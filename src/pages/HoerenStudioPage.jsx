@@ -3,6 +3,7 @@ import { useToast } from "../context/ToastContext";
 import { getStudioStatus, makeListeningScript, makeSpeechClip, makeListeningQuestions, publishListeningLesson, getHoerenPublishCatalog } from "../services/hoerenStudioService";
 import { QUESTION_KINDS, validateDraftQuestions } from "../utils/hoerenQuestions";
 import { inspectHoerenDraft } from "../utils/hoerenDraftQuality.js";
+import { getStudioCourseCatalog, getStudioCourseContext } from "../utils/hoerenCourseCatalog.js";
 import { assembleListeningExam, base64WavToBytes, parseStudioTranscript } from "../utils/hoerenAudio";
 import { SCENES, decodeLocalAtmosphere } from "../utils/hoerenSoundscape";
 import { encodeWavAsMp3 } from "../utils/hoerenMp3";
@@ -58,9 +59,9 @@ export default function HoerenStudioPage() {
   const [level, setLevel] = useState("A1");
   const [examPart, setExamPart] = useState("");
   const [type, setType] = useState("dialogue");
-  const [topic, setTopic] = useState("Eine Fahrkarte am Bahnhof kaufen");
+  const [topic, setTopic] = useState("Wechselpräpositionen und Dativpräpositionen");
   const [engine, setEngine] = useState("lite");
-  const [script, setScript] = useState(TEMPLATES.dialogue);
+  const [script, setScript] = useState("");
   const [lineGap, setLineGap] = useState(0.7);
   const [repeats, setRepeats] = useState(2);
   const [repeatGap, setRepeatGap] = useState(6);
@@ -87,6 +88,7 @@ export default function HoerenStudioPage() {
   const [published, setPublished] = useState(null);
   const [courseLessons, setCourseLessons] = useState([]);
   const [courseLessonsError, setCourseLessonsError] = useState("");
+  const [lessonSearch, setLessonSearch] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -126,12 +128,23 @@ export default function HoerenStudioPage() {
   const cachedVoiceCount = spokenLines.filter(line => voiceClipCache.current.has(clipKey(line))).length;
   const missingVoiceKeys = [...new Set(spokenLines.map(clipKey))].filter(key => !voiceClipCache.current.has(key));
   const clipsToGenerate = missingVoiceKeys.length;
-  const availableDays = [...new Set(courseLessons.filter(item => item.level === level).map(item => Number(item.day)))].sort((a, b) => a - b);
-  const filteredAssignments = courseLessons.filter(item => item.level === level && Number(item.day) === Number(publishDay));
-  const selectedAssignment = filteredAssignments.find(item => item.assignmentKey === assignmentKey);
+  // The complete dictionary is the browsing source; the student API only
+  // confirms which lessons currently support direct publication.
+  const courseCatalog = useMemo(() => getStudioCourseCatalog(level, courseLessons), [level, courseLessons]);
+  const selectedCourseEntry = courseCatalog.find(entry => entry.assignmentKey.toUpperCase() === assignmentKey.toUpperCase()) || null;
+  const selectedAssignment = selectedCourseEntry?.publishable
+    ? courseLessons.find(item => String(item.level).toUpperCase() === level &&
+        String(item.assignmentKey).toUpperCase() === selectedCourseEntry.assignmentKey.toUpperCase() &&
+        Number(item.day) === selectedCourseEntry.publishDay)
+    : null;
+  const filteredCatalog = courseCatalog.filter(entry => {
+    const query = lessonSearch.toLocaleLowerCase().trim();
+    return !query || [entry.assignmentKey, entry.chapter, entry.title, entry.germanTitle, entry.englishTitle]
+      .some(value => String(value || "").toLocaleLowerCase().includes(query));
+  });
   const canPublish = !!audioBlob && !!reviewedQuestions.data.length && questionsMatchScript &&
     teacherApproved && !busy && mode === "course" && ["A1", "A2", "B1"].includes(level) && questionCount === 5 &&
-    !!selectedAssignment && Number.isInteger(Number(publishDay));
+    !!selectedAssignment && !!selectedCourseEntry?.publishable && Number(publishDay) === Number(selectedCourseEntry.publishDay) && Number.isInteger(Number(publishDay));
   const updateQuestions = (index, changes) => {
     setQuestions(existing => existing.map((q, i) => i === index ? { ...q, ...changes } : q));
     setTeacherApproved(false); setPublished(null);
@@ -148,6 +161,18 @@ export default function HoerenStudioPage() {
     const soundscape = { scene, ambience: useAtmosphere, bell: openingBell, ending: endingSound, volume: soundVolume / 100, userAudio };
     return assembleListeningExam(transcript.lines, clips, { repeats, lineGap, repeatGap, soundscape });
   }
+  function chooseCourseLesson(nextKey, nextLevel = level) {
+    const choice = getStudioCourseCatalog(nextLevel, courseLessons).find(entry =>
+      entry.assignmentKey.toUpperCase() === String(nextKey || "").toUpperCase());
+    setLevel(nextLevel);
+    setLessonSearch("");
+    setAssignmentKey(choice?.assignmentKey || "");
+    setPublishDay(choice?.publishDay ?? choice?.day ?? 0);
+    setTopic(choice?.germanTitle || "");
+    setScript("");
+    setQuestions([]); setQuestionScript(""); setTeacherApproved(false); setPublished(null);
+    clearAudio();
+  }
   function changeProductionMode(nextMode) {
     if (nextMode === mode) return;
     setMode(nextMode);
@@ -156,11 +181,8 @@ export default function HoerenStudioPage() {
       setLevelAndPart(examLevel, "1");
     } else {
       setExamPart("");
-      setType("dialogue"); setTopic("Eine Fahrkarte am Bahnhof kaufen");
-      setScript(TEMPLATES.dialogue); setQuestionKind("richtig-falsch");
-      setQuestions([]); setQuestionScript("");
-      setTeacherApproved(false); setPublished(null); setRepeats(2);
-      clearAudio();
+      setType("dialogue"); setQuestionKind("richtig-falsch"); setRepeats(2);
+      chooseCourseLesson(assignmentKey || getStudioCourseCatalog(level, courseLessons)[0]?.assignmentKey);
     }
   }
   function updateSpokenSegment(spokenIndex, text, speaker) {
@@ -206,7 +228,8 @@ export default function HoerenStudioPage() {
   async function generateScript() {
     setBusy("script"); setProgress(""); clearAudio();
     try {
-      const result = await makeListeningScript({ topic, type, level, part: mode === "goethe" ? examPart : "", mode, kind: questionKind });
+      const result = await makeListeningScript({ topic, type, level, part: mode === "goethe" ? examPart : "", mode, kind: questionKind,
+        lessonContext: mode === "course" ? getStudioCourseContext(selectedCourseEntry) : null });
       setScript(result.script);
       setQuestions(result.questions || []);
       setQuestionKind(result.kind || "richtig-falsch");
@@ -221,7 +244,8 @@ export default function HoerenStudioPage() {
     if (script.trim().length < 35 || !ready) return;
     setBusy("questions"); setProgress("");
     try {
-      const result = await makeListeningQuestions({ script, kind: questionKind, level, part: mode === "goethe" ? examPart : "", mode });
+      const result = await makeListeningQuestions({ script, kind: questionKind, level, part: mode === "goethe" ? examPart : "", mode,
+        lessonContext: mode === "course" ? getStudioCourseContext(selectedCourseEntry) : null });
       setQuestions(result.questions);
       setQuestionScript(script);
       setTeacherApproved(false); setPublished(null);
@@ -238,7 +262,7 @@ export default function HoerenStudioPage() {
         mp3,
         metadata: {
           level, day: Number(publishDay), assignmentKey: assignmentKey.trim().toUpperCase(),
-          title: topic.trim(), script, kind: questionKind,
+          title: selectedCourseEntry?.germanTitle || topic.trim(), script, kind: questionKind,
           questions: reviewedQuestions.data, teacherApproved,
         },
       });
@@ -347,7 +371,10 @@ export default function HoerenStudioPage() {
             <label>German level<select value={level} disabled={!!busy} onChange={event => {
               const next = event.target.value;
               if (mode === "goethe") setLevelAndPart(next, "1");
-              else { setLevel(next); setQuestions([]); setQuestionScript(""); setTeacherApproved(false); setPublished(null); clearAudio(); }
+              else {
+                const first = getStudioCourseCatalog(next, courseLessons).find(entry => entry.chapter !== "0");
+                chooseCourseLesson(first?.assignmentKey, next);
+              }
             }}>{LEVELS.filter(choice => mode === "course" || choice !== "A1").map(choice => <option key={choice}>{choice}</option>)}</select></label>
             {mode === "goethe" ? <label>Hören {level === "C2" ? "Aufgabe" : "Teil"}
               <select value={examPart} disabled={!!busy || !status?.profiles?.[level]} onChange={event => setLevelAndPart(level, event.target.value)}>
