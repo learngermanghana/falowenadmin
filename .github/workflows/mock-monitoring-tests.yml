@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "src/pages/TimedAssignmentAttemptsPage.jsx"
+      - "src/utils/timedAttemptLookup.js"
+      - "tests/timed-attempt-lookup.test.js"
       - "src/services/placementAttemptService.js"
       - "tests/placement-attempt-monitoring.test.js"
       - "src/utils/mockAttemptMonitoring.js"
@@ -17,6 +19,8 @@ on:
     branches: [main]
     paths:
       - "src/pages/TimedAssignmentAttemptsPage.jsx"
+      - "src/utils/timedAttemptLookup.js"
+      - "tests/timed-attempt-lookup.test.js"
       - "src/services/placementAttemptService.js"
       - "tests/placement-attempt-monitoring.test.js"
       - "src/utils/mockAttemptMonitoring.js"
