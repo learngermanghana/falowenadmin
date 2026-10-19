@@ -182,7 +182,9 @@ export default function HoerenStudioPage() {
     } else {
       setExamPart("");
       setType("dialogue"); setQuestionKind("richtig-falsch"); setRepeats(2);
-      chooseCourseLesson(assignmentKey || getStudioCourseCatalog(level, courseLessons)[0]?.assignmentKey);
+      const rows = getStudioCourseCatalog(level, courseLessons);
+      const existing = rows.find(row => row.assignmentKey.toUpperCase() === assignmentKey.toUpperCase());
+      chooseCourseLesson(existing?.assignmentKey || rows.find(row => row.chapter !== "0")?.assignmentKey);
     }
   }
   function updateSpokenSegment(spokenIndex, text, speaker) {
