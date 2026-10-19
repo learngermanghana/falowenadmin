@@ -50,13 +50,17 @@ export function isReceiptForCampusAssignment(data = {}, path = "", assignmentKey
 
   const inferred = inferSubmissionIdentityFromPath(path);
   const identity = resolveStudentIdentity(data, inferred.studentCode);
-  const matchedUid = plan.uids?.some(id => trimmed(id) === identity.studentId);
+  const identityUids = unique([
+    identity.studentId, data.studentId, data.student_id, data.uid,
+    data.userId, data.ownerUid, data.raw?.studentId, data.raw?.uid,
+  ]);
+  const matchedUid = plan.uids?.some(id => identityUids.includes(trimmed(id)));
   const matchedEmail = plan.emails?.some(email => lowercase(email) === lowercase(identity.studentEmail));
   const matchedCode = plan.codes?.some(code => lowercase(code) === lowercase(identity.studentCode));
   const nestedPathMatches = plan.nestedIds?.some(id =>
     path.startsWith(`submissions/${plan.level}/${id}/`));
   // Never return another student's submission solely from a reused student code.
-  if (identity.studentId && plan.uids?.length && !plan.uids.includes(identity.studentId)) return false;
+  if (identityUids.length && plan.uids?.length && !matchedUid) return false;
   return Boolean(matchedUid || matchedEmail || matchedCode || nestedPathMatches);
 }
 
