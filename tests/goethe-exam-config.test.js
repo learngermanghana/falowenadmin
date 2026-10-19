@@ -64,5 +64,5 @@ test("Admin exposes the complete shared Goethe editor and endpoint service", asy
   assert.match(service, /cloudfunctions\.net\/api\/exam-file\/config/);
   assert.match(service, /Authorization: `Bearer \$\{token\}`/);
   assert.match(app, /path="\/exam-file"/);
-  assert.match(app, /Exam File and Date/);
+  assert.match(app, /Goethe Exam File/);
 });

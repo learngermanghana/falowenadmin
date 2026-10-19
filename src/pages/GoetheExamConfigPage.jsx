@@ -55,9 +55,9 @@ export default function GoetheExamConfigPage() {
     } finally { setSaving(false); }
   }
 
-  if (loading) return <div style={{ padding: 16 }}>Loading Exam File and Date settings…</div>;
+  if (loading) return <div style={{ padding: 16 }}>Loading Goethe Exam File settings…</div>;
   return <div style={{ padding: 16, display: "grid", gap: 14 }}>
-    <header><h1 style={{ margin: 0 }}>Exam File and Date</h1><p style={{ color: "#475569" }}>Set exam dates once for Falowen, Admin and the email reminder script.</p><Link to="/communication">Communication</Link></header>
+    <header><h1 style={{ margin: 0 }}>Goethe Exam File</h1><p style={{ color: "#475569" }}>Set exam dates once for Falowen, Admin and the email reminder script.</p><Link to="/communication">Communication</Link></header>
     {error ? <div style={{ padding: 12, borderRadius: 8, background: "#fef2f2", color: "#991b1b" }}>{error}</div> : null}
     <section style={{ ...card, background: "#eff6ff" }}><strong>Shared endpoint</strong><code style={{ overflowWrap: "anywhere" }}>{GOETHE_EXAM_CONFIG_URL}</code><small>Source: {meta.source || "default"} · Published: {formatDate(meta.updatedAt)} · Version {config?.version || 1} · {upcomingCount} exam rows</small></section>
 
