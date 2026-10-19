@@ -1,4 +1,4 @@
-# Shared Exam File and Date configuration
+# Shared Goethe Exam File configuration
 
 Falowen Admin is the single editor for Goethe exam dates, registration windows and reminder policy.
 
@@ -14,7 +14,7 @@ Falowen Admin is the single editor for Goethe exam dates, registration windows a
 ## Admin workflow
 
 1. Sign in to Falowen Admin.
-2. Open **Exam File and Date** from the navigation.
+2. Open **Goethe Exam File** from the navigation.
 3. Update A1–C1 exam dates, registration opening/closing dates, prices, links and reminder settings.
 4. Select **Publish Goethe settings** once.
 
