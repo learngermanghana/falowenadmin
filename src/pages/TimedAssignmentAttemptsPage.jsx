@@ -1,8 +1,9 @@
 import { startVisiblePolling } from "../utils/visiblePolling.js";
 import { createTimedAttemptListenerHealth } from "../utils/timedAttemptListenerHealth.js";
+import { findCampusSubmissionReceipts } from "../utils/timedSubmissionReceiptLookup.js";
 import { buildCampusTimedAttemptId, isMatchingCampusTimer, normalizeTimedAssignmentKey } from "../utils/timedAttemptLookup.js";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { collection, deleteDoc, doc, documentId, getDoc, getDocs, limit, onSnapshot, query as firestoreQuery, where } from "firebase/firestore";
+import { collection, collectionGroup, deleteDoc, doc, documentId, getDoc, getDocs, limit, onSnapshot, query as firestoreQuery, where } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { fetchPlacementAttempts, fetchPlacementLeads, normalizePlacementResults, placementStatus, countRegisteredOrPaidPlacements } from "../services/placementAttemptService.js";
@@ -265,23 +266,21 @@ export default function TimedAssignmentAttemptsPage() {
       recovered = recovered.filter(item => isMatchingCampusTimer(item, assignmentKey));
       setRecoveredTimed(recovered);
 
-      // Timed attempt state is not evidence of a saved course submission.
-      // Check the separate submissions collection for a real Firestore receipt.
-      const matchingSubmissions = await getDocs(firestoreQuery(
-        collection(db, "submissions"),
-        where(who.includes("@") ? "studentEmail" : "studentId", "==",
-          who.includes("@") ? who.toLowerCase() : who),
-        limit(200),
-      ));
-      const receipts = matchingSubmissions.docs
-        .map(item => ({ id: item.id, ...item.data() }))
-        .filter(item => normalizeTimedAssignmentKey(
-          item.canonicalAssignmentKey || item.assignmentKey || item.assignmentId || item.assignment_id,
-        ) === assignmentKey);
-      setSubmissionReceipts(receipts);
-      setSubmissionLookupLimited(matchingSubmissions.size >= 200);
-      setLookupNotice(`For ${assignmentKey}: ${recovered.length} timer record(s) and ${receipts.length} actual submission receipt(s)`
-        + (matchingSubmissions.size >= 200 ? " in the first 200 submission records for this student; inspect older records separately." : "."));
+      // Admin's marking loader supports flat submissions, collectionGroup(posts),
+      // nested submission collections, and historical identity aliases.
+      // Never infer that homework is missing from a timer status alone.
+      const receiptResult = await findCampusSubmissionReceipts({
+        db, studentInput: who, assignmentKey, timerRecords: recovered,
+        firestore: { collection, collectionGroup, getDocs, query: firestoreQuery, where, limit },
+      });
+      setSubmissionReceipts(receiptResult.receipts);
+      setSubmissionLookupLimited(receiptResult.incomplete);
+      setLookupNotice(
+        `For ${assignmentKey}: ${recovered.length} timer record(s), ${receiptResult.receipts.length} matching submitted-work record(s).`
+        + (receiptResult.incomplete
+          ? " Receipt lookup was incomplete (permission/index error or result limit); do not assume other submissions are absent."
+          : " Searched flat and nested submission layouts and supported student identity fields."),
+      );
     } catch (error) {
       setLookupError(error?.message || "Could not look up this Campus timer.");
     } finally {
@@ -608,7 +607,7 @@ export default function TimedAssignmentAttemptsPage() {
         </p>
         {isStaff && <form onSubmit={lookupMissingTimedAttempt} style={{ ...card, display: "grid", gap: 10 }} data-testid="campus-timer-lookup">
           <strong>Find missing Campus timer · Reset by student</strong>
-          <p style={{ margin: 0, color: "#475569" }}>If a timed attempt does not appear in this list, find its saved timer directly by the learner\u0027s UID or login email. This finds timer records, not submitted homework.</p>
+          <p style={{ margin: 0, color: "#475569" }}>If a timed attempt does not appear in this list, find its saved timer directly by the learner\u0027s UID or login email. This searches both saved timers and supported submission locations. A closed timer does not confirm a successful submission.</p>
           <div style={{ display: "flex", gap: 9, flexWrap: "wrap", alignItems: "end" }}>
             <label style={{ display: "grid", gap: 4, flex: "2 1 230px" }}>Student UID or login email
               <input aria-label="Student UID or login email" value={lookupStudent} onChange={event => setLookupStudent(event.target.value)} placeholder="Student UID or email" required style={{ padding: 10, borderRadius: 8, border: "1px solid #94a3b8" }} />
@@ -626,11 +625,11 @@ export default function TimedAssignmentAttemptsPage() {
             {submissionReceipts.map(receipt => (
               <div key={receipt.id} style={{ background: "#eff6ff", borderRadius: 8, padding: 10, fontSize: 13 }}>
                 <strong>Saved workbook submission</strong> · {receipt.assignmentKey || receipt.assignmentId} · {receipt.status || "unknown status"}
-                <div>Submitted: {formatDate(receipt.submittedAt || receipt.createdAt)} · Receipt ID: submissions/{receipt.id}</div>
+                <div>Submitted: {formatDate(receipt.submittedAt || receipt.createdAt)} · Firestore path: {receipt.path}</div>
                 <div>Marking: {receipt.markingStatus || "awaiting processing"}</div>
               </div>
             ))}
-            {submissionLookupLimited ? <small>The first 200 student records were checked; older submissions may require a separate search.</small> : null}
+            {submissionLookupLimited ? <small role="alert">Some submission sources could not be fully checked. Search is inconclusive; review the marking queue and Firestore before resetting or assuming an assignment is missing.</small> : null}
           </div>
         </form>}
         <div className="monitor-status-filters" role="group" aria-label="Filter Campus timed test status">
