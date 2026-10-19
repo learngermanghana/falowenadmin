@@ -13,6 +13,7 @@ const ALLOWED_TYPES = new Set(["dialogue", "announcement", "telephone", "podcast
 const crypto = require("node:crypto");
 const { extractLessonDraft, questionInstructions } = require("./hoerenQuestions");
 const { EXAM_PROFILES, getExamProfile, buildExamPrompt } = require("./hoerenExamProfiles");
+const { validateCourseLessonContext, courseLessonPrompt } = require("./hoerenCurriculumContext");
 // SHA-256 identifier for the single verified Falowen owner UID. This is not an API secret.
 // Using a digest avoids publishing the Firebase account UID in public repository code.
 const DEFAULT_OWNER_UID_SHA256 = "e8bc09aac410e86216e384ab4c612d6ac6551273085f8344206b23f4004f90a1";
@@ -56,7 +57,8 @@ function validateScriptRequest(body = {}) {
   const profile = mode === "goethe" ? getExamProfile(level, part) : null;
   if (mode === "goethe" && !profile) throw Object.assign(new Error("Select a supported Hören Teil/Aufgabe for this level."), { status: 400 });
   if (profile && type !== profile.type) throw Object.assign(new Error("Recording type does not match this exam Teil."), { status: 400 });
-  return { level, type, topic, part, profile, mode, kind: profile?.kind || kind };
+  const lessonContext = mode === "course" ? validateCourseLessonContext(body.lessonContext, level) : null;
+  return { level, type, topic, part, profile, mode, kind: profile?.kind || kind, lessonContext };
 }
 
 function extractAudio(result = {}) {
@@ -155,7 +157,7 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
 
   app.post("/ai-studio/script", guard, async (req, res) => {
     try {
-      const { level, type, topic, profile, kind, mode } = validateScriptRequest(req.body);
+      const { level, type, topic, profile, kind, lessonContext } = validateScriptRequest(req.body);
       const key = String(geminiKey.value() || "").trim();
       if (!key) return res.status(503).json({ ok: false, error: "Gemini API key is not configured." });
       const remaining = await reserveUsage(db, req.hoerenOwnerUid, "script");
@@ -164,9 +166,7 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
         key,
         { contents: [{ role: "user", parts: [{ text:
           profile ? buildExamPrompt(profile, topic, questionInstructions(profile.kind, profile.questionCount)) :
-          (`Create an original German listening recording for a Falowen Course Book activity. CEFR level ${level}. Recording format ${type}. Topic ${topic}.\n` +
-          "Write a practical teaching text with realistic, grammatically correct German, about 80–150 spoken words. Use A:/B:/C: for speaker turns, [PAUSE 3] as an optional standalone instruction; 18 segments maximum, each no more than 320 characters. Do not claim official Goethe affiliation. " +
-          questionInstructions(kind))
+          courseLessonPrompt({ level, type, topic, kind, lessonContext })
         }] }], generationConfig: { temperature: 0.4, responseMimeType: "application/json", maxOutputTokens: profile ? 6000 : 1750 } },
       );
       const draft = extractLessonDraft(result, profile?.questionCount || 5);
@@ -186,6 +186,7 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
       const mode = String(req.body?.mode || (req.body?.part ? "goethe" : "course")).toLowerCase();
       if (!["goethe", "course"].includes(mode)) return res.status(400).json({ ok: false, error: "Choose a valid production mode." });
       const profile = mode === "goethe" ? getExamProfile(req.body?.level, req.body?.part) : null;
+      const lessonContext = mode === "course" ? validateCourseLessonContext(req.body?.lessonContext, String(req.body?.level || "A1").toUpperCase()) : null;
       if (mode === "goethe" && !profile) return res.status(400).json({ ok: false, error: "Choose a valid exam level and Teil." });
       if (profile && kind !== profile.kind) return res.status(400).json({ ok: false, error: "Question type must match the selected Teil." });
       const key = String(geminiKey.value() || "").trim();
@@ -195,7 +196,8 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
         `https://generativelanguage.googleapis.com/v1beta/models/${SCRIPT_MODEL}:generateContent`, key,
         { contents: [{ role: "user", parts: [{ text:
           `Create ${profile?.questionCount || 5} accurate listening questions from this exact German transcript. Preserve the transcript completely. ` +
-          questionInstructions(kind, profile?.questionCount || 5) + (profile ? "\nSelected format: " + profile.structure : "") + "\nTranscript:\n" + script
+          questionInstructions(kind, profile?.questionCount || 5) + (profile ? "\nSelected format: " + profile.structure : "") +
+          (lessonContext ? "\nCourse lesson: " + lessonContext.assignmentKey + ", chapter " + lessonContext.chapter + ", German title: " + lessonContext.title + ". Keep questions aligned to this lesson. " : "") + "\nTranscript:\n" + script
         }] }], generationConfig: { temperature: 0.2, responseMimeType: "application/json", maxOutputTokens: profile ? 5500 : 1700 } },
       );
       const draft = extractLessonDraft(result, profile?.questionCount || 5);
