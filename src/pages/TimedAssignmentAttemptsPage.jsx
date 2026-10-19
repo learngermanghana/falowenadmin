@@ -1,7 +1,8 @@
 import { startVisiblePolling } from "../utils/visiblePolling.js";
 import { createTimedAttemptListenerHealth } from "../utils/timedAttemptListenerHealth.js";
+import { buildCampusTimedAttemptId, isMatchingCampusTimer, normalizeTimedAssignmentKey } from "../utils/timedAttemptLookup.js";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { collection, deleteDoc, doc, documentId, onSnapshot, query as firestoreQuery, where } from "firebase/firestore";
+import { collection, deleteDoc, doc, documentId, getDoc, getDocs, limit, onSnapshot, query as firestoreQuery, where } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { fetchPlacementAttempts, fetchPlacementLeads, normalizePlacementResults, placementStatus, countRegisteredOrPaidPlacements } from "../services/placementAttemptService.js";
@@ -46,6 +47,12 @@ export default function TimedAssignmentAttemptsPage() {
   const [loading, setLoading] = useState(true);
   const [timerError, setTimerError] = useState("");
   const [resettingId, setResettingId] = useState("");
+  const [lookupStudent, setLookupStudent] = useState("");
+  const [lookupAssignment, setLookupAssignment] = useState("A1-11");
+  const [lookupBusy, setLookupBusy] = useState(false);
+  const [lookupError, setLookupError] = useState("");
+  const [recoveredTimed, setRecoveredTimed] = useState([]);
+  const [lookupNotice, setLookupNotice] = useState("");
   const [mocks, setMocks] = useState([]);
   const [mockLoading, setMockLoading] = useState(true);
   const [mockError, setMockError] = useState("");
@@ -193,6 +200,12 @@ export default function TimedAssignmentAttemptsPage() {
 
   const filteredMocks = useMemo(() => filterMockAttempts(mocks, query, mockStatus, mockLevel), [mocks, query, mockStatus, mockLevel]);
   const filteredTimed = useMemo(() => filterTimedAttempts(attempts, query, timedStatus), [attempts, query, timedStatus]);
+  const displayedTimed = useMemo(() => {
+    const known = new Set(filteredTimed.map(item => item.id));
+    const recovered = filterTimedAttempts(recoveredTimed, query, timedStatus)
+      .filter(item => !known.has(item.id));
+    return [...filteredTimed, ...recovered];
+  }, [filteredTimed, recoveredTimed, query, timedStatus]);
   const placementRows = useMemo(()=>normalizePlacementResults(placementRecords,placementLeads),[placementRecords,placementLeads]);
   const filteredPlacement = useMemo(()=>placementRows.filter(row=>{
     if(placementFilter!=="all" && (placementFilter==="contacted" ? !row.consent : placementStatus(row,now)!==placementFilter))return false;
@@ -220,13 +233,54 @@ export default function TimedAssignmentAttemptsPage() {
     setWritingReview(null);
   };
 
+  const lookupMissingTimedAttempt = async (event) => {
+    event.preventDefault();
+    const who = lookupStudent.trim();
+    const assignmentKey = normalizeTimedAssignmentKey(lookupAssignment);
+    setLookupError("");
+    setLookupNotice("");
+    setRecoveredTimed([]);
+    if (!isStaff) { setLookupError("Staff access is required to search Campus timers."); return; }
+    if (!who || !/^(A1|A2|B1)-[A-Z0-9._-]+$/.test(assignmentKey)) {
+      setLookupError("Enter a student UID or email and an assignment code such as A1-11.");
+      return;
+    }
+    setLookupBusy(true);
+    try {
+      let recovered = [];
+      if (who.includes("@")) {
+        // Single-field index; avoids relying on the whole-attempt list or a composite index.
+        const found = await getDocs(firestoreQuery(collection(db, COLLECTION), where("studentEmail", "==", who.toLowerCase()), limit(100)));
+        recovered = found.docs.map(item => ({ id: item.id, ...item.data() }));
+      } else {
+        const id = buildCampusTimedAttemptId(who, assignmentKey);
+        if (!id) throw new Error("Invalid student UID or assignment code.");
+        const record = await getDoc(doc(db, COLLECTION, id));
+        if (record.exists()) recovered = [{ id: record.id, ...record.data() }];
+      }
+      recovered = recovered.filter(item => isMatchingCampusTimer(item, assignmentKey));
+      setRecoveredTimed(recovered);
+      setLookupNotice(recovered.length
+        ? `Found ${recovered.length} Campus timer record(s) for ${assignmentKey}. You can reset the matching record below.`
+        : `No Campus timer record found for ${assignmentKey} and this student. Verify their UID/email, or inspect the separate workbook submissions page.`);
+    } catch (error) {
+      setLookupError(error?.message || "Could not look up this Campus timer.");
+    } finally {
+      setLookupBusy(false);
+    }
+  };
+
   const resetAttempt = async (attempt) => {
     const label = [attempt.studentEmail || attempt.studentCode || attempt.studentId, attempt.assignmentKey]
       .filter(Boolean).join(" · ");
     if (!window.confirm(`Reset timed attempt for ${label}? The student will be allowed to start a fresh timed attempt.`)) return;
     setResettingId(attempt.id);
     setTimerError("");
-    try { await deleteDoc(doc(db, COLLECTION, attempt.id)); }
+    try {
+      await deleteDoc(doc(db, COLLECTION, attempt.id));
+      setRecoveredTimed(current => current.filter(item => item.id !== attempt.id));
+      setLookupNotice(`Timer reset for ${attempt.assignmentKey}. The student can refresh the workbook and begin a new attempt. This does not delete or resubmit graded work.`);
+    }
     catch (error) { setTimerError(error?.message || "Could not reset this timed attempt."); }
     finally { setResettingId(""); }
   };
@@ -531,18 +585,35 @@ export default function TimedAssignmentAttemptsPage() {
         <h2 style={{ margin: 0 }}>Campus · Timed assignment attempts</h2>
         <p style={{ margin: 0, color: "#64748b" }}>
           These are timed tests in the Campus workbook, not full mocks from Exam Room.
-          The countdown uses the saved start time and duration. Reset removes only the Campus timer, not a mock result.
+          The countdown uses the saved start time and duration. Reset removes only the Campus timer, not a mock result. A timer marked submitted does not prove that the separate workbook submission was saved.
         </p>
+        {isStaff && <form onSubmit={lookupMissingTimedAttempt} style={{ ...card, display: "grid", gap: 10 }} data-testid="campus-timer-lookup">
+          <strong>Find missing Campus timer · Reset by student</strong>
+          <p style={{ margin: 0, color: "#475569" }}>If a timed attempt does not appear in this list, find its saved timer directly by the learner\u0027s UID or login email. This finds timer records, not submitted homework.</p>
+          <div style={{ display: "flex", gap: 9, flexWrap: "wrap", alignItems: "end" }}>
+            <label style={{ display: "grid", gap: 4, flex: "2 1 230px" }}>Student UID or login email
+              <input aria-label="Student UID or login email" value={lookupStudent} onChange={event => setLookupStudent(event.target.value)} placeholder="Student UID or email" required style={{ padding: 10, borderRadius: 8, border: "1px solid #94a3b8" }} />
+            </label>
+            <label style={{ display: "grid", gap: 4, flex: "1 1 130px" }}>Assignment code
+              <input aria-label="Campus assignment code" value={lookupAssignment} onChange={event => setLookupAssignment(event.target.value)} placeholder="A1-11" required style={{ padding: 10, borderRadius: 8, border: "1px solid #94a3b8" }} />
+            </label>
+            <button type="submit" disabled={lookupBusy} style={{ background: "#1d4ed8", color: "#fff", padding: "11px 16px", border: 0, borderRadius: 8, fontWeight: 800 }}>
+              {lookupBusy ? "Searching…" : "Find timer"}
+            </button>
+          </div>
+          {lookupError && <p role="alert" style={{ margin: 0, color: "#991b1b" }}>{lookupError}</p>}
+          {lookupNotice && <p role="status" style={{ margin: 0, color: "#1e40af" }}>{lookupNotice}</p>}
+        </form>}
         <div className="monitor-status-filters" role="group" aria-label="Filter Campus timed test status">
           {[[ "all", "All" ], [ "in_progress", "In progress" ], [ "completed", "Completed" ]].map(([value,label]) =>
             <button className="monitor-status-button" key={value} type="button"
               onClick={() => setTimedStatus(value)} aria-pressed={timedStatus === value}>{label}</button>)}
-          <span className="monitor-filter-count">{filteredTimed.length} shown</span>
+          <span className="monitor-filter-count">{displayedTimed.length} shown</span>
         </div>
         {timerError && <div role="alert" style={{ ...card, color: "#991b1b", borderColor: "#fecaca" }}>{timerError}</div>}
         {loading && <p>Loading timed assignments…</p>}
-        {!loading && !filteredTimed.length && <div style={card}>No Campus timed attempts match these filters.</div>}
-        {filteredTimed.map(attempt => {
+        {!loading && !displayedTimed.length && <div style={card}>No Campus timed attempts match these filters. If a student is missing, use Find timer above.</div>}
+        {displayedTimed.map(attempt => {
           const end = timeEnd(attempt);
           const remaining = remainingSeconds(end, now);
           return <article key={attempt.id} style={card}>
