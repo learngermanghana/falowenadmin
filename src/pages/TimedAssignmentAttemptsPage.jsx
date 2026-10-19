@@ -53,6 +53,8 @@ export default function TimedAssignmentAttemptsPage() {
   const [lookupError, setLookupError] = useState("");
   const [recoveredTimed, setRecoveredTimed] = useState([]);
   const [lookupNotice, setLookupNotice] = useState("");
+  const [submissionReceipts, setSubmissionReceipts] = useState([]);
+  const [submissionLookupLimited, setSubmissionLookupLimited] = useState(false);
   const [mocks, setMocks] = useState([]);
   const [mockLoading, setMockLoading] = useState(true);
   const [mockError, setMockError] = useState("");
@@ -240,6 +242,8 @@ export default function TimedAssignmentAttemptsPage() {
     setLookupError("");
     setLookupNotice("");
     setRecoveredTimed([]);
+    setSubmissionReceipts([]);
+    setSubmissionLookupLimited(false);
     if (!isStaff) { setLookupError("Staff access is required to search Campus timers."); return; }
     if (!who || !/^(A1|A2|B1)-[A-Z0-9._-]+$/.test(assignmentKey)) {
       setLookupError("Enter a student UID or email and an assignment code such as A1-11.");
@@ -260,9 +264,27 @@ export default function TimedAssignmentAttemptsPage() {
       }
       recovered = recovered.filter(item => isMatchingCampusTimer(item, assignmentKey));
       setRecoveredTimed(recovered);
-      setLookupNotice(recovered.length
-        ? `Found ${recovered.length} Campus timer record(s) for ${assignmentKey}. You can reset the matching record below.`
-        : `No Campus timer record found for ${assignmentKey} and this student. Verify their UID/email, or inspect the separate workbook submissions page.`);
+
+      // Timer lifecycle and submitted homework are separate Firestore records.
+      // Search real submissions for the same student rather than treating an
+      // expired/submitted timer as proof that Admin received the student's work.
+      const receiptQuery = firestoreQuery(
+        collection(db, "submissions"),
+        where(who.includes("@") ? "studentEmail" : "studentId", "==", who.includes("@") ? who.toLowerCase() : who),
+        limit(200),
+      );
+      const matchingSubmissions = await getDocs(receiptQuery);
+      const receipts = matchingSubmissions.docs
+        .map(item => ({ id: item.id, ...item.data() }))
+        .filter(item => normalizeTimedAssignmentKey(
+          item.canonicalAssignmentKey || item.assignmentKey || item.assignmentId || item.assignment_id,
+        ) === assignmentKey);
+      setSubmissionReceipts(receipts);
+      setSubmissionLookupLimited(matchingSubmissions.size >= 200);
+      setLookupNotice(
+        `For ${assignmentKey}: ${recovered.length} timer record(s), ${receipts.length} submitted-work receipt(s)`
+        + (matchingSubmissions.size >= 200 ? " found within the most recent lookup window; use the submissions page for a full audit." : "."),
+      );
     } catch (error) {
       setLookupError(error?.message || "Could not look up this Campus timer.");
     } finally {
@@ -603,6 +625,16 @@ export default function TimedAssignmentAttemptsPage() {
           </div>
           {lookupError && <p role="alert" style={{ margin: 0, color: "#991b1b" }}>{lookupError}</p>}
           {lookupNotice && <p role="status" style={{ margin: 0, color: "#1e40af" }}>{lookupNotice}</p>}
+          <div data-testid="campus-submission-receipts" style={{ display: "grid", gap: 6 }}>
+            {submissionReceipts.map(receipt => (
+              <div key={receipt.id} style={{ background: "#eff6ff", padding: 10, borderRadius: 8, fontSize: 13 }}>
+                <strong>Verified Firestore submission record</strong> · {receipt.assignmentKey || receipt.assignmentId} · {receipt.status || "unknown status"}
+                <div>Saved: {formatDate(receipt.submittedAt || receipt.createdAt)} · Receipt: submissions/{receipt.id}</div>
+                <div>Automatic marking: {receipt.markingStatus || "awaiting processing"}</div>
+              </div>
+            ))}
+            {submissionLookupLimited ? <small>More than 200 submissions exist for this student; use the submissions page for older receipts.</small> : null}
+          </div>}
         </form>}
         <div className="monitor-status-filters" role="group" aria-label="Filter Campus timed test status">
           {[[ "all", "All" ], [ "in_progress", "In progress" ], [ "completed", "Completed" ]].map(([value,label]) =>
