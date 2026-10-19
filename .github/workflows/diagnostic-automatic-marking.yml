@@ -15,9 +15,13 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - name: In-memory student submission and marking regression tests
-        run: node --test functions/automaticCourseMarking.test.cjs tests/structured-submission-payload.test.js tests/submission-identity.test.js tests/marking-queue.test.js
+      - name: Automatic marking worker, score persistence, student notification and fallback tests
+        run: node --test functions/automaticCourseMarking.test.cjs
+      - name: Submission identity and incoming queue checks
+        run: node --test tests/submission-identity.test.js tests/marking-queue.test.js
       - name: Generate production worker using same predeploy build command
         run: node scripts/buildAutomaticMarking.mjs --prepared
       - name: Test generated objective and AI marking pipeline
         run: node --test functions/automaticMarkingPipeline.test.cjs
+      - name: Structured submission capture and marking contract
+        run: node --test tests/structured-submission-payload.test.js
