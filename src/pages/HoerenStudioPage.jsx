@@ -174,7 +174,7 @@ export default function HoerenStudioPage() {
       const newLine = index === spokenIndex ? `${speaker}: ${text.trim()}` : `${line.speaker}: ${line.text}`;
       index += 1;
       return newLine;
-    }).join("\\n");
+    }).join("\n");
     setScript(changed); setTeacherApproved(false); setPublished(null); clearAudio();
     toast.success("Sentence updated. Unchanged voice clips remain cached.");
   }
@@ -355,7 +355,7 @@ export default function HoerenStudioPage() {
               </select>
             </label> : <label>Recording type<select value={type} disabled={!!busy} onChange={event => setTypeAndTemplate(event.target.value)}>
               {Object.entries(TYPE_LABELS).map(([value, name]) => <option key={value} value={value}>{name}</option>)}
-            </select></label>}}
+            </select></label>}
           </div>
           {selectedProfile ? <div className="hoeren-placeholder">
             <strong>{level} Hören · {selectedProfile.examLabel} {examPart} — {selectedProfile.label}</strong>
@@ -363,6 +363,42 @@ export default function HoerenStudioPage() {
             <p>{questionCount} questions · {selectedProfile.repeats === 1 ? "Listen once" : "Listen twice"} · target ~{selectedProfile.wordTarget} spoken words. Original Falowen practice, not an official Goethe recording.</p>
             {level === "C1" && examPart === "1" ? <p><strong>Book matching:</strong> 3 original books (Buch 1, Buch 2, Buch 3), 6 statements, one play. Exam reading time: 60 seconds.</p> : null}
           </div> : null}
+          {mode === "course" ? <div className="hoeren-course-destination">
+            <h3>Target Course Book assignment</h3>
+            <p className="hoeren-hint">Select the existing assignment before creating audio. For direct publishing, only A1–B1 five-question practice is currently supported.</p>
+        <div className="hoeren-input-grid">
+          <label>Falowen level
+            <input value={level} readOnly aria-label="Selected course level" />
+          </label>
+          <label>Course Book day
+            <select value={availableDays.includes(Number(publishDay)) ? String(publishDay) : ""} disabled={!!busy || !availableDays.length}
+              onChange={e => {
+                const day = Number(e.target.value);
+                const first = courseLessons.find(item => item.level === level && Number(item.day) === day);
+                setPublishDay(day); setAssignmentKey(first?.assignmentKey || "");
+                setTeacherApproved(false); setPublished(null);
+              }}>
+              <option value="">Select day</option>
+              {availableDays.map(day => <option key={day} value={day}>Day {day}</option>)}
+            </select>
+          </label>
+        </div>
+        <label>Falowen assignment
+          <select value={selectedAssignment ? assignmentKey : ""} disabled={!!busy || !filteredAssignments.length}
+            onChange={e => { setAssignmentKey(e.target.value); setTeacherApproved(false); setPublished(null); }}>
+            <option value="">Select assignment</option>
+            {filteredAssignments.map(item => <option key={item.assignmentKey} value={item.assignmentKey}>
+              {item.assignmentKey} · {item.title}
+            </option>)}
+          </select>
+        </label>
+        {courseLessonsError ? <p className="hoeren-validation" role="alert">{courseLessonsError}</p> : null}
+        {selectedAssignment ? <p className="hoeren-hint">Course Book: {selectedAssignment.route}</p> : null}
+
+          </div> : <div className="hoeren-exam-schema">
+            <strong>Goethe Hören preset is locked</strong>
+            <p>{selectedProfile ? `${selectedProfile.questionCount} questions · ${QUESTION_KINDS[selectedProfile.kind]} · play ${selectedProfile.repeats === 1 ? "once" : "twice"}` : "Select an exam Teil to load its rules."}</p>
+          </div>}
           <div className="hoeren-input-grid">
             <label>Recording style<input value={selectedProfile?.type || type} readOnly /></label>
             <label>Voice segments budget<input value={`Up to 18 speech clips · ${status?.remaining.speech ?? "—"} left today`} readOnly /></label>
@@ -462,7 +498,7 @@ export default function HoerenStudioPage() {
             </> : null}
           </fieldset>
           <div className="hoeren-quality" role="status">
-            <h3>Pre-audio exam quality check</h3>
+            <h3>{mode === "goethe" ? "Pre-audio exam quality check" : "Pre-audio checks"}</h3>
             <p>{draftAudit.wordCount} spoken words · {spokenLines.length} voice segments · {draftAudit.pauseCount} pauses</p>
             {draftAudit.errors.map((issue, i) => <p key={`error-${i}`} className="hoeren-validation">Fix: {issue}</p>)}
             {draftAudit.warnings.map((issue, i) => <p key={`warn-${i}`} className="hoeren-hint">Review: {issue}</p>)}
@@ -485,7 +521,7 @@ export default function HoerenStudioPage() {
             <audio controls preload="metadata" src={audioUrl} aria-label="Preview generated Hören recording" />
             <p>{(audioBlob.size / 1_000_000).toFixed(1)} MB · WAV · 24 kHz</p>
             <div className="hoeren-downloads">
-              {questions.length && !reviewedQuestions.error ? <button type="button" className="hoeren-quiet" onClick={() => downloadFile(JSON.stringify({ level, examPart, title: topic, kind: questionKind, questions: reviewedQuestions.data }, null, 2), `${filename}-questions-key.json`, "application/json")}>Download questions &amp; answer key</button> : null}
+              {questions.length && !reviewedQuestions.error ? <button type="button" className="hoeren-quiet" onClick={() => downloadFile(JSON.stringify({ mode, level, examPart, title: topic, kind: questionKind, questions: reviewedQuestions.data }, null, 2), `${filename}-questions-key.json`, "application/json")}>Download questions &amp; answer key</button> : null}
               <button type="button" className="hoeren-button" disabled={!!busy} onClick={downloadMp3}>{busy === "mp3" ? "Converting to MP3…" : "Download MP3"}</button>
               <button type="button" className="hoeren-quiet" disabled={!!busy} onClick={() => downloadFile(audioBlob, `${filename}.wav`, "audio/wav")}>Download WAV</button>
               <button type="button" className="hoeren-quiet" onClick={() => downloadFile(script, `${filename}.txt`, "text/plain;charset=utf-8")}>Download transcript</button>
@@ -493,38 +529,10 @@ export default function HoerenStudioPage() {
           </div> : <div className="hoeren-placeholder">Your approved recording will appear here for playback and download.</div>}
         </section>
       </div>
-      <section className="hoeren-panel">
+      {mode === "course" ? <section className="hoeren-panel">
         <h2>4. Teacher approval &amp; publish to Course Book</h2>
-        {questionCount !== 5 || !["A1", "A2", "B1"].includes(level) ? <p className="hoeren-hint">This {level} {selectedProfile?.examLabel || "Teil"} {examPart} template supports creation and local export. Direct Course Book publishing is disabled until the student player can handle this exercise format.</p> : null}
+        {!["A1", "A2", "B1"].includes(level) ? <p className="hoeren-hint">This Course Book level can export audio, but direct publishing is currently supported only for A1–B1 activities.</p> : null}
         <p className="hoeren-hint">Publish only after listening to the final MP3 and checking all answers. Course Book publishing currently supports five-question A1–B1 activities; higher-level or longer exam Teils can be downloaded but not yet published. This does not overwrite existing tutor assignments.</p>
-        <div className="hoeren-input-grid">
-          <label>Falowen level
-            <input value={level} readOnly aria-label="Selected course level" />
-          </label>
-          <label>Course Book day
-            <select value={availableDays.includes(Number(publishDay)) ? String(publishDay) : ""} disabled={!!busy || !availableDays.length}
-              onChange={e => {
-                const day = Number(e.target.value);
-                const first = courseLessons.find(item => item.level === level && Number(item.day) === day);
-                setPublishDay(day); setAssignmentKey(first?.assignmentKey || "");
-                setTeacherApproved(false); setPublished(null);
-              }}>
-              <option value="">Select day</option>
-              {availableDays.map(day => <option key={day} value={day}>Day {day}</option>)}
-            </select>
-          </label>
-        </div>
-        <label>Falowen assignment
-          <select value={selectedAssignment ? assignmentKey : ""} disabled={!!busy || !filteredAssignments.length}
-            onChange={e => { setAssignmentKey(e.target.value); setTeacherApproved(false); setPublished(null); }}>
-            <option value="">Select assignment</option>
-            {filteredAssignments.map(item => <option key={item.assignmentKey} value={item.assignmentKey}>
-              {item.assignmentKey} · {item.title}
-            </option>)}
-          </select>
-        </label>
-        {courseLessonsError ? <p className="hoeren-validation" role="alert">{courseLessonsError}</p> : null}
-        {selectedAssignment ? <p className="hoeren-hint">Course Book: {selectedAssignment.route}</p> : null}
         <label className="hoeren-effect-option">
           <input type="checkbox" checked={teacherApproved} disabled={!!busy || !audioBlob || !!reviewedQuestions.error || !questionsMatchScript}
             onChange={e => setTeacherApproved(e.target.checked)} />
@@ -535,7 +543,11 @@ export default function HoerenStudioPage() {
         </button>
         {published ? <div className="hoeren-output" role="status">Published to {published.assignmentKey} · Day {published.day} · Revision {published.revision.slice(0, 8)}. The student practice will appear in the Course Book.</div> : null}
         <p className="hoeren-hint">No Google generation occurs during publishing. Cloudflare R2 and Firebase may charge their normal storage or request costs.</p>
-      </section>
+      </section> : <section className="hoeren-panel">
+        <h2>4. Download Goethe exam materials</h2>
+        <p className="hoeren-hint">This Goethe exam builder prepares downloadable audio, transcript and question key. Direct Exams Room publication is not yet supported for these preset formats. Nothing is uploaded automatically.</p>
+        <p className="hoeren-hint">For a full exam set, prepare each Teil separately. Teachers should verify the correct answers, task authenticity and recording quality.</p>
+      </section>}
       <p className="hoeren-footer">Practice recordings are original teaching materials and not official Goethe-Institut exam audio. Listen and check all numbers, names and pronunciation before use.</p>
     </div>
   );
