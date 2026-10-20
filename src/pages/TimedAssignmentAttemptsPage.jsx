@@ -226,7 +226,7 @@ export default function TimedAssignmentAttemptsPage() {
   useEffect(() => {
     // Avoid repeating the mock-monitor network request while staff view Campus timers.
     if (category !== "mocks") return undefined;
-    return startVisiblePolling(loadMocks, 30000);
+    return startVisiblePolling(loadMocks, 120000);
   }, [loadMocks, category]);
 
   const filteredMocks = useMemo(() => filterMockAttempts(mocks, query, mockStatus, mockLevel), [mocks, query, mockStatus, mockLevel]);
@@ -388,7 +388,7 @@ export default function TimedAssignmentAttemptsPage() {
       {showMocks && <section id="mock-monitoring" role="tabpanel" aria-labelledby="monitor-mocks-tab" className="monitor-content" data-testid="mock-monitoring">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
           <div><h2 style={{ margin: 0 }}>Exam Room · Full mock exams</h2>
-            <small style={{ color: "#64748b" }}>Last synced: {lastChecked ? formatDate(lastChecked) : "not yet"} · refreshes every 30 seconds</small>
+            <small style={{ color: "#64748b" }}>Last synced: {lastChecked ? formatDate(lastChecked) : "not yet"} · refreshes every 2 minutes (manual refresh available)</small>
           </div>
           <button type="button" onClick={loadMocks} style={{ border: "1px solid #2563eb", borderRadius: 10, background: "#fff", color: "#1d4ed8", padding: "9px 12px", fontWeight: 750, cursor: "pointer" }}>Refresh now</button>
         </div>
