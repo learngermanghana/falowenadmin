@@ -213,9 +213,11 @@ async function recoverTimedDraft({ admin, db, timerId, draftId, actor }) {
   });
   return { submissionPath: submissionRef.path, status: "submitted", marking: "Automatic marking will be queued by the submission-created trigger." };
 }
-function registerTimedDraftRecoveryRoutes(app, { admin, db, requireAuth }) {
+function registerTimedDraftRecoveryRoutes(app, { admin, db }) {
   const guard = async req => {
-    const actor = await requireAuth(req);
+    const bearer = String(req.headers.authorization || "").match(/^Bearer (\S+)$/);
+    if (!bearer) throw new Error("Firebase authentication token required.");
+    const actor = await admin.auth().verifyIdToken(bearer[1], true);
     const email = lower(actor.email);
     if (!actor.email_verified || email !== "moxflex@gmail.com")
       throw new Error("Admin recovery access denied.");
