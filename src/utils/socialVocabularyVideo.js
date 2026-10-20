@@ -202,9 +202,10 @@ export function renderVocabularyFrame(canvas, word, settings = {}, seconds = 7) 
   // Branded ending, no lengthy logo outro that would suppress useful word exposure.
   const endAlpha = appear(s, .85, .1);
   withAlpha(ctx, endAlpha, () => {
-    ctx.fillStyle = theme.dark; ctx.globalAlpha *= .93;
+    ctx.save(); ctx.globalAlpha *= .93;
+    ctx.fillStyle = theme.dark;
     ctx.fillRect(0, 0, 1080, 1920);
-    ctx.globalAlpha = 1;
+    ctx.restore();
     drawBrand(ctx, 230, 770, 137, "#ffffff");
     centeredLines(ctx, "Save this word for later", 540, 940, 890, 55, 70, 2, "#ffffff", 700);
     centeredLines(ctx, "Learn German • A1 to C2", 540, 1080, 890, 36, 48, 2, "#ccedff", 500);
