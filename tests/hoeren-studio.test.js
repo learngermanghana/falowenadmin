@@ -235,3 +235,13 @@ test("pasted exam narration is repaired without changing already formatted speec
   assert.equal(parseStudioTranscript(cleaned).filter(x => x.type === "speech").length, 5);
   assert.equal(repairStudioTranscript("A: Wir vergleichen Modell A: günstig, B: schnell."), "A: Wir vergleichen Modell A: günstig, B: schnell.");
 });
+
+
+test("AI Studio quota refresh is actionable and script budget allows corrections", () => {
+  const api = readFileSync(new URL("../functions/hoerenStudioApi.js", import.meta.url), "utf8");
+  const page = readFileSync(new URL("../src/pages/HoerenStudioPage.jsx", import.meta.url), "utf8");
+  assert.match(api, /script: 10, speech: 36/);
+  assert.match(page, /onClick=\{\(\) => reloadStatus\(true\)\}/);
+  assert.match(page, /refreshingQuota \? "Refreshing quota…"/);
+  assert.match(page, /refreshing does not grant extra credits/);
+});
