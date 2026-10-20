@@ -243,4 +243,4 @@ function registerTimedDraftRecoveryRoutes(app, { admin, db }) {
   });
 }
 module.exports = { listTimedDraftRecovery, recoverTimedDraft, registerTimedDraftRecoveryRoutes,
-  textOf, keyOf, endedAt, recoveryId, sanitizeDate };
+  inspectAttempt, textOf, keyOf, endedAt, recoveryId, sanitizeDate };
