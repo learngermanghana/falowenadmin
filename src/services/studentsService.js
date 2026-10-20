@@ -257,6 +257,20 @@ export async function updateStudentById(studentId, payload) {
   return updateStudentByIdThroughApi(studentId, payload);
 }
 
+export async function retryStudentSheetSync(studentId, {
+  fetchImpl = globalThis.fetch,
+  headersLoader = authHeaders,
+} = {}) {
+  const normalizedId = normalize(studentId);
+  if (!normalizedId) throw new Error("Student ID is required");
+  const response = await fetchImpl('/api/students/' + encodeURIComponent(normalizedId) + '/sync-sheet', {
+    method: "POST",
+    headers: await headersLoader(),
+    body: JSON.stringify({}),
+  });
+  return parseStudentProfileUpdateResponse(response, await response.text());
+}
+
 export function parseStudentClassTransferResponse(response = {}, responseText = "") {
   return parseStudentProfileUpdateResponse(response, responseText);
 }

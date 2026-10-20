@@ -179,6 +179,108 @@ function studentDeleteJson_(payload) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+
+/**
+ * Write only existing columns in the master student tab and verify every changed
+ * cell. No headers are added or deleted; all unrelated columns stay intact.
+ */
+function studentDeleteEquivalentSyncValue_(field, expected, rawValue, rendered, timeZone) {
+  const left = studentDeleteText_(expected);
+  const right = studentDeleteText_(rendered);
+  if (left === right) return true;
+  if (field === 'balanceDue' && left !== '' && right !== '') {
+    const number = value => Number(String(value).replace(/[,\s]/g, ''));
+    return Number.isFinite(number(left)) && Number.isFinite(number(right)) && number(left) === number(right);
+  }
+  if (field === 'contractStart' || field === 'contractEnd') {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(left)) return false;
+    if (rawValue instanceof Date && !isNaN(rawValue.getTime())) {
+      return Utilities.formatDate(rawValue, timeZone, 'yyyy-MM-dd') === left;
+    }
+    const legacyDate = right.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (legacyDate) return [legacyDate[3], legacyDate[1].padStart(2, '0'), legacyDate[2].padStart(2, '0')].join('-') === left;
+  }
+  return false;
+}
+
+function studentDeleteSyncProfile_(spreadsheet, payload) {
+  const fieldHeaders = {
+    name: 'name', phone: 'phone', location: 'location', level: 'level',
+    balanceDue: 'balance', contractStart: 'contractstart',
+    contractEnd: 'contractend', studentCode: 'studentcode',
+    email: 'email', status: 'status',
+  };
+  const changes = payload.updates || {};
+  const fields = Object.keys(changes);
+  if (!fields.length || fields.some((field) => !Object.prototype.hasOwnProperty.call(fieldHeaders, field))) {
+    throw new Error('Unsupported or empty student profile sync fields');
+  }
+  const sheetName = studentDeleteProperty_('STUDENT_PROFILE_SHEET_NAME', 'students');
+  const sheet = spreadsheet.getSheetByName(sheetName) || spreadsheet.getSheetByName('Students');
+  if (!sheet) throw new Error('Student master sheet not found');
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) throw new Error('Student master sheet is busy; retry');
+  try {
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) throw new Error('Student master sheet has no records');
+    const lastColumn = sheet.getLastColumn();
+    const headers = sheet.getRange(1, 1, 1, lastColumn).getDisplayValues()[0].map(studentDeleteHeaderKey_);
+    const headerColumn = {};
+    headers.forEach((header, i) => { if (header && !headerColumn[header]) headerColumn[header] = i + 1; });
+    const missing = fields.filter((field) => !headerColumn[fieldHeaders[field]]);
+    if (missing.length) throw new Error('Missing existing student columns: ' + missing.join(', '));
+
+    const identity = payload.identity || {};
+    const ids = [
+      { key: 'uid', value: studentDeleteNormalize_(identity.uid) },
+      { key: 'studentcode', value: studentDeleteNormalize_(identity.studentCode) },
+      { key: 'email', value: studentDeleteNormalize_(identity.email) },
+    ].filter((item) => item.value && headerColumn[item.key]);
+    if (!ids.length) throw new Error('No supported student identifier for sheet sync');
+    const rows = sheet.getRange(2, 1, lastRow - 1, lastColumn).getDisplayValues();
+    // Prefer UID, then student code, then email; never update multiple matches.
+    let index = -1;
+    for (const id of ids) {
+      const matches = [];
+      rows.forEach((row, i) => {
+        if (studentDeleteNormalize_(row[headerColumn[id.key] - 1]) === id.value) matches.push(i);
+      });
+      if (matches.length > 1) throw new Error('Ambiguous duplicate student identity: ' + id.key);
+      if (matches.length === 1) {
+        index = matches[0];
+        break;
+      }
+    }
+    if (index < 0) throw new Error('Student missing from Google Sheet; no new row was created');
+    const sourceRow = rows[index];
+    for (const id of ids) {
+      const stored = studentDeleteNormalize_(sourceRow[headerColumn[id.key] - 1]);
+      if (stored && stored !== id.value) {
+        throw new Error('Student sheet identifiers disagree: ' + id.key);
+      }
+    }
+
+    const row = index + 2;
+    for (const field of fields) {
+      sheet.getRange(row, headerColumn[fieldHeaders[field]]).setValue(studentDeleteText_(changes[field]));
+    }
+    SpreadsheetApp.flush();
+    const verifiedFields = [];
+    for (const field of fields) {
+      const expected = studentDeleteText_(changes[field]);
+      const cell = sheet.getRange(row, headerColumn[fieldHeaders[field]]);
+      const actual = studentDeleteText_(cell.getDisplayValue());
+      if (!studentDeleteEquivalentSyncValue_(field, expected, cell.getValue(), actual, spreadsheet.getSpreadsheetTimeZone())) {
+        throw new Error('Student sheet read-back mismatch: ' + field);
+      }
+      verifiedFields.push(field);
+    }
+    return { ok: true, verified: true, matchedRows: 1, row, verifiedFields: verifiedFields };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function doPost(e) {
   try {
     const payload = JSON.parse(e.postData && e.postData.contents ? e.postData.contents : '{}');
@@ -186,6 +288,10 @@ function doPost(e) {
     if (!expectedSecret || payload.secret !== expectedSecret) throw new Error('Unauthorized');
 
     const spreadsheet = studentDeleteSpreadsheet_();
+    if (payload.action === 'syncStudentProfile') {
+      return studentDeleteJson_(studentDeleteSyncProfile_(spreadsheet, payload));
+    }
+
 
     if (payload.action === 'deleteLead') {
       const deletedRows = studentDeleteCompletedLead_(spreadsheet, payload);
