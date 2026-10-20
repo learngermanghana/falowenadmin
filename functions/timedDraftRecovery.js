@@ -92,6 +92,7 @@ async function inspectAttempt(db, timerRef, timer, options = {}) {
   if (submissions.length || scoreExists) return { ...base, state: "already-submitted", reason: "Final submission or score already exists; do not recover again." };
   if (!draft) return { ...base, state: "no-cloud-draft", reason: "No saved cloud draft found; browser-only answers cannot be recovered from Admin." };
   if (!textOf(draft.data)) return { ...base, state: "empty-cloud-draft", reason: "Draft exists but has no saved answer text." };
+  if (textOf(draft.data).length > 2500) return { ...base, state: "needs-review", reason: "Draft is longer than the supported submission limit; inspect manually." };
   const lock = await db.collection("submissionLocks").doc(draft.ref.id).get();
   if (lock.exists) return { ...base, state: "needs-review", reason: "Submission lock already exists; inspect before restoring." };
   if (!uid || norm(draft.data.studentId || draft.data.ownerUid || draft.data.uid) !== uid)
@@ -120,7 +121,8 @@ async function listTimedDraftRecovery({ db, date, student = "", assignmentKey = 
     const item = doc.data() || {};
     const result = await inspectAttempt(db, doc.ref, item);
     return { cases: [{ ...result, timerId: doc.id }], incomplete: false, checked: 1 };
-  } else q = q.where("timerRecord", "==", true);
+  } else if (studentFilter) throw new Error("Enter an assignment code when searching by student UID.");
+  else q = q.where("timerRecord", "==", true);
   const snap = await q.limit(501).get();
   const candidates = snap.docs.filter(doc => {
     const record = doc.data() || {};
@@ -153,11 +155,15 @@ async function recoverTimedDraft({ admin, db, timerId, draftId, actor }) {
   const submissionRef = db.collection("submissions").doc(recoveryId(draftId));
   const lockRef = db.collection("submissionLocks").doc(draftId);
   const auditRef = db.collection("timedDraftRecoveryAudit").doc(recoveryId(draftId));
+  const identityGuardRef = db.collection("timedDraftRecoveryIdentityLocks").doc(recoveryId(inspection.studentId + "::" + inspection.assignmentKey));
+  const scoreRef = inspection.studentCode ? db.collection("scores").doc((inspection.studentCode + "__" + inspection.assignmentKey).replace(/[/#?[\]]+/g, "_")) : null;
   await db.runTransaction(async tx => {
-    const [freshTimer, freshDraft, existingSubmission, existingLock, existingAudit] = await Promise.all([
+    const [freshTimer, freshDraft, existingSubmission, existingLock, existingAudit, existingIdentityLock, existingScore] = await Promise.all([
       tx.get(timerRef), tx.get(draftRef), tx.get(submissionRef), tx.get(lockRef), tx.get(auditRef),
+      tx.get(identityGuardRef), scoreRef ? tx.get(scoreRef) : Promise.resolve(null),
     ]);
-    if (!freshTimer.exists || !freshDraft.exists || existingSubmission.exists || existingLock.exists || existingAudit.exists)
+    if (!freshTimer.exists || !freshDraft.exists || existingSubmission.exists || existingLock.exists ||
+        existingAudit.exists || existingIdentityLock.exists || existingScore?.exists)
       throw new Error("An attempt or recovery lock changed; nothing was overwritten.");
     const t = freshTimer.data() || {};
     const d = freshDraft.data() || {};
@@ -187,6 +193,8 @@ async function recoverTimedDraft({ admin, db, timerId, draftId, actor }) {
       createdAt: now, updatedAt: now, submittedAt: now, recoveredAt: now,
       recoveredBy: actor.uid, recoveredByEmail: lower(actor.email),
     };
+    tx.create(identityGuardRef, { studentId: inspection.studentId, assignmentKey: inspection.assignmentKey,
+      submissionPath: submissionRef.path, createdAt: now });
     tx.create(submissionRef, payload);
     tx.create(lockRef, {
       studentId: inspection.studentId, userId: inspection.studentId, ownerUid: inspection.studentId,
