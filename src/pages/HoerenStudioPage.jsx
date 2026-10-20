@@ -222,9 +222,23 @@ export default function HoerenStudioPage() {
     setQuestions([]); setQuestionScript(""); setTeacherApproved(false); setPublished(null);
     clearAudio();
   }
-  async function reloadStatus() {
-    try { setStatus(await getStudioStatus()); setServerError(""); }
-    catch (error) { setServerError(error.message); }
+  const [refreshingQuota, setRefreshingQuota] = useState(false);
+  const [quotaNotice, setQuotaNotice] = useState("");
+  async function reloadStatus(showFeedback = false) {
+    if (showFeedback) { setRefreshingQuota(true); setQuotaNotice(""); }
+    try {
+      const fresh = await getStudioStatus();
+      setStatus(fresh);
+      setServerError("");
+      if (showFeedback) {
+        setQuotaNotice(`Updated: ${fresh.remaining.script} scripts and ${fresh.remaining.speech} voice clips remain today. Quota resets at 00:00 UTC; refreshing does not grant extra credits.`);
+      }
+    } catch (error) {
+      setServerError(error.message);
+      if (showFeedback) setQuotaNotice(`Could not refresh quota: ${error.message}`);
+    } finally {
+      if (showFeedback) setRefreshingQuota(false);
+    }
   }
   async function generateScript() {
     setBusy("script"); setProgress(""); clearAudio();
@@ -361,8 +375,9 @@ export default function HoerenStudioPage() {
       <section className="hoeren-usage" aria-label="Daily API limits">
         <div><strong>{status ? status.remaining.script : "—"}</strong><span>scripts remaining today</span></div>
         <div><strong>{status ? status.remaining.speech : "—"}</strong><span>voice clips remaining today</span></div>
-        <div className="hoeren-usage-note">The limit resets daily (UTC). A generation request may use Google's paid quota if your Google project has billing enabled. Files are not saved on the server.</div>
-        <button type="button" className="hoeren-quiet" onClick={reloadStatus}>Refresh quota</button>
+        <div className="hoeren-usage-note">The limit resets daily (UTC). Script limit: 10 requests/day. A generation request may use Google's paid quota if your Google project has billing enabled. Files are not saved on the server.</div>
+        <button type="button" className="hoeren-quiet" disabled={refreshingQuota} onClick={() => reloadStatus(true)}>{refreshingQuota ? "Refreshing quota…" : "Refresh quota"}</button>
+        {quotaNotice ? <p role="status" className="hoeren-hint">{quotaNotice}</p> : null}
       </section>
       <section className="hoeren-mode-picker" aria-label="Audio production workflow">
         <button type="button" className={`hoeren-mode-choice ${mode === "course" ? "is-active" : ""}`}
