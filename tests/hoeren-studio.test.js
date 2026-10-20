@@ -268,3 +268,12 @@ test("written Teil numbers and comma-separated example narration are accepted au
   assert.equal(lines.find(line => line.speaker === "B").text, "In Gang vier.");
   assert.equal(sameSpokenTranscript(source, repairUnlabelledStudioLines(source)), true);
 });
+
+
+test("stale transcript blocks answer-key download but leaves audio exports available", () => {
+  const source = readFileSync(new URL("../src/pages/HoerenStudioPage.jsx", import.meta.url), "utf8");
+  assert.match(source, /questions\.length && !reviewedQuestions\.error && questionsMatchScript \? <button/);
+  assert.match(source, /Answer-key download is locked because the transcript has changed/);
+  assert.match(source, /onClick=\{downloadMp3\}/);
+  assert.match(source, /Download WAV/);
+});
