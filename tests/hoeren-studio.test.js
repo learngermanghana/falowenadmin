@@ -57,7 +57,7 @@ test("Goethe-style editable transcript parses exact pauses and voices", () => {
     { type: "pause", seconds: 3 },
     { type: "speech", speaker: "B", text: "Guten Tag" },
   ]);
-  assert.throws(() => parseStudioTranscript("Narrator: Hello"), /Line 1/);
+  assert.equal(parseStudioTranscript("Eine kurze Ansage.")[0].speaker, "A");
   assert.throws(() => parseStudioTranscript("[PAUSE 50]"), /Pauses/);
 });
 test("clip assembler produces valid WAV and repeats without another request", async () => {
@@ -132,7 +132,7 @@ test("Goethe mode locks the correct question kind and task profile", () => {
   assert.equal(getExamProfile("C2", "3").questionCount, 10);
 });
 
-test("structural exam preflight rejects wrong counts and preserves teacher review", () => {
+test("question review warnings do not block audio generation", () => {
   const p = getExamProfile("C1", "1");
   const script = "A: Buch eins ist ein spannender Roman über Wetter. Buch zwei ist eine Studie über Städte. Buch drei ist ein Essay über den Wald.";
   const options = ["Buch 1 – Wetter", "Buch 2 – Städte", "Buch 3 – Wald"];
@@ -145,13 +145,13 @@ test("structural exam preflight rejects wrong counts and preserves teacher revie
   assert.equal(good.errors.length,0);
   assert.equal(good.readyForVoice,true);
   const badCount = inspectHoerenDraft({mode:"goethe",script,kind:"multiple-choice",questions:questions.slice(0,5),expectedCount:6,profile:p,questionScript:script});
-  assert.equal(badCount.readyForVoice,false);
-  assert.match(badCount.errors.join(" "), /6/);
+  assert.equal(badCount.readyForVoice,true);
+  assert.match(badCount.warnings.join(" "), /6/);
   const badChoices=questions.map(q=>({...q,options:["Roman","Sachbuch","Essay"]}));
   const invalid = inspectHoerenDraft({mode:"goethe",script,kind:"multiple-choice",questions:badChoices,expectedCount:6,profile:p,questionScript:script});
-  assert.match(invalid.errors.join(" "), /Buch 1/);
+  assert.match(invalid.warnings.join(" "), /Buch 1/);
   const changed = inspectHoerenDraft({mode:"goethe",script:script+" Extra.",kind:"multiple-choice",questions,expectedCount:6,profile:p,questionScript:script});
-  assert.equal(changed.readyForVoice,false);
+  assert.equal(changed.readyForVoice,true);
 });
 
 test("Course Book recording can be generated as audio-only, without published questions", () => {
@@ -255,4 +255,16 @@ test("free transcript repair labels written-number Goethe introductions", () => 
   assert.ok(fixed.includes("A: Modell A: günstig, B: schnell."));
   assert.doesNotThrow(() => parseStudioTranscript(fixed));
   assert.equal(repairUnlabelledStudioLines(fixed), fixed);
+});
+
+
+test("written Teil numbers and comma-separated example narration are accepted automatically", () => {
+  const source = "Hören Teil Drei. Fünf kurze Gespräche.\nA: Sie hören jeden Text einmal.,Beispiel.\nA: Wo sind die Tomaten?\nB: In Gang vier.\n[PAUSE 3],Nummer Eins.\nA: Diese Jacke ist zu klein.\nEnde von Hören Teil Drei.";
+  const lines = parseStudioTranscript(source);
+  assert.equal(lines[0].text, "Hören Teil Drei. Fünf kurze Gespräche.");
+  assert.ok(lines.some(line => line.text === "Beispiel."));
+  assert.ok(lines.some(line => line.text === "Nummer Eins."));
+  assert.equal(lines.filter(line => line.type === "pause").length, 1);
+  assert.equal(lines.find(line => line.speaker === "B").text, "In Gang vier.");
+  assert.equal(sameSpokenTranscript(source, repairUnlabelledStudioLines(source)), true);
 });

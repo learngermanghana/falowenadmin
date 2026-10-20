@@ -31,11 +31,11 @@ export function inspectHoerenDraft({ script, kind, questions = [], expectedCount
   }
 
   if (questions.length) {
-    if (!sameSpokenTranscript(questionScript, script)) errors.push("The transcript changed since the questions were generated. Regenerate or verify the questions.");
+    if (!sameSpokenTranscript(questionScript, script)) warnings.push("The transcript changed since the questions were generated. Regenerate or verify the questions.");
     try {
       validateDraftQuestions({ script, questions, kind, expectedCount });
     } catch (error) {
-      errors.push(error.message);
+      warnings.push(error.message);
     }
     // Matching formats must use one stable set of options for every item.
     if (mode === "goethe" && profile?.level === "C1" && profile.part === "1" &&
@@ -43,9 +43,9 @@ export function inspectHoerenDraft({ script, kind, questions = [], expectedCount
       kind === "multiple-choice") {
       const first = questions[0]?.options?.map(normalizeQuote);
       if (!first || first.length !== 3 || !first.every((option, index) => option.startsWith(`buch ${index + 1}`))) {
-        errors.push("C1 Teil 1 needs the same three labelled choices: Buch 1, Buch 2, Buch 3.");
+        warnings.push("C1 Teil 1 needs the same three labelled choices: Buch 1, Buch 2, Buch 3.");
       } else if (questions.some(q => JSON.stringify(q.options?.map(normalizeQuote)) !== JSON.stringify(first))) {
-        errors.push("All six C1 book-matching questions must share the same three book options.");
+        warnings.push("All six C1 book-matching questions must share the same three book options.");
       }
       const answers = new Set(questions.map(q => q.correctIndex));
       if (answers.size < 3) warnings.push("Verify that all three books are represented in the answer key.");
@@ -58,5 +58,5 @@ export function inspectHoerenDraft({ script, kind, questions = [], expectedCount
   if (mode === "goethe" && spokenLines.length && new Set(spokenLines.map(line => line.speaker)).size === 1 && /discussion|interview/i.test(profile?.type || "")) {
     warnings.push("This Teil describes a conversation. Check whether more than one voice is needed.");
   }
-  return { errors, warnings, spokenLines, wordCount, pauseCount, readyForVoice: errors.length === 0 && (mode !== "goethe" || questions.length === expectedCount) };
+  return { errors, warnings, spokenLines, wordCount, pauseCount, readyForVoice: errors.length === 0 };
 }
