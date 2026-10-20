@@ -77,6 +77,11 @@ export default function TimedAssignmentAttemptsPage() {
   const [writingReview, setWritingReview] = useState(null);
   const [writingReviewError, setWritingReviewError] = useState("");
   const [writingReviewLoading, setWritingReviewLoading] = useState(false);
+  const [backupUid, setBackupUid] = useState("");
+  const [backupMockId, setBackupMockId] = useState("a2-mock-02");
+  const [backupDetails, setBackupDetails] = useState(null);
+  const [backupError, setBackupError] = useState("");
+  const [backupLoading, setBackupLoading] = useState(false);
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -195,10 +200,33 @@ export default function TimedAssignmentAttemptsPage() {
     }
   };
 
+  const lookupMockAnswerBackup = async (uid = backupUid, mockId = backupMockId) => {
+    setBackupError("");
+    setBackupDetails(null);
+    if (!String(uid || "").trim()) { setBackupError("Enter the student Firebase UID from their mock record."); return; }
+    setBackupUid(String(uid));
+    setBackupMockId(mockId);
+    setBackupLoading(true);
+    try {
+      const user = auth?.currentUser;
+      if (!user) throw new Error("Staff sign-in required");
+      const token = await user.getIdToken();
+      const endpoint = MOCK_MONITOR_URL.replace(/\/internal\/mock-attempts(?:\?.*)?$/, "/internal/mock-answer-backup");
+      const params = new URLSearchParams({uid:String(uid).trim(), mockId});
+      const response = await fetch(endpoint + "?" + params.toString(), {
+        headers:{Authorization:`Bearer ${token}`,Accept:"application/json"},cache:"no-store",
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.ok !== true) throw new Error(data.error || "Could not load saved answers");
+      setBackupDetails(data.exists ? data.backup : {sections:{}});
+    } catch (error) { setBackupError(error?.message || "Backup recovery unavailable"); }
+    finally { setBackupLoading(false); }
+  };
+
   useEffect(() => {
     // Avoid repeating the mock-monitor network request while staff view Campus timers.
     if (category !== "mocks") return undefined;
-    return startVisiblePolling(loadMocks, 30000);
+    return startVisiblePolling(loadMocks, 120000);
   }, [loadMocks, category]);
 
   const filteredMocks = useMemo(() => filterMockAttempts(mocks, query, mockStatus, mockLevel), [mocks, query, mockStatus, mockLevel]);
@@ -360,7 +388,7 @@ export default function TimedAssignmentAttemptsPage() {
       {showMocks && <section id="mock-monitoring" role="tabpanel" aria-labelledby="monitor-mocks-tab" className="monitor-content" data-testid="mock-monitoring">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
           <div><h2 style={{ margin: 0 }}>Exam Room · Full mock exams</h2>
-            <small style={{ color: "#64748b" }}>Last synced: {lastChecked ? formatDate(lastChecked) : "not yet"} · refreshes every 30 seconds</small>
+            <small style={{ color: "#64748b" }}>Last synced: {lastChecked ? formatDate(lastChecked) : "not yet"} · refreshes every 2 minutes (manual refresh available)</small>
           </div>
           <button type="button" onClick={loadMocks} style={{ border: "1px solid #2563eb", borderRadius: 10, background: "#fff", color: "#1d4ed8", padding: "9px 12px", fontWeight: 750, cursor: "pointer" }}>Refresh now</button>
         </div>
@@ -381,6 +409,33 @@ export default function TimedAssignmentAttemptsPage() {
         <p className="monitor-mock-scores__note" style={{margin:0}}>
           Completed mocks show Lesen, Hören, Schreiben, Sprechen and Total separately. Results must be server-verified; unavailable historical section marks are labelled “Not recorded”.
         </p>
+        <section style={card} aria-label="Saved mock answer recovery" data-testid="mock-answer-backup-recovery">
+          <div><strong>Recover completed mock answers</strong>
+            <p style={{margin:"5px 0 0",color:"#64748b",fontSize:13}}>On-demand recovery for A2 Mock 2 and B2. Lesen/Hören choices and submitted Schreiben texts only. No audio or speech transcripts are stored; records are not verified scores.</p>
+          </div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+            <select aria-label="Backup mock" value={backupMockId} onChange={e=>{setBackupMockId(e.target.value);setBackupDetails(null);}}>
+              <option value="a2-mock-02">A2 Mock 2</option>
+              <option value="b2-final-mock">B2 Final Mock</option>
+            </select>
+            <input aria-label="Student Firebase UID" placeholder="Student Firebase UID" value={backupUid} onChange={e=>setBackupUid(e.target.value)} style={{flex:"1 1 190px"}} />
+            <button type="button" disabled={backupLoading} onClick={()=>void lookupMockAnswerBackup()}>
+              {backupLoading?"Recovering…":"Load saved answers"}
+            </button>
+          </div>
+          {backupError && <p role="alert" style={{color:"#b91c1c"}}>{backupError}</p>}
+          {backupDetails && (!Object.keys(backupDetails.sections || {}).length
+            ? <p>No completed-section backup is stored for this student and mock yet.</p>
+            : <section style={{display:"grid",gap:10}}>
+                <small>Attempt started: {formatDate(backupDetails.attemptStartedAtMs)}</small>
+                {Object.entries(backupDetails.sections || {}).map(([section,values])=><article key={section} style={{padding:10,background:"#f8fafc",borderRadius:8}}>
+                  <strong>{section === "lesen" ? "Lesen" : section === "hoeren" ? "Hören" : "Schreiben"} · submitted {formatDate(values.submittedAt)}</strong>
+                  {section==="schreiben" ? Object.entries(values.schreiben || {sms:values.sms,email:values.email}).filter(([,value])=>typeof value==="string").map(([part,value])=><div key={part}>
+                    <strong>{part}</strong><p style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{value || "No answer"}</p>
+                  </div>):<pre style={{fontSize:12,whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{JSON.stringify(Object.fromEntries(Object.entries(values).filter(([key])=>key.endsWith("Answers") || key==="answers")),null,2)}</pre>}
+                </article>)}
+              </section>)}
+        </section>
         {mockError && <div role="alert" style={{ ...card, color: "#991b1b", borderColor: "#fecaca" }}>
           {mockError}{lastChecked ? " · Showing last successfully loaded data." : ""}
         </div>}
@@ -488,6 +543,8 @@ export default function TimedAssignmentAttemptsPage() {
                   </span>)}
               </div>
             </div>
+            {attempt.mockId === "a2-mock-02" && attempt.uid && <button type="button"
+              onClick={()=>void lookupMockAnswerBackup(attempt.uid,"a2-mock-02")}>Recover submitted choices and writing</button>}
             {attempt.progressSource !== "browser_reported" && (
               <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: 12 }}>
                 <button type="button" onClick={() => void openWritingReview(attempt)}
