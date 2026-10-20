@@ -191,6 +191,27 @@ export default function SocialVocabularyCreator() {
       }, "image/png");
     } catch { setError("Image export was blocked. Use an image URL that permits cross-origin canvas access."); }
   };
+  const [captionOverride,setCaptionOverride] = useState("");
+  useEffect(() => setCaptionOverride(""), [data?.id, data?.german, data?.english, data?.exampleDE, data?.exampleEN]);
+  const suggestedCaption = data ? [
+    "🇩🇪 German Vocabulary of the Day",
+    "",
+    data.german + " — " + data.english,
+    "",
+    "Example: " + data.exampleDE,
+    "Meaning: " + data.exampleEN,
+    data.grammar ? "Grammar tip: " + data.grammar : "",
+    "",
+    "Save this post and try using the word in your own sentence!",
+    "Learn German with Falowen: https://falowen.app",
+    "",
+    "#LearnGerman #DeutschLernen #GermanVocabulary #WortDesTages #Falowen"
+  ].filter((line)=>line!==undefined && line!==null).join("\n") : "";
+  const postCaption = captionOverride || suggestedCaption;
+  const copyPostCaption = async () => {
+    try {await navigator.clipboard.writeText(postCaption);}
+    catch {setError("Cannot copy caption automatically. Select and copy it from the text box.");}
+  };
   const field = (key,label) => <label style={{display:"grid",gap:5,fontSize:13,fontWeight:600}}>{label}
     <textarea rows={key==="grammar" ? 3 : 2} value={data?.[key] || ""} onChange={e=>setOverrides(prev=>({...prev,[key]:e.target.value}))} style={{border:"1px solid #cbd5e1",borderRadius:8,padding:10,width:"100%",boxSizing:"border-box"}} />
   </label>;
@@ -218,10 +239,16 @@ export default function SocialVocabularyCreator() {
         {imageWarning && <small style={{color:"#92400e"}}>Image URL could not be displayed. Using a text backdrop instead.</small>}
         {!data && !loading && <p>No ready vocabulary found. Complete the example sentences and set Content Status to Ready in the sheet.</p>}
         <canvas ref={canvasRef} style={{width:"100%",height:"auto",borderRadius:10,background:"#102b27"}} aria-label="Vocabulary post preview" />
-        {data && <button type="button" onClick={()=>navigator.clipboard?.writeText([`${data.german} — ${data.english}`,data.exampleDE,data.exampleEN,data.grammar,"Learn German with Falowen. #LearnGerman #GermanVocabulary #Falowen"].filter(Boolean).join("\n\n"))}>Copy post caption</button>}
+        
         <a href={SHEET_URL} target="_blank" rel="noreferrer">Edit vocabulary in Google Sheets</a>
       </div>
       {studioMode==="video" && <SocialVocabularyVideoCreator word={data} />}
+      {data && <section style={{gridColumn:"1 / -1",display:"grid",gap:10,padding:18,border:"1px solid #dbeafe",borderRadius:14,background:"#f8fafc"}}>
+        <h3 style={{margin:0}}>Ready-to-share post caption</h3>
+        <p style={{margin:0,color:"#475569"}}>Generated from the selected German word, translation, example sentences and grammar tip. Works for both the animated video and PNG poster.</p>
+        <textarea aria-label="Vocabulary social media caption" rows={11} value={postCaption} onChange={event=>setCaptionOverride(event.target.value)} style={{width:"100%",boxSizing:"border-box",border:"1px solid #cbd5e1",padding:12,borderRadius:9,lineHeight:1.6}}/>
+        <button type="button" onClick={copyPostCaption} style={{width:"fit-content",padding:"10px 16px"}}>Copy caption + hashtags</button>
+      </section>}
     </div>
   </section>;
 }
