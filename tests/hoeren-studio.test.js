@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { parseStudioTranscript, formatStudioTranscript, sameSpokenTranscript, assembleListeningExam , repairStudioTranscript } from "../src/utils/hoerenAudio.js";
+import { parseStudioTranscript, formatStudioTranscript, sameSpokenTranscript, assembleListeningExam , repairStudioTranscript, repairUnlabelledStudioLines } from "../src/utils/hoerenAudio.js";
 import { validateDraftQuestions } from "../src/utils/hoerenQuestions.js";
 import { inspectHoerenDraft } from "../src/utils/hoerenDraftQuality.js";
 
@@ -245,4 +245,14 @@ test("AI Studio quota refresh is actionable and script budget allows corrections
   assert.match(page, /onClick=\{\(\) => reloadStatus\(true\)\}/);
   assert.match(page, /refreshingQuota \? "Refreshing quota…"/);
   assert.match(page, /refreshing does not grant extra credits/);
+});
+
+test("free transcript repair labels written-number Goethe introductions", () => {
+  const original = ["Hören Teil Drei. Fünf kurze Gespräche.", "Sie hören jeden Text einmal.", "A: Guten Tag.", "B: Hallo.", "[PAUSE 3]", "Nummer 2.", "A: Modell A: günstig, B: schnell."].join("\n");
+  const fixed = repairUnlabelledStudioLines(original);
+  assert.ok(fixed.startsWith("A: Hören Teil Drei. Fünf kurze Gespräche.\nA: Sie hören jeden Text einmal."));
+  assert.ok(fixed.includes("\nA: Nummer 2.\n"));
+  assert.ok(fixed.includes("A: Modell A: günstig, B: schnell."));
+  assert.doesNotThrow(() => parseStudioTranscript(fixed));
+  assert.equal(repairUnlabelledStudioLines(fixed), fixed);
 });

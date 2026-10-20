@@ -4,7 +4,7 @@ import { getStudioStatus, makeListeningScript, makeSpeechClip, makeListeningQues
 import { QUESTION_KINDS, validateDraftQuestions } from "../utils/hoerenQuestions";
 import { inspectHoerenDraft } from "../utils/hoerenDraftQuality.js";
 import { getStudioCourseCatalog, getStudioCourseContext, resolveStudioCourseModeLesson } from "../utils/hoerenCourseCatalog.js";
-import { assembleListeningExam, base64WavToBytes, parseStudioTranscript, formatStudioTranscript, sameSpokenTranscript , repairStudioTranscript } from "../utils/hoerenAudio";
+import { assembleListeningExam, base64WavToBytes, parseStudioTranscript, formatStudioTranscript, sameSpokenTranscript , repairStudioTranscript, repairUnlabelledStudioLines } from "../utils/hoerenAudio";
 import { SCENES, decodeLocalAtmosphere } from "../utils/hoerenSoundscape";
 import { encodeWavAsMp3 } from "../utils/hoerenMp3";
 import "./HoerenStudioPage.css";
@@ -255,6 +255,15 @@ export default function HoerenStudioPage() {
     } catch (error) { toast.error(error.message); }
     finally { setBusy(""); await reloadStatus(); }
   }
+  function repairTranscript() {
+    const repaired = repairUnlabelledStudioLines(script);
+    if (repaired === script) { toast.success('Transcript formatting is already valid.'); return; }
+    setScript(repaired);
+    setTeacherApproved(false);
+    setPublished(null);
+    clearAudio();
+    toast.success('Transcript repaired free of charge. Review speakers and question evidence.');
+  }
   function verifyExistingQuestions() {
     if (!questions.length) return;
     if (reviewedQuestions.error) {
@@ -458,6 +467,7 @@ export default function HoerenStudioPage() {
             <textarea rows={13} spellCheck lang="de" value={script} disabled={!!busy} onChange={(event) => { setScript(repairStudioTranscript(event.target.value)); setTeacherApproved(false); setPublished(null); clearAudio(); }} />
           </label>
           <p className="hoeren-hint">Pasted dialogue, numbered announcements and pauses are formatted automatically. Please check the script for accuracy before synthesizing.</p>
+          <button type="button" className="hoeren-quiet" disabled={!!busy || !script.trim()} onClick={repairTranscript}>Fix transcript formatting · free</button>
            <p className="hoeren-hint"><strong>Transcript format:</strong> Start spoken segments with <code>A:</code>, <code>B:</code> or <code>C:</code>. Add <code>[PAUSE 3]</code> on its own line. A, B and C use distinct voices.</p>
           {!transcript.error && spokenLines.length ? <details className="hoeren-sentence-editor">
             <summary>Edit individual voice segments · reuse unchanged audio</summary>

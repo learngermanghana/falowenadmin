@@ -22,6 +22,15 @@ export function repairStudioTranscript(source) {
     .replace(/(^|\n)[ \t]*(?=Sie hören(?:\s|$))/gi, "$1A: ");
 }
 
+// Explicit teacher action: label unlabelled standalone narration, without
+// guessing at speaker changes inside the existing spoken dialogue.
+export function repairUnlabelledStudioLines(source) {
+  return repairStudioTranscript(source).split("\n").map(line => {
+    const trimmed = line.trim();
+    if (!trimmed || /^(?:[ABC]:\s*.+|\[PAUSE\s+\d{1,2}\])$/i.test(trimmed)) return line;
+    return `A: ${trimmed}`;
+  }).join("\n");
+}
 export function sameSpokenTranscript(a, b) {
   try {
     const normalize = value => parseStudioTranscript(formatStudioTranscript(value)).map(line => line.type === "pause" ? `PAUSE:${line.seconds}` : `${line.speaker}:${line.text.replace(/\s+/g, " ").trim()}`).join("\n");
