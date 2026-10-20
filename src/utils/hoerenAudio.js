@@ -16,6 +16,7 @@ export function formatStudioTranscript(source) {
 // Repair common pasted exam narration without guessing at dialogue in sentences.
 export function repairStudioTranscript(source) {
   return formatStudioTranscript(source)
+    .replace(/([.!?]|\[PAUSE[ \t]+\d{1,2}\]),[ \t]*(?=(?:Beispiel\b|Nummer[ \t]+(?:\d+|eins|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn)\b))/gi, "$1\n")
     .replace(/,[ \t]*(?=(?:Nummer[ \t]+\d+\.|Sie hören\b|Ende von Hören Teil\b))/gi, "\n")
     .replace(/(^|\n)[ \t]*(Nummer[ \t]+\d+[.!]?|Ende von Hören Teil[ \t]+\d+[.!]?|Hören Teil[ \t]+\d+[^\n]*?)[ \t]*(?=\n|$)/gi, (_match, start, narration) => `${start}A: ${narration}`)
     .replace(/(\[PAUSE[ \t]+\d{1,2}\])[ \t]*,[ \t]*(?=Nummer[ \t]+\d+)/gi, "$1\n")
@@ -39,7 +40,7 @@ export function sameSpokenTranscript(a, b) {
 }
 
 export function parseStudioTranscript(source) {
-  const lines = formatStudioTranscript(source).split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const lines = repairUnlabelledStudioLines(source).split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   if (lines.length > 64) throw new Error("Maximum 64 transcript lines.");
   if (!lines.length) throw new Error("Enter a script or generate one first.");
   return lines.map((line, index) => {

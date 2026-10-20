@@ -245,10 +245,10 @@ export default function HoerenStudioPage() {
     try {
       const result = await makeListeningScript({ topic, type, level, part: mode === "goethe" ? examPart : "", mode, kind: questionKind,
         lessonContext: mode === "course" ? getStudioCourseContext(selectedCourseEntry) : null });
-      setScript(repairStudioTranscript(result.script));
+      setScript(repairUnlabelledStudioLines(result.script));
       setQuestions(result.questions || []);
       setQuestionKind(result.kind || "richtig-falsch");
-      setQuestionScript(repairStudioTranscript(result.script));
+      setQuestionScript(repairUnlabelledStudioLines(result.script));
       setTeacherApproved(false); setPublished(null);
       setStatus((previous) => previous && ({ ...previous, remaining: { ...previous.remaining, script: result.remaining } }));
       toast.success(`Script and ${questionCount} Hören questions generated. Review the answers before approving.`);
@@ -308,7 +308,7 @@ export default function HoerenStudioPage() {
   }
   async function generateAudio() {
     if (!ready || !!busy || !draftAudit.readyForVoice) {
-      toast.error(draftAudit.errors[0] || "Finish the exam questions before making audio.");
+      toast.error(draftAudit.errors[0] || "Check the transcript before making audio.");
       return;
     }
     if (clipsToGenerate > (status?.remaining.speech ?? 0)) {
