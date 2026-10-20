@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { parseStudioTranscript, formatStudioTranscript, sameSpokenTranscript, assembleListeningExam , repairStudioTranscript } from "../src/utils/hoerenAudio.js";
 import { validateDraftQuestions } from "../src/utils/hoerenQuestions.js";
