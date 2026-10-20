@@ -1,4 +1,5 @@
 import ResultSubmissionViewer from "../components/ResultSubmissionViewer.jsx";
+import DraftHistoryPanel from "../components/DraftHistoryPanel.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { loadRoster, updateFirestoreScore } from "../services/markingService.js";
 import { loadStudentResultSources, syncFirestoreScoreToSheet, syncFirestoreScoresToSheet } from "../services/studentResultsService.js";
@@ -132,14 +133,19 @@ export default function StudentResultsComparePage() {
   const [studentId, setStudentId] = useState("");
   const [data, setData] = useState(EMPTY_RESULT_SOURCES);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("firestore");
+  const [activeTab, setActiveTab] = useState(() =>
+    new URLSearchParams(window.location.search).get("tab") === "drafts" ? "drafts" : "firestore");
   const [syncingId, setSyncingId] = useState("");
   const [selectedRows, setSelectedRows] = useState({});
   const [editingId, setEditingId] = useState("");
   const [editDraft, setEditDraft] = useState({});
   const [savingEditId, setSavingEditId] = useState("");
 
-  useEffect(() => { loadRoster().then(setRoster).catch((err) => error(err?.message || "Failed to load roster.")); }, [error]);
+  // Do not fetch the roster or Sheet just because someone opened Drafts.
+  useEffect(() => {
+    if (activeTab === "drafts") return;
+    loadRoster().then(setRoster).catch((err) => error(err?.message || "Failed to load roster."));
+  }, [activeTab === "drafts", error]);
   const filtered = useMemo(() => roster.filter((r) => !query.trim() || [r.name, r.studentCode, r.level].some((v) => norm(v).includes(norm(query)))), [roster, query]);
   const student = useMemo(() => roster.find((r) => r.id === studentId) || null, [roster, studentId]);
   const sheetKeys = useMemo(() => new Set(data.sheetRows.map(assignmentKey)), [data.sheetRows]);
@@ -222,8 +228,18 @@ export default function StudentResultsComparePage() {
   }
 
   return <div style={{ padding: 16, display: "grid", gap: 14 }}>
-    <h2>Student Result Sources</h2>
-    <p style={{ marginTop: -8, opacity: 0.8 }}>Compare a student’s saved Firestore result with the published score sheet. A student code and assignment ID identify one permanent result row.</p>
+    <h2>Results</h2>
+    <p style={{ marginTop: -8, opacity: 0.8 }}>
+      {activeTab === "drafts"
+        ? "Browse every saved cloud draft in a selected date window, including work not finally submitted. Viewing does not start marking."
+        : "Compare a student’s saved Firestore result with the published score sheet. A student code and assignment ID identify one permanent result row."}
+    </p>
+    <nav aria-label="Results sources and saved drafts" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      {[["firestore", "Firebase / Firestore"], ["sheet", "Sheet"], ["inconsistent", "Firestore-only"], ["drafts", "Saved Drafts"]].map(([id, label]) =>
+        <button key={id} type="button" aria-pressed={activeTab === id} onClick={() => setActiveTab(id)}
+          style={{ fontWeight: activeTab === id ? 800 : 500, background: activeTab === id ? "#dbeafe" : undefined, borderRadius: 8, padding: "10px 12px" }}>{label}</button>)}
+    </nav>
+    {activeTab === "drafts" ? <DraftHistoryPanel /> : <>
     <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, display: "grid", gap: 8 }}>
       <input placeholder="Search student name/code/level" value={query} onChange={(e) => setQuery(e.target.value)} />
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -238,11 +254,11 @@ export default function StudentResultsComparePage() {
       {data.firestoreDuplicateCount > 0 ? <p style={{ margin: 0, color: "#92400e" }}>{data.firestoreDuplicateCount} older Firestore duplicate{data.firestoreDuplicateCount === 1 ? " is" : "s are"} hidden; the newest result is shown.</p> : null}
       <button type="button" disabled={!selectedIds.size || syncingId === "__bulk__"} onClick={handleSyncSelected} style={{ justifySelf: "start" }}>{syncingId === "__bulk__" ? "Updating selected..." : `Update selected sheet rows (${selectedIds.size})`}</button>
     </section>
-    <nav style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{[["firestore", "Firebase / Firestore"], ["sheet", "Sheet"], ["inconsistent", "Firestore-only"]].map(([id, label]) => <button key={id} type="button" onClick={() => setActiveTab(id)} style={{ fontWeight: activeTab === id ? 800 : 500 }}>{label}</button>)}</nav>
     <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
       {activeTab === "firestore" ? <ResultTable studentCode={student?.studentCode} studentLevel={student?.level} rows={data.firestoreRows} source="Firestore" onSync={handleSync} syncingId={syncingId} selectedIds={selectedIds} onToggleSelected={handleToggleSelected} onToggleAll={handleToggleAll} allSelected={data.firestoreRows.length > 0 && data.firestoreRows.every((row, index) => selectedIds.has(row.id || row.dedupe_id || row.dedupeId || `Firestore-${index}`))} onEdit={startEdit} editingId={editingId} editDraft={editDraft} onEditDraftChange={(field, value) => setEditDraft((current) => ({ ...current, [field]: value }))} onCancelEdit={() => { setEditingId(""); setEditDraft({}); }} onSaveEdit={handleSaveEdit} savingEditId={savingEditId} /> : null}
       {activeTab === "sheet" ? <ResultTable studentCode={student?.studentCode} studentLevel={student?.level} rows={data.sheetRows} source="sheet" /> : null}
       {activeTab === "inconsistent" ? <ResultTable studentCode={student?.studentCode} studentLevel={student?.level} rows={inconsistentRows} source="Firestore-only" onSync={handleSync} syncingId={syncingId} selectedIds={selectedIds} onToggleSelected={handleToggleSelected} onToggleAll={handleToggleAll} allSelected={inconsistentRows.length > 0 && inconsistentRows.every((row, index) => selectedIds.has(row.id || row.dedupe_id || row.dedupeId || `Firestore-only-${index}`))} onEdit={startEdit} editingId={editingId} editDraft={editDraft} onEditDraftChange={(field, value) => setEditDraft((current) => ({ ...current, [field]: value }))} onCancelEdit={() => { setEditingId(""); setEditDraft({}); }} onSaveEdit={handleSaveEdit} savingEditId={savingEditId} /> : null}
     </section>
+    </>}
   </div>;
 }
