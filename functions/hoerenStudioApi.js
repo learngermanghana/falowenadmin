@@ -94,7 +94,7 @@ async function postGemini(url, key, payload, timeoutMs = 38_000) {
     if (!response.ok) {
       if (response.status === 429) throw Object.assign(new Error("Google's free API quota is exhausted. Try again later."), { status: 429 });
       if (response.status === 402 || response.status === 403) throw Object.assign(new Error("The Gemini API key or billing access needs attention."), { status: 503 });
-      throw Object.assign(new Error("Google audio service is temporarily unavailable."), { status: 502 });
+      throw Object.assign(new Error("Google service could not complete the request (upstream error). Your existing draft was not changed. Please retry later."), { status: 502 });
     }
     return await response.json();
   } finally {
@@ -139,9 +139,9 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
   }
 
   async function handleError(res, error) {
-    const status = Number(error?.status) || 502;
+    const status = Number(error?.status) || (error?.name === "AbortError" ? 504 : 502);
     console.warn("hoeren_studio_error", { status, message: error?.message || "unknown" });
-    return res.status(status).json({ ok: false, error: error?.message || "Audio generation failed." });
+    return res.status(status).json({ ok: false, error: error?.name === "AbortError" ? "Gemini took too long to respond. Keep your existing draft and retry later." : (error?.message || "Audio generation failed.") });
   }
 
   app.get("/ai-studio/status", guard, async (req, res) => {
