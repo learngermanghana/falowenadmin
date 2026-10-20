@@ -4,6 +4,7 @@ import { normalizeScheduleRules } from "../utils/liveClassScheduling";
 import { useToast } from "../context/ToastContext";
 import SocialCourseContentCreator from "../components/SocialCourseContentCreator.jsx";
 import SocialVocabularyCreator from "../components/SocialVocabularyCreator.jsx";
+import SocialAdsDictionary from "../components/SocialAdsDictionary.jsx";
 import { QRCodeCanvas } from "qrcode.react";
 import {
   CAMPAIGN_FORMATS, campaignClassEligibility, accraToday,
@@ -713,8 +714,9 @@ export default function SocialMediaPage() {
         <button type="button" className="social-studio-tab" aria-pressed={activeTab === "creator"} onClick={() => setActiveTab("creator")}>Course Content Creator</button>
         <button type="button" className="social-studio-tab" aria-pressed={activeTab === "posters"} onClick={() => setActiveTab("posters")}>Upcoming Classes</button>
         <button type="button" className="social-studio-tab" aria-pressed={activeTab === "vocabulary"} onClick={() => setActiveTab("vocabulary")}>Vocabulary</button>
+        <button type="button" className="social-studio-tab" aria-pressed={activeTab === "ads"} onClick={() => setActiveTab("ads")}>Ads & Motivation</button>
       </nav>
-      {activeTab === "creator" ? <SocialCourseContentCreator /> : activeTab === "vocabulary" ? <SocialVocabularyCreator /> : (
+      {activeTab === "creator" ? <SocialCourseContentCreator /> : activeTab === "vocabulary" ? <SocialVocabularyCreator /> : activeTab === "ads" ? <SocialAdsDictionary /> : (
         <div className="social-poster-workspace">
           <section className="social-poster-header">
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between" }}>
