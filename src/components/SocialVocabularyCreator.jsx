@@ -4,12 +4,14 @@ import SocialVocabularyVideoCreator from "./SocialVocabularyVideoCreator.jsx";
 const SHEET_ID = "1I1yAnqzSh3DPjwWRh9cdRSfzNSPsi7o4r5Taj9Y36NU";
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
 const CONFIGURED_CSV_URL = import.meta.env.VITE_GERMAN_VOCABS_CSV_URL || "";
-const CSV_URLS = CONFIGURED_CSV_URL
-  ? [CONFIGURED_CSV_URL]
-  : [
-      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=German_Vocabs`,
-      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=0`,
-    ];
+// The spreadsheet is titled German_Vocabs, but its actual worksheet is Sheet1 (gid 0).
+// A configured URL may become stale: always keep the known sheet exports as fallbacks.
+const CSV_URLS = [...new Set([
+  CONFIGURED_CSV_URL,
+  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet1`,
+  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`,
+  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=0`,
+].filter(Boolean))];
 const SIZES = { portrait: [1080, 1350], square: [1080, 1080], story: [1080, 1920] };
 
 function parseCSV(source) {
@@ -100,7 +102,9 @@ export default function SocialVocabularyCreator() {
           try {
             const response = await fetch(url, { signal: controller.signal });
             if (!response.ok) throw new Error(`Sheet request failed (${response.status}).`);
-            parsed = parseVocabularyCSV(await response.text());
+            const body = await response.text();
+            if (/^\s*<!doctype html|^\s*<html/i.test(body)) throw new Error("The sheet returned a web page instead of CSV. Publish Sheet1 as CSV.");
+            parsed = parseVocabularyCSV(body);
             break;
           } catch (cause) {
             if (cause.name === "AbortError") throw cause;
@@ -111,7 +115,7 @@ export default function SocialVocabularyCreator() {
         setWords(parsed);
         if (!parsed.length) setError("The vocabulary sheet has no populated rows.");
       } catch (err) {
-        if (err.name !== "AbortError") setError("Cannot load the vocabulary sheet. Publish its A–Q columns as CSV (or configure VITE_GERMAN_VOCABS_CSV_URL). " + err.message);
+        if (err.name !== "AbortError") setError("Cannot load the vocabulary sheet. Check that Sheet1 (A–Q) is published as CSV. " + err.message);
       } finally { if (!controller.signal.aborted) setLoading(false); }
     })();
     return () => controller.abort();

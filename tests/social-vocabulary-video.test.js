@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   chooseVocabularyVideoMime, originalMusicNotes, renderVocabularyFrame,
   videoFileStem, videoStageAt, VIDEO_DURATIONS, VIDEO_RESOLUTIONS, VIDEO_THEMES,
@@ -44,4 +45,13 @@ test("original music notes are deterministic and bounded to duration; silence ha
 test("drawing a missing word or canvas is a harmless no-op", () => {
   assert.doesNotThrow(() => renderVocabularyFrame(null, null));
   assert.doesNotThrow(() => renderVocabularyFrame({}, null));
+});
+
+
+test("Vocabulary Studio uses the actual Sheet1 tab and safe fallback CSV URLs", () => {
+  const src = readFileSync(new URL("../src/components/SocialVocabularyCreator.jsx", import.meta.url), "utf8");
+  assert.match(src, /sheet=Sheet1/);
+  assert.match(src, /export\?format=csv&gid=0/);
+  assert.doesNotMatch(src, /sheet=German_Vocabs/);
+  assert.match(src, /CSV_URLS = \[\.\.\.new Set\(/);
 });
