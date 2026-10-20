@@ -27,7 +27,7 @@ async function staffRequest(path, options = {}) {
   return payload;
 }
 export default function TimedDraftRecoveryPanel() {
-  const { isStaff } = useAuth();
+  const { user } = useAuth();
   const [date, setDate] = useState(yesterdayUtc);
   const [student, setStudent] = useState("");
   const [assignmentKey, setAssignmentKey] = useState("");
@@ -37,7 +37,7 @@ export default function TimedDraftRecoveryPanel() {
   const [expanded, setExpanded] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  if (!isStaff) return null;
+  if (String(user?.email || "").trim().toLowerCase() !== "moxflex@gmail.com") return null;
 
   const loadReport = async (event) => {
     event?.preventDefault?.();
