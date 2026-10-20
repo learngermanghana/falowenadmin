@@ -3,6 +3,7 @@
 // Read-only, on-demand historical view of cloud-saved assignments.
 // One indexed date-range query per page; no polling, scans, or per-row joins.
 const { inspectAttempt } = require("./timedDraftRecovery.js");
+const { getDraftSubmissionState, queueMissingDraftMarking } = require("./draftSubmissionStatus.js");
 
 const PAGE_LIMIT = 25;
 const MAX_DATE_WINDOW_DAYS = 31;
@@ -41,6 +42,7 @@ function safeSummary(snapshot) {
     updatedAt: millis(d.updatedAt), createdAt: millis(d.createdAt),
     answerLength: extractText(d).length, hasAnswer: Boolean(extractText(d)),
     recoveredSubmissionPath: trimmed(d.recoveredSubmissionPath),
+    submissionHint: d.recoveredSubmissionPath ? "recovered" : "unverified",
   };
 }
 async function listDraftHistory({ db, admin, from, to, studentEmail = "", cursor = "" }) {
@@ -96,8 +98,11 @@ async function readDraftHistoryDetail({ db, draftId }) {
   const owner = trimmed(record.studentId || record.uid || record.ownerUid);
   const key = assignmentOf(record);
   const summary = safeSummary(draft);
-  let assessment = { state: "not-checked", reason: "No matching timed attempt was verified." };
-  if (owner && /^(A1|A2|B1)-[0-9]+(?:[._][0-9]+)*$/.test(key)) {
+  // Check the real final submission and score, not the draft's own "draft"
+  // status or the timer's optimistic "submitted" flag.
+  const submission = await getDraftSubmissionState({ db, draft: record });
+  let assessment = { state: "not-checked", reason: "Only a saved cloud draft is known. No expired timed attempt was verified.", eligible: false };
+  if (submission.status === "not-submitted" && owner && /^(A1|A2|B1)-[0-9]+(?:[._][0-9]+)*$/.test(key)) {
     const timerRef = db.collection("submissionLocks").doc(timedId(owner, key));
     const timer = await timerRef.get();
     if (timer.exists && trimmed(timer.data()?.studentId || timer.data()?.uid) === owner) {
@@ -107,8 +112,9 @@ async function readDraftHistoryDetail({ db, draftId }) {
         submissionPaths: check.submissionPaths || [] };
     }
   }
-  return { draft: summary, answer: extractText(record).slice(0, 30000), answerTruncated: extractText(record).length > 30000,
-    assessment };
+  return { draft: summary, answer: extractText(record).slice(0, 30000),
+    answerTruncated: extractText(record).length > 30000,
+    submission, assessment };
 }
 function registerDraftHistoryRoutes(app, { admin, db }) {
   const guard = async req => {
@@ -117,6 +123,7 @@ function registerDraftHistoryRoutes(app, { admin, db }) {
     const actor = await admin.auth().verifyIdToken(bearer[1], true);
     if (actor.email_verified !== true || lower(actor.email) !== "moxflex@gmail.com")
       throw new Error("Owner access is required to review student drafts.");
+    return actor;
   };
   app.get("/admin/draft-history", async (req, res) => {
     try {
@@ -134,6 +141,17 @@ function registerDraftHistoryRoutes(app, { admin, db }) {
       return res.json({ ok: true, ...await readDraftHistoryDetail({ db, draftId: req.params.draftId }) });
     } catch (error) { return res.status(/access|sign-in/i.test(error.message) ? 403 : 400)
       .json({ ok: false, error: error.message || "Could not preview saved draft." }); }
+  });
+  app.post("/admin/draft-history/:draftId/queue-marking", async (req, res) => {
+    try {
+      const actor = await guard(req);
+      if (req.body?.confirmation !== "QUEUE EXISTING SUBMISSION")
+        throw new Error("Explicit marking confirmation is required.");
+      return res.json({ ok: true, ...await queueMissingDraftMarking({
+        db, admin, actor, draftId: req.params.draftId, submissionPath: req.body.submissionPath,
+      }) });
+    } catch (error) { return res.status(/access|sign-in/i.test(error.message) ? 403 : 409)
+      .json({ ok: false, error: error.message || "Cannot queue marking." }); }
   });
 }
 module.exports = { listDraftHistory, readDraftHistoryDetail, registerDraftHistoryRoutes,
