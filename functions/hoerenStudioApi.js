@@ -7,7 +7,7 @@ const MODELS = Object.freeze({
   flash: "gemini-3.8-flash-tts",
 });
 const SCRIPT_MODEL = "gemini-3.5-flash-lite";
-const LIMITS = Object.freeze({ script: 5, speech: 36 });
+const LIMITS = Object.freeze({ script: 10, speech: 36 });
 const ALLOWED_LEVELS = new Set(["A1", "A2", "B1", "B2", "C1", "C2"]);
 const ALLOWED_TYPES = new Set(["dialogue", "announcement", "telephone", "podcast", "radio", "interview", "discussion", "lecture"]);
 const crypto = require("node:crypto");
