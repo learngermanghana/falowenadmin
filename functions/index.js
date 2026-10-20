@@ -14,6 +14,7 @@ const { setGlobalOptions } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
 const { registerHoerenStudioRoutes } = require("./hoerenStudioApi.js");
 const { registerTimedDraftRecoveryRoutes } = require("./timedDraftRecovery.js");
+const { registerDraftHistoryRoutes } = require("./draftHistory.js");
 const { createAttendanceConfirmationEmailJob, sendAssignmentAttendanceCreditEmail } = require("./attendanceConfirmationEmails.js");
 const { retryFailedAttendanceDeliveries, listAttendanceDeliveryHealth } = require("./attendanceConfirmationRetry.js");
 const { registerCompletionDocumentRoute } = require("./completionParticipationDocument.js");
@@ -2400,6 +2401,7 @@ exports.createPostSubmissionMarkingJob = onDocumentCreated("submissions/{level}/
 
 // Staff-approved draft restorations use the ordinary submission/marking pipeline.
 registerTimedDraftRecoveryRoutes(app, { admin, db, requireAuth });
+registerDraftHistoryRoutes(app, { admin, db });
 
 // Marking runs on Firebase, using the same generated pipeline as tutor marking.
 const { createCourseMarkingWorker, createScoreSyncWorker } = require("./automaticCourseMarking");
