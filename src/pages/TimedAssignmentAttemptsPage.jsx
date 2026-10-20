@@ -1,3 +1,4 @@
+import TimedDraftRecoveryPanel from "../components/TimedDraftRecoveryPanel.jsx";
 import { startVisiblePolling } from "../utils/visiblePolling.js";
 import { createTimedAttemptListenerHealth } from "../utils/timedAttemptListenerHealth.js";
 import { findCampusSubmissionReceipts } from "../utils/timedSubmissionReceiptLookup.js";
@@ -605,6 +606,7 @@ export default function TimedAssignmentAttemptsPage() {
           These are timed tests in the Campus workbook, not full mocks from Exam Room.
           The countdown uses the saved start time and duration. Reset removes only the Campus timer, not a mock result. A timer marked submitted does not prove that the separate workbook submission was saved. Check the <a href="/marking" style={{ color: "#1d4ed8", fontWeight: 700 }}>Marking Hub</a> for actual student work; a timer reset does not create a submission.
         </p>
+        <TimedDraftRecoveryPanel />
         {isStaff && <form onSubmit={lookupMissingTimedAttempt} style={{ ...card, display: "grid", gap: 10 }} data-testid="campus-timer-lookup">
           <strong>Find missing Campus timer · Reset by student</strong>
           <p style={{ margin: 0, color: "#475569" }}>If a timed attempt does not appear in this list, find its saved timer directly by the learner\u0027s UID or login email. This searches both saved timers and supported submission locations. A closed timer does not confirm a successful submission.</p>
