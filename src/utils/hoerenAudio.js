@@ -13,6 +13,15 @@ export function formatStudioTranscript(source) {
     .replace(/(\[PAUSE[ \t]+\d{1,2}\]),[ \t]*(?=[ABC]:[ \t])/gi, "$1\n");
 }
 
+// Repair common pasted exam narration without guessing at dialogue in sentences.
+export function repairStudioTranscript(source) {
+  return formatStudioTranscript(source)
+    .replace(/,[ \t]*(?=(?:Nummer[ \t]+\d+\.|Sie hören\b|Ende von Hören Teil\b))/gi, "\n")
+    .replace(/(^|\n)[ \t]*(Nummer[ \t]+\d+[.!]?|Ende von Hören Teil[ \t]+\d+[.!]?|Hören Teil[ \t]+\d+[^\n]*?)[ \t]*(?=\n|$)/gi, (_match, start, narration) => `${start}A: ${narration}`)
+    .replace(/(\[PAUSE[ \t]+\d{1,2}\])[ \t]*,[ \t]*(?=Nummer[ \t]+\d+)/gi, "$1\n")
+    .replace(/(^|\n)[ \t]*(?=Sie hören(?:\s|$))/gi, "$1A: ");
+}
+
 export function sameSpokenTranscript(a, b) {
   try {
     const normalize = value => parseStudioTranscript(formatStudioTranscript(value)).map(line => line.type === "pause" ? `PAUSE:${line.seconds}` : `${line.speaker}:${line.text.replace(/\s+/g, " ").trim()}`).join("\n");

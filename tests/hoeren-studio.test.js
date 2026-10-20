@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { parseStudioTranscript, formatStudioTranscript, sameSpokenTranscript, assembleListeningExam } from "../src/utils/hoerenAudio.js";
+import { parseStudioTranscript, formatStudioTranscript, sameSpokenTranscript, assembleListeningExam , repairStudioTranscript } from "../src/utils/hoerenAudio.js";
 import { validateDraftQuestions } from "../src/utils/hoerenQuestions.js";
 import { inspectHoerenDraft } from "../src/utils/hoerenDraftQuality.js";
 
@@ -224,4 +224,14 @@ test("comma delimiters never consume newlines or reassign spoken comparison text
   assert.deepEqual(parseStudioTranscript(comparison).map(line => line.speaker), ["A"]);
   const comparisonTab = "A: Modell A: günstig,\tB: schnell.";
   assert.equal(formatStudioTranscript(comparisonTab), comparisonTab);
+});
+
+test("pasted exam narration is repaired without changing already formatted speech", () => {
+  const pasted = ["Hören Teil 3.", "Nummer 1.", "A: Hallo.", "[PAUSE 3],Nummer 2.", "B: Guten Tag."].join("\n");
+  const cleaned = repairStudioTranscript(pasted);
+  assert.match(cleaned, /^A: Hören Teil 3\./);
+  assert.ok(cleaned.includes("\nA: Nummer 1."));
+  assert.ok(cleaned.includes("\n[PAUSE 3]\nA: Nummer 2."));
+  assert.equal(parseStudioTranscript(cleaned).filter(x => x.type === "speech").length, 5);
+  assert.equal(repairStudioTranscript("A: Wir vergleichen Modell A: günstig, B: schnell."), "A: Wir vergleichen Modell A: günstig, B: schnell.");
 });

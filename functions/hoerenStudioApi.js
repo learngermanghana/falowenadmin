@@ -11,7 +11,7 @@ const LIMITS = Object.freeze({ script: 5, speech: 36 });
 const ALLOWED_LEVELS = new Set(["A1", "A2", "B1", "B2", "C1", "C2"]);
 const ALLOWED_TYPES = new Set(["dialogue", "announcement", "telephone", "podcast", "radio", "interview", "discussion", "lecture"]);
 const crypto = require("node:crypto");
-const { extractLessonDraft, questionInstructions } = require("./hoerenQuestions");
+const { extractLessonDraft, questionInstructions, validateQuestionSet } = require("./hoerenQuestions");
 const { EXAM_PROFILES, getExamProfile, buildExamPrompt } = require("./hoerenExamProfiles");
 const { validateCourseLessonContext, courseLessonPrompt } = require("./hoerenCurriculumContext");
 // SHA-256 identifier for the single verified Falowen owner UID. This is not an API secret.
@@ -94,7 +94,7 @@ async function postGemini(url, key, payload, timeoutMs = 38_000) {
     if (!response.ok) {
       if (response.status === 429) throw Object.assign(new Error("Google's free API quota is exhausted. Try again later."), { status: 429 });
       if (response.status === 402 || response.status === 403) throw Object.assign(new Error("The Gemini API key or billing access needs attention."), { status: 503 });
-      throw Object.assign(new Error("Google audio service is temporarily unavailable."), { status: 502 });
+      throw Object.assign(new Error("Google service could not complete the request (upstream error). Your existing draft was not changed. Please retry later."), { status: 502 });
     }
     return await response.json();
   } finally {
@@ -139,9 +139,9 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
   }
 
   async function handleError(res, error) {
-    const status = Number(error?.status) || 502;
+    const status = Number(error?.status) || (error?.name === "AbortError" ? 504 : 502);
     console.warn("hoeren_studio_error", { status, message: error?.message || "unknown" });
-    return res.status(status).json({ ok: false, error: error?.message || "Audio generation failed." });
+    return res.status(status).json({ ok: false, error: error?.name === "AbortError" ? "Gemini took too long to respond. Keep your existing draft and retry later." : (error?.message || "Audio generation failed.") });
   }
 
   app.get("/ai-studio/status", guard, async (req, res) => {
@@ -195,15 +195,22 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
       const result = await postGemini(
         `https://generativelanguage.googleapis.com/v1beta/models/${SCRIPT_MODEL}:generateContent`, key,
         { contents: [{ role: "user", parts: [{ text:
-          `Create ${profile?.questionCount || 5} accurate listening questions from this exact German transcript. Preserve the transcript completely. ` +
+          `Create ${profile?.questionCount || 5} accurate listening questions from this exact German transcript. The teacher transcript is immutable: NEVER rewrite, normalize, or include a revised transcript. Return questions for the original words. ` +
           questionInstructions(kind, profile?.questionCount || 5) + (profile ? "\nSelected format: " + profile.structure : "") +
           (lessonContext ? "\nCourse lesson: " + lessonContext.assignmentKey + ", chapter " + lessonContext.chapter + ", German title: " + lessonContext.title + ". Keep questions aligned to this lesson. " : "") + "\nTranscript:\n" + script
         }] }], generationConfig: { temperature: 0.2, responseMimeType: "application/json", maxOutputTokens: profile ? 5500 : 1700 } },
       );
-      const draft = extractLessonDraft(result, profile?.questionCount || 5);
-      if (draft.script !== script || draft.kind !== kind) throw Object.assign(
-        new Error("Google modified the supplied script or question type. Please retry."), { status: 502 });
-      return res.json({ ok: true, questions: draft.questions, kind, remaining });
+      // The teacher's transcript is authoritative. Gemini often reprints it with
+      // harmless formatting differences; do not reject valid questions for that.
+      const raw = (result.candidates?.[0]?.content?.parts || []).map(part => part.text || "").join("").trim()
+        .replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
+      let generated;
+      try { generated = JSON.parse(raw); }
+      catch { throw Object.assign(new Error("Gemini returned incomplete question data. No changes were saved; please retry later."), { status: 502 }); }
+      if (generated.kind && generated.kind !== kind) throw Object.assign(new Error("Gemini returned the wrong question type. Please retry."), { status: 502 });
+      // Evidence must match the original script, never a rewritten version.
+      const questions = validateQuestionSet({ script, kind, questions: generated.questions, expectedCount: profile?.questionCount || 5 });
+      return res.json({ ok: true, questions, kind, remaining });
     } catch (error) { return handleError(res, error); }
   });
 
