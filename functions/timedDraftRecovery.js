@@ -217,7 +217,7 @@ function registerTimedDraftRecoveryRoutes(app, { admin, db, requireAuth }) {
   const guard = async req => {
     const actor = await requireAuth(req);
     const email = lower(actor.email);
-    if (!actor.email_verified || !["moxflex@gmail.com", "staff@falowen.app"].includes(email))
+    if (!actor.email_verified || email !== "moxflex@gmail.com")
       throw new Error("Admin recovery access denied.");
     return actor;
   };
