@@ -28,15 +28,42 @@ const firstNumber = (...values) => {
 
 const firstText = (...values) => values.map(text).find(Boolean) || "";
 
-export const isArchivedStudent = (student = {}) => {
+// Expired trials stay visible and recoverable to staff during the agreed
+// 30-day window even when older integrations also mark them inactive.
+export const isExpiredTrialStudent = (student = {}) => {
+  const status = lower(student.status || student.studentStatus || student.enrollmentStatus).replace(/[_-]+/g, " ");
+  const trialStatus = lower(student.trialStatus || student.trial_status).replace(/[_-]+/g, " ");
+  const paymentStatus = lower(student.paymentStatus || student.payment_status || student.financeStatus).replace(/[_-]+/g, " ");
+  if (["paid", "partially paid", "partial", "successful", "success", "complete", "completed"].includes(paymentStatus)) return false;
+  if (["paid", "converted"].includes(status)) return false;
+  if ([student.paid, student.paidAmount, student.amountPaid, student.totalPaid].some((value) => Number(value) > 0)) return false;
+  return status === "trial expired" || trialStatus === "expired" || trialStatus === "trial expired";
+};
+
+export const trialRecoveryPurgeAtMs = (student = {}) => {
+  const expiredAt = toDateMs(student.trialExpiredAt || student.trialEnd || student.trialEndsAt || student.trial_end);
+  const explicitPurgeAt = toDateMs(student.trialPurgeAt || student.trial_purge_at || student.purgeAt);
+  return Math.max(explicitPurgeAt, expiredAt > 0 ? expiredAt + 30 * DAY_MS : 0);
+};
+
+export const isRetainedExpiredTrialStudent = (student = {}, nowMs = Date.now()) => {
+  if (!isExpiredTrialStudent(student)) return false;
+  const purgeAt = trialRecoveryPurgeAtMs(student);
+  // Missing dates must not make a still-existing student invisible to staff.
+  return !purgeAt || nowMs < purgeAt;
+};
+
+export const isArchivedStudent = (student = {}, nowMs = Date.now()) => {
+  if (isRetainedExpiredTrialStudent(student, nowMs)) return false;
   const status = lower(student.status || student.studentStatus || student.enrollmentStatus);
   return ["archived", "inactive", "withdrawn", "removed", "cancelled", "canceled"].some((token) =>
     status.includes(token),
   );
 };
 
-export const isTrialOrUnpaidStudent = (student = {}) => {
-  if (isArchivedStudent(student)) return false;
+export const isTrialOrUnpaidStudent = (student = {}, nowMs = Date.now()) => {
+  if (isRetainedExpiredTrialStudent(student, nowMs)) return true;
+  if (isArchivedStudent(student, nowMs)) return false;
   const status = lower(student.status);
   const paymentStatus = lower(student.paymentStatus);
   const balance = firstNumber(student.balanceDue, student.balance, student.outstandingBalance, student.amountDue);
@@ -119,7 +146,7 @@ export const resolveStudentLearningStatus = (student = {}, nowMs = Date.now()) =
     ["submitted", "resubmitted", "pending_review", "awaiting_review"].some((token) =>
       reviewStatus.includes(token),
     );
-  const trialEnded = status.includes("trial_expired") || status.includes("trial-ended");
+  const trialEnded = isExpiredTrialStudent(student);
   const paymentBlocked = ["overdue", "failed", "rejected"].some((token) => paymentStatus.includes(token));
   const contractEnded = contractEndMs > 0 && contractEndMs <= nowMs;
   const accessNeedsAttention = trialEnded || paymentBlocked || (contractEnded && (balanceDue === null || balanceDue > 0));

@@ -11,6 +11,8 @@ import {
   readPublishedStudentName,
 } from "./publishedSheetService.js";
 
+import { missingRetainedSheetTrials } from "../utils/studentTrialSheetRecovery.js";
+
 const ROSTER_SOURCE_TIMEOUT_MS = 8000;
 
 function byNameAsc(a, b) {
@@ -207,6 +209,47 @@ export async function listStudentsByClass(classId, options = {}) {
 
 export async function listAllStudents() {
   return listAllStudentsWithFirestore();
+}
+
+// Read-only reconciliation with the already-published sheet: the Firestore
+// directory is authoritative for normal actions, sheet-only trials need recovery.
+export async function listMissingRetainedTrials(firestoreStudents = [], loadRows = loadPublishedStudentRows) {
+  const sheetRows = await loadRows();
+  return missingRetainedSheetTrials(sheetRows, firestoreStudents);
+}
+
+export async function recoverMissingTrialStudent(sheetTrial, {
+  fetchImpl = globalThis.fetch,
+  headersLoader = authHeaders,
+} = {}) {
+  if (!sheetTrial?.sheetOnly || !sheetTrial.uid) throw new Error("Choose a sheet-only expired trial record.");
+  const response = await fetchImpl("/api/students/recover-trial", {
+    method: "POST",
+    headers: await headersLoader(),
+    body: JSON.stringify({
+      uid: sheetTrial.uid,
+      studentCode: sheetTrial.studentCode,
+      email: sheetTrial.email,
+      name: sheetTrial.name,
+      level: sheetTrial.level,
+      className: sheetTrial.className,
+      phone: sheetTrial.phone,
+      location: sheetTrial.location,
+      learningMode: sheetTrial.learningMode,
+      registrationDate: sheetTrial.registrationDate,
+      trialExpiredAt: sheetTrial.trialExpiredAt,
+      trialPurgeAt: sheetTrial.trialPurgeAt,
+      paymentStatus: sheetTrial.paymentStatus,
+      paid: 0,
+      confirm: true,
+    }),
+  });
+  const raw = await response.text();
+  const data = (() => { try { return JSON.parse(raw); } catch { return {}; } })();
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error || `Trial recovery failed (HTTP ${response.status}).`);
+  }
+  return data;
 }
 
 export function parseStudentProfileUpdateResponse(response = {}, responseText = "") {

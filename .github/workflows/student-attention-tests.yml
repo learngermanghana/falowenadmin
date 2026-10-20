@@ -12,6 +12,9 @@ on:
       - "src/components/StudentLearningStatusPanel.jsx"
       - "src/utils/studentAttention.js"
       - "tests/student-attention.test.js"
+      - "tests/expired-trial-directory.test.js"
+      - "tests/student-trial-sheet-recovery.test.js"
+      - "src/utils/studentTrialSheetRecovery.js"
       - "tests/student-attention-integration.test.js"
       - "tests/student-leads-hub.test.js"
       - ".github/workflows/student-attention-tests.yml"
@@ -35,7 +38,7 @@ jobs:
         run: npm ci
 
       - name: Test attention rules and placement
-        run: node --test tests/student-attention.test.js tests/student-attention-integration.test.js tests/student-leads-hub.test.js
+        run: node --test tests/student-attention.test.js tests/student-attention-integration.test.js tests/student-leads-hub.test.js tests/expired-trial-directory.test.js tests/student-trial-sheet-recovery.test.js tests/pending-student-cleanup.test.js
 
       - name: Build Falowen Admin
         run: npm run build

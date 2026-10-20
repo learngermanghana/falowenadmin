@@ -122,17 +122,16 @@ function trialExpiredAtMillis(student = {}) {
 }
 
 function trialPurgeAtMillis(student = {}) {
+  const expiredAt = trialExpiredAtMillis(student);
+  const minimumPurgeAt = expiredAt > 0 ? expiredAt + TRIAL_RETENTION_MS : 0;
   const explicit = [
     student.trialPurgeAt,
     student.trial_purge_at,
     student.purgeAt,
   ];
-  for (const value of explicit) {
-    const millis = toMillis(value);
-    if (millis > 0) return millis;
-  }
-  const expiredAt = trialExpiredAtMillis(student);
-  return expiredAt > 0 ? expiredAt + TRIAL_RETENTION_MS : 0;
+  // Imported/stale purge dates may never shorten the guaranteed recovery window.
+  const explicitPurgeAt = explicit.reduce((latest, value) => Math.max(latest, toMillis(value)), 0);
+  return Math.max(minimumPurgeAt, explicitPurgeAt);
 }
 
 function expiredPendingReason(student = {}, now = Date.now()) {
