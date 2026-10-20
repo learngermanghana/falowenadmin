@@ -89,7 +89,8 @@ export default function SocialVocabularyVideoCreator({ word }) {
 
   useEffect(() => () => {
     if (recordingRef.current) {
-      const { recorder, stream, context } = recordingRef.current;
+      const { recorder, stream, context, cancel } = recordingRef.current;
+      cancel?.();
       if (recorder.state !== "inactive") recorder.stop();
       stream.getTracks().forEach(track => track.stop());
       context?.close().catch(() => {});
@@ -126,6 +127,16 @@ export default function SocialVocabularyVideoCreator({ word }) {
       return;
     }
     let context = null, stream = null, recorder = null, timer = null, frameId = null;
+    let cancelled = false, wake = null;
+    const cancel = () => {
+      cancelled = true;
+      if (timer) window.clearTimeout(timer);
+      wake?.();
+    };
+    const waitForRecording = () => new Promise(resolve => {
+      wake = resolve;
+      timer = window.setTimeout(resolve, Number(duration) * 1000 + 180);
+    });
     setBusy(true);
     try {
       // MediaRecorder encodes a real-time canvas stream entirely on this device.
@@ -171,9 +182,10 @@ export default function SocialVocabularyVideoCreator({ word }) {
           if (recorder.state === "recording" && elapsed < Number(duration)) frameId = requestAnimationFrame(frame);
         };
         frameId = requestAnimationFrame(frame);
-        recordingRef.current = { recorder, stream, context };
+        recordingRef.current = { recorder, stream, context, cancel };
         setMessage("Recording " + duration + " seconds locally. " + WAIT);
-        await new Promise(resolve => { timer = window.setTimeout(resolve, Number(duration) * 1000 + 180); });
+        await waitForRecording();
+        if (cancelled) return;
         renderVocabularyFrame(canvas, word, currentSettings, duration);
         if (recorder.state === "recording") recorder.stop();
         const blob = await resultPromise;
@@ -199,9 +211,10 @@ export default function SocialVocabularyVideoCreator({ word }) {
           if (recorder.state === "recording" && elapsed < Number(duration)) frameId = requestAnimationFrame(frame);
         };
         frameId = requestAnimationFrame(frame);
-        recordingRef.current = { recorder, stream, context };
+        recordingRef.current = { recorder, stream, context, cancel };
         setMessage("Recording " + duration + " seconds locally. " + WAIT);
-        await new Promise(resolve => { timer = window.setTimeout(resolve, Number(duration) * 1000 + 180); });
+        await waitForRecording();
+        if (cancelled) return;
         renderVocabularyFrame(canvas, word, currentSettings, duration);
         if (recorder.state === "recording") recorder.stop();
         const blob = await resultPromise;
@@ -216,7 +229,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
       stream?.getTracks().forEach(track => track.stop());
       if (context) await context.close().catch(() => {});
       recordingRef.current = null;
-      setBusy(false);
+      if (!cancelled) setBusy(false);
     }
   };
 
