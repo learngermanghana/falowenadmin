@@ -88,3 +88,17 @@ test("Campus timed tests correctly filter submitted vs unfinished or expired loc
   assert.deepEqual(filterTimedAttempts(timed,"mia","all").map(row => row.id), ["d"]);
   assert.equal(filterTimedAttempts(timed,"B1","in_progress").length,0);
 });
+
+test("staff fetches completed mock backups only on demand, without loading speech media", () => {
+  const page=fs.readFileSync("src/pages/TimedAssignmentAttemptsPage.jsx","utf8");
+  assert.match(page,/mock-answer-backup/);
+  assert.match(page,/data-testid="mock-answer-backup-recovery"/);
+  assert.match(page,/lookupMockAnswerBackup/);
+  assert.match(page,/Recover submitted choices and writing/);
+  assert.match(page,/No audio or speech transcripts are stored/);
+  assert.match(page,/startVisiblePolling\(loadMocks, 120000\)/);
+  const lookup=page.slice(page.indexOf("const lookupMockAnswerBackup"),page.indexOf("  useEffect(() => {",page.indexOf("const lookupMockAnswerBackup")));
+  assert.match(lookup,/getIdToken\(\)/);
+  assert.match(lookup,/cache:"no-store"/);
+  assert.doesNotMatch(lookup,/setInterval/);
+});
