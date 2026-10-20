@@ -17,7 +17,7 @@ function fakeDatabase(records = draftRecords()) {
     firestore: { Timestamp: { fromMillis: ts } },
   };
   const db = { collection(name) {
-    if (name !== "submissionDrafts") throw new Error("Unexpected collection " + name);
+    if (name !== "submissionDrafts") return { doc: id => ({ id, async get() { metrics.getDocs++; return { exists: false, id, data: () => undefined }; } }) };
     const read = id => ({
       id, ref: { id }, exists: Boolean(records[id]), data: () => records[id],
     });
