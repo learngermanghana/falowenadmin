@@ -4,9 +4,13 @@ on:
   pull_request:
     paths:
       - "src/pages/TimedAssignmentAttemptsPage.jsx"
+      - "src/pages/StudentResultsComparePage.jsx"
+      - "src/components/DraftHistoryPanel.jsx"
+      - "functions/draftHistory.js"
+      - "functions/draftHistory.test.cjs"
       - "src/components/TimedDraftRecoveryPanel.jsx"
       - "functions/timedDraftRecovery.js"
-      - "functions/timedDraftRecovery.test.cjs"
+      - "functions/timedDraftRecovery.test.cjs functions/draftHistory.test.cjs"
       - "src/services/placementAttemptService.js"
       - "tests/placement-attempt-monitoring.test.js"
       - "src/utils/mockAttemptMonitoring.js"
@@ -22,6 +26,10 @@ on:
     branches: [main]
     paths:
       - "src/pages/TimedAssignmentAttemptsPage.jsx"
+      - "src/pages/StudentResultsComparePage.jsx"
+      - "src/components/DraftHistoryPanel.jsx"
+      - "functions/draftHistory.js"
+      - "functions/draftHistory.test.cjs"
       - "src/components/TimedDraftRecoveryPanel.jsx"
       - "functions/timedDraftRecovery.js"
       - "functions/timedDraftRecovery.test.cjs"
