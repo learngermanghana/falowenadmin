@@ -13,7 +13,14 @@ async function request(endpoint, payload) {
     cache: "no-store",
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok || !data.ok) throw new Error(data.error || `The studio request failed (${response.status}).`);
+  if (!response.ok || !data.ok) {
+    const fallback = response.status === 502
+      ? "AI Studio could not complete this request (502). The AI provider or server may be temporarily unavailable; your existing transcript and questions are unchanged."
+      : response.status === 504
+        ? "AI Studio timed out. Keep your current draft and retry later."
+        : `The studio request failed (${response.status}).`;
+    throw new Error(data.error || fallback);
+  }
   return data;
 }
 
