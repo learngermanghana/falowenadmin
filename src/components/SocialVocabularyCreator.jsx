@@ -1,8 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import SocialVocabularyVideoCreator from "./SocialVocabularyVideoCreator.jsx";
 
 const SHEET_ID = "1I1yAnqzSh3DPjwWRh9cdRSfzNSPsi7o4r5Taj9Y36NU";
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
-const CSV_URL = import.meta.env.VITE_GERMAN_VOCABS_CSV_URL || `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=0`;
+const CONFIGURED_CSV_URL = import.meta.env.VITE_GERMAN_VOCABS_CSV_URL || "";
+const CSV_URLS = CONFIGURED_CSV_URL
+  ? [CONFIGURED_CSV_URL]
+  : [
+      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=German_Vocabs`,
+      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=0`,
+    ];
 const SIZES = { portrait: [1080, 1350], square: [1080, 1080], story: [1080, 1920] };
 
 function parseCSV(source) {
@@ -23,7 +30,14 @@ function parseCSV(source) {
 }
 export function parseVocabularyCSV(csv) {
   const rows = parseCSV(csv.replace(/^\uFEFF/, ""));
-  const header = (rows.shift() || []).map(value => value.trim().toLowerCase());
+  // Some published sheets include explanatory lines before A–Q headings.
+  const normalizeHeader = value => String(value || "").trim().toLowerCase().replace(/[\s_-]+/g, " ");
+  const headerIndex = rows.findIndex(row => {
+    const labels = row.map(normalizeHeader);
+    return ["german", "english", "content status"].every(name => labels.includes(name));
+  });
+  if (headerIndex < 0) throw new Error("Expected German_Vocabs headers were not found.");
+  const header = rows.splice(0, headerIndex + 1).pop().map(normalizeHeader);
   const index = name => header.indexOf(name.toLowerCase());
   const get = (row, name) => (row[index(name)] || "").trim();
   if (index("German") < 0 || index("English") < 0 || index("Content Status") < 0) throw new Error("Expected German_Vocabs headers were not found.");
@@ -72,6 +86,7 @@ export default function SocialVocabularyCreator() {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState("");
   const [format, setFormat] = useState("portrait");
+  const [studioMode, setStudioMode] = useState("video");
   const [overrides, setOverrides] = useState({});
   const [ready, setReady] = useState(false);
   const [imageWarning, setImageWarning] = useState(false);
@@ -79,10 +94,20 @@ export default function SocialVocabularyCreator() {
     const controller = new AbortController();
     (async () => {
       try {
-        const response = await fetch(CSV_URL, { signal: controller.signal });
-        if (!response.ok) throw new Error(`Sheet request failed (${response.status}).`);
-        const content = await response.text();
-        const parsed = parseVocabularyCSV(content);
+        let parsed = null;
+        let lastError = null;
+        for (const url of CSV_URLS) {
+          try {
+            const response = await fetch(url, { signal: controller.signal });
+            if (!response.ok) throw new Error(`Sheet request failed (${response.status}).`);
+            parsed = parseVocabularyCSV(await response.text());
+            break;
+          } catch (cause) {
+            if (cause.name === "AbortError") throw cause;
+            lastError = cause;
+          }
+        }
+        if (!parsed) throw lastError || new Error("Cannot read the published vocabulary sheet.");
         setWords(parsed);
         if (!parsed.length) setError("The vocabulary sheet has no populated rows.");
       } catch (err) {
@@ -166,8 +191,12 @@ export default function SocialVocabularyCreator() {
     <textarea rows={key==="grammar" ? 3 : 2} value={data?.[key] || ""} onChange={e=>setOverrides(prev=>({...prev,[key]:e.target.value}))} style={{border:"1px solid #cbd5e1",borderRadius:8,padding:10,width:"100%",boxSizing:"border-box"}} />
   </label>;
   return <section style={{display:"grid",gap:16}}>
-    <div><h2 style={{margin:"0 0 6px"}}>Vocabulary Post Studio</h2><p style={{margin:0,color:"#64748b"}}>Uses approved German_Vocabs sheet content only. No AI and no generated sentences.</p></div>
+    <div><h2 style={{margin:"0 0 6px"}}>Falowen Vocabulary Studio</h2><p style={{margin:0,color:"#64748b"}}>Create branded vocabulary Shorts, Reels and story posters from approved German_Vocabs sheet content. Animation and music generation run locally, with no paid video API.</p></div>
     {error && <div role="alert" style={{padding:12,background:"#fef2f2",color:"#991b1b",borderRadius:8}}>{error} <a href={SHEET_URL} target="_blank" rel="noreferrer">Open source sheet</a></div>}
+    <div role="group" aria-label="Vocabulary output" style={{display:"flex",flexWrap:"wrap",gap:8}}>
+      <button type="button" aria-pressed={studioMode==="video"} onClick={()=>setStudioMode("video")} style={{padding:"11px 15px",borderRadius:10,border:"1px solid #b8d6ec",background:studioMode==="video"?"#1266b6":"#f2f8fc",color:studioMode==="video"?"white":"#1d4e81",fontWeight:800,cursor:"pointer"}}>Animated video</button>
+      <button type="button" aria-pressed={studioMode==="poster"} onClick={()=>setStudioMode("poster")} style={{padding:"11px 15px",borderRadius:10,border:"1px solid #b8d6ec",background:studioMode==="poster"?"#1266b6":"#f2f8fc",color:studioMode==="poster"?"white":"#1d4e81",fontWeight:800,cursor:"pointer"}}>Classic PNG poster</button>
+    </div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:20,alignItems:"start"}}>
       <div style={{display:"grid",gap:12,padding:18,border:"1px solid #e2e8f0",borderRadius:14,background:"white"}}>
         <label>Level <select value={level} onChange={e=>setLevel(e.target.value)} style={{display:"block",width:"100%",padding:10}}>{["A1","A2","B1","B2","C1"].map(v=><option key={v}>{v}</option>)}</select></label>
@@ -177,10 +206,10 @@ export default function SocialVocabularyCreator() {
         </select></label>
         <button type="button" disabled={!available.length} onClick={()=>{const pool=available.filter(w=>w.id!==word?.id && !w.lastPosted); const next=pool.length?pool:available.filter(w=>w.id!==word?.id); if(next.length) setSelected(String(next[Math.floor(Math.random()*next.length)].id));}}>Pick another word</button>
         <small>{loading?"Loading vocabulary…":`${available.length} ready words in ${level}`}. Only sheet rows marked Ready with both translations are eligible.</small>
-        <label>Post format <select value={format} onChange={e=>setFormat(e.target.value)} style={{display:"block",width:"100%",padding:10}}><option value="portrait">Instagram portrait · 1080×1350</option><option value="square">Square · 1080×1080</option><option value="story">Story · 1080×1920</option></select></label>
+        {studioMode==="poster" && <label>Post format <select value={format} onChange={e=>setFormat(e.target.value)} style={{display:"block",width:"100%",padding:10}}><option value="portrait">Instagram portrait · 1080×1350</option><option value="square">Square · 1080×1080</option><option value="story">Story · 1080×1920</option></select></label>}
         {data && <><h3 style={{margin:"8px 0 0"}}>Edit this export only</h3>{field("german","German word")}{field("english","English meaning")}{field("exampleDE","German sentence")}{field("exampleEN","English sentence")}{field("grammar","Grammar tip")}{field("imageUrl","Image URL (optional)")}<small>Edits here do not change your Google Sheet.</small></>}
       </div>
-      <div style={{display:"grid",gap:12,padding:18,border:"1px solid #e2e8f0",borderRadius:14,background:"white"}}>
+      <div style={{display:studioMode==="poster"?"grid":"none",gap:12,padding:18,border:"1px solid #e2e8f0",borderRadius:14,background:"white"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}><strong>Live PNG preview</strong><button type="button" onClick={download} disabled={!ready}>Export PNG</button></div>
         {imageWarning && <small style={{color:"#92400e"}}>Image URL could not be displayed. Using a text backdrop instead.</small>}
         {!data && !loading && <p>No ready vocabulary found. Complete the example sentences and set Content Status to Ready in the sheet.</p>}
@@ -188,6 +217,7 @@ export default function SocialVocabularyCreator() {
         {data && <button type="button" onClick={()=>navigator.clipboard?.writeText([`${data.german} — ${data.english}`,data.exampleDE,data.exampleEN,data.grammar,"Learn German with Falowen. #LearnGerman #GermanVocabulary #Falowen"].filter(Boolean).join("\n\n"))}>Copy post caption</button>}
         <a href={SHEET_URL} target="_blank" rel="noreferrer">Edit vocabulary in Google Sheets</a>
       </div>
+      {studioMode==="video" && <SocialVocabularyVideoCreator word={data} />}
     </div>
   </section>;
 }
