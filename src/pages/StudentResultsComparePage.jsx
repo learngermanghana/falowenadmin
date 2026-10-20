@@ -141,11 +141,17 @@ export default function StudentResultsComparePage() {
   const [editDraft, setEditDraft] = useState({});
   const [savingEditId, setSavingEditId] = useState("");
 
-  // Do not fetch the roster or Sheet just because someone opened Drafts.
+  const rosterRequested = useRef(false);
+  // Switching between results tabs must not repeatedly fetch the roster.
+  // Loading the draft tab directly does not start roster or Sheet reads.
   useEffect(() => {
-    if (activeTab === "drafts") return;
-    loadRoster().then(setRoster).catch((err) => error(err?.message || "Failed to load roster."));
-  }, [activeTab === "drafts", error]);
+    if (activeTab === "drafts" || rosterRequested.current) return;
+    rosterRequested.current = true;
+    loadRoster().then(setRoster).catch((err) => {
+      rosterRequested.current = false;
+      error(err?.message || "Failed to load roster.");
+    });
+  }, [activeTab, error]);
   const filtered = useMemo(() => roster.filter((r) => !query.trim() || [r.name, r.studentCode, r.level].some((v) => norm(v).includes(norm(query)))), [roster, query]);
   const student = useMemo(() => roster.find((r) => r.id === studentId) || null, [roster, studentId]);
   const sheetKeys = useMemo(() => new Set(data.sheetRows.map(assignmentKey)), [data.sheetRows]);
