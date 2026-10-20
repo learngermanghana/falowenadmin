@@ -37,6 +37,14 @@
       "destination": "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/attendance-confirmation-emails/retry-failed"
     },
     {
+      "source": "/api/admin/draft-history/:draftId",
+      "destination": "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/admin/draft-history/:draftId"
+    },
+    {
+      "source": "/api/admin/draft-history",
+      "destination": "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/admin/draft-history"
+    },
+    {
       "source": "/api/admin/timed-drafts/recover",
       "destination": "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/admin/timed-drafts/recover"
     },
