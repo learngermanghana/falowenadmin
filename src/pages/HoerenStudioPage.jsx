@@ -584,7 +584,7 @@ export default function HoerenStudioPage() {
             <audio controls preload="metadata" src={audioUrl} aria-label="Preview generated Hören recording" />
             <p>{(audioBlob.size / 1_000_000).toFixed(1)} MB · WAV · 24 kHz</p>
             <div className="hoeren-downloads">
-              {questions.length && !reviewedQuestions.error ? <button type="button" className="hoeren-quiet" onClick={() => downloadFile(JSON.stringify({ mode, level, examPart, title: topic, kind: questionKind, questions: reviewedQuestions.data }, null, 2), `${filename}-questions-key.json`, "application/json")}>Download questions &amp; answer key</button> : null}
+              {questions.length && !reviewedQuestions.error && questionsMatchScript ? <button type="button" className="hoeren-quiet" onClick={() => downloadFile(JSON.stringify({ mode, level, examPart, title: topic, kind: questionKind, questions: reviewedQuestions.data }, null, 2), `${filename}-questions-key.json`, "application/json")}>Download questions &amp; answer key</button> : null}
               <button type="button" className="hoeren-button" disabled={!!busy} onClick={downloadMp3}>{busy === "mp3" ? "Converting to MP3…" : "Download MP3"}</button>
               <button type="button" className="hoeren-quiet" disabled={!!busy} onClick={() => downloadFile(audioBlob, `${filename}.wav`, "audio/wav")}>Download WAV</button>
               <button type="button" className="hoeren-quiet" onClick={() => downloadFile(script, `${filename}.txt`, "text/plain;charset=utf-8")}>Download transcript</button>
