@@ -4,7 +4,7 @@ import { getStudioStatus, makeListeningScript, makeSpeechClip, makeListeningQues
 import { QUESTION_KINDS, validateDraftQuestions } from "../utils/hoerenQuestions";
 import { inspectHoerenDraft } from "../utils/hoerenDraftQuality.js";
 import { getStudioCourseCatalog, getStudioCourseContext, resolveStudioCourseModeLesson } from "../utils/hoerenCourseCatalog.js";
-import { assembleListeningExam, base64WavToBytes, parseStudioTranscript, formatStudioTranscript, sameSpokenTranscript } from "../utils/hoerenAudio";
+import { assembleListeningExam, base64WavToBytes, parseStudioTranscript, formatStudioTranscript, sameSpokenTranscript , repairStudioTranscript } from "../utils/hoerenAudio";
 import { SCENES, decodeLocalAtmosphere } from "../utils/hoerenSoundscape";
 import { encodeWavAsMp3 } from "../utils/hoerenMp3";
 import "./HoerenStudioPage.css";
@@ -231,15 +231,26 @@ export default function HoerenStudioPage() {
     try {
       const result = await makeListeningScript({ topic, type, level, part: mode === "goethe" ? examPart : "", mode, kind: questionKind,
         lessonContext: mode === "course" ? getStudioCourseContext(selectedCourseEntry) : null });
-      setScript(formatStudioTranscript(result.script));
+      setScript(repairStudioTranscript(result.script));
       setQuestions(result.questions || []);
       setQuestionKind(result.kind || "richtig-falsch");
-      setQuestionScript(formatStudioTranscript(result.script));
+      setQuestionScript(repairStudioTranscript(result.script));
       setTeacherApproved(false); setPublished(null);
       setStatus((previous) => previous && ({ ...previous, remaining: { ...previous.remaining, script: result.remaining } }));
       toast.success(`Script and ${questionCount} Hören questions generated. Review the answers before approving.`);
     } catch (error) { toast.error(error.message); }
     finally { setBusy(""); await reloadStatus(); }
+  }
+  function verifyExistingQuestions() {
+    if (!questions.length) return;
+    if (reviewedQuestions.error) {
+      toast.error(`Fix the question evidence or answers first: ${reviewedQuestions.error}`);
+      return;
+    }
+    setQuestionScript(script);
+    setTeacherApproved(false);
+    setPublished(null);
+    toast.success("Questions verified against this transcript. Review the answer key before approving.");
   }
   async function generateQuestions() {
     if (script.trim().length < 35 || !ready) return;
@@ -429,9 +440,9 @@ export default function HoerenStudioPage() {
           <button className="hoeren-button" type="button" disabled={!ready || !!busy || topic.trim().length < 4 || !status?.remaining.script || (mode === "goethe" && !selectedProfile) || (mode === "course" && !selectedCourseEntry)} onClick={generateScript}>{busy === "script" ? "Generating script…" : mode === "goethe" ? "Generate complete Goethe task" : "Generate Course Book script + questions"}</button>
           <p className="hoeren-hint">{mode === "course" ? "The selected dictionary chapter, assignment ID and German/English titles are passed to the AI so the recording and questions stay aligned with that course lesson." : "You can also write or paste your own script without spending a script-generation request."}</p>
           <label>Transcript — edit before creating audio
-            <textarea rows={13} spellCheck lang="de" value={script} disabled={!!busy} onChange={(event) => { setScript(formatStudioTranscript(event.target.value)); setTeacherApproved(false); setPublished(null); clearAudio(); }} />
+            <textarea rows={13} spellCheck lang="de" value={script} disabled={!!busy} onChange={(event) => { setScript(repairStudioTranscript(event.target.value)); setTeacherApproved(false); setPublished(null); clearAudio(); }} />
           </label>
-          <p className="hoeren-hint">Pasted comma-separated speaker turns and pauses are automatically placed on their own lines.</p>
+          <p className="hoeren-hint">Pasted dialogue, numbered announcements and pauses are formatted automatically. Please check the script for accuracy before synthesizing.</p>
            <p className="hoeren-hint"><strong>Transcript format:</strong> Start spoken segments with <code>A:</code>, <code>B:</code> or <code>C:</code>. Add <code>[PAUSE 3]</code> on its own line. A, B and C use distinct voices.</p>
           {!transcript.error && spokenLines.length ? <details className="hoeren-sentence-editor">
             <summary>Edit individual voice segments · reuse unchanged audio</summary>
@@ -455,7 +466,11 @@ export default function HoerenStudioPage() {
               {busy === "questions" ? "Creating questions…" : `Generate ${questionCount} questions · one script quota`}
             </button>
             {questions.length ? <>
-              {!questionsMatchScript ? <p className="hoeren-validation">The script changed. Review the questions and regenerate them, or restore the reviewed script before publishing.</p> : null}
+              {!questionsMatchScript ? <div className="hoeren-validation">
+                <p>The transcript changed. Check every question and its evidence, then confirm without spending AI credits.</p>
+                <button type="button" className="hoeren-quiet" disabled={!!busy || !!reviewedQuestions.error} onClick={verifyExistingQuestions}>Verify existing questions · free</button>
+                {reviewedQuestions.error ? <p>Resolve first: {reviewedQuestions.error}</p> : null}
+              </div> : null}
               {questions.map((q, index) => <div className="hoeren-question" key={index}>
                 <strong>Question {index + 1}</strong>
                 <label>Statement / question
