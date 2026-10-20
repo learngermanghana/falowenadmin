@@ -17,7 +17,11 @@ function fakeDatabase(records = draftRecords()) {
     firestore: { Timestamp: { fromMillis: ts } },
   };
   const db = { collection(name) {
-    if (name !== "submissionDrafts") return { doc: id => ({ id, async get() { metrics.getDocs++; return { exists: false, id, data: () => undefined }; } }) };
+    if (name !== "submissionDrafts") return {
+      doc: id => ({ id, async get() { metrics.getDocs++; return { exists: false, id, data: () => undefined }; },
+        collection: () => ({ where: () => ({ limit: () => ({ get: async () => ({ size: 0, docs: [] }) }) }) }) }),
+      where: () => ({ limit: () => ({ get: async () => ({ size: 0, docs: [] }) }) }),
+    };
     const read = id => ({
       id, ref: { id }, exists: Boolean(records[id]), data: () => records[id],
     });
@@ -82,6 +86,7 @@ test("history reads work even when assignment has no timer, and previews load on
   assert.equal(detail.draft.studentEmail.endsWith("@example.com"), true);
   assert.match(detail.answer, /Student draft/);
   assert.equal(detail.assessment.state, "not-checked");
+  assert.equal(detail.submission.status, "not-submitted");
 });
 test("email search is bounded, includes original date filtering, and reports incomplete scans", async () => {
   const all = Object.fromEntries(Object.entries(draftRecords(180)).map(([key, row]) => [key,
