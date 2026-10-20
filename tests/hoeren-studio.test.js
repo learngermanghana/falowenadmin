@@ -227,11 +227,11 @@ test("comma delimiters never consume newlines or reassign spoken comparison text
 });
 
 test("pasted exam narration is repaired without changing already formatted speech", () => {
-  const pasted = "Hören Teil 3.\\nNummer 1.\\nA: Hallo.\\n[PAUSE 3],Nummer 2.\\nB: Guten Tag.";
+  const pasted = ["Hören Teil 3.", "Nummer 1.", "A: Hallo.", "[PAUSE 3],Nummer 2.", "B: Guten Tag."].join("\n");
   const cleaned = repairStudioTranscript(pasted);
   assert.match(cleaned, /^A: Hören Teil 3\./);
-  assert.match(cleaned, /\\nA: Nummer 1\./);
-  assert.match(cleaned, /\\n\[PAUSE 3\]\\nA: Nummer 2\./);
+  assert.ok(cleaned.includes("\nA: Nummer 1."));
+  assert.ok(cleaned.includes("\n[PAUSE 3]\nA: Nummer 2."));
   assert.equal(parseStudioTranscript(cleaned).filter(x => x.type === "speech").length, 5);
   assert.equal(repairStudioTranscript("A: Wir vergleichen Modell A: günstig, B: schnell."), "A: Wir vergleichen Modell A: günstig, B: schnell.");
 });
