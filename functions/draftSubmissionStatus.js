@@ -25,7 +25,7 @@ async function findSubmission(db, draft, key) {
   const uid = uidOf(draft), email = lower(draft.studentEmail), code = tidy(draft.studentCode);
   const found = new Map();
   let capped = false;
-  const add = list => list.filter(d => statusOf(d.data() || {}) !== "draft" &&
+  const add = list => list.filter(d => !["draft", "unsaved", "deleted", "cancelled"].includes(statusOf(d.data() || {})) &&
     belongs(d.data() || {}, draft, key)).forEach(d => found.set(d.ref.path, d));
 
   let response = await queryBy(db, "submissions", "studentId", uid);
@@ -88,7 +88,7 @@ async function getDraftSubmissionState({ db, draft }) {
   if (job.exists) return state("marking", "Final submission verified. A marking job already exists (" + (currentJob || "pending") + ").", {
     submissionPath: path, submissionPaths: [path], markingStatus: currentJob || marking || "pending",
   });
-  if (!eligible(submission, key.split("-")[0], key) || path.split("/").length !== 2) {
+  if (statusOf(submission) !== "submitted" || !eligible(submission, key.split("-")[0], key) || path.split("/").length !== 2) {
     return state("needs-review", "Submission exists but cannot be safely queued automatically. Review in Marking Hub.", { submissionPath: path, submissionPaths: [path] });
   }
   if (!tidy(draft.studentCode || submission.studentCode)) return state("needs-review", "Student code is missing; verify identity before auto marking.", { submissionPath: path, submissionPaths: [path] });
@@ -117,7 +117,7 @@ async function queueMissingDraftMarking({ db, admin, draftId, submissionPath, ac
       throw new Error("Submission, marking job or score changed; no duplicate job created.");
     const data = submission.data() || {};
     if (!belongs(data, row, key) || uidOf(data) !== expectedUid ||
-        statusOf(data) === "draft" || lower(data.markingStatus) === "marked" ||
+        statusOf(data) !== "submitted" || lower(data.markingStatus) === "marked" ||
         !eligible(data, key.split("-")[0], key))
       throw new Error("Submission no longer meets verified marking requirements.");
     tx.create(jobRef, {
