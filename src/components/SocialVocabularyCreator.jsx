@@ -3,7 +3,13 @@ import SocialVocabularyVideoCreator from "./SocialVocabularyVideoCreator.jsx";
 
 const SHEET_ID = "1I1yAnqzSh3DPjwWRh9cdRSfzNSPsi7o4r5Taj9Y36NU";
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
-const CSV_URL = import.meta.env.VITE_GERMAN_VOCABS_CSV_URL || `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=0`;
+const CONFIGURED_CSV_URL = import.meta.env.VITE_GERMAN_VOCABS_CSV_URL || "";
+const CSV_URLS = CONFIGURED_CSV_URL
+  ? [CONFIGURED_CSV_URL]
+  : [
+      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=German_Vocabs`,
+      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=0`,
+    ];
 const SIZES = { portrait: [1080, 1350], square: [1080, 1080], story: [1080, 1920] };
 
 function parseCSV(source) {
@@ -24,7 +30,14 @@ function parseCSV(source) {
 }
 export function parseVocabularyCSV(csv) {
   const rows = parseCSV(csv.replace(/^\uFEFF/, ""));
-  const header = (rows.shift() || []).map(value => value.trim().toLowerCase());
+  // Some published sheets include explanatory lines before A–Q headings.
+  const normalizeHeader = value => String(value || "").trim().toLowerCase().replace(/[\s_-]+/g, " ");
+  const headerIndex = rows.findIndex(row => {
+    const labels = row.map(normalizeHeader);
+    return ["german", "english", "content status"].every(name => labels.includes(name));
+  });
+  if (headerIndex < 0) throw new Error("Expected German_Vocabs headers were not found.");
+  const header = rows.splice(0, headerIndex + 1).pop().map(normalizeHeader);
   const index = name => header.indexOf(name.toLowerCase());
   const get = (row, name) => (row[index(name)] || "").trim();
   if (index("German") < 0 || index("English") < 0 || index("Content Status") < 0) throw new Error("Expected German_Vocabs headers were not found.");
@@ -81,10 +94,20 @@ export default function SocialVocabularyCreator() {
     const controller = new AbortController();
     (async () => {
       try {
-        const response = await fetch(CSV_URL, { signal: controller.signal });
-        if (!response.ok) throw new Error(`Sheet request failed (${response.status}).`);
-        const content = await response.text();
-        const parsed = parseVocabularyCSV(content);
+        let parsed = null;
+        let lastError = null;
+        for (const url of CSV_URLS) {
+          try {
+            const response = await fetch(url, { signal: controller.signal });
+            if (!response.ok) throw new Error(`Sheet request failed (${response.status}).`);
+            parsed = parseVocabularyCSV(await response.text());
+            break;
+          } catch (cause) {
+            if (cause.name === "AbortError") throw cause;
+            lastError = cause;
+          }
+        }
+        if (!parsed) throw lastError || new Error("Cannot read the published vocabulary sheet.");
         setWords(parsed);
         if (!parsed.length) setError("The vocabulary sheet has no populated rows.");
       } catch (err) {
