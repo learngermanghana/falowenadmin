@@ -1,7 +1,7 @@
 const { test, before, after } = require('node:test');
 const fs = require('node:fs');
 const { initializeTestEnvironment, assertSucceeds, assertFails } = require('@firebase/rules-unit-testing');
-const { collection, collectionGroup, doc, getDoc, getDocs, setDoc } = require('firebase/firestore');
+const { collection, collectionGroup, doc, getDoc, getDocs, setDoc, deleteDoc } = require('firebase/firestore');
 let env;
 before(async () => {
   env = await initializeTestEnvironment({
@@ -49,4 +49,47 @@ test('ordinary student and signed-out accounts cannot access staff panels or oth
 test('student submission ownership access is preserved', async () => {
   const db = env.authenticatedContext('student-owner', { email: 'owner@example.com' }).firestore();
   await assertSucceeds(getDoc(doc(db, 'submissions/flat')));
+});
+
+
+test('staff identity, owner email and staff claims can list, create and update private mock drafts', async () => {
+  const tokens=[
+    {email:'moxflex@gmail.com'},
+    {email:'staff@falowen.app'},
+    {staff:true},
+    {admin:true},
+    {role:'staff'},
+    {role:'admin'},
+  ];
+  for(let index=0;index<tokens.length;index++){
+    const db=env.authenticatedContext('draft-staff-'+index,tokens[index]).firestore();
+    const id='a2-mock-'+String(index+10).padStart(2,'0');
+    const ref=doc(db,'mockFactoryDrafts',id);
+    const body={id,level:'A2',status:'draft',title:'A2 draft'};
+    await assertSucceeds(getDocs(collection(db,'mockFactoryDrafts')));
+    await assertSucceeds(setDoc(ref,body));
+    await assertSucceeds(getDoc(ref));
+    await assertSucceeds(setDoc(ref,{...body,status:'review'}));
+    await assertFails(setDoc(ref,{...body,status:'published'}));
+    await assertFails(setDoc(ref,{...body,level:'C2'}));
+    await assertFails(deleteDoc(ref));
+  }
+});
+
+test('students and signed-out visitors cannot list, inspect or write private mock drafts',async()=>{
+  const teacher=env.authenticatedContext('teacher',{email:'staff@falowen.app'}).firestore();
+  await assertSucceeds(setDoc(doc(teacher,'mockFactoryDrafts','a1-mock-19'),{
+    id:'a1-mock-19',level:'A1',status:'draft',title:'Protected exam'
+  }));
+  for (const context of [
+    env.authenticatedContext('student',{email:'student@example.com',role:'student'}),
+    env.unauthenticatedContext()
+  ]){
+    const db=context.firestore();
+    await assertFails(getDocs(collection(db,'mockFactoryDrafts')));
+    await assertFails(getDoc(doc(db,'mockFactoryDrafts','a1-mock-19')));
+    await assertFails(setDoc(doc(db,'mockFactoryDrafts','a1-mock-20'),{
+      id:'a1-mock-20',level:'A1',status:'draft'
+    }));
+  }
 });
