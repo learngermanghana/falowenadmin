@@ -38,18 +38,18 @@ test("presenter fullscreen wiring keeps one A1 dock and synchronizes browser exi
 
   assert.match(a1, /useEffect, useMemo, useRef, useState/);
   assert.doesNotMatch(a1, /toggleFocusMode/);
-  assert.equal((a1.match(/presenter-focus-dock/g) || []).length, 1);
+  assert.equal((a1.match(/<PresenterControls focus/g) || []).length, 1);
   assert.match(a1, /presenterShellRef\.current\?\.requestFullscreen/);
   assert.match(shared, /presenterShellRef\.current\?\.requestFullscreen/);
 
   assert.match(a1, /addEventListener\("fullscreenchange", handleFullscreenChange\)/);
   assert.match(shared, /addEventListener\("fullscreenchange", handleFullscreenChange\)/);
-  assert.match(a1, /aria-label="Restore presenter controls"/);
-  assert.match(shared, /aria-label="Restore presenter controls"/);
+  assert.match(fs.readFileSync("src/components/PresenterControls.jsx", "utf8"), /aria-label="Restore presenter controls"/);
+  assert.match(fs.readFileSync("src/components/PresenterControls.jsx", "utf8"), /aria-label="Restore presenter controls"/);
   assert.match(a1, /presenter-shell \$\{focusMode \? "is-presentation-mode" : ""\}/);
   assert.match(shared, /presenter-shell \$\{focusMode \? "is-presentation-mode" : ""\}/);
-  assert.match(a1, />Restore<\/button>/);
-  assert.match(shared, />Restore<\/button>/);
+  assert.match(fs.readFileSync("src/components/PresenterControls.jsx", "utf8"), />Restore controls<\/button>/);
+  assert.match(fs.readFileSync("src/components/PresenterControls.jsx", "utf8"), />Restore controls<\/button>/);
 });
 
 
@@ -62,9 +62,9 @@ test("desktop presenter keeps fullscreen and exit actions in the timer row and c
   const pickerCss = read("src/components/PresenterStudentPicker.css");
 
   for (const source of [a1, shared]) {
-    assert.match(source, /toolbarActions=\{\(/);
-    assert.match(source, /className="presenter-session-present"[^>]*>Present full screen<\/button>/);
-    assert.match(source, /className="presenter-session-exit"[^>]*>Exit presenter<\/button>/);
+    assert.match(source, /toolbarActions=\{<PresenterActions/);
+    assert.match(fs.readFileSync("src/components/PresenterControls.jsx", "utf8"), /className="presenter-session-present"[^>]*>Present full screen<\/button>/);
+    assert.match(fs.readFileSync("src/components/PresenterControls.jsx", "utf8"), /className="presenter-session-exit"[^>]*>Exit presenter<\/button>/);
     assert.doesNotMatch(source, /className="presenter-top-actions"/);
   }
 
@@ -119,7 +119,7 @@ test("global Focus Mode teaching canvas reserves controls and prioritizes studen
 
   for (const source of [a1, shared]) {
     assert.match(source, /presenter-title-long/);
-    assert.match(source, />Restore<\/button>/);
+    assert.match(fs.readFileSync("src/components/PresenterControls.jsx", "utf8"), />Restore controls<\/button>/);
   }
 
   assert.match(a1, /ref=\{contentRef\}/);
