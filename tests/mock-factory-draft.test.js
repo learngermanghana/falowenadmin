@@ -17,6 +17,7 @@ test("A2 Mock 3 detects missing listening audio, keys and saved student results"
  const draft=newMockDraft("A2",3);
  const errors=validateMockDraft(draft).join(" | ");
  assert.match(errors,/hoeren: verify R2 audio/);
+ assert.match(errors,/hoeren: add the answer count/);
  assert.match(errors,/hoeren: attach the server answer-key draft/);
  assert.match(errors,/student result/);
  assert.match(errors,/idempotent result recovery/);
@@ -40,4 +41,16 @@ test("complete teacher checklist does not create publication permission",()=>{
  for(const key of Object.keys(draft.qa))draft.qa[key]=true;
  assert.deepEqual(validateMockDraft(draft),[]);
  assert.equal(exportMockDraft(draft).includes('"status": "draft"'),true);
+});
+
+test("an empty 0/0 key count is never treated as a valid objective section",()=>{
+ const draft=newMockDraft("A2",3);
+ draft.sections.hoeren.questionCount=0;
+ draft.sections.hoeren.answerKeyCount=0;
+ assert.match(validateMockDraft(draft).join(" | "),/hoeren: add the answer count/);
+ draft.sections.hoeren.questionCount=20;
+ draft.sections.hoeren.answerKeyCount=19;
+ assert.match(validateMockDraft(draft).join(" | "),/hoeren: answer count does not match questions/);
+ draft.sections.hoeren.answerKeyCount=20;
+ assert.doesNotMatch(validateMockDraft(draft).join(" | "),/hoeren: add the answer count|hoeren: answer count does not match questions/);
 });
