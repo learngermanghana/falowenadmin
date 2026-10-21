@@ -120,9 +120,9 @@ test("A1 Presenter exposes teacher-purpose guidance and a full-canvas presentati
   assert.match(source, /function a1TeacherPurpose/);
   assert.match(source, /aria-label="Teacher purpose"/);
   assert.match(source, /!focusMode && teacherPurpose/);
-  assert.match(source, />Present full screen</);
-  assert.match(source, /presenter-focus-dock/);
-  assert.match(source, /aria-label="Restore presenter controls"/);
+  assert.match(fs.readFileSync("src/components/PresenterControls.jsx", "utf8"), />Present full screen</);
+  assert.match(fs.readFileSync("src/components/PresenterControls.jsx", "utf8"), /presenter-focus-dock/);
+  assert.match(fs.readFileSync("src/components/PresenterControls.jsx", "utf8"), /aria-label="Restore presenter controls"/);
   assert.match(source, /presenter-stage \$\{focusMode \? "is-focus-mode" : ""\}/);
   assert.match(css, /\.presenter-stage\.is-focus-mode > \.presenter-participation-dock/);
 });
