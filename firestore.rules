@@ -14,6 +14,21 @@ service cloud.firestore {
     }
 
     // Answer key sync metadata written by Falowen Admin.
+    // Restricted teacher drafts. Never expose draft questions or answer keys to students.
+    match /mockFactoryDrafts/{draftId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin()
+        && request.resource.data.id == draftId
+        && request.resource.data.level in ['A1','A2','B1','B2','C1','C2']
+        && request.resource.data.status in ['draft','review'];
+      allow update: if isAdmin()
+        && resource.data.id == draftId
+        && request.resource.data.id == draftId
+        && request.resource.data.level == resource.data.level
+        && request.resource.data.status in ['draft','review'];
+      allow delete: if false;
+    }
+
     match /answerKeyRegistry/{docId} {
       allow read, write: if isAdmin();
     }
