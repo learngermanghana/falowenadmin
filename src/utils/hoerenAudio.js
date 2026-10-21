@@ -14,7 +14,7 @@ export function formatStudioTranscript(source) {
     // Pause markers are timing metadata, not synthesized speech. Split them
     // before ANY paid clip requests, including pasted "A: [PAUSE 3]".
     .replace(/[ \t]*(\[PAUSE[ \t]+\d{1,2}\])[ \t]*/gi, "\n$1\n")
-    .replace(/(^|\n)[ \t]*[ABC]:[ \t]*(?=\[PAUSE[ \t]+\d{1,2}\](?:\n|$))/gi, "$1")
+    .replace(/(^|\n)[ \t]*[ABC]:[ \t]*(?=\n|$)/gi, "$1")
     .replace(/\n{2,}/g, "\n").trim();
 }
 
