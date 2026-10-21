@@ -7,11 +7,36 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn()
-        && request.auth.token.email in [
-          "moxflex@gmail.com"
-        ];
+      return isSignedIn() && (
+        request.auth.token.get('admin', false) == true ||
+        request.auth.token.get('staff', false) == true ||
+        request.auth.token.get('role', '') in ['admin', 'staff', 'tutor'] ||
+        request.auth.token.get('email', '') in ['moxflex@gmail.com','staff@falowen.app']
+      );
     }
+
+    // Staff may review old and nested student submissions, but students can
+    // only read documents carrying their own authenticated identity.
+    match /{path=**}/submissions/{submissionId} {
+      allow read: if isAdmin() || (isSignedIn() &&
+        (resource.data.get('studentId', '') == request.auth.uid ||
+         resource.data.get('userId', '') == request.auth.uid ||
+         resource.data.get('uid', '') == request.auth.uid));
+      allow write: if isAdmin();
+    }
+
+    // Historical level/student/attempt layout used by the monitoring page.
+    match /submissions/{level}/{studentId}/{attemptId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /{path=**}/posts/{postId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /examTutorReviewQueue/{docId} { allow read, write: if isAdmin(); }
+    match /ai_issue_reports/{docId} { allow read, write: if isAdmin(); }
+    match /markingJobs/{docId} { allow read, write: if isAdmin(); }
 
     // Answer key sync metadata written by Falowen Admin.
     // Restricted teacher drafts. Never expose draft questions or answer keys to students.
