@@ -1692,7 +1692,7 @@
         "label": "Teil 2 Schreiben",
         "hasReferenceAnswers": false,
         "gradingMode": "ai_written_response",
-        "instruction": "Teil 2 is a Schreiben/writing part. There is no fixed reference answer in the answer key. Do not mark the student wrong or give 0 because reference answers are missing. Grade with AI using the writing prompt, CEFR level, task completion, grammar, vocabulary, structure, and clarity."
+        "instruction": "A2 Schreiben Teil 2: Informal email to friend Jan. Check three task points: name favourite sport and how often it is practised; explain why the student enjoys it; invite Jan to do sport together next Saturday. Assess informal greeting and closing, understandable language, task completion, grammar and coherence. No fixed reference answer; never apply the old formal sports-club registration task."
       },
       "teil3": {
         "label": "teil3",
