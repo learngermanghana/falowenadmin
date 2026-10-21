@@ -280,5 +280,5 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
 
 module.exports = {
   MODELS, LIMITS, ownerUid, isStudioOwner, validateSpeechRequest, validateScriptRequest,
-  extractAudio, extractScript, registerHoerenStudioRoutes,
+  extractAudio, extractScript, registerHoerenStudioRoutes, reserveUsage, settleUsage,
 };
