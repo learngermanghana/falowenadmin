@@ -106,3 +106,12 @@ test("Day 15 teaches continuing duration with seit plus dative and present tense
   assert.match(grammar.detailEn, /continues now/i);
   assert.match(slide.teacherSupport.modelExamplesDe.join(" "), /seit zwei Jahren|seit dem Sommer/i);
 });
+
+
+test("Day 15 writing slide now guides an informal email to Jan", () => {
+  const slide = getA2WorkbookAlignedSlideDay11To15("A2-6.15");
+  const writing = slide.workbookConnection.parts.find(part => part.label === "Teil 2 · Schreiben");
+  assert.match(writing.detailEn, /Jan/);
+  assert.match(writing.detailEn, /Saturday/);
+  assert.doesNotMatch(writing.detailEn, /fitness studio|course places/i);
+});
