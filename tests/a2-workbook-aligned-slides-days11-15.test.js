@@ -118,12 +118,22 @@ test("Day 15 writing slide now guides an informal email to Jan", () => {
 });
 
 
-test("Day 15 presenter swaps only practice for Sport-Matchmaker", () => {
-  const util = readFileSync(new URL("../src/utils/teachingPresenter.js", import.meta.url), "utf8");
+test("Day 15 live A2 V2 presenter actually uses the interactive Sport-Matchmaker", async () => {
+  const { buildTeachingPresenterStages } = await import("../src/utils/teachingPresenter.js");
+  const slide = getTeachingSlideByAssignmentId("A2-6.15");
+  const stages = buildTeachingPresenterStages(slide, slide.topic);
+  const practice = stages.filter(stage => stage.id === "practice");
+  assert.equal(practice.length, 1, "replace the existing practice slide, never add a new one");
+  assert.equal(practice[0].type, "sport-matchmaker");
+  assert.equal(practice[0].title, "Sport-Matchmaker");
+  assert.equal(practice[0].items.length, 1);
+  assert.ok(practice[0].suggestedMinutes > 0);
+  assert.equal(stages.filter(stage=>stage.id==="practice").length,1);
+  assert.deepEqual(stages.map(stage=>stage.id), ["intro","warmup","knowledge","phrases","grammar-check","practice","questions","workbook","lesson-summary"]);
+  assert.equal(stages.some(stage=>/Finde die wichtige Information/.test(stage.title || "")),false);
   const view = readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
   const game = readFileSync(new URL("../src/components/A2SportMatchmaker.jsx", import.meta.url), "utf8");
-  assert.match(util, /slide\.assignmentId === "A2-6\.15" \? "sport-matchmaker" : "flow"/);
-  assert.match(view, /<A2SportMatchmaker \/>/);
+  assert.match(view, /stage\.type === "sport-matchmaker" \? \(<A2SportMatchmaker \/>\)/);
   assert.match(game, /Antwort zeigen/);
   assert.match(game, /E-Mail an Jan/);
 });
