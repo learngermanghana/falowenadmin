@@ -415,7 +415,7 @@ export const a2WorkbookAlignedSlidesDays11To15 = [
     assignmentId: "A2-6.15",
     title: "A2 Day 15 · Mein Lieblingssport",
     topic: "6.15 Mein Lieblingssport",
-    objective: "Students discuss sport and training, say how long an activity has continued with seit + Dativ + Präsens, and prepare for the workbook sports-course email and local-sports comprehension tasks.",
+    objective: "Students discuss sport and training, say how long an activity has continued with seit + Dativ + Präsens, and prepare for a short informal email inviting Jan to play sport next Saturday.",
     estimatedDuration: "45–60 minutes",
     warmupQuestionsDe: [
       "Was ist dein Lieblingssport?",
@@ -429,8 +429,8 @@ export const a2WorkbookAlignedSlidesDays11To15 = [
       "Ich spiele seit einem Jahr Fußball.",
       "Ich mache seit meiner Kindheit Sport.",
       "Seit zwei Monaten trainiere ich im Fitnessstudio.",
-      "Gibt es noch freie Plätze im Sportkurs?",
-      "Wie sind die Trainingszeiten und wie viel kostet der Kurs?",
+      "Ich mache Fußball, weil es mir Spaß macht.",
+      "Hast du nächsten Samstag Zeit? Wollen wir zusammen Sport machen?",
     ],
     studentQuestionsDe: [
       "Welchen Sport machst du und warum magst du ihn?",
@@ -465,7 +465,7 @@ export const a2WorkbookAlignedSlidesDays11To15 = [
       "Follow the workbook speaking theme: sport type → training/frequency → health benefit → opinion, and add seit as the lesson's time-language target.",
       "Teach the core meaning first: an activity started in the past and is still true now, so German uses seit + Dativ + Präsens.",
       "Contrast with vor only to clarify meaning: seit zwei Jahren spiele ich ... (continues now) versus vor zwei Jahren habe ich angefangen (past starting point).",
-      "Bridge to the sports-course email: ask about free places, describe experience/motivation and ask about training times/costs.",
+      "Bridge to Schreiben: informal email to Jan with favourite sport and frequency, a reason with weil, and an invitation for next Saturday.",
       "Lesen and Hören both survey local sport opportunities, so use them to recycle vocabulary for fitness studios, clubs, swimming, yoga, climbing and team sports.",
     ],
     interactionFlow: [
@@ -473,7 +473,7 @@ export const a2WorkbookAlignedSlidesDays11To15 = [
       { phase: "Seit timeline", detailEn: "9 min: place starting points on a simple timeline and convert them into seit + Dativ + Präsens sentences." },
       { phase: "Dative time forms", detailEn: "8 min: practise seit einem Monat/einer Woche/einem Jahr/dem Sommer/meiner Kindheit." },
       { phase: "Pair interview", detailEn: "10 min: partners ask Lieblingssport, frequency, seit wann, health benefit and reason." },
-      { phase: "Workbook bridge", detailEn: "7 min: plan the course-registration email and preview local sports vocabulary for Lesen/Hören." },
+      { phase: "Workbook bridge", detailEn: "7 min: plan the informal invitation email to Jan and preview local sports vocabulary for Lesen/Hören." },
     ],
     wrapUpTaskDe: "Sprich oder schreibe 5 Sätze über deinen Lieblingssport. Benutze seit + Dativ + Präsens, eine Häufigkeitsangabe und einen Grund mit weil.",
     workbookConnection: {
@@ -482,13 +482,13 @@ export const a2WorkbookAlignedSlidesDays11To15 = [
       parts: [
         { label: "Grammar", detailEn: "seit + Dativ + Präsens for an activity that started in the past and continues now; contrast with vor + Dativ + past tense for a past starting point/event." },
         { label: "Teil 1 · Sprechen", detailEn: "Discuss favourite sport, training frequency/partners, health benefits and opinion; add how long the activity has continued with seit." },
-        { label: "Teil 2 · Schreiben", detailEn: "Email to a sports club or fitness studio: ask about free course places, describe experience/motivation, and ask about training times and costs." },
+        { label: "Teil 2 · Schreiben", detailEn: "Informal email to Jan: name favourite sport and frequency, explain why with weil, and invite Jan to do sport together next Saturday." },
         { label: "Teil 3 · Lesen", detailEn: "‘Sportangebote in unserer Stadt’: Fit & Fun, Grün-Weiß team sports, city run, swimming hall, senior fitness and the role of sport in quality of life." },
         { label: "Teil 4 · Hören", detailEn: "Local sports offers: Vital Plus courses, summer yoga in the park, Aqua Fun water fitness, climbing park levels and club sports." },
       ],
     },
     teacherSupport: {
-      lessonOverviewEn: "Day 15 combines a familiar sports topic with precise duration language. Students describe what they do, how often and why, then add how long it has been true using seit + dative + present tense. The workbook applies the same vocabulary to a course-registration email and local sports reading/listening.",
+      lessonOverviewEn: "Day 15 combines a familiar sports topic with precise duration language. Students describe what they do, how often and why, then add how long it has been true using seit + dative + present tense. The workbook applies the same vocabulary to an informal email to Jan and local sports reading/listening.",
       grammarFocusEn: [
         "Use seit when something started in the past and is still true now: Ich spiele seit einem Jahr Fußball.",
         "After seit, the time expression is dative: einem Monat, einer Woche, einem Jahr, dem Sommer, meiner Kindheit.",
@@ -499,7 +499,7 @@ export const a2WorkbookAlignedSlidesDays11To15 = [
         "Ich spiele seit zwei Jahren Tennis und trainiere zweimal pro Woche.",
         "Seit dem Sommer gehe ich jeden Samstag joggen.",
         "Ich schwimme seit meiner Kindheit gern, weil ich mich dabei entspannen kann.",
-        "Gibt es noch freie Plätze im Kurs, und wie sind die Trainingszeiten?",
+        "Hallo Jan, ich spiele gern Fußball, weil es Spaß macht. Hast du nächsten Samstag Zeit?",
       ],
       commonMistakesEn: [
         "Using accusative or nominative after seit instead of dative.",
