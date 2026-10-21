@@ -55,7 +55,7 @@ export function inspectHoerenDraft({ script, kind, questions = [], expectedCount
   }
 
   if (spokenLines.some(line => line.text.length > 285)) warnings.push("Some segments are close to the 320-character speech limit.");
-  if (mode === "goethe" && spokenLines.length && new Set(spokenLines.map(line => line.speaker)).size === 1 && /discussion|interview/i.test(profile?.type || "")) {
+  if (mode === "goethe" && spokenLines.length && new Set(spokenLines.map(line => line.speaker)).size === 1 && /dialogue|discussion|interview/i.test(profile?.type || "")) {
     warnings.push("This Teil describes a conversation. Check whether more than one voice is needed.");
   }
   return { errors, warnings, spokenLines, wordCount, pauseCount, readyForVoice: errors.length === 0 };
