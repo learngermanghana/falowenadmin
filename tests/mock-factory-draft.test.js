@@ -17,7 +17,7 @@ test("A2 Mock 3 detects missing listening audio, keys and saved student results"
  const draft=newMockDraft("A2",3);
  const errors=validateMockDraft(draft).join(" | ");
  assert.match(errors,/hoeren: verify R2 audio/);
- assert.match(errors,/hoeren: answer count/);
+ assert.match(errors,/hoeren: attach the server answer-key draft/);
  assert.match(errors,/student result/);
  assert.match(errors,/idempotent result recovery/);
 });
