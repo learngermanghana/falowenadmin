@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -114,4 +115,15 @@ test("Day 15 writing slide now guides an informal email to Jan", () => {
   assert.match(writing.detailEn, /Jan/);
   assert.match(writing.detailEn, /Saturday/);
   assert.doesNotMatch(writing.detailEn, /fitness studio|course places/i);
+});
+
+
+test("Day 15 presenter swaps only practice for Sport-Matchmaker", () => {
+  const util = readFileSync(new URL("../src/utils/teachingPresenter.js", import.meta.url), "utf8");
+  const view = readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
+  const game = readFileSync(new URL("../src/components/A2SportMatchmaker.jsx", import.meta.url), "utf8");
+  assert.match(util, /slide\.assignmentId === "A2-6\.15" \? "sport-matchmaker" : "flow"/);
+  assert.match(view, /<A2SportMatchmaker \/>/);
+  assert.match(game, /Antwort zeigen/);
+  assert.match(game, /E-Mail an Jan/);
 });
