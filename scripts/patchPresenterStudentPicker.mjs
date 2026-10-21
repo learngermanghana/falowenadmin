@@ -51,7 +51,7 @@ for (const { path, signature, nextSignature, fallbackPicker } of presenterPaths)
     source = source.replace(signature, nextSignature);
   }
 
-  if (!source.includes('className="presenter-next-lesson"')) {
+  if (!source.includes('className="presenter-next-lesson"') && !source.includes('<PresenterControls')) {
     const footerAnchor = "          </button>\n        </footer>";
     if (!source.includes(footerAnchor)) {
       throw new Error(`Next lesson footer anchor missing in ${path.pathname}`);
