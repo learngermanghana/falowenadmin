@@ -32,7 +32,9 @@ export function validateMockDraft(draft) {
     if(!Number.isInteger(Number(part.questionCount))||Number(part.questionCount)<1)
       errors.push(`${section}: add the task/question count`);
     if(section==="lesen"||section==="hoeren"){
-      if(Number(part.questionCount)!==Number(part.answerKeyCount))
+      if(Number(part.answerKeyCount)<1 || !Number.isInteger(Number(part.answerKeyCount)))
+        errors.push(`${section}: add the answer count`);
+      else if(Number(part.questionCount)!==Number(part.answerKeyCount))
         errors.push(`${section}: answer count does not match questions`);
       if(!part.answerKeyVerified)errors.push(`${section}: compare answer key with source questions`);
       if(part.answerKeyJson?.trim()){
