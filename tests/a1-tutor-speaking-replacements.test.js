@@ -6,7 +6,6 @@ import { autoMarkSubmission, checkDeterministicObjectiveAnswers } from "../src/u
 
 const configurations = [
   { id: "A1-4", source: "A1 Countries and Languages 4", speaking: "teil2", objective: "teil3", count: 5 },
-  { id: "A1-8", source: "A1 The 24 Hour Clock and Dates 8", speaking: "teil2", objective: "teil1", count: 5 },
   { id: "A1-11", source: "A1 Instructions and Directions 11", speaking: "teil1", objective: "teil2", count: 5 },
 ];
 
@@ -51,3 +50,14 @@ for (const config of configurations) {
     assert.equal(objective.objectiveTotal, config.count);
   });
 }
+
+test("A1-8 uses two objective Lesen parts and no longer needs speaking approval", () => {
+  const entry = normalizeAnswerKeyEntry("A1 The 24 Hour Clock and Dates 8", dictionary["A1 The 24 Hour Clock and Dates 8"]);
+  assert.deepEqual(entry.referenceAnswerParts, ["teil1", "teil2"]);
+  assert.equal(entry.partGrading.teil1.gradingMode, "answer_key");
+  assert.equal(entry.partGrading.teil2.gradingMode, "answer_key");
+  assert.equal(entry.parts.teil1.answers.length, 5);
+  assert.equal(entry.parts.teil2.answers.length, 3);
+  assert.equal(entry.totalAnswers, 8);
+  assert.deepEqual(entry.speakingParts || [], []);
+});

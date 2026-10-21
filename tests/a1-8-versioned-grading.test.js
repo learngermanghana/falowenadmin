@@ -31,21 +31,19 @@ test("A1-8 preserves the former 15-question grading contract", () => {
 });
 
 const currentSubmission = `Teil 1
-1. B
-2. B
-3. C
-4. B
-5. A
+1. Richtig
+2. Richtig
+3. Falsch
+4. Richtig
+5. Richtig
 
 Teil 2
-1. A
-2. A
-3. B
-4. A
-5. B`;
+6. B
+7. C
+8. B`;
 
-test("A1-8 current Day 12 submissions use the new 5+5 key", () => {
+test("A1-8 new Day 12 5+3 reading questions are graded with the new key", () => {
   const result = computeObjectiveScore("A1-8", currentSubmission);
-  assert.equal(result.totalCount, 10);
-  assert.equal(result.correctCount, 10);
+  assert.equal(result.totalCount, 8);
+  assert.equal(result.correctCount, 8);
 });
