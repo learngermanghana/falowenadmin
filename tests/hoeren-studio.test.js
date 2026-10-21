@@ -60,6 +60,15 @@ test("Goethe-style editable transcript parses exact pauses and voices", () => {
   assert.equal(parseStudioTranscript("Eine kurze Ansage.")[0].speaker, "A");
   assert.throws(() => parseStudioTranscript("[PAUSE 50]"), /Pauses/);
 });
+test("inline A2 Teil 3 pauses are separated without billable speech clips", () => {
+  const lines = parseStudioTranscript(
+    "A: Hören Teil Drei. [PAUSE 3]\\nA: Beispiel. Wo treffen sich Anna und Ben?\\nB: Im Buchladen.\\nA: [PAUSE 3]\\nA: Nummer eins. Was möchte der Kunde?\\nB: Drei Brötchen."
+  );
+  assert.deepEqual(lines.map(line => line.type === "pause" ? "pause" : line.speaker),
+    ["A", "pause", "A", "B", "pause", "A", "B"]);
+  assert.ok(lines.every(line => line.type !== "speech" || !line.text.includes("[PAUSE")));
+  assert.equal(lines.filter(line => line.type === "speech").length, 5);
+});
 test("clip assembler produces valid WAV and repeats without another request", async () => {
   const blob = assembleListeningExam(
     parseStudioTranscript("A: Hallo\n[PAUSE 1]\nB: Ja"),
