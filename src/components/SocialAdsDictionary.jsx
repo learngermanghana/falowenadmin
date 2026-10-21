@@ -120,7 +120,7 @@ function accentedText(ctx, line, x, y, design) {
 function drawPoster(ctx, w, h, item, fields, design) {
   const { headline, subheading, benefits, ctaLabel } = fields;
   const margin = 80, maxWidth = w - margin * 2;
-  const benefitY = h - 255, heroTop = Math.round(h * (h <= 1100 ? 0.32 : h <= 1400 ? 0.35 : 0.38));
+  const benefitY = h - 255, minimumHeroTop = Math.round(h * (h <= 1100 ? 0.32 : h <= 1400 ? 0.35 : 0.38));
 
   ctx.textBaseline = "alphabetic";
   ctx.textAlign = "left";
@@ -144,8 +144,12 @@ function drawPoster(ctx, w, h, item, fields, design) {
     headlineLines = nextHeadline;
     subtitleLines = nextSubtitle;
     titleSize = size;
-    if (heroTop + required <= benefitY - 25 && nextHeadline.length <= 4 && nextSubtitle.length <= 3) break;
+    if (minimumHeroTop + required <= benefitY - 25 && nextHeadline.length <= 4 && nextSubtitle.length <= 3) break;
   }
+  const contentHeight = titleSize + Math.max(0, Math.min(4, headlineLines.length) - 1) * titleSize * 1.12
+    + 36 + subtitleSize + Math.max(0, Math.min(3, subtitleLines.length) - 1) * 46;
+  // Cluster headline, subtitle, benefits and CTA at the foot, so faces stay visible above.
+  const heroTop = Math.max(minimumHeroTop, benefitY - contentHeight - 42);
   ctx.font = "800 " + titleSize + "px Arial, sans-serif";
   headlineLines.slice(0, 4).forEach((line, index) => {
     accentedText(ctx, line, margin, heroTop + titleSize + index * titleSize * 1.12, design);
