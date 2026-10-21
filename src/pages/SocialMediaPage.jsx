@@ -5,6 +5,7 @@ import { useToast } from "../context/ToastContext";
 import SocialCourseContentCreator from "../components/SocialCourseContentCreator.jsx";
 import SocialVocabularyCreator from "../components/SocialVocabularyCreator.jsx";
 import SocialAdsDictionary from "../components/SocialAdsDictionary.jsx";
+import SocialGermanChallenges from "../components/SocialGermanChallenges.jsx";
 import { QRCodeCanvas } from "qrcode.react";
 import {
   CAMPAIGN_FORMATS, campaignClassEligibility, accraToday,
@@ -713,10 +714,11 @@ export default function SocialMediaPage() {
       <nav className="social-studio-tabs" aria-label="Social media tools">
         <button type="button" className="social-studio-tab" aria-pressed={activeTab === "creator"} onClick={() => setActiveTab("creator")}>Course Content Creator</button>
         <button type="button" className="social-studio-tab" aria-pressed={activeTab === "posters"} onClick={() => setActiveTab("posters")}>Upcoming Classes</button>
+        <button type="button" className="social-studio-tab" aria-pressed={activeTab === "challenges"} onClick={() => setActiveTab("challenges")}>German Challenges</button>
         <button type="button" className="social-studio-tab" aria-pressed={activeTab === "vocabulary"} onClick={() => setActiveTab("vocabulary")}>Vocabulary</button>
         <button type="button" className="social-studio-tab" aria-pressed={activeTab === "ads"} onClick={() => setActiveTab("ads")}>Ads & Motivation</button>
       </nav>
-      {activeTab === "creator" ? <SocialCourseContentCreator /> : activeTab === "vocabulary" ? <SocialVocabularyCreator /> : activeTab === "ads" ? <SocialAdsDictionary /> : (
+      {activeTab === "creator" ? <SocialCourseContentCreator /> : activeTab === "vocabulary" ? <SocialVocabularyCreator /> : activeTab === "challenges" ? <SocialGermanChallenges /> : activeTab === "ads" ? <SocialAdsDictionary /> : (
         <div className="social-poster-workspace">
           <section className="social-poster-header">
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between" }}>
