@@ -1,3 +1,4 @@
+import PresenterControls, { PresenterActions, PresenterStageJump, usePresenterKeyboard } from "./PresenterControls.jsx";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
 import { getA1GrammarChecks } from "../data/a1GrammarChecks.js";
@@ -297,6 +298,8 @@ export default function A1GrammarPresenter({
 }) {
   const stages = useMemo(() => stageList(slide, topicLabel), [slide, topicLabel]);
   const presenterShellRef = useRef(null);
+  const [reportOpen, setReportOpen] = useState(false);
+  useEffect(() => setReportOpen(false), [slide]);
   const [stageIndex, setStageIndex] = useState(0);
   const [itemIndex, setItemIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -343,7 +346,6 @@ export default function A1GrammarPresenter({
   // Do not give hints during the scored one-question-per-student diagnostic
   // or the final unaided exit check. Teacher checks appear after reveal only.
   const canShowHint = Boolean(activeCoaching && !participationCheckMode && !stage?.exitCheck);
-  const progress = stages.length ? ((stageIndex + 1) / stages.length) * 100 : 0;
 
   function resetQuestionState() {
     setItemIndex(0);
@@ -365,6 +367,7 @@ export default function A1GrammarPresenter({
       setShowHint(false);
       return;
     }
+    if (stageIndex === stages.length - 1) { setReportOpen(true); return; }
     goTo(stageIndex + 1);
   }
 
@@ -552,34 +555,19 @@ export default function A1GrammarPresenter({
     };
   }, [stage?.id, stage?.type, stage?.title, stage?.items, fitMode, focusMode]);
 
-  useEffect(() => {
-    function onKeyDown(event) {
-      const tagName = event.target?.tagName;
-      if (["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(tagName)) return;
-      if (["ArrowRight", "PageDown", " "].includes(event.key)) {
-        event.preventDefault();
-        if (participationCheckMode) return;
-        next();
-      } else if (["ArrowLeft", "PageUp"].includes(event.key)) {
-        event.preventDefault();
-        previous();
-      } else if (event.key === "Home") {
-        event.preventDefault();
-        goTo(0);
-      } else if (event.key === "End") {
-        event.preventDefault();
-        goTo(stages.length - 1);
-      }
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [stageIndex, itemIndex, stage?.id, stages.length, manualCheckMode, participationCheckMode]);
+  usePresenterKeyboard({ previous, next, first: () => goTo(0), last: () => goTo(stages.length - 1),
+    blocked: reportOpen, preventNext: participationCheckMode });
 
   if (!stage) return null;
 
   const atStart = stageIndex === 0 && (!manualCheckMode || itemIndex === 0);
   const atEnd = stageIndex === stages.length - 1 && (!manualCheckMode || itemIndex === stage.items.length - 1);
+
+  const nextTitle = participationCheckMode
+    ? stage.examReadiness
+      ? "This leaves the exam-readiness live check. Use Next student above to test the rest of the class."
+      : "This leaves the class understanding check. Use Next student above to test the rest of the class."
+    : "";
 
   return (
     <div ref={presenterShellRef} className={`presenter-shell ${focusMode ? "is-presentation-mode" : ""}`} role="dialog" aria-modal="true" aria-label="A1 teaching presenter">
@@ -609,12 +597,8 @@ export default function A1GrammarPresenter({
           </div>
         ) : null}
         {focusMode ? (
-          <div className="presenter-focus-dock" aria-label="Presentation controls">
-            <button type="button" onClick={previous} disabled={atStart} aria-label="Previous slide">←</button>
-            <span>{stageIndex + 1}/{stages.length}</span>
-            <button type="button" className="presenter-restore-control" onClick={exitPresentationView} aria-label="Restore presenter controls">Restore</button>
-            <button type="button" onClick={next} disabled={atEnd} aria-label="Next slide">Next slide →</button>
-          </div>
+          <PresenterControls focus index={stageIndex} total={stages.length} atStart={atStart} atEnd={atEnd}
+            onPrevious={previous} onNext={next} onRestore={exitPresentationView} onReport={() => setReportOpen(true)} nextTitle={nextTitle} nextLabel={participationCheckMode ? "Continue lesson →" : manualCheckMode && itemIndex < stage.items.length - 1 ? "Next question →" : "Next slide →"} />
         ) : null}
         <header className="presenter-topbar">
           <div>
@@ -629,21 +613,11 @@ export default function A1GrammarPresenter({
             slide={slide}
             stage={stage}
             onTimeStateChange={setClassTimeState}
-            toolbarActions={(
-              <>
-                <button type="button" className="presenter-session-present" onClick={presentFullscreen}>Present full screen</button>
-                <button type="button" className="presenter-session-exit" onClick={onExit}>Exit presenter</button>
-              </>
-            )}
+            toolbarActions={<PresenterActions onPresent={presentFullscreen} onExit={onExit} onReport={() => setReportOpen(true)} />}
           />
 
           <div className="presenter-v2-tools">
-            <label className="presenter-stage-jump">
-              <span>Jump to</span>
-              <select value={stageIndex} onChange={(event) => goTo(Number(event.target.value))}>
-                {stages.map((item, index) => <option key={item.id} value={index}>{index + 1}. {item.title}</option>)}
-              </select>
-            </label>
+            <PresenterStageJump stages={stages} index={stageIndex} onChange={goTo} />
             <div className={`presenter-timer ${activityTimerExpired ? "presenter-timer-expired" : ""}`} role="group" aria-label="A1 activity timer controls">
               <span className="presenter-timer-mode">Activity timer</span>
               <strong>{formatFocusTime(activityRemainingSeconds)}</strong>
@@ -666,6 +640,8 @@ export default function A1GrammarPresenter({
 
         <div className="presenter-participation-dock" aria-label="Class participation controls">
           <PresenterStudentPicker
+            reportOpen={reportOpen} onReportClose={() => setReportOpen(false)}
+            responseContext={{ question: activeCheck?.questionDe || stage.title, stageId: stage.id }}
             slide={slide}
             questions={participationCheckMode ? stage.items : []}
             questionContext={participationCheckMode ? stage.id : "class-participation"}
@@ -860,38 +836,9 @@ export default function A1GrammarPresenter({
           )}
         </main>
 
-        <footer className="presenter-footer">
-          <button type="button" onClick={previous} disabled={atStart}>← Previous</button>
-          <div className="presenter-progress-wrap" aria-label={`Stage ${stageIndex + 1} of ${stages.length}`}>
-            <span>{stageIndex + 1} / {stages.length}</span>
-            <div className="presenter-progress-track"><div className="presenter-progress-bar" style={{ width: `${progress}%` }} /></div>
-          </div>
-          <button
-            type="button"
-            onClick={next}
-            disabled={atEnd}
-            title={participationCheckMode
-              ? (stage.examReadiness
-                ? "This leaves the exam-readiness live check. Use Next student above to test the rest of the class."
-                : "This leaves the class understanding check. Use Next student above to test the rest of the class.")
-              : ""}
-          >
-            {participationCheckMode
-              ? "Continue lesson →"
-              : manualCheckMode && itemIndex < stage.items.length - 1
-                ? "Nächste Aufgabe →"
-                : "Next →"}
-          </button>
-          {nextLessonHref ? (
-            <a
-              className="presenter-next-lesson"
-              href={nextLessonHref}
-              title={nextLessonLabel || "Open next lesson in Presenter Mode"}
-            >
-              Next lesson{nextLessonLabel ? ` · ${nextLessonLabel}` : ""} →
-            </a>
-          ) : null}
-        </footer>
+        <PresenterControls index={stageIndex} total={stages.length} atStart={atStart} atEnd={atEnd}
+            onPrevious={previous} onNext={next} onRestore={exitPresentationView} onReport={() => setReportOpen(true)} nextTitle={nextTitle} nextLabel={participationCheckMode ? "Continue lesson →" : manualCheckMode && itemIndex < stage.items.length - 1 ? "Next question →" : "Next slide →"}
+          nextLessonHref={nextLessonHref} nextLessonLabel={nextLessonLabel} />
       </div>
     </div>
   );
