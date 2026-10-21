@@ -286,3 +286,13 @@ test("stale transcript blocks answer-key download but leaves audio exports avail
   assert.match(source, /onClick=\{downloadMp3\}/);
   assert.match(source, /Download WAV/);
 });
+
+
+test("A2 Hören Teil 3 prompts require distinct speakers and quality warns on a single voice", () => {
+  const profile = getExamProfile("A2", "3");
+  const prompt = buildExamPrompt(profile, "Einkaufen", "Return valid questions");
+  assert.match(prompt, /B: MUST speak the second conversation partner/);
+  const script = "A: Nummer eins.\nA: Hallo, wo ist der Bahnhof?\nA: Gehen Sie geradeaus bis zur Ampel.\n[PAUSE 3]\nA: Nummer zwei.\nA: Wie teuer ist die Jacke?\nA: Sie kostet vierzig Euro.";
+  const report = inspectHoerenDraft({script,kind:"multiple-choice",questions:[],expectedCount:5,profile,mode:"goethe"});
+  assert.ok(report.warnings.some(w => /more than one voice/i.test(w)));
+});
