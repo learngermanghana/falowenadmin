@@ -1,0 +1,33 @@
+name: German challenge dictionary checks
+on:
+  pull_request:
+    paths:
+      - 'src/data/socialChallenge*.js'
+      - 'src/data/socialGermanChallenges.js'
+      - 'src/utils/socialGermanChallengeRender.js'
+      - 'src/components/SocialGermanChallenges.jsx'
+      - 'src/pages/SocialMediaPage.jsx'
+      - 'tests/social-german-challenges.test.js'
+      - '.github/workflows/social-german-challenges.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/socialChallenge*.js'
+      - 'src/data/socialGermanChallenges.js'
+      - 'src/utils/socialGermanChallengeRender.js'
+      - 'src/components/SocialGermanChallenges.jsx'
+      - 'src/pages/SocialMediaPage.jsx'
+      - 'tests/social-german-challenges.test.js'
+      - '.github/workflows/social-german-challenges.yml'
+permissions:
+  contents: read
+jobs:
+  validate-challenges:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate 120 original challenges, captions and export contracts
+        run: node --test tests/social-german-challenges.test.js
