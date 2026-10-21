@@ -7,7 +7,7 @@ test("Presentation view remains full-canvas with only compact navigation", () =>
   const css = fs.readFileSync("src/components/TeachingSlidePresenter.css", "utf8");
 
   assert.match(presenter, /Presentation view/);
-  assert.match(presenter, /aria-label="Restore presenter controls"/);
+  assert.match(fs.readFileSync("src/components/PresenterControls.jsx", "utf8"), /aria-label="Restore presenter controls"/);
   assert.doesNotMatch(presenter, />Show marking</);
   assert.match(css, /\.presenter-stage\.is-focus-mode > \.presenter-topbar/);
   assert.match(css, /\.presenter-stage\.is-focus-mode > \.presenter-student-picker/);
