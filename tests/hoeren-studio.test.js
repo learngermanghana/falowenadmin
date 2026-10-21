@@ -62,7 +62,7 @@ test("Goethe-style editable transcript parses exact pauses and voices", () => {
 });
 test("inline A2 Teil 3 pauses are separated without billable speech clips", () => {
   const lines = parseStudioTranscript(
-    "A: Hören Teil Drei. [PAUSE 3]\\nA: Beispiel. Wo treffen sich Anna und Ben?\\nB: Im Buchladen.\\nA: [PAUSE 3]\\nA: Nummer eins. Was möchte der Kunde?\\nB: Drei Brötchen."
+    "A: Hören Teil Drei. [PAUSE 3]\nA: Beispiel. Wo treffen sich Anna und Ben?\nB: Im Buchladen.\nA: [PAUSE 3]\nA: Nummer eins. Was möchte der Kunde?\nB: Drei Brötchen."
   );
   assert.deepEqual(lines.map(line => line.type === "pause" ? "pause" : line.speaker),
     ["A", "pause", "A", "B", "pause", "A", "B"]);
