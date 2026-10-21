@@ -12,6 +12,7 @@ import { getA2B1AdminLessonProfileForSlide } from "../data/a2B1LessonProfile.js"
 import { getPresenterSlidePhoto } from "../utils/presenterSlidePhotos.js";
 import { nextB1Day18CareerIndex } from "../data/b1Day18CareerChallenge.js";
 import B1HousingChoicePractice from "./B1HousingChoicePractice.jsx";
+import A2SportMatchmaker from "./A2SportMatchmaker.jsx";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import "./TeachingSlidePresenter.css";
@@ -1719,7 +1720,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 Paararbeit: Tauscht die Rollen und ersetzt Ghana, Deutschland und die Sprachen durch eigene Beispiele.
               </p>
             </section>
-          ) : stage.type === "flow" ? (
+          ) : stage.type === "sport-matchmaker" ? (<A2SportMatchmaker />) : stage.type === "flow" ? (
             <>
               <div className="presenter-practice-heading">
                 <div>
