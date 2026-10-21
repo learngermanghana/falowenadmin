@@ -291,6 +291,7 @@ function buildExamPrompt(profile, topic, questionInstructions) {
     "Required authentic-style format: " + profile.structure + ".",
     "Write around " + profile.wordTarget + " SPOKEN German words, with suitable CEFR " + profile.level + " vocabulary and natural pacing.",
     speakerRule,
+    ...(profile.type === "dialogue" || profile.type === "interview" ? ["MANDATORY CONVERSATION VOICES: A: is the narrator and first conversation partner; B: MUST speak the second conversation partner\u0027s turns. Alternate A: and B: for natural conversational exchanges. Do not mark both participants A:. Every independent conversation must include at least one B: response. Narration such as Nummer eins remains A:. Keep under 36 spoken segments overall."] : []),
     "Use rich and internally consistent details, avoid repeated generic assertions. Ensure every answer is unambiguous from the spoken script.",
     questionInstructions
   ].join("\n");
