@@ -91,7 +91,7 @@ export const CHALLENGE_QUIZZES = [
   {
     "level": "A1",
     "topic": "Verb endings",
-    "prompt": "Choose the correct sentence.",
+    "prompt": "Which sentence means “She works in Berlin”?",
     "options": [
       "Sie arbeitet in Berlin.",
       "Sie arbeiten in Berlin."
