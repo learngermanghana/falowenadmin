@@ -1987,7 +1987,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
     },
     { id: "grammar", type: "list", kicker: "Grammatik", title: advanced ? "Neue Strukturen" : "Grammar focus", items: grammarItems, suggestedMinutes: interactionMinutes(slide, 1) || 10 },
     { id: "examples", type: "list", kicker: "Beispiele", title: advanced ? "Modellsätze" : "Model examples", items: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [], suggestedMinutes: interactionMinutes(slide, 2) || 8 },
-    { id: "practice", type: "flow", kicker: "Übung", title: advanced ? "Geführte Übung" : "Guided practice", items: practiceItems },
+    { id: "practice", type: slide.assignmentId === "A2-6.15" ? "sport-matchmaker" : "flow", kicker: "Übung", title: slide.assignmentId === "A2-6.15" ? "Sport-Matchmaker" : (advanced ? "Geführte Übung" : "Guided practice"), items: practiceItems },
     ...(level === "A1" && slide.presenterDialogue?.turns?.length ? [{
       id: "travel-dialogue",
       type: "dialogue",

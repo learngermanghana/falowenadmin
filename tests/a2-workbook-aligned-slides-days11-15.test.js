@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -105,4 +106,24 @@ test("Day 15 teaches continuing duration with seit plus dative and present tense
   assert.match(grammar.detailEn, /seit \+ Dativ \+ Präsens/i);
   assert.match(grammar.detailEn, /continues now/i);
   assert.match(slide.teacherSupport.modelExamplesDe.join(" "), /seit zwei Jahren|seit dem Sommer/i);
+});
+
+
+test("Day 15 writing slide now guides an informal email to Jan", () => {
+  const slide = getA2WorkbookAlignedSlideDay11To15("A2-6.15");
+  const writing = slide.workbookConnection.parts.find(part => part.label === "Teil 2 · Schreiben");
+  assert.match(writing.detailEn, /Jan/);
+  assert.match(writing.detailEn, /Saturday/);
+  assert.doesNotMatch(writing.detailEn, /fitness studio|course places/i);
+});
+
+
+test("Day 15 presenter swaps only practice for Sport-Matchmaker", () => {
+  const util = readFileSync(new URL("../src/utils/teachingPresenter.js", import.meta.url), "utf8");
+  const view = readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
+  const game = readFileSync(new URL("../src/components/A2SportMatchmaker.jsx", import.meta.url), "utf8");
+  assert.match(util, /slide\.assignmentId === "A2-6\.15" \? "sport-matchmaker" : "flow"/);
+  assert.match(view, /<A2SportMatchmaker \/>/);
+  assert.match(game, /Antwort zeigen/);
+  assert.match(game, /E-Mail an Jan/);
 });
