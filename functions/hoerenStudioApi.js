@@ -113,17 +113,42 @@ async function readUsage(db, uid) {
   return { script: Number(data.script || 0), speech: Number(data.speech || 0) };
 }
 
-// Reserve before sending to Google; a failed API call may still incur a bill.
-// Firestore transactions ensure overlapping requests cannot bypass daily caps.
+// Reserve atomically before calling Google. Release an unsuccessful reservation
+// exactly once, even when cleanup is retried after a transient Firestore failure.
+// Google may still bill for a failed/timeout response; our owner-only limits
+// count only completed, usable Studio outputs.
 async function reserveUsage(db, uid, kind) {
   const ref = usageRef(db, uid);
-  return db.runTransaction(async (transaction) => {
+  const reservation = ref.collection("attempts").doc();
+  const remaining = await db.runTransaction(async transaction => {
     const snapshot = await transaction.get(ref);
     const used = Number(snapshot.data()?.[kind] || 0);
     if (used >= LIMITS[kind]) throw Object.assign(new Error(`Daily ${kind} limit reached. Try again tomorrow.`), { status: 429 });
     transaction.set(ref, { [kind]: used + 1, updatedAt: new Date().toISOString() }, { merge: true });
+    transaction.create(reservation, { kind, status: "reserved", createdAt: new Date().toISOString() });
     return LIMITS[kind] - used - 1;
   });
+  return { remaining, reservation, usage: ref, kind };
+}
+async function settleUsage(db, slot, succeeded) {
+  if (!slot) return;
+  await db.runTransaction(async transaction => {
+    const marker = await transaction.get(slot.reservation);
+    if (!marker.exists || marker.data()?.status !== "reserved") return;
+    if (!succeeded) {
+      const usage = await transaction.get(slot.usage);
+      const used = Number(usage.data()?.[slot.kind] || 0);
+      transaction.set(slot.usage, { [slot.kind]: Math.max(0, used - 1), updatedAt: new Date().toISOString() }, { merge: true });
+    }
+    transaction.update(slot.reservation, { status: succeeded ? "succeeded" : "refunded", settledAt: new Date().toISOString() });
+  });
+}
+async function refundFailedRequest(db, slot) {
+  if (!slot) return;
+  try { await settleUsage(db, slot, false); }
+  catch (refundError) {
+    console.error("hoeren_studio_quota_refund_failed", { kind: slot.kind, reservationId: slot.reservation.id, message: refundError?.message });
+  }
 }
 
 function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeConfig }) {
@@ -156,11 +181,13 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
   });
 
   app.post("/ai-studio/script", guard, async (req, res) => {
+    let slot;
     try {
       const { level, type, topic, profile, kind, lessonContext } = validateScriptRequest(req.body);
       const key = String(geminiKey.value() || "").trim();
       if (!key) return res.status(503).json({ ok: false, error: "Gemini API key is not configured." });
-      const remaining = await reserveUsage(db, req.hoerenOwnerUid, "script");
+      slot = await reserveUsage(db, req.hoerenOwnerUid, "script");
+      const remaining = slot.remaining;
       const result = await postGemini(
         `https://generativelanguage.googleapis.com/v1beta/models/${SCRIPT_MODEL}:generateContent`,
         key,
@@ -171,12 +198,14 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
       );
       const draft = extractLessonDraft(result, profile?.questionCount || 5);
       if (draft.kind !== kind) throw new Error("Google returned the wrong answer format.");
+      await settleUsage(db, slot, true);
       return res.json({ ok: true, ...draft, remaining });
-    } catch (error) { return handleError(res, error); }
+    } catch (error) { await refundFailedRequest(db, slot); return handleError(res, error); }
   });
 
   // Optional separate generation; spends one of the same five daily script requests.
   app.post("/ai-studio/questions", guard, async (req, res) => {
+    let slot;
     try {
       const script = String(req.body?.script || "").trim();
       const kind = String(req.body?.kind || "richtig-falsch");
@@ -191,7 +220,8 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
       if (profile && kind !== profile.kind) return res.status(400).json({ ok: false, error: "Question type must match the selected Teil." });
       const key = String(geminiKey.value() || "").trim();
       if (!key) return res.status(503).json({ ok: false, error: "Gemini API key is not configured." });
-      const remaining = await reserveUsage(db, req.hoerenOwnerUid, "script");
+      slot = await reserveUsage(db, req.hoerenOwnerUid, "script");
+      const remaining = slot.remaining;
       const result = await postGemini(
         `https://generativelanguage.googleapis.com/v1beta/models/${SCRIPT_MODEL}:generateContent`, key,
         { contents: [{ role: "user", parts: [{ text:
@@ -210,16 +240,19 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
       if (generated.kind && generated.kind !== kind) throw Object.assign(new Error("Gemini returned the wrong question type. Please retry."), { status: 502 });
       // Evidence must match the original script, never a rewritten version.
       const questions = validateQuestionSet({ script, kind, questions: generated.questions, expectedCount: profile?.questionCount || 5 });
+      await settleUsage(db, slot, true);
       return res.json({ ok: true, questions, kind, remaining });
-    } catch (error) { return handleError(res, error); }
+    } catch (error) { await refundFailedRequest(db, slot); return handleError(res, error); }
   });
 
   app.post("/ai-studio/speech", guard, async (req, res) => {
+    let slot;
     try {
       const { text, speaker, engine } = validateSpeechRequest(req.body);
       const key = String(geminiKey.value() || "").trim();
       if (!key) return res.status(503).json({ ok: false, error: "Gemini API key is not configured." });
-      const remaining = await reserveUsage(db, req.hoerenOwnerUid, "speech");
+      slot = await reserveUsage(db, req.hoerenOwnerUid, "speech");
+      const remaining = slot.remaining;
       const result = await postGemini(
         "https://generativelanguage.googleapis.com/v1beta/interactions",
         key,
@@ -238,8 +271,10 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
         45_000,
       );
       res.set("Cache-Control", "no-store");
-      return res.json({ ok: true, ...extractAudio(result), remaining });
-    } catch (error) { return handleError(res, error); }
+      const audio = extractAudio(result);
+      await settleUsage(db, slot, true);
+      return res.json({ ok: true, ...audio, remaining });
+    } catch (error) { await refundFailedRequest(db, slot); return handleError(res, error); }
   });
 }
 
