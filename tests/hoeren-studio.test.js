@@ -11,7 +11,7 @@ const { EXAM_PROFILES, getExamProfile, buildExamPrompt } = require("../functions
 const { validateQuestionSet, extractLessonDraft, questionInstructions } = require("../functions/hoerenQuestions.js");
 const {
   MODELS, LIMITS, ownerUid, isStudioOwner, validateSpeechRequest,
-  validateScriptRequest, extractAudio, extractScript,
+  validateScriptRequest, extractAudio, extractScript, reserveUsage, settleUsage,
 } = require("../functions/hoerenStudioApi.js");
 
 function fakeWav() {
@@ -295,4 +295,51 @@ test("A2 Hören Teil 3 prompts require distinct speakers and quality warns on a 
   const script = "A: Nummer eins.\nA: Hallo, wo ist der Bahnhof?\nA: Gehen Sie geradeaus bis zur Ampel.\n[PAUSE 3]\nA: Nummer zwei.\nA: Wie teuer ist die Jacke?\nA: Sie kostet vierzig Euro.";
   const report = inspectHoerenDraft({script,kind:"multiple-choice",questions:[],expectedCount:5,profile,mode:"goethe"});
   assert.ok(report.warnings.some(w => /more than one voice/i.test(w)));
+});
+
+test("failed generation refunds exactly once, while success consumes a credit", async () => {
+  const records = new Map();
+  let nextId = 0;
+  const makeRef = id => ({
+    id,
+    collection: () => ({ doc: () => makeRef("attempt-" + (++nextId)) }),
+  });
+  const db = {
+    collection: () => ({ doc: id => makeRef("usage-" + id) }),
+    runTransaction: async work => {
+      const mutations = [];
+      const transaction = {
+        get: async ref => ({
+          exists: records.has(ref.id),
+          data: () => records.get(ref.id),
+        }),
+        set: (ref, data, options) => mutations.push(() => records.set(ref.id, {
+          ...(options?.merge ? records.get(ref.id) : {}),
+          ...data,
+        })),
+        create: (ref, data) => mutations.push(() => {
+          if (records.has(ref.id)) throw new Error("Duplicate reservation");
+          records.set(ref.id, data);
+        }),
+        update: (ref, data) => mutations.push(() => records.set(ref.id, {
+          ...records.get(ref.id), ...data,
+        })),
+      };
+      const value = await work(transaction);
+      mutations.forEach(mutate => mutate());
+      return value;
+    },
+  };
+  const first = await reserveUsage(db, "owner", "speech");
+  const usage = () => records.get(first.usage.id).speech;
+  assert.equal(usage(), 1);
+  await settleUsage(db, first, false);
+  assert.equal(usage(), 0);
+  await settleUsage(db, first, false);
+  assert.equal(usage(), 0);
+  const second = await reserveUsage(db, "owner", "speech");
+  await settleUsage(db, second, true);
+  assert.equal(usage(), 1);
+  await settleUsage(db, second, false);
+  assert.equal(usage(), 1);
 });
