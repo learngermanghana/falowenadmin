@@ -38,9 +38,9 @@ const currentSubmission = `Teil 1
 5. Richtig
 
 Teil 2
-1. B
-2. C
-3. B`;
+6. B
+7. C
+8. B`;
 
 test("A1-8 new Day 12 5+3 reading questions are graded with the new key", () => {
   const result = computeObjectiveScore("A1-8", currentSubmission);
