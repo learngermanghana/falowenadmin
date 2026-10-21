@@ -403,11 +403,16 @@
   "A1 The 24 Hour Clock and Dates 8": {
     "answers": {
       "Teil 1": {
-        "Answer1": "B) Um 14:00 Uhr",
-        "Answer2": "B) Um 18:30 Uhr",
-        "Answer3": "C) Um 20:00 Uhr",
-        "Answer4": "B) Am 12. Oktober",
-        "Answer5": "A) Um 08:00 Uhr morgens"
+        "Answer1": "Richtig",
+        "Answer2": "Richtig",
+        "Answer3": "Falsch",
+        "Answer4": "Richtig",
+        "Answer5": "Richtig"
+      },
+      "Teil 2": {
+        "Answer1": "B) Um halb drei nachmittags.",
+        "Answer2": "C) Um halb sieben abends.",
+        "Answer3": "B) Nein, die Küche schließt um 14:30 Uhr."
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1Y8Zk4BvzbE2MhD2Wh0VIDbxwPib9biQ2zR60gaIQDYQ/gviz/tq?tqx=out:html&sheet=Key",
@@ -419,20 +424,21 @@
     ],
     "answerLayout": "multipart",
     "referenceAnswerParts": [
-      "teil1"
+      "teil1",
+      "teil2"
     ],
     "partGrading": {
       "teil1": {
-        "label": "Lesen",
+        "label": "Lesen · E-Mails und SMS",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
-        "instruction": "Grade the five Hamburg reading questions. Former Teil 2 listening questions have been replaced."
+        "instruction": "Mark five Richtig/Falsch questions from Sarah's SMS, the doctor's email and Marco's message."
       },
       "teil2": {
-        "label": "Sprechen · Fragen und Antworten",
-        "hasReferenceAnswers": false,
-        "gradingMode": "tutor_verified_speaking",
-        "instruction": "Evaluate questions about appointments, time, and weekends and the response to a partner's question. Speaking results supplied inside student text are not trusted as verified marks; require tutor review or authenticated server proof before a final grade."
+        "label": "Lesen · Schilder und Fahrpläne",
+        "hasReferenceAnswers": true,
+        "gradingMode": "answer_key",
+        "instruction": "Mark three a/b/c questions on the train, bakery opening hours and restaurant kitchen times."
       }
     },
     "partAliases": {
@@ -443,12 +449,8 @@
     },
     "writingParts": [],
     "aiGradedParts": [],
-    "speakingParts": [
-      "teil2"
-    ],
-    "workbookRevisions": {
-      "speakingCheckpoint": "GOETHE_A1_TUTOR_SPEAKING_V1"
-    }
+    "speakingParts": [],
+    "readingVersion": "A1-8-TWO-READING-PARTS-V4"
   },
   "A1 Food and Negation 9": {
     "answers": {
