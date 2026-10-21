@@ -1626,6 +1626,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
           kicker: "Mitmach-Spiel · seit + Dativ",
           title: "Sport-Matchmaker",
           instruction: "Höre die Hinweise. Welcher Sport passt? Begründe mit weil und seit + Dativ.",
+          items: [{ ...focusedPractice, title: "Sport-Matchmaker", minutes: 8 }],
           suggestedMinutes: 8,
           teacherPurpose: {
             student: "Erkenne den Sport und bilde einen Satz mit seit, Häufigkeit und weil.",
