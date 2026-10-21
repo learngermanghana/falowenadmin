@@ -221,10 +221,18 @@ const A2_KNOWLEDGE = {
   "A2-6.15": {
     ...getPresenterReadingLesson("A2-6.15"),
     activity: {
-      title: "Finde die wichtige Information",
-      instruction: "Lest drei Sportpläne und entscheidet, welcher zum Ziel passt.",
-      prompts: ["Ziel: Entspannung nach der Arbeit", "Plan A: jeden Tag intensives Wettkampftraining", "Plan B: dreimal pro Woche moderates Training mit Pausen"],
-      modelItems: ["Plan B passt besser zum Ziel Entspannung.", "Regelmäßigkeit und Erholung sind wichtig."],
+      title: "Sport-Matchmaker",
+      instruction: "Hört die Sport-Hinweise, wählt die passende Sportart und begründet mit weil und seit + Dativ.",
+      prompts: [
+        "Lena trainiert im Wasser. Welchen Sport macht sie?",
+        "Ben spielt in einer Mannschaft. Seit wann spielt er?",
+        "Mia trainiert auf einer Matte. Warum gefällt ihr dieser Sport?",
+      ],
+      modelItems: [
+        "Lena schwimmt seit einem Jahr, weil sie sich entspannen möchte.",
+        "Ben spielt seit drei Jahren Fußball, weil er gern mit Freunden spielt.",
+        "Mia macht seit zwei Monaten Yoga, weil sie sich danach besser fühlt.",
+      ],
     },
   },
   "A2-6.16": {

@@ -81,7 +81,7 @@ test("all A2 days use Presenter 2.0 with workbook-aligned classroom support", ()
       assert.ok(challenge.items.length >= 1, slide.assignmentId);
       assert.ok(challenge.suggestedMinutes > 0, slide.assignmentId);
     } else {
-      assert.equal(practice.type, "flow");
+      assert.equal(practice.type, slide.assignmentId === "A2-6.15" ? "sport-matchmaker" : "flow");
       assert.equal(practice.items.length, 1, slide.assignmentId);
       assert.ok(practice.items[0].minutes > 0, slide.assignmentId);
     }

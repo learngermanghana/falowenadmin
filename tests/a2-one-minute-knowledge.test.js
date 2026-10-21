@@ -63,7 +63,7 @@ test("A2 Presenter uses the stable teaching spine and removes repetitive ending 
     assert.equal(grammar.items.length, 3, `${assignmentId} grammar should be checked in three short steps`);
     assert.ok(grammar.items.every((item) => item.prompt && item.answer), `${assignmentId} grammar checks need teacher keys`);
 
-    assert.equal(practice.type, "flow");
+    assert.equal(practice.type, assignmentId === "A2-6.15" ? "sport-matchmaker" : "flow");
     assert.equal(practice.items.length, 1, `${assignmentId} should have one focused practice, not a repeated drill stack`);
     assert.ok(practice.items[0].prompts?.length >= 2, `${assignmentId} focused practice should be actionable`);
 

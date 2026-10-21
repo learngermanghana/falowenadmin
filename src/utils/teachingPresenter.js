@@ -1617,6 +1617,22 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
       },
       buildA2B1GrammarCheckStage(slide, support, level),
       ...(() => {
+        // Day 15 has its own interactive sport game. The V2 presenter returns
+        // above the generic fallback, so its practice must be replaced HERE.
+        // Preserve the "practice" ID and one-slide layout for saved sessions.
+        if (normalizedAssignmentId(slide) === "A2-6.15") return [{
+          id: "practice",
+          type: "sport-matchmaker",
+          kicker: "Mitmach-Spiel · seit + Dativ",
+          title: "Sport-Matchmaker",
+          instruction: "Höre die Hinweise. Welcher Sport passt? Begründe mit weil und seit + Dativ.",
+          items: [{ ...focusedPractice, title: "Sport-Matchmaker", minutes: 8 }],
+          suggestedMinutes: 8,
+          teacherPurpose: {
+            student: "Erkenne den Sport und bilde einen Satz mit seit, Häufigkeit und weil.",
+            teacher: "Zeige ein Profil, lass erst raten, dann die Lösung aufdecken. Spiele mehrere Runden und führe zur E-Mail an Jan über.",
+          },
+        }];
         const challenge = getA2TeacherChallenge(normalizedAssignmentId(slide));
         if (challenge) return [{
           id: "scenario-challenge",
@@ -1987,7 +2003,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
     },
     { id: "grammar", type: "list", kicker: "Grammatik", title: advanced ? "Neue Strukturen" : "Grammar focus", items: grammarItems, suggestedMinutes: interactionMinutes(slide, 1) || 10 },
     { id: "examples", type: "list", kicker: "Beispiele", title: advanced ? "Modellsätze" : "Model examples", items: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [], suggestedMinutes: interactionMinutes(slide, 2) || 8 },
-    { id: "practice", type: slide.assignmentId === "A2-6.15" ? "sport-matchmaker" : "flow", kicker: "Übung", title: slide.assignmentId === "A2-6.15" ? "Sport-Matchmaker" : (advanced ? "Geführte Übung" : "Guided practice"), items: practiceItems },
+    { id: "practice", type: "flow", kicker: "Übung", title: advanced ? "Geführte Übung" : "Guided practice", items: practiceItems },
     ...(level === "A1" && slide.presenterDialogue?.turns?.length ? [{
       id: "travel-dialogue",
       type: "dialogue",
