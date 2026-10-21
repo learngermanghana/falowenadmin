@@ -10,12 +10,12 @@ export function formatStudioTranscript(source) {
   // "Modell A: günstig, B: schnell".
   return String(source || "").replace(/\r\n/g, "\n")
     .replace(/(?<=[.!?]),[ \t]*(?=(?:[ABC]:[ \t]|\[PAUSE[ \t]+\d{1,2}\]))/gi, "\n")
-    .replace(/(\\[PAUSE[ \\t]+\\d{1,2}\\]),[ \\t]*(?=[ABC]:[ \\t])/gi, "$1\\n")
+    .replace(/(\[PAUSE[ \t]+\d{1,2}\]),[ \t]*(?=[ABC]:[ \t])/gi, "$1\n")
     // Pause markers are timing metadata, not synthesized speech. Split them
     // before ANY paid clip requests, including pasted "A: [PAUSE 3]".
-    .replace(/[ \\t]*(\\[PAUSE[ \\t]+\\d{1,2}\\])[ \\t]*/gi, "\\n$1\\n")
-    .replace(/(^|\\n)[ \\t]*[ABC]:[ \\t]*(?=\\[PAUSE[ \\t]+\\d{1,2}\\](?:\\n|$))/gi, "$1")
-    .replace(/\\n{2,}/g, "\\n").trim();
+    .replace(/[ \t]*(\[PAUSE[ \t]+\d{1,2}\])[ \t]*/gi, "\n$1\n")
+    .replace(/(^|\n)[ \t]*[ABC]:[ \t]*(?=\[PAUSE[ \t]+\d{1,2}\](?:\n|$))/gi, "$1")
+    .replace(/\n{2,}/g, "\n").trim();
 }
 
 // Repair common pasted exam narration without guessing at dialogue in sentences.
