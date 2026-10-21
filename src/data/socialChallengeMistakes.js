@@ -164,9 +164,9 @@ export const CHALLENGE_MISTAKES = [
   {
     "level": "B2",
     "topic": "Konjunktiv I",
-    "incorrect": "Er behauptet, er ist unschuldig.",
-    "correct": "Er behauptet, er sei unschuldig.",
-    "explanation": "In formal reported speech, Konjunktiv I “sei” marks indirect speech."
+    "incorrect": "Die Expertin sagt, das System funktionier.",
+    "correct": "Die Expertin sagt, das System funktioniere.",
+    "explanation": "In formal reported speech, the Konjunktiv I form of “funktionieren” is “funktioniere”."
   },
   {
     "level": "B2",
@@ -178,9 +178,9 @@ export const CHALLENGE_MISTAKES = [
   {
     "level": "B2",
     "topic": "Formal genitive",
-    "incorrect": "Wegen dem starken Regen wurde abgesagt.",
+    "incorrect": "Wegen des starken Regen wurde abgesagt.",
     "correct": "Wegen des starken Regens wurde abgesagt.",
-    "explanation": "Formal written German uses genitive after “wegen”."
+    "explanation": "After “wegen des”, the masculine genitive noun also requires the ending “-s”: “Regens”."
   },
   {
     "level": "B2",
