@@ -314,8 +314,18 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
       if (!snapshot.exists) return res.status(404).json({ ok: false, error: "Student not found" });
       const student = snapshot.data() || {};
       // Do not create a second sign-in account or change the student's UID.
-      if (!cleanStudentId(student.uid || student.authUid || student.firebaseUid)) {
+      const uid = cleanStudentId(student.uid || student.authUid || student.firebaseUid);
+      if (!uid) {
         return res.status(409).json({ ok: false, error: "Student account has no Firebase UID. Link their existing sign-in identity before activating trial access." });
+      }
+      if (typeof admin.auth === "function") {
+        try { await admin.auth().getUser(uid); }
+        catch (error) {
+          if (String(error?.code || "") === "auth/user-not-found") {
+            return res.status(409).json({ ok: false, error: "Firebase login for this UID does not exist. Resolve the account sign-in first; do not create a duplicate student row." });
+          }
+          throw error;
+        }
       }
       const patch = makeManualTrialPatch(student, new Date(), admin.firestore.FieldValue);
       patch.updatedBy = String(user?.email || user?.uid || "").trim();
