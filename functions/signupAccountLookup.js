@@ -3,7 +3,7 @@
 const clean = value => String(value || "").trim();
 const lower = value => clean(value).toLowerCase();
 const ownerEmail = "moxflex@gmail.com";
-const emailPattern = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function lookupSignupAccount({ admin, db, email }) {
   let authUser = null;
@@ -52,7 +52,7 @@ async function lookupSignupAccount({ admin, db, email }) {
 function registerSignupAccountLookup(app, { admin, db }) {
   app.get("/admin/signup-account-lookup", async (req, res) => {
     const header = clean(req.headers.authorization);
-    const token = header.match(/^Bearer (\\S+)$/);
+    const token = header.match(/^Bearer (\S+)$/);
     if (!token) return res.status(401).json({ ok: false, error: "Sign in to check an account." });
     let actor;
     try {
