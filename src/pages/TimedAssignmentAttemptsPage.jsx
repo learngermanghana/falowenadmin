@@ -287,12 +287,14 @@ export default function TimedAssignmentAttemptsPage() {
   const filteredPractices = useMemo(() => filterExamRoomPractices(practiceRows,
     { search: practiceSearch, level: practiceLevel, section: practiceSection }),
     [practiceRows, practiceSearch, practiceLevel, practiceSection]);
-  const practiceStudents = useMemo(() => new Set(practiceRows.map(row =>
+  const practiceStudents = useMemo(() => new Set(filteredPractices.map(row =>
     row.studentCode?.toLowerCase() || row.email || row.uid).filter(Boolean)).size,
-    [practiceRows]);
-  const notPractised = useMemo(() => Array.isArray(practiceRoster)
-    ? unpractisedStudents(practiceRoster, practiceRows, practiceLevel)
-    : [], [practiceRoster, practiceRows, practiceLevel]);
+    [filteredPractices]);
+  const notPractised = useMemo(() => Array.isArray(practiceRoster) && practiceFetchedAt
+    ? unpractisedStudents(practiceRoster,
+        practiceRows.filter(row => practiceSection === "all" || row.section === practiceSection),
+        practiceLevel)
+    : [], [practiceRoster, practiceRows, practiceLevel, practiceSection, practiceFetchedAt]);
   const filteredTimed = useMemo(() => filterTimedAttempts(attempts, query, timedStatus), [attempts, query, timedStatus]);
   const displayedTimed = useMemo(() => {
     const known = new Set(filteredTimed.map(item => item.id));
@@ -470,7 +472,7 @@ export default function TimedAssignmentAttemptsPage() {
           </p>
           <div className="monitor-summary" aria-label="Exam practice summary">
             {[
-              ["Saved practice attempts", practiceRows.length],
+              ["Saved practice attempts", filteredPractices.length],
               ["Students with saved practice", practiceStudents],
               ["No saved practice", practiceRoster ? notPractised.length : "Load roster"],
             ].map(([label,value])=><div className="monitor-summary-card" key={label}><span>{label}</span><strong>{value}</strong></div>)}
@@ -511,7 +513,7 @@ export default function TimedAssignmentAttemptsPage() {
           <div style={{borderTop:"1px solid #e2e8f0",paddingTop:12,display:"grid",gap:8}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
               <strong>Who has not practised?</strong>
-              <button type="button" onClick={() => void loadPracticeRoster()} disabled={practiceRosterLoading}>
+              <button type="button" onClick={() => void loadPracticeRoster()} disabled={practiceRosterLoading || !practiceFetchedAt}>
                 {practiceRosterLoading ? "Loading roster…" : practiceRoster ? "Reload class roster" : "Compare with student roster"}
               </button>
             </div>
