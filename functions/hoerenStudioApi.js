@@ -7,7 +7,7 @@ const MODELS = Object.freeze({
   flash: "gemini-3.8-flash-tts",
 });
 const SCRIPT_MODEL = "gemini-3.5-flash-lite";
-const LIMITS = Object.freeze({ script: 10, speech: 36 });
+const LIMITS = Object.freeze({ script: 20, speech: 72 });
 const ALLOWED_LEVELS = new Set(["A1", "A2", "B1", "B2", "C1", "C2"]);
 const ALLOWED_TYPES = new Set(["dialogue", "announcement", "telephone", "podcast", "radio", "interview", "discussion", "lecture"]);
 const crypto = require("node:crypto");
@@ -43,6 +43,23 @@ function validateSpeechRequest(body = {}) {
   return { text, speaker, engine };
 }
 
+// Scenes use one Google request for up to two voices instead of one request per turn.
+function validateSceneRequest(body = {}) {
+  const engine = String(body.engine || "lite").trim();
+  if (!Object.hasOwn(MODELS, engine)) throw Object.assign(new Error("Unsupported voice engine."), { status: 400 });
+  const turns = Array.isArray(body.turns) ? body.turns : [{ text: body.text, speaker: body.speaker }];
+  if (!turns.length || turns.length > 8) throw Object.assign(new Error("Each scene needs 1–8 speaking turns."), { status: 400 });
+  const cleaned = turns.map(turn => {
+    const checked = validateSpeechRequest({ text: turn?.text, speaker: turn?.speaker, engine });
+    return { text: checked.text, speaker: checked.speaker };
+  });
+  if (new Set(cleaned.map(turn => turn.speaker)).size > 2) throw Object.assign(new Error("Google allows at most two voices per scene."), { status: 400 });
+  if (cleaned.reduce((total, turn) => total + turn.text.length, 0) > 520) {
+    throw Object.assign(new Error("Each scene must contain at most 520 spoken characters. Split into smaller scenes."), { status: 400 });
+  }
+  return { turns: cleaned, engine };
+}
+
 function validateScriptRequest(body = {}) {
   const level = String(body.level || "A1").toUpperCase();
   const type = String(body.type || "dialogue").toLowerCase();
@@ -66,7 +83,7 @@ function extractAudio(result = {}) {
   const audio = blocks.filter((block) => block.type === "audio").at(-1);
   if (!audio?.data || typeof audio.data !== "string") throw new Error("Google did not return audio.");
   const bytes = Buffer.from(audio.data, "base64");
-  if (bytes.length < 44 || bytes.length > 2_600_000 ||
+  if (bytes.length < 44 || bytes.length > 4_000_000 ||
       bytes.toString("ascii", 0, 4) !== "RIFF" || bytes.toString("ascii", 8, 12) !== "WAVE") {
     throw new Error("Google returned unsupported or oversized WAV audio.");
   }
@@ -92,7 +109,7 @@ async function postGemini(url, key, payload, timeoutMs = 38_000) {
       signal: controller.signal,
     });
     if (!response.ok) {
-      if (response.status === 429) throw Object.assign(new Error("Google's free API quota is exhausted. Try again later."), { status: 429 });
+      if (response.status === 429) throw Object.assign(new Error("Google returned rate limit 429 for this project/model. Falowen's remaining allowance is separate from Google's minute/day/token quota. Completed voice scenes are saved in your browser; check Google AI Studio rate limits before retrying."), { status: 429 });
       if (response.status === 402 || response.status === 403) throw Object.assign(new Error("The Gemini API key or billing access needs attention."), { status: 503 });
       throw Object.assign(new Error("Google service could not complete the request (upstream error). Your existing draft was not changed. Please retry later."), { status: 502 });
     }
@@ -248,27 +265,34 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
   app.post("/ai-studio/speech", guard, async (req, res) => {
     let slot;
     try {
-      const { text, speaker, engine } = validateSpeechRequest(req.body);
+      const { turns, engine } = validateSceneRequest(req.body);
       const key = String(geminiKey.value() || "").trim();
       if (!key) return res.status(503).json({ ok: false, error: "Gemini API key is not configured." });
       slot = await reserveUsage(db, req.hoerenOwnerUid, "speech");
       const remaining = slot.remaining;
+      const voice = { A: "Kore", B: "Puck", C: "Charon" };
+      const speakerIds = [...new Set(turns.map(turn => turn.speaker))];
+      const speechConfig = speakerIds.length === 1
+        ? [{ voice: voice[speakerIds[0]] }]
+        : { mode: "conversational", speakers: speakerIds.map(speaker => ({ speaker, voice: voice[speaker] })) };
       const result = await postGemini(
         "https://generativelanguage.googleapis.com/v1beta/interactions",
         key,
         {
           model: MODELS[engine],
+          store: false,
           input: [{
             type: "user_input",
-            content: [{
-              type: "text", text,
-              annotations: [{ type: "speech_metadata", style: "Clear, natural standard German pronunciation, realistic Goethe-style exam practice, neutral speaking pace." }],
-            }],
+            content: turns.map(turn => ({
+              type: "text", text: turn.text,
+              annotations: [{ type: "speech_metadata", ...(speakerIds.length > 1 ? { speaker: turn.speaker } : {}),
+                style: "Clear, natural standard German, suitable for Goethe-style listening practice; calm and neutral pace." }],
+            })),
           }],
           response_format: { type: "audio", mime_type: "audio/wav" },
-          generation_config: { speech_config: [{ voice: speaker === "A" ? "Kore" : speaker === "B" ? "Puck" : "Charon" }] },
+          generation_config: { speech_config: speechConfig },
         },
-        45_000,
+        60_000,
       );
       res.set("Cache-Control", "no-store");
       const audio = extractAudio(result);
@@ -279,6 +303,6 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
 }
 
 module.exports = {
-  MODELS, LIMITS, ownerUid, isStudioOwner, validateSpeechRequest, validateScriptRequest,
+  MODELS, LIMITS, ownerUid, isStudioOwner, validateSpeechRequest, validateSceneRequest, validateScriptRequest,
   extractAudio, extractScript, registerHoerenStudioRoutes, reserveUsage, settleUsage,
 };
