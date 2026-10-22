@@ -57,15 +57,17 @@ const CUES = Object.freeze({
 // hospital scene. Leave those recordings clean; manual override stays possible.
 function classifyScene(text) {
   const matches = Object.entries(CUES).filter(([, pattern]) => pattern.test(text)).map(([scene]) => scene);
-  return matches.length === 1 ? matches[0] : "none";
+  return matches.length === 1 ? matches[0] : matches.length > 1 ? "mixed" : "none";
 }
 export function suggestRecordingScene({ script = "", topic = "", type = "", mode = "course" } = {}) {
+  if (["radio", "podcast", "interview", "discussion", "lecture", "telephone"].includes(type)) return "none";
   const lines = String(script).split(/\[PAUSE\s+\d{1,2}\]/i);
-  const situations = lines.map(classifyScene).filter(scene => scene !== "none");
+  const detected = lines.map(classifyScene);
+  if (detected.includes("mixed")) return "none";
+  const situations = detected.filter(scene => scene !== "none");
   const unique = [...new Set(situations)];
   if (unique.length > 1) return "none";
   if (unique.length === 1) return unique[0];
-  if (["radio", "podcast", "interview", "discussion", "lecture", "telephone"].includes(type)) return "none";
   if (mode === "goethe" && lines.length > 2) return "none";
   return classifyScene(topic);
 }
