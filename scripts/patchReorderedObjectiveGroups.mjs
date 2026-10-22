@@ -153,12 +153,14 @@ const questionGroupHelper = `function splitQuestionGroupBlocks(text = "") {
 }
 
 ${questionGroupHelperAnchor}`;
-source = replaceOnce(
-  source,
-  questionGroupHelperAnchor,
-  questionGroupHelper,
-  "Q-numbered objective group helper",
-);
+if (!source.includes("function splitQuestionGroupBlocks(text = \"\") {")) {
+  source = replaceOnce(
+    source,
+    questionGroupHelperAnchor,
+    questionGroupHelper,
+    "Q-numbered objective group helper",
+  );
+}
 
 const groupSelectionBefore = "  const groups = sectionGroups.length > 1 ? sectionGroups : blockGroups.length > 1 ? blockGroups : sectionGroups.length ? sectionGroups : blockGroups;";
 const groupSelectionAfter = `  const questionGroups = splitQuestionGroupBlocks(submissionText);
