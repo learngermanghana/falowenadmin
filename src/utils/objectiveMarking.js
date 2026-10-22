@@ -533,7 +533,8 @@ const A1_6_WORKBOOK_V2_ANSWERS = {
   "Teil 2": { Answer1: "B", Answer2: "A", Answer3: "C", Answer4: "B", Answer5: "C" },
 };
 
-// Revised Day 11 signs reading; Hören retains the current recorded exercise.
+// Preserve old A1-7 recordings for historical attempts. New workbook
+// submissions explicitly carry A1-7-HOEREN-V3 to select the replacement key.
 const A1_7_READING_V1_ANSWERS = {
   "Teil 1": {
     Answer1: "B) Zwei Tage",
@@ -548,6 +549,23 @@ const A1_7_READING_V1_ANSWERS = {
     Answer3: "A) Richtig",
     Answer4: "B) Um sechs Uhr",
     Answer5: "A) Um Viertel vor sechs, er holt Anna ab.",
+  },
+};
+
+const A1_7_HOEREN_V3_ANSWERS = {
+  "Teil 1": {
+    Answer1: "Falsch",
+    Answer2: "Richtig",
+    Answer3: "Richtig",
+    Answer4: "Richtig",
+    Answer5: "Falsch",
+  },
+  "Teil 2": {
+    Answer1: "B) Um 16:00 Uhr",
+    Answer2: "B) Um 6:30 Uhr",
+    Answer3: "C) Er sieht fern.",
+    Answer4: "B) Um 18:00 Uhr",
+    Answer5: "A) Tom holt Anna ab.",
   },
 };
 
@@ -619,6 +637,7 @@ export function selectVersionedObjectiveReferenceEntry(referenceEntry = {}, subm
   }
   if (normalizeAssignmentId(resolvedAssignmentId) === "A1-7") {
     const revisedReading = /A1-7-READING-V2/i.test(submissionText);
+    const revisedListening = /A1-7-HOEREN-V3/i.test(submissionText);
     // Choose only one reference representation, even when Firestore has both
     // normalized parts and rawAnswers from a previous answer-key sync.
     const {
@@ -629,7 +648,7 @@ export function selectVersionedObjectiveReferenceEntry(referenceEntry = {}, subm
     } = referenceEntry || {};
     return {
       ...baseReference,
-      answers: revisedReading ? A1_7_READING_V2_ANSWERS : A1_7_READING_V1_ANSWERS,
+      answers: revisedListening ? A1_7_HOEREN_V3_ANSWERS : revisedReading ? A1_7_READING_V2_ANSWERS : A1_7_READING_V1_ANSWERS,
       totalAnswers: 10,
       expectedParts: ["teil1", "teil2"],
       referenceAnswerParts: ["teil1", "teil2"],

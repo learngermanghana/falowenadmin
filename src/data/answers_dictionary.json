@@ -359,11 +359,11 @@
         "Answer5": "Falsch"
       },
       "Teil 2": {
-        "Answer1": "Richtig",
-        "Answer2": "Falsch",
-        "Answer3": "Richtig",
-        "Answer4": "B) Um sechs Uhr",
-        "Answer5": "A) Um Viertel vor sechs, er holt Anna ab."
+        "Answer1": "B) Um 16:00 Uhr",
+        "Answer2": "B) Um 6:30 Uhr",
+        "Answer3": "C) Er sieht fern.",
+        "Answer4": "B) Um 18:00 Uhr",
+        "Answer5": "A) Tom holt Anna ab."
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1dCI5BbOvfvI4RekolDshv19jyNFPmzenDSrgBMGL9Uk/gviz/tq?tqx=out:html&sheet=Key",
@@ -389,7 +389,7 @@
         "label": "Hören",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
-        "instruction": "Grade Hören only against the reference answers in Teil 2."
+        "instruction": "Grade the current A1 Day 11 five A/B/C Hören questions about Tagesablauf & Uhrzeiten (Deutschkurs 16:00; Anna gets up 06:30; Tom watches TV at 20:00; Supermarkt closes 18:00; Tom collects Anna). Do not use the withdrawn true/false listening questions or old YouTube video reference."
       }
     },
     "partAliases": {
@@ -398,7 +398,8 @@
       "Teil 1": "teil1",
       "Teil 2": "teil2"
     },
-    "readingVersion": "A1-7-READING-V2"
+    "readingVersion": "A1-7-READING-V2",
+    "listeningVersion": "A1-7-HOEREN-V3"
   },
   "A1 The 24 Hour Clock and Dates 8": {
     "answers": {
