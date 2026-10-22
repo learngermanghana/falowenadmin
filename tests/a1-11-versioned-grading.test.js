@@ -41,32 +41,33 @@ test("A1-11 preserves the former 15-answer grading contract", () => {
   assert.equal(result.correctCount, 15);
 });
 
-const currentSubmission = `Teil 1
-1. B
-2. A
-3. C
-4. B
-5. A
-
-Teil 2
+const currentSubmission = `Teil 2
 1. A
 2. B
 3. A
 4. B
-5. A`;
+5. A
 
-test("A1-11 current answer sheet excludes replaced Teil 1 reading", () => {
+Teil 3
+1. Richtig
+2. Falsch
+3. Falsch
+4. Richtig
+5. Falsch`;
+
+test("A1-11 current answer sheet includes Hören and new Wegbeschreibung Lesen", () => {
   const result = computeObjectiveScore("A1-11", currentSubmission);
-  assert.equal(result.totalCount, 5);
-  assert.equal(result.correctCount, 5);
+  assert.equal(result.totalCount, 10);
+  assert.equal(result.correctCount, 10);
 });
 
 
 test("A1-11 production deterministic scorer preserves the legacy 15-answer key from a normalized registry entry", () => {
   assert.equal(currentReferenceEntry.assignmentKey, "A1-11");
-  assert.equal(currentReferenceEntry.totalAnswers, 5);
+  assert.equal(currentReferenceEntry.totalAnswers, 10);
   assert.equal(currentReferenceEntry.parts?.teil1, undefined);
   assert.equal(currentReferenceEntry.parts?.teil2?.answerCount, 5);
+  assert.equal(currentReferenceEntry.parts?.teil3?.answerCount, 5);
 
   const result = checkDeterministicObjectiveAnswers({
     referenceEntry: currentReferenceEntry,
@@ -78,13 +79,13 @@ test("A1-11 production deterministic scorer preserves the legacy 15-answer key f
   assert.equal(result.objectiveScore, 100);
 });
 
-test("A1-11 production deterministic scorer uses the five remaining Hören answers", () => {
+test("A1-11 production deterministic scorer uses all ten Hören and Lesen answers", () => {
   const result = checkDeterministicObjectiveAnswers({
     referenceEntry: currentReferenceEntry,
     submissionText: currentSubmission,
   });
   assert.ok(result);
-  assert.equal(result.objectiveTotal, 5);
-  assert.equal(result.objectiveCorrect, 5);
+  assert.equal(result.objectiveTotal, 10);
+  assert.equal(result.objectiveCorrect, 10);
   assert.equal(result.objectiveScore, 100);
 });
