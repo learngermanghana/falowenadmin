@@ -1,12 +1,12 @@
 // Shared production defaults for all CEFR levels. These change local playback or
 // speaker labels only; they never rewrite the words or answer evidence.
-const NARRATION = /^(?:hören\\b|sie hören\\b|lesen sie\\b|markieren sie\\b|kreuzen sie\\b|zu jedem text\\b|entscheiden sie\\b|beispiel\\b|nummer\\s+(?:\\d+|eins|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn)\\b|aufgabe\\s+\\d+\\b|ende (?:von )?hören\\b|jetzt hören sie\\b|sie bekommen\\b|wählen sie\\b)/iu;
-const PAUSE = /^\\[PAUSE\\s+\\d{1,2}\\]$/i;
-const SPOKEN = /^([ABCD]):\\s*(.+)$/i;
+const NARRATION = /^(?:hören\b|sie hören\b|lesen sie\b|markieren sie\b|kreuzen sie\b|zu jedem text\b|entscheiden sie\b|beispiel\b|nummer\s+(?:\d+|eins|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn)\b|aufgabe\s+\d+\b|ende (?:von )?hören\b|jetzt hören sie\b|sie bekommen\b|wählen sie\b)/iu;
+const PAUSE = /^\[PAUSE\s+\d{1,2}\]$/i;
+const SPOKEN = /^([ABCD]):\s*(.+)$/i;
 const CAST = ["B", "C", "D"];
 
 export function assignGoetheSpeakers(source) {
-  const lines = String(source || "").replace(/\\r\\n/g, "\\n").split("\\n");
+  const lines = String(source || "").replace(/\r\n/g, "\n").split("\n");
   // Each pause-delimited recording is a fresh situation. The presenter is A;
   // independent speakers use B/C/D, rotating on successive monologues.
   let start = 0;
@@ -42,16 +42,16 @@ export function assignGoetheSpeakers(source) {
     }
   }
   rewriteGroup(lines.length);
-  return output.join("\\n");
+  return output.join("\n");
 }
 
 const CUES = Object.freeze({
-  airport: /\\b(?:flughafen|flugzeug|flug|terminal|gate|landebahn|abflug|ankunftsterminal|airport)\\b/iu,
-  station: /\\b(?:bahnhof|bahnsteig|gleis|zug|s-bahn|u-bahn|ice|schaffner|hauptbahnhof|train station)\\b/iu,
-  cafe: /\\b(?:café|cafe|restaurant|speisekarte|kellner|kellnerin|mittagessen|bäckerei)\\b/iu,
-  supermarket: /\\b(?:supermarkt|kaufhaus|laden|einkaufen|kasse|umtauschen|lebensmittel|geschäft)\\b/iu,
-  clinic: /\\b(?:arztpraxis|krankenhaus|apotheke|ärztin|rezept|patient|sprechstunde)\\b/iu,
-  street: /\\b(?:straßenverkehr|ampel|straßenbahn|zebrastreifen|fußgänger|parkplatz)\\b/iu,
+  airport: /\b(?:flughafen|flugzeug|flug|terminal|gate|landebahn|abflug|ankunftsterminal|airport)\b/iu,
+  station: /\b(?:bahnhof|bahnsteig|gleis|zug|s-bahn|u-bahn|ice|schaffner|hauptbahnhof|train station)\b/iu,
+  cafe: /\b(?:café|cafe|restaurant|speisekarte|kellner|kellnerin|mittagessen|bäckerei)\b/iu,
+  supermarket: /\b(?:supermarkt|kaufhaus|laden|einkaufen|kasse|umtauschen|lebensmittel|geschäft)\b/iu,
+  clinic: /\b(?:arztpraxis|krankenhaus|apotheke|ärztin|rezept|patient|sprechstunde)\b/iu,
+  street: /\b(?:straßenverkehr|ampel|straßenbahn|zebrastreifen|fußgänger|parkplatz)\b/iu,
 });
 // An exam with several locations must not put a train-station sound under a
 // hospital scene. Leave those recordings clean; manual override stays possible.
@@ -60,7 +60,7 @@ function classifyScene(text) {
   return matches.length === 1 ? matches[0] : "none";
 }
 export function suggestRecordingScene({ script = "", topic = "", type = "", mode = "course" } = {}) {
-  const lines = String(script).split(/\\[PAUSE\\s+\\d{1,2}\\]/i);
+  const lines = String(script).split(/\[PAUSE\s+\d{1,2}\]/i);
   const situations = lines.map(classifyScene).filter(scene => scene !== "none");
   const unique = [...new Set(situations)];
   if (unique.length > 1) return "none";
