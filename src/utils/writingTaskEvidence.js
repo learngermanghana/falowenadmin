@@ -52,6 +52,29 @@ function ruleForPoint(label = "", assignmentKey = "") {
     }
   }
 
+  if (normalizedAssignmentKey === "A2-6.15") {
+    // Falowen learner workbook: informal email to Jan about favourite sport.
+    // The historical formal Sportverein/Kursplatz task is no longer assigned.
+    if (/name your favourite sport and how often you practise it/.test(value)) {
+      return [
+        /\b(?:lieblingssport|fu[ßs]ball|schwimmen|joggen|laufen|yoga|tennis|badminton|fitness|basketball|volleyball|radfahren|sport|trainiere|spiele)\b/i,
+        /\b(?:einmal|zweimal|dreimal|viermal|f[uü]nfmal|sechsmal|\d+\s*mal)\s+(?:pro|in\s+der)\s+woche\b|\b(?:jede[nrs]?|alle)\s+(?:montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag|woche|tag)\b/i,
+      ];
+    }
+    if (/explain why you enjoy this sport/.test(value)) {
+      return [
+        /\b(?:fu[ßs]ball|schwimmen|joggen|laufen|yoga|tennis|badminton|fitness|basketball|volleyball|radfahren|sport|spielen|trainieren|es|das)\b/i,
+        /\b(?:weil|denn|deshalb|darum|spa[ßs]|entspannend|gesund|freude|gef[aä]llt)\b/i,
+      ];
+    }
+    if (/invite jan to do sport together next saturday/.test(value)) {
+      return [
+        /\b(?:n[aä]chsten|kommenden)?\s*(?:samstag|samtag)\b/i,
+        /\b(?:hast\s+du|m[oö]chtest\s+du|willst\s+du|kommst\s+du|wollen\s+wir|k[oö]nnen\s+wir|lass\s+uns|lade\s+dich\s+ein)\b/i,
+      ];
+    }
+  }
+
   if (normalizedAssignmentKey === "A2-4.10") {
     // Current learner coursebook: invite a friend to explore a city, NOT a festival.
     if (/name the city or neighbourhood and explain why/i.test(value)) {

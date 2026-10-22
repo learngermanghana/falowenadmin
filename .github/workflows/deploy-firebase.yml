@@ -8,6 +8,8 @@ on:
     paths:
       - 'functions/**'
       - 'src/data/answers_dictionary.json'
+      - 'src/data/a2WritingTaskSpecs.js'
+      - 'src/utils/writingTaskEvidence.js'
       - 'scripts/**'
       - 'firebase.json'
       - 'firestore.indexes.json'
