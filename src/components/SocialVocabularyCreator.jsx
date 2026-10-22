@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import SocialVocabularyVideoCreator from "./SocialVocabularyVideoCreator.jsx";
+import SocialPhotoGallery from "./SocialPhotoGallery.jsx";
 
 const SHEET_ID = "1I1yAnqzSh3DPjwWRh9cdRSfzNSPsi7o4r5Taj9Y36NU";
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
@@ -67,7 +68,7 @@ function wrap(ctx, text, x, y, width, lineHeight, maxLines = 3) {
   return y;
 }
 async function loadImage(url) {
-  if (!url || !/^https:\/\//i.test(url)) return null;
+  if (!url || !/^(https:\/\/|data:image\/(jpeg|png|webp);base64,)/i.test(url)) return null;
   return new Promise(resolve => {
     const img = new Image();
     img.crossOrigin = "anonymous";
@@ -90,6 +91,7 @@ export default function SocialVocabularyCreator() {
   const [format, setFormat] = useState("portrait");
   const [studioMode, setStudioMode] = useState("video");
   const [overrides, setOverrides] = useState({});
+  const [selectedGalleryId, setSelectedGalleryId] = useState("");
   const [ready, setReady] = useState(false);
   const [imageWarning, setImageWarning] = useState(false);
   useEffect(() => {
@@ -226,13 +228,13 @@ export default function SocialVocabularyCreator() {
       <div style={{display:"grid",gap:12,padding:18,border:"1px solid #e2e8f0",borderRadius:14,background:"white"}}>
         <label>Level <select value={level} onChange={e=>setLevel(e.target.value)} style={{display:"block",width:"100%",padding:10}}>{["A1","A2","B1","B2","C1"].map(v=><option key={v}>{v}</option>)}</select></label>
         <label>Search ready vocabulary <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search German or English" style={{display:"block",width:"100%",padding:10,boxSizing:"border-box"}} /></label>
-        <label>Word <select value={word?.id || ""} disabled={!available.length} onChange={e=>setSelected(e.target.value)} style={{display:"block",width:"100%",padding:10}}>
+        <label>Word <select value={word?.id || ""} disabled={!available.length} onChange={e=>{setSelected(e.target.value); setOverrides({}); setSelectedGalleryId("");}} style={{display:"block",width:"100%",padding:10}}>
           {filtered.map(w=><option value={w.id} key={w.id}>{w.german} — {w.english}</option>)}
         </select></label>
-        <button type="button" disabled={!available.length} onClick={()=>{const pool=available.filter(w=>w.id!==word?.id && !w.lastPosted); const next=pool.length?pool:available.filter(w=>w.id!==word?.id); if(next.length) setSelected(String(next[Math.floor(Math.random()*next.length)].id));}}>Pick another word</button>
+        <button type="button" disabled={!available.length} onClick={()=>{const pool=available.filter(w=>w.id!==word?.id && !w.lastPosted); const next=pool.length?pool:available.filter(w=>w.id!==word?.id); if(next.length) { setSelected(String(next[Math.floor(Math.random()*next.length)].id)); setOverrides({}); setSelectedGalleryId(""); }}}>Pick another word</button>
         <small>{loading?"Loading vocabulary…":`${available.length} ready words in ${level}`}. Only sheet rows marked Ready with both translations are eligible.</small>
         {studioMode==="poster" && <label>Post format <select value={format} onChange={e=>setFormat(e.target.value)} style={{display:"block",width:"100%",padding:10}}><option value="portrait">Instagram portrait · 1080×1350</option><option value="square">Square · 1080×1080</option><option value="story">Story · 1080×1920</option></select></label>}
-        {data && <><h3 style={{margin:"8px 0 0"}}>Edit this export only</h3>{field("german","German word")}{field("english","English meaning")}{field("exampleDE","German sentence")}{field("exampleEN","English sentence")}{field("grammar","Grammar tip")}{field("imageUrl","Image URL (optional)")}<small>Edits here do not change your Google Sheet.</small></>}
+        {data && <><h3 style={{margin:"8px 0 0"}}>Edit this export only</h3>{field("german","German word")}{field("english","English meaning")}{field("exampleDE","German sentence")}{field("exampleEN","English sentence")}{field("grammar","Grammar tip")}{field("imageUrl","Image URL (optional)")}{studioMode === "poster" && <SocialPhotoGallery activeId={selectedGalleryId} defaultOpen={false} onSelect={(image, photo) => {setOverrides(prev => ({...prev, imageUrl: image})); setSelectedGalleryId(photo.id);}} />}<small>Edits here do not change your Google Sheet.</small></>}
       </div>
       <div style={{display:studioMode==="poster"?"grid":"none",gap:12,padding:18,border:"1px solid #e2e8f0",borderRadius:14,background:"white"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}><strong>Live PNG preview</strong><button type="button" onClick={download} disabled={!ready}>Export PNG</button></div>
