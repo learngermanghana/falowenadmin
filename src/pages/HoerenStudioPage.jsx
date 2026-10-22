@@ -403,8 +403,8 @@ export default function HoerenStudioPage() {
       {serverError ? <div className="hoeren-alert" role="alert">Studio setup: {serverError}. Access is disabled until the owner UID and Gemini API key are configured securely.</div> : null}
       {status && !ready ? <div className="hoeren-alert" role="alert">The Gemini API secret has not been configured. Script and audio generation are disabled.</div> : null}
       <section className="hoeren-usage" aria-label="Daily API limits">
-        <div><strong>{status ? status.remaining.script : "—"}</strong><span>scripts remaining today</span></div>
-        <div><strong>{status ? status.remaining.speech : "—"}</strong><span>voice clips remaining today</span></div>
+        <div><strong>{status ? status.remaining.script : "—"}</strong><span>script requests remaining today</span></div>
+        <div><strong>{status ? status.remaining.speech : "—"}</strong><span>speech requests remaining today</span></div>
         <div className="hoeren-usage-note">Falowen safety limits reset daily (UTC); Google has its own per-model/project minute, day and token quotas. These displayed counts do not guarantee Google's availability. Completed scenes are cached on this device, not on the server.</div>
         <button type="button" className="hoeren-quiet" disabled={refreshingQuota} onClick={() => reloadStatus(true)}>{refreshingQuota ? "Refreshing quota…" : "Refresh quota"}</button>
         {quotaNotice ? <p role="status" className="hoeren-hint">{quotaNotice}</p> : null}
@@ -479,7 +479,7 @@ export default function HoerenStudioPage() {
           </div>}
           <div className="hoeren-input-grid">
             <label>Recording style<input value={selectedProfile?.type || type} readOnly /></label>
-            <label>Voice segments budget<input value={`Up to 36 spoken lines · ${status?.remaining.speech ?? "—"} Falowen calls left today`} readOnly /></label>
+            <label>Recording limits<input value={`Up to 36 spoken lines · ${status?.remaining.speech ?? "—"} Falowen calls left today`} readOnly /></label>
           </div>
           <label>{mode === "course" ? "Lesson-aligned audio topic (optional subtopic)" : "Topic for an original exam script"}<input value={topic} disabled={!!busy} maxLength={240} onChange={(event) => { setTopic(event.target.value); clearAudio(); }} placeholder="e.g. Shopping at a supermarket" /></label>
           <button className="hoeren-button" type="button" disabled={!ready || !!busy || topic.trim().length < 4 || !status?.remaining.script || (mode === "goethe" && !selectedProfile) || (mode === "course" && !selectedCourseEntry)} onClick={generateScript}>{busy === "script" ? "Generating script…" : mode === "goethe" ? "Generate complete Goethe task" : "Generate Course Book script + questions"}</button>
@@ -507,7 +507,7 @@ export default function HoerenStudioPage() {
               <strong>Preset · {questionCount} questions · {QUESTION_KINDS[questionKind]}</strong>
               <p>The selected Goethe {level === "C2" ? "Aufgabe" : "Teil"} determines the question type and number automatically. No manual format selection.</p>
             </div>}
-            <p className="hoeren-hint">AI creates the script and questions together in one request. Regenerating questions from edited text uses one of your five daily script requests. Review the answer key and evidence before using any activity.</p>
+            <p className="hoeren-hint">AI creates the script and questions together in one request. Regenerating questions from edited text uses one of Falowen's daily script requests. Review the answer key and evidence before using any activity.</p>
             <button type="button" className="hoeren-quiet" disabled={!ready || !!busy || !status?.remaining.script || script.trim().length < 35} onClick={generateQuestions}>
               {busy === "questions" ? "Creating questions…" : `Generate ${questionCount} questions · one script quota`}
             </button>
