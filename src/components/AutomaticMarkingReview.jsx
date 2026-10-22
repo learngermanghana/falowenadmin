@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { closeAutomaticMarkingReview, loadAutomaticMarkingPage, openAutomaticMarking, saveAutomaticMarkingReview } from '../services/automaticMarkingReviewService.js';
+import { closeAutomaticMarkingReview, loadAutomaticMarkingPage, loadMarkingHealth, openAutomaticMarking, saveAutomaticMarkingReview } from '../services/automaticMarkingReviewService.js';
 import { assignmentTitle } from '../utils/assignmentTitle.js';
+import { auth } from '../firebase.js';
 import { automaticPublicationLabel, automaticReviewReasons, isAutomaticResultPublished } from '../utils/automaticReviewStatus.js';
 
 export default function AutomaticMarkingReview() {
@@ -14,6 +15,15 @@ export default function AutomaticMarkingReview() {
   const [reason, setReason] = useState('');
   const [showReviewed, setShowReviewed] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [health, setHealth] = useState(null);
+  const [healthBusy, setHealthBusy] = useState(false);
+  const [healthError, setHealthError] = useState('');
+  async function refreshHealth() {
+    setHealthBusy(true); setHealthError('');
+    try { setHealth(await loadMarkingHealth()); }
+    catch (err) { setHealthError(err.message); }
+    finally { setHealthBusy(false); }
+  }
   async function load(more = false) {
     setBusy(true); setError('');
     try {
@@ -62,6 +72,25 @@ export default function AutomaticMarkingReview() {
   const original = detail?.audit?.result || detail?.row.result;
   return <section className="marking-card" aria-label="Automatic marking audit">
     <h2>AI-marked work</h2>
+    {String(auth.currentUser?.email || '').toLowerCase() === 'moxflex@gmail.com' && <section aria-label="Marking health" style={{ padding: 12, border: '1px solid #cbd5e1', borderRadius: 8, marginBottom: 16 }}>
+      <h3>Marking health</h3>
+      <p>Check queued, delayed, review-required and Sheet sync jobs without scanning all student submissions.</p>
+      <button type="button" disabled={healthBusy} onClick={refreshHealth}>{healthBusy ? 'Checking…' : 'Check marking health'}</button>
+      {healthError && <p role="alert">{healthError}</p>}
+      {health && <div>
+        <p role="status">Checked {new Date(health.checkedAt).toLocaleString()}. These are bounded samples, not system-wide totals.</p>
+        <p>Marking pending: {health.samples.pending.sampled}{health.samples.pending.capped ? '+' : ''} · Running: {health.samples.marking.sampled}{health.samples.marking.capped ? '+' : ''} · Tutor review: {health.samples.needs_review.sampled}{health.samples.needs_review.capped ? '+' : ''}</p>
+        <p>Sheet export pending: {health.sheetSync.pending.sampled}{health.sheetSync.pending.capped ? '+' : ''} · Sheet export review: {health.sheetSync.needs_review.sampled}{health.sheetSync.needs_review.capped ? '+' : ''}</p>
+        {health.rows.some(row => row.overdue || row.status === 'needs_review') && <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', textAlign: 'left' }}>
+          <thead><tr><th>Assignment</th><th>Student code</th><th>Marking status</th><th>Attempts</th><th>Reason</th></tr></thead>
+          <tbody>{health.rows.filter(row => row.overdue || row.status === 'needs_review').slice(0, 25).map(row => <tr key={row.id}>
+            <td>{row.assignmentKey || 'Unknown'}</td><td>{row.studentCode || 'See saved submission'}</td>
+            <td>{row.overdue ? 'Delayed · ' : ''}{row.status}</td><td>{row.attempts}</td><td>{row.error || row.errorKind || 'Check submission receipt in Saved Drafts'}</td>
+          </tr>)}</tbody>
+        </table></div>}
+        <p>For a verified submission with no marking job, open Results → Saved Drafts → Check submission. Recovery is available only if the job and score are truly missing.</p>
+      </div>}
+    </section>}
     <p>Open saved work to check the AI decision. Corrections keep the original AI evidence and queue a Sheet update.</p>
     <button type="button" disabled={busy} onClick={() => load()}>Refresh</button>
     <label style={{ marginLeft: 16 }}><input type="checkbox" checked={showReviewed} onChange={event => setShowReviewed(event.target.checked)} /> Show reviewed</label>
