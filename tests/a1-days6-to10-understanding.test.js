@@ -119,7 +119,7 @@ test("Day 10 presenter checks the published lesson directly instead of reteachin
   assert.match(JSON.stringify(slide), /ihr\/Ihr|formal Ihr/);
   assert.match(JSON.stringify(slide), /meine rote Tasche/);
   assert.match(JSON.stringify(slide), /Correct or Needs review/);
-  assert.match(slide.wrapUpTaskDe, /Ihr Buch/);
+  assert.match(slide.wrapUpTaskDe, /Frau Müller, ist das ___ Buch/);
   const presenter = fs.readFileSync("src/components/A1GrammarPresenter.jsx", "utf8");
   assert.match(presenter, /getA1Days6To10ApplicationChecks\("A1-6"\)/);
   assert.match(presenter, /id: "mistake-fix"/);
