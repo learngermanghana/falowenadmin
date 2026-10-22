@@ -83,7 +83,7 @@ test("clip assembler produces valid WAV and repeats without another request", as
   assert.equal(audio.length, 44 + (4 * 4) + (24000 * 2 * 4));
 });
 test("complete Goethe dialogue batches into one call per pause-delimited scene", () => {
-  const source = "A: Hören Teil Drei. Fünf kurze Gespräche.\\n[PAUSE 3]\\nA: Nummer eins.\\nA: Wo ist das Obst?\\nB: Links.\\nA: Danke.\\n[PAUSE 3]\\nA: Nummer zwei.\\nA: Wann schließen Sie?\\nB: Um acht.";
+  const source = ["A: Hören Teil Drei. Fünf kurze Gespräche.", "[PAUSE 3]", "A: Nummer eins.", "A: Wo ist das Obst?", "B: Links.", "A: Danke.", "[PAUSE 3]", "A: Nummer zwei.", "A: Wann schließen Sie?", "B: Um acht."].join("\n");
   const parsed = parseStudioTranscript(source);
   const plan = buildStudioSpeechPlan(parsed);
   const scenes = plan.filter(item => item.type === "speech");
