@@ -57,10 +57,13 @@ const rows = [
     "Ihr Kollege hat Ihnen ein berufliches Seminar vorgeschlagen, das Ihre Karriere fördern könnte. Schreiben Sie ihm eine formelle E-Mail.",
     ["Bedanken Sie sich für den Vorschlag und sagen Sie, dass Sie interessiert sind.", "Fragen Sie nach dem Inhalt und den Terminen des Seminars.", "Fragen Sie nach den Kosten."],
     ["Thank the colleague and show interest in the seminar", "Ask about the seminar content and dates or schedule", "Ask about the seminar costs"]],
-  ["A2-6.15", "Mein Lieblingssport", "formal_email", "formal", "business",
-    "Sie sind in Deutschland und möchten sich für einen Sportkurs anmelden. Schreiben Sie eine E-Mail an einen Sportverein oder ein Fitnessstudio.",
-    ["Fragen Sie, ob es noch freie Plätze gibt.", "Beschreiben Sie Ihre Erfahrung oder Motivation.", "Fragen Sie nach den Trainingszeiten und den Kosten."],
-    ["Ask whether a course place is available", "Describe your experience or motivation", "Ask about training times and costs"]],
+  // Source: student A2 Day 15 workbook (A2Day15MeinLieblingssportWorkbookPage.js).
+  // This replaces the withdrawn formal sports-club enquiry; never grade the
+  // new informal Jan task against course-place or fee requirements.
+  ["A2-6.15", "Mein Lieblingssport", "informal_email", "informal", "friend_or_personal_contact",
+    "Ihr Freund Jan hat Sie gefragt, welchen Sport Sie gerne machen. Schreiben Sie eine kurze informelle E-Mail an Jan.",
+    ["Nennen Sie Ihren Lieblingssport und sagen Sie, wie oft Sie ihn machen.", "Erklären Sie, warum Ihnen dieser Sport gefällt.", "Laden Sie Jan ein, nächsten Samstag zusammen Sport zu machen."],
+    ["Name your favourite sport and how often you practise it", "Explain why you enjoy this sport", "Invite Jan to do sport together next Saturday"]],
   ["A2-6.16", "Wohlbefinden und Entspannung", "formal_email", "formal", "professional_contact",
     "Sie möchten wegen Ihrer Gesundheit einen Arzt kontaktieren. Schreiben Sie eine E-Mail.",
     ["Fragen Sie nach einem Termin.", "Fragen Sie nach den Kosten oder ob Ihre Versicherung die Behandlung bezahlt.", "Fragen Sie nach möglichen Untersuchungen oder Behandlungen."],
