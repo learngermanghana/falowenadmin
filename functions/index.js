@@ -2411,7 +2411,11 @@ exports.markCourseSubmissionAutomatically = onDocumentCreated({
   document: "markingJobs/{jobId}", secrets: [openAiApiKeySecret],
   timeoutSeconds: 540, memory: "512MiB", maxInstances: 2, concurrency: 1, retry: true,
 }, createCourseMarkingWorker({
-  admin, db, loadReference: loadAnswerKeyRegistryEntry, callAi: callOpenAiForMarking,
+  admin, db,
+  // The bundled, checked-in Admin key wins over the potentially stale Firestore registry.
+  loadReference: async key => require('./automaticMarkingPipeline.cjs').canonicalCourseReference(key)
+    || await loadAnswerKeyRegistryEntry(key),
+  callAi: callOpenAiForMarking,
   mark: options => require("./automaticMarkingPipeline.cjs").markSubmissionWithAI(options),
 }));
 exports.syncAutomaticCourseScore = onDocumentCreated({
