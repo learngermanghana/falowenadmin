@@ -37,7 +37,7 @@ function validateSpeechRequest(body = {}) {
   const speaker = String(body.speaker || "A").trim().toUpperCase();
   const engine = String(body.engine || "lite").trim();
   if (!text || text.length > 320) throw Object.assign(new Error("Each spoken line must contain 1–320 characters."), { status: 400 });
-  if (!["A", "B", "C"].includes(speaker)) throw Object.assign(new Error("Choose voice A, B or C."), { status: 400 });
+  if (!["A", "B", "C", "D"].includes(speaker)) throw Object.assign(new Error("Choose voice A, B, C or D."), { status: 400 });
   if (!Object.hasOwn(MODELS, engine)) throw Object.assign(new Error("Unsupported voice engine."), { status: 400 });
   if (/\[(?:PAUSE|SILENCE|REPEAT)/i.test(text)) throw Object.assign(new Error("Pause instructions must be separate from spoken lines."), { status: 400 });
   return { text, speaker, engine };
@@ -270,7 +270,7 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
       if (!key) return res.status(503).json({ ok: false, error: "Gemini API key is not configured." });
       slot = await reserveUsage(db, req.hoerenOwnerUid, "speech");
       const remaining = slot.remaining;
-      const voice = { A: "Kore", B: "Puck", C: "Charon" };
+      const voice = { A: "Kore", B: "Puck", C: "Charon", D: "Zephyr" };
       const speakerIds = [...new Set(turns.map(turn => turn.speaker))];
       const speechConfig = speakerIds.length === 1
         ? [{ voice: voice[speakerIds[0]] }]
