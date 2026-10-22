@@ -19,7 +19,10 @@ async function request(endpoint, payload) {
       : response.status === 504
         ? "AI Studio timed out. Keep your current draft and retry later."
         : `The studio request failed (${response.status}).`;
-    throw new Error(data.error || fallback);
+    const error = new Error(data.error || fallback);
+    error.httpStatus = response.status;
+    if (data.providerQuota) error.providerQuota = data.providerQuota;
+    throw error;
   }
   return data;
 }

@@ -129,6 +129,50 @@ export function assembleListeningExam(lines, clipBytes, options = {}) {
   return writeWav(options.soundscape ? applySoundscapeToPcm(samples, options.soundscape) : samples);
 }
 
+// Convert a teacher-supplied speech scene to the same 24 kHz mono PCM WAV
+// format returned by Gemini. This runs entirely in the browser: no paid
+// request, server upload, or third-party audio conversion is required.
+export function studioWavFromDecodedAudio(buffer) {
+  if (!buffer || !Number.isFinite(buffer.duration) || buffer.duration <= 0 || buffer.duration > 90 ||
+      !Number.isFinite(buffer.sampleRate) || buffer.sampleRate < 1000 || buffer.numberOfChannels < 1) {
+    throw new Error("Choose a valid recording lasting no more than 90 seconds.");
+  }
+  const channels = Array.from({ length: buffer.numberOfChannels }, (_, i) => buffer.getChannelData(i));
+  const count = Math.ceil(buffer.duration * 24000);
+  const pcm = new Uint8Array(count * 2);
+  const view = new DataView(pcm.buffer);
+  for (let i = 0; i < count; i += 1) {
+    const position = i * buffer.sampleRate / 24000;
+    const start = Math.min(channels[0].length - 1, Math.floor(position));
+    const end = Math.min(channels[0].length - 1, start + 1);
+    const fraction = position - Math.floor(position);
+    let sample = 0;
+    for (const channel of channels) sample += channel[start] * (1 - fraction) + channel[end] * fraction;
+    sample = Math.max(-1, Math.min(1, sample / channels.length));
+    view.setInt16(i * 2, sample < 0 ? Math.round(sample * 32768) : Math.round(sample * 32767), true);
+  }
+  return writeWav(pcm);
+}
+
+export async function importStudioVoiceRecording(file) {
+  if (!file || file.size === 0 || file.size > 20 * 1024 * 1024) {
+    throw new Error("Select a recorded MP3/WAV/M4A/OGG file up to 20 MB.");
+  }
+  const Context = globalThis.AudioContext || globalThis.webkitAudioContext;
+  if (!Context) throw new Error("Audio import is unavailable in this browser. Try a modern desktop browser.");
+  const context = new Context();
+  try {
+    const decoded = await context.decodeAudioData(await file.arrayBuffer());
+    const wav = studioWavFromDecodedAudio(decoded);
+    return new Uint8Array(await wav.arrayBuffer());
+  } catch (error) {
+    if (/valid recording|90 seconds/.test(error?.message || "")) throw error;
+    throw new Error("This audio file could not be decoded. Use a regular MP3 or WAV recording.");
+  } finally {
+    await context.close().catch(() => {});
+  }
+}
+
 export function base64WavToBytes(base64) {
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);

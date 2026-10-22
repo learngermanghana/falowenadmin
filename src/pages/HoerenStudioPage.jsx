@@ -4,7 +4,7 @@ import { getStudioStatus, makeListeningScript, makeSpeechClip, makeListeningQues
 import { QUESTION_KINDS, validateDraftQuestions } from "../utils/hoerenQuestions";
 import { inspectHoerenDraft } from "../utils/hoerenDraftQuality.js";
 import { getStudioCourseCatalog, getStudioCourseContext, resolveStudioCourseModeLesson } from "../utils/hoerenCourseCatalog.js";
-import { assembleListeningExam, base64WavToBytes, parseStudioTranscript, formatStudioTranscript, sameSpokenTranscript , repairStudioTranscript, repairUnlabelledStudioLines } from "../utils/hoerenAudio";
+import { assembleListeningExam, base64WavToBytes, parseStudioTranscript, formatStudioTranscript, sameSpokenTranscript , repairStudioTranscript, repairUnlabelledStudioLines, importStudioVoiceRecording } from "../utils/hoerenAudio";
 import { SCENES, decodeLocalAtmosphere } from "../utils/hoerenSoundscape";
 import { encodeWavAsMp3 } from "../utils/hoerenMp3";
 import { buildStudioSpeechPlan, sceneVoiceKey, assemblyScenePlan } from "../utils/hoerenSpeechPlan";
@@ -77,6 +77,7 @@ export default function HoerenStudioPage() {
   const [serverError, setServerError] = useState("");
   const [busy, setBusy] = useState("");
   const [progress, setProgress] = useState("");
+  const [googleQuotaWarning, setGoogleQuotaWarning] = useState(null);
   const [audioBlob, setAudioBlob] = useState(null);
   const [generatedClips, setGeneratedClips] = useState(null);
   const voiceClipCache = useRef(new Map());
@@ -326,7 +327,7 @@ export default function HoerenStudioPage() {
     finally { setBusy(""); setProgress(""); }
   }
   async function generateAudio() {
-    if (!ready || !!busy || !cacheReady || !draftAudit.readyForVoice) {
+    if (!!busy || !cacheReady || !draftAudit.readyForVoice || (clipsToGenerate > 0 && !ready)) {
       toast.error(draftAudit.errors[0] || "Wait for saved scenes to load, then check the transcript.");
       return;
     }
@@ -360,10 +361,31 @@ export default function HoerenStudioPage() {
       const blob = await assembleCachedClips(clips);
       setAudioBlob(blob);
       setAudioUrl(URL.createObjectURL(blob));
+      setGoogleQuotaWarning(null);
       toast.success(`Recording ready. Reused ${speechScenes.length - newKeys.size} scenes; generated ${newKeys.size} new scenes.`);
     } catch (error) {
-      toast.error(`${error.message} Successful scenes are saved locally; avoid repeated retries while Google reports 429.`);
+      if (error.httpStatus === 429 && error.providerQuota) {
+        setGoogleQuotaWarning({ ...error.providerQuota, engine });
+      }
+      toast.error(error.message + " Previously completed scenes remain saved. You can also import your own recorded audio below.");
     } finally { setBusy(""); setProgress(""); await reloadStatus(); }
+  }
+
+  async function importVoiceScene(scene, file) {
+    if (!file || !!busy) return;
+    setBusy("import"); setProgress("Decoding and saving a local voice recording…");
+    try {
+      const wav = await importStudioVoiceRecording(file);
+      const key = clipKey(scene);
+      voiceClipCache.current.set(key, wav);
+      const saved = await saveVoice(key, wav);
+      clearAudio();
+      setCacheRevision(revision => revision + 1);
+      toast.success(saved
+        ? "Scene saved in this browser. No Google API request used."
+        : "Scene imported for this session. Browser storage is unavailable, so export the finished audio.");
+    } catch (error) { toast.error(error.message); }
+    finally { setBusy(""); setProgress(""); }
   }
 
   async function remixWithoutGoogle() {
@@ -592,9 +614,30 @@ export default function HoerenStudioPage() {
             <strong>Audio cost preview</strong>
             <p>{cacheReady ? `${cachedVoiceCount} of ${speechScenes.length} scenes saved · ${clipsToGenerate} new Google call(s) needed` : "Checking saved scenes…"} · {status?.remaining.speech ?? "—"} Falowen calls left. {spokenLines.length} spoken turns become {speechScenes.length} scenes; pauses remain intact.</p>
           </div>
+          {googleQuotaWarning?.engine === engine ? <div className="hoeren-alert" role="alert">
+            <strong>Google TTS is currently refusing requests (429).</strong>
+            <p>{googleQuotaWarning.category === "daily"
+              ? "Google identified a daily quota limit. The provider resets daily quotas at midnight Pacific time, not at Falowen's UTC reset."
+              : googleQuotaWarning.category === "temporary"
+                ? "Google identified a short-term rate limit. Please avoid repeated requests until that rate limit clears."
+                : "Google did not identify the exact quota category. Falowen cannot increase it, even when its own counter shows requests remaining."}</p>
+            {googleQuotaWarning.retryAfterSeconds != null ? <p>Google suggested waiting at least {googleQuotaWarning.retryAfterSeconds} seconds before retrying.</p> : null}
+            <p>View the selected project's Gemini 3.8 TTS limits in <a href="https://aistudio.google.com/rate-limit" target="_blank" rel="noreferrer">Google AI Studio Rate Limits</a>, or import your own recorded scenes below without using Google.</p>
+          </div> : null}
+          <details className="hoeren-sentence-editor">
+            <summary>Import recorded speech scenes · no Google credits</summary>
+            <p className="hoeren-hint">Use audio previously recorded or generated elsewhere. Each uploaded file must contain the complete spoken lines for that scene (including both speakers in a dialogue). MP3, WAV, M4A or OGG, up to 20 MB and 90 seconds. Files are converted to 24 kHz WAV and kept in this browser. Falowen adds pauses and repeats after assembly.</p>
+            {speechScenes.map((scene, index) => <div className="hoeren-segment" key={clipKey(scene)}>
+              <div className="hoeren-segment-top"><strong>Scene {index + 1}</strong><span>{voiceClipCache.current.has(clipKey(scene)) ? "Audio saved" : "Recording missing"}</span></div>
+              <p className="hoeren-hint">{scene.turns.map(turn => `${turn.speaker}: ${turn.text}`).join(" / ").slice(0, 360)}</p>
+              <label>Replace scene with a local audio recording
+                <input type="file" accept="audio/*,.mp3,.wav,.m4a,.ogg" disabled={!!busy} onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; importVoiceScene(scene, file); }} />
+              </label>
+            </div>)}
+          </details>
           <div className="hoeren-divider" />
           {generatedClips?.length && !audioBlob ? <button type="button" className="hoeren-button" disabled={!!busy} onClick={remixWithoutGoogle}>Remix existing recording · no Gemini credits</button> : null}
-          <button type="button" className="hoeren-button" disabled={!ready || !!busy || !cacheReady || !draftAudit.readyForVoice || clipsToGenerate > (status?.remaining.speech ?? 0)} onClick={generateAudio}>
+          <button type="button" className="hoeren-button" disabled={!!busy || !cacheReady || !draftAudit.readyForVoice || (clipsToGenerate > 0 && (!ready || clipsToGenerate > (status?.remaining.speech ?? 0)))} onClick={generateAudio}>
             {busy === "audio" ? "Preparing German audio…" : clipsToGenerate ? `Generate ${clipsToGenerate} missing scene(s)` : "Assemble saved scenes · no Gemini credits"}
           </button>
           {progress ? <p role="status" aria-live="polite">{progress}</p> : null}

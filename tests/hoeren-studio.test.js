@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { parseStudioTranscript, formatStudioTranscript, sameSpokenTranscript, assembleListeningExam , repairStudioTranscript, repairUnlabelledStudioLines } from "../src/utils/hoerenAudio.js";
+import { parseStudioTranscript, formatStudioTranscript, sameSpokenTranscript, assembleListeningExam , studioWavFromDecodedAudio, repairStudioTranscript, repairUnlabelledStudioLines } from "../src/utils/hoerenAudio.js";
 import { validateDraftQuestions } from "../src/utils/hoerenQuestions.js";
 import { inspectHoerenDraft } from "../src/utils/hoerenDraftQuality.js";
 import { buildStudioSpeechPlan, sceneVoiceKey, assemblyScenePlan } from "../src/utils/hoerenSpeechPlan.js";
@@ -12,7 +12,7 @@ const { EXAM_PROFILES, getExamProfile, buildExamPrompt } = require("../functions
 const { validateQuestionSet, extractLessonDraft, questionInstructions } = require("../functions/hoerenQuestions.js");
 const {
   MODELS, LIMITS, ownerUid, isStudioOwner, validateSpeechRequest, validateSceneRequest,
-  validateScriptRequest, extractAudio, extractScript, reserveUsage, settleUsage,
+  validateScriptRequest, extractAudio, extractScript, classifyGemini429, reserveUsage, settleUsage,
 } = require("../functions/hoerenStudioApi.js");
 
 function fakeWav() {
@@ -28,6 +28,40 @@ function fakeWav() {
   bytes.set([1,0,2,0],44);
   return bytes;
 }
+test("Google 429 includes only bounded, non-sensitive quota classification", () => {
+  const daily = classifyGemini429({
+    error: { status: "RESOURCE_EXHAUSTED", message: "Quota exceeded: requests_per_day for project private-123" }
+  });
+  assert.deepEqual(daily, { category: "daily", retryAfterSeconds: null });
+  assert.ok(!JSON.stringify(daily).includes("private-123"));
+  assert.deepEqual(classifyGemini429({
+    error: { status: "RESOURCE_EXHAUSTED", details: [{ violations: [{ quotaId: "requests_per_minute" }] }, { retryDelay: "17s" }] }
+  }), { category: "temporary", retryAfterSeconds: 17 });
+  assert.deepEqual(classifyGemini429({}, { get: name => name === "retry-after" ? "25" : "" }), {
+    category: "unknown", retryAfterSeconds: 25,
+  });
+  assert.deepEqual(classifyGemini429({}, { get: () => "not-a-time" }), {
+    category: "unknown", retryAfterSeconds: null,
+  });
+});
+
+test("imported speech is normalized to 24kHz mono PCM for local exam assembly", async () => {
+  const sampleRate = 48000;
+  const sampleCount = sampleRate / 2;
+  const left = new Float32Array(sampleCount).fill(0.25);
+  const right = new Float32Array(sampleCount).fill(-0.25);
+  const fake = { duration: 0.5, sampleRate, numberOfChannels: 2, getChannelData: index => index ? right : left };
+  const result = studioWavFromDecodedAudio(fake);
+  const wav = new Uint8Array(await result.arrayBuffer());
+  const metadata = new DataView(wav.buffer);
+  assert.equal(metadata.getUint32(24, true), 24000);
+  assert.equal(metadata.getUint16(22, true), 1);
+  assert.equal(metadata.getUint16(34, true), 16);
+  assert.equal(wav.byteLength, 44 + 24000);
+  assert.equal(metadata.getInt16(44, true), 0);
+  assert.throws(() => studioWavFromDecodedAudio({ duration: 91, sampleRate, numberOfChannels: 1 }), /90 seconds/);
+});
+
 test("owner-only requires explicit configured UID (fail closed)", () => {
   assert.equal(ownerUid({}, {}), "");
   assert.equal(ownerUid({ ai_studio: { owner_uid: "abc" } }, {}), "abc");
