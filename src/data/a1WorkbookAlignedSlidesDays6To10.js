@@ -374,11 +374,11 @@ export const a1WorkbookAlignedSlidesDays6To10 = [
       "Der Balkon ist klein, aber schön.",
     ],
     studentQuestionsDe: [
-      "Ergänze: Das ist ___ Tisch (mein), ___ Tasche (dein), ___ Buch (sein).",
+      "Drei Sätze: Das ist ___ Tisch (mein). Das ist ___ Tasche (dein). Das ist ___ Buch (sein).",
       "Ergänze: Ich suche ___ Stuhl (mein). Warum nicht „mein“?",
       "Frau Weber, ist das ___ Buch? (ihr / Ihr)",
       "Anna hat eine Tasche. Das ist ___ Tasche (ihr / ihre / Ihre).",
-      "Bilde zwei Sätze: Das ist meine rote Tasche. Die Tasche ist rot.",
+      "Bilde zwei Sätze mit „meine rote Tasche“ und „Die Tasche ist ...“ (rot).",
     ],
     teacherNotesEn: [
       "Do not repeat the entire grammar lesson. Test one form at a time; students answer before the teacher reveals the solution.",
@@ -397,7 +397,7 @@ export const a1WorkbookAlignedSlidesDays6To10 = [
       { phase: "Exit check", detailEn: "3 min: independently finish four short forms including masculine accusative, formal Ihr and ist + colour." },
       { phase: "Workbook bridge", detailEn: "Use the existing tutor-marked reading/Hören workbook for further home/apartment comprehension; no separate scored colour worksheet." },
     ],
-    wrapUpTaskDe: "Ergänze: meine Lampe, deinen Stuhl, Ihr Buch. Korrigiere: Das Sofa ist grün (nicht grünes).",
+    wrapUpTaskDe: "Ergänze: Das ist ___ Lampe (mein). Ich sehe ___ Stuhl (dein). Frau Müller, ist das ___ Buch? (formal). Korrigiere: Das Sofa ist grünes.",
     workbookConnection: connection({
       grammarUrl: "/campus/course/objects-and-colors-chapter-6",
       workbookUrl: "/campus/course/a1-day-10-objects-colors-possessive-articles-workbook",
