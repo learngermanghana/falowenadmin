@@ -5,6 +5,9 @@ import { pathToFileURL } from "node:url";
 // Shared modules and unrecognised files deliberately fall back to every existing
 // deployment group. Keep targeted mappings small and explicit.
 export const WORKER_TARGETS = {
+  // A new checked-in answer dictionary changes both the automatic marking worker
+  // and the Admin marking API. Redeploy only those two consumers, not every function.
+  "src/data/answers_dictionary.json": ["api", "markCourseSubmissionAutomatically"],
   "functions/trialAccessEmails.js": ["sendTrialAccessWelcomeEmail", "sendTrialAccessReminderEmails"],
   "functions/finalMockResultEmails.js": ["sendFinalMockResultEmail"],
   "functions/studentLearningInterventionEmails.js": ["sendStudentLearningNudges"],
