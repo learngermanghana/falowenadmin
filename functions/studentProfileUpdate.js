@@ -219,6 +219,42 @@ async function resolveStudentAuthIdentity({ studentRef, admin }) {
   };
 }
 
+
+const MANUAL_TRIAL_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+
+function isStudentAlreadyPaid(student = {}) {
+  const paymentStatus = String(student.paymentStatus || student.payment_status || "").trim().toLowerCase().replace(/[_-]+/g," ");
+  if (["paid","partially paid","partial","completed","success"].includes(paymentStatus)) return true;
+  return ["paid","paidAmount","amountPaid","initialPaymentAmount","tuitionPaid","totalPaid"]
+    .some(field => Number(String(student[field] ?? "0").replace(/[^0-9.-]/g,"")) > 0);
+}
+
+// Changing a student's payment status cannot be used to grant access.
+// Only staff can explicitly activate a limited trial on an existing unpaid account.
+function makeManualTrialPatch(student = {}, now = new Date(), fieldValue = {}) {
+  if (isStudentAlreadyPaid(student)) {
+    const error = new Error("This student already has a payment. Manage their paid contract instead of restarting a free trial.");
+    error.statusCode = 409;
+    throw error;
+  }
+  const start = new Date(now);
+  if (Number.isNaN(start.getTime())) throw new Error("Invalid trial start date");
+  const end = new Date(start.getTime() + MANUAL_TRIAL_DURATION_MS);
+  const patch = {
+    status: "trial_active",
+    trialStatus: "active",
+    paymentStatus: "Pending",
+    trialStartedAt: start.toISOString(),
+    trialEndsAt: end.toISOString(),
+    updatedAt: typeof fieldValue.serverTimestamp === "function" ? fieldValue.serverTimestamp() : start.toISOString(),
+  };
+  // Don't retain old expiry blockers when staff explicitly starts a new trial.
+  for (const field of ["trialExpiredAt","trialPurgeAt","trialAccessBlockedAt"]) {
+    if (typeof fieldValue.delete === "function") patch[field] = fieldValue.delete();
+  }
+  return patch;
+}
+
 function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffEmails = [] }) {
   if (!app?.patch || !app?.post || !app?.get || !db?.collection || !db?.batch || !admin?.firestore?.FieldValue?.serverTimestamp || typeof requireAuth !== "function") {
     throw new Error("Student profile update route dependencies are incomplete");
@@ -263,6 +299,58 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
       return res.status(statusCodeForError(error)).json({
         ok: false,
         error: isMissingStudentError(error) ? "Student not found" : error?.message || "Student profile update failed",
+      });
+    }
+  });
+
+  app.post("/students/:studentId/activate-trial", async (req, res) => {
+    try {
+      const user = await requireAuth(req);
+      assertStudentProfileEditor(user, staffEmails);
+      const studentId = cleanStudentId(req.params?.studentId);
+      if (!studentId) return res.status(400).json({ ok: false, error: "Student ID is required" });
+      const studentRef = db.collection("students").doc(studentId);
+      const snapshot = await studentRef.get();
+      if (!snapshot.exists) return res.status(404).json({ ok: false, error: "Student not found" });
+      const student = snapshot.data() || {};
+      // Do not create a second sign-in account or change the student's UID.
+      const uid = cleanStudentId(student.uid || student.authUid || student.firebaseUid);
+      if (!uid) {
+        return res.status(409).json({ ok: false, error: "Student account has no Firebase UID. Link their existing sign-in identity before activating trial access." });
+      }
+      if (typeof admin.auth === "function") {
+        try { await admin.auth().getUser(uid); }
+        catch (error) {
+          if (String(error?.code || "") === "auth/user-not-found") {
+            return res.status(409).json({ ok: false, error: "Firebase login for this UID does not exist. Resolve the account sign-in first; do not create a duplicate student row." });
+          }
+          throw error;
+        }
+      }
+      const patch = makeManualTrialPatch(student, new Date(), admin.firestore.FieldValue);
+      patch.updatedBy = String(user?.email || user?.uid || "").trim();
+      const batch = db.batch();
+      batch.update(studentRef, patch);
+      batch.set(db.collection("auditLogs").doc(), {
+        type: "student.manual_trial_activation",
+        studentId,
+        studentCode: cleanStudentId(student.studentCode || student.studentcode),
+        trialStartedAt: patch.trialStartedAt,
+        trialEndsAt: patch.trialEndsAt,
+        actor: patch.updatedBy,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      await batch.commit();
+      return res.json({
+        ok: true,
+        studentId,
+        trial: { status: patch.status, trialStatus: patch.trialStatus, paymentStatus: patch.paymentStatus,
+          trialStartedAt: patch.trialStartedAt, trialEndsAt: patch.trialEndsAt },
+        message: "Seven-day trial activated on the existing Firebase student record.",
+      });
+    } catch (error) {
+      return res.status(statusCodeForError(error)).json({
+        ok: false, error: isMissingStudentError(error) ? "Student not found" : error?.message || "Could not activate trial",
       });
     }
   });
@@ -410,4 +498,6 @@ module.exports = {
   providerIdsForAuthUser,
   resolveStudentAuthIdentity,
   registerStudentProfileUpdateRoute,
+  isStudentAlreadyPaid,
+  makeManualTrialPatch,
 };

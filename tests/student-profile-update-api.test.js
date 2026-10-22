@@ -11,6 +11,8 @@ const {
   sanitizeStudentProfileUpdates,
   isStudentProfileEditor,
   registerStudentProfileUpdateRoute,
+  isStudentAlreadyPaid,
+  makeManualTrialPatch,
 } = studentProfileUpdateModule;
 
 function createResponse() {
@@ -312,4 +314,51 @@ test("editing contact email preserves Firebase authentication identity", async (
   assert.equal(response.body.updates.authEmail, "original-login@example.com");
   assert.equal(writes[0].email, "new-contact@example.com");
   assert.equal(writes[0].authEmail, "original-login@example.com");
+});
+
+test("unpaid manual trial has a fresh seven-day end and never marks tuition paid", () => {
+  const date = new Date("2026-10-22T11:00:00Z");
+  const patch = makeManualTrialPatch({paymentStatus:"Pending",paid:0,uid:"auth-existing"},date,{
+    serverTimestamp:()=> "now", delete:()=> "DELETE",
+  });
+  assert.equal(patch.status,"trial_active");
+  assert.equal(patch.trialStatus,"active");
+  assert.equal(patch.paymentStatus,"Pending");
+  assert.equal(patch.trialStartedAt,"2026-10-22T11:00:00.000Z");
+  assert.equal(patch.trialEndsAt,"2026-10-29T11:00:00.000Z");
+  assert.equal(patch.trialExpiredAt,"DELETE");
+  assert.equal(Object.hasOwn(patch,"paid"),false);
+  assert.equal(Object.hasOwn(patch,"balanceDue"),false);
+  assert.equal(isStudentAlreadyPaid({paid:0,paymentStatus:"Pending"}),false);
+  assert.equal(isStudentAlreadyPaid({paid:10}),true);
+  assert.throws(()=>makeManualTrialPatch({paymentStatus:"Paid"},date),/already has a payment/);
+  assert.throws(()=>makeManualTrialPatch({paymentStatus:"Partially Paid",paid:20},date),/already has a payment/);
+});
+
+test("manual trial route edits existing student only and writes audit on successful activation", async () => {
+  let activate, writes = [];
+  const user={email:"staff@falowen.app",uid:"staff-uid"};
+  const app={
+    patch(){},get(){},
+    post(path,handler){ if(path.endsWith("/activate-trial"))activate=handler; }
+  };
+  const studentRef={id:"student-1",get:async()=>({exists:true,data:()=>({uid:"existing-auth",paid:0,paymentStatus:"Pending",studentCode:"student-1"})})};
+  const db={
+    collection(name){ return {doc:(id)=>name==="students"?studentRef:{id:id||"audit-record"}}; },
+    batch(){ return {
+      update:(ref,payload)=>writes.push({type:"update",ref,payload}),
+      set:(ref,payload)=>writes.push({type:"audit",ref,payload}),
+      commit:async()=>{},
+    }; },
+  };
+  const admin={firestore:{FieldValue:{serverTimestamp:()=> "now",delete:()=> "delete"}}};
+  registerStudentProfileUpdateRoute({app,db,admin,requireAuth:async()=>user});
+  assert.equal(typeof activate,"function");
+  const res=createResponse();
+  await activate({params:{studentId:"student-1"}},res);
+  assert.equal(res.statusCode,200);
+  assert.equal(res.body.trial.status,"trial_active");
+  assert.equal(writes.length,2);
+  assert.equal(writes[0].payload.paymentStatus,"Pending");
+  assert.equal(writes[1].payload.type,"student.manual_trial_activation");
 });
