@@ -427,3 +427,24 @@ test("Goethe audio page exposes all CEFR levels, auto scene selection and distin
   assert.match(page,/sceneOverride \?\? "auto"/);
   assert.match(page,/value="D">D/);
 });
+
+test("A1 Teil 1 blocks contradictory Richtig/Falsch and five-text instructions", () => {
+  const p=getExamProfile("A1","1");
+  const spoken=[
+    "A: Hören Teil 1. Sie hören fünf kurze Gespräche. Entscheiden Sie, ob die Aussagen richtig oder falsch sind.",
+    "[PAUSE 3]",
+    "B: Hallo Lukas, hier ist Marie. Unser Zug fährt um sieben Uhr."
+  ].join("\n");
+  const result=inspectHoerenDraft({script:spoken,kind:"multiple-choice",mode:"goethe",profile:p});
+  assert.equal(result.wordCount>0,true);
+  assert.equal(result.pauseCount,1);
+  assert.equal(result.readyForVoice,false);
+  assert.match(result.errors.join(" "),/Richtig\/Falsch/);
+  assert.match(result.errors.join(" "),/announce 5 texts/);
+});
+test("voice-only Goethe casting does not falsely invalidate question transcript", () => {
+  const original="A: Hören Teil eins.\n[PAUSE 3]\nA: Hallo!";
+  const cast=assignGoetheSpeakers(original);
+  assert.equal(sameSpokenTranscript(original,cast),true);
+  assert.equal(sameSpokenTranscript(original,cast.replace("Hallo!","Tschüss!")),false);
+});
