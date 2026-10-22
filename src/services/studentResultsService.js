@@ -1,4 +1,5 @@
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, limit, query, where } from "firebase/firestore";
+import { isExamRoomPracticeResult, normalizeExamRoomPractices } from "../utils/examRoomPracticeMonitoring.js";
 import { db } from "../firebase.js";
 import answersDictionary from "../data/answers_dictionary.json";
 import {
@@ -139,8 +140,10 @@ export async function loadStudentResultSources(studentCode) {
     loadFirestoreRows(studentCode),
     loadSheetRows(studentCode),
   ]);
-  const firestore = collapseStudentResultRows(firestoreRawRows);
-  const sheet = collapseStudentResultRows(sheetResult.rows);
+  // Exams Room samples belong on Mock Monitoring, not the ordinary course Results page.
+  // Keep historical stored scores and Sheet rows intact; only separate their Admin presentation.
+  const firestore = collapseStudentResultRows(firestoreRawRows.filter(row => !isExamRoomPracticeResult(row)));
+  const sheet = collapseStudentResultRows(sheetResult.rows.filter(row => !isExamRoomPracticeResult(row)));
 
   return {
     firestoreRows: firestore.rows,
@@ -186,4 +189,19 @@ export async function syncFirestoreScoresToSheet(scores = []) {
 
 export async function syncFirestoreScoreToSheet(score = {}) {
   return syncFirestoreScoresToSheet([score]);
+}
+
+
+// One bounded, on-demand Firestore read of completed Exams Room practice scores.
+ // No live listener, timer polling, AI marking, Cloud Function invocation, or Sheet write.
+export async function loadExamRoomPracticeSubmissions(max = 300) {
+  const count = Math.max(1, Math.min(300, Math.floor(Number(max) || 300)));
+  const snapshot = await getDocs(query(collection(db, "scores"),
+    where("source", "==", "exam_room_practice"), limit(count)));
+  const rows = snapshot.docs.map(document => ({ id: document.id, ...document.data() }));
+  return {
+    rows: normalizeExamRoomPractices(rows),
+    partial: snapshot.size >= count,
+    fetchedAt: new Date().toISOString(),
+  };
 }
