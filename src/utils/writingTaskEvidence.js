@@ -52,6 +52,25 @@ function ruleForPoint(label = "", assignmentKey = "") {
     }
   }
 
+  if (normalizedAssignmentKey === "A2-6.16") {
+    // Current coursebook: short informal email to Markus, no doctor appointment.
+    if (/name a relaxing activity you do/.test(value)) {
+      return /\b(?:sauna|therme|wellness|wellnesstag|spazieren|spaziergang|park|yoga|meditation|meditieren|musik|lesen|schwimmen|entspann\w*|erholen)\b/i;
+    }
+    if (/explain why that activity helps you relax/.test(value)) {
+      return [
+        /\b(?:weil|denn|deshalb|darum)\b/i,
+        /\b(?:gut|entspann\w*|ruhig|erhol\w*|stress|hilft|besser|wohl|gl[uü]cklich|gesund)\b/i,
+      ];
+    }
+    if (/invite markus to relax together next weekend/.test(value)) {
+      return [
+        /\b(?:n[aä]chstes?\s+wochenende|am\s+samstag|am\s+sonntag|n[aä]chsten\s+samstag|n[aä]chsten\s+sonntag)\b/i,
+        /\b(?:hast\s+du\s+lust|kommst\s+du\s+mit|wollen\s+wir|m[oö]chtest\s+du|willst\s+du|k[oö]nnen\s+wir|lass\s+uns|mitkommen|zusammen|gemeinsam)\b/i,
+      ];
+    }
+  }
+
   if (normalizedAssignmentKey === "A2-6.15") {
     // Falowen learner workbook: informal email to Jan about favourite sport.
     // The historical formal Sportverein/Kursplatz task is no longer assigned.
