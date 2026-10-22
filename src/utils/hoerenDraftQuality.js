@@ -54,9 +54,9 @@ export function inspectHoerenDraft({ script, kind, questions = [], expectedCount
     warnings.push(mode === "goethe" ? "Generate the preset questions before producing an exam recording." : "No questions yet. Audio export still works, but Course Book publishing needs five reviewed questions.");
   }
 
-  if (spokenLines.some(line => line.text.length > 285)) warnings.push("Some segments are close to the 320-character speech limit.");
-  if (mode === "goethe" && spokenLines.length && new Set(spokenLines.map(line => line.speaker)).size === 1 && /dialogue|discussion|interview/i.test(profile?.type || "")) {
-    warnings.push("This Teil describes a conversation. Check whether more than one voice is needed.");
+  if (spokenLines.some(line => line.text.length > 285)) warnings.push("Long passages have been divided into speech-safe clips without dropping text.");
+  if (mode === "goethe" && spokenLines.length && !spokenLines.some(line => ["B", "C", "D"].includes(line.speaker))) {
+    warnings.push("Only instruction voice A is assigned. Use B/C/D for actual exam task speakers.");
   }
   return { errors, warnings, spokenLines, wordCount, pauseCount, readyForVoice: errors.length === 0 };
 }
