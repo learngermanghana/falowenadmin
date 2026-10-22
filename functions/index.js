@@ -16,6 +16,7 @@ const { registerHoerenStudioRoutes } = require("./hoerenStudioApi.js");
 const { registerTimedDraftRecoveryRoutes } = require("./timedDraftRecovery.js");
 const { registerDraftHistoryRoutes } = require("./draftHistory.js");
 const { registerMarkingHealthRoutes } = require("./markingHealth.js");
+const { registerSignupAccountLookup } = require("./signupAccountLookup.js");
 const { createAttendanceConfirmationEmailJob, sendAssignmentAttendanceCreditEmail } = require("./attendanceConfirmationEmails.js");
 const { retryFailedAttendanceDeliveries, listAttendanceDeliveryHealth } = require("./attendanceConfirmationRetry.js");
 const { registerCompletionDocumentRoute } = require("./completionParticipationDocument.js");
@@ -2404,6 +2405,7 @@ exports.createPostSubmissionMarkingJob = onDocumentCreated({ document: "submissi
 registerTimedDraftRecoveryRoutes(app, { admin, db, requireAuth });
 registerDraftHistoryRoutes(app, { admin, db });
 registerMarkingHealthRoutes(app, { admin, db });
+registerSignupAccountLookup(app, { admin, db });
 
 // Marking runs on Firebase, using the same generated pipeline as tutor marking.
 const { createCourseMarkingWorker, createScoreSyncWorker } = require("./automaticCourseMarking");
