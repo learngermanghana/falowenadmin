@@ -68,5 +68,7 @@ test("Mock page loads practice results once, roster only on request, and never i
   assert.match(ui,/if \(!mockRequested\.current\)/);
   assert.doesNotMatch(ui,/startVisiblePolling\(/);
   assert.doesNotMatch(ui,/onSnapshot\([^\)]*scores/);
+  assert.match(ui,/practiceRows\.filter\(row => practiceSection === "all" \|\| row\.section === practiceSection\)/);
+  assert.match(ui,/practiceRosterLoading \|\| !practiceFetchedAt/);
   assert.doesNotMatch(ui,/markExam|markingApi|Gemini|OpenAI/);
 });
