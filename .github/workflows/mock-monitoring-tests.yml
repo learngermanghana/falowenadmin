@@ -22,6 +22,9 @@ on:
       - "tests/timed-submission-receipt-lookup.test.js"
       - "tests/timed-attempt-lookup.test.js"
       - "src/App.jsx"
+      - "src/services/studentResultsService.js"
+      - "src/utils/examRoomPracticeMonitoring.js"
+      - "tests/exam-room-practice-monitoring.test.js"
       - "tests/mock-timed-monitoring.test.js"
       - "tests/student-leads-hub.test.js"
       - ".github/workflows/mock-monitoring-tests.yml"
@@ -47,6 +50,9 @@ on:
       - "tests/timed-submission-receipt-lookup.test.js"
       - "tests/timed-attempt-lookup.test.js"
       - "src/App.jsx"
+      - "src/services/studentResultsService.js"
+      - "src/utils/examRoomPracticeMonitoring.js"
+      - "tests/exam-room-practice-monitoring.test.js"
       - "tests/mock-timed-monitoring.test.js"
       - "tests/student-leads-hub.test.js"
       - ".github/workflows/mock-monitoring-tests.yml"
@@ -59,4 +65,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - run: node --test tests/mock-timed-monitoring.test.js tests/student-leads-hub.test.js tests/placement-attempt-monitoring.test.js tests/timed-attempt-lookup.test.js tests/timed-submission-receipt-lookup.test.js functions/timedDraftRecovery.test.cjs functions/draftHistory.test.cjs functions/draftSubmissionStatus.test.cjs
+      - run: node --test tests/exam-room-practice-monitoring.test.js tests/mock-timed-monitoring.test.js tests/student-leads-hub.test.js tests/placement-attempt-monitoring.test.js tests/timed-attempt-lookup.test.js tests/timed-submission-receipt-lookup.test.js functions/timedDraftRecovery.test.cjs functions/draftHistory.test.cjs functions/draftSubmissionStatus.test.cjs
