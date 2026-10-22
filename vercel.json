@@ -73,6 +73,10 @@
       "destination": "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/student-leads/$1"
     },
     {
+      "source": "/api/admin/signup-account-lookup",
+      "destination": "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/admin/signup-account-lookup"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/router?path=$1"
     },

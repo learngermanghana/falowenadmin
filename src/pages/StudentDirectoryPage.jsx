@@ -7,6 +7,7 @@ import { createStudent, listAllStudents, updateStudentById } from "../services/s
 import { listClassCohorts } from "../services/liveClassService";
 import { useToast } from "../context/ToastContext";
 import StudentSupportTools from "../components/StudentSupportTools";
+import SignupAccountLookup from "../components/SignupAccountLookup.jsx";
 import StudentPaymentTools from "../components/StudentPaymentTools";
 import StudentUpgradeTools from "../components/StudentUpgradeTools";
 import CompletionPackPanel from "../components/CompletionPackPanel.jsx";
@@ -717,6 +718,7 @@ export default function StudentDirectoryPage() {
               placeholder="Search by name, phone, email, class, student code..."
               style={{ width: "100%", maxWidth: 460, padding: "8px 10px", borderRadius: 8, border: "1px solid #ccd4e2" }}
             />
+            <SignupAccountLookup email={query} />
           </>
         )}
       </section>
