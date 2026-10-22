@@ -8,6 +8,10 @@ export const WORKER_TARGETS = {
   // A new checked-in answer dictionary changes both the automatic marking worker
   // and the Admin marking API. Redeploy only those two consumers, not every function.
   "src/data/answers_dictionary.json": ["api", "markCourseSubmissionAutomatically"],
+  // Saved Schreiben questions and task-evidence rules are part of the Firebase
+  // marking bundle, not merely Admin UI copy.
+  "src/data/a2WritingTaskSpecs.js": ["api", "markCourseSubmissionAutomatically"],
+  "src/utils/writingTaskEvidence.js": ["api", "markCourseSubmissionAutomatically"],
   "functions/trialAccessEmails.js": ["sendTrialAccessWelcomeEmail", "sendTrialAccessReminderEmails"],
   "functions/finalMockResultEmails.js": ["sendFinalMockResultEmail"],
   "functions/studentLearningInterventionEmails.js": ["sendStudentLearningNudges"],
