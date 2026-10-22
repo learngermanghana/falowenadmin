@@ -44,6 +44,12 @@ Client: `src/pages/HoerenStudioPage.jsx`, `src/utils/hoerenQuestions.js`, `src/s
 - Goethe C1 model: https://www.goethe.de/pro/relaunch/prf/materialien/C1_modular/c1-modular_modellsatz.pdf
 - Accessible sample modules: https://bfu.goethe.de/a2_mod_2MX5/hoeren.php, https://bfu.goethe.de/b1_mod/hoeren.php, https://bfu.goethe.de/b2_mod_2MX6/hoeren.php, https://bfu.goethe.de/c1mod/, https://bfu.goethe.de/c2_mod/hoeren.php
 
+## Google 429 diagnostics and free offline fallback
+
+Falowen's 20-script / 72-scene limits are internal owner-only safety counters, **not** Google's usage entitlements. Google 429 errors may be daily quota exhaustion (RPD; resets at midnight Pacific time), minute/second rate limiting (RPM/TPM), or a provider error without usable quota details. The backend inspects only structured category and bounded retry-after metadata; it never sends Google's raw response, project IDs, API keys or request text to the browser. The page shows the applicable category and links to https://aistudio.google.com/rate-limit. Do not automatically switch to a possibly paid model or repeatedly retry unknown 429 responses.
+
+If Google voice generation is unavailable, the teacher may open **Import recorded speech scenes · no Google credits**. Supply one MP3/WAV/M4A/OGG file per scene, containing the exact A/B lines (including any narrator introductions for that scene). The browser decodes, resamples to mono 24 kHz 16-bit PCM and saves it in the existing IndexedDB scene cache. It can then add the transcript's exact [PAUSE] gaps and download the full WAV or MP3 **without making a Google speech call**. Import is manual recording, not an AI voice generation substitute, and the teacher remains responsible for hearing each scene and checking all words. Uploaded clips are not sent to Falowen's server.
+
 ## Testing
 
 Run `node --test tests/hoeren-studio.test.js tests/hoeren-question-publishing.test.js` and the normal production build, then manually generate the C1 book task once under a configured owner account and listen for natural transitions between books. Verify generated evidence, question counts, audio, and export before enabling other workflows.
