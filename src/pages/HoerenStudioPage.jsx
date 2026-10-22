@@ -484,7 +484,7 @@ export default function HoerenStudioPage() {
           </div>}
           <div className="hoeren-input-grid">
             <label>Recording style<input value={selectedProfile?.type || type} readOnly /></label>
-            <label>Recording limits<input value={`Up to 36 spoken lines · ${status?.remaining.speech ?? "—"} Falowen calls left today`} readOnly /></label>
+            <label>Recording limits<input value={`Long text auto-split · max 36 voice clips · ${status?.remaining.speech ?? "—"} calls left`} readOnly /></label>
           </div>
           <label>{mode === "course" ? "Lesson-aligned audio topic (optional subtopic)" : "Topic for an original exam script"}<input value={topic} disabled={!!busy} maxLength={240} onChange={(event) => { setTopic(event.target.value); clearAudio(); }} placeholder="e.g. Shopping at a supermarket" /></label>
           <button className="hoeren-button" type="button" disabled={!ready || !!busy || topic.trim().length < 4 || !status?.remaining.script || (mode === "goethe" && !selectedProfile) || (mode === "course" && !selectedCourseEntry)} onClick={generateScript}>{busy === "script" ? "Generating script…" : mode === "goethe" ? "Generate complete Goethe task" : "Generate Course Book script + questions"}</button>
