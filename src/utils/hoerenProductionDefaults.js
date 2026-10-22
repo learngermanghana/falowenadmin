@@ -46,12 +46,12 @@ export function assignGoetheSpeakers(source) {
 }
 
 const CUES = Object.freeze({
-  airport: /\b(?:flughafen|flugzeug|flug|terminal|gate|landebahn|abflug|ankunftsterminal|airport)\b/iu,
-  station: /\b(?:bahnhof|bahnsteig|gleis|zug|s-bahn|u-bahn|ice|schaffner|hauptbahnhof|train station)\b/iu,
-  cafe: /\b(?:café|cafe|restaurant|speisekarte|kellner|kellnerin|mittagessen|bäckerei)\b/iu,
-  supermarket: /\b(?:supermarkt|kaufhaus|laden|einkaufen|kasse|umtauschen|lebensmittel|geschäft)\b/iu,
-  clinic: /\b(?:arztpraxis|krankenhaus|apotheke|ärztin|rezept|patient|sprechstunde)\b/iu,
-  street: /\b(?:straßenverkehr|ampel|straßenbahn|zebrastreifen|fußgänger|parkplatz)\b/iu,
+  airport: /(?<![\p{L}\p{N}])(?:flughafen|flugzeug|flug|terminal|gate|landebahn|abflug|ankunftsterminal|airport)(?![\p{L}\p{N}])/iu,
+  station: /(?<![\p{L}\p{N}])(?:bahnhof|bahnsteig|gleis|zug|s-bahn|u-bahn|ice|schaffner|hauptbahnhof|train station)(?![\p{L}\p{N}])/iu,
+  cafe: /(?<![\p{L}\p{N}])(?:café|cafe|restaurant|speisekarte|kellner|kellnerin|mittagessen|bäckerei)(?![\p{L}\p{N}])/iu,
+  supermarket: /(?<![\p{L}\p{N}])(?:supermarkt|kaufhaus|laden|einkaufen|kasse|umtauschen|lebensmittel|geschäft)(?![\p{L}\p{N}])/iu,
+  clinic: /(?<![\p{L}\p{N}])(?:arztpraxis|krankenhaus|apotheke|ärztin|rezept|patient|sprechstunde)(?![\p{L}\p{N}])/iu,
+  street: /(?<![\p{L}\p{N}])(?:straßenverkehr|ampel|straßenbahn|zebrastreifen|fußgänger|parkplatz)(?![\p{L}\p{N}])/iu,
 });
 // An exam with several locations must not put a train-station sound under a
 // hospital scene. Leave those recordings clean; manual override stays possible.
