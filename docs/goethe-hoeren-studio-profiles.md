@@ -10,7 +10,7 @@ The AI Studio now has two visible modes. **Course Book Audio** supports flexible
 
 A pre-audio checker validates transcript notation, segment and question counts, literal supporting evidence, and C1 Teil 1's shared Buch 1/2/3 answer options. Warnings flag unusual word counts or speakers. These are structural checks, **not** automatic guarantees that the listening answers are semantically correct. A teacher must check correctness.
 
-The sentence editor can change one speaker's line without discarding other voice clips. Successful clips are cached in the current browser session under voice model + speaker + exact text. Only missing clips call Google's TTS API; rearranging or remixing unchanged clips is free of further synthesis requests. Reloading or closing the page discards this ephemeral cache.
+The sentence editor allows individual line edits. The studio now generates each pause-delimited dialogue scene in a single Gemini 3.8 two-speaker TTS request, rather than calling Google for every turn. A scene includes at most 2 speakers, 8 turns and 520 characters; longer segments are split safely. Exact numbered pauses are inserted locally. Successful scene audio is saved on this device using IndexedDB for up to 14 days so reloading does not spend another API request. Editing one sentence only invalidates its scene. Browser storage may be unavailable in private mode or after data is cleared; download finished WAV/MP3 exports.
 
 ## Selection
 
@@ -29,7 +29,7 @@ Do not copy official copyrighted audio/texts. All generation is original exam-st
 
 ## Constraints and fidelity
 
-The existing studio uses a maximum of 18 TTS clips per recording (320 characters each), 36 clips/day, and five script/question generation requests per day. Higher-level texts use longer scripts split into up to 18 speech segments and may exhaust a day's clip allowance on one activity. **The Studio never launches speech generation automatically** after creating a script.
+The existing studio uses a maximum of 18 TTS clips per recording (320 characters each), 72 scene requests/day in Falowen's internal budget, and 20 script/question requests/day. Falowen's local allowances do not reflect Google project's rate limits. A Google 429 may occur even when Falowen shows remaining requests; this is not resolved by raising Falowen's counter. The two-speaker scene batching reduces the number of Google calls substantially, especially for short alternating dialogues. **The Studio never launches speech generation automatically** after creating a script.
 
 C2 Aufgabe 1 and certain lower-level mixed/picture-matching tasks are **adapted practice segments**, not complete official-format exam reproductions: image choices and mixed answer modes are represented using text Richtig/Falsch or a–c selection. Editors must review each question and evidence and confirm the selected Teil fits learner objectives. The description on screen explains each format. C2 Aufgabe 1 uses one excerpt with five statements, not all 15 statements from five excerpts.
 
