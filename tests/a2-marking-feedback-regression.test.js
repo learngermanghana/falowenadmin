@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { getA2WritingTaskSpec } from "../src/data/a2WritingTaskSpecs.js";
 import { evaluateWritingTaskEvidence } from "../src/utils/writingTaskEvidence.js";
-import { applyQuestionAwareWritingGuard } from "../src/utils/questionAwareWritingMarking.js";
+import { applyQuestionAwareWritingGuard, resolveQuestionAwareWritingTask } from "../src/utils/questionAwareWritingMarking.js";
 import { comparePublishedAnswerKeys } from "../src/utils/publishedMarkingContract.js";
 import { dedupeRepeatedFeedback, limitFeedbackWords } from "../src/utils/feedbackPolicy.js";
 import { reconcileMarkingQuality } from "../src/utils/markingQuality.js";
@@ -206,4 +206,55 @@ test("A2 rich examiner comments and objective-only grading remain unchanged", ()
   assert.ok(preserved.feedback.startsWith(rich));
   const objectiveOnly = reconcileMarkingQuality({ feedback: rich, finalScore: 100 }, objective, { text: source }, { writingExpected: false });
   assert.doesNotMatch(objectiveOnly.feedback, /secretarial|vacanc|office/i);
+});
+
+
+test("A2-6.15 saved Schreiben task matches the current Jan sport invitation workbook, not old sports-club application", () => {
+  const task = getA2WritingTaskSpec("A2-6.15");
+  assert.equal(task.register, "informal");
+  assert.equal(task.textType, "informal_email");
+  assert.equal(task.recipient, "friend_or_personal_contact");
+  assert.match(task.taskText, /Freund Jan/);
+  assert.match(task.taskText, /nächsten Samstag zusammen Sport/i);
+  assert.equal(task.taskPoints.length, 3);
+  assert.doesNotMatch(JSON.stringify(task), /Sportverein|Fitnessstudio|freie Plätze|course place is available|trainingszeiten und den kosten/i);
+
+  // Even when an earlier result carried a saved old question, the canonical
+  // current workbook specification must win for a new marking attempt.
+  const resolved = resolveQuestionAwareWritingTask({
+    referenceEntry: {
+      assignmentKey: "A2-6.15", level: "A2",
+      writingParts: ["teil2"], aiGradedParts: ["teil2"],
+      questionAwareWritingTask: {
+        assignmentKey: "A2-6.15", level: "A2",
+        source: "legacy-admin",
+        taskText: "Fragen Sie, ob es noch freie Plätze gibt.",
+        textType: "formal_email", register: "formal",
+        taskPoints: ["Ask whether a course place is available"],
+      },
+    },
+    submission: { assignmentKey: "A2-6.15", level: "A2" },
+  });
+  assert.equal(resolved.register, "informal");
+  assert.deepEqual(resolved.taskPoints, task.taskPoints);
+  assert.match(resolved.taskText, /Freund Jan/);
+});
+
+test("A2-6.15 evidence checks favourite sport, enjoyment, frequency and invitation rather than course availability", () => {
+  const task = getA2WritingTaskSpec("A2-6.15");
+  const letter = [
+    "Hallo Jan,",
+    "mein Lieblingssport ist Fußball. Ich spiele dreimal pro Woche,",
+    "weil es sehr entspannend ist. Hast du nächsten Samtag Zeit?",
+    "Wir können zusammen Fußball spielen!",
+    "Liebe Grüße, Selasi",
+  ].join("\n");
+  // A misspelling Samtag → Samstag should be corrected as language, not used
+  // to invent an unrelated sports-club availability requirement.
+  const evidence = evaluateWritingTaskEvidence(task, letter);
+  assert.deepEqual(evidence.map(point => point.status), ["met", "met", "met"]);
+  const withoutInvitation = evaluateWritingTaskEvidence(task, letter.replace(/Hast du nächsten Samtag Zeit\?/, ""))
+    .map(point => point.status);
+  assert.deepEqual(withoutInvitation, ["met", "met", "missing"]);
+  assert.doesNotMatch(evidence.map(e => e.label).join(" "), /course place|training times and costs/i);
 });
