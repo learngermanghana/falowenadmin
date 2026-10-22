@@ -1,3 +1,4 @@
+import PresenterLessonReport from "./PresenterLessonReport.jsx";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { listClasses } from "../services/classesService.js";
 import { listStudentsByClass } from "../services/studentsService.js";
@@ -81,9 +82,9 @@ function classMatchesCourse(entry = {}, course = "") {
   return candidates.some((value) => value === expected || value.startsWith(`${expected} `));
 }
 
-function participationStorageKey(slide = {}, classId = "") {
+function participationStorageKey(slide = {}, classId = "", sessionDate = "") {
   const lesson = normalize(slide.assignmentId || slide.id || `${slide.course || "course"}-${slide.day || "lesson"}`);
-  return `falowen:presenter:participation:${lesson}:${classId}`;
+  return `falowen:presenter:participation:${lesson}:${classId}:${sessionDate}`;
 }
 
 function readingHistoryStorageKey(classId = "") {
@@ -237,6 +238,9 @@ export default function PresenterStudentPicker({
   responseTimerEnabled = true,
   readingShare = null,
   onReadingAssignmentChange,
+  reportOpen = false,
+  onReportClose,
+  responseContext = null,
 }) {
   const [classOptions, setClassOptions] = useState([]);
   const classContext = useMemo(() => readPresenterClassContext(window.location.search), []);
@@ -357,7 +361,7 @@ export default function PresenterStudentPicker({
     setRoundQuestionIds(new Set());
     onQuestionChange?.(null);
 
-    const storageKey = participationStorageKey(slide, selectedClassId);
+    const storageKey = participationStorageKey(slide, selectedClassId, sessionDate);
     const saved = readParticipation(storageKey);
     setStats(saved.stats || {});
     setAbsentKeys(new Set(Array.isArray(saved.absentKeys) ? saved.absentKeys : []));
@@ -417,12 +421,12 @@ export default function PresenterStudentPicker({
   }, [questionContext, questionSignature, onQuestionChange]);
 
   useEffect(() => {
-    if (!selectedClassId) return;
+    if (!selectedClassId || loadingStudents || hydratedIdentity !== sessionIdentity) return;
     safeStorageSet(
-      participationStorageKey(slide, selectedClassId),
+      participationStorageKey(slide, selectedClassId, sessionDate),
       JSON.stringify({ stats, absentKeys: [...absentKeys], cloudRevision }),
     );
-  }, [stats, absentKeys, cloudRevision, selectedClassId, slide]);
+  }, [stats, absentKeys, cloudRevision, selectedClassId, slide, sessionDate, loadingStudents, hydratedIdentity, sessionIdentity]);
 
   const refreshFromCloud = useCallback(async () => {
     if (!selectedClassId || !assignmentId || !students.length) return;
@@ -742,6 +746,13 @@ export default function PresenterStudentPicker({
       result,
       questionContext: normalize(questionContext),
       recordedAt: new Date().toISOString(),
+    } : responseContext ? {
+      questionId: normalize(responseContext.stageId),
+      question: normalize(responseContext.question),
+      sourceQuestion: normalize(responseContext.question),
+      questionContext: normalize(responseContext.stageId),
+      result,
+      recordedAt: new Date().toISOString(),
     } : null;
 
     setStats((currentStats) => {
@@ -817,6 +828,9 @@ export default function PresenterStudentPicker({
 
   return (
     <section className="presenter-student-picker" aria-label="Random student participation">
+      {reportOpen && <PresenterLessonReport slide={slide} roster={roster} stats={stats} absentKeys={absentKeys}
+        className={selectedClass?.name || selectedClassId} sessionDate={sessionDate}
+        loading={loadingClasses || interactionLocked} error={error} saveLabel={saveLabel} onClose={onReportClose} />}
       <div className="presenter-student-toolbar">
         <label className="presenter-student-class-select">
           <span>Class</span>

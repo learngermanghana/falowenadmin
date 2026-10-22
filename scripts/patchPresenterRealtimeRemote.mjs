@@ -82,8 +82,8 @@ const teachingRealtimeEffects = `  useEffect(() => {
 
 teaching = replaceOnce(
   teaching,
-  '  useEffect(() => {\n    function onKeyDown(event) {',
-  `${teachingRealtimeEffects}  useEffect(() => {\n    function onKeyDown(event) {`,
+  '  usePresenterKeyboard({',
+  `${teachingRealtimeEffects}  usePresenterKeyboard({`,
   "TeachingSlidePresenter realtime effects",
 );
 fs.writeFileSync(teachingTarget, teaching);
@@ -148,8 +148,8 @@ const a1RealtimeEffects = `  useEffect(() => {
 
 a1 = replaceOnce(
   a1,
-  '  useEffect(() => {\n    function onKeyDown(event) {',
-  `${a1RealtimeEffects}  useEffect(() => {\n    function onKeyDown(event) {`,
+  '  usePresenterKeyboard({',
+  `${a1RealtimeEffects}  usePresenterKeyboard({`,
   "A1GrammarPresenter realtime effects",
 );
 fs.writeFileSync(a1Target, a1);
@@ -351,8 +351,8 @@ const remotePickerEffects = `  useEffect(() => {
 
 picker = replaceOnce(
   picker,
-  '  useEffect(() => {\n    if (!selectedClassId) return;\n    safeStorageSet(',
-  `${remotePickerEffects}  useEffect(() => {\n    if (!selectedClassId) return;\n    safeStorageSet(`,
+  '  useEffect(() => {\n    if (!selectedClassId || loadingStudents || hydratedIdentity !== sessionIdentity) return;\n    safeStorageSet(',
+  `${remotePickerEffects}  useEffect(() => {\n    if (!selectedClassId || loadingStudents || hydratedIdentity !== sessionIdentity) return;\n    safeStorageSet(`,
   "PresenterStudentPicker realtime effects",
 );
 

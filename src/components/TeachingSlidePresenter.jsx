@@ -1,3 +1,4 @@
+import PresenterControls, { PresenterActions, PresenterStageJump, usePresenterKeyboard } from "./PresenterControls.jsx";
 import C2GrammarTeaching from "./C2GrammarTeaching.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -124,12 +125,14 @@ function buildB1CorrectionTeacherGuide(questionDe = "", modelAnswerDe = "") {
   return [...new Set(guide)].slice(0, 6);
 }
 
-export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
+export default function TeachingSlidePresenter({ slide, topicLabel, onExit, nextLessonHref = "", nextLessonLabel = "" }) {
   const stages = useMemo(() => buildTeachingPresenterStages(slide, topicLabel), [slide, topicLabel]);
   const presenterShellRef = useRef(null);
   const presenterV2 = isTeachingPresenterV2Slide(slide);
   const advancedClassroom = ["B2", "C1"].includes(String(slide.course || "").toUpperCase());
   const lessonContract = useMemo(() => getA2B1AdminLessonProfileForSlide(slide), [slide]);
+  const [reportOpen, setReportOpen] = useState(false);
+  useEffect(() => setReportOpen(false), [slide]);
   const [stageIndex, setStageIndex] = useState(0);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [showQuestionSupport, setShowQuestionSupport] = useState(false);
@@ -317,6 +320,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     setShowSpeakingFeedback(false);
       return;
     }
+    if (stageIndex === stages.length - 1) { setReportOpen(true); return; }
     goTo(stageIndex + 1);
   }
 
@@ -623,34 +627,13 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     }
   }, []);
 
-  useEffect(() => {
-    function onKeyDown(event) {
-      const tagName = event.target?.tagName;
-      if (["INPUT", "TEXTAREA", "SELECT"].includes(tagName)) return;
-      if (tagName === "BUTTON" && [" ", "Enter"].includes(event.key)) return;
-
-      if (["ArrowRight", "PageDown", " "].includes(event.key)) {
-        event.preventDefault();
-        next();
-      } else if (["ArrowLeft", "PageUp"].includes(event.key)) {
-        event.preventDefault();
-        previous();
-      } else if (event.key === "Home") {
-        event.preventDefault();
-        goTo(0);
-      } else if (event.key === "End") {
-        event.preventDefault();
-        goTo(stages.length - 1);
-      }
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [stageIndex, stages.length, questionIndex, stage?.type, stage?.items?.length]);
+  usePresenterKeyboard({ previous, next, first: () => goTo(0), last: () => goTo(stages.length - 1),
+    blocked: reportOpen, preventNext: false });
 
   if (!stage) return null;
 
-  const progress = stages.length ? ((stageIndex + 1) / stages.length) * 100 : 0;
+  const atStart = stageIndex === 0 && questionIndex === 0 && c2AnalysisStep === 0;
+  const atEnd = stageIndex === stages.length - 1 && (stage.type !== "question-reveal" || questionIndex === stage.items.length - 1) && (stage.type !== "c2-analysis" || c2AnalysisStep === 2);
   const stagePhoto = getPresenterSlidePhoto(slide, stage);
   const activeQuestion = stage.type === "question-reveal" ? stage.items[questionIndex] : "";
   const activeQuestionLevel = stage.type === "question-reveal" && Array.isArray(stage.questionLevels)
@@ -737,19 +720,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
           </div>
         ) : null}
         {focusMode ? (
-          <div className="presenter-focus-dock" aria-label="Focus mode controls">
-            <button type="button" onClick={previous} disabled={stageIndex === 0 && questionIndex === 0} aria-label="Previous slide">←</button>
-            <span>{stageIndex + 1}/{stages.length}</span>
-            <button type="button" className="presenter-restore-control" onClick={exitPresentationView} aria-label="Restore presenter controls">Restore</button>
-            <button
-              type="button"
-              onClick={next}
-              disabled={stageIndex === stages.length - 1 && (stage.type !== "question-reveal" || questionIndex === stage.items.length - 1)}
-              aria-label="Next slide"
-            >
-              Next slide →
-            </button>
-          </div>
+          <PresenterControls focus index={stageIndex} total={stages.length} atStart={atStart} atEnd={atEnd}
+            onPrevious={previous} onNext={next} onRestore={exitPresentationView} onReport={() => setReportOpen(true)} nextLabel={stage.type === "c2-analysis" && c2AnalysisStep < 2 ? (c2AnalysisStep === 0 ? "Check →" : "Decide →") : stage.type === "question-reveal" && questionIndex < stage.items.length - 1 ? "Next question →" : "Next slide →"} />
         ) : null}
         <header className="presenter-topbar">
           <div>
@@ -761,25 +733,14 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
             slide={slide}
             stage={stage}
             onTimeStateChange={setClassTimeState}
-            toolbarActions={(
-              <>
-                <button type="button" className="presenter-session-present" onClick={presentFullscreen}>Present full screen</button>
-                <button type="button" className="presenter-session-exit" onClick={onExit}>Exit presenter</button>
-              </>
-            )}
+            toolbarActions={<PresenterActions onPresent={presentFullscreen} onExit={onExit} onReport={() => setReportOpen(true)} />}
           />
 
-          {showPresenterTimer ? (
-            <div className="presenter-v2-tools">
-              <label className="presenter-stage-jump">
-                <span>Jump to</span>
-                <select value={stageIndex} onChange={(event) => goTo(Number(event.target.value))}>
-                  {stages.map((item, index) => <option key={item.id} value={index}>{index + 1}. {item.title}</option>)}
-                </select>
-              </label>
+          <div className="presenter-v2-tools">
+            <PresenterStageJump stages={stages} index={stageIndex} onChange={goTo} />
 
-              <div className={`presenter-timer ${timerExpired ? "presenter-timer-expired" : ""}`}>
-                {a2B1ActivityTimer ? <span className="presenter-timer-mode">Activity timer</span> : null}
+              {showPresenterTimer && <div className={`presenter-timer ${timerExpired ? "presenter-timer-expired" : ""}`}>
+                <span className="presenter-timer-mode">Activity timer</span>
                 <strong>{formatTimer(timerRemaining)}</strong>
                 <div className="presenter-timer-presets" role="group" aria-label="Activity timer duration">
                   {timerPresets.map((minutes) => (
@@ -798,13 +759,14 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                   {timerRunning ? "Pause" : "Start"}
                 </button>
                 <button type="button" onClick={resetPresenterTimer}>Reset</button>
-              </div>
-            </div>
-          ) : null}
+              </div>}
+          </div>
 
         </header>
 
         <PresenterStudentPicker
+            reportOpen={reportOpen} onReportClose={() => setReportOpen(false)}
+            responseContext={{ question: activeQuestion || stage.title, stageId: stage.id }}
           slide={slide}
           onRosterCountChange={setRosterCount}
           responseTimerEnabled={!warmupPerStudent}
@@ -2096,20 +2058,9 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
           )}
         </main>
 
-        <footer className="presenter-footer">
-          <button type="button" onClick={previous} disabled={stageIndex === 0 && questionIndex === 0}>← Previous</button>
-          <div className="presenter-progress-wrap" aria-label={`Slide ${stageIndex + 1} of ${stages.length}`}>
-            <span>{stageIndex + 1} / {stages.length}</span>
-            <div className="presenter-progress-track"><div className="presenter-progress-bar" style={{ width: `${progress}%` }} /></div>
-          </div>
-          <button type="button" onClick={next} disabled={stageIndex === stages.length - 1 && (stage.type !== "question-reveal" || questionIndex === stage.items.length - 1)}>
-            {stage.type === "c2-analysis" && c2AnalysisStep < 2
-              ? (c2AnalysisStep === 0 ? "Prüfen →" : "Entscheiden →")
-              : stage.type === "question-reveal" && questionIndex < stage.items.length - 1
-                ? (advancedClassroom ? "Nächste Frage →" : "Next question →")
-                : "Next →"}
-          </button>
-        </footer>
+        <PresenterControls index={stageIndex} total={stages.length} atStart={atStart} atEnd={atEnd}
+            onPrevious={previous} onNext={next} onRestore={exitPresentationView} onReport={() => setReportOpen(true)} nextLabel={stage.type === "c2-analysis" && c2AnalysisStep < 2 ? (c2AnalysisStep === 0 ? "Check →" : "Decide →") : stage.type === "question-reveal" && questionIndex < stage.items.length - 1 ? "Next question →" : "Next slide →"}
+          nextLessonHref={nextLessonHref} nextLessonLabel={nextLessonLabel} />
       </div>
     </div>
   );

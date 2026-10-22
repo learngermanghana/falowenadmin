@@ -7,7 +7,7 @@ const require = createRequire(import.meta.url);
 const React = require('react');
 const { JSDOM } = require('jsdom');
 
-test('A1 linked roster loads once; hint, answer and student buttons survive rerenders', async () => {
+test('A1–C2 controls retain questions, reports use live marks and switching class clears results', async () => {
   const dom = new JSDOM('<div id="root"></div>', {
     url: 'https://admin.falowen.app/teaching-slides/course/A1/a1-3-6?present=1&classRecordId=LnvBRAxp5IjmQZzfM6eY&classId=LnvBRAxp5IjmQZzfM6eY&sessionDate=2026-10-12',
     pretendToBeVisual: true,
@@ -15,6 +15,8 @@ test('A1 linked roster loads once; hint, answer and student buttons survive rere
   globalThis.window = dom.window;
   globalThis.document = dom.window.document;
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  dom.window.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
+  dom.window.HTMLDialogElement.prototype.close = function () { this.open = false; };
   dom.window.localStorage.setItem('falowen:presenter:last-class', 'A1 Hamburg Klasse');
   const { createRoot } = require('react-dom/client');
   const context = await transformWithEsbuild(fs.readFileSync('src/utils/presenterClassContext.js', 'utf8'), 'presenterClassContext.js', { format: 'cjs' });
@@ -62,6 +64,9 @@ test('A1 linked roster loads once; hint, answer and student buttons survive rere
     new Function('require', 'module', 'exports', code)(mockRequire, module, module.exports);
     return module.exports;
   }
+  mocks['../utils/presenterLessonReport.js'] = await compile('src/utils/presenterLessonReport.js');
+  mocks['./PresenterLessonReport.jsx'] = await compile('src/components/PresenterLessonReport.jsx');
+  mocks['./PresenterControls.jsx'] = await compile('src/components/PresenterControls.jsx');
   mocks['./PresenterStudentPicker.jsx'] = await compile('src/components/PresenterStudentPicker.jsx');
   const Presenter = (await compile('src/components/A1GrammarPresenter.jsx')).default;
   const root = createRoot(document.getElementById('root'));
@@ -91,9 +96,54 @@ test('A1 linked roster loads once; hint, answer and student buttons survive rere
     assert.ok(document.querySelector('.presenter-model-support')?.textContent.includes(selectedCheck.answerDe));
     assert.equal(document.querySelector('.presenter-question').textContent.trim(), selectedQuestion);
     assert.equal(loads, settledLoads, 'picking and revealing an answer must not restart roster restore');
+    await click(button('Needs review'));
+    await click(button('Lesson report'));
+    assert.ok(document.querySelector('dialog').open);
+    assert.ok(document.querySelector('dialog').textContent.includes(selectedQuestion));
+    assert.equal(document.querySelector('dialog tbody tr td').textContent, '1');
+    await click(button('Back to lesson'));
+    assert.equal(document.querySelector('dialog'), null);
+    assert.equal(document.querySelector('.presenter-question').textContent.trim(), selectedQuestion);
     const select = document.querySelector('.presenter-student-class-select select');
     await React.act(async () => { select.value = 'A1 Hamburg Klasse'; select.dispatchEvent(new dom.window.Event('change', { bubbles: true })); });
     assert.equal(select.value, 'A1 Hamburg Klasse', 'the URL must not prevent a later manual class switch');
+    await click(button('Lesson report'));
+    assert.equal(document.querySelector('dialog tbody tr td').textContent, '0', 'switching class must not leak the previous class results');
+    await click(button('Back to lesson'));
+
+    mocks['../utils/teachingPresenter.js'] = {
+      buildTeachingPresenterStages: () => [
+        { id: 'intro', type: 'intro', title: 'Lesson introduction' },
+        { id: 'questions', type: 'question-reveal', title: 'Speaking', items: ['First question?', 'Second question?'] },
+      ],
+      clampPresenterIndex: (i, n) => Math.max(0, Math.min(n - 1, i)),
+      getSpeakingQuestionModel: () => null, isTeachingPresenterV2Slide: () => true,
+    };
+    mocks['../utils/warmupText.js'] = { splitWarmupQuestionSegments: text => [{ text }] };
+    mocks['../utils/presenterSentenceNumbering.js'] = { numberedPresenterSentences: () => [] };
+    mocks['../data/a2B1LessonProfile.js'] = { getA2B1AdminLessonProfileForSlide: () => null };
+    mocks['../data/b1Day18CareerChallenge.js'] = { nextB1Day18CareerIndex: () => 0 };
+    for (const name of ['C2GrammarTeaching', 'B1HousingChoicePractice', 'A2SportMatchmaker']) mocks[`./${name}.jsx`] = { __esModule: true, default: () => null };
+    const SharedPresenter = (await compile('src/components/TeachingSlidePresenter.jsx')).default;
+    for (const level of ['A2', 'B1', 'B2', 'C1', 'C2']) {
+      await React.act(async () => root.render(React.createElement(SharedPresenter, { key: level, slide: {
+        id: `${level}-lesson`, course: level, assignmentId: `${level}-1.1`, title: 'Practice',
+        workbookConnection: { workbookUrl: `/campus/course/${level}-lesson` },
+      }, onExit() {} })));
+      await click(button('Next slide →'));
+      assert.ok(document.querySelector('main').textContent.includes('First question?'));
+      await click(button('Pick student'));
+      await click(button('Needs review'));
+      await click(button('Next question →'));
+      assert.ok(document.querySelector('main').textContent.includes('Second question?'));
+      await click(button('Finish lesson · report'));
+      assert.ok(document.querySelector('dialog').textContent.includes('First question?'), `${level} records the question marked for review`);
+      assert.equal(document.querySelector('dialog a').href, `https://www.falowen.app/campus/course/${level}-lesson`);
+      await click(button('Back to lesson'));
+      assert.ok(document.querySelector('main').textContent.includes('Second question?'));
+      await click(button('← Previous'));
+      assert.ok(document.querySelector('main').textContent.includes('First question?'));
+    }
   } finally {
     await React.act(async () => root.unmount());
     dom.window.close();

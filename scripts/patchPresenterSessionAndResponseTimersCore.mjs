@@ -87,7 +87,7 @@ pickerSource = replaceOnce(
 
 pickerSource = replaceOnce(
   pickerSource,
-  '  useEffect(() => {\n    if (!selectedClassId) return;\n    safeStorageSet(',
+  '  useEffect(() => {\n    if (!selectedClassId || loadingStudents || hydratedIdentity !== sessionIdentity) return;\n    safeStorageSet(',
   [
     '  // presenter-response-deadline-clock-v2',
     '  useEffect(() => {',
@@ -163,7 +163,7 @@ pickerSource = replaceOnce(
     '  }, [responseTimerEnabled]);',
     '',
     '  useEffect(() => {',
-    '    if (!selectedClassId) return;',
+    '    if (!selectedClassId || loadingStudents || hydratedIdentity !== sessionIdentity) return;',
     '    safeStorageSet(',
   ].join("\n"),
   "student response timer effects",
