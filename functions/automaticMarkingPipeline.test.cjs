@@ -85,3 +85,23 @@ test('bundled Firebase worker grades versioned A1-12.1 Bahnhof Hören, not the p
   assert.equal(legacy.objectiveCorrect, 10);
   assert.equal(legacy.objectiveTotal, 10);
 });
+
+
+test('A2-5.14 current five-answer workbook grades 5/5, never old 5/12', async () => {
+  const pipeline = loadPipeline();
+  const referenceEntry = pipeline.canonicalCourseReference('A2-5.14');
+  assert.ok(referenceEntry, 'A2-5.14 must be included in the bundled marking dictionary');
+  assert.deepEqual(Array.from(referenceEntry.referenceAnswerParts), ['teil3']);
+  assert.equal(referenceEntry.totalAnswers, 5);
+  const result = await withMarkingTransport(
+    async () => { throw new Error('five-question objective assignment must never request AI'); },
+    () => pipeline.markSubmissionWithAI({
+      referenceEntry,
+      submission: { assignmentKey: 'A2-5.14', level: 'A2' },
+      submissionText: 'TEIL 3\n1. A\n2. C\n3. B\n4. A\n5. B',
+    }),
+  );
+  assert.equal(result.objectiveCorrect, 5);
+  assert.equal(result.objectiveTotal, 5);
+  assert.equal(result.finalScore, 100);
+});

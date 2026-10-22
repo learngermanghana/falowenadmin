@@ -15,6 +15,7 @@ const { defineSecret } = require("firebase-functions/params");
 const { registerHoerenStudioRoutes } = require("./hoerenStudioApi.js");
 const { registerTimedDraftRecoveryRoutes } = require("./timedDraftRecovery.js");
 const { registerDraftHistoryRoutes } = require("./draftHistory.js");
+const { registerMarkingHealthRoutes } = require("./markingHealth.js");
 const { createAttendanceConfirmationEmailJob, sendAssignmentAttendanceCreditEmail } = require("./attendanceConfirmationEmails.js");
 const { retryFailedAttendanceDeliveries, listAttendanceDeliveryHealth } = require("./attendanceConfirmationRetry.js");
 const { registerCompletionDocumentRoute } = require("./completionParticipationDocument.js");
@@ -2387,21 +2388,22 @@ exports.sendFinalMockResultEmail = createFinalMockResultEmailTrigger({
   runtimeConfig,
 });
 
-exports.createFlatSubmissionMarkingJob = onDocumentCreated("submissions/{submissionId}", async (event) => {
+exports.createFlatSubmissionMarkingJob = onDocumentCreated({ document: "submissions/{submissionId}", retry: true }, async (event) => {
   await createAutomaticMarkingJob(event, "flat");
 });
 
-exports.createNestedSubmissionMarkingJob = onDocumentCreated("submissions/{level}/{studentCode}/{submissionId}", async (event) => {
+exports.createNestedSubmissionMarkingJob = onDocumentCreated({ document: "submissions/{level}/{studentCode}/{submissionId}", retry: true }, async (event) => {
   await createAutomaticMarkingJob(event, "nested");
 });
 
-exports.createPostSubmissionMarkingJob = onDocumentCreated("submissions/{level}/posts/{submissionId}", async (event) => {
+exports.createPostSubmissionMarkingJob = onDocumentCreated({ document: "submissions/{level}/posts/{submissionId}", retry: true }, async (event) => {
   await createAutomaticMarkingJob(event, "posts");
 });
 
 // Staff-approved draft restorations use the ordinary submission/marking pipeline.
 registerTimedDraftRecoveryRoutes(app, { admin, db, requireAuth });
 registerDraftHistoryRoutes(app, { admin, db });
+registerMarkingHealthRoutes(app, { admin, db });
 
 // Marking runs on Firebase, using the same generated pipeline as tutor marking.
 const { createCourseMarkingWorker, createScoreSyncWorker } = require("./automaticCourseMarking");
@@ -2409,7 +2411,11 @@ exports.markCourseSubmissionAutomatically = onDocumentCreated({
   document: "markingJobs/{jobId}", secrets: [openAiApiKeySecret],
   timeoutSeconds: 540, memory: "512MiB", maxInstances: 2, concurrency: 1, retry: true,
 }, createCourseMarkingWorker({
-  admin, db, loadReference: loadAnswerKeyRegistryEntry, callAi: callOpenAiForMarking,
+  admin, db,
+  // The bundled, checked-in Admin key wins over the potentially stale Firestore registry.
+  loadReference: async key => require('./automaticMarkingPipeline.cjs').canonicalCourseReference(key)
+    || await loadAnswerKeyRegistryEntry(key),
+  callAi: callOpenAiForMarking,
   mark: options => require("./automaticMarkingPipeline.cjs").markSubmissionWithAI(options),
 }));
 exports.syncAutomaticCourseScore = onDocumentCreated({

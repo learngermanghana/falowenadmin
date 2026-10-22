@@ -78,3 +78,13 @@ test("runtime pushes still include shared changes left behind by failed deployme
     assert.match(fs.readFileSync(".github/workflows/deploy-firebase.yml", "utf8"), /step.conclusion === 'success'/);
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
+
+
+test("a lesson answer-key update redeploys marking API and automatic worker without all Cloud Run functions", () => {
+  const keyPath = "src/data/answers_dictionary.json";
+  const workflow = fs.readFileSync(".github/workflows/deploy-firebase.yml", "utf8");
+  assert.match(workflow, /- 'src\/data\/answers_dictionary\.json'/);
+  const plan = selectFirebaseDeployTargets({ changedPaths: [keyPath] });
+  assert.equal(plan.mode, "targeted");
+  assert.deepEqual(plan.targets, ["api", "markCourseSubmissionAutomatically"]);
+});

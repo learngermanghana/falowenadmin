@@ -10,16 +10,16 @@ const configurations = [
 ];
 
 for (const config of configurations) {
-  test(`${config.id}: answer sheet has one objective part and one tutor-reviewed speaking part`, () => {
+  test(`${config.id}: answer sheet has its current objective parts and tutor-reviewed speaking`, () => {
     const entry = normalizeAnswerKeyEntry(config.source, dictionary[config.source]);
     assert.equal(entry.assignmentKey, config.id);
-    assert.deepEqual(entry.referenceAnswerParts, [config.objective]);
+    assert.deepEqual(entry.referenceAnswerParts, config.id === 'A1-11' ? ['teil2', 'teil3'] : [config.objective]);
     assert.deepEqual(entry.writingParts, []);
     assert.equal(entry.partGrading[config.speaking].gradingMode, "tutor_verified_speaking");
     assert.equal(entry.partGrading[config.speaking].hasReferenceAnswers, false);
     assert.equal(entry.parts[config.speaking], undefined);
     assert.equal(entry.parts[config.objective].answers.length, config.count);
-    assert.equal(entry.totalAnswers, config.count);
+    assert.equal(entry.totalAnswers, config.id === 'A1-11' ? 10 : config.count);
   });
 
   test(`${config.id}: never accepts a student-claimed score as verified`, () => {
@@ -47,7 +47,7 @@ for (const config of configurations) {
     assert.ok(result.reviewReasons?.some(text => /tutor review/i.test(text)));
     assert.ok(result.parts.some(part => part.partType === "speaking" && part.result.score === null));
     const objective = checkDeterministicObjectiveAnswers({ referenceEntry: entry, submissionText: sectionText });
-    assert.equal(objective.objectiveTotal, config.count);
+    assert.equal(objective.objectiveTotal, config.id === 'A1-11' ? 10 : config.count);
   });
 }
 

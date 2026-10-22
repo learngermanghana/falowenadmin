@@ -123,3 +123,18 @@ export async function closeAutomaticMarkingReview(detail) {
     tx.set(ref, { reviewClosedAt: new Date().toISOString(), reviewClosedBy: auth.currentUser.uid }, { merge: true });
   });
 }
+
+
+// Explicit owner action only: bounded Firestore job/sync samples from the server.
+export async function loadMarkingHealth() {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Sign in before checking marking health.');
+  const response = await fetch('/api/admin/marking-health', {
+    cache: 'no-store',
+    headers: { Authorization: 'Bearer ' + await user.getIdToken() },
+  });
+  const body = await response.json().catch(() => null);
+  if (!response.ok || body?.ok !== true)
+    throw new Error(body?.error || 'Could not check marking health.');
+  return body;
+}

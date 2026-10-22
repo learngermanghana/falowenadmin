@@ -444,7 +444,16 @@ const A1_11_LEGACY_REFERENCE_ENTRY = {
 
 function isA111LegacySubmission(assignmentId = "", sections = [], submissionText = "") {
   if (normalizeAssignmentId(assignmentId) !== "A1-11") return false;
-  if (sections.some((section) => section.partId === "teil3")) return true;
+  // Modern A1-11 also contains Teil 3: five Richtig/Falsch Wegbeschreibung questions.
+  // Recognize the former workbook from its five objective letter answers in Teil 1,
+  // not simply from the presence of Teil 3.
+  const teil3 = sections.find(section => section.partId === "teil3");
+  if (teil3) {
+    const teil1 = sections.find(section => section.partId === "teil1");
+    const answers = teil1 ? extractRestartedNumberingEntries(teil1.text) : [];
+    return answers.length >= 5 && answers.slice(0, 5).every(entry =>
+      /^[A-D](?:$|[\s.)-])/i.test(String(entry.answer || "").trim()));
+  }
   const objectiveCount = sections.reduce(
     (count, section) => count + extractRestartedNumberingEntries(section.text).length,
     0,
