@@ -62,3 +62,14 @@ test("requires verified owner and rejects unauthorized email lookup", async () =
   assert.equal(response.statusCode,403);
   assert.equal(response.data.ok,false);
 });
+
+
+test("Admin Vercel routes the owner-only account lookup to Firebase before the catch-all API router", () => {
+  const fs = require("node:fs");
+  const routes = JSON.parse(fs.readFileSync("vercel.json", "utf8")).rewrites;
+  const index = routes.findIndex(item => item.source === "/api/admin/signup-account-lookup");
+  assert.ok(index >= 0, "missing Firebase account diagnostic rewrite");
+  assert.ok(index < routes.findIndex(item => item.source === "/api/(.*)"));
+  assert.equal(routes[index].destination,
+    "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/admin/signup-account-lookup");
+});
