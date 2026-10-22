@@ -2,7 +2,7 @@
 
 Owner-only editor: `https://admin.falowen.app/ai-studio`
 
-This feature adds original Goethe-style **practice** recordings (not official recordings), with A1–B2 scripted dialogs, public announcements, telephone messages, two Google voices, local timed pauses, optional second full playback and downloadable **WAV** + transcript. No audio files are persisted in Firestore/Cloud Storage.
+This feature adds original Goethe-style **practice** recordings (not official recordings), with A1–C2 scripted dialogs, public announcements, telephone messages, four assigned Google voices, local timed pauses, optional second full playback and downloadable **WAV** + transcript. No audio files are persisted in Firestore/Cloud Storage.
 
 ## Activation (required; fail closed)
 
@@ -18,8 +18,8 @@ This feature adds original Goethe-style **practice** recordings (not official re
 ## Budget safeguards
 
 - Firebase verifies the signed ID token and requires **exact owner UID**.
-- Firestore transactions reserve a hard application limit of **5 generated scripts and 36 speech clips per UTC day** across parallel calls.
-- Audio clips limited to 320 characters each; recording limited to 18 spoken turns, 40 total transcript lines.
+- Firestore transactions reserve a hard application limit of **20 generated scripts and 72 speech scenes per UTC day** across parallel calls.
+- Individual Google TTS turns remain limited to 320 characters; the browser automatically splits longer spoken lines without discarding text. A recording is limited to 36 speech segments and 64 transcript lines, with up to 8 turns and 2 speakers per Google scene.
 - Max API response WAV 2.6 MB per clip; no files uploaded or published automatically.
 - Repeats and pauses are assembled in browser without extra AI calls. Save/download the recording after generation to avoid paying for regeneration.
 - Google free quotas and billing are independent of this application cap. **Firestore limits are not a financial ceiling**: Gemini billing and other cloud usage may still incur charges, including errors/retries. Use a Google Cloud budget/alerts, restrict key scope and review actual consumption before enabling paid access.
@@ -32,7 +32,7 @@ This feature adds original Goethe-style **practice** recordings (not official re
 - Google speech models: `gemini-3.8-flash-lite-tts` and `gemini-3.8-flash-tts` (REST `/v1beta/interactions`). Audio is generated as 24kHz 16-bit mono WAV.
 - Test: `node --test tests/hoeren-studio.test.js`.
 - No ElevenLabs subscription or Vercel plan upgrade is introduced. Existing Vercel Hobby commercial-use terms should be evaluated separately from this feature.
-- **MP3 export**, exam question generation and direct student publication are not implemented; WAV is usable and lossless, and can be converted offline if needed.
+- Local **MP3/WAV export** and exam question generation are available. Direct Course Book publication remains restricted to approved five-question A1–B1 lessons; Goethe exam sets remain local exports.
 
 ## Transcript notation
 
@@ -43,4 +43,4 @@ B: Möchten Sie heute oder morgen fahren?
 A: Morgen früh, bitte.
 ```
 
-A and B map to two prebuilt voices. `[PAUSE N]` adds N seconds of *exact* digital silence. Line gap and repeat gap are added on the device, not spoken by the AI. Audio is generated turn by turn and cached only in the open browser session; losing the session before downloading means the WAV must be regenerated.
+In Goethe Exam mode, A is the formal narrator; B, C and D are distinct task speakers. The speaker roles and recording environment are inferred automatically but can be edited manually. `[PAUSE N]` adds N seconds of *exact* digital silence. Line gap and repeat gap are added on the device, not spoken by the AI. Audio is generated turn by turn and cached only in the open browser session; losing the session before downloading means the WAV must be regenerated.

@@ -24,6 +24,20 @@ export function inspectHoerenDraft({ script, kind, questions = [], expectedCount
   if (mode === "goethe" && profile) {
     if (kind !== profile.kind) errors.push("Question format does not match the selected exam template.");
     if (spokenLines.length) {
+      // Test the SPOKEN instructions, not only the form controls. This catches
+      // copied A1 Teil 1 scripts which announce Richtig/Falsch instead of a–c.
+      const intro = spokenLines.slice(0, 3).map(line => line.text).join(" ").toLowerCase();
+      if (profile.kind === "multiple-choice" && /(?:richtig\s+oder\s+falsch|richtig\s*\/\s*falsch)/iu.test(intro)) {
+        errors.push("The spoken instructions say Richtig/Falsch, but this Teil requires a–c choices. Correct the instructions before generating audio.");
+      }
+      if (profile.kind === "richtig-falsch" && /(?:richtige\s+(?:antwort|lösung)\s+[abc]|\ba\s*,\s*b\s*(?:,|oder)\s*c\b)/iu.test(intro)) {
+        errors.push("The spoken instructions say a–c, but this Teil uses Richtig/Falsch.");
+      }
+      const announced = intro.match(/\b(vier|fünf|sechs)\s+(?:kurze\s+)?(?:texte|gespräche|ansagen|informationen)\b/iu)?.[1];
+      const announcedCount = { vier: 4, fünf: 5, sechs: 6 }[announced];
+      if (announcedCount && announcedCount !== profile.questionCount) {
+        errors.push(`The instructions announce ${announcedCount} texts but this Teil requires ${profile.questionCount}. Check the exam format.`);
+      }
       const target = Number(profile.wordTarget);
       if (target && wordCount < target * 0.6) warnings.push(`Audio script is short for this Teil (${wordCount} / ~${target} words).`);
       if (target && wordCount > target * 1.55) warnings.push(`Audio script may be long for this Teil (${wordCount} / ~${target} words).`);
@@ -54,9 +68,9 @@ export function inspectHoerenDraft({ script, kind, questions = [], expectedCount
     warnings.push(mode === "goethe" ? "Generate the preset questions before producing an exam recording." : "No questions yet. Audio export still works, but Course Book publishing needs five reviewed questions.");
   }
 
-  if (spokenLines.some(line => line.text.length > 285)) warnings.push("Some segments are close to the 320-character speech limit.");
-  if (mode === "goethe" && spokenLines.length && new Set(spokenLines.map(line => line.speaker)).size === 1 && /dialogue|discussion|interview/i.test(profile?.type || "")) {
-    warnings.push("This Teil describes a conversation. Check whether more than one voice is needed.");
+  if (spokenLines.some(line => line.text.length > 285)) warnings.push("Long passages have been divided into speech-safe clips without dropping text.");
+  if (mode === "goethe" && spokenLines.length && !spokenLines.some(line => ["B", "C", "D"].includes(line.speaker))) {
+    warnings.push("Only instruction voice A is assigned. Use B/C/D for actual exam task speakers.");
   }
   return { errors, warnings, spokenLines, wordCount, pauseCount, readyForVoice: errors.length === 0 };
 }

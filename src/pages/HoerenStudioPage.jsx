@@ -6,6 +6,7 @@ import { inspectHoerenDraft } from "../utils/hoerenDraftQuality.js";
 import { getStudioCourseCatalog, getStudioCourseContext, resolveStudioCourseModeLesson } from "../utils/hoerenCourseCatalog.js";
 import { assembleListeningExam, base64WavToBytes, parseStudioTranscript, formatStudioTranscript, sameSpokenTranscript , repairStudioTranscript, repairUnlabelledStudioLines } from "../utils/hoerenAudio";
 import { SCENES, decodeLocalAtmosphere } from "../utils/hoerenSoundscape";
+import { assignGoetheSpeakers, suggestRecordingScene } from "../utils/hoerenProductionDefaults.js";
 import { encodeWavAsMp3 } from "../utils/hoerenMp3";
 import { buildStudioSpeechPlan, sceneVoiceKey, assemblyScenePlan } from "../utils/hoerenSpeechPlan";
 import { getSavedVoice, saveVoice } from "../utils/hoerenVoiceCache";
@@ -45,11 +46,11 @@ function SpeechSegmentEditor({ line, index, onSave, hasAudio, disabled }) {
       <span>{hasAudio ? "Scene cached · free to reuse" : "Scene not yet generated"}</span>
     </div>
     <label>Speaker <select value={speaker} disabled={disabled} onChange={e => setSpeaker(e.target.value)}>
-      <option value="A">A</option><option value="B">B</option><option value="C">C</option>
+      <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
     </select></label>
-    <label>Spoken words <textarea rows={2} value={text} disabled={disabled} maxLength={320} onChange={e => setText(e.target.value)} /></label>
+    <label>Spoken words <textarea rows={2} value={text} disabled={disabled} onChange={e => setText(e.target.value)} /></label>
     <div className="hoeren-segment-bottom">
-      <small>{text.length}/320 characters</small>
+      <small>{text.length} characters · long text is split safely for speech</small>
       <button type="button" className="hoeren-quiet" disabled={disabled || !dirty || !text.trim()} onClick={() => onSave(index, text, speaker)}>Apply sentence edit</button>
     </div>
   </div>;
@@ -67,7 +68,7 @@ export default function HoerenStudioPage() {
   const [lineGap, setLineGap] = useState(0.7);
   const [repeats, setRepeats] = useState(2);
   const [repeatGap, setRepeatGap] = useState(6);
-  const [scene, setScene] = useState("station");
+  const [sceneOverride, setSceneOverride] = useState(null);
   const [useAtmosphere, setUseAtmosphere] = useState(true);
   const [openingBell, setOpeningBell] = useState(true);
   const [endingSound, setEndingSound] = useState(true);
@@ -116,6 +117,8 @@ export default function HoerenStudioPage() {
   }, [script]);
   const spokenLines = transcript.lines.filter((line) => line.type === "speech");
   const selectedProfile = mode === "goethe" ? (status?.profiles?.[level]?.[examPart] || null) : null;
+  const suggestedScene = suggestRecordingScene({ script, topic, type: selectedProfile?.type || type, mode });
+  const scene = sceneOverride ?? suggestedScene;
   const questionCount = selectedProfile?.questionCount || 5;
   const ready = Boolean(status?.ready);
   const filename = safeFileName(level, topic, examPart);
@@ -196,8 +199,7 @@ export default function HoerenStudioPage() {
     if (nextMode === mode) return;
     setMode(nextMode);
     if (nextMode === "goethe") {
-      const examLevel = level === "A1" ? "A2" : level;
-      setLevelAndPart(examLevel, "1");
+      setLevelAndPart(level, "1");
     } else {
       setExamPart("");
       setType("dialogue"); setQuestionKind("richtig-falsch"); setRepeats(2);
@@ -206,8 +208,8 @@ export default function HoerenStudioPage() {
     }
   }
   function updateSpokenSegment(spokenIndex, text, speaker) {
-    if (!text.trim() || text.trim().length > 320) {
-      toast.error("A spoken segment needs 1–320 characters.");
+    if (!text.trim()) {
+      toast.error("A spoken segment cannot be empty.");
       return;
     }
     let index = 0;
@@ -222,11 +224,11 @@ export default function HoerenStudioPage() {
   }
   function setLevelAndPart(nextLevel, nextPart) {
     const profile = status?.profiles?.[nextLevel]?.[nextPart];
-    setLevel(nextLevel); setExamPart(nextLevel === "A1" ? "" : nextPart);
+    setLevel(nextLevel); setExamPart(nextPart);
     if (profile) {
       setType(profile.type); setTopic(profile.topic); setScript(profile.preview);
       setQuestionKind(profile.kind); setRepeats(profile.repeats);
-      setScene("none"); setUseAtmosphere(false);
+      setSceneOverride(null); setUseAtmosphere(true); setOpeningBell(false); setEndingSound(false);
     } else if (nextLevel === "A1") {
       setType("dialogue"); setQuestionKind("richtig-falsch");
       setTopic("Eine Fahrkarte am Bahnhof kaufen"); setScript(TEMPLATES.dialogue);
@@ -264,10 +266,12 @@ export default function HoerenStudioPage() {
     try {
       const result = await makeListeningScript({ topic, type, level, part: mode === "goethe" ? examPart : "", mode, kind: questionKind,
         lessonContext: mode === "course" ? getStudioCourseContext(selectedCourseEntry) : null });
-      setScript(repairUnlabelledStudioLines(result.script));
+      const formatted = repairUnlabelledStudioLines(result.script);
+      const produced = mode === "goethe" ? assignGoetheSpeakers(formatted) : formatted;
+      setScript(produced);
       setQuestions(result.questions || []);
       setQuestionKind(result.kind || "richtig-falsch");
-      setQuestionScript(repairUnlabelledStudioLines(result.script));
+      setQuestionScript(produced);
       setTeacherApproved(false); setPublished(null);
       setStatus((previous) => previous && ({ ...previous, remaining: { ...previous.remaining, script: result.remaining } }));
       toast.success(`Script and ${questionCount} Hören questions generated. Review the answers before approving.`);
@@ -275,7 +279,8 @@ export default function HoerenStudioPage() {
     finally { setBusy(""); await reloadStatus(); }
   }
   function repairTranscript() {
-    const repaired = repairUnlabelledStudioLines(script);
+    const formatted = repairUnlabelledStudioLines(script);
+    const repaired = mode === "goethe" ? assignGoetheSpeakers(formatted) : formatted;
     if (repaired === script) { toast.success('Transcript formatting is already valid.'); return; }
     setScript(repaired);
     setTeacherApproved(false);
@@ -432,7 +437,7 @@ export default function HoerenStudioPage() {
                 const first = getStudioCourseCatalog(next, courseLessons).find(entry => entry.chapter !== "0");
                 chooseCourseLesson(first?.assignmentKey, next);
               }
-            }}>{LEVELS.filter(choice => mode === "course" || choice !== "A1").map(choice => <option key={choice}>{choice}</option>)}</select></label>
+            }}>{LEVELS.map(choice => <option key={choice}>{choice}</option>)}</select></label>
             {mode === "goethe" ? <label>Hören {level === "C2" ? "Aufgabe" : "Teil"}
               <select value={examPart} disabled={!!busy || !status?.profiles?.[level]} onChange={event => setLevelAndPart(level, event.target.value)}>
                 {Object.entries(status?.profiles?.[level] || {}).map(([part, profile]) => <option key={part} value={part}>{profile.examLabel} {part} · {profile.label}</option>)}
@@ -479,17 +484,17 @@ export default function HoerenStudioPage() {
           </div>}
           <div className="hoeren-input-grid">
             <label>Recording style<input value={selectedProfile?.type || type} readOnly /></label>
-            <label>Recording limits<input value={`Up to 36 spoken lines · ${status?.remaining.speech ?? "—"} Falowen calls left today`} readOnly /></label>
+            <label>Recording limits<input value={`Long text auto-split · max 36 voice clips · ${status?.remaining.speech ?? "—"} calls left`} readOnly /></label>
           </div>
           <label>{mode === "course" ? "Lesson-aligned audio topic (optional subtopic)" : "Topic for an original exam script"}<input value={topic} disabled={!!busy} maxLength={240} onChange={(event) => { setTopic(event.target.value); clearAudio(); }} placeholder="e.g. Shopping at a supermarket" /></label>
           <button className="hoeren-button" type="button" disabled={!ready || !!busy || topic.trim().length < 4 || !status?.remaining.script || (mode === "goethe" && !selectedProfile) || (mode === "course" && !selectedCourseEntry)} onClick={generateScript}>{busy === "script" ? "Generating script…" : mode === "goethe" ? "Generate complete Goethe task" : "Generate Course Book script + questions"}</button>
           <p className="hoeren-hint">{mode === "course" ? "The selected dictionary chapter, assignment ID and German/English titles are passed to the AI so the recording and questions stay aligned with that course lesson." : "You can also write or paste your own script without spending a script-generation request."}</p>
           <label>Transcript — edit before creating audio
-            <textarea rows={13} spellCheck lang="de" value={script} disabled={!!busy} onChange={(event) => { setScript(repairStudioTranscript(event.target.value)); setTeacherApproved(false); setPublished(null); clearAudio(); }} />
+            <textarea rows={13} spellCheck lang="de" value={script} disabled={!!busy} onChange={(event) => { setScript(repairStudioTranscript(event.target.value)); setTeacherApproved(false); setPublished(null); clearAudio(); }} onBlur={() => { if (mode === "goethe") { const cast = assignGoetheSpeakers(repairUnlabelledStudioLines(script)); if (cast !== script) { setScript(cast); setTeacherApproved(false); clearAudio(); } } }} />
           </label>
-          <p className="hoeren-hint">Pasted dialogue, numbered announcements and pauses are formatted automatically. Please check the script for accuracy before synthesizing.</p>
+          <p className="hoeren-hint">Pasted dialogue, numbered announcements and pauses are formatted automatically. Goethe instruction voice A stays separate from task voices B/C/D; casting runs when you finish editing. Long text is divided into speech-safe clips without deleting words.</p>
           <button type="button" className="hoeren-quiet" disabled={!!busy || !script.trim()} onClick={repairTranscript}>Fix transcript formatting · free</button>
-           <p className="hoeren-hint"><strong>Transcript format:</strong> Start spoken segments with <code>A:</code>, <code>B:</code> or <code>C:</code>. Add <code>[PAUSE 3]</code> on its own line. A, B and C use distinct voices.</p>
+           <p className="hoeren-hint"><strong>Transcript format:</strong> Use <code>A:</code> for the exam narrator and <code>B:</code>, <code>C:</code> or <code>D:</code> for task actors. Put <code>[PAUSE 3]</code> on its own line. Each speaker has a distinct voice.</p>
           {!transcript.error && spokenLines.length ? <details className="hoeren-sentence-editor">
             <summary>Edit individual voice segments · reuse unchanged audio</summary>
             <p className="hoeren-hint">Edit any sentence; only its dialogue scene requires a new Google call. Unchanged scenes remain cached across refreshes on this browser. Keep questions aligned with the edited transcript.</p>
@@ -563,11 +568,13 @@ export default function HoerenStudioPage() {
           <fieldset className="hoeren-fieldset hoeren-atmosphere">
             <legend>Sound effects &amp; atmosphere · no extra AI credits</legend>
             <label>Recording environment
-              <select value={scene} disabled={!!busy} onChange={(event) => { setScene(event.target.value); clearAudio(true); }}>
+              <select value={sceneOverride ?? "auto"} disabled={!!busy} onChange={(event) => { setSceneOverride(event.target.value === "auto" ? null : event.target.value); clearAudio(true); }}>
+                <option value="auto">Auto · {SCENES[suggestedScene]}</option>
                 {Object.entries(SCENES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
             </label>
-            {scene !== "none" ? <>
+            <p className="hoeren-hint">Auto selects a suitable setting. Mixed locations and interviews remain clean instead of placing one ambience under unrelated tasks. Manual override is available.</p>
+             {scene !== "none" ? <>
               <label className="hoeren-effect-option"><input type="checkbox" checked={useAtmosphere} disabled={!!busy} onChange={(event) => { setUseAtmosphere(event.target.checked); clearAudio(true); }} /> Ambient background</label>
               <label className="hoeren-effect-option"><input type="checkbox" checked={openingBell} disabled={!!busy} onChange={(event) => { setOpeningBell(event.target.checked); clearAudio(true); }} /> {scene === "station" ? "Station announcement bell" : "Short opening chime"}</label>
               {scene === "station" ? <label className="hoeren-effect-option"><input type="checkbox" checked={endingSound} disabled={!!busy} onChange={(event) => { setEndingSound(event.target.checked); clearAudio(true); }} /> Gentle departing-train cue</label> : null}

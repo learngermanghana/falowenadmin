@@ -2,6 +2,50 @@
 // Adapted original Goethe-style Hören PRACTICE profiles. These are not official exam materials.
 // Kept on the server and returned to the owner-only Studio status API.
 const EXAM_PROFILES = Object.freeze({
+  "A1": {
+    "1": {
+      "label": "Sechs kurze Gespräche · a–c",
+      "type": "dialogue",
+      "kind": "multiple-choice",
+      "questionCount": 6,
+      "repeats": 2,
+      "wordTarget": 170,
+      "structure": "sechs kurze, eigenständige Alltagsszenen mit je einer a–c-Aufgabe. In der offiziellen Prüfung sind manche Antwortoptionen bebildert; hier als textbasierte Aufgaben adaptiert.",
+      "topic": "Einkaufen, Familie und Termine",
+      "part": "1",
+      "level": "A1",
+      "examLabel": "Teil",
+      "preview": "A: Hören Teil eins. Sie hören sechs kurze Gespräche. Kreuzen Sie die richtige Antwort an.\nA: Nummer eins.\nB: Entschuldigung, wann fährt der Zug?\nC: Um acht Uhr fünfzehn.\n[PAUSE 3]\nA: Nummer zwei.\nB: Guten Tag! Was kostet das Brot?\nC: Zwei Euro, bitte."
+    },
+    "2": {
+      "label": "Vier Durchsagen · Richtig/Falsch",
+      "type": "announcement",
+      "kind": "richtig-falsch",
+      "questionCount": 4,
+      "repeats": 1,
+      "wordTarget": 125,
+      "structure": "vier kurze öffentliche Durchsagen oder Informationen, jeweils eine Richtig/Falsch-Aussage; jeder Text einmal hören.",
+      "topic": "Durchsagen in der Stadt",
+      "part": "2",
+      "level": "A1",
+      "examLabel": "Teil",
+      "preview": "A: Hören Teil zwei. Sie hören vier kurze Informationen. Kreuzen Sie richtig oder falsch an.\nA: Nummer sieben.\nB: Achtung! Die Kundeninformation schließt heute schon um siebzehn Uhr.\n[PAUSE 3]\nA: Nummer acht.\nC: Der Zug nach Hamburg fährt heute von Gleis vier."
+    },
+    "3": {
+      "label": "Fünf Informationen · a–c",
+      "type": "telephone",
+      "kind": "multiple-choice",
+      "questionCount": 5,
+      "repeats": 2,
+      "wordTarget": 140,
+      "structure": "fünf kurze Alltagsinformationen oder Telefonansagen; je eine a–c-Aufgabe, jeden Text zweimal hören.",
+      "topic": "Nachrichten und Verabredungen",
+      "part": "3",
+      "level": "A1",
+      "examLabel": "Teil",
+      "preview": "A: Hören Teil drei. Sie hören fünf Informationen. Kreuzen Sie die richtige Antwort an.\nA: Nummer elf.\nB: Hallo Lina, ich komme um fünf Uhr zum Bahnhof.\n[PAUSE 3]\nA: Nummer zwölf.\nC: Hier ist die Praxis Müller. Ihr Termin ist am Mittwoch um zehn Uhr."
+    }
+  },
   "A2": {
     "1": {
       "label": "Fünf kurze Hörtexte",
@@ -110,7 +154,7 @@ const EXAM_PROFILES = Object.freeze({
       "questionCount": 8,
       "repeats": 2,
       "wordTarget": 280,
-      "structure": "eine moderierte Diskussion mit Moderator A, Person B und Person C; jede Aufgabe ordnet eine Aussage einem Sprecher zu; verwende dieselben drei Sprecheroptionen",
+      "structure": "eine moderierte Diskussion mit Moderator B, Person C und Person D; jede Aufgabe ordnet eine Aussage einem Sprecher zu; verwende dieselben drei Sprecheroptionen",
       "topic": "Kinder und Medien",
       "part": "4",
       "level": "B1",
@@ -283,7 +327,7 @@ function getExamProfile(level, part) {
   return EXAM_PROFILES[String(level || "").toUpperCase()]?.[String(part || "")] || null;
 }
 function buildExamPrompt(profile, topic, questionInstructions) {
-  const speakerRule = "Write the transcript as separate A:, B: or C: lines (C only for a third speaker), maximum 36 spoken lines and 320 characters per spoken line. Each text line is a spoken segment, not a paragraph heading. Prefix ALL spoken narration with A:, including the title, instructions, Beispiel, Nummer eins and the ending. Separate segments with newline characters, never commas. [PAUSE 3] may appear on a line by itself. Do not include timestamps, voice directions, or labels such as Buch 1 outside of spoken lines.";
+  const speakerRule = "A: is ONLY the spoken exam instructor (title, instructions, Beispiel, Nummer eins and ending). B:, C: and D: are task speakers, different from A:. Rotate B/C/D for unrelated short talks, announcements and calls. For dialogues use B: and C:; for three-person discussions use B:, C:, D:. Each speaker turn must begin on a new line. Long natural sentences and complete Goethe passages are allowed; audio is split automatically into safe TTS clips without deleting words. Place [PAUSE 3] on its own line between texts. Do not include timestamps or unspoken stage directions.";
   return [
     "Create an ORIGINAL, copyright-safe German Hören PRACTICE task, not an official Goethe recording.",
     "Target Goethe-Zertifikat " + profile.level + " Hören " + profile.examLabel + " " + profile.part + ": " + profile.label + ".",
@@ -291,7 +335,7 @@ function buildExamPrompt(profile, topic, questionInstructions) {
     "Required authentic-style format: " + profile.structure + ".",
     "Write around " + profile.wordTarget + " SPOKEN German words, with suitable CEFR " + profile.level + " vocabulary and natural pacing.",
     speakerRule,
-    ...(profile.type === "dialogue" || profile.type === "interview" ? ["MANDATORY CONVERSATION VOICES: A: is the narrator and first conversation partner; B: MUST speak the second conversation partner\u0027s turns. Alternate A: and B: for natural conversational exchanges. Do not mark both participants A:. Every independent conversation must include at least one B: response. Narration such as Nummer eins remains A:. Keep under 36 spoken segments overall."] : []),
+    ...(["dialogue", "interview", "discussion"].includes(profile.type) ? ["MANDATORY CONVERSATION VOICES: A: is the instruction voice only. B: and C: speak the conversation, and D: speaks the third participant when required. Every independent dialogue needs two task speakers, not the same voice. The narrator A: must not be a dialogue partner."] : []),
     "Use rich and internally consistent details, avoid repeated generic assertions. Ensure every answer is unambiguous from the spoken script.",
     questionInstructions
   ].join("\n");

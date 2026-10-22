@@ -2,6 +2,7 @@
 // Optional user-supplied (licensed) MP3/WAV backgrounds are mixed in the browser only.
 export const SCENES = Object.freeze({
   station: "Bahnhof · Train station",
+  airport: "Flughafen · Airport",
   cafe: "Café · Restaurant",
   supermarket: "Supermarkt · Shop",
   clinic: "Arztpraxis · Waiting room",
@@ -37,6 +38,7 @@ function ambienceAt(t, i, scene) {
   // Smoothed deterministic noise at very low level approximates distant room / transit hum,
   // without asserting that synthetic beds are authentic field recordings.
   const n = (hashNoise(i >> 3, 89) + hashNoise(i >> 6, 191) + hashNoise(i >> 10, 43)) / 3;
+  if (scene === "airport") return 0.11 * n + 0.045 * Math.sin(TWO_PI * 103 * t);
   if (scene === "station") return 0.17 * n + 0.065 * Math.sin(TWO_PI * 71 * t);
   if (scene === "cafe") return 0.12 * n + 0.035 * Math.sin(TWO_PI * 135 * t);
   if (scene === "supermarket") return 0.09 * n + 0.055 * Math.sin(TWO_PI * 100 * t);
