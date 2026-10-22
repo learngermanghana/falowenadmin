@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { SOCIAL_ADS_DICTIONARY } from "../data/socialAdsDictionary.js";
+import SocialPhotoGallery from "./SocialPhotoGallery.jsx";
 
 const SIZES = { portrait: [1080, 1350], square: [1080, 1080], story: [1080, 1920] };
 const FIELD = { width: "100%", boxSizing: "border-box", padding: 10, border: "1px solid #cbd5e1", borderRadius: 9 };
@@ -203,6 +204,7 @@ export default function SocialAdsDictionary() {
   const [benefits, setBenefits] = useState("Live classes • A1–B2 • Exam prep");
   const [ctaLabel, setCtaLabel] = useState("Start learning today");
   const [photoUrl, setPhotoUrl] = useState("");
+  const [selectedGalleryId, setSelectedGalleryId] = useState("");
   const [format, setFormat] = useState("portrait");
   const [design, setDesign] = useState(savedDesign);
   const [preset, setPreset] = useState("custom");
@@ -243,6 +245,7 @@ export default function SocialAdsDictionary() {
     setCtaLabel(next.type === "ad" ? "Start learning today" : "Keep going with Falowen");
     setCaptionEdit("");
     setPhotoUrl("");
+    setSelectedGalleryId("");
     setError("");
     // The chosen design continues across all 21 reusable posts.
   };
@@ -288,6 +291,7 @@ export default function SocialAdsDictionary() {
     if (fileUrl.current) URL.revokeObjectURL(fileUrl.current);
     fileUrl.current = URL.createObjectURL(file);
     setPhotoUrl(fileUrl.current);
+    setSelectedGalleryId("");
   };
   const mark = (value) => {
     const next = { ...status, [item.id]: value };
@@ -347,13 +351,23 @@ export default function SocialAdsDictionary() {
         </div>
         <div style={PANEL}>
           <strong>2. Background picture</strong>
+          <SocialPhotoGallery activeId={selectedGalleryId} onSelect={(image, photo) => {
+            if (fileUrl.current) { URL.revokeObjectURL(fileUrl.current); fileUrl.current = ""; }
+            setPhotoUrl(image);
+            setSelectedGalleryId(photo.id);
+            setError("");
+          }} />
+          <details><summary style={{ cursor: "pointer", fontWeight: 700 }}>Or use your own photo / image link</summary>
+          <div style={{ display: "grid", gap: 8, marginTop: 9 }}>
           <a href={searchLink} target="_blank" rel="noreferrer">Find free photos for “{item.photoSearch}” on Pexels ↗</a>
           <small>Use a direct image address, not a Pexels webpage link. Check the photo licence before publishing.</small>
           <label>Direct image URL
-            <input type="url" placeholder="https://images.pexels.com/photos/..." value={photoUrl.startsWith("blob:") ? "" : photoUrl} onChange={(e) => { setPhotoUrl(e.target.value); }} style={FIELD} />
+            <input type="url" placeholder="https://images.pexels.com/photos/..." value={photoUrl.startsWith("blob:") || photoUrl.startsWith("data:") ? "" : photoUrl} onChange={(e) => { setPhotoUrl(e.target.value); setSelectedGalleryId(""); }} style={FIELD} />
           </label>
           <label>Or upload a downloaded image<input type="file" accept="image/*" onChange={(e) => upload(e.target.files?.[0])} /></label>
-          <small>Uploading the image is best for reliable PNG export. If there is no photo, the design exports on a navy gradient.</small>
+          <small>Custom images must allow browser canvas export. Without a photo, the design uses a navy gradient.</small>
+          </div></details>
+          <button type="button" onClick={() => { setPhotoUrl(""); setSelectedGalleryId(""); }}>Remove background photo</button>
           <strong>Photo positioning</strong>
           <label>Zoom · {design.zoom}%<input aria-label="Photo zoom" type="range" min="100" max="175" value={design.zoom} onChange={(e) => changeDesign("zoom", Number(e.target.value))} style={{ width: "100%" }} /></label>
           <label>Move left / right · {design.cropX}%<input aria-label="Photo horizontal position" type="range" min="0" max="100" value={design.cropX} onChange={(e) => changeDesign("cropX", Number(e.target.value))} style={{ width: "100%" }} /></label>
