@@ -65,19 +65,20 @@ export const A1_DAYS6_TO10_UNDERSTANDING = Object.freeze({
     check("Exit-Check: Ergänze „___ Hund schläft. Ich sehe ___ Hund. Ich kaufe ___ Apfel.“", "Der Hund schläft. Ich sehe den Hund. Ich kaufe einen Apfel.", "Check nominative der, definite accusative den and recognition of indefinite accusative einen."),
   ],
 
-  // Day 10 · Possessive forms + apartment/furniture workbook reading/listening.
+  // Day 10 · Test the grammar page directly: possessives, case, ihr/Ihr,
+  // colours and objects. The workbook's Lesen/Hören remain separate activities.
   "A1-6": [
-    check("Was ist richtig: „mein Tisch“ oder „meine Tisch“?", "mein Tisch.", "Tisch is masculine; the nominative possessive is mein."),
-    check("Was ist richtig: „meine Lampe“ oder „mein Lampe“?", "meine Lampe.", "Lampe is feminine, so use meine."),
-    check("Was ist richtig: „mein Buch“ oder „meine Buch“?", "mein Buch.", "Buch is neuter and uses mein in the nominative."),
-    check("Ergänze: „Ich suche ___ Tisch.“ (mein)", "Ich suche meinen Tisch.", "A masculine direct object takes meinen, not mein."),
-    check("Welche Farbe hat der Gegenstand: „Das Auto ist rot“?", "rot.", "An adjective after ist stays in its basic form."),
-    check("Was ist ein „Wohnzimmer“?", "a living room / das Wohnzimmer.", "This is a room, not a piece of furniture."),
-    check("Was bedeutet „Küche“ auf Englisch?", "kitchen.", "Küche is the room where people cook."),
-    check("Was bedeutet „Schlafzimmer“ auf Englisch?", "bedroom.", "Schlafzimmer is a room, not a bed."),
-    check("Was bedeutet „Balkon“ auf Englisch?", "balcony.", "The apartment reading/listening asks whether there is a balcony."),
-    check("Was ist die höfliche Possessivform: „ihr Tisch“ oder „Ihr Tisch“, wenn du eine Person siezt?", "Ihr Tisch.", "Capital Ihr is used for the formal your; lowercase ihr has other meanings."),
-    check("Exit-Check: Ergänze „Das ist ___ Lampe (mein); Ich suche ___ Stuhl (mein); ___ Tisch ist groß (mein).“", "Das ist meine Lampe. Ich suche meinen Stuhl. Mein Tisch ist groß.", "Distinguish feminine nominative meine, masculine accusative meinen and masculine nominative mein."),
+    check("Wähle: „Das ist ___ Tisch.“ (ich: mein / meine / meinen)", "Das ist mein Tisch.", "Tisch is masculine; after das ist use nominative mein, not meine or accusative meinen."),
+    check("Wähle: „Das ist ___ Tasche.“ (du: dein / deine / deinen)", "Das ist deine Tasche.", "Tasche is feminine, so the possessive dein takes -e: deine."),
+    check("Ergänze: „Er liest ___ Buch.“ (sein / seine / seinen)", "Er liest sein Buch.", "Buch is neuter; in the accusative, it still takes sein without an ending."),
+    check("Ergänze: „Ich suche ___ Stuhl.“ (mein / meine / meinen)", "Ich suche meinen Stuhl.", "Suchen takes an accusative direct object; masculine der Stuhl requires meinen."),
+    check("Ergänze: „Das sind ___ Bücher.“ (unser / unsere / unseren)", "Das sind unsere Bücher.", "Plural Bücher uses unsere in the nominative, just like meine Bücher."),
+    check("Ergänze: „Ich sehe ___ Tisch.“ (euer / eure / euren)", "Ich sehe euren Tisch.", "The masculine accusative form of euer is euren; the second e disappears."),
+    check("Frau Weber, ist das ___ Buch? (ihr / Ihr)", "Frau Weber, ist das Ihr Buch?", "Formal your is always capitalized Ihr; the possessive is inside the sentence, not at its start."),
+    check("Anna hat eine Tasche. Das ist ___ Tasche. (ihr / ihre / Ihre)", "Das ist ihre Tasche.", "Her is lowercase ihr; feminine Tasche requires the ending -e, so use ihre."),
+    check("In „Wo wohnt ihr?“: Ist „ihr“ her, their oder you all?", "you all / ihr = ihr (2. Person Plural).", "Here ihr is the informal plural subject pronoun, not a possessive before a noun."),
+    check("Bilde zwei Sätze: „meine rote Tasche“ und „Die Tasche ist ... (rot)“.", "Das ist meine rote Tasche. Die Tasche ist rot.", "Before Tasche say rote; after ist the colour stays rot without an extra adjective ending."),
+    check("Exit-Check: Ergänze „Das ist ___ Lampe“ (mein), „Ich sehe ___ Stuhl“ (dein), „Frau Müller, ist das ___ Buch?“ (formal) und korrigiere „Das Sofa ist grünes“.", "Das ist meine Lampe. Ich sehe deinen Stuhl. Frau Müller, ist das Ihr Buch? Das Sofa ist grün.", "Unaided check: feminine nominative meine, masculine accusative deinen, capitalized formal Ihr and an unchanged colour after ist."),
   ],
 });
 
@@ -99,8 +100,8 @@ export const A1_DAYS6_TO10_QUICK_CHECKS = Object.freeze({
     check("Was bedeutet „direktes Objekt“?", "The person or thing receiving the action.", "Use Wen? or Was? after the verb to find the direct object."),
   ],
   "A1-6": [
-    check("Wie heißt „living room“ auf Deutsch?", "das Wohnzimmer.", "The noun has a neuter definite article."),
-    check("Welches Wort ist ein Möbelstück: „Stuhl“ oder „Küche“?", "der Stuhl.", "Stuhl is furniture; Küche is a room."),
+    check("Was passt: „Das ist ___ Buch.“ (ich: mein / meine)?", "Das ist mein Buch.", "Neuter das Buch follows the ein pattern, so mein has no -e ending."),
+    check("Was passt: „Ich nehme ___ Tisch.“ (mein / meinen)?", "Ich nehme meinen Tisch.", "Nehmen has a masculine accusative direct object, so mein becomes meinen."),
   ],
 });
 
@@ -122,8 +123,8 @@ export const A1_DAYS6_TO10_APPLICATION_CHECKS = Object.freeze({
     check("Ergänze: „___ Frau kauft ___ Lampe.“ (die)", "Die Frau kauft die Lampe.", "Feminine definite die stays die in both cases."),
   ],
   "A1-6": [
-    check("Korrigiere: „Das ist meine Tisch.“", "Das ist mein Tisch.", "Masculine nominative uses mein."),
-    check("Ergänze: „Ich sehe ___ Lampe.“ (mein)", "Ich sehe meine Lampe.", "Feminine accusative remains meine."),
+    check("Correct the mistake: „Das ist meine Tisch. Er ist blaue.“", "Das ist mein Tisch. Er ist blau.", "Masculine nominative der Tisch needs mein; a colour after ist has no ending: blau."),
+    check("Correct the mistake: „Frau Weber, ist das ihr Tasche? Ich suche euer Tisch.“", "Frau Weber, ist das Ihre Tasche? Ich suche euren Tisch.", "Formal your takes a capital I and feminine -e (Ihre); masculine accusative euer becomes euren."),
   ],
 });
 
