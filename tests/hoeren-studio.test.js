@@ -394,7 +394,7 @@ test("Goethe long passages keep every word and are divided into bounded audio cl
   assert.equal(splitLongStudioSpeech(long).length,segments.length);
   const audit = inspectHoerenDraft({script:"A: "+long,kind:"multiple-choice",mode:"course"});
   assert.equal(audit.errors.length,0);
-  assert.equal(audit.wordCount,long.split(/\\s+/).length);
+  assert.equal(audit.wordCount,long.split(/\s+/).length);
 });
 test("Goethe narrator and monologue cast remain separate and diverse without rewriting words", () => {
   const source = [
@@ -405,25 +405,25 @@ test("Goethe narrator and monologue cast remain separate and diverse without rew
     "[PAUSE 3]","A: Hier ist das Kundencenter.",
     "[PAUSE 3]","A: Hallo Anna, ich bin Sofia.",
     "[PAUSE 3]","A: Ende von Hören Teil eins."
-  ].join("\\n");
+  ].join("\n");
   const cast = assignGoetheSpeakers(source);
   assert.deepEqual(parseStudioTranscript(cast).filter(x=>x.type==="speech").map(x=>x.speaker),
     ["A","B","C","D","B","C","A"]);
   assert.equal(assignGoetheSpeakers(cast),cast);
   assert.ok(cast.includes("B: Hallo Lukas"));
-  const dialogue = assignGoetheSpeakers("A: Nummer eins.\\nA: Guten Tag.\\nB: Hallo!");
-  assert.ok(dialogue.includes("A: Nummer eins.\\nB: Guten Tag.\\nC: Hallo!"));
+  const dialogue = assignGoetheSpeakers("A: Nummer eins.\nA: Guten Tag.\nB: Hallo!");
+  assert.ok(dialogue.includes("A: Nummer eins.\nB: Guten Tag.\nC: Hallo!"));
 });
 test("studio auto-selects a single recording scene, not an incorrect scene for mixed exam texts", () => {
   assert.equal(suggestRecordingScene({script:"B: Der Zug steht am Gleis vier.",type:"dialogue",mode:"goethe"}),"station");
   assert.equal(suggestRecordingScene({script:"B: Der Flug landet am Flughafen.",type:"announcement",mode:"goethe"}),"airport");
-  assert.equal(suggestRecordingScene({script:"B: Der Zug steht am Gleis vier.\\n[PAUSE 3]\\nC: Ihre Ärztin wartet in der Arztpraxis.",type:"dialogue",mode:"goethe"}),"none");
+  assert.equal(suggestRecordingScene({script:"B: Der Zug steht am Gleis vier.\n[PAUSE 3]\nC: Ihre Ärztin wartet in der Arztpraxis.",type:"dialogue",mode:"goethe"}),"none");
   assert.equal(suggestRecordingScene({script:"A: Beim Gleis sprechen wir über Politik.",type:"radio",mode:"goethe"}),"none");
 });
 test("Goethe audio page exposes all CEFR levels, auto scene selection and distinct actor voices", () => {
   const page=readFileSync(new URL("../src/pages/HoerenStudioPage.jsx",import.meta.url),"utf8");
-  assert.match(page,/LEVELS\\.map\\(choice/);
-  assert.match(page,/assignGoetheSpeakers\\(formatted\\)/);
-  assert.match(page,/sceneOverride \\?\\? "auto"/);
+  assert.match(page,/LEVELS\.map\(choice/);
+  assert.match(page,/assignGoetheSpeakers\(formatted\)/);
+  assert.match(page,/sceneOverride \?\? "auto"/);
   assert.match(page,/value="D">D/);
 });
