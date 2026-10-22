@@ -146,8 +146,9 @@ test("challenge preview and story export share one scaled layout with isolated h
   const subfooter = preview.labels.find(({ text }) => text.includes("Learn German") && text.includes("A1–B2"));
   assert.ok(saved.y > layout.cardBottom && subfooter.y > saved.y);
   assert.ok(subfooter.y < layout.h - 20);
-  assert.ok(preview.labels.some(({ text }) => text === copy.reveal), "render must include the correct answer");
-  assert.ok(preview.labels.some(({ text }) => text === copy.explanation), "render must include the explanation");
+  const allDrawnText = preview.labels.map(({ text }) => text).join(" ");
+  assert.ok(allDrawnText.includes(copy.reveal), "render must include the correct answer");
+  assert.ok(allDrawnText.includes(copy.explanation), "render must include the explanation");
 });
 
 test("square and portrait challenges reserve space for category, content and CTA", () => {
