@@ -2,10 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { parseStudioTranscript, formatStudioTranscript, sameSpokenTranscript, assembleListeningExam , repairStudioTranscript, repairUnlabelledStudioLines } from "../src/utils/hoerenAudio.js";
+import { parseStudioTranscript, formatStudioTranscript, sameSpokenTranscript, assembleListeningExam , repairStudioTranscript, repairUnlabelledStudioLines, splitLongStudioSpeech } from "../src/utils/hoerenAudio.js";
 import { validateDraftQuestions } from "../src/utils/hoerenQuestions.js";
 import { inspectHoerenDraft } from "../src/utils/hoerenDraftQuality.js";
 import { buildStudioSpeechPlan, sceneVoiceKey, assemblyScenePlan } from "../src/utils/hoerenSpeechPlan.js";
+import { assignGoetheSpeakers, suggestRecordingScene } from "../src/utils/hoerenProductionDefaults.js";
 
 const require = createRequire(import.meta.url);
 const { EXAM_PROFILES, getExamProfile, buildExamPrompt } = require("../functions/hoerenExamProfiles.js");
@@ -51,6 +52,7 @@ test("speech requests strictly limit paid generation inputs", () => {
   assert.throws(() => validateSpeechRequest({ text: "[PAUSE 3]" }), /Pause/);
   assert.throws(() => validateScriptRequest({ mode: "goethe", level: "C2", type: "dialogue", topic: "Hallo" }), /Teil/);
   assert.equal(validateSpeechRequest({ text: "Guten Tag", speaker: "C" }).speaker, "C");
+  assert.equal(validateSpeechRequest({ text: "Guten Tag", speaker: "D" }).speaker, "D");
 });
 test("Goethe-style editable transcript parses exact pauses and voices", () => {
   assert.deepEqual(parseStudioTranscript("A: Hallo\n[PAUSE 3]\nB: Guten Tag"), [
@@ -116,7 +118,7 @@ test("Google REST audio and script are checked before accepting a response", () 
 });
 
 test("all official Hören Teil/Aufgabe selections are configured", () => {
-  for (const [level, count] of Object.entries({ A2: 4, B1: 4, B2: 4, C1: 4, C2: 3 })) {
+  for (const [level, count] of Object.entries({ A1: 3, A2: 4, B1: 4, B2: 4, C1: 4, C2: 3 })) {
     assert.equal(Object.keys(EXAM_PROFILES[level]).length, count);
   }
   const profile = getExamProfile("C1", "1");
@@ -317,10 +319,10 @@ test("stale transcript blocks answer-key download but leaves audio exports avail
 test("A2 Hören Teil 3 prompts require distinct speakers and quality warns on a single voice", () => {
   const profile = getExamProfile("A2", "3");
   const prompt = buildExamPrompt(profile, "Einkaufen", "Return valid questions");
-  assert.match(prompt, /B: MUST speak the second conversation partner/);
+  assert.match(prompt, /B: and C: speak the conversation/);
   const script = "A: Nummer eins.\nA: Hallo, wo ist der Bahnhof?\nA: Gehen Sie geradeaus bis zur Ampel.\n[PAUSE 3]\nA: Nummer zwei.\nA: Wie teuer ist die Jacke?\nA: Sie kostet vierzig Euro.";
   const report = inspectHoerenDraft({script,kind:"multiple-choice",questions:[],expectedCount:5,profile,mode:"goethe"});
-  assert.ok(report.warnings.some(w => /more than one voice/i.test(w)));
+  assert.ok(report.warnings.some(w => /task speakers/i.test(w)));
 });
 
 test("failed generation refunds exactly once, while success consumes a credit", async () => {
@@ -368,4 +370,60 @@ test("failed generation refunds exactly once, while success consumes a credit", 
   assert.equal(usage(), 1);
   await settleUsage(db, second, false);
   assert.equal(usage(), 1);
+});
+
+test("A1 adult exam templates match the three listening-part counts and response types", () => {
+  assert.deepEqual([1,2,3].map(part => {
+    const p = getExamProfile("A1",part);
+    return [p.questionCount,p.kind,p.repeats];
+  }), [[6,"multiple-choice",2],[4,"richtig-falsch",1],[5,"multiple-choice",2]]);
+  assert.equal(validateScriptRequest({ mode:"goethe",level:"A1",part:"2",type:"announcement",topic:"Durchsagen" }).profile.level,"A1");
+  for (const level of ["A1","A2","B1","B2","C1","C2"]) {
+    const profile = getExamProfile(level, "1");
+    assert.match(buildExamPrompt(profile,"Alltag","Make questions"),/A: is ONLY the spoken exam instructor/);
+    assert.match(buildExamPrompt(profile,"Alltag","Make questions"),/B:, C: and D:/);
+  }
+});
+test("Goethe long passages keep every word and are divided into bounded audio clips", () => {
+  const long = Array.from({length:20},(_,i)=>`Am Bahnhof erklärt Maria den Fahrgästen die Abfahrt um ${i+1} Uhr.`).join(" ");
+  assert.ok(long.length > 320);
+  const segments = parseStudioTranscript("A: " + long);
+  assert.ok(segments.length > 1);
+  assert.ok(segments.every(segment=>segment.text.length<=320));
+  assert.equal(segments.map(segment=>segment.text).join(" "), long);
+  assert.equal(splitLongStudioSpeech(long).length,segments.length);
+  const audit = inspectHoerenDraft({script:"A: "+long,kind:"multiple-choice",mode:"course"});
+  assert.equal(audit.errors.length,0);
+  assert.equal(audit.wordCount,long.split(/\\s+/).length);
+});
+test("Goethe narrator and monologue cast remain separate and diverse without rewriting words", () => {
+  const source = [
+    "A: Hören Teil eins. Lesen Sie zuerst die Aufgabe zu Nummer eins.",
+    "[PAUSE 3]","A: Hallo Lukas, hier ist Marie. Unser Zug fährt um sieben Uhr.",
+    "[PAUSE 3]","A: Guten Tag, hier spricht das Reisebüro.",
+    "[PAUSE 3]","A: Ich stehe am Bahnsteig in Frankfurt.",
+    "[PAUSE 3]","A: Hier ist das Kundencenter.",
+    "[PAUSE 3]","A: Hallo Anna, ich bin Sofia.",
+    "[PAUSE 3]","A: Ende von Hören Teil eins."
+  ].join("\\n");
+  const cast = assignGoetheSpeakers(source);
+  assert.deepEqual(parseStudioTranscript(cast).filter(x=>x.type==="speech").map(x=>x.speaker),
+    ["A","B","C","D","B","C","A"]);
+  assert.equal(assignGoetheSpeakers(cast),cast);
+  assert.ok(cast.includes("B: Hallo Lukas"));
+  const dialogue = assignGoetheSpeakers("A: Nummer eins.\\nA: Guten Tag.\\nB: Hallo!");
+  assert.ok(dialogue.includes("A: Nummer eins.\\nB: Guten Tag.\\nC: Hallo!"));
+});
+test("studio auto-selects a single recording scene, not an incorrect scene for mixed exam texts", () => {
+  assert.equal(suggestRecordingScene({script:"B: Der Zug steht am Gleis vier.",type:"dialogue",mode:"goethe"}),"station");
+  assert.equal(suggestRecordingScene({script:"B: Der Flug landet am Flughafen.",type:"announcement",mode:"goethe"}),"airport");
+  assert.equal(suggestRecordingScene({script:"B: Der Zug steht am Gleis vier.\\n[PAUSE 3]\\nC: Ihre Ärztin wartet in der Arztpraxis.",type:"dialogue",mode:"goethe"}),"none");
+  assert.equal(suggestRecordingScene({script:"A: Beim Gleis sprechen wir über Politik.",type:"radio",mode:"goethe"}),"none");
+});
+test("Goethe audio page exposes all CEFR levels, auto scene selection and distinct actor voices", () => {
+  const page=readFileSync(new URL("../src/pages/HoerenStudioPage.jsx",import.meta.url),"utf8");
+  assert.match(page,/LEVELS\\.map\\(choice/);
+  assert.match(page,/assignGoetheSpeakers\\(formatted\\)/);
+  assert.match(page,/sceneOverride \\?\\? "auto"/);
+  assert.match(page,/value="D">D/);
 });
