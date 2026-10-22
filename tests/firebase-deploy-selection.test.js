@@ -88,3 +88,14 @@ test("a lesson answer-key update redeploys marking API and automatic worker with
   assert.equal(plan.mode, "targeted");
   assert.deepEqual(plan.targets, ["api", "markCourseSubmissionAutomatically"]);
 });
+
+
+test("updated saved A2 writing questions and evidence redeploy the Firebase marker, not just Admin frontend", () => {
+  const workflow = fs.readFileSync(".github/workflows/deploy-firebase.yml", "utf8");
+  for (const keyPath of ["src/data/a2WritingTaskSpecs.js", "src/utils/writingTaskEvidence.js"]) {
+    assert.ok(workflow.includes("'" + keyPath + "'"), "no marking deploy trigger for " + keyPath);
+    const plan = selectFirebaseDeployTargets({ changedPaths: [keyPath] });
+    assert.equal(plan.mode, "targeted", keyPath);
+    assert.deepEqual(plan.targets, ["api", "markCourseSubmissionAutomatically"]);
+  }
+});
