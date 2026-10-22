@@ -7,7 +7,7 @@ export const a2WorkbookAlignedSlidesDays16To20 = [
     assignmentId: "A2-6.16",
     title: "A2 Day 16 · Wohlbefinden und Entspannung",
     topic: "6.16 Wohlbefinden und Entspannung",
-    objective: "Students describe well-being and relaxation with reflexive verbs, discuss symptoms and healthy habits, and transfer the same health language into the doctor email and workbook comprehension tasks.",
+    objective: "Students describe well-being and relaxation with reflexive verbs, discuss symptoms and healthy habits, and transfer the same health language into the informal email to Markus and workbook comprehension tasks.",
     estimatedDuration: "45–60 minutes",
     warmupQuestionsDe: [
       "Was machst du, wenn du gestresst bist?",
@@ -21,15 +21,15 @@ export const a2WorkbookAlignedSlidesDays16To20 = [
       "Am Wochenende erhole ich mich.",
       "Ich treffe mich mit Freunden.",
       "Ich habe Kopfschmerzen / Husten / Fieber.",
-      "Ich möchte einen Termin vereinbaren.",
-      "Welche Untersuchung empfehlen Sie?",
+      "Hast du nächstes Wochenende Lust mitzukommen?",
+      "Das tut mir gut, weil ich mich erholen kann.",
     ],
     studentQuestionsDe: [
       "Was machst du für dein körperliches und mentales Wohlbefinden?",
       "Welche zwei reflexiven Verben kannst du für deinen Alltag benutzen?",
       "Was machst du, wenn du krank oder gestresst bist?",
       "Welche Symptome würdest du einem Arzt beschreiben?",
-      "Welche Fragen würdest du in einer E-Mail an eine Arztpraxis stellen?",
+      "Wie würdest du Markus zu einer Entspannungsaktivität einladen?",
     ],
     speakingModels: [
       {
@@ -49,23 +49,23 @@ export const a2WorkbookAlignedSlidesDays16To20 = [
         "modelAnswerDe": "Ich habe seit gestern Halsschmerzen und Husten. Außerdem fühle ich mich müde und habe schlecht geschlafen."
       },
       {
-        "questionDe": "Welche Fragen würdest du in einer E-Mail an eine Arztpraxis stellen?",
-        "modelAnswerDe": "Haben Sie diese Woche einen freien Termin? Welche Unterlagen soll ich zum Termin mitbringen?"
+        "questionDe": "Wie würdest du Markus zu einer Entspannungsaktivität einladen?",
+        "modelAnswerDe": "Lieber Markus, ich gehe gern im Park spazieren, weil das entspannt. Hast du nächstes Wochenende Zeit? Viele Grüße!"
       }
     ],
     teacherNotesEn: [
       "Use the actual Day 16 grammar page as the source of truth: the target is reflexive verbs with mich, dich, sich, uns and euch.",
       "Keep the pronoun mapping visible and tie each form to a meaningful health or relaxation action instead of drilling pronouns in isolation.",
       "Follow the workbook speaking scope: physical well-being, mental well-being, symptoms, doctor communication, body parts, healthy living, medicine and stress management.",
-      "Bridge directly into the doctor email: ask for an appointment, ask about costs/insurance and ask about possible examinations or treatment.",
-      "Use the Lesen advertisements as service-selection practice (Yoga, Fitnessstudio, Kochkurs, Zahnarzt, Physiotherapie, Laufgruppe) and the Hören task as healthy-lifestyle comprehension.",
+      "Bridge into the informal email to Markus (20–30 words): name a relaxing activity, explain why it helps, and invite Markus for next weekend.",
+      "Use the Lesen advertisements as service-selection practice (Yoga, Fitnessstudio, Kochkurs, Zahnarzt, Physiotherapie, Laufgruppe) and the Hören task as the Lena–Max dialogue about stress, yoga, sleep, the free trial and Saturday meeting.",
     ],
     interactionFlow: [
       { phase: "How do you feel?", detailEn: "6 min: students describe current well-being with simple adjectives and one reflexive verb." },
       { phase: "Reflexive map", detailEn: "9 min: build ich→mich, du→dich, er/sie/es→sich, wir→uns, ihr→euch, sie/Sie→sich with health examples." },
       { phase: "Well-being speaking", detailEn: "12 min: students connect relaxation, sleep, exercise, food, friends and digital breaks in a short answer." },
       { phase: "Doctor role-play", detailEn: "10 min: patient describes symptoms; doctor asks follow-up questions and suggests an examination or treatment." },
-      { phase: "Workbook bridge", detailEn: "6 min: plan the doctor email and preview the service advertisements plus healthy-lifestyle listening details." },
+      { phase: "Workbook bridge", detailEn: "6 min: plan the informal Markus relaxation invitation, then preview the service advertisements and Lena–Max listening details." },
     ],
     wrapUpTaskDe: "Sprich oder schreibe 5 Sätze über dein Wohlbefinden. Benutze mindestens zwei reflexive Verben und nenne eine gesunde Gewohnheit.",
     workbookConnection: {
@@ -74,13 +74,13 @@ export const a2WorkbookAlignedSlidesDays16To20 = [
       parts: [
         { label: "Grammar", detailEn: "Reflexive verbs with mich, dich, sich, uns and euch; the action refers back to the same person, e.g. Ich entspanne mich, Du fühlst dich, Wir treffen uns." },
         { label: "Teil 1 · Sprechen", detailEn: "Discuss well-being, relaxation, symptoms, doctor visits, body parts, healthy living, medicine and stress management." },
-        { label: "Teil 2 · Schreiben", detailEn: "Email/letter to a doctor: ask for an appointment, ask about costs or insurance coverage, and ask about possible examinations or treatments." },
+        { label: "Teil 2 · Schreiben", detailEn: "Informal 20–30-word email to Markus: name a relaxation activity, explain its benefit, invite him next weekend; informal greeting and closing." },
         { label: "Teil 3 · Lesen", detailEn: "Match health and well-being needs to advertisements for Yoga, a gym, healthy cooking, a dentist, physiotherapy and a running group." },
-        { label: "Teil 4 · Hören", detailEn: "Healthy-lifestyle listening: fruit and vegetables, daily movement, fitness motivation, regular doctor visits and suggested sports." },
+        { label: "Teil 4 · Hören", detailEn: "Lena and Max: why Lena is tired, yoga days, a free first lesson, sleeping habits and where they meet Saturday." },
       ],
     },
     teacherSupport: {
-      lessonOverviewEn: "Day 16 combines practical health communication with reflexive verbs. Students should be able to say how they feel, explain what they do to relax or recover, describe basic symptoms and then use the same health vocabulary in a doctor email and service-selection/listening tasks.",
+      lessonOverviewEn: "Day 16 combines practical health communication with reflexive verbs. Students should be able to say how they feel, explain what they do to relax or recover, describe basic symptoms and then use the same health vocabulary in an informal relaxation email to Markus and service-selection/Lena–Max listening tasks.",
       grammarFocusEn: [
         "Reflexive pronouns for this lesson: ich→mich, du→dich, er/sie/es→sich, wir→uns, ihr→euch, sie/Sie→sich.",
         "The reflexive pronoun normally stays close to the conjugated verb: Ich entspanne mich am Abend. / Wir treffen uns nach der Arbeit.",
@@ -97,7 +97,7 @@ export const a2WorkbookAlignedSlidesDays16To20 = [
         "Using the wrong reflexive pronoun, especially ich→sich or wir→sich instead of mich/uns.",
         "Moving the reflexive pronoun before the subject or breaking normal main-clause word order.",
         "Listing wellness vocabulary without producing connected sentences about personal habits.",
-        "Writing the doctor email without covering appointment, costs/insurance and examination/treatment questions.",
+        "Missing one of the three Markus email points (activity, reason, weekend invitation), informal greeting or closing.",
       ],
     },
   },

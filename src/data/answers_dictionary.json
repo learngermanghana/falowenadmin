@@ -1718,11 +1718,11 @@
         "Answer5": "C) Angebot C"
       },
       "teil4": {
-        "Answer1": "B) Sie schläft schlecht.",
-        "Answer2": "B) Dienstag und Donnerstag.",
-        "Answer3": "A) Die erste Stunde ist gratis.",
-        "Answer4": "C) Er liest ein Buch.",
-        "Answer5": "A) Sie gehen in die Sauna."
+        "Answer1": "B) Sie arbeitet sehr viel und schläft schlecht.",
+        "Answer2": "A) Jeden Dienstag und Donnerstag nach der Arbeit.",
+        "Answer3": "C) Sie ist kostenlos (gratis).",
+        "Answer4": "B) Er trinkt nach 3 Uhr nachmittags keinen Kaffee mehr.",
+        "Answer5": "A) Vor dem Schwimmbad."
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/13fG-McZz3Q_rmcHymAwfLwX7C1illz91v5b2yXyoArI/gviz/tq?tqx=out:html&sheet=Key",
@@ -1750,7 +1750,7 @@
         "label": "Teil 2 Schreiben",
         "hasReferenceAnswers": false,
         "gradingMode": "ai_written_response",
-        "instruction": "Teil 2 is a Schreiben/writing part. There is no fixed reference answer in the answer key. Do not mark the student wrong or give 0 because reference answers are missing. Grade with AI using the writing prompt, CEFR level, task completion, grammar, vocabulary, structure, and clarity."
+        "instruction": "A2 Schreiben Teil 2: informal email to friend Markus (20–30 words including greeting and closing). Assess all three current points: a relaxing activity after a stressful work week, why it helps the learner, and an invitation for next weekend. Check informal greeting and sign-off, weil verb-final word order, grammar, spelling, coherence and length. No fixed model-answer key for Schreiben."
       },
       "teil3": {
         "label": "teil3",

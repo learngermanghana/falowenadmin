@@ -85,10 +85,10 @@ Teil 2 · Hören 1B · 2C · 3A · 4B · 5B`;
 
 test("A2-6.16 parses unnumbered choice lines inside labelled Teil 3 and Teil 4", () => {
   const submission = `Teil 2
-Sehr geehrte Damen und Herren,
-ich schreibe Ihnen, weil ich seit einigen Tagen gesundheitliche Probleme habe. Ich möchte gern einen Termin vereinbaren.
-Mit freundlichen Grüßen
-Sarah
+Lieber Markus,
+zur Entspannung gehe ich im Park spazieren, weil ich danach ruhig bin. Hast du Lust, nächstes Wochenende mitzukommen?
+Viele Grüße
+Anna
 
 Teil 3
 B
@@ -99,9 +99,9 @@ C
 
 Teil 4
 B
-B
 A
 C
+B
 A`;
 
   const result = computeObjectiveScore("A2-6.16", submission);
@@ -114,7 +114,7 @@ A`;
   );
   assert.deepEqual(
     [1, 2, 3, 4, 5].map((question) => result.details[`teil4.${question}`].student),
-    ["B", "B", "A", "C", "A"],
+    ["B", "A", "C", "B", "A"],
   );
   assert.equal(Object.values(result.details).filter((detail) => detail.student).length, 10);
   assert.equal(result.details["teil3.1"].correct, true);
