@@ -98,6 +98,25 @@ function extractScript(result = {}) {
   return text;
 }
 
+// Provider 429 may be RPD, RPM/TPM or unspecified capacity. Only expose
+// bounded, classification-only metadata; never forward raw Google details.
+function classifyGemini429(body = {}, headers = {}) {
+  const error = body?.error || {};
+  const details = Array.isArray(error.details) ? error.details : [];
+  const violations = details.flatMap(item => Array.isArray(item.violations) ? item.violations : []);
+  const signals = [error.status, error.message, error.reason, ...violations.map(v => [v.quotaId, v.quotaMetric, v.description].join(" "))].filter(x => typeof x === "string").join(" ").toLowerCase();
+  const daily = /quota_exceeded|requests?_per_day|\brpd\b|daily|per day|per_day|requests? per 24/.test(signals);
+  const temporary = /rate_limit_exceeded|too_many_requests|requests?_per_minute|\brpm\b|\btpm\b|per.second|per.minute|per_minute/.test(signals);
+  const category = daily ? "daily" : temporary ? "temporary" : "unknown";
+  const retryDetail = details.find(item => typeof item?.retryDelay === "string")?.retryDelay;
+  const headerValue = typeof headers?.get === "function" ? headers.get("retry-after") : "";
+  let retrySeconds = null;
+  if (typeof headerValue === "string" && /^\d+(?:\.\d+)?$/.test(headerValue.trim())) retrySeconds = Math.ceil(Number(headerValue));
+  else if (typeof retryDetail === "string" && /^\d+(?:\.\d+)?s$/.test(retryDetail)) retrySeconds = Math.ceil(parseFloat(retryDetail));
+  if (retrySeconds !== null && (!Number.isFinite(retrySeconds) || retrySeconds < 0)) retrySeconds = null;
+  return { category, retryAfterSeconds: retrySeconds === null ? null : Math.min(retrySeconds, 3600) };
+}
+
 async function postGemini(url, key, payload, timeoutMs = 38_000) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -109,7 +128,19 @@ async function postGemini(url, key, payload, timeoutMs = 38_000) {
       signal: controller.signal,
     });
     if (!response.ok) {
-      if (response.status === 429) throw Object.assign(new Error("Google returned rate limit 429 for this project/model. Falowen's remaining allowance is separate from Google's minute/day/token quota. Completed voice scenes are saved in your browser; check Google AI Studio rate limits before retrying."), { status: 429 });
+      if (response.status === 429) {
+        // Google uses 429 for several distinct cases. Read only structured,
+        // non-sensitive quota metadata; never return its raw error body (which
+        // can include project identifiers, service metadata, or request text).
+        const providerError = await response.json().catch(() => ({}));
+        const quota = classifyGemini429(providerError, response.headers);
+        const message = quota.category === "daily"
+          ? "Google's daily TTS quota has been reached for this project/model. Google's daily quotas reset at midnight Pacific time, independently of Falowen's daily allowance."
+          : quota.category === "temporary"
+            ? "Google is temporarily rate-limiting speech generation for this project/model. Try again after the indicated cooldown; saved scenes remain available."
+            : "Google rejected the TTS request (429) without identifying which quota was exceeded. Check this model and project in Google AI Studio; more Falowen credits will not override it.";
+        throw Object.assign(new Error(message), { status: 429, providerQuota: quota });
+      }
       if (response.status === 402 || response.status === 403) throw Object.assign(new Error("The Gemini API key or billing access needs attention."), { status: 503 });
       throw Object.assign(new Error("Google service could not complete the request (upstream error). Your existing draft was not changed. Please retry later."), { status: 502 });
     }
@@ -183,7 +214,7 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
   async function handleError(res, error) {
     const status = Number(error?.status) || (error?.name === "AbortError" ? 504 : 502);
     console.warn("hoeren_studio_error", { status, message: error?.message || "unknown" });
-    return res.status(status).json({ ok: false, error: error?.name === "AbortError" ? "Gemini took too long to respond. Keep your existing draft and retry later." : (error?.message || "Audio generation failed.") });
+    return res.status(status).json({ ok: false, error: error?.name === "AbortError" ? "Gemini took too long to respond. Keep your existing draft and retry later." : (error?.message || "Audio generation failed."), ...(error?.providerQuota ? { providerQuota: error.providerQuota } : {}) });
   }
 
   app.get("/ai-studio/status", guard, async (req, res) => {
@@ -304,5 +335,5 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
 
 module.exports = {
   MODELS, LIMITS, ownerUid, isStudioOwner, validateSpeechRequest, validateSceneRequest, validateScriptRequest,
-  extractAudio, extractScript, registerHoerenStudioRoutes, reserveUsage, settleUsage,
+  extractAudio, extractScript, classifyGemini429, registerHoerenStudioRoutes, reserveUsage, settleUsage,
 };
