@@ -1,8 +1,10 @@
-import { startVisiblePolling } from "../utils/visiblePolling.js";
+import { loadRoster } from "../services/markingService.js";
+import { loadExamRoomPracticeSubmissions } from "../services/studentResultsService.js";
+import { filterExamRoomPractices, unpractisedStudents } from "../utils/examRoomPracticeMonitoring.js";
 import { createTimedAttemptListenerHealth } from "../utils/timedAttemptListenerHealth.js";
 import { findCampusSubmissionReceipts } from "../utils/timedSubmissionReceiptLookup.js";
 import { buildCampusTimedAttemptId, isMatchingCampusTimer, normalizeTimedAssignmentKey } from "../utils/timedAttemptLookup.js";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { collection, collectionGroup, deleteDoc, doc, documentId, getDoc, getDocs, limit, onSnapshot, query as firestoreQuery, where } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
@@ -57,6 +59,19 @@ export default function TimedAssignmentAttemptsPage() {
   const [submissionReceipts, setSubmissionReceipts] = useState([]);
   const [submissionLookupLimited, setSubmissionLookupLimited] = useState(false);
   const [mocks, setMocks] = useState([]);
+  const mockRequested = useRef(false);
+  const practiceRequested = useRef(false);
+  const [practiceRows, setPracticeRows] = useState([]);
+  const [practiceLoading, setPracticeLoading] = useState(false);
+  const [practiceFetchedAt, setPracticeFetchedAt] = useState("");
+  const [practicePartial, setPracticePartial] = useState(false);
+  const [practiceError, setPracticeError] = useState("");
+  const [practiceSearch, setPracticeSearch] = useState("");
+  const [practiceLevel, setPracticeLevel] = useState("all");
+  const [practiceSection, setPracticeSection] = useState("all");
+  const [practiceRoster, setPracticeRoster] = useState(null);
+  const [practiceRosterLoading, setPracticeRosterLoading] = useState(false);
+  const [practiceRosterError, setPracticeRosterError] = useState("");
   const [mockLoading, setMockLoading] = useState(true);
   const [mockError, setMockError] = useState("");
   const [placementRecords, setPlacementRecords] = useState([]);
@@ -141,6 +156,37 @@ export default function TimedAssignmentAttemptsPage() {
     }
   }, []);
 
+  const loadPractices = useCallback(async () => {
+    setPracticeLoading(true);
+    try {
+      const result = await loadExamRoomPracticeSubmissions();
+      setPracticeRows(result.rows);
+      setPracticeFetchedAt(result.fetchedAt);
+      setPracticePartial(result.partial);
+      setPracticeError("");
+    } catch (error) {
+      setPracticeError(error?.message || "Could not load submitted Exams Room practices.");
+    } finally {
+      setPracticeLoading(false);
+    }
+  }, []);
+
+  // "Not practised" requires an actual enrolled roster. Never infer inactivity
+  // just because a student is absent from the most recent bounded score batch.
+  const loadPracticeRoster = useCallback(async () => {
+    if (practiceRosterLoading) return;
+    setPracticeRosterLoading(true);
+    try {
+      const records = await loadRoster();
+      setPracticeRoster(records);
+      setPracticeRosterError("");
+    } catch (error) {
+      setPracticeRosterError(error?.message || "Student roster unavailable.");
+    } finally {
+      setPracticeRosterLoading(false);
+    }
+  }, [practiceRosterLoading]);
+
   const loadPlacement = useCallback(async () => {
     setPlacementLoading(true);
     try {
@@ -224,12 +270,29 @@ export default function TimedAssignmentAttemptsPage() {
   };
 
   useEffect(() => {
-    // Avoid repeating the mock-monitor network request while staff view Campus timers.
-    if (category !== "mocks") return undefined;
-    return startVisiblePolling(loadMocks, 120000);
-  }, [loadMocks, category]);
+    // One fetch on entering Exam Room; never poll 700 mock attempts or hundreds of
+    // saved practice scores every two minutes. Staff can refresh explicitly.
+    if (category !== "mocks") return;
+    if (!mockRequested.current) {
+      mockRequested.current = true;
+      void loadMocks();
+    }
+    if (!practiceRequested.current) {
+      practiceRequested.current = true;
+      void loadPractices();
+    }
+  }, [loadMocks, loadPractices, category]);
 
   const filteredMocks = useMemo(() => filterMockAttempts(mocks, query, mockStatus, mockLevel), [mocks, query, mockStatus, mockLevel]);
+  const filteredPractices = useMemo(() => filterExamRoomPractices(practiceRows,
+    { search: practiceSearch, level: practiceLevel, section: practiceSection }),
+    [practiceRows, practiceSearch, practiceLevel, practiceSection]);
+  const practiceStudents = useMemo(() => new Set(practiceRows.flatMap(row =>
+    [row.studentCode?.toLowerCase(), row.email, row.uid].filter(Boolean))).size,
+    [practiceRows]);
+  const notPractised = useMemo(() => Array.isArray(practiceRoster)
+    ? unpractisedStudents(practiceRoster, practiceRows, practiceLevel)
+    : [], [practiceRoster, practiceRows, practiceLevel]);
   const filteredTimed = useMemo(() => filterTimedAttempts(attempts, query, timedStatus), [attempts, query, timedStatus]);
   const displayedTimed = useMemo(() => {
     const known = new Set(filteredTimed.map(item => item.id));
@@ -388,10 +451,82 @@ export default function TimedAssignmentAttemptsPage() {
       {showMocks && <section id="mock-monitoring" role="tabpanel" aria-labelledby="monitor-mocks-tab" className="monitor-content" data-testid="mock-monitoring">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
           <div><h2 style={{ margin: 0 }}>Exam Room · Full mock exams</h2>
-            <small style={{ color: "#64748b" }}>Last synced: {lastChecked ? formatDate(lastChecked) : "not yet"} · refreshes every 2 minutes (manual refresh available)</small>
+            <small style={{ color: "#64748b" }}>Last synced: {lastChecked ? formatDate(lastChecked) : "not yet"} · on-demand updates only (no automatic polling)</small>
           </div>
-          <button type="button" onClick={loadMocks} style={{ border: "1px solid #2563eb", borderRadius: 10, background: "#fff", color: "#1d4ed8", padding: "9px 12px", fontWeight: 750, cursor: "pointer" }}>Refresh now</button>
+          <button type="button" onClick={() => { void loadMocks(); void loadPractices(); }} style={{ border: "1px solid #2563eb", borderRadius: 10, background: "#fff", color: "#1d4ed8", padding: "9px 12px", fontWeight: 750, cursor: "pointer" }}>Refresh now</button>
         </div>
+        <section style={card} data-testid="exam-room-practice-monitor" aria-label="Exams Room practice submissions">
+          <div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap"}}>
+            <div>
+              <h3 style={{margin:"0 0 4px"}}>Exams Room · Practice submissions</h3>
+              <small style={{color:"#64748b"}}>Lesen, Hören and other individual samples, separately from full mocks · Last loaded: {practiceFetchedAt ? formatDate(practiceFetchedAt) : "not yet"}</small>
+            </div>
+            <button type="button" onClick={() => void loadPractices()} disabled={practiceLoading}>
+              {practiceLoading ? "Loading…" : "Refresh practices"}
+            </button>
+          </div>
+          <p style={{margin:0,color:"#475569",fontSize:13}}>
+            Only actually submitted and saved exam samples appear here. Opening this page never calls AI marking, syncs a Sheet row, or creates a submission.
+          </p>
+          <div className="monitor-summary" aria-label="Exam practice summary">
+            {[
+              ["Saved practice attempts", practiceRows.length],
+              ["Students with saved practice", practiceStudents],
+              ["No saved practice", practiceRoster ? notPractised.length : "Load roster"],
+            ].map(([label,value])=><div className="monitor-summary-card" key={label}><span>{label}</span><strong>{value}</strong></div>)}
+          </div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"end"}}>
+            <label style={{display:"grid",gap:4,flex:"2 1 220px"}}>Search student or sample
+              <input type="search" value={practiceSearch} onChange={e=>setPracticeSearch(e.target.value)} placeholder="Student name, email or sample…" />
+            </label>
+            <label style={{display:"grid",gap:4}}>Level
+              <select value={practiceLevel} onChange={e=>setPracticeLevel(e.target.value)}>
+                {["all","A1","A2","B1","B2","C1","C2"].map(value=><option key={value} value={value}>{value==="all"?"All levels":value}</option>)}
+              </select>
+            </label>
+            <label style={{display:"grid",gap:4}}>Section
+              <select value={practiceSection} onChange={e=>setPracticeSection(e.target.value)}>
+                {[["all","All sections"],["lesen","Lesen"],["hoeren","Hören"],["schreiben","Schreiben"],["sprechen","Sprechen"],["mixed","Mixed"]].map(([value,label])=><option key={value} value={value}>{label}</option>)}
+              </select>
+            </label>
+          </div>
+          {practiceError && <p role="alert" style={{margin:0,color:"#b91c1c"}}>{practiceError}{practiceFetchedAt ? " · Showing previously loaded results." : ""}</p>}
+          {practicePartial && <p role="status" style={{margin:0,color:"#92400e"}}>Limited to 300 saved scores. Older attempts or students may not be shown. Absence is not proof they never practised.</p>}
+          {practiceLoading && !practiceFetchedAt ? <p>Loading saved practice submissions…</p> : null}
+          {practiceFetchedAt && !filteredPractices.length && <p>No saved practice submissions match these filters.</p>}
+          {!!filteredPractices.length && <div style={{overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+              <thead><tr>{["Student","Level","Sample","Score","Submitted","Status"].map(label=><th key={label} scope="col" style={{textAlign:"left",padding:"9px 7px",borderBottom:"1px solid #cbd5e1"}}>{label}</th>)}</tr></thead>
+              <tbody>{filteredPractices.slice(0,100).map((entry,index)=><tr key={entry.id || index}>
+                <td style={{padding:7,borderBottom:"1px solid #e2e8f0"}}><strong>{entry.name || entry.email || entry.studentCode || "Student"}</strong>{entry.name && entry.email && <small style={{display:"block",color:"#64748b"}}>{entry.email}</small>}</td>
+                <td style={{padding:7,borderBottom:"1px solid #e2e8f0"}}>{entry.level}</td>
+                <td style={{padding:7,borderBottom:"1px solid #e2e8f0"}}>{entry.title}<small style={{display:"block",color:"#64748b"}}>{entry.section} · attempt {entry.attemptNumber}</small></td>
+                <td style={{padding:7,borderBottom:"1px solid #e2e8f0"}}><b>{entry.percent}%</b>{entry.rawScore !== null && <small style={{display:"block"}}>{entry.rawScore}/{entry.total}</small>}</td>
+                <td style={{padding:7,borderBottom:"1px solid #e2e8f0"}}>{formatDate(entry.date)}</td>
+                <td style={{padding:7,borderBottom:"1px solid #e2e8f0",color:"#166534"}}>Submitted</td>
+              </tr>)}</tbody>
+            </table>
+            {filteredPractices.length > 100 && <small>Showing the latest 100 matching submissions. Narrow your filters to see others.</small>}
+          </div>}
+          <div style={{borderTop:"1px solid #e2e8f0",paddingTop:12,display:"grid",gap:8}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+              <strong>Who has not practised?</strong>
+              <button type="button" onClick={() => void loadPracticeRoster()} disabled={practiceRosterLoading}>
+                {practiceRosterLoading ? "Loading roster…" : practiceRoster ? "Reload class roster" : "Compare with student roster"}
+              </button>
+            </div>
+            <small style={{color:"#64748b"}}>Roster is read only when requested, never on each refresh. “No submission recorded” means no saved practice found in the loaded window, not that a student has never visited Exams Room.</small>
+            {practiceRosterError && <p role="alert" style={{color:"#b91c1c"}}>{practiceRosterError}</p>}
+            {practiceRoster && <div>
+              <p style={{margin:"0 0 8px"}}>{notPractised.length} of {practiceRoster.filter(row=>practiceLevel==="all"||row.level===practiceLevel).length} listed students have no matching saved practice in the loaded window{practicePartial ? " (limited history)" : ""}.</p>
+              <div style={{maxHeight:230,overflowY:"auto",display:"grid",gap:5}}>
+                {notPractised.map((student,index)=><div key={student.id||student.studentCode||index} style={{padding:"7px 10px",borderRadius:8,background:"#f8fafc",fontSize:13}}>
+                  <strong>{student.name||student.studentCode||"Student"}</strong> · {student.level||"—"} · No submission recorded
+                </div>)}
+              </div>
+            </div>}
+          </div>
+        </section>
         <div className="monitor-status-filters" role="group" aria-label="Filter Exam Room mock status">
           {[[ "all", "All" ], [ "in_progress", "In progress" ], [ "completed", "Completed" ]].map(([value,label]) =>
             <button className="monitor-status-button" key={value} type="button"
