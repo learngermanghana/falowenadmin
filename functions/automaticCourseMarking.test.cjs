@@ -159,3 +159,67 @@ test('mixed A1 tutor speaking results can never auto-publish a student-claimed s
     assert.ok(result.publicationReviewReasons.some(reason=>/speaking checkpoint/i.test(reason)));
   }
 });
+
+
+test('temporary AI outage retries once without losing the submission or inventing a score', async () => {
+  const store = memoryDb({
+    'markingJobs/j': { automatic: true, submissionPath: 'submissions/s', level: 'A1',
+      assignmentKey: 'A1-1.1', status: 'pending' },
+    'submissions/s': { status: 'submitted', studentId: 'uid', submissionText: 'Saved original answer' },
+    'students/uid': { studentCode: 'test', email: 'student@example.test' },
+  });
+  let calls = 0;
+  const worker = createCourseMarkingWorker({
+    db: store.db,
+    loadReference: async () => ({ parts: [{}], version: 'v1' }),
+    mark: async () => { calls++; throw Error('fetch failed'); },
+  });
+  const event = { data: store.snapshot('markingJobs/j') };
+  await assert.rejects(worker(event), /fetch failed/);
+  assert.equal(store.rows.get('markingJobs/j').status, 'pending');
+  assert.equal(store.rows.get('submissions/s').submissionText, 'Saved original answer');
+  await worker(event);
+  assert.equal(calls, 2);
+  assert.equal(store.rows.get('markingJobs/j').status, 'needs_review');
+  assert.equal(store.rows.get('submissions/s').markingStatus, 'needs_review');
+  assert.equal(store.rows.get('scores/test__A1-1.1'), undefined);
+  await worker(event);
+  assert.equal(calls, 2, 'replay must not consume more AI tokens');
+});
+
+test('changed answer-key revision fails closed before requesting AI marking', async () => {
+  const store = memoryDb({
+    'markingJobs/j': { automatic: true, submissionPath: 'submissions/s', level: 'A2',
+      assignmentKey: 'A2-1.1', status: 'pending' },
+    'submissions/s': { status: 'submitted', studentId: 'uid',
+      answerKeyVersion: 'exercise-v1', submissionText: 'Student work preserved' },
+    'students/uid': { studentCode: 'test' },
+  });
+  await createCourseMarkingWorker({
+    db: store.db,
+    loadReference: async () => ({ parts: [{}], version: 'exercise-v2' }),
+    mark: async () => assert.fail('must not send changed answer keys to AI'),
+  })({ data: store.snapshot('markingJobs/j') });
+  assert.equal(store.rows.get('submissions/s').markingStatus, 'needs_review');
+  assert.match(store.rows.get('markingJobs/j').error, /answer-key version/);
+  assert.equal(store.rows.get('scores/test__A2-1.1'), undefined);
+});
+
+test('conflicting AI totals are kept for tutor review, never auto-published', async () => {
+  const store = memoryDb({
+    'markingJobs/j': { automatic: true, submissionPath: 'submissions/s', level: 'B1',
+      assignmentKey: 'B1-2.5', status: 'pending' },
+    'submissions/s': { status: 'submitted', studentId: 'uid',
+      submissionText: 'A sufficiently long written response' },
+    'students/uid': { studentCode: 'test' },
+  });
+  await createCourseMarkingWorker({
+    db: store.db,
+    loadReference: async () => ({ parts: [{}], version: 'v1' }),
+    mark: async () => ({ status: 'marked', score: 90, finalScore: 49,
+      confidence: 0.99, feedback: 'Evidence available' }),
+  })({ data: store.snapshot('markingJobs/j') });
+  assert.equal(store.rows.get('submissions/s').markingStatus, 'needs_review');
+  assert.equal(store.rows.get('scores/test__B1-2.5'), undefined);
+  assert.ok(store.rows.get('markingResults/s').publicationReviewReasons.some(x => /different final/.test(x)));
+});
