@@ -6,7 +6,7 @@ import { getA1PresenterUnderstandingChecks } from "../data/a1PresenterUnderstand
 import { buildA1CheckCoaching } from "../data/a1CheckCoaching.js";
 import { buildA1SlideReviewChecks } from "../data/a1SlideReview.js";
 import { getA1Days1To5QuickChecks } from "../data/a1Days1To5Understanding.js";
-import { getA1Days6To10QuickChecks } from "../data/a1Days6To10Understanding.js";
+import { getA1Days6To10QuickChecks, getA1Days6To10ApplicationChecks } from "../data/a1Days6To10Understanding.js";
 import { getA1Days11To15QuickChecks } from "../data/a1Days11To15Understanding.js";
 import { getA1Days16To20QuickChecks } from "../data/a1Days16To20Understanding.js";
 import { getA1Days21To24QuickChecks } from "../data/a1Days21To24Understanding.js";
@@ -209,9 +209,13 @@ function stageList(slide, topicLabel) {
     || getA1Days16To20QuickChecks(slide.assignmentId)
     || getA1Days21To24QuickChecks(slide.assignmentId)
     || grammarChecks.slice(0, 2);
-  const correctionChecks = mainChecks
-    .filter((item) => /mistake|correct|avoid this/i.test(String(item?.questionDe || "")))
-    .slice(0, 2);
+  // A1 Day 10 has two newly authored error-correction questions which must
+  // not duplicate the individual check assigned to a student earlier in class.
+  const correctionChecks = String(slide?.assignmentId || "").trim().toUpperCase() === "A1-6"
+    ? getA1Days6To10ApplicationChecks("A1-6")
+    : mainChecks
+      .filter((item) => /mistake|correct|avoid this/i.test(String(item?.questionDe || "")))
+      .slice(0, 2);
   const speaking = getA1EverydaySpeaking(slide.assignmentId);
   const mistakeItems = Array.isArray(support.commonMistakesEn) ? support.commonMistakesEn : [];
 

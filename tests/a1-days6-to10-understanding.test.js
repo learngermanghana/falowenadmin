@@ -79,9 +79,20 @@ test("Days 9 and 10 keep workbook case grammar and home comprehension separate",
   assert.match(caseWork, /den Hund/);
   assert.doesNotMatch(caseWork, /Hören/);
   const home = JSON.stringify(getA1Days6To10UnderstandingChecks("A1-6"));
-  for (const phrase of ["mein Tisch", "meine Lampe", "meinen Tisch", "Wohnzimmer", "Küche", "Balkon", "Ihr Tisch"]) {
+  for (const phrase of ["mein Tisch", "deine Tasche", "sein Buch", "meinen Stuhl", "unsere Bücher", "euren Tisch", "Ihr Buch", "ihre Tasche", "Wo wohnt ihr", "meine rote Tasche", "Die Tasche ist rot"]) {
     assert.ok(home.includes(phrase), phrase);
   }
+  assert.doesNotMatch(home, /Was bedeutet „Wohnzimmer“|Was bedeutet „Küche“|Was bedeutet „Balkon“/);
+  assert.match(home, /Exit-Check:.*Lampe/);
+  const applied = getA1Days6To10ApplicationChecks("A1-6");
+  assert.deepEqual(applied.map((item) => item.questionDe.startsWith("Correct the mistake:")), [true, true]);
+  assert.ok(applied[0].answerDe.includes("mein Tisch") && applied[0].answerDe.includes("ist blau"));
+  assert.ok(applied[1].answerDe.includes("Ihre Tasche") && applied[1].answerDe.includes("euren Tisch"));
+  assert.equal(new Set([
+    ...getA1Days6To10QuickChecks("A1-6"),
+    ...getA1Days6To10UnderstandingChecks("A1-6"),
+    ...applied,
+  ].map((item) => lower(item.questionDe))).size, 15);
 });
 
 test("Days 6–10 use the existing answer-reveal slide and no progress modifications", () => {
@@ -95,7 +106,26 @@ test("Days 6–10 use the existing answer-reveal slide and no progress modificat
   // Retired workbook/sentence-build presenter assertion: replaced by speaking missions.
   // Retired workbook/sentence-build presenter assertion: replaced by speaking missions.
   assert.match(slides, /Self-practice bridge/);
-  assert.match(slides, /Reading\/Hören workbook bridge/);
+  assert.match(slides, /Workbook bridge/);
   assert.doesNotMatch(slides, /phase: "Language mini-interview"|phase: "Apartment speaking"|phase: "Hobby round"/);
   assert.doesNotMatch(presenter, /Student Learning Progress|Self-practice completion tracking/);
+});
+
+test("Day 10 presenter checks the published lesson directly instead of reteaching room vocabulary", () => {
+  const slide = getSlidesByCourse("A1").find((entry) => entry.assignmentId === "A1-6");
+  assert.ok(slide);
+  const checks = getA1Days6To10UnderstandingChecks("A1-6");
+  assert.equal(checks.length, 11);
+  assert.match(JSON.stringify(slide), /ihr\/Ihr|formal Ihr/);
+  assert.match(JSON.stringify(slide), /meine rote Tasche/);
+  assert.match(JSON.stringify(slide), /Correct or Needs review/);
+  assert.match(slide.wrapUpTaskDe, /Frau Müller, ist das ___ Buch/);
+  const presenter = fs.readFileSync("src/components/A1GrammarPresenter.jsx", "utf8");
+  assert.match(presenter, /getA1Days6To10ApplicationChecks\("A1-6"\)/);
+  assert.match(presenter, /id: "mistake-fix"/);
+  const combined = checks.map(({ questionDe, answerDe }) => questionDe + " " + answerDe).join(" ");
+  assert.match(combined, /euer|euren/);
+  assert.match(combined, /ihr|Ihr/);
+  assert.match(combined, /rot/);
+  assert.match(combined, /Stuhl/);
 });
