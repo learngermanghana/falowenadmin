@@ -422,6 +422,7 @@ export const a1WorkbookAlignedSlidesDays6To10 = [
         "Ich suche meinen Stuhl. Ich sehe euren Tisch.",
         "Frau Weber, ist das Ihr Buch? Anna hat ihre Tasche.",
         "Das ist meine rote Tasche. Die Tasche ist rot.",
+        "Meine Lieblingsfarbe ist blau.",
         "In meinem Zimmer habe ich einen Tisch und eine Lampe.",
       ],
       commonMistakesEn: [
