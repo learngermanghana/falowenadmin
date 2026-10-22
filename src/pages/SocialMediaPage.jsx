@@ -6,6 +6,7 @@ import SocialCourseContentCreator from "../components/SocialCourseContentCreator
 import SocialVocabularyCreator from "../components/SocialVocabularyCreator.jsx";
 import SocialAdsDictionary from "../components/SocialAdsDictionary.jsx";
 import SocialGermanChallenges from "../components/SocialGermanChallenges.jsx";
+import SocialPhotoGallery from "../components/SocialPhotoGallery.jsx";
 import { QRCodeCanvas } from "qrcode.react";
 import {
   CAMPAIGN_FORMATS, campaignClassEligibility, accraToday,
@@ -508,6 +509,7 @@ export default function SocialMediaPage() {
   const [templateId, setTemplateId] = useState(TEMPLATES[0].id);
   const [formatId, setFormatId] = useState(FORMATS[0].id);
   const [photoSrc, setPhotoSrc] = useState("");
+  const [selectedGalleryId, setSelectedGalleryId] = useState("");
   const [photoReading, setPhotoReading] = useState(false);
   const [photoControls, setPhotoControls] = useState(DEFAULT_PHOTO);
   const [loading, setLoading] = useState(true);
@@ -609,6 +611,7 @@ export default function SocialMediaPage() {
     const reader = new FileReader();
     reader.onload = () => {
       setPhotoSrc(typeof reader.result === "string" ? reader.result : "");
+      setSelectedGalleryId("");
       setPhotoControls(DEFAULT_PHOTO);
       setPhotoReading(false);
     };
@@ -620,6 +623,7 @@ export default function SocialMediaPage() {
   };
 
   const removePhoto = () => {
+    setSelectedGalleryId("");
     setPhotoSrc("");
     setPhotoControls(DEFAULT_PHOTO);
   };
@@ -797,7 +801,7 @@ export default function SocialMediaPage() {
             </div>
           </details>
 
-          <details className="social-poster-details">
+          <details className="social-poster-details" open>
             <summary>4. Size &amp; photo</summary>
             <div style={{ display: "grid", gap: 10 }}>
               {campaignMode ? <p className="social-campaign-help">Campaign sizes are optimized automatically for each asset.</p> : FORMATS.map((item) => (
@@ -806,8 +810,14 @@ export default function SocialMediaPage() {
                   <span><strong>{item.label}</strong> <small style={{ color: "#64748b" }}>({item.hint})</small></span>
                 </label>
               ))}
+              <SocialPhotoGallery activeId={selectedGalleryId} onSelect={(image, photo) => {
+                setPhotoSrc(image);
+                setSelectedGalleryId(photo.id);
+                setPhotoControls(DEFAULT_PHOTO);
+                setPhotoReading(false);
+              }} />
               <label style={{ display: "grid", gap: 6, marginTop: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 700 }}>Upload student/class photo</span>
+                <span style={{ fontSize: 13, fontWeight: 700 }}>Or upload your own student/class photo</span>
                 <input type="file" accept="image/*" onChange={(event) => uploadPhoto(event.target.files?.[0] || null)} />
                 <small style={{ color: "#64748b" }}>Temporary only — the photo is not uploaded or saved.</small>
               </label>
