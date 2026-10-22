@@ -286,7 +286,9 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
             content: turns.map(turn => ({
               type: "text", text: turn.text,
               annotations: [{ type: "speech_metadata", ...(speakerIds.length > 1 ? { speaker: turn.speaker } : {}),
-                style: "Clear, natural standard German, suitable for Goethe-style listening practice; calm and neutral pace." }],
+                style: turn.speaker === "A"
+                  ? "Professional German exam narrator: crisp, deliberate, instructional delivery with calm neutral emphasis."
+                  : "Natural conversational standard German for an independent task speaker; clear but lifelike intonation, distinct from the exam narrator." }],
             })),
           }],
           response_format: { type: "audio", mime_type: "audio/wav" },
