@@ -287,8 +287,8 @@ export default function TimedAssignmentAttemptsPage() {
   const filteredPractices = useMemo(() => filterExamRoomPractices(practiceRows,
     { search: practiceSearch, level: practiceLevel, section: practiceSection }),
     [practiceRows, practiceSearch, practiceLevel, practiceSection]);
-  const practiceStudents = useMemo(() => new Set(practiceRows.flatMap(row =>
-    [row.studentCode?.toLowerCase(), row.email, row.uid].filter(Boolean))).size,
+  const practiceStudents = useMemo(() => new Set(practiceRows.map(row =>
+    row.studentCode?.toLowerCase() || row.email || row.uid).filter(Boolean)).size,
     [practiceRows]);
   const notPractised = useMemo(() => Array.isArray(practiceRoster)
     ? unpractisedStudents(practiceRoster, practiceRows, practiceLevel)
