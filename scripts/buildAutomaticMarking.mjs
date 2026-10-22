@@ -13,7 +13,7 @@ for (const command of commands) {
   if (!process.argv.includes('--prepared') && markingPatches && /^node scripts\/[^ ]+\.mjs$/.test(command)) execFileSync(process.execPath, [command.slice(5)], { cwd: root, stdio: 'inherit' });
 }
 await build({
-  stdin: { contents: `export { markSubmissionWithAI } from './src/services/markingService.js';`, resolveDir: root },
+  stdin: { contents: `export { markSubmissionWithAI } from './src/services/markingService.js';\nexport { canonicalCourseReference } from './src/utils/canonicalCourseReference.js';`, resolveDir: root },
   outfile: path.join(root, 'functions/automaticMarkingPipeline.cjs'),
   bundle: true, minify: true, platform: 'node', target: 'node22', format: 'cjs',
   external: ['firebase-admin', './automaticMarkingContext.js'],
