@@ -24,6 +24,20 @@ export function inspectHoerenDraft({ script, kind, questions = [], expectedCount
   if (mode === "goethe" && profile) {
     if (kind !== profile.kind) errors.push("Question format does not match the selected exam template.");
     if (spokenLines.length) {
+      // Test the SPOKEN instructions, not only the form controls. This catches
+      // copied A1 Teil 1 scripts which announce Richtig/Falsch instead of a–c.
+      const intro = spokenLines.slice(0, 3).map(line => line.text).join(" ").toLowerCase();
+      if (profile.kind === "multiple-choice" && /(?:richtig\s+oder\s+falsch|richtig\s*\/\s*falsch)/iu.test(intro)) {
+        errors.push("The spoken instructions say Richtig/Falsch, but this Teil requires a–c choices. Correct the instructions before generating audio.");
+      }
+      if (profile.kind === "richtig-falsch" && /(?:richtige\s+(?:antwort|lösung)\s+[abc]|\ba\s*,\s*b\s*(?:,|oder)\s*c\b)/iu.test(intro)) {
+        errors.push("The spoken instructions say a–c, but this Teil uses Richtig/Falsch.");
+      }
+      const announced = intro.match(/\b(vier|fünf|sechs)\s+(?:kurze\s+)?(?:texte|gespräche|ansagen|informationen)\b/iu)?.[1];
+      const announcedCount = { vier: 4, fünf: 5, sechs: 6 }[announced];
+      if (announcedCount && announcedCount !== profile.questionCount) {
+        errors.push(`The instructions announce ${announcedCount} texts but this Teil requires ${profile.questionCount}. Check the exam format.`);
+      }
       const target = Number(profile.wordTarget);
       if (target && wordCount < target * 0.6) warnings.push(`Audio script is short for this Teil (${wordCount} / ~${target} words).`);
       if (target && wordCount > target * 1.55) warnings.push(`Audio script may be long for this Teil (${wordCount} / ~${target} words).`);
