@@ -96,7 +96,10 @@ test("staff fetches completed mock backups only on demand, without loading speec
   assert.match(page,/lookupMockAnswerBackup/);
   assert.match(page,/Recover submitted choices and writing/);
   assert.match(page,/No audio or speech transcripts are stored/);
-  assert.match(page,/startVisiblePolling\(loadMocks, 120000\)/);
+  assert.doesNotMatch(page,/startVisiblePolling\(loadMocks, 120000\)/, "mock monitor must not poll expensive attempt lists every two minutes");
+  assert.match(page,/mockRequested\.current/);
+  assert.match(page,/practiceRequested\.current/);
+  assert.match(page,/data-testid="exam-room-practice-monitor"/);
   const lookup=page.slice(page.indexOf("const lookupMockAnswerBackup"),page.indexOf("  useEffect(() => {",page.indexOf("const lookupMockAnswerBackup")));
   assert.match(lookup,/getIdToken\(\)/);
   assert.match(lookup,/cache:"no-store"/);
