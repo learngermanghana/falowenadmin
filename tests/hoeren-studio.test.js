@@ -5,12 +5,13 @@ import { createRequire } from "node:module";
 import { parseStudioTranscript, formatStudioTranscript, sameSpokenTranscript, assembleListeningExam , repairStudioTranscript, repairUnlabelledStudioLines } from "../src/utils/hoerenAudio.js";
 import { validateDraftQuestions } from "../src/utils/hoerenQuestions.js";
 import { inspectHoerenDraft } from "../src/utils/hoerenDraftQuality.js";
+import { buildStudioSpeechPlan, sceneVoiceKey, assemblyScenePlan } from "../src/utils/hoerenSpeechPlan.js";
 
 const require = createRequire(import.meta.url);
 const { EXAM_PROFILES, getExamProfile, buildExamPrompt } = require("../functions/hoerenExamProfiles.js");
 const { validateQuestionSet, extractLessonDraft, questionInstructions } = require("../functions/hoerenQuestions.js");
 const {
-  MODELS, LIMITS, ownerUid, isStudioOwner, validateSpeechRequest,
+  MODELS, LIMITS, ownerUid, isStudioOwner, validateSpeechRequest, validateSceneRequest,
   validateScriptRequest, extractAudio, extractScript, reserveUsage, settleUsage,
 } = require("../functions/hoerenStudioApi.js");
 
@@ -39,7 +40,7 @@ test("only the approved Firebase owner UID passes server auth", () => {
 test("Gemini model ids and request quotas are explicit", () => {
   assert.equal(MODELS.lite, "gemini-3.8-flash-lite-tts");
   assert.equal(MODELS.flash, "gemini-3.8-flash-tts");
-  assert.ok(LIMITS.speech <= 36);
+  assert.deepEqual(LIMITS, { script: 20, speech: 72 });
 });
 test("speech requests strictly limit paid generation inputs", () => {
   assert.deepEqual(validateSpeechRequest({ text: "Guten Tag!", speaker: "B", engine: "flash" }), {
@@ -81,6 +82,31 @@ test("clip assembler produces valid WAV and repeats without another request", as
   // Two tiny clips x two passes + (1s pause x twice) + 2s replay gap.
   assert.equal(audio.length, 44 + (4 * 4) + (24000 * 2 * 4));
 });
+test("complete Goethe dialogue batches into one call per pause-delimited scene", () => {
+  const source = "A: Hören Teil Drei. Fünf kurze Gespräche.\\n[PAUSE 3]\\nA: Nummer eins.\\nA: Wo ist das Obst?\\nB: Links.\\nA: Danke.\\n[PAUSE 3]\\nA: Nummer zwei.\\nA: Wann schließen Sie?\\nB: Um acht.";
+  const parsed = parseStudioTranscript(source);
+  const plan = buildStudioSpeechPlan(parsed);
+  const scenes = plan.filter(item => item.type === "speech");
+  assert.equal(parsed.filter(item => item.type === "speech").length, 8);
+  assert.equal(scenes.length, 3);
+  assert.equal(scenes[1].turns.length, 4);
+  assert.deepEqual(assemblyScenePlan(plan).filter(item => item.type === "pause").map(item => item.seconds), [3,3]);
+  const key = sceneVoiceKey("lite", scenes[1]);
+  assert.equal(key, sceneVoiceKey("lite", { turns: [...scenes[1].turns] }));
+  assert.notEqual(key, sceneVoiceKey("flash", scenes[1]));
+  const blob = assembleListeningExam(assemblyScenePlan(plan), scenes.map(() => fakeWav()), { repeats: 1, lineGap: 0 });
+  assert.ok(blob.size > 44);
+});
+
+test("scene API enforces at most two voices and 520 characters", () => {
+  assert.deepEqual(validateSceneRequest({ turns: [{ speaker: "A", text: "Hallo" }, { speaker: "B", text: "Guten Tag" }], engine: "lite" }), {
+    engine: "lite", turns: [{ speaker: "A", text: "Hallo" }, { speaker: "B", text: "Guten Tag" }],
+  });
+  assert.throws(() => validateSceneRequest({ turns: ["A", "B", "C"].map(speaker => ({ speaker, text: "Hallo" })) }), /two voices/);
+  assert.throws(() => validateSceneRequest({ turns: [{ speaker: "A", text: "x".repeat(300) }, { speaker: "B", text: "x".repeat(300) }] }), /520/);
+  assert.throws(() => validateSceneRequest({ turns: [{ speaker: "A", text: "[PAUSE 3]" }] }), /Pause/);
+});
+
 test("Google REST audio and script are checked before accepting a response", () => {
   const bytes = fakeWav();
   assert.equal(extractAudio({ steps: [{ type: "model_output", content: [{ type: "audio", data: Buffer.from(bytes).toString("base64") }] }] }).size, bytes.length);
@@ -250,7 +276,7 @@ test("pasted exam narration is repaired without changing already formatted speec
 test("AI Studio quota refresh is actionable and script budget allows corrections", () => {
   const api = readFileSync(new URL("../functions/hoerenStudioApi.js", import.meta.url), "utf8");
   const page = readFileSync(new URL("../src/pages/HoerenStudioPage.jsx", import.meta.url), "utf8");
-  assert.match(api, /script: 10, speech: 36/);
+  assert.match(api, /script: 20, speech: 72/);
   assert.match(page, /onClick=\{\(\) => reloadStatus\(true\)\}/);
   assert.match(page, /refreshingQuota \? "Refreshing quota…"/);
   assert.match(page, /refreshing does not grant extra credits/);
