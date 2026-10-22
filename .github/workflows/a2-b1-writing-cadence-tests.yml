@@ -7,6 +7,7 @@ on:
       - 'src/utils/**'
       - 'tests/a2-b1-writing-requirement.test.js'
       - 'tests/question-aware-writing-marking.test.js'
+      - 'tests/a2-day16-relaxation-sync.test.js'
       - 'tests/b1-semantic-writing-marking.test.js'
       - 'scripts/patchA1WritingPlaceholderReferences.mjs'
       - '.github/workflows/a2-b1-writing-cadence-tests.yml'
@@ -17,6 +18,7 @@ on:
       - 'src/utils/**'
       - 'tests/a2-b1-writing-requirement.test.js'
       - 'tests/question-aware-writing-marking.test.js'
+      - 'tests/a2-day16-relaxation-sync.test.js'
       - 'tests/b1-semantic-writing-marking.test.js'
       - 'scripts/patchA1WritingPlaceholderReferences.mjs'
       - '.github/workflows/a2-b1-writing-cadence-tests.yml'
@@ -50,6 +52,7 @@ jobs:
           tests/b1-semantic-writing-marking.test.js
           tests/a1-question-aware-writing-marking.test.js
           tests/a2-writing-cadence.test.js
+          tests/a2-day16-relaxation-sync.test.js
           tests/b1-writing-cadence.test.js
           tests/assignment-registry.test.js
           tests/answer-key-integrity.test.js
