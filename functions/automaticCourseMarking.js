@@ -1,6 +1,7 @@
 const crypto = require('node:crypto');
 const { familyRecordingReference } = require('./a1FamilyRecordingReference');
 const { withMarkingTransport } = require('./automaticMarkingContext');
+const { referenceVersionProblem, scoreProblems, isTransientMarkingError } = require('./markingReliability');
 const RESULTS_URL = 'https://www.falowen.app/campus/results';
 // Until the speaking score has authenticated backend provenance, no score may
 // be automatically published for the three mixed A1 tutor workbooks.
@@ -23,7 +24,7 @@ function releasable(result = {}) {
     && Number.isFinite(Number(score)) && Number(score) >= 0 && Number(score) <= 100
     && Number(result.confidence) >= 0.8
     && !(result.consistencyWarnings || []).length && !(result.reviewReasons || []).length
-    && !result.secondExaminer?.requiresTutorReview;
+    && !scoreProblems(result).length && !result.secondExaminer?.requiresTutorReview;
 }
 
 function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now = () => Date.now() }) {
@@ -78,6 +79,9 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
       }
       let referenceEntry = await loadReference(job.assignmentKey);
       if (!referenceEntry?.parts) throw new Error('No registered answer key; tutor review required');
+      // New submissions may carry their immutable marking-key revision; never grade them against a changed key.
+      const versionProblem = referenceVersionProblem(submission, referenceEntry);
+      if (versionProblem) throw new Error(versionProblem);
       referenceEntry = familyRecordingReference(referenceEntry, submission, job.assignmentKey);
       const text = String(submission.submissionText || submission.text || submission.answer || submission.workContent || '').trim();
       if (!text) throw new Error('Submission text is missing; tutor review required');
@@ -108,6 +112,7 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
           ...(result.consistencyWarnings || []).map(value => typeof value === 'string' ? value : value.message || value.code || 'Marking consistency warning.'),
           ...(result.reviewReasons || []).map(value => typeof value === 'string' ? value : value.message || value.code || 'Marking validation requires review.'),
           ...(result.secondExaminer?.requiresTutorReview ? ['The second examiner requested tutor review.'] : []),
+          ...scoreProblems(result),
           ...((result.finalScore ?? result.score) == null || !Number.isFinite(Number(result.finalScore ?? result.score)) ? ['A valid final score is unavailable.'] : []),
         ];
         tx.set(db.collection('markingResults').doc(snap.id), clean({
@@ -172,13 +177,24 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         tx.create(db.collection('automaticScoreSync').doc(idForPath(snap.ref.path)), { row, scorePath: scoreRef.path, status: 'pending', attempts: 0 });
       });
     } catch (error) {
-      // Keep the saved work in the tutor queue; never invent a mark on failure.
+      // Retry transport/AI outages through the existing Firebase event retry policy.
+      // Incorrect keys, grading ambiguity, missing identity and exhausted attempts stay in tutor review.
+      const transient = isTransientMarkingError(error);
       await db.runTransaction(async tx => {
         const fresh = (await tx.get(jobRef)).data();
         if (fresh.token !== token) return;
-        tx.set(jobRef, { status: 'needs_review', error: String(error.message).slice(0, 500), leaseUntil: 0 }, { merge: true });
-        tx.set(submissionRef, { markingStatus: 'needs_review' }, { merge: true });
+        const retry = transient && Number(fresh.attempts || 0) < 2;
+        const status = retry ? 'pending' : 'needs_review';
+        tx.set(jobRef, { status, error: String(error.message).slice(0, 500),
+          errorKind: transient ? 'temporary_service_failure' : 'marking_validation',
+          lastErrorAt: new Date(now()).toISOString(), leaseUntil: 0 }, { merge: true });
+        tx.set(submissionRef, { markingStatus: status }, { merge: true });
       });
+      if (transient) {
+        // On the second failure the job becomes needs_review; do not make unbounded AI calls.
+        const final = (await jobRef.get()).data();
+        if (final?.status === 'pending') throw error;
+      }
     }
   };
 }
