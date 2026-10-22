@@ -677,8 +677,12 @@ export default function StudentDirectoryPage() {
             <span style={{ fontSize: 13, fontWeight: 600 }}>{fieldLabels[field] || field}</span>
             {STATUS_CHOICES[field] ? (
               <select value={draft[field]} disabled={isSaving}
-                onChange={(event) => updateDraftField(selectedStudent.id, field, event.target.value, selectedStudent)}
+                onChange={(event) => {
+                  if (field === "status" && event.target.value === "trial_active") activateTrialForStudent(selectedStudent);
+                  else updateDraftField(selectedStudent.id, field, event.target.value, selectedStudent);
+                }}
                 style={{ width: "100%", padding: "8px 9px", borderRadius: 6, border: "1px solid #ccd4e2" }}>
+                {!draft[field] ? <option value="">Select status</option> : null}
                 {statusOptions(field, draft[field]).map(value => <option key={value} value={value}>{value.replace(/_/g, " ")}</option>)}
               </select>
             ) : (
