@@ -39,7 +39,7 @@ export function repairUnlabelledStudioLines(source) {
 }
 export function sameSpokenTranscript(a, b) {
   try {
-    const normalize = value => parseStudioTranscript(formatStudioTranscript(value)).map(line => line.type === "pause" ? `PAUSE:${line.seconds}` : `${line.speaker}:${line.text.replace(/\s+/g, " ").trim()}`).join("\n");
+    const normalize = value => parseStudioTranscript(formatStudioTranscript(value)).map(line => line.type === "pause" ? `PAUSE:${line.seconds}` : line.text.replace(/\s+/g, " ").trim()).join("\n");
     return normalize(a) === normalize(b);
   } catch { return false; }
 }
