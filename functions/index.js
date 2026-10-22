@@ -2388,15 +2388,15 @@ exports.sendFinalMockResultEmail = createFinalMockResultEmailTrigger({
   runtimeConfig,
 });
 
-exports.createFlatSubmissionMarkingJob = onDocumentCreated("submissions/{submissionId}", async (event) => {
+exports.createFlatSubmissionMarkingJob = onDocumentCreated({ document: "submissions/{submissionId}", retry: true }, async (event) => {
   await createAutomaticMarkingJob(event, "flat");
 });
 
-exports.createNestedSubmissionMarkingJob = onDocumentCreated("submissions/{level}/{studentCode}/{submissionId}", async (event) => {
+exports.createNestedSubmissionMarkingJob = onDocumentCreated({ document: "submissions/{level}/{studentCode}/{submissionId}", retry: true }, async (event) => {
   await createAutomaticMarkingJob(event, "nested");
 });
 
-exports.createPostSubmissionMarkingJob = onDocumentCreated("submissions/{level}/posts/{submissionId}", async (event) => {
+exports.createPostSubmissionMarkingJob = onDocumentCreated({ document: "submissions/{level}/posts/{submissionId}", retry: true }, async (event) => {
   await createAutomaticMarkingJob(event, "posts");
 });
 
