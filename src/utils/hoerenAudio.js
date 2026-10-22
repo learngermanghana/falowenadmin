@@ -9,12 +9,12 @@ export function formatStudioTranscript(source) {
   // newlines separating already-formatted turns. Preserve spoken lists such as
   // "Modell A: günstig, B: schnell".
   return String(source || "").replace(/\r\n/g, "\n")
-    .replace(/(?<=[.!?]),[ \t]*(?=(?:[ABC]:[ \t]|\[PAUSE[ \t]+\d{1,2}\]))/gi, "\n")
-    .replace(/(\[PAUSE[ \t]+\d{1,2}\]),[ \t]*(?=[ABC]:[ \t])/gi, "$1\n")
+    .replace(/(?<=[.!?]),[ \t]*(?=(?:[ABCD]:[ \t]|\[PAUSE[ \t]+\d{1,2}\]))/gi, "\n")
+    .replace(/(\[PAUSE[ \t]+\d{1,2}\]),[ \t]*(?=[ABCD]:[ \t])/gi, "$1\n")
     // Pause markers are timing metadata, not synthesized speech. Split them
     // before ANY paid clip requests, including pasted "A: [PAUSE 3]".
     .replace(/[ \t]*(\[PAUSE[ \t]+\d{1,2}\])(?!,)[ \t]*/gi, "\n$1\n")
-    .replace(/(^|\n)[ \t]*[ABC]:[ \t]*(?=\n|$)/gi, "$1")
+    .replace(/(^|\n)[ \t]*[ABCD]:[ \t]*(?=\n|$)/gi, "$1")
     .replace(/\n{2,}/g, "\n").trim();
 }
 
@@ -33,7 +33,7 @@ export function repairStudioTranscript(source) {
 export function repairUnlabelledStudioLines(source) {
   return repairStudioTranscript(source).split("\n").map(line => {
     const trimmed = line.trim();
-    if (!trimmed || /^(?:[ABC]:\s*.+|\[PAUSE\s+\d{1,2}\])$/i.test(trimmed)) return line;
+    if (!trimmed || /^(?:[ABCD]:\s*.+|\[PAUSE\s+\d{1,2}\])$/i.test(trimmed)) return line;
     return `A: ${trimmed}`;
   }).join("\n");
 }
@@ -44,21 +44,38 @@ export function sameSpokenTranscript(a, b) {
   } catch { return false; }
 }
 
+// Google clips still have bounded inputs, but teachers can paste complete Goethe
+// passages. Split long paragraphs at natural sentence/word boundaries for TTS.
+export function splitLongStudioSpeech(text, maximum = 320) {
+  let remaining = String(text || "").trim();
+  const chunks = [];
+  while (remaining.length > maximum) {
+    const head = remaining.slice(0, maximum);
+    const sentenceEnds = [...head.matchAll(/[.!?](?=\s|$)/gu)];
+    const sentenceBreak = sentenceEnds.map(match => match.index + 1).filter(pos => pos > maximum * 0.45).pop();
+    const wordBreak = head.lastIndexOf(" ");
+    const splitAt = sentenceBreak || (wordBreak > 0 ? wordBreak : maximum);
+    chunks.push(remaining.slice(0, splitAt).trim());
+    remaining = remaining.slice(splitAt).trim();
+  }
+  if (remaining) chunks.push(remaining);
+  return chunks;
+}
+
 export function parseStudioTranscript(source) {
   const lines = repairUnlabelledStudioLines(source).split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   if (lines.length > 64) throw new Error("Maximum 64 transcript lines.");
   if (!lines.length) throw new Error("Enter a script or generate one first.");
-  return lines.map((line, index) => {
+  return lines.flatMap((line, index) => {
     const pause = line.match(/^\[PAUSE\s+(\d{1,2})\]$/i);
     if (pause) {
       const seconds = Number(pause[1]);
       if (seconds < 1 || seconds > 20) throw new Error("Pauses must last 1–20 seconds.");
-      return { type: "pause", seconds };
+      return [{ type: "pause", seconds }];
     }
-    const turn = line.match(/^([ABC]):\s*(.+)$/i);
-    if (!turn) throw new Error(`Line ${index + 1}: use A: text, B: text, or [PAUSE 3].`);
-    if (turn[2].length > 320) throw new Error(`Line ${index + 1} is too long (max 320 characters).`);
-    return { type: "speech", speaker: turn[1].toUpperCase(), text: turn[2] };
+    const turn = line.match(/^([ABCD]):\s*(.+)$/i);
+    if (!turn) throw new Error(`Line ${index + 1}: use A:, B:, C:, D: or [PAUSE 3].`);
+    return splitLongStudioSpeech(turn[2]).map(text => ({ type: "speech", speaker: turn[1].toUpperCase(), text }));
   });
 }
 
