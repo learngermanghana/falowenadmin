@@ -3,7 +3,7 @@ import "./StudentDirectoryPage.css";
 import { STUDENT_DETAIL_TABS, nextStudentDetailTab } from "../utils/studentDetailTabs.js";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { createStudent, listAllStudents, updateStudentById } from "../services/studentsService";
+import { createStudent, listAllStudents, updateStudentById, activateExistingStudentTrial } from "../services/studentsService";
 import { listClassCohorts } from "../services/liveClassService";
 import { useToast } from "../context/ToastContext";
 import StudentSupportTools from "../components/StudentSupportTools";
@@ -23,6 +23,14 @@ import { isArchivedStudent, isTrialOrUnpaidStudent, resolveStudentLearningStatus
 const editableFields = STUDENT_DETAIL_TABS.flatMap((tab) => tab.fields);
 
 const dateFields = new Set(["contractStart", "contractEnd"]);
+const STATUS_CHOICES = {
+  status: ["Paid", "Active", "Pending", "trial_active", "trial_expired", "Expired", "Archived"],
+  paymentStatus: ["Paid", "Partially Paid", "Pending", "Unpaid", "Overdue", "Expired"],
+};
+function statusOptions(field, current) {
+  return [...new Set([...(STATUS_CHOICES[field] || []), String(current || "").trim()].filter(Boolean))];
+}
+
 
 const fieldLabels = {
   name: "Name",
@@ -351,6 +359,7 @@ export default function StudentDirectoryPage() {
   const [savingId, setSavingId] = useState("");
   const [creatingStudent, setCreatingStudent] = useState(false);
   const [createDraft, setCreateDraft] = useState(addStudentDefaultDraft);
+  const [activatingTrialId, setActivatingTrialId] = useState("");
   const [error, setError] = useState("");
   const [followUpType, setFollowUpType] = useState("balance");
   const [followUpMessage, setFollowUpMessage] = useState("");
@@ -504,6 +513,23 @@ export default function StudentDirectoryPage() {
     }
   };
 
+
+  const activateTrialForStudent = async (student) => {
+    if (!window.confirm("Start a NEW seven-day trial from today? This keeps the existing login, student code and unpaid balance.")) return;
+    setActivatingTrialId(student.id);
+    try {
+      const result = await activateExistingStudentTrial(student.id);
+      setStudents(previous => previous.map(record => record.id === student.id
+        ? { ...record, ...result.trial } : record));
+      setDrafts(previous => { const next = { ...previous }; delete next[student.id]; return next; });
+      pushToast({type: "success",message: `Seven-day trial activated through ${new Date(result.trial.trialEndsAt).toLocaleDateString("en-GB")}. The existing login was retained.`});
+    } catch (error) {
+      pushToast({type: "error",message: error?.message || "Could not activate student trial"});
+    } finally {
+      setActivatingTrialId("");
+    }
+  };
+
   const handleSupportStudentDeleted = (studentId) => {
     setStudents((prev) => prev.filter((record) => record.id !== studentId));
     setDrafts((prev) => {
@@ -546,6 +572,14 @@ export default function StudentDirectoryPage() {
       if (field === "initialPaymentAmount") {
         next.paymentIntentAmount = String(calculatePaystackGrossAmount(value));
       }
+      if (field === "status" && value === "trial_active") {
+        next.paymentStatus = "Pending";
+        next.paid = "0";
+        next.initialPaymentAmount = "0";
+        next.paymentIntentAmount = "0";
+        const cost = Number(next.tuitionFee || "0");
+        if (cost > 0) { next.balanceDue = String(cost); next.balance = String(cost); }
+      }
       return next;
     });
   };
@@ -581,6 +615,21 @@ export default function StudentDirectoryPage() {
       }
     }
 
+    // Manual trial creation must carry trial timestamps, not only a status label.
+    if (nextPayload.status === "trial_active") {
+      const startedAt = new Date();
+      nextPayload.trialStatus = "active";
+      nextPayload.trialStartedAt = startedAt.toISOString();
+      nextPayload.trialEndsAt = new Date(startedAt.getTime() + 7 * 86400000).toISOString();
+      nextPayload.paymentStatus = "Pending";
+      nextPayload.paid = 0;
+      nextPayload.initialPaymentAmount = 0;
+      nextPayload.paymentIntentAmount = 0;
+      if (Number(nextPayload.tuitionFee) > 0) {
+        nextPayload.balanceDue = Number(nextPayload.tuitionFee);
+        nextPayload.balance = Number(nextPayload.tuitionFee);
+      }
+    }
     setCreatingStudent(true);
     try {
       await createStudent(studentId, nextPayload);
@@ -626,13 +675,21 @@ export default function StudentDirectoryPage() {
         return (
           <label key={`${selectedStudent.id}-${field}`} style={{ display: "grid", gap: 6 }}>
             <span style={{ fontSize: 13, fontWeight: 600 }}>{fieldLabels[field] || field}</span>
-            <input
-              type={dateFields.has(field) ? "date" : "text"}
-              value={draft[field]}
-              onChange={(event) => updateDraftField(selectedStudent.id, field, event.target.value, selectedStudent)}
-              style={{ width: "100%", padding: "8px 9px", borderRadius: 6, border: "1px solid #ccd4e2" }}
-              disabled={isSaving}
-            />
+            {STATUS_CHOICES[field] ? (
+              <select value={draft[field]} disabled={isSaving}
+                onChange={(event) => updateDraftField(selectedStudent.id, field, event.target.value, selectedStudent)}
+                style={{ width: "100%", padding: "8px 9px", borderRadius: 6, border: "1px solid #ccd4e2" }}>
+                {statusOptions(field, draft[field]).map(value => <option key={value} value={value}>{value.replace(/_/g, " ")}</option>)}
+              </select>
+            ) : (
+              <input
+                type={dateFields.has(field) ? "date" : "text"}
+                value={draft[field]}
+                onChange={(event) => updateDraftField(selectedStudent.id, field, event.target.value, selectedStudent)}
+                style={{ width: "100%", padding: "8px 9px", borderRadius: 6, border: "1px solid #ccd4e2" }}
+                disabled={isSaving}
+              />
+            )}
             {field === "email" ? (
               <span style={{ fontSize: 12, color: "#64748b", lineHeight: 1.45 }}>
                 Contact email can change without moving the account. Login, progress, scores and class history stay attached to the Firebase UID.
@@ -887,6 +944,18 @@ export default function StudentDirectoryPage() {
                             className="student-detail-panel">
                             <h3>{tab.label === "Class" ? "Class and contract" : tab.label}</h3>
                             {tab.id === "profile" && <StudentLearningStatusPanel student={selectedStudent} />}
+                            {tab.id === "profile" && (
+                              <div className="student-trial-activation" style={{marginBottom:14,padding:12,border:"1px solid #c7d2fe",borderRadius:10}}>
+                                <strong>Trial access</strong>
+                                <p style={{margin:"6px 0",fontSize:13}}>Current trial: {selectedStudent.trialStatus || selectedStudent.status || "Not set"}. Start: {selectedStudent.trialStartedAt ? new Date(selectedStudent.trialStartedAt).toLocaleDateString("en-GB") : "missing"} · Ends: {selectedStudent.trialEndsAt ? new Date(selectedStudent.trialEndsAt).toLocaleDateString("en-GB") : "missing"}.</p>
+                                <p style={{margin:"6px 0",fontSize:13}}>A manual trial needs valid dates in Firestore. Editing the Google Sheet alone does not grant account access.</p>
+                                <button type="button" disabled={Boolean(activatingTrialId) || !selectedStudent.uid}
+                                  onClick={() => activateTrialForStudent(selectedStudent)}>
+                                  {activatingTrialId === selectedStudent.id ? "Activating trial…" : "Activate 7-day trial from today"}
+                                </button>
+                                {!selectedStudent.uid && <p role="alert">This record has no Firebase UID. Link the existing sign-in before activating a trial.</p>}
+                              </div>
+                            )}
                             {renderEditableFields(tab.fields)}
                             {/* STUDENT_EMERGENCY_CONTACT_FIELD: Emergency contact stays in the staff-only Profile tab. */}
                             {tab.id === "profile" && <StudentEmergencyContact student={selectedStudent} />}
@@ -1066,13 +1135,21 @@ export default function StudentDirectoryPage() {
               {addStudentFields.map((field) => (
                 <label key={`create-${field}`} style={{ display: "grid", gap: 6 }}>
                   <span style={{ fontSize: 13, fontWeight: 600 }}>{addStudentLabels[field] || field}</span>
-                  <input
-                    type={addStudentDateFields.has(field) ? "date" : "text"}
-                    value={createDraft[field]}
-                    onChange={(event) => updateCreateDraftField(field, event.target.value)}
-                    style={{ width: "100%", padding: "8px 9px", borderRadius: 6, border: "1px solid #ccd4e2" }}
-                    disabled={creatingStudent}
-                  />
+                  {STATUS_CHOICES[field] ? (
+                    <select value={createDraft[field]} disabled={creatingStudent}
+                      onChange={(event) => updateCreateDraftField(field, event.target.value)}
+                      style={{ width: "100%", padding: "8px 9px", borderRadius: 6, border: "1px solid #ccd4e2" }}>
+                      {statusOptions(field, createDraft[field]).map(value => <option key={value} value={value}>{value.replace(/_/g, " ")}</option>)}
+                    </select>
+                  ) : (
+                    <input
+                      type={addStudentDateFields.has(field) ? "date" : "text"}
+                      value={createDraft[field]}
+                      onChange={(event) => updateCreateDraftField(field, event.target.value)}
+                      style={{ width: "100%", padding: "8px 9px", borderRadius: 6, border: "1px solid #ccd4e2" }}
+                      disabled={creatingStudent}
+                    />
+                  )}
                 </label>
               ))}
             </div>
