@@ -270,7 +270,7 @@ export default function SocialGermanChallenges() {
           <strong>4. Preview &amp; export</strong><span style={{ fontSize: 12, color: "#475569" }}>{selected.level} · {original.label}</span>
         </div>
         <div style={{ maxWidth: 390, margin: "0 auto", width: "100%" }}>
-          <canvas ref={canvasRef} width={540} height={960} role="img" aria-label="German challenge video scene preview" style={{ width: "100%", aspectRatio: "9 / 16", background: "#071a3a", borderRadius: 12 }} />
+          <canvas ref={canvasRef} width={540} height={960} role="img" aria-label="German challenge video scene preview" style={{ display: "block", width: "100%", height: "auto", aspectRatio: "9 / 16", background: "#071a3a", borderRadius: 12, boxShadow: "0 14px 32px rgba(7, 26, 58, 0.16)" }} />
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
           {CHALLENGE_SCENES.map((item, index) => <button key={item.id} type="button" aria-pressed={scene === index} disabled={working} onClick={() => { setPreviewPlaying(false); setScene(index); }} style={{ padding: "9px 4px", background: scene === index ? "#102e55" : "#fff", color: scene === index ? "#fff" : "#0f172a", border: "1px solid #9baecc", borderRadius: 9, fontSize: 12 }}>{item.label}<br />{item.seconds}</button>)}

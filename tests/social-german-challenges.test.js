@@ -7,7 +7,8 @@ import {
 } from "../src/data/socialGermanChallenges.js";
 import {
   CHALLENGE_VIDEO_SECONDS, challengeFileStem, challengeVideoMime, sceneAtTime,
-  CHALLENGE_EXPORT_SIZES,
+  CHALLENGE_EXPORT_SIZES, CHALLENGE_ARTBOARD_WIDTH,
+  challengeFrameLayout, challengeTextFits, renderChallengeFrame,
 } from "../src/utils/socialGermanChallengeRender.js";
 
 test("120 editorial challenges have the promised unique category counts and valid levels", () => {
@@ -89,4 +90,83 @@ test("social-media page adds challenges without removing vocabulary and advert e
   assert.match(component, /Copy caption \+ hashtags/);
   assert.match(component, /MediaRecorder/);
   assert.doesNotMatch(component, /fetch\(/);
+});
+
+
+function fakeChallengeCanvas(width, height) {
+  const labels = [];
+  const transforms = [];
+  const ctx = {
+    font: "700 24px Arial",
+    textAlign: "left",
+    setTransform(...args) { transforms.push(args); },
+    clearRect() {},
+    createLinearGradient() { return { addColorStop() {} }; },
+    fillRect() {},
+    beginPath() {},
+    arc() {},
+    fill() {},
+    stroke() {},
+    roundRect() {},
+    rect() {},
+    measureText(value) {
+      const fontSize = Number(this.font.match(/(\d+(?:\.\d+)?)px/)?.[1]) || 24;
+      return { width: Array.from(String(value)).length * fontSize * 0.54 };
+    },
+    fillText(value, x, y) {
+      labels.push({ text: String(value), x, y, font: this.font, align: this.textAlign });
+    },
+  };
+  return { width, height, getContext: () => ctx, ctx, labels, transforms };
+}
+
+test("challenge preview and story export share one scaled layout with isolated header and footer", () => {
+  assert.equal(CHALLENGE_ARTBOARD_WIDTH, 1080);
+  const entry = SOCIAL_GERMAN_CHALLENGES.find((row) => row.type === "mistake");
+  const copy = challengeCopy(entry);
+  const preview = fakeChallengeCanvas(540, 960);
+  const exportSize = fakeChallengeCanvas(1080, 1920);
+  assert.equal(renderChallengeFrame(preview, entry, copy, 2, 8), true);
+  assert.equal(renderChallengeFrame(exportSize, entry, copy, 2, 8), true);
+  assert.deepEqual(
+    preview.labels.map(({ text, x, y }) => ({ text, x, y })),
+    exportSize.labels.map(({ text, x, y }) => ({ text, x, y })),
+    "preview must match the exported pixels, except for the canvas scale",
+  );
+  assert.ok(preview.transforms.some((arr) => arr[0] === 0.5 && arr[3] === 0.5));
+  assert.ok(exportSize.transforms.some((arr) => arr[0] === 1 && arr[3] === 1));
+  const brand = preview.labels.find(({ text }) => text === "FALOWEN");
+  const badge = preview.labels.find(({ text }) => text.includes("MISTAKE"));
+  assert.ok(brand && badge && brand.y < 160 && badge.y < 160);
+  const logoEnd = brand.x + preview.ctx.measureText(brand.text).width;
+  const badgeStart = badge.x - 385 / 2;
+  assert.ok(logoEnd < badgeStart, "wordmark and category badge must not collide");
+  const layout = challengeFrameLayout(540, 960);
+  const saved = preview.labels.find(({ text }) => text === "SAVE THIS FOR REVISION");
+  const subfooter = preview.labels.find(({ text }) => text.includes("Learn German") && text.includes("A1–B2"));
+  assert.ok(saved.y > layout.cardBottom && subfooter.y > saved.y);
+  assert.ok(subfooter.y < layout.h - 20);
+  const allDrawnText = preview.labels.map(({ text }) => text).join(" ");
+  assert.ok(allDrawnText.includes(copy.reveal), "render must include the correct answer");
+  assert.ok(allDrawnText.includes(copy.explanation), "render must include the explanation");
+});
+
+test("square and portrait challenges reserve space for category, content and CTA", () => {
+  for (const dimensions of Object.values(CHALLENGE_EXPORT_SIZES)) {
+    const l = challengeFrameLayout(dimensions.width, dimensions.height);
+    assert.ok(l.topicY < l.cardTop, dimensions.label);
+    assert.ok(l.cardTop < l.cardBottom, dimensions.label);
+    assert.ok(l.cardBottom + 36 < l.footerTop, dimensions.label);
+    assert.ok(l.footerBottom < l.bottomLineY, dimensions.label);
+    assert.ok(l.bottomLineY < l.h, dimensions.label);
+  }
+});
+
+test("overlong edited answers cannot be exported with clipped invisible text", () => {
+  const entry = SOCIAL_GERMAN_CHALLENGES.find((row) => row.type === "mistake");
+  const copy = { ...challengeCopy(entry), reveal: "Wiederhole diese sehr lange Antwort ".repeat(150) };
+  const canvas = fakeChallengeCanvas(1080, 1080);
+  assert.equal(challengeTextFits(canvas.ctx, entry, copy, canvas.width, canvas.height, 2), false);
+  assert.equal(renderChallengeFrame(canvas, entry, copy, 2), false);
+  assert.ok(canvas.labels.some(({ text }) => /Text zu lang/i.test(text)));
 });
