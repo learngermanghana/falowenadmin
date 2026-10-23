@@ -6,6 +6,7 @@ import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js"
 import { A2_DAY17_AUDIO_KEY, A2_DAY17_TRANSCRIPT, A2_DAY17_WARMUP, A2_DAY17_LISTENING } from "../src/data/a2Day17Opening.js";
 import { INTERACTIVE_LESSON_OPENINGS, getInteractiveLessonOpening, isInteractiveOpeningStage } from "../src/data/interactiveLessonOpenings.js";
 import { B1_DAY25_AUDIO_KEY, B1_DAY25_LISTENING, B1_DAY25_LISTENING_QUESTIONS, B1_DAY25_TRANSCRIPT } from "../src/data/b1Day25Listening.js";
+import { A2_DAY18_BANK_AUDIO_KEY, A2_DAY18_BANK_LISTENING, A2_DAY18_BANK_QUESTIONS, A2_DAY18_BANK_TRANSCRIPT } from "../src/data/a2Day18BankListening.js";
 
 test("A2 Day 17 replaces only its opening stages with a 10-minute warm-up and listening", () => {
   const slide = getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-6.17");
@@ -71,10 +72,10 @@ test("chosen chapters reuse four authored 10-minute warm-up steps without invent
     assert.equal(stages.find(s=>s.id==="warmup").variant,"interactive-warmup",id);
     assert.equal(stages.find(s=>s.id==="warmup").type,"list",id);
     assert.equal(stages.find(s=>s.id==="knowledge").type,"knowledge",id);
-    assert.equal(Boolean(entry.listening),["A2-6.17","B1-8.25"].includes(id),id);
-    assert.equal(stages.find(s=>s.id==="knowledge").variant==="interactive-listening",["A2-6.17","B1-8.25"].includes(id),id);
+    assert.equal(Boolean(entry.listening),["A2-6.17","A2-7.18","B1-8.25"].includes(id),id);
+    assert.equal(stages.find(s=>s.id==="knowledge").variant==="interactive-listening",["A2-6.17","A2-7.18","B1-8.25"].includes(id),id);
     assert.equal(isInteractiveOpeningStage(id,"warmup"),true,id);
-    assert.equal(isInteractiveOpeningStage(id,"knowledge"),["A2-6.17","B1-8.25"].includes(id),id);
+    assert.equal(isInteractiveOpeningStage(id,"knowledge"),["A2-6.17","A2-7.18","B1-8.25"].includes(id),id);
     assert.equal(isInteractiveOpeningStage(id,"phrases"),false,id);
   }
 });
@@ -143,4 +144,50 @@ test("B1 Day 25 classroom Hören uses uploaded five-question Richtig/Falsch key"
   assert.equal(knowledge.suggestedMinutes,12);
   assert.equal(knowledge.listeningItems.length,5);
   assert.ok(stages.find(stage=>stage.id==="phrases"),"Existing Wortschatz retained");
+});
+
+
+test("A2 Day 18 Hören maps uploaded Bank Richtig/Falsch items without changing other lessons", () => {
+  const lesson = getInteractiveLessonOpening("A2-7.18");
+  const listening = lesson.listening;
+  assert.equal(listening.audioKey, "a2/day-18/bank-telefonat.mp3");
+  assert.equal(A2_DAY18_BANK_AUDIO_KEY, listening.audioKey);
+  assert.equal(listening.level, "A2");
+  assert.equal(listening.day, 18);
+  assert.equal(listening.suggestedMinutes, 7);
+  assert.equal(listening.questions.length, 5);
+  assert.equal(A2_DAY18_BANK_QUESTIONS.length, 5);
+  assert.equal(A2_DAY18_BANK_LISTENING, listening);
+  assert.deepEqual(listening.questions.map(q => q.answer), [
+    "Richtig", "Richtig", "Falsch", "Richtig", "Falsch",
+  ]);
+  assert.deepEqual(listening.questions.map(q => q.prompt), [
+    "Frau Weber ruft bei der Bank an, weil sie eine Frage zu ihrem Konto hat.",
+    "Die EC-Karte von Frau Weber funktioniert im Geschäft nicht mehr.",
+    "Frau Weber hat ihre Karte im Geschäft verloren.",
+    "Die Bank kann Frau Weber einen neuen PIN-Code per Post schicken.",
+    "Der neue PIN-Code kommt sofort per E-Mail.",
+  ]);
+  const transcript = A2_DAY18_BANK_TRANSCRIPT.map(([, line]) => line).join(" ");
+  for (const q of listening.questions) {
+    assert.deepEqual(q.options, ["Richtig", "Falsch"]);
+    assert.equal(q.options[q.correctIndex], q.answer);
+    assert.ok(q.hint.includes(q.evidence));
+    assert.ok(transcript.includes(q.evidence), `Missing listening evidence: ${q.evidence}`);
+  }
+  const slide = getSlidesByCourse("A2").find(s => s.assignmentId === "A2-7.18");
+  assert.ok(slide);
+  const stages = buildTeachingPresenterStages(slide, slide.topic);
+  assert.equal(stages.find(s => s.id === "warmup").variant, "interactive-warmup");
+  const knowledge = stages.find(s => s.id === "knowledge");
+  assert.equal(knowledge.type, "knowledge");
+  assert.equal(knowledge.variant, "interactive-listening");
+  assert.equal(knowledge.suggestedMinutes, 7);
+  assert.equal(knowledge.audioKey, A2_DAY18_BANK_AUDIO_KEY);
+  assert.equal(knowledge.listeningItems.length, 5);
+  assert.equal(isInteractiveOpeningStage("A2-7.18", "knowledge"), true);
+  assert.ok(stages.find(s => s.id === "phrases"), "Vocabulary page remains intact");
+  assert.equal(stages.length, buildTeachingPresenterStages({
+    ...slide, assignmentId: "A2-7.19",
+  }, slide.topic).length, "Keep the stage count unchanged");
 });
