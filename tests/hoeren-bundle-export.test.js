@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
 import {crc32,zipFiles,printPdf,buildExamZip} from "../src/utils/hoerenExamBundle.js";
 const decoder=new TextDecoder();
 function entriesOf(blob){
@@ -66,4 +67,85 @@ test("complete pack includes 2 individual MP3 files, scripts, questions, PDFs, m
  const manifest=JSON.parse(decoder.decode(list.find(x=>x.name.endsWith("/manifest.json")).data));
  assert.equal(manifest.parts[0].mediaKey,"b1/mock-hoeren/mock-03/teil-1.mp3");
  assert.equal(manifest.questionCount,2);
+});
+
+test("saved part uses selected theme rather than the static level preset",()=>{
+ const src=readFileSync(new URL("../src/components/HoerenBatchPanel.jsx",import.meta.url),"utf8");
+ assert.match(src,/topic:\s*topic\.trim\(\),\s*repeats:preset\.repeats/);
+ assert.doesNotMatch(src,/topic:preset\.topic,repeats:preset\.repeats/);
+});
+test("questions and solutions PDFs number items cumulatively across A1 parts",async()=>{
+ const parts=[6,4,5].map((count,part)=>({
+   label:"Teil",topic:"Meine eigene Auswahl "+(part+1),
+   audio:new Blob(["ID3","audio"]),script:"A: Ein neuer Test.",approved:true,repeats:1,
+   questions:Array.from({length:count},(_,j)=>({
+     question:`Teil${part+1} Frage ${j+1}`,
+     kind:"richtig-falsch",answer:j%2===0?"Richtig":"Falsch",evidence:"Ein neuer Test"
+   }))
+ }));
+ const pack=await buildExamZip({level:"A1",mock:"04",parts,includeSlides:false});
+ const list=await entriesOf(pack.blob);
+ const files=list.filter(e=>/\/(?:Fragen|Loesungen)\.pdf$/.test(e.name));
+ assert.equal(files.length,2);
+ for(const file of files){
+   const text=decoder.decode(file.data);
+   for(const [number,question] of [[1,"Teil1 Frage 1"],[6,"Teil1 Frage 6"],
+       [7,"Teil2 Frage 1"],[10,"Teil2 Frage 4"],
+       [11,"Teil3 Frage 1"],[15,"Teil3 Frage 5"]]){
+     assert.ok(text.includes(`(${number}. ${question}) Tj`),
+       `${file.name} has wrong numbering for question ${number}`);
+   }
+   assert.ok(!text.includes("(1. Teil2 Frage 1)"),"Numbering must not restart at Teil 2");
+ }
+ const key=JSON.parse(decoder.decode(list.find(x=>x.name.endsWith("/Antwortschluessel.json")).data));
+ assert.equal(key[0].answers[5].number,6);
+ assert.equal(key[1].answers[0].number,7);
+ assert.equal(key[2].answers[0].number,11);
+ const manifest=JSON.parse(decoder.decode(list.find(x=>x.name.endsWith("/manifest.json")).data));
+ assert.equal(manifest.parts[0].topic,"Meine eigene Auswahl 1");
+ assert.equal(manifest.parts[1].topic,"Meine eigene Auswahl 2");
+});
+test("enabled CapCut export includes paired question and solution PNGs with matching cumulative numbering",async()=>{
+ const painted=[];
+ const previous=globalThis.document;
+ globalThis.document={
+   createElement:tag=>{
+     assert.equal(tag,"canvas");
+     const calls=[];
+     return {
+       width:0,height:0,
+       getContext:()=>({
+         fillRect:()=>{},
+         fillText:(text)=>calls.push(String(text)),
+         measureText:text=>({width:String(text).length*12})
+       }),
+       toBlob:callback=>{
+         painted.push(calls);
+         callback(new Blob(["mock PNG"],{type:"image/png"}));
+       }
+     };
+   }
+ };
+ try{
+   const parts=[{topic:"Wetter",length:6},{topic:"Stadt",length:4}].map((part,i)=>({
+     label:"Teil",topic:part.topic,approved:true,repeats:1,script:"A: Test.",audio:new Blob(["ID3"]),
+     questions:Array.from({length:part.length},(_,j)=>({
+       question:`Frage ${i+1} ${j+1}`,kind:"richtig-falsch",answer:"Richtig",evidence:"Test"
+     }))
+   }));
+   const pack=await buildExamZip({level:"A1",mock:"05",parts,includeSlides:true});
+   const files=await entriesOf(pack.blob);
+   const pngs=files.filter(f=>f.name.endsWith(".png"));
+   assert.equal(pngs.length,6,"two pages for Teil 1, one page for Teil 2, each with answer slide");
+   assert.ok(pngs.some(p=>p.name.endsWith("/loesungen-teil-1-seite-1.png")));
+   assert.ok(pngs.some(p=>p.name.endsWith("/loesungen-teil-1-seite-2.png")));
+   assert.ok(pngs.some(p=>p.name.endsWith("/loesungen-teil-2-seite-1.png")));
+   assert.equal(painted.length,6);
+   assert.ok(painted[1].some(x=>x.includes("Lösung: Richtig")));
+   assert.ok(painted[2].includes("6"));
+   assert.ok(painted[4].includes("7"),"Teil 2 first slide uses question 7");
+   assert.ok(painted[5].includes("7"),"Teil 2 answer slide also uses question 7");
+ }finally{
+   if(previous===undefined)delete globalThis.document;else globalThis.document=previous;
+ }
 });
