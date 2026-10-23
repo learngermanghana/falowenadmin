@@ -13,7 +13,7 @@ function RevealPanel({ activity }) {
 }
 
 export default function A2Day17Activities({ stage }) {
-  const listening = stage.type === "pharmacy-listening";
+  const listening = stage.variant === "pharmacy-listening";
   const [step, setStep] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [showHint, setShowHint] = useState(false);
@@ -29,9 +29,9 @@ export default function A2Day17Activities({ stage }) {
     setStep(0); setShowAnswer(false); setShowHint(false); setShowTranscript(false);
     setSelected(-1); setAudioUrl(""); setAudioError(""); setAudioBusy(false);
     requestCounter.current += 1;
-  }, [stage.type]);
+  }, [stage.variant]);
 
-  const items = stage.items || [];
+  const items = listening ? (stage.listeningItems || []) : (stage.challengeItems || []);
   const activity = items[step] || items[0];
   if (!activity) return null;
 
