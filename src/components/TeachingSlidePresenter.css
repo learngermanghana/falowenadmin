@@ -5057,3 +5057,69 @@
   .presenter-content-interactive .pharm-activity { width: 100%; }
   .presenter-content-interactive .pharm-challenge { padding: .85rem; }
 }
+
+
+/* Reusable A2/B1 classroom challenges: keep teaching controls readable without
+   obscuring the heading. Does not change the picker on ordinary slides. */
+.presenter-stage.is-focus-mode.presenter-has-interactive-opening > .presenter-content.presenter-content-interactive {
+  padding-top: clamp(8.5rem, 17vh, 10rem);
+  padding-bottom: clamp(5.4rem, 9vh, 6.5rem);
+}
+.presenter-stage.is-focus-mode.presenter-has-interactive-opening > .presenter-participation-dock,
+.presenter-stage.is-focus-mode.presenter-has-interactive-opening > .presenter-student-picker {
+  top: .6rem;
+  left: .75rem;
+  max-width: min(330px, calc(100vw - 1.5rem));
+}
+.presenter-stage.is-focus-mode.presenter-has-interactive-opening .presenter-student-picker {
+  display: block;
+  padding: .28rem .38rem;
+  border-radius: 12px;
+}
+.presenter-stage.is-focus-mode.presenter-has-interactive-opening .presenter-student-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .2rem .4rem;
+}
+.presenter-stage.is-focus-mode.presenter-has-interactive-opening .presenter-student-current {
+  flex: 0 1 auto;
+  min-width: 62px;
+  max-width: 128px;
+  padding: .12rem .16rem;
+}
+.presenter-stage.is-focus-mode.presenter-has-interactive-opening .presenter-student-current span {
+  display: none;
+}
+.presenter-stage.is-focus-mode.presenter-has-interactive-opening .presenter-student-current strong {
+  font-size: .73rem;
+  line-height: 1.2;
+}
+.presenter-stage.is-focus-mode.presenter-has-interactive-opening .presenter-pick-student,
+.presenter-stage.is-focus-mode.presenter-has-interactive-opening .presenter-student-actions button {
+  min-height: 29px;
+  padding: .32rem .5rem;
+  font-size: .68rem;
+}
+.presenter-stage.is-focus-mode.presenter-has-interactive-opening .presenter-focus-stage-timer {
+  padding: .35rem .5rem;
+}
+.presenter-stage.is-focus-mode.presenter-has-interactive-opening .pharm-head {
+  padding: .8rem 1.15rem;
+  min-height: 0;
+  gap: .5rem;
+}
+.presenter-stage.is-focus-mode.presenter-has-interactive-opening .pharm-head h1 {
+  font-size: clamp(1.25rem, 2.1vw, 1.9rem);
+  line-height: 1.18;
+}
+@media (max-width: 760px) {
+  .presenter-stage.is-focus-mode.presenter-has-interactive-opening > .presenter-content.presenter-content-interactive {
+    padding: 10.5rem .8rem 5.4rem;
+  }
+  .presenter-stage.is-focus-mode.presenter-has-interactive-opening > .presenter-participation-dock,
+  .presenter-stage.is-focus-mode.presenter-has-interactive-opening > .presenter-student-picker {
+    top: .45rem;
+    left: .45rem;
+    max-width: min(240px, calc(100vw - .9rem));
+  }
+}
