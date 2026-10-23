@@ -234,3 +234,29 @@ test("A2 Day 20 Reklamation preserves the uploaded Richtig/Falsch answers and wo
   assert.equal(stages.length,buildTeachingPresenterStages({...slide,assignmentId:"A2-7.19"},slide.topic).length);
   assert.equal(isInteractiveOpeningStage("A2-7.20","knowledge"),true);
 });
+
+
+test("interactive Hören requests signed audio from Firebase instead of rate-limited website API", () => {
+  const component = readFileSync(new URL("../src/components/InteractiveLessonOpening.jsx", import.meta.url), "utf8");
+  assert.match(component, /us-central1-falowen-examiner-trainer\.cloudfunctions\.net\/api/);
+  assert.match(component, /VITE_FALOWEN_COURSE_MEDIA_API_URL/);
+  assert.doesNotMatch(component, /VITE_FALOWEN_COURSE_API_URL/);
+  assert.doesNotMatch(component, /https:\/\/www\.falowen\.app\/api/);
+  assert.match(component, /Authorization: `Bearer \$\{await user\.getIdToken\(\)\}`/);
+  assert.match(component, /lesson\.listening\.audioKey/);
+  assert.match(component, /\/course-media\/\$\{lesson\.listening\.level\.toLowerCase\(\)\}\/audio-url/);
+});
+
+test("interactive fullscreen reserves top toolbar space and avoids redundant timer caption", () => {
+  const component = readFileSync(new URL("../src/components/InteractiveLessonOpening.jsx", import.meta.url), "utf8");
+  const presenter = readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
+  const css = readFileSync(new URL("../src/components/TeachingSlidePresenter.css", import.meta.url), "utf8");
+  assert.doesNotMatch(component, /className="pharm-duration"/);
+  assert.match(presenter, /presenter-has-interactive-opening/);
+  assert.match(presenter, /contentRef\.current\.scrollTop = 0/);
+  assert.match(css, /presenter-has-interactive-opening > \.presenter-content\.presenter-content-interactive/);
+  assert.match(css, /padding-top: clamp\(8\.5rem, 17vh, 10rem\)/);
+  assert.match(css, /presenter-student-current span \{\s*display: none/);
+  assert.match(css, /presenter-has-interactive-opening \.presenter-student-toolbar/);
+  assert.match(component, /pharm-challenge-kicker/);
+});
