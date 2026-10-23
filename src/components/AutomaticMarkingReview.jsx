@@ -69,6 +69,14 @@ export default function AutomaticMarkingReview() {
     } catch (err) { setError(err.message); } finally { setBusy(false); }
   }
   const visibleRows = page.rows.filter(row => showReviewed || !isAutomaticResultPublished(row) || !(row.reviewClosedAt || row.tutorReview));
+  const reviewReasonSummary = row => {
+    const reasons = (row.publicationReviewReasons || row.result?.reviewReasons || [])
+      .map(reason => typeof reason === 'string' ? reason : reason?.message || reason?.reason || reason?.code || '')
+      .filter(Boolean);
+    if (isAutomaticResultPublished(row)) return '—';
+    return reasons.length ? reasons[0] + (reasons.length > 1 ? ` (+${reasons.length - 1} more)` : '')
+      : 'Open for marking evidence';
+  };
   const original = detail?.audit?.result || detail?.row.result;
   return <section className="marking-card" aria-label="Automatic marking audit">
     <h2>AI marking · Results and failed attempts</h2>
@@ -98,12 +106,13 @@ export default function AutomaticMarkingReview() {
     {error && <p role="alert">{error}</p>}
     {message && <p role="status">{message}</p>}
     <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', textAlign: 'left' }}>
-      <thead><tr><th>Student</th><th>Assignment</th><th>Score</th><th>Status</th><th>Action</th></tr></thead>
+      <thead><tr><th>Student</th><th>Assignment</th><th>Score</th><th>Status</th><th>Review reason</th><th>Action</th></tr></thead>
       <tbody>{visibleRows.map(row => <tr key={row.id}>
         <td>{row.studentName || row.studentCode || row.studentId || 'Student'}</td>
         <td>{assignmentTitle(row.assignmentTitle, row.assignment, row.result?.assignmentKey, row.assignmentId)}</td>
         <td>{row.finalScore ?? '—'}</td>
         <td>{automaticPublicationLabel(row)}</td>
+        <td style={{ maxWidth: 280, overflowWrap: 'anywhere' }}>{reviewReasonSummary(row)}</td>
         <td><button type="button" disabled={busy} onClick={() => open(row)}>Open & review</button></td>
       </tr>)}</tbody>
     </table></div>
