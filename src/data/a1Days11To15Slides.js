@@ -218,6 +218,7 @@ export function enhanceA1Days11To15Slide(slide = {}) {
     studentQuestionsDe: spec.studentQuestionsDe,
     teacherNotesEn: spec.teacherNotesEn,
     interactionFlow: spec.flow,
+    grammarTeachingSections: spec.grammarTeachingSections || slide.grammarTeachingSections,
     wrapUpTaskDe: spec.wrapUpTaskDe,
     workbookConnection: {
       grammarUrl: id === "A1-7" ? "/campus/course/the-12-hour-clock-system-in-german-chapter-7" : null,
