@@ -68,6 +68,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Verify reusable A2/B1 classroom openings and Hören preview
+        run: node --test tests/a2-day17-pharmacy-activities.test.js
       - name: Verify image assets and non-displacing presenter layout
         run: node --test tests/presenter-slide-photos.test.js
       - name: Apply B2/C1 speaking-model patch
@@ -98,7 +100,5 @@ jobs:
         run: node scripts/auditA2B1SpeakingCoaching.mjs
       - name: Run teaching slide regression tests
         run: node --test tests/presenter-sentence-numbering.test.js tests/warmup-adaptive-controls.test.js tests/teaching-presenter.test.js tests/teacher-slide-support.test.js tests/a1-workbook-aligned-slides-days1-5.test.js tests/a1-workbook-aligned-slides-days6-10.test.js tests/a2-b1-warmup-support.test.js tests/a2-workbook-aligned-slides.test.js tests/a2-workbook-aligned-slides-days6-10.test.js tests/a2-workbook-aligned-slides-days11-15.test.js tests/a2-workbook-aligned-slides-days16-20.test.js tests/a2-workbook-aligned-slides-days21-24.test.js tests/a2-workbook-aligned-slides-days25-28.test.js tests/b1-workbook-aligned-slides-days1-10.test.js tests/b1-workbook-aligned-slides-days11-20.test.js tests/b1-workbook-aligned-slides-days21-28.test.js tests/c2-presenter-v2-all-days.test.js tests/teacher-lesson-guidance.test.js tests/*speaking-model-answers.test.js
-      - name: Test A2 Day 17 pharmacy lesson interactive opening
-        run: node --test tests/a2-day17-pharmacy-activities.test.js
       - name: Build production bundle
         run: npm run build
