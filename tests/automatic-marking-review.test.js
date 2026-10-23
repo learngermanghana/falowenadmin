@@ -115,7 +115,7 @@ test('approval retains the AI writing-minimum failure even above 60', async () =
 test('unpublished work cannot be closed or hidden as reviewed', async () => {
   const f = fixture(); f.rows.get('markingResults/work').sentToStudent = false;
   await assert.rejects(f.close(f.detail), /publish/);
-  assert.equal(automaticPublicationLabel({ reviewClosedAt: 'old', sentToStudent: false }), 'Awaiting approval');
+  assert.equal(automaticPublicationLabel({ reviewClosedAt: 'old', sentToStudent: false }), 'Tutor review required');
 });
 test('approval refuses to overwrite another saved attempt', async () => {
   const f = fixture(); f.detail.score = null;
