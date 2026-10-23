@@ -14,7 +14,8 @@ import { getPresenterSlidePhoto } from "../utils/presenterSlidePhotos.js";
 import { nextB1Day18CareerIndex } from "../data/b1Day18CareerChallenge.js";
 import B1HousingChoicePractice from "./B1HousingChoicePractice.jsx";
 import A2SportMatchmaker from "./A2SportMatchmaker.jsx";
-import A2Day17Activities from "./A2Day17Activities.jsx";
+import InteractiveLessonOpening from "./InteractiveLessonOpening.jsx";
+import { isInteractiveOpeningStage } from "../data/interactiveLessonOpenings.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import "./TeachingSlidePresenter.css";
@@ -187,15 +188,13 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
   const [readingPhase, setReadingPhase] = useState("idle");
   const [activeReadingAssignment, setActiveReadingAssignment] = useState(null);
   const stage = stages[stageIndex] || stages[0];
-  // Day 17 is a dedicated teaching activity, not an ordinary A2 list/reading.
-  // Route by its stable assignment and stage IDs as well as the newer variant,
-  // so a partial/stale slide descriptor never renders a title-only fallback.
-  const pharmacyOpening = String(slide.assignmentId || "").toUpperCase() === "A2-6.17"
-    && (stage?.id === "warmup" || stage?.id === "knowledge");
+  // Selected A2/B1 chapters use the same interactive renderer, but only
+  // verified Hören chapters replace the ordinary Wissensimpuls.
+  const interactiveOpening = isInteractiveOpeningStage(slide.assignmentId, stage?.id);
   const presenterLevel = String(slide.course || "").trim().toUpperCase();
   const readingEligible = ["A2", "B1"].includes(presenterLevel)
     && stage?.type === "knowledge"
-    && stage?.variant !== "pharmacy-listening"
+    && stage?.variant !== "interactive-listening"
     && Boolean(String(stage?.textDe || "").trim());
   const numberedKnowledgeSentences = useMemo(
     () => numberedPresenterSentences(stage?.textDe || ""),
@@ -533,8 +532,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
     }
     if (a2B1ActivityTimer) {
       setTimerMode("activity");
-      if (stage?.variant === "pharmacy-warmup" || stage?.variant === "pharmacy-listening") {
-        const minutes = stage?.variant === "pharmacy-warmup" ? 10 : 6;
+      if (stage?.variant === "interactive-warmup" || stage?.variant === "interactive-listening") {
+        const minutes = stage?.variant === "interactive-warmup" ? 10 : 6;
         setActivityTimerMinutes(minutes);
         setTimerRemaining(minutes * 60);
       } else {
@@ -662,7 +661,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
     : [];
   const timerExpired = showPresenterTimer && timerRemaining === 0 && !timerRunning;
   const timerPresets = a2B1ActivityTimer
-    ? (stage?.variant === "pharmacy-warmup" || stage?.variant === "pharmacy-listening"
+    ? (stage?.variant === "interactive-warmup" || stage?.variant === "interactive-listening"
       ? [10, 7, 6, 5, 3, 2, 1] : A2_B1_ACTIVITY_TIMER_PRESETS)
     : [...new Set([stage.suggestedMinutes, 2, 3, 5, 10].filter(Boolean))];
   const warmupTimerTotalSeconds = Math.max(1, activityTimerMinutes * 60);
@@ -795,7 +794,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
           onReadingAssignmentChange={setActiveReadingAssignment}
         />
 
-        <main ref={contentRef} className={`presenter-content presenter-content-${stage.type} presenter-stage-${stage.id} presenter-fit-${fitMode} ${pharmacyOpening ? "presenter-content-pharmacy" : ""} ${stagePhoto ? `presenter-has-photo presenter-photo-${stagePhoto.density}` : ""}`}>
+        <main ref={contentRef} className={`presenter-content presenter-content-${stage.type} presenter-stage-${stage.id} presenter-fit-${fitMode} ${interactiveOpening ? "presenter-content-interactive" : ""} ${stagePhoto ? `presenter-has-photo presenter-photo-${stagePhoto.density}` : ""}`}>
           {stagePhoto ? (
             <figure className="presenter-slide-photo" aria-hidden="true">
               <img src={stagePhoto.src} alt="" width="640" height="420" loading="lazy" decoding="async" draggable="false" />
@@ -881,8 +880,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                 </section>
               ) : null}
             </>
-          ) : pharmacyOpening ? (
-            <A2Day17Activities key={stage.id} stage={stage} />
+          ) : interactiveOpening ? (
+            <InteractiveLessonOpening key={`${slide.assignmentId}:${stage.id}`} stage={stage} slide={slide} />
           ) : stage.type === "scenario-challenge" ? (
             <section className="presenter-career-challenge" aria-label="Teacher-led scenario challenge">
               <div className="presenter-career-challenge-heading">
