@@ -1,0 +1,33 @@
+.pharm-activity{display:grid;gap:1rem;width:min(100%,1000px);margin:0 auto;color:#14283b;font-size:1rem}
+.pharm-head{display:flex;justify-content:space-between;align-items:center;gap:1.5rem;background:linear-gradient(115deg,#102a43,#1d5060);color:white;padding:1.25rem 1.6rem;border-radius:20px;box-shadow:0 12px 32px #102a431c}
+.pharm-eyebrow{display:block;letter-spacing:.14em;text-transform:uppercase;font-weight:900;font-size:.71rem;color:#46d6c5}
+.pharm-head h1{font-size:clamp(1.6rem,3.3vw,2.6rem);line-height:1.1;margin:.4rem 0}
+.pharm-head p{margin:0;color:#d3e2e9;font-size:.95rem}
+.pharm-duration{display:grid;place-items:center;flex-shrink:0;border-radius:15px;background:#ffffff16;border:1px solid #ffffff40;padding:.6rem 1rem;min-width:93px}
+.pharm-duration strong{font-size:2.2rem;line-height:1}.pharm-duration span{font-size:.64rem;font-weight:900;letter-spacing:.12em}
+.pharm-progress{display:flex;gap:.45rem}.pharm-progress button{background:transparent;cursor:pointer;border:0;flex:1;min-width:0;padding:.2rem;color:#64748b;font-weight:800;font-size:.7rem;text-align:center}
+.pharm-progress-bar{display:block;height:7px;background:#d9e5e9;border-radius:99px;margin-bottom:.3rem}
+.pharm-progress button.is-current .pharm-progress-bar{background:#0d9488}.pharm-progress button.is-done .pharm-progress-bar{background:#80cbc3}
+.pharm-challenge{border:1px solid #dae6ea;border-radius:20px;padding:1.3rem 1.5rem;background:#fff;box-shadow:0 8px 25px #0926350a;display:grid;gap:.8rem}
+.pharm-challenge-kicker{display:flex;justify-content:space-between;gap:1rem;color:#087d75;font-size:.76rem;letter-spacing:.08em;font-weight:900}
+.pharm-context{border-left:4px solid #16a394;background:#ecf9f6;padding:.8rem 1rem;border-radius:8px;font-weight:600}
+.pharm-challenge h2{font-size:clamp(1.3rem,2.3vw,1.9rem);line-height:1.27;margin:.1rem 0}
+.pharm-options{display:grid;gap:.6rem}.pharm-options button{display:flex;align-items:center;text-align:left;gap:.9rem;padding:.85rem 1rem;border:1px solid #cfdae1;border-radius:12px;background:#fbfdfd;color:#21344b;font:inherit;font-weight:650;cursor:pointer}
+.pharm-options button span{display:grid;place-items:center;border:1px solid #c3d1d6;border-radius:50%;width:32px;height:32px;flex-shrink:0;font-weight:900}
+.pharm-options button.is-picked{background:#e7f8f5;border-color:#079989}.pharm-options button.is-picked span{background:#087e74;color:#fff}
+.pharm-lines{display:grid;gap:.5rem}.pharm-lines p{padding:.7rem .9rem;margin:0;background:#f3f7f8;border-radius:10px;font-size:1.03rem;font-weight:550}
+.pharm-reveal{background:#ecf9f3;border:1px solid #89d6b2;border-radius:12px;padding:.9rem 1rem;display:grid;gap:.4rem}
+.pharm-reveal .pharm-eyebrow{color:#047857}.pharm-answer{white-space:pre-line;color:#0d4f40;margin:0;font-size:1.08rem;font-weight:800}.pharm-reveal small{font-size:.9rem;color:#345b52}
+.pharm-actions{display:flex;flex-wrap:wrap;gap:.6rem}.pharm-btn{border:0;border-radius:11px;padding:.68rem .95rem;font:inherit;font-size:.92rem;font-weight:800;cursor:pointer}
+.pharm-btn-primary{background:#0b867d;color:white}.pharm-btn-soft{background:#eaf1f4;color:#17354b}.pharm-btn-next{background:#193f55;color:white}
+.pharm-btn:disabled{opacity:.4;cursor:not-allowed}.pharm-hint{background:#fff8e8;border:1px solid #f3dfad;padding:.75rem 1rem;border-radius:12px;margin:0;font-size:.92rem}
+.pharm-bottom{display:flex;justify-content:space-between;align-items:center;gap:1rem}.pharm-bottom>span{font-size:.81rem;color:#64748b;font-weight:850}
+.pharm-footnote{font-size:.75rem;color:#64748b;margin:0}
+.pharm-audio{display:grid;gap:.75rem;background:#f1f7fb;border:1px solid #cbdfec;border-radius:17px;padding:1rem 1.3rem}
+.pharm-audio-label{display:flex;align-items:center;gap:.8rem}.pharm-audio-label>span{font-size:2rem;color:#0e766d}
+.pharm-audio-label div{display:grid;gap:.1rem}.pharm-audio-label strong{font-size:1.04rem}.pharm-audio-label small{color:#607588;font-size:.82rem}
+.pharm-audio audio{width:100%;height:50px}.pharm-audio .pharm-btn{justify-self:start}.pharm-audio-error{color:#b91c1c;font-size:.82rem;line-height:1.3;margin:0}
+.pharm-script{border-top:1px solid #cbdce3;padding-top:.6rem}.pharm-script summary{cursor:pointer;font-weight:850;font-size:.9rem}.pharm-script summary span{font-size:.65rem;margin-left:.5rem;color:#64748b}
+.pharm-transcript{max-height:230px;overflow:auto;padding:.65rem .2rem}.pharm-transcript p{display:flex;gap:.7rem;align-items:baseline;margin:.25rem 0;font-size:.91rem;line-height:1.38}.pharm-transcript p b{display:grid;place-items:center;min-width:26px;height:26px;border-radius:7px;background:#daf5ec;color:#047857}
+.pharm-transcript p b.is-b{background:#e0ebff;color:#1d4ed8}
+@media(max-width:720px){.pharm-head{padding:1rem;gap:.7rem}.pharm-head h1{font-size:1.5rem}.pharm-duration{min-width:70px;padding:.5rem}.pharm-duration strong{font-size:1.6rem}.pharm-challenge{padding:1rem}.pharm-challenge-kicker{font-size:.65rem}.pharm-btn{font-size:.83rem;padding:.6rem}.pharm-actions .pharm-btn{flex:1 1 145px}}

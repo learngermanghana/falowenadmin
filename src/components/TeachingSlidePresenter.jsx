@@ -14,6 +14,7 @@ import { getPresenterSlidePhoto } from "../utils/presenterSlidePhotos.js";
 import { nextB1Day18CareerIndex } from "../data/b1Day18CareerChallenge.js";
 import B1HousingChoicePractice from "./B1HousingChoicePractice.jsx";
 import A2SportMatchmaker from "./A2SportMatchmaker.jsx";
+import A2Day17Activities from "./A2Day17Activities.jsx";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import "./TeachingSlidePresenter.css";
@@ -189,6 +190,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
   const presenterLevel = String(slide.course || "").trim().toUpperCase();
   const readingEligible = ["A2", "B1"].includes(presenterLevel)
     && stage?.type === "knowledge"
+    && stage?.variant !== "pharmacy-listening"
     && Boolean(String(stage?.textDe || "").trim());
   const numberedKnowledgeSentences = useMemo(
     () => numberedPresenterSentences(stage?.textDe || ""),
@@ -526,7 +528,13 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
     }
     if (a2B1ActivityTimer) {
       setTimerMode("activity");
-      setTimerRemaining(activityTimerMinutes * 60);
+      if (stage?.variant === "pharmacy-warmup" || stage?.variant === "pharmacy-listening") {
+        const minutes = stage?.variant === "pharmacy-warmup" ? 10 : 6;
+        setActivityTimerMinutes(minutes);
+        setTimerRemaining(minutes * 60);
+      } else {
+        setTimerRemaining(activityTimerMinutes * 60);
+      }
       return;
     }
     setTimerMode("stage");
@@ -649,7 +657,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
     : [];
   const timerExpired = showPresenterTimer && timerRemaining === 0 && !timerRunning;
   const timerPresets = a2B1ActivityTimer
-    ? A2_B1_ACTIVITY_TIMER_PRESETS
+    ? (stage?.variant === "pharmacy-warmup" || stage?.variant === "pharmacy-listening"
+      ? [10, 7, 6, 5, 3, 2, 1] : A2_B1_ACTIVITY_TIMER_PRESETS)
     : [...new Set([stage.suggestedMinutes, 2, 3, 5, 10].filter(Boolean))];
   const warmupTimerTotalSeconds = Math.max(1, activityTimerMinutes * 60);
   const warmupTimerRatio = timerRemaining / warmupTimerTotalSeconds;
@@ -867,6 +876,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                 </section>
               ) : null}
             </>
+          ) : (stage.variant === "pharmacy-warmup" || stage.variant === "pharmacy-listening") ? (
+            <A2Day17Activities key={stage.variant} stage={stage} />
           ) : stage.type === "scenario-challenge" ? (
             <section className="presenter-career-challenge" aria-label="Teacher-led scenario challenge">
               <div className="presenter-career-challenge-heading">
