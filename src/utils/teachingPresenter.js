@@ -8,6 +8,7 @@ import { getB1WarmupFollowUp } from "../data/b1WarmupFollowUps.js";
 import { getB1VocabularyQuestion } from "../data/b1VocabularyQuestions.js";
 import { getA2B1KnowledgeAnswers } from "../data/a2B1KnowledgeAnswers.js";
 import { getA2FocusedPractice, getA2PresenterKnowledge } from "../data/a2PresenterKnowledge.js";
+import { A2_DAY17_AUDIO_KEY, A2_DAY17_WARMUP, A2_DAY17_LISTENING, A2_DAY17_TRANSCRIPT } from "../data/a2Day17Opening.js";
 import { getB1FocusedPractice, getB1PresenterKnowledge } from "../data/b1PresenterKnowledge.js";
 import { getPresenterTopicFoundation } from "../data/presenterTopicFoundations.js";
 import { getSpeakingDifficultySelection } from "../data/presenterSpeakingDifficulty.js";
@@ -1593,6 +1594,16 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         suggestedMinutes: warmupSuggestedMinutes(slide),
         timingMode: PER_STUDENT_WARMUP_LEVELS.has(level) ? "per-student" : "",
         timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length),
+        ...(normalizedAssignmentId(slide) === "A2-6.17" ? {
+          type: "pharmacy-warmup",
+          kicker: "10-Minuten-Challenge",
+          title: "In der Apotheke · Mitmach-Start",
+          items: A2_DAY17_WARMUP,
+          questionSupport: [],
+          timingMode: "",
+          timingLabel: "10 Minuten für die ganze Klasse",
+          suggestedMinutes: 10,
+        } : {}),
       },
       ...(knowledge ? [{
         id: "knowledge",
@@ -1604,6 +1615,16 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         answerItems: buildKnowledgeAnswerItems(knowledge, slide.assignmentId),
         instruction: knowledge.readingPurpose,
         suggestedMinutes: 5,
+        ...(normalizedAssignmentId(slide) === "A2-6.17" ? {
+          type: "pharmacy-listening",
+          kicker: "Hören · Beratungsdetektiv",
+          title: "Hör zu: In der Apotheke",
+          instruction: "Höre zuerst ohne Skript zu. Prüfe die Antworten danach gemeinsam.",
+          items: A2_DAY17_LISTENING,
+          transcript: A2_DAY17_TRANSCRIPT,
+          audioKey: A2_DAY17_AUDIO_KEY,
+          suggestedMinutes: 6,
+        } : {}),
       }] : []),
       {
         id: "phrases",
