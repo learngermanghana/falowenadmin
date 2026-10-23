@@ -14,6 +14,7 @@ import { getPresenterSlidePhoto } from "../utils/presenterSlidePhotos.js";
 import { nextB1Day18CareerIndex } from "../data/b1Day18CareerChallenge.js";
 import B1HousingChoicePractice from "./B1HousingChoicePractice.jsx";
 import A2SportMatchmaker from "./A2SportMatchmaker.jsx";
+import A2Day17Activities from "./A2Day17Activities.jsx";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import "./TeachingSlidePresenter.css";
@@ -867,6 +868,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                 </section>
               ) : null}
             </>
+          ) : (stage.type === "pharmacy-warmup" || stage.type === "pharmacy-listening") ? (
+            <A2Day17Activities key={stage.type} stage={stage} />
           ) : stage.type === "scenario-challenge" ? (
             <section className="presenter-career-challenge" aria-label="Teacher-led scenario challenge">
               <div className="presenter-career-challenge-heading">
