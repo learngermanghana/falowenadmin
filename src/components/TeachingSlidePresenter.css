@@ -4991,3 +4991,69 @@
 @media (max-width: 900px) {
   .presenter-travel-dialogue-turns { grid-template-columns: 1fr; }
 }
+
+
+/* A2 Day 17 pharmacy: the fullscreen stage must never collapse into a
+   generic centered title with clipped challenge/audio content. */
+.presenter-stage > .presenter-content.presenter-content-pharmacy,
+.presenter-stage.is-focus-mode > .presenter-content.presenter-content-pharmacy {
+  display: block;
+  align-content: start;
+  justify-content: flex-start;
+  align-items: stretch;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  padding: 1.1rem clamp(1rem, 3.5vw, 3.5rem) 1.8rem;
+}
+.presenter-stage.is-focus-mode > .presenter-content.presenter-content-pharmacy {
+  padding-top: clamp(5.9rem, 10vh, 7rem);
+  padding-bottom: clamp(4.8rem, 8vh, 6.2rem);
+}
+.presenter-content-pharmacy .pharm-activity {
+  display: grid;
+  width: min(1120px, 100%);
+  min-height: 0;
+  height: auto;
+  max-height: none;
+  margin: 0 auto;
+  align-content: start;
+  gap: clamp(.55rem, 1vh, 1rem);
+  visibility: visible;
+  opacity: 1;
+}
+.presenter-stage.is-focus-mode .presenter-content-pharmacy .pharm-head h1,
+.presenter-stage.is-focus-mode.presenter-title-medium .presenter-content-pharmacy .pharm-head h1,
+.presenter-stage.is-focus-mode.presenter-title-long .presenter-content-pharmacy .pharm-head h1 {
+  max-width: unset;
+  margin: .35rem 0;
+  text-align: left;
+  font-size: clamp(1.4rem, 3vw, 2.4rem);
+  line-height: 1.12;
+}
+.presenter-stage.is-focus-mode .presenter-content-pharmacy .pharm-challenge h2 {
+  max-width: unset;
+  text-align: left;
+  font-size: clamp(1.2rem, 2.4vw, 1.8rem);
+  line-height: 1.22;
+}
+.presenter-stage.is-focus-mode .presenter-content-pharmacy .pharm-options button {
+  font-size: clamp(.88rem, 1.25vw, 1.04rem);
+}
+.presenter-stage.is-focus-mode .presenter-content-pharmacy .pharm-challenge,
+.presenter-stage.is-focus-mode .presenter-content-pharmacy .pharm-audio {
+  flex-shrink: 0;
+  min-height: fit-content;
+}
+@media (max-width: 760px) {
+  .presenter-stage.is-focus-mode > .presenter-content.presenter-content-pharmacy {
+    padding: 6.7rem .8rem 5.6rem;
+  }
+  .presenter-content-pharmacy .pharm-activity { width: 100%; }
+  .presenter-content-pharmacy .pharm-challenge { padding: .85rem; }
+}
