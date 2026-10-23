@@ -10,6 +10,7 @@ import { assignGoetheSpeakers, suggestRecordingScene } from "../utils/hoerenProd
 import { encodeWavAsMp3 } from "../utils/hoerenMp3";
 import { buildStudioSpeechPlan, sceneVoiceKey, assemblyScenePlan } from "../utils/hoerenSpeechPlan";
 import { getSavedVoice, saveVoice } from "../utils/hoerenVoiceCache";
+import HoerenBatchPanel from "../components/HoerenBatchPanel";
 import "./HoerenStudioPage.css";
 
 const TEMPLATES = {
@@ -426,6 +427,9 @@ export default function HoerenStudioPage() {
           <span>Pick a CEFR level and Teil. Questions, format and replay settings follow the exam template automatically.</span>
         </button>
       </section>
+      {mode === "goethe" ? <HoerenBatchPanel
+        profiles={status?.profiles || {}} ready={ready} initialLevel={level}
+      /> : null}
       <div className="hoeren-columns">
         <section className="hoeren-panel">
           <h2>1. {mode === "goethe" ? "Select the Goethe exam Teil" : "Prepare Course Book audio"}</h2>
