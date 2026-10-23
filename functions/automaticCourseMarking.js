@@ -185,10 +185,32 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         if (fresh.token !== token) return;
         const retry = transient && Number(fresh.attempts || 0) < 2;
         const status = retry ? 'pending' : 'needs_review';
-        tx.set(jobRef, { status, error: String(error.message).slice(0, 500),
-          errorKind: transient ? 'temporary_service_failure' : 'marking_validation',
-          lastErrorAt: new Date(now()).toISOString(), leaseUntil: 0 }, { merge: true });
+        const message = String(error?.message || error || 'Unknown marking failure').slice(0, 500);
+        const errorKind = transient ? 'temporary_service_failure' : 'marking_validation';
+        const timestamp = new Date(now()).toISOString();
+        // A failure before an AI result (missing key, identity, service outage)
+        // must still be visible in Admin's AI-marking tab. The previous flow only
+        // changed the job status, leaving the AI review list empty.
+        const reviewRef = db.collection('markingResults').doc(snap.id);
+        const existingReview = retry ? null : await tx.get(reviewRef);
+        tx.set(jobRef, { status, error: message, errorKind,
+          lastErrorAt: timestamp, leaseUntil: 0 }, { merge: true });
         tx.set(submissionRef, { markingStatus: status }, { merge: true });
+        if (!retry && !existingReview.exists) {
+          const reason = 'Automatic marking could not finish: ' + message;
+          tx.set(reviewRef, clean({
+            submissionId: snap.id, submissionPath: snap.ref.path,
+            studentId: submission.studentId || submission.uid || submission.userId || '',
+            studentCode: job.studentCode || submission.studentCode || submission.studentcode || '',
+            studentName: submission.studentName || submission.name || '',
+            level: job.level, assignmentId: job.assignmentKey,
+            assignmentTitle: assignmentTitle(submission.assignmentTitle, submission.title, job.assignmentKey),
+            status: 'needs_review', publicationStatus: 'awaiting_approval', sentToStudent: false,
+            publicationReviewReasons: [reason], errorKind, attempts: fresh.attempts || 0,
+            result: { status: 'needs_review', confidence: 0, reviewReasons: [reason] },
+            source: 'automatic_course_marking', createdAt: timestamp, updatedAt: timestamp,
+          }));
+        }
       });
       if (transient) {
         // On the second failure the job becomes needs_review; do not make unbounded AI calls.
