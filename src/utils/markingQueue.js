@@ -48,6 +48,15 @@ export function shouldIncludeInIncomingQueue(row = {}, lastScore = null, queueSt
   // the earlier score that caused the block.
   if (requiresDuplicateTutorVerification(row)) return true;
 
+  // An acknowledged automatic job belongs in the AI-marking audit, not in the
+  // general manual queue. The raw workflow status remains "submitted" throughout
+  // marking, so checking that status alone previously exposed every new job here.
+  // Do not hide submissions that never received a job, or explicit duplicate
+  // verification tasks that a tutor must resolve.
+  const markingStatus = normalize(row.markingStatus || raw.markingStatus);
+  if ((raw.markingJobCreatedAt || row.markingJobCreatedAt)
+    && ["pending", "marking", "needs_review", "marked"].includes(markingStatus)) return false;
+
   const scoreTime = timestampMillis(lastScore?.markedAt || lastScore?.scoredAt || lastScore?.updatedAt || lastScore?.createdAt || lastScore?.date);
   if (lastScore && scoreTime && (!submissionTime || submissionTime <= scoreTime)) return false;
 
@@ -55,7 +64,6 @@ export function shouldIncludeInIncomingQueue(row = {}, lastScore = null, queueSt
   // still carries the previous attempt's score, feedback, or terminal marking status.
   if (lastScore && scoreTime && submissionTime > scoreTime) return true;
 
-  const markingStatus = normalize(row.markingStatus || raw.markingStatus);
   const workflowStatus = normalize(raw.workflowStatus || raw.status || row.status);
   if (OPEN_SUBMISSION_STATUSES.has(markingStatus) || OPEN_SUBMISSION_STATUSES.has(workflowStatus) || isResubmission(row)) return true;
   if (TERMINAL_SUBMISSION_STATUSES.has(markingStatus) || TERMINAL_SUBMISSION_STATUSES.has(workflowStatus)) return false;
