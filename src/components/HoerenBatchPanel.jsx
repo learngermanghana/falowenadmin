@@ -85,7 +85,7 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
       const base=validateDraftQuestions({script,questions:reply.questions,kind:preset.kind,expectedCount:preset.questionCount});
       state=await savePart(index,{
         script,questions:base.map(q=>({...q,kind:preset.kind})),
-        topic:preset.topic,repeats:preset.repeats,
+        topic:topic.trim(),repeats:preset.repeats,
         audio:null,approved:false,error:"",createdAt:Date.now()
       });
     }

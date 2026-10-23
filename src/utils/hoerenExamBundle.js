@@ -85,17 +85,22 @@ function answerFor(q){
   return "abc"[Number(q.correctIndex)];
 }
 function paperSections(parts,answers=false){
-  return parts.map((part,index)=>({
+  let offset=0;
+  return parts.map((part,index)=>{
+    const firstNumber=offset;
+    offset+=part.questions.length;
+    return {
     heading:`Hören ${part.label || "Teil"} ${index+1} - ${part.topic||"Übung"}`,
     lines:part.questions.flatMap((q,i)=>{
-      const item=[`${i+1}. ${q.question}`];
+      const item=[`${firstNumber+i+1}. ${q.question}`];
       if(!answers){
         if(q.kind==="richtig-falsch")item.push("    [ ] Richtig      [ ] Falsch");
         else q.options.forEach((option,j)=>item.push(`    [ ] ${"abc"[j]}) ${option}`));
       }else item.push(`    Lösung: ${answerFor(q)}`);
       return [...item,""];
     })
-  }));
+  };
+  });
 }
 function wrapCanvas(ctx,txt,x,y,maxWidth,lineHeight){
   const words=String(txt).split(/\s+/);let line="";
