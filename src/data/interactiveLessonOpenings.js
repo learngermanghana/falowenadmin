@@ -1,6 +1,7 @@
 // Curated reusable 10-minute classroom warm-ups. The A2 Day 17 Hören is
 // the only verified recording; never invent audio or override scored workbook work.
 import { A2_DAY17_AUDIO_KEY, A2_DAY17_WARMUP, A2_DAY17_LISTENING, A2_DAY17_TRANSCRIPT } from "./a2Day17Opening.js";
+import { B1_DAY25_LISTENING } from "./b1Day25Listening.js";
 
 const ENTRIES = {
   "A2-3.8":   {
@@ -388,6 +389,8 @@ ENTRIES["A2-6.17"].listening = {
   questions: A2_DAY17_LISTENING,
   previewWords: ["die Lutschtabletten", "die Dosierungsangaben", "der Kassenbon"],
 };
+
+ENTRIES["B1-8.25"].listening = B1_DAY25_LISTENING;
 
 export const INTERACTIVE_LESSON_OPENINGS = Object.freeze(
   Object.fromEntries(Object.entries(ENTRIES).map(([key, entry]) => [
