@@ -6,17 +6,18 @@ const check = (questionDe, answerDe, noteEn) => ({ questionDe, answerDe, noteEn 
 
 export const A1_DAYS11_TO15_UNDERSTANDING = Object.freeze({
   "A1-7": [
-    check("Wie spät ist es um 7:00?", "Es ist sieben Uhr.", "Use the hour followed by Uhr for a full-hour time."),
-    check("Wie sagt man 7:30 mit halb?", "Es ist halb acht.", "halb names the NEXT hour; halb acht means 7:30, not 8:30."),
-    check("Wie sagt man 8:30 mit halb?", "Es ist halb neun.", "The next hour is neun, so halb neun means 8:30."),
-    check("Wie sagt man 7:10 mit nach?", "Es ist zehn nach sieben.", "nach counts minutes after the current hour."),
-    check("Wie sagt man 7:50 mit vor?", "Es ist zehn vor acht.", "vor counts minutes until the next hour: ten minutes before eight."),
-    check("Wie sagt man 7:15 mit Viertel?", "Es ist Viertel nach sieben.", "Viertel nach means 15 minutes after the hour."),
-    check("Wie sagt man 7:45 mit Viertel?", "Es ist Viertel vor acht.", "Viertel vor means 15 minutes before the next hour."),
-    check("Ergänze: „Der Kurs beginnt ___ halb acht.“", "Der Kurs beginnt um halb acht.", "Use um when giving the time of an activity or appointment."),
-    check("Welche Uhrzeit ist „fünf nach neun“?", "9:05 Uhr.", "The minutes follow nine o'clock, not precede ten."),
-    check("Welche Uhrzeit ist „zwanzig vor sechs“?", "5:40 Uhr.", "Twenty minutes before six is 5:40."),
-    check("Exit-Check: Schreibe die Zeiten für „halb acht“, „zehn vor acht“ und „Viertel nach sieben“ als Zahlen.", "7:30 · 7:50 · 7:15.", "Require all three distinct concepts: halb, vor and nach, unaided."),
+    check("Wie spät ist es um 6:15?", "Es ist Viertel nach sechs.", "Viertel nach means a quarter past the hour."),
+    check("Wie sagt man 7:30 mit halb?", "Es ist halb acht.", "halb names the NEXT hour: 7:30 is halb acht."),
+    check("Was bedeutet „ab 10 Uhr“ auf einem Schild?", "Ab 10 Uhr bedeutet: geöffnet ab 10 Uhr / starting at 10:00.", "ab introduces a starting time, not a closing time."),
+    check("Die Bibliothek ist von 9 bis 17 Uhr geöffnet. Ist sie um 18 Uhr offen?", "Nein, um 18 Uhr ist sie geschlossen.", "von … bis marks the opening interval."),
+    check("Ergänze: „Der Laden ist ___ 18 Uhr geöffnet.“ (until)", "Der Laden ist bis 18 Uhr geöffnet.", "bis means until; ab means starting from."),
+    check("Was ist der Unterschied: „Viertel vor acht“ und „vor 8 Uhr“?", "Viertel vor acht ist 7:45. Vor 8 Uhr ist jede Zeit vor 8:00.", "The quarter expression is exact; the before expression is a wider interval."),
+    check("Es ist 10:00 Uhr. Sage eine passende Tageszeit.", "Es ist vormittags. / Es ist am Vormittag.", "Late morning is vormittags; boundaries are approximate."),
+    check("Es ist 12:30 Uhr. Ist es vormittags, mittags oder nachts?", "Es ist mittags.", "Around 12:30 is midday."),
+    check("Es ist 16:00 Uhr. Ergänze: „Ich kaufe ___ ein.“", "Ich kaufe nachmittags ein.", "nachmittags describes an afternoon activity, with the prefix ein at the end."),
+    check("Korrigiere: „Ich aufstehe um 6 Uhr.“", "Ich stehe um 6 Uhr auf.", "In the main clause, conjugate stehen and move auf to the end."),
+    check("Was ist der Unterschied zwischen „ab 10 Uhr“ und „abholen“?", "ab 10 Uhr = starting at ten; abholen is a separable verb, e.g. Ich hole Anna ab.", "The time word ab and the verb prefix ab- do not have the same function."),
+    check("Exit-Check: Ergänze „Der Kurs ist ___ 8 ___ 10 Uhr. ___ gehe ich einkaufen.“", "Der Kurs ist von 8 bis 10 Uhr. Danach gehe ich einkaufen. / Nach dem Kurs gehe ich einkaufen.", "Require von … bis and a correct later-time expression without prompting."),
   ],
   "A1-8": [
     check("Wie liest du 18:30 Uhr im 24-Stunden-System?", "Achtzehn Uhr dreißig.", "Schedules may show 24-hour clock times; say the hour and minutes precisely."),
@@ -77,7 +78,7 @@ export const A1_DAYS11_TO15_UNDERSTANDING = Object.freeze({
 export const A1_DAYS11_TO15_QUICK_CHECKS = Object.freeze({
   "A1-7": [
     check("Was heißt halb acht als digitale Zeit?", "7:30.", "halb always refers to the next hour."),
-    check("Ist „zehn nach sieben“ vor oder nach 7:00?", "nach 7:00.", "nach means after the hour."),
+    check("Das Museum öffnet ab 10 Uhr. Kannst du um 10:30 Uhr kommen?", "Ja, ab 10 Uhr ist es geöffnet.", "ab = starting from, not until."),
   ],
   "A1-8": [
     check("Welche Zahl ist eine 24-Stunden-Uhrzeit: 18:00 oder 6 Uhr abends?", "18:00.", "Use the 24-hour form to read written timetables."),
@@ -99,8 +100,8 @@ export const A1_DAYS11_TO15_QUICK_CHECKS = Object.freeze({
 
 export const A1_DAYS11_TO15_APPLICATION_CHECKS = Object.freeze({
   "A1-7": [
-    check("Korrigiere die Uhrzeit: „halb acht = 8:30“.", "halb acht = 7:30.", "halb counts towards the next hour."),
-    check("Ergänze: „Ich stehe ___ sieben Uhr auf.“", "Ich stehe um sieben Uhr auf.", "An activity at a precise time takes um."),
+    check("Ergänze: „Ich lerne ___ Deutsch.“ (10:00 Uhr)", "Ich lerne vormittags Deutsch.", "vormittags is a suitable part of the day for 10:00."),
+    check("Korrigiere: „Ich aufstehe um 6 Uhr.“", "Ich stehe um 6 Uhr auf.", "aufstehen splits: stehe … auf."),
   ],
   "A1-8": [
     check("Ergänze: „Wir treffen uns ___ Freitag ___ 17 Uhr.“", "Wir treffen uns am Freitag um 17 Uhr.", "am + weekday; um + clock time."),
