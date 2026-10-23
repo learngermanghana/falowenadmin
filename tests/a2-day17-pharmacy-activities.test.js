@@ -5,6 +5,7 @@ import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 import { A2_DAY17_AUDIO_KEY, A2_DAY17_TRANSCRIPT, A2_DAY17_WARMUP, A2_DAY17_LISTENING } from "../src/data/a2Day17Opening.js";
 import { INTERACTIVE_LESSON_OPENINGS, getInteractiveLessonOpening, isInteractiveOpeningStage } from "../src/data/interactiveLessonOpenings.js";
+import { B1_DAY25_AUDIO_KEY, B1_DAY25_LISTENING, B1_DAY25_LISTENING_QUESTIONS, B1_DAY25_TRANSCRIPT } from "../src/data/b1Day25Listening.js";
 
 test("A2 Day 17 replaces only its opening stages with a 10-minute warm-up and listening", () => {
   const slide = getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-6.17");
@@ -70,10 +71,10 @@ test("chosen chapters reuse four authored 10-minute warm-up steps without invent
     assert.equal(stages.find(s=>s.id==="warmup").variant,"interactive-warmup",id);
     assert.equal(stages.find(s=>s.id==="warmup").type,"list",id);
     assert.equal(stages.find(s=>s.id==="knowledge").type,"knowledge",id);
-    assert.equal(Boolean(entry.listening),id==="A2-6.17",id);
-    assert.equal(stages.find(s=>s.id==="knowledge").variant==="interactive-listening",id==="A2-6.17",id);
+    assert.equal(Boolean(entry.listening),["A2-6.17","B1-8.25"].includes(id),id);
+    assert.equal(stages.find(s=>s.id==="knowledge").variant==="interactive-listening",["A2-6.17","B1-8.25"].includes(id),id);
     assert.equal(isInteractiveOpeningStage(id,"warmup"),true,id);
-    assert.equal(isInteractiveOpeningStage(id,"knowledge"),id==="A2-6.17",id);
+    assert.equal(isInteractiveOpeningStage(id,"knowledge"),["A2-6.17","B1-8.25"].includes(id),id);
     assert.equal(isInteractiveOpeningStage(id,"phrases"),false,id);
   }
 });
@@ -103,4 +104,43 @@ test("shared fullscreen renderer includes audio overview and optional post-audio
   assert.match(activity, /pharm-question-overview/);
   assert.match(activity, /if \(autoReview\)/);
   assert.match(activity, /setReviewMode\(false\)/);
+});
+
+
+test("B1 Day 25 classroom Hören uses uploaded five-question Richtig/Falsch key", () => {
+  const lesson = getInteractiveLessonOpening("B1-8.25");
+  assert.equal(lesson.listening.audioKey, "b1/day-25/online-shopping-verbraucherservice.mp3");
+  assert.equal(B1_DAY25_AUDIO_KEY, lesson.listening.audioKey);
+  assert.equal(lesson.listening.level, "B1");
+  assert.equal(lesson.listening.day, 25);
+  assert.equal(lesson.listening.suggestedMinutes, 12);
+  assert.equal(lesson.listening.questions.length, 5);
+  assert.equal(B1_DAY25_LISTENING_QUESTIONS.length, 5);
+  assert.deepEqual(lesson.listening.questions.map(q => q.answer), [
+    "Richtig", "Falsch", "Falsch", "Richtig", "Richtig",
+  ]);
+  const expectedText = [
+    "In Deutschland hat man bei vielen Online-Käufen ein gesetzliches Widerrufsrecht von vierzehn Tagen.",
+    "Es reicht völlig aus, die Ware einfach nur zurückzuschicken, um den Kauf zu widerrufen.",
+    "Bei Produkten, die speziell für einen Kunden angefertigt wurden, gilt das Widerrufsrecht normalerweise.",
+    "Ein sehr niedriger Preis kann ein Hinweis auf einen betrügerischen Online-Shop sein.",
+    "Wenn ein Artikel beschädigt angekommen ist, können Fotos helfen, das Problem zu erklären.",
+  ];
+  assert.deepEqual(lesson.listening.questions.map(q => q.prompt), expectedText);
+  for (const q of lesson.listening.questions) {
+    assert.deepEqual(q.options, ["Richtig", "Falsch"]);
+    assert.equal(q.answer, q.options[q.correctIndex]);
+    assert.ok(q.evidence && q.hint.includes(q.evidence));
+    assert.match(B1_DAY25_TRANSCRIPT.map(x=>x[1]).join(" "), new RegExp(q.evidence.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"), "i"));
+  }
+  assert.ok(B1_DAY25_TRANSCRIPT.length > 12);
+  assert.equal(B1_DAY25_LISTENING.audioKey, lesson.listening.audioKey);
+  const slide = getSlidesByCourse("B1").find(x=>x.assignmentId==="B1-8.25");
+  const stages = buildTeachingPresenterStages(slide, slide.topic);
+  const knowledge = stages.find(stage=>stage.id==="knowledge");
+  assert.equal(knowledge.type,"knowledge");
+  assert.equal(knowledge.variant,"interactive-listening");
+  assert.equal(knowledge.suggestedMinutes,12);
+  assert.equal(knowledge.listeningItems.length,5);
+  assert.ok(stages.find(stage=>stage.id==="phrases"),"Existing Wortschatz retained");
 });

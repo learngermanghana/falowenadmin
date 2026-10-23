@@ -70,7 +70,7 @@ export default function InteractiveLessonOpening({ stage, slide }) {
     }
   }
 
-  return <section className="pharm-activity" aria-label={listening ? "Apotheken-Detektiv Hören" : "Apotheken-Challenge Warm-up"}>
+  return <section className="pharm-activity" aria-label={listening ? `${lesson.listening.title} Hören` : `${lesson.title} Warm-up`}>
     <div className="pharm-head">
       <div>
         <span className="pharm-eyebrow">{slide.course} · TAG {slide.dayNumber} · {listening ? "HÖREN / HÖRDETEKTIV" : "INTERAKTIVER WARM-UP"}</span>
@@ -81,6 +81,7 @@ export default function InteractiveLessonOpening({ stage, slide }) {
     </div>
     {listening && <div className="pharm-audio">
       <div className="pharm-audio-label"><span aria-hidden="true">♫</span><div><strong>{lesson.listening.title}</strong><small>Lies zuerst die Fragen. Höre danach ohne das Skript zu.</small></div></div>
+      {lesson.listening.playbackNote ? <p className="pharm-playback-note" role="note">{lesson.listening.playbackNote} · Fragen bleiben während des Abspielens sichtbar.</p> : null}
       {!audioUrl ? (
         <button type="button" className="pharm-btn pharm-btn-primary" onClick={prepareAudio} disabled={audioBusy}>{audioBusy ? "Audio wird vorbereitet…" : "▶ Audio laden"}</button>
       ) : <>
