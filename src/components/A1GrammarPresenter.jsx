@@ -237,6 +237,16 @@ function stageList(slide, topicLabel) {
       title: "Do you remember the grammar rule?",
       items: quickChecks,
     },
+    // Optional lesson-specific grammar slides (currently A1-7).
+    ...(Array.isArray(slide.grammarTeachingSections)
+      ? slide.grammarTeachingSections.map((section, index) => ({
+          id: "grammar-topic-" + (index + 1),
+          type: "list",
+          kicker: "Grammatik · Kapitel 7 · " + (index + 1) + "/5",
+          title: section.title,
+          items: Array.isArray(section.items) ? section.items : [],
+        }))
+      : []),
     {
       id: "grammar-check",
       type: "check",
