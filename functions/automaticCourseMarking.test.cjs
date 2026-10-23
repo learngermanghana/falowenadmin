@@ -100,6 +100,76 @@ for (const existing of [false,true]) test(`marking publishes once and preserves 
   }
   assert.equal(store.rows.get(`aiMarkingAudit/${idForPath('submissions/s1')}`).referenceVersion,'v1');
 });
+for (const grade of [90, 60, 59, 40]) test(`valid A1–B1 score ${grade}/100 publishes without tutor approval`, async () => {
+  for (const level of ['A1', 'A2', 'B1']) {
+    const key = `${level}-7.22`;
+    const store = memoryDb({
+      'markingJobs/j': { automatic: true, submissionPath: 'submissions/s', level, assignmentKey: key, status: 'pending' },
+      'submissions/s': { status: 'submitted', studentId: 'uid', submissionText: 'Teil 3\\n1. B\\n2. B\\n3. B' },
+      'students/uid': { studentCode: 'ST1', email: 'student@example.test' },
+    });
+    await createCourseMarkingWorker({
+      db: store.db,
+      loadReference: async () => ({ parts: [{}], version: 'v1' }),
+      mark: async () => ({ status: 'marked', score: grade, finalScore: grade,
+        confidence: 1, objectiveScore: grade, objectiveCorrect: grade / 10,
+        objectiveTotal: 10, feedback: 'Review the one incorrect answer.' }),
+    })({ data: store.snapshot('markingJobs/j') });
+    const review = store.rows.get('markingResults/s');
+    assert.equal(review.status, 'marked');
+    assert.equal(review.publicationStatus, 'published');
+    assert.equal(review.sentToStudent, true);
+    assert.equal(review.publicationReviewReasons.length, 0);
+    assert.equal(store.rows.get('scores/ST1__' + key).score, grade);
+    assert.equal(store.rows.get('submissions/s').feedbackSentToStudent, true);
+  }
+});
+
+test('an existing published score for the same submission does not demand re-approval or create duplicate Sheet rows', async () => {
+  const path = 'submissions/s';
+  const store = memoryDb({
+    'markingJobs/j': { automatic: true, submissionPath: path, level: 'B1', assignmentKey: 'B1-7.22', status: 'pending' },
+    [path]: { status: 'submitted', studentId: 'uid', submissionText: 'TEIL 3\\n1. B\\n2. B\\n3. B' },
+    'students/uid': { studentCode: 'ST1', email: 'student@example.test' },
+    'scores/ST1__B1-7.22': { source: 'automatic_course_marking', score: 90,
+      submissionPath: path, comments: 'Original saved feedback', sheetSaved: true },
+  });
+  await createCourseMarkingWorker({
+    db: store.db,
+    loadReference: async () => ({ parts: [{}], version: 'v1' }),
+    mark: async () => ({ status: 'marked', score: 90, finalScore: 90, confidence: 1,
+      feedback: 'A duplicate explanation from a replay' }),
+  })({ data: store.snapshot('markingJobs/j') });
+  const review = store.rows.get('markingResults/s');
+  assert.equal(review.status, 'marked');
+  assert.equal(review.publicationStatus, 'published');
+  assert.equal(review.sentToStudent, true);
+  assert.equal(store.rows.get('scores/ST1__B1-7.22').comments, 'Original saved feedback');
+  assert.equal(store.rows.get(path).aiFeedback, 'Original saved feedback');
+  assert.equal([...store.rows.keys()].filter(key => key.startsWith('automaticScoreSync/')).length, 0);
+  assert.equal([...store.rows.keys()].filter(key => key.startsWith('studentNotifications/')).length, 0);
+});
+
+test('a manual correction of the same submission is never replaced by the automatic 90/100 result', async () => {
+  const path = 'submissions/s';
+  const store = memoryDb({
+    'markingJobs/j': { automatic: true, submissionPath: path, level: 'B1', assignmentKey: 'B1-7.22', status: 'pending' },
+    [path]: { status: 'submitted', studentId: 'uid', submissionText: 'TEIL 3\\n1. B\\n2. B\\n3. B' },
+    'students/uid': { studentCode: 'ST1', email: 'student@example.test' },
+    'scores/ST1__B1-7.22': { source: 'automatic_course_marking', score: 90,
+      submissionPath: path, reviewedByTutor: true, comments: 'Teacher correction' },
+  });
+  await createCourseMarkingWorker({
+    db: store.db,
+    loadReference: async () => ({ parts: [{}], version: 'v1' }),
+    mark: async () => ({ status: 'marked', score: 90, finalScore: 90, confidence: 1,
+      feedback: 'Automated feedback' }),
+  })({ data: store.snapshot('markingJobs/j') });
+  assert.equal(store.rows.get('markingResults/s').publicationStatus, 'awaiting_approval');
+  assert.match(store.rows.get('markingResults/s').publicationReviewReasons.join(' '), /existing score/);
+  assert.equal(store.rows.get('scores/ST1__B1-7.22').comments, 'Teacher correction');
+});
+
 for (const outcome of [{passed:false,writingMinimumMet:false},{writingMinimumMet:false},{passed:true}]) {
   test(`notification follows grading outcome ${JSON.stringify(outcome)}`,async()=>{
     const store=memoryDb({'markingJobs/j':{automatic:true,submissionPath:'submissions/s',level:'A2',assignmentKey:'A2-1.1',status:'pending'},
