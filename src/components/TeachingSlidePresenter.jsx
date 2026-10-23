@@ -195,6 +195,12 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
   // Selected A2/B1 chapters use the same interactive renderer, but only
   // verified Hören chapters replace the ordinary Wissensimpuls.
   const interactiveOpening = isInteractiveOpeningStage(slide.assignmentId, stage?.id);
+  useEffect(() => {
+    // Stage content is a persistent scroll container. Without resetting its
+    // scroll position, the next interactive card can start beneath the floating
+    // class controls even when the safe-top layout padding is correct.
+    if (interactiveOpening && contentRef.current) contentRef.current.scrollTop = 0;
+  }, [interactiveOpening, slide?.assignmentId, stage?.id]);
   const presenterLevel = String(slide.course || "").trim().toUpperCase();
   const readingEligible = ["A2", "B1"].includes(presenterLevel)
     && stage?.type === "knowledge"
@@ -695,7 +701,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
 
   return (
     <div ref={presenterShellRef} className={`presenter-shell ${focusMode ? "is-presentation-mode" : ""}`} role="dialog" aria-modal="true" aria-label="Teaching slide presenter">
-      <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""} ${focusMode && showPresenterTimer ? "presenter-has-focus-stage-timer" : ""} ${stage?.examMode ? "is-c2-exam-mode" : ""} ${String(stage.title || "").length > 58 ? "presenter-title-long" : String(stage.title || "").length > 38 ? "presenter-title-medium" : ""}`}>
+      <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""} ${focusMode && showPresenterTimer ? "presenter-has-focus-stage-timer" : ""} ${interactiveOpening ? "presenter-has-interactive-opening" : ""} ${stage?.examMode ? "is-c2-exam-mode" : ""} ${String(stage.title || "").length > 58 ? "presenter-title-long" : String(stage.title || "").length > 38 ? "presenter-title-medium" : ""}`}>
         {focusMode && showPresenterTimer ? (
           <div
             className={`presenter-focus-stage-timer ${timerExpired ? "is-expired" : ""}`}

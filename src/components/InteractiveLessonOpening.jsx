@@ -3,7 +3,10 @@ import { auth } from "../firebaseAuth.js";
 import "./A2Day17Activities.css";
 import { getInteractiveLessonOpening } from "../data/interactiveLessonOpenings.js";
 
-const AUDIO_API = (import.meta.env.VITE_FALOWEN_COURSE_API_URL || "https://www.falowen.app/api").replace(/[/]+$/, "");
+// Classroom recordings are signed by the deployed Firebase API. The website
+// /api route can run an older Vercel bundle when Hobby build limits are hit.
+const AUDIO_API = (import.meta.env.VITE_FALOWEN_COURSE_MEDIA_API_URL
+  || "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api").replace(/[/]+$/, "");
 
 function RevealPanel({ activity }) {
   return <div className="pharm-reveal" role="status">
@@ -60,7 +63,12 @@ export default function InteractiveLessonOpening({ stage, slide }) {
         cache: "no-store",
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data.url) throw new Error(data.error || `Audio konnte nicht geladen werden (HTTP ${response.status}).`);
+      if (!response.ok || !data.url) {
+        const reason = response.status === 400 && /invalid .*audio request/i.test(String(data.error || ""))
+          ? "Die Audiofreigabe ist auf dem Server noch nicht aktiv. Bitte die Firebase-API-Bereitstellung prüfen."
+          : data.error || `Audio konnte nicht geladen werden (HTTP ${response.status}).`;
+        throw new Error(reason);
+      }
       if (requestId !== requestCounter.current) return;
       setAudioUrl(String(data.url));
     } catch (error) {
@@ -75,9 +83,7 @@ export default function InteractiveLessonOpening({ stage, slide }) {
       <div>
         <span className="pharm-eyebrow">{slide.course} · TAG {slide.dayNumber} · {listening ? "HÖREN / HÖRDETEKTIV" : "INTERAKTIVER WARM-UP"}</span>
         <h1>{listening ? lesson.listening.title : lesson.title}</h1>
-        <p>{listening ? "Zuerst zuhören. Dann verstehen, entscheiden und begründen." : "Vier Aufgaben · eine Unterrichtsphase · gemeinsam sprechen."}</p>
       </div>
-      <div className="pharm-duration"><strong>{stage.suggestedMinutes || (listening ? 6 : 10)}</strong><span>MINUTEN</span></div>
     </div>
     {listening && <div className="pharm-audio">
       <div className="pharm-audio-label"><span aria-hidden="true">♫</span><div><strong>{lesson.listening.title}</strong><small>Lies zuerst die Fragen. Höre danach ohne das Skript zu.</small></div></div>
