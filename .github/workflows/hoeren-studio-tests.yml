@@ -9,6 +9,10 @@ on:
       - "src/data/c2PresenterSlides.js"
       - "tests/hoeren-course-catalog.test.js"
       - "functions/index.js"
+      - "src/components/HoerenBatchPanel.jsx"
+      - "src/utils/hoerenExamBundle.js"
+      - "src/utils/hoerenExamBundleCache.js"
+      - "tests/hoeren-bundle-export.test.js"
       - "src/pages/HoerenStudioPage.jsx"
       - "src/pages/HoerenStudioPage.css"
       - "src/services/hoerenStudioService.js"
@@ -35,5 +39,5 @@ jobs:
           cache: npm
       - run: npm ci
       - run: node --check functions/hoerenStudioApi.js && node --check functions/hoerenQuestions.js && node --check functions/hoerenCurriculumContext.js && node --check functions/index.js
-      - run: node --test tests/hoeren-studio.test.js tests/hoeren-course-catalog.test.js tests/a1-12.1-hoeren-v3-and-soundscape.test.js tests/hoeren-question-publishing.test.js
+      - run: node --test tests/hoeren-studio.test.js tests/hoeren-course-catalog.test.js tests/a1-12.1-hoeren-v3-and-soundscape.test.js tests/hoeren-question-publishing.test.js tests/hoeren-bundle-export.test.js
       - run: npm run build
