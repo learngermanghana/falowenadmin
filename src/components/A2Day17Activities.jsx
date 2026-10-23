@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { auth } from "../firebaseAuth.js";
 import "./A2Day17Activities.css";
+import { A2_DAY17_AUDIO_KEY, A2_DAY17_WARMUP, A2_DAY17_LISTENING, A2_DAY17_TRANSCRIPT } from "../data/a2Day17Opening.js";
 
 const AUDIO_API = (import.meta.env.VITE_FALOWEN_COURSE_API_URL || "https://www.falowen.app/api").replace(/[/]+$/, "");
 
@@ -13,7 +14,7 @@ function RevealPanel({ activity }) {
 }
 
 export default function A2Day17Activities({ stage }) {
-  const listening = stage.variant === "pharmacy-listening";
+  const listening = stage.id === "knowledge" || stage.variant === "pharmacy-listening";
   const [step, setStep] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [showHint, setShowHint] = useState(false);
@@ -29,9 +30,9 @@ export default function A2Day17Activities({ stage }) {
     setStep(0); setShowAnswer(false); setShowHint(false); setShowTranscript(false);
     setSelected(-1); setAudioUrl(""); setAudioError(""); setAudioBusy(false);
     requestCounter.current += 1;
-  }, [stage.variant]);
+  }, [stage.id, stage.variant]);
 
-  const items = listening ? (stage.listeningItems || []) : (stage.challengeItems || []);
+  const items = listening ? (stage.listeningItems?.length ? stage.listeningItems : A2_DAY17_LISTENING) : (stage.challengeItems?.length ? stage.challengeItems : A2_DAY17_WARMUP);
   const activity = items[step] || items[0];
   if (!activity) return null;
 
@@ -47,7 +48,7 @@ export default function A2Day17Activities({ stage }) {
     try {
       const user = auth.currentUser;
       if (!user) throw new Error("Bitte zuerst in Falowen Admin anmelden.");
-      const params = new URLSearchParams({ day: "17", key: stage.audioKey });
+      const params = new URLSearchParams({ day: "17", key: stage.audioKey || A2_DAY17_AUDIO_KEY });
       const response = await fetch(`${AUDIO_API}/course-media/a2/audio-url?${params}`, {
         method: "GET",
         headers: { Authorization: `Bearer ${await user.getIdToken()}` },
@@ -81,10 +82,10 @@ export default function A2Day17Activities({ stage }) {
         <audio key={audioUrl} ref={audioRef} src={audioUrl} controls preload="none" aria-label="Hörtext In der Apotheke" />
         <button type="button" className="pharm-btn pharm-btn-soft" onClick={() => { audioRef.current?.pause(); setAudioUrl(""); prepareAudio(); }}>↻ Audiolink erneuern</button>
       </>}
-      {audioError && <p className="pharm-audio-error" role="alert">{audioError} · R2-Objekt: {stage.audioKey}</p>}
+      {audioError && <p className="pharm-audio-error" role="alert">{audioError} · R2-Objekt: {stage.audioKey || A2_DAY17_AUDIO_KEY}</p>}
       <details className="pharm-script" open={showTranscript} onToggle={(event) => setShowTranscript(event.currentTarget.open)}>
         <summary>{showTranscript ? "Skript ausblenden" : "Skript für die Klasse anzeigen"} <span>OPTIONAL</span></summary>
-        <div className="pharm-transcript" lang="de">{(stage.transcript || []).map(([speaker, line],index)=>
+        <div className="pharm-transcript" lang="de">{(stage.transcript?.length ? stage.transcript : A2_DAY17_TRANSCRIPT).map(([speaker, line],index)=>
           <p key={index}><b className={speaker === "A" ? "is-a" : "is-b"}>{speaker}</b> <span>{line}</span></p>
         )}</div>
       </details>

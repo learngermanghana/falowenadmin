@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 import { A2_DAY17_AUDIO_KEY, A2_DAY17_TRANSCRIPT, A2_DAY17_WARMUP, A2_DAY17_LISTENING } from "../src/data/a2Day17Opening.js";
@@ -48,4 +49,21 @@ test("pharmacy questions are key-backed and transcript contains uploaded facts",
     assert.ok(Number.isInteger(item.correctIndex));
     assert.ok(item.options[item.correctIndex]);
   }
+});
+
+
+test("A2 Day 17 fullscreen render always uses activity cards, not generic title fallback", () => {
+  const presenter = readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
+  const css = readFileSync(new URL("../src/components/TeachingSlidePresenter.css", import.meta.url), "utf8");
+  const activity = readFileSync(new URL("../src/components/A2Day17Activities.jsx", import.meta.url), "utf8");
+  assert.match(presenter, /const pharmacyOpening = String\(slide\.assignmentId/);
+  assert.match(presenter, /pharmacyOpening \? \(/);
+  assert.match(presenter, /<A2Day17Activities key=\{stage\.id\}/);
+  assert.match(presenter, /presenter-content-pharmacy/);
+  assert.match(css, /presenter-stage\.is-focus-mode > \.presenter-content\.presenter-content-pharmacy/);
+  assert.match(css, /overflow-y:\s*auto/);
+  assert.match(activity, /stage\.id === "knowledge"/);
+  assert.match(activity, /A2_DAY17_LISTENING/);
+  assert.match(activity, /A2_DAY17_TRANSCRIPT/);
+  assert.match(activity, /<audio key=\{audioUrl\}/);
 });

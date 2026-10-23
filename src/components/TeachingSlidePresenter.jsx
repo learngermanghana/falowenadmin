@@ -187,6 +187,11 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
   const [readingPhase, setReadingPhase] = useState("idle");
   const [activeReadingAssignment, setActiveReadingAssignment] = useState(null);
   const stage = stages[stageIndex] || stages[0];
+  // Day 17 is a dedicated teaching activity, not an ordinary A2 list/reading.
+  // Route by its stable assignment and stage IDs as well as the newer variant,
+  // so a partial/stale slide descriptor never renders a title-only fallback.
+  const pharmacyOpening = String(slide.assignmentId || "").toUpperCase() === "A2-6.17"
+    && (stage?.id === "warmup" || stage?.id === "knowledge");
   const presenterLevel = String(slide.course || "").trim().toUpperCase();
   const readingEligible = ["A2", "B1"].includes(presenterLevel)
     && stage?.type === "knowledge"
@@ -790,7 +795,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
           onReadingAssignmentChange={setActiveReadingAssignment}
         />
 
-        <main ref={contentRef} className={`presenter-content presenter-content-${stage.type} presenter-stage-${stage.id} presenter-fit-${fitMode} ${stagePhoto ? `presenter-has-photo presenter-photo-${stagePhoto.density}` : ""}`}>
+        <main ref={contentRef} className={`presenter-content presenter-content-${stage.type} presenter-stage-${stage.id} presenter-fit-${fitMode} ${pharmacyOpening ? "presenter-content-pharmacy" : ""} ${stagePhoto ? `presenter-has-photo presenter-photo-${stagePhoto.density}` : ""}`}>
           {stagePhoto ? (
             <figure className="presenter-slide-photo" aria-hidden="true">
               <img src={stagePhoto.src} alt="" width="640" height="420" loading="lazy" decoding="async" draggable="false" />
@@ -876,8 +881,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                 </section>
               ) : null}
             </>
-          ) : (stage.variant === "pharmacy-warmup" || stage.variant === "pharmacy-listening") ? (
-            <A2Day17Activities key={stage.variant} stage={stage} />
+          ) : pharmacyOpening ? (
+            <A2Day17Activities key={stage.id} stage={stage} />
           ) : stage.type === "scenario-challenge" ? (
             <section className="presenter-career-challenge" aria-label="Teacher-led scenario challenge">
               <div className="presenter-career-challenge-heading">
