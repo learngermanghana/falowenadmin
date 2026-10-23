@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { auth } from "../firebaseAuth.js";
 import "./A2Day17Activities.css";
 
-const AUDIO_API = (import.meta.env.VITE_FALOWEN_COURSE_API_URL || "https://www.falowen.app/api").replace(/\\/+$/, "");
+const AUDIO_API = (import.meta.env.VITE_FALOWEN_COURSE_API_URL || "https://www.falowen.app/api").replace(/[/]+$/, "");
 
 function RevealPanel({ activity }) {
   return <div className="pharm-reveal" role="status">
