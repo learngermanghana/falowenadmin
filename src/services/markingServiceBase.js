@@ -276,6 +276,11 @@ async function loadExistingScoreIndex() {
     snap.forEach((docSnap) => {
       const data = docSnap.data() || {};
       const keys = [docSnap.id, data.dedupe_id, scoreDedupeId(data)].filter(Boolean).map(String);
+      // The student code can be absent or recorded under a legacy alias on
+      // older submissions. The exact submission path is a stronger match.
+      if (data.submissionPath && /^submissions\//.test(String(data.submissionPath))) {
+        keys.push(`submission-path:${data.submissionPath}`);
+      }
       keys.forEach((key) => scores.set(key, data));
     });
     return scores;
@@ -285,8 +290,12 @@ async function loadExistingScoreIndex() {
   }
 }
 
+function scoreForSubmission(row, scoreIndex) {
+  return scoreIndex.get(`submission-path:${row.path}`) || scoreIndex.get(scoreDedupeIdForSubmission(row));
+}
+
 function decorateSubmissionWithPreviousScore(row, scoreIndex) {
-  const score = scoreIndex.get(scoreDedupeIdForSubmission(row));
+  const score = scoreForSubmission(row, scoreIndex);
   if (!score) return row;
   return {
     ...row,
@@ -318,7 +327,7 @@ export async function loadSubmissions({ includeMarked = false } = {}) {
   const decoratedRows = results.map((row) => decorateSubmissionWithPreviousScore(row, scoreIndex));
   const queueRows = includeMarked
     ? decoratedRows
-    : decoratedRows.filter((row) => shouldIncludeInIncomingQueue(row, scoreIndex.get(scoreDedupeIdForSubmission(row)), MARKING_QUEUE_START_DATE));
+    : decoratedRows.filter((row) => shouldIncludeInIncomingQueue(row, scoreForSubmission(row, scoreIndex), MARKING_QUEUE_START_DATE));
   return queueRows.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
 }
 
