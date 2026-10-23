@@ -85,10 +85,12 @@ export const A1_GRAMMAR_CHECKS = {
     check("Why is it useful to learn nouns together with der, die or das?", "The noun gender helps you choose the correct articles and possessive forms."),
   ],
   "A1-7": [
-    check("What does halb mean when telling time in German?", "It refers to half an hour before the next hour: halb acht means 7:30."),
-    check("What is the idea behind nach and vor when telling time?", "nach means after the hour; vor means before the next hour."),
-    check("Which preposition is normally used before a specific clock time?", "um, for example: um 18 Uhr."),
-    check("What is the difference between formal digital time and everyday 12-hour expressions?", "Formal time often uses exact 24-hour forms; everyday speech often uses halb, Viertel, nach and vor."),
+    check("What does halb acht mean as a clock time?", "It means 7:30. Halb names the next hour."),
+    check("What is the difference between um 8 Uhr and ab 8 Uhr?", "um 8 Uhr means at 8; ab 8 Uhr means starting at 8."),
+    check("What does von 8 bis 10 Uhr mean?", "From 8:00 until 10:00."),
+    check("What do vor and nach mean outside the Viertel expressions?", "vor = before; nach = after, for example vor 8 Uhr and nach 8 Uhr."),
+    check("When would you say vormittags, mittags and nachmittags?", "For an activity before noon, at midday, or in the afternoon."),
+    check("How does aufstehen split in a main sentence?", "Ich stehe um 6 Uhr auf. The prefix auf goes to the end."),
   ],
   "A1-8": [
     check("What is the main difference between the 12-hour and 24-hour clock in German?", "The 24-hour clock gives the exact hour from 00 to 23 and is common in schedules and formal contexts."),
