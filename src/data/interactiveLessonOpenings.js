@@ -3,6 +3,7 @@
 import { A2_DAY17_AUDIO_KEY, A2_DAY17_WARMUP, A2_DAY17_LISTENING, A2_DAY17_TRANSCRIPT } from "./a2Day17Opening.js";
 import { B1_DAY25_LISTENING } from "./b1Day25Listening.js";
 import { A2_DAY18_BANK_LISTENING } from "./a2Day18BankListening.js";
+import { A2_DAY20_LISTENING } from "./a2Day20Listening.js";
 
 const ENTRIES = {
   "A2-3.8":   {
@@ -392,6 +393,7 @@ ENTRIES["A2-6.17"].listening = {
 };
 
 ENTRIES["A2-7.18"].listening = A2_DAY18_BANK_LISTENING;
+ENTRIES["A2-7.20"].listening = A2_DAY20_LISTENING;
 ENTRIES["B1-8.25"].listening = B1_DAY25_LISTENING;
 
 export const INTERACTIVE_LESSON_OPENINGS = Object.freeze(
