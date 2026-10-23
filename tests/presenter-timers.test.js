@@ -465,3 +465,27 @@ test("Presenter shows a non-blocking level-aware lesson budget with stage guidan
   assert.match(css, /\.presenter-session-budget-track/);
   assert.match(css, /\.presenter-session-budget-bar/);
 });
+
+test("teacher-selected 5 or 7 minute presets survive B1 Day 25 Hören initialization", () => {
+  const source = read("src/components/TeachingSlidePresenter.jsx");
+  const presetHandler = source.match(/function setTimerMinutes\(minutes, mode = "activity"\) \{[\s\S]*?\n  \}/)?.[0] || "";
+  assert.match(presetHandler, /activityTimerMinutesRef\.current = safeMinutes/);
+  assert.match(presetHandler, /setActivityTimerMinutes\(safeMinutes\)/);
+  assert.match(presetHandler, /setTimerRemaining\(seconds\)/);
+
+  const init = source.match(/useEffect\(\(\) => \{\s*setQuestionIndex\(0\);[\s\S]*?\n  \}, \[([^\]]+)\]\);/);
+  assert.ok(init, "The stage initializer effect must be present");
+  assert.match(init[0], /stage\?\.variant === "interactive-listening"/);
+  assert.match(init[0], /Number\(stage\?\.suggestedMinutes \|\| 6\)/);
+  assert.match(init[0], /activityTimerMinutesRef\.current = minutes/);
+  assert.match(init[0], /setTimerRemaining\(activityTimerMinutesRef\.current \* 60\)/);
+  assert.match(init[1], /slide\?\.assignmentId/);
+  assert.match(init[1], /stage\?\.id/);
+  assert.match(init[1], /stage\?\.variant/);
+  assert.doesNotMatch(init[1], /\bactivityTimerMinutes\b/,
+    "Preset state must not reinitialize the current stage or reset its countdown");
+  assert.match(source, /onClick=\{\(\) => setTimerMinutes\(minutes, a2B1ActivityTimer \? "activity" : "stage"\)\}/);
+  assert.match(source, /const timerPresets = a2B1ActivityTimer/);
+  assert.match(source, /setTimerRemaining\(activityTimerMinutes \* 60\)/,
+    "Reset must still honour the duration chosen by the teacher");
+});
