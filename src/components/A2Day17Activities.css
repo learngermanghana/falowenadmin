@@ -63,3 +63,6 @@
   .pharm-question-overview { grid-template-columns:1fr }
   .pharm-overview { padding:.8rem }
 }
+
+/* Optional description of two-pass classroom recordings. */
+.pharm-playback-note { margin:0; padding:.55rem .7rem; background:#eaf9f5; border-left:3px solid #0d9488; border-radius:6px; font-size:.8rem; font-weight:650; color:#0f665f; line-height:1.35; }
