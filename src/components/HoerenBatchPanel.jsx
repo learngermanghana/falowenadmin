@@ -46,7 +46,7 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
   const profile=profiles?.[level]||{};
   const indexes=keysOf(profile);
   const complete=indexes.length>0&&indexes.every(i=>records[i]?.audio instanceof Blob&&records[i]?.questions?.length&&records[i]?.approved);
-  const missing=indexes.filter(i=>!records[i]?.script);
+  const missing=indexes.filter(i=>!records[i]?.script);\n  const pendingMixed=level==="B1"&&records["1"]?.script&&records["1"]?.questions?.length===5?1:0;
   useEffect(()=>{
     let active=true;
     setLoading(true);setError("");setNotice("");setRecords({});cacheRef.current={};
@@ -82,23 +82,26 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
       });
       const script=assignGoetheSpeakers(repairUnlabelledStudioLines(reply.script));
       const base=validateDraftQuestions({script,questions:reply.questions,kind:preset.kind,expectedCount:preset.questionCount});
-      let all=base.map(q=>({...q,kind:preset.kind}));
-      if(level==="B1"&&index==="1"){
-        setWorking("Teil 1: generating five additional a–c questions for the five announcements");
-        // Current single-Teil preset produces five R/F tasks; the full B1
-        // practice pack needs five paired a–c tasks as well.
-        const second=await makeListeningQuestions({
-          script,kind:"multiple-choice",level,mode:"course"
-        });
-        const extra=validateDraftQuestions({script,questions:second.questions,
-          kind:"multiple-choice",expectedCount:5}).map(q=>({...q,kind:"multiple-choice"}));
-        all=base.flatMap((q,i)=>[{...q,kind:"richtig-falsch"},extra[i]]);
-      }
       state=await savePart(index,{
-        script,questions:all,topic:preset.topic,repeats:preset.repeats,
+        script,questions:base.map(q=>({...q,kind:preset.kind})),
+        topic:preset.topic,repeats:preset.repeats,
         audio:null,approved:false,error:"",createdAt:Date.now()
       });
     }
+    if(level==="B1"&&index==="1"&&state.questions?.length===5){
+      const remaining=await getStudioStatus();
+      if(remaining.remaining.script<1)throw new Error("One script request is needed for the five additional B1 Teil 1 a–c questions. Your first five questions are saved; resume later.");
+      setWorking("Teil 1: adding five multiple-choice questions to the saved script");
+      const second=await makeListeningQuestions({
+        script:state.script,kind:"multiple-choice",level,mode:"course"
+      });
+      const extra=validateDraftQuestions({script:state.script,questions:second.questions,
+        kind:"multiple-choice",expectedCount:5}).map(q=>({...q,kind:"multiple-choice"}));
+      const all=state.questions.flatMap((q,i)=>[q,extra[i]]);
+      state=await savePart(index,{questions:all,approved:false,error:""});
+    }
+    if(level==="B1"&&index==="1"&&state.questions?.length!==10)
+      throw new Error("B1 Teil 1 must have ten paired questions before producing audio.");
     if(cancelRef.current)return;
     const parsed=parseStudioTranscript(state.script);
     const plan=buildStudioSpeechPlan(parsed);
@@ -139,7 +142,7 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
       checkReady();cancelRef.current=false;setError("");setNotice("");
       const quota=await getStudioStatus();setQuota(quota.remaining);
       const targets=partIndex?[partIndex]:indexes.filter(i=>!(cacheRef.current[i]?.audio instanceof Blob));
-      const required=countScripts(level,targets.filter(i=>!cacheRef.current[i]?.script));
+      const required=countScripts(level,targets.filter(i=>!cacheRef.current[i]?.script)) +\n        (level==="B1" && targets.includes("1") && cacheRef.current["1"]?.script && cacheRef.current["1"]?.questions?.length===5?1:0);
       if(quota.remaining.script<required)throw new Error(
         `This run needs up to ${required} script requests, but ${quota.remaining.script} remain. Generate fewer Teile or resume after the reset.`
       );
@@ -194,7 +197,7 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
       onChange={e=>setTopic(e.target.value)}/></label>
     <label className="hoeren-batch-check"><input type="checkbox" checked={includeSlides} disabled={!!working}
       onChange={e=>setIncludeSlides(e.target.checked)}/> Include editable-free 1920×1080 question/answer slide PNGs for CapCut</label>
-    <p className="hoeren-hint">Estimated script requests for unfinished parts: <strong>{countScripts(level,missing)}</strong>.
+    <p className="hoeren-hint">Estimated script requests for unfinished parts: <strong>{countScripts(level,missing)+pendingMixed}</strong>.
       Speech requests depend on the generated dialogues. Cached scenes are reused, pauses and repeats cost no extra Gemini calls.
       {level==="B1"?" B1 Teil 1 uses an additional request for five paired multiple-choice questions (30 total across B1).":""}
     </p>
