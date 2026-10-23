@@ -2070,7 +2070,7 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
       audioLevel: lessonOpening.listening.level,
       audioDay: lessonOpening.listening.day,
       previewWords: lessonOpening.listening.previewWords || [],
-      suggestedMinutes: 6,
+      suggestedMinutes: lessonOpening.listening.suggestedMinutes || 6,
       teacherPurpose: {
         student: "Hörfragen zuerst lesen, Dialog hören, Informationen entnehmen und begründen.",
         teacher: "Fragen gemeinsam vor dem Audio zeigen. Keine automatischen Fragenwechsel während des Hörens.",
