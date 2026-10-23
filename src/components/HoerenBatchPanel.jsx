@@ -114,14 +114,14 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
     if(new Set(needNew).size>remaining.remaining.speech)throw new Error(
       `Teil ${index} needs ${new Set(needNew).size} voice requests but only ${remaining.remaining.speech} remain. Cached scenes are safe; resume later.`
     );
-    const wavClips=[];
+    const wavClips=[];\n    const generatedThisRun=new Map();
     for(let i=0;i<scenes.length;i++){
       if(cancelRef.current)return;
-      let wav=cached[i];
+      let wav=cached[i]||generatedThisRun.get(voiceKeys[i]);
       if(!wav){
         setWorking(`Teil ${index}: voice scene ${i+1}/${scenes.length}`);
         const reply=await makeSpeechClip({turns:scenes[i].turns,engine});
-        wav=base64WavToBytes(reply.audioBase64);
+        wav=base64WavToBytes(reply.audioBase64);\n        generatedThisRun.set(voiceKeys[i],wav);
         if(!await saveVoice(voiceKeys[i],wav))
           setStorageWarning("Voice-scene storage is unavailable. Avoid refreshing before this Teil is exported.");
       }
@@ -139,7 +139,7 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
   async function run(partIndex=null){
     if(working)return;
     try{
-      checkReady();cancelRef.current=false;setError("");setNotice("");
+      checkReady();cancelRef.current=false;setError("");setNotice("");setWorking("Checking available Gemini requests");
       const quota=await getStudioStatus();setQuota(quota.remaining);
       const targets=partIndex?[partIndex]:indexes.filter(i=>!(cacheRef.current[i]?.audio instanceof Blob));
       const required=countScripts(level,targets.filter(i=>!cacheRef.current[i]?.script)) +\n        (level==="B1" && targets.includes("1") && cacheRef.current["1"]?.script && cacheRef.current["1"]?.questions?.length===5?1:0);
@@ -201,7 +201,7 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
       Speech requests depend on the generated dialogues. Cached scenes are reused, pauses and repeats cost no extra Gemini calls.
       {level==="B1"?" B1 Teil 1 uses an additional request for five paired multiple-choice questions (30 total across B1).":""}
     </p>
-    <div className="hoeren-batch-grid">
+    {quota?<p className="hoeren-hint">Last quota check: {quota.script} script requests, {quota.speech} voice requests remaining.</p>:null}\n    <div className="hoeren-batch-grid">
       {indexes.map(i=>{
         const p=profile[i],r=records[i],hasAudio=r?.audio instanceof Blob;
         return <article key={i} className="hoeren-batch-part">
