@@ -1,20 +1,28 @@
 export const A1_TOPIC_TEACHER_SUPPORT = {
   "A1-7": {
+    lessonOverviewEn: "A1 Day 11 teaches five connected topics: telling time, small schedule words, parts of the day, separable verbs and a daily routine. The published two-part workbook is unchanged.",
     grammarFocusEn: [
-      "Use um before exact clock times: um sieben Uhr, um halb acht.",
-      "Teach halb as half an hour before the next hour: halb acht = 7:30.",
-      "Contrast nach and vor clearly: zehn nach sieben, zehn vor acht.",
+      "Use um with an exact clock time; ab for a start time; von … bis for a period; bis for an end time.",
+      "vor = before; nach = after. Viertel vor acht is 07:45, but vor 8 Uhr can be any earlier time.",
+      "halb names the next hour: halb acht = 07:30.",
+      "morgens, vormittags, mittags, nachmittags, abends and nachts describe approximate parts of the day.",
+      "Conjugated verb position two and separable prefix last: Ich stehe um sechs Uhr auf.",
     ],
     modelExamplesDe: [
-      "Es ist sieben Uhr.",
-      "Es ist halb acht.",
-      "Der Kurs beginnt um Viertel nach fünf.",
-      "Ich stehe um zehn vor sieben auf.",
+      "Das Museum ist ab 10 Uhr geöffnet.",
+      "Der Unterricht ist von 8 bis 10 Uhr.",
+      "Vormittags lerne ich Deutsch.",
+      "Mittags esse ich mit meiner Familie.",
+      "Nachmittags kaufe ich ein.",
+      "Am Montag stehe ich um 6 Uhr auf.",
     ],
     commonMistakesEn: [
-      "Reading halb acht as 8:30 instead of 7:30.",
-      "Leaving out um before a specific clock time.",
-      "Confusing vor with nach when the minute hand is before the next hour.",
+      "Interpreting halb acht as 8:30 rather than 7:30.",
+      "Confusing ab 10 Uhr (from ten) and bis 10 Uhr (until ten).",
+      "Confusing the exact 07:45 expression Viertel vor acht with the broad interval vor 8 Uhr.",
+      "Confusing morgen (tomorrow) with morgens (in the mornings), or vormittags with nachmittags.",
+      "Leaving the separable prefix next to the conjugated verb: Ich aufstehe instead of Ich stehe … auf.",
+      "Thinking ab in ab 10 Uhr is a separable verb prefix like ab- in abholen.",
     ],
   },
   "A1-8": {
