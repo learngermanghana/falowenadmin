@@ -119,6 +119,12 @@ test('missing answer key preserves original work and routes to tutor without sco
   assert.equal(store.rows.get('submissions/s').markingStatus,'needs_review');
   assert.equal([...store.rows.keys()].some(k=>k.startsWith('scores/')),false);
   assert.equal([...store.rows.keys()].some(k=>k.startsWith('studentNotifications/')),false);
+  const failedReview = store.rows.get('markingResults/s');
+  assert.equal(failedReview.source, 'automatic_course_marking');
+  assert.equal(failedReview.status, 'needs_review');
+  assert.equal(failedReview.publicationStatus, 'awaiting_approval');
+  assert.match(failedReview.publicationReviewReasons[0], /No registered answer key/);
+  assert.equal(failedReview.result.finalScore, undefined);
 });
 for (const title of [true, 'TRUE', undefined, 'A1 · Day 1 · Grüße']) test(`automatic export uses a real assignment title (${title})`,async()=>{
   const store=memoryDb({'markingJobs/j':{automatic:true,submissionPath:'submissions/s',level:'A1',assignmentKey:'A1-1.1',status:'pending'},
