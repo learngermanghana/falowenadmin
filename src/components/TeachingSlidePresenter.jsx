@@ -144,6 +144,10 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerMode, setTimerMode] = useState("activity");
   const [activityTimerMinutes, setActivityTimerMinutes] = useState(DEFAULT_ACTIVITY_TIMER_MINUTES);
+  // The teacher can change this while staying on the same lesson stage. Keep
+  // the latest choice available when a different stage is initialized, without
+  // making preset changes themselves retrigger the stage initialization effect.
+  const activityTimerMinutesRef = useRef(DEFAULT_ACTIVITY_TIMER_MINUTES);
   const [rosterCount, setRosterCount] = useState(0);
   const [warmupQuestionCount, setWarmupQuestionCount] = useState(4);
   const [warmupSupportOpen, setWarmupSupportOpen] = useState({});
@@ -348,7 +352,10 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
   function setTimerMinutes(minutes, mode = "activity") {
     const safeMinutes = Math.max(0, Number(minutes || 0));
     const seconds = safeMinutes * 60;
-    if (a2B1ActivityTimer && safeMinutes) setActivityTimerMinutes(safeMinutes);
+    if (a2B1ActivityTimer && safeMinutes) {
+      activityTimerMinutesRef.current = safeMinutes;
+      setActivityTimerMinutes(safeMinutes);
+    }
     setTimerMode(mode);
     setTimerRemaining(seconds);
     setTimerRunning(false);
@@ -534,16 +541,17 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
       setTimerMode("activity");
       if (stage?.variant === "interactive-warmup" || stage?.variant === "interactive-listening") {
         const minutes = stage?.variant === "interactive-warmup" ? 10 : Number(stage?.suggestedMinutes || 6);
+        activityTimerMinutesRef.current = minutes;
         setActivityTimerMinutes(minutes);
         setTimerRemaining(minutes * 60);
       } else {
-        setTimerRemaining(activityTimerMinutes * 60);
+        setTimerRemaining(activityTimerMinutesRef.current * 60);
       }
       return;
     }
     setTimerMode("stage");
     setTimerRemaining(stage?.suggestedMinutes ? stage.suggestedMinutes * 60 : 0);
-  }, [stage?.id, stage?.suggestedMinutes, stage?.timingMode, a2B1ActivityTimer, activityTimerMinutes]);
+  }, [slide?.assignmentId, stage?.id, stage?.variant, stage?.suggestedMinutes, stage?.timingMode, a2B1ActivityTimer]);
 
   useEffect(() => {
     const node = contentRef.current;
