@@ -190,6 +190,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
   const presenterLevel = String(slide.course || "").trim().toUpperCase();
   const readingEligible = ["A2", "B1"].includes(presenterLevel)
     && stage?.type === "knowledge"
+    && stage?.variant !== "pharmacy-listening"
     && Boolean(String(stage?.textDe || "").trim());
   const numberedKnowledgeSentences = useMemo(
     () => numberedPresenterSentences(stage?.textDe || ""),
@@ -527,8 +528,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
     }
     if (a2B1ActivityTimer) {
       setTimerMode("activity");
-      if (stage?.type === "pharmacy-warmup" || stage?.type === "pharmacy-listening") {
-        const minutes = stage?.type === "pharmacy-warmup" ? 10 : 6;
+      if (stage?.variant === "pharmacy-warmup" || stage?.variant === "pharmacy-listening") {
+        const minutes = stage?.variant === "pharmacy-warmup" ? 10 : 6;
         setActivityTimerMinutes(minutes);
         setTimerRemaining(minutes * 60);
       } else {
@@ -656,7 +657,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
     : [];
   const timerExpired = showPresenterTimer && timerRemaining === 0 && !timerRunning;
   const timerPresets = a2B1ActivityTimer
-    ? (stage?.type === "pharmacy-warmup" || stage?.type === "pharmacy-listening"
+    ? (stage?.variant === "pharmacy-warmup" || stage?.variant === "pharmacy-listening"
       ? [10, 7, 6, 5, 3, 2, 1] : A2_B1_ACTIVITY_TIMER_PRESETS)
     : [...new Set([stage.suggestedMinutes, 2, 3, 5, 10].filter(Boolean))];
   const warmupTimerTotalSeconds = Math.max(1, activityTimerMinutes * 60);
@@ -875,8 +876,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                 </section>
               ) : null}
             </>
-          ) : (stage.type === "pharmacy-warmup" || stage.type === "pharmacy-listening") ? (
-            <A2Day17Activities key={stage.type} stage={stage} />
+          ) : (stage.variant === "pharmacy-warmup" || stage.variant === "pharmacy-listening") ? (
+            <A2Day17Activities key={stage.variant} stage={stage} />
           ) : stage.type === "scenario-challenge" ? (
             <section className="presenter-career-challenge" aria-label="Teacher-led scenario challenge">
               <div className="presenter-career-challenge-heading">
