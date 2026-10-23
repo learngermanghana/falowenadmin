@@ -533,7 +533,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
     if (a2B1ActivityTimer) {
       setTimerMode("activity");
       if (stage?.variant === "interactive-warmup" || stage?.variant === "interactive-listening") {
-        const minutes = stage?.variant === "interactive-warmup" ? 10 : 6;
+        const minutes = stage?.variant === "interactive-warmup" ? 10 : Number(stage?.suggestedMinutes || 6);
         setActivityTimerMinutes(minutes);
         setTimerRemaining(minutes * 60);
       } else {
@@ -662,7 +662,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
   const timerExpired = showPresenterTimer && timerRemaining === 0 && !timerRunning;
   const timerPresets = a2B1ActivityTimer
     ? (stage?.variant === "interactive-warmup" || stage?.variant === "interactive-listening"
-      ? [10, 7, 6, 5, 3, 2, 1] : A2_B1_ACTIVITY_TIMER_PRESETS)
+      ? [...new Set([stage?.suggestedMinutes, 10, 7, 6, 5, 3, 2, 1].filter(Boolean))] : A2_B1_ACTIVITY_TIMER_PRESETS)
     : [...new Set([stage.suggestedMinutes, 2, 3, 5, 10].filter(Boolean))];
   const warmupTimerTotalSeconds = Math.max(1, activityTimerMinutes * 60);
   const warmupTimerRatio = timerRemaining / warmupTimerTotalSeconds;
