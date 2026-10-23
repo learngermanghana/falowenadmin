@@ -37,6 +37,6 @@ jobs:
       - name: Validate generated service
         run: node --check src/services/markingServiceBase.js
       - name: Run focused regressions
-        run: node --test tests/score-attempts.test.js tests/score-save-reservation.test.js tests/marking-queue.test.js
+        run: node --test tests/score-attempts.test.js tests/score-save-reservation.test.js tests/marking-queue.test.js tests/marking-health-routing.test.js
       - name: Lint touched JavaScript
         run: npx eslint src/services/markingServiceBase.js src/utils/markingQueue.js src/utils/scoreSaveReservation.js scripts/patchDuplicateScoreVerification.mjs tests/marking-queue.test.js tests/score-save-reservation.test.js

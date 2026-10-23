@@ -69,9 +69,17 @@ export default function AutomaticMarkingReview() {
     } catch (err) { setError(err.message); } finally { setBusy(false); }
   }
   const visibleRows = page.rows.filter(row => showReviewed || !isAutomaticResultPublished(row) || !(row.reviewClosedAt || row.tutorReview));
+  const reviewReasonSummary = row => {
+    const reasons = (row.publicationReviewReasons || row.result?.reviewReasons || [])
+      .map(reason => typeof reason === 'string' ? reason : reason?.message || reason?.reason || reason?.code || '')
+      .filter(Boolean);
+    if (isAutomaticResultPublished(row)) return '—';
+    return reasons.length ? reasons[0] + (reasons.length > 1 ? ` (+${reasons.length - 1} more)` : '')
+      : 'Open for marking evidence';
+  };
   const original = detail?.audit?.result || detail?.row.result;
   return <section className="marking-card" aria-label="Automatic marking audit">
-    <h2>AI-marked work</h2>
+    <h2>AI marking · Results and failed attempts</h2>
     {String(auth.currentUser?.email || '').toLowerCase() === 'moxflex@gmail.com' && <section aria-label="Marking health" style={{ padding: 12, border: '1px solid #cbd5e1', borderRadius: 8, marginBottom: 16 }}>
       <h3>Marking health</h3>
       <p>Check queued, delayed, review-required and Sheet sync jobs without scanning all student submissions.</p>
@@ -91,19 +99,20 @@ export default function AutomaticMarkingReview() {
         <p>For a verified submission with no marking job, open Results → Saved Drafts → Check submission. Recovery is available only if the job and score are truly missing.</p>
       </div>}
     </section>}
-    <p>Open saved work to check the AI decision. Corrections keep the original AI evidence and queue a Sheet update.</p>
+    <p>Successful assessments and attempts stopped by missing keys, identity checks or service errors appear here. Open the work to see the recorded reason before correcting it. A failed attempt has no automatic score.</p>
     <button type="button" disabled={busy} onClick={() => load()}>Refresh</button>
     <label style={{ marginLeft: 16 }}><input type="checkbox" checked={showReviewed} onChange={event => setShowReviewed(event.target.checked)} /> Show reviewed</label>
     {busy && <p role="status">Loading…</p>}
     {error && <p role="alert">{error}</p>}
     {message && <p role="status">{message}</p>}
     <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', textAlign: 'left' }}>
-      <thead><tr><th>Student</th><th>Assignment</th><th>Score</th><th>Status</th><th>Action</th></tr></thead>
+      <thead><tr><th>Student</th><th>Assignment</th><th>Score</th><th>Status</th><th>Review reason</th><th>Action</th></tr></thead>
       <tbody>{visibleRows.map(row => <tr key={row.id}>
         <td>{row.studentName || row.studentCode || row.studentId || 'Student'}</td>
         <td>{assignmentTitle(row.assignmentTitle, row.assignment, row.result?.assignmentKey, row.assignmentId)}</td>
         <td>{row.finalScore ?? '—'}</td>
         <td>{automaticPublicationLabel(row)}</td>
+        <td style={{ maxWidth: 280, overflowWrap: 'anywhere' }}>{reviewReasonSummary(row)}</td>
         <td><button type="button" disabled={busy} onClick={() => open(row)}>Open & review</button></td>
       </tr>)}</tbody>
     </table></div>
@@ -116,9 +125,11 @@ export default function AutomaticMarkingReview() {
       </section>}
       <h3>Submitted work</h3>
       <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{detail.submission.submissionText || detail.submission.text || detail.submission.answer || detail.submission.workContent || 'No text available'}</pre>
-      <h3>Original AI result</h3>
-      <p>Score: {original?.finalScore ?? original?.score ?? '—'}/100 · Confidence: {original?.confidence ?? '—'}</p>
-      <p style={{ whiteSpace: 'pre-wrap' }}>{original?.feedback}</p>
+      <h3>{original?.finalScore == null && original?.score == null ? 'No AI score · marking stopped' : 'Original AI result'}</h3>
+      {original?.finalScore == null && original?.score == null
+        ? <p>Automatic marking did not produce a score. Review the reason above, then enter a tutor score and feedback if appropriate.</p>
+        : <><p>Score: {original.finalScore ?? original.score}/100 · Confidence: {original.confidence ?? '—'}</p>
+          <p style={{ whiteSpace: 'pre-wrap' }}>{original.feedback}</p></>}
       <details><summary>Marking evidence and answer key</summary><pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{JSON.stringify(detail.audit || original, null, 2)}</pre></details>
       {detail.row.tutorReview && <p>Last tutor correction: {detail.row.tutorReview.reason}</p>}
       {detail.reviews?.length > 0 && <details><summary>Tutor correction history</summary>

@@ -101,12 +101,23 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         const existingScore = await tx.get(scoreRef);
         const currentSubmission = (await tx.get(submissionRef)).data();
         if (fresh.token !== token || currentSubmission.markingStatus === 'marked') return;
-        // Never overwrite a tutor's decision or a previous attempt automatically.
-        const publish = release && !existingScore.exists;
+        // A saved score for this exact, already-published automatic attempt is
+        // not a *second* attempt requiring teacher approval. Respect the saved
+        // result and never recreate the Sheet outbox or notification.
+        const previous = existingScore.exists ? existingScore.data() || {} : null;
+        const existingSameAttempt = Boolean(previous
+          && previous.source === 'automatic_course_marking'
+          && previous.submissionPath === snap.ref.path
+          && !previous.reviewedByTutor && !previous.manualScoreOverride
+          && !previous.tutorReviewed && !previous.reviewedBy
+          && Number.isFinite(Number(previous.score))
+          && Number(previous.score) === Number(result.finalScore ?? result.score));
+        // Never overwrite a tutor's decision or an older/different attempt.
+        const publish = release && (!existingScore.exists || existingSameAttempt);
         const status = publish ? 'marked' : 'needs_review';
         const publicationReviewReasons = publish ? [] : [
           ...(speakingReviewRequired ? ['Speaking checkpoint requires verified server assessment or tutor review; student-supplied score is not authoritative.'] : []),
-          ...(existingScore.exists ? ['An existing score is saved for this assignment; automatic marking cannot overwrite it.'] : []),
+          ...(existingScore.exists && !existingSameAttempt ? ['An existing score is saved for this assignment; automatic marking cannot overwrite it.'] : []),
           ...(result.status !== 'marked' ? ['The marking pipeline requested tutor review.'] : []),
           ...(!Number.isFinite(Number(result.confidence)) || Number(result.confidence) < 0.8 ? ['AI confidence is below the automatic-release threshold.'] : []),
           ...(result.consistencyWarnings || []).map(value => typeof value === 'string' ? value : value.message || value.code || 'Marking consistency warning.'),
@@ -129,11 +140,16 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         }));
         tx.set(submissionRef, clean({
           markingStatus: status, markingUpdatedAt: timestamp,
-          ...(publish ? { finalScore: result.finalScore ?? result.score, aiFeedback: result.feedback,
-            feedbackSentToStudent: true, resultUrl: RESULTS_URL, automaticMarking: true } : {}),
+          ...(publish ? {
+            finalScore: existingSameAttempt ? previous.score : (result.finalScore ?? result.score),
+            aiFeedback: existingSameAttempt ? (previous.comments || previous.feedback || result.feedback) : result.feedback,
+            feedbackSentToStudent: true, resultUrl: RESULTS_URL, automaticMarking: true,
+          } : {}),
         }), { merge: true });
         tx.set(jobRef, { status, publicationReviewReasons, completedAt: timestamp, leaseUntil: 0 }, { merge: true });
-        if (!publish) return;
+        // An idempotent reconciliation must not overwrite an existing score,
+        // repeat a notification, or create a second Sheet sync.
+        if (!publish || existingSameAttempt) return;
         const row = clean({
           studentcode: studentCode, studentCode, studentId,
           studentEmail: student.email || student.studentEmail || '',
@@ -185,10 +201,32 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         if (fresh.token !== token) return;
         const retry = transient && Number(fresh.attempts || 0) < 2;
         const status = retry ? 'pending' : 'needs_review';
-        tx.set(jobRef, { status, error: String(error.message).slice(0, 500),
-          errorKind: transient ? 'temporary_service_failure' : 'marking_validation',
-          lastErrorAt: new Date(now()).toISOString(), leaseUntil: 0 }, { merge: true });
+        const message = String(error?.message || error || 'Unknown marking failure').slice(0, 500);
+        const errorKind = transient ? 'temporary_service_failure' : 'marking_validation';
+        const timestamp = new Date(now()).toISOString();
+        // A failure before an AI result (missing key, identity, service outage)
+        // must still be visible in Admin's AI-marking tab. The previous flow only
+        // changed the job status, leaving the AI review list empty.
+        const reviewRef = db.collection('markingResults').doc(snap.id);
+        const existingReview = retry ? null : await tx.get(reviewRef);
+        tx.set(jobRef, { status, error: message, errorKind,
+          lastErrorAt: timestamp, leaseUntil: 0 }, { merge: true });
         tx.set(submissionRef, { markingStatus: status }, { merge: true });
+        if (!retry && !existingReview.exists) {
+          const reason = 'Automatic marking could not finish: ' + message;
+          tx.set(reviewRef, clean({
+            submissionId: snap.id, submissionPath: snap.ref.path,
+            studentId: submission.studentId || submission.uid || submission.userId || '',
+            studentCode: job.studentCode || submission.studentCode || submission.studentcode || '',
+            studentName: submission.studentName || submission.name || '',
+            level: job.level, assignmentId: job.assignmentKey,
+            assignmentTitle: assignmentTitle(submission.assignmentTitle, submission.title, job.assignmentKey),
+            status: 'needs_review', publicationStatus: 'awaiting_approval', sentToStudent: false,
+            publicationReviewReasons: [reason], errorKind, attempts: fresh.attempts || 0,
+            result: { status: 'needs_review', confidence: 0, reviewReasons: [reason] },
+            source: 'automatic_course_marking', createdAt: timestamp, updatedAt: timestamp,
+          }));
+        }
       });
       if (transient) {
         // On the second failure the job becomes needs_review; do not make unbounded AI calls.

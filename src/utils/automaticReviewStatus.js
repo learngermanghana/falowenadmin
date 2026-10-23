@@ -1,6 +1,6 @@
 export const isAutomaticResultPublished = row => row?.sentToStudent === true;
 export const automaticPublicationLabel = row => !isAutomaticResultPublished(row)
-  ? 'Awaiting approval' : row.tutorReview?.action === 'approve' ? 'Published to student'
+  ? 'Tutor review required' : row.tutorReview?.action === 'approve' ? 'Published to student'
     : row.tutorReview ? 'Tutor corrected' : 'Published to student';
 export function automaticReviewReasons(detail) {
   const row = detail.row || {};
