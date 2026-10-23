@@ -365,31 +365,31 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
   },
   "A1-7": {
     "words": [
-      "die Uhr",
-      "halb",
-      "Viertel",
-      "vor",
-      "nach"
+      "ab",
+      "von … bis",
+      "vormittags",
+      "nachmittags",
+      "aufstehen"
     ],
     "mission": {
-      "title": "Wann beginnt der Kurs?",
-      "situation": "Dein Deutschkurs beginnt um 7:30 Uhr.",
-      "prompt": "Sage die Uhrzeit auf Deutsch mit „halb“.",
-      "model": "Der Kurs beginnt um halb acht.",
-      "hint": "halb acht bedeutet 7:30, nicht 8:30.",
-      "secondRound": "Zweite Runde: 7:15 → Viertel nach sieben."
+      "title": "Ein Tag mit Deutschkurs",
+      "situation": "Dein Deutschkurs ist von 8 bis 10 Uhr. Das Museum ist ab 10 Uhr geöffnet.",
+      "prompt": "Sage die Kurszeit und wann das Museum öffnet.",
+      "model": "Mein Deutschkurs ist von 8 bis 10 Uhr. Das Museum öffnet ab 10 Uhr.",
+      "hint": "von … bis = from … to; ab = starting at.",
+      "secondRound": "Zweite Runde: Der Laden ist bis 18 Uhr geöffnet. Wann schließt er?"
     },
     "reaction": {
-      "title": "Ein Blick auf die Uhr",
-      "situation": "Dein Partner hat keine Uhr.",
-      "prompt": "Die Lehrkraft fragt: „Wie spät ist es? Es ist 8:30 Uhr.“ Antworte mit „halb“.",
-      "model": "Es ist halb neun.",
-      "note": "Bei halb nennt man die nächste Stunde.",
+      "title": "Annas Tagesablauf",
+      "situation": "Anna erzählt von ihrem Tag.",
+      "prompt": "Die Lehrkraft fragt: „Was macht Anna vormittags?“ Antworte: Deutsch lernen.",
+      "model": "Vormittags lernt Anna Deutsch.",
+      "note": "vormittags means before noon; accept Am Vormittag lernt Anna Deutsch.",
       "second": {
-        "situation": "Ein Freund hat die Uhrzeit nicht verstanden.",
-        "prompt": "Die Lehrkraft sagt: „Es ist 7:15 Uhr.“ Sage die Uhrzeit mit Viertel.",
-        "model": "Es ist Viertel nach sieben.",
-        "note": "Viertel nach sieben entspricht 7:15."
+        "situation": "Anna erzählt weiter.",
+        "prompt": "Die Lehrkraft fragt: „Was macht Anna nachmittags?“ Antworte mit einkaufen.",
+        "model": "Nachmittags kauft Anna ein.",
+        "note": "einkaufen separates: kauft … ein."
       }
     }
   },
