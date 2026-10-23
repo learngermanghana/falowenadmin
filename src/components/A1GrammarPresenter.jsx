@@ -692,11 +692,19 @@ export default function A1GrammarPresenter({
                 <strong>{stage.examReadiness ? "A1 speaking readiness method" : "A1 grammar-check method"}</strong>
                 <p>{stage.examReadiness
                   ? "Warm-up diagnosis → exam map → Teil 1 → live performance/knowledge checks → mini mock exam → readiness decision → fresh exit check."
-                  : "Grammar notes first → check understanding → correct the target rule → five-word Mini-Mission → listen and respond → unaided exit check."}</p>
+                  : (Array.isArray(slide.grammarTeachingSections)
+                    ? "Quick check → five grammar topics → individual understanding checks → daily-routine practice → unaided exit check."
+                    : "Grammar notes first → check understanding → correct the target rule → five-word Mini-Mission → listen and respond → unaided exit check.")}</p>
                 <small>{stage.examReadiness
                   ? "Use grammar only when it blocks the speaking task. During the mock exam, reduce teacher help and judge whether the student can perform independently."
                   : "Use the grammar page to teach. Presenter should not reteach the lesson: it checks whether each learner can recognize, correct and apply the grammar. Record only Correct or Needs review."}</small>
               </div>
+              {Array.isArray(slide.grammarTeachingSections) && slide.workbookConnection ? (
+                <div className="presenter-workbook-actions">
+                  {slide.workbookConnection.grammarUrl ? <a href={lessonUrl(slide.workbookConnection.grammarUrl)} target="_blank" rel="noreferrer">Open updated grammar notes</a> : null}
+                  {slide.workbookConnection.workbookUrl ? <a href={lessonUrl(slide.workbookConnection.workbookUrl)} target="_blank" rel="noreferrer">Open unchanged A1-7 workbook</a> : null}
+                </div>
+              ) : null}
             </>
           ) : stage.type === "check" ? (
             <section className="presenter-question-reveal">
