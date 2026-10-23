@@ -18,6 +18,15 @@ function noteFor(part){
   const index=Number(part?.correctIndex);
   return Number.isInteger(index)&&index>=0&&index<3?"abc"[index]:"";
 }
+function PartAudio({blob,label}){
+  const [src,setSrc]=useState("");
+  useEffect(()=>{
+    if(!(blob instanceof Blob)){setSrc("");return;}
+    const url=URL.createObjectURL(blob);setSrc(url);
+    return()=>URL.revokeObjectURL(url);
+  },[blob]);
+  return src?<audio aria-label={label} controls preload="none" src={src}/>:null;
+}
 export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="B1"}){
   const [level,setLevel]=useState(initialLevel);
   const [mock,setMock]=useState("03");
@@ -178,7 +187,7 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
         {Array.from({length:15},(_,i)=>String(i+1).padStart(2,"0")).map(n=><option key={n} value={n}>Mock {n}</option>)}
       </select></label>
       <label>Voice quality<select value={engine} disabled={!!working} onChange={e=>setEngine(e.target.value)}>
-        <option value="lite">Flash Lite (budget)</option><option value="standard">Flash (higher quality)</option>
+        <option value="lite">Flash Lite (budget)</option><option value="flash">Flash (higher quality)</option>
       </select></label>
     </div>
     <label>Theme across the mock<input value={topic} maxLength={210} disabled={!!working}
@@ -197,8 +206,7 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
             <small>{hasAudio?"MP3 ready":r?.script?"Script saved":"Not generated"}</small></div>
           <p>{r?.questions?.length||p.questionCount} questions · {p.repeats===2?"2 plays":"1 play"}</p>
           {r?.error?<p role="alert" className="hoeren-validation">{r.error}</p>:null}
-          {hasAudio?<audio aria-label={`Teil ${i} generated audio`} controls preload="none"
-            src={URL.createObjectURL(r.audio)} onEnded={event=>{event.currentTarget.currentTime=0}}/>:null}
+          {hasAudio?<PartAudio blob={r.audio} label={`Teil ${i} generated audio`}/>:null}
           {r?.questions?.length?<details><summary>Review questions and answer key ({r.questions.length})</summary>
             <ol>{r.questions.map((q,j)=><li key={j}>{q.question}
               <small> Answer: {noteFor(q)} {q.evidence?"· evidence: "+q.evidence:""}</small>
