@@ -151,6 +151,8 @@ export async function buildExamZip({level,mock,parts,includeSlides=true}){
       for(let start=0;start<p.questions.length;start+=5){
         const img=await paintSlide(level,mock,number,p.questions.slice(start,start+5),totalQuestions-p.questions.length+start);
         entries.push([`${folder}/YouTube-Slides/teil-${number}-seite-${1+Math.floor(start/5)}.png`,img]);
+        const solution=await paintSlide(level,mock,number,p.questions.slice(start,start+5),totalQuestions-p.questions.length+start,true);
+        entries.push([`${folder}/YouTube-Slides/loesungen-teil-${number}-seite-${1+Math.floor(start/5)}.png`,solution]);
       }
     }
   }
