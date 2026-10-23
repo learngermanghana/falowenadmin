@@ -46,7 +46,8 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
   const profile=profiles?.[level]||{};
   const indexes=keysOf(profile);
   const complete=indexes.length>0&&indexes.every(i=>records[i]?.audio instanceof Blob&&records[i]?.questions?.length&&records[i]?.approved);
-  const missing=indexes.filter(i=>!records[i]?.script);\n  const pendingMixed=level==="B1"&&records["1"]?.script&&records["1"]?.questions?.length===5?1:0;
+  const missing=indexes.filter(i=>!records[i]?.script);
+  const pendingMixed=level==="B1"&&records["1"]?.script&&records["1"]?.questions?.length===5?1:0;
   useEffect(()=>{
     let active=true;
     setLoading(true);setError("");setNotice("");setRecords({});cacheRef.current={};
@@ -114,14 +115,16 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
     if(new Set(needNew).size>remaining.remaining.speech)throw new Error(
       `Teil ${index} needs ${new Set(needNew).size} voice requests but only ${remaining.remaining.speech} remain. Cached scenes are safe; resume later.`
     );
-    const wavClips=[];\n    const generatedThisRun=new Map();
+    const wavClips=[];
+    const generatedThisRun=new Map();
     for(let i=0;i<scenes.length;i++){
       if(cancelRef.current)return;
       let wav=cached[i]||generatedThisRun.get(voiceKeys[i]);
       if(!wav){
         setWorking(`Teil ${index}: voice scene ${i+1}/${scenes.length}`);
         const reply=await makeSpeechClip({turns:scenes[i].turns,engine});
-        wav=base64WavToBytes(reply.audioBase64);\n        generatedThisRun.set(voiceKeys[i],wav);
+        wav=base64WavToBytes(reply.audioBase64);
+        generatedThisRun.set(voiceKeys[i],wav);
         if(!await saveVoice(voiceKeys[i],wav))
           setStorageWarning("Voice-scene storage is unavailable. Avoid refreshing before this Teil is exported.");
       }
@@ -142,7 +145,8 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
       checkReady();cancelRef.current=false;setError("");setNotice("");setWorking("Checking available Gemini requests");
       const quota=await getStudioStatus();setQuota(quota.remaining);
       const targets=partIndex?[partIndex]:indexes.filter(i=>!(cacheRef.current[i]?.audio instanceof Blob));
-      const required=countScripts(level,targets.filter(i=>!cacheRef.current[i]?.script)) +\n        (level==="B1" && targets.includes("1") && cacheRef.current["1"]?.script && cacheRef.current["1"]?.questions?.length===5?1:0);
+      const required=countScripts(level,targets.filter(i=>!cacheRef.current[i]?.script)) +
+        (level==="B1" && targets.includes("1") && cacheRef.current["1"]?.script && cacheRef.current["1"]?.questions?.length===5?1:0);
       if(quota.remaining.script<required)throw new Error(
         `This run needs up to ${required} script requests, but ${quota.remaining.script} remain. Generate fewer Teile or resume after the reset.`
       );
@@ -201,7 +205,8 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
       Speech requests depend on the generated dialogues. Cached scenes are reused, pauses and repeats cost no extra Gemini calls.
       {level==="B1"?" B1 Teil 1 uses an additional request for five paired multiple-choice questions (30 total across B1).":""}
     </p>
-    {quota?<p className="hoeren-hint">Last quota check: {quota.script} script requests, {quota.speech} voice requests remaining.</p>:null}\n    <div className="hoeren-batch-grid">
+    {quota?<p className="hoeren-hint">Last quota check: {quota.script} script requests, {quota.speech} voice requests remaining.</p>:null}
+    <div className="hoeren-batch-grid">
       {indexes.map(i=>{
         const p=profile[i],r=records[i],hasAudio=r?.audio instanceof Blob;
         return <article key={i} className="hoeren-batch-part">
