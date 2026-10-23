@@ -8,7 +8,7 @@ import { getB1WarmupFollowUp } from "../data/b1WarmupFollowUps.js";
 import { getB1VocabularyQuestion } from "../data/b1VocabularyQuestions.js";
 import { getA2B1KnowledgeAnswers } from "../data/a2B1KnowledgeAnswers.js";
 import { getA2FocusedPractice, getA2PresenterKnowledge } from "../data/a2PresenterKnowledge.js";
-import { A2_DAY17_AUDIO_KEY, A2_DAY17_WARMUP, A2_DAY17_LISTENING, A2_DAY17_TRANSCRIPT } from "../data/a2Day17Opening.js";
+import { getInteractiveLessonOpening } from "../data/interactiveLessonOpenings.js";
 import { getB1FocusedPractice, getB1PresenterKnowledge } from "../data/b1PresenterKnowledge.js";
 import { getPresenterTopicFoundation } from "../data/presenterTopicFoundations.js";
 import { getSpeakingDifficultySelection } from "../data/presenterSpeakingDifficulty.js";
@@ -1594,15 +1594,6 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         suggestedMinutes: warmupSuggestedMinutes(slide),
         timingMode: PER_STUDENT_WARMUP_LEVELS.has(level) ? "per-student" : "",
         timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length),
-        ...(normalizedAssignmentId(slide) === "A2-6.17" ? {
-          variant: "pharmacy-warmup",
-          kicker: "10-Minuten-Challenge",
-          title: "In der Apotheke · Mitmach-Start",
-          challengeItems: A2_DAY17_WARMUP,
-          timingMode: "",
-          timingLabel: "10 Minuten für die ganze Klasse",
-          suggestedMinutes: 10,
-        } : {}),
       },
       ...(knowledge ? [{
         id: "knowledge",
@@ -1614,14 +1605,6 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         answerItems: buildKnowledgeAnswerItems(knowledge, slide.assignmentId),
         instruction: knowledge.readingPurpose,
         suggestedMinutes: 5,
-        ...(normalizedAssignmentId(slide) === "A2-6.17" ? {
-          variant: "pharmacy-listening",
-          kicker: "Hören · Beratungsdetektiv",
-          listeningItems: A2_DAY17_LISTENING,
-          transcript: A2_DAY17_TRANSCRIPT,
-          audioKey: A2_DAY17_AUDIO_KEY,
-          suggestedMinutes: 6,
-        } : {}),
       }] : []),
       {
         id: "phrases",
@@ -2063,7 +2046,39 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
   const presenterV2 = isTeachingPresenterV2Slide(slide);
   const level = classroomLevel(slide);
   const stages = presenterV2 ? buildPresenterV2Stages(slide, topicLabel) : buildClassicStages(slide, topicLabel);
-  const filtered = stages.filter((stage) => {
+  const lessonOpening = presenterV2 && ["A2", "B1"].includes(level)
+    ? getInteractiveLessonOpening(normalizedAssignmentId(slide)) : null;
+  // Keep the original teacher reading and warm-up checks in their canonical
+  // stages for audits; only switch their in-class visual presentation.
+  const prepared = lessonOpening ? stages.map((stage) => {
+    if (stage.id === "warmup") return {
+      ...stage, variant: "interactive-warmup", kicker: "10-Minuten-Challenge",
+      title: lessonOpening.title, challengeItems: lessonOpening.warmup,
+      suggestedMinutes: 10, timingMode: "",
+      timingLabel: "10 Minuten für die ganze Klasse",
+      teacherPurpose: {
+        student: "Entscheiden, korrigieren und in vollständigen Sätzen sprechen.",
+        teacher: "Vier kurze Aufgaben in zehn Minuten. Antworten erst nach dem mündlichen Versuch zeigen.",
+      },
+    };
+    if (stage.id === "knowledge" && lessonOpening.listening) return {
+      ...stage, variant: "interactive-listening", kicker: "Hören · Hördetektiv",
+      title: lessonOpening.listening.title,
+      listeningItems: lessonOpening.listening.questions,
+      transcript: lessonOpening.listening.transcript,
+      audioKey: lessonOpening.listening.audioKey,
+      audioLevel: lessonOpening.listening.level,
+      audioDay: lessonOpening.listening.day,
+      previewWords: lessonOpening.listening.previewWords || [],
+      suggestedMinutes: 6,
+      teacherPurpose: {
+        student: "Hörfragen zuerst lesen, Dialog hören, Informationen entnehmen und begründen.",
+        teacher: "Fragen gemeinsam vor dem Audio zeigen. Keine automatischen Fragenwechsel während des Hörens.",
+      },
+    };
+    return stage;
+  }) : stages;
+  const filtered = prepared.filter((stage) => {
     if (stage.type === "intro") return Boolean(stage.title || stage.topic || stage.objective);
     if (stage.type === "task") return Boolean(stage.body);
     if (stage.type === "dialogue") return Array.isArray(stage.turns) && stage.turns.length > 0;
