@@ -65,8 +65,12 @@ export function shouldIncludeInIncomingQueue(row = {}, lastScore = null, queueSt
   if (lastScore && scoreTime && submissionTime > scoreTime) return true;
 
   const workflowStatus = normalize(raw.workflowStatus || raw.status || row.status);
+  // The learner preserves status="submitted" after a job finishes. A terminal
+  // marking state is authoritative for the *same* attempt, even if no
+  // markingJobCreatedAt marker was retained by an older submission.
+  if (TERMINAL_SUBMISSION_STATUSES.has(markingStatus) && !isResubmission(row)) return false;
   if (OPEN_SUBMISSION_STATUSES.has(markingStatus) || OPEN_SUBMISSION_STATUSES.has(workflowStatus) || isResubmission(row)) return true;
-  if (TERMINAL_SUBMISSION_STATUSES.has(markingStatus) || TERMINAL_SUBMISSION_STATUSES.has(workflowStatus)) return false;
+  if (TERMINAL_SUBMISSION_STATUSES.has(workflowStatus)) return false;
   if (row.feedbackSentToStudent || raw.feedbackSentToStudent) return false;
   if (row.finalScore !== null && row.finalScore !== undefined) return false;
   if (raw.aiFeedback || raw.tutorFeedback || raw.feedback) return false;
