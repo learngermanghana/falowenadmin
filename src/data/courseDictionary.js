@@ -15,7 +15,7 @@ export const courseDictionary = {
     "A1-4": { assignment_id: "A1-4", chapter: "4", de: "Länder und Sprachen", en: "Countries and Languages" },
     "A1-5": { assignment_id: "A1-5", chapter: "5", de: "Nominativ und Akkusativ", en: "Nominative and Accusative Cases" },
     "A1-6": { assignment_id: "A1-6", chapter: "6", de: "Gegenstände, Farben und Possessivartikel", en: "Objects, Colors and Possessive Articles" },
-    "A1-7": { assignment_id: "A1-7", chapter: "7", de: "Die 12-Stunden-Uhr", en: "The 12 Hour Clock" },
+    "A1-7": { assignment_id: "A1-7", chapter: "7", de: "Die Uhrzeit und der Tagesablauf", en: "Understanding Time and Daily Routines" },
     "A1-8": { assignment_id: "A1-8", chapter: "8", de: "Die 24-Stunden-Uhr und Datum", en: "The 24 Hour Clock and Dates" },
     "A1-3.5": { assignment_id: "A1-3.5", chapter: "3.5", de: "Wiederholung: Zahlen, Zeit und Preise", en: "Numbers, Time and Prices Revision" },
     "A1-3.6": { assignment_id: "A1-3.6", chapter: "3.6", de: "Modalverben", en: "Modal Verbs" },
