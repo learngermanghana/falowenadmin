@@ -53,4 +53,4 @@ test("Vocabulary Studio uses the actual Sheet1 tab and safe fallback CSV URLs", 
   assert.doesNotMatch(src, /sheet=German_Vocabs/);
   assert.match(src, /CSV_URLS = \[\.\.\.new Set\(/);
 });
-\n
+
