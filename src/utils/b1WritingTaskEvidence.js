@@ -203,10 +203,9 @@ const RULES = {
     makeRule(/\b(?:ich\s+habe|ich\s+hatte|bei\s+mir|meine\s+erfahrung|meiner\s+erfahrung|in\s+meinem\s+heimatland|in\s+ghana|bei\s+uns|zum\s+beispiel)\b/i)
   ],
   "B1-9.26": [
-    makeCountRule([/\b(?:nach|in|auf)\s+[A-ZÄÖÜ][a-zäöüß]+|\breiseziel|ziel\b/i, /\b(?:zug|bus|auto|flugzeug|flug|bahn|fahrrad|schiff)\b/i], 2),
-    makeRule(/\b(?:problem|versp[aä]tung|ausgefallen|verloren|kaputt|krank|reservierung|koffer|gepäck)\b/i),
-    makeRule(/\b(?:gel[oö]st|angerufen|umgebucht|gefunden|ersatz|geholfen|repariert|neue\s+buchung)\b/i),
-    makeRule(/\b(?:am\s+ende|schlie[ßs]lich|danach|trotzdem|reise\s+war|gut\s+angekommen|zur[uü]ckgekehrt)\b/i),
+    makeRule(/\b(?:meiner\s+meinung|ich\s+(?:denke|finde|glaube|stimme)|ich\s+bin\s+der\s+meinung|ich\s+sehe\s+das|ich\s+bin\s+(?:einverstanden|anderer\s+meinung)|meines\s+erachtens)\b/i),
+    makeRule(/\b(?:versp[aä]tung|reiseproblem|ausgefallen|verloren|koffer|gepäck|stress|erfahrung|erlebt|weil|denn|zum\s+beispiel|grund)\b/i),
+    makeRule(/\b(?:man\s+(?:sollte|k[oö]nnte)|pufferzeit|rechtzeitig|fr[uü]h|vorher|vorbereiten|umbuchen|versicherung|hilfe|hotline|kundenservice|alternative|app|entsch[aä]digung|informieren|planen|l[oö]sen)\b/i),
   ],
   "B1-10.27": [
     makeRule(/\b(?:wichtig|umwelt|klima|ressourcen|zukunft|sch[uü]tzen|verschmutzung)\b/i),

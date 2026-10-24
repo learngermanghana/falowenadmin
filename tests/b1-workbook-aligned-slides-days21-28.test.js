@@ -22,7 +22,7 @@ const EXPECTED = {
   "B1-7.22": { day: 22, directGrammar: false, terms: ["dass", "relative", "miteinander", "füreinander"] },
   "B1-7.23": { day: 23, directGrammar: false, terms: ["könnten", "würde", "wenn", "weil"] },
   "B1-8.24": { day: 24, directGrammar: false, terms: ["dass", "weil", "um … zu", "sollten", "einerseits"] },
-  "B1-8.25": { day: 25, directGrammar: false, terms: ["Könnten Sie", "dass", "deshalb", "erstatten"] },
+  "B1-8.25": { day: 25, directGrammar: false, terms: ["einerseits", "weil", "deshalb", "Widerrufsrecht"] },
   "B1-9.26": { day: 26, directGrammar: false, terms: ["wenn", "falls", "würden", "sollten"] },
   "B1-10.27": { day: 27, directGrammar: false, terms: ["indem", "dass", "wenn", "könnte"] },
   "B1-10.28": { day: 28, directGrammar: false, terms: ["indem", "weil", "trotzdem", "dass"] },
@@ -136,26 +136,34 @@ test("Day 24 scores all seven current reading statements", () => {
   assert.match(listening, /excludes?/i);
 });
 
-test("Day 25 excludes removed writing/listening and submits reading only", () => {
+test("Day 25 teacher guide agrees with required Schreiben, Lesen and seven-question sustainable-shopping Hören", () => {
   const slide = getB1WorkbookAlignedSlideDay21To28("B1-8.25");
   const contract = contractByAssignmentId["B1-8.25"];
-  assert.deepEqual(contract.expectedParts, ["teil3"]);
-  assert.equal(slide.workbookConnection.parts.some((entry) => /Teil 2.*Schreiben/i.test(entry.label)), false);
-  assert.ok(contract.excludedParts.includes("teil4"));
+  assert.deepEqual(contract.expectedParts, ["teil2","teil3","teil4"]);
+  assert.deepEqual(contract.writingParts, ["teil2"]);
+  assert.deepEqual(contract.referenceAnswerParts, ["teil3","teil4"]);
   assert.equal(Object.keys(contract.answers.teil3).length, 7);
-  assert.match(part(slide, "Teil 4 · Hören").detailEn, /removed/i);
-  assert.match(part(slide, "Teil 4 · Hören").detailEn, /Do not submit/i);
+  assert.equal(Object.keys(contract.answers.teil4).length, 7);
+  assert.match(part(slide, "Teil 2 · Schreiben").detailEn, /Tim.*80-word|80-word.*Tim/i);
+  assert.match(part(slide, "Teil 3 · Lesen").detailEn, /press article about online-shopping/i);
+  assert.match(part(slide, "Teil 4 · Hören").detailEn, /b1\/day-25\/day-25\.mp3/i);
+  assert.match(slide.workbookConnection.subtitle, /All three assignments are submitted/i);
+  const guideText=JSON.stringify({teacherNotesEn:slide.teacherNotesEn,parts:slide.workbookConnection.parts,subtitle:slide.workbookConnection.subtitle});
+  assert.doesNotMatch(guideText,/no submitted Schreiben|no submitted Teil 2|separate mixed reading|excludes teil4|SELF-CHECK\/UNSCORED/i);
 });
-
-test("Day 26 scores all seven current Urlaubsland reading questions", () => {
+test("Day 26 teacher guide agrees with new four-matching Lesen, five-item Hören and Markus forum Schreiben", () => {
   const slide = getB1WorkbookAlignedSlideDay21To28("B1-9.26");
   const contract = contractByAssignmentId["B1-9.26"];
-  assert.deepEqual(contract.expectedParts, ["teil2", "teil3"]);
-  assert.ok(contract.excludedParts.includes("teil4"));
-  assert.equal(Object.keys(contract.answers.teil3).length, 7);
-  const reading = part(slide, "Teil 3 · Lesen").detailEn;
-  assert.match(reading, /seven/i);
-  assert.match(reading, /all seven|reference answers/i);
+  assert.deepEqual(contract.expectedParts, ["teil2","teil3","teil4"]);
+  assert.deepEqual(contract.referenceAnswerParts, ["teil3","teil4"]);
+  assert.equal(Object.keys(contract.answers.teil3).length, 4);
+  assert.equal(Object.keys(contract.answers.teil4).length, 5);
+  assert.match(part(slide, "Teil 2 · Schreiben").detailEn, /Markus/i);
+  assert.match(part(slide, "Teil 3 · Lesen").detailEn, /four situation-to-advert/i);
+  assert.match(part(slide, "Teil 4 · Hören").detailEn, /b1\/day-26\/day-26\.mp3/i);
+  assert.match(slide.workbookConnection.subtitle, /Schreiben.*Lesen.*Hören/i);
+  const guideText=JSON.stringify({teacherNotesEn:slide.teacherNotesEn,parts:slide.workbookConnection.parts,subtitle:slide.workbookConnection.subtitle});
+  assert.doesNotMatch(guideText,/Informal letter to Max\/Lisa|Urlaubsland Deutschland|Hören is self-check|Hören.*excluded/i);
 });
 
 for (const assignmentId of ["B1-10.27", "B1-10.28"]) {

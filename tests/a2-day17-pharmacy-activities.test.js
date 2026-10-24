@@ -109,44 +109,27 @@ test("shared fullscreen renderer includes audio overview and optional post-audio
 });
 
 
-test("B1 Day 25 classroom Hören uses uploaded five-question Richtig/Falsch key", () => {
+test("B1 Day 25 classroom Hören uses seven answers and the matching uploaded R2 audio", () => {
   const lesson = getInteractiveLessonOpening("B1-8.25");
-  assert.equal(lesson.listening.audioKey, "b1/day-25/online-shopping-verbraucherservice.mp3");
+  assert.equal(lesson.listening.audioKey, "b1/day-25/day-25.mp3");
   assert.equal(B1_DAY25_AUDIO_KEY, lesson.listening.audioKey);
-  assert.equal(lesson.listening.level, "B1");
-  assert.equal(lesson.listening.day, 25);
-  assert.equal(lesson.listening.suggestedMinutes, 12);
-  assert.equal(lesson.listening.questions.length, 5);
-  assert.equal(B1_DAY25_LISTENING_QUESTIONS.length, 5);
-  assert.deepEqual(lesson.listening.questions.map(q => q.answer), [
-    "Richtig", "Falsch", "Falsch", "Richtig", "Richtig",
-  ]);
-  const expectedText = [
-    "In Deutschland hat man bei vielen Online-Käufen ein gesetzliches Widerrufsrecht von vierzehn Tagen.",
-    "Es reicht völlig aus, die Ware einfach nur zurückzuschicken, um den Kauf zu widerrufen.",
-    "Bei Produkten, die speziell für einen Kunden angefertigt wurden, gilt das Widerrufsrecht normalerweise.",
-    "Ein sehr niedriger Preis kann ein Hinweis auf einen betrügerischen Online-Shop sein.",
-    "Wenn ein Artikel beschädigt angekommen ist, können Fotos helfen, das Problem zu erklären.",
-  ];
-  assert.deepEqual(lesson.listening.questions.map(q => q.prompt), expectedText);
+  assert.equal(lesson.listening.questions.length, 7);
+  assert.equal(B1_DAY25_LISTENING_QUESTIONS.length, 7);
+  assert.deepEqual(lesson.listening.questions.map(q=>q.answer[0]), ["B","C","A","B","A","C","B"]);
   for (const q of lesson.listening.questions) {
-    assert.deepEqual(q.options, ["Richtig", "Falsch"]);
+    assert.equal(q.options.length, 3);
+    assert.deepEqual(q.options.map(x => x[0]), ["A", "B", "C"]);
     assert.equal(q.answer, q.options[q.correctIndex]);
     assert.ok(q.evidence && q.hint.includes(q.evidence));
-    assert.match(B1_DAY25_TRANSCRIPT.map(x=>x[1]).join(" "), new RegExp(q.evidence.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"), "i"));
+    assert.ok(B1_DAY25_TRANSCRIPT.map(x=>x[1]).join(" ").includes(q.evidence));
   }
-  assert.ok(B1_DAY25_TRANSCRIPT.length > 12);
-  assert.equal(B1_DAY25_LISTENING.audioKey, lesson.listening.audioKey);
   const slide = getSlidesByCourse("B1").find(x=>x.assignmentId==="B1-8.25");
   const stages = buildTeachingPresenterStages(slide, slide.topic);
   const knowledge = stages.find(stage=>stage.id==="knowledge");
   assert.equal(knowledge.type,"knowledge");
   assert.equal(knowledge.variant,"interactive-listening");
-  assert.equal(knowledge.suggestedMinutes,12);
-  assert.equal(knowledge.listeningItems.length,5);
-  assert.ok(stages.find(stage=>stage.id==="phrases"),"Existing Wortschatz retained");
+  assert.equal(knowledge.listeningItems.length,7);
 });
-
 
 test("A2 Day 18 Hören maps uploaded Bank Richtig/Falsch items without changing other lessons", () => {
   const lesson = getInteractiveLessonOpening("A2-7.18");

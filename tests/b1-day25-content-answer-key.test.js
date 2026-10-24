@@ -11,7 +11,7 @@ const [label, entry] = Object.entries(dictionary).find(([, row]) => row.assignme
 test("B1 Day 25 key has the exact new seven Lesen answers", () => {
   const expected = ["B","B","B","A","A","A","C"];
   assert.deepEqual(Object.values(entry.answers.teil3).map(x => x[0]), expected);
-  assert.deepEqual(entry.expectedParts, ["teil2","teil3"]);
+  assert.deepEqual(entry.expectedParts, ["teil2","teil3","teil4"]);
   assert.deepEqual(entry.writingParts, ["teil2"]);
   assert.deepEqual(entry.aiGradedParts, ["teil2"]);
   assert.equal(entry.partGrading.teil2.gradingMode, "ai_written_response");
@@ -19,12 +19,11 @@ test("B1 Day 25 key has the exact new seven Lesen answers", () => {
   assert.equal(validateAnswerEntry(label,entry).errors.length,0);
 });
 
-test("B1 Day 25 seven prepared Hören answers remain excluded until its MP3 is verified", () => {
+test("B1 Day 25 seven Hören answers are now scored with the verified recording", () => {
   assert.deepEqual(Object.values(entry.answers.teil4).map(x => x[0]), ["B","C","A","B","A","C","B"]);
-  assert.ok(entry.excludedParts.includes("teil4"));
-  assert.ok(!entry.expectedParts.includes("teil4"));
-  assert.ok(!entry.referenceAnswerParts.includes("teil4"));
-  assert.equal(entry.pendingHoeren.status,"audio-pending");
+  assert.ok(entry.expectedParts.includes("teil4"));
+  assert.ok(entry.referenceAnswerParts.includes("teil4"));
+  assert.equal(entry.partGrading.teil4.gradingMode, "answer_key");
 });
 
 test("B1 Day 25 writing is a reasoned online-shopping opinion rather than a complaint", () => {
