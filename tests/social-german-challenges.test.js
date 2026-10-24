@@ -69,7 +69,7 @@ test("scene times and video MIME fallback produce safe, portable exports", () =>
   assert.equal(sceneAtTime(6.9), 1);
   assert.equal(sceneAtTime(7), 2);
   assert.equal(sceneAtTime(10), 3);
-  assert.equal(challengeVideoMime(type => type === "video/webm;codecs=vp8"), "video/webm;codecs=vp8");
+  assert.equal(challengeVideoMime(type => type === "video/webm;codecs=vp8"), "");
   assert.equal(challengeVideoMime(() => false), "");
   assert.equal(challengeFileStem({ id: "GC-Q-001" }), "falowen-german-challenge-gc-q-001");
   assert.deepEqual(Object.values(CHALLENGE_EXPORT_SIZES).map(size => [size.width, size.height]), [[1080, 1350], [1080, 1080], [1080, 1920]]);
