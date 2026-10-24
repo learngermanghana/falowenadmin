@@ -1,3 +1,4 @@
+import {chooseSocialMp4Mime} from "./socialMp4Export.js";
 // Canvas-only animation: no image-generation, cloud rendering, or third-party music APIs.
 export const VIDEO_THEMES = Object.freeze([
   { id: "blue", label: "Falowen Blue", background: "#0068db", second: "#0ebde9", dark: "#063a78", ink: "#153966", accent: "#10abeb" },
@@ -23,14 +24,8 @@ export const videoFileStem = word => "falowen-vocab-" + String(word?.level || "A
     .replace(/ß/g, "ss").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").slice(0, 65) || "word").toLowerCase();
 
 export function chooseVocabularyVideoMime(isSupported) {
-  const candidates = [
-    { mime: "video/mp4;codecs=avc1.42E01E,mp4a.40.2", extension: "mp4" },
-    { mime: "video/mp4", extension: "mp4" },
-    { mime: "video/webm;codecs=vp9,opus", extension: "webm" },
-    { mime: "video/webm;codecs=vp8,opus", extension: "webm" },
-    { mime: "video/webm", extension: "webm" },
-  ];
-  return candidates.find(choice => isSupported(choice.mime)) || null;
+  const mime=chooseSocialMp4Mime(isSupported);
+  return mime ? {mime,extension:"mp4"} : null;
 }
 
 export function videoStageAt(seconds, duration = 12) {
