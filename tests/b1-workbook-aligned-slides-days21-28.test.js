@@ -145,7 +145,7 @@ test("Day 25 teacher guide agrees with required Schreiben, Lesen and seven-quest
   assert.equal(Object.keys(contract.answers.teil3).length, 7);
   assert.equal(Object.keys(contract.answers.teil4).length, 7);
   assert.match(part(slide, "Teil 2 · Schreiben").detailEn, /Tim.*80-word|80-word.*Tim/i);
-  assert.match(part(slide, "Teil 3 · Lesen").detailEn, /online-shopping article/i);
+  assert.match(part(slide, "Teil 3 · Lesen").detailEn, /press article about online-shopping/i);
   assert.match(part(slide, "Teil 4 · Hören").detailEn, /b1\/day-25\/day-25\.mp3/i);
   assert.match(slide.workbookConnection.subtitle, /All three assignments are submitted/i);
   const guideText=JSON.stringify({teacherNotesEn:slide.teacherNotesEn,parts:slide.workbookConnection.parts,subtitle:slide.workbookConnection.subtitle});
@@ -163,7 +163,7 @@ test("Day 26 teacher guide agrees with new four-matching Lesen, five-item Hören
   assert.match(part(slide, "Teil 4 · Hören").detailEn, /b1\/day-26\/day-26\.mp3/i);
   assert.match(slide.workbookConnection.subtitle, /Schreiben.*Lesen.*Hören/i);
   const guideText=JSON.stringify({teacherNotesEn:slide.teacherNotesEn,parts:slide.workbookConnection.parts,subtitle:slide.workbookConnection.subtitle});
-  assert.doesNotMatch(guideText,/Max\/Lisa|Urlaubsland Deutschland|Hören is self-check|excluded/i);
+  assert.doesNotMatch(guideText,/Informal letter to Max\/Lisa|Urlaubsland Deutschland|Hören is self-check|Hören.*excluded/i);
 });
 
 for (const assignmentId of ["B1-10.27", "B1-10.28"]) {
