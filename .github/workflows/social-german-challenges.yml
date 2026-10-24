@@ -5,6 +5,8 @@ on:
       - 'src/data/socialChallenge*.js'
       - 'src/data/socialGermanChallenges.js'
       - 'src/utils/socialGermanChallengeRender.js'
+      - 'src/utils/socialMp4Export.js'
+      - 'tests/social-mp4-export.test.js'
       - 'src/components/SocialGermanChallenges.jsx'
       - 'src/pages/SocialMediaPage.jsx'
       - 'tests/social-german-challenges.test.js'
@@ -15,6 +17,8 @@ on:
       - 'src/data/socialChallenge*.js'
       - 'src/data/socialGermanChallenges.js'
       - 'src/utils/socialGermanChallengeRender.js'
+      - 'src/utils/socialMp4Export.js'
+      - 'tests/social-mp4-export.test.js'
       - 'src/components/SocialGermanChallenges.jsx'
       - 'src/pages/SocialMediaPage.jsx'
       - 'tests/social-german-challenges.test.js'
@@ -30,4 +34,4 @@ jobs:
         with:
           node-version: '22'
       - name: Validate 120 original challenges, captions and export contracts
-        run: node --test tests/social-german-challenges.test.js
+        run: node --test tests/social-german-challenges.test.js tests/social-mp4-export.test.js
