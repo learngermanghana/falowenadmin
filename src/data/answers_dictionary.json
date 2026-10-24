@@ -3704,9 +3704,7 @@
     "assignment_id": "B1-8.25",
     "expectedParts": [
       "teil2",
-      "teil3"
-    ],
-    "excludedParts": [
+      "teil3",
       "teil4"
     ],
     "writingParts": [
@@ -3716,7 +3714,8 @@
       "teil2"
     ],
     "referenceAnswerParts": [
-      "teil3"
+      "teil3",
+      "teil4"
     ],
     "answerLayout": "multipart",
     "partGrading": {
@@ -3731,26 +3730,30 @@
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Grade all seven A/B/C reading answers against the current Online-Shopping press article."
+      },
+      "teil4": {
+        "label": "Teil 4 Hören",
+        "hasReferenceAnswers": true,
+        "gradingMode": "answer_key",
+        "instruction": "Mark the seven A/B/C answers against the actual Day 25 sustainable-shopping dialogue (b1/day-25/day-25.mp3). Do not use the old online-shopping consumer-rights audio or 5-item Richtig/Falsch key."
       }
-    },
-    "pendingHoeren": {
-      "status": "audio-pending",
-      "note": "Seven listening answers are prepared in answers.teil4, but Teil 4 remains excluded from grading until its matching sustainable-shopping audio is verified and the workbook enables submission.",
-      "requiredAudioTranscript": "Nachhaltig einkaufen · Plastiktüten vermeiden"
     }
   },
   "B1 9.26 Reiseprobleme und Lösungen": {
     "answers": {
       "teil3": {
-        "Answer1": "B) Mecklenburg-Vorpommern",
-        "Answer2": "A) Die Zugspitze",
-        "Answer3": "A) Rügen und Usedom",
-        "Answer4": "B) Städte wie Berlin, Hamburg, Köln und München",
-        "Answer5": "B) Das Oktoberfest",
-        "Answer6": "A) Neuschwanstein, Herrenchiemsee und Linderhof",
-        "Answer7": "C) Weil das Wetter in Deutschland nicht immer sonnig und warm ist"
+        "Answer1": "A) Flug-Recht24 – Kofferverlust und Entschädigung",
+        "Answer2": "C) EuroPannenschutz – Autopanne in Europa",
+        "Answer3": "B) ZugPlus App – Entschädigung bei Zugverspätung",
+        "Answer4": "E) SicherReisen – Reiserücktritt wegen Krankheit"
       },
-      "teil4": {}
+      "teil4": {
+        "Answer1": "A) Richtig",
+        "Answer2": "B) Falsch",
+        "Answer3": "B) Falsch",
+        "Answer4": "B) Falsch",
+        "Answer5": "A) Richtig"
+      }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1o3axSLfa47e16kvcL2zJP5FdtYXTbOwYAEzQ4Xen1VI/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1o3axSLfa47e16kvcL2zJP5FdtYXTbOwYAEzQ4Xen1VI/edit",
@@ -3758,9 +3761,7 @@
     "assignment_id": "B1-9.26",
     "expectedParts": [
       "teil2",
-      "teil3"
-    ],
-    "excludedParts": [
+      "teil3",
       "teil4"
     ],
     "writingParts": [
@@ -3770,7 +3771,8 @@
       "teil2"
     ],
     "referenceAnswerParts": [
-      "teil3"
+      "teil3",
+      "teil4"
     ],
     "answerLayout": "multipart",
     "partGrading": {
@@ -3778,13 +3780,19 @@
         "label": "Teil 2 Schreiben",
         "hasReferenceAnswers": false,
         "gradingMode": "ai_written_response",
-        "instruction": "Teil 2 is a Schreiben/writing part. There is no fixed reference answer in the answer key. Do not mark the student wrong or give 0 because reference answers are missing. Grade with AI using the writing prompt, CEFR level, task completion, grammar, vocabulary, structure, and clarity."
+        "instruction": "Grade an approximately 80-word B1 opinion forum reply to Markus on travel problems. Assess (1) response and own opinion on avoiding long-distance travel, (2) own experiences or reasons, (3) concrete ways to prevent or solve travel stress. Mark as a forum post, NOT an informal personal letter; no salutation is required. Evaluate task completion, clarity, grammar, vocabulary and cohesion."
       },
       "teil3": {
-        "label": "teil3",
+        "label": "Teil 3 Lesen",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
-        "instruction": "Grade this part against the reference answers in answers."
+        "instruction": "Mark exactly four matching situations A/C/B/E against the five travel service advertisements; 0 is available but not used by any correct answer."
+      },
+      "teil4": {
+        "label": "Teil 4 Hören",
+        "hasReferenceAnswers": true,
+        "gradingMode": "answer_key",
+        "instruction": "Mark five Richtig/Falsch statements A/B/B/B/A from the supplied travel-problems listening key and the audio object b1/day-26/day-26.mp3."
       }
     }
   },
