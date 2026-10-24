@@ -86,3 +86,30 @@
   .social-campaign-switch{width:100%}
   .social-campaign-switch button{flex:1}
 }
+
+
+/* Social grammar production dictionary · selectable editorial mini-lessons. */
+.social-creator-mode{display:flex;gap:7px;flex-wrap:wrap;padding:5px;border:1px solid #dce5ef;background:#edf3fb;border-radius:13px;width:fit-content}
+.social-creator-mode button{font:inherit;font-weight:800;border:0;border-radius:9px;padding:11px 17px;background:transparent;color:#375774;cursor:pointer}
+.social-creator-mode button[aria-pressed="true"]{background:#fff;color:#173d74;box-shadow:0 2px 7px #10243f1a}
+.social-grammar-workspace{display:grid;gap:16px;min-width:0}
+.social-grammar-summary{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;padding:18px 21px;background:linear-gradient(110deg,#102e59,#1d508c);border-radius:16px;color:#fff}
+.social-grammar-summary strong{font-size:20px;letter-spacing:-.02em}
+.social-grammar-summary p{margin:7px 0 0;color:#d6e8ff;font-size:13px;max-width:610px;line-height:1.55}
+.social-grammar-summary>span{background:#ffffff20;border:1px solid #ffffff55;border-radius:25px;padding:8px 14px;white-space:nowrap;font-size:13px;font-weight:800}
+.social-grammar-grid{display:grid;grid-template-columns:minmax(255px,.83fr) minmax(270px,1fr) minmax(300px,1.15fr);gap:14px;align-items:start;min-width:0}
+.social-grammar-grid .social-panel{min-width:0}
+.social-grammar-grid .social-form-row{display:grid;gap:6px;margin-bottom:14px}
+.social-grammar-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:9px 0 13px}
+.social-grammar-filters label{display:grid;gap:5px;font-size:12px;font-weight:750;color:#33465e}
+.social-grammar-count{color:#64748b;font-size:12px;margin:10px 0}
+.social-grammar-results{display:grid;gap:6px;max-height:605px;overflow-y:auto;padding-right:3px}
+.social-grammar-option{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:57px;text-align:left;border:1px solid #e1e8f0;border-radius:10px;background:#f8fafc;padding:10px 11px;cursor:pointer;font:inherit}
+.social-grammar-option[aria-pressed="true"]{background:#eaf3ff;border-color:#3f80cf;box-shadow:inset 3px 0 0 #2c6abd}
+.social-grammar-option strong{display:block;color:#1b3654;font-size:13px}
+.social-grammar-option small{display:block;margin-top:3px;font-size:11px;color:#687b90}
+.social-grammar-status{font-size:10px;font-weight:800;color:#44638a;white-space:nowrap}
+.social-grammar-preview .social-script-preview{max-height:330px;min-height:220px}
+.social-grammar-disclaimer{font-size:12px;line-height:1.6;color:#56687d;background:#f5f8fc;border:1px solid #e2e8f0;padding:10px;border-radius:9px}
+@media(max-width:1180px){.social-grammar-grid{grid-template-columns:minmax(250px,1fr) minmax(350px,1.35fr)}.social-grammar-preview{grid-column:1/-1}}
+@media(max-width:730px){.social-grammar-grid{grid-template-columns:1fr}.social-grammar-preview{grid-column:auto}.social-grammar-results{max-height:315px}.social-grammar-summary strong{font-size:18px}}
