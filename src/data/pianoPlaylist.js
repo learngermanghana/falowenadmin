@@ -1,9 +1,14 @@
 // Generated from the MP3 files currently in public/.
 export const waitingMusicPlaylist = Object.freeze([
   {
-    "id": "30-minutes-calm-piano-instrumental-music-1",
-    "title": "30 Minutes Calm Piano Instrumental Music",
-    "src": "/30%20Minutes%20Calm%20Piano%20Instrumental%20Music.mp3"
+    "id": "gemeinsam-schaffen-wir-das-1",
+    "title": "Gemeinsam schaffen wir das",
+    "src": "/Gemeinsam%20schaffen%20wir%20das.mp3"
+  },
+  {
+    "id": "willkommen-bei-falowen-2",
+    "title": "Willkommen bei Falowen",
+    "src": "/Willkommen%20bei%20Falowen(1).mp3"
   }
 ]);
 export const pianoPlaylist = waitingMusicPlaylist;
