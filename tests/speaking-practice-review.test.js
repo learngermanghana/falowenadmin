@@ -5,7 +5,7 @@ const page=readFileSync(new URL("../src/pages/SpeakingPracticeReviewPage.jsx",im
 const client=readFileSync(new URL("../src/services/speakingPracticeReviewService.js",import.meta.url),"utf8");
 const app=readFileSync(new URL("../src/App.jsx",import.meta.url),"utf8");
 test("Speaking review route is staff protected and visible in both menus",()=>{
-  assert.match(app,/Route path="\/speaking-review" element=\{<ProtectedRoute><SpeakingPracticeReviewPage\/><\/ProtectedRoute>\}/);
+  assert.match(app,/Route path="\/speaking-review" element=\{<ProtectedRoute><SpeakingPracticeReviewPage\s*\/><\/ProtectedRoute>\}/);
   assert.equal((app.match(/to="\/speaking-review"/g)||[]).length,2);
 });
 test("Speaking review stays lazy and fetches only on an explicit student lookup",()=>{
