@@ -4,21 +4,20 @@ import {readFileSync} from "node:fs";
 const page=readFileSync(new URL("../src/pages/SpeakingPracticeReviewPage.jsx",import.meta.url),"utf8");
 const client=readFileSync(new URL("../src/services/speakingPracticeReviewService.js",import.meta.url),"utf8");
 const app=readFileSync(new URL("../src/App.jsx",import.meta.url),"utf8");
-test("Speaking review route is staff protected and visible in both menus",()=>{
+test("Speaking usage dashboard is a protected Admin route",()=>{
   assert.match(app,/Route path="\/speaking-review" element=\{<ProtectedRoute><SpeakingPracticeReviewPage\s*\/><\/ProtectedRoute>\}/);
   assert.equal((app.match(/to="\/speaking-review"/g)||[]).length,2);
 });
-test("Speaking review stays lazy and fetches only on an explicit student lookup",()=>{
-  assert.match(page,/onSubmit=\{run\}/);
-  assert.match(page,/loadSpeakingPracticeReview\(\{auth,student,level\}\)/);
-  assert.doesNotMatch(page,/useEffect\s*\(|setInterval\s*\(|onSnapshot\s*\(/);
-  assert.match(client,/cache:"no-store"/);
+test("Activity is fetched only on staff button click; no periodic checks",()=>{
+  assert.match(page,/onClick=\{\(\)=>check\("activity"\)\}/);
+  assert.match(page,/onSubmit=\{e=>\{e\.preventDefault\(\);check\("student"\);\}\}/);
   assert.match(client,/getIdToken\(\)/);
-  assert.doesNotMatch(client,/setInterval\s*\(|onSnapshot\s*\(|openai|transcribe|MediaRecorder/i);
+  assert.match(client,/cache:"no-store"/);
+  assert.doesNotMatch(page,/useEffect\s*\(|setInterval\s*\(|onSnapshot\s*\(/);
 });
-test("Staff UI distinguishes transcripts from replayable original audio",()=>{
-  assert.match(page,/microphone recordings were transcribed, not saved as playable files/i);
-  assert.match(page,/genuine confirmed transcripts/i);
-  assert.match(page,/Course Book/);
-  assert.match(page,/Exams Room/);
+test("No voice files, transcripts, German answers or dollar estimates in dashboard",()=>{
+  assert.match(page,/not currently recorded per learner/);
+  assert.match(page,/Reserved AI call units this month/);
+  assert.match(page,/No automatic refresh/);
+  assert.doesNotMatch(page,/item\.answers|item\.dialogue|item\.feedback|audioBase64|<audio|MediaRecorder/);
 });
