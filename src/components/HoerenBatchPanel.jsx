@@ -1,7 +1,7 @@
 import {useEffect,useRef,useState} from "react";
 import {getStudioStatus,makeListeningScript,makeListeningQuestions,makeSpeechClip} from "../services/hoerenStudioService";
-import {parseStudioTranscript,repairUnlabelledStudioLines,base64WavToBytes,assembleListeningExam} from "../utils/hoerenAudio";
-import {assignGoetheSpeakers} from "../utils/hoerenProductionDefaults";
+import {parseStudioTranscript,repairUnlabelledStudioLines,sameSpokenTranscript,base64WavToBytes,assembleListeningExam} from "../utils/hoerenAudio";
+import {assignGoetheSpeakers,suggestRecordingScene} from "../utils/hoerenProductionDefaults";
 import {buildStudioSpeechPlan,assemblyScenePlan,sceneVoiceKey} from "../utils/hoerenSpeechPlan";
 import {getSavedVoice,saveVoice} from "../utils/hoerenVoiceCache";
 import {validateDraftQuestions} from "../utils/hoerenQuestions";
@@ -10,8 +10,17 @@ import {buildExamZip} from "../utils/hoerenExamBundle";
 import {bundleKey,loadExamParts,saveExamParts,deleteExamParts} from "../utils/hoerenExamBundleCache";
 const LEVELS=["A1","A2","B1","B2","C1","C2"];
 const keysOf=p=>Object.keys(p||{}).sort((a,b)=>Number(a)-Number(b));
-function countScripts(level,missing) {
-  return missing.reduce((n,p)=>n+(level==="B1"&&p==="1"?2:1),0);
+function scriptRequestsNeeded(level,index,part={}) {
+  if (!part.script) return level==="B1"&&index==="1" ? 2 : 1;
+  if (level==="B1"&&index==="1") return part.questions?.length===10 ? 0 : part.questions?.length===5 ? 1 : 2;
+  return part.questions?.length ? 0 : 1;
+}
+function downloadBlob(blob,filename) {
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;a.download=filename;
+  document.body.appendChild(a);a.click();a.remove();
+  window.setTimeout(()=>URL.revokeObjectURL(url),30000);
 }
 function noteFor(part){
   if(part?.kind==="richtig-falsch")return part.answer||"";
@@ -33,6 +42,11 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
   const [topic,setTopic]=useState("Alltag, Reisen, Gesellschaft und Arbeit");
   const [engine,setEngine]=useState("lite");
   const [includeSlides,setIncludeSlides]=useState(true);
+  const [lineGap,setLineGap]=useState(0.7);
+  const [repeatGap,setRepeatGap]=useState(6);
+  const [useAtmosphere,setUseAtmosphere]=useState(true);
+  const [soundVolume,setSoundVolume]=useState(12);
+  const [scriptEdits,setScriptEdits]=useState({});
   const [records,setRecords]=useState({});
   const [loading,setLoading]=useState(true);
   const [working,setWorking]=useState("");
@@ -46,11 +60,10 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
   const profile=profiles?.[level]||{};
   const indexes=keysOf(profile);
   const complete=indexes.length>0&&indexes.every(i=>records[i]?.audio instanceof Blob&&records[i]?.questions?.length&&records[i]?.approved);
-  const missing=indexes.filter(i=>!records[i]?.script);
-  const pendingMixed=level==="B1"&&records["1"]?.script&&records["1"]?.questions?.length===5?1:0;
+  const estimatedScripts=indexes.reduce((n,i)=>n+scriptRequestsNeeded(level,i,records[i]),0);
   useEffect(()=>{
     let active=true;
-    setLoading(true);setError("");setNotice("");setRecords({});cacheRef.current={};
+    setLoading(true);setError("");setNotice("");setRecords({});setScriptEdits({});cacheRef.current={};
     loadExamParts(key).then(x=>{if(active){cacheRef.current=x;setRecords(x)}})
       .catch(()=>{if(active)setStorageWarning("Persistent storage is unavailable. Keep this tab open and download the ZIP before closing.")})
       .finally(()=>{if(active)setLoading(false)});
@@ -75,7 +88,7 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
     if(!state.script){
       setWorking(`Teil ${index}: script and questions`);
       const quota=await getStudioStatus();
-      const needed=level==="B1"&&index==="1"?2:1;
+      const needed=1;
       if(quota.remaining.script<needed)throw new Error(`Teil ${index} needs ${needed} script requests; only ${quota.remaining.script} remain. Resume after quota reset.`);
       const reply=await makeListeningScript({
         topic:`${topic}. Independent Teil ${index}; no repeated scenarios between parts.`,
@@ -88,6 +101,17 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
         topic:topic.trim(),repeats:preset.repeats,
         audio:null,approved:false,error:"",createdAt:Date.now()
       });
+    }
+    if(!state.questions?.length){
+      const remaining=await getStudioStatus();
+      if(remaining.remaining.script<1)throw new Error(`Teil ${index} needs one question request; resume after quota reset.`);
+      setWorking(`Teil ${index}: questions for saved transcript`);
+      const reply=await makeListeningQuestions({
+        script:state.script,kind:preset.kind,level,part:index,mode:"goethe"
+      });
+      const reviewed=validateDraftQuestions({script:state.script,questions:reply.questions,
+        kind:preset.kind,expectedCount:preset.questionCount});
+      state=await savePart(index,{questions:reviewed.map(q=>({...q,kind:preset.kind})),approved:false,error:""});
     }
     if(level==="B1"&&index==="1"&&state.questions?.length===5){
       const remaining=await getStudioStatus();
@@ -103,6 +127,8 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
     }
     if(level==="B1"&&index==="1"&&state.questions?.length!==10)
       throw new Error("B1 Teil 1 must have ten paired questions before producing audio.");
+    if(state.questions?.length!==(level==="B1"&&index==="1"?10:preset.questionCount))
+      throw new Error(`Teil ${index} has an incomplete question set. Review before producing audio.`);
     if(cancelRef.current)return;
     const parsed=parseStudioTranscript(state.script);
     const plan=buildStudioSpeechPlan(parsed);
@@ -132,12 +158,52 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
     }
     if(cancelRef.current)return;
     setWorking(`Teil ${index}: assembling MP3 locally`);
-    const wav=assembleListeningExam(assemblyScenePlan(plan),wavClips,{
-      repeats:preset.repeats,lineGap:0.7,repeatGap:6,
-      soundscape:{scene:"none",bell:false,ambience:false,ending:false}
-    });
-    const audio=await encodeWavAsMp3(wav);
+    const audio=await assemblePart(index,plan,wavClips);
     await savePart(index,{audio,approved:false,error:""});
+  }
+  async function assemblePart(index,plan,clips){
+    const part=cacheRef.current[index];
+    const preset=profile[index];
+    const scene=useAtmosphere?suggestRecordingScene({
+      script:part.script,topic:part.topic||topic,type:preset.type,mode:"goethe"
+    }):"none";
+    const wav=assembleListeningExam(assemblyScenePlan(plan),clips,{
+      repeats:preset.repeats,lineGap,repeatGap,
+      soundscape:{scene,ambience:useAtmosphere,bell:false,ending:false,volume:soundVolume/100}
+    });
+    return encodeWavAsMp3(wav);
+  }
+  async function remixPart(index){
+    if(working)return;
+    setWorking(`Teil ${index}: remixing saved voices`);setError("");
+    try{
+      const plan=buildStudioSpeechPlan(parseStudioTranscript(cacheRef.current[index].script));
+      const scenes=plan.filter(item=>item.type==="speech");
+      const clips=await Promise.all(scenes.map(scene=>getSavedVoice(sceneVoiceKey(engine,scene))));
+      if(clips.some(x=>!x))throw new Error("Some saved voice scenes are missing for this voice quality. Generate the Teil again to replace them.");
+      const audio=await assemblePart(index,plan,clips);
+      await savePart(index,{audio,approved:false,error:""});
+      setNotice(`Teil ${index} remixed with the current playback settings, no Gemini requests.`);
+    }catch(err){setError(err.message)}
+    finally{setWorking("")}
+  }
+  async function saveTranscript(index){
+    const current=cacheRef.current[index];
+    if(!current?.script)return;
+    try{
+      const next=assignGoetheSpeakers(repairUnlabelledStudioLines(scriptEdits[index]??current.script));
+      parseStudioTranscript(next);
+      if(next===current.script)return;
+      const wordsUnchanged=sameSpokenTranscript(current.script,next);
+      await savePart(index,{
+        script:next,audio:null,approved:false,error:"",
+        ...(wordsUnchanged?{}:{questions:[]})
+      });
+      setScriptEdits(old=>({...old,[index]:next}));
+      setNotice(wordsUnchanged
+        ?`Teil ${index}: speaker changes saved. Regenerate audio using cached voice scenes where possible.`
+        :`Teil ${index}: transcript changed. The old answers were cleared; resume to regenerate questions and audio.`);
+    }catch(err){setError(`Teil ${index}: ${err.message}`)}
   }
   async function run(partIndex=null){
     if(working)return;
@@ -145,17 +211,22 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
       checkReady();cancelRef.current=false;setError("");setNotice("");setWorking("Checking available Gemini requests");
       const quota=await getStudioStatus();setQuota(quota.remaining);
       const targets=partIndex?[partIndex]:indexes.filter(i=>!(cacheRef.current[i]?.audio instanceof Blob));
-      const required=countScripts(level,targets.filter(i=>!cacheRef.current[i]?.script)) +
-        (level==="B1" && targets.includes("1") && cacheRef.current["1"]?.script && cacheRef.current["1"]?.questions?.length===5?1:0);
-      if(quota.remaining.script<required)throw new Error(
-        `This run needs up to ${required} script requests, but ${quota.remaining.script} remain. Generate fewer Teile or resume after the reset.`
-      );
+      const failures=[];
       for(const index of targets){
         if(cancelRef.current)break;
         try{await generatePart(index)}
-        catch(err){await savePart(index,{error:err.message});throw err}
+        catch(err){
+          await savePart(index,{error:err.message});
+          failures.push(`Teil ${index}: ${err.message}`);
+          // A transient provider failure should not block other independent Teile.
+          // Daily quota exhaustion is not transient; stop to avoid futile requests.
+          if(partIndex || /daily .*limit|only 0 remain|rate limit 429|quota reset/i.test(err.message))break;
+        }
       }
-      setNotice(cancelRef.current?"Paused. Generated parts have been saved; use Resume when ready.":"Generation complete. Listen to each MP3, review answers and approve the parts before exporting.");
+      if(failures.length)setError(failures.join(" | "));
+      setNotice(cancelRef.current?"Paused. Completed MP3s can already be downloaded."
+        :failures.length?"Some Teile failed. Completed MP3s are downloadable now; retry only failed Teile."
+        :"Generation complete. Download each MP3 now or review and approve for the ZIP.");
     }catch(err){setError(err.message)}
     finally{setWorking("");}
   }
@@ -166,10 +237,7 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
       const bundle=await buildExamZip({
         level,mock,parts:indexes.map(i=>({...records[i],label:profile[i].examLabel,part:i})),includeSlides
       });
-      const url=URL.createObjectURL(bundle.blob);
-      const a=document.createElement("a");a.href=url;a.download=bundle.filename;
-      document.body.appendChild(a);a.click();a.remove();
-      window.setTimeout(()=>URL.revokeObjectURL(url),30000);
+      downloadBlob(bundle.blob,bundle.filename);
       setNotice(`Exported ${bundle.questionCount} questions and ${indexes.length} MP3 files in one ZIP. No further AI requests.`);
     }catch(err){setError(err.message)}finally{setWorking("")}
   }
@@ -177,7 +245,7 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
     if(!window.confirm("Delete all locally saved parts of this mock? This cannot be undone."))return;
     try{await deleteExamParts(key)}
     catch(err){setError(err.message);return;}
-    cacheRef.current={};setRecords({});setNotice("Local mock cleared.");
+    cacheRef.current={};setRecords({});setScriptEdits({});setNotice("Local mock cleared.");
   }
   return <section className="hoeren-panel hoeren-batch" aria-label="Complete Goethe Hören exam ZIP generator">
     <div className="hoeren-batch-head">
@@ -201,10 +269,33 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
       onChange={e=>setTopic(e.target.value)}/></label>
     <label className="hoeren-batch-check"><input type="checkbox" checked={includeSlides} disabled={!!working}
       onChange={e=>setIncludeSlides(e.target.checked)}/> Include editable-free 1920×1080 question/answer slide PNGs for CapCut</label>
-    <p className="hoeren-hint">Estimated script requests for unfinished parts: <strong>{countScripts(level,missing)+pendingMixed}</strong>.
+    <p className="hoeren-hint">Estimated script requests for unfinished parts: <strong>{estimatedScripts}</strong>.
       Speech requests depend on the generated dialogues. Cached scenes are reused, pauses and repeats cost no extra Gemini calls.
       {level==="B1"?" B1 Teil 1 uses an additional request for five paired multiple-choice questions (30 total across B1).":""}
     </p>
+    <div className="hoeren-input-grid">
+      <label>Gap between speaking scenes (seconds)
+        <input type="number" min="0" max="5" step="0.1" value={lineGap} disabled={!!working}
+          onChange={e=>setLineGap(Math.max(0,Math.min(5,Number(e.target.value)||0)))}/>
+      </label>
+      <label>Gap before second playback (seconds)
+        <input type="number" min="0" max="20" step="1" value={repeatGap} disabled={!!working}
+          onChange={e=>setRepeatGap(Math.max(0,Math.min(20,Number(e.target.value)||0)))}/>
+      </label>
+      <label>Automatic scene background
+        <select value={useAtmosphere?"auto":"none"} disabled={!!working}
+          onChange={e=>setUseAtmosphere(e.target.value==="auto")}>
+          <option value="auto">Auto detect (same as individual Studio)</option>
+          <option value="none">Clean exam audio (no background)</option>
+        </select>
+      </label>
+      <label>Background effects volume
+        <input type="range" min="0" max="35" step="1" value={soundVolume} disabled={!!working||!useAtmosphere}
+          onChange={e=>setSoundVolume(Number(e.target.value))}/>
+        <small>{soundVolume}%</small>
+      </label>
+    </div>
+    <p className="hoeren-hint">Narrator A is reserved for instructions; task speakers rotate B/C/D between independent scenes. Speaker voices and automatic soundscape match the individual Studio. To update an existing MP3 with these playback settings, use Remix Teil (no extra AI calls).</p>
     {quota?<p className="hoeren-hint">Last quota check: {quota.script} script requests, {quota.speech} voice requests remaining.</p>:null}
     <div className="hoeren-batch-grid">
       {indexes.map(i=>{
@@ -215,6 +306,23 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
           <p>{r?.questions?.length||p.questionCount} questions · {p.repeats===2?"2 plays":"1 play"}</p>
           {r?.error?<p role="alert" className="hoeren-validation">{r.error}</p>:null}
           {hasAudio?<PartAudio blob={r.audio} label={`Teil ${i} generated audio`}/>:null}
+          {hasAudio?<div className="hoeren-batch-part-actions">
+            <button type="button" className="hoeren-button" onClick={()=>downloadBlob(r.audio,`Falowen-${level}-Mock-${mock}-Teil-${i}.mp3`)}>
+              Download Teil {i} MP3
+            </button>
+            <button type="button" className="hoeren-quiet" disabled={!!working} onClick={()=>remixPart(i)}>
+              Remix Teil {i} · no AI calls
+            </button>
+          </div>:null}
+          {r?.script?<details>
+            <summary>Review / edit transcript and voices (Teil {i})</summary>
+            <p className="hoeren-hint">One line per speaker: A for examiner instructions, B/C/D for task voices, and [PAUSE 3] on its own line. Saving changes to spoken words clears outdated answer keys.</p>
+            <textarea rows={9} lang="de" aria-label={`Teil ${i} transcript`}
+              value={scriptEdits[i]??r.script} disabled={!!working}
+              onChange={e=>setScriptEdits(old=>({...old,[i]:e.target.value}))}/>
+            <button type="button" className="hoeren-quiet" disabled={!!working}
+              onClick={()=>saveTranscript(i)}>Save transcript &amp; speaker changes · free</button>
+          </details>:null}
           {r?.questions?.length?<details><summary>Review questions and answer key ({r.questions.length})</summary>
             <ol>{r.questions.map((q,j)=><li key={j}>{q.question}
               <small> Answer: {noteFor(q)} {q.evidence?"· evidence: "+q.evidence:""}</small>
@@ -243,7 +351,7 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
     </div>
     <p className="hoeren-hint">Saved on this browser via IndexedDB. Review every part before exporting.
       The ZIP includes scripts, MP3s, Fragen.pdf, Lösungen.pdf, teacher-only answer keys, R2 upload paths and optional CapCut slides.
-      These are independently generated practice tasks, not official Goethe-Institut recordings.
+      Each completed MP3 can be downloaded during generation, without teacher approval. Approval is only needed for the combined ZIP. These are independently generated practice tasks, not official Goethe-Institut recordings.
       Google quota and pay-as-you-go costs remain separate from Falowen's daily safety limits.</p>
   </section>;
 }

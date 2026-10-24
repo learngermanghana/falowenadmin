@@ -448,3 +448,31 @@ test("voice-only Goethe casting does not falsely invalidate question transcript"
   assert.equal(sameSpokenTranscript(original,cast),true);
   assert.equal(sameSpokenTranscript(original,cast.replace("Hallo!","Tschüss!")),false);
 });
+
+test("independent Goethe conversations rotate actors while the instruction narrator stays A", () => {
+  const input = [
+    "A: Nummer eins.", "B: Wann fährt der Zug?", "C: Um neun.",
+    "[PAUSE 3]", "A: Nummer zwei.", "B: Wo ist die Apotheke?", "C: Gleich hier.",
+    "[PAUSE 3]", "A: Nummer drei.", "B: Welche Straße?", "C: Die Bahnhofstraße."
+  ].join("\n");
+  const cast = assignGoetheSpeakers(input);
+  const spoken = parseStudioTranscript(cast).filter(part => part.type === "speech");
+  assert.deepEqual(spoken.map(part => part.speaker),
+    ["A", "B", "C", "A", "C", "D", "A", "D", "B"]);
+  assert.equal(assignGoetheSpeakers(cast), cast, "a second formatting pass must not rotate voices again");
+  const plan = buildStudioSpeechPlan(parseStudioTranscript(cast)).filter(part => part.type === "speech");
+  assert.deepEqual(plan.map(scene => scene.turns.map(turn => turn.speaker)),
+    [["A"],["B","C"],["A"],["C","D"],["A"],["D","B"]]);
+  assert.ok(plan.every(scene => new Set(scene.turns.map(turn => turn.speaker)).size <= 2));
+});
+test("batch exposes downloads for complete Teile independently of ZIP completion", () => {
+  const page = readFileSync(new URL("../src/components/HoerenBatchPanel.jsx", import.meta.url), "utf8");
+  assert.match(page, /hasAudio\?<div className="hoeren-batch-part-actions">/);
+  assert.match(page, /downloadBlob\(r\.audio,/);
+  assert.match(page, /Download Teil \{i\} MP3/);
+  assert.match(page, /failures\.push/);
+  assert.match(page, /Some Teile failed/);
+  assert.match(page, /Save transcript &amp; speaker changes/);
+  assert.match(page, /suggestRecordingScene/);
+  assert.match(page, /Remix Teil \{i\}/);
+});
