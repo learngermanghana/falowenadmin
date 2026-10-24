@@ -69,7 +69,7 @@ test("scene times and video MIME fallback produce safe, portable exports", () =>
   assert.equal(sceneAtTime(6.9), 1);
   assert.equal(sceneAtTime(7), 2);
   assert.equal(sceneAtTime(10), 3);
-  assert.equal(challengeVideoMime(type => type === "video/webm;codecs=vp8"), "video/webm;codecs=vp8");
+  assert.equal(challengeVideoMime(type => type === "video/webm;codecs=vp8"), "");
   assert.equal(challengeVideoMime(() => false), "");
   assert.equal(challengeFileStem({ id: "GC-Q-001" }), "falowen-german-challenge-gc-q-001");
   assert.deepEqual(Object.values(CHALLENGE_EXPORT_SIZES).map(size => [size.width, size.height]), [[1080, 1350], [1080, 1080], [1080, 1920]]);
@@ -169,4 +169,13 @@ test("overlong edited answers cannot be exported with clipped invisible text", (
   assert.equal(challengeTextFits(canvas.ctx, entry, copy, canvas.width, canvas.height, 2), false);
   assert.equal(renderChallengeFrame(canvas, entry, copy, 2), false);
   assert.ok(canvas.labels.some(({ text }) => /Text zu lang/i.test(text)));
+});
+
+test("challenge videos export MP4 only, and refuse WebM-only browsers",()=>{
+  assert.equal(challengeVideoMime(type=>type==="video/mp4"),"video/mp4");
+  assert.equal(challengeVideoMime(type=>type==="video/webm"),"");
+  const src=readFileSync(new URL("../src/components/SocialGermanChallenges.jsx",import.meta.url),"utf8");
+  assert.match(src,/requireValidSocialMp4\(blob\)/);
+  assert.match(src,/12s\.mp4/);
+  assert.doesNotMatch(src,/12s\.\" \+ .*webm/);
 });

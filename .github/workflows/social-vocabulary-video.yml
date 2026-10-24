@@ -7,6 +7,8 @@ on:
       - "src/components/SocialVocabularyVideoCreator.jsx"
       - "src/components/SocialVocabularyVideoCreator.css"
       - "src/utils/socialVocabularyVideo.js"
+      - "src/utils/socialMp4Export.js"
+      - "tests/social-mp4-export.test.js"
       - "tests/social-vocabulary-video.test.js"
       - ".github/workflows/social-vocabulary-video.yml"
   push:
@@ -16,6 +18,8 @@ on:
       - "src/components/SocialVocabularyVideoCreator.jsx"
       - "src/components/SocialVocabularyVideoCreator.css"
       - "src/utils/socialVocabularyVideo.js"
+      - "src/utils/socialMp4Export.js"
+      - "tests/social-mp4-export.test.js"
       - "tests/social-vocabulary-video.test.js"
 
 jobs:
@@ -27,7 +31,7 @@ jobs:
         with:
           node-version: "22"
       - name: Test animation and local export contracts
-        run: node --test tests/social-vocabulary-video.test.js
+        run: node --test tests/social-vocabulary-video.test.js tests/social-mp4-export.test.js
       - name: Check bundle for mobile preview and local recording
         run: |
           npm ci --ignore-scripts
