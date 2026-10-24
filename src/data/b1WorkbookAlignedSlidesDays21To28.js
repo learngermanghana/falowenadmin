@@ -507,7 +507,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
     assignmentId: "B1-9.26",
     title: "B1 Day 26 · Reiseprobleme und Lösungen",
     topic: "9.26 Reiseprobleme und Lösungen",
-    objective: "Students plan for travel disruptions and respond with conditionals, polite solution language and a coherent informal past-event letter.",
+    objective: "Students discuss solutions to travel problems, compare five travel-help adverts, and respond to Markus with an approximately 80-word forum opinion.",
     estimatedDuration: "45–60 minutes",
     warmupQuestionsDe: [
       "Welches Reiseproblem hast du schon erlebt?",
