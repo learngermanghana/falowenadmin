@@ -1,3 +1,4 @@
+import {requireValidSocialMp4} from "../utils/socialMp4Export.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CHALLENGE_LEVELS, CHALLENGE_TYPES, challengeCopy,
@@ -158,7 +159,7 @@ export default function SocialGermanChallenges() {
     if (!selected || !copy || working) return;
     setError(""); setNotice(""); setPreviewPlaying(false);
     if (!videoMime || typeof HTMLCanvasElement === "undefined" || typeof HTMLCanvasElement.prototype.captureStream !== "function") {
-      setError("Your browser does not support canvas video recording. Export the PNG slides instead, or use a recent Chrome/Edge browser.");
+      setError("MP4 recording is unavailable in this browser. Export PNG or use a browser with H.264 MP4 recording support.");
       return;
     }
     // Verify all scenes at output resolution before starting a 12-second real-time recording.
@@ -203,8 +204,9 @@ export default function SocialGermanChallenges() {
       const blob = await finished;
       if (!active.cancelled) {
         if (!blob.size) throw new Error("The video was empty. Please retry in a supported desktop browser.");
-        download(blob, fileStem + "-12s." + (videoMime.includes("mp4") ? "mp4" : "webm"));
-        setNotice("12-second silent video exported. Add licensed music in your social app if desired.");
+        await requireValidSocialMp4(blob);
+        download(blob, fileStem + "-12s.mp4");
+        setNotice("12-second MP4 exported. Add licensed music in your social app if desired.");
       }
     } catch (cause) {
       setError(cause?.message || "Video export failed.");
@@ -285,8 +287,8 @@ export default function SocialGermanChallenges() {
           <button type="button" disabled={working} onClick={() => exportSlide(1)}>Export question PNG</button>
           <button type="button" disabled={working} onClick={() => exportSlide(2)}>Export answer PNG</button>
         </div>
-        <button type="button" disabled={working || !videoMime} onClick={exportVideo}>{working ? "Recording your 12-second video…" : "Export 12-second vertical video"}</button>
-        {!videoMime && <p style={NOTE}>Video export needs MediaRecorder (supported by many current desktop browsers). PNG export works independently.</p>}
+        <button type="button" disabled={working || !videoMime} onClick={exportVideo}>{working ? "Recording your 12-second video…" : "Export 12-second MP4 video"}</button>
+        {!videoMime && <p style={NOTE}>MP4 encoding is unavailable in this browser; WebM will not be offered as an MP4. You can still export PNG.</p>}
         <p style={NOTE}>Videos are recorded on your device, vertically at 720 × 1280, without watermarks or paid AI tokens. They are silent so you can add licensed music in TikTok or Instagram.</p>
         {notice && <p role="status" style={{ margin: 0, color: "#166534", fontWeight: 600 }}>{notice}</p>}
         {error && <p role="alert" style={{ margin: 0, color: "#b91c1c" }}>{error}</p>}
