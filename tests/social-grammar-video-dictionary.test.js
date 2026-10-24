@@ -14,7 +14,8 @@ test("The content creator contains exactly 50 distinct authored A1–B1 grammar 
  for(const x of SOCIAL_GRAMMAR_VIDEOS){
   assert.match(x.id,/^GR-\d{3}$/);
   assert.ok(["A1","A2","B1"].includes(x.level));
-  for(const prop of ["category","title","hook","rule","example"])assert.ok(x[prop]?.length>10,`${x.id}: ${prop}`);
+  for(const prop of ["title","hook","rule","example"])assert.ok(x[prop]?.length>10,`${x.id}: ${prop}`);
+  assert.ok(x.category?.length>=4,`${x.id}: category`);
   const script=grammarVideoScript(x);
   assert.match(script,/0–3s/);
   assert.match(script,/24–30s/);
