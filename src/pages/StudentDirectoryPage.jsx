@@ -476,7 +476,7 @@ export default function StudentDirectoryPage() {
         : normalizeEditableValue(student[field]).trim();
 
       if (incomingValue !== originalValue) {
-        payload[field] = incomingValue;
+        payload[field] = dateFields.has(field) && !incomingValue ? null : incomingValue;
       }
     }
 
@@ -686,14 +686,24 @@ export default function StudentDirectoryPage() {
                 {statusOptions(field, draft[field]).map(value => <option key={value} value={value}>{value.replace(/_/g, " ")}</option>)}
               </select>
             ) : (
-              <input
-                type={dateFields.has(field) ? "date" : "text"}
-                value={draft[field]}
-                onChange={(event) => updateDraftField(selectedStudent.id, field, event.target.value, selectedStudent)}
-                style={{ width: "100%", padding: "8px 9px", borderRadius: 6, border: "1px solid #ccd4e2" }}
-                disabled={isSaving}
-              />
+              dateFields.has(field) ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input type="date" value={draft[field] || ""}
+                    onChange={(event) => updateDraftField(selectedStudent.id, field, event.target.value, selectedStudent)}
+                    disabled={isSaving} style={{ flex: 1, minWidth: 0, padding: "8px 9px", borderRadius: 6, border: "1px solid #ccd4e2" }}/>
+                  <button type="button" className="hoeren-quiet" disabled={isSaving || !draft[field]}
+                    onClick={() => updateDraftField(selectedStudent.id, field, "", selectedStudent)}>
+                    Clear
+                  </button>
+                </div>
+              ) : (
+                <input type="text" value={draft[field]}
+                  onChange={(event) => updateDraftField(selectedStudent.id, field, event.target.value, selectedStudent)}
+                  style={{ width: "100%", padding: "8px 9px", borderRadius: 6, border: "1px solid #ccd4e2" }}
+                  disabled={isSaving}/>
+              )
             )}
+            {dateFields.has(field) ? <small style={{ color: "#64748b" }}>Clear and save to store a null contract date. This does not reset the 7-day trial.</small> : null}
             {field === "email" ? (
               <span style={{ fontSize: 12, color: "#64748b", lineHeight: 1.45 }}>
                 Contact email can change without moving the account. Login, progress, scores and class history stay attached to the Firebase UID.

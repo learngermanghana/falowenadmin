@@ -42,6 +42,10 @@ function sanitizeStudentProfileUpdates(input = {}) {
 
   for (const [field, rawValue] of Object.entries(source)) {
     if (!EDITABLE_STUDENT_FIELDS.has(field)) continue;
+    if ((field === "contractStart" || field === "contractEnd") && (rawValue === null || rawValue === "")) {
+      updates[field] = null;
+      continue;
+    }
     const value = normalizeEditableValue(rawValue);
     if (value === undefined) continue;
     updates[field] = typeof value === "string" ? value.trim() : value;

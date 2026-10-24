@@ -46,6 +46,17 @@ test("student profile sanitizer keeps ordinary profile fields but forces class c
   });
 });
 
+
+test("clearing contract dates stores database null without changing trial status or its timestamps", () => {
+  const patch=sanitizeStudentProfileUpdates({
+    contractStart:null,contractEnd:null,status:"trial_active",
+    trialStartedAt:"2026-10-22T21:25:02.171Z",
+    trialEndsAt:"2026-10-29T21:25:02.171Z",
+  });
+  assert.deepEqual(patch,{contractStart:null,contractEnd:null,status:"trial_active"});
+  assert.equal(sanitizeStudentProfileUpdates({contractStart:"",contractEnd:""}).contractStart,null);
+});
+
 test("student profile editor authorization is mandatory", () => {
   assert.equal(isStudentProfileEditor({ email: "student@example.com" }), false);
   assert.equal(isStudentProfileEditor({ email: "staff@falowen.app" }), true);
