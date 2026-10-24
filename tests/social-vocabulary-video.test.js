@@ -24,9 +24,7 @@ test("filename sanitizes German vocabulary without losing the level", () => {
 });
 test("format selection does not label WebM as MP4", () => {
   assert.deepEqual(chooseVocabularyVideoMime(t => t === "video/mp4"), { mime: "video/mp4", extension: "mp4" });
-  assert.deepEqual(chooseVocabularyVideoMime(t => t === "video/webm;codecs=vp8,opus"), {
-    mime: "video/webm;codecs=vp8,opus", extension: "webm",
-  });
+  assert.equal(chooseVocabularyVideoMime(t => t === "video/webm;codecs=vp8,opus"), null);
   assert.equal(chooseVocabularyVideoMime(() => false), null);
 });
 test("original music notes are deterministic and bounded to duration; silence has zero notes", () => {
@@ -55,3 +53,4 @@ test("Vocabulary Studio uses the actual Sheet1 tab and safe fallback CSV URLs", 
   assert.doesNotMatch(src, /sheet=German_Vocabs/);
   assert.match(src, /CSV_URLS = \[\.\.\.new Set\(/);
 });
+\n
