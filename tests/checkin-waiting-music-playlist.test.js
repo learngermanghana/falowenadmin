@@ -23,7 +23,9 @@ test("waiting room playlist includes every public MP3 and points only to real fi
 
   assert.ok(publicMp3Files.length >= 1);
   assert.equal(waitingMusicPlaylist.length, publicMp3Files.length);
-  assert.ok(waitingMusicPlaylist.some((track) => /Calm Piano/i.test(track.title)));
+  assert.ok(waitingMusicPlaylist.some((track) => /Gemeinsam schaffen wir das/i.test(track.title)));
+  assert.ok(waitingMusicPlaylist.some((track) => /Willkommen bei Falowen/i.test(track.title)));
+  assert.ok(!waitingMusicPlaylist.some((track) => /Calm Piano/i.test(track.title)));
 
   const configuredFiles = waitingMusicPlaylist
     .map((track) => path.basename(decodeURIComponent(track.src)))
