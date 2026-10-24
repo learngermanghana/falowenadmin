@@ -362,15 +362,14 @@ const rows = [
   [
     "B1-9.26",
     "Reiseprobleme und Lösungen",
-    "informal_email",
-    "informal",
-    "friend_or_personal_contact",
-    "Write an informal letter to Max or Lisa about a trip.",
+    "opinion_essay",
+    "neutral",
+    "general_audience",
+    "Write approximately 80 German words as a forum response to Markus, who wants to avoid long-distance travel after delays and lost luggage. State your opinion, describe personal experience or reasons, and suggest ways to avoid or solve travel problems.",
     [
-      "Say the destination and means of transport",
-      "Explain what went wrong",
-      "Explain how you solved the problem",
-      "Explain how the trip ended"
+      "Express your opinion on Markus' claim about travel",
+      "Describe travel difficulties from experience or provide reasons",
+      "Suggest concrete ways to prevent or resolve travel problems"
     ]
   ],
   [
