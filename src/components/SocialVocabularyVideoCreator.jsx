@@ -220,7 +220,8 @@ export default function SocialVocabularyVideoCreator({ word }) {
         renderVocabularyFrame(canvas, word, currentSettings, duration);
         if (recorder.state === "recording") recorder.stop();
         const blob = await resultPromise;
-        downloadBlob(blob, videoFileStem(word) + "-" + duration + "s." + (blob.type.startsWith("video/mp4") ? "mp4" : mime.extension));
+        await requireValidSocialMp4(blob);
+        downloadBlob(blob, videoFileStem(word) + "-" + duration + "s.mp4");
         setMessage("MP4 video exported.");
       }
     } catch (cause) { setError(readableError(cause)); setMessage(""); }
