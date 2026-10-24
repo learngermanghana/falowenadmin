@@ -7,31 +7,29 @@ const CAST = ["B", "C", "D"];
 
 export function assignGoetheSpeakers(source) {
   const lines = String(source || "").replace(/\r\n/g, "\n").split("\n");
-  // Each pause-delimited recording is a fresh situation. The presenter is A;
-  // independent speakers use B/C/D, rotating on successive monologues.
+  const output = [...lines];
+  // Narrator A is never recast. Rotate B/C/D between independent tasks, while
+  // preserving a distinct, consistent voice for each actor within each task.
+  // Canonical group casting makes this safe to run twice (e.g. on editor blur).
   let start = 0;
   let groupNumber = 0;
-  const output = [...lines];
   const rewriteGroup = end => {
     const actors = [];
     for (let i = start; i < end; i += 1) {
       const found = output[i].trim().match(SPOKEN);
-      if (found && !NARRATION.test(found[2])) actors.push(found[1].toUpperCase());
+      if (found && !NARRATION.test(found[2])) {
+        const original = found[1].toUpperCase();
+        if (!actors.includes(original)) actors.push(original);
+      }
     }
     if (!actors.length) return;
-    const used = new Set(actors);
-    let mapping = {};
-    if (used.has("A")) {
-      if (used.has("B") && used.has("C")) mapping = { A: "B", B: "C", C: "D" };
-      else if (used.has("B")) mapping = { A: "B", B: "C" };
-      else if (used.has("C")) mapping = { A: "B" };
-      else mapping = { A: CAST[groupNumber % CAST.length] };
-    }
+    const mapping = Object.fromEntries(actors.map((speaker, i) =>
+      [speaker, CAST[(groupNumber + i) % CAST.length]]));
     for (let i = start; i < end; i += 1) {
       const found = output[i].trim().match(SPOKEN);
-      if (!found || NARRATION.test(found[2])) continue;
-      const speaker = found[1].toUpperCase();
-      if (mapping[speaker]) output[i] = `${mapping[speaker]}: ${found[2]}`;
+      if (found && !NARRATION.test(found[2])) {
+        output[i] = `${mapping[found[1].toUpperCase()]}: ${found[2]}`;
+      }
     }
     groupNumber += 1;
   };
