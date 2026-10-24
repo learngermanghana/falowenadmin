@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - "src/pages/TimedAssignmentAttemptsPage.jsx"
+      - "src/pages/SpeakingPracticeReviewPage.jsx"
+      - "src/services/speakingPracticeReviewService.js"
+      - "tests/speaking-practice-review.test.js"
       - "src/pages/StudentResultsComparePage.jsx"
       - "src/components/DraftHistoryPanel.jsx"
       - "src/components/DraftHistoryPanel.css"
@@ -32,6 +35,9 @@ on:
     branches: [main]
     paths:
       - "src/pages/TimedAssignmentAttemptsPage.jsx"
+      - "src/pages/SpeakingPracticeReviewPage.jsx"
+      - "src/services/speakingPracticeReviewService.js"
+      - "tests/speaking-practice-review.test.js"
       - "src/pages/StudentResultsComparePage.jsx"
       - "src/components/DraftHistoryPanel.jsx"
       - "src/components/DraftHistoryPanel.css"
@@ -65,4 +71,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - run: node --test tests/exam-room-practice-monitoring.test.js tests/mock-timed-monitoring.test.js tests/student-leads-hub.test.js tests/placement-attempt-monitoring.test.js tests/timed-attempt-lookup.test.js tests/timed-submission-receipt-lookup.test.js functions/timedDraftRecovery.test.cjs functions/draftHistory.test.cjs functions/draftSubmissionStatus.test.cjs
+      - run: node --test tests/speaking-practice-review.test.js tests/exam-room-practice-monitoring.test.js tests/mock-timed-monitoring.test.js tests/student-leads-hub.test.js tests/placement-attempt-monitoring.test.js tests/timed-attempt-lookup.test.js tests/timed-submission-receipt-lookup.test.js functions/timedDraftRecovery.test.cjs functions/draftHistory.test.cjs functions/draftSubmissionStatus.test.cjs

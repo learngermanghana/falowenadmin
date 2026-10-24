@@ -798,6 +798,7 @@ export default function TimedAssignmentAttemptsPage() {
         <p style={{ margin: 0, color: "#64748b" }}>
           These are timed tests in the Campus workbook, not full mocks from Exam Room.
           The countdown uses the saved start time and duration. Reset removes only the Campus timer, not a mock result. A timer marked submitted does not prove that the separate workbook submission was saved. Check the <a href="/marking" style={{ color: "#1d4ed8", fontWeight: 700 }}>Marking Hub</a> for actual student work; a timer reset does not create a submission.
+          {" "}To review actual saved AI examiner answers from Course Book or Exams Room, open <a href="/speaking-review" style={{ color: "#1d4ed8", fontWeight: 700 }}>Speaking Review</a>. Speaking sessions are not Campus timer records.
         </p>
         <p style={{ margin: 0, color: "#475569", fontSize: 13 }}>Looking for saved student answers? Open <a href="/student-results?tab=drafts">Results → Saved Drafts</a> and choose the date. Draft browsing is read-only.</p>
         {isStaff && <form onSubmit={lookupMissingTimedAttempt} style={{ ...card, display: "grid", gap: 10 }} data-testid="campus-timer-lookup">

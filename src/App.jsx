@@ -36,6 +36,7 @@ const HoerenStudioPage = lazy(() => import("./pages/HoerenStudioPage.jsx"));
 const MockBuilderPage = lazy(() => import("./pages/MockBuilderPage.jsx"));
 const WritingSubmissionTrackerPage = lazy(() => import("./pages/WritingSubmissionTrackerPage"));
 const TimedAssignmentAttemptsPage = lazy(() => import("./pages/TimedAssignmentAttemptsPage.jsx"));
+const SpeakingPracticeReviewPage = lazy(() => import("./pages/SpeakingPracticeReviewPage.jsx"));
 const OrientationPage = lazy(() => import("./pages/OrientationSetupTabsPage.jsx"));
 const ClassScheduleSetupPage = lazy(() => import("./pages/ClassScheduleSetupPage"));
 const ClassOperationsPage = lazy(() => import("./pages/ClassOperationsPage"));
@@ -153,6 +154,7 @@ function TopBar() {
                 <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
                 <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
                 <Link to="/timed-attempts" onClick={() => setMenuOpen(false)}>Mock Monitoring & Timers</Link>
+                <Link to="/speaking-review" onClick={() => setMenuOpen(false)}>Speaking Review</Link>
                 <Link to="/mock-builder" onClick={() => setMenuOpen(false)}>Mock Builder</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
               </>
@@ -167,6 +169,7 @@ function TopBar() {
                 {String(import.meta.env.VITE_HOEREN_STUDIO_OWNER_UID || "").trim() === user.uid ? <Link to="/ai-studio" onClick={() => setMenuOpen(false)}>AI Hören Studio</Link> : null}
                 <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
                 <Link to="/timed-attempts" onClick={() => setMenuOpen(false)}>Mock Monitoring & Timers</Link>
+                <Link to="/speaking-review" onClick={() => setMenuOpen(false)}>Speaking Review</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
                 <Link to="/mock-builder" onClick={() => setMenuOpen(false)}>Mock Builder</Link>
                 <Link to="/marking" onClick={() => setMenuOpen(false)}>Marking</Link>
@@ -293,6 +296,7 @@ export default function App() {
           <Route path="/writing-submissions" element={<ProtectedRoute allowStaff={false}><WritingSubmissionTrackerPage /></ProtectedRoute>} />
           <Route path="/writing-submissions/:submissionId" element={<ProtectedRoute allowStaff={false}><WritingSubmissionTrackerPage /></ProtectedRoute>} />
           <Route path="/timed-attempts" element={<ProtectedRoute><TimedAssignmentAttemptsPage /></ProtectedRoute>} />
+          <Route path="/speaking-review" element={<ProtectedRoute><SpeakingPracticeReviewPage /></ProtectedRoute>} />
           <Route path="/mock-builder" element={<ProtectedRoute><MockBuilderPage /></ProtectedRoute>} />
           <Route path="/quality-check" element={<Navigate to="/" replace />} />
           <Route path="/class-schedule-setup" element={<ProtectedRoute allowStaff={false}><ClassScheduleSetupPage /></ProtectedRoute>} />
