@@ -1,3 +1,4 @@
+import {requireValidSocialMp4} from "../utils/socialMp4Export.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   VIDEO_DURATIONS, VIDEO_RESOLUTIONS, VIDEO_THEMES, MUSIC_CHOICES,
@@ -123,7 +124,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
     if (!word || busy) return;
     setError(""); setMessage(""); setPlaying(false);
     if (!videoSupported() || !mime) {
-      setError("Video recording is not supported by this browser. PNG export remains available. Try Chrome or Safari with MediaRecorder support.");
+      setError("MP4 recording is not supported in this browser. PNG export remains available; try a browser with H.264 MP4 MediaRecorder support.");
       return;
     }
     let context = null, stream = null, recorder = null, timer = null, frameId = null;
@@ -189,10 +190,11 @@ export default function SocialVocabularyVideoCreator({ word }) {
         renderVocabularyFrame(canvas, word, currentSettings, duration);
         if (recorder.state === "recording") recorder.stop();
         const blob = await resultPromise;
-        downloadBlob(blob, videoFileStem(word) + "-" + duration + "s." + (blob.type.startsWith("video/mp4") ? "mp4" : mime.extension));
-        setMessage("Video exported with " + (music === "none" ? "no music" : "original Falowen music")
+        await requireValidSocialMp4(blob);
+        downloadBlob(blob, videoFileStem(word) + "-" + duration + "s.mp4");
+        setMessage("MP4 video exported with " + (music === "none" ? "no music" : "original Falowen music")
           + (voiceFile ? " and your attached German audio." : ".")
-          + (mime.extension === "webm" ? " This browser recorded WebM, not MP4." : ""));
+);
       } else {
         stream = new MediaStream(tracks);
         recorder = new MediaRecorder(stream, { mimeType: mime.mime, videoBitsPerSecond: quality === "full" ? 5500000 : 3000000 });
@@ -219,7 +221,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
         if (recorder.state === "recording") recorder.stop();
         const blob = await resultPromise;
         downloadBlob(blob, videoFileStem(word) + "-" + duration + "s." + (blob.type.startsWith("video/mp4") ? "mp4" : mime.extension));
-        setMessage("Silent video exported." + (mime.extension === "webm" ? " This browser recorded WebM, not MP4." : ""));
+        setMessage("MP4 video exported.");
       }
     } catch (cause) { setError(readableError(cause)); setMessage(""); }
     finally {
@@ -283,12 +285,12 @@ export default function SocialVocabularyVideoCreator({ word }) {
           </button>
           <button type="button" className={CTA} disabled={busy || !word || !canvasSupported} onClick={exportPng}>Export story PNG</button>
           <button type="button" className={CTA + " primary"} disabled={busy || !word || !mime} onClick={exportVideo}>
-            {busy ? "Encoding video…" : "Export video " + (mime?.extension === "mp4" ? "MP4" : mime?.extension === "webm" ? "WebM" : "")}
+            {busy ? "Encoding video…" : "Export MP4 video"}
           </button>
         </div>
         {playing && <small aria-live="off">Preview · {previewTime.toFixed(1)}s / {duration}s</small>}
-        {!mime && <p role="alert" className="social-vocab-video-warning">Local video encoding is unavailable in this browser. You can still export PNG; try a modern desktop browser for video.</p>}
-        {mime?.extension === "webm" && <p className="social-vocab-video-warning">This browser does not support native MP4 recording. It will download a WebM video. For a directly uploadable MP4, use a browser that supports MP4 MediaRecorder or convert the file locally.</p>}
+        {!mime && <p role="alert" className="social-vocab-video-warning">This browser cannot record MP4. No WebM file will be downloaded. You can still export PNG or use a browser with MP4 (H.264) MediaRecorder support.</p>}
+        
         {message && <p className="social-vocab-video-success" role="status">{message}</p>}
         {error && <p className="social-vocab-video-warning" role="alert">{error}</p>}
         <small className="social-vocab-video-note">Export runs locally and takes the selected duration. Keep this tab visible until it finishes. No video or audio is uploaded to Falowen.</small>
