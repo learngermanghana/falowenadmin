@@ -109,9 +109,21 @@ async function postGemini(url, key, payload, timeoutMs = 38_000) {
       signal: controller.signal,
     });
     if (!response.ok) {
-      if (response.status === 429) throw Object.assign(new Error("Google returned rate limit 429 for this project/model. Falowen's remaining allowance is separate from Google's minute/day/token quota. Completed voice scenes are saved in your browser; check Google AI Studio rate limits before retrying."), { status: 429 });
-      if (response.status === 402 || response.status === 403) throw Object.assign(new Error("The Gemini API key or billing access needs attention."), { status: 503 });
-      throw Object.assign(new Error("Google service could not complete the request (upstream error). Your existing draft was not changed. Please retry later."), { status: 502 });
+      // Keep the provider's status (not its raw body, which can contain details
+      // inappropriate for the teacher UI) so 502/503/429 have distinct remedies.
+      let providerCode = "";
+      try {
+        const body = await response.json();
+        providerCode = String(body?.error?.status || "").slice(0, 60);
+      } catch { /* Provider did not send JSON. */ }
+      console.warn("hoeren_studio_google_upstream", {
+        httpStatus: response.status, providerCode, // Never log prompts, voice text or credentials.
+      });
+      if (response.status === 429) throw Object.assign(new Error("Google rate limit (429) for this project/model. Falowen's quota is separate from Google's limits. Completed voice scenes remain saved in this browser; check the Google AI Studio rate limits before resuming."), { status: 429 });
+      if ([401,402,403].includes(response.status)) throw Object.assign(new Error("Gemini credentials or billing are not authorized for this request. Check the key and its model access."), { status: 503 });
+      if ([400,404].includes(response.status)) throw Object.assign(new Error(`Google rejected this AI Studio request (${response.status}). Check model availability and request format; repeated generation will not fix an invalid request.`), { status: 502 });
+      if ([500,502,503,504].includes(response.status)) throw Object.assign(new Error(`Google Gemini is temporarily unavailable (upstream ${response.status}). Your successful parts and cached scenes are safe; resume this Teil later.`), { status: 503 });
+      throw Object.assign(new Error(`Google service error (upstream ${response.status}). Your saved parts remain unchanged.`), { status: 502 });
     }
     return await response.json();
   } finally {
