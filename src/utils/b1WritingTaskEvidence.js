@@ -194,11 +194,13 @@ const RULES = {
     conclusion,
   ],
   "B1-8.25": [
-    makeRule(/\b(?:am\s+\d{1,2}[./-]\d{1,2}|am\s+\d{1,2}\.\s*\w+|vor\s+\d+\s+tagen|letzte\s+woche|gekauft\s+am)\b/i),
-    makeRule(/\b(?:kaputt|defekt|display|bildschirm|kratzer|funktioniert\s+nicht|besch[aä]digt|schaden)\b/i),
-    makeRule(/\b(?:zur[uü]ckgeschickt|zur[uü]ckgesendet|paket|retoure|r[uü]cksendung|lieferung|sendungsnummer)\b/i),
-    makeRule(/\b(?:ersatz|austausch|reparatur|reparieren|erstattung|geld\s+zur[uü]ck)\b/i),
-    makeRule(/\b(?:schnelle\s+(?:antwort|l[oö]sung|r[uü]ckmeldung)|baldige\s+r[uü]ckmeldung|bitte\s+antworten|w[aä]re\s+ich\s+dankbar)\b/i),
+    makeCountRule([
+      /\b(?:ich\s+(?:finde|denke|stimme)|meiner\s+meinung|meines\s+erachtens|ich\s+bin\s+der\s+meinung)\b/i,
+      /\b(?:risik\w*|fake[- ]?shop\w*|betrug|datenschutz|unsicher|sichere\s+zahlung)\b/i,
+      /\b(?:widerruf\w*|verbraucherrecht\w*|r[uü]cksend\w*|r[uü]ckgab\w*|vierzehn\s+tage|14\s+tage)\b/i
+    ], 2),
+    makeRule(/\b(?:weil|denn|deshalb|daher|aus\s+diesem\s+grund|da\s+ich)\b/i),
+    makeRule(/\b(?:ich\s+habe|ich\s+hatte|bei\s+mir|meine\s+erfahrung|meiner\s+erfahrung|in\s+meinem\s+heimatland|in\s+ghana|bei\s+uns|zum\s+beispiel)\b/i)
   ],
   "B1-9.26": [
     makeCountRule([/\b(?:nach|in|auf)\s+[A-ZÄÖÜ][a-zäöüß]+|\breiseziel|ziel\b/i, /\b(?:zug|bus|auto|flugzeug|flug|bahn|fahrrad|schiff)\b/i], 2),

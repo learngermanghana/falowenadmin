@@ -3680,39 +3680,63 @@
   "B1 8.25 Online einkaufen ? Rechte und Risiken": {
     "answers": {
       "teil3": {
-        "Answer1": "B) Sie ist selbstständig und verdient mehr.",
-        "Answer2": "C) Weil Service und Beratung gut sind.",
-        "Answer3": "B) Sie trennt Müll und spart Energie.",
-        "Answer4": "C) Licht und elektrische Geräte werden ausgeschaltet.",
-        "Answer5": "B) Beratung zu Konsum, Verträgen und Ernährung",
-        "Answer6": "C) Durch staatliche Unterstützung und teilweise Kundenzahlungen",
-        "Answer7": "B) Broschüren mit Informationen"
+        "Answer1": "B) Weil man bequem von zu Hause aus eine große Auswahl bestellen kann.",
+        "Answer2": "B) Sie verlangen Geld per Vorkasse, schicken die Ware aber nie ab.",
+        "Answer3": "B) Dass vertrauliche Daten und Kreditkartendaten missbraucht werden.",
+        "Answer4": "A) Ein 14-tägiges Widerrufsrecht ohne Angabe von Gründen.",
+        "Answer5": "A) Er kann den Vertrag stornieren und die Ware zurückschicken.",
+        "Answer6": "A) Man sollte das Impressum prüfen und Kundenbewertungen lesen.",
+        "Answer7": "C) Den Kauf auf Rechnung sowie etablierte Bezahldienste."
       },
-      "teil4": {}
+      "teil4": {
+        "Answer1": "B) Ihr Rucksack war kaputt und sie hatte keine Tasche dabei.",
+        "Answer2": "C) Zwei oder drei stabile Jutebeutel.",
+        "Answer3": "A) Sie vergisst sie beim spontanen Einkauf nach der Arbeit.",
+        "Answer4": "B) Einen zusammengefalteten Beutel in der Jacken- oder Arbeitstasche aufbewahren.",
+        "Answer5": "A) Sie verwendet waschbare Stoffnetze oder kauft unverpacktes Obst.",
+        "Answer6": "C) Dort gibt es viele unverpackte Produkte aus der Region.",
+        "Answer7": "B) Am Samstag um zehn Uhr vor dem Rathaus."
+      }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1qD3fjXMprCDY-5Xz1-msUH1DgA9_V8KbwxTInF0I0AE/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1qD3fjXMprCDY-5Xz1-msUH1DgA9_V8KbwxTInF0I0AE/edit",
     "format": "objective",
     "assignment_id": "B1-8.25",
     "expectedParts": [
+      "teil2",
       "teil3"
     ],
     "excludedParts": [
       "teil4"
     ],
-    "writingParts": [],
-    "aiGradedParts": [],
+    "writingParts": [
+      "teil2"
+    ],
+    "aiGradedParts": [
+      "teil2"
+    ],
     "referenceAnswerParts": [
       "teil3"
     ],
     "answerLayout": "multipart",
     "partGrading": {
+      "teil2": {
+        "label": "Teil 2 Schreiben",
+        "hasReferenceAnswers": false,
+        "gradingMode": "ai_written_response",
+        "instruction": "Grade the B1 online-shopping guestbook discussion (about 80 German words). Check the student's own position on online shopping, risks and consumer rights, a reasoned argument, and a concrete personal or home-country example. Do not grade this as a formal complaint letter or require a greeting."
+      },
       "teil3": {
-        "label": "teil3",
+        "label": "Teil 3 Lesen",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
-        "instruction": "Grade this part against the reference answers in answers."
+        "instruction": "Grade all seven A/B/C reading answers against the current Online-Shopping press article."
       }
+    },
+    "pendingHoeren": {
+      "status": "audio-pending",
+      "note": "Seven listening answers are prepared in answers.teil4, but Teil 4 remains excluded from grading until its matching sustainable-shopping audio is verified and the workbook enables submission.",
+      "requiredAudioTranscript": "Nachhaltig einkaufen · Plastiktüten vermeiden"
     }
   },
   "B1 9.26 Reiseprobleme und Lösungen": {

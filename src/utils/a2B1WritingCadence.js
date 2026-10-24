@@ -12,12 +12,12 @@ export const A2_NO_WRITING_ASSIGNMENTS = Object.freeze([
 export const B1_REQUIRED_WRITING_ASSIGNMENTS = Object.freeze([
   "B1-1.1", "B1-1.3", "B1-2.4", "B1-2.6", "B1-3.8", "B1-3.9",
   "B1-4.12", "B1-4.13", "B1-5.14", "B1-5.16", "B1-6.18", "B1-6.20",
-  "B1-7.21", "B1-7.23", "B1-8.24", "B1-9.26", "B1-10.27", "B1-10.28",
+  "B1-7.21", "B1-7.23", "B1-8.24", "B1-8.25", "B1-9.26", "B1-10.27", "B1-10.28",
 ]);
 
 export const B1_NO_WRITING_ASSIGNMENTS = Object.freeze([
   "B1-1.2", "B1-2.5", "B1-3.7", "B1-4.10", "B1-4.11",
-  "B1-5.15", "B1-5.17", "B1-6.19", "B1-7.22", "B1-8.25",
+  "B1-5.15", "B1-5.17", "B1-6.19", "B1-7.22",
 ]);
 
 const REQUIRED = Object.freeze({
