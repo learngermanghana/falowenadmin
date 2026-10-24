@@ -115,9 +115,10 @@ test("B1 Day 25 classroom Hören uses seven answers and the matching uploaded R2
   assert.equal(B1_DAY25_AUDIO_KEY, lesson.listening.audioKey);
   assert.equal(lesson.listening.questions.length, 7);
   assert.equal(B1_DAY25_LISTENING_QUESTIONS.length, 7);
-  assert.deepEqual(lesson.listening.questions.map(q=>q.answer), ["B","C","A","B","A","C","B"]);
+  assert.deepEqual(lesson.listening.questions.map(q=>q.answer[0]), ["B","C","A","B","A","C","B"]);
   for (const q of lesson.listening.questions) {
-    assert.deepEqual(q.options, ["A", "B", "C"]);
+    assert.equal(q.options.length, 3);
+    assert.deepEqual(q.options.map(x => x[0]), ["A", "B", "C"]);
     assert.equal(q.answer, q.options[q.correctIndex]);
     assert.ok(q.evidence && q.hint.includes(q.evidence));
     assert.ok(B1_DAY25_TRANSCRIPT.map(x=>x[1]).join(" ").includes(q.evidence));
