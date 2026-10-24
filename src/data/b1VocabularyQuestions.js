@@ -436,20 +436,20 @@ export const B1_VOCABULARY_QUESTIONS = Object.freeze({
   ],
   "B1-8.25": [
     {
-      "term": "Das Produkt ist beschädigt angekommen.",
-      "questionDe": "Du hast ein Paket geöffnet und siehst einen kaputten Gegenstand. Wie beschreibst du den Zustand der gelieferten Ware?"
+      "term": "Meiner Meinung nach hat Online-Shopping viele Vorteile, aber ...",
+      "questionDe": "Du antwortest auf Tims Forumsbeitrag und möchtest Vorteile sowie deine Bedenken ausdrücken. Wie beginnst du deine persönliche Meinung?"
     },
     {
-      "term": "Ich möchte die Ware zurückgeben.",
-      "questionDe": "Du willst ein online bestelltes Produkt nicht behalten. Wie teilst du dem Shop mit, dass du es zurückschicken möchtest?"
+      "term": "Einerseits ist es bequem, andererseits gibt es Risiken.",
+      "questionDe": "Du möchtest in einem Satz den Vorteil der Bequemlichkeit und die Gefahren beim Online-Einkauf gegenüberstellen. Wie formulierst du das?"
     },
     {
-      "term": "Könnten Sie mir bitte Ersatz schicken?",
-      "questionDe": "Du hast beschädigte Ware erhalten und bittest höflich um ein Ersatzprodukt. Wie formulierst du die Bitte?"
+      "term": "Ich stimme Tim zu, weil ...",
+      "questionDe": "Du bist derselben Meinung wie Tim und möchtest auch einen Grund nennen. Wie beginnst du deine begründete Zustimmung?"
     },
     {
-      "term": "Ich bitte Sie, mir den Kaufpreis zu erstatten.",
-      "questionDe": "Du möchtest dein Geld für eine fehlerhafte Bestellung wiederhaben. Wie formulierst du eine formelle Erstattungsbitte?"
+      "term": "Ein Beispiel aus meinem Alltag ist ...",
+      "questionDe": "Dein Forumsbeitrag braucht eine persönliche Erfahrung aus deinem täglichen Leben. Wie leitest du ein eigenes Beispiel ein?"
     }
   ],
   "B1-9.26": [
