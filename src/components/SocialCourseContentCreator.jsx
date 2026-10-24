@@ -1,3 +1,4 @@
+import SocialGrammarVideoDictionary from "./SocialGrammarVideoDictionary.jsx";
 import { useMemo, useState } from "react";
 import { courseDictionary, compareCourseDictionaryEntries } from "../data/courseDictionary.js";
 import { getTeachingSlideByAssignmentId } from "../data/teachingSlides.js";
@@ -45,6 +46,7 @@ function safeUrl(value) {
 }
 export default function SocialCourseContentCreator() {
   const { pushToast } = useToast();
+  const [creatorMode, setCreatorMode] = useState("grammar");
   const [level, setLevel] = useState("A2");
   const [assignmentId, setAssignmentId] = useState(() => dictionaryEntries("A2")[0]?.assignment_id || "");
   const [templateId, setTemplateId] = useState("speaking");
@@ -158,6 +160,11 @@ export default function SocialCourseContentCreator() {
 
   return (
     <section className="social-course-studio">
+      <nav className="social-creator-mode" aria-label="Content source">
+        <button type="button" aria-pressed={creatorMode === "grammar"} onClick={() => setCreatorMode("grammar")}>50 Grammar Video Ideas</button>
+        <button type="button" aria-pressed={creatorMode === "course"} onClick={() => setCreatorMode("course")}>Course Lesson Creator</button>
+      </nav>
+      {creatorMode === "grammar" ? <SocialGrammarVideoDictionary /> : <>
       <div className="social-section-lead">
         <div>
           <h2>Course Content Creator</h2>
@@ -282,6 +289,7 @@ export default function SocialCourseContentCreator() {
           </details>
         </section>
       </div>
+      </>}
     </section>
   );
 }
