@@ -1,3 +1,4 @@
+import {chooseSocialMp4Mime} from "./socialMp4Export.js";
 // Browser-only canvas renderer. No paid video or image generation API.
 export const CHALLENGE_EXPORT_SIZES = {
   portrait: { width: 1080, height: 1350, label: "Instagram portrait" },
@@ -19,10 +20,9 @@ export function sceneAtTime(seconds) {
   return 3;
 }
 export function challengeVideoMime(isTypeSupported) {
-  if (typeof isTypeSupported !== "function") return "";
-  return ["video/mp4;codecs=avc1.42E01E", "video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"]
-    .find((format) => isTypeSupported(format)) || "";
+  return chooseSocialMp4Mime(isTypeSupported);
 }
+
 export function challengeFileStem(challenge) {
   return "falowen-german-challenge-" + String(challenge?.id || "post").replace(/[^a-z0-9-]/gi, "").toLowerCase();
 }
