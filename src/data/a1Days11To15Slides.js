@@ -90,31 +90,67 @@ const CONTENT = Object.freeze({
   },
   "A1-8": {
     assignmentKind: "tutor-marked",
-    subtitle: "Tutor-marked A1 Day 12 workbook: Lesen and Hören. The 12-hour conversion is unscored practice.",
+    subtitle: "A1 Day 12 tutor-marked workbook: two Lesen parts. The separate six-question grammar knowledge check is unscored practice.",
     parts: [
-      { label: "Teil 1 · Lesen", detailEn: "Read the published 24-hour timetable, date and appointment text, then answer the five reading questions." },
-      { label: "Teil 2 · Hören", detailEn: "Listen for the five Day 12 date/time answers. The additional 12-hour conversion is practice rather than a graded section." },
+      { label: "Teil 1 · Lesen (Richtig/Falsch)", detailEn: "Read three messages and answer five Richtig/Falsch questions." },
+      { label: "Teil 2 · Lesen (A/B/C)", detailEn: "Read three signs and timetables; select answers for three multiple-choice questions." },
     ],
     teacherNotesEn: [
-      "Day 12 publishes two scored reference-answer parts: five Lesen questions and five Hören questions.",
-      "The 12-hour conversion is supplementary practice, not a third scored assignment part.",
-      "Check am with weekdays/dates and um with clock times. Use ordinal date forms and do not invent a separate writing submission.",
+      "Keep the presentation in the same order as the new grammar note: AM/PM and 24-hour clock → exact minutes → 12 months → date ordinals.",
+      "The actual A1-8 workbook has two scored Lesen parts: five Richtig/Falsch and three A/B/C questions. Do not call the second part Hören.",
+      "Do not introduce years, am/um, or other time-preposition revisions here; they belong in the following chapter.",
+      "Use the six-question grammar knowledge test for quick independent practice without changing submission or marking.",
+    ],
+    grammarTeachingSections: [
+      {
+        title: "1. AM / PM und die 24-Stunden-Uhr",
+        items: [
+          "6 AM = 06:00 = sechs Uhr morgens; 6 PM = 18:00 = sechs Uhr abends.",
+          "9 AM = neun Uhr morgens; 9 PM = 21:00 = neun Uhr abends.",
+          "For 1 PM to 11 PM, add 12 to the hour. 3 PM = 15:00.",
+        ],
+      },
+      {
+        title: "2. Genaue Minuten sagen",
+        items: [
+          "Pattern: hour + Uhr + minutes. 13:43 = dreizehn Uhr dreiundvierzig.",
+          "02:21 = zwei Uhr einundzwanzig; 14:21 = vierzehn Uhr einundzwanzig.",
+          "07:05 = sieben Uhr fünf; 23:58 = dreiundzwanzig Uhr achtundfünfzig.",
+        ],
+      },
+      {
+        title: "3. Die zwölf Monate",
+        items: [
+          "Januar · Februar · März · April · Mai · Juni",
+          "Juli · August · September · Oktober · November · Dezember",
+          "German months start with a capital letter.",
+        ],
+      },
+      {
+        title: "4. Das Datum: Tag + Monat",
+        items: [
+          "Write: 03.05. / 12.08. / 23.10. No years in this chapter.",
+          "Say: der dritte Mai · der zwölfte August · der dreiundzwanzigste Oktober.",
+          "Most ordinals 4–19 end in -te, 20–31 in -ste; remember erste, dritte, siebte, achte.",
+          "Heute ist der dritte Mai. (Today is 3 May.)",
+        ],
+      },
     ],
     studentQuestionsDe: [
-      "Lies 18:30 Uhr als deutsche Uhrzeit.",
-      "Wie sagt man 19:00 Uhr im 12-Stunden-System?",
-      "Lies den Fahrplan: RE 4 · 18:45 · Gleis 5. Wann fährt der Zug?",
-      "Ergänze: „Der Kurs ist ___ Montag ___ 18 Uhr.“",
-      "Wie sagst du den 5. Mai mit am?",
+      "Was ist 7 PM im 24-Stunden-System?",
+      "Wie sagt man 13:43 Uhr?",
+      "Wie sagt man 02:21 Uhr?",
+      "Welcher Monat kommt nach März?",
+      "Wie sagt man das Datum 23. Oktober?",
     ],
     flow: [
-      { phase: "Fahrplan verstehen", detailEn: "8 min: identify departure time, line number and platform in a short timetable." },
-      { phase: "12/24-Stunden prüfen", detailEn: "9 min: convert a few exact times as unscored understanding checks." },
-      { phase: "Datum und Präposition", detailEn: "10 min: complete am + day/date and um + clock-time sentences; show ordinal answers after a response." },
-      { phase: "Lesen/Hören transfer", detailEn: "10 min: explain the five reading and five listening answers in the published workbook; no invented third section." },
-      { phase: "Abschluss ohne Hilfe", detailEn: "8 min: solve a fresh weekday, date and exact time combination." },
+      { phase: "12/24-Stunden", detailEn: "8 min: connect AM/PM with morgens and abends; convert 6 PM and 7 PM." },
+      { phase: "Minuten", detailEn: "10 min: read 13:43, 02:21, 14:21 and 07:05 exactly." },
+      { phase: "Monate", detailEn: "8 min: recognise and order all twelve German months." },
+      { phase: "Datum", detailEn: "10 min: form ordinal day + month, without years or time prepositions." },
+      { phase: "Sechs Fragen", detailEn: "8 min: complete the grammar-page six-question multiple-choice check; then open the unchanged two-part Lesen workbook." },
     ],
-    wrapUpTaskDe: "Ergänze am oder um zu Montag, dem fünften Mai und 18:45 Uhr. Lies danach eine Zugzeit korrekt im Fahrplan.",
+    wrapUpTaskDe: "Lies 14:21 Uhr, nenne den Monat nach März und sage den 23. Oktober als Datum.",
   },
   "A1-3.5": {
     assignmentKind: "unverified",
@@ -221,7 +257,7 @@ export function enhanceA1Days11To15Slide(slide = {}) {
     grammarTeachingSections: spec.grammarTeachingSections || slide.grammarTeachingSections,
     wrapUpTaskDe: spec.wrapUpTaskDe,
     workbookConnection: {
-      grammarUrl: id === "A1-7" ? "/campus/course/the-12-hour-clock-system-in-german-chapter-7" : null,
+      grammarUrl: id === "A1-7" ? "/campus/course/the-12-hour-clock-system-in-german-chapter-7" : id === "A1-8" ? "/campus/course/a1-day-12-the-24-hour-clock-and-dates" : null,
       workbookUrl: route,
       subtitle: spec.subtitle,
       parts: spec.parts,
