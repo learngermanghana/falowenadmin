@@ -349,16 +349,14 @@ const rows = [
   [
     "B1-8.25",
     "Online einkaufen – Rechte und Risiken",
-    "complaint",
-    "formal",
-    "business",
-    "Write a formal complaint to customer service about a damaged phone.",
+    "opinion_essay",
+    "neutral",
+    "general_audience",
+    "Write an approximately 80-word guestbook discussion responding to Tim (28). State a view on online shopping, risks and consumer rights; justify it and include an experience from personal life or your home country.",
     [
-      "State the date or time of purchase",
-      "Describe the damage or defect",
-      "Explain the return or delivery details",
-      "Request a replacement, repair or refund",
-      "Politely request a quick response or solution"
+      "State your own view on online shopping, risks and consumer rights",
+      "Explain and justify your opinion",
+      "Give a personal experience or example from daily life or your home country"
     ]
   ],
   [
