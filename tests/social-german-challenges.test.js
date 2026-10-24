@@ -170,3 +170,12 @@ test("overlong edited answers cannot be exported with clipped invisible text", (
   assert.equal(renderChallengeFrame(canvas, entry, copy, 2), false);
   assert.ok(canvas.labels.some(({ text }) => /Text zu lang/i.test(text)));
 });
+
+test("challenge videos export MP4 only, and refuse WebM-only browsers",()=>{
+  assert.equal(challengeVideoMime(type=>type==="video/mp4"),"video/mp4");
+  assert.equal(challengeVideoMime(type=>type==="video/webm"),"");
+  const src=readFileSync(new URL("../src/components/SocialGermanChallenges.jsx",import.meta.url),"utf8");
+  assert.match(src,/requireValidSocialMp4\(blob\)/);
+  assert.match(src,/12s\.mp4/);
+  assert.doesNotMatch(src,/12s\.\" \+ .*webm/);
+});
