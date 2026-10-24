@@ -58,49 +58,83 @@ export const B1_DAY25_TRANSCRIPT = Object.freeze([
     "Keine Sorge, diesmal bin ich vorbereitet. Bis Samstag."
   ]
 ]);
-const OPTIONS = Object.freeze(["A", "B", "C"]);
 const questions = [
   {
     "prompt": "Warum musste eine Person im Supermarkt Einwegtüten kaufen?",
     "answer": "B",
-    "evidence": "Mein alter Rucksack ist gestern kaputt gegangen"
+    "evidence": "Mein alter Rucksack ist gestern kaputt gegangen",
+    "options": [
+      "A) Sie wollte eine große Party organisieren.",
+      "B) Ihr Rucksack war kaputt und sie hatte keine Tasche dabei.",
+      "C) Die Stoffbeutel waren im Supermarkt verboten."
+    ]
   },
   {
     "prompt": "Welche Alternative zu Plastiktüten wird zuerst empfohlen?",
     "answer": "C",
-    "evidence": "zwei oder drei stabile Jutebeutel"
+    "evidence": "zwei oder drei stabile Jutebeutel",
+    "options": [
+      "A) Ein Korb aus Kunststoff.",
+      "B) Große Papiertüten, die man nur einmal benutzt.",
+      "C) Zwei oder drei stabile Jutebeutel."
+    ]
   },
   {
     "prompt": "Warum benutzt die Person ihre Stoffbeutel bisher nicht regelmäßig?",
     "answer": "A",
-    "evidence": "vergesse ich sie jedes Mal"
+    "evidence": "vergesse ich sie jedes Mal",
+    "options": [
+      "A) Sie vergisst sie beim spontanen Einkauf nach der Arbeit.",
+      "B) Sie findet Stoffbeutel zu teuer.",
+      "C) Sie darf sie nicht in den Supermarkt mitnehmen."
+    ]
   },
   {
     "prompt": "Wie soll die Person laut dem Tipp dafür sorgen, immer einen Beutel dabeizuhaben?",
     "answer": "B",
-    "evidence": "einen zusammengefalteten Beutel in deine Jackentasche"
+    "evidence": "einen zusammengefalteten Beutel in deine Jackentasche",
+    "options": [
+      "A) Jeden Tag einen neuen Beutel kaufen.",
+      "B) Einen zusammengefalteten Beutel in der Jacken- oder Arbeitstasche aufbewahren.",
+      "C) Den Beutel am Wochenende im Supermarkt abgeben."
+    ]
   },
   {
     "prompt": "Was macht eine Person beim Einkauf von Obst und Gemüse, um Plastik zu vermeiden?",
     "answer": "A",
-    "evidence": "kleine Wiederverwendungsnetze aus Stoff"
+    "evidence": "kleine Wiederverwendungsnetze aus Stoff",
+    "options": [
+      "A) Sie verwendet waschbare Stoffnetze oder kauft unverpacktes Obst.",
+      "B) Sie nimmt immer die kleinen Plastiktüten im Supermarkt.",
+      "C) Sie kauft ausschließlich tiefgekühltes Obst."
+    ]
   },
   {
     "prompt": "Warum geht eine Person besonders gern auf den Wochenmarkt?",
     "answer": "C",
-    "evidence": "Dort ist fast alles unverpackt"
+    "evidence": "Dort ist fast alles unverpackt",
+    "options": [
+      "A) Dort sind nur importierte Waren erhältlich.",
+      "B) Der Markt ist an jedem Abend geöffnet.",
+      "C) Dort gibt es viele unverpackte Produkte aus der Region."
+    ]
   },
   {
     "prompt": "Wann und wo wollen sich die beiden zum gemeinsamen Einkauf treffen?",
     "answer": "B",
-    "evidence": "am Samstag um zehn Uhr vor dem Rathaus treffen"
+    "evidence": "am Samstag um zehn Uhr vor dem Rathaus treffen",
+    "options": [
+      "A) Am Freitag um zehn Uhr vor dem Bahnhof.",
+      "B) Am Samstag um zehn Uhr vor dem Rathaus.",
+      "C) Am Samstag um zwölf Uhr vor dem Supermarkt."
+    ]
   }
 ];
 export const B1_DAY25_LISTENING_QUESTIONS = Object.freeze(questions.map((item) => Object.freeze({
   prompt: item.prompt,
-  options: OPTIONS,
-  correctIndex: OPTIONS.indexOf(item.answer),
-  answer: item.answer,
+  options: item.options,
+  correctIndex: "ABC".indexOf(item.answer),
+  answer: item.options["ABC".indexOf(item.answer)],
   evidence: item.evidence,
   hint: "Hörbeleg: „" + item.evidence + "“",
   explanation: item.evidence,
