@@ -19,3 +19,10 @@ test("both video components inspect container bytes before download",()=>{
     assert.match(src,/await requireValidSocialMp4\(blob\)/,path);
   }
 });
+
+test("silent and audio vocabulary MP4 paths both validate real container before downloading",()=>{
+  const src=readFileSync(new URL("../src/components/SocialVocabularyVideoCreator.jsx",import.meta.url),"utf8");
+  const calls=[...src.matchAll(/await requireValidSocialMp4\(blob\);\s*downloadBlob\(blob, videoFileStem\(word\) \+ "-" \+ duration \+ "s\.mp4"\)/g)];
+  assert.equal(calls.length,2,"Both music and silent exports must verify MP4 signature");
+  assert.doesNotMatch(src,/mime\.extension|\.(?:webm|mkv)"/i);
+});
