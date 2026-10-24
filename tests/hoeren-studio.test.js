@@ -7,6 +7,7 @@ import { validateDraftQuestions } from "../src/utils/hoerenQuestions.js";
 import { inspectHoerenDraft } from "../src/utils/hoerenDraftQuality.js";
 import { buildStudioSpeechPlan, sceneVoiceKey, assemblyScenePlan } from "../src/utils/hoerenSpeechPlan.js";
 import { assignGoetheSpeakers, suggestRecordingScene } from "../src/utils/hoerenProductionDefaults.js";
+import { prepareSavedBatchTranscript,shouldGenerateBatchAudio } from "../src/utils/hoerenBatchWorkflow.js";
 
 const require = createRequire(import.meta.url);
 const { EXAM_PROFILES, getExamProfile, buildExamPrompt } = require("../functions/hoerenExamProfiles.js");
@@ -475,4 +476,32 @@ test("batch exposes downloads for complete Teile independently of ZIP completion
   assert.match(page, /Save transcript &amp; speaker changes/);
   assert.match(page, /suggestRecordingScene/);
   assert.match(page, /Remix Teil \{i\}/);
+});
+
+test("teacher speaker edits persist and preserve questions when words stay the same", () => {
+  const original=assignGoetheSpeakers(["A: Nummer eins.","B: Guten Tag.","C: Hallo."].join("\n"));
+  const edited=original.replace("B: Guten Tag.","D: Guten Tag.");
+  const saved=prepareSavedBatchTranscript(original,edited);
+  assert.equal(saved.changed,true);
+  assert.equal(saved.wordsUnchanged,true);
+  assert.ok(saved.next.includes("D: Guten Tag."));
+  assert.equal(saved.next.includes("B: Guten Tag."),false);
+  assert.deepEqual(parseStudioTranscript(saved.next).filter(line=>line.type==="speech").map(line=>line.speaker),["A","D","C"]);
+  const oldPlan=buildStudioSpeechPlan(parseStudioTranscript(original)).filter(x=>x.type==="speech");
+  const newPlan=buildStudioSpeechPlan(parseStudioTranscript(saved.next)).filter(x=>x.type==="speech");
+  assert.notDeepEqual(oldPlan,newPlan,"Recasting must change the voice scene plan");
+});
+
+test("completed Teil can explicitly regenerate without deleting existing MP3 or questions", () => {
+  const audio=new Blob(["old mp3"],{type:"audio/mpeg"});
+  const part={audio,questions:[{question:"Wo?"}],script:"B: Hallo.",approved:true};
+  assert.equal(shouldGenerateBatchAudio(part),false,"Normal resume skips completed parts");
+  assert.equal(shouldGenerateBatchAudio(part,true),true,"Explicit regeneration bypasses guard");
+  assert.equal(shouldGenerateBatchAudio({...part,audio:null}),true,"Unfinished parts still resume");
+  assert.equal(part.audio,audio,"Old MP3 must remain until replacement succeeds");
+  assert.equal(part.questions.length,1);
+  const panel=readFileSync(new URL("../src/components/HoerenBatchPanel.jsx",import.meta.url),"utf8");
+  assert.ok(panel.includes("onClick={()=>run(i,{regenerateAudio:true})}"));
+  assert.ok(panel.includes("generatePart(index,{regenerateAudio:regenerateAudio&&index===partIndex})"));
+  assert.equal(panel.includes("assignGoetheSpeakers(repairUnlabelledStudioLines(scriptEdits"),false);
 });

@@ -1,8 +1,9 @@
 import {useEffect,useRef,useState} from "react";
 import {getStudioStatus,makeListeningScript,makeListeningQuestions,makeSpeechClip} from "../services/hoerenStudioService";
-import {parseStudioTranscript,repairUnlabelledStudioLines,sameSpokenTranscript,base64WavToBytes,assembleListeningExam} from "../utils/hoerenAudio";
+import {parseStudioTranscript,repairUnlabelledStudioLines,base64WavToBytes,assembleListeningExam} from "../utils/hoerenAudio";
 import {assignGoetheSpeakers,suggestRecordingScene} from "../utils/hoerenProductionDefaults";
 import {buildStudioSpeechPlan,assemblyScenePlan,sceneVoiceKey} from "../utils/hoerenSpeechPlan";
+import {prepareSavedBatchTranscript,shouldGenerateBatchAudio} from "../utils/hoerenBatchWorkflow";
 import {getSavedVoice,saveVoice} from "../utils/hoerenVoiceCache";
 import {validateDraftQuestions} from "../utils/hoerenQuestions";
 import {encodeWavAsMp3} from "../utils/hoerenMp3";
@@ -80,10 +81,10 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
     if(!ready||!indexes.length)throw new Error("Choose a supported level and check the AI Studio key.");
     if(loading)throw new Error("Saved work is still loading.");
   }
-  async function generatePart(index){
+  async function generatePart(index,{regenerateAudio=false}={}){
     const preset=profile[index];
     const existing=cacheRef.current[index]||{};
-    if(existing.audio instanceof Blob&&existing.questions?.length)return;
+    if(!shouldGenerateBatchAudio(existing,regenerateAudio))return;
     let state=existing;
     if(!state.script){
       setWorking(`Teil ${index}: script and questions`);
@@ -180,7 +181,7 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
       const plan=buildStudioSpeechPlan(parseStudioTranscript(cacheRef.current[index].script));
       const scenes=plan.filter(item=>item.type==="speech");
       const clips=await Promise.all(scenes.map(scene=>getSavedVoice(sceneVoiceKey(engine,scene))));
-      if(clips.some(x=>!x))throw new Error("Some saved voice scenes are missing for this voice quality. Generate the Teil again to replace them.");
+      if(clips.some(x=>!x))throw new Error(`Teil ${index}: saved voice clips for this quality are missing or expired. Use Regenerate Teil ${index} audio below. Your current MP3 remains available until replacement succeeds.`);
       const audio=await assemblePart(index,plan,clips);
       await savePart(index,{audio,approved:false,error:""});
       setNotice(`Teil ${index} remixed with the current playback settings, no Gemini requests.`);
@@ -191,10 +192,8 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
     const current=cacheRef.current[index];
     if(!current?.script)return;
     try{
-      const next=assignGoetheSpeakers(repairUnlabelledStudioLines(scriptEdits[index]??current.script));
-      parseStudioTranscript(next);
-      if(next===current.script)return;
-      const wordsUnchanged=sameSpokenTranscript(current.script,next);
+      const {next,changed,wordsUnchanged}=prepareSavedBatchTranscript(current.script,scriptEdits[index]);
+      if(!changed)return;
       await savePart(index,{
         script:next,audio:null,approved:false,error:"",
         ...(wordsUnchanged?{}:{questions:[]})
@@ -205,7 +204,7 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
         :`Teil ${index}: transcript changed. The old answers were cleared; resume to regenerate questions and audio.`);
     }catch(err){setError(`Teil ${index}: ${err.message}`)}
   }
-  async function run(partIndex=null){
+  async function run(partIndex=null,{regenerateAudio=false}={}){
     if(working)return;
     try{
       checkReady();cancelRef.current=false;setError("");setNotice("");setWorking("Checking available Gemini requests");
@@ -214,7 +213,7 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
       const failures=[];
       for(const index of targets){
         if(cancelRef.current)break;
-        try{await generatePart(index)}
+        try{await generatePart(index,{regenerateAudio:regenerateAudio&&index===partIndex})}
         catch(err){
           await savePart(index,{error:err.message});
           failures.push(`Teil ${index}: ${err.message}`);
@@ -225,7 +224,9 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
       }
       if(failures.length)setError(failures.join(" | "));
       setNotice(cancelRef.current?"Paused. Completed MP3s can already be downloaded."
-        :failures.length?"Some Teile failed. Completed MP3s are downloadable now; retry only failed Teile."
+        :failures.length?"Some Teile failed. Existing MP3s remain downloadable; retry only failed Teile."
+        :regenerateAudio
+        ?`Teil ${partIndex} audio regenerated. Script and questions are preserved; listen and re-approve for ZIP export.`
         :"Generation complete. Download each MP3 now or review and approve for the ZIP.");
     }catch(err){setError(err.message)}
     finally{setWorking("");}
@@ -295,7 +296,7 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
         <small>{soundVolume}%</small>
       </label>
     </div>
-    <p className="hoeren-hint">Narrator A is reserved for instructions; task speakers rotate B/C/D between independent scenes. Speaker voices and automatic soundscape match the individual Studio. To update an existing MP3 with these playback settings, use Remix Teil (no extra AI calls).</p>
+    <p className="hoeren-hint">Narrator A is reserved for instructions; task speakers rotate B/C/D between independent scenes. Speaker voices and automatic soundscape match the individual Studio. Teacher-selected speakers are preserved. Remix with existing clips for free; if clips are missing or quality changes, use Regenerate Teil (may use Gemini quota).</p>
     {quota?<p className="hoeren-hint">Last quota check: {quota.script} script requests, {quota.speech} voice requests remaining.</p>:null}
     <div className="hoeren-batch-grid">
       {indexes.map(i=>{
@@ -313,6 +314,12 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
             <button type="button" className="hoeren-quiet" disabled={!!working} onClick={()=>remixPart(i)}>
               Remix Teil {i} · no AI calls
             </button>
+            <button type="button" className="hoeren-quiet"
+              disabled={!!working||!ready||loading||(scriptEdits[i]??r.script)!==r.script}
+              onClick={()=>run(i,{regenerateAudio:true})}>
+              Regenerate Teil {i} audio · may use Gemini
+            </button>
+            <small>Only this Teil is regenerated; existing MP3 stays until replacement succeeds. Keep the transcript and questions. Save edits first and re-approve the new audio.</small>
           </div>:null}
           {r?.script?<details>
             <summary>Review / edit transcript and voices (Teil {i})</summary>
