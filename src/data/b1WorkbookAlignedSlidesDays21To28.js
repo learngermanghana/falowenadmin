@@ -446,12 +446,12 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
         "modelAnswerDe": "Vor einer Bestellung prüfe ich den Gesamtpreis, die Lieferkosten und die Lieferzeit. Außerdem schaue ich nach Angaben zum Anbieter und zu Rücksendungen. Bewertungen können helfen, sollten aber nicht die einzige Grundlage sein."
       },
       {
-        "questionDe": "Wie reklamiert man beschädigte Ware höflich?",
-        "modelAnswerDe": "Guten Tag, meine Bestellung ist heute angekommen, leider ist der Artikel beschädigt. Im Anhang finden Sie ein Foto des Schadens. Könnten Sie mir bitte mitteilen, ob ein Ersatz möglich ist?"
+        "questionDe": "Welche Meinung vertritt Tim im Gästebuch?",
+        "modelAnswerDe": "Tim findet Online-Shopping schnell und bequem. Er meint, dass bekannte Händler kaum Risiken haben und dass man bestellte Waren innerhalb von vierzehn Tagen zurücksenden kann. Ich stimme ihm nur teilweise zu, denn Fake-Shops und Datenschutz bleiben wichtige Probleme."
       },
       {
-        "questionDe": "Wann würdest du Ersatz statt Geld zurück verlangen?",
-        "modelAnswerDe": "Ich würde Ersatz verlangen, wenn ich den Artikel weiterhin brauche und nur dieses Exemplar beschädigt ist. Voraussetzung wäre, dass ein einwandfreier Ersatz zeitnah verfügbar ist. Wenn ich kein Vertrauen mehr in das Produkt hätte, würde ich lieber um eine Rückzahlung bitten."
+        "questionDe": "Wie vermeidest du Plastikmüll beim Einkaufen?",
+        "modelAnswerDe": "Ich nehme eigene Stoffbeutel zum Einkaufen mit und benutze waschbare Netze für Obst und Gemüse. Wenn möglich, kaufe ich unverpackte regionale Produkte auf dem Wochenmarkt. So brauche ich weniger Plastiktüten."
       }
     ],
     teacherNotesEn: [
