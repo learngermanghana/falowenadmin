@@ -63,3 +63,17 @@
   .marking-review-detail form button[type="submit"] { position:sticky; bottom:env(safe-area-inset-bottom,0px); z-index:2; width:100%; min-height:48px; background:#1d4ed8; color:#fff; }
   .marking-report-copy-fallback textarea { font-size:14px; }
 }
+
+
+.marking-recheck-panel { border:1px solid #bfdbfe; background:#eff6ff; padding:16px; border-radius:12px; margin:16px 0; display:grid; gap:10px; }
+.marking-recheck-panel > p { margin:0; line-height:1.5; }
+.marking-recheck-panel label { display:grid; gap:8px; font-weight:600; }
+.marking-recheck-panel button { justify-self:start; max-width:100%; }
+.marking-recheck-summary { border:1px solid #93c5fd; border-radius:9px; padding:12px; background:white; }
+.marking-recheck-summary [role="alert"] { color:#991b1b; }
+.marking-objective-answers { display:flex; flex-wrap:wrap; gap:10px; font-size:14px; overflow-wrap:anywhere; }
+@media(max-width:700px) {
+  .marking-recheck-panel { padding:12px; }
+  .marking-recheck-panel button { width:100%; justify-self:stretch; }
+  .marking-objective-answers { display:grid; gap:4px; }
+}
