@@ -103,7 +103,7 @@ function extractScript(result = {}) {
 function describeGoogleRejection(body) {
   const raw = String(body?.error?.message || "").slice(0, 4000);
   const code = String(body?.error?.status || "").replace(/[^A-Z_]/g, "").slice(0, 40);
-  const field = raw.match(/(?:generation_config|speech_config|response_format|annotations|input|model|speech_metadata|speaker|voice|mime_type|store)(?:[.\\[\\]a-zA-Z_0-9]*)/i)?.[0]?.slice(0, 100) || "";
+  const field = ["generation_config","speech_config","response_format","speech_metadata","mime_type","annotations","speaker","voice","model","input","store"].find(name => new RegExp("\\b" + name + "\\b", "i").test(raw)) || "";
   const category = /not found|not supported|unknown model|not available/i.test(raw) ? "model_unavailable"
     : /invalid|unsupported|unknown field|unrecognized|unexpected|malformed|missing|required|schema/i.test(raw) ? "invalid_argument"
     : /voice|speaker|speech_config|speech_metadata/i.test(raw) ? "voice_configuration"
