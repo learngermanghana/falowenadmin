@@ -49,7 +49,7 @@ jobs:
           if ! firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions:falowenadmin:api --force --non-interactive --json > "$RUNNER_TEMP/ai-studio-deploy.log" 2>&1; then
             cat "$RUNNER_TEMP/ai-studio-deploy.log"
             node -e 'const fs = require("node:fs"); const log = fs.readFileSync(process.argv[1], "utf8").slice(-16000); console.log("::error::" + log.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A"));' "$RUNNER_TEMP/ai-studio-deploy.log"
-            node -e 'const fs = require("node:fs"); const log = fs.readFileSync(process.argv[1], "utf8"); const error = log.match(/"error"\s*:\s*"([^"\n]+)/); const message = error ? error[1] : "Firebase deployment failed; check workflow log."; fs.writeFileSync(process.argv[2], JSON.stringify({state:"failure",context:"AI Studio API deployment",description:message.slice(0,140)}));' "$RUNNER_TEMP/ai-studio-deploy.log" "$RUNNER_TEMP/failure-status.json"
+            node -e 'const fs = require("node:fs"); const log = fs.readFileSync(process.argv[1], "utf8"); const error = log.match(/"error"\s*:\s*"([^"\n]+)/); const message = error ? error[1] : "Firebase deployment failed; check workflow log."; fs.writeFileSync(process.argv[2], JSON.stringify({state:"failure",context:"AI Studio API deployment",description:message.slice(-140)}));' "$RUNNER_TEMP/ai-studio-deploy.log" "$RUNNER_TEMP/failure-status.json"
             gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" --input "$RUNNER_TEMP/failure-status.json"
             exit 1
           fi
