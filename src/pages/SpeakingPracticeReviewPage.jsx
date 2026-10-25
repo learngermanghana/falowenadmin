@@ -24,11 +24,10 @@ export default function SpeakingPracticeReviewPage(){
   };
   const overview=data?.view==="activity";
   const activity=data?.activity||[];
-  const openSessions=activity.filter(item=>item.state==="session_open"||item.state==="processing");
   return <main style={{maxWidth:1100,margin:"0 auto",padding:"24px 16px",display:"grid",gap:16}}>
     <header>
-      <h1 style={{margin:"0 0 6px"}}>Sprechen Activity &amp; AI Usage</h1>
-      <p style={sub}>View A1–B2 Exams Room and Course Book practice without storing, replaying or reading student recordings. Information is fetched only when you press a button.</p>
+      <h1 style={{margin:"0 0 6px"}}>Student speaking results</h1>
+      <p style={sub}>See student names and saved speaking practice scores for A1–B2 Exams Room and Course Book sessions.</p>
     </header>
     <section style={panel} aria-label="Speaking activity controls">
       <div style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"end"}}>
@@ -38,7 +37,7 @@ export default function SpeakingPracticeReviewPage(){
             {["A1","A2","B1","B2"].map(v=><option value={v} key={v}>{v}</option>)}
           </select>
         </label>
-        <button type="button" onClick={()=>check("activity")} disabled={working} style={button}>{working?"Checking saved activity…":"Load / refresh speaking activity"}</button>
+        <button type="button" onClick={()=>check("activity")} disabled={working} style={button}>{working?"Checking saved activity…":"Load / refresh speaking results"}</button>
       </div>
       <form onSubmit={e=>{e.preventDefault();check("student");}} style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"end"}}>
         <label style={{...label,flex:"2 1 280px"}}>Optional: look up one student
@@ -46,38 +45,28 @@ export default function SpeakingPracticeReviewPage(){
             placeholder="Registered email, student code or UID"
             style={{padding:10,border:"1px solid #94a3b8",borderRadius:8}}/>
         </label>
-        <button type="submit" disabled={working} style={{...button,background:"#334155"}}>View student's usage</button>
+        <button type="submit" disabled={working} style={{...button,background:"#334155"}}>View student's scores</button>
       </form>
-      <p style={sub}>No automatic refresh · No transcription or AI marking calls · No saved audio files or transcripts. An open session does not necessarily mean the microphone is active.</p>
+      <p style={sub}>Results update when you press Refresh. Sessions without a saved mark show “Not scored yet”.</p>
     </section>
     {error&&<p role="alert" style={{...panel,color:"#b91c1c"}}>{error}</p>}
     {data&&<section aria-label="Speaking monitoring results" style={{display:"grid",gap:16}}>
-      <section style={panel}>
-        <h2 style={{margin:0}}>Usage snapshot</h2>
-        <p style={sub}>Checked {fmtDate(data.checkedAt)}. Provider billing in USD is <strong>not currently recorded per learner</strong>, so no fabricated monetary costs are shown.</p>
-        {overview&&<div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
-          <div><strong style={{fontSize:24}}>{openSessions.length}</strong><p style={sub}>Recently listed open/processing sessions</p></div>
-          <div><strong style={{fontSize:24}}>{activity.length}</strong><p style={sub}>Recent session records (bounded)</p></div>
-          <div><strong style={{fontSize:24}}>{data.usage?.reservedAiCallUnits??"—"}</strong><p style={sub}>Reserved AI call units this month (global)</p></div>
-        </div>}
-        <p style={sub}>Usage counters are not dollar costs, and some reserved units may correspond to failed provider calls. The list is a snapshot, not a real-time live microphone monitor.</p>
-        {data.limited&&<p style={{...sub,color:"#92400e"}}>Limited to the latest records returned. This is not a complete all-time count.</p>}
-      </section>
+      <p style={sub}>Checked {fmtDate(data.checkedAt)}.{data.limited ? " Showing the latest available records." : ""}</p>
       {overview?<section style={panel}>
-        <h2 style={{margin:0}}>Who's practising? · A1–B2</h2>
+        <h2 style={{margin:0}}>Recent student results · A1–B2</h2>
         {!activity.length&&<p style={sub}>No recent Live AI examiner session records were returned for this filter.</p>}
         {activity.map((item,i)=><article key={item.uid+"-"+item.assignmentKey+"-"+i}
           style={{padding:12,border:"1px solid #e2e8f0",borderRadius:10,display:"grid",gap:5}}>
           <div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
-            <strong>{item.level} · {sourceLabel(item.source)} {item.assignmentKey?"· "+item.assignmentKey:""}</strong>
+            <strong>{item.studentName || item.studentEmail || "Student name unavailable"}</strong>
             <span style={{...sub,color:item.state==="processing"?"#9a3412":"#475569"}}>{item.state==="processing"?"AI response processing":item.state==="session_open"?"Session open":"Ended / expired"}</span>
           </div>
-          <p style={sub}>Student UID: {item.uid||"Not available"} · Started {fmtDate(item.startedAt)}</p>
-          <p style={sub}>Student turns: {item.practiceTurns} · Confirmed questions: {item.answeredQuestions} · Uploaded audio: {Number(item.recordedBytes||0)>0?"Used for transcription, not retained":"No usage recorded"}</p>
+          <p style={sub}>{item.level} · {sourceLabel(item.source)}{item.assignmentKey ? " · " + item.assignmentKey : ""} · {fmtDate(item.startedAt)}</p>
+          <strong>Practice score: {item.score === null || item.score === undefined ? "Not scored yet" : `${Number(item.score.toFixed(2))}%`}</strong>
         </article>)}
       </section>:<section style={panel}>
         <h2 style={{margin:0}}>Student speaking progress</h2>
-        <p style={sub}>{data.student?.name||data.student?.email||data.student?.uid||"Learner"} · {data.results?.length||0} recent completed examiner snapshots</p>
+        <p style={sub}>{data.student?.name||data.student?.email||"Student name unavailable"} · {data.results?.length||0} recent completed examiner snapshots</p>
         {data.course?.length>0&&data.course.map(item=><div key={item.assignmentKey}>
           <strong>{item.assignmentKey} · {item.status==="completed"?"Final score saved":"Final score pending"}</strong>
           <p style={sub}>Verified parts in recent results: {item.savedPartCount}/3 · Score: {item.score??"Not saved"}</p>

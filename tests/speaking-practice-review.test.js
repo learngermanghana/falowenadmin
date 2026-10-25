@@ -16,8 +16,9 @@ test("Activity is fetched only on staff button click; no periodic checks",()=>{
   assert.doesNotMatch(page,/useEffect\s*\(|setInterval\s*\(|onSnapshot\s*\(/);
 });
 test("No voice files, transcripts, German answers or dollar estimates in dashboard",()=>{
-  assert.match(page,/not currently recorded per learner/);
-  assert.match(page,/Reserved AI call units this month/);
-  assert.match(page,/No automatic refresh/);
+  assert.match(page,/item.studentName/);
+  assert.match(page,/Practice score:/);
+  assert.match(page,/Not scored yet/);
+  assert.doesNotMatch(page,/Uploaded audio|Student UID:|Reserved AI call units|item\.recordedBytes/);
   assert.doesNotMatch(page,/item\.answers|item\.dialogue|item\.feedback|audioBase64|<audio|MediaRecorder/);
 });
