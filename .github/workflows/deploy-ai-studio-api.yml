@@ -1,0 +1,50 @@
+name: Deploy AI Studio API
+on:
+  workflow_dispatch:
+concurrency:
+  group: falowenadmin-firebase-deploy
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      FIREBASE_PROJECT_ID: falowen-examiner-trainer
+      GOOGLE_CLOUD_PROJECT: falowen-examiner-trainer
+      GCLOUD_PROJECT: falowen-examiner-trainer
+      CLOUD_RUNTIME_CONFIG: ${{ secrets.FALOWEN_ADMIN_CLOUD_RUNTIME_CONFIG || '{}' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify speech and Studio behavior
+        run: |
+          node --check functions/hoerenStudioApi.js
+          node --test tests/hoeren-studio.test.js tests/hoeren-course-catalog.test.js tests/a1-12.1-hoeren-v3-and-soundscape.test.js tests/hoeren-question-publishing.test.js tests/hoeren-bundle-export.test.js
+      - name: Install shared marking build dependencies
+        run: npm ci
+      - name: Install functions dependencies
+        working-directory: functions
+        run: npm ci
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools@14
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FALOWEN }}'
+      - name: Preserve production runtime configuration
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const value = Buffer.from(process.env.CLOUD_RUNTIME_CONFIG || '{}').toString('base64');
+          fs.writeFileSync(`functions/.env.${process.env.FIREBASE_PROJECT_ID}`, `CLOUD_RUNTIME_CONFIG_B64=${value}\n`);
+          NODE
+          node scripts/ensureScoreWebhookSecrets.mjs
+      - name: Deploy production API only
+        run: |
+          if ! firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions:falowenadmin:api --force --non-interactive --json > "$RUNNER_TEMP/ai-studio-deploy.log" 2>&1; then
+            cat "$RUNNER_TEMP/ai-studio-deploy.log"
+            while IFS= read -r line; do echo "::error::$line"; done < <(tail -20 "$RUNNER_TEMP/ai-studio-deploy.log")
+            exit 1
+          fi
+          cat "$RUNNER_TEMP/ai-studio-deploy.log"

@@ -367,7 +367,7 @@ export default function HoerenStudioPage() {
       setAudioUrl(URL.createObjectURL(blob));
       toast.success(`Recording ready. Reused ${speechScenes.length - newKeys.size} scenes; generated ${newKeys.size} new scenes.`);
     } catch (error) {
-      toast.error(`${error.message} Successful scenes are saved locally; avoid repeated retries while Google reports 429.`);
+      toast.error(`${error.message} Successful scenes are saved locally.${error.status === 429 ? " Avoid repeated retries while Google reports 429." : ""}`);
     } finally { setBusy(""); setProgress(""); await reloadStatus(); }
   }
 
