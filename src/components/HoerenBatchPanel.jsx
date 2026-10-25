@@ -73,8 +73,15 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
   async function savePart(index,change){
     const next={...cacheRef.current,[index]:{...cacheRef.current[index],...change}};
     cacheRef.current=next;setRecords(next);
-    try{await saveExamParts(key,next)}
-    catch{setStorageWarning("Could not save this exam in browser storage; download it before leaving this tab.")}
+    try {
+      await saveExamParts(key,next);
+      setStorageWarning("");
+    } catch (error) {
+      const quota = error?.name === "QuotaExceededError";
+      setStorageWarning(quota
+        ? "Browser storage is full. Completed MP3s may not survive a refresh. Download each finished Teil now, clear space outside this tab, and retry saving. Do not clear Falowen site data."
+        : "Browser storage did not save this exam (" + (error?.name || "storage unavailable") + "). Keep this tab open and download completed MP3s before leaving. Check private browsing and site storage permissions.");
+    }
     return next[index];
   }
   function checkReady(){
