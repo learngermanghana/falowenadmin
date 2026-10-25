@@ -1,3 +1,4 @@
+import HoerenBatchPanel from "../components/HoerenBatchPanel.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useToast } from "../context/ToastContext";
 import { getStudioStatus, makeListeningScript, makeSpeechClip, makeListeningQuestions, publishListeningLesson, getHoerenPublishCatalog } from "../services/hoerenStudioService";
@@ -58,6 +59,8 @@ function SpeechSegmentEditor({ line, index, onSave, hasAudio, disabled }) {
 
 export default function HoerenStudioPage() {
   const toast = useToast();
+  const [workspace, setWorkspace] = useState("single");
+  const [packBusy, setPackBusy] = useState(false);
   const [mode, setMode] = useState("course");
   const [level, setLevel] = useState("A1");
   const [examPart, setExamPart] = useState("");
@@ -415,17 +418,26 @@ export default function HoerenStudioPage() {
         {quotaNotice ? <p role="status" className="hoeren-hint">{quotaNotice}</p> : null}
       </section>
       <section className="hoeren-mode-picker" aria-label="Audio production workflow">
-        <button type="button" className={`hoeren-mode-choice ${mode === "course" ? "is-active" : ""}`}
-          aria-pressed={mode === "course"} disabled={!!busy} onClick={() => changeProductionMode("course")}>
+        <button type="button" className={`hoeren-mode-choice ${workspace === "single" && mode === "course" ? "is-active" : ""}`}
+          aria-pressed={workspace === "single" && mode === "course"} disabled={!!busy || packBusy} onClick={() => { setWorkspace("single"); if (mode !== "course") changeProductionMode("course"); }}>
           <strong>Course Book Audio</strong>
           <span>Flexible German listening activities for everyday Falowen assignments. Choose the question format when needed.</span>
         </button>
-        <button type="button" className={`hoeren-mode-choice ${mode === "goethe" ? "is-active" : ""}`}
-          aria-pressed={mode === "goethe"} disabled={!!busy || !status?.profiles} onClick={() => changeProductionMode("goethe")}>
+        <button type="button" className={`hoeren-mode-choice ${workspace === "single" && mode === "goethe" ? "is-active" : ""}`}
+          aria-pressed={workspace === "single" && mode === "goethe"} disabled={!!busy || packBusy || !status?.profiles} onClick={() => { setWorkspace("single"); if (mode !== "goethe") changeProductionMode("goethe"); }}>
           <strong>Goethe Exam Audio</strong>
           <span>Pick a CEFR level and Teil. Questions, format and replay settings follow the exam template automatically.</span>
         </button>
+        <button type="button" className={`hoeren-mode-choice ${workspace === "pack" ? "is-active" : ""}`}
+          aria-pressed={workspace === "pack"} disabled={!!busy || packBusy || !status?.profiles} onClick={() => setWorkspace("pack")}>
+          <strong>Complete level ZIP</strong>
+          <span>Generate every Hören Teil for one level and mock. Review once, then download MP3s, transcripts, questions and answers together.</span>
+        </button>
       </section>
+      <div hidden={workspace !== "pack"}>
+        <HoerenBatchPanel profiles={status?.profiles || {}} ready={ready} initialLevel={level} onBusyChange={setPackBusy} onStatusChange={setStatus} />
+      </div>
+      <div hidden={workspace !== "single"}>
       <div className="hoeren-columns">
         <section className="hoeren-panel">
           <h2>1. {mode === "goethe" ? "Select the Goethe exam Teil" : "Prepare Course Book audio"}</h2>
@@ -638,8 +650,9 @@ export default function HoerenStudioPage() {
       </section> : <section className="hoeren-panel">
         <h2>4. Download Goethe exam materials</h2>
         <p className="hoeren-hint">This Goethe exam builder prepares downloadable audio, transcript and question key. Direct Exams Room publication is not yet supported for these preset formats. Nothing is uploaded automatically.</p>
-        <p className="hoeren-hint">For a full exam set, prepare each Teil separately. Teachers should verify the correct answers, task authenticity and recording quality.</p>
+        <p className="hoeren-hint">For all Teile in one download, choose Complete level ZIP above. Verify the correct answers and recording quality before exporting.</p>
       </section>}
+      </div>
       <p className="hoeren-footer">Practice recordings are original teaching materials and not official Goethe-Institut exam audio. Listen and check all numbers, names and pronunciation before use.</p>
     </div>
   );

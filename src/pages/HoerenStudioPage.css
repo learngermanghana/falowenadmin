@@ -58,3 +58,8 @@
  .hoeren-batch-head{flex-direction:column;}
  .hoeren-batch-actions button{width:100%;}
 }
+
+.hoeren-mode-picker { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.hoeren-panel .hoeren-batch-check { display: flex; font-weight: 500; }
+.hoeren-panel .hoeren-batch-check input[type=checkbox] { width: auto; margin-top: 4px; }
+@media(max-width:830px) { .hoeren-mode-picker { grid-template-columns: 1fr; } }

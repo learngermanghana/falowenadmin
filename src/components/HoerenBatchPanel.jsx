@@ -37,7 +37,7 @@ function PartAudio({blob,label}){
   },[blob]);
   return src?<audio aria-label={label} controls preload="none" src={src}/>:null;
 }
-export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="B1"}){
+export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="B1",onBusyChange,onStatusChange}){
   const [level,setLevel]=useState(initialLevel);
   const [mock,setMock]=useState("03");
   const [topic,setTopic]=useState("Alltag, Reisen, Gesellschaft und Arbeit");
@@ -57,6 +57,7 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
   const [storageWarning,setStorageWarning]=useState("");
   const cacheRef=useRef({});
   const cancelRef=useRef(false);
+  useEffect(()=>{onBusyChange?.(Boolean(working));},[working,onBusyChange]);
   const key=bundleKey(level,mock);
   const profile=profiles?.[level]||{};
   const indexes=keysOf(profile);
@@ -215,7 +216,7 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
     if(working)return;
     try{
       checkReady();cancelRef.current=false;setError("");setNotice("");setWorking("Checking available Gemini requests");
-      const quota=await getStudioStatus();setQuota(quota.remaining);
+      const quota=await getStudioStatus();setQuota(quota.remaining);onStatusChange?.(quota);
       const targets=partIndex?[partIndex]:indexes.filter(i=>!(cacheRef.current[i]?.audio instanceof Blob));
       const failures=[];
       for(const index of targets){
@@ -236,7 +237,11 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
         ?`Teil ${partIndex} audio regenerated. Script and questions are preserved; listen and re-approve for ZIP export.`
         :"Generation complete. Download each MP3 now or review and approve for the ZIP.");
     }catch(err){setError(err.message)}
-    finally{setWorking("");}
+    finally{
+      try { const current=await getStudioStatus();setQuota(current.remaining);onStatusChange?.(current); }
+      catch { /* A status refresh must not discard completed audio. */ }
+      setWorking("");
+    }
   }
   function downloadDraftBackup() {
     const parts = Object.fromEntries(Object.entries(cacheRef.current).map(([part, record]) => [
@@ -272,8 +277,8 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
   }
   return <section className="hoeren-panel hoeren-batch" aria-label="Complete Goethe Hören exam ZIP generator">
     <div className="hoeren-batch-head">
-      <div><span className="hoeren-kicker">NEW · COMPLETE EXAM PACK</span>
-        <h2>Generate all Hören Teile → one ZIP</h2>
+      <div><span className="hoeren-kicker">COMPLETE LEVEL PACK</span>
+        <h2>Generate a complete level ZIP</h2>
         <p className="hoeren-hint">One workflow, individual resumable recordings, local MP3/PDF/PNG export. No automatic student publication.</p>
       </div>
       <span className="hoeren-batch-pill">{indexes.filter(i=>records[i]?.audio instanceof Blob).length}/{indexes.length||"—"} audio ready</span>
@@ -320,6 +325,16 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
     </div>
     <p className="hoeren-hint">Narrator A is reserved for instructions; task speakers rotate B/C/D between independent scenes. Speaker voices and automatic soundscape match the individual Studio. Teacher-selected speakers are preserved. Remix with existing clips for free; if clips are missing or quality changes, use Regenerate Teil (may use Gemini quota).</p>
     {quota?<p className="hoeren-hint">Last quota check: {quota.script} script requests, {quota.speech} voice requests remaining.</p>:null}
+    <div className="hoeren-batch-actions">
+      <button type="button" className="hoeren-button" disabled={!!working||!ready||loading||!indexes.length}
+        onClick={()=>run()}>{working?"Generating…":"Generate / resume complete exam"}</button>
+      {working?<button type="button" className="hoeren-quiet" onClick={()=>{cancelRef.current=true}}>
+        Stop after current request</button>:null}
+      <button type="button" className="hoeren-button" disabled={!complete||!!working} onClick={exportBundle}>
+        Download complete ZIP</button>
+      <button type="button" className="hoeren-quiet" disabled={!!working||loading} onClick={clear}>Clear local mock</button>
+    </div>
+    <p role="status" className="hoeren-hint">{complete ? "All Teile are ready and approved. Download your complete ZIP above." : `Generate all ${indexes.length} Teile, then listen and approve each one to unlock the ZIP.`}</p>
     <div className="hoeren-batch-grid">
       {indexes.map(i=>{
         const p=profile[i],r=records[i],hasAudio=r?.audio instanceof Blob;
@@ -370,15 +385,6 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
     {error?<p role="alert" className="hoeren-validation">{error}</p>:null}
     {notice?<p role="status" className="hoeren-hint">{notice}</p>:null}
     {working?<p role="status" className="hoeren-batch-progress">{working}</p>:null}
-    <div className="hoeren-batch-actions">
-      <button type="button" className="hoeren-button" disabled={!!working||!ready||loading||!indexes.length}
-        onClick={()=>run()}>{working?"Generating…":"Generate / resume complete exam"}</button>
-      {working?<button type="button" className="hoeren-quiet" onClick={()=>{cancelRef.current=true}}>
-        Stop after current request</button>:null}
-      <button type="button" className="hoeren-button" disabled={!complete||!!working} onClick={exportBundle}>
-        Download complete ZIP</button>
-      <button type="button" className="hoeren-quiet" disabled={!!working||loading} onClick={clear}>Clear local mock</button>
-    </div>
     <p className="hoeren-hint">Saved on this browser via IndexedDB. Review every part before exporting.
       The ZIP includes scripts, MP3s, Fragen.pdf, Lösungen.pdf, teacher-only answer keys, R2 upload paths and optional CapCut slides.
       Each completed MP3 can be downloaded during generation, without teacher approval. Approval is only needed for the combined ZIP. These are independently generated practice tasks, not official Goethe-Institut recordings.
