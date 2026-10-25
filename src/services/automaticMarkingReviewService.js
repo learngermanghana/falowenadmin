@@ -53,10 +53,20 @@ export async function openAutomaticMarking(row) {
     audit: audits.docs[0]?.data() || null, reviews: reviews.docs.map(entry => ({ ...entry.data(), id: entry.id })) };
 }
 
-export async function saveAutomaticMarkingReview(detail, { score, feedback, reason, approve = false }) {
+export async function saveAutomaticMarkingReview(detail, { score, feedback, reason, approve = false, verifiedRecheck = null }) {
   if (!auth.currentUser || !detail.studentPath) throw new Error('A registered student and signed-in tutor are required.');
   if (!approve && (score === '' || !Number.isFinite(Number(score)) || Number(score) < 0 || Number(score) > 100)) throw new Error('Enter a score from 0 to 100.');
   if (!approve && (!feedback.trim() || !reason.trim())) throw new Error('Enter feedback and a reason for the correction.');
+  if (verifiedRecheck && (approve || !Number.isFinite(Number(verifiedRecheck.finalScore))
+    || Number(score) !== Number(verifiedRecheck.finalScore)
+    || !Number.isInteger(Number(verifiedRecheck.objectiveCorrect))
+    || !Number.isInteger(Number(verifiedRecheck.objectiveTotal))
+    || Number(verifiedRecheck.objectiveTotal) <= 0
+    || Number(verifiedRecheck.objectiveCorrect) < 0
+    || Number(verifiedRecheck.objectiveCorrect) > Number(verifiedRecheck.objectiveTotal)
+    || !verifiedRecheck.objectiveDetails || typeof verifiedRecheck.objectiveDetails !== 'object')) {
+    throw new Error('Rechecked evidence does not match the proposed score. Recheck the answers again.');
+  }
   const timestamp = new Date().toISOString();
   const markingRef = doc(db, 'markingResults', detail.row.id);
   const studentRef = doc(db, detail.studentPath);
@@ -84,6 +94,9 @@ export async function saveAutomaticMarkingReview(detail, { score, feedback, reas
       const passed = typeof ai.passed === 'boolean' ? ai.passed : false;
       Object.assign(correction, { passed, failed: !passed, status: passed ? 'passed' : 'failed', result: passed ? 'passed' : 'failed' });
     }
+    if (verifiedRecheck && verifiedRecheck.writingMinimumMet === false) {
+      Object.assign(correction, { passed: false, failed: true, status: 'failed', result: 'failed' });
+    }
     const student = registered.data();
     const evidence = Object.fromEntries([
       'objectiveScore', 'objectiveCorrect', 'objectiveTotal', 'objectiveDetails', 'wrongAnswers',
@@ -96,7 +109,25 @@ export async function saveAutomaticMarkingReview(detail, { score, feedback, reas
       objective_score: ai.objectiveScore ?? '', objective_correct: ai.objectiveCorrect ?? '',
       objective_total: ai.objectiveTotal ?? '', writing_score: ai.writingScorePercent ?? ai.writingScore ?? '',
     });
-    const updated = { ...evidence, ...current, ...correction, passStatus: correction.passed ? 'passed' : 'failed', comments: feedback.trim(), feedback: feedback.trim(),
+    // New verified answer evidence updates the student's score while the immutable AI
+    // audit and original AI result remain available for debugging.
+    const checkedEvidence = verifiedRecheck ? {
+      objectiveScore: verifiedRecheck.objectiveScore,
+      objectiveCorrect: verifiedRecheck.objectiveCorrect,
+      objectiveTotal: verifiedRecheck.objectiveTotal,
+      objectiveDetails: verifiedRecheck.objectiveDetails,
+      objective_score: verifiedRecheck.objectiveScore,
+      objective_correct: verifiedRecheck.objectiveCorrect,
+      objective_total: verifiedRecheck.objectiveTotal,
+      writingScore: verifiedRecheck.writingScore ?? null,
+      writingScorePercent: verifiedRecheck.writingScorePercent ?? null,
+      writing_score: verifiedRecheck.writingScorePercent ?? '',
+      maxWritingScore: verifiedRecheck.maxWritingScore ?? null,
+      writingMinimumMet: verifiedRecheck.writingMinimumMet,
+      scoreBreakdown: verifiedRecheck.scoreBreakdown || null,
+      tutorVerifiedReference: verifiedRecheck.referenceVersion || 'Admin bundled reference',
+    } : {};
+    const updated = { ...evidence, ...current, ...checkedEvidence, ...correction, passStatus: correction.passed ? 'passed' : 'failed', comments: feedback.trim(), feedback: feedback.trim(),
       studentCode, studentcode: studentCode, studentId: student.uid || detail.row.studentId,
       studentEmail: student.email || '', name: student.name || student.fullName || detail.row.studentName || '',
       assignmentId, assignment_id: assignmentId, level: detail.row.level || assignmentId.split('-')[0],
@@ -107,13 +138,22 @@ export async function saveAutomaticMarkingReview(detail, { score, feedback, reas
     updated.assignment = assignmentTitle(current.assignment, detail.row.assignmentTitle, assignmentId);
     if (!updated.studentId) throw new Error('Registered student UID is missing.');
     const review = { score: correction.score, feedback: feedback.trim(), reason: reason.trim(),
-      action: approve ? 'approve' : 'edit', tutorUid: auth.currentUser.uid, createdAt: timestamp };
+      action: approve ? 'approve' : verifiedRecheck ? 'recheck' : 'edit',
+      ...(verifiedRecheck ? { referenceVersion: verifiedRecheck.referenceVersion || '',
+        objectiveCorrect: verifiedRecheck.objectiveCorrect,
+        objectiveTotal: verifiedRecheck.objectiveTotal, scoreBreakdown: verifiedRecheck.scoreBreakdown || null } : {}),
+      tutorUid: auth.currentUser.uid, createdAt: timestamp };
     tx.set(reviewRef, { ...review, previousScore: current.score ?? null, previousFeedback: current.comments || current.feedback || '' });
     tx.set(scoreRef, updated);
     // Keep the original AI result and its evidence intact; tutor changes have a separate history.
     tx.set(markingRef, { finalScore: correction.score, feedback: feedback.trim(), tutorReview: review,
       status: 'marked', sentToStudent: true, publicationStatus: 'published',
-      reviewClosedAt: timestamp, reviewClosedBy: auth.currentUser.uid, updatedAt: timestamp }, { merge: true });
+      reviewClosedAt: timestamp, reviewClosedBy: auth.currentUser.uid, updatedAt: timestamp,
+      ...(verifiedRecheck ? { tutorRecheck: {
+        objectiveCorrect: verifiedRecheck.objectiveCorrect, objectiveTotal: verifiedRecheck.objectiveTotal,
+        referenceVersion: verifiedRecheck.referenceVersion || '',
+        scoreBreakdown: verifiedRecheck.scoreBreakdown || null, createdAt: timestamp
+      } } : {}) }, { merge: true });
     tx.set(submissionRef, { finalScore: correction.score, aiFeedback: feedback.trim(), markingStatus: 'marked',
       feedbackSentToStudent: true, resultUrl: 'https://www.falowen.app/campus/results',
       markingUpdatedAt: timestamp, tutorReviewed: true }, { merge: true });
