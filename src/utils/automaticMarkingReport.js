@@ -1,4 +1,5 @@
 import { normalizeAnswerKeyEntry } from './answerKeyNormalizer.js';
+import { parseSubmissionSections } from './submissionSections.js';
 
 // The Admin bundle can differ from the Firebase worker deployed to production.
 // The saved audit reference is the only evidence of what a completed AI job saw.
@@ -54,6 +55,22 @@ export function compareMarkingReferences(usedReference, currentReference) {
     usedAvailable: true, currentAvailable: true };
 }
 
+
+export function findUnkeyedSubmittedAnswers(submissionText, reference) {
+  if (!reference || !submissionText) return [];
+  return parseSubmissionSections(submissionText)
+    .filter(section => section.partId === 'teil3' || section.partId === 'teil4')
+    .flatMap(section => {
+      const keyed = reference.parts?.[section.partId]?.answers?.length || 0;
+      const numbers = [...section.text.matchAll(/(?:^|\n)\s*(\d{1,3})\s*[).:]\s*\S/g)]
+        .map(match => Number(match[1]));
+      const maximum = numbers.length ? Math.max(...numbers) : 0;
+      return maximum > keyed
+        ? [section.partId + ': answered through question ' + maximum + ', key has only ' + keyed]
+        : [];
+    });
+}
+
 const privateField = /^(?:email|phone|whatsapp|address|name|fullname|firstname|lastname|studentname|studentemail|studentcode|studentid|uid|userid|tutoruid|ipaddress|deviceid|password|secret|token|authorization|apikey|keyid|accesskey)$/i;
 export function sanitizeMarkingEvidence(value, depth = 0) {
   if (depth > 14) return '[truncated]';
@@ -101,6 +118,8 @@ export function buildAutomaticMarkingReport(detail, currentReference) {
     'Admin bundle vs saved audit reference: ' + comparison.status,
     'Important: the current Admin bundle is NOT proof of the currently deployed Firebase marking key.',
     'Reference changes: ' + (comparison.status === 'unavailable' ? 'Cannot compare missing evidence' : comparison.rows.filter(item => item.changed).length),
+    'Unkeyed submitted answers in current Admin reference:',
+    json(findUnkeyedSubmittedAnswers(submittedWork, currentReference)),
     json(comparison.rows.filter(item => item.changed)),
     '',
     'STUDENT WORK (ORIGINAL)',
