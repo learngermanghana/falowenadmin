@@ -66,7 +66,7 @@ export default function SocialGermanChallenges() {
   const usedCount = SOCIAL_GERMAN_CHALLENGES.filter((entry) => statuses[entry.id] === "Published").length;
   const fileStem = challengeFileStem(selected);
   const videoMime = typeof MediaRecorder !== "undefined" && typeof MediaRecorder.isTypeSupported === "function"
-    ? chooseSocialVideoFormat((mime) => MediaRecorder.isTypeSupported(mime), exportFormat) : null;
+    ? chooseSocialVideoFormat((mime) => MediaRecorder.isTypeSupported(mime), exportFormat, { audioRequired: falowenTrack !== "none" }) : null;
 
   const resetSelection = (id) => {
     setSelectedId(id);
@@ -163,7 +163,7 @@ export default function SocialGermanChallenges() {
     if (!selected || !copy || working) return;
     setError(""); setNotice(""); setPreviewPlaying(false);
     if (!videoMime || typeof HTMLCanvasElement === "undefined" || typeof HTMLCanvasElement.prototype.captureStream !== "function") {
-      setError("The selected MP4 or WebM format is unavailable in this browser. Try Auto, another format, or PNG.");
+      setError("The selected format cannot include the chosen audio in this browser. Choose Auto or WebM, or export without audio.");
       return;
     }
     // Verify all scenes at output resolution before starting a 12-second real-time recording.
@@ -175,7 +175,7 @@ export default function SocialGermanChallenges() {
         return;
       }
     }
-    let stream, recorder, audioContext, animationFrame = 0, timer = 0;
+    let stream, recorder, audioContext, soundtrack, animationFrame = 0, timer = 0;
     setWorking(true);
     try {
       renderChallengeFrame(exportCanvas, selected, copy, 0, 0);
@@ -183,11 +183,13 @@ export default function SocialGermanChallenges() {
       if (!stream.getVideoTracks().length) throw new Error("This browser did not create a video track.");
       if (falowenTrack !== "none") {
         const Context = window.AudioContext || window.webkitAudioContext;
-        if (!Context) throw new Error("This browser cannot mix audio into MP4.");
+        if (!Context) throw new Error("This browser cannot mix audio into video.");
         audioContext = new Context();
         await audioContext.resume();
         const output = audioContext.createMediaStreamDestination();
-        await addSocialMusic(audioContext, output, falowenTrack, CHALLENGE_VIDEO_SECONDS);
+        soundtrack = await addSocialMusic(audioContext, output, falowenTrack, CHALLENGE_VIDEO_SECONDS);
+        await audioContext.resume();
+        if (audioContext.state !== "running") throw new Error("Audio is paused by this browser. Keep the tab active and try export again.");
         stream = new MediaStream([...stream.getVideoTracks(), ...output.stream.getAudioTracks()]);
       }
       recorder = new MediaRecorder(stream, { mimeType: videoMime.mime, videoBitsPerSecond: 3500000 });
@@ -208,6 +210,7 @@ export default function SocialGermanChallenges() {
         active.frame = animationFrame;
       };
       recorder.start();
+      soundtrack?.start();
       animationFrame = requestAnimationFrame(tick);
       active.frame = animationFrame;
       timer = setTimeout(() => {
@@ -308,7 +311,7 @@ export default function SocialGermanChallenges() {
             <option value="webm">WebM · Chrome/Firefox</option>
           </select>
         </label>
-        <label>Falowen background song for MP4
+        <label>Falowen background song for video
           <select style={FIELD} disabled={working} value={falowenTrack} onChange={(event) => setFalowenTrack(event.target.value)}>
             {SOCIAL_MUSIC_TRACKS.map(track => <option key={track.id} value={track.id}>{track.label}</option>)}
           </select>

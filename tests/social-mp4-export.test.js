@@ -31,3 +31,11 @@ test("both video exporters validate container and use matching extension", () =>
   assert.equal([...vocabulary.matchAll(/await requireValidSocialVideo\(blob, mime\)/g)].length,2);
   assert.equal([...vocabulary.matchAll(/videoFileStem\(word\) \+ "-" \+ duration \+ "s\." \+ mime\.extension/g)].length,2);
 });
+
+test("music exports never fall back to a video-only MP4 profile", () => {
+  const supports = type => type === "video/mp4;codecs=avc1.42E01E" || type === "video/mp4" || type === "video/webm;codecs=vp8,opus";
+  assert.deepEqual(chooseSocialVideoFormat(supports, "auto", {audioRequired:true}), {mime:"video/webm;codecs=vp8,opus",extension:"webm"});
+  assert.equal(chooseSocialVideoFormat(supports, "mp4", {audioRequired:true}), null);
+  const aac = type => type === "video/mp4;codecs=avc1.42E01E,mp4a.40.2";
+  assert.equal(chooseSocialVideoFormat(aac, "auto", {audioRequired:true}).extension, "mp4");
+});

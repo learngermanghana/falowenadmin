@@ -66,7 +66,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const canvasSupported = typeof HTMLCanvasElement !== "undefined";
-  const mime = videoSupported() ? chooseSocialVideoFormat(type => MediaRecorder.isTypeSupported(type), exportFormat) : null;
+  const mime = videoSupported() ? chooseSocialVideoFormat(type => MediaRecorder.isTypeSupported(type), exportFormat, { audioRequired: music !== "none" || !!voiceFile || falowenTrack !== "none" }) : null;
   const currentSettings = { theme, duration };
 
   useEffect(() => {
@@ -127,7 +127,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
     if (!word || busy) return;
     setError(""); setMessage(""); setPlaying(false);
     if (!videoSupported() || !mime) {
-      setError("Neither the selected MP4 nor WebM format is supported here. Choose Auto or another format, or export PNG.");
+      setError("The selected format cannot include the chosen audio in this browser. Choose Auto or WebM, or export without audio.");
       return;
     }
     let context = null, stream = null, recorder = null, timer = null, frameId = null;
@@ -177,8 +177,11 @@ export default function SocialVocabularyVideoCreator({ word }) {
           recorder.onstop = () => blobs.length ? resolve(new Blob(blobs, { type: recorder.mimeType || trackMime }))
             : reject(new Error("No video frames were encoded."));
         });
-        await addSocialMusic(context, output, falowenTrack, Number(duration));
+        const soundtrack = await addSocialMusic(context, output, falowenTrack, Number(duration));
+        await context.resume();
+        if (context.state !== "running") throw new Error("Audio is paused by this browser. Keep the tab active and try export again.");
         recorder.start(300);
+        soundtrack?.start();
         scheduleSound(context, output, Number(duration), falowenTrack !== "none" ? "none" : music, buffer);
         const start = performance.now();
         const frame = now => {
@@ -196,7 +199,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
         const blob = await resultPromise;
         await requireValidSocialVideo(blob, mime);
         downloadBlob(blob, videoFileStem(word) + "-" + duration + "s." + mime.extension);
-        setMessage("MP4 video exported with " + (falowenTrack !== "none" ? (SOCIAL_MUSIC_TRACKS.find(track => track.id === falowenTrack)?.label || "Falowen song") : music === "none" ? "no music" : "original Falowen music")
+        setMessage(mime.extension.toUpperCase() + " video exported with " + (falowenTrack !== "none" ? (SOCIAL_MUSIC_TRACKS.find(track => track.id === falowenTrack)?.label || "Falowen song") : music === "none" ? "no music" : "original Falowen music")
           + (voiceFile ? " and your attached German audio." : ".")
 );
       } else {
@@ -224,10 +227,9 @@ export default function SocialVocabularyVideoCreator({ word }) {
         renderVocabularyFrame(canvas, word, currentSettings, duration);
         if (recorder.state === "recording") recorder.stop();
         const blob = await resultPromise;
-        await requireValidSocialMp4(blob);
         await requireValidSocialVideo(blob, mime);
         downloadBlob(blob, videoFileStem(word) + "-" + duration + "s." + mime.extension);
-        setMessage("MP4 video exported.");
+        setMessage(mime.extension.toUpperCase() + " video exported.");
       }
     } catch (cause) { setError(readableError(cause)); setMessage(""); }
     finally {
@@ -278,7 +280,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
             {MUSIC_CHOICES.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
           </select>
         </label>
-        <label>Falowen song for MP4 export
+        <label>Falowen song for video export
           <select value={falowenTrack} disabled={busy} onChange={e => setFalowenTrack(e.target.value)}>
             {SOCIAL_MUSIC_TRACKS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
           </select>
@@ -291,7 +293,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
         <button type="button" className={CTA} disabled={!word || busy} onClick={announceGerman}>
           Hear German pronunciation (device preview)
         </button>
-        <p className="social-vocab-video-note">Choose a Falowen song to embed it into the MP4, or keep the original tones. When a Falowen song is selected, it replaces the generated tones. No paid music API is required. Device text-to-speech is only for preview. Attach an approved voice recording to embed pronunciation in the video.</p>
+        <p className="social-vocab-video-note">Choose a Falowen song to embed it into the video, or keep the original tones. Auto uses WebM when this browser cannot record MP4 with audio. When a Falowen song is selected, it replaces the generated tones. No paid music API is required. Device text-to-speech is only for preview. Attach an approved voice recording to embed pronunciation in the video.</p>
       </div>
       <div className="social-vocab-video-preview">
         <div className="social-vocab-video-screen">
@@ -307,7 +309,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
           </button>
         </div>
         {playing && <small aria-live="off">Preview · {previewTime.toFixed(1)}s / {duration}s</small>}
-        {!mime && <p role="alert" className="social-vocab-video-warning">This browser cannot record MP4. No WebM file will be downloaded. You can still export PNG or use a browser with MP4 (H.264) MediaRecorder support.</p>}
+        {!mime && <p role="alert" className="social-vocab-video-warning">The selected format is unavailable with these audio settings. Choose Auto or WebM. MP4 with music requires H.264 and AAC recording support.</p>}
         
         {message && <p className="social-vocab-video-success" role="status">{message}</p>}
         {error && <p className="social-vocab-video-warning" role="alert">{error}</p>}

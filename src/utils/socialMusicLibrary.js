@@ -20,12 +20,19 @@ export async function addSocialMusic(context, destination, trackId, seconds, vol
   const gain = context.createGain();
   source.buffer = buffer;
   source.loop = true;
-  gain.gain.setValueAtTime(volume, context.currentTime);
-  gain.gain.setValueAtTime(volume, context.currentTime + Math.max(0, seconds - .35));
-  gain.gain.linearRampToValueAtTime(0.0001, context.currentTime + seconds);
   source.connect(gain);
   gain.connect(destination);
-  source.start();
-  source.stop(context.currentTime + seconds + .05);
-  return source;
+  let started = false;
+  // Loading/decode can take seconds. Start the music and its fade only after
+  // MediaRecorder starts, so slow loading cannot consume the soundtrack first.
+  return { start() {
+    if (started) return;
+    started = true;
+    const start = context.currentTime;
+    gain.gain.setValueAtTime(volume, start);
+    gain.gain.setValueAtTime(volume, start + Math.max(0, seconds - .35));
+    gain.gain.linearRampToValueAtTime(0.0001, start + seconds);
+    source.start(start);
+    source.stop(start + seconds + .05);
+  } };
 }

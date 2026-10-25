@@ -26,9 +26,13 @@ export const SOCIAL_WEBM_CANDIDATES = Object.freeze([
   "video/webm;codecs=vp8,opus",
   "video/webm",
 ]);
-export function chooseSocialVideoFormat(isSupported, preferred="auto") {
+export function chooseSocialVideoFormat(isSupported, preferred="auto", {audioRequired=false}={}) {
   if (typeof isSupported !== "function") return null;
-  const mp4 = chooseSocialMp4Mime(isSupported);
+  // A video-only H.264 probe can succeed while AAC encoding is unavailable.
+  // Some browsers then mux Opus into MP4, which many social/video players mute.
+  const mp4 = audioRequired
+    ? SOCIAL_MP4_CANDIDATES.find(type => type.includes("mp4a.") && isSupported(type)) || ""
+    : chooseSocialMp4Mime(isSupported);
   const webm = SOCIAL_WEBM_CANDIDATES.find(type => isSupported(type)) || "";
   if (preferred === "mp4") return mp4 ? {mime:mp4,extension:"mp4"} : null;
   if (preferred === "webm") return webm ? {mime:webm,extension:"webm"} : null;
