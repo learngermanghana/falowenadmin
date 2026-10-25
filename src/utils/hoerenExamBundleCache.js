@@ -16,10 +16,24 @@ async function transaction(mode, action) {
   try {
     return await new Promise((resolve, reject) => {
       const tx = db.transaction(STORE, mode);
-      const request = action(tx.objectStore(STORE));
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-      tx.onerror = () => reject(tx.error);
+      let value;
+      let settled = false;
+      const finishError = (error) => {
+        if (!settled) { settled = true; reject(error || new Error("Browser storage transaction failed")); }
+      };
+      tx.oncomplete = () => {
+        if (!settled) { settled = true; resolve(value); }
+      };
+      tx.onerror = () => finishError(tx.error);
+      tx.onabort = () => finishError(tx.error || new Error("Browser storage transaction aborted"));
+      try {
+        const request = action(tx.objectStore(STORE));
+        request.onsuccess = () => { value = request.result; };
+        request.onerror = () => finishError(request.error);
+      } catch (error) {
+        try { tx.abort(); } catch {}
+        finishError(error);
+      }
     });
   } finally { db.close(); }
 }
