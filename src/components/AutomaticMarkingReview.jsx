@@ -35,6 +35,7 @@ export default function AutomaticMarkingReview() {
   const [recheck, setRecheck] = useState(null);
   const [tutorWritingPoints, setTutorWritingPoints] = useState('');
   const [recheckError, setRecheckError] = useState('');
+  const [recheckApplied, setRecheckApplied] = useState(false);
   const reviewRef = useRef(null);
   useEffect(() => {
     if (detail) reviewRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
@@ -67,7 +68,7 @@ export default function AutomaticMarkingReview() {
   }
   function recheckObjectiveAnswers() {
     if (!detail) return;
-    setRecheckError('');
+    setRecheckError(''); setRecheckApplied(false);
     try {
       const assignmentId = detail.row.assignmentId || detail.row.result?.assignmentKey || '';
       const reference = bundledReferenceForAssignment(answersDictionary, assignmentId);
@@ -104,6 +105,7 @@ export default function AutomaticMarkingReview() {
   function useRecheckedScore() {
     if (!recheck || recheck.outcome.writingRequiredButMissing || recheck.unkeyedParts.length) return;
     setScore(String(recheck.outcome.finalScore));
+    setRecheckApplied(true);
     setReason('Tutor rechecked original answers against the current Admin answer key; revised objective result ' +
       recheck.correctCount + '/' + recheck.totalCount + ' and reviewed final score.');
     setEditing(true);
@@ -124,7 +126,7 @@ export default function AutomaticMarkingReview() {
   }
   useEffect(() => { load(); }, []);
   async function open(row) {
-    setBusy(true); setError(''); setMessage(''); setDetail(null); setReportFallback(''); setRecheck(null); setTutorWritingPoints(''); setRecheckError('');
+    setBusy(true); setError(''); setMessage(''); setDetail(null); setReportFallback(''); setRecheck(null); setTutorWritingPoints(''); setRecheckError(''); setRecheckApplied(false);
     try {
       const next = await openAutomaticMarking(row);
       setDetail(next); setEditing(false); setScore(String(next.score?.score ?? row.finalScore ?? row.result?.finalScore ?? row.result?.score ?? ''));
@@ -134,7 +136,19 @@ export default function AutomaticMarkingReview() {
   async function save(event) {
     event.preventDefault(); setBusy(true); setError(''); setMessage('');
     try {
-      await saveAutomaticMarkingReview(detail, { score, feedback, reason });
+      const verifiedRecheck = recheckApplied && recheck ? {
+        finalScore: recheck.outcome.finalScore,
+        objectiveCorrect: recheck.correctCount, objectiveTotal: recheck.totalCount,
+        objectiveScore: 100 * recheck.correctCount / recheck.totalCount,
+        objectiveDetails: recheck.details,
+        writingScore: recheck.assignmentWriting ? Number(tutorWritingPoints) : null,
+        writingScorePercent: recheck.assignmentWriting ? Number(tutorWritingPoints) * 2.5 : null,
+        maxWritingScore: recheck.assignmentWriting ? 40 : null,
+        writingMinimumMet: recheck.outcome.writingMinimumMet,
+        scoreBreakdown: recheck.outcome.scoreBreakdown,
+        referenceVersion: recheck.referenceVersion,
+      } : null;
+      await saveAutomaticMarkingReview(detail, { score, feedback, reason, verifiedRecheck });
       setDetail(null);
       setMessage('Result published to the student. Background synchronization is queued.');
       await load();
@@ -175,7 +189,7 @@ export default function AutomaticMarkingReview() {
     detail.row.assignmentId || detail.row.result?.assignmentKey) : null;
   const referenceComparison = detail ? compareMarkingReferences(detail.audit?.referenceEntry, currentReference) : null;
   const objectiveDetails = original?.objectiveDetails && typeof original.objectiveDetails === 'object'
-    ? Object.entries(original.objectiveDetails) : [];
+    ? Object.entries(detail?.row?.tutorRecheck && detail?.score?.objectiveDetails ? detail.score.objectiveDetails : original.objectiveDetails) : [];
   return <section className="marking-card automatic-marking-inbox" aria-label="Student work and marking review">
     <header className="marking-inbox-heading"><div><h2>Student work &amp; marking review</h2><p>Find any saved AI-marked result, compare answer references and correct scores. New results first.</p></div><button type="button" disabled={busy} onClick={() => load()}>Refresh results</button></header>
     {error && <p role="alert">{error}</p>}
@@ -306,7 +320,7 @@ export default function AutomaticMarkingReview() {
         {editing && <form onSubmit={save} style={{ display: 'grid', gap: 12, marginTop: 16 }}>
         <h3>Correct score &amp; publish</h3>
         <p>A manual score is the tutor’s final decision. The original AI result remains saved above.</p>
-        <label>Final score /100 <input type="number" min="0" max="100" step="1" required value={score} onChange={event => setScore(event.target.value)} disabled={busy} /></label>
+        <label>Final score /100 <input type="number" min="0" max="100" step="1" required value={score} onChange={event => {setScore(event.target.value); setRecheckApplied(false);}} disabled={busy} /></label>
         <label>Feedback<textarea rows={6} required value={feedback} onChange={event => setFeedback(event.target.value)} disabled={busy} style={{ display: 'block', width: '100%' }} /></label>
         <label>Reason for correction<textarea required value={reason} onChange={event => setReason(event.target.value)} disabled={busy} style={{ display: 'block', width: '100%' }} /></label>
         <button type="submit" disabled={busy}>Save & publish to student</button>
