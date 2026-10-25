@@ -83,8 +83,11 @@ test("teacher-purpose guidance is normal-view only and presentation view stays c
   assert.match(presenter, /aria-label="Teacher purpose"/);
   assert.match(presenter, /stage\.teacherPurpose\.student/);
   assert.match(presenter, /stage\.teacherPurpose\.teacher/);
-  assert.match(presenter, /Present full screen/);
-  assert.match(presenter, /presenter-focus-dock/);
+  const controls = fs.readFileSync("src/components/PresenterControls.jsx", "utf8");
+  assert.match(presenter, /<PresenterActions/);
+  assert.match(presenter, /<PresenterControls/);
+  assert.match(controls, /Present full screen/);
+  assert.match(controls, /presenter-focus-dock/);
   assert.match(css, /\.presenter-teacher-purpose/);
   assert.match(css, /\.presenter-grammar-check-grid/);
 });

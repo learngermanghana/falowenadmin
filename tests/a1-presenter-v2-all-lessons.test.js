@@ -68,7 +68,7 @@ test("A1 Day 11 and Day 12 teaching slides use the official class-day mapping", 
   assert.equal(day11.dayNumber, 11);
   assert.equal(day11.day, "Day 11");
   assert.match(day11.title, /^A1 Day 11 ·/);
-  assert.match(day11.topic, /Die 12-Stunden-Uhr/);
+  assert.match(day11.topic, /Die Uhrzeit und der Tagesablauf/);
 
   assert.equal(day12.dayNumber, 12);
   assert.equal(day12.day, "Day 12");

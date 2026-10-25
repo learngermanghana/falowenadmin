@@ -10,7 +10,12 @@ test('only course submissions at A1/A2/B1 are eligible', () => {
 test('release requires a valid, confident result with no review flags', () => {
   const good = {status:'marked', finalScore:80, confidence:0.95};
   assert.equal(releasable(good),true);
-  assert.equal(releasable({...good,finalScore:0}),true);
+  assert.equal(releasable({...good,finalScore:0}),false);
+  assert.equal(releasable({...good,finalScore:59}),false);
+  assert.equal(releasable({...good,finalScore:60}),true);
+  assert.equal(releasable({...good,passed:false}),false);
+  assert.equal(releasable({...good,writingMinimumMet:false}),false);
+  assert.equal(releasable({...good,writingScore:null,writingScorePercent:null,maxWritingScore:100}),true);
   for (const patch of [{finalScore:null},{finalScore:'oops'},{confidence:0.4},{status:'needs_review'},
     {consistencyWarnings:['missing part']},{reviewReasons:[{code:'disagreement'}]},
     {secondExaminer:{requiresTutorReview:true}}]) assert.equal(releasable({...good,...patch}),false);
@@ -100,7 +105,7 @@ for (const existing of [false,true]) test(`marking publishes once and preserves 
   }
   assert.equal(store.rows.get(`aiMarkingAudit/${idForPath('submissions/s1')}`).referenceVersion,'v1');
 });
-for (const grade of [90, 60, 59, 40]) test(`valid A1–B1 score ${grade}/100 publishes without tutor approval`, async () => {
+for (const grade of [90, 60, 59, 40]) test(`A1–B1 score ${grade}/100 follows pass or review policy`, async () => {
   for (const level of ['A1', 'A2', 'B1']) {
     const key = `${level}-7.22`;
     const store = memoryDb({
@@ -112,16 +117,24 @@ for (const grade of [90, 60, 59, 40]) test(`valid A1–B1 score ${grade}/100 pub
       db: store.db,
       loadReference: async () => ({ parts: [{}], version: 'v1' }),
       mark: async () => ({ status: 'marked', score: grade, finalScore: grade,
-        confidence: 1, objectiveScore: grade, objectiveCorrect: grade / 10,
+        confidence: 1, writingScore:null, writingScorePercent:null, maxWritingScore:100, objectiveScore: grade, objectiveCorrect: grade / 10,
         objectiveTotal: 10, feedback: 'Review the one incorrect answer.' }),
     })({ data: store.snapshot('markingJobs/j') });
     const review = store.rows.get('markingResults/s');
-    assert.equal(review.status, 'marked');
-    assert.equal(review.publicationStatus, 'published');
-    assert.equal(review.sentToStudent, true);
-    assert.equal(review.publicationReviewReasons.length, 0);
-    assert.equal(store.rows.get('scores/ST1__' + key).score, grade);
-    assert.equal(store.rows.get('submissions/s').feedbackSentToStudent, true);
+    if (grade < 60) {
+      assert.equal(review.status, 'needs_review');
+      assert.equal(review.sentToStudent, false);
+      assert.match(review.publicationReviewReasons.join(' '), /Failed assessment/);
+      assert.equal(store.rows.has('scores/ST1__' + key), false);
+      assert.equal([...store.rows.keys()].some(key => key.startsWith('automaticScoreSync/')), false);
+    } else {
+      assert.equal(review.status, 'marked');
+      assert.equal(review.publicationStatus, 'published');
+      assert.equal(review.sentToStudent, true);
+      assert.equal(review.publicationReviewReasons.length, 0);
+      assert.equal(store.rows.get('scores/ST1__' + key).score, grade);
+      assert.equal(store.rows.get('submissions/s').feedbackSentToStudent, true);
+    }
   }
 });
 
@@ -176,6 +189,11 @@ for (const outcome of [{passed:false,writingMinimumMet:false},{writingMinimumMet
       'submissions/s':{studentId:'uid',submissionText:'Work'},'students/uid':{studentCode:'real'}});
     await createCourseMarkingWorker({db:store.db,loadReference:async()=>({parts:[{}]}),mark:async()=>({status:'marked',score:80,confidence:.99,...outcome})})({data:store.snapshot('markingJobs/j')});
     const notification=store.rows.get(`studentNotifications/${idForPath('submissions/s')}`);
+    if (outcome.passed === false || outcome.writingMinimumMet === false) {
+      assert.equal(notification, undefined);
+      assert.equal(store.rows.get('markingResults/s').status, 'needs_review');
+      return;
+    }
     assert.equal(notification.status,outcome.passed===true?'passed':'needs_improvement');
     assert.equal(notification.data.status,notification.status);
     assert.match(notification.body,outcome.passed===true?/Passed/:/Needs improvement/);

@@ -6,12 +6,29 @@ import { isAutomaticResultPublished } from '../utils/automaticReviewStatus.js';
 
 const PAGE_SIZE = 25;
 export async function loadAutomaticMarkingPage(cursor = null) {
-  // One indexed field avoids a deployment-dependent composite index. Cursor order is stable.
+  // A single-field date index is available without a new composite deployment.
+  // Filter the bounded page by source; advance by the raw page cursor even if it contains other sources.
   const snapshot = await getDocs(query(collection(db, 'markingResults'),
-    where('source', '==', 'automatic_course_marking'),
+    orderBy('createdAt', 'desc'),
     ...(cursor ? [startAfter(cursor)] : []), limit(PAGE_SIZE)));
-  return { rows: snapshot.docs.map(entry => ({ ...entry.data(), id: entry.id })),
-    cursor: snapshot.docs.at(-1) || null, hasMore: snapshot.size === PAGE_SIZE };
+  const rows = await Promise.all(snapshot.docs.filter(entry => entry.data().source === 'automatic_course_marking').map(async entry => {
+    const row = { ...entry.data(), id: entry.id };
+    if (String(row.studentName || row.name || '').trim() && !/^student$/i.test(String(row.studentName || row.name).trim())) return row;
+    try {
+      const work = /^submissions\/[^/]+(?:\/[^/]+\/[^/]+)?$/.test(row.submissionPath || '')
+        ? (await getDoc(doc(db, row.submissionPath))).data() || {} : {};
+      const uid = row.studentId || work.studentId || work.uid || work.userId;
+      const code = row.studentCode || work.studentCode || work.studentcode;
+      let student = uid ? await getDoc(doc(db, 'students', uid)) : null;
+      if (!student?.exists() && uid) student = (await getDocs(query(collection(db, 'students'), where('uid', '==', uid), limit(1)))).docs[0];
+      if (!student?.exists() && code) student = (await getDocs(query(collection(db, 'students'), where('studentCode', '==', code), limit(1)))).docs[0];
+      const profile = student?.exists() ? student.data() : {};
+      const name = [profile.name, profile.fullName, profile.studentName, [profile.firstName, profile.lastName].filter(Boolean).join(' '), work.studentName, work.name, row.name]
+        .find(value => String(value || '').trim() && !/^student$/i.test(String(value).trim()));
+      return { ...row, studentName: name || '', studentCode: profile.studentCode || profile.studentcode || code || '', studentEmail: profile.email || profile.studentEmail || work.studentEmail || work.email || row.studentEmail || '' };
+    } catch { return { ...row, identityUnavailable: true }; }
+  }));
+  return { rows, cursor: snapshot.docs.at(-1) || null, hasMore: snapshot.size === PAGE_SIZE };
 }
 
 export async function openAutomaticMarking(row) {

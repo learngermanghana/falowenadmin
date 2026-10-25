@@ -2,7 +2,7 @@
 
 New submitted course assignments create one deterministic Firebase marking job per submission path. The worker bundles the same Admin marking service and production patches: objective parsing, level weights, question-aware writing guards, zero-score recovery and independent second examiner. Objective-only submissions avoid an AI call. Other levels and mock/speaking exam flows remain outside this worker.
 
-Reliable results (marked, confidence >= 0.8, no review reasons/warnings or examiner disagreement) are published atomically to the submission, markingResults and scores. A private aiMarkingAudit record preserves the submitted work, reference key/version and full marking result. Missing keys, uncertain work, errors or existing assignment scores go to tutor review. Existing tutor decisions are never overwritten automatically. Only new jobs marked automatic are processed; historical submissions are not regraded.
+Reliable passing results (score >= 60, no failed pass outcome or writing-minimum failure, marked, confidence >= 0.8, no review reasons/warnings or examiner disagreement) are published atomically to the submission, markingResults and scores. A private aiMarkingAudit record preserves the submitted work, reference key/version and full marking result. Missing keys, uncertain work, errors or existing assignment scores go to tutor review. Existing tutor decisions are never overwritten automatically. Only new jobs marked automatic are processed; historical submissions are not regraded.
 
 The learner listens to its saved submission and shows marking, review or score/feedback with /campus/results. The Results page supplements Sheet results with the student's saved automatic scores so publication does not wait for Sheet refresh.
 
@@ -21,3 +21,13 @@ Firebase Secret Manager must contain OPENAI_API_KEY (existing), SCORES_WEBHOOK_U
 The learner rules protect marking fields from student writes and make score writes staff-only. Automatic jobs, private keys and audit records stay staff-only. No long-running Vercel endpoint, timer, polling loop or new email sender is introduced.
 
 Before release, test one new A1, A2 and B1 assignment with test accounts and real registry entries, verify Results + one Sheet row/email, then replay the event and test a tutor correction. The worker/module tests use in-memory storage and stubbed transport; they do not prove production credentials or Apps Script email delivery.
+
+## Marking inbox and release policy
+
+Valid passing assessments publish and create their Sheet outbox automatically. Failed assessments retain their AI evidence for tutor review before publication. Missing keys, conflicting totals, service errors and unverified speaking evidence remain marking issues; they are not treated as student failures. Objective-only results legitimately carry null writing fields, which must not be validated as invalid writing marks. Real non-null out-of-range writing marks still block publication.
+
+The inbox defaults to unpublished work and provides Failed results, Marking issues, Published and All results views, with student/assignment search and level filtering. Queries page by createdAt descending, 25 rows at a time. Counts and filters cover loaded rows only; Load more retrieves older results. Diagnostics stay collapsed until opened and checked explicitly. No new polling or scheduled AI calls are introduced.
+
+The inbox uses the existing single-field date index, filters each bounded page by source and advances its raw cursor even for pages containing other sources. No new composite index is required. Deploy the Admin marking worker for the publication-policy and null-writing validation fixes. Previously held jobs are not automatically replayed or approved; review their original evidence individually.
+
+Missing legacy display names are resolved on each loaded page from the exact submission and registered student. Only unnamed rows are enriched, reads are bounded by page size and no polling is added. New results preserve registered studentName and first/last name aliases as well as name/fullName.
