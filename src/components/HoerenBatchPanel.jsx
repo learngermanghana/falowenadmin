@@ -238,6 +238,21 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
     }catch(err){setError(err.message)}
     finally{setWorking("");}
   }
+  function downloadDraftBackup() {
+    const parts = Object.fromEntries(Object.entries(cacheRef.current).map(([part, record]) => [
+      part, {
+        script: record.script || "",
+        questions: record.questions || [],
+        topic: record.topic || "",
+        repeats: record.repeats,
+        approved: false,
+        error: record.error || ""
+      }
+    ]));
+    downloadBlob(new Blob([JSON.stringify({ level, mock, createdAt: new Date().toISOString(), parts }, null, 2)], { type: "application/json" }),
+      `Falowen-${level}-Mock-${mock}-Hoeren-draft-backup.json`);
+    setNotice("Transcript and question backup downloaded. MP3s must be downloaded separately.");
+  }
   async function exportBundle(){
     if(working||!complete)return;
     setWorking("Creating ZIP, PDFs and PNG slides on this device");setError("");
@@ -350,7 +365,8 @@ export default function HoerenBatchPanel({profiles={},ready=false,initialLevel="
         </article>
       })}
     </div>
-    {storageWarning?<p role="alert" className="hoeren-validation">{storageWarning}</p>:null}
+    <button type="button" className="hoeren-quiet" onClick={downloadDraftBackup}>Download transcript &amp; question backup (JSON) · no AI calls</button>
+        {storageWarning?<p role="alert" className="hoeren-validation">{storageWarning}</p>:null}
     {error?<p role="alert" className="hoeren-validation">{error}</p>:null}
     {notice?<p role="status" className="hoeren-hint">{notice}</p>:null}
     {working?<p role="status" className="hoeren-batch-progress">{working}</p>:null}
