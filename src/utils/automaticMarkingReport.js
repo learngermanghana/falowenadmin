@@ -89,7 +89,7 @@ export function buildAutomaticMarkingReport(detail, currentReference) {
     'Level: ' + (row.level || 'Unknown'),
     'Attempt: ' + (submission.attempt || row.attempt || 'Not recorded'),
     'Submitted: ' + (submission.submittedAt || row.submittedAt || row.createdAt || 'Unknown'),
-    'Submission path: ' + (row.submissionPath || 'Unknown'),
+    'Submission path structure: ' + (row.submissionPath ? String(row.submissionPath).split('/').map((part, index) => index % 2 ? '[record]' : part).join('/') : 'Unknown'),
     'Publication: ' + (row.publicationStatus || row.status || 'Unknown'),
     'Reported score: ' + (row.finalScore ?? 'Unavailable'),
     '',
