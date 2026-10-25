@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { bundledReferenceForAssignment, buildAutomaticMarkingReport, compareMarkingReferences } from '../src/utils/automaticMarkingReport.js';
+import { bundledReferenceForAssignment, buildAutomaticMarkingReport, compareMarkingReferences, findUnkeyedSubmittedAnswers } from '../src/utils/automaticMarkingReport.js';
 import { computeObjectiveScore } from '../src/utils/objectiveMarking.js';
 import { calculateWeightedMarkingOutcome } from '../src/utils/markingScorePolicy.js';
 
@@ -44,6 +44,8 @@ test('Vicky objective work has four correct of ten keyed answers, not thirteen k
   assert.equal(result.correctCount, 4);
   assert.equal(result.totalCount, 10);
   assert.equal(pharmacy.writingParts.length, 0);
+  assert.deepEqual(findUnkeyedSubmittedAnswers(vicky, pharmacy), ['teil3: answered through question 8, key has only 5']);
+  assert.deepEqual(findUnkeyedSubmittedAnswers(selasi, sport), []);
 });
 
 test('reference diff shows original versus changed Admin answers and missing evidence', () => {
