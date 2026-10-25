@@ -225,3 +225,94 @@ export default function SocialVocabularyVideoCreator({ word }) {
         if (recorder.state === "recording") recorder.stop();
         const blob = await resultPromise;
         await requireValidSocialMp4(blob);
+        await requireValidSocialVideo(blob, mime);
+        downloadBlob(blob, videoFileStem(word) + "-" + duration + "s." + mime.extension);
+        setMessage("MP4 video exported.");
+      }
+    } catch (cause) { setError(readableError(cause)); setMessage(""); }
+    finally {
+      if (timer) window.clearTimeout(timer);
+      if (frameId) window.cancelAnimationFrame(frameId);
+      if (recorder && recorder.state !== "inactive") { try { recorder.stop(); } catch { /* stopped already */ } }
+      stream?.getTracks().forEach(track => track.stop());
+      if (context) await context.close().catch(() => {});
+      recordingRef.current = null;
+      if (!cancelled) setBusy(false);
+    }
+  };
+
+  return <section className="social-vocab-video" aria-label="Animated vocabulary video studio">
+    <div className="social-vocab-video-header">
+      <div>
+        <h3>Animated Vocabulary of the Day</h3>
+        <p>Branded intro → German word → meaning → example → ending. No paid video API.</p>
+      </div>
+      <span className="social-vocab-video-pill">9:16 · Shorts / Reels / TikTok</span>
+    </div>
+    <div className="social-vocab-video-layout">
+      <div className="social-vocab-video-controls">
+        <label>Visual style
+          <select value={theme} disabled={busy} onChange={e => setTheme(e.target.value)}>
+            {VIDEO_THEMES.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+          </select>
+        </label>
+        <label>Video duration
+          <select value={duration} disabled={busy} onChange={e => setDuration(Number(e.target.value))}>
+            {VIDEO_DURATIONS.map(value => <option key={value} value={value}>{value} seconds</option>)}
+          </select>
+        </label>
+        <label>Video resolution
+          <select value={quality} disabled={busy} onChange={e => setQuality(e.target.value)}>
+            {VIDEO_RESOLUTIONS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+          </select>
+        </label>
+        <label>Video file format
+          <select value={exportFormat} disabled={busy} onChange={e => setExportFormat(e.target.value)}>
+            <option value="auto">Auto (MP4 preferred, WebM fallback)</option>
+            <option value="mp4">MP4 · H.264 (where supported)</option>
+            <option value="webm">WebM · Chrome/Firefox compatible</option>
+          </select>
+        </label>
+        <label>Background music
+          <select value={music} disabled={busy} onChange={e => setMusic(e.target.value)}>
+            {MUSIC_CHOICES.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+          </select>
+        </label>
+        <label>Falowen song for MP4 export
+          <select value={falowenTrack} disabled={busy} onChange={e => setFalowenTrack(e.target.value)}>
+            {SOCIAL_MUSIC_TRACKS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+          </select>
+        </label>
+        <label>German pronunciation recording · optional
+          <input type="file" disabled={busy} accept="audio/mpeg,audio/mp4,audio/wav,audio/x-wav,audio/aac,.mp3,.m4a,.wav"
+            onChange={e => setVoiceFile(e.target.files?.[0] || null)}/>
+        </label>
+        {voiceFile && <button type="button" className={CTA} disabled={busy} onClick={() => setVoiceFile(null)}>Remove pronunciation audio</button>}
+        <button type="button" className={CTA} disabled={!word || busy} onClick={announceGerman}>
+          Hear German pronunciation (device preview)
+        </button>
+        <p className="social-vocab-video-note">Choose a Falowen song to embed it into the MP4, or keep the original tones. When a Falowen song is selected, it replaces the generated tones. No paid music API is required. Device text-to-speech is only for preview. Attach an approved voice recording to embed pronunciation in the video.</p>
+      </div>
+      <div className="social-vocab-video-preview">
+        <div className="social-vocab-video-screen">
+          <canvas ref={canvasRef} width={540} height={960} aria-label="Animated vocabulary video preview"/>
+        </div>
+        <div className="social-vocab-video-actions">
+          <button type="button" className={CTA} disabled={busy || !word} onClick={() => { setPlaying(x => !x); setError(""); }}>
+            {playing ? "Pause preview" : "Play animation"}
+          </button>
+          <button type="button" className={CTA} disabled={busy || !word || !canvasSupported} onClick={exportPng}>Export story PNG</button>
+          <button type="button" className={CTA + " primary"} disabled={busy || !word || !mime} onClick={exportVideo}>
+            {busy ? "Encoding video…" : `Export ${mime?.extension?.toUpperCase() || "video"} video`}
+          </button>
+        </div>
+        {playing && <small aria-live="off">Preview · {previewTime.toFixed(1)}s / {duration}s</small>}
+        {!mime && <p role="alert" className="social-vocab-video-warning">This browser cannot record MP4. No WebM file will be downloaded. You can still export PNG or use a browser with MP4 (H.264) MediaRecorder support.</p>}
+        
+        {message && <p className="social-vocab-video-success" role="status">{message}</p>}
+        {error && <p className="social-vocab-video-warning" role="alert">{error}</p>}
+        <small className="social-vocab-video-note">Export runs locally and takes the selected duration. Keep this tab visible until it finishes. No video or audio is uploaded to Falowen.</small>
+      </div>
+    </div>
+  </section>;
+}
