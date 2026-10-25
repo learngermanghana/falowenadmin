@@ -17,3 +17,10 @@ test('filters distinguish failed assessment from technical issue and support ide
   assert.deepEqual(filterMarkingInbox(rows,{view:'issues',search:'A2-1.1'}).map(row=>row.id),['issue']);
   assert.equal(markingInboxCategory({finalScore:90,result:{writingMinimumMet:false}}),'failed');
 });
+
+ test('invalid or uncertain provisional failures remain marking issues', () => {
+  for (const result of [{finalScore:40,score:90}, {finalScore:40,confidence:0.3}, {finalScore:40,secondExaminer:{requiresTutorReview:true}}, {finalScore:40,consistencyWarnings:['Invalid writing marks']}]) {
+    assert.equal(markingInboxCategory({result}), 'issues');
+  }
+  assert.equal(markingInboxCategory({finalScore:40,publicationReviewReasons:['Failed assessment requires tutor review before publication.'],result:{score:40,finalScore:40,confidence:1,status:'marked'}}),'failed');
+});
