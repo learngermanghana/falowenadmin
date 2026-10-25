@@ -70,14 +70,14 @@ function buildSpeechPayload({ turns, engine }) {
     store: false,
     input: [{ type: "user_input", content: turns.map(turn => ({
       type: "text", text: turn.text,
-      annotations: [{ type: "speech_metadata", speaker: turn.speaker,
+      annotations: [{ type: "speech_metadata", ...(speakers.length === 2 ? { speaker: turn.speaker } : {}),
         style: turn.speaker === "A"
           ? "Professional German exam narrator: crisp, deliberate, instructional delivery with calm neutral emphasis."
           : "Natural conversational standard German for an independent task speaker; clear but lifelike intonation, distinct from the exam narrator." }],
     })) }],
     response_format: { type: "audio", mime_type: "audio/wav" },
     generation_config: {
-      speech_config: speakers.map(speaker => ({ speaker, voice: voices[speaker], language: "de-DE" })),
+      speech_config: speakers.map(speaker => ({ ...(speakers.length === 2 ? { speaker } : {}), voice: voices[speaker], language: "de-DE" })),
     },
   };
 }

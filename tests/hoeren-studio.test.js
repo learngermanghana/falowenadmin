@@ -525,11 +525,12 @@ test("speech payload maps each annotated speaker to one documented Interactions 
     const config = payload.generation_config.speech_config;
     assert.ok(Array.isArray(config));
     assert.equal(config.length, new Set(speakers).size);
-    assert.deepEqual(config.map(item => item.speaker), [...new Set(speakers)]);
+    assert.deepEqual(config.map(item => item.speaker), new Set(speakers).size === 2 ? [...new Set(speakers)] : [undefined]);
     assert.ok(config.every(item => item.voice && item.language === "de-DE"));
     assert.ok(config.every(item => Object.keys(item).every(key => ["speaker", "voice", "language"].includes(key))));
     for (const part of payload.input[0].content) {
       assert.equal(config.filter(item => item.speaker === part.annotations[0].speaker).length, 1);
+      if (config.length === 1) assert.equal(Object.hasOwn(part.annotations[0], "speaker"), false);
     }
     assert.equal(payload.store, false);
     assert.deepEqual(payload.response_format, { type: "audio", mime_type: "audio/wav" });
