@@ -155,3 +155,38 @@ export async function loadMarkingHealth() {
     throw new Error(body?.error || 'Could not check marking health.');
   return body;
 }
+
+
+// Explicit, bounded historical lookup. Unlike the 25-row inbox, these
+// queries can find older published results without paging through all students.
+// No polling, AI call or new index is required.
+export async function searchAutomaticMarkingResults(input) {
+  const term = String(input || '').trim();
+  if (term.length < 2) throw new Error('Enter at least two characters to search.');
+  const candidate = term[0].toUpperCase() + term.slice(1);
+  const searches = [
+    ['studentCode', term], ['studentCode', term.toLowerCase()],
+    ['studentEmail', term], ['studentEmail', term.toLowerCase()],
+    ['assignmentId', term.toUpperCase()], ['studentName', term],
+    ['studentName', candidate]
+  ];
+  const unique = [...new Map(searches.map(([field, value]) => [field + ':' + value, [field, value]])).values()];
+  const settled = await Promise.allSettled(unique.map(([field, value]) =>
+    getDocs(field === 'studentName'
+      ? query(collection(db, 'markingResults'), where(field, '>=', value),
+        where(field, '<=', value + '\uf8ff'), limit(PAGE_SIZE))
+      : query(collection(db, 'markingResults'), where(field, '==', value), limit(PAGE_SIZE)))));
+  if (!settled.some(item => item.status === 'fulfilled')) {
+    throw new Error('Historical lookup is unavailable. Try the recent results list.');
+  }
+  const rows = new Map();
+  for (const result of settled) {
+    if (result.status !== 'fulfilled') continue;
+    for (const entry of result.value.docs) {
+      if (entry.data().source !== 'automatic_course_marking') continue;
+      rows.set(entry.id, { ...entry.data(), id: entry.id });
+    }
+  }
+  return [...rows.values()].sort((a, b) =>
+    String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+}
