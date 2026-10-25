@@ -1,28 +1,33 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {chooseSocialMp4Mime,requireValidSocialMp4} from "../src/utils/socialMp4Export.js";
+import {chooseSocialMp4Mime, chooseSocialVideoFormat, requireValidSocialMp4, requireValidSocialVideo} from "../src/utils/socialMp4Export.js";
 
-test("choose only actual MP4 format, not WebM when browser lacks MP4",()=>{
-  assert.equal(chooseSocialMp4Mime(type=>type==="video/mp4"),"video/mp4");
-  assert.equal(chooseSocialMp4Mime(type=>type.includes("webm")),"");
+test("MP4 MIME remains genuine, with explicit WebM fallback", () => {
+  assert.equal(chooseSocialMp4Mime(type => type === "video/mp4"), "video/mp4");
+  assert.equal(chooseSocialMp4Mime(type => type.includes("webm")), "");
+  const supports = type => type === "video/webm;codecs=vp8,opus";
+  assert.deepEqual(chooseSocialVideoFormat(supports, "auto"), {mime:"video/webm;codecs=vp8,opus",extension:"webm"});
+  assert.equal(chooseSocialVideoFormat(supports, "mp4"), null);
+  assert.deepEqual(chooseSocialVideoFormat(supports, "webm"), {mime:"video/webm;codecs=vp8,opus",extension:"webm"});
 });
-test("accept an MP4 ISO BMFF ftyp box and reject renamed WebM",async()=>{
-  const mp4=new Blob([Uint8Array.from([0,0,0,12,102,116,121,112,105,115,111,109])],{type:"video/mp4"});
+
+test("export validates real MP4 and WebM container signatures", async () => {
+  const mp4 = new Blob([Uint8Array.from([0,0,0,12,102,116,121,112,105,115,111,109])],{type:"video/mp4"});
+  const webm = new Blob([Uint8Array.from([0x1a,0x45,0xdf,0xa3,0x00])],{type:"video/webm"});
   assert.equal(await requireValidSocialMp4(mp4),mp4);
-  await assert.rejects(()=>requireValidSocialMp4(new Blob(["WebM"],{type:"video/mp4"})),/not MP4/i);
-  await assert.rejects(()=>requireValidSocialMp4(new Blob(["WebM"],{type:"video/webm"})),/real MP4/i);
-});
-test("both video components inspect container bytes before download",()=>{
-  for(const path of ["SocialVocabularyVideoCreator.jsx","SocialGermanChallenges.jsx"]){
-    const src=readFileSync(new URL("../src/components/"+path,import.meta.url),"utf8");
-    assert.match(src,/await requireValidSocialMp4\(blob\)/,path);
-  }
+  assert.equal(await requireValidSocialVideo(webm,{extension:"webm"}),webm);
+  await assert.rejects(() => requireValidSocialMp4(new Blob(["WebM"],{type:"video/mp4"})),/not MP4/i);
+  await assert.rejects(() => requireValidSocialVideo(new Blob(["not webm"],{type:"video/webm"}),{extension:"webm"}),/valid WebM/);
 });
 
-test("silent and audio vocabulary MP4 paths both validate real container before downloading",()=>{
-  const src=readFileSync(new URL("../src/components/SocialVocabularyVideoCreator.jsx",import.meta.url),"utf8");
-  const calls=[...src.matchAll(/await requireValidSocialMp4\(blob\);\s*downloadBlob\(blob, videoFileStem\(word\) \+ "-" \+ duration \+ "s\.mp4"\)/g)];
-  assert.equal(calls.length,2,"Both music and silent exports must verify MP4 signature");
-  assert.doesNotMatch(src,/mime\.extension|\.(?:webm|mkv)"/i);
+test("both video exporters validate container and use matching extension", () => {
+  for (const file of ["SocialVocabularyVideoCreator.jsx","SocialGermanChallenges.jsx"]) {
+    const source = readFileSync(new URL("../src/components/"+file,import.meta.url),"utf8");
+    assert.match(source,/await requireValidSocialVideo\(blob,/);
+    assert.match(source,/\.extension/);
+  }
+  const vocabulary = readFileSync(new URL("../src/components/SocialVocabularyVideoCreator.jsx",import.meta.url),"utf8");
+  assert.equal([...vocabulary.matchAll(/await requireValidSocialVideo\(blob, mime\)/g)].length,2);
+  assert.equal([...vocabulary.matchAll(/videoFileStem\(word\) \+ "-" \+ duration \+ "s\." \+ mime\.extension/g)].length,2);
 });
