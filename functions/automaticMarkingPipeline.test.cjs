@@ -105,3 +105,11 @@ test('A2-5.14 current five-answer workbook grades 5/5, never old 5/12', async ()
   assert.equal(result.objectiveTotal, 5);
   assert.equal(result.finalScore, 100);
 });
+
+ test('bundled B1-2.6 reference contains current five Lesen and five Hoeren answers', () => {
+  const ref = loadPipeline().canonicalCourseReference('B1-2.6');
+  assert.equal(ref.totalAnswers, 10);
+  const letters = part => Array.from(ref.parts[part].answers, answer => answer.correctLetter);
+  assert.deepEqual(letters('teil3'), ['A','B','C','B','B']);
+  assert.deepEqual(letters('teil4'), ['B','A','B','A','C']);
+});
