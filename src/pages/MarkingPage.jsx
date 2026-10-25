@@ -190,11 +190,11 @@ function findRosterMatchForSubmission(roster = [], submission = {}) {
 }
 
 export default function MarkingPage() {
-  const [tab, setTab] = useState('incoming');
+  const [tab, setTab] = useState('automatic');
   return <>
     <nav aria-label="Marking sections" style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+      <button type="button" aria-pressed={tab === 'automatic'} onClick={() => setTab('automatic')}>Student work &amp; review</button>
       <button type="button" aria-pressed={tab === 'incoming'} onClick={() => setTab('incoming')}>Submissions to mark</button>
-      <button type="button" aria-pressed={tab === 'automatic'} onClick={() => setTab('automatic')}>AI-marked · Review & edit</button>
     </nav>
     {tab === 'automatic' ? <AutomaticMarkingReview /> : <TutorMarkingWorkspace />}
   </>;
