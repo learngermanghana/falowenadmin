@@ -130,7 +130,7 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         ];
         tx.set(db.collection('markingResults').doc(snap.id), clean({
           ...submission, submissionId: snap.id, submissionPath: snap.ref.path,
-          studentId, studentCode, studentName: student.name || student.fullName || submission.studentName || '', assignmentId: job.assignmentKey,
+          studentId, studentCode, studentName: student.name || student.fullName || student.studentName || [student.firstName, student.lastName].filter(Boolean).join(' ') || submission.studentName || submission.name || '', assignmentId: job.assignmentKey,
           assignmentTitle: assignmentTitle(submission.assignmentTitle, submission.title, referenceEntry.title, job.assignmentKey),
           result, status, publicationReviewReasons, publicationStatus: publish ? 'published' : 'awaiting_approval', finalScore: result.finalScore ?? result.score, feedback: result.feedback,
           sentToStudent: publish, source: 'automatic_course_marking', createdAt: timestamp, updatedAt: timestamp,
@@ -155,7 +155,7 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         const row = clean({
           studentcode: studentCode, studentCode, studentId,
           studentEmail: student.email || student.studentEmail || '',
-          studentName: student.name || student.fullName || submission.studentName || '', name: student.name || student.fullName || submission.studentName || '',
+          studentName: student.name || student.fullName || student.studentName || [student.firstName, student.lastName].filter(Boolean).join(' ') || submission.studentName || submission.name || '', name: student.name || student.fullName || student.studentName || [student.firstName, student.lastName].filter(Boolean).join(' ') || submission.studentName || submission.name || '',
           assignment: assignmentTitle(submission.assignmentTitle, submission.title, submission.assignment,
             referenceEntry.title, job.assignmentKey),
           assignment_id: job.assignmentKey, assignmentId: job.assignmentKey,

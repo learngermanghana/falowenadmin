@@ -127,3 +127,17 @@ test('review reasons distinguish missing legacy explanations from actual flags',
   assert.match(automaticReviewReasons({ row: { sentToStudent: false } })[0], /No review reason/);
   assert.ok(automaticReviewReasons({ row: { result: { confidence: 0.7 } } }).some(text => text.includes('confidence')));
 });
+
+ test('legacy unnamed inbox result resolves its registered student instead of generic Student', async () => {
+  const entry = { id:'legacy', data:()=>({ source:'automatic_course_marking', studentId:'uid', studentName:'Student', submissionPath:'submissions/work' }) };
+  const doc = (_db, ...parts) => ({path:parts.join('/')});
+  const getDoc = async ref => ({exists:()=>true, data:()=>ref.path === 'students/uid'
+    ? {firstName:'Samuel', lastName:'Kumar', studentCode:'SamaelKumar856', email:'samaelkumar@gmail.com'}
+    : {studentId:'uid', studentName:'Student'}});
+  const api = new Function('collection','doc','getDoc','getDocs','query','orderBy','limit','startAfter','db',
+    `${source}; return loadAutomaticMarkingPage;`)(()=>({}),doc,getDoc,async()=>({docs:[entry],size:1}),()=>({}),()=>({}),()=>({}),()=>({}),{});
+  const page = await api();
+  assert.equal(page.rows[0].studentName,'Samuel Kumar');
+  assert.equal(page.rows[0].studentCode,'SamaelKumar856');
+  assert.equal(page.rows[0].studentEmail,'samaelkumar@gmail.com');
+});

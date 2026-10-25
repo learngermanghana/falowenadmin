@@ -114,7 +114,7 @@ export default function AutomaticMarkingReview() {
       <thead><tr><th>Assessed</th><th>Student</th><th>Assignment</th><th>Score</th><th>Status</th><th>Review reason</th><th>Action</th></tr></thead>
       <tbody>{visibleRows.map(row => <tr key={row.id}>
         <td><time dateTime={row.createdAt}>{row.createdAt ? new Date(row.createdAt).toLocaleString('en-GB', { timeZone: 'Africa/Accra', dateStyle: 'medium', timeStyle: 'short' }) : 'Date unavailable'}</time></td>
-        <td>{row.studentName || row.studentCode || row.studentId || 'Student'}</td>
+        <td><strong>{row.studentName || row.name || row.studentEmail || row.studentCode || row.studentId || 'Name unavailable'}</strong><small style={{ display: 'block', color: '#526078', marginTop: 4 }}>{[row.studentEmail, row.studentCode].filter(Boolean).join(' · ')}{row.identityUnavailable ? ' · Identity lookup unavailable' : ''}</small></td>
         <td>{assignmentTitle(row.assignmentTitle, row.assignment, row.result?.assignmentKey, row.assignmentId)}</td>
         <td>{row.finalScore ?? '—'}</td>
         <td><span className={`marking-inbox-status marking-inbox-status-${markingInboxCategory(row)}`}>{isAutomaticResultPublished(row) ? automaticPublicationLabel(row) : markingInboxCategory(row) === 'failed' ? 'Failed · review' : 'Marking issue · review'}</span></td>
