@@ -1,6 +1,8 @@
 import { auth } from "../firebaseAuth";
 
-const BASE = "/api/ai-studio";
+// Long-running audio requests must not pass through Vercel's Node proxy.
+// Firebase already permits CORS and verifies the same owner ID token.
+const BASE = (import.meta.env.VITE_AI_STUDIO_API_URL || "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/ai-studio").replace(/\/+$/, "");
 
 async function request(endpoint, payload) {
   const user = auth.currentUser;

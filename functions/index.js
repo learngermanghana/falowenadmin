@@ -2635,6 +2635,9 @@ exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob(
 registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey: geminiAudioKeySecret, runtimeConfig });
 
 exports.api = onRequest({
+  // Speech has a 60s upstream timeout; leave time for auth, quota settlement,
+  // and a structured error response instead of a platform gateway failure.
+  timeoutSeconds: 120,
   secrets: [
     attendancePinSaltSecret,
     orientationSyncSecret,
