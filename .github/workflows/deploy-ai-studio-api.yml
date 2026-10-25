@@ -44,11 +44,7 @@ jobs:
         run: |
           if ! firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions:falowenadmin:api --force --non-interactive --json > "$RUNNER_TEMP/ai-studio-deploy.log" 2>&1; then
             cat "$RUNNER_TEMP/ai-studio-deploy.log"
-            node --input-type=module - "$RUNNER_TEMP/ai-studio-deploy.log" <<'NODE'
-            import fs from 'node:fs';
-            const log = fs.readFileSync(process.argv[2], 'utf8').slice(-16000);
-            console.log('::error::' + log.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A'));
-            NODE
+            node -e 'const fs = require("node:fs"); const log = fs.readFileSync(process.argv[1], "utf8").slice(-16000); console.log("::error::" + log.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A"));' "$RUNNER_TEMP/ai-studio-deploy.log"
             exit 1
           fi
           cat "$RUNNER_TEMP/ai-studio-deploy.log"
