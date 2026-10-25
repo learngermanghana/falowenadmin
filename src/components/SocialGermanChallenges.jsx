@@ -119,7 +119,7 @@ export default function SocialGermanChallenges() {
       clearTimeout(active.timer);
       if (active.recorder?.state !== "inactive") active.recorder?.stop();
       active.stream?.getTracks().forEach((track) => track.stop());
-      if (audioContext) await audioContext.close().catch(() => {});
+      active.audioContext?.close().catch(() => {});
     }
   }, []);
 
@@ -196,7 +196,7 @@ export default function SocialGermanChallenges() {
         recorder.onerror = (event) => reject(new Error(event.error?.message || "Video recording failed."));
         recorder.onstop = () => resolve(new Blob(chunks, { type: videoMime }));
       });
-      const active = { recorder, stream, frame: 0, timer: 0, cancelled: false };
+      const active = { recorder, stream, audioContext, frame: 0, timer: 0, cancelled: false };
       recordingRef.current = active;
       const start = performance.now();
       const tick = (now) => {
@@ -226,6 +226,7 @@ export default function SocialGermanChallenges() {
       clearTimeout(timer);
       cancelAnimationFrame(animationFrame);
       stream?.getTracks().forEach((track) => track.stop());
+      if (audioContext) await audioContext.close().catch(() => {});
       if (recorder && recorder.state !== "inactive") recorder.stop();
       recordingRef.current = null;
       setWorking(false);
