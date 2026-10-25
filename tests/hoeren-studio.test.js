@@ -14,7 +14,7 @@ const { EXAM_PROFILES, getExamProfile, buildExamPrompt } = require("../functions
 const { validateQuestionSet, extractLessonDraft, questionInstructions } = require("../functions/hoerenQuestions.js");
 const {
   MODELS, LIMITS, ownerUid, isStudioOwner, validateSpeechRequest, validateSceneRequest,
-  validateScriptRequest, extractAudio, extractScript, reserveUsage, settleUsage,
+  validateScriptRequest, extractAudio, extractScript, describeGoogleRejection, reserveUsage, settleUsage,
 } = require("../functions/hoerenStudioApi.js");
 
 function fakeWav() {
@@ -504,4 +504,14 @@ test("completed Teil can explicitly regenerate without deleting existing MP3 or 
   assert.ok(panel.includes("onClick={()=>run(i,{regenerateAudio:true})}"));
   assert.ok(panel.includes("generatePart(index,{regenerateAudio:regenerateAudio&&index===partIndex})"));
   assert.equal(panel.includes("assignGoetheSpeakers(repairUnlabelledStudioLines(scriptEdits"),false);
+});
+
+test("provider rejection diagnostics are specific but do not expose private messages", () => {
+  const response = describeGoogleRejection({ error: {
+    status: "INVALID_ARGUMENT",
+    message: "Invalid speech_config. Private transcript: Alice secret learning material"
+  } });
+  assert.equal(response.category, "invalid_argument");
+  assert.equal(response.field, "speech_config");
+  assert.doesNotMatch(JSON.stringify(response), /Alice secret learning material/);
 });
