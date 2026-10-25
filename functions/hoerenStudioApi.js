@@ -98,6 +98,27 @@ function extractScript(result = {}) {
   return text;
 }
 
+// Do not echo provider messages verbatim: they can contain request text or credentials.
+// Recognize only safe field names and common validation categories.
+function describeGoogleRejection(body) {
+  const raw = String(body?.error?.message || "").slice(0, 4000);
+  const code = String(body?.error?.status || "").replace(/[^A-Z_]/g, "").slice(0, 40);
+  const field = raw.match(/(?:generation_config|speech_config|response_format|annotations|input|model|speech_metadata|speaker|voice|mime_type|store)(?:[.\\[\\]a-zA-Z_0-9]*)/i)?.[0]?.slice(0, 100) || "";
+  const category = /not found|not supported|unknown model|not available/i.test(raw) ? "model_unavailable"
+    : /invalid|unsupported|unknown field|unrecognized|unexpected|malformed|missing|required|schema/i.test(raw) ? "invalid_argument"
+    : /voice|speaker|speech_config|speech_metadata/i.test(raw) ? "voice_configuration"
+    : /quota|rate limit/i.test(raw) ? "quota"
+    : "provider_rejected";
+  const explanation = {
+    model_unavailable: "Google does not recognize or support the selected speech model.",
+    invalid_argument: "Google rejected a request parameter or format.",
+    voice_configuration: "Google rejected the speaker or voice configuration.",
+    quota: "Google rejected the request because of a quota or rate limit.",
+    provider_rejected: "Google rejected the speech request; inspect the safe server diagnostic."
+  }[category];
+  return { category, code, field, explanation };
+}
+
 async function postGemini(url, key, payload, timeoutMs = 38_000) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -111,17 +132,19 @@ async function postGemini(url, key, payload, timeoutMs = 38_000) {
     if (!response.ok) {
       // Keep the provider's status (not its raw body, which can contain details
       // inappropriate for the teacher UI) so 502/503/429 have distinct remedies.
-      let providerCode = "";
+      let diagnostic = describeGoogleRejection({});
       try {
-        const body = await response.json();
-        providerCode = String(body?.error?.status || "").slice(0, 60);
-      } catch { /* Provider did not send JSON. */ }
+        diagnostic = describeGoogleRejection(await response.json());
+      } catch { /* Non-JSON provider response: never log raw content. */ }
       console.warn("hoeren_studio_google_upstream", {
-        httpStatus: response.status, providerCode, // Never log prompts, voice text or credentials.
+        httpStatus: response.status, providerCode: diagnostic.code,
+        category: diagnostic.category, field: diagnostic.field,
+        endpoint: url.endsWith("/interactions") ? "speech" : "content",
+        // Never log prompts, text, audio, full provider messages or credentials.
       });
       if (response.status === 429) throw Object.assign(new Error("Google rate limit (429) for this project/model. Falowen's quota is separate from Google's limits. Completed voice scenes remain saved in this browser; check the Google AI Studio rate limits before resuming."), { status: 429 });
       if ([401,402,403].includes(response.status)) throw Object.assign(new Error("Gemini credentials or billing are not authorized for this request. Check the key and its model access."), { status: 503 });
-      if ([400,404].includes(response.status)) throw Object.assign(new Error(`Google rejected this AI Studio request (${response.status}). Check model availability and request format; repeated generation will not fix an invalid request.`), { status: 502 });
+      if ([400,404].includes(response.status)) throw Object.assign(new Error(`Google rejected the AI Studio request (upstream ${response.status}): ${diagnostic.explanation}${diagnostic.field ? " Field: " + diagnostic.field + "." : ""} No generation was saved. Avoid repeated retries until the request configuration is corrected.`), { status: 502, providerCategory: diagnostic.category });
       if ([500,502,503,504].includes(response.status)) throw Object.assign(new Error(`Google Gemini is temporarily unavailable (upstream ${response.status}). Your successful parts and cached scenes are safe; resume this Teil later.`), { status: 503 });
       throw Object.assign(new Error(`Google service error (upstream ${response.status}). Your saved parts remain unchanged.`), { status: 502 });
     }
@@ -318,5 +341,5 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
 
 module.exports = {
   MODELS, LIMITS, ownerUid, isStudioOwner, validateSpeechRequest, validateSceneRequest, validateScriptRequest,
-  extractAudio, extractScript, registerHoerenStudioRoutes, reserveUsage, settleUsage,
+  extractAudio, extractScript, describeGoogleRejection, registerHoerenStudioRoutes, reserveUsage, settleUsage,
 };
