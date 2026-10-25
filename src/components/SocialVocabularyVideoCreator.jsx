@@ -1,4 +1,4 @@
-import {requireValidSocialMp4} from "../utils/socialMp4Export.js";
+import {chooseSocialVideoFormat, requireValidSocialVideo} from "../utils/socialMp4Export.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   VIDEO_DURATIONS, VIDEO_RESOLUTIONS, VIDEO_THEMES, MUSIC_CHOICES,
@@ -56,6 +56,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
   const [theme, setTheme] = useState("blue");
   const [duration, setDuration] = useState(12);
   const [quality, setQuality] = useState("standard");
+  const [exportFormat, setExportFormat] = useState("auto");
   const [music, setMusic] = useState("gentle");
   const [falowenTrack, setFalowenTrack] = useState("none");
   const [voiceFile, setVoiceFile] = useState(null);
@@ -65,7 +66,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const canvasSupported = typeof HTMLCanvasElement !== "undefined";
-  const mime = videoSupported() ? chooseVocabularyVideoMime(type => MediaRecorder.isTypeSupported(type)) : null;
+  const mime = videoSupported() ? chooseSocialVideoFormat(type => MediaRecorder.isTypeSupported(type), exportFormat) : null;
   const currentSettings = { theme, duration };
 
   useEffect(() => {
@@ -126,7 +127,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
     if (!word || busy) return;
     setError(""); setMessage(""); setPlaying(false);
     if (!videoSupported() || !mime) {
-      setError("MP4 recording is not supported in this browser. PNG export remains available; try a browser with H.264 MP4 MediaRecorder support.");
+      setError("Neither the selected MP4 nor WebM format is supported here. Choose Auto or another format, or export PNG.");
       return;
     }
     let context = null, stream = null, recorder = null, timer = null, frameId = null;
@@ -193,8 +194,8 @@ export default function SocialVocabularyVideoCreator({ word }) {
         renderVocabularyFrame(canvas, word, currentSettings, duration);
         if (recorder.state === "recording") recorder.stop();
         const blob = await resultPromise;
-        await requireValidSocialMp4(blob);
-        downloadBlob(blob, videoFileStem(word) + "-" + duration + "s.mp4");
+        await requireValidSocialVideo(blob, mime);
+        downloadBlob(blob, videoFileStem(word) + "-" + duration + "s." + mime.extension);
         setMessage("MP4 video exported with " + (falowenTrack !== "none" ? (SOCIAL_MUSIC_TRACKS.find(track => track.id === falowenTrack)?.label || "Falowen song") : music === "none" ? "no music" : "original Falowen music")
           + (voiceFile ? " and your attached German audio." : ".")
 );
@@ -224,7 +225,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
         if (recorder.state === "recording") recorder.stop();
         const blob = await resultPromise;
         await requireValidSocialMp4(blob);
-        downloadBlob(blob, videoFileStem(word) + "-" + duration + "s.mp4");
+        downloadBlob(blob, videoFileStem(word) + "-" + duration + "s." + mime.extension);
         setMessage("MP4 video exported.");
       }
     } catch (cause) { setError(readableError(cause)); setMessage(""); }
@@ -264,6 +265,13 @@ export default function SocialVocabularyVideoCreator({ word }) {
             {VIDEO_RESOLUTIONS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
           </select>
         </label>
+        <label>Video file format
+          <select value={exportFormat} disabled={busy} onChange={e => setExportFormat(e.target.value)}>
+            <option value="auto">Auto (MP4 preferred, WebM fallback)</option>
+            <option value="mp4">MP4 · H.264 (where supported)</option>
+            <option value="webm">WebM · Chrome/Firefox compatible</option>
+          </select>
+        </label>
         <label>Background music
           <select value={music} disabled={busy} onChange={e => setMusic(e.target.value)}>
             {MUSIC_CHOICES.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
@@ -294,7 +302,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
           </button>
           <button type="button" className={CTA} disabled={busy || !word || !canvasSupported} onClick={exportPng}>Export story PNG</button>
           <button type="button" className={CTA + " primary"} disabled={busy || !word || !mime} onClick={exportVideo}>
-            {busy ? "Encoding video…" : "Export MP4 video"}
+            {busy ? "Encoding video…" : `Export ${mime?.extension?.toUpperCase() || "video"} video`}
           </button>
         </div>
         {playing && <small aria-live="off">Preview · {previewTime.toFixed(1)}s / {duration}s</small>}
