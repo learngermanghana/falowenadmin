@@ -1,4 +1,5 @@
 import {requireValidSocialMp4} from "../utils/socialMp4Export.js";
+import { SOCIAL_MUSIC_TRACKS, addSocialMusic } from "../utils/socialMusicLibrary.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CHALLENGE_LEVELS, CHALLENGE_TYPES, challengeCopy,
@@ -51,6 +52,7 @@ export default function SocialGermanChallenges() {
   const [format, setFormat] = useState("story");
   const [statuses, setStatuses] = useState(getStatuses);
   const [working, setWorking] = useState(false);
+  const [falowenTrack, setFalowenTrack] = useState("none");
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const canvasRef = useRef(null);
@@ -117,6 +119,7 @@ export default function SocialGermanChallenges() {
       clearTimeout(active.timer);
       if (active.recorder?.state !== "inactive") active.recorder?.stop();
       active.stream?.getTracks().forEach((track) => track.stop());
+      if (audioContext) await audioContext.close().catch(() => {});
     }
   }, []);
 
@@ -171,12 +174,21 @@ export default function SocialGermanChallenges() {
         return;
       }
     }
-    let stream, recorder, animationFrame = 0, timer = 0;
+    let stream, recorder, audioContext, animationFrame = 0, timer = 0;
     setWorking(true);
     try {
       renderChallengeFrame(exportCanvas, selected, copy, 0, 0);
       stream = exportCanvas.captureStream(30);
       if (!stream.getVideoTracks().length) throw new Error("This browser did not create a video track.");
+      if (falowenTrack !== "none") {
+        const Context = window.AudioContext || window.webkitAudioContext;
+        if (!Context) throw new Error("This browser cannot mix audio into MP4.");
+        audioContext = new Context();
+        await audioContext.resume();
+        const output = audioContext.createMediaStreamDestination();
+        await addSocialMusic(audioContext, output, falowenTrack, CHALLENGE_VIDEO_SECONDS);
+        stream = new MediaStream([...stream.getVideoTracks(), ...output.stream.getAudioTracks()]);
+      }
       recorder = new MediaRecorder(stream, { mimeType: videoMime, videoBitsPerSecond: 3500000 });
       const chunks = [];
       const finished = new Promise((resolve, reject) => {
@@ -206,7 +218,7 @@ export default function SocialGermanChallenges() {
         if (!blob.size) throw new Error("The video was empty. Please retry in a supported desktop browser.");
         await requireValidSocialMp4(blob);
         download(blob, fileStem + "-12s.mp4");
-        setNotice("12-second MP4 exported. Add licensed music in your social app if desired.");
+        setNotice("12-second MP4 exported" + (falowenTrack === "none" ? " without music." : " with " + (SOCIAL_MUSIC_TRACKS.find(track => track.id === falowenTrack)?.label || "Falowen music") + "."));
       }
     } catch (cause) {
       setError(cause?.message || "Video export failed.");
@@ -287,9 +299,14 @@ export default function SocialGermanChallenges() {
           <button type="button" disabled={working} onClick={() => exportSlide(1)}>Export question PNG</button>
           <button type="button" disabled={working} onClick={() => exportSlide(2)}>Export answer PNG</button>
         </div>
+        <label>Falowen background song for MP4
+          <select style={FIELD} disabled={working} value={falowenTrack} onChange={(event) => setFalowenTrack(event.target.value)}>
+            {SOCIAL_MUSIC_TRACKS.map(track => <option key={track.id} value={track.id}>{track.label}</option>)}
+          </select>
+        </label>
         <button type="button" disabled={working || !videoMime} onClick={exportVideo}>{working ? "Recording your 12-second video…" : "Export 12-second MP4 video"}</button>
         {!videoMime && <p style={NOTE}>MP4 encoding is unavailable in this browser; WebM will not be offered as an MP4. You can still export PNG.</p>}
-        <p style={NOTE}>Videos are recorded on your device, vertically at 720 × 1280, without watermarks or paid AI tokens. They are silent so you can add licensed music in TikTok or Instagram.</p>
+        <p style={NOTE}>Videos are recorded on your device, vertically at 720 × 1280, without watermarks or paid AI tokens. Choose one of the two Falowen songs to embed it into the MP4, or export without music.</p>
         {notice && <p role="status" style={{ margin: 0, color: "#166534", fontWeight: 600 }}>{notice}</p>}
         {error && <p role="alert" style={{ margin: 0, color: "#b91c1c" }}>{error}</p>}
       </section>}
