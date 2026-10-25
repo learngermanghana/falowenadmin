@@ -60,6 +60,28 @@ function validateSceneRequest(body = {}) {
   return { turns: cleaned, engine };
 }
 
+// Interactions accepts a list of SpeechConfig entries. Do not send the
+// generateContent-style/conversational mode wrapper: it is not in this schema.
+function buildSpeechPayload({ turns, engine }) {
+  const voices = { A: "Kore", B: "Puck", C: "Charon", D: "Zephyr" };
+  const speakers = [...new Set(turns.map(turn => turn.speaker))];
+  return {
+    model: MODELS[engine],
+    store: false,
+    input: [{ type: "user_input", content: turns.map(turn => ({
+      type: "text", text: turn.text,
+      annotations: [{ type: "speech_metadata", speaker: turn.speaker,
+        style: turn.speaker === "A"
+          ? "Professional German exam narrator: crisp, deliberate, instructional delivery with calm neutral emphasis."
+          : "Natural conversational standard German for an independent task speaker; clear but lifelike intonation, distinct from the exam narrator." }],
+    })) }],
+    response_format: { type: "audio", mime_type: "audio/wav" },
+    generation_config: {
+      speech_config: speakers.map(speaker => ({ speaker, voice: voices[speaker], language: "de-DE" })),
+    },
+  };
+}
+
 function validateScriptRequest(body = {}) {
   const level = String(body.level || "A1").toUpperCase();
   const type = String(body.type || "dialogue").toLowerCase();
@@ -305,30 +327,10 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
       if (!key) return res.status(503).json({ ok: false, error: "Gemini API key is not configured." });
       slot = await reserveUsage(db, req.hoerenOwnerUid, "speech");
       const remaining = slot.remaining;
-      const voice = { A: "Kore", B: "Puck", C: "Charon", D: "Zephyr" };
-      const speakerIds = [...new Set(turns.map(turn => turn.speaker))];
-      const speechConfig = speakerIds.length === 1
-        ? [{ voice: voice[speakerIds[0]] }]
-        : { mode: "conversational", speakers: speakerIds.map(speaker => ({ speaker, voice: voice[speaker] })) };
       const result = await postGemini(
         "https://generativelanguage.googleapis.com/v1beta/interactions",
         key,
-        {
-          model: MODELS[engine],
-          store: false,
-          input: [{
-            type: "user_input",
-            content: turns.map(turn => ({
-              type: "text", text: turn.text,
-              annotations: [{ type: "speech_metadata", ...(speakerIds.length > 1 ? { speaker: turn.speaker } : {}),
-                style: turn.speaker === "A"
-                  ? "Professional German exam narrator: crisp, deliberate, instructional delivery with calm neutral emphasis."
-                  : "Natural conversational standard German for an independent task speaker; clear but lifelike intonation, distinct from the exam narrator." }],
-            })),
-          }],
-          response_format: { type: "audio", mime_type: "audio/wav" },
-          generation_config: { speech_config: speechConfig },
-        },
+        buildSpeechPayload({ turns, engine }),
         60_000,
       );
       res.set("Cache-Control", "no-store");
@@ -341,5 +343,5 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
 
 module.exports = {
   MODELS, LIMITS, ownerUid, isStudioOwner, validateSpeechRequest, validateSceneRequest, validateScriptRequest,
-  extractAudio, extractScript, describeGoogleRejection, registerHoerenStudioRoutes, reserveUsage, settleUsage,
+  extractAudio, extractScript, describeGoogleRejection, buildSpeechPayload, registerHoerenStudioRoutes, reserveUsage, settleUsage,
 };

@@ -515,3 +515,23 @@ test("provider rejection diagnostics are specific but do not expose private mess
   assert.equal(response.field, "speech_config");
   assert.doesNotMatch(JSON.stringify(response), /Alice secret learning material/);
 });
+
+
+test("speech payload maps each annotated speaker to one documented Interactions voice config", () => {
+  const { buildSpeechPayload } = require("../functions/hoerenStudioApi.js");
+  for (const speakers of [["A"], ["B"], ["C", "D", "C"], ["A", "B"]]) {
+    const scene = validateSceneRequest({ engine: "lite", turns: speakers.map(speaker => ({ speaker, text: "Guten Tag." })) });
+    const payload = buildSpeechPayload(scene);
+    const config = payload.generation_config.speech_config;
+    assert.ok(Array.isArray(config));
+    assert.equal(config.length, new Set(speakers).size);
+    assert.deepEqual(config.map(item => item.speaker), [...new Set(speakers)]);
+    assert.ok(config.every(item => item.voice && item.language === "de-DE"));
+    assert.ok(config.every(item => Object.keys(item).every(key => ["speaker", "voice", "language"].includes(key))));
+    for (const part of payload.input[0].content) {
+      assert.equal(config.filter(item => item.speaker === part.annotations[0].speaker).length, 1);
+    }
+    assert.equal(payload.store, false);
+    assert.deepEqual(payload.response_format, { type: "audio", mime_type: "audio/wav" });
+  }
+});
