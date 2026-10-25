@@ -7,6 +7,7 @@ import { bundledReferenceForAssignment, buildAutomaticMarkingReport, compareMark
 import { computeObjectiveScore } from '../utils/objectiveMarking.js';
 import { calculateWeightedMarkingOutcome } from '../utils/markingScorePolicy.js';
 import { getA2B1WritingRequirement } from '../utils/a2B1WritingCadence.js';
+import { parseSubmissionSections } from '../utils/submissionSections.js';
 import { assignmentTitle } from '../utils/assignmentTitle.js';
 import { auth } from '../firebase.js';
 import { automaticPublicationLabel, automaticReviewReasons, isAutomaticResultPublished } from '../utils/automaticReviewStatus.js';
@@ -74,6 +75,16 @@ export default function AutomaticMarkingReview() {
         detail.submission.answer || detail.submission.workContent || '';
       if (!reference || !submissionText.trim()) throw new Error('The student submission or current answer key is missing.');
       const result = computeObjectiveScore(reference, submissionText);
+      // Detect numbered submitted questions that have no answer in the chosen key.
+      // Do not offer a one-click score correction for a partial key.
+      const unkeyedParts = parseSubmissionSections(submissionText)
+        .filter(section => section.partId === 'teil3' || section.partId === 'teil4')
+        .flatMap(section => {
+          const keyed = reference.parts?.[section.partId]?.answers?.length || 0;
+          const numbers = [...section.text.matchAll(/(?:^|\n)\s*(\d{1,3})\s*[).:]\s*\S/g)].map(match => Number(match[1]));
+          const maximum = numbers.length ? Math.max(...numbers) : 0;
+          return maximum > keyed ? [section.partId + ': answered through question ' + maximum + ', key has only ' + keyed] : [];
+        });
       if (!result.totalCount) throw new Error('No objective questions could be checked.');
       const assignmentWriting = getA2B1WritingRequirement({ level: assignmentId.split('-')[0], assignmentId });
       const objectivePercent = result.correctCount * 100 / result.totalCount;
@@ -87,11 +98,11 @@ export default function AutomaticMarkingReview() {
         writingPercent: writing === null ? null : (writing / 40) * 100,
         hasWriting: writing !== null, writingRequiredOverride: assignmentWriting
       });
-      setRecheck({ ...result, outcome, assignmentWriting, referenceVersion: reference.version || 'Unversioned Admin bundle' });
+      setRecheck({ ...result, outcome, assignmentWriting, unkeyedParts, referenceVersion: reference.version || 'Unversioned Admin bundle' });
     } catch (err) { setRecheck(null); setRecheckError(err.message); }
   }
   function useRecheckedScore() {
-    if (!recheck || recheck.outcome.writingRequiredButMissing) return;
+    if (!recheck || recheck.outcome.writingRequiredButMissing || recheck.unkeyedParts.length) return;
     setScore(String(recheck.outcome.finalScore));
     setReason('Tutor rechecked original answers against the current Admin answer key; revised objective result ' +
       recheck.correctCount + '/' + recheck.totalCount + ' and reviewed final score.');
@@ -261,11 +272,12 @@ export default function AutomaticMarkingReview() {
           <p><strong>{recheck.correctCount}/{recheck.totalCount} answers correct</strong></p>
           <p>Objective: {Math.round(recheck.correctCount * 100 / recheck.totalCount)}% ·
             {recheck.outcome.writingRequiredButMissing ? ' Enter writing points before calculating a final mark.' : ' Suggested total: ' + recheck.outcome.finalScore + '/100'}</p>
-          <p className="marking-reference-note">Check that the number of questions matches the actual submitted assignment. Extra answers without a key cannot be scored.</p>
+          {recheck.unkeyedParts.length > 0 ? <p role="alert"><strong>Incomplete answer key — do not publish this score:</strong> {recheck.unkeyedParts.join('; ')}</p>
+            : <p className="marking-reference-note">Verify this key matches the student attempt before publishing.</p>}
           <details><summary>Question-by-question recheck</summary>{Object.entries(recheck.details).map(([key, answer]) =>
             <div className="marking-reference-row" key={key}><strong>{key} · {answer.correct ? 'Correct' : 'Incorrect'}</strong>
             <span>Student: {answer.student || 'Missing'}</span><span>Expected: {answer.expectedDisplay || answer.expected || 'Missing'}</span></div>)}</details>
-          {!recheck.outcome.writingRequiredButMissing && <button type="button" onClick={useRecheckedScore}>Use score in tutor correction</button>}
+          {!recheck.outcome.writingRequiredButMissing && !recheck.unkeyedParts.length && <button type="button" onClick={useRecheckedScore}>Use score in tutor correction</button>}
         </div>}
       </section>
       <h3>Submitted work</h3>
