@@ -21,7 +21,8 @@ function eligible(submission, level, assignmentKey) {
 function releasable(result = {}) {
   const score = result.finalScore ?? result.score;
   return result.status === 'marked' && score !== null && score !== ''
-    && Number.isFinite(Number(score)) && Number(score) >= 0 && Number(score) <= 100
+    && Number.isFinite(Number(score)) && Number(score) >= 60 && Number(score) <= 100
+    && result.passed !== false && result.writingMinimumMet !== false
     && Number(result.confidence) >= 0.8
     && !(result.consistencyWarnings || []).length && !(result.reviewReasons || []).length
     && !scoreProblems(result).length && !result.secondExaminer?.requiresTutorReview;
@@ -116,6 +117,7 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         const publish = release && (!existingScore.exists || existingSameAttempt);
         const status = publish ? 'marked' : 'needs_review';
         const publicationReviewReasons = publish ? [] : [
+          ...((Number(result.finalScore ?? result.score) < 60 || result.passed === false || result.writingMinimumMet === false) ? ['Failed assessment requires tutor review before publication.'] : []),
           ...(speakingReviewRequired ? ['Speaking checkpoint requires verified server assessment or tutor review; student-supplied score is not authoritative.'] : []),
           ...(existingScore.exists && !existingSameAttempt ? ['An existing score is saved for this assignment; automatic marking cannot overwrite it.'] : []),
           ...(result.status !== 'marked' ? ['The marking pipeline requested tutor review.'] : []),

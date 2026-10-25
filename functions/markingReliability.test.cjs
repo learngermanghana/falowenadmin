@@ -27,3 +27,9 @@ test('retry only short-lived provider failures, never a bad reference or exhaust
     Error('insufficient_quota'), Object.assign(Error('invalid request'), { status: 400 })])
     assert.equal(isTransientMarkingError(error), false);
 });
+
+ test('objective-only null writing fields do not block automatic publication', () => {
+  assert.deepEqual(scoreProblems({score:90, writingScore:null, writingScorePercent:null, maxWritingScore:100}), []);
+  assert.deepEqual(scoreProblems({score:90, writingScore:0, writingScorePercent:0, maxWritingScore:100}), []);
+  assert.ok(scoreProblems({score:90, writingScore:'invalid', maxWritingScore:100}).length);
+});

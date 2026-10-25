@@ -6,11 +6,12 @@ import { isAutomaticResultPublished } from '../utils/automaticReviewStatus.js';
 
 const PAGE_SIZE = 25;
 export async function loadAutomaticMarkingPage(cursor = null) {
-  // One indexed field avoids a deployment-dependent composite index. Cursor order is stable.
+  // A single-field date index is available without a new composite deployment.
+  // Filter the bounded page by source; advance by the raw page cursor even if it contains other sources.
   const snapshot = await getDocs(query(collection(db, 'markingResults'),
-    where('source', '==', 'automatic_course_marking'),
+    orderBy('createdAt', 'desc'),
     ...(cursor ? [startAfter(cursor)] : []), limit(PAGE_SIZE)));
-  return { rows: snapshot.docs.map(entry => ({ ...entry.data(), id: entry.id })),
+  return { rows: snapshot.docs.filter(entry => entry.data().source === 'automatic_course_marking').map(entry => ({ ...entry.data(), id: entry.id })),
     cursor: snapshot.docs.at(-1) || null, hasMore: snapshot.size === PAGE_SIZE };
 }
 

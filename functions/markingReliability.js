@@ -2,6 +2,7 @@
 
 // Pure verification helpers; never send uncertain coursework to the student.
 const value = input => String(input ?? "").trim();
+const present = input => input !== null && input !== undefined && input !== "";
 const numeric = input => input !== null && input !== undefined && input !== "" && Number.isFinite(Number(input));
 function referenceVersionProblem(submission = {}, reference = {}) {
   const saved = value(submission.markingReferenceVersion || submission.answerKeyVersion || submission.markingKeyVersion);
@@ -27,12 +28,12 @@ function scoreProblems(result = {}) {
         Number(total) < 0 || Number(correct) > Number(total))
       problems.push("Objective correct/total counts are inconsistent.");
   }
-  if (result.writingScore !== undefined && result.maxWritingScore !== undefined &&
+  if (present(result.writingScore) && present(result.maxWritingScore) &&
       (!numeric(result.writingScore) || !numeric(result.maxWritingScore) ||
        Number(result.writingScore) < 0 || Number(result.maxWritingScore) < 0 ||
        Number(result.writingScore) > Number(result.maxWritingScore)))
     problems.push("Writing score exceeds its available marks.");
-  if (result.writingScorePercent !== undefined &&
+  if (present(result.writingScorePercent) &&
       (!numeric(result.writingScorePercent) || Number(result.writingScorePercent) < 0 ||
        Number(result.writingScorePercent) > 100))
     problems.push("Writing percentage is outside 0–100.");

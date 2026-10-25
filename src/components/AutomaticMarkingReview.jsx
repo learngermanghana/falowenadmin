@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { filterMarkingInbox, markingInboxCategory } from '../utils/markingInbox.js';
+import './AutomaticMarkingReview.css';
 import { closeAutomaticMarkingReview, loadAutomaticMarkingPage, loadMarkingHealth, openAutomaticMarking, saveAutomaticMarkingReview } from '../services/automaticMarkingReviewService.js';
 import { assignmentTitle } from '../utils/assignmentTitle.js';
 import { auth } from '../firebase.js';
@@ -13,7 +15,9 @@ export default function AutomaticMarkingReview() {
   const [score, setScore] = useState('');
   const [feedback, setFeedback] = useState('');
   const [reason, setReason] = useState('');
-  const [showReviewed, setShowReviewed] = useState(false);
+  const [inboxView, setInboxView] = useState('review');
+  const [search, setSearch] = useState('');
+  const [level, setLevel] = useState('');
   const [editing, setEditing] = useState(false);
   const [health, setHealth] = useState(null);
   const [healthBusy, setHealthBusy] = useState(false);
@@ -68,7 +72,8 @@ export default function AutomaticMarkingReview() {
       setDetail(null); setMessage('Review closed. Find it again with Show reviewed.');
     } catch (err) { setError(err.message); } finally { setBusy(false); }
   }
-  const visibleRows = page.rows.filter(row => showReviewed || !isAutomaticResultPublished(row) || !(row.reviewClosedAt || row.tutorReview));
+  const visibleRows = filterMarkingInbox(page.rows, { view: inboxView, search, level });
+  const views = [['review', 'Needs attention'], ['failed', 'Failed results'], ['issues', 'Marking issues'], ['published', 'Published'], ['all', 'All results']];
   const reviewReasonSummary = row => {
     const reasons = (row.publicationReviewReasons || row.result?.reviewReasons || [])
       .map(reason => typeof reason === 'string' ? reason : reason?.message || reason?.reason || reason?.code || '')
@@ -78,10 +83,13 @@ export default function AutomaticMarkingReview() {
       : 'Open for marking evidence';
   };
   const original = detail?.audit?.result || detail?.row.result;
-  return <section className="marking-card" aria-label="Automatic marking audit">
-    <h2>AI marking · Results and failed attempts</h2>
-    {String(auth.currentUser?.email || '').toLowerCase() === 'moxflex@gmail.com' && <section aria-label="Marking health" style={{ padding: 12, border: '1px solid #cbd5e1', borderRadius: 8, marginBottom: 16 }}>
-      <h3>Marking health</h3>
+  return <section className="marking-card automatic-marking-inbox" aria-label="Automatic marking audit">
+    <header className="marking-inbox-heading"><div><h2>Marking inbox</h2><p>New results first. Valid passes publish automatically; failed assessments need your review.</p></div><button type="button" disabled={busy} onClick={() => load()}>Refresh results</button></header>
+    <nav className="marking-inbox-views" aria-label="Result status">{views.map(([value, label]) => <button key={value} type="button" aria-pressed={inboxView === value} onClick={() => setInboxView(value)}>{label} <span>{page.rows.filter(row => value === 'all' || (value === 'review' ? !isAutomaticResultPublished(row) : markingInboxCategory(row) === value)).length}</span></button>)}</nav>
+    <div className="marking-inbox-filters"><label>Find student or assignment<input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Name, email, student code or A1-14.1" /></label><label>Level<select value={level} onChange={event => setLevel(event.target.value)}><option value="">All levels</option>{['A1', 'A2', 'B1'].map(value => <option key={value}>{value}</option>)}</select></label></div>
+    <p className="marking-inbox-count">Showing {visibleRows.length} of {page.rows.length} loaded results · Newest first · Counts and filters apply to loaded results{page.hasMore ? '; load more for earlier work.' : '.'}</p>
+    {String(auth.currentUser?.email || '').toLowerCase() === 'moxflex@gmail.com' && <details className="marking-inbox-health" aria-label="Marking health" style={{ padding: 12, border: '1px solid #cbd5e1', borderRadius: 8, marginBottom: 16 }}>
+      <summary>Marking health · diagnostics</summary>
       <p>Check queued, delayed, review-required and Sheet sync jobs without scanning all student submissions.</p>
       <button type="button" disabled={healthBusy} onClick={refreshHealth}>{healthBusy ? 'Checking…' : 'Check marking health'}</button>
       {healthError && <p role="alert">{healthError}</p>}
@@ -98,25 +106,23 @@ export default function AutomaticMarkingReview() {
         </table></div>}
         <p>For a verified submission with no marking job, open Results → Saved Drafts → Check submission. Recovery is available only if the job and score are truly missing.</p>
       </div>}
-    </section>}
-    <p>Successful assessments and attempts stopped by missing keys, identity checks or service errors appear here. Open the work to see the recorded reason before correcting it. A failed attempt has no automatic score.</p>
-    <button type="button" disabled={busy} onClick={() => load()}>Refresh</button>
-    <label style={{ marginLeft: 16 }}><input type="checkbox" checked={showReviewed} onChange={event => setShowReviewed(event.target.checked)} /> Show reviewed</label>
+    </details>}
     {busy && <p role="status">Loading…</p>}
     {error && <p role="alert">{error}</p>}
     {message && <p role="status">{message}</p>}
     <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', textAlign: 'left' }}>
-      <thead><tr><th>Student</th><th>Assignment</th><th>Score</th><th>Status</th><th>Review reason</th><th>Action</th></tr></thead>
+      <thead><tr><th>Assessed</th><th>Student</th><th>Assignment</th><th>Score</th><th>Status</th><th>Review reason</th><th>Action</th></tr></thead>
       <tbody>{visibleRows.map(row => <tr key={row.id}>
+        <td><time dateTime={row.createdAt}>{row.createdAt ? new Date(row.createdAt).toLocaleString('en-GB', { timeZone: 'Africa/Accra', dateStyle: 'medium', timeStyle: 'short' }) : 'Date unavailable'}</time></td>
         <td>{row.studentName || row.studentCode || row.studentId || 'Student'}</td>
         <td>{assignmentTitle(row.assignmentTitle, row.assignment, row.result?.assignmentKey, row.assignmentId)}</td>
         <td>{row.finalScore ?? '—'}</td>
-        <td>{automaticPublicationLabel(row)}</td>
+        <td><span className={`marking-inbox-status marking-inbox-status-${markingInboxCategory(row)}`}>{isAutomaticResultPublished(row) ? automaticPublicationLabel(row) : markingInboxCategory(row) === 'failed' ? 'Failed · review' : 'Marking issue · review'}</span></td>
         <td style={{ maxWidth: 280, overflowWrap: 'anywhere' }}>{reviewReasonSummary(row)}</td>
         <td><button type="button" disabled={busy} onClick={() => open(row)}>Open & review</button></td>
       </tr>)}</tbody>
     </table></div>
-    {!busy && !visibleRows.length && <p>No work awaiting review in this page.{page.hasMore ? ' Load more to check the next page.' : ''}</p>}
+    {!busy && !visibleRows.length && <p>No results match these filters in the loaded page.{page.hasMore ? ' Load more to check the next page.' : ''}</p>}
     {page.hasMore && <button type="button" disabled={busy} onClick={() => load(true)}>Load more</button>}
     {detail && <article style={{ marginTop: 24 }}>
       <p><strong>Status: {automaticPublicationLabel(detail.row)}</strong></p>
