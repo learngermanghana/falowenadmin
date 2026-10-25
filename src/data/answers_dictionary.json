@@ -2646,20 +2646,18 @@
   "B1 2.6 Leben in der Stadt oder auf dem Land?": {
     "answers": {
       "teil3": {
-        "Answer1": "B) Einfamilienhaus",
-        "Answer2": "C) Balance zwischen Privatsphäre und Gemeinschaftsgefühl",
-        "Answer3": "B) Weil sie günstig sind",
-        "Answer4": "B) Ein energieeffizientes Haus, oft mit umweltfreundlicher Technik",
-        "Answer5": "B) Sie spielt eine wichtige Rolle",
-        "Answer6": "B) Kurze Wege zu Geschäften und Restaurants",
-        "Answer7": "C) WG"
+        "Answer1": "A) Ein Vergleich zwischen den Lebensbedingungen in der Stadt und auf dem Land.",
+        "Answer2": "B) Man kann durch den guten Nahverkehr problemlos ohne eigenes Auto leben.",
+        "Answer3": "C) Weil Häuser dort preiswerter sind und man mehr Platz hat.",
+        "Answer4": "B) Man ist wegen des schlechten Busangebots meist auf ein Auto angewiesen.",
+        "Answer5": "B) Viele ziehen an den Stadtrand oder in Orte mit guter Zugverbindung zur Stadt."
       },
       "teil4": {
-        "Answer1": "B) Gemeinsame Nutzung von Haushaltsgeraten",
-        "Answer2": "B) Wegen der Privatsphare und des Plastzes",
-        "Answer3": "C) Wohnungen in Mehrfamilienhausern",
-        "Answer4": "C) Passivhauser",
-        "Answer5": "B) Mischung aus Privatsphare und sozialer interaktion"
+        "Answer1": "B) Die vielen kulturellen Angebote und die kurzen Wege",
+        "Answer2": "A) Sie ist persönlicher.",
+        "Answer3": "B) Die Natur direkt vor der Haustür",
+        "Answer4": "A) Sie müsste täglich eine Stunde mit dem Zug pendeln.",
+        "Answer5": "C) Sie sind deutlich günstiger als in der Stadt."
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1JXeoYk5ruXOZblqVFx6chD5tMxs8lMA5mDAX3KQwNpE/gviz/tq?tqx=out:html&sheet=Key",
