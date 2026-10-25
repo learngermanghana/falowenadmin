@@ -4,6 +4,9 @@ import './AutomaticMarkingReview.css';
 import { closeAutomaticMarkingReview, loadAutomaticMarkingPage, loadMarkingHealth, openAutomaticMarking, saveAutomaticMarkingReview, searchAutomaticMarkingResults } from '../services/automaticMarkingReviewService.js';
 import answersDictionary from '../data/answers_dictionary.json';
 import { bundledReferenceForAssignment, buildAutomaticMarkingReport, compareMarkingReferences } from '../utils/automaticMarkingReport.js';
+import { computeObjectiveScore } from '../utils/objectiveMarking.js';
+import { calculateWeightedMarkingOutcome } from '../utils/markingScorePolicy.js';
+import { getA2B1WritingRequirement } from '../utils/a2B1WritingCadence.js';
 import { assignmentTitle } from '../utils/assignmentTitle.js';
 import { auth } from '../firebase.js';
 import { automaticPublicationLabel, automaticReviewReasons, isAutomaticResultPublished } from '../utils/automaticReviewStatus.js';
@@ -28,6 +31,9 @@ export default function AutomaticMarkingReview() {
   const [searchedFor, setSearchedFor] = useState('');
   const [searchBusy, setSearchBusy] = useState(false);
   const [reportFallback, setReportFallback] = useState('');
+  const [recheck, setRecheck] = useState(null);
+  const [tutorWritingPoints, setTutorWritingPoints] = useState('');
+  const [recheckError, setRecheckError] = useState('');
   const reviewRef = useRef(null);
   useEffect(() => {
     if (detail) reviewRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
@@ -58,6 +64,40 @@ export default function AutomaticMarkingReview() {
       setMessage('Clipboard was blocked. Select and copy the report from the field below.');
     }
   }
+  function recheckObjectiveAnswers() {
+    if (!detail) return;
+    setRecheckError('');
+    try {
+      const assignmentId = detail.row.assignmentId || detail.row.result?.assignmentKey || '';
+      const reference = bundledReferenceForAssignment(answersDictionary, assignmentId);
+      const submissionText = detail.submission.submissionText || detail.submission.text ||
+        detail.submission.answer || detail.submission.workContent || '';
+      if (!reference || !submissionText.trim()) throw new Error('The student submission or current answer key is missing.');
+      const result = computeObjectiveScore(reference, submissionText);
+      if (!result.totalCount) throw new Error('No objective questions could be checked.');
+      const assignmentWriting = getA2B1WritingRequirement({ level: assignmentId.split('-')[0], assignmentId });
+      const objectivePercent = result.correctCount * 100 / result.totalCount;
+      const writing = tutorWritingPoints === '' ? null : Number(tutorWritingPoints);
+      if (writing !== null && (!Number.isFinite(writing) || writing < 0 || writing > 40)) {
+        throw new Error('Enter writing marks between 0 and 40.');
+      }
+      const outcome = calculateWeightedMarkingOutcome({
+        level: assignmentId.split('-')[0], assignmentId,
+        objectiveScore: objectivePercent, objectiveDetails: result.details,
+        writingPercent: writing === null ? null : (writing / 40) * 100,
+        hasWriting: writing !== null, writingRequiredOverride: assignmentWriting
+      });
+      setRecheck({ ...result, outcome, assignmentWriting, referenceVersion: reference.version || 'Unversioned Admin bundle' });
+    } catch (err) { setRecheck(null); setRecheckError(err.message); }
+  }
+  function useRecheckedScore() {
+    if (!recheck || recheck.outcome.writingRequiredButMissing) return;
+    setScore(String(recheck.outcome.finalScore));
+    setReason('Tutor rechecked original answers against the current Admin answer key; revised objective result ' +
+      recheck.correctCount + '/' + recheck.totalCount + ' and reviewed final score.');
+    setEditing(true);
+    setMessage('Rechecked score loaded into the tutor editor. Review feedback and save only after confirming every question belongs to this key.');
+  }
   async function refreshHealth() {
     setHealthBusy(true); setHealthError('');
     try { setHealth(await loadMarkingHealth()); }
@@ -73,7 +113,7 @@ export default function AutomaticMarkingReview() {
   }
   useEffect(() => { load(); }, []);
   async function open(row) {
-    setBusy(true); setError(''); setMessage(''); setDetail(null); setReportFallback('');
+    setBusy(true); setError(''); setMessage(''); setDetail(null); setReportFallback(''); setRecheck(null); setTutorWritingPoints(''); setRecheckError('');
     try {
       const next = await openAutomaticMarking(row);
       setDetail(next); setEditing(false); setScore(String(next.score?.score ?? row.finalScore ?? row.result?.finalScore ?? row.result?.score ?? ''));
@@ -208,6 +248,26 @@ export default function AutomaticMarkingReview() {
             <strong>{row.key}</strong><span>Used: {row.used ?? 'Not present'}</span><span>Admin: {row.current ?? 'Not present'}</span>
           </div>)}</details>}
       </section>
+      <section className="marking-recheck-panel" aria-label="Recheck objective answers">
+        <h3>Recheck against corrected answer key</h3>
+        <p>This rechecks answers locally without an AI call. It never changes the student result until a tutor saves a correction.</p>
+        {getA2B1WritingRequirement({ level: String(detail.row.assignmentId || '').split('-')[0], assignmentId: detail.row.assignmentId }) === true &&
+          <label>Tutor writing points (0–40)
+            <input type="number" min="0" max="40" step="1" value={tutorWritingPoints}
+              placeholder="Enter after reviewing the writing" onChange={event => {setTutorWritingPoints(event.target.value); setRecheck(null);}} /></label>}
+        <button type="button" disabled={busy} onClick={recheckObjectiveAnswers}>Recheck objective answers</button>
+        {recheckError && <p role="alert">{recheckError}</p>}
+        {recheck && <div role="status" className="marking-recheck-summary">
+          <p><strong>{recheck.correctCount}/{recheck.totalCount} answers correct</strong></p>
+          <p>Objective: {Math.round(recheck.correctCount * 100 / recheck.totalCount)}% ·
+            {recheck.outcome.writingRequiredButMissing ? ' Enter writing points before calculating a final mark.' : ' Suggested total: ' + recheck.outcome.finalScore + '/100'}</p>
+          <p className="marking-reference-note">Check that the number of questions matches the actual submitted assignment. Extra answers without a key cannot be scored.</p>
+          <details><summary>Question-by-question recheck</summary>{Object.entries(recheck.details).map(([key, answer]) =>
+            <div className="marking-reference-row" key={key}><strong>{key} · {answer.correct ? 'Correct' : 'Incorrect'}</strong>
+            <span>Student: {answer.student || 'Missing'}</span><span>Expected: {answer.expectedDisplay || answer.expected || 'Missing'}</span></div>)}</details>
+          {!recheck.outcome.writingRequiredButMissing && <button type="button" onClick={useRecheckedScore}>Use score in tutor correction</button>}
+        </div>}
+      </section>
       <h3>Submitted work</h3>
       <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{detail.submission.submissionText || detail.submission.text || detail.submission.answer || detail.submission.workContent || 'No text available'}</pre>
       <h3>{original?.finalScore == null && original?.score == null ? 'No AI score · marking stopped' : 'Original AI result'}</h3>
@@ -218,7 +278,7 @@ export default function AutomaticMarkingReview() {
       {objectiveDetails.length > 0 && <section className="marking-objective-review"><h3>Question-by-question AI evidence</h3>
         {objectiveDetails.map(([question, evidence]) => <div className="marking-objective-evidence" key={question}>
           <strong>{question} · {evidence?.correct === true ? 'Correct' : evidence?.correct === false ? 'Incorrect' : 'Review'}</strong>
-          <pre>{JSON.stringify(evidence, null, 2)}</pre>
+          <div className="marking-objective-answers"><span>Student: {evidence?.student ?? 'Unknown'}</span><span>Expected: {evidence?.expectedDisplay ?? evidence?.expected ?? 'Unknown'}</span></div>
         </div>)}
       </section>}
       <details><summary>Raw marking evidence and answer key</summary><pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{JSON.stringify(detail.audit || original, null, 2)}</pre></details>
