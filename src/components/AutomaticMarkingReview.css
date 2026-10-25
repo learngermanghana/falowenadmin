@@ -16,3 +16,50 @@
 .marking-inbox-status { display:inline-block; padding:5px 9px; border-radius:12px; font-size:12px; font-weight:700; }
 .marking-inbox-status-published { color:#166534; background:#dcfce7; }.marking-inbox-status-failed { color:#991b1b; background:#fee2e2; }.marking-inbox-status-issues { color:#92400e; background:#fef3c7; }
 @media(max-width:640px) { .automatic-marking-inbox { padding:12px; }.marking-inbox-heading { flex-direction:column; }.marking-inbox-views button { flex:1 1 130px; } }
+
+
+/* Review controls are intentionally touch-sized and never depend on a wide table. */
+.marking-inbox-list[hidden] { display:none !important; }
+.marking-mobile-results { display:none; }
+.marking-search-actions { display:flex; gap:8px; align-items:end; flex-wrap:wrap; }
+.marking-search-actions button, .marking-review-toolbar button,
+.marking-mobile-result button, .marking-review-detail button { min-height:44px; }
+.marking-inbox-filters { align-items:end; }
+.marking-review-detail { margin-top:18px; scroll-margin-top:20px; max-width:100%; min-width:0; }
+.marking-review-detail h2, .marking-review-detail h3 { overflow-wrap:anywhere; }
+.marking-review-detail pre { white-space:pre-wrap; overflow-wrap:anywhere; max-width:100%; overflow-x:auto; }
+.marking-review-toolbar { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:18px; }
+.marking-review-toolbar button { flex:1 1 170px; }
+.marking-review-toolbar button:last-child { background:#1d4ed8; color:#fff; border:1px solid #1d4ed8; }
+.marking-reference-review, .marking-objective-review { background:#f8fafc; border:1px solid #cbd5e1; border-radius:12px; padding:16px; margin:18px 0; }
+.marking-reference-note { color:#475569; font-size:14px; }
+.marking-reference-row { display:grid; grid-template-columns:minmax(100px,0.8fr) repeat(2,minmax(0,1fr)); gap:12px; padding:12px 0; border-top:1px solid #cbd5e1; overflow-wrap:anywhere; }
+.marking-objective-evidence { background:white; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-top:8px; }
+.marking-review-detail label { display:block; max-width:100%; }
+.marking-review-detail input, .marking-review-detail textarea, .marking-report-copy-fallback textarea { width:100%; box-sizing:border-box; padding:12px; border:1px solid #94a3b8; border-radius:8px; font:inherit; min-height:44px; }
+.marking-report-copy-fallback { display:grid !important; gap:8px; margin-bottom:18px; }
+.marking-review-detail button:focus-visible, .marking-inbox-list button:focus-visible { outline:3px solid #2563eb; outline-offset:3px; }
+@media (max-width:700px) {
+  .automatic-marking-inbox { padding:12px; min-width:0; overflow-wrap:anywhere; }
+  .marking-inbox-heading { flex-direction:column; gap:8px; }
+  .marking-inbox-heading button { width:100%; min-height:44px; }
+  .marking-inbox-views { display:flex; flex-wrap:nowrap; overflow-x:auto; padding:4px 2px 10px; margin:10px 0; scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch; }
+  .marking-inbox-views button { white-space:nowrap; flex:0 0 auto; scroll-snap-align:start; min-height:44px; }
+  .marking-inbox-filters { padding:12px; display:grid; grid-template-columns:minmax(0,1fr); gap:12px; }
+  .marking-inbox-filters label { min-width:0; width:100%; }
+  .marking-search-actions button { flex:1 1 120px; }
+  .marking-inbox-table { display:none; }
+  .marking-mobile-results { display:grid; gap:12px; }
+  .marking-mobile-result { border:1px solid #cbd5e1; background:#fff; border-radius:12px; padding:14px; min-width:0; }
+  .marking-mobile-result-top { display:flex; justify-content:space-between; gap:12px; align-items:start; }
+  .marking-mobile-result-top strong { overflow-wrap:anywhere; }
+  .marking-mobile-result p { margin:8px 0; overflow-wrap:anywhere; }
+  .marking-mobile-reason { color:#526078; font-size:13px; }
+  .marking-mobile-result button { width:100%; margin-top:8px; }
+  .marking-review-toolbar { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .marking-review-toolbar button { min-width:0; font-size:14px; padding:10px 6px; }
+  .marking-reference-review, .marking-objective-review { padding:12px; }
+  .marking-reference-row { grid-template-columns:minmax(0,1fr); gap:5px; }
+  .marking-review-detail form button[type="submit"] { position:sticky; bottom:env(safe-area-inset-bottom,0px); z-index:2; width:100%; min-height:48px; background:#1d4ed8; color:#fff; }
+  .marking-report-copy-fallback textarea { font-size:14px; }
+}
