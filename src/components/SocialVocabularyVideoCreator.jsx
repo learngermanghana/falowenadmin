@@ -5,6 +5,7 @@ import {
   chooseVocabularyVideoMime, originalMusicNotes, renderVocabularyFrame, videoFileStem,
 } from "../utils/socialVocabularyVideo.js";
 import "./SocialVocabularyVideoCreator.css";
+import { SOCIAL_MUSIC_TRACKS, addSocialMusic } from "../utils/socialMusicLibrary.js";
 
 const CTA = "social-vocab-video-button";
 const WAIT = "Keep this tab open and the screen awake until the recording finishes.";
@@ -56,6 +57,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
   const [duration, setDuration] = useState(12);
   const [quality, setQuality] = useState("standard");
   const [music, setMusic] = useState("gentle");
+  const [falowenTrack, setFalowenTrack] = useState("none");
   const [voiceFile, setVoiceFile] = useState(null);
   const [playing, setPlaying] = useState(false);
   const [previewTime, setPreviewTime] = useState(0);
@@ -149,10 +151,10 @@ export default function SocialVocabularyVideoCreator({ word }) {
       const tracks = [...visualStream.getVideoTracks()];
       if (!tracks.length) throw new Error("This device did not provide a video track.");
       const Context = window.AudioContext || window.webkitAudioContext;
-      if ((music !== "none" || voiceFile) && !Context)
+      if ((music !== "none" || voiceFile || falowenTrack !== "none") && !Context)
         throw new Error("Your browser cannot mix audio into a video. Set music to None or use a newer browser.");
       let buffer = null;
-      if (Context && (music !== "none" || voiceFile)) {
+      if (Context && (music !== "none" || voiceFile || falowenTrack !== "none")) {
         context = new Context();
         await context.resume();
         if (voiceFile) {
@@ -174,8 +176,9 @@ export default function SocialVocabularyVideoCreator({ word }) {
           recorder.onstop = () => blobs.length ? resolve(new Blob(blobs, { type: recorder.mimeType || trackMime }))
             : reject(new Error("No video frames were encoded."));
         });
+        await addSocialMusic(context, output, falowenTrack, Number(duration));
         recorder.start(300);
-        scheduleSound(context, output, Number(duration), music, buffer);
+        scheduleSound(context, output, Number(duration), falowenTrack !== "none" ? "none" : music, buffer);
         const start = performance.now();
         const frame = now => {
           const elapsed = Math.min(Number(duration), (now - start) / 1000);
@@ -192,7 +195,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
         const blob = await resultPromise;
         await requireValidSocialMp4(blob);
         downloadBlob(blob, videoFileStem(word) + "-" + duration + "s.mp4");
-        setMessage("MP4 video exported with " + (music === "none" ? "no music" : "original Falowen music")
+        setMessage("MP4 video exported with " + (falowenTrack !== "none" ? (SOCIAL_MUSIC_TRACKS.find(track => track.id === falowenTrack)?.label || "Falowen song") : music === "none" ? "no music" : "original Falowen music")
           + (voiceFile ? " and your attached German audio." : ".")
 );
       } else {
@@ -266,6 +269,11 @@ export default function SocialVocabularyVideoCreator({ word }) {
             {MUSIC_CHOICES.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
           </select>
         </label>
+        <label>Falowen song for MP4 export
+          <select value={falowenTrack} disabled={busy} onChange={e => setFalowenTrack(e.target.value)}>
+            {SOCIAL_MUSIC_TRACKS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+          </select>
+        </label>
         <label>German pronunciation recording · optional
           <input type="file" disabled={busy} accept="audio/mpeg,audio/mp4,audio/wav,audio/x-wav,audio/aac,.mp3,.m4a,.wav"
             onChange={e => setVoiceFile(e.target.files?.[0] || null)}/>
@@ -274,7 +282,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
         <button type="button" className={CTA} disabled={!word || busy} onClick={announceGerman}>
           Hear German pronunciation (device preview)
         </button>
-        <p className="social-vocab-video-note">Original tones are generated in your browser; no licensed music download is required. Device text-to-speech is only for preview. Attach an approved voice recording to embed pronunciation in the video.</p>
+        <p className="social-vocab-video-note">Choose a Falowen song to embed it into the MP4, or keep the original tones. When a Falowen song is selected, it replaces the generated tones. No paid music API is required. Device text-to-speech is only for preview. Attach an approved voice recording to embed pronunciation in the video.</p>
       </div>
       <div className="social-vocab-video-preview">
         <div className="social-vocab-video-screen">
