@@ -3,11 +3,10 @@ import { filterMarkingInbox, markingInboxCategory } from '../utils/markingInbox.
 import './AutomaticMarkingReview.css';
 import { closeAutomaticMarkingReview, loadAutomaticMarkingPage, loadMarkingHealth, openAutomaticMarking, saveAutomaticMarkingReview, searchAutomaticMarkingResults } from '../services/automaticMarkingReviewService.js';
 import answersDictionary from '../data/answers_dictionary.json';
-import { bundledReferenceForAssignment, buildAutomaticMarkingReport, compareMarkingReferences } from '../utils/automaticMarkingReport.js';
+import { bundledReferenceForAssignment, buildAutomaticMarkingReport, compareMarkingReferences, findUnkeyedSubmittedAnswers } from '../utils/automaticMarkingReport.js';
 import { computeObjectiveScore } from '../utils/objectiveMarking.js';
 import { calculateWeightedMarkingOutcome } from '../utils/markingScorePolicy.js';
 import { getA2B1WritingRequirement } from '../utils/a2B1WritingCadence.js';
-import { parseSubmissionSections } from '../utils/submissionSections.js';
 import { assignmentTitle } from '../utils/assignmentTitle.js';
 import { auth } from '../firebase.js';
 import { automaticPublicationLabel, automaticReviewReasons, isAutomaticResultPublished } from '../utils/automaticReviewStatus.js';
@@ -78,14 +77,7 @@ export default function AutomaticMarkingReview() {
       const result = computeObjectiveScore(reference, submissionText);
       // Detect numbered submitted questions that have no answer in the chosen key.
       // Do not offer a one-click score correction for a partial key.
-      const unkeyedParts = parseSubmissionSections(submissionText)
-        .filter(section => section.partId === 'teil3' || section.partId === 'teil4')
-        .flatMap(section => {
-          const keyed = reference.parts?.[section.partId]?.answers?.length || 0;
-          const numbers = [...section.text.matchAll(/(?:^|\n)\s*(\d{1,3})\s*[).:]\s*\S/g)].map(match => Number(match[1]));
-          const maximum = numbers.length ? Math.max(...numbers) : 0;
-          return maximum > keyed ? [section.partId + ': answered through question ' + maximum + ', key has only ' + keyed] : [];
-        });
+      const unkeyedParts = findUnkeyedSubmittedAnswers(submissionText, reference);
       if (!result.totalCount) throw new Error('No objective questions could be checked.');
       const assignmentWriting = getA2B1WritingRequirement({ level: assignmentId.split('-')[0], assignmentId });
       const objectivePercent = result.correctCount * 100 / result.totalCount;
@@ -188,8 +180,10 @@ export default function AutomaticMarkingReview() {
   const currentReference = detail ? bundledReferenceForAssignment(answersDictionary,
     detail.row.assignmentId || detail.row.result?.assignmentKey) : null;
   const referenceComparison = detail ? compareMarkingReferences(detail.audit?.referenceEntry, currentReference) : null;
-  const objectiveDetails = original?.objectiveDetails && typeof original.objectiveDetails === 'object'
-    ? Object.entries(detail?.row?.tutorRecheck && detail?.score?.objectiveDetails ? detail.score.objectiveDetails : original.objectiveDetails) : [];
+  const availableObjectiveDetails = detail?.row?.tutorRecheck && detail?.score?.objectiveDetails
+    ? detail.score.objectiveDetails : original?.objectiveDetails;
+  const objectiveDetails = availableObjectiveDetails && typeof availableObjectiveDetails === 'object'
+    ? Object.entries(availableObjectiveDetails) : [];
   return <section className="marking-card automatic-marking-inbox" aria-label="Student work and marking review">
     <header className="marking-inbox-heading"><div><h2>Student work &amp; marking review</h2><p>Find any saved AI-marked result, compare answer references and correct scores. New results first.</p></div><button type="button" disabled={busy} onClick={() => load()}>Refresh results</button></header>
     {error && <p role="alert">{error}</p>}
