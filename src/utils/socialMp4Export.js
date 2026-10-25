@@ -20,3 +20,26 @@ export async function requireValidSocialMp4(blob){
   }
   return blob;
 }
+
+export const SOCIAL_WEBM_CANDIDATES = Object.freeze([
+  "video/webm;codecs=vp9,opus",
+  "video/webm;codecs=vp8,opus",
+  "video/webm",
+]);
+export function chooseSocialVideoFormat(isSupported, preferred="auto") {
+  if (typeof isSupported !== "function") return null;
+  const mp4 = chooseSocialMp4Mime(isSupported);
+  const webm = SOCIAL_WEBM_CANDIDATES.find(type => isSupported(type)) || "";
+  if (preferred === "mp4") return mp4 ? {mime:mp4,extension:"mp4"} : null;
+  if (preferred === "webm") return webm ? {mime:webm,extension:"webm"} : null;
+  return mp4 ? {mime:mp4,extension:"mp4"} : webm ? {mime:webm,extension:"webm"} : null;
+}
+export async function requireValidSocialVideo(blob, format) {
+  if (format?.extension === "mp4") return requireValidSocialMp4(blob);
+  if (format?.extension !== "webm" || !blob?.size || !/^video\/webm(?:;|$)/i.test(blob.type || ""))
+    throw new Error("Video encoding failed. No file was downloaded.");
+  const header = new Uint8Array(await blob.slice(0,4).arrayBuffer());
+  if (header.length !== 4 || header[0] !== 0x1a || header[1] !== 0x45 || header[2] !== 0xdf || header[3] !== 0xa3)
+    throw new Error("The recording is not a valid WebM video.");
+  return blob;
+}
