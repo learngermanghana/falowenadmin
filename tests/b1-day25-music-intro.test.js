@@ -1,4 +1,5 @@
 import test from "node:test";
+import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { getInteractiveLessonOpening, isInteractiveOpeningStage } from "../src/data/interactiveLessonOpenings.js";
@@ -52,3 +53,24 @@ test("B1 Day 24 original music + reading format and A2 signed-audio lessons rema
     assert.equal(stages.find((stage) => stage.id === "knowledge").variant, "interactive-listening");
   }
 });
+
+
+test("B1 Day 25 projector scenario remains scrollable and action buttons stay within a safe area", () => {
+  const css = requireCss();
+  const presenter = requirePresenter();
+  assert.match(css, /presenter-has-day25-scenario/);
+  assert.match(css, /presenter-content-day25-scenario/);
+  assert.match(css, /overflow-y:\s*auto/);
+  assert.match(css, /scroll-padding-bottom:\s*6\.5rem/);
+  assert.match(css, /presenter-career-controls/);
+  assert.match(presenter, /isDay25ScenarioStage/);
+  assert.match(presenter, /presenter-has-day25-scenario/);
+  assert.match(presenter, /presenter-content-day25-scenario/);
+});
+
+function requireCss() {
+  return readFileSync(new URL("../src/components/TeachingSlidePresenter.css", import.meta.url), "utf8");
+}
+function requirePresenter() {
+  return readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
+}
