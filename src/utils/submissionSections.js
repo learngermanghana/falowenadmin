@@ -159,7 +159,7 @@ function normalizeCompactObjectiveSeparators(text = "") {
 // headings followed by a numbered answer, never an ordinary mention of Teil 3.
 function normalizeInlineObjectiveHeadings(text = "") {
   return String(text || "").replace(
-    /[ \t]+((?:teil|tiel|part)[ \t]*[34](?:[ \t]*[.:;|·•–-]?[ \t]*(?:lesen|reading|h[oö]ren|hoeren|listening))?[ \t]*[:;]?[ \t]*)(?=1\s*[).:]\s*(?:[A-Z](?:[).:]|\s|$)|richtig\b|falsch\b))/gi,
+    /[ \t]+((?:teil|tiel|part)[ \t]*[1-4](?:[ \t]*[.:;|·•–-]?[ \t]*(?:lesen|reading|h[oö]ren|hoeren|listening))?[ \t]*[:;]?[ \t]*)(?=1\s*[).:]\s*(?:[A-Z](?:[).:]|\s|$)|richtig\b|falsch\b|wahr\b))/gi,
     "\n$1",
   );
 }

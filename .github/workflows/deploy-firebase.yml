@@ -8,6 +8,12 @@ on:
     paths:
       - 'functions/**'
       - 'src/data/answers_dictionary.json'
+      - 'src/data/courseMarkingSnapshot.json'
+      - 'src/utils/canonicalCourseReference.js'
+      - 'src/utils/objectiveMarking.js'
+      - 'src/utils/autoMarking.js'
+      - 'src/utils/submissionSections.js'
+      - 'src/services/markingService.js'
       - 'src/data/a2WritingTaskSpecs.js'
       - 'src/utils/writingTaskEvidence.js'
       - 'scripts/**'

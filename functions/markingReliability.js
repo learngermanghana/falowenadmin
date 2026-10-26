@@ -27,6 +27,21 @@ function scoreProblems(result = {}) {
     if (!numeric(correct) || !numeric(total) || Number(correct) < 0 ||
         Number(total) < 0 || Number(correct) > Number(total))
       problems.push("Objective correct/total counts are inconsistent.");
+    if (numeric(correct) && numeric(total) && Number(total) > 0) {
+      const expectedPercent = Number(correct) / Number(total) * 100;
+      if (present(result.objectiveScore) && (!numeric(result.objectiveScore)
+          || Math.abs(Number(result.objectiveScore) - expectedPercent) > 0.51))
+        problems.push("Objective percentage contradicts the correct/total counts.");
+      const details = result.objectiveDetails;
+      if (details && typeof details === 'object' && Object.keys(details).length) {
+        const rows = Object.values(details);
+        if (rows.length !== Number(total) || rows.filter(row => row.correct === true).length !== Number(correct))
+          problems.push("Objective question evidence contradicts the correct/total counts.");
+      }
+      if (result.writingScore === null && result.writingScorePercent === null
+          && numeric(score) && Math.abs(Number(score) - expectedPercent) > 0.51)
+        problems.push("Objective-only final score contradicts the verified answers.");
+    }
   }
   if (present(result.writingScore) && present(result.maxWritingScore) &&
       (!numeric(result.writingScore) || !numeric(result.maxWritingScore) ||

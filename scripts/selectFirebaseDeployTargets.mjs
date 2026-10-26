@@ -5,6 +5,17 @@ import { pathToFileURL } from "node:url";
 // Shared modules and unrecognised files deliberately fall back to every existing
 // deployment group. Keep targeted mappings small and explicit.
 export const WORKER_TARGETS = {
+  "src/data/courseMarkingSnapshot.json": ["api", "markCourseSubmissionAutomatically"],
+  "src/utils/canonicalCourseReference.js": ["api", "markCourseSubmissionAutomatically"],
+  "src/utils/objectiveMarking.js": ["api", "markCourseSubmissionAutomatically"],
+  "src/utils/autoMarking.js": ["api", "markCourseSubmissionAutomatically"],
+  "src/utils/submissionSections.js": ["api", "markCourseSubmissionAutomatically"],
+  "src/services/markingService.js": ["api", "markCourseSubmissionAutomatically"],
+  "functions/markingReliability.js": ["api", "markCourseSubmissionAutomatically"],
+  "functions/markingReliability.test.cjs": ["api", "markCourseSubmissionAutomatically"],
+  "scripts/syncCourseMarkingSnapshot.mjs": ["api", "markCourseSubmissionAutomatically"],
+  "scripts/buildAutomaticMarking.mjs": ["api", "markCourseSubmissionAutomatically"],
+
   // A new checked-in answer dictionary changes both the automatic marking worker
   // and the Admin marking API. Redeploy only those two consumers, not every function.
   "src/data/answers_dictionary.json": ["api", "markCourseSubmissionAutomatically"],
