@@ -13,6 +13,7 @@ import { getA2B1AdminLessonProfileForSlide } from "../data/a2B1LessonProfile.js"
 import { getPresenterSlidePhoto } from "../utils/presenterSlidePhotos.js";
 import { nextB1Day18CareerIndex } from "../data/b1Day18CareerChallenge.js";
 import B1HousingChoicePractice from "./B1HousingChoicePractice.jsx";
+import B1SustainabilityDecisions from "./B1SustainabilityDecisions.jsx";
 import A2SportMatchmaker from "./A2SportMatchmaker.jsx";
 import InteractiveLessonOpening from "./InteractiveLessonOpening.jsx";
 import { MusicVideoStage, MusicReadingStage } from "./MusicTeachingStages.jsx";
@@ -1718,7 +1719,14 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                 Paararbeit: Tauscht die Rollen und ersetzt Ghana, Deutschland und die Sprachen durch eigene Beispiele.
               </p>
             </section>
-          ) : stage.type === "sport-matchmaker" ? (<A2SportMatchmaker />) : stage.type === "flow" ? (
+          ) : stage.type === "sport-matchmaker" ? (<A2SportMatchmaker />)
+            : stage.type === "flow" && Array.isArray(stage.items?.[0]?.sustainabilityCases) && stage.items[0].sustainabilityCases.length ? (
+              <B1SustainabilityDecisions
+                key={`${slide.assignmentId}:${stage.id}`}
+                cases={stage.items[0].sustainabilityCases}
+                onSetMinutes={setTimerMinutes}
+              />
+            ) : stage.type === "flow" ? (
             <>
               <div className="presenter-practice-heading">
                 <div>
