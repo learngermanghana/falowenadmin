@@ -12,7 +12,7 @@ test("B1 Day 25 uses the published YouTube video only on slide 2 and retains R2 
 
   assert.deepEqual(stages.map((stage) => stage.id), [
     "intro", "warmup", "knowledge", "phrases", "grammar-check",
-    "practice", "questions", "workbook", "lesson-summary",
+    "scenario-challenge", "questions", "workbook", "lesson-summary",
   ]);
   assert.equal(stages[0].musicIntro, undefined);
   assert.equal(stages[1].variant, "interactive-music-video");
@@ -34,7 +34,7 @@ test("B1 Day 25 uses the published YouTube video only on slide 2 and retains R2 
   // The remaining teaching stages, speaking, workbook, and assessment contract
   // are unchanged. The music is a teacher-led, unscored introduction.
   assert.deepEqual(stages.slice(3).map((stage) => stage.id), [
-    "phrases", "grammar-check", "practice", "questions", "workbook", "lesson-summary",
+    "phrases", "grammar-check", "scenario-challenge", "questions", "workbook", "lesson-summary",
   ]);
 });
 
