@@ -2399,9 +2399,9 @@ export default function CheckinDisplayPage() {
                       )}</h2>
                     )}
                     <div className="checkin-display-lobby-think-note">
-                      <strong>Think about your answer.</strong>
+                      <strong>{miniPractice ? "Unbewertete Mini-Übung" : "Think about your answer."}</strong>
                       <span>
-                        You will answer after class starts. Your teacher will set the Activity timer during class.
+                        {miniPractice ? "Nur zum Üben. Du erhältst dafür keine Note." : "You will answer after class starts. Your teacher will set the Activity timer during class."}
                       </span>
                     </div>
                   </div>
@@ -2480,22 +2480,7 @@ export default function CheckinDisplayPage() {
                   {attendanceLive ? "Updating live" : "Waiting for signed-in live data"}
                 </div>
 
-                {showNames ? (
-                  <div className="checkin-display-name-list">
-                    <div className="checkin-display-name-title">Checked in</div>
-                    {checkedInNames.length ? checkedInNames.map((name, index) => (
-                      <div className="checkin-display-name-row" key={name + index}>
-                        <span>{name}</span><strong>✓</strong>
-                      </div>
-                    )) : (
-                      <div className="checkin-display-name-empty">
-                        {attendanceLive ? "No student has checked in yet." : "Names are only available to a signed-in admin display."}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="checkin-display-privacy-note">Student names are hidden on the projector by default.</div>
-                )}
+                <div className="checkin-display-privacy-note">Student names are hidden on the projector by default.</div>
 
                 {attendanceError ? <div className="checkin-display-attendance-error">{attendanceError}</div> : null}
               </section>
