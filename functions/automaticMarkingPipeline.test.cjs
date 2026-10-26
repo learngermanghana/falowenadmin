@@ -124,3 +124,31 @@ test('verified A1-11 speaking is included with objective marks without another A
  assert.equal(result.speakingScore,8);assert.equal(result.finalScore,90);
  assert.equal(result.writingScore,null);assert.equal(result.status,'marked');assert.equal(calls,0);
 });
+
+for(const [assignmentKey,student,reading,listening] of [
+ ['A2-5.13','leonard','1. A 2. B 3. B 4. B 5. C','1. B 2. C 3. B 4. B 5. C'],
+ ['A2-6.16','selasi','1. B 2. C 3. D 4. A 5. C','1. B 2. A 3. B 4. B 5. A'],
+])test(`${assignmentKey}: valid writing and shared objective marks release without false examiner disagreement`,async()=>{
+ const pipeline=loadPipeline();
+ const fixtures=require('../tests/fixtures/a2-day13-day16-submissions.json');
+ const submissionText=`TEIL 2 ${fixtures[student]} TEIL 3 ${reading} TEIL 4 ${listening}`;
+ let calls=0;
+ const result=await withMarkingTransport(async(payload)=>{
+  calls++;
+  // Simulate the old secondary objective-scoring error: writing agrees,
+  // but the AI's combined total differs by 12 marks.
+  const score=payload.markingMode==='second_examiner'?74:86;
+  return {level:'A2',assignmentKey,score,finalScore:score,writingScore:80,writingScorePercent:80,confidence:.99,status:'marked',shouldSendAutomatically:true,taskCompletion:{completed:3,total:3,missing:[]},feedback:'Clear relevant response.',parts:[{partId:'teil2',partType:'writing',score:80,maxScore:100}]};
+ },()=>pipeline.markSubmissionWithAI({referenceEntry:pipeline.canonicalCourseReference(assignmentKey),submission:{level:'A2',assignmentKey},submissionText}));
+ assert.equal(calls,2);
+ assert.equal(result.objectiveCorrect,9);assert.equal(result.objectiveTotal,10);
+ assert.equal(result.taskCompletion.completed,3);
+ assert.equal(result.secondExaminer.scoreDelta,0);
+ assert.equal(result.secondExaminer.requiresTutorReview,false);
+ assert.equal(result.finalScore,86);
+ assert.equal(require('./automaticCourseMarking').releasable(result),true);
+ assert.equal(result.status,'marked',JSON.stringify({reasons:result.reviewReasons,warnings:result.consistencyWarnings,evidence:result.taskPointEvidence,ai:result.ai?.questionAwareWritingGuard,confidence:result.confidence}));
+ assert.ok(result.confidence>=.8);
+ assert.deepEqual(Array.from(result.missingTaskPoints),[]);
+ assert.ok(!/missing points|required writing points are missing|answer was blank/i.test(result.feedback));
+});

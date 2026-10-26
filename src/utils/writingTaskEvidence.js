@@ -52,16 +52,34 @@ function ruleForPoint(label = "", assignmentKey = "") {
     }
   }
 
+  if (normalizedAssignmentKey === "A2-5.13" && /experience and strengths or skills/.test(value)) {
+    const positive = (source) => sentences(source).filter(sentence => !/\b(?:nicht|kein\w*|nie)\b/i.test(sentence));
+    return [
+      source => positive(source).some(sentence => /\b(?:erfahrung|berufserfahrung|gearbeitet|praktikum)\b|\barbeite\s+als\b/i.test(sentence)),
+      source => positive(source).some(sentence =>
+        /\b(?:kann|konnte|kenntnisse|f[aä]higkeiten|kompetenz|st[aä]rke|zuverl[aä]ssig|freundlich|teamf[aä]hig|flexibel)\b/i.test(sentence)
+        || /\b(?:im|in\s+einem)\s+team\b[^.!?]{0,50}\b(?:arbeit\w*|gearbeitet)\b|\b(?:arbeit\w*|gearbeitet)\b[^.!?]{0,50}\b(?:im|in\s+einem)\s+team\b/i.test(sentence)
+        || /\b(?:unter\s+zeitdruck\s+arbeiten|l[oö]sungen\s+finden|kunden\s+(?:beraten|bedienen))\b/i.test(sentence)),
+    ];
+  }
+
   if (normalizedAssignmentKey === "A2-6.16") {
     // Current coursebook: short informal email to Markus, no doctor appointment.
     if (/name a relaxing activity you do/.test(value)) {
       return /\b(?:sauna|therme|wellness|wellnesstag|spazieren|spaziergang|park|yoga|meditation|meditieren|musik|lesen|schwimmen|entspann\w*|erholen)\b/i;
     }
     if (/explain why that activity helps you relax/.test(value)) {
-      return [
-        /\b(?:weil|denn|deshalb|darum)\b/i,
-        /\b(?:gut|entspann\w*|ruhig|erhol\w*|stress|hilft|besser|wohl|gl[uü]cklich|gesund)\b/i,
-      ];
+      // A direct benefit is a reason at A2; a causal conjunction is optional.
+      // Require an actual benefit statement, not just the topic or a negated benefit.
+      return (source) => sentences(source).some((sentence) => {
+        return /(?<!\p{L})(?:[uü]bungen|yoga|sauna|spaziergang|musik|lesen|schwimmen|meditation|das|es|dabei|danach|ich)(?!\p{L})/iu.test(sentence)
+          && /\b(?:ist|sind|macht|machen|hilft|helfen|f[uü]hle|werde|bin|kann|entspannt|beruhigt|reduziert|vergesse)\b/i.test(sentence)
+          && [...sentence.matchAll(/\b(?:gut|spa[ßs]|entspannend|entspannt|ruhig\w*|erholsam|erholt|besser|wohl|gl[uü]cklich|gesund|stress\s+(?:zu\s+)?(?:reduzieren|verringern|abbauen|abzubauen|vergessen)|abschalten|ruhe)\b/gi)].some(match => {
+            // Negation of price must not cancel an earlier relaxation benefit.
+            const prefix = sentence.slice(0, match.index).split(/[,;]|\b(?:und|aber|sondern)\b/i).at(-1);
+            return !/\b(?:nicht|kein\w*|kaum)\b/i.test(prefix);
+          });
+      });
     }
     if (/invite markus to relax together next weekend/.test(value)) {
       return [

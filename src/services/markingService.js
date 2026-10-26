@@ -256,6 +256,17 @@ function routeMissedWritingToReview(result = {}, submissionText = "") {
   }));
 }
 
+function reconcileExaminerObjectives(result, options, text) {
+  if (!options.referenceEntry) return result;
+  const objective = computeObjectiveScore(options.referenceEntry, text);
+  if (!objective.totalCount) return result;
+  return mergeObjectiveScore({
+    ...result,
+    level: result.level || options.referenceEntry.level || options.submission?.level,
+    assignmentKey: result.assignmentKey || options.referenceEntry.assignmentKey || options.submission?.assignmentKey,
+  }, objective);
+}
+
 async function requestSecondExaminer(options = {}) {
   const originalText = options.submissionText || options.submission?.text || "";
   const payload = {
@@ -278,11 +289,11 @@ async function requestSecondExaminer(options = {}) {
     throw new Error(body?.message || "Second examiner request failed");
   }
 
-  return applyQuestionAwareWritingGuard(
+  return reconcileExaminerObjectives(applyQuestionAwareWritingGuard(
     sanitizeMarkingResult(body.result || body),
     options,
     originalText,
-  );
+  ), options, originalText);
 }
 
 function mergeSecondExaminer(primary = {}, secondary = null, error = null) {
@@ -394,6 +405,7 @@ export async function loadSubmissions(options = {}) {
 export async function markSubmissionWithAI(options = {}) {
   if (options.serverSpeakingAssessment) return markVerifiedSpeakingSubmission(options);
   const originalSubmissionText = options.submissionText || options.submission?.text || "";
+  const finalSubmission = { ...(options.submission || {}), text: originalSubmissionText };
   const preparedOptions = await prepareMarkingOptions(options);
   const reference = preparedOptions.referenceEntry;
   const withPublishedContractAudit = (result) => {
@@ -420,13 +432,13 @@ export async function markSubmissionWithAI(options = {}) {
   }
 
   const finalizeVerified = (result) => {
-    if (!reference || isBlockedScore(scoreValueFromResult(result))) return withPublishedContractAudit(finalizeMarkingResult(result, options.submission));
+    if (!reference || isBlockedScore(scoreValueFromResult(result))) return withPublishedContractAudit(finalizeMarkingResult(result, finalSubmission));
     const objective = computeObjectiveScore(reference, originalSubmissionText);
     const writingExpected = Array.isArray(reference.writingParts) ? reference.writingParts.length > 0 : hasWritingEvidence(result);
     const cleaned = writingExpected ? result : { ...result, writingScore: null, writingScorePercent: null };
     return withPublishedContractAudit(finalizeMarkingResult(reconcileMarkingQuality(mergeObjectiveScore(cleaned, objective), objective, { ...(options.submission || {}), text: originalSubmissionText }, {
       writingExpected, wordTarget: options.feedbackWordTarget,
-    }), options.submission));
+    }), finalSubmission));
   };
 
   let primary = applyQuestionAwareWritingGuard(
@@ -448,6 +460,7 @@ export async function markSubmissionWithAI(options = {}) {
   }
 
   primary = routeMissedWritingToReview(primary, originalSubmissionText);
+  primary = reconcileExaminerObjectives(primary, preparedOptions, originalSubmissionText);
 
   if (isBlockedScore(scoreValueFromResult(primary)) || !hasWritingEvidence(primary)) {
     return finalizeVerified(primary);

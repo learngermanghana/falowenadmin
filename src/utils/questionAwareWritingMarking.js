@@ -1,3 +1,4 @@
+import { parseSubmissionSections } from "./submissionSections.js";
 import { getTeachingSlideByAssignmentId } from "../data/teachingSlides.js";
 import { A1_WRITING_RUBRIC_VERSION, getA1WritingTaskSpec } from "../data/a1WritingTaskSpecs.js";
 import { A2_WRITING_RUBRIC_VERSION, getA2WritingTaskSpec } from "../data/a2WritingTaskSpecs.js";
@@ -228,21 +229,9 @@ function normalizedPartId(value = "") {
 }
 
 function extractSubmissionPart(submissionText = "", partId = "") {
-  const source = String(submissionText || "").replace(/\r/g, "");
   const normalized = normalizedPartId(partId);
-  const number = normalized.match(/([1-4])$/)?.[1];
-  if (!number) return "";
-
-  const marker = new RegExp(`(?:^|\\n)\\s*(?:teil|tiel|part)\\s*${number}\\b[^\\n]*\\n?`, "i");
-  const start = source.search(marker);
-  if (start < 0) return "";
-
-  const fromStart = source.slice(start);
-  const heading = fromStart.match(marker)?.[0] || "";
-  const bodyStart = start + heading.length;
-  const tail = source.slice(bodyStart);
-  const next = tail.search(/(?:^|\n)\s*(?:teil|tiel|part)\s*[1-4]\b[^\n]*/i);
-  return (next >= 0 ? tail.slice(0, next) : tail).trim();
+  return parseSubmissionSections(submissionText).filter(section => section.partId === normalized)
+    .map(section => section.text).join("\n\n").trim();
 }
 
 function writingPartIds(task = {}) {
@@ -266,6 +255,8 @@ function writingText(submissionText = "", task = {}) {
     }
   }
 
+  const writingSections = parseSubmissionSections(source).filter(section => section.partId === "teil2");
+  if (writingSections.length) return writingSections.map(section => section.text).join("\n\n");
   let fallback = source;
   const laterPart = fallback.search(/(?:^|\n)\s*(?:teil\s*[34]|lesen|reading|h[oö]ren|hoeren|listening)\b/i);
   if (laterPart >= 0) fallback = fallback.slice(0, laterPart);
