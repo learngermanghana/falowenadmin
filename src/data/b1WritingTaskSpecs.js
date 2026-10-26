@@ -349,14 +349,14 @@ const rows = [
   [
     "B1-8.25",
     "Online einkaufen – Rechte und Risiken",
-    "opinion_essay",
-    "neutral",
-    "general_audience",
-    "Write an approximately 80-word guestbook discussion responding to Tim (28). State a view on online shopping, risks and consumer rights; justify it and include an experience from personal life or your home country.",
+    "formal_email",
+    "formal",
+    "customer_service",
+    "Write a formal 40–50-word email to ElectroWorld because an ordered electronic device arrived damaged. Include the purchase date, product and order number, describe the defect, and ask politely for exchange, repair or a refund. Use a formal greeting and closing.",
     [
-      "State your own view on online shopping, risks and consumer rights",
-      "Explain and justify your opinion",
-      "Give a personal experience or example from daily life or your home country"
+      "Identify the purchase (date, product and order number)",
+      "Describe the damaged or malfunctioning product",
+      "Request an exchange, repair or refund politely"
     ]
   ],
   [
