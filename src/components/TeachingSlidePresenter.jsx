@@ -205,7 +205,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
   const presenterLevel = String(slide.course || "").trim().toUpperCase();
   const readingEligible = ["A2", "B1"].includes(presenterLevel)
     && stage?.type === "knowledge"
-    && stage?.variant !== "interactive-listening"
+    && stage?.variant !== "interactive-listening" && stage?.variant !== "interactive-music"
     && Boolean(String(stage?.textDe || "").trim());
   const numberedKnowledgeSentences = useMemo(
     () => numberedPresenterSentences(stage?.textDe || ""),
@@ -546,7 +546,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
     }
     if (a2B1ActivityTimer) {
       setTimerMode("activity");
-      if (stage?.variant === "interactive-warmup" || stage?.variant === "interactive-listening") {
+      if (stage?.variant === "interactive-warmup" || stage?.variant === "interactive-listening" || stage?.variant === "interactive-music" || stage?.variant === "interactive-music" || stage?.variant === "interactive-music") {
         const minutes = stage?.variant === "interactive-warmup" ? 10 : Number(stage?.suggestedMinutes || 6);
         activityTimerMinutesRef.current = minutes;
         setActivityTimerMinutes(minutes);
