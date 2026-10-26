@@ -155,10 +155,19 @@ function normalizeCompactObjectiveSeparators(text = "") {
   );
 }
 
+// A copied report may flatten all newlines. Only split explicit objective
+// headings followed by a numbered answer, never an ordinary mention of Teil 3.
+function normalizeInlineObjectiveHeadings(text = "") {
+  return String(text || "").replace(
+    /[ \t]+((?:teil|tiel|part)[ \t]*[34](?:[ \t]*[.:;|·•–-]?[ \t]*(?:lesen|reading|h[oö]ren|hoeren|listening))?[ \t]*[:;]?[ \t]*)(?=1\s*[).:]\s*(?:[A-Z](?:[).:]|\s|$)|richtig\b|falsch\b))/gi,
+    "\n$1",
+  );
+}
+
 export function parseSubmissionSections(text = "") {
   const source = normalizeStandaloneAnswerPrefixes(
     normalizeNumberedQuestionAnswerPairs(
-      normalizeQSectionAliases(normalizeLeadingShortAnswerBlock(text)),
+      normalizeQSectionAliases(normalizeLeadingShortAnswerBlock(normalizeInlineObjectiveHeadings(text))),
     ),
   );
   const markerRegex = /(?:^|\n)[ \t]*((?:teil|tiel|part)[ \t]*([1-4]|I{1,3}|IV)(?:[ \t]*(?:[.:;|·•–-][ \t]*)?(?:lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing))?|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)[ \t]*(?:\([^\n)]*\))?[ \t]*[.:;]?[ \t]*/gi;

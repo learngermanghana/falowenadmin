@@ -1,3 +1,4 @@
+import { parseSubmissionSections } from "./submissionSections.js";
 import { allowsConnectorAssessment } from "./a1ConnectorPolicy.js";
 import { stripMarkingEmojis } from "./markingFeedbackText.js";
 import { selectVersionedObjectiveReferenceEntry } from "./objectiveMarking.js";
@@ -102,6 +103,15 @@ function findPartId(value = "") {
 function splitSubmissionIntoParts(submissionText = "") {
   const text = String(submissionText || "").trim();
   if (!text) return [{ partId: "unknown", title: "Unknown", text: "", confidence: 0 }];
+
+  // Preserve same-line payloads instead of swallowing them into the heading.
+  if (/^\s*(?:teil|tiel|part)\s*[1-4]\b/i.test(text)
+      && /\b(?:teil|tiel|part)\s*[1-4](?:\s+(?:\d+\s*[).:]|hallo\b|liebe\w*\b|sehr\s+geehrt)|\s*·\s*(?:lesen|h[oö]ren|hoeren)\b)/i.test(text)) {
+    return parseSubmissionSections(text).map(section => ({
+      partId: section.partId === "main" ? "unknown" : section.partId,
+      title: section.heading || "Unlabelled submission", text: section.text, confidence: 0.9,
+    }));
+  }
 
   const markerRegex = /(?:^|\n)\s*((?:teil|part)\s*(?:[1-4]|iv|iii|ii|i|eins|zwei|drei|vier|one|two|three|four)\b[^\n]*|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\b[^\n]*)\s*:?\s*(?=\n|$)/gi;
   const markers = [];
