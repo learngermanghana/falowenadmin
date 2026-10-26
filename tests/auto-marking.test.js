@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { autoMarkSubmission, checkDeterministicObjectiveAnswers } from "../src/utils/autoMarking.js";
+import { autoMarkSubmission, checkDeterministicObjectiveAnswers, heuristicWritingMarker } from "../src/utils/autoMarking.js";
 
 test("deterministic parser scores Anzeige A-F-X answers without AI", () => {
   const result = checkDeterministicObjectiveAnswers({

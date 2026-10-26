@@ -72,10 +72,13 @@ function ruleForPoint(label = "", assignmentKey = "") {
       // A direct benefit is a reason at A2; a causal conjunction is optional.
       // Require an actual benefit statement, not just the topic or a negated benefit.
       return (source) => sentences(source).some((sentence) => {
-        if (/\b(?:nicht|kein\w*|kaum)\b/i.test(sentence)) return false;
         return /(?<!\p{L})(?:[uü]bungen|yoga|sauna|spaziergang|musik|lesen|schwimmen|meditation|das|es|dabei|danach|ich)(?!\p{L})/iu.test(sentence)
           && /\b(?:ist|sind|macht|machen|hilft|helfen|f[uü]hle|werde|bin|kann|entspannt|beruhigt|reduziert|vergesse)\b/i.test(sentence)
-          && /\b(?:gut|spa[ßs]|entspannend|entspannt|ruhig\w*|erholsam|erholt|besser|wohl|gl[uü]cklich|gesund|stress\s+(?:abbauen|abzubauen|vergessen)|abschalten|ruhe)\b/i.test(sentence);
+          && [...sentence.matchAll(/\b(?:gut|spa[ßs]|entspannend|entspannt|ruhig\w*|erholsam|erholt|besser|wohl|gl[uü]cklich|gesund|stress\s+(?:zu\s+)?(?:reduzieren|verringern|abbauen|abzubauen|vergessen)|abschalten|ruhe)\b/gi)].some(match => {
+            // Negation of price must not cancel an earlier relaxation benefit.
+            const prefix = sentence.slice(0, match.index).split(/[,;]|\b(?:und|aber|sondern)\b/i).at(-1);
+            return !/\b(?:nicht|kein\w*|kaum)\b/i.test(prefix);
+          });
       });
     }
     if (/invite markus to relax together next weekend/.test(value)) {

@@ -46,6 +46,6 @@ test('A2-5.13 still requires both experience and a positive skill',()=>{
 });
 test('A2-6.16 still requires a benefit, not only a topic, price or negated statement',()=>{
  const task=getA2WritingTaskSpec('A2-6.16');
- for(const text of ['Ich mache Yoga im Park.','Yoga ist kostenlos.','Yoga ist nicht entspannend.','Ich mache Yoga, weil ich Zeit habe.']) assert.equal(evaluateWritingTaskEvidence(task,text)[1].status,'missing');
- for(const text of ['Die Übungen sind einfach und entspannend.','Yoga hilft mir, Stress abzubauen.','Ich fühle mich danach besser.']) assert.equal(evaluateWritingTaskEvidence(task,text)[1].status,'met');
+ for(const text of ['Ich mache Yoga im Park.','Yoga ist kostenlos.','Yoga ist nicht entspannend.','Die Übungen sind nicht besonders erholsam.','Ich fühle mich danach nicht besser.','Ich mache Yoga, weil ich Zeit habe.']) assert.equal(evaluateWritingTaskEvidence(task,text)[1].status,'missing');
+ for(const text of ['Die Übungen sind einfach und entspannend.','Yoga hilft mir, Stress abzubauen.','Ich fühle mich danach besser.','Ich mache Yoga, weil es entspannend ist und nicht viel kostet.','Ich mache Yoga, weil es mir hilft, Stress zu reduzieren.']) assert.equal(evaluateWritingTaskEvidence(task,text)[1].status,'met');
 });
