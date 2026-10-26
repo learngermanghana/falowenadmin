@@ -75,12 +75,19 @@ test("chosen chapters reuse four authored 10-minute warm-up steps without invent
       assert.ok((item.options?.length || 0) + (item.lines?.length || 0) > 0,id);
     }
     const stages = buildTeachingPresenterStages(slide,slide.topic);
-    assert.equal(stages.find(s=>s.id==="warmup").variant,"interactive-warmup",id);
+    // Day 25 keeps the authored four warm-up exercises as source material,
+    // but its visual warm-up slot is now deliberately the lighter YouTube song.
+    if (id === "B1-8.25") {
+      assert.equal(stages.find(s => s.id === "warmup").variant, "interactive-music-video", id);
+      assert.equal(stages.find(s => s.id === "warmup").musicVideo.youtubeId, "ArWT0uVqUxo");
+    } else {
+      assert.equal(stages.find(s => s.id === "warmup").variant, "interactive-warmup", id);
+    }
     assert.equal(stages.find(s=>s.id==="warmup").type,"list",id);
     assert.equal(stages.find(s=>s.id==="knowledge").type,"knowledge",id);
     assert.equal(Boolean(entry.listening),["A2-6.17","A2-7.18","A2-7.20","B1-8.25"].includes(id),id);
     assert.equal(stages.find(s=>s.id==="knowledge").variant==="interactive-listening",["A2-6.17","A2-7.18","A2-7.20","B1-8.25"].includes(id),id);
-    assert.equal(isInteractiveOpeningStage(id,"warmup"),true,id);
+    assert.equal(isInteractiveOpeningStage(id,"warmup"),id !== "B1-8.25",id);
     assert.equal(isInteractiveOpeningStage(id,"knowledge"),["A2-6.17","A2-7.18","A2-7.20","B1-8.25"].includes(id),id);
     assert.equal(isInteractiveOpeningStage(id,"phrases"),false,id);
   }

@@ -402,6 +402,15 @@ ENTRIES["B1-8.24"] = {
   warmup: [], // Music video replaces the Day 24 warm-up, without changing other days.
   listening: B1_DAY24_MUSIC,
 };
+// Day 25 uses YouTube only for the music introduction (slide 2).
+// The separate R2 Hören activity and graded workbook recording stay intact.
+ENTRIES["B1-8.25"].musicIntro = {
+  mediaType: "music",
+  youtubeId: "ArWT0uVqUxo",
+  title: "Klick mit Köpfchen · Online einkaufen – Rechte und Risiken",
+  introQuestion: "Worauf sollte man beim Online-Einkaufen achten?",
+  nextStep: "Weiter zur Hören-Aufgabe „Nachhaltig einkaufen“ mit der bestehenden Audioaufnahme. Das Lied ist nur ein kurzer Einstieg; keine zusätzlichen Testfragen.",
+};
 ENTRIES["B1-8.25"].listening = B1_DAY25_LISTENING;
 
 export const INTERACTIVE_LESSON_OPENINGS = Object.freeze(
@@ -415,6 +424,7 @@ export function getInteractiveLessonOpening(assignmentId = "") {
 }
 export function isInteractiveOpeningStage(assignmentId = "", stageId = "") {
   const lesson = getInteractiveLessonOpening(assignmentId);
+  if (lesson?.musicIntro && stageId === "warmup") return false; // YouTube introduction replaces the warm-up only
   if (lesson?.listening?.mediaType === "music") return false; // Independent YouTube Musik / Lesen stages
   return Boolean(lesson && ((stageId === "warmup" && lesson.warmup?.length > 0) || (stageId === "knowledge" && lesson.listening)));
 }

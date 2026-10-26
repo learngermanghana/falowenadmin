@@ -14,8 +14,7 @@ export function MusicVideoStage({ music }) {
       </header>
       <MusicVideoEmbed videoId={music.youtubeId} title={music.title} variant="lesson" />
       <div className="music-teaching-next-step">
-        <strong>Nach dem Lied:</strong> Weiter zu „Liedtext lesen & verstehen“.
-        Die Grammatik- und Sprechaufgaben folgen später wie gewohnt.
+        <strong>Nach dem Lied:</strong> {music.nextStep || "Weiter zu „Liedtext lesen & verstehen“. Die Grammatik- und Sprechaufgaben folgen später wie gewohnt."}
       </div>
     </section>
   );
