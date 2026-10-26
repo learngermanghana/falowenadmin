@@ -8,6 +8,9 @@ on:
       - 'src/utils/pianoAudio.js'
       - 'src/pages/CheckinDisplayPage.jsx'
       - 'src/pages/CheckinDisplayPage.css'
+      - 'src/utils/checkinLobbyView.js'
+      - 'src/pages/CanonicalAttendancePageV3.jsx'
+      - 'tests/checkin-smart-lobby-v2.test.js'
       - 'src/services/attendanceService.js'
       - 'scripts/patchCheckinWaitingRoomPlaylist.mjs'
       - 'tests/checkin-waiting-music-playlist.test.js'
@@ -42,6 +45,6 @@ jobs:
         run: |
           node --check scripts/patchCheckinWaitingRoomPlaylist.mjs
           node --check src/utils/pianoAudio.js
-          node --test tests/checkin-waiting-music-playlist.test.js
+          node --test tests/checkin-waiting-music-playlist.test.js tests/checkin-smart-lobby-v2.test.js
       - name: Build production bundle
         run: npx vite build
