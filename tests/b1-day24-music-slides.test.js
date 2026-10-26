@@ -87,3 +87,37 @@ test("teacher can follow up answer evidence by seeking to the correct moment", (
   assert.match(css, /presenter-has-music-video/);
   assert.match(css, /presenter-session-timer-copy/);
 });
+
+
+test("B1 Day 24 Argumentkarte is a four-case interactive decision activity on its existing 7-minute slide", () => {
+  const slide = getSlidesByCourse("B1").find((item) => item.assignmentId === "B1-8.24");
+  const stages = buildTeachingPresenterStages(slide, slide.topic);
+  const practice = stages.find((stage) => stage.id === "practice");
+
+  assert.equal(stages.length, 9, "do not add or remove slides");
+  assert.equal(stages[5].id, "practice");
+  assert.equal(stages[6].id, "questions", "keep existing speaking tasks after practice");
+  assert.equal(practice.type, "flow");
+  assert.equal(practice.suggestedMinutes, 7);
+  assert.equal(practice.items.length, 1);
+  assert.equal(practice.items[0].title, "Argumentkarte Nachhaltigkeit");
+
+  const cases = practice.items[0].sustainabilityCases;
+  assert.equal(cases.length, 4, "each sustainability category needs a clear everyday case");
+  assert.deepEqual(cases.map((item) => item.id), ["handy", "jacke", "getraenk", "batterien"]);
+  assert.deepEqual(cases.map((item) => item.correctCategory), ["avoid", "reuse", "switch", "dispose"]);
+  assert.ok(cases.every((item) => item.title && item.situation && item.question && item.model && item.explanation));
+
+  const presenter = fs.readFileSync("src/components/TeachingSlidePresenter.jsx", "utf8");
+  const interactive = fs.readFileSync("src/components/B1SustainabilityDecisions.jsx", "utf8");
+  const css = fs.readFileSync("src/components/B1SustainabilityDecisions.css", "utf8");
+
+  assert.match(presenter, /<B1SustainabilityDecisions/);
+  assert.match(presenter, /stage\.items\?\.\[0\]\?\.sustainabilityCases/);
+  assert.match(interactive, /Lösung prüfen/);
+  assert.match(interactive, /Nächster Fall/);
+  assert.match(interactive, /B1-MODELLSATZ/);
+  assert.match(interactive, /setRevealed/);
+  assert.match(interactive, /onSetMinutes\?\.\(7\)/);
+  assert.match(css, /@media\(max-width:520px\)/);
+});
