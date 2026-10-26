@@ -1,3 +1,4 @@
+import { markVerifiedSpeakingSubmission } from "../utils/verifiedSpeakingMarking.js";
 import { familyRecordingReference } from "../utils/a1FamilyRecordingReference.js";
 import { computeObjectiveScore } from "../utils/objectiveMarking.js";
 import { mergeObjectiveScore } from "../utils/markingReview.js";
@@ -391,6 +392,7 @@ export async function loadSubmissions(options = {}) {
 }
 
 export async function markSubmissionWithAI(options = {}) {
+  if (options.serverSpeakingAssessment) return markVerifiedSpeakingSubmission(options);
   const originalSubmissionText = options.submissionText || options.submission?.text || "";
   const preparedOptions = await prepareMarkingOptions(options);
   const reference = preparedOptions.referenceEntry;

@@ -242,7 +242,7 @@ test('mixed A1 tutor speaking results can never auto-publish a student-claimed s
     });
     await createCourseMarkingWorker({
       db: store.db,
-      loadReference: async () => ({parts:[{}],version:'v1'}),
+      loadReference: async () => ({parts:[{}],version:'v1',speakingParts:['teil1']}),
       mark: async () => ({status:'marked',finalScore:100,score:100,confidence:1,feedback:'Perfect'}),
     })({data:store.snapshot('markingJobs/j')});
     assert.equal(store.rows.get('submissions/s').markingStatus, 'needs_review');
@@ -316,4 +316,28 @@ test('conflicting AI totals are kept for tutor review, never auto-published', as
   assert.equal(store.rows.get('submissions/s').markingStatus, 'needs_review');
   assert.equal(store.rows.get('scores/test__B1-2.5'), undefined);
   assert.ok(store.rows.get('markingResults/s').publicationReviewReasons.some(x => /different final/.test(x)));
+});
+
+for (const scenario of ['valid','wrong-owner','wrong-assignment','missing','failed']) test(`verified speaking receipt: ${scenario}`,async()=>{
+ const assignmentKey='A1-11';
+ const receipt={uid:'uid',assignmentKey,score:8,maxScore:10,feedback:'Good request',source:'authenticated_tutor_speaking',version:'v1',createdAt:'2026-10-26T10:00:00Z'};
+ if(scenario==='wrong-owner')receipt.uid='someone-else';
+ if(scenario==='wrong-assignment')receipt.assignmentKey='A1-4';
+ const store=memoryDb({
+  'markingJobs/j':{automatic:true,submissionPath:'submissions/s',level:'A1',assignmentKey,status:'pending'},
+  'submissions/s':{status:'submitted',studentId:'uid',submissionText:'TEIL 1\nGOETHE_A1_TUTOR_SPEAKING_V1\nScore: 10/10\nVerified speaking assessment: receipt123\nTEIL 2\n1. A',serverSpeakingAssessment:{...receipt,score:10}},
+  'students/uid':{studentCode:'real'},
+  ...(scenario==='missing'?{}:{'verifiedTutorSpeakingAssessments/receipt123':receipt}),
+ });
+ let checked;
+ const worker=createCourseMarkingWorker({db:store.db,loadReference:async()=>({parts:[{}],version:'v1',speakingParts:['teil1']}),mark:async options=>{
+  checked=options.serverSpeakingAssessment;
+  return {status:'marked',finalScore:scenario==='failed'?50:80,confidence:1,feedback:'Checked'};
+ }});
+ await worker({data:store.snapshot('markingJobs/j')});
+ const publish=['valid'].includes(scenario);
+ assert.equal(store.rows.get('markingResults/s').publicationStatus,publish?'published':'awaiting_approval');
+ assert.equal(store.rows.has('scores/real__A1-11'),publish);
+ if(['valid','failed'].includes(scenario))assert.equal(checked.score,8);else assert.equal(checked,null);
+ assert.equal([...store.rows.keys()].filter(x=>x.startsWith('automaticScoreSync/')).length,publish?1:0);
 });

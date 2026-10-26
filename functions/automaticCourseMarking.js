@@ -3,9 +3,19 @@ const { familyRecordingReference } = require('./a1FamilyRecordingReference');
 const { withMarkingTransport } = require('./automaticMarkingContext');
 const { referenceVersionProblem, scoreProblems, isTransientMarkingError } = require('./markingReliability');
 const RESULTS_URL = 'https://www.falowen.app/campus/results';
-// Until the speaking score has authenticated backend provenance, no score may
-// be automatically published for the three mixed A1 tutor workbooks.
-const A1_SPEAKING_REVIEW_ASSIGNMENTS = new Set(['A1-4', 'A1-8', 'A1-11']);
+// These mixed workbooks need an authenticated, server-owned speaking receipt.
+const A1_SPEAKING_REVIEW_ASSIGNMENTS = new Set(['A1-2', 'A1-4', 'A1-8', 'A1-11']);
+async function verifiedSpeakingAssessment(db, text, studentId, assignmentKey) {
+  const matches = [...text.matchAll(/^Verified speaking assessment: ([A-Za-z0-9_-]{1,128})\s*$/gm)];
+  if (matches.length !== 1) return null;
+  const snap = await db.collection('verifiedTutorSpeakingAssessments').doc(matches[0][1]).get();
+  const data = snap.exists ? snap.data() : null;
+  if (!data || data.uid !== studentId || data.assignmentKey !== assignmentKey
+    || data.source !== 'authenticated_tutor_speaking' || data.version !== 'v1'
+    || typeof data.score !== 'number' || !Number.isFinite(data.score) || data.score < 0 || data.score > 10
+    || data.maxScore !== 10 || !data.feedback || !data.createdAt) return null;
+  return { ...data, assessmentId: snap.id || matches[0][1] };
+}
 const idForPath = path => `auto_${crypto.createHash('sha256').update(path).digest('hex')}`;
 const clean = value => JSON.parse(JSON.stringify(value));
 const assignmentTitle = (...values) => values.find(value => typeof value === 'string'
@@ -86,11 +96,15 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
       referenceEntry = familyRecordingReference(referenceEntry, submission, job.assignmentKey);
       const text = String(submission.submissionText || submission.text || submission.answer || submission.workContent || '').trim();
       if (!text) throw new Error('Submission text is missing; tutor review required');
+      const speakingRequired = A1_SPEAKING_REVIEW_ASSIGNMENTS.has(String(job.assignmentKey || "").toUpperCase())
+        && (Boolean(referenceEntry.speakingParts?.length) || Object.values(referenceEntry.partGrading || {}).some(part => part.gradingMode === 'tutor_verified_speaking'));
+      const serverSpeakingAssessment = speakingRequired
+        ? await verifiedSpeakingAssessment(db, text, studentId, job.assignmentKey) : null;
       const result = await withMarkingTransport(callAi, () => mark({
         submission: { ...submission, id: snap.id, path: snap.ref.path, text },
-        submissionText: text, referenceEntry,
+        submissionText: text, referenceEntry, serverSpeakingAssessment,
       }));
-      const speakingReviewRequired = A1_SPEAKING_REVIEW_ASSIGNMENTS.has(String(job.assignmentKey || "").toUpperCase());
+      const speakingReviewRequired = speakingRequired && !serverSpeakingAssessment;
       const release = !speakingReviewRequired && releasable(result);
       const timestamp = new Date(now()).toISOString();
       const studentCode = registeredCode;
@@ -164,6 +178,7 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
           markingRubricVersion: result.markingRubricVersion,
           objectiveScore: result.objectiveScore, objectiveCorrect: result.objectiveCorrect, objectiveTotal: result.objectiveTotal,
           writingScore: result.writingScore, writingScorePercent: result.writingScorePercent, maxWritingScore: result.maxWritingScore,
+          speakingScore: result.speakingScore, maxSpeakingScore: result.maxSpeakingScore, speakingAssessmentId: result.speakingAssessmentId,
           date: timestamp, createdAt: timestamp, updatedAt: timestamp, level: job.level,
           link: RESULTS_URL, source: 'automatic_course_marking', dedupe_id: scoreId,
           objective_score: result.objectiveScore ?? '', objective_correct: result.objectiveCorrect ?? '',
