@@ -546,7 +546,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
     }
     if (a2B1ActivityTimer) {
       setTimerMode("activity");
-      if (stage?.variant === "interactive-warmup" || stage?.variant === "interactive-listening" || stage?.variant === "interactive-music" || stage?.variant === "interactive-music" || stage?.variant === "interactive-music") {
+      if (stage?.variant === "interactive-warmup" || stage?.variant === "interactive-listening" || stage?.variant === "interactive-music") {
         const minutes = stage?.variant === "interactive-warmup" ? 10 : Number(stage?.suggestedMinutes || 6);
         activityTimerMinutesRef.current = minutes;
         setActivityTimerMinutes(minutes);
