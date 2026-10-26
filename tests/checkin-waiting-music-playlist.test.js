@@ -602,10 +602,10 @@ test("Smart Class Lobby keeps check-in available on every waiting slide", () => 
 
   assert.match(page, /activeSmartLobbySlide\.id === "checkin"/);
   assert.match(page, /QRCodeCanvas value=\{checkinUrl\} size=\{280\}/);
-  assert.match(page, /activeSmartLobbySlide\.id !== "checkin"/);
-  assert.match(page, /QRCodeCanvas value=\{checkinUrl\} size=\{112\}/);
-  assert.match(page, /Still need to check in\?/);
-  assert.match(page, /Scan anytime\./);
+  assert.match(page, /checkin-display-lobby-qr-rail/);
+  assert.match(page, /checkin-display-lobby-persistent-qr/);
+  const rotatingArea = page.slice(page.indexOf('className="checkin-display-lobby-stage"'), page.indexOf('className="checkin-display-lobby-footer"'));
+  assert.doesNotMatch(rotatingArea, /QRCodeCanvas/, "QR stays in the persistent rail instead of rotating away");
   assert.match(page, /checkedInCount \+ " \/ " \+ expectedTotal/);
 });
 
@@ -627,11 +627,11 @@ test("Smart Class Lobby warm-up remains preview-only and never starts the five-m
   assert.match(css, /\.checkin-display-warmup-keyword\s*\{[\s\S]*background:\s*#facc15/);
 
   const lobbyStart = page.indexOf('className="checkin-display-smart-lobby"');
-  const musicStart = page.indexOf("checkin-display-music", lobbyStart);
-  assert.ok(lobbyStart > 0 && musicStart > lobbyStart, "Smart Lobby should render before waiting-room music");
-
+  const musicStart = page.indexOf("checkin-display-music", page.indexOf('id="checkin-display-teacher-panel"'));
+  assert.ok(lobbyStart > 0 && musicStart > 0, "Lobby and teacher-only music controls both exist");
+  assert.ok(musicStart < lobbyStart, "Music playback controls belong to the collapsible teacher panel");
   assert.doesNotMatch(
-    page.slice(Math.max(0, lobbyStart - 1500), musicStart),
+    page.slice(lobbyStart, page.indexOf('className="checkin-display-lobby-footer"', lobbyStart)),
     /setWarmup|warmupDeadline|WARMUP_PREPARATION_MINUTES|startWarmup/i,
     "Attendance lobby must preview the question without owning the Presenter warm-up timer",
   );
@@ -654,8 +654,8 @@ test("Smart Class Lobby adapts its rotation to attendance and proximity to start
   assert.match(page, /const nearStart = Boolean\(scheduledStartAt && \(scheduledStartAt - nowMs\) <= 2 \* 60 \* 1000\)/);
   assert.match(page, /const lowAttendance = attendanceRatio !== null && attendanceRatio < 0\.6/);
   assert.match(page, /const highAttendance = attendanceRatio !== null && attendanceRatio >= 0\.75/);
-  assert.match(page, /\["starting", "warmup", "starting", "checkin", "lesson", "starting", "outcomes"\]/);
-  assert.match(page, /\["checkin", "lesson", "checkin", "outcomes", "checkin", "warmup", "starting"\]/);
+  assert.match(page, /\["starting", "warmup", "lesson", "outcomes"\]/);
+  assert.match(page, /\["checkin", "lesson", "outcomes", "warmup", "starting"\]/);
   assert.match(page, /\["lesson", "outcomes", "warmup", "starting", "checkin"\]/);
   assert.match(page, /sequenceKey:/);
 });
@@ -796,7 +796,7 @@ test("Smart Class Lobby preserves pending and failed live-attendance state inste
   assert.match(page, /className=\{"checkin-display-lobby-live-state is-" \+ attendanceConnectionState\}/);
   assert.match(page, /\{attendanceError \? <small>\{attendanceError\}<\/small> : null\}/);
   assert.match(page, /\{attendanceCountLabel\}<\/strong>/);
-  assert.match(page, /waiting for verified live attendance/);
+  assert.match(page, /awaiting verified live attendance/);
 
   assert.match(css, /\.checkin-display-lobby-live-state\.is-live/);
   assert.match(css, /\.checkin-display-lobby-live-state\.is-error/);
@@ -871,5 +871,5 @@ test("A1 Attendance launches Presenter by curriculum day so multi-block days sta
   assert.match(teachingPage, /lessonBlockTotal=\{Math\.max\(1, a1DayBlocks\.length\)\}/);
 
   assert.match(presenter, /Day \$\{slide\.dayNumber\} · Block \$\{lessonBlockPosition\}\/\$\{lessonBlockTotal\}/);
-  assert.match(presenter, /className="presenter-next-lesson"/);
+  assert.match(presenter, /nextLessonHref=\{nextLessonHref\}/);
 });
