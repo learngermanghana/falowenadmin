@@ -1,6 +1,6 @@
 {
   "repository": "learngermanghana/falowenexamtrainer",
-  "revision": "0cff0c9d463804afdef049f4f34101831d583cc0",
+  "revision": "aab2df30fc555ae29703af7a10dd619f1937660f",
   "answerKeys": {
     "A1 Greetings and Asking About Well-being 0.1": {
       "answers": {
@@ -2298,6 +2298,298 @@
         "Nennen Sie einen weiteren persönlichen Wunsch für die Zukunft.",
         "Fragen Sie nach den Zukunftsplänen der anderen Person."
       ]
+    }
+  },
+  "b1WritingTasks": {
+    "B1-1.1": {
+      "assignmentKey": "B1-1.1",
+      "title": "Ist persönlicher Kontakt im Traumberuf wichtiger als flexible Arbeit im Homeoffice?",
+      "situation": "Bearbeiten Sie alle drei Punkte und begründen Sie Ihre Meinung zu persönlichem Kontakt und Homeoffice.",
+      "points": [],
+      "submissionNote": "Write approximately 80 words and submit the finished text through the Submit tab."
+    },
+    "B1-1.2": {
+      "assignmentKey": "B1-1.2",
+      "title": "Schreiben Sie eine E-Mail über einen Freund fürs Leben.",
+      "situation": "Sie haben einen Freund fürs Leben gefunden und möchten einer anderen Freundin darüber berichten.",
+      "points": [],
+      "submissionNote": "Write approximately 80 words and submit your final email through the Submit tab."
+    },
+    "B1-1.3": {
+      "assignmentKey": "B1-1.3",
+      "title": "Schreiben Sie an Ihre Sprachkursleiterin Frau Wolmer.",
+      "situation": "Frau Wolmer hat die Gruppe gebeten, eine Präsentation über Erfolgsgeschichten vorzubereiten. Sie können leider nicht teilnehmen.",
+      "points": [],
+      "submissionNote": "Write approximately 40 words and submit the finished email through the Submit tab."
+    },
+    "B1-2.4": {
+      "assignmentKey": "B1-2.4",
+      "title": "Sind persönliche Kontakte bei der Wohnungssuche hilfreicher als Online-Portale?",
+      "situation": "Schreiben Sie Ihre eigene Meinung zu der Frage, ob persönliche Kontakte bei der Wohnungssuche hilfreicher sind als Online-Portale. Begründen Sie Ihre Meinung und geben Sie ein konkretes Beispiel.",
+      "points": [],
+      "submissionNote": "Write approximately 80 words and submit your final text through the Submit tab."
+    },
+    "B1-2.5": {
+      "assignmentKey": "B1-2.5",
+      "title": "Schreiben Sie eine höfliche E-Mail an den Vermieter.",
+      "situation": "Bearbeiten Sie die Schreibaufgabe vollständig und begründen Sie Ihre Meinung auf B1-Niveau.",
+      "points": [],
+      "submissionNote": "Write approximately 80–100 words and submit your final email through the Submit tab."
+    },
+    "B1-2.6": {
+      "assignmentKey": "B1-2.6",
+      "title": "Stadt oder Land – welches ist Ihrer Meinung nach besser und warum?",
+      "situation": "Reagieren Sie auf Tanjas Meinung, vergleichen Sie beide Wohnorte und begründen Sie Ihre persönliche Entscheidung.",
+      "points": [],
+      "submissionNote": "Write approximately 80 words and submit your final text through Submit."
+    },
+    "B1-3.7": {
+      "assignmentKey": "B1-3.7",
+      "title": "Sind Fertiggerichte eine gute Wahl für eine gesunde Ernährung? Schreiben Sie Ihre Meinung.",
+      "situation": "Reagieren Sie auf Tanjas Meinung. Erklären Sie, ob Fertiggerichte eine gute Wahl für eine gesunde Ernährung sind. Nennen Sie Vorteile, Nachteile und Ihre persönliche Lösung im Alltag.",
+      "points": [],
+      "submissionNote": "Write approximately 80 words and submit your final text through Submit."
+    },
+    "B1-3.8": {
+      "assignmentKey": "B1-3.8",
+      "title": "Sind regelmäßige Sporteinheiten der Schlüssel zu einem gesunden Leben? Schreiben Sie Ihre Meinung.",
+      "situation": "Situation: Max sagt, dass regelmäßige Sporteinheiten helfen, fit zu bleiben und das Immunsystem zu stärken. Schreiben Sie Ihre Meinung. Gehen Sie auf Max ein, nennen Sie Vorteile von Sport, erklären Sie die Rolle von Ernährung und schreiben Sie, was Sie persönlich im Alltag tun oder verbessern möchten.",
+      "points": [],
+      "submissionNote": "Write about 80–100 words and submit the final text in Submit."
+    },
+    "B1-3.9": {
+      "assignmentKey": "B1-3.9",
+      "title": "Ist eine gute Work-Life-Balance im modernen Arbeitsumfeld möglich?",
+      "situation": "Reagieren Sie auf Lisas Meinung. Nennen Sie Argumente dafür und dagegen, geben Sie ein Beispiel und formulieren Sie Ihre eigene Position.\n\nViele Menschen haben Schwierigkeiten, Arbeit und Privatleben in Einklang zu bringen. Ich stimme dem zu, denn lange Arbeitszeiten und ständiger Stress können die Gesundheit und das Wohlbefinden beeinträchtigen. Dennoch gibt es heute flexible Arbeitsmodelle wie Homeoffice oder Gleitzeit, die helfen können, eine bessere Balance zu finden. Ich finde, dass jeder bewusst Pausen einplanen und Zeit für Familie und Hobbys nehmen sollte, um langfristig produktiv und zufrieden zu bleiben. Was denken Sie darüber?",
+      "points": [
+        "Fassen Sie Lisas Meinung kurz zusammen.",
+        "Nennen Sie mindestens ein Argument dafür und ein Argument dagegen.",
+        "Erklären Sie, welche Rolle Homeoffice oder flexible Arbeitszeiten spielen.",
+        "Geben Sie ein persönliches Beispiel oder beschreiben Sie die Situation in Ihrem Heimatland.",
+        "Formulieren Sie Ihre eigene Meinung und einen klaren Schluss."
+      ],
+      "submissionNote": ""
+    },
+    "B1-4.10": {
+      "assignmentKey": "B1-4.10",
+      "title": "Brauchen wir digitale Auszeiten für unsere Gesundheit?",
+      "situation": "Reagieren Sie auf den Impulstext. Schreiben Sie über Vorteile und Schwierigkeiten einer digitalen Auszeit, nennen Sie konkrete Strategien und formulieren Sie Ihre eigene Meinung.\n\nIn der heutigen schnelllebigen Welt ist es immer schwieriger, Zeit für sich selbst zu finden. Zwischen Arbeit, Familie und anderen Verpflichtungen bleibt oft wenig Raum für persönliche Auszeiten. Regelmäßige Momente der Ruhe können Stress reduzieren und neue Energie geben. Ob ein Spaziergang, ein Buch oder einige Minuten ohne Smartphone – solche Pausen sind wichtig für das allgemeine Wohlbefinden.",
+      "points": [
+        "Fassen Sie die Hauptaussage des Impulstextes kurz zusammen.",
+        "Nennen Sie mindestens zwei Vorteile einer digitalen Auszeit.",
+        "Erklären Sie eine Schwierigkeit oder einen möglichen Nachteil.",
+        "Beschreiben Sie zwei konkrete Strategien für einen gesünderen Umgang mit Technik.",
+        "Geben Sie ein persönliches Beispiel oder beschreiben Sie die Situation in Ihrem Heimatland.",
+        "Formulieren Sie Ihre eigene Meinung und einen klaren Schluss."
+      ],
+      "submissionNote": ""
+    },
+    "B1-4.11": {
+      "assignmentKey": "B1-4.11",
+      "title": "Ist Teamkooperation in der heutigen Arbeitswelt wichtig? Schreiben Sie Ihre Meinung.",
+      "situation": "Reagieren Sie auf Markus. Nennen Sie Vorteile der Zusammenarbeit, erklären Sie mindestens eine Herausforderung und formulieren Sie Ihre eigene Meinung mit einem Beispiel.",
+      "points": [],
+      "submissionNote": "Write approximately 80–100 words and submit the finished text through the Submit tab."
+    },
+    "B1-4.12": {
+      "assignmentKey": "B1-4.12",
+      "title": "Schreiben Sie einen informellen Brief an Ihren Freund Felix über ein spannendes Abenteuer.",
+      "situation": "Sie haben kürzlich ein spannendes Abenteuer erlebt – zum Beispiel eine Reise, eine Wanderung oder ein besonderes Erlebnis. Schreiben Sie einen informellen Brief und erzählen Sie davon.\n\nSie haben kürzlich ein spannendes Abenteuer erlebt – zum Beispiel eine aufregende Reise, eine Wanderung oder ein besonderes Erlebnis. Schreiben Sie einen informellen Brief an Ihren Freund Felix und erzählen Sie ihm davon.",
+      "points": [
+        "Begrüßen Sie Felix und fragen Sie kurz, wie es ihm geht.",
+        "Erklären Sie, welches Abenteuer Sie erlebt haben und wo es war.",
+        "Beschreiben Sie zwei wichtige Erlebnisse oder Eindrücke.",
+        "Nennen Sie eine Schwierigkeit und wie Sie sie gelöst haben.",
+        "Schreiben Sie, was Sie gelernt haben oder warum das Erlebnis besonders war.",
+        "Beenden Sie den Brief freundlich."
+      ],
+      "submissionNote": ""
+    },
+    "B1-4.13": {
+      "assignmentKey": "B1-4.13",
+      "title": "Sind spannende Filme besser als ruhige Filme?",
+      "situation": "Schreiben Sie einen B1-Meinungsaufsatz. Erklären Sie Ihre Meinung, nennen Sie Vorteile und Nachteile und schließen Sie mit einem klaren Fazit.\n\nStudents are to write an essay expressing their opinion on the following topic: Sind spannende Filme besser als ruhige Filme?",
+      "points": [
+        "Schreiben Sie eine passende Einleitung zum Thema Spannung im Film.",
+        "Erklären Sie Ihre Meinung klar.",
+        "Nennen Sie Vorteile spannender Filme: fesselnder, emotionaler, bleiben länger im Gedächtnis.",
+        "Nennen Sie Nachteile: Stress, zu hohe Spannung, ruhigere Filme haben oft tiefere Botschaften.",
+        "Vergleichen Sie spannende und ruhige Filme kurz.",
+        "Schreiben Sie ein Fazit mit Ihrer endgültigen Meinung."
+      ],
+      "submissionNote": ""
+    },
+    "B1-5.14": {
+      "assignmentKey": "B1-5.14",
+      "title": "Formelle E-Mail: Teilnahme an einem Weiterbildungsprogramm ablehnen",
+      "situation": "Ihr Arbeitgeber bietet Ihnen die Möglichkeit, an einem beruflichen Weiterbildungsprogramm teilzunehmen. Das Programm findet nach der regulären Arbeitszeit statt und dauert sechs Monate. Schreiben Sie eine formelle E-Mail an Ihren Chef und begründen Sie höflich, warum Sie nicht teilnehmen können.\n\nIhr Arbeitgeber bietet Ihnen die Möglichkeit, an einem beruflichen Weiterbildungsprogramm teilzunehmen. Das Programm findet jedoch nach der regulären Arbeitszeit statt und dauert sechs Monate. Schreiben Sie einen formellen Brief an Ihren Chef, in dem Sie klar mitteilen, dass Sie nicht teilnehmen können, und begründen Sie Ihre Entscheidung. Schreiben Sie eine E-Mail (circa 40 Wörter). Vergessen Sie nicht die Anrede und den Gruß am Schluss.",
+      "points": [
+        "Verwenden Sie eine passende formelle Anrede.",
+        "Bedanken Sie sich kurz für das Angebot.",
+        "Teilen Sie klar mit, dass Sie nicht teilnehmen können.",
+        "Begründen Sie Ihre Entscheidung höflich.",
+        "Schließen Sie mit einem formellen Gruß."
+      ],
+      "submissionNote": ""
+    },
+    "B1-5.15": {
+      "assignmentKey": "B1-5.15",
+      "title": "Meinungsbeitrag: Erleichtern Medien das Arbeiten im Homeoffice?",
+      "situation": "Reagiere auf Daniels Meinung. Schreibe circa 80–100 Wörter. Äußere deine Meinung, nenne Vorteile und mögliche Probleme digitaler Medien und erkläre, wie man Arbeit und Privatleben besser trennen kann.\n\nModerne Medien wie E-Mails, Videokonferenzen und digitale Tools machen das Arbeiten im Homeoffice einfacher. Ich stimme dem zu, denn sie ermöglichen eine schnelle Kommunikation und flexible Zusammenarbeit. Dennoch kann ständige Erreichbarkeit auch stressig sein und die Grenze zwischen Arbeit und Privatleben verschwimmen lassen. Ich finde, dass man klare Arbeitszeiten festlegen sollte, um eine gute Balance zu behalten. Was denken Sie darüber?",
+      "points": [
+        "Reagiere klar auf Daniels Meinung.",
+        "Erkläre, wie digitale Medien das Homeoffice erleichtern.",
+        "Nenne mindestens einen Nachteil oder ein Risiko.",
+        "Schlage eine Lösung für ständige Erreichbarkeit oder fehlende Grenzen vor.",
+        "Fasse deine Meinung am Schluss kurz zusammen."
+      ],
+      "submissionNote": ""
+    },
+    "B1-5.16": {
+      "assignmentKey": "B1-5.16",
+      "title": "Kann man Prüfungsangst mit der richtigen Stressbewältigung reduzieren?",
+      "situation": "Lesen Sie Julias Meinung und schreiben Sie Ihre eigene Antwort. Sagen Sie, ob Sie zustimmen oder nicht, und begründen Sie Ihre Meinung mit Beispielen.\n\nKann man Prüfungsangst mit der richtigen Stressbewältigung reduzieren? Schreiben Sie Ihre Meinung. Julia: Viele Menschen haben Angst vor Prüfungen, weil sie unter Druck stehen. Ich stimme dem zu, denn Nervosität kann die Leistung beeinflussen. Dennoch gibt es viele Strategien, um besser mit Stress umzugehen, wie gute Vorbereitung oder Entspannungsübungen. Ich finde, dass jeder seine eigene Methode finden sollte, um ruhig zu bleiben und sich sicher zu fühlen. Was denken Sie darüber?",
+      "points": [
+        "Beziehen Sie sich kurz auf Julias Meinung.",
+        "Schreiben Sie, ob Sie zustimmen oder nicht.",
+        "Nennen Sie mindestens zwei Strategien gegen Prüfungsangst.",
+        "Begründen Sie, warum diese Strategien helfen können.",
+        "Schreiben Sie ein klares Fazit."
+      ],
+      "submissionNote": ""
+    },
+    "B1-5.17": {
+      "assignmentKey": "B1-5.17",
+      "title": "Wie lernt man am besten?",
+      "situation": "Lesen Sie Tims Meinung und schreiben Sie Ihre eigene Antwort. Sagen Sie, welche Lernmethoden Sie gut finden und warum.\n\nWie lernt man am besten? Schreiben Sie Ihre Meinung. Tim: Jeder Mensch lernt anders. Ich denke, dass es wichtig ist, eine gute Methode zu finden. Manche lernen gut mit Büchern, andere mit Videos oder in Gruppen. Dennoch ist regelmäßiges Üben immer wichtig. Ich finde, dass man sich Ziele setzen und Pausen machen sollte, um effektiv zu lernen. Was denken Sie darüber?",
+      "points": [
+        "Beziehen Sie sich kurz auf Tims Meinung.",
+        "Schreiben Sie, ob Sie zustimmen oder nicht.",
+        "Nennen Sie zwei Lernmethoden, die für Sie gut funktionieren.",
+        "Erklären Sie, warum Ziele, Pausen oder Wiederholung wichtig sind.",
+        "Schreiben Sie ein klares Fazit."
+      ],
+      "submissionNote": ""
+    },
+    "B1-6.18": {
+      "assignmentKey": "B1-6.18",
+      "title": "Gibt es verschiedene Wege zum Wunschberuf?",
+      "situation": "Lesen Sie Lenas Meinung und schreiben Sie Ihre eigene Antwort. Erklären Sie, ob es verschiedene Wege zum Wunschberuf gibt und welche Wege Sie sinnvoll finden.\n\nGibt es verschiedene Wege zum Wunschberuf? Schreiben Sie Ihre Meinung. Lena: Es gibt viele Wege, um den Wunschberuf zu erreichen. Ich stimme dem zu, denn manche Menschen machen eine Ausbildung, andere studieren an einer Universität. Dennoch kann man auch durch Praktika oder Weiterbildungen ein Ziel erreichen. Ich finde, dass jeder seinen eigenen Weg wählen sollte, je nachdem, was am besten zu ihm passt. Was denken Sie darüber?",
+      "points": [
+        "Beziehen Sie sich kurz auf Lenas Meinung.",
+        "Schreiben Sie, ob Sie zustimmen oder nicht.",
+        "Nennen Sie verschiedene Wege: Ausbildung, Studium, Praktikum oder Weiterbildung.",
+        "Erklären Sie, warum Menschen unterschiedliche Wege brauchen.",
+        "Schreiben Sie ein klares Fazit."
+      ],
+      "submissionNote": ""
+    },
+    "B1-6.19": {
+      "assignmentKey": "B1-6.19",
+      "title": "Sind Vorstellungsgespräche schwierig? Schreiben Sie Ihre Meinung.",
+      "situation": "Situation: Emma findet, dass ein Vorstellungsgespräch stressig sein kann. Reagieren Sie auf ihre Meinung. Schreiben Sie, ob Sie zustimmen, warum Vorstellungsgespräche schwierig sein können, wie man sich vorbereiten kann und was für Erfolg wichtig ist.",
+      "points": [],
+      "submissionNote": "Write about 80 words and submit your final text in the Submit tab."
+    },
+    "B1-6.20": {
+      "assignmentKey": "B1-6.20",
+      "title": "Sind Ausbildung und Qualifikationen wichtig für den Beruf?",
+      "situation": "Reagieren Sie auf Felix' Meinung. Sagen Sie, ob Sie zustimmen, vergleichen Sie Ausbildung mit Erfahrung und nennen Sie ein Beispiel.",
+      "points": [],
+      "submissionNote": "Write approximately 80–100 words and submit the finished text through the Submit tab."
+    },
+    "B1-7.21": {
+      "assignmentKey": "B1-7.21",
+      "title": "Verschiedene Lebensformen – Alleine wohnen oder in einer WG?",
+      "situation": "Sie haben im Leserforum eines Online-Magazins einen Beitrag zum Thema „Verschiedene Lebensformen – Alleine wohnen oder in einer WG?“ gelesen. Schreiben Sie nun Ihre Meinung zum Thema (ca. 80 Wörter).\n\nIch wohne seit einem Jahr alleine in meiner eigenen Wohnung. Das ist zwar etwas teurer und man muss im Haushalt alles selbst machen, aber ich genieße die Unabhängigkeit und Ruhe sehr. Ich kann mir nicht mehr vorstellen, in einer WG oder bei den Eltern zu wohnen.",
+      "points": [
+        "Reagieren Sie auf Antons Meinung zum Alleinwohnen.",
+        "Sagen Sie, ob Sie lieber alleine oder in einer WG wohnen würden.",
+        "Nennen Sie einen Vorteil und einen Nachteil und begründen Sie Ihre Meinung.",
+        "Geben Sie nach Möglichkeit ein Beispiel aus dem Alltag."
+      ],
+      "submissionNote": ""
+    },
+    "B1-7.22": {
+      "assignmentKey": "B1-7.22",
+      "title": "Was denken Sie über Partnersuche im Internet?",
+      "situation": "Teilen Sie Marias Ansicht oder haben Sie eine andere Meinung? Begründen Sie Ihre Antwort.",
+      "points": [],
+      "submissionNote": "Write approximately 80–100 words and submit the finished text through the Submit tab."
+    },
+    "B1-7.23": {
+      "assignmentKey": "B1-7.23",
+      "title": "Ist das erste Date wirklich wichtig für eine Beziehung? Schreiben Sie Ihre Meinung.",
+      "situation": "Lesen Sie Sophies Meinung. Schreiben Sie danach Ihre eigene Meinung und begründen Sie Ihren Standpunkt.\n\nViele Menschen glauben, dass das erste Date entscheidet, ob man zusammenpasst. Ich stimme dem teilweise zu, denn der erste Eindruck kann viel bedeuten. Man merkt oft schnell, ob man sich sympathisch ist. Trotzdem finde ich, dass man nicht zu viel erwarten sollte. Manche Menschen sind beim ersten Treffen nervös und zeigen sich nicht so, wie sie wirklich sind. Ich denke, wichtiger ist, wie sich die Beziehung danach entwickelt. Was denken Sie darüber?",
+      "points": [
+        "Sagen Sie, ob Sie Sophie zustimmen oder nicht.",
+        "Erklären Sie, welche Bedeutung der erste Eindruck haben kann.",
+        "Nennen Sie einen Grund, warum ein erstes Date auch täuschen kann.",
+        "Begründen Sie Ihre eigene Meinung mit einem Beispiel.",
+        "Formulieren Sie einen klaren Schluss."
+      ],
+      "submissionNote": ""
+    },
+    "B1-8.24": {
+      "assignmentKey": "B1-8.24",
+      "title": "Ist es wichtig, beim Konsum auf Nachhaltigkeit zu achten? Schreiben Sie Ihre Meinung.",
+      "situation": "Lesen Sie Pauls Meinung. Schreiben Sie danach Ihre eigene Meinung, begründen Sie Ihren Standpunkt und nennen Sie konkrete Beispiele.\n\nIn der heutigen Zeit ist es immer wichtiger, nachhaltig zu konsumieren. Ich stimme dem zu, denn durch bewusstes Einkaufen können wir die Umwelt schützen und Ressourcen sparen. Viele Produkte, die wir kaufen, haben einen großen Einfluss auf die Natur, zum Beispiel durch Verpackungen oder den CO₂-Ausstoß bei der Herstellung. Dennoch ist es manchmal schwierig, nachhaltige Alternativen zu finden, vor allem bei den Preisen. Ich finde, dass jeder von uns kleine Schritte machen kann, wie weniger Plastik zu verwenden oder Secondhand zu kaufen. Was denken Sie darüber?",
+      "points": [
+        "Sagen Sie, ob Sie Paul zustimmen oder nicht.",
+        "Erklären Sie, warum nachhaltiger Konsum wichtig sein kann.",
+        "Nennen Sie Schwierigkeiten oder Nachteile nachhaltiger Alternativen.",
+        "Geben Sie konkrete Beispiele für nachhaltigen Konsum.",
+        "Formulieren Sie einen klaren Schluss."
+      ],
+      "submissionNote": ""
+    },
+    "B1-8.25": {
+      "assignmentKey": "B1-8.25",
+      "title": "Diskussionsbeitrag · Online einkaufen – Rechte und Risiken (ca. 80 Wörter)",
+      "situation": "Sie haben im Fernsehen eine Diskussionssendung zum Thema „Online einkaufen – Rechte und Risiken“ gesehen. Im Online-Gästebuch der Sendung lesen Sie Tims Meinung. Schreiben Sie Ihren Diskussionsbeitrag in etwa 25 Minuten (ca. 80 Wörter).\n\n„Ich kaufe fast alles im Internet, weil es schnell und bequem ist. Bisher hatte ich noch nie Probleme. Wer vorsichtig ist und bei bekannten Händlern bestellt, geht kaum ein Risiko ein. Außerdem hat man ja das Recht, Waren innerhalb von 14 Tagen zurückzusenden.“",
+      "points": [
+        "Äußern Sie Ihre Meinung zum Thema Online-Shopping sowie zu Risiken und Verbraucherrechten.",
+        "Begründen Sie Ihre Haltung.",
+        "Nennen Sie persönliche Erfahrungen oder ein Beispiel aus Ihrem Alltag bzw. Ihrem Heimatland."
+      ],
+      "submissionNote": ""
+    },
+    "B1-9.26": {
+      "assignmentKey": "B1-9.26",
+      "title": "Goethe-Zertifikat B1 · Schreiben Teil 2 · Reiseprobleme und Lösungen",
+      "situation": "Arbeitszeit: ca. 25 Minuten. Schreiben Sie einen Forumsbeitrag von ca. 80 Wörtern. Sie haben im Internet einen Beitrag von Markus zum Thema „Reiseprobleme und Lösungen“ gelesen. Reagieren Sie darauf.\n\n„Letzten Sommer hatte mein Zug drei Stunden Verspätung und mein Koffer ist am Flughafen verloren gegangen. Reisen kann heutzutage wirklich stressig sein! Ich finde, man sollte lieber öfter zu Hause bleiben oder nur kurze Ausflüge in der Region machen, anstatt weit weg zu fahren.“",
+      "points": [
+        "Meinung: Äußern Sie Ihre Meinung zu Markus' Aussage.",
+        "Erfahrung/Gründe: Berichten Sie von eigenen Erfahrungen mit Reiseproblemen oder nennen Sie Gründe dafür.",
+        "Lösungen: Machen Sie Vorschläge, wie man Stress oder Probleme beim Reisen vermeiden oder lösen kann."
+      ],
+      "submissionNote": ""
+    },
+    "B1-10.27": {
+      "assignmentKey": "B1-10.27",
+      "title": "Kann jeder Mensch umweltfreundlich leben? Schreiben Sie Ihre Meinung.",
+      "situation": "Lesen Sie Ahmeds Meinung. Schreiben Sie danach Ihre eigene Meinung und begründen Sie Ihren Standpunkt.\n\nIch denke, dass jeder Mensch umweltfreundlich leben kann, aber es ist manchmal nicht so einfach. Manche Menschen leben in Städten, wo sie kein Auto brauchen, andere auf dem Land, wo es keine Busse gibt. Ich finde, man kann auch kleine Dinge tun: zum Beispiel Stofftaschen benutzen oder das Licht ausschalten, wenn man den Raum verlässt. Das kostet nichts und hilft trotzdem der Umwelt. Außerdem ist es wichtig, dass man in der Schule oder in den Medien über Umweltschutz spricht. So lernen mehr Menschen, warum es wichtig ist. Was meinen Sie dazu?",
+      "points": [
+        "Sagen Sie, ob Sie Ahmed zustimmen oder nicht.",
+        "Erklären Sie, warum umweltfreundliches Leben wichtig ist.",
+        "Nennen Sie Beispiele aus dem Alltag.",
+        "Beschreiben Sie Schwierigkeiten.",
+        "Formulieren Sie einen klaren Schluss."
+      ],
+      "submissionNote": ""
+    },
+    "B1-10.28": {
+      "assignmentKey": "B1-10.28",
+      "title": "Kann jeder Mensch klimafreundlich leben? Schreiben Sie Ihre Meinung.",
+      "situation": "Schreiben Sie einen Meinungstext und beziehen Sie sich auf konkrete Beispiele aus dem Alltag.\n\nIn der heutigen Zeit ist der Klimawandel ein großes Problem. Viele Menschen fragen sich, was sie persönlich tun können, um die Umwelt zu schützen. Meiner Meinung nach kann jeder im Alltag kleine Schritte machen. Man kann zum Beispiel öfter mit dem Fahrrad fahren oder öffentliche Verkehrsmittel nutzen, statt mit dem Auto zu fahren. Auch beim Einkaufen kann man klimafreundlich handeln – etwa durch den Kauf regionaler Produkte oder durch Vermeidung von Plastik. Zu Hause hilft es, Strom zu sparen, Geräte nicht im Standby-Modus zu lassen und weniger zu heizen. Natürlich ist es manchmal nicht einfach, klimafreundlich zu leben, besonders wenn man auf dem Land wohnt oder wenig Geld hat. Trotzdem glaube ich, dass jeder einen Beitrag leisten kann. Zusammenfassend denke ich, dass viele kleine Taten eine große Wirkung haben können, wenn alle mitmachen.",
+      "points": [
+        "Sagen Sie, ob jeder Mensch klimafreundlich leben kann.",
+        "Nennen Sie Beispiele aus Verkehr, Einkaufen oder Haushalt.",
+        "Beschreiben Sie Schwierigkeiten, zum Beispiel Land, Geld oder Gewohnheiten.",
+        "Begründen Sie Ihre Meinung.",
+        "Formulieren Sie einen Schluss."
+      ],
+      "submissionNote": ""
     }
   }
 }

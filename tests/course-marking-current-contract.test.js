@@ -31,3 +31,13 @@ test('Current A2 writing task uses Jan and all three current task points', () =>
   assert.match(task.taskPointsDe[2], /Samstag/);
   assert.doesNotMatch(task.taskSituationDe, /Sportverein|Fitnessstudio/);
 });
+
+test('Every B1 writing contract retains current instructions and source opinion', async () => {
+  const { resolveQuestionAwareWritingTask } = await import('../src/utils/questionAwareWritingMarking.js');
+  assert.equal(Object.keys(snapshot.b1WritingTasks).length, 28);
+  const task = resolveQuestionAwareWritingTask({ referenceEntry: canonicalCourseReference('B1-5.16') });
+  assert.equal(task.source, 'learner-coursebook');
+  assert.match(task.taskText, /Julias Meinung|Julia:/);
+  assert.equal(task.taskPoints.length, 5);
+  assert.match(task.taskPoints[2], /zwei Strategien/);
+});

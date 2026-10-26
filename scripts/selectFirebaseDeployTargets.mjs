@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 // Shared modules and unrecognised files deliberately fall back to every existing
 // deployment group. Keep targeted mappings small and explicit.
 export const WORKER_TARGETS = {
+  "src/utils/questionAwareWritingMarking.js": ["api", "markCourseSubmissionAutomatically"],
   "src/data/courseMarkingSnapshot.json": ["api", "markCourseSubmissionAutomatically"],
   "src/utils/canonicalCourseReference.js": ["api", "markCourseSubmissionAutomatically"],
   "src/utils/objectiveMarking.js": ["api", "markCourseSubmissionAutomatically"],

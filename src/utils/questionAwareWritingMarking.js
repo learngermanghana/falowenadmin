@@ -36,7 +36,13 @@ function applyAuthoritativeWritingOverride(task = {}) {
     && clean(task.taskText);
   const samePoints = publishedA2
     && JSON.stringify(task.taskPointsDe.map(clean)) === JSON.stringify((a2Spec.taskPointsDe || []).map(clean));
-  const next = publishedA2
+  const publishedB1 = task.source === "learner-coursebook"
+    && Boolean(task.sourceVersion) && b1Spec && clean(task.taskText);
+  const next = publishedB1 ? {
+    ...b1Spec, ...task, level: "B1",
+    taskPoints: task.taskPointsDe?.length ? [...task.taskPointsDe] : [task.taskSituationDe],
+    rubricVersion: `learner-${task.sourceVersion}`,
+  } : publishedA2
     ? {
       ...a2Spec, ...task, level: "A2",
       taskPoints: samePoints ? [...a2Spec.taskPoints] : [...task.taskPointsDe],

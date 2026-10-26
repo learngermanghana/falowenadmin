@@ -10,6 +10,7 @@ on:
       - 'src/data/answers_dictionary.json'
       - 'src/data/courseMarkingSnapshot.json'
       - 'src/utils/canonicalCourseReference.js'
+      - 'src/utils/questionAwareWritingMarking.js'
       - 'src/utils/objectiveMarking.js'
       - 'src/utils/autoMarking.js'
       - 'src/utils/submissionSections.js'
