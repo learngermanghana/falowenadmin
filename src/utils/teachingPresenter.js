@@ -2066,7 +2066,7 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
       },
     };
     if (stage.id === "knowledge" && lessonOpening.listening) return {
-      ...stage, variant: "interactive-listening", kicker: lessonOpening.listening.mediaType === "music" ? "Musik · Hörverstehen" : "Hören · Hördetektiv",
+      ...stage, variant: lessonOpening.listening.mediaType === "music" ? "interactive-music" : "interactive-listening", kicker: lessonOpening.listening.mediaType === "music" ? "Musik · Hörverstehen" : "Hören · Hördetektiv",
       title: lessonOpening.listening.title,
       listeningItems: lessonOpening.listening.questions,
       transcript: lessonOpening.listening.transcript,
