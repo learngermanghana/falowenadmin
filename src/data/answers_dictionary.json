@@ -3684,22 +3684,20 @@
   "B1 8.25 Online einkaufen ? Rechte und Risiken": {
     "answers": {
       "teil3": {
-        "Answer1": "B) Weil man bequem von zu Hause aus eine große Auswahl bestellen kann.",
-        "Answer2": "B) Sie verlangen Geld per Vorkasse, schicken die Ware aber nie ab.",
-        "Answer3": "B) Dass vertrauliche Daten und Kreditkartendaten missbraucht werden.",
-        "Answer4": "A) Ein 14-tägiges Widerrufsrecht ohne Angabe von Gründen.",
-        "Answer5": "A) Er kann den Vertrag stornieren und die Ware zurückschicken.",
-        "Answer6": "A) Man sollte das Impressum prüfen und Kundenbewertungen lesen.",
-        "Answer7": "C) Den Kauf auf Rechnung sowie etablierte Bezahldienste."
+        "Answer1": "B) Man kann den Kauf ohne Nennung von Gründen stornieren.",
+        "Answer2": "C) Sobald der Kunde das Paket zu Hause empfängt.",
+        "Answer3": "B) Ein T-Shirt mit einem persönlichen Foto-Aufdruck.",
+        "Answer4": "B) Der Käufer, wenn der Händler ihn vorab darüber informiert hat.",
+        "Answer5": "B) Das Gewährleistungsrecht.",
+        "Answer6": "C) 2 Jahre.",
+        "Answer7": "B) Wenn die Reparatur der Ware zweimal nicht geklappt hat."
       },
       "teil4": {
-        "Answer1": "B) Ihr Rucksack war kaputt und sie hatte keine Tasche dabei.",
-        "Answer2": "C) Zwei oder drei stabile Jutebeutel.",
-        "Answer3": "A) Sie vergisst sie beim spontanen Einkauf nach der Arbeit.",
-        "Answer4": "B) Einen zusammengefalteten Beutel in der Jacken- oder Arbeitstasche aufbewahren.",
-        "Answer5": "A) Sie verwendet waschbare Stoffnetze oder kauft unverpacktes Obst.",
-        "Answer6": "C) Dort gibt es viele unverpackte Produkte aus der Region.",
-        "Answer7": "B) Am Samstag um zehn Uhr vor dem Rathaus."
+        "Answer1": "A) Richtig",
+        "Answer2": "B) Falsch",
+        "Answer3": "A) Richtig",
+        "Answer4": "B) Falsch",
+        "Answer5": "A) Richtig"
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1qD3fjXMprCDY-5Xz1-msUH1DgA9_V8KbwxTInF0I0AE/gviz/tq?tqx=out:html&sheet=Key",

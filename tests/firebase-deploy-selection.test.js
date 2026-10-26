@@ -99,3 +99,9 @@ test("updated saved A2 writing questions and evidence redeploy the Firebase mark
     assert.deepEqual(plan.targets, ["api", "markCourseSubmissionAutomatically"]);
   }
 });
+
+test('rebuilt marking bundle and workbook snapshots deploy only their two runtime consumers', () => {
+ const plan = selectFirebaseDeployTargets({ changedPaths: ['functions/automaticMarkingPipeline.cjs', 'src/data/courseMarkingSnapshot.json', 'src/data/answers_dictionary.json'] });
+ assert.equal(plan.mode, 'targeted');
+ assert.deepEqual(plan.targets, ['api','markCourseSubmissionAutomatically']);
+});

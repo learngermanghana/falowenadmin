@@ -1,6 +1,6 @@
 {
   "repository": "learngermanghana/falowenexamtrainer",
-  "revision": "656e69643e651c2a53700178328d607fb6293b12",
+  "revision": "6890135b0fabe49b34aafa528471a3dadfd9739e",
   "answerKeys": {
     "A1 Greetings and Asking About Well-being 0.1": {
       "answers": {
@@ -1862,22 +1862,20 @@
     "B1 8.25 Online einkaufen ? Rechte und Risiken": {
       "answers": {
         "teil3": {
-          "Answer1": "B) Weil man bequem von zu Hause aus eine große Auswahl bestellen kann.",
-          "Answer2": "B) Sie verlangen Geld per Vorkasse, schicken die Ware aber nie ab.",
-          "Answer3": "B) Dass vertrauliche Daten und Kreditkartendaten missbraucht werden.",
-          "Answer4": "A) Ein 14-tägiges Widerrufsrecht ohne Angabe von Gründen.",
-          "Answer5": "A) Er kann den Vertrag stornieren und die Ware zurückschicken.",
-          "Answer6": "A) Man sollte das Impressum prüfen und Kundenbewertungen lesen.",
-          "Answer7": "C) Den Kauf auf Rechnung sowie etablierte Bezahldienste."
+          "Answer1": "B) Man kann den Kauf ohne Nennung von Gründen stornieren.",
+          "Answer2": "C) Sobald der Kunde das Paket zu Hause empfängt.",
+          "Answer3": "B) Ein T-Shirt mit einem persönlichen Foto-Aufdruck.",
+          "Answer4": "B) Der Käufer, wenn der Händler ihn vorab darüber informiert hat.",
+          "Answer5": "B) Das Gewährleistungsrecht.",
+          "Answer6": "C) 2 Jahre.",
+          "Answer7": "B) Wenn die Reparatur der Ware zweimal nicht geklappt hat."
         },
         "teil4": {
-          "Answer1": "B) Ihr Rucksack war kaputt und sie hatte keine Tasche dabei.",
-          "Answer2": "C) Zwei oder drei stabile Jutebeutel.",
-          "Answer3": "A) Sie vergisst sie beim spontanen Einkauf nach der Arbeit.",
-          "Answer4": "B) Einen zusammengefalteten Beutel in der Jacken- oder Arbeitstasche aufbewahren.",
-          "Answer5": "A) Sie verwendet waschbare Stoffnetze oder kauft unverpacktes Obst.",
-          "Answer6": "C) Dort gibt es viele unverpackte Produkte aus der Region.",
-          "Answer7": "B) Am Samstag um zehn Uhr vor dem Rathaus."
+          "Answer1": "A) Richtig",
+          "Answer2": "B) Falsch",
+          "Answer3": "A) Richtig",
+          "Answer4": "B) Falsch",
+          "Answer5": "A) Richtig"
         }
       },
       "answer_url": "https://docs.google.com/spreadsheets/d/1qD3fjXMprCDY-5Xz1-msUH1DgA9_V8KbwxTInF0I0AE/gviz/tq?tqx=out:html&sheet=Key",
@@ -2550,14 +2548,14 @@
     },
     "B1-8.25": {
       "assignmentKey": "B1-8.25",
-      "title": "Diskussionsbeitrag · Online einkaufen – Rechte und Risiken (ca. 80 Wörter)",
-      "situation": "Sie haben im Fernsehen eine Diskussionssendung zum Thema „Online einkaufen – Rechte und Risiken“ gesehen. Im Online-Gästebuch der Sendung lesen Sie Tims Meinung. Schreiben Sie Ihren Diskussionsbeitrag in etwa 25 Minuten (ca. 80 Wörter).\n\n„Ich kaufe fast alles im Internet, weil es schnell und bequem ist. Bisher hatte ich noch nie Probleme. Wer vorsichtig ist und bei bekannten Händlern bestellt, geht kaum ein Risiko ein. Außerdem hat man ja das Recht, Waren innerhalb von 14 Tagen zurückzusenden.“",
+      "title": "B1 Schreiben: Prüfungsaufgabe · Formelle E-Mail / Reklamation (ca. 40–50 Wörter)",
+      "situation": "Sie haben vor wenigen Tagen im Online-Shop „ElectroWorld“ ein elektronisches Gerät (z. B. ein Tablet oder eine Kaffeemaschine) bestellt. Heute ist das Paket angekommen, aber die Ware ist beschädigt / kaputt. Schreiben Sie eine formelle E-Mail an den Kundenservice von „ElectroWorld“ (ca. 40–50 Wörter). Bearbeiten Sie alle drei Punkte.",
       "points": [
-        "Äußern Sie Ihre Meinung zum Thema Online-Shopping sowie zu Risiken und Verbraucherrechten.",
-        "Begründen Sie Ihre Haltung.",
-        "Nennen Sie persönliche Erfahrungen oder ein Beispiel aus Ihrem Alltag bzw. Ihrem Heimatland."
+        "Grund des Schreibens: Geben Sie Ihren Kauf an (Datum, Produkt und Bestellnummer).",
+        "Problem beschreiben: Was ist beschädigt oder funktioniert nicht?",
+        "Lösung / Forderung: Bitten Sie um Umtausch, Reparatur oder Rückerstattung des Geldes."
       ],
-      "submissionNote": ""
+      "submissionNote": "Schreiben Sie ca. 40–50 Wörter. Vergessen Sie nicht die formelle Anrede und den Gruß."
     },
     "B1-9.26": {
       "assignmentKey": "B1-9.26",

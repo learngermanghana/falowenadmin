@@ -75,3 +75,16 @@ test('B1 Day 24 marks all 12 updated objectives and uses Laura four-point writin
   const wrong = computeObjectiveScore(reference, text.replace('6. C', '6. A').replace('1. Falsch', '1. Richtig'));
   assert.equal(wrong.correctCount, 10);
 });
+
+test('B1 Day 25 grades seven consumer-rights choices and five delivery statements with the ElectroWorld writing task', () => {
+ const reference = canonicalCourseReference('B1-8.25');
+ assert.match(reference.questionAwareWritingTask.taskSituationDe, /ElectroWorld/);
+ assert.match(reference.questionAwareWritingTask.taskSituationDe, /40–50 Wörter/);
+ assert.equal(reference.questionAwareWritingTask.taskPointsDe.length, 3);
+ assert.doesNotMatch(reference.questionAwareWritingTask.taskSituationDe, /Tims Meinung|Diskussionssendung/);
+ const text = 'TEIL 3\n1. B\n2. C\n3. B\n4. B\n5. B\n6. C\n7. B\nTEIL 4\n1. Richtig\n2. Falsch\n3. Richtig\n4. Falsch\n5. Richtig';
+ const score = computeObjectiveScore(reference, text);
+ assert.equal(score.totalCount, 12);
+ assert.equal(score.correctCount, 12);
+ assert.equal(computeObjectiveScore(reference, text.replace('2. C', '2. A')).correctCount, 11);
+});
