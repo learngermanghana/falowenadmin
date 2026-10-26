@@ -1,4 +1,5 @@
 import test from "node:test";
+import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { getInteractiveLessonOpening, isInteractiveOpeningStage } from "../src/data/interactiveLessonOpenings.js";
@@ -25,8 +26,9 @@ test("B1 Day 25 uses the published YouTube video only on slide 2 and retains R2 
   assert.equal(stages[2].variant, "interactive-listening");
   assert.equal(stages[2].audioKey, B1_DAY25_AUDIO_KEY);
   assert.equal(stages[2].audioKey, "b1/day-25/day-25.mp3");
-  assert.equal(stages[2].listeningItems.length, 7);
+  assert.equal(stages[2].listeningItems.length, 5);
   assert.equal(stages[2].transcript, B1_DAY25_LISTENING.transcript);
+  assert.equal(stages[2].transcript.length, 0, "do not invent a transcript for the revised audio");
   assert.equal(stages[2].musicVideo, undefined);
   assert.equal(isInteractiveOpeningStage("B1-8.25", "warmup"), false);
   assert.equal(isInteractiveOpeningStage("B1-8.25", "knowledge"), true);
@@ -51,3 +53,24 @@ test("B1 Day 24 original music + reading format and A2 signed-audio lessons rema
     assert.equal(stages.find((stage) => stage.id === "knowledge").variant, "interactive-listening");
   }
 });
+
+
+test("B1 Day 25 projector scenario remains scrollable and action buttons stay within a safe area", () => {
+  const css = requireCss();
+  const presenter = requirePresenter();
+  assert.match(css, /presenter-has-day25-scenario/);
+  assert.match(css, /presenter-content-day25-scenario/);
+  assert.match(css, /overflow-y:\s*auto/);
+  assert.match(css, /scroll-padding-bottom:\s*6\.5rem/);
+  assert.match(css, /presenter-career-controls/);
+  assert.match(presenter, /isDay25ScenarioStage/);
+  assert.match(presenter, /presenter-has-day25-scenario/);
+  assert.match(presenter, /presenter-content-day25-scenario/);
+});
+
+function requireCss() {
+  return readFileSync(new URL("../src/components/TeachingSlidePresenter.css", import.meta.url), "utf8");
+}
+function requirePresenter() {
+  return readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
+}

@@ -3725,7 +3725,7 @@
         "label": "Teil 2 Schreiben",
         "hasReferenceAnswers": false,
         "gradingMode": "ai_written_response",
-        "instruction": "Grade the B1 online-shopping guestbook discussion (about 80 German words). Check the student's own position on online shopping, risks and consumer rights, a reasoned argument, and a concrete personal or home-country example. Do not grade this as a formal complaint letter or require a greeting."
+        "instruction": "Grade the formal B1 ElectroWorld complaint email (about 40–50 German words). Check formal greeting and closing, purchase details (date, product, order number), a clear description of the damage, and a polite request for exchange, repair, or a refund. Do not grade this as a forum discussion."
       },
       "teil3": {
         "label": "Teil 3 Lesen",
@@ -3737,7 +3737,7 @@
         "label": "Teil 4 Hören",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
-        "instruction": "Mark the seven A/B/C answers against the actual Day 25 sustainable-shopping dialogue (b1/day-25/day-25.mp3). Do not use the old online-shopping consumer-rights audio or 5-item Richtig/Falsch key."
+        "instruction": "Mark exactly five A=Richtig/B=Falsch answers against the updated Day 25 delivery-problem recording (b1/day-25/day-25.mp3). Use the approved five-answer key; do not grade the obsolete seven-item sustainable-shopping dialogue."
       }
     }
   },

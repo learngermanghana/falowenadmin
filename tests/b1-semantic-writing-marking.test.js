@@ -57,11 +57,11 @@ test("canonical B1 spec overrides stale registry metadata", () => {
     submission: { assignmentKey: "B1-8.25", level: "B1" },
   });
 
-  assert.equal(task.textType, "opinion_essay");
-  assert.equal(task.register, "neutral");
+  assert.equal(task.textType, "formal_email");
+  assert.equal(task.register, "formal");
   assert.equal(task.taskPoints.length, 3);
   assert.equal(task.rubricVersion, B1_WRITING_RUBRIC_VERSION);
-  assert.match(task.taskText, /guestbook discussion/i);
+  assert.match(task.taskText, /formal 40.50.word email to ElectroWorld/i);
 });
 
 test("complete B1-1.2 friendship email is 3/3 and keeps its language score", () => {

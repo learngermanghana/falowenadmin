@@ -437,19 +437,19 @@ export const B1_VOCABULARY_QUESTIONS = Object.freeze({
   "B1-8.25": [
     {
       "term": "Meiner Meinung nach hat Online-Shopping viele Vorteile, aber ...",
-      "questionDe": "Du antwortest auf Tims Forumsbeitrag und möchtest Vorteile sowie deine Bedenken ausdrücken. Wie beginnst du deine persönliche Meinung?"
+      "questionDe": "Du diskutierst vor einer Bestellung über Vorteile und Risiken von Online-Shopping. Wie beginnst du deine persönliche Meinung?"
     },
     {
       "term": "Einerseits ist es bequem, andererseits gibt es Risiken.",
       "questionDe": "Du möchtest in einem Satz den Vorteil der Bequemlichkeit und die Gefahren beim Online-Einkauf gegenüberstellen. Wie formulierst du das?"
     },
     {
-      "term": "Ich stimme Tim zu, weil ...",
-      "questionDe": "Du bist derselben Meinung wie Tim und möchtest auch einen Grund nennen. Wie beginnst du deine begründete Zustimmung?"
+      "term": "Ich schreibe Ihnen, weil meine Bestellung beschädigt angekommen ist.",
+      "questionDe": "Du schreibst an den ElektroWorld-Kundenservice, weil das gelieferte Gerät beschädigt ist. Wie erläuterst du höflich den Grund deiner Nachricht?"
     },
     {
-      "term": "Ein Beispiel aus meinem Alltag ist ...",
-      "questionDe": "Dein Forumsbeitrag braucht eine persönliche Erfahrung aus deinem täglichen Leben. Wie leitest du ein eigenes Beispiel ein?"
+      "term": "Das Produkt ist beschädigt. Deshalb bitte ich um Ersatz.",
+      "questionDe": "Du hast eine beschädigte Bestellung erhalten und brauchst eine Lösung. Wie beschreibst du das Problem und bittest höflich um Ersatz?"
     }
   ],
   "B1-9.26": [

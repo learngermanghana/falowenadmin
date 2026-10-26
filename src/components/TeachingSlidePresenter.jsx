@@ -195,6 +195,9 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
   const [activeReadingAssignment, setActiveReadingAssignment] = useState(null);
   const stage = stages[stageIndex] || stages[0];
   const isMusicVideoStage = stage?.variant === "interactive-music-video";
+  // The Day 25 oral challenge has a taller sequence of cards than a normal
+  // slide. Give it a dedicated scroll-safe layout without altering other days.
+  const isDay25ScenarioStage = stage?.type === "scenario-challenge" && String(slide?.assignmentId || "").toUpperCase() === "B1-8.25";
   const isMusicReadingStage = stage?.variant === "interactive-music-reading";
   // Selected A2/B1 chapters use the same interactive renderer, but only
   // verified Hören chapters replace the ordinary Wissensimpuls.
@@ -705,7 +708,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
 
   return (
     <div ref={presenterShellRef} className={`presenter-shell ${focusMode ? "is-presentation-mode" : ""}`} role="dialog" aria-modal="true" aria-label="Teaching slide presenter">
-      <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""} ${focusMode && showPresenterTimer ? "presenter-has-focus-stage-timer" : ""} ${interactiveOpening ? "presenter-has-interactive-opening" : ""} ${isMusicVideoStage ? "presenter-has-music-video" : ""} ${stage?.examMode ? "is-c2-exam-mode" : ""} ${String(stage.title || "").length > 58 ? "presenter-title-long" : String(stage.title || "").length > 38 ? "presenter-title-medium" : ""}`}>
+      <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""} ${focusMode && showPresenterTimer ? "presenter-has-focus-stage-timer" : ""} ${interactiveOpening ? "presenter-has-interactive-opening" : ""} ${isMusicVideoStage ? "presenter-has-music-video" : ""} ${isDay25ScenarioStage ? "presenter-has-day25-scenario" : ""} ${stage?.examMode ? "is-c2-exam-mode" : ""} ${String(stage.title || "").length > 58 ? "presenter-title-long" : String(stage.title || "").length > 38 ? "presenter-title-medium" : ""}`}>
         {focusMode && showPresenterTimer ? (
           <div
             className={`presenter-focus-stage-timer ${timerExpired ? "is-expired" : ""}`}
@@ -812,7 +815,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
           onReadingAssignmentChange={setActiveReadingAssignment}
         />
 
-        <main ref={contentRef} className={`presenter-content presenter-content-${stage.type} presenter-stage-${stage.id} presenter-fit-${fitMode} ${interactiveOpening ? "presenter-content-interactive" : ""} ${isMusicVideoStage ? "presenter-content-music-video" : ""} ${stagePhoto ? `presenter-has-photo presenter-photo-${stagePhoto.density}` : ""}`}>
+        <main ref={contentRef} className={`presenter-content presenter-content-${stage.type} presenter-stage-${stage.id} presenter-fit-${fitMode} ${interactiveOpening ? "presenter-content-interactive" : ""} ${isMusicVideoStage ? "presenter-content-music-video" : ""} ${isDay25ScenarioStage ? "presenter-content-day25-scenario" : ""} ${stagePhoto ? `presenter-has-photo presenter-photo-${stagePhoto.density}` : ""}`}>
           {stagePhoto ? (
             <figure className="presenter-slide-photo" aria-hidden="true">
               <img src={stagePhoto.src} alt="" width="640" height="420" loading="lazy" decoding="async" draggable="false" />

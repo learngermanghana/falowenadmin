@@ -195,12 +195,14 @@ const RULES = {
   ],
   "B1-8.25": [
     makeCountRule([
-      /\b(?:ich\s+(?:finde|denke|stimme)|meiner\s+meinung|meines\s+erachtens|ich\s+bin\s+der\s+meinung)\b/i,
-      /\b(?:risik\w*|fake[- ]?shop\w*|betrug|datenschutz|unsicher|sichere\s+zahlung)\b/i,
-      /\b(?:widerruf\w*|verbraucherrecht\w*|r[uü]cksend\w*|r[uü]ckgab\w*|vierzehn\s+tage|14\s+tage)\b/i
-    ], 2),
-    makeRule(/\b(?:weil|denn|deshalb|daher|aus\s+diesem\s+grund|da\s+ich)\b/i),
-    makeRule(/\b(?:ich\s+habe|ich\s+hatte|bei\s+mir|meine\s+erfahrung|meiner\s+erfahrung|in\s+meinem\s+heimatland|in\s+ghana|bei\s+uns|zum\s+beispiel)\b/i)
+      /\b(?:am\s+\d{1,2}[.]|am\s+\d{1,2}\.\s*\w+|vor\s+\w+\s+tagen?)\b/i,
+      /\b(?:tablet|handy|smartphone|kaffeemaschine|kopfhörer|ger[aä]t|laptop|telefon)\b/i,
+      /\b(?:bestellnummer|bestellung\s*(?:nr\.?|nummer)|auftragsnummer|bestell-?nr\.?)\b/i,
+    ], 3, "Provide purchase date, product and order number."),
+    makeRule(/\b(?:besch[aä]digt|kaputt|defekt|funktioniert\s+nicht|geht\s+nicht|zerbrochen|fehlerhaft|l[aä]sst\s+sich\s+nicht)\b/i,
+      "Describe what is damaged or does not work."),
+    makeRule(/\b(?:(?:bitte|bitt(?:e|en)|m[oö]chte|w[uü]rde\s+gern|k[oö]nnten\s+sie)[^.!?]{0,110}(?:ersatz|umtausch|austausch|reparatur|r[uü]ckerstattung|erstattung|geld\s+zur[uü]ck)|(?:ersatz|umtausch|reparatur|r[uü]ckerstattung)[^.!?]{0,80}bitte)\b/i,
+      "Ask politely for a concrete remedy such as exchange, repair or refund."),
   ],
   "B1-9.26": [
     makeRule(/\b(?:meiner\s+meinung|ich\s+(?:denke|finde|glaube|stimme)|ich\s+bin\s+der\s+meinung|ich\s+sehe\s+das|ich\s+bin\s+(?:einverstanden|anderer\s+meinung)|meines\s+erachtens)\b/i),

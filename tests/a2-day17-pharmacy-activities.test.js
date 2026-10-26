@@ -121,26 +121,26 @@ test("shared fullscreen renderer includes audio overview and optional post-audio
 });
 
 
-test("B1 Day 25 classroom Hören uses seven answers and the matching uploaded R2 audio", () => {
+test("B1 Day 25 classroom Hören uses the current five Richtig/Falsch answers and signed R2 audio", () => {
   const lesson = getInteractiveLessonOpening("B1-8.25");
   assert.equal(lesson.listening.audioKey, "b1/day-25/day-25.mp3");
   assert.equal(B1_DAY25_AUDIO_KEY, lesson.listening.audioKey);
-  assert.equal(lesson.listening.questions.length, 7);
-  assert.equal(B1_DAY25_LISTENING_QUESTIONS.length, 7);
-  assert.deepEqual(lesson.listening.questions.map(q=>q.answer[0]), ["B","C","A","B","A","C","B"]);
+  assert.equal(lesson.listening.questions.length, 5);
+  assert.equal(B1_DAY25_LISTENING_QUESTIONS.length, 5);
+  assert.deepEqual(lesson.listening.questions.map(q=>q.answer[0]), ["A","B","A","B","A"]);
+  assert.equal(B1_DAY25_TRANSCRIPT.length, 0);
   for (const q of lesson.listening.questions) {
-    assert.equal(q.options.length, 3);
-    assert.deepEqual(q.options.map(x => x[0]), ["A", "B", "C"]);
+    assert.equal(q.options.length, 2);
+    assert.deepEqual(q.options.map(x => x[0]), ["A", "B"]);
     assert.equal(q.answer, q.options[q.correctIndex]);
-    assert.ok(q.evidence && q.hint.includes(q.evidence));
-    assert.ok(B1_DAY25_TRANSCRIPT.map(x=>x[1]).join(" ").includes(q.evidence));
+    assert.ok(q.hint && q.explanation);
   }
   const slide = getSlidesByCourse("B1").find(x=>x.assignmentId==="B1-8.25");
   const stages = buildTeachingPresenterStages(slide, slide.topic);
   const knowledge = stages.find(stage=>stage.id==="knowledge");
   assert.equal(knowledge.type,"knowledge");
   assert.equal(knowledge.variant,"interactive-listening");
-  assert.equal(knowledge.listeningItems.length,7);
+  assert.equal(knowledge.listeningItems.length,5);
 });
 
 test("A2 Day 18 Hören maps uploaded Bank Richtig/Falsch items without changing other lessons", () => {
