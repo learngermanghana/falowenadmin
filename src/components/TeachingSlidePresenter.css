@@ -5161,3 +5161,89 @@
     padding: 4.5rem .65rem 5rem;
   }
 }
+
+
+/* B1 Day 25 oral consumer challenge: at laptop / projector heights the
+   three-step roadmap and model-answer controls must not disappear beneath
+   the fullscreen navigation dock. Scope this to Day 25 only. */
+.presenter-stage.presenter-has-day25-scenario > .presenter-content.presenter-content-day25-scenario {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  align-content: start;
+  justify-content: flex-start;
+  scroll-padding-bottom: 6.5rem;
+  padding-bottom: clamp(4.8rem, 9vh, 6.5rem);
+}
+
+.presenter-stage.is-focus-mode.presenter-has-day25-scenario > .presenter-content.presenter-content-day25-scenario {
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  box-sizing: border-box;
+  padding: clamp(7rem, 12vh, 8.5rem) clamp(.85rem, 3.2vw, 2.8rem) clamp(5rem, 10vh, 7rem);
+}
+
+.presenter-has-day25-scenario .presenter-career-challenge {
+  width: min(100%, 1040px);
+  gap: clamp(.4rem, 1vh, .75rem);
+}
+.presenter-has-day25-scenario .presenter-career-challenge-heading h1 {
+  font-size: clamp(1.45rem, 2.5vw, 2.1rem);
+  max-width: none;
+  text-align: left;
+  margin-inline: 0;
+}
+.presenter-has-day25-scenario .presenter-career-hero {
+  padding: clamp(.7rem, 1.3vw, 1rem);
+  gap: clamp(.65rem, 1.4vw, 1rem);
+}
+.presenter-has-day25-scenario .presenter-career-hero > div {
+  margin-inline-start: 0;
+}
+.presenter-has-day25-scenario .presenter-career-hero h2 {
+  font-size: clamp(1.25rem, 2.35vw, 1.95rem);
+}
+.presenter-has-day25-scenario .presenter-career-emoji {
+  flex-basis: clamp(52px, 6vw, 76px);
+  width: clamp(52px, 6vw, 76px);
+  border-radius: 14px;
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+}
+.presenter-has-day25-scenario .presenter-career-milestone {
+  padding: .55rem .65rem;
+}
+.presenter-has-day25-scenario .presenter-career-question {
+  gap: .45rem;
+  padding: clamp(.75rem, 1.3vw, 1rem);
+}
+.presenter-has-day25-scenario .presenter-career-question h2 {
+  font-size: clamp(1.2rem, 2.2vw, 1.7rem);
+  max-width: none;
+  margin-inline: 0;
+  text-align: left;
+}
+.presenter-has-day25-scenario .presenter-career-controls {
+  position: relative;
+  z-index: 1;
+  flex-wrap: wrap;
+  padding-bottom: .45rem;
+}
+.presenter-has-day25-scenario .presenter-career-controls > button {
+  min-height: 44px;
+  padding: .58rem .78rem;
+}
+@media (max-width: 760px) {
+  .presenter-stage.is-focus-mode.presenter-has-day25-scenario > .presenter-content.presenter-content-day25-scenario {
+    padding: 7.5rem .7rem 6.5rem;
+  }
+  .presenter-has-day25-scenario .presenter-career-hero {
+    align-items: start;
+  }
+  .presenter-has-day25-scenario .presenter-career-roadmap {
+    grid-template-columns: 1fr;
+  }
+}
