@@ -136,20 +136,21 @@ test("Day 24 scores all seven current reading statements", () => {
   assert.match(listening, /excludes?/i);
 });
 
-test("Day 25 teacher guide agrees with required Schreiben, Lesen and seven-question sustainable-shopping Hören", () => {
+test("Day 25 teacher guide matches formal Schreiben, seven Lesen and five delivery-problem Hören questions", () => {
   const slide = getB1WorkbookAlignedSlideDay21To28("B1-8.25");
   const contract = contractByAssignmentId["B1-8.25"];
   assert.deepEqual(contract.expectedParts, ["teil2","teil3","teil4"]);
   assert.deepEqual(contract.writingParts, ["teil2"]);
   assert.deepEqual(contract.referenceAnswerParts, ["teil3","teil4"]);
   assert.equal(Object.keys(contract.answers.teil3).length, 7);
-  assert.equal(Object.keys(contract.answers.teil4).length, 7);
-  assert.match(part(slide, "Teil 2 · Schreiben").detailEn, /Tim.*80-word|80-word.*Tim/i);
+  assert.equal(Object.keys(contract.answers.teil4).length, 5);
+  assert.match(part(slide, "Teil 2 · Schreiben").detailEn, /ElectroWorld.*40.50|40.50.*ElectroWorld/i);
   assert.match(part(slide, "Teil 3 · Lesen").detailEn, /press article about online-shopping/i);
   assert.match(part(slide, "Teil 4 · Hören").detailEn, /b1\/day-25\/day-25\.mp3/i);
   assert.match(slide.workbookConnection.subtitle, /All three assignments are submitted/i);
+  assert.match(slide.workbookConnection.subtitle, /five Richtig.Falsch/i);
   const guideText=JSON.stringify({teacherNotesEn:slide.teacherNotesEn,parts:slide.workbookConnection.parts,subtitle:slide.workbookConnection.subtitle});
-  assert.doesNotMatch(guideText,/no submitted Schreiben|no submitted Teil 2|separate mixed reading|excludes teil4|SELF-CHECK\/UNSCORED/i);
+  assert.doesNotMatch(guideText,/no submitted Schreiben|no submitted Teil 2|separate mixed reading|excludes teil4|SELF-CHECK\/UNSCORED|Tim.s opinion|seven sustainable.shopping/i);
 });
 test("Day 26 teacher guide agrees with new four-matching Lesen, five-item Hören and Markus forum Schreiben", () => {
   const slide = getB1WorkbookAlignedSlideDay21To28("B1-9.26");
