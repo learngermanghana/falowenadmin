@@ -102,12 +102,14 @@ export default function InteractiveLessonOpening({ stage, slide }) {
       {lesson.listening.youtubeId
         ? <p className="pharm-playback-note">Nach dem Hören: Klick auf „Antworten einzeln besprechen“. Die Lösungen bleiben zunächst verborgen.</p>
         : <label className="pharm-review-checkbox"><input type="checkbox" checked={autoReview} onChange={(event) => setAutoReview(event.target.checked)} /> Nach Audioende automatisch zu Frage 1 wechseln (optional)</label>}
-      <details className="pharm-script" open={showTranscript} onToggle={(event) => setShowTranscript(event.currentTarget.open)}>
-        <summary>{showTranscript ? (music ? "Liedtext-Auszüge ausblenden" : "Skript ausblenden") : (music ? "Liedtext-Auszüge anzeigen" : "Skript für die Klasse anzeigen")} <span>OPTIONAL</span></summary>
-        <div className="pharm-transcript" lang="de">{(stage.transcript?.length ? stage.transcript : lesson.listening.transcript).map(([speaker, line],index)=>
-          <p key={index}><b className={speaker === "A" ? "is-a" : "is-b"}>{speaker}</b> <span>{line}</span></p>
-        )}</div>
-      </details>
+      {(stage.transcript?.length || lesson.listening.transcript?.length) ? (
+        <details className="pharm-script" open={showTranscript} onToggle={(event) => setShowTranscript(event.currentTarget.open)}>
+          <summary>{showTranscript ? (music ? "Liedtext-Auszüge ausblenden" : "Skript ausblenden") : (music ? "Liedtext-Auszüge anzeigen" : "Skript für die Klasse anzeigen")} <span>OPTIONAL</span></summary>
+          <div className="pharm-transcript" lang="de">{(stage.transcript?.length ? stage.transcript : lesson.listening.transcript).map(([speaker, line],index)=>
+            <p key={index}><b className={speaker === "A" ? "is-a" : "is-b"}>{speaker}</b> <span>{line}</span></p>
+          )}</div>
+        </details>
+      ) : null}
     </div>}
     {(!listening || reviewMode) ? <>
     {listening && <button type="button" className="pharm-btn pharm-btn-soft" onClick={() => setReviewMode(false)}>{music ? "← Alle Musikfragen anzeigen" : "← Alle Hörfragen anzeigen"}</button>}
