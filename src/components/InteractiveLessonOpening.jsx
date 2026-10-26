@@ -20,6 +20,7 @@ function RevealPanel({ activity }) {
 export default function InteractiveLessonOpening({ stage, slide }) {
   const lesson = getInteractiveLessonOpening(slide?.assignmentId);
   const listening = stage.id === "knowledge" && Boolean(lesson?.listening);
+  const music = listening && lesson.listening.mediaType === "music";
   const [step, setStep] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [showHint, setShowHint] = useState(false);
@@ -79,15 +80,15 @@ export default function InteractiveLessonOpening({ stage, slide }) {
     }
   }
 
-  return <section className="pharm-activity" aria-label={listening ? `${lesson.listening.title} Hören` : `${lesson.title} Warm-up`}>
+  return <section className="pharm-activity" aria-label={music ? `${lesson.listening.title} Musik` : listening ? `${lesson.listening.title} Hören` : `${lesson.title} Warm-up`}>
     <div className="pharm-head">
       <div>
-        <span className="pharm-eyebrow">{slide.course} · TAG {slide.dayNumber} · {listening ? "HÖREN / HÖRDETEKTIV" : "INTERAKTIVER WARM-UP"}</span>
+        <span className="pharm-eyebrow">{slide.course} · TAG {slide.dayNumber} · {music ? "MUSIK / LIED VERSTEHEN" : listening ? "HÖREN / HÖRDETEKTIV" : "INTERAKTIVER WARM-UP"}</span>
         <h1>{listening ? lesson.listening.title : lesson.title}</h1>
       </div>
     </div>
     {listening && <div className="pharm-audio">
-      <div className="pharm-audio-label"><span aria-hidden="true">♫</span><div><strong>{lesson.listening.title}</strong><small>Lies zuerst die Fragen. Höre danach ohne das Skript zu.</small></div></div>
+      <div className="pharm-audio-label"><span aria-hidden="true">♫</span><div><strong>{lesson.listening.title}</strong><small>{music ? "Höre das Lied und beantworte die Fragen. Das Video zeigt den Liedtext." : "Lies zuerst die Fragen. Höre danach ohne das Skript zu."}</small></div></div>
       {lesson.listening.playbackNote ? <p className="pharm-playback-note" role="note">{lesson.listening.playbackNote} · Fragen bleiben während des Abspielens sichtbar.</p> : null}
       {lesson.listening.youtubeId ? (
         <MusicVideoEmbed videoId={lesson.listening.youtubeId} title={lesson.listening.title} variant="listening" />
@@ -102,21 +103,21 @@ export default function InteractiveLessonOpening({ stage, slide }) {
         ? <p className="pharm-playback-note">Nach dem Hören: Klick auf „Antworten einzeln besprechen“. Die Lösungen bleiben zunächst verborgen.</p>
         : <label className="pharm-review-checkbox"><input type="checkbox" checked={autoReview} onChange={(event) => setAutoReview(event.target.checked)} /> Nach Audioende automatisch zu Frage 1 wechseln (optional)</label>}
       <details className="pharm-script" open={showTranscript} onToggle={(event) => setShowTranscript(event.currentTarget.open)}>
-        <summary>{showTranscript ? "Skript ausblenden" : (lesson.listening.mediaType === "music" ? "Liedtext-Auszüge anzeigen" : "Skript für die Klasse anzeigen")} <span>OPTIONAL</span></summary>
+        <summary>{showTranscript ? (music ? "Liedtext-Auszüge ausblenden" : "Skript ausblenden") : (music ? "Liedtext-Auszüge anzeigen" : "Skript für die Klasse anzeigen")} <span>OPTIONAL</span></summary>
         <div className="pharm-transcript" lang="de">{(stage.transcript?.length ? stage.transcript : lesson.listening.transcript).map(([speaker, line],index)=>
           <p key={index}><b className={speaker === "A" ? "is-a" : "is-b"}>{speaker}</b> <span>{line}</span></p>
         )}</div>
       </details>
     </div>}
     {(!listening || reviewMode) ? <>
-    {listening && <button type="button" className="pharm-btn pharm-btn-soft" onClick={() => setReviewMode(false)}>← Alle Hörfragen anzeigen</button>}
+    {listening && <button type="button" className="pharm-btn pharm-btn-soft" onClick={() => setReviewMode(false)}>{music ? "← Alle Musikfragen anzeigen" : "← Alle Hörfragen anzeigen"}</button>}
     <div className="pharm-progress" aria-label="Activity step selection">
       {items.map((item,index)=><button type="button" key={index} className={index === step ? "is-current" : index < step ? "is-done" : ""} onClick={() => chooseStep(index)} aria-current={index === step ? "step" : undefined}>
         <span className="pharm-progress-bar" /><span>{index+1}{!listening ? ` · ${item.minutes} min` : ""}</span>
       </button>)}
     </div>
     <div className="pharm-challenge">
-      <div className="pharm-challenge-kicker"><span>AUFGABE {step+1} VON {items.length}</span><span>{listening ? "HÖRVERSTEHEN" : `${activity.minutes} MIN · ${activity.label.toUpperCase()}`}</span></div>
+      <div className="pharm-challenge-kicker"><span>AUFGABE {step+1} VON {items.length}</span><span>{music ? "LIED VERSTEHEN" : listening ? "HÖRVERSTEHEN" : `${activity.minutes} MIN · ${activity.label.toUpperCase()}`}</span></div>
       {activity.context && <div className="pharm-context">{activity.context}</div>}
       <h2>{activity.prompt}</h2>
       {Array.isArray(activity.options) && <div className="pharm-options">
@@ -138,10 +139,10 @@ export default function InteractiveLessonOpening({ stage, slide }) {
       <button type="button" className="pharm-btn pharm-btn-next" onClick={() => chooseStep(step===items.length-1 ? 0 : step+1)}>{step===items.length-1 ? "Neu starten ↻" : "Nächste Aufgabe →"}</button>
     </div>
     </> : <section className="pharm-overview" aria-label="Alle Hörfragen vor dem Hören">
-      <div className="pharm-overview-head"><div><span className="pharm-eyebrow">VOR DEM HÖREN · 1 MINUTE</span><h2>Lies zuerst alle Fragen</h2><p>Notiere nur kurze Antworten oder die Buchstaben – nicht die ganzen Fragen.</p></div><button type="button" className="pharm-btn pharm-btn-primary" onClick={() => { setReviewMode(true); chooseStep(0); }}>Antworten einzeln besprechen →</button></div>
+      <div className="pharm-overview-head"><div><span className="pharm-eyebrow">{music ? "VOR DEM LIED" : "VOR DEM HÖREN"} · 1 MINUTE</span><h2>Lies zuerst alle Fragen</h2><p>Notiere nur kurze Antworten oder die Buchstaben – nicht die ganzen Fragen.</p></div><button type="button" className="pharm-btn pharm-btn-primary" onClick={() => { setReviewMode(true); chooseStep(0); }}>Antworten einzeln besprechen →</button></div>
       {lesson.listening.previewWords?.length ? <div className="pharm-word-list"><b>Wichtige Wörter:</b> {lesson.listening.previewWords.map(word => <span key={word}>{word}</span>)}</div> : null}
       <ol className="pharm-question-overview">{items.map((q,index) => <li key={index}><strong>{index + 1}. {q.prompt}</strong><div>{(q.options || []).map((option,i) => <span key={i}>{String.fromCharCode(65+i)}. {option}</span>)}</div></li>)}</ol>
     </section>}
-    <p className="pharm-footnote">Lehrer steuert die Antworten. Während des Hörens wechseln die Fragen nicht automatisch. Keine Schülerbewertung.</p>
+    <p className="pharm-footnote">Lehrer steuert die Antworten. Die Fragen wechseln nicht automatisch. {music ? "Musiktraining über YouTube – unbewertete Unterrichtsübung." : "Keine Schülerbewertung."}</p>
   </section>;
 }
