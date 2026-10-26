@@ -3629,15 +3629,21 @@
   "B1 8.24 Konsum und Nachhaltigkeit": {
     "answers": {
       "teil3": {
+        "Answer1": "A) Der Kauf neuer Produkte.",
+        "Answer2": "B) Sie gelten als modern und umweltfreundlich.",
+        "Answer3": "B) Sie reduziert Müll und Emissionen.",
+        "Answer4": "A) Ehrenamtliche Experten reparieren gemeinsam mit Besuchern defekte Sachen.",
+        "Answer5": "B) Weil sie oft teurer sind als herkömmliche Waren.",
+        "Answer6": "C) Irreführende Werbung mit angeblicher Umweltfreundlichkeit.",
+        "Answer7": "B) Kritische Konsumenten und gesetzliche Vorschriften."
+      },
+      "teil4": {
         "Answer1": "B) Falsch",
         "Answer2": "A) Richtig",
-        "Answer3": "B) Falsch",
+        "Answer3": "A) Richtig",
         "Answer4": "B) Falsch",
-        "Answer5": "A) Richtig",
-        "Answer6": "B) Falsch",
-        "Answer7": "A) Richtig"
-      },
-      "teil4": {}
+        "Answer5": "A) Richtig"
+      }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1WdDtfi_8MfBJpXrZUj_ypsDqyyAp3DuMhIiB_FNjGnc/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1WdDtfi_8MfBJpXrZUj_ypsDqyyAp3DuMhIiB_FNjGnc/edit",

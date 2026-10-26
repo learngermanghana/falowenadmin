@@ -1,6 +1,6 @@
 {
   "repository": "learngermanghana/falowenexamtrainer",
-  "revision": "c72913c6201e00fff502e785ef9d6574e0681201",
+  "revision": "656e69643e651c2a53700178328d607fb6293b12",
   "answerKeys": {
     "A1 Greetings and Asking About Well-being 0.1": {
       "answers": {
@@ -1838,15 +1838,21 @@
     "B1 8.24 Konsum und Nachhaltigkeit": {
       "answers": {
         "teil3": {
+          "Answer1": "A) Der Kauf neuer Produkte.",
+          "Answer2": "B) Sie gelten als modern und umweltfreundlich.",
+          "Answer3": "B) Sie reduziert Müll und Emissionen.",
+          "Answer4": "A) Ehrenamtliche Experten reparieren gemeinsam mit Besuchern defekte Sachen.",
+          "Answer5": "B) Weil sie oft teurer sind als herkömmliche Waren.",
+          "Answer6": "C) Irreführende Werbung mit angeblicher Umweltfreundlichkeit.",
+          "Answer7": "B) Kritische Konsumenten und gesetzliche Vorschriften."
+        },
+        "teil4": {
           "Answer1": "B) Falsch",
           "Answer2": "A) Richtig",
-          "Answer3": "B) Falsch",
+          "Answer3": "A) Richtig",
           "Answer4": "B) Falsch",
-          "Answer5": "A) Richtig",
-          "Answer6": "B) Falsch",
-          "Answer7": "A) Richtig"
-        },
-        "teil4": {}
+          "Answer5": "A) Richtig"
+        }
       },
       "answer_url": "https://docs.google.com/spreadsheets/d/1WdDtfi_8MfBJpXrZUj_ypsDqyyAp3DuMhIiB_FNjGnc/gviz/tq?tqx=out:html&sheet=Key",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1WdDtfi_8MfBJpXrZUj_ypsDqyyAp3DuMhIiB_FNjGnc/edit",
@@ -2532,16 +2538,15 @@
     },
     "B1-8.24": {
       "assignmentKey": "B1-8.24",
-      "title": "Ist es wichtig, beim Konsum auf Nachhaltigkeit zu achten? Schreiben Sie Ihre Meinung.",
-      "situation": "Lesen Sie Pauls Meinung. Schreiben Sie danach Ihre eigene Meinung, begründen Sie Ihren Standpunkt und nennen Sie konkrete Beispiele.\n\nIn der heutigen Zeit ist es immer wichtiger, nachhaltig zu konsumieren. Ich stimme dem zu, denn durch bewusstes Einkaufen können wir die Umwelt schützen und Ressourcen sparen. Viele Produkte, die wir kaufen, haben einen großen Einfluss auf die Natur, zum Beispiel durch Verpackungen oder den CO₂-Ausstoß bei der Herstellung. Dennoch ist es manchmal schwierig, nachhaltige Alternativen zu finden, vor allem bei den Preisen. Ich finde, dass jeder von uns kleine Schritte machen kann, wie weniger Plastik zu verwenden oder Secondhand zu kaufen. Was denken Sie darüber?",
+      "title": "B1 Schreiben Teil 1: Prüfungsaufgabe · Konsum und Nachhaltigkeit",
+      "situation": "Sie haben im Fernsehen eine Diskussion zum Thema „Konsum und Nachhaltigkeit – Brauchen wir wirklich so viel?“ gesehen. Im Online-Gästebuch der Sendung finden Sie Lauras Meinung. Schreiben Sie nun einen Blogbeitrag / Forenbeitrag zum Thema (ca. 80 Wörter). Schreiben Sie zu allen vier Punkten.\n\n„Ich versuche seit einigen Monaten, weniger neue Kleidung und Plastikprodukte zu kaufen. Viele Dinge kann man gebraucht kaufen oder reparieren. Das spart Geld und schont die Umwelt!“",
       "points": [
-        "Sagen Sie, ob Sie Paul zustimmen oder nicht.",
-        "Erklären Sie, warum nachhaltiger Konsum wichtig sein kann.",
-        "Nennen Sie Schwierigkeiten oder Nachteile nachhaltiger Alternativen.",
-        "Geben Sie konkrete Beispiele für nachhaltigen Konsum.",
-        "Formulieren Sie einen klaren Schluss."
+        "Meinung: Äußern Sie Ihre Meinung zum Thema nachhaltiger Konsum.",
+        "Gründe: Nennen Sie Gründe, warum dieses Thema heutzutage wichtig ist.",
+        "Alternativen: Nennen Sie andere Möglichkeiten, wie man im Alltag nachhaltiger leben kann.",
+        "Vor- und Nachteile: Nennen Sie Vor- oder Nachteile von nachhaltigem Konsum."
       ],
-      "submissionNote": ""
+      "submissionNote": "Schreiben Sie ca. 80 Wörter und bearbeiten Sie alle vier Punkte."
     },
     "B1-8.25": {
       "assignmentKey": "B1-8.25",

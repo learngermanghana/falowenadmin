@@ -61,3 +61,17 @@ Mit freundlichen Grüßen
 Felix`;
   assert.deepEqual(evaluateA1WritingTaskEvidence(task, text).map(row => row.status), Array(6).fill('met'));
 });
+
+test('B1 Day 24 marks all 12 updated objectives and uses Laura four-point writing task', () => {
+  const reference = canonicalCourseReference('B1-8.24');
+  const writing = reference.questionAwareWritingTask;
+  assert.match(writing.taskSituationDe, /Laura|neue Kleidung und Plastikprodukte/);
+  assert.equal(writing.taskPointsDe.length, 4);
+  assert.doesNotMatch(writing.taskSituationDe, /Pauls Meinung/);
+  const text = 'TEIL 3\n1. A\n2. B\n3. B\n4. A\n5. B\n6. C\n7. B\nTEIL 4\n1. Falsch\n2. Richtig\n3. Richtig\n4. Falsch\n5. Richtig';
+  const result = computeObjectiveScore(reference, text);
+  assert.equal(result.totalCount, 12);
+  assert.equal(result.correctCount, 12);
+  const wrong = computeObjectiveScore(reference, text.replace('6. C', '6. A').replace('1. Falsch', '1. Richtig'));
+  assert.equal(wrong.correctCount, 10);
+});
