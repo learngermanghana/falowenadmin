@@ -8,7 +8,7 @@ export const B1_DAY24_MUSIC = Object.freeze({
   title: "Weniger ist mehr · Konsum und Nachhaltigkeit",
   suggestedMinutes: 8,
   introQuestion: "Was bedeutet „Weniger ist mehr“? Achte auf die Hauptbotschaft des Liedes.",
-  playbackNote: "Höre das Lied zuerst ohne Liedtext. Lies vor dem zweiten Hören die Fragen. Der Lehrer zeigt die Lösungen erst danach.",
+  playbackNote: "Höre das Lied und achte auf die Hauptbotschaft. Lies dann die Fragen und höre erneut. Das YouTube-Video enthält eingeblendete Liedtexte; die Lehrkraft zeigt die Lösungen erst nach deinem Versuch.",
   previewWords: ["bewusst einkaufen", "die Nachhaltigkeit", "verschwenden", "wiederverwenden"],
   // Teaching excerpts only: the public video contains the complete synchronized lyrics.
   transcript: [

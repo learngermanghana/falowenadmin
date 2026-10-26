@@ -19,7 +19,7 @@ test("B1 Day 24 integrates music only into slides 1 and 3 of the existing nine-s
   assert.equal(stages[0].musicIntro.youtubeId, "-46siG9FrfE");
   assert.equal(stages[0].musicIntro.mediaType, "music");
   assert.equal(stages[1].variant, undefined, "the original warm-up must remain unchanged");
-  assert.equal(stages[2].variant, "interactive-listening");
+  assert.equal(stages[2].variant, "interactive-music", "music is distinct from signed R2 Hördetektiv");
   assert.equal(stages[2].type, "knowledge", "knowledge ID/type remain stable for saved sessions");
   assert.equal(stages[2].listeningItems.length, 5);
   assert.equal(stages[3].id, "phrases");
@@ -46,11 +46,14 @@ test("music presenter reuses the approved YouTube player without changing existi
   assert.match(player, /Video auf YouTube öffnen/);
   assert.match(presenter, /stage\.musicIntro/);
   assert.match(interactive, /lesson\.listening\.youtubeId/);
+  assert.match(interactive, /MUSIK \/ LIED VERSTEHEN/);
   assert.match(interactive, /prepareAudio/);
   assert.match(interactive, /Antworten einzeln besprechen/);
 
   const a2Existing = getInteractiveLessonOpening("A2-7.20").listening;
   const b1Existing = getInteractiveLessonOpening("B1-8.25").listening;
   assert.ok(a2Existing.audioKey && !a2Existing.youtubeId);
+  const a2 = getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-7.20");
+  assert.equal(buildTeachingPresenterStages(a2, a2.topic).find((x) => x.id === "knowledge").variant, "interactive-listening");
   assert.ok(b1Existing.audioKey && !b1Existing.youtubeId);
 });
