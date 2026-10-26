@@ -620,10 +620,11 @@ export default function CheckinDisplayPage() {
     const lowAttendance = attendanceRatio !== null && attendanceRatio < 0.6;
     const highAttendance = attendanceRatio !== null && attendanceRatio >= 0.75;
 
+    // QR remains on-screen, so repeated QR-only slides are no longer needed.
     const sequence = nearStart
-      ? ["starting", "warmup", "starting", "checkin", "lesson", "starting", "outcomes"]
+      ? ["starting", "warmup", "lesson", "outcomes"]
       : lowAttendance
-        ? ["checkin", "lesson", "checkin", "outcomes", "checkin", "warmup", "starting"]
+        ? ["checkin", "lesson", "outcomes", "warmup", "starting"]
         : highAttendance
           ? ["lesson", "outcomes", "warmup", "starting", "checkin"]
           : ["checkin", "lesson", "outcomes", "warmup", "starting"];
@@ -2312,32 +2313,33 @@ export default function CheckinDisplayPage() {
                 </div>
               </div>
 
+              <div className="checkin-display-lobby-body">
+                <aside className="checkin-display-lobby-qr-rail" aria-label="Always-visible attendance QR">
+                  <span className="checkin-display-lobby-eyebrow">CHECK IN / ANMELDEN</span>
+                  <div className="checkin-display-lobby-persistent-qr">
+                    <QRCodeCanvas value={checkinUrl} size={280} includeMargin />
+                  </div>
+                  <strong>Scan to check in</strong>
+                  <p>Point your phone camera at the code to register your attendance.</p>
+                  <div className="checkin-display-lobby-verified-count" aria-live="polite">
+                    <b>{attendanceCountLabel}</b>
+                    <span>{attendanceLive ? "students checked in" : "awaiting verified live attendance"}</span>
+                  </div>
+                  {expectedTotal ? (
+                    <div className="checkin-display-progress" aria-label={attendancePercent + "% checked in"}>
+                      <span style={{ width: attendancePercent + "%" }} />
+                    </div>
+                  ) : null}
+                </aside>
               <div className="checkin-display-lobby-stage" key={activeSmartLobbySlide.sequenceKey || activeSmartLobbySlide.id}>
                 {activeSmartLobbySlide.id === "checkin" ? (
-                  <div className="checkin-display-lobby-checkin">
-                    <div className="checkin-display-lobby-qr">
-                      <QRCodeCanvas value={checkinUrl} size={280} includeMargin />
-                    </div>
-                    <div className="checkin-display-lobby-checkin-copy">
-                      <span className="checkin-display-lobby-eyebrow">First step</span>
-                      <h2>Check in for class</h2>
-                      <p>Scan the QR code to record your attendance while you wait.</p>
-                      <div className="checkin-display-lobby-count">
-                        <strong>{attendanceCountLabel}</strong>
-                        <span>{attendanceLive ? (checkedInCount === 1 ? "student checked in" : "students checked in") : "waiting for verified live attendance"}</span>
-                      </div>
-                      {expectedTotal ? (
-                        <div className="checkin-display-progress" aria-label={attendancePercent + "% checked in"}>
-                          <span style={{ width: attendancePercent + "%" }} />
-                        </div>
-                      ) : null}
-                      {showNames && checkedInNames.length ? (
-                        <div className="checkin-display-lobby-name-strip">
-                          {checkedInNames.slice(0, 6).map((name, index) => (
-                            <span key={name + index}>{name} ✓</span>
-                          ))}
-                        </div>
-                      ) : null}
+                  <div className="checkin-display-lobby-content checkin-display-lobby-arrival">
+                    <span className="checkin-display-lobby-eyebrow">Schön, dass du da bist!</span>
+                    <h2>Willkommen in deiner Deutschklasse.</h2>
+                    <p>Bitte melde dich über den QR-Code links an. Danach kannst du dich entspannen und auf den Unterricht vorbereiten.</p>
+                    <div className="checkin-display-lobby-count">
+                      <strong>{attendanceCountLabel}</strong>
+                      <span>{attendanceLive ? "verified check-ins" : "checking live attendance…"}</span>
                     </div>
                   </div>
                 ) : activeSmartLobbySlide.id === "lesson" ? (
@@ -2375,10 +2377,27 @@ export default function CheckinDisplayPage() {
                     {waitingWarmupTeaser?.topic ? (
                       <div className="checkin-display-lobby-topic">{waitingWarmupTeaser.topic}</div>
                     ) : null}
-                    <h2>{renderWaitingWarmupQuestion(
-                      waitingWarmupTeaser?.question || "",
-                      waitingWarmupTeaser?.keywords || [],
-                    )}</h2>
+                    {miniPractice ? (
+                      <div className="checkin-display-mini-practice" lang="de">
+                        <p>{miniPractice.question}</p>
+                        <h2>{miniPractice.prompt}</h2>
+                        <div className="checkin-display-mini-choices">
+                          {miniPractice.choices.map((choice, index) => (
+                            <span key={choice} className={showMiniAnswer && index === miniPractice.correctIndex ? "is-answer" : ""}>
+                              {String.fromCharCode(65 + index)}. {choice}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="checkin-display-mini-explanation" aria-live="polite">
+                          {showMiniAnswer ? `Lösung: ${miniPractice.choices[miniPractice.correctIndex]} · ${miniPractice.explanation}` : "Denk nach – die Lösung erscheint gleich."}
+                        </div>
+                      </div>
+                    ) : (
+                      <h2>{renderWaitingWarmupQuestion(
+                        waitingWarmupTeaser?.question || "",
+                        waitingWarmupTeaser?.keywords || [],
+                      )}</h2>
+                    )}
                     <div className="checkin-display-lobby-think-note">
                       <strong>Think about your answer.</strong>
                       <span>
@@ -2408,17 +2427,9 @@ export default function CheckinDisplayPage() {
                   </div>
                 )}
 
-                {activeSmartLobbySlide.id !== "checkin" ? (
-                  <div className="checkin-display-lobby-mini-checkin">
-                    <QRCodeCanvas value={checkinUrl} size={112} includeMargin />
-                    <div>
-                      <strong>Still need to check in?</strong>
-                      <span>Scan anytime.</span>
-                    </div>
-                  </div>
-                ) : null}
               </div>
 
+              </div>
               <div className="checkin-display-lobby-footer">
                 <div className="checkin-display-lobby-dots" aria-label="Lobby slide position">
                   {smartLobbySlides.map((slide, index) => (
