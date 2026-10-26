@@ -871,5 +871,5 @@ test("A1 Attendance launches Presenter by curriculum day so multi-block days sta
   assert.match(teachingPage, /lessonBlockTotal=\{Math\.max\(1, a1DayBlocks\.length\)\}/);
 
   assert.match(presenter, /Day \$\{slide\.dayNumber\} · Block \$\{lessonBlockPosition\}\/\$\{lessonBlockTotal\}/);
-  assert.match(presenter, /className="presenter-next-lesson"/);
+  assert.match(presenter, /nextLessonHref=\{nextLessonHref\}/);
 });
