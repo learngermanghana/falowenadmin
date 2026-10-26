@@ -25,8 +25,9 @@ test("B1 Day 25 uses the published YouTube video only on slide 2 and retains R2 
   assert.equal(stages[2].variant, "interactive-listening");
   assert.equal(stages[2].audioKey, B1_DAY25_AUDIO_KEY);
   assert.equal(stages[2].audioKey, "b1/day-25/day-25.mp3");
-  assert.equal(stages[2].listeningItems.length, 7);
+  assert.equal(stages[2].listeningItems.length, 5);
   assert.equal(stages[2].transcript, B1_DAY25_LISTENING.transcript);
+  assert.equal(stages[2].transcript.length, 0, "do not invent a transcript for the revised audio");
   assert.equal(stages[2].musicVideo, undefined);
   assert.equal(isInteractiveOpeningStage("B1-8.25", "warmup"), false);
   assert.equal(isInteractiveOpeningStage("B1-8.25", "knowledge"), true);
