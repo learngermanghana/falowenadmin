@@ -1,5 +1,5 @@
-// Reusable music-listening lesson data. The YouTube video is the approved
-// B1 Day 24 original song, separate from the unscored workbook Teil 4.
+// Reusable YouTube music lesson. The song is a teacher-led teaching aid,
+// not the separately graded workbook Hören assignment.
 export const B1_DAY24_MUSIC = Object.freeze({
   level: "B1",
   day: 24,
@@ -7,63 +7,117 @@ export const B1_DAY24_MUSIC = Object.freeze({
   youtubeId: "-46siG9FrfE",
   title: "Weniger ist mehr · Konsum und Nachhaltigkeit",
   suggestedMinutes: 8,
-  introQuestion: "Was bedeutet „Weniger ist mehr“? Achte auf die Hauptbotschaft des Liedes.",
-  playbackNote: "Höre das Lied und achte auf die Hauptbotschaft. Lies dann die Fragen und höre erneut. Das YouTube-Video enthält eingeblendete Liedtexte; die Lehrkraft zeigt die Lösungen erst nach deinem Versuch.",
-  previewWords: ["bewusst einkaufen", "die Nachhaltigkeit", "verschwenden", "wiederverwenden"],
-  // Teaching excerpts only: the public video contains the complete synchronized lyrics.
-  transcript: [
-    ["Lied", "Jeden Tag seh ich Werbung überall. Neue Schuhe, neues Handy, immer wieder die Wahl."],
-    ["Lied", "Bevor ich etwas kaufe, denk ich zweimal nach, weil ich nicht für jeden Trend mein Geld ausgeb."],
-    ["Lied", "Weniger ist mehr. Unsere Zukunft ist mir nicht egal. Kauf bewusst ein, denk an morgen."],
-    ["Lied", "Meine alte Jacke ist noch richtig gut. Statt sie wegzuwerfen, trag ich sie mit Mut."],
-    ["Lied", "Ich nehme meine Tasche mit in den Laden, damit wir weniger Plastik haben."],
-    ["Lied", "Wenn wir weniger verschwenden, können wir etwas verändern."],
+  introQuestion: "Was bedeutet „Weniger ist mehr“?",
+  playbackNote: "Seht euch das Musikvideo an. Achtet darauf, wie der Sänger Konsum und Verantwortung miteinander verbindet.",
+  previewWords: ["bewusst einkaufen", "der Konsum", "die Nachhaltigkeit", "Ressourcen verschwenden"],
+  // Excerpts reproduce the words used in the published lyrics video.
+  readingSections: [
+    {
+      label: "Werbung und Kaufentscheidungen",
+      lines: [
+        "Bevor ich etwas kaufe, denk ich zweimal nach,",
+        "weil ich nicht für jeden Trend mein Geld ausgebe.",
+        "Obwohl es billig ist, muss es nicht immer sein.",
+      ],
+    },
+    {
+      label: "Kleidung und Reparatur",
+      lines: [
+        "Meine alte Jacke ist noch richtig gut,",
+        "statt sie wegzuwerfen, trag ich sie mit Mut.",
+        "Ist mein Fahrrad kaputt, reparier ich es.",
+      ],
+    },
+    {
+      label: "Nachhaltigkeit im Alltag",
+      lines: [
+        "Ich nehme meine Tasche mit in den Laden,",
+        "damit wir weniger Plastik haben.",
+        "Obst aus der Region, das kauf ich gern.",
+      ],
+    },
+    {
+      label: "Verantwortung für morgen",
+      lines: [
+        "Wir müssen nicht perfekt sein,",
+        "doch jeder Schritt zählt, auch ein kleiner.",
+        "Die Erde gehört uns nicht allein.",
+      ],
+    },
   ],
+  // Each cue is grounded in the corrected lyrics of this exact song.
+  // Cue times refer to the start of the relevant sung evidence.
   questions: [
     {
-      prompt: "Was ist die Hauptbotschaft des Liedes?",
-      options: ["Man sollte immer das Neueste kaufen.", "Bewusster Konsum kann die Umwelt schützen.", "Teure Kleidung ist immer besser."],
-      correctIndex: 1,
-      answer: "Bewusster Konsum kann die Umwelt schützen.",
-      evidence: "Weniger ist mehr. Unsere Zukunft ist mir nicht egal.",
-      hint: "Achtet auf den Refrain: „Weniger ist mehr“.",
-      explanation: "Der Sänger fordert dazu auf, weniger und bewusster einzukaufen.",
-    },
-    {
-      prompt: "Warum denkt der Sänger vor einem Kauf zweimal nach?",
-      options: ["Weil er nicht jedem Trend folgen möchte.", "Weil er keine Geschäfte findet.", "Weil er nur online einkauft."],
+      prompt: "Was kritisiert der Sänger am Einfluss der Werbung?",
+      options: [
+        "Dass Werbung häufig Wünsche auslöst, die man nicht automatisch erfüllen muss.",
+        "Dass die Werbung grundsätzlich falsche Informationen enthält.",
+        "Dass die Menschen wegen der Werbung nur noch online einkaufen.",
+      ],
       correctIndex: 0,
-      answer: "Weil er nicht jedem Trend folgen möchte.",
-      evidence: "Bevor ich etwas kaufe, denk ich zweimal nach, weil ich nicht für jeden Trend mein Geld ausgeb.",
-      hint: "Hört auf den Grund nach „weil“.",
-      explanation: "Er überlegt, ob er ein Produkt wirklich braucht, statt jedem Trend zu folgen.",
+      answer: "Dass Werbung häufig Wünsche auslöst, die man nicht automatisch erfüllen muss.",
+      timestamp: 32,
+      evidence: "Bevor ich etwas kaufe, denk ich zweimal nach, weil ich nicht für jeden Trend mein Geld ausgebe.",
+      hint: "Es geht um den Unterschied zwischen einem Wunsch und einem wirklichen Bedarf.",
+      explanation: "Der Sänger lehnt Werbung nicht vollständig ab. Er will sich nicht von jedem Trend zum Kaufen verleiten lassen.",
     },
     {
-      prompt: "Was macht der Sänger mit seiner alten Jacke?",
-      options: ["Er wirft sie sofort weg.", "Er kauft eine neue Jacke.", "Er trägt sie weiter."],
+      prompt: "Warum passen die Beispiele mit der Jacke und dem Fahrrad zusammen?",
+      options: [
+        "Beide Dinge sollen möglichst teuer verkauft werden.",
+        "Beide zeigen, dass man brauchbare Gegenstände länger nutzen kann.",
+        "Beide zeigen, dass gebrauchte Dinge immer besser sind als neue.",
+      ],
+      correctIndex: 1,
+      answer: "Beide zeigen, dass man brauchbare Gegenstände länger nutzen kann.",
+      timestamp: 81,
+      evidence: "Statt sie wegzuwerfen, trag ich sie mit Mut. Ist mein Fahrrad kaputt, reparier ich es.",
+      hint: "Welche Alternative zu einem Neukauf wird in beiden Fällen gewählt?",
+      explanation: "Weitertragen und Reparieren können Ressourcen schonen. Das Lied behauptet nicht, dass ein Neukauf grundsätzlich falsch ist.",
+    },
+    {
+      prompt: "Welche Idee verbindet die Stofftasche mit regionalem Obst?",
+      options: [
+        "Nachhaltige Entscheidungen sind nur für wohlhabende Menschen möglich.",
+        "Wer regional einkauft, produziert überhaupt keinen Müll mehr.",
+        "Auch gewöhnliche Kaufentscheidungen können bewusster getroffen werden.",
+      ],
       correctIndex: 2,
-      answer: "Er trägt sie weiter.",
-      evidence: "Meine alte Jacke ist noch richtig gut. Statt sie wegzuwerfen, trag ich sie mit Mut.",
-      hint: "Achtet auf „statt sie wegzuwerfen“.",
-      explanation: "Die Jacke ist noch gut. Weitertragen spart Ressourcen.",
+      answer: "Auch gewöhnliche Kaufentscheidungen können bewusster getroffen werden.",
+      timestamp: 91,
+      evidence: "Ich nehme meine Tasche mit in den Laden, damit wir weniger Plastik haben. Obst aus der Region, das kauf ich gern.",
+      hint: "Beide Beispiele beziehen sich auf kleine Handlungen beim Einkauf.",
+      explanation: "Der Text verbindet weniger Verpackung und bewusst gewählte Produkte mit alltäglichem Konsum.",
     },
     {
-      prompt: "Warum nimmt er seine eigene Tasche zum Einkaufen mit?",
-      options: ["Damit weniger Plastik benutzt wird.", "Damit er mehr Geld ausgibt.", "Weil der Laden sehr weit entfernt ist."],
+      prompt: "Wie ist der Satz „Obwohl es billig ist, muss es nicht immer sein“ zu verstehen?",
+      options: [
+        "Ein niedriger Preis ist allein noch kein guter Kaufgrund.",
+        "Günstige Produkte haben immer eine schlechte Qualität.",
+        "Man sollte grundsätzlich nur teure Waren kaufen.",
+      ],
       correctIndex: 0,
-      answer: "Damit weniger Plastik benutzt wird.",
-      evidence: "Ich nehme meine Tasche mit in den Laden, damit wir weniger Plastik haben.",
-      hint: "Der Zweck folgt nach „damit“.",
-      explanation: "Die eigene Tasche ist ein Beispiel dafür, wie man Verpackungsmüll vermeiden kann.",
+      answer: "Ein niedriger Preis ist allein noch kein guter Kaufgrund.",
+      timestamp: 37,
+      evidence: "Obwohl es billig ist, muss es nicht immer sein.",
+      hint: "Was stellt der Sänger mit „obwohl“ gegenüber?",
+      explanation: "Der Preis kann attraktiv sein, aber entscheidend ist auch, ob man das Produkt wirklich braucht.",
     },
     {
-      prompt: "Was können Menschen laut Lied durch weniger Verschwendung erreichen?",
-      options: ["Sie müssen nie wieder einkaufen.", "Sie können etwas verändern.", "Sie brauchen keine Regeln mehr."],
+      prompt: "Warum betont das Lied, dass wir nicht perfekt sein müssen?",
+      options: [
+        "Weil einzelne Menschen überhaupt nichts verändern können.",
+        "Weil selbst kleine, realistische Veränderungen einen Wert haben.",
+        "Weil Umweltschutz nur die Aufgabe der Politik ist.",
+      ],
       correctIndex: 1,
-      answer: "Sie können etwas verändern.",
-      evidence: "Wenn wir weniger verschwenden, können wir etwas verändern.",
-      hint: "Hört auf die Wenn-Struktur in der Bridge.",
-      explanation: "Das Lied betont kleine Schritte und gemeinsame Verantwortung.",
+      answer: "Weil selbst kleine, realistische Veränderungen einen Wert haben.",
+      timestamp: 136,
+      evidence: "Wir müssen nicht perfekt sein, doch jeder Schritt zählt, auch ein kleiner.",
+      hint: "Der Gegensatz liegt zwischen Perfektion und kleinen Schritten.",
+      explanation: "Das Lied ermutigt zu machbaren Veränderungen statt zu unrealistischen Perfektionsansprüchen.",
     },
   ],
 });
+

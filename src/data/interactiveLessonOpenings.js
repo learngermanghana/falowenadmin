@@ -399,7 +399,7 @@ ENTRIES["A2-7.20"].listening = A2_DAY20_LISTENING;
 ENTRIES["B1-8.24"] = {
   assignmentId: "B1-8.24",
   title: "Konsum und Nachhaltigkeit",
-  warmup: [], // Keep the existing Day 24 warm-up stage unchanged.
+  warmup: [], // Music video replaces the Day 24 warm-up, without changing other days.
   listening: B1_DAY24_MUSIC,
 };
 ENTRIES["B1-8.25"].listening = B1_DAY25_LISTENING;
@@ -415,5 +415,6 @@ export function getInteractiveLessonOpening(assignmentId = "") {
 }
 export function isInteractiveOpeningStage(assignmentId = "", stageId = "") {
   const lesson = getInteractiveLessonOpening(assignmentId);
+  if (lesson?.listening?.mediaType === "music") return false; // Independent YouTube Musik / Lesen stages
   return Boolean(lesson && ((stageId === "warmup" && lesson.warmup?.length > 0) || (stageId === "knowledge" && lesson.listening)));
 }

@@ -15,7 +15,7 @@ import { nextB1Day18CareerIndex } from "../data/b1Day18CareerChallenge.js";
 import B1HousingChoicePractice from "./B1HousingChoicePractice.jsx";
 import A2SportMatchmaker from "./A2SportMatchmaker.jsx";
 import InteractiveLessonOpening from "./InteractiveLessonOpening.jsx";
-import MusicVideoEmbed from "./MusicVideoEmbed.jsx";
+import { MusicVideoStage, MusicReadingStage } from "./MusicTeachingStages.jsx";
 import { isInteractiveOpeningStage } from "../data/interactiveLessonOpenings.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
@@ -193,6 +193,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
   const [readingPhase, setReadingPhase] = useState("idle");
   const [activeReadingAssignment, setActiveReadingAssignment] = useState(null);
   const stage = stages[stageIndex] || stages[0];
+  const isMusicVideoStage = stage?.variant === "interactive-music-video";
+  const isMusicReadingStage = stage?.variant === "interactive-music-reading";
   // Selected A2/B1 chapters use the same interactive renderer, but only
   // verified Hören chapters replace the ordinary Wissensimpuls.
   const interactiveOpening = isInteractiveOpeningStage(slide.assignmentId, stage?.id);
@@ -205,7 +207,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
   const presenterLevel = String(slide.course || "").trim().toUpperCase();
   const readingEligible = ["A2", "B1"].includes(presenterLevel)
     && stage?.type === "knowledge"
-    && stage?.variant !== "interactive-listening" && stage?.variant !== "interactive-music"
+    && stage?.variant !== "interactive-listening" && stage?.variant !== "interactive-music" && !isMusicReadingStage
     && Boolean(String(stage?.textDe || "").trim());
   const numberedKnowledgeSentences = useMemo(
     () => numberedPresenterSentences(stage?.textDe || ""),
@@ -213,7 +215,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
   );
   const a2B1ActivityTimer = ["A2", "B1"].includes(presenterLevel);
   const warmupPerStudent = stage?.id === "warmup" && stage?.timingMode === "per-student";
-  const showPresenterTimer = presenterV2 || warmupPerStudent;
+  const showPresenterTimer = (presenterV2 || warmupPerStudent) && !isMusicVideoStage;
   const availableWarmupQuestions = Array.isArray(stage?.items) ? stage.items.length : 0;
   const visibleWarmupQuestionCount = warmupPerStudent ? Math.min(warmupQuestionCount, availableWarmupQuestions) : availableWarmupQuestions;
   const visibleStageItems = warmupPerStudent ? stage.items.slice(0, visibleWarmupQuestionCount) : stage?.items;
@@ -702,7 +704,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
 
   return (
     <div ref={presenterShellRef} className={`presenter-shell ${focusMode ? "is-presentation-mode" : ""}`} role="dialog" aria-modal="true" aria-label="Teaching slide presenter">
-      <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""} ${focusMode && showPresenterTimer ? "presenter-has-focus-stage-timer" : ""} ${interactiveOpening ? "presenter-has-interactive-opening" : ""} ${stage?.examMode ? "is-c2-exam-mode" : ""} ${String(stage.title || "").length > 58 ? "presenter-title-long" : String(stage.title || "").length > 38 ? "presenter-title-medium" : ""}`}>
+      <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""} ${focusMode && showPresenterTimer ? "presenter-has-focus-stage-timer" : ""} ${interactiveOpening ? "presenter-has-interactive-opening" : ""} ${isMusicVideoStage ? "presenter-has-music-video" : ""} ${stage?.examMode ? "is-c2-exam-mode" : ""} ${String(stage.title || "").length > 58 ? "presenter-title-long" : String(stage.title || "").length > 38 ? "presenter-title-medium" : ""}`}>
         {focusMode && showPresenterTimer ? (
           <div
             className={`presenter-focus-stage-timer ${timerExpired ? "is-expired" : ""}`}
@@ -729,7 +731,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
             </div>
           </div>
         ) : null}
-        {focusMode && classTimeState.durationSeconds > 0 ? (
+        {focusMode && !isMusicVideoStage && classTimeState.durationSeconds > 0 ? (
           <div className={`presenter-focus-time ${classTimeState.expired ? "is-expired" : ""}`} aria-label="Class time remaining">
             <strong>{formatTimer(classTimeState.remainingSeconds)}</strong>
             <span>{classTimeState.expired ? "Time up" : "left"}</span>
@@ -809,7 +811,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
           onReadingAssignmentChange={setActiveReadingAssignment}
         />
 
-        <main ref={contentRef} className={`presenter-content presenter-content-${stage.type} presenter-stage-${stage.id} presenter-fit-${fitMode} ${interactiveOpening ? "presenter-content-interactive" : ""} ${stagePhoto ? `presenter-has-photo presenter-photo-${stagePhoto.density}` : ""}`}>
+        <main ref={contentRef} className={`presenter-content presenter-content-${stage.type} presenter-stage-${stage.id} presenter-fit-${fitMode} ${interactiveOpening ? "presenter-content-interactive" : ""} ${isMusicVideoStage ? "presenter-content-music-video" : ""} ${stagePhoto ? `presenter-has-photo presenter-photo-${stagePhoto.density}` : ""}`}>
           {stagePhoto ? (
             <figure className="presenter-slide-photo" aria-hidden="true">
               <img src={stagePhoto.src} alt="" width="640" height="420" loading="lazy" decoding="async" draggable="false" />
@@ -864,14 +866,6 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                 </div>
               ) : null}
               <h1>{stage.title}</h1>
-              {stage.musicIntro ? (
-                <div className="presenter-music-intro">
-                  <MusicVideoEmbed videoId={stage.musicIntro.youtubeId} title={stage.musicIntro.title} variant="intro" />
-                  <p className="presenter-music-intro-instruction" lang="de">
-                    <strong>Höre das Lied:</strong> {stage.musicIntro.introQuestion}
-                  </p>
-                </div>
-              ) : null}
               {stage.topic ? <p className="presenter-topic">{stage.topic}</p> : null}
               {stage.objective ? <p className="presenter-objective">{stage.objective}</p> : null}
               {stage.duration ? <p className="presenter-duration">{stage.duration}</p> : null}
@@ -903,6 +897,10 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                 </section>
               ) : null}
             </>
+          ) : isMusicVideoStage ? (
+            <MusicVideoStage music={stage.musicVideo} />
+          ) : isMusicReadingStage ? (
+            <MusicReadingStage key={`${slide.assignmentId}:${stage.id}`} music={stage.musicReading} />
           ) : interactiveOpening ? (
             <InteractiveLessonOpening key={`${slide.assignmentId}:${stage.id}`} stage={stage} slide={slide} />
           ) : stage.type === "scenario-challenge" ? (
