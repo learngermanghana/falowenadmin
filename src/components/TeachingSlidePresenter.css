@@ -5123,3 +5123,41 @@
     max-width: min(240px, calc(100vw - .9rem));
   }
 }
+
+
+/* Musik-video stage only: give YouTube the space that the former per-student
+   warm-up and countdown occupied. Do not change other Hören or speaking slides. */
+.presenter-stage.presenter-has-music-video > .presenter-content.presenter-content-music-video,
+.presenter-stage.is-focus-mode.presenter-has-music-video > .presenter-content.presenter-content-music-video {
+  display: block;
+  align-content: start;
+  justify-content: flex-start;
+  align-items: stretch;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: .7rem clamp(.8rem, 2.6vw, 2.6rem) 1.5rem;
+  box-sizing: border-box;
+}
+
+.presenter-stage.is-focus-mode.presenter-has-music-video > .presenter-content.presenter-content-music-video {
+  padding-top: clamp(4.1rem, 8vh, 5.5rem);
+  padding-bottom: clamp(4.5rem, 8vh, 5.5rem);
+}
+
+.presenter-stage.presenter-has-music-video .presenter-session-timer-copy {
+  display: none; /* Session timer keeps running, only its display is hidden. */
+}
+
+.presenter-stage.is-focus-mode.presenter-has-music-video > .presenter-student-picker,
+.presenter-stage.is-focus-mode.presenter-has-music-video > .presenter-participation-dock {
+  display: none; /* Music playback, not a student speaking turn. */
+}
+
+@media (max-width: 760px) {
+  .presenter-stage.is-focus-mode.presenter-has-music-video > .presenter-content.presenter-content-music-video {
+    padding: 4.5rem .65rem 5rem;
+  }
+}
