@@ -58,7 +58,12 @@ test("pharmacy questions are key-backed and transcript contains uploaded facts",
 
 test("chosen chapters reuse four authored 10-minute warm-up steps without invented recordings", () => {
   const chosen = ["A2-3.8","A2-6.17","A2-7.18","A2-7.20","B1-2.5","B1-7.22","B1-8.25"];
-  assert.deepEqual(Object.keys(INTERACTIVE_LESSON_OPENINGS), chosen);
+  // Listening-only music chapters may also use the shared registry, without
+  // replacing their existing warm-up. Check the authored warm-up set only.
+  assert.deepEqual(
+    Object.keys(INTERACTIVE_LESSON_OPENINGS).filter((id) => INTERACTIVE_LESSON_OPENINGS[id].warmup?.length > 0),
+    chosen,
+  );
   for (const id of chosen) {
     const entry = getInteractiveLessonOpening(id);
     const slide = getSlidesByCourse(id.startsWith("A2") ? "A2" : "B1").find(x => x.assignmentId === id);

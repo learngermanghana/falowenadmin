@@ -2,6 +2,7 @@
 // the only verified recording; never invent audio or override scored workbook work.
 import { A2_DAY17_AUDIO_KEY, A2_DAY17_WARMUP, A2_DAY17_LISTENING, A2_DAY17_TRANSCRIPT } from "./a2Day17Opening.js";
 import { B1_DAY25_LISTENING } from "./b1Day25Listening.js";
+import { B1_DAY24_MUSIC } from "./b1Day24Music.js";
 import { A2_DAY18_BANK_LISTENING } from "./a2Day18BankListening.js";
 import { A2_DAY20_LISTENING } from "./a2Day20Listening.js";
 
@@ -394,6 +395,13 @@ ENTRIES["A2-6.17"].listening = {
 
 ENTRIES["A2-7.18"].listening = A2_DAY18_BANK_LISTENING;
 ENTRIES["A2-7.20"].listening = A2_DAY20_LISTENING;
+// Music uses the same Hördetektiv question/reveal flow, not the scored workbook Hören.
+ENTRIES["B1-8.24"] = {
+  assignmentId: "B1-8.24",
+  title: "Konsum und Nachhaltigkeit",
+  warmup: [], // Keep the existing Day 24 warm-up stage unchanged.
+  listening: B1_DAY24_MUSIC,
+};
 ENTRIES["B1-8.25"].listening = B1_DAY25_LISTENING;
 
 export const INTERACTIVE_LESSON_OPENINGS = Object.freeze(
@@ -407,5 +415,5 @@ export function getInteractiveLessonOpening(assignmentId = "") {
 }
 export function isInteractiveOpeningStage(assignmentId = "", stageId = "") {
   const lesson = getInteractiveLessonOpening(assignmentId);
-  return Boolean(lesson && (stageId === "warmup" || (stageId === "knowledge" && lesson.listening)));
+  return Boolean(lesson && ((stageId === "warmup" && lesson.warmup?.length > 0) || (stageId === "knowledge" && lesson.listening)));
 }

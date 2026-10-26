@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { auth } from "../firebaseAuth.js";
 import "./A2Day17Activities.css";
 import { getInteractiveLessonOpening } from "../data/interactiveLessonOpenings.js";
+import MusicVideoEmbed from "./MusicVideoEmbed.jsx";
 
 // Classroom recordings are signed by the deployed Firebase API. The website
 // /api route can run an older Vercel bundle when Hobby build limits are hit.
@@ -88,16 +89,20 @@ export default function InteractiveLessonOpening({ stage, slide }) {
     {listening && <div className="pharm-audio">
       <div className="pharm-audio-label"><span aria-hidden="true">♫</span><div><strong>{lesson.listening.title}</strong><small>Lies zuerst die Fragen. Höre danach ohne das Skript zu.</small></div></div>
       {lesson.listening.playbackNote ? <p className="pharm-playback-note" role="note">{lesson.listening.playbackNote} · Fragen bleiben während des Abspielens sichtbar.</p> : null}
-      {!audioUrl ? (
+      {lesson.listening.youtubeId ? (
+        <MusicVideoEmbed videoId={lesson.listening.youtubeId} title={lesson.listening.title} variant="listening" />
+      ) : !audioUrl ? (
         <button type="button" className="pharm-btn pharm-btn-primary" onClick={prepareAudio} disabled={audioBusy}>{audioBusy ? "Audio wird vorbereitet…" : "▶ Audio laden"}</button>
       ) : <>
         <audio key={audioUrl} ref={audioRef} src={audioUrl} controls preload="none" aria-label={`${lesson.listening.title} Audio`} onEnded={() => { if (autoReview) { setReviewMode(true); chooseStep(0); } }} />
         <button type="button" className="pharm-btn pharm-btn-soft" onClick={() => { audioRef.current?.pause(); setAudioUrl(""); prepareAudio(); }}>↻ Audiolink erneuern</button>
       </>}
       {audioError && <p className="pharm-audio-error" role="alert">{audioError} · R2-Objekt: {lesson.listening.audioKey}</p>}
-      <label className="pharm-review-checkbox"><input type="checkbox" checked={autoReview} onChange={(event) => setAutoReview(event.target.checked)} /> Nach Audioende automatisch zu Frage 1 wechseln (optional)</label>
+      {lesson.listening.youtubeId
+        ? <p className="pharm-playback-note">Nach dem Hören: Klick auf „Antworten einzeln besprechen“. Die Lösungen bleiben zunächst verborgen.</p>
+        : <label className="pharm-review-checkbox"><input type="checkbox" checked={autoReview} onChange={(event) => setAutoReview(event.target.checked)} /> Nach Audioende automatisch zu Frage 1 wechseln (optional)</label>}
       <details className="pharm-script" open={showTranscript} onToggle={(event) => setShowTranscript(event.currentTarget.open)}>
-        <summary>{showTranscript ? "Skript ausblenden" : "Skript für die Klasse anzeigen"} <span>OPTIONAL</span></summary>
+        <summary>{showTranscript ? "Skript ausblenden" : (lesson.listening.mediaType === "music" ? "Liedtext-Auszüge anzeigen" : "Skript für die Klasse anzeigen")} <span>OPTIONAL</span></summary>
         <div className="pharm-transcript" lang="de">{(stage.transcript?.length ? stage.transcript : lesson.listening.transcript).map(([speaker, line],index)=>
           <p key={index}><b className={speaker === "A" ? "is-a" : "is-b"}>{speaker}</b> <span>{line}</span></p>
         )}</div>

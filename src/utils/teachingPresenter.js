@@ -2051,7 +2051,11 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
   // Keep the original teacher reading and warm-up checks in their canonical
   // stages for audits; only switch their in-class visual presentation.
   const prepared = lessonOpening ? stages.map((stage) => {
-    if (stage.id === "warmup") return {
+    if (stage.id === "intro" && lessonOpening.listening?.mediaType === "music") return {
+      ...stage,
+      musicIntro: lessonOpening.listening,
+    };
+    if (stage.id === "warmup" && lessonOpening.warmup?.length) return {
       ...stage, variant: "interactive-warmup", kicker: "10-Minuten-Challenge",
       title: lessonOpening.title, challengeItems: lessonOpening.warmup,
       suggestedMinutes: 10, timingMode: "",
@@ -2062,7 +2066,7 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
       },
     };
     if (stage.id === "knowledge" && lessonOpening.listening) return {
-      ...stage, variant: "interactive-listening", kicker: "Hören · Hördetektiv",
+      ...stage, variant: "interactive-listening", kicker: lessonOpening.listening.mediaType === "music" ? "Musik · Hörverstehen" : "Hören · Hördetektiv",
       title: lessonOpening.listening.title,
       listeningItems: lessonOpening.listening.questions,
       transcript: lessonOpening.listening.transcript,
@@ -2072,8 +2076,12 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
       previewWords: lessonOpening.listening.previewWords || [],
       suggestedMinutes: lessonOpening.listening.suggestedMinutes || 6,
       teacherPurpose: {
-        student: "Hörfragen zuerst lesen, Dialog hören, Informationen entnehmen und begründen.",
-        teacher: "Fragen gemeinsam vor dem Audio zeigen. Keine automatischen Fragenwechsel während des Hörens.",
+        student: lessonOpening.listening.mediaType === "music"
+          ? "Höre das Lied und erkenne die Hauptbotschaft, wichtige Wörter und Beispiele."
+          : "Hörfragen zuerst lesen, Dialog hören, Informationen entnehmen und begründen.",
+        teacher: lessonOpening.listening.mediaType === "music"
+          ? "Zeige die Fragen vor dem erneuten Hören. Antworten und Liedtext-Auszüge erst nach dem Versuch aufdecken. Unbewertete Übung."
+          : "Fragen gemeinsam vor dem Audio zeigen. Keine automatischen Fragenwechsel während des Hörens.",
       },
     };
     return stage;
