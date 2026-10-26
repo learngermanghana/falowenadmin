@@ -11,6 +11,7 @@ on:
       - 'src/data/courseMarkingSnapshot.json'
       - 'src/utils/canonicalCourseReference.js'
       - 'src/utils/questionAwareWritingMarking.js'
+      - 'src/utils/a1WritingTaskEvidence.js'
       - 'src/utils/objectiveMarking.js'
       - 'src/utils/autoMarking.js'
       - 'src/utils/submissionSections.js'

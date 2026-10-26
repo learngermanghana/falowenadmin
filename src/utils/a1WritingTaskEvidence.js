@@ -135,6 +135,28 @@ function questionClauses(source = "") {
   return questions;
 }
 
+function evaluateCurrentA1123(taskPoints, source) {
+  const informal = partText(source, 'teil1');
+  const formal = partText(source, 'teil2');
+  const invitation = /einlad|lad[^.!?\n]{0,100}ein|(?:party|feier)[\s\S]{0,100}(?:komm|besuch)|(?:komm|besuch)[\s\S]{0,100}(?:party|feier)/i;
+  const day = /samstag|sonntag|freitag|montag|dienstag|mittwoch|donnerstag|wochenende|morgen|\d{1,2}\.\s*\d/i;
+  const time = /\d{1,2}(?::\d{2})?\s*uhr|halb\s+\w+|viertel\s+\w+/i;
+  const place = /bei\s+mir|zu\s+hause|in\s+mein|stra[ßs]e|\b(?:im|in|bei)\s+[A-ZÄÖÜ]/;
+  const bring = /mitbring|bring[^.!?\n]{0,100}mit|mit[^.!?\n]{0,40}bring/i;
+  const register = /anmeld|deutschkurs[^.!?\n]{0,60}besuchen|besuchen[^.!?\n]{0,60}deutschkurs/i;
+  const times = /kurszeiten|unterrichtszeiten|wann[^.!?\n]{0,60}(?:kurs|unterricht)|(?:kurs|unterricht)[^.!?\n]{0,60}(?:wann|uhr|zeit)/i;
+  const costs = /kosten|kostet|preis|wie\s+(?:viel|teuer)/i;
+  const start = /(?:ich|wir)[^.!?\n]{0,100}(?:anfangen|beginnen|starten)|(?:ab|im|am)\s+(?:juni|juli|august|sommer|\d{1,2}\.)/i;
+  return [
+    row(taskPoints[0], invitation.test(informal), sentenceFor(informal, invitation)),
+    row(taskPoints[1], day.test(informal) && time.test(informal) && place.test(informal), informal),
+    row(taskPoints[2], bring.test(informal), sentenceFor(informal, bring)),
+    row(taskPoints[3], register.test(formal), sentenceFor(formal, register)),
+    row(taskPoints[4], times.test(formal) && costs.test(formal), formal),
+    row(taskPoints[5], start.test(formal), sentenceFor(formal, start)),
+  ];
+}
+
 function evaluateA1123(taskPoints, source) {
   const informal = partText(source, "teil1");
   const formal = partText(source, "teil2");
@@ -188,6 +210,7 @@ export function evaluateA1WritingTaskEvidence(task = {}, source = "") {
   if (assignmentKey === "A1-1.1") return evaluateA11(taskPoints, source);
   if (assignmentKey === "A1-1.2") return evaluateA112(taskPoints, source);
   if (assignmentKey === "A1-3") return evaluateA13(taskPoints, source);
+  if (assignmentKey === "A1-12.3" && task.taskVersion === 'A1-12.3-INVITATION-COURSE-V2') return evaluateCurrentA1123(taskPoints, source);
   if (assignmentKey === "A1-12.3") return evaluateA1123(taskPoints, source);
   if (assignmentKey === "A1-13") return evaluateA113(taskPoints, source);
   if (assignmentKey === "A1-14.1") return evaluateA1141(taskPoints, source);

@@ -41,3 +41,23 @@ test('Every B1 writing contract retains current instructions and source opinion'
   assert.equal(task.taskPoints.length, 5);
   assert.match(task.taskPoints[2], /zwei Strategien/);
 });
+
+test('Current A1 Day 20 invitation and course enquiry meet the six current points', async () => {
+  const { resolveQuestionAwareWritingTask } = await import('../src/utils/questionAwareWritingMarking.js');
+  const { evaluateA1WritingTaskEvidence } = await import('../src/utils/a1WritingTaskEvidence.js');
+  const task = resolveQuestionAwareWritingTask({ referenceEntry: canonicalCourseReference('A1-12.3') });
+  assert.equal(task.taskVersion, 'A1-12.3-INVITATION-COURSE-V2');
+  assert.match(task.taskText, /Julia/);
+  assert.doesNotMatch(task.taskPoints.join(' '), /congratulate|family can come|pay online/i);
+  const text = `Teil 1
+Liebe Julia,
+ich lade dich zu meiner Party ein. Sie ist am Samstag um 18 Uhr bei mir. Bitte bring Getränke mit.
+Liebe Grüße
+Felix
+Teil 2
+Sehr geehrte Damen und Herren,
+ich möchte mich für einen Deutschkurs anmelden. Wann findet der Kurs statt und wie viel kostet er? Ich möchte im Juli beginnen.
+Mit freundlichen Grüßen
+Felix`;
+  assert.deepEqual(evaluateA1WritingTaskEvidence(task, text).map(row => row.status), Array(6).fill('met'));
+});

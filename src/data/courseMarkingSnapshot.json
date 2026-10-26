@@ -1,6 +1,6 @@
 {
   "repository": "learngermanghana/falowenexamtrainer",
-  "revision": "aab2df30fc555ae29703af7a10dd619f1937660f",
+  "revision": "c72913c6201e00fff502e785ef9d6574e0681201",
   "answerKeys": {
     "A1 Greetings and Asking About Well-being 0.1": {
       "answers": {
@@ -2590,6 +2590,22 @@
         "Formulieren Sie einen Schluss."
       ],
       "submissionNote": ""
+    }
+  },
+  "a1WritingTasks": {
+    "A1-12.3": {
+      "assignmentKey": "A1-12.3",
+      "title": "Einladung an Julia und Anfrage an Sprachakademie München",
+      "situation": "Teil 1: Assess a short informal email of approximately 30 words to Julia (a friend): (1) invite her to a weekend party, (2) specify day, clock time and location, (3) ask her to bring food or drinks. Check a suitable greeting and closing, use of du/dir/dich, clarity, task coverage and basic grammar. Do not require an exact wording or a weil clause.\n\nTeil 2: Assess a short formal email of approximately 30 words to Sprachakademie München. Cover three points: (1) intention to register for a summer German course, (2) ask for course times and costs, (3) state when the learner would like to begin. Check a formal greeting and sign-off, use of Sie/Ihnen, correct task coverage and clear A1 grammar. Do not require payment details or a specific month; accept any suitable summer start preference.",
+      "points": [
+        "Teil 1: invite her to a weekend party",
+        "Teil 1: specify day, clock time and location",
+        "Teil 1: ask her to bring food or drinks",
+        "Teil 2: intention to register for a summer German course",
+        "Teil 2: ask for course times and costs",
+        "Teil 2: state when the learner would like to begin"
+      ],
+      "taskVersion": "A1-12.3-INVITATION-COURSE-V2"
     }
   }
 }

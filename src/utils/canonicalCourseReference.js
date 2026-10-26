@@ -22,10 +22,10 @@ export function canonicalCourseReference(assignmentKey) {
   const row = entries.get(String(assignmentKey || '').trim().toUpperCase());
   if (!row) return null;
   const reference = normalizeAnswerKeyEntry(row.title, row.source);
-  const writing = snapshot.writingTasks[reference.assignmentKey] || snapshot.b1WritingTasks?.[reference.assignmentKey];
+  const writing = snapshot.writingTasks[reference.assignmentKey] || snapshot.b1WritingTasks?.[reference.assignmentKey] || snapshot.a1WritingTasks?.[reference.assignmentKey];
   if (writing) reference.questionAwareWritingTask = {
     assignmentKey: writing.assignmentKey, level: reference.level, title: writing.title,
-    taskSituationDe: writing.situation, taskPointsDe: writing.points.length ? writing.points : [writing.situation],
+    taskVersion: writing.taskVersion, taskSituationDe: writing.situation, taskPointsDe: writing.points.length ? writing.points : [writing.situation],
     taskText: [writing.situation, ...writing.points, writing.submissionNote].filter(Boolean).join(' '),
     source: 'learner-coursebook', sourceVersion: snapshot.revision,
   };
