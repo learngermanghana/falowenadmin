@@ -213,11 +213,6 @@ export default function CanonicalAttendancePageV3() {
     .sort((a, b) => String(a.name || a.code).localeCompare(String(b.name || b.code))), [selected]);
   const present = rows.filter((row) => row.present).length;
 
-  const expectedNames = useMemo(() => rows
-    .map((row) => String(row.name || "").trim())
-    .filter(Boolean)
-    .slice(0, 15), [rows]);
-
   const checkinQuery = useMemo(() => new URLSearchParams({
     classId: String(klass?.id || ""),
     sessionId: String(selected?.id || ""),
@@ -226,9 +221,9 @@ export default function CanonicalAttendancePageV3() {
     assignmentId,
     startTime: localTime(selected?.startsAt, TIMEZONE),
     endTime: localTime(selected?.endsAt, TIMEZONE),
-    expectedStudents: expectedNames.join(", "),
+    // Never place the class roster into a URL, browser history or QR code.
     expectedCount: String(rows.length),
-  }).toString(), [assignmentId, expectedNames, klass?.id, rows.length, selected, sessionLabel]);
+  }).toString(), [assignmentId, klass?.id, rows.length, selected, sessionLabel]);
 
   const checkinUrl = checkinQuery ? `${window.location.origin}/checkin?${checkinQuery}` : "";
   const displayUrl = checkinQuery ? `${window.location.origin}/checkin/display?${checkinQuery}` : "";
