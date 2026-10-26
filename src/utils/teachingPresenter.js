@@ -2078,6 +2078,19 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
         teacher: "Fünf B1-Verständnisfragen; erst Antworten sammeln, dann die Belegstelle mit Zeitangabe zeigen.",
       },
     };
+    if (lessonOpening.musicIntro && stage.id === "warmup") return {
+      ...stage,
+      variant: "interactive-music-video",
+      kicker: "Musik · Einstieg",
+      title: lessonOpening.musicIntro.title,
+      musicVideo: lessonOpening.musicIntro,
+      suggestedMinutes: 0,
+      timingMode: "",
+      teacherPurpose: {
+        student: "Höre das Lied einmal und nenne eine wichtige Vorsichtsmaßnahme beim Online-Einkaufen.",
+        teacher: "Spiele das YouTube-Lyrics-Video als kurzen Einstieg. Eine mündliche Frage genügt, ohne Wertung. Danach folgt das bestehende Hören.",
+      },
+    };
     if (stage.id === "warmup" && lessonOpening.warmup?.length) return {
       ...stage, variant: "interactive-warmup", kicker: "10-Minuten-Challenge",
       title: lessonOpening.title, challengeItems: lessonOpening.warmup,
