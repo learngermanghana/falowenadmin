@@ -22,7 +22,7 @@ const EXPECTED = {
   "B1-7.22": { day: 22, directGrammar: false, terms: ["dass", "relative", "miteinander", "füreinander"] },
   "B1-7.23": { day: 23, directGrammar: false, terms: ["könnten", "würde", "wenn", "weil"] },
   "B1-8.24": { day: 24, directGrammar: false, terms: ["dass", "weil", "um … zu", "sollten", "einerseits"] },
-  "B1-8.25": { day: 25, directGrammar: false, terms: ["einerseits", "weil", "deshalb", "Widerrufsrecht"] },
+  "B1-8.25": { day: 25, directGrammar: false, terms: ["Sehr geehrte", "Bestellnummer", "beschädigt", "Rückerstattung"] },
   "B1-9.26": { day: 26, directGrammar: false, terms: ["wenn", "falls", "würden", "sollten"] },
   "B1-10.27": { day: 27, directGrammar: false, terms: ["indem", "dass", "wenn", "könnte"] },
   "B1-10.28": { day: 28, directGrammar: false, terms: ["indem", "weil", "trotzdem", "dass"] },
@@ -145,7 +145,7 @@ test("Day 25 teacher guide matches formal Schreiben, seven Lesen and five delive
   assert.equal(Object.keys(contract.answers.teil3).length, 7);
   assert.equal(Object.keys(contract.answers.teil4).length, 5);
   assert.match(part(slide, "Teil 2 · Schreiben").detailEn, /ElectroWorld.*40.50|40.50.*ElectroWorld/i);
-  assert.match(part(slide, "Teil 3 · Lesen").detailEn, /press article about online-shopping/i);
+  assert.match(part(slide, "Teil 3 · Lesen").detailEn, /updated consumer-rights article/i);
   assert.match(part(slide, "Teil 4 · Hören").detailEn, /b1\/day-25\/day-25\.mp3/i);
   assert.match(slide.workbookConnection.subtitle, /All three assignments are submitted/i);
   assert.match(slide.workbookConnection.subtitle, /five Richtig.Falsch/i);
