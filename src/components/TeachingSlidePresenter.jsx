@@ -15,6 +15,7 @@ import { nextB1Day18CareerIndex } from "../data/b1Day18CareerChallenge.js";
 import B1HousingChoicePractice from "./B1HousingChoicePractice.jsx";
 import A2SportMatchmaker from "./A2SportMatchmaker.jsx";
 import InteractiveLessonOpening from "./InteractiveLessonOpening.jsx";
+import MusicVideoEmbed from "./MusicVideoEmbed.jsx";
 import { isInteractiveOpeningStage } from "../data/interactiveLessonOpenings.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
@@ -863,6 +864,14 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                 </div>
               ) : null}
               <h1>{stage.title}</h1>
+              {stage.musicIntro ? (
+                <div className="presenter-music-intro">
+                  <MusicVideoEmbed videoId={stage.musicIntro.youtubeId} title={stage.musicIntro.title} variant="intro" />
+                  <p className="presenter-music-intro-instruction" lang="de">
+                    <strong>Höre das Lied:</strong> {stage.musicIntro.introQuestion}
+                  </p>
+                </div>
+              ) : null}
               {stage.topic ? <p className="presenter-topic">{stage.topic}</p> : null}
               {stage.objective ? <p className="presenter-objective">{stage.objective}</p> : null}
               {stage.duration ? <p className="presenter-duration">{stage.duration}</p> : null}
