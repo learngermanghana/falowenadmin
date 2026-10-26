@@ -409,7 +409,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
     assignmentId: "B1-8.25",
     title: "B1 Day 25 · Online einkaufen – Rechte und Risiken",
     topic: "8.25 Online einkaufen – Rechte und Risiken",
-    objective: "Students respond to Tim with an 80-word B1 guestbook opinion, read the seven-question online-shopping article and answer seven sustainable-shopping listening questions.",
+    objective: "Students write a formal 40–50-word complaint to ElectroWorld about damaged goods, complete seven consumer-rights reading questions and five Richtig/Falsch questions about a delivery problem.",
     estimatedDuration: "45–60 minutes",
     warmupQuestionsDe: [
       "Was kaufst du häufig online?",
@@ -420,8 +420,8 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
     keyPhrasesDe: [
       "Meiner Meinung nach hat Online-Shopping viele Vorteile, aber ...",
       "Einerseits ist es bequem, andererseits gibt es Risiken.",
-      "Ich stimme Tim zu, weil ...",
-      "Ein Beispiel aus meinem Alltag ist ...",
+      "Ich schreibe Ihnen, weil meine Bestellung beschädigt angekommen ist.",
+      "Das Produkt ist beschädigt. Deshalb bitte ich um Ersatz.",
       "Man sollte das Impressum und die Bewertungen prüfen.",
       "Durch das Widerrufsrecht kann man viele Käufe rückgängig machen.",
     ],
@@ -429,8 +429,8 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       "Welche Vorteile hat Online-Shopping?",
       "Welche Risiken gibt es bei Fake-Shops und Datenschutz?",
       "Was sollte man vor einer Bestellung prüfen?",
-      "Welche Meinung vertritt Tim im Gästebuch?",
-      "Wie vermeidest du Plastikmüll beim Einkaufen?",
+      "Wie beschreibst du eine beschädigte Bestellung in einer formellen E-Mail?",
+      "Was solltest du tun, wenn eine Online-Bestellung nicht ankommt?",
     ],
     speakingModels: [
       {
@@ -446,57 +446,57 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
         "modelAnswerDe": "Vor einer Bestellung prüfe ich den Gesamtpreis, die Lieferkosten und die Lieferzeit. Außerdem schaue ich nach Angaben zum Anbieter und zu Rücksendungen. Bewertungen können helfen, sollten aber nicht die einzige Grundlage sein."
       },
       {
-        "questionDe": "Welche Meinung vertritt Tim im Gästebuch?",
-        "modelAnswerDe": "Tim findet Online-Shopping schnell und bequem. Er meint, dass bekannte Händler kaum Risiken haben und dass man bestellte Waren innerhalb von vierzehn Tagen zurücksenden kann. Ich stimme ihm nur teilweise zu, denn Fake-Shops und Datenschutz bleiben wichtige Probleme."
+        "questionDe": "Wie beschreibst du eine beschädigte Bestellung in einer formellen E-Mail?",
+        "modelAnswerDe": "Sehr geehrte Damen und Herren, ich habe am 20. Oktober ein Tablet mit der Bestellnummer 12345 bestellt. Leider ist das Display beschädigt. Deshalb bitte ich um eine Ersatzlieferung oder Rückerstattung. Mit freundlichen Grüßen"
       },
       {
-        "questionDe": "Wie vermeidest du Plastikmüll beim Einkaufen?",
-        "modelAnswerDe": "Ich nehme eigene Stoffbeutel zum Einkaufen mit und benutze waschbare Netze für Obst und Gemüse. Wenn möglich, kaufe ich unverpackte regionale Produkte auf dem Wochenmarkt. So brauche ich weniger Plastiktüten."
+        "questionDe": "Was solltest du tun, wenn eine Online-Bestellung nicht ankommt?",
+        "modelAnswerDe": "Wenn mein Paket nicht angekommen ist, überprüfe ich zuerst die Sendungsverfolgung. Dann kontaktiere ich den Händler und schildere das Problem mit der Bestellnummer. Ich bitte um eine Klärung und bewahre alle Nachrichten auf."
       }
     ],
     teacherNotesEn: [
-      "Teil 2 Schreiben IS REQUIRED. Students write approximately 80 words in the online guestbook replying to Tim (28): state their opinion on online shopping, risks and consumer rights, justify it and give a personal/home-country example.",
-      "Teil 3 Lesen IS SCORED: seven a/b/c questions on the press article Online-Shopping – Welche Rechte und Risiken Verbraucher kennen sollten; answer key B B B A A A C.",
-      "Teil 4 Hören IS SCORED: seven a/b/c questions on sustainable shopping, using b1/day-25/day-25.mp3 (NOT the old online-shopping consumer-service audio); answer key B C A B A C B.",
-      "All three graded parts are required in the current Admin marking contract. The 30-minute shared workbook timer allocates ten minutes to each graded tab; the Goethe-style 25-minute Schreiben recommendation is a task guideline, not an additional platform clock.",
+      "Teil 2 Schreiben IS REQUIRED. Students write a formal complaint email to ElectroWorld (40–50 German words) about a damaged electronic device. Include order date, product, order number, defect and a requested solution, plus formal greeting and closing.",
+      "Teil 3 Lesen IS SCORED: seven a/b/c questions about consumer rights in the updated press article; approved learner answer key B C B B B C B.",
+      "Teil 4 Hören IS SCORED: five A=Richtig / B=Falsch statements on a missing online order and customer service, using b1/day-25/day-25.mp3; approved learner answer key A B A B A. Do not use the former seven-question sustainable-shopping task.",
+      "All three graded parts remain required in the Admin marking contract: formal Schreiben, seven-item Lesen and five-item Hören. Preserve the current workbook timer; do not infer the timing from an older task.",
     ],
     interactionFlow: [
       { phase: "Rights vocabulary", detailEn: "8 min: activate Widerrufsrecht, Rücksendung, Garantie, Ersatz and Erstattung." },
-      { phase: "Tim’s opinion", detailEn: "9 min: agree/disagree with Tim on online shopping, evaluate risks and consumer rights." },
-      { phase: "Forum argument", detailEn: "10 min: plan opinion, reasons and a personal example in roughly 80 words." },
+      { phase: "Safe purchase", detailEn: "9 min: evaluate an online shop, payment risks, shipping and return conditions." },
+      { phase: "Formal complaint", detailEn: "10 min: plan ElectroWorld email with order details, defect, requested solution, formal Anrede and Gruß." },
       { phase: "Reading evidence", detailEn: "10 min: identify Fake-Shops, 14-day Widerrufsrecht and safe payment guidance in the article." },
-      { phase: "Workbook bridge", detailEn: "7 min: introduce the scored three-part workbook; explain that Hören is about reusable bags and the Wochenmarkt." },
+      { phase: "Workbook bridge", detailEn: "7 min: explain the required 40–50-word formal complaint, seven reading choices and five Richtig/Falsch Hören statements about an undelivered order." },
     ],
-    wrapUpTaskDe: "Reagiere in vier bis fünf Sätzen auf Tims Meinung: Position, Grund, Risiko und ein persönliches Beispiel.",
+    wrapUpTaskDe: "Formuliere eine kurze höfliche Reklamation: Bestelldaten, Problem, konkrete Bitte und passender Gruß.",
     workbookConnection: workbookConnection(25, [
       { label: "Grammar", detailEn: "Use B1 argument links: einerseits/andererseits, weil/denn/deshalb, examples and opinion phrasing. The course Grammar tab provides support for reasoning and coherence." },
       { label: "Teil 1 · Sprechen", detailEn: "Discuss online-shopping advantages, consumer rights, risks, safe shops/payment and what to do with damaged or incorrect goods. Practice only." },
-      { label: "Teil 2 · Schreiben", detailEn: "REQUIRED AI-MARKED: ca. 80-word online Gästebuch reply to Tim about Online-Shopping, risks and Verbraucherrechte. Include own opinion, reasons and a personal/home-country example." },
-      { label: "Teil 3 · Lesen", detailEn: "REQUIRED OBJECTIVE-MARKED: seven a/b/c questions on the press article about online-shopping risks and consumer rights; key B B B A A A C." },
-      { label: "Teil 4 · Hören", detailEn: "REQUIRED OBJECTIVE-MARKED: seven a/b/c questions on reusable shopping bags, Wochenmarkt and Unverpacktladen. Use b1/day-25/day-25.mp3; key B C A B A C B." },
+      { label: "Teil 2 · Schreiben", detailEn: "REQUIRED AI-MARKED: formal ElectroWorld email, ca. 40–50 words, describing order date/product/order number, damage and a request for exchange, repair or refund, with formal greeting and closing." },
+      { label: "Teil 3 · Lesen", detailEn: "REQUIRED OBJECTIVE-MARKED: seven A/B/C questions about the updated consumer-rights article; approved key B C B B B C B." },
+      { label: "Teil 4 · Hören", detailEn: "REQUIRED OBJECTIVE-MARKED: five Richtig/Falsch statements about a delivery problem and consumer service. Use b1/day-25/day-25.mp3; approved key A B A B A." },
     ], {
       grammarUrl: null,
-      subtitle: "All three assignments are submitted: Teil 2 · Schreiben (Tim forum opinion, about 80 words), Teil 3 · Lesen (seven online-shopping questions) and Teil 4 · Hören (seven sustainable-shopping questions using the Day 25 recording).",
+      subtitle: "All three assignments are submitted: Teil 2 · Schreiben (formal ElectroWorld complaint, 40–50 words), Teil 3 · Lesen (seven consumer-rights questions) and Teil 4 · Hören (five Richtig/Falsch delivery-problem statements using the Day 25 recording).",
     }),
     teacherSupport: {
-      lessonOverviewEn: "Day 25 connects Tim’s online-shopping forum debate to consumer-rights reading, followed by a separate scored sustainable-shopping dialogue.",
+      lessonOverviewEn: "Day 25 connects safe online shopping and formal complaints to updated consumer-rights reading and a five-statement scored delivery-problem listening task.",
       grammarFocusEn: [
-        "A forum contribution uses a neutral personal register; it is not a formal complaint letter.",
-        "Use einerseits/andererseits for advantages and risks.",
-        "Use weil, denn or deshalb to justify an opinion.",
-        "Support your position with one specific example; mention consumer protection such as the Widerrufsrecht.",
+        "Schreiben is a formal complaint email to ElectroWorld, not a forum contribution. Include Sehr geehrte Damen und Herren and Mit freundlichen Grüßen.",
+        "Name the purchase date, product and order number when explaining the problem.",
+        "Describe the defect clearly and request a specific solution using polite B1 expressions.",
+        "Keep the complaint around 40–50 words, with concise and courteous language.",
       ],
       modelExamplesDe: [
-        "Ich stimme Tim nur teilweise zu, weil Online-Shopping auch Risiken hat.",
-        "Einerseits spare ich Zeit, andererseits gibt es Fake-Shops.",
-        "Meiner Erfahrung nach sollte man Bewertungen und das Impressum prüfen.",
-        "Deshalb finde ich das Widerrufsrecht sehr wichtig.",
+        "Ich schreibe Ihnen, weil meine Bestellung beschädigt angekommen ist.",
+        "Leider funktioniert das Gerät nicht, obwohl ich es erst vor wenigen Tagen bestellt habe.",
+        "Ich bitte Sie deshalb um eine Ersatzlieferung oder Rückerstattung.",
+        "Mit freundlichen Grüßen",
       ],
       commonMistakesEn: [
-        "Asking students to write a formal complaint instead of their response to Tim.",
-        "Leaving out reasons or the required personal experience/example.",
-        "Teaching the obsolete mixed reading rather than the seven online-shopping article questions.",
-        "Omitting required Schreiben or Hören submissions or playing the older consumer-service recording instead of b1/day-25/day-25.mp3.",
+        "Asking students to write a forum reply to Tim instead of the required formal ElectroWorld complaint.",
+        "Omitting order details, the damaged-product description or a specific request, or using an informal greeting.",
+        "Teaching the obsolete reading answer sequence instead of the current seven-question consumer-rights task.",
+        "Grading seven sustainable-shopping Hören questions instead of the five Richtig/Falsch delivery-problem questions. Always use the confirmed b1/day-25/day-25.mp3 key.",
       ],
     },
   },
