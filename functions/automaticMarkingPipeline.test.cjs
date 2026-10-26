@@ -113,3 +113,14 @@ test('A2-5.14 current five-answer workbook grades 5/5, never old 5/12', async ()
   assert.deepEqual(letters('teil3'), ['A','B','C','B','B']);
   assert.deepEqual(letters('teil4'), ['B','A','B','A','C']);
 });
+
+test('verified A1-11 speaking is included with objective marks without another AI request',async()=>{
+ const pipeline=loadPipeline();
+ const referenceEntry=pipeline.canonicalCourseReference('A1-11');
+ const submissionText='TEIL 1\nGOETHE_A1_TUTOR_SPEAKING_V1\nScore: 10/10\nVerified speaking assessment: receipt123\nTEIL 2\n1. A\n2. B\n3. A\n4. B\n5. A\nTEIL 3\n1. Richtig\n2. Falsch\n3. Falsch\n4. Richtig\n5. Falsch';
+ let calls=0;
+ const result=await withMarkingTransport(async()=>{calls++;throw Error('Must reuse saved assessment');},()=>pipeline.markSubmissionWithAI({referenceEntry,submissionText,serverSpeakingAssessment:{assignmentKey:'A1-11',score:8,maxScore:10,feedback:'Polite request.',assessmentId:'receipt123'}}));
+ assert.equal(result.objectiveCorrect,10);assert.equal(result.objectiveTotal,10);
+ assert.equal(result.speakingScore,8);assert.equal(result.finalScore,90);
+ assert.equal(result.writingScore,null);assert.equal(result.status,'marked');assert.equal(calls,0);
+});
