@@ -1,0 +1,2303 @@
+{
+  "repository": "learngermanghana/falowenexamtrainer",
+  "revision": "0cff0c9d463804afdef049f4f34101831d583cc0",
+  "answerKeys": {
+    "A1 Greetings and Asking About Well-being 0.1": {
+      "answers": {
+        "Answer1": "C) Guten Morgen",
+        "Answer2": "D) Guten Tag",
+        "Answer3": "B) Guten Abend",
+        "Answer4": "B) Gute Nacht",
+        "Answer5": "C) Guten Morgen",
+        "Answer6": "C) Wie geht es Ihnen",
+        "Answer7": "B) Auf Wiedersehen",
+        "Answer8": "A) Tschuss",
+        "Answer9": "C) Guten Abend",
+        "Answer10": "D) Gute Nacht"
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1AgS3Kb78KcvbJnZvZijM4-cBJ1PitCVnUwe19T4TMPQ/gviz/tq?tqx=out:html&sheet=Key",
+      "format": "objective",
+      "assignment_id": "A1-0.1"
+    },
+    "A1 Alphabets German Alphabet  0.2": {
+      "answers": {
+        "Answer1": "C) 26",
+        "Answer2": "A) A, O, U, B",
+        "Answer3": "A) Eszett",
+        "Answer4": "A) K",
+        "Answer5": "A) A-Umlaut",
+        "Answer6": "A) A, O, U, B",
+        "Answer7": "B 4",
+        "Answer8": "Wasser",
+        "Answer9": "Kaffee",
+        "Answer10": "Blume",
+        "Answer11": "Schule",
+        "Answer12": "Tisch"
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1XJcdMuaivOh2JCnXi1b9E4l5qN4KldyDSRNHJgiHnBs/gviz/tq?tqx=out:html&sheet=Key",
+      "format": "objective",
+      "assignment_id": "A1-0.2"
+    },
+    "A1 Pronouns and Verb Conjugation 1.1": {
+      "answers": {
+        "Answer1": "C Anna",
+        "Answer2": "C München",
+        "Answer3": "A A, B, C, D, E, F, G",
+        "Answer4": "B Hamburg"
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1KCNaM0_sgbrPhYMm89iC8WRzSfQgz80qUO9EAoCpXuo/gviz/tq?tqx=out:html&sheet=Key",
+      "format": "objective",
+      "assignment_id": "A1-1.1"
+    },
+    "A1 Numbers and Addresses 2": {
+      "assignment_id": "A1-2",
+      "format": "objective",
+      "answers": {
+        "Teil 1": {
+          "Answer1": "26",
+          "Answer2": "Müllerstraße 87",
+          "Answer3": "0171 33 55 90",
+          "Answer4": "3",
+          "Answer5": "240"
+        },
+        "Teil 2": {
+          "Answer1": "zwölf",
+          "Answer2": "sechzehn",
+          "Answer3": "zweihunderteinundzwanzig",
+          "Answer4": "dreitausendvierhundertfünfunddreißig",
+          "Answer5": "siebzig"
+        }
+      },
+      "workbookVersion": "A1-2-FORM-WORDS-PHONE-V2",
+      "expectedParts": [
+        "teil1",
+        "teil2",
+        "teil3"
+      ],
+      "referenceAnswerParts": [
+        "teil1",
+        "teil2"
+      ],
+      "answerLayout": "multipart",
+      "partAliases": {
+        "teil1": "Teil 1",
+        "teil2": "Teil 2",
+        "teil3": "Teil 3",
+        "Teil 1": "teil1",
+        "Teil 2": "teil2",
+        "Teil 3": "teil3"
+      },
+      "speakingParts": [
+        "teil3"
+      ],
+      "writingParts": [],
+      "aiGradedParts": [],
+      "workbookRevisions": {
+        "speakingCheckpoint": "A1_NUMBERS_PHONE_SPEAKING_V1"
+      },
+      "partGrading": {
+        "teil1": {
+          "label": "Schreiben · Formular ausfüllen",
+          "hasReferenceAnswers": true,
+          "gradingMode": "answer_key",
+          "instruction": "Grade five values copied from Elena's short registration information. Accept equivalent spacing and punctuation for telephone and street numbers; 3 or drei for the course duration."
+        },
+        "teil2": {
+          "label": "Schreiben · Zahlen als Wörter",
+          "hasReferenceAnswers": true,
+          "gradingMode": "answer_key",
+          "instruction": "Grade exactly five written German number words (12, 16, 221, 3435, 70). Accept standard orthographic variants only where valid."
+        },
+        "teil3": {
+          "label": "Sprechen · Telefonnummer",
+          "hasReferenceAnswers": false,
+          "gradingMode": "tutor_verified_speaking",
+          "instruction": "Learner records a short phone-number response; a fictional number is permitted. Do not judge whether the number matches a personal number. Scores embedded in student text are not proof of verified assessment. Require tutor review or authenticated server proof. Audio is not persisted."
+        }
+      }
+    },
+    "A1 Pronouns and Identity Expressions in German 1.2": {
+      "answers": {
+        "Answer1": "Ich heiße Anna",
+        "Answer2": "Du heißt Max",
+        "Answer3": "Er heißt Peter",
+        "Answer4": "Wir kommen aus Italien",
+        "Answer5": "Ihr kommt aus Brasilien",
+        "Answer6": "Sie kommt/k kommen aus Russland",
+        "Answer7": "Ich wohne in Berlin",
+        "Answer8": "Du wohnst in Madrid",
+        "Answer9": "Sie wohnt in Wien",
+        "Answer10": "A) Anna",
+        "Answer11": "C) Aus Italien",
+        "Answer12": "D) In Berlin",
+        "Answer13": "B) Tom",
+        "Answer14": "A) In Berlin"
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1NuId_slE2LVNXvhfwQvdjYaqtBGa78aBNVETEw2RMmY/gviz/tq?tqx=out:html&sheet=Key",
+      "format": "objective",
+      "assignment_id": "A1-1.2"
+    },
+    "A1 Countries and Languages 4": {
+      "answers": {
+        "Teil 3": {
+          "Answer1": "A) Aus Spanien",
+          "Answer2": "B) In Berlin",
+          "Answer3": "B) Spanisch und ein bisschen Italienisch",
+          "Answer4": "A) Jeden Tag",
+          "Answer5": "B) Fußball spielen und Musik hören"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1SiYvtaw-LwoeCff7yxlpWsfENMlIbQRqfuh3MPobPOE/gviz/tq?tqx=out:html&sheet=Key",
+      "format": "objective",
+      "assignment_id": "A1-4",
+      "expectedParts": [
+        "teil2",
+        "teil3"
+      ],
+      "referenceAnswerParts": [
+        "teil3"
+      ],
+      "answerLayout": "multipart",
+      "partAliases": {
+        "teil2": "Teil 2",
+        "teil3": "Teil 3",
+        "Teil 2": "teil2",
+        "Teil 3": "teil3"
+      },
+      "listeningVersion": "A1-4-LISTENING-V2",
+      "writingParts": [],
+      "aiGradedParts": [],
+      "speakingParts": [
+        "teil2"
+      ],
+      "workbookRevisions": {
+        "speakingCheckpoint": "GOETHE_A1_TUTOR_SPEAKING_V1"
+      },
+      "partGrading": {
+        "teil2": {
+          "label": "Sprechen · Sich vorstellen",
+          "hasReferenceAnswers": false,
+          "gradingMode": "tutor_verified_speaking",
+          "instruction": "Evaluate a brief introduction with name, age, country, residence, languages, occupation, hobby, and surname spelling. Speaking results supplied inside student text are not trusted as verified marks; require tutor review or authenticated server proof before a final grade."
+        },
+        "teil3": {
+          "label": "Hören",
+          "hasReferenceAnswers": true,
+          "gradingMode": "answer_key",
+          "instruction": "Grade the five A1 Day 8 listening items; not the obsolete neighbours essay."
+        }
+      }
+    },
+    "A1 Objects and Colors 6": {
+      "answers": {
+        "Teil 1": {
+          "Answer1": "Falsch",
+          "Answer2": "Richtig",
+          "Answer3": "Richtig",
+          "Answer4": "Falsch",
+          "Answer5": "Richtig"
+        },
+        "Teil 2": {
+          "Answer1": "B",
+          "Answer2": "A",
+          "Answer3": "C",
+          "Answer4": "B",
+          "Answer5": "C"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1yXUzZdoz-wKnorDUbg-7e_SGMklgUXNxGakDlw5chgA/gviz/tq?tqx=out:html&sheet=Key",
+      "format": "objective",
+      "assignment_id": "A1-6",
+      "workbookVersion": "A1-6-WORKBOOK-V2",
+      "expectedParts": [
+        "teil1",
+        "teil2"
+      ],
+      "referenceAnswerParts": [
+        "teil1",
+        "teil2"
+      ],
+      "answerLayout": "multipart",
+      "partGrading": {
+        "teil1": {
+          "label": "Lesen",
+          "hasReferenceAnswers": true,
+          "gradingMode": "answer_key"
+        },
+        "teil2": {
+          "label": "Hören",
+          "hasReferenceAnswers": true,
+          "gradingMode": "answer_key"
+        }
+      },
+      "partAliases": {
+        "teil1": "Teil 1",
+        "teil2": "Teil 2",
+        "Teil 1": "teil1",
+        "Teil 2": "teil2"
+      }
+    },
+    "A1 Nominative and Accusative Cases 5": {
+      "answers": {
+        "Answer1": "Der Tisch – the table",
+        "Answer2": "Die Lampe – the lamp",
+        "Answer3": "Das Buch – the book",
+        "Answer4": "Der Stuhl – the chair",
+        "Answer5": "Die Katze – the cat",
+        "Answer6": "Das Auto – the car",
+        "Answer7": "Der Hund – the dog",
+        "Answer8": "Die Blume – the flower",
+        "Answer9": "Das Fenster – the window",
+        "Answer10": "Der Computer – the computer",
+        "Answer11": "Der Tisch ist groß",
+        "Answer12": "Die Lampe ist neu",
+        "Answer13": "Das Buch ist interessant",
+        "Answer14": "Der Stuhl ist bequem",
+        "Answer15": "Die Katze ist süß",
+        "Answer16": "Das Auto ist schnell",
+        "Answer17": "Der Hund ist freundlich",
+        "Answer18": "Die Blume ist schön",
+        "Answer19": "Das Fenster ist offen",
+        "Answer20": "Der Computer ist teuer",
+        "Answer21": "Ich sehe den Tisch",
+        "Answer22": "Sie kauft die Lampe",
+        "Answer23": "Er liest das Buch",
+        "Answer24": "Wir brauchen den Stuhl",
+        "Answer25": "Du fütterst die Katze",
+        "Answer26": "Ich fahre das Auto",
+        "Answer27": "Sie streichelt den Hund",
+        "Answer28": "Er pflückt die Blume",
+        "Answer29": "Wir putzen das Fenster",
+        "Answer30": "Sie benutzen den Computer"
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1d0dvYURPHf69KlJhToqOxn39V8GCcAsdrhrEAQ78phw/gviz/tq?tqx=out:html&sheet=Key",
+      "format": "objective",
+      "assignment_id": "A1-5"
+    },
+    "A1 Understanding Time 7": {
+      "answers": {
+        "Teil 1": {
+          "Answer1": "Falsch",
+          "Answer2": "Richtig",
+          "Answer3": "Richtig",
+          "Answer4": "Richtig",
+          "Answer5": "Falsch"
+        },
+        "Teil 2": {
+          "Answer1": "B) Um 16:00 Uhr",
+          "Answer2": "B) Um 6:30 Uhr",
+          "Answer3": "C) Er sieht fern.",
+          "Answer4": "B) Um 18:00 Uhr",
+          "Answer5": "A) Tom holt Anna ab."
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1dCI5BbOvfvI4RekolDshv19jyNFPmzenDSrgBMGL9Uk/gviz/tq?tqx=out:html&sheet=Key",
+      "format": "objective",
+      "assignment_id": "A1-7",
+      "expectedParts": [
+        "teil1",
+        "teil2"
+      ],
+      "referenceAnswerParts": [
+        "teil1",
+        "teil2"
+      ],
+      "answerLayout": "multipart",
+      "partAliases": {
+        "teil1": "Teil 1",
+        "teil2": "Teil 2",
+        "Teil 1": "teil1",
+        "Teil 2": "teil2"
+      },
+      "partGrading": {
+        "teil1": {
+          "label": "Lesen",
+          "hasReferenceAnswers": true,
+          "gradingMode": "answer_key",
+          "instruction": "Grade Lesen only against the reference answers in Teil 1."
+        },
+        "teil2": {
+          "label": "Hören",
+          "hasReferenceAnswers": true,
+          "gradingMode": "answer_key",
+          "instruction": "Grade Hören only against the reference answers in Teil 2."
+        }
+      },
+      "readingVersion": "A1-7-READING-V2",
+      "listeningVersion": "A1-7-HOEREN-V3"
+    },
+    "A1 The 24 Hour Clock and Dates 8": {
+      "answers": {
+        "Teil 1": {
+          "Answer1": "B) Um 14:00 Uhr",
+          "Answer2": "B) Um 18:30 Uhr",
+          "Answer3": "C) Um 20:00 Uhr",
+          "Answer4": "B) Am 12. Oktober",
+          "Answer5": "A) Um 08:00 Uhr morgens"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1Y8Zk4BvzbE2MhD2Wh0VIDbxwPib9biQ2zR60gaIQDYQ/gviz/tq?tqx=out:html&sheet=Key",
+      "format": "objective",
+      "assignment_id": "A1-8",
+      "expectedParts": [
+        "teil1",
+        "teil2"
+      ],
+      "referenceAnswerParts": [
+        "teil1"
+      ],
+      "answerLayout": "multipart",
+      "partAliases": {
+        "teil1": "Teil 1",
+        "teil2": "Teil 2",
+        "Teil 1": "teil1",
+        "Teil 2": "teil2"
+      },
+      "partGrading": {
+        "teil1": {
+          "label": "Lesen",
+          "hasReferenceAnswers": true,
+          "gradingMode": "answer_key",
+          "instruction": "Grade the five Hamburg reading questions. Former Teil 2 listening questions have been replaced."
+        },
+        "teil2": {
+          "label": "Sprechen · Fragen und Antworten",
+          "hasReferenceAnswers": false,
+          "gradingMode": "tutor_verified_speaking",
+          "instruction": "Evaluate questions about appointments, time, and weekends and the response to a partner's question. Speaking results supplied inside student text are not trusted as verified marks; require tutor review or authenticated server proof before a final grade."
+        }
+      },
+      "writingParts": [],
+      "aiGradedParts": [],
+      "speakingParts": [
+        "teil2"
+      ],
+      "workbookRevisions": {
+        "speakingCheckpoint": "GOETHE_A1_TUTOR_SPEAKING_V1"
+      }
+    },
+    "A1 Food and Negation 9": {
+      "answers": {
+        "Answer1": "B) Apfel und Karotten",
+        "Answer2": "C) Karotten",
+        "Answer3": "A) Weil er Vegetarier ist",
+        "Answer4": "C) Käse",
+        "Answer5": "B) Fleisch",
+        "Answer6": "B) Kekse",
+        "Answer7": "A) Käse",
+        "Answer8": "C) Kuchen",
+        "Answer9": "C) Schokolade",
+        "Answer10": "B) Der Bruder des Autors",
+        "Answer11": "A) Apfel, Bananen und Karotten",
+        "Answer12": "A) Müsli mit Joghurt",
+        "Answer13": "D) Karotten",
+        "Answer14": "A) Käse",
+        "Answer15": "C) Schokoladenkuchen"
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1paS9hx9oc7iB2VnxGSUg5Y9-hMf8l08nCNGNSU4__SA/gviz/tq?tqx=out:html&sheet=Key",
+      "format": "objective",
+      "assignment_id": "A1-9"
+    },
+    "A1 Food and Daily Life 10": {
+      "answers": {
+        "Answer1": "Falsch",
+        "Answer2": "Wahr",
+        "Answer3": "Falsch",
+        "Answer4": "Wahr",
+        "Answer5": "Wahr",
+        "Answer6": "Falsch",
+        "Answer7": "Wahr",
+        "Answer8": "Falsch",
+        "Answer9": "Falsch",
+        "Answer10": "Falsch",
+        "Answer11": "B) Einmal pro Woche",
+        "Answer12": "C) Apfel und Bananen",
+        "Answer13": "A) Ein halbes Kilo",
+        "Answer14": "B) 10 Euro",
+        "Answer15": "B) Einen schönen Tag"
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1OOxtH3ZuP6Vd8wfZScnV_Ht1ywke1C3OmFm5_kFrVGs/gviz/tq?tqx=out:html&sheet=Key",
+      "format": "objective",
+      "assignment_id": "A1-10"
+    },
+    "A1 Instructions and Directions 11": {
+      "answers": {
+        "teil2": {
+          "Answer1": "A) Richtig",
+          "Answer2": "B) Falsch",
+          "Answer3": "A) Richtig",
+          "Answer4": "B) Die zweite Straße rechts.",
+          "Answer5": "A) Neben der Post, gegenüber vom Supermarkt."
+        },
+        "teil3": {
+          "Answer1": "Richtig",
+          "Answer2": "Falsch",
+          "Answer3": "Falsch",
+          "Answer4": "Richtig",
+          "Answer5": "Falsch"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1kGGQZ89YZV-xGUdFKIHUFOVYG7wB7PnCBF8DqBd4Zok/gviz/tq?tqx=out:html&sheet=Key",
+      "format": "objective",
+      "assignment_id": "A1-11",
+      "expectedParts": [
+        "teil1",
+        "teil2",
+        "teil3"
+      ],
+      "referenceAnswerParts": [
+        "teil2",
+        "teil3"
+      ],
+      "answerLayout": "multipart",
+      "partAliases": {
+        "teil1": "Teil 1",
+        "teil2": "Teil 2",
+        "Teil 1": "teil1",
+        "Teil 2": "teil2",
+        "teil3": "Teil 3",
+        "Teil 3": "teil3"
+      },
+      "partGrading": {
+        "teil1": {
+          "label": "Sprechen · Bitten und Reagieren",
+          "hasReferenceAnswers": false,
+          "gradingMode": "tutor_verified_speaking",
+          "instruction": "Evaluate polite requests with Stift and Fenster and an appropriate reply to a Stadtplan request. Speaking results supplied inside student text are not trusted as verified marks; require tutor review or authenticated server proof before a final grade."
+        },
+        "teil2": {
+          "label": "Hören",
+          "hasReferenceAnswers": true,
+          "gradingMode": "answer_key",
+          "instruction": "Grade the five Bahnhof listening questions. Former Teil 1 reading questions have been replaced."
+        },
+        "teil3": {
+          "label": "Lesen · Wegbeschreibung",
+          "hasReferenceAnswers": true,
+          "gradingMode": "answer_key",
+          "instruction": "Grade the five Richtig/Falsch statements against Teil 3 reference answers. Anna turns right; her house is opposite the bakery. Sarah turns left; the café is next to the post. The park is just behind the bus stop."
+        }
+      },
+      "writingParts": [],
+      "aiGradedParts": [],
+      "speakingParts": [
+        "teil1"
+      ],
+      "workbookRevisions": {
+        "speakingCheckpoint": "GOETHE_A1_TUTOR_SPEAKING_V1"
+      }
+    },
+    "A1 Two Case Preposition 12.1": {
+      "answers": {
+        "Teil 1": {
+          "Answer1": "B) Ärztin",
+          "Answer2": "A) Weil sie keine Zeit hat",
+          "Answer3": "B) Um 8 Uhr",
+          "Answer4": "C) Viele verschiedene Fächer",
+          "Answer5": "C) Einen Sprachkurs besuchen"
+        },
+        "Teil 2": {
+          "Answer1": "B) Falsch (Der Supermarkt hat jeden Tag von 8 Uhr bis 20 Uhr geöffnet.)",
+          "Answer2": "B) Falsch (Die Theoriestunden finden dienstags und donnerstags statt.)",
+          "Answer3": "B) Falsch (Das Büro ist von Montag bis Freitag geöffnet.)",
+          "Answer4": "B) Falsch (Der Englischkurs findet dreimal pro Woche statt.)",
+          "Answer5": "B) Falsch (Das Fitnessstudio ist jeden Tag von 6 Uhr bis 22 Uhr geöffnet.)"
+        },
+        "Teil 3": {
+          "Answer1": "A) Richtig",
+          "Answer2": "A) Richtig",
+          "Answer3": "A) Richtig",
+          "Answer4": "A) Richtig",
+          "Answer5": "A) Richtig"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1vgjfS9u_dS8ypgMOkCkVp3j_04dM8hwGvQiJdCKT74c/gviz/tq?tqx=out:html&sheet=Key",
+      "format": "objective",
+      "assignment_id": "A1-12.1"
+    },
+    "A1 Professions and Prepositions 12.2": {
+      "answers": {
+        "Teil 1": {
+          "Answer1": "In Berlin",
+          "Answer2": "Mit seiner Frau und seinen drei Kindern",
+          "Answer3": "Mit seinem Auto",
+          "Answer4": "Um 7:30 Uhr",
+          "Answer5": "a) Barzahlung (cash)"
+        },
+        "Teil 2": {
+          "Answer1": "B) Um 9:00 Uhr",
+          "Answer2": "B) Um 12:00 Uhr",
+          "Answer3": "B) Um 18:00 Uhr",
+          "Answer4": "B) Um 21:00 Uhr",
+          "Answer5": "D) Alles Genannte"
+        },
+        "Teil 3": {
+          "Answer1": "B) Um 9 Uhr",
+          "Answer2": "B) Um 12 Uhr",
+          "Answer3": "A) ein Computer und ein Drucker",
+          "Answer4": "C) in einer Bar",
+          "Answer5": "C) bar"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1DiO7gh0xrt-SyWWhpxVNtMs9lFjEGuzqJww9OMmTjDY/gviz/tq?tqx=out:html&sheet=Key",
+      "format": "objective",
+      "assignment_id": "A1-12.2"
+    },
+    "Introduction to Letter Writing  12.3": {
+      "answers": {
+        "Answer1": "Read comment for answers"
+      },
+      "assignment_id": "A1-12.3"
+    },
+    "A1 Weather 13": {
+      "answers": {
+        "teil1": {
+          "Answer1": "B) Text B",
+          "Answer2": "A) Text A",
+          "Answer3": "A) Text A",
+          "Answer4": "A) Text A",
+          "Answer5": "B) Text B"
+        },
+        "teil2": {
+          "Answer1": "Richtig",
+          "Answer2": "Falsch",
+          "Answer3": "Falsch",
+          "Answer4": "Richtig",
+          "Answer5": "Falsch"
+        },
+        "teil4": {
+          "Answer1": "B) Es ist kalt und es regnet.",
+          "Answer2": "A) Es ist sonnig und warm.",
+          "Answer3": "B) 20 Grad",
+          "Answer4": "A) Dienstag um 15:30 Uhr",
+          "Answer5": "B) Mittwoch um 10:00 Uhr",
+          "Answer6": "C) Donnerstag um 19:00 Uhr"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1VOz1kZqSXitbHO6ciV4GbGSZJkwXiZM1ifSxPVlvNNA/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1VOz1kZqSXitbHO6ciV4GbGSZJkwXiZM1ifSxPVlvNNA/edit",
+      "format": "objective",
+      "assignment_id": "A1-13",
+      "expectedParts": [
+        "teil1",
+        "teil2",
+        "teil3",
+        "teil4"
+      ],
+      "writingParts": [
+        "teil3"
+      ],
+      "aiGradedParts": [
+        "teil3"
+      ],
+      "referenceAnswerParts": [
+        "teil1",
+        "teil2",
+        "teil4"
+      ],
+      "answerLayout": "multipart",
+      "partGrading": {
+        "teil1": {
+          "label": "Teil 1 Anzeigen",
+          "hasReferenceAnswers": true,
+          "gradingMode": "answer_key",
+          "instruction": "Grade the five weather situation questions against the reference answers."
+        },
+        "teil2": {
+          "label": "Teil 2 Nachricht",
+          "hasReferenceAnswers": true,
+          "gradingMode": "answer_key",
+          "instruction": "Grade the five Richtig/Falsch statements about the Radio ND2 weekend weather report against the reference answers."
+        },
+        "teil3": {
+          "label": "Teil 3 Schreiben",
+          "hasReferenceAnswers": false,
+          "gradingMode": "ai_written_response",
+          "instruction": "Teil 3 is the second A1 letter-writing step after A1-12.3. It is an informal email to Bina, who invited the student to her wedding, but the student cannot attend. It has exactly three content points: (1) say that they cannot come, (2) give one concrete weather reason that explains why attendance is impossible, and (3) make a concrete suggestion for another meeting. Also grade the informal greeting, closing and student's name as letter form, but do not count them as extra task points. Grade the student's actual email using simple A1 expectations for task completion, email form, understandable sentence structure, basic verb forms, word order, vocabulary, spelling and capitalization. A neutral weather description alone is not enough if it does not function as the reason for missing the event. There is no fixed reference answer."
+        },
+        "teil4": {
+          "label": "Teil 4 Hören",
+          "hasReferenceAnswers": true,
+          "gradingMode": "answer_key",
+          "instruction": "Grade the six listening questions against the reference answers."
+        }
+      }
+    },
+    "A1 Health and Body Parts 14.1": {
+      "answers": {
+        "teil1": {
+          "Answer1": "B) Anzeige B",
+          "Answer2": "B) Anzeige B",
+          "Answer3": "A) Anzeige A",
+          "Answer4": "A) Per Anruf oder E-Mail (Anzeige A)",
+          "Answer5": "B) Anzeige B"
+        },
+        "teil3": {
+          "Answer1": "A) Fieber, Kopfschmerzen und Halsschmerzen",
+          "Answer2": "B) Zu Hause bleiben und viel Tee trinken",
+          "Answer3": "A) Am Freitag um 9:30 Uhr",
+          "Answer4": "A) Bahnhofstraße 12",
+          "Answer5": "B) Seine Versichertenkarte",
+          "Answer6": "A) Die Praxis anrufen"
+        },
+        "teil2": {
+          "Answer1": "Richtig",
+          "Answer2": "Richtig",
+          "Answer3": "Richtig",
+          "Answer4": "Richtig",
+          "Answer5": "Falsch"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1FUBXLMY-KhlaDrFbsgKIuHRENalKdl5Zdlqb4Td9Yds/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1FUBXLMY-KhlaDrFbsgKIuHRENalKdl5Zdlqb4Td9Yds/edit",
+      "format": "objective",
+      "assignment_id": "A1-14.1",
+      "expectedParts": [
+        "teil1",
+        "teil2",
+        "teil3"
+      ],
+      "writingParts": [],
+      "aiGradedParts": [],
+      "referenceAnswerParts": [
+        "teil1",
+        "teil2",
+        "teil3"
+      ],
+      "answerLayout": "multipart",
+      "partGrading": {
+        "teil1": {
+          "label": "Teil 1 Lesen",
+          "hasReferenceAnswers": true,
+          "gradingMode": "answer_key",
+          "instruction": "Grade the five health-service advertisement questions against the reference answers."
+        },
+        "teil2": {
+          "label": "Teil 2 Lesen: Ihr Termin",
+          "hasReferenceAnswers": true,
+          "gradingMode": "answer_key",
+          "instruction": "Grade the five Richtig/Falsch statements about the appointment email against the reference answers."
+        },
+        "teil3": {
+          "label": "Teil 3 Hören",
+          "hasReferenceAnswers": true,
+          "gradingMode": "answer_key",
+          "instruction": "Grade the six doctor-practice listening questions against the reference answers."
+        }
+      }
+    },
+    "A2 1.1 Small Talk": {
+      "answers": {
+        "teil3": {
+          "Answer1": "A) Seit Montag",
+          "Answer2": "B) Jana",
+          "Answer3": "C) In der Kantine",
+          "Answer4": "B) Sie besucht einen Deutschkurs.",
+          "Answer5": "C) Sie möchte die Kollegen besser kennenlernen."
+        },
+        "teil4": {
+          "Answer1": "B) Ins Kino gehen",
+          "Answer2": "A) Sie liebt spannende Geschichten",
+          "Answer3": "A) Tennis",
+          "Answer4": "B) Sonnig und warm",
+          "Answer5": "C) Spaziergang"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1bENY4-5AG9hrgaDKqyNpTwKT02i58wGva6tVRn-hhbE/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1bENY4-5AG9hrgaDKqyNpTwKT02i58wGva6tVRn-hhbE/edit",
+      "format": "objective",
+      "assignment_id": "A2-1.1"
+    },
+    "A2 1.2 Personen Beschreiben": {
+      "answers": {
+        "teil3": {
+          "Answer1": "A) In einem Hotel",
+          "Answer2": "B) Ruhig und zuverlässig",
+          "Answer3": "B) Eine Brille",
+          "Answer4": "C) Basketball spielen",
+          "Answer5": "D) Beide haben Freizeitaktivitäten nach oder neben der Arbeit."
+        },
+        "teil4": {
+          "Answer1": "B) Weil er in Deutschland arbeiten möchte.",
+          "Answer2": "C) Sprachkurse, Apps und Freunde",
+          "Answer3": "A) Jeden Tag eine Stunde."
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1rjZ3kemRqOJIfZCX2GwQKMt715GRdo0M90IfKdzOGH0/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1rjZ3kemRqOJIfZCX2GwQKMt715GRdo0M90IfKdzOGH0/edit",
+      "format": "objective",
+      "assignment_id": "A2-1.2"
+    },
+    "A2 1.3 Dinge und Personen vergleichen": {
+      "answers": {
+        "teil3": {
+          "Answer1": "A) Sprachschule A",
+          "Answer2": "B) In Sprachschule B",
+          "Answer3": "B) Sprachschule B",
+          "Answer4": "B) Sprachschule B",
+          "Answer5": "B) Dienstag und Donnerstag"
+        },
+        "teil4": {
+          "Answer1": "B) 26 Jahre",
+          "Answer2": "C) Architektin",
+          "Answer3": "B) Frankfurt",
+          "Answer4": "A) Ein Restaurant eröffnen",
+          "Answer5": "B) Gemeinsam kochen"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1ftIKdxbCKTlcDJUj7uHNWZu-dRfH_Tuja0FzTgS_97M/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1ftIKdxbCKTlcDJUj7uHNWZu-dRfH_Tuja0FzTgS_97M/edit",
+      "format": "objective",
+      "assignment_id": "A2-1.3"
+    },
+    "A2 2.4 Wo möchten wir uns treffen?": {
+      "answers": {
+        "teil3": {
+          "Answer1": "A) Im Stadtpark",
+          "Answer2": "C) Es soll regnen.",
+          "Answer3": "B) Neben der U-Bahn-Station Rathaus",
+          "Answer4": "C) Um 15:30 Uhr",
+          "Answer5": "B) Er reserviert einen Tisch."
+        },
+        "teil4": {
+          "Answer1": "B) Um 10 Uhr",
+          "Answer2": "B) Einen Rucksack mit Snacks und Getränken",
+          "Answer3": "C) Eine Wanderung machen",
+          "Answer4": "C) In einem Restaurant essen und einen Film schauen",
+          "Answer5": "A) Spielen und spazieren gehen"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1Fy36SwyPWJOPXpAPJjIck6JLTdhIlrk11l6KYw1umvk/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1Fy36SwyPWJOPXpAPJjIck6JLTdhIlrk11l6KYw1umvk/edit",
+      "format": "objective",
+      "assignment_id": "A2-2.4"
+    },
+    "A2 2.5 Was machst du in deiner Freizeit": {
+      "answers": {
+        "teil3": {
+          "Answer1": "C) Angebot C",
+          "Answer2": "B) Angebot B",
+          "Answer3": "C) Angebot C",
+          "Answer4": "C) Angebot C",
+          "Answer5": "A) Angebot A"
+        },
+        "teil4": {
+          "Answer1": "A) Tee trinken und lesen",
+          "Answer2": "B) Mensch ärgere dich nicht",
+          "Answer3": "A) Joggen",
+          "Answer4": "B) In den Bergen",
+          "Answer5": "B) Klassische Musik"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/13s4XR4XAKonwV9KVjT-MOw5wXW6b99l3PMmuod7xu7w/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/13s4XR4XAKonwV9KVjT-MOw5wXW6b99l3PMmuod7xu7w/edit",
+      "format": "objective",
+      "assignment_id": "A2-2.5"
+    },
+    "A2 3.6 Möbel und Räume kennenlernen": {
+      "answers": {
+        "teil3": {
+          "Answer1": "A) Neben dem Fenster",
+          "Answer2": "B) Ein Teppich",
+          "Answer3": "C) Im Regal über dem Schreibtisch",
+          "Answer4": "B) Sie essen zusammen in der Küche.",
+          "Answer5": "C) Im Keller"
+        },
+        "teil4": {
+          "Answer1": "B) Drei Zimmer",
+          "Answer2": "A) Ein Bücherregal",
+          "Answer3": "B) Er ist ein bisschen zu klein.",
+          "Answer4": "A) Einen Schreibtisch, einen Stuhl und einen Computer",
+          "Answer5": "B) Eine Pflanze"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1eMuNXnkWU_AQr422gKKkm8v6-MQTY7B7pzIEXjt5q3s/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1eMuNXnkWU_AQr422gKKkm8v6-MQTY7B7pzIEXjt5q3s/edit",
+      "format": "objective",
+      "assignment_id": "A2-3.6"
+    },
+    "A2 3.7 Eine Wohnung suchen": {
+      "answers": {
+        "teil3": {
+          "Answer1": "A) Wohnung A",
+          "Answer2": "B) Wohnung B",
+          "Answer3": "C) Wohnung C",
+          "Answer4": "D) Keine Wohnung passt.",
+          "Answer5": "A) Wohnung A"
+        },
+        "teil4": {
+          "Answer1": "B) 60 Quadratmeter",
+          "Answer2": "C) 750 Euro",
+          "Answer3": "A) Eine Katze ist erlaubt, ein Hund nicht.",
+          "Answer4": "B) 1.300 Euro",
+          "Answer5": "C) Am Donnerstag um 18 Uhr"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1eeiY8L1DYMjbBYjXAy9sPfw_gQt2-WrYAYcPGoeN1d4/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1eeiY8L1DYMjbBYjXAy9sPfw_gQt2-WrYAYcPGoeN1d4/edit",
+      "format": "objective",
+      "assignment_id": "A2-3.7"
+    },
+    "A2 3.8 Rezepte und Essen": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Nein, er kommt ohne Reservierung ins Restaurant.",
+          "Answer2": "B) Gebratenes Fischfilet mit Kartoffeln und Salat",
+          "Answer3": "C) Ein Mineralwasser ohne Kohlensäure",
+          "Answer4": "A) Er findet das Essen ausgezeichnet und lobt es.",
+          "Answer5": "B) Er gibt 2.00 € Trinkgeld (er rundet von 21.00 € auf 23.00 € auf)."
+        },
+        "teil4": {
+          "Answer1": "B) Am Fenster",
+          "Answer2": "A) Ein Mineralwasser und einen Apfelsaft",
+          "Answer3": "C) Eine Gemüsepfanne mit Reis",
+          "Answer4": "A) Ohne Salat",
+          "Answer5": "B) Sie gibt 40 Euro und lässt den Rest als Trinkgeld da."
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1Qdiqusfbg9sqkrkspHljsD3vJPKb0bghFGskL8tCPp0/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1Qdiqusfbg9sqkrkspHljsD3vJPKb0bghFGskL8tCPp0/edit",
+      "format": "objective",
+      "assignment_id": "A2-3.8"
+    },
+    "A2 4.9 Urlaub": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Drei Nächte",
+          "Answer2": "C) 82 Euro",
+          "Answer3": "B) Frühstück",
+          "Answer4": "C) Ab 14 Uhr",
+          "Answer5": "B) Die Rezeption informieren."
+        },
+        "teil4": {
+          "Answer1": "C) Weil es dort sehr teuer und sehr voll ist.",
+          "Answer2": "B) Für den Wörthersee in Österreich",
+          "Answer3": "A) Im Zelt auf einem Campingplatz direkt am Wasser",
+          "Answer4": "C) Vom 15. bis zum 22. Juli",
+          "Answer5": "B) Sie besorgt die Lebensmittel und schreibt eine Packliste."
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1YxZ2noWRoB12-oYlPxhum_LPPShshjQvyXOqnwymtAw/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1YxZ2noWRoB12-oYlPxhum_LPPShshjQvyXOqnwymtAw/edit",
+      "format": "objective",
+      "assignment_id": "A2-4.9"
+    },
+    "A2 4.11 Unterwegs: Verkehrsmittel vergleichen": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Weil man viel Gepäck bequem von Tür zu Tür transportieren kann.",
+          "Answer2": "A) Sie ist schneller als das Auto und steht nicht im Stau.",
+          "Answer3": "B) Entspannen, lesen oder am Laptop arbeiten.",
+          "Answer4": "C) Weil die Tickets viel günstiger sind als bei der Bahn.",
+          "Answer5": "B) Benzin ist teuer und Parkplätze sind schwer zu finden.",
+          "Answer6": "A) Weil Fahrradfahren gesünder und umweltfreundlicher ist.",
+          "Answer7": "C) Der Fernbus braucht am meisten Zeit, ist aber besonders preiswert."
+        },
+        "teil4": {
+          "Answer1": "A) Mit dem Bus",
+          "Answer2": "B) Sie ist schneller und immer pünktlich.",
+          "Answer3": "C) Bei Regen ist es nicht schön.",
+          "Answer4": "B) Vier Stunden",
+          "Answer5": "C) Ein Taxi nehmen"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/16aS6UmVL-kQqcje1f3rDeqobEnkoNsxUwCNE_iBokI4/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/16aS6UmVL-kQqcje1f3rDeqobEnkoNsxUwCNE_iBokI4/edit",
+      "format": "objective",
+      "assignment_id": "A2-4.11"
+    },
+    "A2 5.12 Mein Traumberuf": {
+      "answers": {
+        "teil3": {
+          "Answer1": "A) Anzeige A",
+          "Answer2": "B) Anzeige B",
+          "Answer3": "C) Anzeige C",
+          "Answer4": "D) Anzeige D",
+          "Answer5": "B) Anzeige B"
+        },
+        "teil4": {
+          "Answer1": "B) Tierärztin",
+          "Answer2": "C) Einen Hund und zwei Katzen",
+          "Answer3": "A) In einer Praxis",
+          "Answer4": "C) Sechs Jahre",
+          "Answer5": "B) Weil sie in Deutschland arbeiten möchte."
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1z8wEWz-HJxm1DUvr0a7OE5md3Gj4OR5ZJ3SpJNI-hyQ/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1z8wEWz-HJxm1DUvr0a7OE5md3Gj4OR5ZJ3SpJNI-hyQ/edit",
+      "format": "objective",
+      "assignment_id": "A2-5.12"
+    },
+    "A2 5.13 Ein Vorstellungsgespräch": {
+      "answers": {
+        "teil3": {
+          "Answer1": "A) Büroassistentin",
+          "Answer2": "B) Dienstag um 10:30 Uhr",
+          "Answer3": "B) Herrn Berger",
+          "Answer4": "B) Lebenslauf und Zeugnisse",
+          "Answer5": "C) Sich spätestens am Freitag melden."
+        },
+        "teil4": {
+          "Answer1": "B) In einem Supermarkt",
+          "Answer2": "C) Türkisch und Deutsch",
+          "Answer3": "A) Samstags immer",
+          "Answer4": "B) Am ersten März",
+          "Answer5": "C) Zwölf Euro"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1fySC84kZ7Xl1YfzmK4FaZImNjVI6wsr_YFi-4mfdrm4/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1fySC84kZ7Xl1YfzmK4FaZImNjVI6wsr_YFi-4mfdrm4/edit",
+      "format": "objective",
+      "assignment_id": "A2-5.13"
+    },
+    "A2 5.14 Beruf und Karriere": {
+      "answers": {
+        "teil3": {
+          "Answer1": "A) Zwischen 8:00 und 9:00 Uhr",
+          "Answer2": "C) 30 Minuten",
+          "Answer3": "B) Im Online-System",
+          "Answer4": "A) Am ersten Tag vor 9:00 Uhr",
+          "Answer5": "B) Frau König"
+        },
+        "teil4": {}
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1wKcE29sav7yHsSc9SSOwrbmtq15MF33LbVAeDaz4CAw/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1wKcE29sav7yHsSc9SSOwrbmtq15MF33LbVAeDaz4CAw/edit",
+      "format": "objective",
+      "assignment_id": "A2-5.14"
+    },
+    "A2 6.15 Mein Lieblingssport": {
+      "answers": {
+        "teil3": {
+          "Answer1": "D) Angebot E",
+          "Answer2": "C) Angebot C",
+          "Answer3": "C) Angebot D",
+          "Answer4": "B) Angebot B",
+          "Answer5": "A) Angebot A"
+        },
+        "teil4": {
+          "Answer1": "B) Fußball",
+          "Answer2": "C) Zweimal pro Woche",
+          "Answer3": "A) Jeden Mittwoch",
+          "Answer4": "C) Im Park",
+          "Answer5": "B) Am Mittwoch um sechs Uhr"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/11cVglcrlXHA5N9UBp5S6Mepm2KFP57Cp__4F2GRLRcM/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/11cVglcrlXHA5N9UBp5S6Mepm2KFP57Cp__4F2GRLRcM/edit",
+      "format": "objective",
+      "assignment_id": "A2-6.15"
+    },
+    "A2 6.16 Wohlbefinden und Entspannung": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Angebot B",
+          "Answer2": "C) Angebot C",
+          "Answer3": "D) Angebot D",
+          "Answer4": "A) Angebot A",
+          "Answer5": "C) Angebot C"
+        },
+        "teil4": {
+          "Answer1": "B) Sie arbeitet sehr viel und schläft schlecht.",
+          "Answer2": "A) Jeden Dienstag und Donnerstag nach der Arbeit.",
+          "Answer3": "C) Sie ist kostenlos (gratis).",
+          "Answer4": "B) Er trinkt nach 3 Uhr nachmittags keinen Kaffee mehr.",
+          "Answer5": "A) Vor dem Schwimmbad."
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/13fG-McZz3Q_rmcHymAwfLwX7C1illz91v5b2yXyoArI/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/13fG-McZz3Q_rmcHymAwfLwX7C1illz91v5b2yXyoArI/edit",
+      "format": "objective",
+      "assignment_id": "A2-6.16"
+    },
+    "A2 6.17 In die Apotheke gehen": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Auf Sonnenschutzmittel und Hautcremes.",
+          "Answer2": "B) können Sie von Montag bis Freitag am Vormittag kommen.",
+          "Answer3": "B) Kunden, die wegen Krankheit nicht vorbeikommen können.",
+          "Answer4": "A) Wenn man vor 14:00 Uhr bestellt.",
+          "Answer5": "A) Auf einem Aushang neben der Tür."
+        },
+        "teil4": {
+          "Answer1": "B) Halsschmerzen und eine laufende Nase.",
+          "Answer2": "A) Alle drei Stunden.",
+          "Answer3": "C) Nein, er braucht kein Rezept.",
+          "Answer4": "A) Ein Pflaster mit bunten Tieren.",
+          "Answer5": "B) Mit Karte."
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1X-H0rjHjyJeTbm_bVNh_Bp8VMT-ZwZBQdhadUS1Coqs/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1X-H0rjHjyJeTbm_bVNh_Bp8VMT-ZwZBQdhadUS1Coqs/edit",
+      "format": "objective",
+      "assignment_id": "A2-6.17",
+      "expectedParts": [
+        "teil3",
+        "teil4"
+      ],
+      "writingParts": [],
+      "aiGradedParts": [],
+      "referenceAnswerParts": [
+        "teil3",
+        "teil4"
+      ],
+      "workbookRevisions": {
+        "a2-6.17-hamburg-legacy": {
+          "answers": {
+            "teil3": {
+              "Answer1": "B) Eine Stunde",
+              "Answer2": "B) 20 Euro",
+              "Answer3": "C) Um 20 Uhr",
+              "Answer4": "A) Richtig",
+              "Answer5": "B) Falsch",
+              "Answer6": "A) Richtig",
+              "Answer7": "B) Falsch",
+              "Answer8": "A) Richtig"
+            },
+            "teil4": {
+              "Answer1": "B) Wegen Kopfschmerzen",
+              "Answer2": "C) Ibuprofen",
+              "Answer3": "B) Trockene Haut",
+              "Answer4": "B) Sie war erleichtert",
+              "Answer5": "B) Proben von Produkten"
+            }
+          },
+          "expectedParts": [
+            "teil3",
+            "teil4"
+          ],
+          "writingParts": [],
+          "aiGradedParts": [],
+          "referenceAnswerParts": [
+            "teil3",
+            "teil4"
+          ]
+        }
+      }
+    },
+    "A2 7.18 Die Bank Anrufen": {
+      "answers": {
+        "teil3": {
+          "Answer1": "A) Donnerstag um 14:00 Uhr",
+          "Answer2": "B) Am Marktplatz 8",
+          "Answer3": "B) Einen Reisepass",
+          "Answer4": "C) 45 Minuten",
+          "Answer5": "B) Die Formulare vorher online ausfüllen"
+        },
+        "teil4": {
+          "Answer1": "B) Reisepass, Meldebescheinigung, Einkommensnachweis",
+          "Answer2": "B) Eine Stunde",
+          "Answer3": "B) Drei",
+          "Answer4": "A) Basiskonto",
+          "Answer5": "D) Die Formulare vor dem Termin online ausfüllen"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/11swMhsZxMZKG8YqavvspmntM6RzTtP5NDG6zk19GskI/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/11swMhsZxMZKG8YqavvspmntM6RzTtP5NDG6zk19GskI/edit",
+      "format": "objective",
+      "assignment_id": "A2-7.18"
+    },
+    "A2 7.19 Einkaufen? Wo und wie?": {
+      "answers": {
+        "teil3": {
+          "Answer1": "A) Dienstag und Samstag",
+          "Answer2": "B) Kartenzahlung",
+          "Answer3": "B) Ab 19 Uhr",
+          "Answer4": "B) Kleidung und kleine Haushaltsartikel",
+          "Answer5": "A) Kleidung abgeben"
+        },
+        "teil4": {
+          "Answer1": "B) Bequeme Möglichkeit Produkte nach Hause zu bestellen",
+          "Answer2": "B) Hohe Anzahl von Rücksendungen und Umweltbelastung",
+          "Answer3": "A) Auf vertrauenswürdige Websites und Schutz persönlicher Daten",
+          "Answer4": "A) Aus nachhaltigen Quellen und fairen Bedingungen",
+          "Answer5": "B) Es hat den Konsum revolutioniert und neue Möglichkeiten geschaffen"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1OaEeNnHmG3brY-OhbHDpFmj86YUMLIqzMOEAlpAcnFE/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1OaEeNnHmG3brY-OhbHDpFmj86YUMLIqzMOEAlpAcnFE/edit",
+      "format": "objective",
+      "assignment_id": "A2-7.19"
+    },
+    "A2 7.20 Typische Reklamationssituationen üben": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Einen Wasserkocher",
+          "Answer2": "C) 39 Euro",
+          "Answer3": "B) Es schaltet sich nicht mehr ein.",
+          "Answer4": "A) Der Kassenbon",
+          "Answer5": "B) Ein neues Gerät oder sein Geld zurück"
+        },
+        "teil4": {
+          "Answer1": "B) Er funktioniert nicht",
+          "Answer2": "C) Den Kassenbon",
+          "Answer3": "C) Einen Umtausch oder eine Rückerstattung",
+          "Answer4": "C) Sie hat die falsche Größe",
+          "Answer5": "A) Einen Retourenschein"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1C-utAPIEGi9Rsp_gI3qsfHddX9IXvazP27sxRrobI40/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1C-utAPIEGi9Rsp_gI3qsfHddX9IXvazP27sxRrobI40/edit",
+      "format": "objective",
+      "assignment_id": "A2-7.20"
+    },
+    "A2 8.21 Ein Wochenende planen": {
+      "answers": {
+        "teil3": {
+          "Answer1": "A) Mit dem Zug",
+          "Answer2": "B) Am Rhein spazieren",
+          "Answer3": "B) Restaurant und Konzert",
+          "Answer4": "A) Sie gehen in ein Museum.",
+          "Answer5": "C) Um 17:00 Uhr"
+        },
+        "teil4": {}
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/16SKkqpJNa7NyqrnH5xyiyD5VH6AmmyJWG4dc2SiIVO4/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/16SKkqpJNa7NyqrnH5xyiyD5VH6AmmyJWG4dc2SiIVO4/edit",
+      "format": "objective",
+      "assignment_id": "A2-8.21"
+    },
+    "A2 8.22 Die Woche Plannung": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Zwei Tage",
+          "Answer2": "B) 20 €",
+          "Answer3": "C) An den Landungsbrücken",
+          "Answer4": "A) Freie Fahrt mit Bus und Bahn für zwei Tage",
+          "Answer5": "C) Um 20 Uhr",
+          "Answer6": "B) Seeblick",
+          "Answer7": "A) Ungefähr zwei Stunden"
+        },
+        "teil4": {}
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1IltGaPYHb_jPazZNClHdjzTu-Tgs94zfHNzixrizvCs/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1IltGaPYHb_jPazZNClHdjzTu-Tgs94zfHNzixrizvCs/edit",
+      "format": "objective",
+      "assignment_id": "A2-8.22"
+    },
+    "A2 9.23 Wie kommst du zur Schule / zur Arbeit?": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Zu Fuß",
+          "Answer2": "B) 25 Minuten",
+          "Answer3": "A) Weil es ihm zu kalt ist.",
+          "Answer4": "B) Er findet schwer einen Parkplatz.",
+          "Answer5": "C) 65 Euro"
+        },
+        "teil4": {}
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1u7kFhf4yTXKlRhxVNsr7nmDfaR1XBnkzwG6ZnIwvAmo/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1u7kFhf4yTXKlRhxVNsr7nmDfaR1XBnkzwG6ZnIwvAmo/edit",
+      "format": "objective",
+      "assignment_id": "A2-9.23"
+    },
+    "A2 9.24 Einen Urlaub planen": {
+      "answers": {
+        "teil3": {
+          "Answer1": "D) Anzeige D",
+          "Answer2": "C) Anzeige C",
+          "Answer3": "E) Anzeige E",
+          "Answer4": "A) Anzeige A",
+          "Answer5": "B) Anzeige B"
+        },
+        "teil4": {
+          "Answer1": "B) Italien",
+          "Answer2": "B) Gutes Frühstück, ein ruhiges Zimmer und die Nähe zum Strand",
+          "Answer3": "A) Weil die Autofahrt sehr lang wäre",
+          "Answer4": "B) Eine Kirche besichtigen, durch die Altstadt spazieren und in einem Restaurant essen",
+          "Answer5": "B) Die Abfahrtszeit, die Wettervorhersage und ihre Reservierung"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1VhkmUp18ZHieB-bTyZavqvEs1ikz9bXAHh_aDOai-7E/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1VhkmUp18ZHieB-bTyZavqvEs1ikz9bXAHh_aDOai-7E/edit",
+      "format": "objective",
+      "assignment_id": "A2-9.24"
+    },
+    "A2 9.25 Tagesablauf": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Er macht eine Hafenrundfahrt an den Landungsbrücken.",
+          "Answer2": "B) 20 € (statt 25 €)",
+          "Answer3": "B) Im Restaurant Seeblick",
+          "Answer4": "C) Um 20 Uhr",
+          "Answer5": "B) Ein Besuch im Hafenmuseum und ein Spaziergang im Stadtpark"
+        },
+        "teil4": {}
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1nOtlOXVblDt1RQ8JOLpBBLQfjmnxJ9YF6ylhZo4u6kY/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1nOtlOXVblDt1RQ8JOLpBBLQfjmnxJ9YF6ylhZo4u6kY/edit",
+      "format": "objective",
+      "assignment_id": "A2-9.25"
+    },
+    "A2 10.26 Gefühle in verschiedenen Situationen beschr": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Er findet die Idee sehr gut („Das klingt toll“).",
+          "Answer2": "A) „Ich interessiere mich auch für Musik.“",
+          "Answer3": "B) Er ist gelassen und nimmt die Karten trotzdem („Das ist nicht schlimm“).",
+          "Answer4": "A) Er freut sich über den guten Rat („Super Tipp. Danke“).",
+          "Answer5": "A) Der Tourist ist mit dem Plan für Museum und Stadtpark zufrieden."
+        },
+        "teil4": {
+          "Answer1": "B) Weil sie immer wieder an die Aufgaben denkt",
+          "Answer2": "C) Glücklich und erleichtert",
+          "Answer3": "A) Weil er die neue Stelle nicht bekommen hat",
+          "Answer4": "C) Seine Freundin",
+          "Answer5": "B) Eine Überraschungsparty"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1SQsUUW6_A3X-SGbOsyMZuOgm6Qo7gGsnqY9pbNxYgmY/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1SQsUUW6_A3X-SGbOsyMZuOgm6Qo7gGsnqY9pbNxYgmY/edit",
+      "format": "objective",
+      "assignment_id": "A2-10.26"
+    },
+    "A2 10.27 Digitale Kommunikation": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Freie Fahrt mit Bus und Bahn für zwei Tage sowie Rabatte",
+          "Answer2": "C) Die gebuchten Plätze befinden sich auf den hinteren Rängen.",
+          "Answer3": "A) Auf der Website des Restaurants Seeblick",
+          "Answer4": "B) Ungefähr zwei Stunden",
+          "Answer5": "B) Einen digitalen Stadtplan mit Markierungen für Sehenswürdigkeiten"
+        },
+        "teil4": {
+          "Answer1": "A) Weil ihre Schwester in Österreich lebt",
+          "Answer2": "B) Sie machen eine Videokonferenz",
+          "Answer3": "B) Weil er am Abend nicht ständig auf sein Handy schauen möchte",
+          "Answer4": "B) Weil ihr Datenschutz wichtiger geworden ist",
+          "Answer5": "C) Missverständnisse können leichter entstehen"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1CDLU1BEBm-xCS0BEdXunjSN8CHol1UMuxlF_QDSGNc8/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1CDLU1BEBm-xCS0BEdXunjSN8CHol1UMuxlF_QDSGNc8/edit",
+      "format": "objective",
+      "assignment_id": "A2-10.27"
+    },
+    "A2 10.28 Über die Zukunft sprechen": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Er wird im Restaurant Seeblick Fisch essen.",
+          "Answer2": "A) Heute Abend um 20:00 Uhr",
+          "Answer3": "B) Er möchte das Hafenmuseum besuchen.",
+          "Answer4": "B) Er wird im Stadtpark spazieren gehen.",
+          "Answer5": "C) Zwei Tage lang für Bus und Bahn"
+        },
+        "teil4": {
+          "Answer1": "B) Weil sie später mehr Verantwortung übernehmen möchte",
+          "Answer2": "C) Hotelmanagerin werden",
+          "Answer3": "A) Weil er seinen Beruf wechseln möchte und sich für Computer interessiert",
+          "Answer4": "C) Für eine größere Wohnung, die er in zwei oder drei Jahren mieten möchte",
+          "Answer5": "A) Eine zweiwöchige Reise nach Spanien und ihr Spanisch zu verbessern"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1fAP60NXAKiJ8wdugvjQtZxDX-3ap88vKya7yZWo9mEs/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1fAP60NXAKiJ8wdugvjQtZxDX-3ap88vKya7yZWo9mEs/edit",
+      "format": "objective",
+      "assignment_id": "A2-10.28"
+    },
+    "B1 1.1 Traumwelten": {
+      "answers": {
+        "teil3": {
+          "Answer1": "A) Dass sie von Gottern gesendet wurden",
+          "Answer2": "B) Sigmund Freud",
+          "Answer3": "A) Angst vor dem Alterwerden",
+          "Answer4": "B) Gemeinsames psychologisches Erbe der Menschheit",
+          "Answer5": "B) Als Gedachtnisverarbeitung",
+          "Answer6": "B) Universelle Symbole wie der Held oder die Mutter",
+          "Answer7": "B) Ein geheimnisvolles und faszinierendes Gebiet"
+        },
+        "teil4": {
+          "Answer1": "A) Die Struktur des Benzolmolekuls",
+          "Answer2": "A) Die ldee fur “Frankenstein”",
+          "Answer3": "A) Angst und Unwohlsein",
+          "Answer4": "A) Wenn man im Traum bewusst ist, dass man traumt",
+          "Answer5": "A) In der REM-Phase"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1hKJ2W9aka4qCSMg_tYpbrAQPvw1ON2GrlvJYbjJHe54/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1hKJ2W9aka4qCSMg_tYpbrAQPvw1ON2GrlvJYbjJHe54/edit",
+      "format": "objective",
+      "assignment_id": "B1-1.1"
+    },
+    "B1 1.2 Freundes für Leben": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Vertrauen",
+          "Answer2": "B) Emotional, finanziell oder praktisch",
+          "Answer3": "A) Sie schaffen gemeinsame Erlebnisse und Erinnerungen",
+          "Answer4": "A) Sie hilft, Missverstandnisse zu vermeiden",
+          "Answer5": "B) Den Fehler vergeben und hinter sich lassen",
+          "Answer6": "B) Er starkt die individuelle Freiheit",
+          "Answer7": "B) Vertrauen, Unterstutzung, Ehrlichkeit, Gemeinsame Interessen und Vergebung"
+        },
+        "teil4": {
+          "Answer1": "A) Hort zu und gibt Rastschlage",
+          "Answer2": "A) Gemeinsame Erlebnisse und Erinnerungen",
+          "Answer3": "A) Sie vermeidet Missverstandnisse",
+          "Answer4": "B) Mit Freude",
+          "Answer5": "B) Fehler zu vergeben"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1M8ZeJrG3z1CjUhE09QCEf2p7XtruShjQl-8EzEfWvIQ/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1M8ZeJrG3z1CjUhE09QCEf2p7XtruShjQl-8EzEfWvIQ/edit",
+      "format": "objective",
+      "assignment_id": "B1-1.2"
+    },
+    "B1 1.3 Erfolgsgeschichten": {
+      "answers": {
+        "teil3": {
+          "Answer1": "A) Die Krankenschwester",
+          "Answer2": "B) Weil er fur seine Kinder kampft",
+          "Answer3": "C) Ihr Einsatz fur andere",
+          "Answer4": "B) Sie sind nicht beruhmt",
+          "Answer5": "B) Dass Mut in kleinen Taten liegt",
+          "Answer6": "B) Ein alleinerziehender Vater",
+          "Answer7": "B) Wahre Helden sind diejenigen, die im Alltag still wirken"
+        },
+        "teil4": {
+          "Answer1": "B) Er beginnt seine Arbeit als Hausmeister",
+          "Answer2": "B) Weil sie den Schultag reibungslos macht",
+          "Answer3": "C) Die Heizung fallt aus",
+          "Answer4": "C) Er behebt da Problem, Sofort",
+          "Answer5": "A) Erschopft aber zufrieden"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1EjYVFY9Krq_MmyeBMVUDhOyb8lFLOD_8X0Rg9qpR4G4/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1EjYVFY9Krq_MmyeBMVUDhOyb8lFLOD_8X0Rg9qpR4G4/edit",
+      "format": "objective",
+      "assignment_id": "B1-1.3"
+    },
+    "B1 2.4 Wohnung suchen": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Wegen des Mangels an bezahlbarem Wohnraum",
+          "Answer2": "A) Hohe Nachfrage nach Wohnungen",
+          "Answer3": "B) Um sie als Ferienwohnungen oder Luxusapartments zu nutzen",
+          "Answer4": "B) Mietpreisbremse und Neubauprogramme",
+          "Answer5": "A) Geduld und Flexibilität"
+        },
+        "teil4": {
+          "Answer1": "B) 950 Euro",
+          "Answer2": "C) 200 Euro",
+          "Answer3": "B) Nein",
+          "Answer4": "B) kleine Haustiere",
+          "Answer5": "B) Es gibt eine U-Bahn Station und mehree Bushaltestellen in der Nahe"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/18GckqSrP1SJkHpBuUKlk0yvstL2q6Je10IxmK6vt4XE/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/18GckqSrP1SJkHpBuUKlk0yvstL2q6Je10IxmK6vt4XE/edit",
+      "format": "objective",
+      "assignment_id": "B1-2.4"
+    },
+    "B1 2.5 Der Besichtigungsg termin": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Seit drei Monaten",
+          "Answer2": "B) Die Bewerber durften die Räume einzeln nacheinander ansehen.",
+          "Answer3": "B) Er liegt auf der Rückseite des Hauses und ist ruhig.",
+          "Answer4": "C) 800 Euro",
+          "Answer5": "B) Weil die U-Bahn nah ist und die Einbauküche bereits enthalten ist.",
+          "Answer6": "A) Gehaltsnachweis und Schufa-Auskunft",
+          "Answer7": "B) Bis Freitag"
+        },
+        "teil4": {
+          "Answer1": "A) Am fruhen Morgen",
+          "Answer2": "B) Der Vermieter spart Zeit",
+          "Answer3": "B) Auf das Umfeld und die Nachbarschaft",
+          "Answer4": "C) Weil die Wohung schnell vergeben sein konnte",
+          "Answer5": "B) Gehaltsnachweise und Mieterselbstauskunft"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1eQ3oZh5sV9O-ybmCLnxlxjfxIqrCVoa5HpVcszE_Fv0/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1eQ3oZh5sV9O-ybmCLnxlxjfxIqrCVoa5HpVcszE_Fv0/edit",
+      "format": "objective",
+      "assignment_id": "B1-2.5"
+    },
+    "B1 2.6 Leben in der Stadt oder auf dem Land?": {
+      "answers": {
+        "teil3": {
+          "Answer1": "A) Ein Vergleich zwischen den Lebensbedingungen in der Stadt und auf dem Land.",
+          "Answer2": "B) Man kann durch den guten Nahverkehr problemlos ohne eigenes Auto leben.",
+          "Answer3": "C) Weil Häuser dort preiswerter sind und man mehr Platz hat.",
+          "Answer4": "B) Man ist wegen des schlechten Busangebots meist auf ein Auto angewiesen.",
+          "Answer5": "B) Viele ziehen an den Stadtrand oder in Orte mit guter Zugverbindung zur Stadt."
+        },
+        "teil4": {
+          "Answer1": "B) Die vielen kulturellen Angebote und die kurzen Wege",
+          "Answer2": "A) Sie ist persönlicher.",
+          "Answer3": "B) Die Natur direkt vor der Haustür",
+          "Answer4": "A) Sie müsste täglich eine Stunde mit dem Zug pendeln.",
+          "Answer5": "C) Sie sind deutlich günstiger als in der Stadt."
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1JXeoYk5ruXOZblqVFx6chD5tMxs8lMA5mDAX3KQwNpE/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1JXeoYk5ruXOZblqVFx6chD5tMxs8lMA5mDAX3KQwNpE/edit",
+      "format": "objective",
+      "assignment_id": "B1-2.6"
+    },
+    "B1 3.7 Fast Food vs. Hausmannskost": {
+      "answers": {
+        "teil3": {
+          "Answer1": "A) Sie können zu Übergewicht und Diabetes führen.",
+          "Answer2": "B) Sie können positive Gefühle auslösen.",
+          "Answer3": "B) Zucker schadet den Zähnen.",
+          "Answer4": "B) Sie können langfristig gesundheitliche Probleme verursachen.",
+          "Answer5": "B) Karies und Übergewicht",
+          "Answer6": "C) Man sollte den Zuckerkonsum reduzieren und auf eine ausgewogene Ernährung achten.",
+          "Answer7": "A) Durch körperliche Aktivität und Entspannungstechniken.",
+          "Answer8": "F) Anzeige F",
+          "Answer9": "B) Anzeige B",
+          "Answer10": "C) Anzeige C",
+          "Answer11": "D) Anzeige D",
+          "Answer12": "E) Anzeige E"
+        },
+        "teil4": {
+          "Answer1": "F) Veranstaltung uber gesunde Ernahrung und Zuckerreduktion",
+          "Answer2": "B) Werbung fur ein neues Diat – Programm",
+          "Answer3": "C) Angebot fur zuckerfreie SuBigkeiten",
+          "Answer4": "D) Eroffnung eines neuen Restuarants mit gesunden Gerichten",
+          "Answer5": "E) Rabbatt auf Schokolade im Onlne-Shop",
+          "Answer6": "B) In vielen Fertiggerichten und Softdrinks",
+          "Answer7": "B) Er gibt uns Kurzzeitig Energie",
+          "Answer8": "A) Man fuhlt sich energielos und mude",
+          "Answer9": "A) Erhohtes Risiko fur Ubergewicht und Diabetes Typ 2",
+          "Answer10": "B) Den Zuckerkonsum zu reduzieren und mehr frische Lebensmittel zu essen"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1COQA_nlpRTk-FTLD5fL3HkWoVAvUh0XVrpc4TLE3i-w/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1COQA_nlpRTk-FTLD5fL3HkWoVAvUh0XVrpc4TLE3i-w/edit",
+      "format": "objective",
+      "assignment_id": "B1-3.7"
+    },
+    "B1 3.8 Alles für die Gesundheit": {
+      "answers": {
+        "teil3": {
+          "Answer1": "A) Jemand, der jeden Tag Menschenleben rettet",
+          "Answer2": "B) Er sagt, er macht nur seinen Job",
+          "Answer3": "B) Weil ihre Taten oft unsichtbar sind",
+          "Answer4": "C) Der Druck, schnell die richtige Entscheidung zu treffen",
+          "Answer5": "B) Ihr Engagement fur die Gesellschaft",
+          "Answer6": "C) Jemand, der Engagement zeigt",
+          "Answer7": "C) Sie leisten wichtige Beitrage, die oft unsichtber sind"
+        },
+        "teil4": {
+          "Answer1": "B) Er sorgt fur die Patienten und bereitet ihre Bedurfnisse vor",
+          "Answer2": "A) Er sieht sie als eine Pflicht an die Menschheit",
+          "Answer3": "B) Er ist immer ruhig und findet Losungen",
+          "Answer4": "C) Er bietet emotionale Unterstutzung und hort zu",
+          "Answer5": "B) Sie sehen ihn als einen stillen Helden"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1eLDjlTYn2coRP8HsnZvH1FURNcNY0jUmGtUF9-4pRY4/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1eLDjlTYn2coRP8HsnZvH1FURNcNY0jUmGtUF9-4pRY4/edit",
+      "format": "objective",
+      "assignment_id": "B1-3.8"
+    },
+    "B1 3.9 Work-Life-Balance im modernen Arbeitsumfeld": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Zeitdruck und hohe Erwartungen",
+          "Answer2": "C) Herzprobleme und Bluthochdruck",
+          "Answer3": "A) Regelmäßige Bewegung",
+          "Answer4": "B) Sie liefert dem Körper die nötigen Nährstoffe.",
+          "Answer5": "C) Die Entspannung von Körper und Geist",
+          "Answer6": "B) Sie tragen zum Wohlbefinden bei.",
+          "Answer7": "B) Auf die Signale des Körpers hören und frühzeitig Maßnahmen ergreifen"
+        },
+        "teil4": {
+          "Answer1": "B) Realistische Ziele setzen",
+          "Answer2": "C) Sie verbessert die Stimmun",
+          "Answer3": "A) Sie beruhigen Korper und Geist",
+          "Answer4": "B) Weil er den kpoper",
+          "Answer5": "B) Sie helfen, das wohibefinden zu steigern"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1cIpRc3tSERefI3W4nBoqRlNAD4RmbRVjFry7pMYxiZU/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1cIpRc3tSERefI3W4nBoqRlNAD4RmbRVjFry7pMYxiZU/edit",
+      "format": "objective",
+      "assignment_id": "B1-3.9"
+    },
+    "B1 4.10 Digitale Auszeit und Selbstfürsorge": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Sie kontrollierte das Gerät sehr häufig.",
+          "Answer2": "C) Sie informierte Familie und Kollegen.",
+          "Answer3": "A) Unruhig, weil sie Nachrichten verpassen könnte.",
+          "Answer4": "C) Das Gespräch war länger und persönlicher.",
+          "Answer5": "B) Sie wollte eine Adresse nachsehen und Musik hören.",
+          "Answer6": "B) Sie sind praktisch, und eine vollständige Trennung ist nicht immer realistisch.",
+          "Answer7": "C) Ein bewussterer Umgang mit Technik"
+        },
+        "teil4": {
+          "Answer1": "C) Stress und Uberarbeitung",
+          "Answer2": "B) Produktiver",
+          "Answer3": "A) Sie verbessert die Kommunikation und Geduld",
+          "Answer4": "B) Sie haben weniger Schlafprobleme und Ruckenschmerzen",
+          "Answer5": "C) Gefuhle der Einsamkeit und Isolation"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1rpXdbptzIH1c2xSYb1Kz3c7lRsCshNMyqFa-eMtfS_s/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1rpXdbptzIH1c2xSYb1Kz3c7lRsCshNMyqFa-eMtfS_s/edit",
+      "format": "objective",
+      "assignment_id": "B1-4.10"
+    },
+    "B1 4.11 Teamspiele und Kooperative Aktivitäten": {
+      "answers": {
+        "teil3": {
+          "Answer1": "C) Spiele im Freien",
+          "Answer2": "B) Sie fördern strategisches Denken.",
+          "Answer3": "C) Es kann zu Sucht führen.",
+          "Answer4": "B) Soziale Fähigkeiten",
+          "Answer5": "A) Verlust echter sozialer Interaktion und Bewegung",
+          "Answer6": "C) Eine Balance zwischen digitalen und traditionellen Spielen finden",
+          "Answer7": "A) Minecraft"
+        },
+        "teil4": {
+          "Answer1": "A) Um stress abzubauen",
+          "Answer2": "B) Brettspiele",
+          "Answer3": "B) Sie fordern soziale und korpeliche Fahigkeiten",
+          "Answer4": "B) Digitale Spiele",
+          "Answer5": "A) Traditionelle Spiele Haben Soziale und Korperliche Vorteile"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1bd1xCfp9UE7LHJ_dINYIFU4ZBafXFWe1Qdt5Yq0DsJQ/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1bd1xCfp9UE7LHJ_dINYIFU4ZBafXFWe1Qdt5Yq0DsJQ/edit",
+      "format": "objective",
+      "assignment_id": "B1-4.11"
+    },
+    "B1 4.12 Abenteuer in der Natur": {
+      "answers": {
+        "teil3": {
+          "Answer1": "a) Der Nervenkitzel des Unbekannten.",
+          "Answer2": "b) Um den Alltag zu durchbrechen.",
+          "Answer3": "b) Risiken und Herausforderungen.",
+          "Answer4": "b) Durch alltägliche Veränderungen.",
+          "Answer5": "b) Finanzielle Unsicherheiten.",
+          "Answer6": "b) Unvergessliche Erlebnisse.",
+          "Answer7": "b) Sie suchen den Nervenkitzel im Alltag."
+        },
+        "teil4": {
+          "Answer1": "A",
+          "Answer2": "A",
+          "Answer3": "A",
+          "Answer4": "B",
+          "Answer5": "B"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1_MAR_-rTWz4xhS1Oz0D3fd6Rstd10Q8zP1Dc9jHBCcc/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1_MAR_-rTWz4xhS1Oz0D3fd6Rstd10Q8zP1Dc9jHBCcc/edit",
+      "format": "objective",
+      "assignment_id": "B1-4.12"
+    },
+    "B1 4.13 Eigene Filmkritik schreiben": {
+      "answers": {
+        "teil3": {
+          "Answer1": "a) Ein mysteriöser Mord.",
+          "Answer2": "c) Er ist ein Ermittler.",
+          "Answer3": "c) Eine nächtliche Verfolgung.",
+          "Answer4": "d) Eine unerwartete Figur.",
+          "Answer5": "c) Spannungssteigernd.",
+          "Answer6": "b) Die Dialoge waren klischeehaft.",
+          "Answer7": "a) Ja."
+        },
+        "teil4": {
+          "Answer1": "B) Spannung",
+          "Answer2": "B) Ein leises, schleichendes Gerausch",
+          "Answer3": "B) Durch schnelle Schnitte und Nahaufnahmen",
+          "Answer4": "C) Die Ungewissheit uber den Verlauf der Handlung",
+          "Answer5": "C) Weil sie Abenteuer ohne echte Gefahr erleben wollen"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1BY62D8rPhp8DeGFNZP6uV6Tk3K7Iz5BdjPrZUifyv4s/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1BY62D8rPhp8DeGFNZP6uV6Tk3K7Iz5BdjPrZUifyv4s/edit",
+      "format": "objective",
+      "assignment_id": "B1-4.13"
+    },
+    "B1 5.14 Traditionelles vs. digitales Lernen": {
+      "answers": {
+        "teil3": {
+          "Answer1": "b) Der Arbeitsmarkt verändert sich schnell.",
+          "Answer2": "a) Es ist billiger als formelles Lernen.",
+          "Answer3": "b) Es hält den Geist jung und aktiv.",
+          "Answer4": "a) Die Kosten für Kurse.",
+          "Answer5": "a) Technologie macht Lernen einfacher und zugänglicher.",
+          "Answer6": "b) Kreativität und Anpassungsfähigkeit.",
+          "Answer7": "c) Die richtige Einstellung und Disziplin."
+        },
+        "teil4": {
+          "Answer1": "A) Sie mochte in ihrem Beruf vorankommen",
+          "Answer2": "A) Programmierung",
+          "Answer3": "B) Sie haben wenig Zeit",
+          "Answer4": "A) Er nimmt sich jeden Tag eine Stunde Zeit",
+          "Answer5": "C) RegelmaBig und in kleinen Schritten lernen"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1sdKVEIqVZzqzYlTuEmpXv1W0ozkovfGjoIDFrKvjguM/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1sdKVEIqVZzqzYlTuEmpXv1W0ozkovfGjoIDFrKvjguM/edit",
+      "format": "objective",
+      "assignment_id": "B1-5.14"
+    },
+    "B1 5.15 Medien und Arbeiten im Homeoffice": {
+      "answers": {
+        "teil3": {
+          "Answer1": "b) Sie ermöglicht eine bessere Kommunikation und flexibles Arbeiten.",
+          "Answer2": "c) Stress und soziale Isolation.",
+          "Answer3": "b) Als leicht gefährdet.",
+          "Answer4": "a) Die ältere Generation.",
+          "Answer5": "b) Die Kontrolle über den technologischen Fortschritt.",
+          "Answer6": "b) Bessere digitale Bildung.",
+          "Answer7": "a) Überwältigt."
+        },
+        "teil4": {
+          "Answer1": "C) Flexibilitat durch Homeoffice",
+          "Answer2": "B) Mehr stress und weniger Trennung von Arbeit und Privatleben",
+          "Answer3": "A) Wegen technischer Ungleichheiten",
+          "Answer4": "C) Gesundheitliche Probleme",
+          "Answer5": "C) Balance zwischen digitalem und realem Leben finden"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1Ukcoo644zSndWMdtK4RE9UKT9eCAQo3MFyzySkGERKs/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1Ukcoo644zSndWMdtK4RE9UKT9eCAQo3MFyzySkGERKs/edit",
+      "format": "objective",
+      "assignment_id": "B1-5.15"
+    },
+    "B1 5.16 Prüfungsangst und Stressbewältigung": {
+      "answers": {
+        "teil3": {
+          "Answer1": "b) Prüfungen fördern das Kurzzeitgedächtnis.",
+          "Answer2": "c) Schriftliche, mündliche und praktische Prüfungen.",
+          "Answer3": "b) Prüfungsstress.",
+          "Answer4": "b) Projekte und Hausarbeiten.",
+          "Answer5": "b) Mündliche Prüfungen.",
+          "Answer6": "b) Entspannungstechniken und gute Vorbereitung.",
+          "Answer7": "b) Sie sind fairer und individueller."
+        },
+        "teil4": {
+          "Answer1": "B) RegelmaBiges Lernen und Pausen machen",
+          "Answer2": "A) Meditation und positives Denken",
+          "Answer3": "C) Es kann helfan, die Angst zu reduzieren",
+          "Answer4": "B) Sich klarzumachen, dass die Prufung nur eine Momentaufnahme ist",
+          "Answer5": "C) Negative Gedanken und Stress"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1Yzmp1pDDBIK8axqKMMb48neT1U9qWSrMojawHWz4gok/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1Yzmp1pDDBIK8axqKMMb48neT1U9qWSrMojawHWz4gok/edit",
+      "format": "objective",
+      "assignment_id": "B1-5.16"
+    },
+    "B1 5.17 Wie lernt man am besten?": {
+      "answers": {
+        "teil3": {
+          "Answer1": "b) Aktives Arbeiten mit dem Lernstoff, z.B. durch Zusammenfassungen.",
+          "Answer2": "c) Schlaf hilft, das Gelernte zu speichern.",
+          "Answer3": "b) Regelmäßige Pausen.",
+          "Answer4": "b) Das regelmäßige Wiederholen des Lernstoffs.",
+          "Answer5": "a) Durch aktives Lernen und Wiederholung.",
+          "Answer6": "c) Spaced repetition.",
+          "Answer7": "b) Sie bringen Struktur in den Lernprozess."
+        },
+        "teil4": {
+          "Answer1": "B) Jeden Tag, auch nur zwanzig Minuten",
+          "Answer2": "B) Weil das Gehirn Wiederholung braucht",
+          "Answer3": "C) In ganzen Sätzen",
+          "Answer4": "D) Viel sprechen, auch laut mit sich selbst",
+          "Answer5": "B) Geduld und Spaß"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/17FL2CY2xn5tHSaaysDTypMsuevxzUtAyfpNVhQtKsX4/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/17FL2CY2xn5tHSaaysDTypMsuevxzUtAyfpNVhQtKsX4/edit",
+      "format": "objective",
+      "assignment_id": "B1-5.17"
+    },
+    "B1 6.18 Wege zum Wunschberuf": {
+      "answers": {
+        "teil3": {
+          "Answer1": "c) Leidenschaft und Vernunft.",
+          "Answer2": "b) Flexibilität und Weiterbildung.",
+          "Answer3": "c) Eine Mischung aus Leidenschaft und Vernunft finden.",
+          "Answer4": "b) Der Traumberuf ist nicht immer gefragt.",
+          "Answer5": "c) Die realen Bedingungen auf dem Arbeitsmarkt.",
+          "Answer6": "c) Sie sind nur kurzfristig gefragt.",
+          "Answer7": "a) Durch Flexibilität und Bereitschaft zur Weiterbildung."
+        },
+        "teil4": {
+          "Answer1": "B) Astronaut",
+          "Answer2": "B) Grafikdesigner, Innenarchitekt oder Kunsttherapeut",
+          "Answer3": "B) Ein Praktikum im Kinderheim",
+          "Answer4": "C) Ein Mann wollte Ingenieur werden, arbeitet aber heute als Koch",
+          "Answer5": "A) Mit einem Kompass für die Karriere"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1g_zdXMGP06wWELi9fIiM8eDfRzgHUAMOCwcrkUTaLiM/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1g_zdXMGP06wWELi9fIiM8eDfRzgHUAMOCwcrkUTaLiM/edit",
+      "format": "objective",
+      "assignment_id": "B1-6.18"
+    },
+    "B1 6.19 Das Vorstellungsgespräch": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Weil ihm die Stelle bei der Agentur sehr wichtig ist.",
+          "Answer2": "B) Seinen bisherigen Werdegang und seine Erfahrungen beschreiben.",
+          "Answer3": "A) Frau Weber stellte ihm plötzlich Fragen auf Englisch.",
+          "Answer4": "B) Über seinen Umgang mit Stress und Zeitdruck.",
+          "Answer5": "B) Nach Arbeitszeiten und Fortbildungsangeboten.",
+          "Answer6": "B) Bis Ende nächster Woche.",
+          "Answer7": "B) Drei andere Kandidaten."
+        },
+        "teil4": {
+          "Answer1": "B) Krankenschwester",
+          "Answer2": "C) Seit drei Jahren",
+          "Answer3": "A) Die Klinik hat einen guten Ruf, und sie arbeitet gern im Team",
+          "Answer4": "C) Sie ist manchmal zu perfektionistisch",
+          "Answer5": "C) Vier Wochen"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1jIci1aX6N68DhttbtTg1yLF2ighuNIyYNTtSLz_OEjc/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1jIci1aX6N68DhttbtTg1yLF2ighuNIyYNTtSLz_OEjc/edit",
+      "format": "objective",
+      "assignment_id": "B1-6.19"
+    },
+    "B1 6.20 Wie wird man ?? (Ausbildung und Qu)": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Weil man Reisen und Beruf miteinander verbinden kann.",
+          "Answer2": "C) Es gibt keine staatlich vorgeschriebene, feste Ausbildung.",
+          "Answer3": "B) Ein Studium oder eine Ausbildung im Bereich Tourismus, Sprachen oder Kultur.",
+          "Answer4": "B) Fließendes Englisch und nach Möglichkeit die Sprache des Reiselandes.",
+          "Answer5": "A) Er muss ruhige und schnelle Entscheidungen treffen können.",
+          "Answer6": "B) Themen wie Rhetorik, Erste Hilfe und Reiserecht.",
+          "Answer7": "C) Sie sammeln Erfahrung auf kürzeren Fahrten."
+        },
+        "teil4": {
+          "Answer1": "B) Mittleren Abschluss",
+          "Answer2": "B) Drei bis vier Jahre",
+          "Answer3": "B) Falsch",
+          "Answer4": "A) Man bastelt und singt mit den Kindern",
+          "Answer5": "B) Geduld"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1MaHnVgNn_PC74l5bfjPJp84Of1xGkL-kXneLL9awNHg/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1MaHnVgNn_PC74l5bfjPJp84Of1xGkL-kXneLL9awNHg/edit",
+      "format": "objective",
+      "assignment_id": "B1-6.20"
+    },
+    "B1 7.21 Lebensformen heute ? Familie, Wohnge": {
+      "answers": {
+        "teil3": {
+          "Answer1": "a) Weil ein WG-Zimmer preiswerter ist als eine eigene Wohnung.",
+          "Answer2": "b) Einige Menschen fühlen sich manchmal einsam.",
+          "Answer3": "b) Fast 40 Prozent.",
+          "Answer4": "b) Menschen unterschiedlichen Alters wohnen im selben Gebäude.",
+          "Answer5": "c) Die Nachbarn helfen sich gegenseitig bei alltäglichen Aufgaben."
+        },
+        "teil4": {}
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1Cr7l9lPtiR5KvB7twzyc3FM12OiTTfLow9fu7JfnEU8/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1Cr7l9lPtiR5KvB7twzyc3FM12OiTTfLow9fu7JfnEU8/edit",
+      "format": "objective",
+      "assignment_id": "B1-7.21"
+    },
+    "B1 7.22 Was ist dir in einer Beziehung wichtig?": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Sie nutzen dafür häufig Apps auf dem Smartphone.",
+          "Answer2": "B) Sie können schnell feststellen, ob sie dieselben Interessen haben.",
+          "Answer3": "C) Das große Angebot kann dazu führen, dass Beziehungen schneller beendet werden."
+        },
+        "teil4": {
+          "Answer1": "B) Dr. Claudia Seidel",
+          "Answer2": "0) Keine Person",
+          "Answer3": "A) Prof. Dr. Julian Hofmann",
+          "Answer4": "C) Markus Lindner",
+          "Answer5": "A) Prof. Dr. Julian Hofmann",
+          "Answer6": "0) Keine Person",
+          "Answer7": "B) Dr. Claudia Seidel"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1b4CY4c1YK-QrIKmmq6NX60cdmWJ6u0X6C-qcyoFjbBU/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1b4CY4c1YK-QrIKmmq6NX60cdmWJ6u0X6C-qcyoFjbBU/edit",
+      "format": "objective",
+      "assignment_id": "B1-7.22"
+    },
+    "B1 7.23 Erstes Date ? Typische Situationen": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Anzeige B",
+          "Answer2": "A) Anzeige A",
+          "Answer3": "D) Anzeige D",
+          "Answer4": "C) Anzeige C",
+          "Answer5": "E) Anzeige E"
+        },
+        "teil4": {}
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1gHdQ_M00rJyQkHvK30p-mI_ZY3tk7gMGCTjTpL1drOk/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1gHdQ_M00rJyQkHvK30p-mI_ZY3tk7gMGCTjTpL1drOk/edit",
+      "format": "objective",
+      "assignment_id": "B1-7.23"
+    },
+    "B1 8.24 Konsum und Nachhaltigkeit": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Falsch",
+          "Answer2": "A) Richtig",
+          "Answer3": "B) Falsch",
+          "Answer4": "B) Falsch",
+          "Answer5": "A) Richtig",
+          "Answer6": "B) Falsch",
+          "Answer7": "A) Richtig"
+        },
+        "teil4": {}
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1WdDtfi_8MfBJpXrZUj_ypsDqyyAp3DuMhIiB_FNjGnc/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1WdDtfi_8MfBJpXrZUj_ypsDqyyAp3DuMhIiB_FNjGnc/edit",
+      "format": "objective",
+      "assignment_id": "B1-8.24"
+    },
+    "B1 8.25 Online einkaufen ? Rechte und Risiken": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Weil man bequem von zu Hause aus eine große Auswahl bestellen kann.",
+          "Answer2": "B) Sie verlangen Geld per Vorkasse, schicken die Ware aber nie ab.",
+          "Answer3": "B) Dass vertrauliche Daten und Kreditkartendaten missbraucht werden.",
+          "Answer4": "A) Ein 14-tägiges Widerrufsrecht ohne Angabe von Gründen.",
+          "Answer5": "A) Er kann den Vertrag stornieren und die Ware zurückschicken.",
+          "Answer6": "A) Man sollte das Impressum prüfen und Kundenbewertungen lesen.",
+          "Answer7": "C) Den Kauf auf Rechnung sowie etablierte Bezahldienste."
+        },
+        "teil4": {
+          "Answer1": "B) Ihr Rucksack war kaputt und sie hatte keine Tasche dabei.",
+          "Answer2": "C) Zwei oder drei stabile Jutebeutel.",
+          "Answer3": "A) Sie vergisst sie beim spontanen Einkauf nach der Arbeit.",
+          "Answer4": "B) Einen zusammengefalteten Beutel in der Jacken- oder Arbeitstasche aufbewahren.",
+          "Answer5": "A) Sie verwendet waschbare Stoffnetze oder kauft unverpacktes Obst.",
+          "Answer6": "C) Dort gibt es viele unverpackte Produkte aus der Region.",
+          "Answer7": "B) Am Samstag um zehn Uhr vor dem Rathaus."
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1qD3fjXMprCDY-5Xz1-msUH1DgA9_V8KbwxTInF0I0AE/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1qD3fjXMprCDY-5Xz1-msUH1DgA9_V8KbwxTInF0I0AE/edit",
+      "format": "objective",
+      "assignment_id": "B1-8.25"
+    },
+    "B1 9.26 Reiseprobleme und Lösungen": {
+      "answers": {
+        "teil3": {
+          "Answer1": "A) Flug-Recht24 – Kofferverlust und Entschädigung",
+          "Answer2": "C) EuroPannenschutz – Autopanne in Europa",
+          "Answer3": "B) ZugPlus App – Entschädigung bei Zugverspätung",
+          "Answer4": "E) SicherReisen – Reiserücktritt wegen Krankheit"
+        },
+        "teil4": {
+          "Answer1": "A) Richtig",
+          "Answer2": "B) Falsch",
+          "Answer3": "B) Falsch",
+          "Answer4": "B) Falsch",
+          "Answer5": "A) Richtig"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1o3axSLfa47e16kvcL2zJP5FdtYXTbOwYAEzQ4Xen1VI/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1o3axSLfa47e16kvcL2zJP5FdtYXTbOwYAEzQ4Xen1VI/edit",
+      "format": "objective",
+      "assignment_id": "B1-9.26"
+    },
+    "B1 10.27 Umweltfreundlich im Alltag": {
+      "answers": {
+        "teil3": {
+          "Answer1": "C) Papier, Glas und Plastik",
+          "Answer2": "A) Durch den Einsatz energieeffizienter Geräte",
+          "Answer3": "B) Solar- und Windkraft",
+          "Answer4": "A) Fahrräder und öffentliche Verkehrsmittel",
+          "Answer5": "B) Weil die Fleischproduktion ressourcenintensiv ist",
+          "Answer6": "C) Umweltfreundlich einkaufen",
+          "Answer7": "B) Bei jedem Einzelnen"
+        },
+        "teil4": {
+          "Answer1": "B) Stoffbeutel",
+          "Answer2": "B) Indem man Produkte ohne Plastikverpackung kauft",
+          "Answer3": "C) Indem man das Licht ausschaltet, wenn man einen Raum verlasst",
+          "Answer4": "B) Die Heizung niedriger stellen und warme Kleidung tragen",
+          "Answer5": "B) Bei jedem Einzelnen"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/14lfVVKeZkgYlfg3QOArxlRoNddpAFM0SfKwzfit9ZNU/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/14lfVVKeZkgYlfg3QOArxlRoNddpAFM0SfKwzfit9ZNU/edit",
+      "format": "objective",
+      "assignment_id": "B1-10.27"
+    },
+    "B1 10.28 Klimafreundlich leben": {
+      "answers": {
+        "teil3": {
+          "Answer1": "B) Weil es in vielen Teilen der Welt knapp ist.",
+          "Answer2": "B) Für die Landwirtschaft und die Industrie.",
+          "Answer3": "B) Wassersparende Geräte benutzen.",
+          "Answer4": "B) Weil es das Trinkwasser verschmutzt.",
+          "Answer5": "A) Gesetze und Verordnungen erlassen.",
+          "Answer6": "B) Um die Bedeutung des Wassersparens zu verstehen.",
+          "Answer7": "B) Wasser ist eine kostbare Ressource, die geschützt werden muss."
+        },
+        "teil4": {
+          "Answer1": "B",
+          "Answer2": "B",
+          "Answer3": "B",
+          "Answer4": "B",
+          "Answer5": "B"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1ZmpTcbi4zR5gxGt80Khu3E2M-1sneiJM0qCOCwa8UKo/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1ZmpTcbi4zR5gxGt80Khu3E2M-1sneiJM0qCOCwa8UKo/edit",
+      "format": "objective",
+      "assignment_id": "B1-10.28"
+    },
+    "A1 Asking About Prices 3": {
+      "answers": {
+        "teil1": {
+          "Answer1": "Es.",
+          "Answer2": "Sie.",
+          "Answer3": "Es.",
+          "Answer4": "Er."
+        },
+        "teil3": {
+          "Answer1": "gern",
+          "Answer2": "Magst",
+          "Answer3": "gern",
+          "Answer4": "mögen",
+          "Answer5": "gern",
+          "Answer6": "mag"
+        }
+      },
+      "assignment_id": "A1-3"
+    },
+    "A2 4.10 Eine Stadt entdecken und etwas erleben": {
+      "answers": {
+        "teil3": {
+          "Answer1": "A) In der Touristeninformation",
+          "Answer2": "B) An den Landungsbrücken",
+          "Answer3": "C) Ein Orchesterkonzert in der Elbphilharmonie",
+          "Answer4": "A) Im Restaurant Seeblick",
+          "Answer5": "A) Im Stadtpark spazieren gehen"
+        },
+        "teil4": {
+          "Answer1": "A) Eine Hafenrundfahrt",
+          "Answer2": "B) 20 Euro",
+          "Answer3": "C) Zwei Tage Bus und Bahn fahren und Rabatt im Museum bekommen",
+          "Answer4": "B) Um 20 Uhr",
+          "Answer5": "A) Das Hafenmuseum"
+        }
+      },
+      "answer_url": "https://docs.google.com/spreadsheets/d/1fhMpgMdfNWuZcoRnXMvKhGxXBJLYF-cGV4hyPHmcFu4/gviz/tq?tqx=out:html&sheet=Key",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1fhMpgMdfNWuZcoRnXMvKhGxXBJLYF-cGV4hyPHmcFu4/edit",
+      "format": "objective",
+      "assignment_id": "A2-4.10"
+    }
+  },
+  "writingTasks": {
+    "A2-1.1": {
+      "day": 1,
+      "assignmentKey": "A2-1.1",
+      "title": "E-Mail an Felix: Arbeit und Familie",
+      "situation": "Sie schreiben eine E-Mail an Ihren Freund Felix. Sie möchten ihm von Ihrer Arbeit oder Ihrem Studium und von Ihrer Familie erzählen.",
+      "points": [
+        "Schreiben Sie, warum Sie Felix schreiben.",
+        "Erzählen Sie von Ihrer Arbeit oder Ihrem Studium und von Ihrer Familie.",
+        "Fragen Sie Felix, wie es ihm geht und was bei ihm neu ist."
+      ]
+    },
+    "A2-1.2": {
+      "day": 2,
+      "assignmentKey": "A2-1.2",
+      "title": "E-Mail an Felix: Mein Chef / Meine Chefin",
+      "situation": "Sie schreiben eine E-Mail an Ihren Freund Felix und möchten Ihren Chef oder Ihre Chefin beschreiben.",
+      "points": [
+        "Beschreiben Sie das Aussehen Ihres Chefs oder Ihrer Chefin.",
+        "Beschreiben Sie die Persönlichkeit und das Verhalten bei der Arbeit.",
+        "Sagen Sie, was Ihnen gefällt oder was besser sein könnte, und fragen Sie Felix nach seinem Chef oder seiner Chefin."
+      ]
+    },
+    "A2-1.3": {
+      "day": 3,
+      "assignmentKey": "A2-1.3",
+      "title": "E-Mail an Felix: Meine Eltern vergleichen",
+      "situation": "Sie schreiben eine E-Mail an Ihren Freund Felix und möchten Ihre Mutter und Ihren Vater vergleichen.",
+      "points": [
+        "Vergleichen Sie das Aussehen Ihrer Mutter und Ihres Vaters.",
+        "Vergleichen Sie ihren Charakter.",
+        "Sagen Sie, was Sie an beiden besonders mögen, und fragen Sie Felix nach seinen Eltern."
+      ]
+    },
+    "A2-2.4": {
+      "day": 4,
+      "assignmentKey": "A2-2.4",
+      "title": "E-Mail an Herrn Asadu: Gemeinsam etwas unternehmen",
+      "situation": "Sie möchten Herrn Felix Asadu zu einem gemeinsamen Wochenende einladen. Schreiben Sie ihm eine E-Mail.",
+      "points": [
+        "Erklären Sie, warum Sie ihn einladen, und schlagen Sie eine Aktivität vor.",
+        "Fragen Sie, wann er Zeit hat und wo Sie sich treffen können.",
+        "Fragen Sie, ob er etwas für das Essen oder die Aktivität mitbringen kann."
+      ]
+    },
+    "A2-2.5": {
+      "day": 5,
+      "assignmentKey": "A2-2.5",
+      "title": "E-Mail an Alex: Freizeit planen",
+      "situation": "Sie möchten mit Ihrem Freund Alex am Wochenende etwas unternehmen. Schreiben Sie Alex eine E-Mail.",
+      "points": [
+        "Sagen Sie, dass Sie am Wochenende Zeit haben und etwas zusammen machen möchten.",
+        "Fragen Sie, ob Alex am Wochenende frei ist und wann er Zeit hat.",
+        "Schlagen Sie eine konkrete Aktivität vor und fragen Sie, was Alex davon hält."
+      ]
+    },
+    "A2-3.6": {
+      "day": 6,
+      "assignmentKey": "A2-3.6",
+      "title": "E-Mail über Ihr neues Zimmer",
+      "situation": "Sie sind vor Kurzem umgezogen und möchten einer Freundin oder einem Freund von Ihrem neuen Zimmer erzählen. Schreiben Sie eine E-Mail.",
+      "points": [
+        "Schreiben Sie, warum Sie schreiben oder dass Sie umgezogen sind.",
+        "Beschreiben Sie Ihr Zimmer und die wichtigsten Möbel.",
+        "Sagen Sie, was Ihnen an Ihrem Zimmer besonders gefällt, und erklären Sie warum."
+      ]
+    },
+    "A2-3.7": {
+      "day": 7,
+      "assignmentKey": "A2-3.7",
+      "title": "E-Mail an einen Vermieter",
+      "situation": "Sie möchten eine Wohnung in einer bestimmten Stadt mieten. Schreiben Sie eine E-Mail an den Vermieter.",
+      "points": [
+        "Fragen Sie nach einer verfügbaren Wohnung.",
+        "Nennen Sie wichtige Kriterien, zum Beispiel Größe, Lage oder Preis.",
+        "Fragen Sie nach den Mietbedingungen und nach einem Besichtigungstermin."
+      ]
+    },
+    "A2-3.8": {
+      "day": 8,
+      "assignmentKey": "A2-3.8",
+      "title": "E-Mail an ein Restaurant",
+      "situation": "Sie möchten einen Tisch in einem Restaurant reservieren. Schreiben Sie eine E-Mail an das Restaurant.",
+      "points": [
+        "Fragen Sie nach einem freien Tisch.",
+        "Nennen Sie Datum, Uhrzeit und Anzahl der Personen.",
+        "Fragen Sie nach dem Menü und den Preisen."
+      ]
+    },
+    "A2-4.9": {
+      "day": 9,
+      "assignmentKey": "A2-4.9",
+      "title": "E-Mail an ein Hotel",
+      "situation": "Sie planen einen Urlaub und möchten eine Unterkunft reservieren. Schreiben Sie eine E-Mail an ein Hotel.",
+      "points": [
+        "Fragen Sie nach einem freien Zimmer.",
+        "Nennen Sie wichtige Reisedaten, zum Beispiel Datum, Anzahl der Personen oder Zimmerart.",
+        "Fragen Sie nach dem Preis und nach zusätzlichen Leistungen, zum Beispiel Frühstück oder WLAN."
+      ]
+    },
+    "A2-4.10": {
+      "day": 10,
+      "assignmentKey": "A2-4.10",
+      "title": "E-Mail an einen Freund / eine Freundin: Gemeinsam die Stadt entdecken",
+      "situation": "Sie möchten mit einem Freund oder einer Freundin einen Tag in einer Stadt oder in einem neuen Viertel verbringen. Schreiben Sie eine E-Mail.",
+      "points": [
+        "Sagen Sie, welchen Ort Sie gemeinsam entdecken möchten und warum.",
+        "Schlagen Sie zwei Aktivitäten oder Orte vor, zum Beispiel einen Markt, einen Park, ein Café oder eine Sehenswürdigkeit.",
+        "Nennen Sie einen konkreten Tag und Treffpunkt und fragen Sie, was die Person lieber machen möchte."
+      ]
+    },
+    "A2-4.11": {
+      "day": 11,
+      "assignmentKey": "A2-4.11",
+      "title": "E-Mail an eine Autovermietung",
+      "situation": "Sie sind in Deutschland und möchten für das Wochenende ein Auto mieten. Schreiben Sie eine E-Mail an eine Autovermietung.",
+      "points": [
+        "Fragen Sie, ob für das Wochenende noch ein Auto verfügbar ist.",
+        "Fragen Sie, welche Dokumente benötigt werden.",
+        "Fragen Sie nach dem Preis und ob eine Versicherung enthalten ist."
+      ]
+    },
+    "A2-5.12": {
+      "day": 12,
+      "assignmentKey": "A2-5.12",
+      "title": "E-Mail an ein Unternehmen: Bewerbung",
+      "situation": "Sie sind in Deutschland und möchten sich um eine Arbeitsstelle bewerben. Schreiben Sie eine E-Mail an ein Unternehmen.",
+      "points": [
+        "Fragen Sie, ob es noch offene Stellen gibt.",
+        "Beschreiben Sie Ihre Fähigkeiten und Fertigkeiten für die Stelle.",
+        "Fragen Sie nach den Arbeitszeiten und dem Gehalt."
+      ]
+    },
+    "A2-5.13": {
+      "day": 13,
+      "assignmentKey": "A2-5.13",
+      "title": "Bewerbung bei CityMall",
+      "situation": "Sie möchten sich bei CityMall um eine Stelle als Verkäufer/in oder Kundenservice-Mitarbeiter/in bewerben. Schreiben Sie eine formelle E-Mail.",
+      "points": [
+        "Erklären Sie, warum Sie sich um die Stelle bewerben.",
+        "Beschreiben Sie Ihre Erfahrungen und Stärken.",
+        "Fragen Sie nach den Arbeitszeiten, den Aufgaben oder den Weiterbildungsmöglichkeiten."
+      ]
+    },
+    "A2-5.14": {
+      "day": 14,
+      "assignmentKey": "A2-5.14",
+      "title": "E-Mail an einen Kollegen: Karriereseminar",
+      "situation": "Ihr Kollege hat Ihnen ein berufliches Seminar vorgeschlagen, das Ihre Karriere fördern könnte. Schreiben Sie ihm eine formelle E-Mail.",
+      "points": [
+        "Bedanken Sie sich für den Vorschlag und sagen Sie, dass Sie interessiert sind.",
+        "Fragen Sie nach dem Inhalt und den Terminen des Seminars.",
+        "Fragen Sie nach den Kosten."
+      ]
+    },
+    "A2-6.15": {
+      "day": 15,
+      "assignmentKey": "A2-6.15",
+      "title": "E-Mail an Jan: Mein Lieblingssport",
+      "situation": "Ihr Freund Jan hat Sie in einer Nachricht gefragt, welchen Sport Sie gerne machen. Schreiben Sie eine kurze informelle E-Mail an Jan.",
+      "points": [
+        "Nennen Sie Ihren Lieblingssport und sagen Sie, wie oft Sie ihn machen.",
+        "Erklären Sie, warum Ihnen dieser Sport gefällt.",
+        "Laden Sie Jan ein, nächsten Samstag zusammen Sport zu machen."
+      ]
+    },
+    "A2-6.16": {
+      "day": 16,
+      "assignmentKey": "A2-6.16",
+      "title": "E-Mail an Markus: Entspannung am Wochenende",
+      "situation": "Ihr Freund Markus hat Sie gefragt, was Sie nach einer stressigen Arbeitswoche machen, um sich zu entspannen. Schreiben Sie eine kurze informelle E-Mail an Markus. Schreiben Sie 20–30 Wörter. Vergessen Sie nicht die passende Anrede und den Gruß am Ende.",
+      "points": [
+        "Sagen Sie, was Sie zur Entspannung machen (z. B. Sauna, Spaziergang, Yoga).",
+        "Erklären Sie, warum Ihnen diese Aktivität guttut.",
+        "Laden Sie Markus ein, nächstes Wochenende gemeinsam etwas zur Entspannung zu machen."
+      ]
+    },
+    "A2-6.17": {
+      "day": 17,
+      "assignmentKey": "A2-6.17",
+      "title": "E-Mail an eine Apotheke",
+      "situation": "Sie möchten ein bestimmtes Medikament kaufen. Schreiben Sie eine E-Mail an eine Apotheke.",
+      "points": [
+        "Erklären Sie kurz, warum Sie das Medikament benötigen.",
+        "Fragen Sie nach den Kosten und ob die Versicherung das Medikament übernimmt.",
+        "Fragen Sie nach der richtigen Dosierung oder möglichen Nebenwirkungen."
+      ]
+    },
+    "A2-7.18": {
+      "day": 18,
+      "assignmentKey": "A2-7.18",
+      "title": "E-Mail an Ihre Bank",
+      "situation": "Sie sind in Ghana und Ihre Bankkarte wurde gesperrt. Schreiben Sie eine E-Mail an Ihre Bank.",
+      "points": [
+        "Fragen Sie, ob Ihre Karte entsperrt werden kann.",
+        "Fragen Sie, welche Dokumente oder Informationen benötigt werden.",
+        "Fragen Sie, wie lange der Vorgang dauern wird."
+      ]
+    },
+    "A2-7.19": {
+      "day": 19,
+      "assignmentKey": "A2-7.19",
+      "title": "E-Mail an einen Freund / eine Freundin: Einkaufen",
+      "situation": "Sie möchten mit einem Freund oder einer Freundin Möbel für Ihre neue Wohnung einkaufen. Schreiben Sie eine E-Mail.",
+      "points": [
+        "Laden Sie die Person zum Einkaufen ein und erklären Sie den Grund.",
+        "Schlagen Sie vor, wann und wo Sie sich treffen können.",
+        "Fragen Sie nach der Meinung der Person."
+      ]
+    },
+    "A2-7.20": {
+      "day": 20,
+      "assignmentKey": "A2-7.20",
+      "title": "Formelle E-Mail: Reklamation",
+      "situation": "Sie haben ein Produkt gekauft, aber es ist defekt oder nicht wie bestellt. Schreiben Sie eine formelle Reklamation.",
+      "points": [
+        "Erklären Sie, was Sie gekauft haben und warum Sie schreiben.",
+        "Beschreiben Sie das Problem genau.",
+        "Bitten Sie höflich um Umtausch, Reparatur oder Rückerstattung."
+      ]
+    },
+    "A2-8.21": {
+      "day": 21,
+      "assignmentKey": "A2-8.21",
+      "title": "E-Mail an einen Freund / eine Freundin: Wochenende",
+      "situation": "Sie möchten einen Freund oder eine Freundin zu einem gemeinsamen Wochenende einladen. Schreiben Sie eine E-Mail.",
+      "points": [
+        "Beschreiben Sie Ihre Wochenendpläne und erklären Sie, warum sie besonders sind.",
+        "Nennen Sie wichtige Details, zum Beispiel Datum, Ort, Treffpunkt oder Dauer.",
+        "Erklären Sie, was die Person mitbringen sollte oder was sie erwarten kann."
+      ]
+    },
+    "A2-8.22": {
+      "day": 22,
+      "assignmentKey": "A2-8.22",
+      "title": "E-Mail an einen Freund / eine Freundin: Meine Woche",
+      "situation": "Sie möchten einem Freund oder einer Freundin von Ihrer kommenden Woche erzählen und ein Treffen planen. Schreiben Sie eine E-Mail.",
+      "points": [
+        "Nennen Sie mindestens drei Termine oder Aktivitäten in Ihrer Woche.",
+        "Schreiben Sie, wann Sie Zeit haben.",
+        "Schlagen Sie ein Treffen mit einem konkreten Termin vor."
+      ]
+    },
+    "A2-9.23": {
+      "day": 23,
+      "assignmentKey": "A2-9.23",
+      "title": "E-Mail über Ihren Weg zur Schule oder Arbeit",
+      "situation": "Sie schreiben einem Freund oder einer Freundin über Ihren Weg zur Schule oder zur Arbeit.",
+      "points": [
+        "Beschreiben Sie, welche Verkehrsmittel Sie benutzen.",
+        "Schreiben Sie, wie lange der Weg dauert, und nennen Sie einen Vor- oder Nachteil.",
+        "Fragen Sie, wie die andere Person zur Schule oder zur Arbeit kommt."
+      ]
+    },
+    "A2-9.24": {
+      "day": 24,
+      "assignmentKey": "A2-9.24",
+      "title": "E-Mail an Sandra: Urlaub planen",
+      "situation": "Sie möchten zusammen mit Sandra einen Urlaub planen. Schreiben Sie ihr eine E-Mail.",
+      "points": [
+        "Laden Sie Sandra zur gemeinsamen Urlaubsplanung ein.",
+        "Schlagen Sie einen Termin und einen Treffpunkt für die Planung vor.",
+        "Fragen Sie nach ihrer Meinung zu Reiseziel, Transport oder Unterkunft."
+      ]
+    },
+    "A2-9.25": {
+      "day": 25,
+      "assignmentKey": "A2-9.25",
+      "title": "E-Mail über Ihren Tagesablauf",
+      "situation": "Sie möchten einem Freund oder einer Freundin von Ihrem Tagesablauf erzählen. Schreiben Sie eine E-Mail.",
+      "points": [
+        "Beschreiben Sie Ihren Morgen und Ihren Arbeits- oder Schultag.",
+        "Erklären Sie, was Sie am Abend machen.",
+        "Fragen Sie nach dem Tagesablauf der anderen Person."
+      ]
+    },
+    "A2-10.26": {
+      "day": 26,
+      "assignmentKey": "A2-10.26",
+      "title": "Dankesnachricht an einen Nachbarn / eine Nachbarin",
+      "situation": "Ihr Nachbar oder Ihre Nachbarin hat Ihnen geholfen, als Sie krank waren. Schreiben Sie eine kurze Dankesnachricht.",
+      "points": [
+        "Bedanken Sie sich für die Hilfe.",
+        "Erklären Sie, wie Ihnen die Hilfe geholfen hat oder wie Sie sich dadurch gefühlt haben.",
+        "Bieten Sie an, sich zu revanchieren."
+      ]
+    },
+    "A2-10.27": {
+      "day": 27,
+      "assignmentKey": "A2-10.27",
+      "title": "E-Mail an den Kundenservice",
+      "situation": "Sie haben Ihr Handy verloren und möchten ein neues bestellen. Schreiben Sie eine E-Mail an den Kundenservice.",
+      "points": [
+        "Erklären Sie, warum Sie ein neues Handy benötigen.",
+        "Fragen Sie nach einer Empfehlung für ein passendes Modell.",
+        "Fragen Sie nach der Bestellung und der Lieferung."
+      ]
+    },
+    "A2-10.28": {
+      "day": 28,
+      "assignmentKey": "A2-10.28",
+      "title": "E-Mail über Ihre Zukunftspläne",
+      "situation": "Sie möchten einem Freund oder einer Freundin von Ihren Zukunftsplänen erzählen. Schreiben Sie eine E-Mail.",
+      "points": [
+        "Beschreiben Sie Ihre beruflichen, schulischen oder Ausbildungsziele.",
+        "Nennen Sie einen weiteren persönlichen Wunsch für die Zukunft.",
+        "Fragen Sie nach den Zukunftsplänen der anderen Person."
+      ]
+    }
+  }
+}

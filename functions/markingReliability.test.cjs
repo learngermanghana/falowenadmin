@@ -2,6 +2,14 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { referenceVersionProblem, scoreProblems, isTransientMarkingError } = require('./markingReliability');
 
+test('James-style count, evidence and percentage contradictions block release', () => {
+  assert.ok(scoreProblems({ score: 52, objectiveCorrect: 4, objectiveTotal: 15, objectiveScore: 52 }).length);
+  assert.ok(scoreProblems({ score: 52, objectiveCorrect: 13, objectiveTotal: 25,
+    objectiveDetails: Object.fromEntries(Array.from({ length: 15 }, (_, i) => [i, { correct: i < 13 }])) }).length);
+  assert.deepEqual(scoreProblems({ score: 87, objectiveCorrect: 13, objectiveTotal: 15,
+    objectiveScore: 13 / 15 * 100, writingScore: null, writingScorePercent: null }), []);
+});
+
 test('only explicit matching answer-key revisions permit automatic marking', () => {
   assert.equal(referenceVersionProblem({ answerKeyVersion: '2026-10-22-v1' }, { version: '2026-10-22-v1' }), '');
   assert.match(referenceVersionProblem({ answerKeyVersion: 'old' }, { version: 'new' }), /does not match/);

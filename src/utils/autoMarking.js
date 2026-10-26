@@ -234,7 +234,7 @@ function splitCompactNumberedObjectiveSequence(line = "") {
   if (!trimmed) return [];
 
   const tokenPattern = new RegExp(
-    `\\d{1,3}\\s*[).:-]?\\s*[${OBJECTIVE_OPTION_LETTERS}]\\s*[).:-]?(?=\\s|$)`,
+    `\\d{1,3}\\s*[).:-]?\\s*(?:[${OBJECTIVE_OPTION_LETTERS}]|wahr|falsch|richtig|true|false)\\s*[).:-]?(?=\\s|$)`,
     "gi",
   );
   const matches = [...trimmed.matchAll(tokenPattern)];

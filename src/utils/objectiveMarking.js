@@ -287,9 +287,11 @@ function buildReferenceItems(referenceEntry = {}) {
     }
   }
 
+  // Normalized parts and rawAnswers describe the same questions. Count each
+  // part/question once, even when boolean text normalizes to a choice letter.
   const seen = new Set();
   return items.filter((item) => {
-    const dedupeKey = `${item.partId}:${item.questionNumber}:${item.expected}:${item.expectedText}`;
+    const dedupeKey = `${item.partId}:${item.questionNumber}`;
     if (seen.has(dedupeKey)) return false;
     seen.add(dedupeKey);
     return true;

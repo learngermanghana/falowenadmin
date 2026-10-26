@@ -1,4 +1,5 @@
 import answersDictionary from '../data/answers_dictionary.json' with { type: 'json' };
+import snapshot from '../data/courseMarkingSnapshot.json' with { type: 'json' };
 import { normalizeAnswerKeyEntry } from './answerKeyNormalizer.js';
 
 // Exact, bundled version of the same key registry used by the Admin marking UI.
@@ -10,7 +11,24 @@ for (const [title, source] of Object.entries(answersDictionary)) {
   if (entries.has(key)) throw new Error('Duplicate canonical marking key: ' + key);
   entries.set(key, { title, source });
 }
+// The learner coursebook owns current answers and part metadata. Retain local
+// tutor rubrics only where the learner contract does not specify a field.
+for (const [title, source] of Object.entries(snapshot.answerKeys)) {
+  const key = source.assignment_id;
+  const prior = entries.get(key)?.source || {};
+  entries.set(key, { title, source: { ...prior, ...source } });
+}
 export function canonicalCourseReference(assignmentKey) {
   const row = entries.get(String(assignmentKey || '').trim().toUpperCase());
-  return row ? normalizeAnswerKeyEntry(row.title, row.source) : null;
+  if (!row) return null;
+  const reference = normalizeAnswerKeyEntry(row.title, row.source);
+  const writing = snapshot.writingTasks[reference.assignmentKey];
+  if (writing) reference.questionAwareWritingTask = {
+    assignmentKey: writing.assignmentKey, level: 'A2', title: writing.title,
+    taskSituationDe: writing.situation, taskPointsDe: writing.points,
+    taskText: [writing.situation, ...writing.points].join(' '),
+    source: 'learner-coursebook', sourceVersion: snapshot.revision,
+  };
+  reference.coursebookRevision = snapshot.revision;
+  return reference;
 }

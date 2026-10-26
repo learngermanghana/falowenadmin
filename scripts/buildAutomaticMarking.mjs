@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 const root = path.resolve(import.meta.dirname, '..');
+if (!process.argv.includes('--prepared') && !process.argv.includes('--offline')) execFileSync(process.execPath, ['scripts/syncCourseMarkingSnapshot.mjs'], { cwd: root, stdio: 'inherit' });
 // Apply the same marking patches used by the Admin production build before bundling.
 const commands = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).scripts['sync:build'].split(' && ');
 let markingPatches = false;
@@ -12,6 +13,7 @@ for (const command of commands) {
   if (command === 'node scripts/patchA1AttendanceDayLabels.mjs') break;
   if (!process.argv.includes('--prepared') && markingPatches && /^node scripts\/[^ ]+\.mjs$/.test(command)) execFileSync(process.execPath, [command.slice(5)], { cwd: root, stdio: 'inherit' });
 }
+execFileSync(process.execPath, ['--test', 'tests/course-marking-current-contract.test.js', 'functions/markingReliability.test.cjs'], { cwd: root, stdio: 'inherit' });
 await build({
   stdin: { contents: `export { markSubmissionWithAI } from './src/services/markingService.js';\nexport { canonicalCourseReference } from './src/utils/canonicalCourseReference.js';`, resolveDir: root },
   outfile: path.join(root, 'functions/automaticMarkingPipeline.cjs'),

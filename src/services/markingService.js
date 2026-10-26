@@ -17,6 +17,7 @@ import {
   applyQuestionAwareWritingGuard,
   enrichOptionsWithQuestionAwareWritingTask,
 } from "../utils/questionAwareWritingMarking.js";
+import { canonicalCourseReference } from "../utils/canonicalCourseReference.js";
 import { loadLiveMarkingContract } from "./liveMarkingContractService.js";
 import * as base from "./markingServiceBase.js";
 import { withResubmissionComparison } from "../utils/resubmissionFeedback.js";
@@ -210,6 +211,8 @@ async function prepareMarkingOptions(options = {}) {
   const assignmentKey = options.referenceEntry?.assignmentKey
     || options.referenceEntry?.assignment_id
     || options.submission?.assignmentKey || options.submission?.assignmentId || "";
+  const canonical = canonicalCourseReference(assignmentKey);
+  if (canonical) options = { ...options, referenceEntry: canonical };
   // On each marking, read the deployed learner's staff-only contract. Failing
   // to fetch never authorizes using unverified keys from a public document.
   const live = await loadLiveMarkingContract(assignmentKey, {
