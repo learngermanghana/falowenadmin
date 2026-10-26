@@ -10,6 +10,7 @@ import { pianoPlaylist } from "../data/pianoPlaylist.js";
 import { skipWaitingMusicPlaylist, startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pianoAudio.js";
 import { checkinSessionDateKey, parseCheckinSessionDate } from "../utils/checkinSessionDate.js";
 import { presenterSessionKey } from "../utils/presenterSessionIdentity.js";
+import { getCheckinDisplayClassName, getCheckinLobbyPractice } from "../utils/checkinLobbyView.js";
 import { formatClassCountdown, formatTeachingDuration, sharedClassClock, presenterSessionDurationSeconds } from "../utils/presenterSessionTiming.js";
 import { subscribeSessionCheckins } from "../services/attendanceService.js";
 import { listClasses } from "../services/classesService.js";
@@ -299,6 +300,8 @@ export default function CheckinDisplayPage() {
   const [attendanceLive, setAttendanceLive] = useState(false);
   const [attendanceError, setAttendanceError] = useState("");
   const [showNames, setShowNames] = useState(false);
+  const [teacherPanelOpen, setTeacherPanelOpen] = useState(false);
+  const [showMiniAnswer, setShowMiniAnswer] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [actualStartedAt, setActualStartedAt] = useState(null);
   const [actualEndedAt, setActualEndedAt] = useState(null);
@@ -346,6 +349,16 @@ export default function CheckinDisplayPage() {
     ? String(sessionLabel).trim()
     : (scheduleInfo?.sessionDisplayLabel || "");
   const effectiveAssignmentId = String(assignmentId || scheduleInfo?.assignmentId || "").trim();
+  const displayClassName = getCheckinDisplayClassName(sessionId, classId);
+  const miniPractice = getCheckinLobbyPractice(effectiveAssignmentId);
+
+  // Canonical links exclude roster names; redact them from legacy URLs too.
+  useEffect(() => {
+    const currentUrl = new URL(window.location.href);
+    if (!currentUrl.searchParams.has("expectedStudents")) return;
+    currentUrl.searchParams.delete("expectedStudents");
+    window.history.replaceState(window.history.state, "", `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`);
+  }, []);
 
   useEffect(() => {
     const immediateLevel = inferClassLevel({}, assignmentId, classId);
@@ -633,6 +646,13 @@ export default function CheckinDisplayPage() {
   const activeSmartLobbySlide = smartLobbySlides[
     Math.min(Math.max(0, smartLobbyIndex), Math.max(0, smartLobbySlides.length - 1))
   ] || smartLobbySlides[0];
+
+  useEffect(() => {
+    setShowMiniAnswer(false);
+    if (!miniPractice || activeSmartLobbySlide?.id !== "warmup") return undefined;
+    const reveal = window.setTimeout(() => setShowMiniAnswer(true), 7500);
+    return () => window.clearTimeout(reveal);
+  }, [activeSmartLobbySlide?.sequenceKey, effectiveAssignmentId]);
 
   const showPreviousLobbySlide = useCallback(() => {
     setSmartLobbyIndex((current) => {
@@ -2008,41 +2028,30 @@ export default function CheckinDisplayPage() {
     <div className="checkin-display-page">
       <div className="checkin-display-card">
         <div className="checkin-display-toolbar">
-          <div className="checkin-display-brand">Falowen Attendance</div>
+          <div className="checkin-display-brand">
+            <strong>Learn Language Education Academy</strong>
+            <small>Learning powered by Falowen</small>
+          </div>
+          <div className="checkin-display-toolbar-actions">
+            <span className="checkin-display-music-status" aria-live="polite">♫ {musicPlaying ? `Now playing: ${currentMusicTrack}` : "Music ready"}</span>
+            <button type="button" onClick={toggleFullscreen}>Full screen</button>
+            <button type="button" className="checkin-display-teacher-toggle" aria-expanded={teacherPanelOpen} aria-controls="checkin-display-teacher-panel" onClick={() => setTeacherPanelOpen((open) => !open)}>
+              {teacherPanelOpen ? "Hide teacher controls" : "Teacher controls"}
+            </button>
+          </div>
+        </div>
+        {teacherPanelOpen ? (
+          <section id="checkin-display-teacher-panel" className="checkin-display-teacher-panel" aria-label="Teacher-only classroom controls">
           <div className="checkin-display-toolbar-actions">
             <button type="button" onClick={openSlidesManually} disabled={!presenterLessonUrl}>Open slides</button>
             {falowenLessonUrl && (
               <a href={falowenLessonUrl} target="_blank" rel="noopener noreferrer">Open lesson</a>
             )}
-            <button type="button" onClick={toggleFullscreen}>Full screen</button>
             <button type="button" onClick={copyCheckinLink}>{copiedLink ? "Link copied" : "Copy check-in link"}</button>
             <button type="button" onClick={() => setShowNames((value) => !value)}>
               {showNames ? "Hide names" : "Show names"}
             </button>
           </div>
-        </div>
-
-        <header className="checkin-display-hero">
-          <div>
-            <div className="checkin-display-class-label">{classId || "Class"}</div>
-            <h1>{sessionDisplayLabel || "Student Self Check-in"}</h1>
-            <p>Scan the QR code to record your attendance.</p>
-          </div>
-          <div className="checkin-display-clock">
-            <span>Current time</span>
-            <strong>{formatLiveClockLabel(nowMs)}</strong>
-            <small>{ATTENDANCE_TIME_ZONE_LABEL}</small>
-          </div>
-        </header>
-
-        {classTiming ? (
-          <div className={"checkin-display-timing checkin-display-timing-" + classTiming.kind} role="status" aria-live="polite">
-            <div className="checkin-display-timing-eyebrow">{classTiming.eyebrow}</div>
-            <div className="checkin-display-timing-value">{classTiming.value}</div>
-            <div className="checkin-display-timing-note">{classTiming.note}</div>
-          </div>
-        ) : null}
-
         <div className="checkin-display-teacher-controls">
           <div className="checkin-display-teacher-control-copy">
             <strong>Teacher class control</strong>
@@ -2091,6 +2100,88 @@ export default function CheckinDisplayPage() {
             </div>
           )}
         </div>
+        <div className={`checkin-display-music ${musicPlaying ? "checkin-display-music-playing" : ""}`}>
+          <div className="checkin-display-music-main">
+            <div className="checkin-display-music-copy">
+              <div className="checkin-display-music-title">
+                <span aria-hidden="true">♫</span> Waiting room music
+              </div>
+              <div className="checkin-display-music-note">
+                Relaxing instrumental tracks play in sequence and loop while students wait. {musicPlaying ? `Now playing: ${currentMusicTrack}.` : ""}
+              </div>
+            </div>
+            <div className="checkin-display-music-visual" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+              <span />
+            </div>
+            {pianoPlaylist.length > 1 ? (
+              <button
+                type="button"
+                className="checkin-display-music-skip-button"
+                onClick={skipWaitingMusic}
+                disabled={!musicPlaying || musicStarting}
+                aria-label={musicPlaying ? "Skip to next waiting room track" : "Start waiting music before skipping tracks"}
+                title={musicPlaying ? "Skip to next track" : "Start the music to enable skip"}
+              >
+                Skip
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="checkin-display-music-button"
+              onClick={musicPlaying ? stopWaitingMusic : startWaitingMusic}
+              disabled={musicStarting}
+            >
+              {musicPlaying ? "Stop music" : musicStarting ? "Starting music…" : "Start waiting music"}
+            </button>
+          </div>
+          <label className="checkin-display-music-volume">
+            <span>Volume</span>
+            <input
+              type="range"
+              min="0.1"
+              max="1"
+              step="0.01"
+              value={musicVolume}
+              onChange={(event) => setMusicVolume(Number(event.target.value))}
+              aria-label="Waiting room music volume"
+            />
+            <span>{Math.round(musicVolume * 100)}%</span>
+          </label>
+          {musicError ? <div className="checkin-display-music-error" role="alert">{musicError}</div> : null}
+        </div>
+            {showNames ? (
+              <div className="checkin-display-teacher-roster">
+                <strong>Checked-in students · staff view</strong>
+                {checkedInNames.length ? checkedInNames.map((name, index) => <span key={name + index}>{name}</span>) : <span>No verified check-ins yet.</span>}
+                <small>Hide teacher controls before sharing this screen. Student names are hidden on the projector by default.</small>
+              </div>
+            ) : null}
+          </section>
+        ) : null}
+
+        <header className="checkin-display-hero">
+          <div>
+            <div className="checkin-display-class-label">{waitingClassLevel || "Deutsch"} · Classroom lobby</div>
+            <h1>Willkommen, {displayClassName}!</h1>
+            <p>{sessionDisplayLabel || "Wir lernen heute Deutsch!"}</p>
+          </div>
+          <div className="checkin-display-clock">
+            <span>Current time</span>
+            <strong>{formatLiveClockLabel(nowMs)}</strong>
+            <small>{ATTENDANCE_TIME_ZONE_LABEL}</small>
+          </div>
+        </header>
+
+        {classTiming ? (
+          <div className={"checkin-display-timing checkin-display-timing-" + classTiming.kind} role="status" aria-live="polite">
+            <div className="checkin-display-timing-eyebrow">{classTiming.eyebrow}</div>
+            <div className="checkin-display-timing-value">{classTiming.value}</div>
+            <div className="checkin-display-timing-note">{classTiming.note}</div>
+          </div>
+        ) : null}
 
         {hasRequiredParams ? (
           actualEndedAt ? (
@@ -2405,66 +2496,13 @@ export default function CheckinDisplayPage() {
           </div>
         )}
 
-        <div className={`checkin-display-music ${musicPlaying ? "checkin-display-music-playing" : ""}`}>
-          <div className="checkin-display-music-main">
-            <div className="checkin-display-music-copy">
-              <div className="checkin-display-music-title">
-                <span aria-hidden="true">♫</span> Waiting room music
-              </div>
-              <div className="checkin-display-music-note">
-                Relaxing instrumental tracks play in sequence and loop while students wait. {musicPlaying ? `Now playing: ${currentMusicTrack}.` : ""}
-              </div>
-            </div>
-            <div className="checkin-display-music-visual" aria-hidden="true">
-              <span />
-              <span />
-              <span />
-              <span />
-            </div>
-            {pianoPlaylist.length > 1 ? (
-              <button
-                type="button"
-                className="checkin-display-music-skip-button"
-                onClick={skipWaitingMusic}
-                disabled={!musicPlaying || musicStarting}
-                aria-label={musicPlaying ? "Skip to next waiting room track" : "Start waiting music before skipping tracks"}
-                title={musicPlaying ? "Skip to next track" : "Start the music to enable skip"}
-              >
-                Skip
-              </button>
-            ) : null}
-            <button
-              type="button"
-              className="checkin-display-music-button"
-              onClick={musicPlaying ? stopWaitingMusic : startWaitingMusic}
-              disabled={musicStarting}
-            >
-              {musicPlaying ? "Stop music" : musicStarting ? "Starting music…" : "Start waiting music"}
-            </button>
-          </div>
-          <label className="checkin-display-music-volume">
-            <span>Volume</span>
-            <input
-              type="range"
-              min="0.1"
-              max="1"
-              step="0.01"
-              value={musicVolume}
-              onChange={(event) => setMusicVolume(Number(event.target.value))}
-              aria-label="Waiting room music volume"
-            />
-            <span>{Math.round(musicVolume * 100)}%</span>
-          </label>
-          {musicError ? <div className="checkin-display-music-error" role="alert">{musicError}</div> : null}
-        </div>
-
         <div className={"checkin-display-alert checkin-display-alert-" + statusInfo.kind}>
           <div className="checkin-display-alert-title">{statusInfo.title}</div>
           <div>{statusInfo.detail}</div>
         </div>
 
         <div className="checkin-display-footer">
-          <span><b>Class:</b> {classId || "-"}</span>
+          <span><b>Class:</b> {displayClassName}</span>
           <span><b>Date:</b> {dateLabel || "-"}</span>
           <span><b>Session:</b> {sessionDisplayLabel || "-"}</span>
           <span><b>Expected:</b> {expectedTotal || "-"}</span>
