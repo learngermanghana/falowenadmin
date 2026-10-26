@@ -482,7 +482,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       lessonOverviewEn: "Day 25 connects safe online shopping and formal complaints to updated consumer-rights reading and a five-statement scored delivery-problem listening task.",
       grammarFocusEn: [
         "Schreiben is a formal complaint email to ElectroWorld, not a forum contribution. Include Sehr geehrte Damen und Herren and Mit freundlichen Grüßen.",
-        "Name the purchase date, product and order number when explaining the problem.",
+        "Name the purchase date, product and order number (Bestellnummer) when explaining the problem.",
         "Describe the defect clearly and request a specific solution using polite B1 expressions.",
         "Keep the complaint around 40–50 words, with concise and courteous language.",
       ],
