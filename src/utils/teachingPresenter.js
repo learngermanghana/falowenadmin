@@ -2051,9 +2051,32 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
   // Keep the original teacher reading and warm-up checks in their canonical
   // stages for audits; only switch their in-class visual presentation.
   const prepared = lessonOpening ? stages.map((stage) => {
-    if (stage.id === "intro" && lessonOpening.listening?.mediaType === "music") return {
+    // Music lessons reuse the same nine stage IDs, but teach via video in
+    // stage 2 and lyric-reading in stage 3. No extra slides or scored tasks.
+    if (lessonOpening.listening?.mediaType === "music" && stage.id === "warmup") return {
       ...stage,
-      musicIntro: lessonOpening.listening,
+      variant: "interactive-music-video",
+      kicker: "Musik hören",
+      title: lessonOpening.listening.title,
+      musicVideo: lessonOpening.listening,
+      suggestedMinutes: 0,
+      timingMode: "",
+      teacherPurpose: {
+        student: "Höre das Lied und denke über seine Hauptbotschaft nach.",
+        teacher: "Spiele das YouTube-Musikvideo. Kein Fragen-pro-Schüler-Warm-up auf dieser Folie.",
+      },
+    };
+    if (lessonOpening.listening?.mediaType === "music" && stage.id === "knowledge") return {
+      ...stage,
+      variant: "interactive-music-reading",
+      kicker: "Lesen · Liedtext",
+      title: "Liedtext lesen & verstehen",
+      musicReading: lessonOpening.listening,
+      suggestedMinutes: 8,
+      teacherPurpose: {
+        student: "Lies ausgewählte Liedtextstellen und ziehe begründete Schlussfolgerungen.",
+        teacher: "Fünf B1-Verständnisfragen; erst Antworten sammeln, dann die Belegstelle mit Zeitangabe zeigen.",
+      },
     };
     if (stage.id === "warmup" && lessonOpening.warmup?.length) return {
       ...stage, variant: "interactive-warmup", kicker: "10-Minuten-Challenge",
