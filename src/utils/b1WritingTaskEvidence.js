@@ -205,9 +205,19 @@ const RULES = {
       "Ask politely for a concrete remedy such as exchange, repair or refund."),
   ],
   "B1-9.26": [
-    makeRule(/\b(?:meiner\s+meinung|ich\s+(?:denke|finde|glaube|stimme)|ich\s+bin\s+der\s+meinung|ich\s+sehe\s+das|ich\s+bin\s+(?:einverstanden|anderer\s+meinung)|meines\s+erachtens)\b/i),
-    makeRule(/\b(?:versp[aä]tung|reiseproblem|ausgefallen|verloren|koffer|gepäck|stress|erfahrung|erlebt|weil|denn|zum\s+beispiel|grund)\b/i),
-    makeRule(/\b(?:man\s+(?:sollte|k[oö]nnte)|pufferzeit|rechtzeitig|fr[uü]h|vorher|vorbereiten|umbuchen|versicherung|hilfe|hotline|kundenservice|alternative|app|entsch[aä]digung|informieren|planen|l[oö]sen)\b/i),
+    makeCountRule([
+      /\b(?:interessiere\s+mich|interesse|interessiert|m[oö]chte\s+(?:gern|gerne)?\s*(?:mehr\s+)?(?:information|erfahren)|angebot\s+gesehen)\b/i,
+      /\b(?:wien|wienreise|st[aä]dtereise)\b/i,
+    ], 2, "Express concrete interest in the advertised Vienna city trip."),
+    makeCountRule([
+      /\b(?:reisedaten|reisezeitraum|reisetermine?|wann\s+(?:beginnt|startet|findet)|von\s+wann\s+bis\s+wann|welche[nrs]?\s+daten)\b/i,
+      /\b(?:hotelkategorie|hotelklasse|sterne(?:hotel)?|welches\s+hotel|hotel)\b/i,
+      /\b(?:ausfl[uü]ge?|exkursionen?|besichtigungen?|programm)\b/i,
+    ], 3, "Ask for travel dates, hotel category and excursions."),
+    makeCountRule([
+      /\b(?:angebot|buchungsunterlagen)\b/i,
+      /\b(?:verbindlich|zusenden|schicken|senden|zukommen\s+lassen|erhalten|bekommen|bitte|k[oö]nnten\s+sie)\b/i,
+    ], 2, "Request a binding travel offer or booking documents."),
   ],
   "B1-10.27": [
     makeRule(/\b(?:wichtig|umwelt|klima|ressourcen|zukunft|sch[uü]tzen|verschmutzung)\b/i),
