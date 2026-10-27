@@ -150,7 +150,8 @@ function evaluateCurrentA1123(taskPoints, source) {
   // "Wie lange dauert der Kurs?" asks for duration, NOT the lesson schedule.
   const times = /kurszeiten|unterrichtszeiten|stundenplan|wann\s+findet\s+(?:der\s+)?(?:kurs|unterricht)\s+statt|wann\s+(?:ist|sind)\s+(?:der\s+)?(?:kurs|unterricht)|wann\s+(?:beginnt|startet)\s+(?:der\s+)?unterricht|(?:kurs|unterricht)[^.!?\n]{0,60}(?:um\s+wie\s+viel\s+uhr|an\s+welchen\s+tagen|zu\s+welchen\s+zeiten)|(?:um\s+wie\s+viel\s+uhr|an\s+welchen\s+tagen|zu\s+welchen\s+zeiten)[^.!?\n]{0,60}(?:kurs|unterricht)/i;
   const costs = /kosten|kostet|preis|wie\s+(?:viel|teuer)/i;
-  const start = /(?:ich|wir)[^.!?\n]{0,100}(?:anfangen|beginnen|starten)|(?:ab|im|am)\s+(?:juni|juli|august|sommer|\d{1,2}\.)/i;
+  // A summer *course* preference is not itself a stated start date.
+  const start = /\b(?:ich|wir)[^.!?\n]{0,100}\b(?:anfangen|beginnen|starten)\b|\b(?:ab|vom)\s+(?:juni|juli|august|sommer|\d{1,2}\.)\b/i;
   const implicitInvitation = plannedParty.test(informal) && bring.test(informal)
     && /(?:^|\n)\s*(?:hallo|liebe?r?)\b/i.test(informal);
   const hasTimes = times.test(formal);
