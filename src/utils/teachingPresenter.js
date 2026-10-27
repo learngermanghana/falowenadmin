@@ -2087,8 +2087,8 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
       suggestedMinutes: 0,
       timingMode: "",
       teacherPurpose: {
-        student: "Höre das Lied einmal und nenne eine wichtige Vorsichtsmaßnahme beim Online-Einkaufen.",
-        teacher: "Spiele das YouTube-Lyrics-Video als kurzen Einstieg. Eine mündliche Frage genügt, ohne Wertung. Danach folgt das bestehende Hören.",
+        student: lessonOpening.musicIntro.studentPurpose || "Höre das Lied einmal und nenne eine wichtige Vorsichtsmaßnahme beim Online-Einkaufen.",
+        teacher: lessonOpening.musicIntro.teacherPurpose || "Spiele das YouTube-Lyrics-Video als kurzen Einstieg. Eine mündliche Frage genügt, ohne Wertung. Danach folgt das bestehende Hören.",
       },
     };
     if (stage.id === "warmup" && lessonOpening.warmup?.length) return {
