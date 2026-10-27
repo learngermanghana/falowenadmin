@@ -4,7 +4,7 @@ const objectiveTarget = new URL("../src/utils/objectiveMarking.js", import.meta.
 let objectiveSource = fs.readFileSync(objectiveTarget, "utf8");
 
 const previousCompactPattern = '  const compactPattern = /(?:^|\\s)(\\d{1,3})(?:\\s*[).:–-](?!\\d)\\s*|\\s+)(.*?)(?=\\s+\\d{1,3}(?:\\s*[).:–-](?!\\d)\\s*|\\s+)|$)/g;';
-const robustCompactPattern = '  const compactPattern = /(?:^|\\s)(\\d{1,3})(?:\\s*[)–-]\\s*|\\s*[.,:](?!\\d)\\s*|\\s+(?=[A-FX](?:\\s*[).,:–-]|\\s|$)))(.*?)(?=\\s+\\d{1,3}(?:\\s*[)–-]\\s*|\\s*[.,:](?!\\d)\\s*|\\s+(?=[A-FX](?:\\s*[).,:–-]|\\s|$)))|$)/g;';
+const robustCompactPattern = '  const compactPattern = /(?:^|\\s)(\\d{1,3})(?:\\s*[)–-]\\s*|\\s*[.,:](?!\\d)\\s*|\\s+(?=[A-HX](?:\\s*[).,:–-]|\\s|$)))(.*?)(?=\\s+\\d{1,3}(?:\\s*[)–-]\\s*|\\s*[.,:](?!\\d)\\s*|\\s+(?=[A-HX](?:\\s*[).,:–-]|\\s|$)))|$)/g;';
 const questionAwareCompactPattern = robustCompactPattern;
 
 if (objectiveSource.includes(previousCompactPattern)) {
@@ -24,7 +24,7 @@ if (objectiveSource.includes(legacySinglePattern)) {
 
 const commaSplitting = '.split(/\\r?\\n|[,;]+/)';
 const lineSplitting = '.split(/\\r?\\n/)';
-const compactOptionSplitting = '.split(/\\r?\\n|,(?=\\s*\\d{1,3}\\s*[A-FX](?:\\b|[).,:;–-]))/i)';
+const compactOptionSplitting = '.split(/\\r?\\n|,(?=\\s*\\d{1,3}\\s*[A-HX](?:\\b|[).,:;–-]))/i)';
 if (objectiveSource.includes(commaSplitting)) {
   objectiveSource = objectiveSource.split(commaSplitting).join(lineSplitting);
 } else if (!objectiveSource.includes(lineSplitting) && !objectiveSource.includes(compactOptionSplitting)) {
