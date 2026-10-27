@@ -18,6 +18,14 @@ test("A2 Day 18 follows B1 Day 25: music on slide 2 and existing R2 Hören on sl
   assert.equal(stages[1].variant, "interactive-music-video");
   assert.equal(stages[1].musicVideo.youtubeId, "pXAxzMMXHoE");
   assert.equal(stages[1].musicVideo.level, "A2");
+  assert.equal(stages[1].musicVideo.readingOnVideoSlide, true);
+  assert.equal(stages[1].musicVideo.readingSections.length, 4);
+  assert.equal(stages[1].musicVideo.questions.length, 5);
+  assert.ok(stages[1].musicVideo.questions.every((question) =>
+    question.options[question.correctIndex] === question.answer
+    && question.evidence && question.hint && question.explanation
+    && Number.isInteger(question.timestamp) && question.timestamp >= 0 && question.timestamp < 198
+  ));
   assert.match(stages[1].musicVideo.title, /Meine Karte ist gesperrt/);
   assert.equal(stages[1].suggestedMinutes, 0);
   assert.equal(stages[1].timingMode, "");
@@ -52,4 +60,27 @@ test("music screen displays A2 instead of hard-coded B1 without changing B1 Day 
   assert.equal(b1Stages[1].musicVideo.youtubeId, "ArWT0uVqUxo");
   assert.equal(b1Stages[2].variant, "interactive-listening");
   assert.equal(b1Stages[2].audioKey, "b1/day-25/day-25.mp3");
+});
+
+test("A2 music quiz shares slide 2 with video and retains B1 Day 24's separate lyric slide", () => {
+  const musicComponent = readFileSync(new URL("../src/components/MusicTeachingStages.jsx", import.meta.url), "utf8");
+  const css = readFileSync(new URL("../src/components/MusicTeachingStages.css", import.meta.url), "utf8");
+  assert.match(musicComponent, /music\.readingOnVideoSlide/);
+  assert.match(musicComponent, /Liedtext &amp; 5 Fragen/);
+  assert.match(musicComponent, /MusicReadingStage music=\{music\} embedded/);
+  assert.match(css, /music-video-lesson-tabs/);
+  const b1Slide = getSlidesByCourse("B1").find((item) => item.assignmentId === "B1-8.24");
+  const b1Stages = buildTeachingPresenterStages(b1Slide, b1Slide.topic);
+  assert.equal(b1Stages[1].variant, "interactive-music-video");
+  assert.equal(b1Stages[2].variant, "interactive-music-reading");
+  assert.equal(b1Stages[1].musicVideo.readingOnVideoSlide, undefined);
+});
+
+test("signed classroom audio uses the currently deployed API region, not legacy URL", () => {
+  const audioComponent = readFileSync(new URL("../src/components/InteractiveLessonOpening.jsx", import.meta.url), "utf8");
+  assert.match(audioComponent, /https:\/\/api-awc2au65xa-ew\.a\.run\.app/);
+  assert.doesNotMatch(audioComponent, /us-central1-falowen-examiner-trainer\.cloudfunctions\.net/);
+  assert.match(audioComponent, /getIdToken/);
+  assert.match(audioComponent, /course-media\/\$\{lesson\.listening\.level\.toLowerCase\(\)\}\/audio-url/);
+  assert.match(audioComponent, /R2-Objekt/);
 });

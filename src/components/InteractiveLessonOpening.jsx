@@ -4,10 +4,11 @@ import "./A2Day17Activities.css";
 import { getInteractiveLessonOpening } from "../data/interactiveLessonOpenings.js";
 import MusicVideoEmbed from "./MusicVideoEmbed.jsx";
 
-// Classroom recordings are signed by the deployed Firebase API. The website
-// /api route can run an older Vercel bundle when Hobby build limits are hit.
+// Classroom audio URLs are signed by the current Cloud Run API deployed in
+// europe-west1, not the older us-central1 Cloud Functions endpoint. The
+// private R2 bucket remains protected and no public audio URLs are embedded.
 const AUDIO_API = (import.meta.env.VITE_FALOWEN_COURSE_MEDIA_API_URL
-  || "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api").replace(/[/]+$/, "");
+  || "https://api-awc2au65xa-ew.a.run.app").replace(/[/]+$/, "");
 
 function RevealPanel({ activity }) {
   return <div className="pharm-reveal" role="status">
@@ -67,8 +68,10 @@ export default function InteractiveLessonOpening({ stage, slide }) {
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.url) {
         const reason = response.status === 400 && /invalid .*audio request/i.test(String(data.error || ""))
-          ? "Die Audiofreigabe ist auf dem Server noch nicht aktiv. Bitte die Firebase-API-Bereitstellung prüfen."
-          : data.error || `Audio konnte nicht geladen werden (HTTP ${response.status}).`;
+          ? "Die Audiofreigabe ist auf dem Server noch nicht aktiv. Bitte die API-Bereitstellung prüfen."
+          : response.status === 404 && !data.error
+            ? "Der Audio-Endpunkt ist auf dem Server nicht verfügbar (HTTP 404). Bitte die aktuelle Cloud-Run-API prüfen."
+            : data.error || `Audio konnte nicht geladen werden (HTTP ${response.status}).`;
         throw new Error(reason);
       }
       if (requestId !== requestCounter.current) return;
@@ -95,7 +98,7 @@ export default function InteractiveLessonOpening({ stage, slide }) {
       ) : !audioUrl ? (
         <button type="button" className="pharm-btn pharm-btn-primary" onClick={prepareAudio} disabled={audioBusy}>{audioBusy ? "Audio wird vorbereitet…" : "▶ Audio laden"}</button>
       ) : <>
-        <audio key={audioUrl} ref={audioRef} src={audioUrl} controls preload="none" aria-label={`${lesson.listening.title} Audio`} onEnded={() => { if (autoReview) { setReviewMode(true); chooseStep(0); } }} />
+        <audio key={audioUrl} ref={audioRef} src={audioUrl} controls preload="none" aria-label={`${lesson.listening.title} Audio`} onError={() => setAudioError("Der signierte Audiolink kann nicht abgespielt werden. Bitte prüfen, ob das R2-Objekt existiert und die Audiodatei verfügbar ist.")} onEnded={() => { if (autoReview) { setReviewMode(true); chooseStep(0); } }} />
         <button type="button" className="pharm-btn pharm-btn-soft" onClick={() => { audioRef.current?.pause(); setAudioUrl(""); prepareAudio(); }}>↻ Audiolink erneuern</button>
       </>}
       {audioError && <p className="pharm-audio-error" role="alert">{audioError} · R2-Objekt: {lesson.listening.audioKey}</p>}

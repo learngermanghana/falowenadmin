@@ -232,9 +232,9 @@ test("A2 Day 20 Reklamation preserves the uploaded Richtig/Falsch answers and wo
 });
 
 
-test("interactive Hören requests signed audio from Firebase instead of rate-limited website API", () => {
+test("interactive Hören requests signed audio from deployed Cloud Run API instead of rate-limited website API", () => {
   const component = readFileSync(new URL("../src/components/InteractiveLessonOpening.jsx", import.meta.url), "utf8");
-  assert.match(component, /us-central1-falowen-examiner-trainer\.cloudfunctions\.net\/api/);
+  assert.match(component, /api-awc2au65xa-ew\.a\.run\.app/);
   assert.match(component, /VITE_FALOWEN_COURSE_MEDIA_API_URL/);
   assert.doesNotMatch(component, /VITE_FALOWEN_COURSE_API_URL/);
   assert.doesNotMatch(component, /https:\/\/www\.falowen\.app\/api/);

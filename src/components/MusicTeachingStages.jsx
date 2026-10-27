@@ -5,6 +5,11 @@ import "./MusicTeachingStages.css";
 
 /** The listening video takes the place of a warm-up, without adding a slide. */
 export function MusicVideoStage({ music }) {
+  const [readingOpen, setReadingOpen] = useState(false);
+  const hasInSlideReading = Boolean(
+    music.readingOnVideoSlide && music.readingSections?.length && music.questions?.length,
+  );
+
   return (
     <section className="music-teaching-video" aria-label="Musik im Unterricht">
       <header className="music-teaching-heading">
@@ -12,16 +17,35 @@ export function MusicVideoStage({ music }) {
         <h1>{music.title}</h1>
         <p>Hört das Lied und überlegt: <strong>{music.introQuestion}</strong></p>
       </header>
-      <MusicVideoEmbed videoId={music.youtubeId} title={music.title} variant="lesson" />
-      <div className="music-teaching-next-step">
-        <strong>Nach dem Lied:</strong> {music.nextStep || "Weiter zu „Liedtext lesen & verstehen“. Die Grammatik- und Sprechaufgaben folgen später wie gewohnt."}
-      </div>
+      {hasInSlideReading && (
+        <div className="music-video-lesson-tabs" role="group" aria-label="Musikvideo und Liedtext">
+          <button type="button" className={!readingOpen ? "is-selected" : ""} aria-pressed={!readingOpen}
+            onClick={() => setReadingOpen(false)}>▶ Musikvideo ansehen</button>
+          <button type="button" className={readingOpen ? "is-selected" : ""} aria-pressed={readingOpen}
+            onClick={() => setReadingOpen(true)}>Liedtext &amp; 5 Fragen</button>
+        </div>
+      )}
+      {readingOpen && hasInSlideReading ? (
+        <MusicReadingStage music={music} embedded />
+      ) : (
+        <>
+          <MusicVideoEmbed videoId={music.youtubeId} title={music.title} variant="lesson" />
+          <div className="music-teaching-next-step">
+            <strong>Nach dem Lied:</strong> {hasInSlideReading
+              ? "Öffne „Liedtext & 5 Fragen“, besprecht die Antworten und geht dann zur Hörübung."
+              : music.nextStep || "Weiter zu „Liedtext lesen & verstehen“. Die Grammatik- und Sprechaufgaben folgen später wie gewohnt."}
+          </div>
+        </>
+      )}
+      {readingOpen && hasInSlideReading && (
+        <div className="music-teaching-next-step"><strong>Danach:</strong> {music.nextStep}</div>
+      )}
     </section>
   );
 }
 
 /** Unscored B1 inference questions tied to actual lyric evidence and timestamps. */
-export function MusicReadingStage({ music }) {
+export function MusicReadingStage({ music, embedded = false }) {
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState(-1);
   const [revealed, setRevealed] = useState(false);
@@ -43,16 +67,16 @@ export function MusicReadingStage({ music }) {
 
   return (
     <section className="music-teaching-reading" aria-label="Liedtext lesen und verstehen">
-      <header className="music-teaching-heading">
-        <span>B1 · LESEN & VERSTEHEN</span>
-        <h1>Liedtext lesen & verstehen</h1>
+      {!embedded && <header className="music-teaching-heading">
+        <span>{music.level || "B1"} · LESEN &amp; VERSTEHEN</span>
+        <h1>Liedtext lesen &amp; verstehen</h1>
         <p>Lest die Textstellen und zieht Schlussfolgerungen. Nicht nur einzelne Wörter wiederholen.</p>
-      </header>
+      </header>}
       <div className="music-reading-columns">
         <div className="music-reading-passages" lang="de">
           <div className="music-reading-passages-heading">
             <strong>Ausgewählte Textstellen</strong>
-            <small>Aus „Weniger ist mehr“</small>
+            <small>Aus „{music.title}“</small>
           </div>
           {sections.map((section, number) => (
             <article key={section.label} className="music-reading-passage">
