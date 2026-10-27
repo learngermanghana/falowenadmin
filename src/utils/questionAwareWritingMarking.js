@@ -1257,8 +1257,13 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
   const endingAdvice = task.assignmentKey === "A2-1.1" ? a2Day1EndingAdvice(source) : "";
   // A small verified omission is a scoring deduction, not a marking-system
   // failure. Keep genuine uncertainty, failed grades and examiner disputes held.
+  // The AI transport normalizes an omitted shouldSendAutomatically to false;
+  // it is not an independently verified review reason. The Firebase publisher
+  // instead enforces score, confidence, contradictions and examiner checks.
+  const otherReviewReasons = (Array.isArray(result.reviewReasons) ? result.reviewReasons : [])
+    .filter((reason) => clean(typeof reason === "string" ? "" : reason?.code) !== "missing_task_points");
   const verifiedA1Omission = currentA1123 && result.status === "marked"
-    && result.shouldSendAutomatically !== false
+    && otherReviewReasons.length === 0
     && taskPointEvidence.length === 6
     && taskPointEvidence.every((point) => ["met", "partial", "missing"].includes(point.status))
     && missingTaskPoints.length <= 1
