@@ -36,6 +36,37 @@
   max-width: min(100%, 900px);
 }
 
+.music-video-lesson-tabs {
+  display: flex;
+  gap: .55rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.music-video-lesson-tabs button {
+  border: 1px solid #abd3dd;
+  border-radius: 10px;
+  background: #fff;
+  color: #105667;
+  padding: .58rem 1rem;
+  font: inherit;
+  font-size: .95rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.music-video-lesson-tabs button.is-selected {
+  background: #086a78;
+  border-color: #086a78;
+  color: #fff;
+}
+.music-teaching-video > .music-teaching-reading {
+  width: 100%;
+  max-height: min(70vh, 700px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.music-teaching-video > .music-teaching-reading .music-reading-passages {
+  max-height: min(50vh, 480px);
+}
 .music-teaching-next-step {
   background: #ebf8f8;
   border: 1px solid #a8d6d6;
