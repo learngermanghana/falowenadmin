@@ -21,7 +21,7 @@ if (source.includes(markerBefore)) {
 }
 
 const lineSplitting = '.split(/\\r?\\n/)';
-const compactOptionSplitting = '.split(/\\r?\\n|,(?=\\s*\\d{1,3}\\s*[A-FX](?:\\b|[).,:;–-]))/i)';
+const compactOptionSplitting = '.split(/\\r?\\n|,(?=\\s*\\d{1,3}\\s*[A-HX](?:\\b|[).,:;–-]))/i)';
 if (source.includes(lineSplitting)) {
   source = source.split(lineSplitting).join(compactOptionSplitting);
 } else if (!source.includes(compactOptionSplitting)) {
