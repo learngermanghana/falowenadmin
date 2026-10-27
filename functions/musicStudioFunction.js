@@ -5,7 +5,7 @@ const { defineSecret } = require('firebase-functions/params');
 const { createHandler } = require('./musicStudio');
 const key = defineSecret('GEMINI_API_KEY');
 let runtimeConfig = {};
-try { runtimeConfig = JSON.parse(process.env.CLOUD_RUNTIME_CONFIG || '{}'); } catch { /* owner hash fallback */ }
+try { runtimeConfig = JSON.parse(process.env.CLOUD_RUNTIME_CONFIG_B64 ? Buffer.from(process.env.CLOUD_RUNTIME_CONFIG_B64, 'base64').toString('utf8') : (process.env.CLOUD_RUNTIME_CONFIG || '{}')); } catch { /* owner hash fallback */ }
 exports.musicStudio = onRequest({
   region: 'us-central1', timeoutSeconds: 300, memory: '256MiB', cpu: 'gcf_gen1',
   minInstances: 0, maxInstances: 1, concurrency: 1,
