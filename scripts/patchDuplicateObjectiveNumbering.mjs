@@ -47,7 +47,7 @@ const autoParserBefore = `function parseStudentObjectiveAnswerTokens(tokens = []
     }
 
     const anzeigeOnly = trimmed.match(new RegExp(\`^(?:anzeige\\\\s*[).:-]?\\\\s*)?([\${OBJECTIVE_OPTION_LETTERS}])(?:\\\\b|\\\\s|[).:-]|$)\`, "i"));
-    if (anzeigeOnly && (/^anzeige\\b/i.test(trimmed) || trimmed.length <= 2 || /^[A-FX]\\s*[).:-]/i.test(trimmed))) {
+    if (anzeigeOnly && (/^anzeige\\b/i.test(trimmed) || trimmed.length <= 2 || /^[A-HX]\\s*[).:-]/i.test(trimmed))) {
       orderedQuestion += 1;
       map.set(questionOffset + orderedQuestion, anzeigeOnly[1].toUpperCase());
       pendingQuestion = null;
@@ -106,7 +106,7 @@ const autoParserAfter = `function parseStudentObjectiveAnswerTokens(tokens = [],
     }
 
     const anzeigeOnly = trimmed.match(new RegExp(\`^(?:anzeige\\\\s*[).:-]?\\\\s*)?([\${OBJECTIVE_OPTION_LETTERS}])(?:\\\\b|\\\\s|[).:-]|$)\`, "i"));
-    if (anzeigeOnly && (/^anzeige\\b/i.test(trimmed) || trimmed.length <= 2 || /^[A-FX]\\s*[).:-]/i.test(trimmed))) {
+    if (anzeigeOnly && (/^anzeige\\b/i.test(trimmed) || trimmed.length <= 2 || /^[A-HX]\\s*[).:-]/i.test(trimmed))) {
       orderedQuestion += 1;
       map.set(questionOffset + orderedQuestion, anzeigeOnly[1].toUpperCase());
       pendingQuestion = null;
