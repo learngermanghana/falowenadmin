@@ -212,7 +212,7 @@ const RULES = {
     makeCountRule([
       /\b(?:reisedaten|reisezeitraum|reisetermine?|wann\s+(?:beginnt|startet|findet)|von\s+wann\s+bis\s+wann|welche[nrs]?\s+daten)\b/i,
       /\b(?:hotelkategorie|hotelklasse|sterne(?:hotel)?|welches\s+hotel|hotel)\b/i,
-      /\b(?:ausfl[uü]ge?|exkursionen?|besichtigungen?|programm)\b/i,
+      /\b(?:ausfl[uü]g(?:e|en)?|exkursionen?|besichtigungen?|programm)\b/i,
     ], 3, "Ask for travel dates, hotel category and excursions."),
     makeCountRule([
       /\b(?:angebot|buchungsunterlagen)\b/i,
