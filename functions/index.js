@@ -2634,10 +2634,15 @@ exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob(
 
 registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey: geminiAudioKeySecret, runtimeConfig });
 
+const musicStudioHandler = require('./musicStudio').createHandler({
+  db, verifyToken: token => admin.auth().verifyIdToken(token),
+  key: () => geminiAudioKeySecret.value(), runtimeConfig,
+});
+app.all('/music-studio', musicStudioHandler);
+
 exports.api = onRequest({
-  // Speech has a 60s upstream timeout; leave time for auth, quota settlement,
-  // and a structured error response instead of a platform gateway failure.
-  timeoutSeconds: 120,
+  // Music has a 270s upstream timeout; ordinary API requests finish normally.
+  timeoutSeconds: 300,
   secrets: [
     attendancePinSaltSecret,
     orientationSyncSecret,

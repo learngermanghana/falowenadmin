@@ -306,9 +306,6 @@ jobs:
               --debug 2>&1 | tee -a firebase-deploy.log
           }
 
-          deploy_group "Falowen Music Studio" \
-            "functions:falowenadmin:musicStudio"
-
           deploy_group "Falowen API" \
             "functions:falowenadmin:api"
 

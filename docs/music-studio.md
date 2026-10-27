@@ -12,9 +12,9 @@ https://ai.google.dev/gemini-api/docs/pricing
 
 ## Cost and privacy
 
-Browser -> Firebase `musicStudio` -> Google; no audio through Vercel functions.
-Dedicated function: minInstances 0, maxInstances 1, concurrency 1, 256 MiB,
-fractional CPU, 300s timeout (270s upstream). No always-on worker or scheduler.
+Browser -> Firebase `api/music-studio` -> Google; no audio through Vercel functions.
+Existing secured API function, 300s timeout (270s upstream).
+Music concurrency is limited by its transactional budget lease. No always-on worker or scheduler.
 The static page is lazy-loaded. Google key stays in Secret Manager.
 
 One private Firestore budget document, accessed only on demand. Transactions
@@ -31,15 +31,15 @@ lives in browser memory until navigation/reload; download MP3 before leaving.
 
 ## Deployment and verification
 
-Deploy the new `musicStudio` export in the existing falowenadmin Functions codebase,
+Deploy the existing `api` export in the falowenadmin Functions codebase,
 then deploy the Admin frontend. Reuses existing `GEMINI_API_KEY`; the associated
 Google project needs paid Lyria access. Default frontend URL:
-https://us-central1-falowen-examiner-trainer.cloudfunctions.net/musicStudio
+https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/music-studio
 Optional override: VITE_MUSIC_STUDIO_API_URL. CORS allows production Admin and
-localhost:5173. Existing shared API timeout/settings remain unchanged.
+localhost:5173. Shared API timeout is extended to 300s for music; other scaling settings remain unchanged.
 
 For a targeted manual backend deployment use:
-`firebase deploy --only functions:falowenadmin:musicStudio --project falowen-examiner-trainer`
+`firebase deploy --only functions:falowenadmin:api --project falowen-examiner-trainer`
 The normal workflow may deploy other functions because main.js is shared.
 
 Automated tests cover authorization, payload restrictions, budget limits/reset,

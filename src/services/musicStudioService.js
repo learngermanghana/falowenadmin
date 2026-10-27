@@ -1,5 +1,5 @@
 import { auth } from '../firebaseAuth';
-const BASE = (import.meta.env.VITE_MUSIC_STUDIO_API_URL || 'https://us-central1-falowen-examiner-trainer.cloudfunctions.net/musicStudio').replace(/\/+$/, '');
+const BASE = (import.meta.env.VITE_MUSIC_STUDIO_API_URL || 'https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/music-studio').replace(/\/+$/, '');
 export async function musicRequest(payload) {
   if (!auth.currentUser) throw new Error('Sign in to Falowen Admin first.');
   const response = await fetch(BASE, {
