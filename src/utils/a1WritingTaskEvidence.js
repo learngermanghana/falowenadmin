@@ -139,20 +139,43 @@ function evaluateCurrentA1123(taskPoints, source) {
   const informal = partText(source, 'teil1');
   const formal = partText(source, 'teil2');
   const invitation = /einlad|lad[^.!?\n]{0,100}ein|(?:party|feier)[\s\S]{0,100}(?:komm|besuch)|(?:komm|besuch)[\s\S]{0,100}(?:party|feier)/i;
+  // A personal party announcement plus a direct bring-request is also an
+  // understandable A1 invitation ("ich mache ... eine Party ... mitbringen").
+  const plannedParty = /\b(?:ich|wir)\s+(?:mache|machen|habe|haben|plane|planen|feiere|feiern)\b[^.!?\n]{0,100}\b(?:party|feier)\b/i;
   const day = /samstag|sonntag|freitag|montag|dienstag|mittwoch|donnerstag|wochenende|morgen|\d{1,2}\.\s*\d/i;
   const time = /\d{1,2}(?::\d{2})?\s*uhr|halb\s+\w+|viertel\s+\w+/i;
   const place = /bei\s+mir|zu\s+hause|in\s+mein|stra[ßs]e|\b(?:im|in|bei)\s+[A-ZÄÖÜ]/;
   const bring = /mitbring|bring[^.!?\n]{0,100}mit|mit[^.!?\n]{0,40}bring/i;
   const register = /anmeld|deutschkurs[^.!?\n]{0,60}besuchen|besuchen[^.!?\n]{0,60}deutschkurs/i;
-  const times = /kurszeiten|unterrichtszeiten|wann[^.!?\n]{0,60}(?:kurs|unterricht)|(?:kurs|unterricht)[^.!?\n]{0,60}(?:wann|uhr|zeit)/i;
+  // "Wie lange dauert der Kurs?" asks for duration, NOT the lesson schedule.
+  const times = /kurszeiten|unterrichtszeiten|stundenplan|wann\s+findet\s+(?:der\s+)?(?:kurs|unterricht)\s+statt|wann\s+(?:ist|sind)\s+(?:der\s+)?(?:kurs|unterricht)|wann\s+(?:beginnt|startet)\s+(?:der\s+)?unterricht|(?:kurs|unterricht)[^.!?\n]{0,60}(?:um\s+wie\s+viel\s+uhr|an\s+welchen\s+tagen|zu\s+welchen\s+zeiten)|(?:um\s+wie\s+viel\s+uhr|an\s+welchen\s+tagen|zu\s+welchen\s+zeiten)[^.!?\n]{0,60}(?:kurs|unterricht)/i;
   const costs = /kosten|kostet|preis|wie\s+(?:viel|teuer)/i;
-  const start = /(?:ich|wir)[^.!?\n]{0,100}(?:anfangen|beginnen|starten)|(?:ab|im|am)\s+(?:juni|juli|august|sommer|\d{1,2}\.)/i;
+  // A summer *course* preference is not itself a stated start date.
+  const start = /\b(?:ich|wir)[^.!?\n]{0,100}\b(?:anfangen|beginnen|starten)\b|\b(?:ab|vom)\s+(?:juni|juli|august|sommer|\d{1,2}\.)\b/i;
+  const implicitInvitation = plannedParty.test(informal) && bring.test(informal)
+    && /(?:^|\n)\s*(?:hallo|liebe?r?)\b/i.test(informal);
+  const hasTimes = times.test(formal);
+  const hasCosts = costs.test(formal);
+  const scheduleAndCostPoint = hasTimes && hasCosts
+    ? row(taskPoints[4], true, formal)
+    : hasTimes || hasCosts
+      ? {
+        label: clean(taskPoints[4]),
+        status: "partial",
+        evidence: sentenceFor(formal, hasTimes ? times : costs),
+        missingDetails: [hasTimes ? "course costs" : "course times"],
+        reason: hasTimes
+          ? "The question asks about the course schedule but not its cost."
+          : "The question asks about the cost (or duration), but not when classes take place.",
+      }
+      : row(taskPoints[4], false, "", "Neither course times nor costs were requested.");
   return [
-    row(taskPoints[0], invitation.test(informal), sentenceFor(informal, invitation)),
+    row(taskPoints[0], invitation.test(informal) || implicitInvitation,
+      invitation.test(informal) ? sentenceFor(informal, invitation) : informal),
     row(taskPoints[1], day.test(informal) && time.test(informal) && place.test(informal), informal),
     row(taskPoints[2], bring.test(informal), sentenceFor(informal, bring)),
     row(taskPoints[3], register.test(formal), sentenceFor(formal, register)),
-    row(taskPoints[4], times.test(formal) && costs.test(formal), formal),
+    scheduleAndCostPoint,
     row(taskPoints[5], start.test(formal), sentenceFor(formal, start)),
   ];
 }

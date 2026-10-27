@@ -88,3 +88,100 @@ test('B1 Day 25 grades seven consumer-rights choices and five delivery statement
  assert.equal(score.correctCount, 12);
  assert.equal(computeObjectiveScore(reference, text.replace('2. C', '2. A')).correctCount, 11);
 });
+
+const joshA1123 = `TEIL 1
+Liebe Julia,
+
+ich mache am Samstag eine Party. Sie beginnt um 18 Uhr bei mir zu Hause. Kannst du bitte etwas zu essen und Getränke mitbringen?
+
+Ich freue mich auf dich!
+
+Liebe Grüße
+Josh
+
+TEIL 2
+Sehr geehrte Damen und Herren,
+
+ich möchte im Sommer einen Deutschkurs besuchen. Wie lange dauert der Kurs und wie viel kostet er? Ich möchte im Juni anfangen.
+
+Mit freundlichen Grüßen
+Josh`;
+
+test('A1 Day 12.3 credits Josh’s five met points and one partially met course-times point', async () => {
+  const { resolveQuestionAwareWritingTask, applyQuestionAwareWritingGuard } = await import('../src/utils/questionAwareWritingMarking.js');
+  const { evaluateA1WritingTaskEvidence } = await import('../src/utils/a1WritingTaskEvidence.js');
+  const { markingConsistencyWarnings } = await import('../src/utils/markingQuality.js');
+  const { createRequire } = await import('node:module');
+  const require = createRequire(import.meta.url);
+  const { releasable } = require('../functions/automaticCourseMarking.js');
+  const reference = canonicalCourseReference('A1-12.3');
+  const task = resolveQuestionAwareWritingTask({ referenceEntry: reference });
+  const evidence = evaluateA1WritingTaskEvidence(task, joshA1123);
+  assert.deepEqual(evidence.map(item => item.status), ['met', 'met', 'met', 'met', 'partial', 'met']);
+  assert.match(evidence[0].evidence, /ich mache.*Party/i);
+  assert.match(evidence[4].evidence, /wie viel kostet er/i);
+  assert.deepEqual(evidence[4].missingDetails, ['course times']);
+  assert.doesNotMatch(evidence[4].evidence, /Wann findet der Unterricht statt/);
+
+  const result = applyQuestionAwareWritingGuard({
+    assignmentKey: 'A1-12.3', level: 'A1', score: 75, finalScore: 75,
+    writingScore: 75, writingScorePercent: 75, objectiveScore: null,
+    confidence: 0.98, status: 'marked', passed: true, shouldSendAutomatically: true,
+    feedback: 'Clear invitation and course request. Ask when the classes take place.',
+    parts: [], corrections: [],
+  }, {
+    referenceEntry: reference, submission: { assignmentKey: 'A1-12.3', level: 'A1' },
+  }, joshA1123);
+  assert.equal(result.markingRubricVersion, 'A1-12.3-INVITATION-COURSE-V2');
+  assert.equal(result.taskPointEvidence.length, 6);
+  assert.equal(result.finalScore, 75);
+  assert.equal(result.writingScore, 75);
+  assert.equal(result.status, 'marked');
+  assert.equal(result.shouldSendAutomatically, true);
+  assert.deepEqual(result.taskCompletion.partial, [task.taskPoints[4]]);
+  assert.deepEqual(result.partialTaskPoints[0].missingDetails, ['course times']);
+  assert.equal(result.reviewReasons.length, 0);
+  assert.match(result.feedback, /course times|when the classes take place/i);
+  assert.deepEqual(markingConsistencyWarnings(result, { text: joshA1123, assignmentKey: 'A1-12.3' }), []);
+  assert.equal(releasable(result), true);
+});
+
+test('A1 12.3 full schedule question is met; a duration question alone is not', async () => {
+  const { resolveQuestionAwareWritingTask } = await import('../src/utils/questionAwareWritingMarking.js');
+  const { evaluateA1WritingTaskEvidence } = await import('../src/utils/a1WritingTaskEvidence.js');
+  const task = resolveQuestionAwareWritingTask({ referenceEntry: canonicalCourseReference('A1-12.3') });
+  const complete = joshA1123.replace('Wie lange dauert der Kurs und wie viel kostet er?', 'Wann findet der Unterricht statt und wie viel kostet der Kurs?');
+  assert.equal(evaluateA1WritingTaskEvidence(task, complete)[4].status, 'met');
+  assert.equal(evaluateA1WritingTaskEvidence(task, joshA1123.replace(' und wie viel kostet er', ''))[4].status, 'missing');
+});
+
+test('A1 12.3 one omitted point can be scored, but material omissions and uncertainty still need tutor review', async () => {
+  const { applyQuestionAwareWritingGuard } = await import('../src/utils/questionAwareWritingMarking.js');
+  const { createRequire } = await import('node:module');
+  const require = createRequire(import.meta.url);
+  const { releasable } = require('../functions/automaticCourseMarking.js');
+  const reference = canonicalCourseReference('A1-12.3');
+  const opts = { referenceEntry: reference, submission: { assignmentKey: 'A1-12.3', level: 'A1' } };
+  const original = { assignmentKey: 'A1-12.3', level: 'A1', status: 'marked', confidence: 0.98,
+    score: 92, finalScore: 92, writingScore: 92, writingScorePercent: 92,
+    objectiveScore: null, shouldSendAutomatically: true, passed: true, parts: [], corrections: [] };
+  const withoutStart = joshA1123.replace('Ich möchte im Juni anfangen.', '');
+  const once = applyQuestionAwareWritingGuard(original, opts, withoutStart);
+  assert.equal(once.taskPointEvidence.length, 6);
+  assert.equal(once.taskPointEvidence[5].status, 'missing');
+  assert.equal(once.status, 'marked');
+  assert.ok(once.finalScore <= 85);
+  assert.ok(releasable(once));
+  const twoMissing = applyQuestionAwareWritingGuard(original, opts,
+    withoutStart.replace('Wie lange dauert der Kurs und wie viel kostet er?', ''));
+  assert.equal(twoMissing.status, 'needs_review');
+  assert.equal(twoMissing.shouldSendAutomatically, false);
+  assert.equal(releasable(twoMissing), false);
+  const lowConfidence = applyQuestionAwareWritingGuard({ ...original, confidence: 0.4 }, opts, joshA1123);
+  assert.equal(lowConfidence.status, 'needs_review');
+  assert.equal(releasable(lowConfidence), false);
+  const examinerDisagreed = applyQuestionAwareWritingGuard({ ...original,
+    secondExaminer: { requiresTutorReview: true } }, opts, joshA1123);
+  assert.equal(examinerDisagreed.status, 'needs_review');
+  assert.equal(releasable(examinerDisagreed), false);
+});
