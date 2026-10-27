@@ -3744,10 +3744,13 @@
   "B1 9.26 Reiseprobleme und Lösungen": {
     "answers": {
       "teil3": {
-        "Answer1": "A) Flug-Recht24 – Kofferverlust und Entschädigung",
-        "Answer2": "C) EuroPannenschutz – Autopanne in Europa",
-        "Answer3": "B) ZugPlus App – Entschädigung bei Zugverspätung",
-        "Answer4": "E) SicherReisen – Reiserücktritt wegen Krankheit"
+        "Answer1": "A) Alpen-Trekking pur!",
+        "Answer2": "B) Schwimmschule Delphin",
+        "Answer3": "X) Keine passende Anzeige",
+        "Answer4": "D) Gratis-Kleinanzeigen-Portal",
+        "Answer5": "E) Hausgeräte-Notdienst 24/7",
+        "Answer6": "F) Spanisch am Abend",
+        "Answer7": "H) Hunde-Tagesbetreuung „Bello & Co.“"
       },
       "teil4": {
         "Answer1": "A) Richtig",
@@ -3782,13 +3785,13 @@
         "label": "Teil 2 Schreiben",
         "hasReferenceAnswers": false,
         "gradingMode": "ai_written_response",
-        "instruction": "Grade an approximately 80-word B1 opinion forum reply to Markus on travel problems. Assess (1) response and own opinion on avoiding long-distance travel, (2) own experiences or reasons, (3) concrete ways to prevent or solve travel stress. Mark as a forum post, NOT an informal personal letter; no salutation is required. Evaluate task completion, clarity, grammar, vocabulary and cohesion."
+        "instruction": "Grade a 40–50-word FORMAL German email to TraumReisen GmbH about a 5-day city trip to Vienna. Assess three required points: (1) express interest in the Vienna trip, (2) ask about exact travel dates, hotel category AND excursions, (3) request a binding offer or booking documents. Require appropriate formal salutation and closing. Do NOT grade as an opinion essay, forum reply or informal personal letter. Assess completion, clarity, grammar, vocabulary and register."
       },
       "teil3": {
         "label": "Teil 3 Lesen",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
-        "instruction": "Mark exactly four matching situations A/C/B/E against the five travel service advertisements; 0 is available but not used by any correct answer."
+        "instruction": "Mark exactly seven Anzeigen assignments: 1 A (Alpen-Trekking), 2 B (Schwimmschule), 3 X (no suitable ad because minimum rental is 6 months), 4 D (free classifieds), 5 E (weekend appliances repair), 6 F (Spanish course from 20:15), 7 H (dog daycare). Accept X as the no-match letter; ad g is an overnight holiday kennel, not workday care."
       },
       "teil4": {
         "label": "Teil 4 Hören",
