@@ -6,6 +6,9 @@ import { pathToFileURL } from "node:url";
 // deployment group. Keep targeted mappings small and explicit.
 export const WORKER_TARGETS = {
   "functions/automaticMarkingPipeline.cjs": ["api", "markCourseSubmissionAutomatically"],
+  "functions/automaticCourseMarking.js": ["markCourseSubmissionAutomatically"],
+  "functions/automaticCourseMarking.test.cjs": [],
+  "src/utils/verifiedSpeakingMarking.js": ["api", "markCourseSubmissionAutomatically"],
   "src/utils/a1WritingTaskEvidence.js": ["api", "markCourseSubmissionAutomatically"],
   "src/utils/questionAwareWritingMarking.js": ["api", "markCourseSubmissionAutomatically"],
   "src/data/courseMarkingSnapshot.json": ["api", "markCourseSubmissionAutomatically"],
