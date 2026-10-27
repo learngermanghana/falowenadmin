@@ -37,7 +37,7 @@ function extractWritingBeforeObjectiveAnswers(submissionText = "") {
 
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index].trim();
-    if (/^\d{1,2}\s*[.)\-:]?\s*(?:[A-FX]|richtig|falsch)(?:\b|[.)!?;,]|$)/i.test(line)) {
+    if (/^\d{1,2}\s*[.)\-:]?\s*(?:[A-HX]|richtig|falsch)(?:\b|[.)!?;,]|$)/i.test(line)) {
       consecutiveObjectiveAnswers += 1;
       if (consecutiveObjectiveAnswers === 1) firstObjectiveAnswerLine = index;
       if (consecutiveObjectiveAnswers >= 3) break;
