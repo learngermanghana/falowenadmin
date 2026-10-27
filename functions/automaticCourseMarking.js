@@ -131,7 +131,8 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         const publish = release && (!existingScore.exists || existingSameAttempt);
         const status = publish ? 'marked' : 'needs_review';
         const publicationReviewReasons = publish ? [] : [
-          ...((Number(result.finalScore ?? result.score) < 60 || result.passed === false || result.writingMinimumMet === false) ? ['Failed assessment requires tutor review before publication.'] : []),
+          ...(!result.incompleteAssessment && (Number(result.finalScore ?? result.score) < 60 || result.passed === false || result.writingMinimumMet === false) ? ['Failed assessment requires tutor review before publication.'] : []),
+          ...(result.incompleteAssessment ? ['A required workbook section was not submitted or scored; the assessment is incomplete and has no final pass/fail status.'] : []),
           ...(speakingReviewRequired ? ['Speaking checkpoint requires verified server assessment or tutor review; student-supplied score is not authoritative.'] : []),
           ...(existingScore.exists && !existingSameAttempt ? ['An existing score is saved for this assignment; automatic marking cannot overwrite it.'] : []),
           ...(result.status !== 'marked' ? ['The marking pipeline requested tutor review.'] : []),
