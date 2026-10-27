@@ -1069,7 +1069,9 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
   }
   const deterministicCorrections = task.modality === "spoken_transcript" ? [] : deterministicLanguageCorrections(source, primaryWritingPartId(task), task);
   const structured = readStructuredTask(result);
-  const taskPointEvidence = task.level === "A1" && task.rubricVersion === A1_WRITING_RUBRIC_VERSION
+  const currentA1123 = task.level === "A1" && task.assignmentKey === "A1-12.3"
+    && task.taskVersion === "A1-12.3-INVITATION-COURSE-V2";
+  const taskPointEvidence = task.level === "A1" && (task.rubricVersion === A1_WRITING_RUBRIC_VERSION || currentA1123)
     ? evaluateA1WritingTaskEvidence(task, source)
     : task.level === "A2"
       ? evaluateWritingTaskEvidence(task, source)
@@ -1093,11 +1095,13 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
       return evidenceStatusByLabel.get(label) !== "met";
     })
     : structured.missing;
-  const evidenceAuthoritative = ["A2", "B1"].includes(task.level) && taskPointEvidence.length > 0;
+  // The published A1 12.3 rubric is authoritative too: historical AI task
+  // labels must not replace its six current points.
+  const evidenceAuthoritative = (["A2", "B1"].includes(task.level) || currentA1123) && taskPointEvidence.length > 0;
   const missingTaskPoints = evidenceAuthoritative
     ? [...new Set(canonicalSemanticMissing)]
     : [...new Set([...structuredMissing, ...localMissing])];
-  const semanticTask = [A1_WRITING_RUBRIC_VERSION, A2_WRITING_RUBRIC_VERSION, B1_WRITING_RUBRIC_VERSION].includes(task.rubricVersion);
+  const semanticTask = currentA1123 || [A1_WRITING_RUBRIC_VERSION, A2_WRITING_RUBRIC_VERSION, B1_WRITING_RUBRIC_VERSION].includes(task.rubricVersion);
   const total = semanticTask
     ? (task.taskPoints?.length || 0)
     : Math.max(structured.total || 0, task.taskPoints?.length || 0, missingTaskPoints.length ? 3 : 0);
@@ -1107,7 +1111,10 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
   const legacyEssayMismatch = /email|letter|message|invitation/.test(task.textType) && emailBodyLooksLikeOpinionEssay(source);
   const genreMismatch = classifierMismatch || legacyEssayMismatch;
   const wrongRegister = registerMismatch(task, source);
-  const hasGuardIssue = missingTaskPoints.length > 0 || genreMismatch || wrongRegister;
+  const partialTaskPoints = currentA1123
+    ? taskPointEvidence.filter((point) => point.status === "partial")
+    : [];
+  const hasGuardIssue = missingTaskPoints.length > 0 || partialTaskPoints.length > 0 || genreMismatch || wrongRegister;
   const baseReviewReasons = pruneResolvedWritingReviewReasons(result.reviewReasons, {
     missingTaskPoints,
     genreMismatch,
@@ -1237,6 +1244,8 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
   }
 
   let cap = guardCapForMissing(missingTaskPoints.length, total);
+  // A partially met compound point earns credit, but never full content credit.
+  if (currentA1123 && partialTaskPoints.length) cap = Math.min(cap, 90);
   if (genreMismatch) cap = Math.min(cap, 65);
   if (wrongRegister) cap = Math.min(cap, missingTaskPoints.length ? 60 : 70);
   const guardedWritingScore = Math.min(effectiveWritingScore, cap);
@@ -1246,8 +1255,22 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
   const contradictions = markingContradictions({ result, task, currentWritingScore: guardedWritingScore, completed, total, missingTaskPoints, wrongRegister });
   const dimensions = writingDimensions({ result, completed, total, wrongRegister, genreMismatch });
   const endingAdvice = task.assignmentKey === "A2-1.1" ? a2Day1EndingAdvice(source) : "";
+  // A small verified omission is a scoring deduction, not a marking-system
+  // failure. Keep genuine uncertainty, failed grades and examiner disputes held.
+  const verifiedA1Omission = currentA1123 && result.status === "marked"
+    && result.shouldSendAutomatically !== false
+    && taskPointEvidence.length === 6
+    && taskPointEvidence.every((point) => ["met", "partial", "missing"].includes(point.status))
+    && missingTaskPoints.length <= 1
+    && !genreMismatch && !wrongRegister && !contradictions.length
+    && !recoveredSuspiciousZero && !result.ai?.recoveredMissingWritingScore
+    && !result.secondExaminer?.requiresTutorReview
+    && !(result.consistencyWarnings || []).length
+    && Number(result.confidence) >= 0.8
+    && guardedWritingScore > 0 && weightedOutcome.finalScore >= 60
+    && weightedOutcome.passed !== false;
   const guardReviewReasons = [
-    ...(missingTaskPoints.length ? [{
+    ...(!verifiedA1Omission && missingTaskPoints.length ? [{
       code: "missing_task_points",
       message: `Required writing points are missing: ${missingTaskPoints.join("; ")}.`,
       source: "question_aware_writing",
@@ -1276,17 +1299,35 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     writingScore: guardedWritingScore,
     writingScorePercent: guardedWritingScore,
     parts: updateWritingParts(result.parts, guardedWritingScore, task),
-    taskCompletion: { completed, total, missing: missingTaskPoints },
+    taskCompletion: { completed, total, missing: missingTaskPoints, partial: partialTaskPoints.map((point) => point.label) },
     missingTaskPoints,
+    partialTaskPoints: partialTaskPoints.map((point) => ({ label: point.label, missingDetails: point.missingDetails })),
     taskPointEvidence,
     corrections: mergeCorrections(result.corrections, deterministicCorrections),
     writingDimensions: dimensions,
-    reviewReasons: mergeReviewReasons(baseReviewReasons, guardReviewReasons),
+    reviewReasons: mergeReviewReasons(
+      verifiedA1Omission
+        ? baseReviewReasons.filter((item) => item.code !== "missing_task_points")
+        : baseReviewReasons,
+      guardReviewReasons,
+    ),
     markingRubricVersion: task.rubricVersion || (task.level === "A1" ? A1_WRITING_RUBRIC_VERSION : task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : task.level === "B1" ? B1_WRITING_RUBRIC_VERSION : "question-aware-v1"),
-    feedback: joinStudentFeedback([studentFeedback, endingAdvice]),
-    improvementSummary: joinStudentFeedback([studentImprovementSummary, endingAdvice]),
-    status: "needs_review",
-    shouldSendAutomatically: false,
+    feedback: joinStudentFeedback([
+      studentFeedback,
+      ...(currentA1123 && partialTaskPoints.length
+        ? ["You asked about the cost, but also ask when the classes take place (for example: Wann findet der Unterricht statt?)."]
+        : []),
+      endingAdvice,
+    ]),
+    improvementSummary: joinStudentFeedback([
+      studentImprovementSummary,
+      ...(currentA1123 && partialTaskPoints.length
+        ? ["Next step: ask about course times as well as course costs."]
+        : []),
+      endingAdvice,
+    ]),
+    status: verifiedA1Omission ? "marked" : "needs_review",
+    shouldSendAutomatically: verifiedA1Omission,
     ai: {
       ...(result.ai || {}),
       ...(!recoveredSuspiciousZero && suspiciousZeroWriting ? { suspiciousWritingZero: true } : {}),
