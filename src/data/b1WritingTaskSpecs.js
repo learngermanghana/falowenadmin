@@ -362,17 +362,17 @@ const rows = [
   [
     "B1-9.26",
     "Reiseprobleme und Lösungen",
-    "opinion_essay",
-    "neutral",
-    "general_audience",
-    "Write approximately 80 German words as a forum response to Markus, who wants to avoid long-distance travel after delays and lost luggage. State your opinion, describe personal experience or reasons, and suggest ways to avoid or solve travel problems.",
+    "formal_email",
+    "formal",
+    "customer_service",
+    "Write a formal email of about 40–50 German words to TraumReisen GmbH. You saw its offer for a five-day city trip to Vienna. Express interest, ask for travel dates, hotel category and excursions, and request a binding offer. Use a formal salutation and closing.",
     [
-      "Express your opinion on Markus' claim about travel",
-      "Describe travel difficulties from experience or provide reasons",
-      "Suggest concrete ways to prevent or resolve travel problems"
+      "Express interest in the five-day city trip to Vienna",
+      "Ask about the exact travel dates, hotel category and excursions",
+      "Request a binding offer for the journey"
     ]
   ],
-  [
+    [
     "B1-10.27",
     "Umweltfreundlich im Alltag",
     "opinion_essay",
