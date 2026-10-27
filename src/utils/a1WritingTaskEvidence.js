@@ -148,7 +148,7 @@ function evaluateCurrentA1123(taskPoints, source) {
   const bring = /mitbring|bring[^.!?\n]{0,100}mit|mit[^.!?\n]{0,40}bring/i;
   const register = /anmeld|deutschkurs[^.!?\n]{0,60}besuchen|besuchen[^.!?\n]{0,60}deutschkurs/i;
   // "Wie lange dauert der Kurs?" asks for duration, NOT the lesson schedule.
-  const times = /kurszeiten|unterrichtszeiten|stundenplan|wann\s+findet\s+(?:der\s+)?kurs\s+statt|wann\s+(?:ist|sind)\s+(?:der\s+)?(?:kurs|unterricht)|wann\s+(?:beginnt|startet)\s+(?:der\s+)?unterricht|(?:kurs|unterricht)[^.!?\n]{0,60}(?:um\s+wie\s+viel\s+uhr|an\s+welchen\s+tagen|zu\s+welchen\s+zeiten)|(?:um\s+wie\s+viel\s+uhr|an\s+welchen\s+tagen|zu\s+welchen\s+zeiten)[^.!?\n]{0,60}(?:kurs|unterricht)/i;
+  const times = /kurszeiten|unterrichtszeiten|stundenplan|wann\s+findet\s+(?:der\s+)?(?:kurs|unterricht)\s+statt|wann\s+(?:ist|sind)\s+(?:der\s+)?(?:kurs|unterricht)|wann\s+(?:beginnt|startet)\s+(?:der\s+)?unterricht|(?:kurs|unterricht)[^.!?\n]{0,60}(?:um\s+wie\s+viel\s+uhr|an\s+welchen\s+tagen|zu\s+welchen\s+zeiten)|(?:um\s+wie\s+viel\s+uhr|an\s+welchen\s+tagen|zu\s+welchen\s+zeiten)[^.!?\n]{0,60}(?:kurs|unterricht)/i;
   const costs = /kosten|kostet|preis|wie\s+(?:viel|teuer)/i;
   const start = /(?:ich|wir)[^.!?\n]{0,100}(?:anfangen|beginnen|starten)|(?:ab|im|am)\s+(?:juni|juli|august|sommer|\d{1,2}\.)/i;
   const implicitInvitation = plannedParty.test(informal) && bring.test(informal)
