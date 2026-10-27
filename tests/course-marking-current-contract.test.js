@@ -126,7 +126,7 @@ test('A1 Day 12.3 credits Josh’s five met points and one partially met course-
   const result = applyQuestionAwareWritingGuard({
     assignmentKey: 'A1-12.3', level: 'A1', score: 75, finalScore: 75,
     writingScore: 75, writingScorePercent: 75, objectiveScore: null,
-    confidence: 0.98, status: 'marked', passed: true, shouldSendAutomatically: true,
+    confidence: 0.98, status: 'marked', passed: true, shouldSendAutomatically: false,
     feedback: 'Clear invitation and course request. Ask when the classes take place.',
     parts: [], corrections: [],
   }, {
@@ -137,6 +137,7 @@ test('A1 Day 12.3 credits Josh’s five met points and one partially met course-
   assert.equal(result.finalScore, 75);
   assert.equal(result.writingScore, 75);
   assert.equal(result.status, 'marked');
+  // The server may default this advisory field to false; verified evidence still controls release.
   assert.equal(result.shouldSendAutomatically, true);
   assert.deepEqual(result.taskCompletion.partial, [task.taskPoints[4]]);
   assert.deepEqual(result.partialTaskPoints[0].missingDetails, ['course times']);
@@ -184,4 +185,20 @@ test('A1 12.3 one omitted point can be scored, but material omissions and uncert
     secondExaminer: { requiresTutorReview: true } }, opts, joshA1123);
   assert.equal(examinerDisagreed.status, 'needs_review');
   assert.equal(releasable(examinerDisagreed), false);
+});
+
+test('A1 12.3 still holds results with unrelated AI review reasons', async () => {
+  const { applyQuestionAwareWritingGuard } = await import('../src/utils/questionAwareWritingMarking.js');
+  const reference = canonicalCourseReference('A1-12.3');
+  const opts = { referenceEntry: reference, submission: { assignmentKey: 'A1-12.3', level: 'A1' } };
+  const result = applyQuestionAwareWritingGuard({
+    assignmentKey: 'A1-12.3', level: 'A1', writingScore: 75, writingScorePercent: 75,
+    score: 75, finalScore: 75, confidence: 0.98, status: 'marked',
+    shouldSendAutomatically: false, reviewReasons: [{
+      code: 'second_examiner_disagreement', message: 'The examiner disagreed.',
+    }],
+  }, opts, joshA1123);
+  assert.equal(result.status, 'needs_review');
+  assert.equal(result.shouldSendAutomatically, false);
+  assert.ok(result.reviewReasons.some(reason => reason.code === 'second_examiner_disagreement'));
 });
