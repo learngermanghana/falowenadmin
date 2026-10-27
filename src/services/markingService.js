@@ -188,6 +188,24 @@ function withReviewReason(result = {}, { code, message, source = "marking_servic
   };
 }
 
+// A missing AI writing grade must never be silently converted into an
+// objective-only failure on a workbook that explicitly requires Schreiben.
+function holdUnscoredRequiredWriting(result = {}, referenceEntry = {}) {
+  const writingParts = Array.isArray(referenceEntry.writingParts) ? referenceEntry.writingParts : [];
+  if (!writingParts.length) return result;
+  const score = result.writingScorePercent ?? result.writingScore;
+  if (score !== null && score !== undefined && score !== "" && Number.isFinite(Number(score))) return result;
+  return withReviewReason({
+    ...result, status: "needs_review", shouldSendAutomatically: false,
+    incompleteAssessment: true, missingRequiredParts: writingParts,
+    passed: false,
+  }, {
+    code: "required_writing_unscored",
+    message: "This assignment requires Schreiben, but no reliable writing mark was produced. Tutor review is required; do not publish the objective-only score as a final result.",
+    source: "writing_marking_contract",
+  });
+}
+
 function finalizeMarkingResult(result = {}, submission = {}) {
   const warnings = markingConsistencyWarnings(result, submission);
   return sanitizeMarkingResult(withResubmissionComparison({ ...result, consistencyWarnings: warnings, shouldSendAutomatically: false, ...(warnings.length ? { status: "needs_review" } : {}) }, submission));
@@ -439,9 +457,9 @@ export async function markSubmissionWithAI(options = {}) {
     const objective = computeObjectiveScore(reference, originalSubmissionText);
     const writingExpected = Array.isArray(reference.writingParts) ? reference.writingParts.length > 0 : hasWritingEvidence(result);
     const cleaned = writingExpected ? result : { ...result, writingScore: null, writingScorePercent: null };
-    return withPublishedContractAudit(finalizeMarkingResult(reconcileMarkingQuality(mergeObjectiveScore(cleaned, objective), objective, { ...(options.submission || {}), text: originalSubmissionText }, {
+    return withPublishedContractAudit(holdUnscoredRequiredWriting(finalizeMarkingResult(reconcileMarkingQuality(mergeObjectiveScore(cleaned, objective), objective, { ...(options.submission || {}), text: originalSubmissionText }, {
       writingExpected, wordTarget: options.feedbackWordTarget,
-    }), finalSubmission));
+    }), finalSubmission), reference));
   };
 
   let primary = applyQuestionAwareWritingGuard(
