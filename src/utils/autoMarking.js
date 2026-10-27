@@ -39,7 +39,7 @@ function normalizeAnswer(value) {
   if (["true", "r", "richtig", "wahr", "yes", "ja"].includes(normalized)) return "R";
   if (["false", "f", "falsch", "nein", "no"].includes(normalized)) return "F";
 
-  const option = String(value || "").trim().match(/^([A-FX])\s*[).:-]?$/i);
+  const option = String(value || "").trim().match(/^([A-HX])\s*[).:-]?$/i);
   if (option) return option[1].toUpperCase();
 
   return normalized;
@@ -47,7 +47,7 @@ function normalizeAnswer(value) {
 
 function extractOptionLetter(value) {
   const trimmed = String(value || "").trim();
-  const match = trimmed.match(/^([A-FX])(?:\s*[).:/-]|\s+|$)/i);
+  const match = trimmed.match(/^([A-HX])(?:\s*[).:/-]|\s+|$)/i);
   return match ? match[1].toUpperCase() : "";
 }
 
@@ -270,7 +270,7 @@ function parsePrefixedObjectiveAnswer(line = "") {
 
 function isObjectiveOptionAnswer(answer = "") {
   const normalized = normalizeAnswer(answer);
-  return /^[A-FX]$/.test(normalized) || normalized === "R" || normalized === "F";
+  return /^[A-HX]$/.test(normalized) || normalized === "R" || normalized === "F";
 }
 
 function countObjectiveAnswerEvidence(text = "") {
@@ -282,7 +282,7 @@ function countObjectiveAnswerEvidence(text = "") {
     if (numbered && isObjectiveOptionAnswer(numbered.answer)) return count + 1;
 
     const optionOnly = token.match(new RegExp(`^(?:anzeige\\s*[).:-]?\\s*)?([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
-    if (optionOnly && (/^anzeige\b/i.test(token) || token.length <= 2 || /^[A-FX]\s*[).:-]/i.test(token))) return count + 1;
+    if (optionOnly && (/^anzeige\b/i.test(token) || token.length <= 2 || /^[A-HX]\s*[).:-]/i.test(token))) return count + 1;
 
     return isObjectiveOptionAnswer(token) ? count + 1 : count;
   }, 0);
@@ -319,7 +319,7 @@ function parseStudentObjectiveAnswerTokens(tokens = [], { questionOffset = 0 } =
     }
 
     const anzeigeOnly = trimmed.match(new RegExp(`^(?:anzeige\\s*[).:-]?\\s*)?([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
-    if (anzeigeOnly && (/^anzeige\b/i.test(trimmed) || trimmed.length <= 2 || /^[A-FX]\s*[).:-]/i.test(trimmed))) {
+    if (anzeigeOnly && (/^anzeige\b/i.test(trimmed) || trimmed.length <= 2 || /^[A-HX]\s*[).:-]/i.test(trimmed))) {
       orderedQuestion += 1;
       map.set(questionOffset + orderedQuestion, anzeigeOnly[1].toUpperCase());
       pendingQuestion = null;
@@ -429,7 +429,7 @@ function parseObjectiveReferenceText(text = "") {
     }
 
     const anzeigeOnly = trimmed.match(new RegExp(`^(?:anzeige\\s*[).:-]?\\s*)?([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
-    if (anzeigeOnly && (/^anzeige\b/i.test(trimmed) || trimmed.length <= 2 || /^[A-FX]\s*[).:-]/i.test(trimmed))) {
+    if (anzeigeOnly && (/^anzeige\b/i.test(trimmed) || trimmed.length <= 2 || /^[A-HX]\s*[).:-]/i.test(trimmed))) {
       orderedQuestion += 1;
       entries.push({ key: `Answer${orderedQuestion}`, value: anzeigeOnly[1].toUpperCase() });
     }
