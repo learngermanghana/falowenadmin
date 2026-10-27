@@ -158,8 +158,8 @@ function looksLikeObjectiveAnswerList(submissionText = "") {
 
   const objectiveLines = lines.filter((line) => {
     if (!/^\d{1,3}\s*[.)-]?\s*/.test(line)) return false;
-    return /(?:\/\s*)?[A-FX]\s*$/i.test(line)
-      || /^\d{1,3}\s*[.)-]?\s*[A-FX]\s*$/i.test(line);
+    return /(?:\/\s*)?[A-HX]\s*$/i.test(line)
+      || /^\d{1,3}\s*[.)-]?\s*[A-HX]\s*$/i.test(line);
   });
 
   return objectiveLines.length / lines.length >= 0.8;

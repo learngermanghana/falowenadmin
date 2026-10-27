@@ -62,7 +62,7 @@ function normalizeLeadingShortAnswerBlock(text = "") {
   if (numberedChoiceLines.length !== 7) return raw;
 
   const numbers = numberedChoiceLines.map((line) => {
-    const match = line.match(/^\s*(\d{1,3})\s*[).:–-]?\s*([A-FX])(?:\s*[).,:;–-]|\s|$)/i);
+    const match = line.match(/^\s*(\d{1,3})\s*[).:–-]?\s*([A-HX])(?:\s*[).,:;–-]|\s|$)/i);
     return match ? Number(match[1]) : null;
   });
   if (numbers.some((number) => number === null)) return raw;
@@ -95,12 +95,12 @@ function normalizeQuestionAnswerPayload(value = "") {
   if (!answer) return "";
 
   let option = "";
-  const leadingOption = answer.match(/^([A-FX])(?:\s*[.)]\s*|\s+|$)/i);
+  const leadingOption = answer.match(/^([A-HX])(?:\s*[.)]\s*|\s+|$)/i);
   if (leadingOption) {
     option = leadingOption[1].toUpperCase();
     answer = answer.slice(leadingOption[0].length).trim();
   } else {
-    const trailingOption = answer.match(/\s+([A-FX])\s*[.)]?\s*$/i);
+    const trailingOption = answer.match(/\s+([A-HX])\s*[.)]?\s*$/i);
     if (trailingOption) {
       option = trailingOption[1].toUpperCase();
       answer = answer.slice(0, trailingOption.index).trim();
@@ -143,14 +143,14 @@ function normalizeNumberedQuestionAnswerPairs(text = "") {
 
 function normalizeStandaloneAnswerPrefixes(text = "") {
   return String(text || "").replace(
-    /(^|\n)([ \t]*)(?:ans(?:wer)?|antwort)[ \t]*[:.-]?[ \t]*([A-FX])(?:[ \t]*[.)])?[ \t]*(?=\n|$)/gi,
+    /(^|\n)([ \t]*)(?:ans(?:wer)?|antwort)[ \t]*[:.-]?[ \t]*([A-HX])(?:[ \t]*[.)])?[ \t]*(?=\n|$)/gi,
     (_match, prefix, indent, option) => `${prefix}${indent}${option.toUpperCase()}`,
   );
 }
 
 function normalizeCompactObjectiveSeparators(text = "") {
   return String(text || "").replace(
-    /\s*[·•|]\s*(?=\d{1,3}\s*[A-FX](?:\b|[).,:;–-]))/gi,
+    /\s*[·•|]\s*(?=\d{1,3}\s*[A-HX](?:\b|[).,:;–-]))/gi,
     " ",
   );
 }

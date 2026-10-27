@@ -92,7 +92,7 @@ jobs:
           grep -F 'strictGrammarTextMatches' src/utils/objectiveMarking.js
           grep -F 'permuteAnswerGroups' src/utils/objectiveMarking.js
           grep -F 'answerMatchingMode' src/data/answers_dictionary.json
-          grep -F 'split(/\r?\n|,(?=\s*\d{1,3}\s*[A-FX]' src/utils/objectiveMarking.js
+          grep -F 'split(/\r?\n|,(?=\s*\d{1,3}\s*[A-HX]' src/utils/objectiveMarking.js
           grep -F '(?:teil|tiel|part)' src/utils/objectiveMarking.js
           grep -F 'numberedQuestionPrompt' src/utils/objectiveMarking.js
           grep -F 'objectiveDetectedPartsReconciled' src/utils/finalDeterministicFeedback.js

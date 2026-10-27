@@ -1,7 +1,7 @@
 import answersDictionary from "../data/answers_dictionary.json" with { type: "json" };
 import { parseSubmissionSections } from "./submissionSections.js";
 
-const OPTION_LETTERS = "ABCDEFX";
+const OPTION_LETTERS = "ABCDEFGHX";
 const GERMAN_ARTICLES = new Set(["der", "die", "das", "den", "dem", "des", "ein", "eine", "einen", "einem", "einer", "eines"]);
 const ENGLISH_ARTICLES = new Set(["the", "a", "an"]);
 const STOPWORDS = new Set([
@@ -213,7 +213,7 @@ function flattenAnswerObject(value = {}, path = []) {
 function parseReferenceText(text = "", partId = "main") {
   const entries = [];
   let orderedQuestion = 0;
-  for (const line of String(text || "").split(/\r?\n|,(?=\s*\d{1,3}\s*[A-FX](?:\b|[).,:;–-]))/i)) {
+  for (const line of String(text || "").split(/\r?\n|,(?=\s*\d{1,3}\s*[A-HX](?:\b|[).,:;–-]))/i)) {
     const trimmed = line.trim();
     if (!trimmed || /^(teil|part)\s*\d+\s*:?$/i.test(trimmed)) continue;
     const numbered = trimmed.match(/^(?:answer|antwort|frage|aufgabe|task|exercise|nr\.?|q)?\s*(\d{1,3})\s*[).:-]?\s*(.+)$/i);
@@ -315,9 +315,9 @@ function parseNumberedEntriesFromChunk(chunk = "") {
   const trimmed = String(chunk || "").trim();
   if (!trimmed) return [];
 
-  const compactChoiceSequence = /^(?:\d{1,3}\s*[A-FX](?:\s*[).,:–-])?)(?:\s+\d{1,3}\s*[A-FX](?:\s*[).,:–-])?)+$/i;
+  const compactChoiceSequence = /^(?:\d{1,3}\s*[A-HX](?:\s*[).,:–-])?)(?:\s+\d{1,3}\s*[A-HX](?:\s*[).,:–-])?)+$/i;
   const source = compactChoiceSequence.test(trimmed)
-    ? trimmed.replace(/(^|\s)(\d{1,3})(?=[A-FX](?:\s*[).,:–-]|\s|$))/gi, "$1$2.")
+    ? trimmed.replace(/(^|\s)(\d{1,3})(?=[A-HX](?:\s*[).,:–-]|\s|$))/gi, "$1$2.")
     : trimmed;
 
   const cleanParsedAnswer = (value = "") => String(value || "")
@@ -332,7 +332,7 @@ function parseNumberedEntriesFromChunk(chunk = "") {
   // A compact question marker must have punctuation ("1.", "2:") or be
   // followed by an option letter ("1A", "2 B"). Bare numbers inside an
   // answer, such as "10 Euro" or "7 Uhr", are answer text, not a new item.
-  const compactPattern = /(?:^|\s)(\d{1,3})(?:\s*[)–-]\s*|\s*[.,:](?!\d)\s*|\s+(?=[A-FX](?:\s*[).,:–-]|\s|$)))(.*?)(?=\s+\d{1,3}(?:\s*[)–-]\s*|\s*[.,:](?!\d)\s*|\s+(?=[A-FX](?:\s*[).,:–-]|\s|$)))|$)/g;
+  const compactPattern = /(?:^|\s)(\d{1,3})(?:\s*[)–-]\s*|\s*[.,:](?!\d)\s*|\s+(?=[A-HX](?:\s*[).,:–-]|\s|$)))(.*?)(?=\s+\d{1,3}(?:\s*[)–-]\s*|\s*[.,:](?!\d)\s*|\s+(?=[A-HX](?:\s*[).,:–-]|\s|$)))|$)/g;
   const compactMatches = [...source.matchAll(compactPattern)]
     .map((match) => ({ number: Number(match[1]), answer: cleanParsedAnswer(match[2]) }))
     .filter((entry) => Number.isFinite(entry.number) && normalizeAnswer(entry.answer));
@@ -349,7 +349,7 @@ function extractNumberedTextEntries(text = "") {
   const entries = [];
   let pendingQuestionNumber = null;
   let pendingNumberedQuestion = null;
-  for (const rawLine of String(text || "").split(/\r?\n|,(?=\s*\d{1,3}\s*[A-FX](?:\b|[).,:;–-]))/i)) {
+  for (const rawLine of String(text || "").split(/\r?\n|,(?=\s*\d{1,3}\s*[A-HX](?:\b|[).,:;–-]))/i)) {
     const line = rawLine.trim();
     if (!line) continue;
     const questionLabel = line.match(/^\s*(?:frage|answer|antwort|aufgabe|task|exercise|nr\.?|q)\s*(\d{1,3})\s*[).:-]?\s*$/i);
@@ -394,7 +394,7 @@ function extractNumberedTextEntries(text = "") {
 }
 
 function extractLeadingUnnumberedAnswer(text = "") {
-  for (const rawLine of String(text || "").split(/\r?\n|,(?=\s*\d{1,3}\s*[A-FX](?:\b|[).,:;–-]))/i)) {
+  for (const rawLine of String(text || "").split(/\r?\n|,(?=\s*\d{1,3}\s*[A-HX](?:\b|[).,:;–-]))/i)) {
     const line = rawLine.trim();
     if (!line) continue;
     if (/^\s*(?:answer|antwort|frage|aufgabe|task|exercise|nr\.?|q)?\s*[12]\s*[).:-]?\s*.+/i.test(line)) return "";
@@ -1011,12 +1011,12 @@ function buildHardcodedReferenceItems(assignmentId = "") {
     key,
     partId: "main",
     questionNumber: Number(key),
-    expected: String(expected).toUpperCase() === String(expected) && /^[A-FX]$/.test(String(expected)) ? String(expected).toUpperCase() : normalizeAnswer(expected),
+    expected: String(expected).toUpperCase() === String(expected) && /^[A-HX]$/.test(String(expected)) ? String(expected).toUpperCase() : normalizeAnswer(expected),
     expectedText: "",
     expectedRaw: expected,
     expectedDisplay: expected,
     accepted: [expected],
-    type: /^[A-FX]$/i.test(String(expected)) ? "choice" : "vocabulary",
+    type: /^[A-HX]$/i.test(String(expected)) ? "choice" : "vocabulary",
     vocabularyKey: vocabularyKeys[Number(key)] || "",
     preserveFlatPosition: normalizedAssignmentId === "A1-14.1",
   }));

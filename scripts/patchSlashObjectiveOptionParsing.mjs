@@ -60,14 +60,14 @@ const unnumberedChoiceReplacement = [
   '    .split(/\\r?\\n/)',
   '    .map((line) => line.trim())',
   '    .filter(Boolean);',
-  '  const unnumberedChoicePattern = /^[A-FX](?:(?:\\s*[).:/-]\\s*.*)|(?:\\s+.+))?$/i;',
+  '  const unnumberedChoicePattern = /^[A-HX](?:(?:\\s*[).:/-]\\s*.*)|(?:\\s+.+))?$/i;',
   '  if (unnumberedLines.length >= 2 && unnumberedLines.every((line) => unnumberedChoicePattern.test(line))) {',
   '    return unnumberedLines.map((answer, index) => ({ number: index + 1, answer }));',
   '  }',
   '',
   '  // Vocabulary sections are sometimes pasted as unnumbered bilingual pairs.',
 ].join("\n");
-if (!unnumberedChoiceSource.includes("const unnumberedChoicePattern = /^[A-FX]")) {
+if (!unnumberedChoiceSource.includes("const unnumberedChoicePattern = /^[A-HX]")) {
   if (!unnumberedChoiceSource.includes(unnumberedChoiceAnchor)) {
     throw new Error("Unnumbered objective choice-block anchor changed in objectiveMarking.js");
   }

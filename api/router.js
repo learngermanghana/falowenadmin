@@ -799,7 +799,7 @@ function formatObjectiveMistake(item = {}, index = 0) {
   const expected = item.expectedDisplay || item.expected || "the correct answer";
   const reason = item.reason ? `\n   - Note: ${item.reason}` : "";
   const compactLabel = label.replace(/\bquestion\s+/i, "");
-  const compactExpected = String(expected || "").match(/^[A-FX]\b/i)?.[0]?.toUpperCase() || expected;
+  const compactExpected = String(expected || "").match(/^[A-HX]\b/i)?.[0]?.toUpperCase() || expected;
   return `${index + 1}. ${label}\n   - ${compactLabel}: Your answer was ${submitted}; correct answer is "${compactExpected}"\n   - Your answer: ${submitted}\n   - Correct: ${expected}${reason}`;
 }
 

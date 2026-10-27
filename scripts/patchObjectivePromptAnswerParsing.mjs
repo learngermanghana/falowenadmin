@@ -111,7 +111,7 @@ const autoSplitAfter = `function splitSubmissionIntoParts(submissionText = "") {
     .trim()
     .replace(/(^|\\n)([ \\t]*(?:teil|part)[ \\t]*)2([ \\t]*·[ \\t]*(?:lesen|reading)\\b)/gi, "$1$23$3")
     .replace(/(^|\\n)([ \\t]*(?:teil|part)[ \\t]*)2([ \\t]*·[ \\t]*(?:h[oö]ren|hoeren|listening)\\b)/gi, "$1$24$3")
-    .replace(/((?:teil|part)[ \\t]*[34][ \\t]*·[ \\t]*(?:lesen|reading|h[oö]ren|hoeren|listening)\\b)[ \\t]+(?=\\d{1,3}[ \\t]*[A-FX](?:\\b|[).,:;–-]))/gi, "$1\\n");
+    .replace(/((?:teil|part)[ \\t]*[34][ \\t]*·[ \\t]*(?:lesen|reading|h[oö]ren|hoeren|listening)\\b)[ \\t]+(?=\\d{1,3}[ \\t]*[A-HX](?:\\b|[).,:;–-]))/gi, "$1\\n");
   if (!text) return [{ partId: "unknown", title: "Unknown", text: "", confidence: 0 }];`;
 
 if (autoSource.includes(autoSplitBefore)) {
