@@ -121,3 +121,6 @@ module.exports.sendSaturdayClassSessionReminderEmails = onSchedule({
   timeZone: "Africa/Accra",
   retryCount: 1,
 }, runClassReminderIfOpen);
+
+// Isolated, scale-to-zero music generation; no Vercel proxy or background worker.
+module.exports.musicStudio = require('./musicStudioFunction').musicStudio;
