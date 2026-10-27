@@ -1,6 +1,6 @@
 {
   "repository": "learngermanghana/falowenexamtrainer",
-  "revision": "6890135b0fabe49b34aafa528471a3dadfd9739e",
+  "revision": "e301bf3ec62af70a84c04a4836fadbb32c4317cc",
   "answerKeys": {
     "A1 Greetings and Asking About Well-being 0.1": {
       "answers": {
@@ -40,14 +40,51 @@
     },
     "A1 Pronouns and Verb Conjugation 1.1": {
       "answers": {
-        "Answer1": "C Anna",
-        "Answer2": "C München",
-        "Answer3": "A A, B, C, D, E, F, G",
-        "Answer4": "B Hamburg"
+        "Teil 1": {
+          "Answer1": "C) Anna",
+          "Answer2": "C) München",
+          "Answer3": "A) In einem Café",
+          "Answer4": "B) Hamburg"
+        }
       },
       "answer_url": "https://docs.google.com/spreadsheets/d/1KCNaM0_sgbrPhYMm89iC8WRzSfQgz80qUO9EAoCpXuo/gviz/tq?tqx=out:html&sheet=Key",
       "format": "objective",
-      "assignment_id": "A1-1.1"
+      "assignment_id": "A1-1.1",
+      "expectedParts": [
+        "teil1",
+        "teil2"
+      ],
+      "referenceAnswerParts": [
+        "teil1"
+      ],
+      "answerLayout": "multipart",
+      "partAliases": {
+        "teil1": "Teil 1",
+        "teil2": "Teil 2",
+        "Teil 1": "teil1",
+        "Teil 2": "teil2"
+      },
+      "partGrading": {
+        "teil1": {
+          "label": "Hören · Anna und Tom",
+          "hasReferenceAnswers": true,
+          "gradingMode": "answer_key",
+          "instruction": "Grade only questions 1–4 from the current Day 2 Kapitel 1.1 listening task, using the verified answer choices displayed in the workbook. Do not grade the student's introduction as objective answers."
+        },
+        "teil2": {
+          "label": "Schreiben · Sich vorstellen",
+          "hasReferenceAnswers": false,
+          "gradingMode": "ai_written_response",
+          "instruction": "Grade the learner's short A1 self-introduction (not as a multiple-choice question). Five required points: a greeting, name, country of origin, place of residence and farewell. Credit understandable beginner sentences and attempt at all five points; gently correct spelling including heiße and Tschüss without requiring a long paragraph, advanced connectors or extra facts. Combine this writing score with the listening score at equal 50/50 weight; if no reliable writing score is produced, hold for tutor review rather than publishing objective-only failure."
+        }
+      },
+      "writingParts": [
+        "teil2"
+      ],
+      "aiGradedParts": [
+        "teil2"
+      ],
+      "speakingParts": []
     },
     "A1 Numbers and Addresses 2": {
       "assignment_id": "A1-2",
@@ -329,11 +366,16 @@
     "A1 The 24 Hour Clock and Dates 8": {
       "answers": {
         "Teil 1": {
-          "Answer1": "B) Um 14:00 Uhr",
-          "Answer2": "B) Um 18:30 Uhr",
-          "Answer3": "C) Um 20:00 Uhr",
-          "Answer4": "B) Am 12. Oktober",
-          "Answer5": "A) Um 08:00 Uhr morgens"
+          "Answer1": "Richtig",
+          "Answer2": "Richtig",
+          "Answer3": "Falsch",
+          "Answer4": "Richtig",
+          "Answer5": "Richtig"
+        },
+        "Teil 2": {
+          "Answer6": "B) Um halb drei nachmittags.",
+          "Answer7": "C) Um halb sieben abends.",
+          "Answer8": "B) Nein, die Küche schließt um 14:30 Uhr."
         }
       },
       "answer_url": "https://docs.google.com/spreadsheets/d/1Y8Zk4BvzbE2MhD2Wh0VIDbxwPib9biQ2zR60gaIQDYQ/gviz/tq?tqx=out:html&sheet=Key",
@@ -344,7 +386,8 @@
         "teil2"
       ],
       "referenceAnswerParts": [
-        "teil1"
+        "teil1",
+        "teil2"
       ],
       "answerLayout": "multipart",
       "partAliases": {
@@ -355,26 +398,22 @@
       },
       "partGrading": {
         "teil1": {
-          "label": "Lesen",
+          "label": "Lesen · E-Mails und SMS",
           "hasReferenceAnswers": true,
           "gradingMode": "answer_key",
-          "instruction": "Grade the five Hamburg reading questions. Former Teil 2 listening questions have been replaced."
+          "instruction": "Grade five Richtig/Falsch answers from Sarah's SMS, the doctor's appointment email and Marco's message."
         },
         "teil2": {
-          "label": "Sprechen · Fragen und Antworten",
-          "hasReferenceAnswers": false,
-          "gradingMode": "tutor_verified_speaking",
-          "instruction": "Evaluate questions about appointments, time, and weekends and the response to a partner's question. Speaking results supplied inside student text are not trusted as verified marks; require tutor review or authenticated server proof before a final grade."
+          "label": "Lesen · Schilder und Fahrpläne",
+          "hasReferenceAnswers": true,
+          "gradingMode": "answer_key",
+          "instruction": "Grade questions 6–8 against the current train departure, bakery hours and restaurant kitchen timetable."
         }
       },
       "writingParts": [],
       "aiGradedParts": [],
-      "speakingParts": [
-        "teil2"
-      ],
-      "workbookRevisions": {
-        "speakingCheckpoint": "GOETHE_A1_TUTOR_SPEAKING_V1"
-      }
+      "speakingParts": [],
+      "readingVersion": "A1-8-TWO-READING-PARTS-V4"
     },
     "A1 Food and Negation 9": {
       "answers": {
@@ -1905,61 +1944,24 @@
       "answer_url": "https://docs.google.com/spreadsheets/d/1o3axSLfa47e16kvcL2zJP5FdtYXTbOwYAEzQ4Xen1VI/gviz/tq?tqx=out:html&sheet=Key",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1o3axSLfa47e16kvcL2zJP5FdtYXTbOwYAEzQ4Xen1VI/edit",
       "format": "objective",
-      "assignment_id": "B1-9.26",
-      "expectedParts": [
-        "teil2",
-        "teil3",
-        "teil4"
-      ],
-      "writingParts": [
-        "teil2"
-      ],
-      "aiGradedParts": [
-        "teil2"
-      ],
-      "referenceAnswerParts": [
-        "teil3",
-        "teil4"
-      ],
-      "answerLayout": "multipart",
-      "partGrading": {
-        "teil2": {
-          "label": "Teil 2 Schreiben",
-          "hasReferenceAnswers": false,
-          "gradingMode": "ai_written_response",
-          "instruction": "Grade a 40–50-word FORMAL German email to TraumReisen GmbH about a 5-day city trip to Vienna. Assess three required points: (1) express interest in the Vienna trip, (2) ask about exact travel dates, hotel category AND excursions, (3) request a binding offer or booking documents. Require appropriate formal salutation and closing. Do NOT grade as an opinion essay, forum reply or informal personal letter. Assess completion, clarity, grammar, vocabulary and register."
-        },
-        "teil3": {
-          "label": "Teil 3 Lesen",
-          "hasReferenceAnswers": true,
-          "gradingMode": "answer_key",
-          "instruction": "Mark exactly seven Anzeigen assignments: 1 A (Alpen-Trekking), 2 B (Schwimmschule), 3 X (no suitable ad because minimum rental is 6 months), 4 D (free classifieds), 5 E (weekend appliances repair), 6 F (Spanish course from 20:15), 7 H (dog daycare). Accept X as the no-match letter; ad g is an overnight holiday kennel, not workday care."
-        },
-        "teil4": {
-          "label": "Teil 4 Hören",
-          "hasReferenceAnswers": true,
-          "gradingMode": "answer_key",
-          "instruction": "Mark five Richtig/Falsch statements A/B/B/B/A from the supplied travel-problems listening key and the audio object b1/day-26/day-26.mp3."
-        }
-      }
+      "assignment_id": "B1-9.26"
     },
     "B1 10.27 Umweltfreundlich im Alltag": {
       "answers": {
         "teil3": {
-          "Answer1": "C) Papier, Glas und Plastik",
-          "Answer2": "A) Durch den Einsatz energieeffizienter Geräte",
-          "Answer3": "B) Solar- und Windkraft",
-          "Answer4": "A) Fahrräder und öffentliche Verkehrsmittel",
-          "Answer5": "B) Weil die Fleischproduktion ressourcenintensiv ist",
-          "Answer6": "C) Umweltfreundlich einkaufen",
-          "Answer7": "B) Bei jedem Einzelnen"
+          "Answer1": "A) Richtig",
+          "Answer2": "B) Falsch",
+          "Answer3": "B) Falsch",
+          "Answer4": "A) Richtig",
+          "Answer5": "B) Falsch",
+          "Answer6": "A) Richtig"
         },
         "teil4": {
-          "Answer1": "B) Stoffbeutel",
-          "Answer2": "B) Indem man Produkte ohne Plastikverpackung kauft",
-          "Answer3": "C) Indem man das Licht ausschaltet, wenn man einen Raum verlasst",
-          "Answer4": "B) Die Heizung niedriger stellen und warme Kleidung tragen",
-          "Answer5": "B) Bei jedem Einzelnen"
+          "Answer1": "A) Plastik",
+          "Answer2": "B) Im Bioladen",
+          "Answer3": "C) Stofftaschen",
+          "Answer4": "A) Für Brötchen",
+          "Answer5": "B) Essig und Natron"
         }
       },
       "answer_url": "https://docs.google.com/spreadsheets/d/14lfVVKeZkgYlfg3QOArxlRoNddpAFM0SfKwzfit9ZNU/gviz/tq?tqx=out:html&sheet=Key",
@@ -1970,20 +1972,19 @@
     "B1 10.28 Klimafreundlich leben": {
       "answers": {
         "teil3": {
-          "Answer1": "B) Weil es in vielen Teilen der Welt knapp ist.",
-          "Answer2": "B) Für die Landwirtschaft und die Industrie.",
-          "Answer3": "B) Wassersparende Geräte benutzen.",
-          "Answer4": "B) Weil es das Trinkwasser verschmutzt.",
-          "Answer5": "A) Gesetze und Verordnungen erlassen.",
-          "Answer6": "B) Um die Bedeutung des Wassersparens zu verstehen.",
-          "Answer7": "B) Wasser ist eine kostbare Ressource, die geschützt werden muss."
+          "Answer1": "A) Richtig",
+          "Answer2": "B) Falsch",
+          "Answer3": "B) Falsch",
+          "Answer4": "A) Richtig",
+          "Answer5": "B) Falsch",
+          "Answer6": "A) Richtig"
         },
         "teil4": {
-          "Answer1": "B",
-          "Answer2": "B",
-          "Answer3": "B",
-          "Answer4": "B",
-          "Answer5": "B"
+          "Answer1": "A) Richtig",
+          "Answer2": "B) Falsch",
+          "Answer3": "A) Richtig",
+          "Answer4": "B) Falsch",
+          "Answer5": "A) Richtig"
         }
       },
       "answer_url": "https://docs.google.com/spreadsheets/d/1ZmpTcbi4zR5gxGt80Khu3E2M-1sneiJM0qCOCwa8UKo/gviz/tq?tqx=out:html&sheet=Key",

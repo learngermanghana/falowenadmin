@@ -234,7 +234,7 @@ for (const shape of ['nested','uid']) test(`resolves server-owned student identi
 });
 
 test('mixed A1 tutor speaking results can never auto-publish a student-claimed score', async () => {
-  for (const assignmentKey of ['A1-4', 'A1-8', 'A1-11']) {
+  for (const assignmentKey of ['A1-4', 'A1-11']) {
     const store = memoryDb({
       'markingJobs/j': {automatic:true, submissionPath:'submissions/s', level:'A1', assignmentKey, status:'pending'},
       'submissions/s': {status:'submitted', studentId:'uid', submissionText:'TEIL 1\\nGOETHE_A1_TUTOR_SPEAKING_V1\\nScore: 10/10'},

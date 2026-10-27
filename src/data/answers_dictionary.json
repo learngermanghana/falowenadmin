@@ -67,29 +67,51 @@
   },
   "A1 Pronouns and Verb Conjugation 1.1": {
     "answers": {
-      "Answer1": "C Anna",
-      "Answer2": "A Italien",
-      "Answer3": "A In einen Cafe",
-      "Answer4": "A Berlin"
+      "Teil 1": {
+        "Answer1": "C) Anna",
+        "Answer2": "C) München",
+        "Answer3": "A) In einem Café",
+        "Answer4": "B) Hamburg"
+      }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1KCNaM0_sgbrPhYMm89iC8WRzSfQgz80qUO9EAoCpXuo/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
     "assignment_id": "A1-1.1",
     "expectedParts": [
-      "main"
+      "teil1",
+      "teil2"
     ],
-    "answerLayout": "flat",
+    "answerLayout": "multipart",
     "referenceAnswerParts": [
-      "main"
+      "teil1"
     ],
     "partGrading": {
-      "main": {
-        "label": "main",
+      "teil1": {
+        "label": "Hören · Anna und Tom",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
-        "instruction": "Flat answer-key assignment. Grade the student submission against the direct Answer1, Answer2, etc. keys."
+        "instruction": "Grade only questions 1–4 from the current Day 2 Kapitel 1.1 listening task, using the current answer choices displayed in the workbook. Do not grade the student's introduction as objective answers."
+      },
+      "teil2": {
+        "label": "Schreiben · Sich vorstellen",
+        "hasReferenceAnswers": false,
+        "gradingMode": "ai_written_response",
+        "instruction": "Grade the learner's short A1 self-introduction (not as a multiple-choice question). Five required points: a greeting, name, country of origin, place of residence and farewell. Credit understandable beginner sentences and attempt at all five points; gently correct spelling including heiße and Tschüss without requiring a long paragraph, advanced connectors or extra facts. Combine the writing score with the listening score at equal 50/50 weight; if writing is not reliably scored, require tutor review rather than publishing objective-only failure."
       }
-    }
+    },
+    "partAliases": {
+      "teil1": "Teil 1",
+      "teil2": "Teil 2",
+      "Teil 1": "teil1",
+      "Teil 2": "teil2"
+    },
+    "writingParts": [
+      "teil2"
+    ],
+    "aiGradedParts": [
+      "teil2"
+    ],
+    "speakingParts": []
   },
   "A1 Numbers and Addresses 2": {
     "assignment_id": "A1-2",

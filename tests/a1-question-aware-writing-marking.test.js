@@ -501,13 +501,14 @@ Andrews`);
   assert.match(evidence[1].evidence, /regnen sehr stark/i);
 });
 
-test("legacy flat A1 objective manifests stay unchanged and gain Schreiben only at marking time", () => {
+test("A1 writing tasks preserve the current published objective layout and Schreiben section", () => {
   for (const id of ["A1-1.1", "A1-1.2"]) {
     const entry = referenceEntry(id);
+    const revised = id === "A1-1.1";
     assert.equal(entry.format, "objective", id);
-    assert.deepEqual(entry.expectedParts, ["main"], id);
-    assert.deepEqual(entry.referenceAnswerParts, ["main"], id);
-    assert.equal(entry.writingParts, undefined, id);
+    assert.deepEqual(entry.expectedParts, revised ? ["teil1", "teil2"] : ["main"], id);
+    assert.deepEqual(entry.referenceAnswerParts, revised ? ["teil1"] : ["main"], id);
+    assert.deepEqual(entry.writingParts, revised ? ["teil2"] : undefined, id);
 
     const enriched = enrichOptionsWithQuestionAwareWritingTask({
       referenceEntry: entry,
@@ -516,11 +517,11 @@ test("legacy flat A1 objective manifests stay unchanged and gain Schreiben only 
     const task = enriched.referenceEntry.questionAwareWritingTask;
     assert.deepEqual(task.partIds, ["teil2"], id);
     assert.equal(task.rubricVersion, A1_WRITING_RUBRIC_VERSION, id);
-    assert.deepEqual(enriched.referenceEntry.expectedParts, ["main", "teil2"], id);
+    assert.deepEqual(enriched.referenceEntry.expectedParts, revised ? ["teil1", "teil2"] : ["main", "teil2"], id);
     assert.deepEqual(enriched.referenceEntry.writingParts, ["teil2"], id);
     assert.deepEqual(enriched.referenceEntry.aiGradedParts, ["teil2"], id);
     assert.equal(enriched.referenceEntry.partGrading?.teil2?.gradingMode, "ai_written_response", id);
-    assert.deepEqual(enriched.referenceEntry.referenceAnswerParts, ["main"], id);
+    assert.deepEqual(enriched.referenceEntry.referenceAnswerParts, revised ? ["teil1"] : ["main"], id);
   }
 });
 

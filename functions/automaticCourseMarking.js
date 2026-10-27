@@ -4,7 +4,7 @@ const { withMarkingTransport } = require('./automaticMarkingContext');
 const { referenceVersionProblem, scoreProblems, isTransientMarkingError } = require('./markingReliability');
 const RESULTS_URL = 'https://www.falowen.app/campus/results';
 // These mixed workbooks need an authenticated, server-owned speaking receipt.
-const A1_SPEAKING_REVIEW_ASSIGNMENTS = new Set(['A1-2', 'A1-4', 'A1-8', 'A1-11']);
+const A1_SPEAKING_REVIEW_ASSIGNMENTS = new Set(['A1-2', 'A1-4', 'A1-11']);
 async function verifiedSpeakingAssessment(db, text, studentId, assignmentKey) {
   const matches = [...text.matchAll(/^Verified speaking assessment: ([A-Za-z0-9_-]{1,128})\s*$/gm)];
   if (matches.length !== 1) return null;
@@ -131,7 +131,8 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         const publish = release && (!existingScore.exists || existingSameAttempt);
         const status = publish ? 'marked' : 'needs_review';
         const publicationReviewReasons = publish ? [] : [
-          ...((Number(result.finalScore ?? result.score) < 60 || result.passed === false || result.writingMinimumMet === false) ? ['Failed assessment requires tutor review before publication.'] : []),
+          ...(!result.incompleteAssessment && (Number(result.finalScore ?? result.score) < 60 || result.passed === false || result.writingMinimumMet === false) ? ['Failed assessment requires tutor review before publication.'] : []),
+          ...(result.incompleteAssessment ? ['A required workbook section was not submitted or scored; the assessment is incomplete and has no final pass/fail status.'] : []),
           ...(speakingReviewRequired ? ['Speaking checkpoint requires verified server assessment or tutor review; student-supplied score is not authoritative.'] : []),
           ...(existingScore.exists && !existingSameAttempt ? ['An existing score is saved for this assignment; automatic marking cannot overwrite it.'] : []),
           ...(result.status !== 'marked' ? ['The marking pipeline requested tutor review.'] : []),
