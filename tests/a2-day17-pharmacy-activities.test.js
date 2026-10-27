@@ -75,11 +75,12 @@ test("chosen chapters reuse four authored 10-minute warm-up steps without invent
       assert.ok((item.options?.length || 0) + (item.lines?.length || 0) > 0,id);
     }
     const stages = buildTeachingPresenterStages(slide,slide.topic);
-    // Day 25 keeps the authored four warm-up exercises as source material,
-    // but its visual warm-up slot is now deliberately the lighter YouTube song.
-    if (id === "B1-8.25") {
+    // Days B1-25 and A2-18 keep their authored four warm-ups as source material,
+    // but their visual warm-up slot is the unscored YouTube song.
+    if (id === "B1-8.25" || id === "A2-7.18") {
       assert.equal(stages.find(s => s.id === "warmup").variant, "interactive-music-video", id);
-      assert.equal(stages.find(s => s.id === "warmup").musicVideo.youtubeId, "ArWT0uVqUxo");
+      assert.equal(stages.find(s => s.id === "warmup").musicVideo.youtubeId,
+        id === "A2-7.18" ? "pXAxzMMXHoE" : "ArWT0uVqUxo");
     } else {
       assert.equal(stages.find(s => s.id === "warmup").variant, "interactive-warmup", id);
     }
@@ -87,7 +88,7 @@ test("chosen chapters reuse four authored 10-minute warm-up steps without invent
     assert.equal(stages.find(s=>s.id==="knowledge").type,"knowledge",id);
     assert.equal(Boolean(entry.listening),["A2-6.17","A2-7.18","A2-7.20","B1-8.25"].includes(id),id);
     assert.equal(stages.find(s=>s.id==="knowledge").variant==="interactive-listening",["A2-6.17","A2-7.18","A2-7.20","B1-8.25"].includes(id),id);
-    assert.equal(isInteractiveOpeningStage(id,"warmup"),id !== "B1-8.25",id);
+    assert.equal(isInteractiveOpeningStage(id,"warmup"),!["B1-8.25","A2-7.18"].includes(id),id);
     assert.equal(isInteractiveOpeningStage(id,"knowledge"),["A2-6.17","A2-7.18","A2-7.20","B1-8.25"].includes(id),id);
     assert.equal(isInteractiveOpeningStage(id,"phrases"),false,id);
   }
@@ -174,7 +175,7 @@ test("A2 Day 18 Hören maps uploaded Bank Richtig/Falsch items without changing 
   const slide = getSlidesByCourse("A2").find(s => s.assignmentId === "A2-7.18");
   assert.ok(slide);
   const stages = buildTeachingPresenterStages(slide, slide.topic);
-  assert.equal(stages.find(s => s.id === "warmup").variant, "interactive-warmup");
+  assert.equal(stages.find(s => s.id === "warmup").variant, "interactive-music-video");
   const knowledge = stages.find(s => s.id === "knowledge");
   assert.equal(knowledge.type, "knowledge");
   assert.equal(knowledge.variant, "interactive-listening");
