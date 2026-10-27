@@ -1,0 +1,125 @@
+name: Objective Time Answer Tests
+
+on:
+  pull_request:
+    paths:
+      - 'src/data/answers_dictionary.json'
+      - 'src/utils/objectiveMarking.js'
+      - 'src/utils/essayFeedbackEvidence.js'
+      - 'src/utils/naturalMarkingFeedback.js'
+      - 'src/utils/finalDeterministicFeedback.js'
+      - 'scripts/patchObjectiveAnswerTimeParsing.mjs'
+      - 'scripts/patchObjectivePromptAnswerParsing.mjs'
+      - 'scripts/patchObjectiveWritingPartDetection.mjs'
+      - 'scripts/patchA1WritingPlaceholderReferences.mjs'
+      - 'scripts/patchA1PricePreferenceMarking.mjs'
+      - 'scripts/patchObjectiveSectionHeadingPunctuation.mjs'
+      - 'scripts/patchObjectiveGrammarConsistency.mjs'
+      - 'scripts/patchInlineObjectiveSectionAnswers.mjs'
+      - 'scripts/patchReorderedObjectiveGroups.mjs'
+      - 'tests/a1-price-preference-marking.test.js'
+      - 'tests/a1-grammar-objective-consistency.test.js'
+      - 'tests/a1-reordered-objective-groups.test.js'
+      - 'tests/objective-punctuated-section-headings.test.js'
+      - 'tests/objective-question-form-choice.test.js'
+      - 'tests/objective-time-answer-parsing.test.js'
+      - 'tests/objective-inline-part-headings.test.js'
+      - 'package.json'
+      - '.github/workflows/objective-time-answer-tests.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/data/answers_dictionary.json'
+      - 'src/utils/objectiveMarking.js'
+      - 'src/utils/essayFeedbackEvidence.js'
+      - 'src/utils/naturalMarkingFeedback.js'
+      - 'src/utils/finalDeterministicFeedback.js'
+      - 'scripts/patchObjectiveAnswerTimeParsing.mjs'
+      - 'scripts/patchObjectivePromptAnswerParsing.mjs'
+      - 'scripts/patchObjectiveWritingPartDetection.mjs'
+      - 'scripts/patchA1WritingPlaceholderReferences.mjs'
+      - 'scripts/patchA1PricePreferenceMarking.mjs'
+      - 'scripts/patchObjectiveSectionHeadingPunctuation.mjs'
+      - 'scripts/patchObjectiveGrammarConsistency.mjs'
+      - 'scripts/patchInlineObjectiveSectionAnswers.mjs'
+      - 'scripts/patchReorderedObjectiveGroups.mjs'
+      - 'tests/a1-price-preference-marking.test.js'
+      - 'tests/a1-grammar-objective-consistency.test.js'
+      - 'tests/a1-reordered-objective-groups.test.js'
+      - 'tests/objective-punctuated-section-headings.test.js'
+      - 'tests/objective-question-form-choice.test.js'
+      - 'tests/objective-time-answer-parsing.test.js'
+      - 'tests/objective-inline-part-headings.test.js'
+      - 'package.json'
+      - '.github/workflows/objective-time-answer-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply objective parser patches twice
+        run: |
+          node scripts/patchObjectiveWritingPartDetection.mjs
+          node scripts/patchA1WritingPlaceholderReferences.mjs
+          node scripts/patchObjectiveAnswerTimeParsing.mjs
+          node scripts/patchObjectivePromptAnswerParsing.mjs
+          node scripts/patchA1PricePreferenceMarking.mjs
+          node scripts/patchObjectiveSectionHeadingPunctuation.mjs
+          node scripts/patchObjectiveGrammarConsistency.mjs
+          node scripts/patchInlineObjectiveSectionAnswers.mjs
+          node scripts/patchReorderedObjectiveGroups.mjs
+          node scripts/patchA1WritingPlaceholderReferences.mjs
+          node scripts/patchObjectiveAnswerTimeParsing.mjs
+          node scripts/patchObjectivePromptAnswerParsing.mjs
+          node scripts/patchA1PricePreferenceMarking.mjs
+          node scripts/patchObjectiveSectionHeadingPunctuation.mjs
+          node scripts/patchObjectiveGrammarConsistency.mjs
+          node scripts/patchInlineObjectiveSectionAnswers.mjs
+          node scripts/patchReorderedObjectiveGroups.mjs
+          node --check src/utils/objectiveMarking.js
+          node --check src/utils/essayFeedbackEvidence.js
+          node --check src/utils/naturalMarkingFeedback.js
+          node --check src/utils/finalDeterministicFeedback.js
+          node --check scripts/patchObjectiveGrammarConsistency.mjs
+          node --check scripts/patchInlineObjectiveSectionAnswers.mjs
+          node --check scripts/patchReorderedObjectiveGroups.mjs
+          grep -F 'rootsApproximatelyMatch' src/utils/objectiveMarking.js
+          grep -F 'strictGrammarTextMatches' src/utils/objectiveMarking.js
+          grep -F 'permuteAnswerGroups' src/utils/objectiveMarking.js
+          grep -F 'answerMatchingMode' src/data/answers_dictionary.json
+          grep -F 'split(/\r?\n|,(?=\s*\d{1,3}\s*[A-FX]' src/utils/objectiveMarking.js
+          grep -F '(?:teil|tiel|part)' src/utils/objectiveMarking.js
+          grep -F 'numberedQuestionPrompt' src/utils/objectiveMarking.js
+          grep -F 'objectiveDetectedPartsReconciled' src/utils/finalDeterministicFeedback.js
+          grep -F 'result.hasRegisteredWriting === false' src/utils/essayFeedbackEvidence.js
+          grep -F 'question${questions.length === 1 ? "" : "s"}' src/utils/naturalMarkingFeedback.js
+          grep -F '"writingParts": [' src/data/answers_dictionary.json
+      - name: Test reordered A1-2 objective groups
+        run: node --test tests/a1-reordered-objective-groups.test.js
+      - name: Test Josh and Mary objective consistency
+        run: node --test tests/a1-grammar-objective-consistency.test.js
+      - name: Test Abigail punctuated headings
+        run: node --test --test-name-pattern="scores Abigail 12 of 12" tests/objective-punctuated-section-headings.test.js
+      - name: Test numbered punctuated headings
+        run: node --test --test-name-pattern="numbered Teil headings" tests/objective-punctuated-section-headings.test.js
+      - name: Test Vicky objective score
+        run: node --test --test-name-pattern="preserves prices" tests/a1-price-preference-marking.test.js
+      - name: Test A1 writing registration
+        run: node --test --test-name-pattern="registers Teil 2" tests/a1-price-preference-marking.test.js
+      - name: Test A1 structured feedback
+        run: node --test --test-name-pattern="structured writing evidence" tests/a1-price-preference-marking.test.js
+      - name: Test complete-sentence clock answer
+        run: node --test --test-name-pattern="preserves 7:30" tests/objective-time-answer-parsing.test.js
+      - name: Test copied numbered questions
+        run: node --test --test-name-pattern="reads answers beneath copied numbered questions" tests/objective-time-answer-parsing.test.js
+      - name: Test question-form choice answers
+        run: node --test tests/objective-question-form-choice.test.js
+      - name: Test Ruth compact objective sections
+        run: node --test tests/objective-inline-part-headings.test.js
+      - name: Test multipart feedback labels
+        run: node --test --test-name-pattern="labels each group" tests/objective-time-answer-parsing.test.js

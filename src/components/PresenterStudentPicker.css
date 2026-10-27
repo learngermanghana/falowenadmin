@@ -1,0 +1,706 @@
+.presenter-student-picker {
+  position: relative;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fff;
+  padding: 0.5rem 1rem 0.45rem;
+}
+
+.presenter-student-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.presenter-student-class-select {
+  display: grid;
+  gap: 0.12rem;
+  flex: 0 0 185px;
+  min-width: 0;
+  font-size: 0.66rem;
+  font-weight: 850;
+  color: #64748b;
+}
+
+.presenter-student-class-select select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #fff;
+  color: #0f172a;
+  padding: 0.38rem 0.5rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.presenter-student-current {
+  display: grid;
+  gap: 0.05rem;
+  flex: 0 0 min(225px, 20vw);
+  min-width: 150px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 0.3rem 0.55rem;
+}
+
+.presenter-student-current.is-active {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.presenter-student-current span {
+  font-size: 0.64rem;
+  font-weight: 850;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.presenter-student-current strong {
+  overflow: hidden;
+  color: #0f172a;
+  font-size: 0.98rem;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.presenter-student-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.presenter-student-actions button,
+.presenter-pick-student,
+.presenter-student-more summary,
+.presenter-student-more-panel button {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  padding: 0.42rem 0.58rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 850;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.presenter-student-actions .is-correct {
+  border-color: #86efac;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.presenter-student-actions .is-help {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.presenter-student-actions .is-quiet {
+  color: #475569;
+}
+
+.presenter-pick-student {
+  margin-left: auto;
+  border-color: #1d4ed8;
+  background: #1d4ed8;
+  color: #fff;
+  padding-inline: 0.72rem;
+}
+
+.presenter-student-actions button:disabled,
+.presenter-pick-student:disabled,
+.presenter-student-more-panel button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.presenter-student-more {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.presenter-student-more summary {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 31px;
+  padding: 0;
+  list-style: none;
+  color: #475569;
+}
+
+.presenter-student-more summary::-webkit-details-marker {
+  display: none;
+}
+
+.presenter-student-more-panel {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 0.45rem);
+  right: 0;
+  width: min(380px, 84vw);
+  display: grid;
+  gap: 0.55rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #fff;
+  padding: 0.8rem;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.18);
+}
+
+.presenter-student-more-panel p,
+.presenter-student-more-panel small {
+  margin: 0;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.presenter-student-more-panel button {
+  width: fit-content;
+}
+
+.presenter-absent-list {
+  display: grid;
+  gap: 0.35rem;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0.55rem 0;
+}
+
+.presenter-absent-list > strong {
+  color: #475569;
+  font-size: 0.76rem;
+}
+
+.presenter-absent-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+}
+
+.presenter-absent-row span {
+  overflow: hidden;
+  color: #0f172a;
+  font-size: 0.78rem;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.presenter-absent-row button {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.presenter-student-status-line {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 19px;
+  padding-top: 0.32rem;
+  color: #64748b;
+  font-size: 0.7rem;
+}
+
+.presenter-student-status-line strong {
+  color: #166534;
+}
+
+.presenter-student-save-state.is-failed,
+.presenter-student-save-state.is-conflict,
+.presenter-student-save-state.is-offline {
+  color: #b45309;
+}
+
+.presenter-student-error {
+  color: #b91c1c !important;
+}
+
+/* Keep teaching content dominant inside the 16:9 presenter when the picker row exists. */
+.presenter-shell .presenter-stage:has(> .presenter-student-picker) {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+}
+
+.presenter-stage > .presenter-topbar,
+.presenter-stage > .presenter-footer {
+  padding: 0.6rem 1rem;
+  gap: 0.7rem;
+}
+
+.presenter-stage > .presenter-topbar {
+  min-height: 62px;
+}
+
+.presenter-shell .presenter-content {
+  min-height: 0;
+  padding: clamp(1rem, 3.2vw, 3rem) clamp(1.8rem, 5vw, 5rem);
+}
+
+.presenter-stage > .presenter-footer {
+  min-height: 58px;
+}
+
+.presenter-footer-next {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.presenter-next-lesson {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  border: 1px solid #93c5fd;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 0.45rem 0.72rem;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+@media (max-width: 1050px) {
+  .presenter-student-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .presenter-student-class-select {
+    flex-basis: 170px;
+  }
+
+  .presenter-student-current {
+    flex-basis: 190px;
+  }
+
+  .presenter-pick-student {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .presenter-student-picker {
+    padding: 0.45rem 0.6rem;
+  }
+
+  .presenter-student-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.4rem;
+  }
+
+  .presenter-student-class-select,
+  .presenter-student-current {
+    width: 100%;
+    min-width: 0;
+    flex-basis: auto;
+  }
+
+  .presenter-student-actions {
+    grid-column: 1 / -1;
+    overflow-x: auto;
+    padding-bottom: 0.1rem;
+  }
+
+  .presenter-pick-student {
+    margin-left: 0;
+  }
+
+  .presenter-student-status-line {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .presenter-stage > .presenter-topbar,
+  .presenter-stage > .presenter-footer {
+    padding: 0.5rem 0.65rem;
+  }
+
+  .presenter-footer-next {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .presenter-next-lesson {
+    font-size: 0.72rem;
+  }
+}
+
+
+.presenter-student-secondary-actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-top: 0.6rem;
+}
+
+.presenter-student-secondary-actions button {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #475569;
+  padding: 0.4rem 0.55rem;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 750;
+}
+
+
+/* compact-presenter-participation-toolbar */
+.presenter-student-picker {
+  padding: 0.34rem 0.75rem 0.3rem;
+}
+
+.presenter-student-toolbar {
+  gap: 0.4rem;
+}
+
+.presenter-student-class-select {
+  flex-basis: 165px;
+}
+
+.presenter-student-class-select select {
+  padding: 0.32rem 0.45rem;
+  font-size: 0.74rem;
+}
+
+.presenter-student-current {
+  flex-basis: min(190px, 17vw);
+  min-width: 135px;
+  padding: 0.24rem 0.45rem;
+}
+
+.presenter-student-current strong {
+  font-size: 0.9rem;
+}
+
+.presenter-student-actions {
+  gap: 0.25rem;
+}
+
+.presenter-student-actions button,
+.presenter-pick-student,
+.presenter-student-more summary,
+.presenter-student-more-panel button {
+  padding: 0.36rem 0.5rem;
+  font-size: 0.72rem;
+}
+
+.presenter-end-summary > summary {
+  padding: 0.36rem 0.5rem !important;
+  font-size: 0.72rem !important;
+}
+
+.presenter-student-status-line {
+  min-height: 15px;
+  gap: 0.45rem;
+  padding-top: 0.16rem;
+  font-size: 0.64rem;
+  line-height: 1.15;
+}
+
+.presenter-stage > .presenter-topbar {
+  min-height: 52px;
+  padding: 0.42rem 0.75rem;
+  gap: 0.5rem;
+}
+
+.presenter-stage > .presenter-footer {
+  min-height: 50px;
+  padding: 0.45rem 0.75rem;
+}
+
+.presenter-shell .presenter-content {
+  padding: clamp(0.85rem, 2.6vw, 2.35rem) clamp(1.5rem, 4.5vw, 4.25rem);
+}
+
+@media (min-width: 1351px) {
+  .presenter-student-picker {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.25rem 0.7rem;
+  }
+
+  .presenter-student-toolbar {
+    min-width: 0;
+  }
+
+  .presenter-student-status-line {
+    justify-self: end;
+    max-width: min(760px, 48vw);
+    padding-top: 0;
+    white-space: nowrap;
+  }
+
+  .presenter-student-question-card,
+  .presenter-student-error {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 1350px) {
+  .presenter-student-status-line {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
+
+/* Minimal participation toolbar inside Focus Mode. */
+.presenter-stage.is-focus-mode .presenter-student-picker {
+  width: auto;
+  display: block;
+  border: 1px solid rgba(148, 163, 184, 0.72);
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.95);
+  padding: 0.34rem 0.42rem;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.13);
+  backdrop-filter: blur(8px);
+}
+
+.presenter-stage.is-focus-mode .presenter-student-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.presenter-stage.is-focus-mode .presenter-student-class-select,
+.presenter-stage.is-focus-mode .presenter-end-summary,
+.presenter-stage.is-focus-mode .presenter-student-more,
+.presenter-stage.is-focus-mode .presenter-student-status-line,
+.presenter-stage.is-focus-mode .presenter-student-question-card,
+.presenter-stage.is-focus-mode .presenter-student-current-stats {
+  display: none !important;
+}
+
+.presenter-stage.is-focus-mode .presenter-student-current {
+  flex: 0 1 180px;
+  min-width: 110px;
+  max-width: 180px;
+  padding: 0.22rem 0.42rem;
+  border-color: transparent;
+  background: transparent;
+}
+
+.presenter-stage.is-focus-mode .presenter-student-current.is-active {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.presenter-stage.is-focus-mode .presenter-student-current span {
+  font-size: 0.58rem;
+}
+
+.presenter-stage.is-focus-mode .presenter-student-current strong {
+  font-size: 0.8rem;
+}
+
+.presenter-stage.is-focus-mode .presenter-student-actions {
+  display: inline-flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.presenter-stage.is-focus-mode .presenter-student-actions button,
+.presenter-stage.is-focus-mode .presenter-pick-student {
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 0.38rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  box-shadow: none;
+}
+
+.presenter-stage.is-focus-mode .presenter-pick-student {
+  margin-left: 0;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 700px) {
+  .presenter-stage.is-focus-mode .presenter-student-picker {
+    max-width: calc(100vw - 0.9rem);
+    overflow-x: auto;
+  }
+
+  .presenter-stage.is-focus-mode .presenter-student-current {
+    flex-basis: 130px;
+    min-width: 95px;
+  }
+
+  .presenter-stage.is-focus-mode .presenter-student-actions button,
+  .presenter-stage.is-focus-mode .presenter-pick-student {
+    font-size: 0.66rem;
+    padding: 0.34rem 0.48rem;
+  }
+}
+
+
+/* quick-skip-absent-actions */
+.presenter-student-actions .is-skip {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
+}
+
+.presenter-student-actions .is-absent {
+  border-color: #fbbf24;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.presenter-stage.is-focus-mode .presenter-student-actions .is-skip,
+.presenter-stage.is-focus-mode .presenter-student-actions .is-absent {
+  display: inline-flex;
+}
+
+@media (max-width: 700px) {
+  .presenter-stage.is-focus-mode .presenter-student-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .presenter-stage.is-focus-mode .presenter-student-current {
+    flex: 1 1 105px;
+  }
+
+  .presenter-stage.is-focus-mode .presenter-student-actions {
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+  }
+
+  .presenter-stage.is-focus-mode .presenter-pick-student {
+    flex: 0 0 auto;
+  }
+}
+
+
+/* presenter-reading-share */
+.presenter-reading-share {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-top: 0.3rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 11px;
+  background: #eff6ff;
+  padding: 0.5rem 0.65rem;
+  color: #1e3a8a;
+}
+
+.presenter-reading-share-silent {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.presenter-reading-share-silent span {
+  color: #475569;
+  font-size: 0.74rem;
+}
+
+.presenter-reading-share-heading {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(100px, 1fr) auto;
+  align-items: center;
+  gap: 0.35rem 0.65rem;
+}
+
+.presenter-reading-share-heading > span {
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.presenter-reading-share-heading > strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.presenter-reading-share-heading > small {
+  color: #475569;
+  font-weight: 750;
+}
+
+.presenter-reading-share-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex: 0 0 auto;
+}
+
+.presenter-reading-share-actions button {
+  min-height: 30px;
+  border: 1px solid #93c5fd;
+  border-radius: 999px;
+  background: #fff;
+  color: #1d4ed8;
+  padding: 0.32rem 0.55rem;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.presenter-reading-share-actions button.is-complete {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.presenter-reading-share-actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.presenter-stage.is-focus-mode .presenter-reading-share {
+  position: absolute;
+  z-index: 45;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  width: min(720px, calc(100vw - 1rem));
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.16);
+}
+
+.presenter-stage.is-focus-mode .presenter-student-picker:has(.presenter-reading-share) {
+  overflow: visible;
+}
+
+@media (max-width: 700px) {
+  .presenter-reading-share {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .presenter-reading-share-heading {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .presenter-reading-share-heading > small {
+    grid-column: 1 / -1;
+  }
+
+  .presenter-reading-share-actions {
+    justify-content: flex-end;
+  }
+}

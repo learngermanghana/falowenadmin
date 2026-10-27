@@ -1,0 +1,2 @@
+Redeploy production after merging PR #557: make the administrator-selected last live/correct session authoritative for rebuilding all following live-class sessions.
+Triggered 2026-08-24.

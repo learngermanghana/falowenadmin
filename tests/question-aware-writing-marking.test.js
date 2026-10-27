@@ -1,0 +1,929 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+
+import { compareExaminerResults } from "../src/utils/markingIntelligence.js";
+import { computeObjectiveScore } from "../src/utils/objectiveMarking.js";
+import { A2_WRITING_RUBRIC_VERSION, getA2WritingTaskSpecs } from "../src/data/a2WritingTaskSpecs.js";
+import answersDictionary from "../src/data/answers_dictionary.json" with { type: "json" };
+import {
+  applyQuestionAwareWritingGuard,
+  enforceA2B1WritingConsistency,
+  enrichOptionsWithQuestionAwareWritingTask,
+  resolveQuestionAwareWritingTask,
+} from "../src/utils/questionAwareWritingMarking.js";
+
+const referenceEntryByAssignmentId = (assignmentId) => {
+  const entry = Object.values(answersDictionary).find((item) => item.assignment_id === assignmentId);
+  assert.ok(entry, `Missing answer entry for ${assignmentId}`);
+  return { ...entry, assignmentKey: assignmentId, level: assignmentId.split("-")[0] };
+};
+
+test("current A2/B1 no-writing manifest entries do not resolve a Schreiben task", () => {
+  for (const assignmentId of ["A2-2.5", "B1-7.22"]) {
+    const referenceEntry = referenceEntryByAssignmentId(assignmentId);
+    const options = {
+      referenceEntry,
+      submission: { assignmentKey: assignmentId, level: referenceEntry.level },
+    };
+    assert.equal(resolveQuestionAwareWritingTask(options), null, assignmentId);
+
+    const enriched = enrichOptionsWithQuestionAwareWritingTask(options);
+    assert.equal(enriched.referenceEntry.questionAwareWritingTask, undefined, assignmentId);
+    assert.equal(enriched.submission.questionAwareWritingTask, undefined, assignmentId);
+  }
+});
+
+const assignmentOptions = {
+  referenceEntry: {
+    assignmentKey: "B1-1.2",
+    level: "B1",
+    title: "Freunde fürs Leben",
+    // Historical writing task: current sparse references follow the no-writing cadence.
+    writingParts: ["teil2"],
+  },
+  submission: {
+    assignmentKey: "B1-1.2",
+    level: "B1",
+  },
+};
+
+const opinionEssayInsteadOfEmail = `Teil 2
+
+Hallo Carmen,
+ich schreibe dir, weil ich über das Thema „Freundschaft fürs Leben“ sprechen möchte.
+
+Meine Meinung ist, dass Freundschaft fürs Leben sehr wichtig ist, weil man Wissen teilen und über seine Probleme sprechen kann.
+
+Im Alltag trifft man viele Menschen. Manchmal entstehen Freundschaften durch gemeinsame Ziele oder Hobbys, zum Beispiel beim Sport, bei der Arbeit oder in der Kirche.
+
+Ich denke, dass Freundschaften fürs Leben oft schon in der Schulzeit oder Kindheit entstehen. Gute Freunde bleiben auch in schwierigen Zeiten zusammen. Ein echter Freund geht mit dir durch dick und dünn.
+
+Einerseits gibt es viele Vorteile. Man kann seine Geheimnisse mit einem guten Freund teilen. Ein zuverlässiger Freund bewahrt deine Geheimnisse und unterstützt dich, wenn du Probleme hast.
+
+Andererseits gibt es auch Nachteile. Manchmal gibt es Probleme zwischen Freunden. Zum Beispiel kann man enttäuscht werden oder das Vertrauen kann verletzt werden.
+
+In meinem Heimatland treffen sich viele Menschen am Wochenende mit ihren Freunden. Sie spielen zusammen, helfen sich gegenseitig und verbringen Zeit miteinander.
+
+Zusammenfassend lässt sich sagen, dass Freundschaft fürs Leben sehr wichtig ist. Gute Freunde unterstützen uns in schwierigen Zeiten und machen unser Leben schöner.
+
+Viele Grüße
+Fred
+
+Teil 3
+1. b
+2. b
+3. a
+4. a
+5. b
+6. b
+7. b
+
+Teil 4
+1. a
+2. a
+3. a
+4. b
+5. b`;
+
+const actualEmail = `Teil 2
+
+Hallo Carmen,
+wie geht es dir? Ich möchte dir von meinem besten Freund Kofi erzählen. Wir haben uns vor fünf Jahren in einem Deutschkurs kennengelernt, weil wir zusammen eine Partneraufgabe gemacht haben.
+Unsere Freundschaft ist für mich besonders, weil Kofi ehrlich und zuverlässig ist und mich in schwierigen Situationen unterstützt.
+Hast du am Samstag Zeit? Wollen wir uns um 15 Uhr im Café am Bahnhof treffen? Dann kann ich dir mehr erzählen.
+Schreib mir bald.
+
+Liebe Grüße
+Fred`;
+
+const reubenEmail = `Teil 2
+Liebe Ruth,
+ich hoffe, es geht dir gut. Ich schreibe dir, weil ich dir von einem neuen Freund von mir erzählen möchte. Er heißt Mark, ist Arzt und wohnt auch hier in Accra. Wir haben uns vor vier Jahren am Arbeitsplatz kennengelernt. Seitdem sind wir gute Freunde. Unsere Freundschaft ist für mich ganz besonders, weil Mark viele gute Eigenschaften hat. Zum Beispiel ist er ehrlich, geduldig, bescheiden, lustig, klug, hilfsbereit und offen. Er hilft mir in vielen schwierigen Situationen. Ich möchte ihn dir gerne vorstellen. Hast du am nächsten Wochenende Zeit? Wir könnten uns bei mir zu Hause treffen. Passt dir das? Ich freue mich auf deine Antwort.
+Viele Grüße
+Reuben`;
+
+test("explicit legacy B1-1.2 writing reference resolves its three communicative points", () => {
+  const task = resolveQuestionAwareWritingTask(assignmentOptions);
+  assert.ok(task);
+  assert.equal(task.assignmentKey, "B1-1.2");
+  assert.equal(task.level, "B1");
+  assert.equal(task.textType, "informal_email");
+  assert.equal(task.register, "informal");
+  assert.deepEqual(task.taskPoints, [
+    "Explain how you and the friend met",
+    "Explain why this specific friendship is special",
+    "Make a concrete suggestion for a meeting",
+  ]);
+  assert.match(task.taskText, /explain how you met/i);
+  assert.match(task.gradingInstruction, /not merely against the general topic/i);
+});
+
+test("marking payload is enriched so both AI examiners receive the exact writing task", () => {
+  const enriched = enrichOptionsWithQuestionAwareWritingTask(assignmentOptions);
+  assert.equal(enriched.referenceEntry.questionAwareWritingTask.assignmentKey, "B1-1.2");
+  assert.equal(enriched.submission.questionAwareWritingTask.assignmentKey, "B1-1.2");
+  assert.match(enriched.referenceEntry.questionAwareWritingTask.gradingInstruction, /every required communicative point separately/i);
+});
+
+test("generic friendship opinion essay cannot keep a 100% writing score", () => {
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    ...assignmentOptions,
+    submissionText: opinionEssayInsteadOfEmail,
+  });
+  const result = applyQuestionAwareWritingGuard({
+    level: "B1",
+    assignmentKey: "B1-1.2",
+    objectiveScore: 100,
+    objectiveCorrect: 12,
+    objectiveTotal: 12,
+    writingScore: 100,
+    writingScorePercent: 100,
+    finalScore: 100,
+    score: 100,
+    taskCompletion: { completed: 3, total: 3, missing: [] },
+    feedback: "Strong work. You completed the required task.",
+    status: "needs_review",
+    confidence: 0.8,
+  }, enriched, opinionEssayInsteadOfEmail);
+
+  assert.equal(result.objectiveScore, 100);
+  assert.equal(result.objectiveCorrect, 12);
+  assert.equal(result.objectiveTotal, 12);
+  assert.equal(result.writingScore, 55);
+  assert.equal(result.writingScorePercent, 55);
+  assert.equal(result.finalScore, 82);
+  assert.equal(result.markingPolicy, "a2-b1-40-30-30");
+  assert.equal(result.writingMinimumMet, true);
+  assert.equal(result.taskCompletion.completed, 0);
+  assert.equal(result.taskCompletion.total, 3);
+  assert.equal(result.missingTaskPoints.length, 3);
+  assert.equal(result.ai.questionAwareWritingGuard.genreMismatch, true);
+  assert.equal(result.ai.detectedWritingTextType.detectedType, "opinion_essay");
+  assert.match(result.feedback, /Still missing:/i);
+  assert.match(result.feedback, /required informal email format/i);
+  assert.doesNotMatch(result.feedback, /Question-aware writing check|writing score is capped|language quality cannot replace task fulfilment/i);
+});
+
+test("a genuine informal email that answers all three points is not capped", () => {
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    ...assignmentOptions,
+    submissionText: actualEmail,
+  });
+  const result = applyQuestionAwareWritingGuard({
+    level: "B1",
+    assignmentKey: "B1-1.2",
+    objectiveScore: 100,
+    objectiveCorrect: 12,
+    objectiveTotal: 12,
+    writingScore: 92,
+    writingScorePercent: 92,
+    finalScore: 97,
+    score: 97,
+    taskCompletion: { completed: 3, total: 3, missing: [] },
+    feedback: "Clear and complete informal email.",
+    status: "needs_review",
+    confidence: 0.8,
+  }, enriched, actualEmail);
+
+  assert.equal(result.writingScore, 92);
+  assert.equal(result.finalScore, 97);
+  assert.equal(result.ai.questionAwareWritingGuard, undefined);
+  assert.equal(result.ai.questionAwareWritingTask.assignmentKey, "B1-1.2");
+  assert.equal(result.ai.detectedWritingTextType.detectedType, "informal_email");
+  assert.equal(result.ai.questionAwareWritingConsistency.checked, true);
+  assert.equal(result.ai.questionAwareWritingConsistency.authority, "taskPointEvidence");
+  assert.deepEqual(result.ai.questionAwareWritingConsistency.missingTaskPoints, []);
+});
+
+test("Reuben-style complete B1 email keeps its evidence-based language score", () => {
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    ...assignmentOptions,
+    submissionText: reubenEmail,
+  });
+  const result = applyQuestionAwareWritingGuard({
+    level: "B1",
+    assignmentKey: "B1-1.2",
+    objectiveScore: 100,
+    objectiveCorrect: 12,
+    objectiveTotal: 12,
+    writingScore: 85,
+    writingScorePercent: 85,
+    finalScore: 94,
+    score: 94,
+    taskCompletion: { completed: 3, total: 3, missing: [] },
+    missingTaskPoints: [],
+    corrections: [],
+    feedback: "Strong task completion with only an extension goal for cohesion.",
+    status: "marked",
+    confidence: 0.82,
+  }, enriched, reubenEmail);
+
+  assert.equal(result.writingScore, 85);
+  assert.equal(result.writingScorePercent, 85);
+  assert.equal(result.finalScore, 94);
+  assert.equal(result.status, "marked");
+  assert.equal(result.ai.questionAwareWritingGuard, undefined);
+  assert.equal(result.ai.questionAwareWritingCalibration, undefined);
+  assert.equal(result.ai.detectedWritingTextType.detectedType, "informal_email");
+});
+
+test("a close second examiner at 0.68 confidence does not force tutor review by status alone", () => {
+  const comparison = compareExaminerResults(
+    { finalScore: 96, writingScore: 90, confidence: 0.84, status: "marked" },
+    { finalScore: 95, writingScore: 88, confidence: 0.68, status: "needs_review" },
+  );
+
+  assert.equal(comparison.scoreDelta, 1);
+  assert.equal(comparison.writingScoreDelta, 2);
+  assert.equal(comparison.requiresTutorReview, false);
+  assert.equal(comparison.agreement, "high");
+});
+
+function findUndefinedPaths(value, path = "result", seen = new WeakSet()) {
+  if (value === undefined) return [path];
+  if (!value || typeof value !== "object") return [];
+  if (seen.has(value)) return [];
+  seen.add(value);
+  if (Array.isArray(value)) {
+    return value.flatMap((item, index) => findUndefinedPaths(item, path + "[" + index + "]", seen));
+  }
+  return Object.entries(value).flatMap(([key, item]) => findUndefinedPaths(item, path + "." + key, seen));
+}
+
+const victoriaA2Day1 = `Teil 2
+Sehr geehrter Herr Felix,
+Ich schreibe Ihnen, weil ich über meine Arbeiten und Schule sprechen möchte.
+Die Schule ist sehr schön und interessant. Ich habe viele Leute aus meinem Land kennengelernt.
+Ich arbeite bei Cleanwerk, es ist sehr stressig.Könnten Sie mir helfen?
+Viele Grüße
+Victoria
+
+Teil 3
+1. C
+2. B
+3. A
+4. A
+5. B
+6. B
+7. C
+
+Teil 4
+1. B
+2. A
+3. A
+4. B
+5. C`;
+
+test("A2-1.1 keeps the authoritative informal Felix-letter register even if cached registry metadata says formal", () => {
+  const staleFormalTask = {
+    assignmentKey: "A2-1.1",
+    level: "A2",
+    title: "Small Talk",
+    taskText: "Write to Felix about work and family.",
+    textType: "formal_email",
+    register: "formal",
+    recipient: "formal_recipient",
+    taskPoints: ["Explain why you are writing", "Write about work and school/family", "Ask Felix a question"],
+    source: "assignmentRegistry",
+    gradingInstruction: "Expected register: formal.",
+  };
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    referenceEntry: { assignmentKey: "A2-1.1", level: "A2", questionAwareWritingTask: staleFormalTask },
+    submission: { assignmentKey: "A2-1.1", level: "A2" },
+    submissionText: victoriaA2Day1,
+  });
+
+  const task = enriched.referenceEntry.questionAwareWritingTask;
+  assert.equal(task.register, "informal");
+  assert.equal(task.textType, "informal_email");
+  assert.equal(task.recipient, "friend_or_personal_contact");
+  assert.equal(task.taskPoints.length, 3);
+  assert.equal(task.taskPointsDe.length, 3);
+  assert.match(task.taskText, /Arbeit oder Ihrem Studium/i);
+  assert.match(task.taskText, /Familie/i);
+  assert.match(task.taskText, /allen drei Punkten/i);
+  assert.match(task.gradingInstruction, /Expected register: informal/i);
+  assert.doesNotMatch(task.gradingInstruction, /Expected register: formal/i);
+});
+
+test("Victoria A2-1.1 recovers an impossible zero before applying the informal-register cap", () => {
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    referenceEntry: {
+      assignmentKey: "A2-1.1",
+      level: "A2",
+      questionAwareWritingTask: {
+        assignmentKey: "A2-1.1",
+        level: "A2",
+        title: "Small Talk",
+        taskText: "Informal letter to Felix about work and family.",
+        textType: "formal_email",
+        register: "formal",
+        recipient: "formal_recipient",
+        taskPoints: ["Explain why you are writing", "Write about work and school/family", "Ask Felix a question"],
+      },
+    },
+    submission: { assignmentKey: "A2-1.1", level: "A2" },
+    submissionText: victoriaA2Day1,
+  });
+
+  const result = applyQuestionAwareWritingGuard({
+    level: "A2",
+    assignmentKey: "A2-1.1",
+    objectiveScore: 92,
+    objectiveCorrect: 11,
+    objectiveTotal: 12,
+    writingScore: 0,
+    writingScorePercent: 0,
+    finalScore: 55,
+    score: 55,
+    taskCompletion: { completed: 3, total: 3, missing: [] },
+    missingTaskPoints: [],
+    feedback: "You addressed all 3 task points.",
+    status: "marked",
+    confidence: 0.8,
+  }, enriched, victoriaA2Day1);
+
+  assert.equal(result.ai.questionAwareWritingTask.register, "informal");
+  assert.equal(result.writingScore, 60);
+  assert.equal(result.writingScorePercent, 60);
+  assert.equal(result.finalScore, 79);
+  assert.equal(Object.prototype.hasOwnProperty.call(result.ai, "suspiciousWritingZero"), false);
+  assert.deepEqual(findUndefinedPaths(result), []);
+  assert.equal(result.ai.questionAwareWritingGuard.suspiciousWritingZero, true);
+  assert.equal(result.ai.questionAwareWritingGuard.recoveredWritingScore > 0, true);
+  assert.equal(result.ai.questionAwareWritingGuard.genreMismatch, false);
+  assert.equal(result.ai.questionAwareWritingGuard.registerMismatch, true);
+  assert.equal(result.taskCompletion.completed, 1);
+  assert.equal(result.taskCompletion.total, 3);
+  assert.equal(result.markingRubricVersion, A2_WRITING_RUBRIC_VERSION);
+  assert.equal(result.taskPointEvidence.length, 3);
+  assert.deepEqual(result.taskPointEvidence.map((item) => item.status), ["met", "missing", "missing"]);
+  assert.equal(result.writingDimensions.taskFulfilment, 33);
+  assert.equal(result.writingDimensions.registerAndTextType, 60);
+  assert.deepEqual(result.missingTaskPoints, [
+    "Write about your work or studies and your family",
+    "At the end ask Felix a relevant personal question about how he is or what is new with him",
+  ]);
+  assert.match(result.ai.questionAwareWritingGuard.endingAdvice, /Könnten Sie mir helfen/);
+  assert.match(result.ai.questionAwareWritingGuard.endingAdvice, /Ich freue mich auf deine Antwort/);
+  assert.equal(result.status, "needs_review");
+  assert.equal(result.shouldSendAutomatically, false);
+  assert.match(result.feedback, /requested informal register/i);
+  assert.match(result.feedback, /work or studies and your family/i);
+  assert.match(result.feedback, /relevant personal question/i);
+  assert.match(result.feedback, /Könnten Sie mir helfen/);
+  assert.match(result.feedback, /Ich freue mich auf deine Antwort/);
+  assert.doesNotMatch(result.feedback, /Question-aware writing check|capped at 60%|language quality cannot replace task fulfilment/i);
+  assert.doesNotMatch(result.feedback, /requested formal register/i);
+});
+
+
+test("formal and informal email are the same correspondence genre; register is evaluated separately", async () => {
+  const { writingTextTypesCompatible } = await import("../src/utils/writingTaskSchema.js");
+  assert.equal(writingTextTypesCompatible("informal_email", "formal_email"), true);
+  assert.equal(writingTextTypesCompatible("formal_email", "informal_email"), true);
+  assert.equal(writingTextTypesCompatible("informal_email", "opinion_essay"), false);
+});
+
+
+const selasiA2Day1 = `Teil 2
+Lieber Felix,
+Wie geht es dir? Ich hoffe es geht dir gut. Ich schreibe dir, weil ich eine tolle Nachricht habe für dich! Wir haben jetzt einen neuen Hund. Ich bin sehr glücklich.
+Ich arbeite in der IT-Branche, zu Hause natürlich und studiere Deutsch. Mein Vater, meine Mutter und meine Geschwister sind Teil der Familie. Ich habe einen großen Bruder und eine jüngere Schwester, und jetzt haben wir einen schönen Hund.
+Und du? Was machst du gern?
+Viele Grüße,
+Selasi`;
+
+test("A2-1.1 accepts a relevant personal final question but does not require the exact model wording", () => {
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    referenceEntry: { assignmentKey: "A2-1.1", level: "A2" },
+    submission: { assignmentKey: "A2-1.1", level: "A2" },
+    submissionText: selasiA2Day1,
+  });
+
+  const result = applyQuestionAwareWritingGuard({
+    level: "A2",
+    assignmentKey: "A2-1.1",
+    objectiveScore: 92,
+    writingScore: 86,
+    writingScorePercent: 86,
+    finalScore: 90,
+    score: 90,
+    taskCompletion: { completed: 3, total: 3, missing: [] },
+    missingTaskPoints: [],
+    feedback: "Clear and relevant informal letter.",
+    status: "needs_review",
+    confidence: 0.52,
+  }, enriched, selasiA2Day1);
+
+  assert.equal(result.writingScore, 86);
+  assert.equal(result.ai.questionAwareWritingGuard, undefined);
+  assert.equal(result.ai.questionAwareWritingTask.taskPoints.length, 3);
+  assert.equal(result.taskCompletion.completed, 3);
+  assert.equal(result.taskCompletion.total, 3);
+  assert.equal(result.taskPointEvidence.every((item) => item.status === "met"), true);
+  assert.equal(result.markingRubricVersion, A2_WRITING_RUBRIC_VERSION);
+});
+
+test("A2-1.1 does not count a generic help question as the required final question to Felix", () => {
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    referenceEntry: { assignmentKey: "A2-1.1", level: "A2" },
+    submission: { assignmentKey: "A2-1.1", level: "A2" },
+    submissionText: victoriaA2Day1,
+  });
+
+  const result = applyQuestionAwareWritingGuard({
+    level: "A2",
+    assignmentKey: "A2-1.1",
+    objectiveScore: 92,
+    writingScore: 82,
+    writingScorePercent: 82,
+    finalScore: 88,
+    score: 88,
+    taskCompletion: { completed: 3, total: 3, missing: [] },
+    missingTaskPoints: [],
+    feedback: "You addressed all task points.",
+    status: "marked",
+    confidence: 0.8,
+  }, enriched, victoriaA2Day1);
+
+  assert.equal(result.taskCompletion.completed, 1);
+  assert.equal(result.taskCompletion.total, 3);
+  assert.equal(result.missingTaskPoints.includes("Write about your work or studies and your family"), true);
+  assert.equal(result.missingTaskPoints.some((item) => /relevant personal question/i.test(item)), true);
+  assert.match(result.feedback, /does not answer the Felix task/i);
+});
+
+
+const victoriaHotelReservationA249 = `Teil 2
+Lieber Herr Felix,
+
+Ich schreibe Ihnen,weil ich im Urlaub bin und für meinen Aufenthalt in Berlin ein Zimmer in Ihrem Hotel buchen möchte. Ich werde am Samstag, 10. Oktober, nachmittags ankommen. Wie viel kostet ein normales Zimmer und wie groß ist es. Ich würde auch gerne wissen, ob Sie ein kostenloses Frühstück servieren und ob es Internet gibt. Ich habe vor, drei Tage zu bleiben, bevor ich nach Fulda zurückkomme.
+Ich freue mich auf Ihre Antwort. Vielen Dank
+
+Teil 3
+1. B
+2. C
+3. B
+4. C
+5. B
+
+Teil 4
+1. C
+2. B
+3. A
+4. C
+5. B`;
+
+test("A2-4.9 recognizes Victoria's hotel booking, stay details, price and services without false missing points", () => {
+  const referenceEntry = referenceEntryByAssignmentId("A2-4.9");
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    referenceEntry,
+    submission: { assignmentKey: "A2-4.9", level: "A2" },
+    submissionText: victoriaHotelReservationA249,
+  });
+
+  const result = applyQuestionAwareWritingGuard({
+    level: "A2",
+    assignmentKey: "A2-4.9",
+    objectiveScore: 100,
+    objectiveCorrect: 10,
+    objectiveTotal: 10,
+    writingScore: 85,
+    writingScorePercent: 85,
+    finalScore: 94,
+    score: 94,
+    taskCompletion: {
+      completed: 1,
+      total: 3,
+      missing: [
+        "Ask for a free room",
+        "Give stay details such as dates, people or room type",
+      ],
+    },
+    missingTaskPoints: [
+      "Ask for a free room",
+      "Give stay details such as dates, people or room type",
+    ],
+    feedback: "Writing score: 85%. You covered one task point.",
+    status: "needs_review",
+    confidence: 0.95,
+  }, enriched, victoriaHotelReservationA249);
+
+  assert.deepEqual(result.taskPointEvidence.map((item) => item.status), ["met", "met", "met"]);
+  assert.equal(result.taskCompletion.completed, 3);
+  assert.equal(result.taskCompletion.total, 3);
+  assert.deepEqual(result.missingTaskPoints, []);
+  assert.match(result.taskPointEvidence[0].evidence, /Zimmer.*buchen/i);
+  assert.match(result.taskPointEvidence[1].evidence, /Samstag, 10\.|drei Tage/i);
+  assert.match(result.taskPointEvidence[2].evidence, /Wie viel kostet/i);
+  assert.match(result.taskPointEvidence[2].evidence, /Frühstück|Internet/i);
+  assert.equal(result.ai.questionAwareWritingGuard.registerMismatch, true);
+  assert.equal(result.ai.questionAwareWritingGuard.missingTaskPoints.length, 0);
+  assert.equal(result.writingScore, 70);
+  assert.equal(result.finalScore, 88);
+  assert.match(result.feedback, /requested formal register/i);
+  assert.doesNotMatch(result.feedback, /Still missing:/i);
+  assert.ok(result.corrections.some((item) => item.from === "Lieber Herr Felix" && item.to === "Sehr geehrter Herr Felix"));
+});
+
+test("all 28 A2 writing assignments have canonical semantic specs", () => {
+  const specs = getA2WritingTaskSpecs();
+  assert.equal(specs.length, 28);
+  assert.equal(new Set(specs.map((spec) => spec.assignmentKey)).size, 28);
+  for (const spec of specs) {
+    assert.match(spec.assignmentKey, /^A2-\d+\.\d+$/);
+    assert.ok(spec.taskText.length >= 10, spec.assignmentKey + " needs task text");
+    assert.ok(["formal", "informal", "neutral"].includes(spec.register), spec.assignmentKey + " needs register");
+    assert.equal(spec.taskPoints.length, 3, spec.assignmentKey + " must have exactly three communicative points");
+    assert.equal(spec.taskPointsDe.length, 3, spec.assignmentKey + " must expose exactly three Goethe bullets");
+    assert.match(spec.taskText, /allen drei Punkten/i, spec.assignmentKey + " needs Goethe-style prompt wording");
+    assert.equal(spec.rubricVersion, A2_WRITING_RUBRIC_VERSION);
+  }
+});
+
+test("A2 Day 22 and Day 23 use the current workbook questions", () => {
+  const day22 = getA2WritingTaskSpecs().find((spec) => spec.assignmentKey === "A2-8.22");
+  const day23 = getA2WritingTaskSpecs().find((spec) => spec.assignmentKey === "A2-9.23");
+
+  assert.deepEqual(day22.taskPointsDe, [
+    "Nennen Sie mindestens drei Termine oder Aktivitäten in Ihrer Woche.",
+    "Schreiben Sie, wann Sie Zeit haben.",
+    "Schlagen Sie ein Treffen mit einem konkreten Termin vor.",
+  ]);
+  assert.match(day23.taskText, /Weg zur Schule oder zur Arbeit/i);
+  assert.match(day23.taskPointsDe.join(" "), /Verkehrsmittel/i);
+  assert.doesNotMatch(day23.taskText, /Autohaus|Autohändler/i);
+});
+
+test("canonical A2 spec overrides stale registry metadata beyond Day 1", () => {
+  const task = resolveQuestionAwareWritingTask({
+    referenceEntry: {
+      assignmentKey: "A2-7.20",
+      level: "A2",
+      questionAwareWritingTask: {
+        assignmentKey: "A2-7.20",
+        level: "A2",
+        textType: "informal_email",
+        register: "informal",
+        taskText: "Old generic writing task",
+        taskPoints: ["Write something"],
+      },
+    },
+    submission: { assignmentKey: "A2-7.20", level: "A2" },
+  });
+  assert.equal(task.textType, "complaint");
+  assert.equal(task.register, "formal");
+  assert.equal(task.taskPoints.length, 3);
+  assert.match(task.taskText, /defekt|nicht wie bestellt/i);
+});
+
+
+const vickyA2Day2 = `Teil 2
+Lieber Felix
+
+Wie geht es dir? Ich hoffe es geht dir gut. Ich schreibe dir, weil ich meine Chefin beschreiben möchte. Meine Chefin heißt Frau Stückman. Sie ist 55 Jahre alt. Sie ist klein und hellhäutig. Sie hat kurze schwarze Haare. Sie ist fleißig und freundlich. Sie trägt ein blaues Kleid. Ich finde sie motivierend, weil sie sehr hart arbeitet. Wie ist dein Chef ?
+Viele Grüße
+Vicky
+
+Teil 3
+1. B
+2. B
+3. C
+4. B
+5. B
+6. A
+7. B
+
+Teil 4
+1. B
+2. C
+3. A
+4. A
+5. A`;
+
+test("explicit legacy A2-1.2 writing reference recovers a zero without a stale contradiction", () => {
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    referenceEntry: { assignmentKey: "A2-1.2", level: "A2", writingParts: ["teil2"] },
+    submission: { assignmentKey: "A2-1.2", level: "A2" },
+    submissionText: vickyA2Day2,
+  });
+
+  const result = applyQuestionAwareWritingGuard({
+    level: "A2",
+    assignmentKey: "A2-1.2",
+    objectiveScore: 75,
+    objectiveCorrect: 9,
+    objectiveTotal: 12,
+    writingScore: 0,
+    writingScorePercent: 0,
+    finalScore: 45,
+    score: 45,
+    taskCompletion: { completed: 3, total: 3, missing: [] },
+    missingTaskPoints: [],
+    corrections: [],
+    feedback: "Strong work. You addressed all three task points.",
+    status: "marked",
+    confidence: 0.8,
+  }, enriched, vickyA2Day2);
+
+  assert.ok(result.writingScore > 0);
+  assert.equal(result.taskCompletion.completed, 3);
+  assert.equal(result.taskCompletion.total, 3);
+  assert.equal(result.taskPointEvidence.length, 3);
+  assert.equal(result.taskPointEvidence[2].status, "met");
+  assert.match(result.taskPointEvidence[2].evidence, /Wie ist dein Chef/i);
+  assert.equal(result.status, "marked");
+  assert.equal((result.ai?.markingContradictions || []).some((item) => /Writing score is 0/i.test(item)), false);
+  assert.equal((result.reviewReasons || []).some((item) => item.code === "writing_zero_with_completed_task"), false);
+  assert.equal(result.writingDimensions.languageControl, null);
+  assert.equal(result.writingDimensions.coherence, null);
+  assert.ok(result.corrections.some((item) => item.from === "Ich hoffe es geht dir gut." && item.to === "Ich hoffe, es geht dir gut."));
+  assert.ok(result.corrections.some((item) => /Wie ist dein Chef\s+\?/.test(item.from) && item.to === "Wie ist dein Chef?"));
+});
+
+
+const leonardA2Day3Submission = `Teil 2
+Lieber Felix, ich hoffe es geht dir gut? Ich schreibe dir weil, ich meine Mutter und meinen Vater vergleichen möchte. Zuerst, ist mein Vater größer als meine Mutter. Er hat braune Augen genauso wie meine Mutter. Zweitens, hat meine Mutter längere Haare als mein Vater. Außerdem, beide sind freundlich und verantwortlich. Mein Vater ist sportlicher als meine Mutter weil, er im Fitnessstudio arbeitet. Sie ist auch empathischer als meine Vater weil, sie in der Kindergarten arbeitet. Zum schluss, ich mag meine Eltern weil, beide zuverlassig sind. Und du? Was mögen Sie besonders über deinen Eltern?
+
+Teil 3
+1. A
+2. B
+3. B
+4. B
+5. B
+
+Teil 4
+1. B
+2. C
+3. B
+4. A
+5. B`;
+
+test("A2-1.3 uses the live 5+5 objective key and scores Leonard's objective answers 10/10", () => {
+  const result = computeObjectiveScore("A2-1.3", leonardA2Day3Submission);
+
+  assert.equal(result.totalCount, 10);
+  assert.equal(result.correctCount, 10);
+  assert.deepEqual(Object.entries(result.details).filter(([, detail]) => !detail.correct), []);
+  assert.equal(result.details["teil3.1"].expected, "A");
+  assert.equal(result.details["teil3.4"].expected, "B");
+  assert.equal(result.details["teil4.4"].expected, "A");
+});
+
+test("A2-1.3 deterministic evidence overrides a stale AI claim that character comparison is missing", () => {
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    referenceEntry: { assignmentKey: "A2-1.3", level: "A2" },
+    submission: { assignmentKey: "A2-1.3", level: "A2" },
+    submissionText: leonardA2Day3Submission,
+  });
+
+  const result = applyQuestionAwareWritingGuard({
+    level: "A2",
+    assignmentKey: "A2-1.3",
+    objectiveScore: 100,
+    objectiveCorrect: 10,
+    objectiveTotal: 10,
+    writingScore: 78,
+    writingScorePercent: 78,
+    finalScore: 87,
+    score: 87,
+    taskCompletion: {
+      completed: 2,
+      total: 3,
+      missing: ["Compare their character"],
+    },
+    missingTaskPoints: ["Compare their character"],
+    reviewReasons: [{
+      code: "missing_task_points",
+      message: "Required writing points are missing: Compare their character.",
+      source: "question_aware_writing",
+    }],
+    feedback: "The response compares the parents and gives relevant examples. Required writing points are missing: Compare their character.",
+    corrections: [],
+    status: "needs_review",
+    confidence: 0.8,
+  }, enriched, leonardA2Day3Submission);
+
+  assert.equal(result.taskCompletion.completed, 3);
+  assert.equal(result.taskCompletion.total, 3);
+  assert.deepEqual(result.taskCompletion.missing, []);
+  assert.deepEqual(result.missingTaskPoints || [], []);
+  assert.deepEqual(result.taskPointEvidence.map((item) => item.status), ["met", "met", "met"]);
+  assert.match(result.taskPointEvidence[1].evidence, /freundlich|verantwortlich/i);
+  assert.equal((result.reviewReasons || []).some((item) => item.code === "missing_task_points"), false);
+  assert.doesNotMatch(result.feedback, /missing:\s*Compare their character|missing.*Compare their character/i);
+  assert.match(result.feedback, /compares the parents and gives relevant examples/i);
+  assert.equal(result.ai?.questionAwareWritingGuard, undefined);
+  assert.equal(result.writingScore, 78);
+  assert.equal(result.writingScorePercent, 78);
+
+  assert.ok(result.corrections.some((item) => item.from === "meine Vater" && item.to === "mein Vater"));
+  assert.ok(result.corrections.some((item) => item.from === "in der Kindergarten" && item.to === "im Kindergarten"));
+  assert.ok(result.corrections.some((item) => /Was mögen Sie besonders über deinen Eltern/i.test(item.from) && item.to === "Was magst du besonders an deinen Eltern?"));
+  assert.ok(result.corrections.some((item) => /Ich hoffe es geht dir gut\?/i.test(item.from) && /Ich hoffe, es geht dir gut\./i.test(item.to)));
+  assert.ok(result.corrections.some((item) => /weil,/i.test(item.from) && /weil\s+(?:ich|er|sie)/i.test(item.to)));
+  assert.ok(result.corrections.some((item) => /zuverlassig/i.test(item.from) && item.to === "zuverlässig"));
+
+  const comparison = compareExaminerResults(
+    { finalScore: 90, writingScore: 80, confidence: 0.84, status: "marked" },
+    { ...result, finalScore: 87, writingScore: 78, confidence: 0.8, status: "needs_review" },
+  );
+  assert.equal(comparison.scoreDelta, 3);
+  assert.equal(comparison.writingScoreDelta, 2);
+  assert.equal(comparison.requiresTutorReview, false);
+});
+
+test("A2-1.3 prunes a resolved character claim even when appearance is still genuinely missing", () => {
+  const appearanceMissingSubmission = `Teil 2
+Lieber Felix,
+ich schreibe dir, weil ich meine Mutter und meinen Vater vergleichen möchte.
+Beide sind freundlich und verantwortlich. Mein Vater ist sportlicher als meine Mutter, weil er im Fitnessstudio arbeitet.
+Meine Mutter ist empathischer als mein Vater, weil sie im Kindergarten arbeitet.
+Ich mag beide besonders, weil sie zuverlässig sind. Und du? Was magst du besonders an deinen Eltern?
+Viele Grüße
+Leonard`;
+
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    referenceEntry: { assignmentKey: "A2-1.3", level: "A2" },
+    submission: { assignmentKey: "A2-1.3", level: "A2" },
+    submissionText: appearanceMissingSubmission,
+  });
+
+  const result = applyQuestionAwareWritingGuard({
+    level: "A2",
+    assignmentKey: "A2-1.3",
+    objectiveScore: 100,
+    writingScore: 82,
+    writingScorePercent: 82,
+    finalScore: 89,
+    score: 89,
+    taskCompletion: {
+      completed: 1,
+      total: 3,
+      missing: [
+        "Compare your mother and father's appearance",
+        "Compare their character",
+      ],
+    },
+    missingTaskPoints: [
+      "Compare your mother and father's appearance",
+      "Compare their character",
+    ],
+    feedback: "Required writing points are missing: Compare your mother and father's appearance; Compare their character.",
+    improvementSummary: "Compare their character. The appearance comparison is not addressed.",
+    status: "needs_review",
+    confidence: 0.8,
+  }, enriched, appearanceMissingSubmission);
+
+  assert.deepEqual(result.taskPointEvidence.map((item) => item.status), ["missing", "met", "met"]);
+  assert.deepEqual(result.missingTaskPoints, ["Compare your mother and father's appearance"]);
+  assert.match(result.feedback, /Compare your mother and father's appearance/i);
+  assert.match(result.feedback, /You covered: Compare their character/i);
+  assert.doesNotMatch(result.feedback, /Still missing:[^.]*Compare their character|missing[^.]*Compare their character/i);
+  assert.doesNotMatch(result.improvementSummary, /Compare their character/i);
+  assert.match(result.feedback, /Still missing: Compare your mother and father's appearance/i);
+});
+
+test("A2-1.3 replaces stale praise for a missing point with canonical student feedback", () => {
+  const appearanceMissingSubmission = `Teil 2
+Lieber Felix,
+ich schreibe dir, weil ich meine Mutter und meinen Vater vergleichen möchte.
+Beide sind freundlich und verantwortlich. Mein Vater ist sportlicher als meine Mutter, weil er im Fitnessstudio arbeitet.
+Meine Mutter ist empathischer als mein Vater, weil sie im Kindergarten arbeitet.
+Ich mag beide besonders, weil sie zuverlässig sind. Und du? Was magst du besonders an deinen Eltern?
+Viele Grüße
+Leonard`;
+
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    referenceEntry: { assignmentKey: "A2-1.3", level: "A2" },
+    submission: { assignmentKey: "A2-1.3", level: "A2" },
+    submissionText: appearanceMissingSubmission,
+  });
+
+  const result = applyQuestionAwareWritingGuard({
+    level: "A2",
+    assignmentKey: "A2-1.3",
+    objectiveScore: 100,
+    writingScore: 82,
+    writingScorePercent: 82,
+    finalScore: 89,
+    score: 89,
+    taskCompletion: { completed: 3, total: 3, missing: [] },
+    missingTaskPoints: [],
+    feedback: "You clearly compared their appearance. Good use of weil in your explanation. Question-aware writing check: all task points complete.",
+    improvementSummary: "You addressed all task points. Keep working on word order.",
+    status: "marked",
+    confidence: 0.8,
+  }, enriched, appearanceMissingSubmission);
+
+  assert.deepEqual(result.taskPointEvidence.map((item) => item.status), ["missing", "met", "met"]);
+  assert.deepEqual(result.missingTaskPoints, ["Compare your mother and father's appearance"]);
+  assert.match(result.feedback, /Good use of weil/i);
+  assert.match(result.feedback, /Still missing: Compare your mother and father's appearance/i);
+  assert.doesNotMatch(result.feedback, /clearly compared their appearance/i);
+  assert.doesNotMatch(result.feedback, /Question-aware writing check|writing score is capped|all task points complete/i);
+  assert.match(result.improvementSummary, /Next step: add Compare your mother and father's appearance/i);
+  assert.doesNotMatch(result.improvementSummary, /addressed all task points/i);
+  assert.equal(result.ai.questionAwareWritingGuard.missingTaskPoints[0], "Compare your mother and father's appearance");
+  assert.equal(result.ai.questionAwareWritingGuard.guardedWritingScore, 80);
+});
+
+test("A2/B1 final consistency gate repairs stale completion, feedback, and score before save", () => {
+  const task = {
+    assignmentKey: "A2-1.3",
+    level: "A2",
+    textType: "informal_email",
+    register: "informal",
+    taskPoints: [
+      "Compare your mother and father's appearance",
+      "Compare their character",
+      "Give your personal opinion and ask Felix about his parents",
+    ],
+  };
+  const evidence = [
+    { label: task.taskPoints[0], status: "missing", evidence: "" },
+    { label: task.taskPoints[1], status: "met", evidence: "Beide sind freundlich." },
+    { label: task.taskPoints[2], status: "met", evidence: "Ich mag beide ... Und du?" },
+  ];
+
+  const result = enforceA2B1WritingConsistency({
+    level: "A2",
+    assignmentKey: "A2-1.3",
+    objectiveScore: 100,
+    writingScore: 96,
+    writingScorePercent: 96,
+    finalScore: 98,
+    score: 98,
+    taskCompletion: { completed: 3, total: 3, missing: [] },
+    missingTaskPoints: [],
+    feedback: "You completed all three points. You clearly compared their appearance. Good word order.",
+    improvementSummary: "All points are complete. Keep improving adjective endings.",
+    status: "marked",
+    shouldSendAutomatically: true,
+  }, {
+    task,
+    taskPointEvidence: evidence,
+    genreMismatch: false,
+    wrongRegister: false,
+    detectedTextType: { detectedType: "informal_email", confidence: 0.95 },
+  });
+
+  assert.deepEqual(result.taskCompletion, {
+    completed: 2,
+    total: 3,
+    missing: ["Compare your mother and father's appearance"],
+  });
+  assert.deepEqual(result.missingTaskPoints, ["Compare your mother and father's appearance"]);
+  assert.equal(result.writingScore, 80);
+  assert.equal(result.writingScorePercent, 80);
+  assert.equal(result.status, "needs_review");
+  assert.equal(result.shouldSendAutomatically, false);
+  assert.match(result.feedback, /Still missing: Compare your mother and father's appearance/i);
+  assert.doesNotMatch(result.feedback, /completed all three points|clearly compared their appearance/i);
+  assert.match(result.feedback, /Good word order/i);
+  assert.match(result.improvementSummary, /Next step: add Compare your mother and father's appearance/i);
+  assert.equal(result.ai.questionAwareWritingConsistency.checked, true);
+  assert.equal(result.ai.questionAwareWritingConsistency.authority, "taskPointEvidence");
+  assert.equal(result.ai.questionAwareWritingConsistency.scoreCap, 80);
+  assert.ok(result.ai.questionAwareWritingConsistency.repairs.includes("task_completion"));
+  assert.ok(result.ai.questionAwareWritingConsistency.repairs.includes("writing_score_cap"));
+  assert.ok(result.ai.questionAwareWritingConsistency.repairs.includes("feedback"));
+});
+
+test("A2-1.3 removes every resolved item from a semicolon missing-point list", () => {
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    referenceEntry: { assignmentKey: "A2-1.3", level: "A2" },
+    submission: { assignmentKey: "A2-1.3", level: "A2" },
+    submissionText: leonardA2Day3Submission,
+  });
+
+  const result = applyQuestionAwareWritingGuard({
+    level: "A2",
+    assignmentKey: "A2-1.3",
+    objectiveScore: 100,
+    writingScore: 78,
+    writingScorePercent: 78,
+    finalScore: 87,
+    score: 87,
+    taskCompletion: { completed: 1, total: 3, missing: [
+      "Compare your mother and father's appearance",
+      "Compare their character",
+    ] },
+    missingTaskPoints: [
+      "Compare your mother and father's appearance",
+      "Compare their character",
+    ],
+    feedback: "Required writing points are missing: Compare your mother and father's appearance; Compare their character.",
+    improvementSummary: "Required writing points are missing: Compare your mother and father's appearance; Compare their character.",
+    status: "needs_review",
+    confidence: 0.8,
+  }, enriched, leonardA2Day3Submission);
+
+  assert.deepEqual(result.missingTaskPoints, []);
+  assert.doesNotMatch(result.feedback, /Required writing points are missing/i);
+  assert.doesNotMatch(result.feedback, /Compare your mother and father's appearance/i);
+  assert.doesNotMatch(result.feedback, /Compare their character/i);
+  assert.doesNotMatch(result.improvementSummary, /Compare your mother and father's appearance|Compare their character/i);
+});
+

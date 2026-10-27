@@ -1,0 +1,87 @@
+name: Deploy Holiday Apps Script
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps-script/holiday-calendar-webapp.gs'
+      - '.github/workflows/deploy-holiday-apps-script.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: falowen-holiday-apps-script
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      HOLIDAY_APPS_SCRIPT_ID: ${{ secrets.HOLIDAY_APPS_SCRIPT_ID }}
+      HOLIDAY_APPS_SCRIPT_DEPLOYMENT_ID: ${{ secrets.HOLIDAY_APPS_SCRIPT_DEPLOYMENT_ID }}
+      GOOGLE_CLASPRC_JSON: ${{ secrets.GOOGLE_CLASPRC_JSON }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check Apps Script deployment configuration
+        id: config
+        shell: bash
+        run: |
+          if [[ -n "$HOLIDAY_APPS_SCRIPT_ID" && -n "$HOLIDAY_APPS_SCRIPT_DEPLOYMENT_ID" && -n "$GOOGLE_CLASPRC_JSON" ]]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Holiday Apps Script auto-deploy is not configured. Set HOLIDAY_APPS_SCRIPT_ID, HOLIDAY_APPS_SCRIPT_DEPLOYMENT_ID, and GOOGLE_CLASPRC_JSON repository secrets."
+            {
+              echo "### Holiday Apps Script deployment skipped"
+              echo "Configure these repository secrets to enable automatic source + web-app deployment:"
+              echo "- HOLIDAY_APPS_SCRIPT_ID"
+              echo "- HOLIDAY_APPS_SCRIPT_DEPLOYMENT_ID"
+              echo "- GOOGLE_CLASPRC_JSON"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Install clasp
+        if: steps.config.outputs.configured == 'true'
+        run: npm install --global @google/clasp@latest
+
+      - name: Clone bound Holiday Apps Script
+        if: steps.config.outputs.configured == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.config"
+          printf '%s' "$GOOGLE_CLASPRC_JSON" > "$HOME/.clasprc.json"
+          rm -rf .holiday-clasp
+          mkdir .holiday-clasp
+          cd .holiday-clasp
+          clasp clone-script "$HOLIDAY_APPS_SCRIPT_ID" --rootDir .
+
+      - name: Replace holiday web-app source safely
+        if: steps.config.outputs.configured == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t script_files < <(find .holiday-clasp -maxdepth 1 -type f \( -name '*.js' -o -name '*.gs' \) | sort)
+          if [[ "${#script_files[@]}" -ne 1 ]]; then
+            echo "Expected exactly one server-side source file (.js or .gs) in the bound Holiday Apps Script, found ${#script_files[@]}." >&2
+            printf 'Found: %s\n' "${script_files[@]}" >&2
+            exit 1
+          fi
+          cp apps-script/holiday-calendar-webapp.gs "${script_files[0]}"
+          cd .holiday-clasp
+          clasp push --force
+
+      - name: Update existing Holiday web-app deployment
+        if: steps.config.outputs.configured == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd .holiday-clasp
+          clasp update-deployment "$HOLIDAY_APPS_SCRIPT_DEPLOYMENT_ID" --description "Falowen holiday notice ${GITHUB_SHA}"
+          clasp list-deployments

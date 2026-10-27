@@ -1,0 +1,220 @@
+name: Live Class Session Tests
+
+on:
+  pull_request:
+    paths:
+      - 'functions/attendanceConfirmationEmails.js'
+      - 'scripts/patchAttendanceConfirmationEmails.mjs'
+      - 'firebase.json'
+      - 'src/App.jsx'
+      - 'src/components/AttendanceConfirmationAutomationPanel.jsx'
+      - 'src/components/ClassAttendanceTracker.jsx'
+      - 'src/components/ClassEditorCard.jsx'
+      - 'src/components/CreateClassCard.jsx'
+      - 'src/components/LiveClassLessonDateRepair.jsx'
+      - 'src/components/LiveClassStudentsPanel.jsx'
+      - 'src/components/SessionDictionaryPicker.jsx'
+      - 'src/data/courseDictionary.js'
+      - 'src/data/courseSessionGroups.js'
+      - 'src/pages/AttendanceOverviewPage.jsx'
+      - 'src/pages/CanonicalAttendancePage.jsx'
+      - 'src/pages/ClassScheduleSetupPage.jsx'
+      - 'src/pages/CommunicationHubPage.jsx'
+      - 'src/pages/TutorMarkingSimplePage.jsx'
+      - 'src/pages/LiveClassesPage.js'
+      - 'src/pages/LiveClassesPageV2.jsx'
+      - 'src/services/attendanceAnalyticsService.js'
+      - 'src/services/attendanceConfirmationEmailService.js'
+      - 'src/services/attendanceService.js'
+      - 'src/services/classCohortUpdateService.js'
+      - 'src/services/liveClassCancelService.js'
+      - 'src/services/liveClassCompatibilityService.js'
+      - 'src/services/liveClassCompatibilityServiceBase.js'
+      - 'src/services/liveClassLessonDateRepairService.js'
+      - 'src/services/liveClassManualRescheduleService.js'
+      - 'src/services/liveClassRescheduleCommunicationService.js'
+      - 'src/services/liveClassRebuildService.js'
+      - 'src/services/liveClassRescheduleRecoveryService.js'
+      - 'src/services/liveClassRescheduleService.js'
+      - 'src/services/liveClassSchedulePreparation.js'
+      - 'src/services/liveClassService.js'
+      - 'src/services/liveClassSessionCleanupService.js'
+      - 'src/services/liveClassSessionDirectService.js'
+      - 'src/services/liveClassSupersededStatusService.js'
+      - 'src/utils/attendanceAnalytics.js'
+      - 'src/utils/liveClassDictionarySelection.js'
+      - 'src/utils/liveClassLessonOrder.js'
+      - 'src/utils/liveClassManualReschedule.js'
+      - 'src/utils/liveClassRebuildIdentity.js'
+      - 'src/utils/liveClassRescheduleEmail.js'
+      - 'src/utils/liveClassReschedulePlan.js'
+      - 'src/utils/liveClassScheduleHealth.js'
+      - 'src/utils/liveClassScheduleRules.js'
+      - 'src/utils/liveClassScheduling.js'
+      - 'src/utils/liveClassSessionDedupe.js'
+      - 'src/utils/liveClassSessionRebuildPlan.js'
+      - 'src/utils/liveClassSupersededRecords.js'
+      - 'src/utils/liveClassTimetableIntegrity.js'
+      - 'tests/attendance-analytics.test.js'
+      - 'tests/attendance-confirmation-email-ui.test.js'
+      - 'tests/attendance-confirmation-emails.test.js'
+      - 'tests/attendance-tracking-ui.test.js'
+      - 'tests/course-dictionary-id-casing.test.js'
+      - 'tests/live-class-a1-b1-timetable-repair.test.js'
+      - 'tests/live-class-complete-session-visibility.test.js'
+      - 'tests/live-class-dictionary-selection.test.js'
+      - 'tests/live-class-direct-session-change.test.js'
+      - 'tests/live-class-lesson-order-repair.test.js'
+      - 'tests/live-class-mobile-reschedule-date.test.js'
+      - 'tests/live-class-official-timetable-repair.test.js'
+      - 'tests/live-class-rebuild-identity.test.js'
+      - 'tests/live-class-reschedule-email.test.js'
+      - 'tests/live-class-reschedule-plan.test.js'
+      - 'tests/live-class-schedule-rules.test.js'
+      - 'tests/live-class-session-dedupe.test.js'
+      - 'tests/live-class-session-rebuild.test.js'
+      - 'tests/live-class-superseded-status.test.js'
+      - 'tests/live-class-unified-session-change-ui.test.js'
+      - 'tests/tutor-marking-simplification.test.js'
+      - '.github/workflows/live-class-session-tests.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'functions/attendanceConfirmationEmails.js'
+      - 'scripts/patchAttendanceConfirmationEmails.mjs'
+      - 'firebase.json'
+      - 'src/App.jsx'
+      - 'src/components/AttendanceConfirmationAutomationPanel.jsx'
+      - 'src/components/ClassAttendanceTracker.jsx'
+      - 'src/components/ClassEditorCard.jsx'
+      - 'src/components/CreateClassCard.jsx'
+      - 'src/components/LiveClassLessonDateRepair.jsx'
+      - 'src/components/LiveClassStudentsPanel.jsx'
+      - 'src/components/SessionDictionaryPicker.jsx'
+      - 'src/data/courseDictionary.js'
+      - 'src/data/courseSessionGroups.js'
+      - 'src/pages/AttendanceOverviewPage.jsx'
+      - 'src/pages/CanonicalAttendancePage.jsx'
+      - 'src/pages/ClassScheduleSetupPage.jsx'
+      - 'src/pages/CommunicationHubPage.jsx'
+      - 'src/pages/TutorMarkingSimplePage.jsx'
+      - 'src/pages/LiveClassesPage.js'
+      - 'src/pages/LiveClassesPageV2.jsx'
+      - 'src/services/attendanceAnalyticsService.js'
+      - 'src/services/attendanceConfirmationEmailService.js'
+      - 'src/services/attendanceService.js'
+      - 'src/services/classCohortUpdateService.js'
+      - 'src/services/liveClassCancelService.js'
+      - 'src/services/liveClassCompatibilityService.js'
+      - 'src/services/liveClassCompatibilityServiceBase.js'
+      - 'src/services/liveClassLessonDateRepairService.js'
+      - 'src/services/liveClassManualRescheduleService.js'
+      - 'src/services/liveClassRescheduleCommunicationService.js'
+      - 'src/services/liveClassRebuildService.js'
+      - 'src/services/liveClassRescheduleRecoveryService.js'
+      - 'src/services/liveClassRescheduleService.js'
+      - 'src/services/liveClassSchedulePreparation.js'
+      - 'src/services/liveClassService.js'
+      - 'src/services/liveClassSessionCleanupService.js'
+      - 'src/services/liveClassSessionDirectService.js'
+      - 'src/services/liveClassSupersededStatusService.js'
+      - 'src/utils/attendanceAnalytics.js'
+      - 'src/utils/liveClassDictionarySelection.js'
+      - 'src/utils/liveClassLessonOrder.js'
+      - 'src/utils/liveClassManualReschedule.js'
+      - 'src/utils/liveClassRebuildIdentity.js'
+      - 'src/utils/liveClassRescheduleEmail.js'
+      - 'src/utils/liveClassReschedulePlan.js'
+      - 'src/utils/liveClassScheduleHealth.js'
+      - 'src/utils/liveClassScheduleRules.js'
+      - 'src/utils/liveClassScheduling.js'
+      - 'src/utils/liveClassSessionDedupe.js'
+      - 'src/utils/liveClassSessionRebuildPlan.js'
+      - 'src/utils/liveClassSupersededRecords.js'
+      - 'src/utils/liveClassTimetableIntegrity.js'
+      - 'tests/attendance-analytics.test.js'
+      - 'tests/attendance-confirmation-email-ui.test.js'
+      - 'tests/attendance-confirmation-emails.test.js'
+      - 'tests/attendance-tracking-ui.test.js'
+      - 'tests/course-dictionary-id-casing.test.js'
+      - 'tests/live-class-a1-b1-timetable-repair.test.js'
+      - 'tests/live-class-complete-session-visibility.test.js'
+      - 'tests/live-class-dictionary-selection.test.js'
+      - 'tests/live-class-direct-session-change.test.js'
+      - 'tests/live-class-lesson-order-repair.test.js'
+      - 'tests/live-class-mobile-reschedule-date.test.js'
+      - 'tests/live-class-official-timetable-repair.test.js'
+      - 'tests/live-class-rebuild-identity.test.js'
+      - 'tests/live-class-reschedule-email.test.js'
+      - 'tests/live-class-reschedule-plan.test.js'
+      - 'tests/live-class-schedule-rules.test.js'
+      - 'tests/live-class-session-dedupe.test.js'
+      - 'tests/live-class-session-rebuild.test.js'
+      - 'tests/live-class-superseded-status.test.js'
+      - 'tests/live-class-unified-session-change-ui.test.js'
+      - 'tests/tutor-marking-simplification.test.js'
+      - '.github/workflows/live-class-session-tests.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate attendance confirmation worker
+        run: |
+          node --check functions/attendanceConfirmationEmails.js
+          node --check scripts/patchAttendanceConfirmationEmails.mjs
+          node scripts/patchAttendanceConfirmationEmails.mjs
+          node --check functions/index.js
+          node --check functions/attendanceConfirmationEmails.js
+          grep -F 'exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob' functions/index.js
+          grep -F 'config: classConfig' functions/attendanceConfirmationEmails.js
+          grep -F 'schedule: "*/30 * * * *"' functions/attendanceConfirmationEmails.js
+
+      - name: Test mobile reschedule date handling
+        run: node --test tests/live-class-mobile-reschedule-date.test.js
+
+      - name: Test backward reschedule planning
+        run: node --test tests/live-class-reschedule-plan.test.js
+
+      - name: Test superseded status normalization
+        run: node --test tests/live-class-superseded-status.test.js
+
+      - name: Run existing live class session tests
+        run: >-
+          node --test
+          tests/attendance-analytics.test.js
+          tests/attendance-confirmation-email-ui.test.js
+          tests/attendance-confirmation-emails.test.js
+          tests/attendance-tracking-ui.test.js
+          tests/course-dictionary-id-casing.test.js
+          tests/live-class-a1-b1-timetable-repair.test.js
+          tests/live-class-complete-session-visibility.test.js
+          tests/live-class-dictionary-selection.test.js
+          tests/live-class-direct-session-change.test.js
+          tests/live-class-lesson-order-repair.test.js
+          tests/live-class-official-timetable-repair.test.js
+          tests/live-class-rebuild-identity.test.js
+          tests/live-class-reschedule-email.test.js
+          tests/live-class-schedule-rules.test.js
+          tests/live-class-session-dedupe.test.js
+          tests/live-class-session-rebuild.test.js
+          tests/live-class-unified-session-change-ui.test.js
+          tests/tutor-marking-simplification.test.js
+
+      - name: Build dashboard
+        run: npm run build

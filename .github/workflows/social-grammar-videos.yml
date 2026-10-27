@@ -1,0 +1,35 @@
+name: Social grammar video dictionary checks
+on:
+  pull_request:
+    paths:
+      - 'src/data/socialGrammarVideoDictionary.js'
+      - 'src/components/SocialGrammarVideoDictionary.jsx'
+      - 'src/components/SocialCourseContentCreator.jsx'
+      - 'src/pages/SocialMediaPage.css'
+      - 'tests/social-grammar-video-dictionary.test.js'
+      - '.github/workflows/social-grammar-videos.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/socialGrammarVideoDictionary.js'
+      - 'src/components/SocialGrammarVideoDictionary.jsx'
+      - 'src/components/SocialCourseContentCreator.jsx'
+      - 'src/pages/SocialMediaPage.css'
+      - 'tests/social-grammar-video-dictionary.test.js'
+      - '.github/workflows/social-grammar-videos.yml'
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate all 50 grammar video scripts, search and creator UI
+        run: node --test tests/social-grammar-video-dictionary.test.js
+      - name: Build admin content creator
+        run: |
+          npm ci --ignore-scripts
+          npm run build

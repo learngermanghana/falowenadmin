@@ -1,0 +1,307 @@
+export const A1_TOPIC_TEACHER_SUPPORT = {
+  "A1-7": {
+    lessonOverviewEn: "A1 Day 11 teaches five connected topics: telling time, small schedule words, parts of the day, separable verbs and a daily routine. The published two-part workbook is unchanged.",
+    grammarFocusEn: [
+      "Use um with an exact clock time; ab for a start time; von … bis for a period; bis for an end time.",
+      "vor = before; nach = after. Viertel vor acht is 07:45, but vor 8 Uhr can be any earlier time.",
+      "halb names the next hour: halb acht = 07:30.",
+      "morgens, vormittags, mittags, nachmittags, abends and nachts describe approximate parts of the day.",
+      "Conjugated verb position two and separable prefix last: Ich stehe um sechs Uhr auf.",
+    ],
+    modelExamplesDe: [
+      "Das Museum ist ab 10 Uhr geöffnet.",
+      "Der Unterricht ist von 8 bis 10 Uhr.",
+      "Vormittags lerne ich Deutsch.",
+      "Mittags esse ich mit meiner Familie.",
+      "Nachmittags kaufe ich ein.",
+      "Am Montag stehe ich um 6 Uhr auf.",
+    ],
+    commonMistakesEn: [
+      "Interpreting halb acht as 8:30 rather than 7:30.",
+      "Confusing ab 10 Uhr (from ten) and bis 10 Uhr (until ten).",
+      "Confusing the exact 07:45 expression Viertel vor acht with the broad interval vor 8 Uhr.",
+      "Confusing morgen (tomorrow) with morgens (in the mornings), or vormittags with nachmittags.",
+      "Leaving the separable prefix next to the conjugated verb: Ich aufstehe instead of Ich stehe … auf.",
+      "Thinking ab in ab 10 Uhr is a separable verb prefix like ab- in abholen.",
+    ],
+  },
+  "A1-8": {
+    grammarFocusEn: [
+      "Use the 24-hour clock for schedules and exact written times.",
+      "Use am with weekdays and dates: am Montag, am fünften Mai.",
+      "Build dates with ordinal forms rather than plain cardinal numbers.",
+    ],
+    modelExamplesDe: [
+      "Der Zug fährt um 18:45 Uhr ab.",
+      "Der Termin ist am Montag um 14 Uhr.",
+      "Mein Geburtstag ist am fünften Mai.",
+      "Der Kurs beginnt am 12. September um 17 Uhr.",
+    ],
+    commonMistakesEn: [
+      "Using a 12-hour expression when the task gives a formal 24-hour timetable.",
+      "Using um before a weekday or date instead of am.",
+      "Saying a date with a plain number instead of the required ordinal form.",
+    ],
+  },
+  "A1-3.5": {
+    grammarFocusEn: [
+      "Keep German numbers above 20 in ones + und + tens order.",
+      "Review time expressions and price language together without changing the number order.",
+      "Use singular kostet and plural kosten when talking about prices.",
+    ],
+    modelExamplesDe: [
+      "32 = zweiunddreißig.",
+      "Es ist halb neun.",
+      "Das kostet zwölf Euro fünfzig.",
+      "Die Bücher kosten vierundzwanzig Euro.",
+    ],
+    commonMistakesEn: [
+      "Reading 24 as zwanzigvier instead of vierundzwanzig.",
+      "Misreading halb neun as 9:30 instead of 8:30.",
+      "Using kostet for plural items or kosten for one item.",
+    ],
+  },
+  "A1-3.6": {
+    grammarFocusEn: [
+      "Place the conjugated modal verb in position 2 in a main clause.",
+      "Keep the second verb in the infinitive at the end.",
+      "Differentiate common meanings: können for ability, müssen for necessity, möchten for a polite wish.",
+    ],
+    modelExamplesDe: [
+      "Ich kann Deutsch sprechen.",
+      "Wir müssen heute lernen.",
+      "Möchtest du einen Kaffee trinken?",
+      "Er kann morgen nicht kommen.",
+    ],
+    commonMistakesEn: [
+      "Conjugating both verbs instead of leaving the second verb in the infinitive.",
+      "Putting the infinitive directly after the modal instead of at the end.",
+      "Confusing möchten with müssen and changing the intended meaning.",
+    ],
+  },
+  "A1-4.7": {
+    grammarFocusEn: [
+      "Teil 1 tests basic personal information and self-introduction.",
+      "Teil 2 requires a simple question and an appropriate answer on a familiar topic.",
+      "Teil 3 requires a request or instruction and a suitable reaction.",
+    ],
+    modelExamplesDe: [
+      "Ich heiße Felix. Ich komme aus Ghana und wohne in Accra.",
+      "Was machst du am Wochenende? – Ich treffe Freunde.",
+      "Kannst du mir bitte den Stift geben? – Ja, natürlich.",
+      "Bitte öffnen Sie das Fenster. – Gern.",
+    ],
+    commonMistakesEn: [
+      "Giving only one-word answers when a short complete sentence is possible.",
+      "Answering a Teil 2 question without asking or responding to the required interaction.",
+      "Ignoring bitte or an appropriate reaction in the request task.",
+    ],
+  },
+  "A1-9": {
+    grammarFocusEn: [
+      "Use kein to negate an indefinite or article-less noun phrase.",
+      "Use nicht to negate verbs, adjectives, adverbs, or the wider statement.",
+      "Match kein to gender, number and case: keine, keinen, kein.",
+    ],
+    modelExamplesDe: [
+      "Ich esse keinen Käse.",
+      "Wir haben keine Milch.",
+      "Die Suppe ist nicht warm.",
+      "Ich koche heute nicht.",
+    ],
+    commonMistakesEn: [
+      "Using nicht directly before a noun where kein is required.",
+      "Using kein for an adjective or verb instead of nicht.",
+      "Forgetting the masculine accusative form keinen.",
+    ],
+  },
+  "A1-10": {
+    grammarFocusEn: [
+      "Conjugate routine verbs to match the subject.",
+      "Keep the conjugated verb in position 2 even when a time expression comes first.",
+      "Use gern to express that an activity is liked.",
+    ],
+    modelExamplesDe: [
+      "Morgens esse ich Brot und Obst.",
+      "Um sieben Uhr stehe ich auf.",
+      "Am Abend koche ich gern.",
+      "Nach der Arbeit gehe ich nach Hause.",
+    ],
+    commonMistakesEn: [
+      "Putting the subject before the verb after a time expression: Morgens ich esse ...",
+      "Leaving routine verbs in the infinitive instead of conjugating them.",
+      "Using gern as if it were an adjective instead of linking it to an activity.",
+    ],
+  },
+  "A1-11": {
+    grammarFocusEn: [
+      "Use the polite Sie-imperative as the main route-giving form: verb first + Sie + rest.",
+      "Build directions with high-frequency verbs: gehen, abbiegen and überqueren.",
+      "Treat abbiegen as separable: Biegen Sie links/rechts ab.",
+      "Ask for directions with Entschuldigung, wo ist ...? and Wie komme ich zum/zur ...?",
+      "Use route-position language such as geradeaus, an der Kreuzung, auf der linken/rechten Seite and neben.",
+      "Show du and ihr only briefly for comparison; keep A1-11 practice centred on polite Sie directions.",
+    ],
+    modelExamplesDe: [
+      "Entschuldigung, wie komme ich zum Bahnhof?",
+      "Wie komme ich zur nächsten Apotheke?",
+      "Gehen Sie bitte geradeaus.",
+      "Biegen Sie an der Kreuzung links ab.",
+      "Überqueren Sie die Straße.",
+      "Die Bäckerei ist auf der linken Seite, direkt neben dem Supermarkt.",
+    ],
+    commonMistakesEn: [
+      "Using statement order when giving an instruction: Sie gehen geradeaus instead of Gehen Sie geradeaus.",
+      "Forgetting the separable prefix: Biegen Sie rechts instead of Biegen Sie rechts ab.",
+      "Mixing links and rechts while giving a route.",
+      "Using the wrong contraction when asking for a place: zum Bahnhof but zur Apotheke.",
+      "Practising unrelated classroom or health commands instead of the directions required by A1-11.",
+    ],
+  },
+  "A1-12.1": {
+    grammarFocusEn: [
+      "Use dative with a two-way preposition for location: Wo?",
+      "Use mit, bei and zu with dative even with a destination: mit dem Bus, beim Arzt, zum Arzt, zur Arbeit.",
+      "Use accusative with a two-way preposition for movement toward a destination: Wohin?",
+      "Make the article change visible, especially dem/der/den versus den/die/das.",
+    ],
+    modelExamplesDe: [
+      "Das Buch liegt auf dem Tisch.",
+      "Ich lege das Buch auf den Tisch.",
+      "Wir sind in der Küche.",
+      "Wir gehen in die Küche.",
+      "Ich fahre mit dem Bus.",
+      "Ich bin beim Arzt. Ich gehe zum Arzt.",
+      "Wir fahren zur Arbeit.",
+    ],
+    commonMistakesEn: [
+      "Choosing the case only from the preposition without asking Wo? or Wohin?.",
+      "Treating all movement as accusative: zu always takes dative, and movement within a location can use dative.",
+      "Forgetting the masculine article change between dem and den.",
+    ],
+  },
+  "A1-12.2": {
+    grammarFocusEn: [
+      "Use als to name a profession or role: Ich arbeite als Lehrer.",
+      "Use bei for an employer/company/person and in for many workplaces.",
+      "Use zu for direction to work and common institutions: zur Arbeit, zum Arzt.",
+    ],
+    modelExamplesDe: [
+      "Ich arbeite als Verkäuferin.",
+      "Mein Bruder arbeitet bei einer Bank.",
+      "Sie arbeitet in einem Krankenhaus.",
+      "Ich fahre morgens zur Arbeit.",
+    ],
+    commonMistakesEn: [
+      "Using als for the employer instead of the profession.",
+      "Mixing bei and in without considering whether the phrase names an employer or a workplace.",
+      "Using in die Arbeit where zur Arbeit is the intended everyday expression.",
+    ],
+  },
+  "A1-5.9": {
+    grammarFocusEn: [
+      "Use W-questions for specific information and verb-first questions for yes/no answers.",
+      "Give short complete answers before adding a follow-up question.",
+      "Use können + bitte for simple polite requests in the speaking exam.",
+    ],
+    modelExamplesDe: [
+      "Wo wohnst du? – Ich wohne in Accra.",
+      "Hast du Geschwister? – Ja, ich habe zwei Brüder.",
+      "Kannst du mir bitte helfen? – Ja, gern.",
+      "Was machst du gern? – Ich höre gern Musik.",
+    ],
+    commonMistakesEn: [
+      "Using statement word order in a direct W-question.",
+      "Giving a memorized answer that does not match the partner's question.",
+      "Making a request without an appropriate reaction or polite form.",
+    ],
+  },
+  "A1-12.3": {
+    grammarFocusEn: [
+      "Separate formal and informal greetings, pronouns and closing formulas.",
+      "Answer exactly three content bullet points in each writing task with short relevant information.",
+      "Keep letter form separate from task content: greeting + three content points + closing + name.",
+    ],
+    modelExamplesDe: [
+      "Liebe Anna, vielen Dank für deine Einladung.",
+      "Sehr geehrte Damen und Herren, ich schreibe Ihnen, weil …",
+      "Kannst du mir bitte die Uhrzeit sagen?",
+      "Mit freundlichen Grüßen\nFelix Asadu",
+    ],
+    commonMistakesEn: [
+      "Mixing du/dein with formal Sie/Ihr in the same message.",
+      "Forgetting one of the required task points.",
+      "Using an informal closing in a formal email or letter.",
+    ],
+  },
+  "A1-13": {
+    grammarFocusEn: [
+      "Use impersonal es in common weather expressions: Es regnet. Es ist windig.",
+      "Distinguish sein + adjective from a weather verb: Es ist kalt versus Es schneit.",
+      "Use Grad correctly for temperatures: Es sind 30 Grad.",
+      "Day 13 has exactly three content points: cannot attend, concrete weather reason, and another-meeting suggestion. Greeting, closing and name are checked separately as letter form.",
+      "Turn weather into a communicative reason, not just a description: name the weather and show its consequence for the plan.",
+    ],
+    modelExamplesDe: [
+      "Liebe Bina, danke für deine Einladung.",
+      "Leider kann ich nicht zur Hochzeit kommen.",
+      "Es regnet sehr stark, und mein Bus fährt nicht.",
+      "Können wir uns am Sonntag treffen?",
+      "Liebe Grüße\nFelix",
+    ],
+    commonMistakesEn: [
+      "Leaving out es in weather expressions such as Es regnet or Es ist kalt.",
+      "Using sein with a weather verb: Es ist regnet instead of Es regnet.",
+      "Giving only a weather description without explaining why it stops the student from coming.",
+      "Forgetting the suggestion for another meeting after saying they cannot attend.",
+      "Forgetting the informal greeting, closing or name even though this is a follow-up letter-writing task.",
+    ],
+  },
+  "A1-14.1": {
+    grammarFocusEn: [
+      "Use haben + symptom noun for common complaints: Ich habe Kopfschmerzen.",
+      "Use body part + tut/tun weh to say where it hurts.",
+      "Use kann + infinitive for a cancellation: Leider kann ich nicht kommen.",
+      "Ask Wann hast du Zeit? to a friend or Wann haben Sie Zeit? formally; answer with am + day and um + clock time.",
+      "Day 14.1 has exactly three content points: cannot attend, concrete health reason, and another-meeting suggestion. Greeting, closing and name are checked separately as letter form.",
+      "Use the health language as the reason for the cancellation, for example: Leider kann ich nicht kommen. Ich habe Fieber.",
+    ],
+    modelExamplesDe: [
+      "Lieber Felix, danke für deine Einladung.",
+      "Leider kann ich nicht zu deinem Geburtstag kommen.",
+      "Ich bin krank. Ich habe Fieber und Kopfschmerzen.",
+      "Wann hast du Zeit?",
+      "Können wir uns am Montag um 16 Uhr treffen?",
+      "Liebe Grüße\nMary",
+    ],
+    commonMistakesEn: [
+      "Using ist weh instead of tut weh.",
+      "Using tut with a plural body part instead of tun.",
+      "Using habe krank instead of bin krank or bin Fieber instead of habe Fieber.",
+      "Conjugating kommen again after kann instead of using the infinitive.",
+      "Using Wann du hast Zeit? instead of Wann hast du Zeit?, or swapping am and um.",
+      "Naming a symptom without connecting it to the message about not being able to attend.",
+      "Forgetting the suggestion for another meeting after the health reason.",
+      "Forgetting the informal greeting, closing or name even though this is the third letter-writing task.",
+    ],
+  },
+  "A1-14.2": {
+    grammarFocusEn: [
+      "Distinguish accusative direct objects from dative objects required by certain verbs.",
+      "Learn dative verbs such as helfen and danken together with their case.",
+      "Track masculine article changes: den in accusative, dem in dative.",
+    ],
+    modelExamplesDe: [
+      "Ich sehe den Mann.",
+      "Ich helfe dem Mann.",
+      "Sie dankt der Lehrerin.",
+      "Wir geben dem Kind das Buch.",
+    ],
+    commonMistakesEn: [
+      "Using accusative after helfen or danken.",
+      "Confusing den and dem with masculine nouns.",
+      "Treating every object as accusative instead of learning the case required by the verb.",
+    ],
+  },
+};
+

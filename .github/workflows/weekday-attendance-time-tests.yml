@@ -1,0 +1,48 @@
+name: Weekday Attendance Time Tests
+
+on:
+  pull_request:
+    paths:
+      - 'src/components/LiveClassLessonDateRepair.jsx'
+      - 'src/services/liveClassCompatibilityService.js'
+      - 'src/services/liveClassManualRescheduleService.js'
+      - 'src/utils/attendanceSessionOverride.js'
+      - 'src/utils/liveClassManualReschedule.js'
+      - 'src/utils/liveClassRepairManualOverrides.js'
+      - 'tests/attendance-session-override.test.js'
+      - 'tests/live-class-mobile-reschedule-date.test.js'
+      - 'tests/live-class-repair-manual-overrides.test.js'
+      - '.github/workflows/weekday-attendance-time-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/components/LiveClassLessonDateRepair.jsx'
+      - 'src/services/liveClassCompatibilityService.js'
+      - 'src/services/liveClassManualRescheduleService.js'
+      - 'src/utils/attendanceSessionOverride.js'
+      - 'src/utils/liveClassManualReschedule.js'
+      - 'src/utils/liveClassRepairManualOverrides.js'
+      - 'tests/attendance-session-override.test.js'
+      - 'tests/live-class-mobile-reschedule-date.test.js'
+      - 'tests/live-class-repair-manual-overrides.test.js'
+      - '.github/workflows/weekday-attendance-time-tests.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Test weekday-aware attendance and rescheduling
+        run: |
+          node --test tests/attendance-session-override.test.js
+          node --test tests/live-class-mobile-reschedule-date.test.js
+          node --test tests/live-class-repair-manual-overrides.test.js
+      - name: Build dashboard
+        run: npm run build

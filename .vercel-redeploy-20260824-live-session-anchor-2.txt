@@ -1,0 +1,1 @@
+Second production redeploy trigger for PR #557 after prior Vercel Hobby build-rate limit. Triggered 2026-08-24.

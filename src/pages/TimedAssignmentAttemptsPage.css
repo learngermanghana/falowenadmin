@@ -1,0 +1,285 @@
+/* Scoped controls: the global button rule uses white text by default.
+   Always set foreground AND background for inactive and selected filters. */
+.mock-timed-monitor {
+  min-width: 0;
+  color: #15253b;
+}
+.mock-timed-monitor .monitor-switcher {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.mock-timed-monitor button.monitor-tab {
+  display: grid;
+  gap: 6px;
+  align-content: center;
+  min-width: 0;
+  min-height: 91px;
+  padding: 16px 18px;
+  text-align: left;
+  color: #334155;
+  background-color: #fff;
+  border: 2px solid #cbd5e1;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  cursor: pointer;
+}
+.mock-timed-monitor button.monitor-tab strong {
+  font-size: 1.05rem;
+  color: inherit;
+  line-height: 1.35;
+}
+.mock-timed-monitor button.monitor-tab span {
+  font-size: 0.87rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #475569;
+}
+.mock-timed-monitor button.monitor-tab[aria-selected="true"] {
+  color: #153e91;
+  background-color: #eff6ff;
+  border-color: #2563eb;
+  box-shadow: inset 0 0 0 1px #2563eb;
+}
+.mock-timed-monitor button.monitor-tab[aria-selected="true"] span {
+  color: #1e40af;
+}
+.mock-timed-monitor .monitor-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.mock-timed-monitor .monitor-summary-card {
+  display: grid;
+  gap: 7px;
+  background-color: #fff;
+  border: 1px solid #dce5f1;
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+.mock-timed-monitor .monitor-summary-card span {
+  color: #475569;
+  font-size: 0.87rem;
+}
+.mock-timed-monitor .monitor-summary-card strong {
+  color: #17253a;
+  font-size: 1.55rem;
+  font-weight: 800;
+}
+.mock-timed-monitor .monitor-search {
+  display: grid;
+  gap: 6px;
+}
+.mock-timed-monitor .monitor-search strong {
+  color: #253650;
+}
+.mock-timed-monitor .monitor-search input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #bac9db;
+  border-radius: 10px;
+  background-color: #fff;
+  color: #1e293b;
+}
+.mock-timed-monitor .monitor-search input::placeholder {
+  color: #64748b;
+}
+.mock-timed-monitor .monitor-content {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.mock-timed-monitor .monitor-status-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  padding: 4px 0;
+}
+.mock-timed-monitor button.monitor-status-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  min-width: 94px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid #9aacc2;
+  background-color: #fff;
+  color: #253650;
+  font-weight: 750;
+  line-height: 1.25;
+  cursor: pointer;
+}
+.mock-timed-monitor button.monitor-status-button[aria-pressed="true"] {
+  border-color: #1d4ed8;
+  background-color: #1d4ed8;
+  color: #fff;
+  box-shadow: 0 2px 7px rgba(29, 78, 216, 0.18);
+}
+.mock-timed-monitor button.monitor-status-button:hover:not([aria-pressed="true"]) {
+  background-color: #f1f5f9;
+  border-color: #64748b;
+  color: #0f172a;
+}
+.mock-timed-monitor button.monitor-status-button:focus-visible,
+.mock-timed-monitor button.monitor-tab:focus-visible {
+  outline: 3px solid #f59e0b;
+  outline-offset: 3px;
+}
+.mock-timed-monitor .monitor-filter-count {
+  color: #475569;
+  font-size: 0.85rem;
+  font-weight: 650;
+  margin-inline-start: auto;
+}
+.mock-timed-monitor .monitor-timed-state {
+  font-size: 0.84rem;
+  color: #1d4ed8;
+}
+.mock-timed-monitor .monitor-timed-state.is-completed {
+  color: #166534;
+}
+@media (max-width: 670px) {
+  .mock-timed-monitor .monitor-switcher { grid-template-columns: 1fr; }
+  .mock-timed-monitor .monitor-switcher {
+    gap: 8px;
+  }
+  .mock-timed-monitor button.monitor-tab {
+    padding: 12px;
+    min-height: 104px;
+  }
+  .mock-timed-monitor button.monitor-tab strong {
+    font-size: 0.94rem;
+  }
+  .mock-timed-monitor .monitor-summary {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  }
+  .mock-timed-monitor button.monitor-status-button {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .mock-timed-monitor .monitor-filter-count {
+    width: 100%;
+    text-align: right;
+  }
+}
+
+
+/* Verified A1/A2/B1 mock results: readable as five cells on any screen. */
+.mock-timed-monitor .monitor-mock-scores {
+  display: grid;
+  gap: 10px;
+  padding: 13px;
+  background: #f8fafc;
+  border: 1px solid #dbe5f0;
+  border-radius: 12px;
+}
+.mock-timed-monitor .monitor-mock-scores__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+}
+.mock-timed-monitor .monitor-mock-scores__header strong { color: #0f172a; font-size: 14px; }
+.mock-timed-monitor .monitor-mock-scores__header small { color: #475569; font-size: 12px; }
+.mock-timed-monitor .monitor-mock-scores__grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+.mock-timed-monitor .monitor-mock-score {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  gap: 4px;
+  padding: 10px 9px;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+}
+.mock-timed-monitor .monitor-mock-score span { color: #334155; font-size: 12px; font-weight: 700; }
+.mock-timed-monitor .monitor-mock-score strong { color: #0f172a; font-size: 18px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.mock-timed-monitor .monitor-mock-score--total { background: #eff6ff; border-color: #93c5fd; }
+.mock-timed-monitor .monitor-mock-score--total strong { color: #1e40af; }
+.mock-timed-monitor .monitor-mock-scores__note { color: #92400e; font-size: 12px; line-height: 1.5; }
+@media (max-width: 780px) {
+  .mock-timed-monitor .monitor-mock-scores__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mock-timed-monitor .monitor-mock-score--total { grid-column: 1 / -1; }
+}
+
+
+/* Full mock score audit: compare five results at a glance without opening cards. */
+.mock-timed-monitor .monitor-mock-summary-table {
+  border: 1px solid #dbe4f1;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+}
+.mock-timed-monitor .monitor-mock-summary-table__heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+.mock-timed-monitor .monitor-mock-summary-table__heading small {
+  color: #475569;
+  font-size: 12px;
+}
+.mock-timed-monitor .monitor-mock-summary-table__scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.mock-timed-monitor .monitor-mock-summary-table__scroll:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: -3px;
+}
+.mock-timed-monitor .monitor-mock-summary-table table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 770px;
+  font-size: 13px;
+}
+.mock-timed-monitor .monitor-mock-summary-table th,
+.mock-timed-monitor .monitor-mock-summary-table td {
+  text-align: left;
+  white-space: nowrap;
+  padding: 10px 11px;
+  border-bottom: 1px solid #edf2f7;
+}
+.mock-timed-monitor .monitor-mock-summary-table thead {
+  color: #0f172a;
+  background: #f1f5f9;
+}
+.mock-timed-monitor .monitor-mock-summary-table thead small {
+  color: #475569;
+  font-size: 11px;
+}
+.mock-timed-monitor .monitor-mock-summary-table tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+.mock-timed-monitor .monitor-mock-summary-table th[scope="row"] {
+  font-weight: 750;
+  max-width: 210px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mock-timed-monitor .monitor-mock-summary-table__total {
+  font-weight: 800;
+  color: #1e40af;
+}
+.mock-timed-monitor .monitor-mock-summary-table > .monitor-mock-scores__note {
+  display: block;
+  padding: 9px 14px 12px;
+}
+@media (max-width: 640px) {
+  .mock-timed-monitor .monitor-mock-summary-table__heading { padding: 12px; }
+  .mock-timed-monitor .monitor-mock-summary-table table { font-size: 12px; }
+}

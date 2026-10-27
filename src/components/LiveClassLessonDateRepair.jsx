@@ -1,0 +1,439 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useAuth } from "../context/AuthContext.jsx";
+import { useToast } from "../context/ToastContext.jsx";
+import { getCompatibleClassDashboard } from "../services/liveClassCompatibilityService.js";
+import { restoreFollowingSessionsToWeeklyPattern } from "../services/liveClassFollowingScheduleRestoreService.js";
+import { repairClassToOfficialLessonSchedule } from "../services/liveClassLessonDateRepairService.js";
+import {
+  listClassCohorts,
+  recoverLegacyRescheduleCollision,
+} from "../services/liveClassService.js";
+import { buildFollowingScheduleRestorePlan } from "../utils/liveClassFollowingScheduleRestore.js";
+import { buildOfficialLessonSchedulePlan } from "../utils/liveClassLessonOrder.js";
+import { partitionRepairPlanItems } from "../utils/liveClassRepairManualOverrides.js";
+
+function formatDateTime(value) {
+  const parsed = new Date(value || 0);
+  if (Number.isNaN(parsed.getTime())) return "Unknown date";
+  return parsed.toLocaleString("en-GB", {
+    timeZone: "Africa/Accra",
+    weekday: "long",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
+function formatDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return value || "Not set";
+  return new Date(`${value}T12:00:00.000Z`).toLocaleDateString("en-GB", {
+    timeZone: "Africa/Accra",
+    weekday: "long",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function statusOf(session = {}) {
+  return String(session.status || "scheduled").trim().toLowerCase();
+}
+
+function belongsToSelectedClass(session = {}, classId = "", klass = {}) {
+  const resolvedClassId = String(classId || "").trim();
+  if (!resolvedClassId) return false;
+  const accepted = new Set([
+    resolvedClassId,
+    klass.id,
+    klass.classId,
+    klass.name,
+    klass.className,
+    klass.slug,
+  ].map((value) => String(value || "").trim()).filter(Boolean));
+  const canonicalOwner = String(session.classRecordId || "").trim();
+  if (canonicalOwner) return accepted.has(canonicalOwner);
+  const legacyOwner = String(session.classId || "").trim();
+  return !legacyOwner || accepted.has(legacyOwner);
+}
+
+function AnchorRestoreControls({
+  anchorSessionId,
+  anchorOptions,
+  busy,
+  followingRestorePreview,
+  onAnchorChange,
+  onRestore,
+}) {
+  return (
+    <div style={{ display: "grid", gap: 10, padding: 12, borderRadius: 10, background: "#ecfdf5", border: "1px solid #86efac", color: "#166534" }}>
+      <strong>Rebuild from the last correct/live session</strong>
+      <div>Select the last session whose date and time are correct. Falowen keeps that permanent session as the anchor and rebuilds every later official lesson into the next available saved class slot.</div>
+      <label style={{ display: "grid", gap: 6, marginTop: 4 }}>
+        <strong>Correct session to keep as the timetable anchor</strong>
+        <select value={anchorSessionId} onChange={(event) => onAnchorChange(event.target.value)} disabled={busy}>
+          <option value="">Select the last correct session</option>
+          {anchorOptions.map((item) => (
+            <option key={item.session.id} value={item.session.id}>{item.group.topic} — {formatDateTime(item.session.startsAt)}</option>
+          ))}
+        </select>
+      </label>
+
+      {followingRestorePreview.error ? (
+        <div role="alert" style={{ padding: 10, borderRadius: 8, background: "#fee2e2", border: "1px solid #fca5a5", color: "#991b1b" }}>{followingRestorePreview.error}</div>
+      ) : null}
+
+      {followingRestorePreview.plan ? (
+        <div style={{ display: "grid", gap: 7, padding: 12, borderRadius: 9, background: "#fff", border: "1px solid #86efac", color: "#1f2937" }}>
+          <strong>Bulk restoration preview</strong>
+          <div>Anchor remains: <strong>{formatDateTime(followingRestorePreview.plan.anchorStartsAt)}</strong></div>
+          <div>Rebuild begins no earlier than: <strong>{formatDateTime(followingRestorePreview.plan.notBeforeStartsAt)}</strong></div>
+          <div>Existing sessions to move: <strong>{followingRestorePreview.plan.movedCount}</strong> · Missing sessions to create: <strong>{followingRestorePreview.plan.createdCount}</strong> · Stale future records to supersede: <strong>{followingRestorePreview.plan.staleFutureRecords?.length || 0}</strong></div>
+          {followingRestorePreview.plan.restorableItems.slice(0, 10).map((item) => (
+            <div key={item.lessonNumber} style={{ overflowWrap: "anywhere" }}>
+              {item.group.topic}: {item.session ? formatDateTime(item.session.startsAt) : "Missing"} → <strong>{formatDateTime(item.targetStartsAt)}</strong>
+            </div>
+          ))}
+          {followingRestorePreview.plan.restorableItems.length > 10 ? <small>Plus {followingRestorePreview.plan.restorableItems.length - 10} more correction(s).</small> : null}
+          {!followingRestorePreview.plan.restorableItems.length && !(followingRestorePreview.plan.staleFutureRecords?.length || 0) ? <div>The future timetable already matches the selected anchor. Saving the anchor will still stop earlier historical gaps from blocking future rescheduling.</div> : null}
+        </div>
+      ) : null}
+
+      <button type="button" onClick={onRestore} disabled={busy || !followingRestorePreview.plan}>
+        {busy
+          ? "Rebuilding timetable…"
+          : (followingRestorePreview.plan?.restorableItems.length || followingRestorePreview.plan?.staleFutureRecords?.length)
+            ? "Rebuild all sessions after this anchor"
+            : "Save this session as the repair anchor"}
+      </button>
+    </div>
+  );
+}
+
+export default function LiveClassLessonDateRepair() {
+  const { user } = useAuth();
+  const toast = useToast();
+  const [classes, setClasses] = useState([]);
+  const [classId, setClassId] = useState("");
+  const [dashboard, setDashboard] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [anchorSessionId, setAnchorSessionId] = useState("");
+  const [anchorNotBeforeStartsAt, setAnchorNotBeforeStartsAt] = useState("");
+  const recoveryStarted = useRef(false);
+
+  useEffect(() => {
+    let active = true;
+    listClassCohorts()
+      .then((rows) => {
+        if (!active) return;
+        setClasses(rows);
+        const remembered = window.localStorage.getItem("falowen-live-class-repair-class-id") || "";
+        const nextClassId = rows.some((item) => item.id === remembered) ? remembered : rows[0]?.id || "";
+        setClassId(nextClassId);
+      })
+      .catch((error) => {
+        if (active) setMessage(error?.message || "Could not load classes for timetable repair.");
+      });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    setAnchorSessionId("");
+    setAnchorNotBeforeStartsAt("");
+    if (!classId) {
+      setDashboard(null);
+      return () => { active = false; };
+    }
+
+    window.localStorage.setItem("falowen-live-class-repair-class-id", classId);
+    setLoading(true);
+    setMessage("");
+    getCompatibleClassDashboard(classId)
+      .then((next) => {
+        if (active) setDashboard(next);
+      })
+      .catch((error) => {
+        if (active) setMessage(error?.message || "Could not load the class timetable.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => { active = false; };
+  }, [classId]);
+
+  useEffect(() => {
+    if (!classes.length || recoveryStarted.current) return undefined;
+    recoveryStarted.current = true;
+    let active = true;
+
+    (async () => {
+      const repaired = [];
+      for (const klass of classes) {
+        try {
+          const result = await recoverLegacyRescheduleCollision(klass.id, {
+            adminId: user?.uid || user?.email || "schedule-recovery",
+          });
+          if (result.repaired) repaired.push(result);
+        } catch (error) {
+          console.warn(`Could not inspect legacy reschedule for ${klass.id}`, error);
+        }
+      }
+
+      if (!active || !repaired.length) return;
+      const moved = repaired.reduce((total, result) => total + Number(result.movedSessions || 0), 0);
+      const successMessage = `${repaired.length} legacy reschedule collision(s) repaired. ${moved} session(s) were shifted to restore curriculum order.`;
+      setMessage(successMessage);
+      toast.success(successMessage, { durationMs: 10000 });
+
+      if (classId) {
+        const next = await getCompatibleClassDashboard(classId).catch(() => null);
+        if (active && next) setDashboard(next);
+      }
+    })();
+
+    return () => { active = false; };
+  }, [classes, classId, toast, user?.email, user?.uid]);
+
+  const scopedSessions = useMemo(
+    () => (dashboard?.sessions || []).filter((session) => belongsToSelectedClass(session, classId, dashboard?.klass || {})),
+    [classId, dashboard],
+  );
+
+  const preview = useMemo(() => {
+    if (!dashboard || !classId) return { plan: null, error: "" };
+    try {
+      return {
+        plan: buildOfficialLessonSchedulePlan({
+          classId,
+          klass: dashboard.klass,
+          sessions: scopedSessions,
+          excludedDates: dashboard.klass?.holidayDatesExcluded || [],
+        }),
+        error: "",
+      };
+    } catch (error) {
+      return { plan: null, error: error?.message || "Could not prepare the official class timetable." };
+    }
+  }, [classId, dashboard, scopedSessions]);
+
+  const plan = preview.plan;
+  const repairItems = useMemo(() => partitionRepairPlanItems(plan?.items || []), [plan]);
+  const changedItems = repairItems.automaticItems;
+  const preservedItems = repairItems.preservedItems;
+  const repairBlockedByManualMoves = preservedItems.length > 0;
+  const needsRepair = Boolean(
+    plan && !repairBlockedByManualMoves && (
+      changedItems.length
+      || plan.currentSessions < plan.expectedLessons
+      || String(dashboard?.klass?.endDate || "") !== plan.endDate
+    )
+  );
+
+  const anchorOptions = useMemo(() => (plan?.items || []).filter((item) => {
+    if (!item.session?.id) return false;
+    return !["cancelled", "superseded"].includes(statusOf(item.session)) && item.session.superseded !== true;
+  }), [plan]);
+
+  const followingRestorePreview = useMemo(() => {
+    if (!dashboard || !classId || !anchorSessionId) return { plan: null, error: "" };
+    try {
+      return {
+        plan: buildFollowingScheduleRestorePlan({
+          classId,
+          klass: dashboard.klass,
+          sessions: scopedSessions,
+          anchorSessionId,
+          excludedDates: dashboard.klass?.holidayDatesExcluded || [],
+          notBeforeStartsAt: anchorNotBeforeStartsAt,
+        }),
+        error: "",
+      };
+    } catch (error) {
+      return { plan: null, error: error?.message || "Could not prepare the following-session restoration." };
+    }
+  }, [anchorNotBeforeStartsAt, anchorSessionId, classId, dashboard, scopedSessions]);
+
+  async function refresh() {
+    if (!classId) return null;
+    const next = await getCompatibleClassDashboard(classId);
+    setDashboard(next);
+    return next;
+  }
+
+  async function repairOfficialTimetable() {
+    if (!plan || !needsRepair || busy || repairBlockedByManualMoves) return;
+    const finalItem = plan.items.at(-1);
+    const confirmed = window.confirm(
+      `Repair this ${plan.levelId} class to the official ${plan.expectedLessons} ${plan.countLabel}?\n\n`
+      + `Start date: ${dashboard.klass?.startDate || "Not set"}\n`
+      + `Corrected end date: ${plan.endDate}\n`
+      + `Missing ${plan.countLabel} to create: ${plan.missingLessons}\n`
+      + `Final ${plan.itemLabel.toLowerCase()} target: ${finalItem ? formatDateTime(finalItem.targetStartsAt) : "Not available"}\n\n`
+      + "All dates and curriculum identities are written in one atomic update, so topics cannot rotate between sessions.",
+    );
+    if (!confirmed) return;
+
+    setBusy(true);
+    setMessage("");
+    try {
+      const result = await repairClassToOfficialLessonSchedule({
+        classId,
+        klass: dashboard.klass,
+        sessions: scopedSessions,
+        adminId: user?.uid || user?.email || "admin",
+      });
+      await refresh();
+      const successMessage = `${result.levelId} timetable repaired: ${result.expectedLessons} ${result.countLabel}, ${result.created} missing session(s) created, ${result.moved} date(s) corrected, end date ${formatDate(result.endDate)}.`;
+      setMessage(successMessage);
+      toast.success(successMessage, { durationMs: 10000 });
+    } catch (error) {
+      const errorMessage = `${error?.code ? `${error.code}: ` : ""}${error?.message || "Official timetable repair failed"}`;
+      setMessage(errorMessage);
+      toast.error(errorMessage, { durationMs: 10000 });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function restoreFollowingPattern() {
+    const restorePlan = followingRestorePreview.plan;
+    if (!restorePlan || !anchorSessionId || busy) return;
+    const staleFutureCount = Number(restorePlan.staleFutureRecords?.length || 0);
+    const hasTimetableMoves = restorePlan.restorableItems.length > 0;
+    const hasRepairWork = hasTimetableMoves || staleFutureCount > 0;
+    const confirmed = window.confirm(
+      hasRepairWork
+        ? `Keep ${restorePlan.anchorSession.topic || "the selected session"} at ${formatDateTime(restorePlan.anchorStartsAt)} and rebuild every later lesson from the next available timetable slot?\n\n`
+          + `${restorePlan.movedCount} existing session(s) will move.\n`
+          + `${restorePlan.createdCount} missing session(s) will be created.\n`
+          + `${staleFutureCount} stale future duplicate/orphan record(s) will be superseded.\n`
+          + `${restorePlan.skippedCancelled.length} cancelled session(s) will remain cancelled.\n`
+          + `New class end date: ${formatDate(restorePlan.endDate)}.\n\n`
+          + "Any saved timetable slot that had already passed when you selected the anchor is skipped, so the next lesson starts at the next still-available class time."
+        : `Save ${restorePlan.anchorSession.topic || "the selected anchor"} as the last correct/live session?\n\nEarlier historical gaps will no longer block future session rescheduling.`,
+    );
+    if (!confirmed) return;
+
+    setBusy(true);
+    setMessage("");
+    try {
+      const result = await restoreFollowingSessionsToWeeklyPattern({
+        classId,
+        klass: dashboard.klass,
+        sessions: scopedSessions,
+        anchorSessionId,
+        notBeforeStartsAt: restorePlan.notBeforeStartsAt,
+        adminId: user?.uid || user?.email || "admin",
+      });
+      await refresh();
+      setAnchorSessionId("");
+      setAnchorNotBeforeStartsAt("");
+      const cleaned = Number(result.supersededFutureRecords || 0);
+      const successMessage = Number(result.remindersReleased || 0) > 0
+        ? `Anchor saved. Timetable health is ${result.healthStatus}. Re-enabled reminders for ${result.remindersReleased} future session(s).`
+        : Number(result.moved || 0) || Number(result.created || 0) || cleaned
+          ? `Weekly pattern restored after the selected anchor: ${result.moved} session(s) moved, ${result.created} created, ${cleaned} stale future record(s) superseded. New end date: ${formatDate(result.endDate)}.`
+          : `Anchor saved. Earlier historical gaps will not block future session rescheduling. Timetable health is ${result.healthStatus || "healthy"}.`;
+      setMessage(successMessage);
+      toast.success(successMessage, { durationMs: 12000 });
+    } catch (error) {
+      const errorMessage = `${error?.code ? `${error.code}: ` : ""}${error?.message || "Could not restore the following timetable pattern"}`;
+      setMessage(errorMessage);
+      toast.error(errorMessage, { durationMs: 10000 });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function selectAnchor(nextAnchorSessionId) {
+    setAnchorSessionId(nextAnchorSessionId);
+    setAnchorNotBeforeStartsAt(nextAnchorSessionId ? new Date().toISOString() : "");
+  }
+
+  return (
+    <article className="card" style={{ display: "grid", gap: 12, marginBottom: 16, border: "2px solid #f59e0b", background: "#fffbeb" }}>
+      <div>
+        <h2 style={{ marginBottom: 6 }}>Official class timetable repair</h2>
+        <p style={{ margin: 0 }}>Supports A1, A2 and B1 and uses each level&apos;s official grouped timetable count. The repair is atomic and does not move topics one-by-one.</p>
+      </div>
+
+      <label style={{ display: "grid", gap: 6 }}>
+        <strong>Class to inspect</strong>
+        <select value={classId} onChange={(event) => setClassId(event.target.value)} disabled={busy}>
+          <option value="">Select a class</option>
+          {classes.map((klass) => (
+            <option key={klass.id} value={klass.id}>{klass.name || klass.className || klass.id}</option>
+          ))}
+        </select>
+      </label>
+
+      {loading ? <p>Checking the official class timetable…</p> : null}
+      {!loading && dashboard && plan ? (
+        <div style={{ display: "grid", gap: 10 }}>
+          <div style={{ display: "grid", gap: 5, padding: 12, borderRadius: 10, background: "#fff", border: "1px solid #fcd34d" }}>
+            <div>Class: <strong>{dashboard.klass?.name || dashboard.klass?.className || classId}</strong></div>
+            <div>Level: <strong>{plan.levelId}</strong></div>
+            <div>Official requirement: <strong>{plan.expectedLessons} {plan.countLabel}</strong></div>
+            <div>Start date: <strong>{formatDate(dashboard.klass?.startDate)}</strong></div>
+            <div>Current end date: <strong>{formatDate(dashboard.klass?.endDate)}</strong></div>
+            <div>Calculated official end date: <strong>{formatDate(plan.endDate)}</strong></div>
+            <div>Visible sessions: <strong>{plan.currentSessions}</strong> of <strong>{plan.expectedLessons}</strong></div>
+            <div>Missing sessions: <strong>{plan.missingLessons}</strong> · Automatic date corrections: <strong>{changedItems.length}</strong> · Preserved manual moves: <strong>{preservedItems.length}</strong></div>
+          </div>
+
+          {preservedItems.length ? (
+            <div style={{ display: "grid", gap: 8, padding: 12, borderRadius: 10, background: "#ecfdf5", border: "1px solid #86efac", color: "#166534" }}>
+              <strong>{preservedItems.length} deliberately moved session(s) were detected.</strong>
+              {preservedItems.slice(0, 10).map((item) => (
+                <div key={item.lessonNumber}>{item.group.topic}: <strong>{formatDateTime(item.session?.startsAt)}</strong></div>
+              ))}
+              {preservedItems.length > 10 ? <small>Plus {preservedItems.length - 10} more preserved move(s).</small> : null}
+            </div>
+          ) : null}
+
+          <AnchorRestoreControls
+            anchorSessionId={anchorSessionId}
+            anchorOptions={anchorOptions}
+            busy={busy}
+            followingRestorePreview={followingRestorePreview}
+            onAnchorChange={selectAnchor}
+            onRestore={restoreFollowingPattern}
+          />
+
+          {changedItems.length ? (
+            <div style={{ display: "grid", gap: 6, padding: 12, borderRadius: 10, background: "#fff", border: "1px solid #fcd34d" }}>
+              {changedItems.slice(0, 10).map((item) => (
+                <div key={item.lessonNumber}>
+                  {item.group.topic}: {item.session ? formatDateTime(item.session.startsAt) : "Missing"} → <strong>{formatDateTime(item.targetStartsAt)}</strong>
+                </div>
+              ))}
+              {changedItems.length > 10 ? <small>Plus {changedItems.length - 10} more correction(s).</small> : null}
+            </div>
+          ) : null}
+
+          {!needsRepair && !repairBlockedByManualMoves ? (
+            <div style={{ padding: 12, borderRadius: 10, background: "#ecfdf5", border: "1px solid #a7f3d0" }}>
+              This class already has the complete official timetable.
+            </div>
+          ) : null}
+
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button type="button" onClick={repairOfficialTimetable} disabled={busy || !needsRepair || repairBlockedByManualMoves}>
+              {busy ? "Repairing all sessions atomically…" : repairBlockedByManualMoves ? "Use anchor restoration above" : `Repair to ${plan.expectedLessons} ${plan.countLabel}`}
+            </button>
+            <button type="button" onClick={refresh} disabled={busy}>Check again</button>
+          </div>
+        </div>
+      ) : null}
+
+      {!loading && preview.error ? <div style={{ padding: 10, borderRadius: 8, background: "#fff", border: "1px solid #fca5a5", color: "#991b1b" }}>{preview.error}</div> : null}
+      {message ? <div style={{ padding: 10, borderRadius: 8, background: "#fff", border: "1px solid #fcd34d" }}>{message}</div> : null}
+    </article>
+  );
+}

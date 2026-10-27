@@ -1,0 +1,180 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+
+import { getSlidesByCourse } from "../src/data/teachingSlides.js";
+import { a1WorkbookAlignedSlidesDays1To5 } from "../src/data/a1WorkbookAlignedSlidesDays1To5.js";
+import { a1WorkbookAlignedSlidesDays6To10 } from "../src/data/a1WorkbookAlignedSlidesDays6To10.js";
+import { a1LaterTeachingSlides } from "../src/data/a1LaterTeachingSlides.js";
+import {
+  buildTeachingPresenterStages,
+  isA1PresenterV2Slide,
+  isTeachingPresenterV2Slide,
+} from "../src/utils/teachingPresenter.js";
+
+const REQUIRED_CORE_STAGES = [
+  "intro", "warmup", "phrases", "grammar", "examples",
+  "practice", "mistakes", "questions", "wrapup",
+];
+
+const WORKBOOK_ALIGNED = [
+  ...a1WorkbookAlignedSlidesDays1To5,
+  ...a1WorkbookAlignedSlidesDays6To10,
+];
+
+const VERIFIED_LATER_IDS = new Set(
+  a1LaterTeachingSlides.map((slide) => String(slide.assignmentId || "").toUpperCase()),
+);
+
+function isTutorial(slide = {}) {
+  return String(slide.assignmentId || "").trim().toUpperCase() === "A1-TUTORIAL";
+}
+
+test("all real A1 teaching lessons use Presenter 2.0 while orientation stays classic", () => {
+  const slides = getSlidesByCourse("A1");
+  assert.ok(slides.length > WORKBOOK_ALIGNED.length, "A1 should include later lessons beyond Day 10");
+
+  for (const slide of slides) {
+    if (isTutorial(slide)) {
+      assert.equal(isA1PresenterV2Slide(slide), false);
+      continue;
+    }
+
+    assert.equal(isA1PresenterV2Slide(slide), true, slide.assignmentId);
+    assert.equal(isTeachingPresenterV2Slide(slide), true, slide.assignmentId);
+
+    const stages = buildTeachingPresenterStages(slide, slide.topic);
+    const ids = stages.map((stage) => stage.id);
+    REQUIRED_CORE_STAGES.forEach((stageId) => {
+      assert.ok(ids.includes(stageId), `${slide.assignmentId} missing ${stageId}`);
+    });
+
+    const questions = stages.find((stage) => stage.id === "questions");
+    const practice = stages.find((stage) => stage.id === "practice");
+    assert.equal(questions.type, "question-reveal", slide.assignmentId);
+    assert.ok(questions.supportItems.length >= 3, `${slide.assignmentId} missing model support`);
+    assert.equal(practice.type, "flow", slide.assignmentId);
+    assert.ok(practice.items.some((item) => item.minutes > 0), `${slide.assignmentId} missing timer-ready practice`);
+  }
+});
+
+test("A1 Day 11 and Day 12 teaching slides use the official class-day mapping", () => {
+  const slides = getSlidesByCourse("A1");
+  const day11 = slides.find((slide) => slide.assignmentId === "A1-7");
+  const day12 = slides.find((slide) => slide.assignmentId === "A1-8");
+
+  assert.ok(day11, "A1 Day 11 / A1-7 teaching slide missing");
+  assert.ok(day12, "A1 Day 12 / A1-8 teaching slide missing");
+
+  assert.equal(day11.dayNumber, 11);
+  assert.equal(day11.day, "Day 11");
+  assert.match(day11.title, /^A1 Day 11 ·/);
+  assert.match(day11.topic, /Die Uhrzeit und der Tagesablauf/);
+
+  assert.equal(day12.dayNumber, 12);
+  assert.equal(day12.day, "Day 12");
+  assert.match(day12.title, /^A1 Day 12 ·/);
+  assert.match(day12.topic, /Die 24-Stunden-Uhr und Datum/);
+
+  assert.ok(slides.some((slide) => slide.dayNumber === 11), "A1 Day 11 should be visible in the teacher slide list");
+  assert.ok(slides.some((slide) => slide.dayNumber === 12), "A1 Day 12 should be visible in the teacher slide list");
+});
+
+test("A1 workbook-aligned Day 1-10 lessons retain their real workbook bridge", () => {
+  assert.ok(WORKBOOK_ALIGNED.length >= 10);
+
+  for (const slide of WORKBOOK_ALIGNED) {
+    const stages = buildTeachingPresenterStages(slide, slide.topic);
+    const workbook = stages.find((stage) => stage.id === "workbook");
+    assert.ok(workbook, `${slide.assignmentId} missing workbook stage`);
+    assert.equal(workbook.items.length, 3);
+    assert.equal(workbook.title, "Was ist noch unklar?");
+  }
+});
+
+test("A1-11 has a dedicated directions-first imperative slide on canonical Day 17", () => {
+  const slides = getSlidesByCourse("A1");
+  const slide = slides.find((entry) => entry.assignmentId === "A1-11");
+
+  assert.ok(slide, "A1-11 slide missing");
+  assert.equal(slide.id, "a1-11-directions-imperative");
+  assert.equal(slide.dayNumber, 17);
+  assert.equal(slide.day, "Day 17");
+  assert.match(slide.title, /Anweisungen und Wegbeschreibung/);
+  assert.match(slide.topic, /Imperativ mit Sie/);
+
+  const content = JSON.stringify(buildTeachingPresenterStages(slide, slide.topic));
+  const normalizedContent = content.toLocaleLowerCase("de-DE");
+  const requiredPhrases = [
+    "wie komme ich zum bahnhof",
+    "wie komme ich zur nächsten apotheke",
+    "gehen sie bitte geradeaus",
+    "biegen sie links ab",
+    "biegen sie rechts ab",
+    "überqueren sie die straße",
+    "auf der linken seite",
+  ];
+  for (const phrase of requiredPhrases) {
+    assert.ok(normalizedContent.includes(phrase), `A1-11 missing: ${phrase}`);
+  }
+
+  assert.doesNotMatch(content, /Trink mehr Wasser/i);
+  assert.doesNotMatch(content, /Öffnet eure Bücher/i);
+  assert.doesNotMatch(content, /Komm bitte herein/i);
+});
+test("A1-5.10 has a dedicated conjunctions slide on canonical Day 24", () => {
+  const slides = getSlidesByCourse("A1");
+  const slide = slides.find((entry) => entry.assignmentId === "A1-5.10");
+  assert.ok(slide, "A1-5.10 slide missing");
+  assert.equal(slide.id, "a1-5-10");
+  assert.equal(slide.dayNumber, 24);
+  assert.equal(slide.day, "Day 24");
+  assert.match(slide.title, /^A1 Day 24 · Weil & nützliche A1-Redemittel$/);
+  assert.equal(slides.find((entry) => entry.dayNumber === 24)?.assignmentId, "A1-5.10");
+  assert.equal(slide.workbookConnection?.grammarUrl, "/campus/course/conjunctions-5-10");
+  assert.equal(slide.workbookConnection?.workbookUrl, "");
+
+  const stages = buildTeachingPresenterStages(slide, slide.topic);
+  const workbook = stages.find((stage) => stage.id === "workbook");
+  assert.ok(workbook, "A1-5.10 missing workbook/grammar bridge stage");
+  assert.equal(workbook.title, "Was ist noch unklar?");
+  assert.equal(workbook.title, "Was ist noch unklar?");
+  assert.equal(workbook.items.length, 3);
+
+  const classroomContent = JSON.stringify(stages);
+  assert.match(classroomContent, /Learn/);
+  assert.match(classroomContent, /Choose/);
+  assert.match(classroomContent, /Build/);
+  assert.match(classroomContent, /Match/);
+  assert.match(classroomContent, /Formal oder informell/);
+  assert.match(classroomContent, /Repair/);
+  assert.match(classroomContent, /Apply/);
+  assert.match(classroomContent, /Recognise/);
+  assert.match(classroomContent, /Final transfer/);
+  assert.match(classroomContent, /weil ich krank bin/i);
+  assert.match(classroomContent, /weil ich arbeiten muss/i);
+  assert.match(classroomContent, /Können wir uns am Mittwoch treffen/i);
+  assert.match(classroomContent, /Ich schreibe Ihnen, weil ich mehr Informationen/i);
+  assert.match(classroomContent, /und, aber, oder and denn|und, aber, oder und denn/i);
+
+  const productivePhrases = JSON.stringify(slide.keyPhrasesDe || []);
+  assert.doesNotMatch(productivePhrases, /deshalb/i, "deshalb should be introduced productively at A2");
+  assert.doesNotMatch(productivePhrases, /\bdenn\b/i, "denn should remain recognition-only at A1");
+});
+
+test("later A1 generic lessons do not invent workbook links", () => {
+  const alignedIds = new Set(WORKBOOK_ALIGNED.map((slide) => String(slide.assignmentId || "").toUpperCase()));
+  const laterSlides = getSlidesByCourse("A1").filter((slide) => {
+    const assignmentId = String(slide.assignmentId || "").toUpperCase();
+    return !isTutorial(slide) && !alignedIds.has(assignmentId) && !VERIFIED_LATER_IDS.has(assignmentId);
+  });
+  assert.ok(laterSlides.length > 0);
+
+  for (const slide of laterSlides) {
+    const stages = buildTeachingPresenterStages(slide, slide.topic);
+    const workbook = stages.find((stage) => stage.id === "workbook");
+    if (workbook) {
+      assert.equal(workbook.title, "Was ist noch unklar?");
+      assert.equal(workbook.title, "Was ist noch unklar?");
+    }
+  }
+});

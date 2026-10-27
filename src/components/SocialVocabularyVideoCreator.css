@@ -1,0 +1,29 @@
+.social-vocab-video{container-type:inline-size;background:#fff;border:1px solid #dce6f3;border-radius:16px;padding:19px;display:grid;gap:16px;min-width:0}
+.social-vocab-video-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.social-vocab-video-header h3{margin:0 0 5px;font-size:19px;color:#13345a}
+.social-vocab-video-header p{margin:0;color:#60738b;font-size:13px;line-height:1.5}
+.social-vocab-video-pill{border-radius:50px;background:#e5f5ff;color:#095f9e;padding:7px 12px;font-size:12px;font-weight:800}
+.social-vocab-video-layout{display:grid;grid-template-columns:minmax(225px,.83fr) minmax(240px,1.17fr);gap:18px;align-items:start}
+.social-vocab-video-controls{display:grid;gap:13px}
+.social-vocab-video-controls label{display:grid;gap:6px;font-size:13px;color:#304967;font-weight:750}
+.social-vocab-video-controls input,.social-vocab-video-controls select{font:inherit;color:#183856;border:1px solid #cbd8e7;background:#fff;border-radius:9px;padding:11px 10px;min-width:0;max-width:100%;width:100%;box-sizing:border-box}
+.social-vocab-video-controls input[type=file]{font-size:12px}
+.social-vocab-video-note{color:#65758b;font-size:12px;line-height:1.55;margin:0}
+.social-vocab-video-preview{display:grid;gap:11px;min-width:0}
+.social-vocab-video-screen{width:min(100%,300px);aspect-ratio:9/16;overflow:hidden;margin:auto;border-radius:20px;box-shadow:0 12px 40px #0e36562b;background:#067de2;border:4px solid #123e71}
+.social-vocab-video-screen canvas{display:block;width:100%;height:100%;object-fit:cover}
+.social-vocab-video-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.social-vocab-video-button{font:inherit;min-height:40px;padding:9px 12px;border-radius:9px;border:1px solid #bed3e8;background:#f4faff;color:#1a4e86;font-weight:750;cursor:pointer;font-size:13px}
+.social-vocab-video-button.primary{border-color:#1769c4;background:#1769c4;color:#fff}
+.social-vocab-video-button:disabled{cursor:not-allowed;opacity:.5}
+.social-vocab-video-button:focus-visible,.social-vocab-video-controls input:focus-visible,.social-vocab-video-controls select:focus-visible{outline:3px solid #7abcf6;outline-offset:2px}
+.social-vocab-video-warning{padding:11px;border:1px solid #f4c884;border-radius:9px;background:#fffaeb;color:#80540d;font-size:12px;line-height:1.6;margin:0;overflow-wrap:anywhere}
+.social-vocab-video-success{padding:11px;border:1px solid #a5debe;border-radius:9px;background:#effcf4;color:#12613b;font-size:12px;line-height:1.6;margin:0}
+@media(max-width:850px){.social-vocab-video-layout{grid-template-columns:1fr}.social-vocab-video-screen{width:min(100%,340px)}}
+@media(max-width:520px){.social-vocab-video{padding:12px}.social-vocab-video-actions button{flex:1 1 40%}.social-vocab-video-header h3{font-size:17px}}
+
+@container (max-width: 590px) {
+  .social-vocab-video-layout { grid-template-columns: 1fr; }
+  .social-vocab-video-preview { min-width: 0; }
+  .social-vocab-video-screen { width: min(100%, 300px); }
+}

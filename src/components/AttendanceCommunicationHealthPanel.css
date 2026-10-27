@@ -1,0 +1,205 @@
+.attendance-communication-health {
+  margin-top: 14px;
+  border: 1px solid #dbe4f0;
+  border-radius: 14px;
+  background: #fff;
+  padding: 16px;
+  display: grid;
+  gap: 14px;
+}
+
+.attendance-communication-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.attendance-communication-heading span {
+  color: #1d4ed8;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.attendance-communication-heading h3 {
+  margin: 4px 0 0;
+}
+
+.attendance-communication-heading p,
+.attendance-communication-footnote {
+  margin: 5px 0 0;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.attendance-communication-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.attendance-communication-actions button,
+.attendance-communication-actions a {
+  min-height: 38px;
+  border-radius: 8px;
+  padding: 0 11px;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  font-weight: 800;
+}
+
+.attendance-communication-actions a {
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.attendance-communication-actions .is-retry {
+  background: #fff7ed;
+  border-color: #fdba74;
+  color: #9a3412;
+}
+
+.attendance-communication-metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.attendance-communication-metrics article {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 10px;
+}
+
+.attendance-communication-metrics article.is-danger {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.attendance-communication-metrics article.is-warning {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.attendance-communication-metrics span {
+  display: block;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.attendance-communication-metrics strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 1.2rem;
+}
+
+.attendance-communication-worker {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  color: #475569;
+  font-size: 0.86rem;
+}
+
+.attendance-communication-diagnosis {
+  border-radius: 10px;
+  padding: 11px 12px;
+  border: 1px solid #dbeafe;
+  background: #eff6ff;
+}
+
+.attendance-communication-diagnosis p {
+  margin: 4px 0 0;
+}
+
+.attendance-communication-diagnosis.is-success {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.attendance-communication-diagnosis.is-warning {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.attendance-communication-diagnosis.is-danger,
+.attendance-communication-error {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.attendance-communication-error {
+  border-radius: 10px;
+  padding: 11px 12px;
+}
+
+.attendance-communication-table-wrap {
+  overflow-x: auto;
+}
+
+.attendance-communication-table-wrap table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+
+.attendance-communication-table-wrap th,
+.attendance-communication-table-wrap td {
+  padding: 9px 10px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  vertical-align: top;
+}
+
+.attendance-communication-table-wrap th {
+  color: #64748b;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.attendance-communication-table-wrap td small {
+  display: block;
+  margin-top: 2px;
+  color: #64748b;
+}
+
+.attendance-delivery-status {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 0.75rem;
+  font-weight: 850;
+}
+
+.attendance-delivery-status.is-sent {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.attendance-delivery-status.is-failed {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.attendance-delivery-status.is-processing {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+@media (max-width: 760px) {
+  .attendance-communication-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

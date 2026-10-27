@@ -1,0 +1,52 @@
+name: Answer key integrity and parser stress
+
+on:
+  pull_request:
+    paths:
+      - 'src/data/answers_dictionary.json'
+      - 'src/utils/answerKeyIntegrity.js'
+      - 'src/utils/objectiveMarking.js'
+      - 'src/utils/submissionSections.js'
+      - 'src/utils/autoMarking.js'
+      - 'scripts/patchObjectivePromptAnswerParsing.mjs'
+      - 'scripts/validateAnswerDictionary.mjs'
+      - 'tests/answer-key-integrity.test.js'
+      - 'tests/objective-parser-format-matrix.test.js'
+      - 'tests/b1-3.9-semantic-section-parsing.test.js'
+      - 'tests/a1-9-ans-prefix.test.js'
+      - 'tests/a1-0.2-unnumbered-text-block.test.js'
+      - 'tests/a2-pre-sep18-assessment-keys.test.js'
+      - '.github/workflows/answer-key-integrity.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/data/answers_dictionary.json'
+      - 'src/utils/answerKeyIntegrity.js'
+      - 'src/utils/objectiveMarking.js'
+      - 'src/utils/submissionSections.js'
+      - 'src/utils/autoMarking.js'
+      - 'scripts/patchObjectivePromptAnswerParsing.mjs'
+      - 'scripts/validateAnswerDictionary.mjs'
+      - 'tests/answer-key-integrity.test.js'
+      - 'tests/objective-parser-format-matrix.test.js'
+      - 'tests/b1-3.9-semantic-section-parsing.test.js'
+      - 'tests/a1-9-ans-prefix.test.js'
+      - 'tests/a1-0.2-unnumbered-text-block.test.js'
+      - 'tests/a2-pre-sep18-assessment-keys.test.js'
+      - '.github/workflows/answer-key-integrity.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply objective parser compatibility patches
+        run: node scripts/patchObjectivePromptAnswerParsing.mjs
+      - name: Validate answer dictionary structure
+        run: node scripts/validateAnswerDictionary.mjs
+      - name: Run integrity and parser format matrix
+        run: node --test tests/answer-key-integrity.test.js tests/objective-parser-format-matrix.test.js tests/b1-3.9-semantic-section-parsing.test.js tests/a1-9-ans-prefix.test.js tests/a1-0.2-unnumbered-text-block.test.js tests/a2-pre-sep18-assessment-keys.test.js tests/golden-known-submissions.test.js

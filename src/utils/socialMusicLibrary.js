@@ -1,0 +1,38 @@
+// Built-in Falowen music from the existing public/ directory. No paid media service.
+export const SOCIAL_MUSIC_TRACKS = Object.freeze([
+  { id: "none", label: "No background music", src: "" },
+  { id: "gemeinsam", label: "Gemeinsam schaffen wir das", src: "/Gemeinsam%20schaffen%20wir%20das.mp3" },
+  { id: "willkommen", label: "Willkommen bei Falowen", src: "/Willkommen%20bei%20Falowen(1).mp3" },
+]);
+
+export async function addSocialMusic(context, destination, trackId, seconds, volume = 0.22) {
+  const track = SOCIAL_MUSIC_TRACKS.find(item => item.id === trackId);
+  if (!track?.src) return null;
+  const response = await fetch(track.src);
+  if (!response.ok) throw new Error("Cannot load Falowen music: " + track.label);
+  let buffer;
+  try {
+    buffer = await context.decodeAudioData(await response.arrayBuffer());
+  } catch {
+    throw new Error("Cannot decode Falowen music: " + track.label);
+  }
+  const source = context.createBufferSource();
+  const gain = context.createGain();
+  source.buffer = buffer;
+  source.loop = true;
+  source.connect(gain);
+  gain.connect(destination);
+  let started = false;
+  // Loading/decode can take seconds. Start the music and its fade only after
+  // MediaRecorder starts, so slow loading cannot consume the soundtrack first.
+  return { start() {
+    if (started) return;
+    started = true;
+    const start = context.currentTime;
+    gain.gain.setValueAtTime(volume, start);
+    gain.gain.setValueAtTime(volume, start + Math.max(0, seconds - .35));
+    gain.gain.linearRampToValueAtTime(0.0001, start + seconds);
+    source.start(start);
+    source.stop(start + seconds + .05);
+  } };
+}

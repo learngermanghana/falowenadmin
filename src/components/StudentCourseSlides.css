@@ -1,0 +1,547 @@
+.student-slides-shell {
+  width: min(100%, 980px);
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.student-slides-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: end;
+  margin-bottom: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #dbe1ef;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 8px 24px rgba(18, 38, 101, 0.08);
+  backdrop-filter: blur(8px);
+}
+
+.student-slides-eyebrow,
+.student-section-kicker {
+  margin: 0 0 0.3rem;
+  color: #1d4ed8;
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.student-lesson-select {
+  display: grid;
+  gap: 0.35rem;
+  min-width: min(100%, 420px);
+}
+
+.student-lesson-select span {
+  color: #5f6b85;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.student-lesson-select select {
+  width: 100%;
+  border: 1px solid #cfd7ea;
+  border-radius: 10px;
+  padding: 0.65rem 0.8rem;
+  background: #fff;
+  font: inherit;
+  font-weight: 700;
+}
+
+.student-slide-card {
+  overflow: hidden;
+  border: 1px solid #dbe1ef;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(18, 38, 101, 0.08);
+}
+
+.student-slide-hero {
+  padding: 1.35rem 1.4rem 1.2rem;
+  background: linear-gradient(135deg, #eef4ff 0%, #ffffff 72%);
+  border-bottom: 1px solid #dbe1ef;
+}
+
+.student-slide-hero-topline {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.student-slide-level,
+.student-slide-day {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.32rem 0.7rem;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.student-slide-level {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.student-slide-day {
+  border: 1px solid #cfdcff;
+  background: #fff;
+  color: #244296;
+}
+
+.student-slide-hero h1 {
+  margin: 0.85rem 0 0.35rem;
+  font-size: clamp(1.65rem, 4vw, 2.45rem);
+  line-height: 1.1;
+}
+
+.student-slide-topic {
+  margin: 0;
+  color: #475569;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.student-slide-section {
+  padding: 1.15rem 1.4rem;
+  border: 0;
+  border-bottom: 1px solid #eef1f6;
+  background: #fff;
+}
+
+.student-slide-section:last-child {
+  border-bottom: 0;
+}
+
+.student-slide-objective {
+  background: #fbfdff;
+}
+
+.student-grammar-section {
+  background: #fff;
+}
+
+.student-slide-objective > p:last-child,
+.student-summary-section .student-collapsible-content > p:last-child {
+  margin: 0;
+  font-size: 1.08rem;
+  line-height: 1.55;
+}
+
+.student-slide-list,
+.student-question-list {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.student-slide-list li,
+.student-question-list li {
+  margin: 0.48rem 0;
+  line-height: 1.5;
+}
+
+.student-section-help {
+  margin: 0 0 0.75rem;
+  color: #5f6b85;
+  line-height: 1.5;
+}
+
+.student-collapsible-section {
+  display: block;
+}
+
+.student-collapsible-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.student-collapsible-summary::-webkit-details-marker {
+  display: none;
+}
+
+.student-collapsible-summary::after {
+  content: "+";
+  display: inline-grid;
+  width: 1.65rem;
+  height: 1.65rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #1d4ed8;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.student-collapsible-section[open] > .student-collapsible-summary::after {
+  content: "−";
+}
+
+.student-collapsible-summary .student-section-kicker {
+  margin-bottom: 0;
+}
+
+.student-collapsible-content {
+  padding-top: 0.75rem;
+}
+
+.student-model-details {
+  margin-top: 0.7rem;
+  border-top: 1px dashed #d7dfef;
+  padding-top: 0.65rem;
+}
+
+.student-model-details summary {
+  width: fit-content;
+  cursor: pointer;
+  color: #1d4ed8;
+  font-weight: 850;
+}
+
+.student-model-details[open] summary {
+  margin-bottom: 0.6rem;
+}
+
+.student-practice-grid {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.student-practice-card {
+  border: 1px solid #dbe1ef;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  background: #fbfdff;
+}
+
+.student-practice-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.student-practice-heading h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.student-practice-heading span {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #244296;
+  padding: 0.22rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.student-practice-instruction {
+  margin: 0.55rem 0;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.student-speaking-section {
+  background: #fcfcff;
+}
+
+.student-workbook-section {
+  background: #f8fbff;
+}
+
+.student-workbook-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.student-workbook-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  border: 1px solid #1d4ed8;
+  padding: 0.52rem 0.78rem;
+  color: #1d4ed8;
+  text-decoration: none;
+  font-weight: 850;
+}
+
+.student-summary-section {
+  background: #eef4ff;
+}
+
+.student-slide-navigation {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.student-slide-navigation button {
+  min-height: 44px;
+  border: 1px solid #cfd7ea;
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.student-slide-navigation button:first-child {
+  justify-self: start;
+}
+
+.student-slide-navigation button:last-child {
+  justify-self: end;
+  border-color: #1d4ed8;
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.student-slide-navigation button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.student-print-button {
+  color: #475569 !important;
+}
+
+.student-mobile-day-select,
+.student-nav-mobile {
+  display: none;
+}
+
+.student-slides-empty {
+  border: 1px solid #dbe1ef;
+  border-radius: 14px;
+  padding: 1.2rem;
+  background: #fff;
+}
+
+@media (max-width: 720px) {
+  .student-slides-shell {
+    width: 100%;
+    padding: 0.45rem 0.45rem 0.6rem;
+  }
+
+  .student-slides-toolbar {
+    display: none;
+  }
+
+  .student-slide-card {
+    border-radius: 12px;
+    box-shadow: none;
+  }
+
+  .student-slide-hero {
+    padding: 0.8rem 0.85rem 0.75rem;
+  }
+
+  .student-slide-level,
+  .student-slide-day {
+    padding: 0.22rem 0.55rem;
+    font-size: 0.72rem;
+  }
+
+  .student-slide-hero h1 {
+    margin: 0.6rem 0 0.22rem;
+    font-size: clamp(1.3rem, 7vw, 1.7rem);
+    line-height: 1.12;
+  }
+
+  .student-slide-topic {
+    font-size: 0.88rem;
+    line-height: 1.35;
+  }
+
+  .student-slide-section {
+    padding: 0.78rem 0.85rem;
+  }
+
+  .student-slides-eyebrow,
+  .student-section-kicker {
+    font-size: 0.72rem;
+  }
+
+  .student-slide-objective > p:last-child,
+  .student-summary-section .student-collapsible-content > p:last-child {
+    font-size: 0.96rem;
+    line-height: 1.45;
+  }
+
+  .student-slide-list,
+  .student-question-list {
+    padding-left: 1.05rem;
+  }
+
+  .student-slide-list li,
+  .student-question-list li {
+    margin: 0.38rem 0;
+    font-size: 0.94rem;
+    line-height: 1.42;
+  }
+
+  .student-collapsible-summary {
+    min-height: 2rem;
+  }
+
+  .student-collapsible-summary::after {
+    width: 1.45rem;
+    height: 1.45rem;
+    font-size: 0.9rem;
+  }
+
+  .student-collapsible-content {
+    padding-top: 0.6rem;
+  }
+
+  .student-section-help {
+    margin-bottom: 0.55rem;
+    font-size: 0.9rem;
+  }
+
+  .student-practice-grid {
+    gap: 0;
+  }
+
+  .student-practice-card {
+    border: 0;
+    border-top: 1px solid #e4e9f2;
+    border-radius: 0;
+    padding: 0.7rem 0;
+    background: transparent;
+  }
+
+  .student-practice-card:first-child {
+    border-top: 0;
+    padding-top: 0.1rem;
+  }
+
+  .student-practice-heading h3 {
+    font-size: 0.96rem;
+  }
+
+  .student-practice-heading span {
+    padding: 0.16rem 0.45rem;
+    font-size: 0.7rem;
+  }
+
+  .student-practice-instruction {
+    margin: 0.4rem 0;
+    font-size: 0.92rem;
+  }
+
+  .student-workbook-links {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+  }
+
+  .student-workbook-links a {
+    min-height: 40px;
+    padding: 0.45rem 0.65rem;
+  }
+
+  .student-slide-navigation {
+    position: sticky;
+    bottom: 0.45rem;
+    z-index: 30;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 0.4rem;
+    margin: 0.65rem 0 0;
+    padding: 0.4rem;
+    border: 1px solid #dbe1ef;
+    border-radius: 13px;
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: 0 10px 28px rgba(18, 38, 101, 0.14);
+    backdrop-filter: blur(10px);
+  }
+
+  .student-slide-navigation button {
+    width: 44px;
+    min-height: 44px;
+    padding: 0;
+    justify-self: stretch !important;
+    font-size: 1.15rem;
+  }
+
+  .student-print-button,
+  .student-nav-full {
+    display: none !important;
+  }
+
+  .student-nav-mobile,
+  .student-mobile-day-select {
+    display: block;
+  }
+
+  .student-mobile-day-select {
+    min-width: 0;
+  }
+
+  .student-mobile-day-select select {
+    width: 100%;
+    height: 44px;
+    border: 1px solid #cfd7ea;
+    border-radius: 9px;
+    padding: 0 0.6rem;
+    background: #fff;
+    color: #0f172a;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 850;
+    text-align: center;
+  }
+}
+
+@media print {
+  .student-slides-toolbar,
+  .student-slide-navigation,
+  .student-workbook-section {
+    display: none !important;
+  }
+
+  .student-slides-shell {
+    width: 100%;
+    max-width: none;
+    padding: 0;
+  }
+
+  .student-slide-card {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .student-collapsible-section {
+    display: block;
+  }
+
+  .student-collapsible-summary::after {
+    display: none;
+  }
+
+  .student-collapsible-content {
+    display: block !important;
+  }
+
+  .student-model-details:not([open]) > *:not(summary) {
+    display: none;
+  }
+}

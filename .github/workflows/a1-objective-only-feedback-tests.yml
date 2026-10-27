@@ -1,0 +1,40 @@
+name: A1 Objective-Only Feedback Tests
+
+on:
+  pull_request:
+    paths:
+      - 'src/utils/naturalMarkingFeedback.js'
+      - 'src/data/a1WritingTaskSpecs.js'
+      - 'scripts/patchObjectiveOnlyNaturalFeedback.mjs'
+      - 'tests/objective-only-natural-feedback.test.js'
+      - 'tests/a1-question-aware-writing-marking.test.js'
+      - '.github/workflows/a1-objective-only-feedback-tests.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/utils/naturalMarkingFeedback.js'
+      - 'src/data/a1WritingTaskSpecs.js'
+      - 'scripts/patchObjectiveOnlyNaturalFeedback.mjs'
+      - 'tests/objective-only-natural-feedback.test.js'
+      - 'tests/a1-question-aware-writing-marking.test.js'
+      - '.github/workflows/a1-objective-only-feedback-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply objective-only feedback patch twice
+        run: |
+          node scripts/patchObjectiveOnlyNaturalFeedback.mjs
+          node scripts/patchObjectiveOnlyNaturalFeedback.mjs
+          node --check src/utils/naturalMarkingFeedback.js
+          node --check src/data/a1WritingTaskSpecs.js
+      - name: Test objective-only feedback guard
+        run: node --test tests/objective-only-natural-feedback.test.js
+      - name: Test A1 letter-writing scope
+        run: node --test --test-name-pattern="letter writing is limited" tests/a1-question-aware-writing-marking.test.js

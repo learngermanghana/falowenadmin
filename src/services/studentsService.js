@@ -1,0 +1,376 @@
+import { collection, doc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
+import { auth } from "../firebase.js";
+import { db } from "../firebase.js";
+import {
+  loadPublishedStudentRows,
+  readPublishedClassName,
+  readPublishedLevel,
+  readPublishedStatus,
+  readPublishedStudentCode,
+  readPublishedStudentEmail,
+  readPublishedStudentName,
+} from "./publishedSheetService.js";
+
+const ROSTER_SOURCE_TIMEOUT_MS = 8000;
+
+function byNameAsc(a, b) {
+  return String(a?.name || "").localeCompare(String(b?.name || ""));
+}
+
+function normalize(value) {
+  return String(value || "").trim();
+}
+
+function normalizeComparable(value) {
+  return normalize(value).toLowerCase().replace(/\s+/g, " ");
+}
+
+function settleWithin(promise, fallback = []) {
+  return Promise.race([
+    Promise.resolve(promise).catch(() => fallback),
+    new Promise((resolve) => globalThis.setTimeout(() => resolve(fallback), ROSTER_SOURCE_TIMEOUT_MS)),
+  ]);
+}
+
+function isActiveStudent(row = {}) {
+  const status = normalize(row.status || row.studentStatus || row.enrollmentStatus).toLowerCase();
+  if (!status) return true;
+  return !["inactive", "archived", "withdrawn", "removed", "cancelled", "canceled", "trial_expired"].includes(status);
+}
+
+function studentIdentityKeys(student = {}) {
+  const strongKeys = [
+    student.studentCode,
+    student.studentcode,
+    student.uid,
+    student.email,
+  ].map(normalizeComparable).filter(Boolean);
+
+  if (strongKeys.length) return strongKeys;
+
+  return [student.id, student.name]
+    .map(normalizeComparable)
+    .filter(Boolean);
+}
+
+function uniqueStudents(rows = []) {
+  const seen = new Set();
+  return rows.filter((student) => {
+    const keys = studentIdentityKeys(student);
+    if (!keys.length || keys.some((key) => seen.has(key))) return false;
+    keys.forEach((key) => seen.add(key));
+    return true;
+  });
+}
+
+function studentClassValues(student = {}) {
+  return [
+    student.classId,
+    student.classRecordId,
+    student.className,
+    student.classname,
+    student.class,
+    student.group,
+    student.groupId,
+    student.groupName,
+    student.cohort,
+    student.cohortId,
+    student.cohortName,
+  ].map(normalizeComparable).filter(Boolean);
+}
+
+function resolvePublishedClass(row) {
+  const className = normalize(readPublishedClassName(row));
+  if (className) return className;
+  return normalize(readPublishedLevel(row));
+}
+
+function mapPublishedStudent(row) {
+  return {
+    id: String(readPublishedStudentCode(row) || readPublishedStudentName(row) || "").trim(),
+    name: normalize(readPublishedStudentName(row)),
+    email: normalize(readPublishedStudentEmail(row)),
+    studentCode: normalize(readPublishedStudentCode(row)),
+    className: resolvePublishedClass(row),
+    status: normalize(readPublishedStatus(row)).toLowerCase(),
+    role: "student",
+  };
+}
+
+export async function listPublishedStudentsByClassWithLoader(classId, loadRows = loadPublishedStudentRows) {
+  const targetClassName = normalizeComparable(classId);
+  if (!targetClassName) return [];
+
+  const rows = await loadRows();
+
+  return rows
+    .filter((row) => {
+      const className = normalizeComparable(readPublishedClassName(row));
+      return className === targetClassName;
+    })
+    .map(mapPublishedStudent)
+    .filter((row) => row.name && isActiveStudent(row))
+    .sort(byNameAsc);
+}
+
+export async function loadStudentsByFieldWithFirestore(fieldName, classId, firestore = { collection, getDocs, query, where, db }) {
+  const q = firestore.query(firestore.collection(firestore.db, "students"), firestore.where(fieldName, "==", classId));
+  const snap = await firestore.getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort(byNameAsc);
+}
+
+export async function listAllStudentsWithFirestore(firestore = { collection, getDocs, db }) {
+  const snap = await firestore.getDocs(firestore.collection(firestore.db, "students"));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort(byNameAsc);
+}
+
+export async function updateStudentByIdWithFirestore(studentId, payload, firestore = { doc, updateDoc, db }) {
+  if (!normalize(studentId)) {
+    throw new Error("Student ID is required");
+  }
+
+  const studentRef = firestore.doc(firestore.db, "students", studentId);
+  await firestore.updateDoc(studentRef, payload);
+}
+
+export async function createStudentWithFirestore(
+  studentId,
+  payload,
+  firestore = { doc, setDoc, serverTimestamp, db },
+) {
+  if (!normalize(studentId)) {
+    throw new Error("Student ID is required");
+  }
+
+  const studentRef = firestore.doc(firestore.db, "students", studentId);
+  await firestore.setDoc(studentRef, { ...payload, updated_at: firestore.serverTimestamp() }, { merge: true });
+}
+
+export async function listStudentsByClassWithDeps(
+  classId,
+  {
+    className = "",
+    loadPublishedStudentsByClass = listPublishedStudentsByClassWithLoader,
+    loadStudentsByField = loadStudentsByFieldWithFirestore,
+    loadAllStudents = listAllStudentsWithFirestore,
+  } = {},
+) {
+  const identifiers = [...new Set(
+    [classId, className]
+      .map(normalize)
+      .filter(Boolean),
+  )];
+  const comparableIdentifiers = new Set(identifiers.map(normalizeComparable));
+  const fields = ["classId", "classRecordId", "className"];
+
+  const exactQueries = identifiers.flatMap((identifier) =>
+    fields.map((field) => settleWithin(loadStudentsByField(field, identifier))),
+  );
+  const publishedIdentifiers = [...new Set([className, classId].map(normalize).filter(Boolean))];
+  const publishedQueries = publishedIdentifiers.map((identifier) =>
+    settleWithin(loadPublishedStudentsByClass(identifier)),
+  );
+
+  const [exactResults, allStudents, publishedResults] = await Promise.all([
+    Promise.all(exactQueries),
+    settleWithin(loadAllStudents()),
+    Promise.all(publishedQueries),
+  ]);
+
+  const rosterRows = exactResults.flat();
+  const authoritativeStudents = allStudents.filter((student) =>
+    studentClassValues(student).some((value) => comparableIdentifiers.has(value)),
+  );
+  rosterRows.push(...authoritativeStudents);
+
+  const firestoreByIdentity = new Map();
+  allStudents.forEach((student) => {
+    studentIdentityKeys(student).forEach((key) => firestoreByIdentity.set(key, student));
+  });
+  const publishedRows = publishedResults.flat().filter((student) => {
+    const firestoreStudent = studentIdentityKeys(student)
+      .map((key) => firestoreByIdentity.get(key))
+      .find(Boolean);
+    if (!firestoreStudent) return true;
+    return studentClassValues(firestoreStudent).some((value) => comparableIdentifiers.has(value));
+  });
+  rosterRows.push(...publishedRows);
+
+  return uniqueStudents(rosterRows)
+    .filter((row) => row.name && isActiveStudent(row))
+    .sort(byNameAsc);
+}
+
+export async function listStudentsByClass(classId, options = {}) {
+  return listStudentsByClassWithDeps(classId, options);
+}
+
+export async function listAllStudents() {
+  return listAllStudentsWithFirestore();
+}
+
+export function parseStudentProfileUpdateResponse(response = {}, responseText = "") {
+  const text = String(responseText || "").trim();
+  let data = {};
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = {};
+    }
+  }
+
+  if (!response.ok || data?.ok === false) {
+    const nonHtmlText = text && !/^\s*</.test(text) ? text.slice(0, 500) : "";
+    const statusLabel = [response.status, response.statusText].filter(Boolean).join(" ");
+    const fallback = response.status === 404
+      ? "Student update endpoint is not deployed yet. Deploy the latest Firebase function and retry."
+      : `Student update failed${statusLabel ? ` (${statusLabel})` : ""}.`;
+    throw new Error(String(data?.error || data?.message || nonHtmlText || fallback));
+  }
+
+  return data;
+}
+
+export async function updateStudentByIdThroughApi(
+  studentId,
+  payload,
+  {
+    fetchImpl = globalThis.fetch,
+    headersLoader = authHeaders,
+  } = {},
+) {
+  const normalizedId = normalize(studentId);
+  if (!normalizedId) throw new Error("Student ID is required");
+  if (typeof fetchImpl !== "function") throw new Error("Student update transport is unavailable");
+
+  const response = await fetchImpl(`/api/students/${encodeURIComponent(normalizedId)}`, {
+    method: "PATCH",
+    headers: await headersLoader(),
+    body: JSON.stringify({ updates: payload || {} }),
+  });
+  const responseText = await response.text();
+  return parseStudentProfileUpdateResponse(response, responseText);
+}
+
+export async function updateStudentById(studentId, payload) {
+  return updateStudentByIdThroughApi(studentId, payload);
+}
+
+export async function activateExistingStudentTrial(studentId, { fetchImpl = globalThis.fetch, headersLoader = authHeaders } = {}) {
+  const normalizedId = normalize(studentId);
+  if (!normalizedId) throw new Error("Student ID is required");
+  const response = await fetchImpl(`/api/students/${encodeURIComponent(normalizedId)}/activate-trial`, {
+    method: "POST",
+    headers: await headersLoader(),
+  });
+  return parseStudentProfileUpdateResponse(response, await response.text());
+}
+
+export function parseStudentClassTransferResponse(response = {}, responseText = "") {
+  return parseStudentProfileUpdateResponse(response, responseText);
+}
+
+export async function transferStudentClass(
+  studentId,
+  {
+    targetClassRecordId,
+    effectiveDate,
+    reason = "",
+  } = {},
+  {
+    fetchImpl = globalThis.fetch,
+    headersLoader = authHeaders,
+  } = {},
+) {
+  const normalizedId = normalize(studentId);
+  if (!normalizedId) throw new Error("Student ID is required");
+  if (!normalize(targetClassRecordId)) throw new Error("Select the new class");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalize(effectiveDate))) throw new Error("Choose a valid effective date");
+  if (typeof fetchImpl !== "function") throw new Error("Student transfer transport is unavailable");
+
+  const response = await fetchImpl(`/api/students/${encodeURIComponent(normalizedId)}/transfer-class`, {
+    method: "POST",
+    headers: await headersLoader(),
+    body: JSON.stringify({
+      targetClassRecordId: normalize(targetClassRecordId),
+      effectiveDate: normalize(effectiveDate),
+      reason: normalize(reason),
+    }),
+  });
+  const responseText = await response.text();
+  return parseStudentClassTransferResponse(response, responseText);
+}
+
+export async function listStudentClassTransfers(
+  studentId,
+  {
+    fetchImpl = globalThis.fetch,
+    headersLoader = authHeaders,
+  } = {},
+) {
+  const normalizedId = normalize(studentId);
+  if (!normalizedId) return [];
+  if (typeof fetchImpl !== "function") throw new Error("Student transfer history transport is unavailable");
+
+  const response = await fetchImpl(`/api/students/${encodeURIComponent(normalizedId)}/class-transfers`, {
+    headers: await headersLoader(),
+  });
+  const responseText = await response.text();
+  const data = parseStudentClassTransferResponse(response, responseText);
+  return Array.isArray(data?.transfers) ? data.transfers : [];
+}
+
+async function authHeaders() {
+  const token = auth?.currentUser ? await auth.currentUser.getIdToken() : "";
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
+export function parseStudentDeletionResponse(response = {}, responseText = "") {
+  const text = String(responseText || "").trim();
+  let data = {};
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = {};
+    }
+  }
+
+  if (!response.ok || data?.ok === false) {
+    const nonHtmlText = text && !/^\s*</.test(text) ? text.slice(0, 500) : "";
+    const statusLabel = [response.status, response.statusText].filter(Boolean).join(" ");
+    const fallback = response.status === 404
+      ? "Student deletion endpoint is not deployed yet. Deploy the latest Firebase function and retry."
+      : `Student deletion request failed${statusLabel ? ` (${statusLabel})` : ""}.`;
+    throw new Error(String(data?.error || data?.message || nonHtmlText || fallback));
+  }
+
+  return data;
+}
+
+export async function deleteStudentAccount(student = {}) {
+  const studentId = normalize(student.id);
+  const studentCode = normalize(student.studentCode || student.studentcode || student.uid || studentId);
+  const email = normalize(student.email).toLowerCase();
+
+  if (!studentId && !studentCode && !email) {
+    throw new Error("Student ID, student code, or email is required");
+  }
+
+  const response = await fetch("/api/students/delete-account", {
+    method: "POST",
+    headers: await authHeaders(),
+    body: JSON.stringify({ studentId, studentCode, email, student }),
+  });
+
+  const responseText = await response.text();
+  return parseStudentDeletionResponse(response, responseText);
+}
+
+export async function createStudent(studentId, payload) {
+  return createStudentWithFirestore(studentId, payload);
+}

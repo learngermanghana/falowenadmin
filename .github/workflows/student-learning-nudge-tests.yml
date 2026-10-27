@@ -1,0 +1,44 @@
+name: Student Learning Nudge Tests
+
+on:
+  pull_request:
+    paths:
+      - "functions/studentLearningInterventionEmails.js"
+      - "functions/main.js"
+      - "firebase.json"
+      - "tests/student-learning-intervention-emails.test.js"
+      - "tests/firebase-predeploy-schedulers.test.js"
+      - ".github/workflows/student-learning-nudge-tests.yml"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install app dependencies
+        run: npm ci
+
+      - name: Install Functions dependencies
+        working-directory: functions
+        run: npm ci
+
+      - name: Test low-cost learning nudges
+        run: node --test tests/student-learning-intervention-emails.test.js tests/firebase-predeploy-schedulers.test.js
+
+      - name: Check Functions entrypoints
+        run: |
+          node --check functions/studentLearningInterventionEmails.js
+          node --check functions/main.js
+
+      - name: Build Falowen Admin
+        run: npm run build

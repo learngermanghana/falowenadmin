@@ -1,0 +1,70 @@
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "falowenadmin",
+      "disallowLegacyRuntimeConfig": true,
+      "predeploy": [
+        "node scripts/patchStudentPaymentLinks.mjs",
+        "node scripts/patchStudentPaymentHistoryApi.mjs",
+        "node scripts/patchStudentPaymentAdminSecurity.mjs",
+        "node scripts/patchStudentPaymentContractLifecycle.mjs",
+        "node scripts/patchStudentUpgradePaymentDriven.mjs",
+        "node scripts/patchStudentProfileUpdateApi.mjs",
+        "node scripts/patchClassParticipationApi.mjs",
+        "node scripts/patchPresenterConceptLabels.mjs",
+        "node scripts/patchStudentPaymentUpdateEmails.mjs",
+        "node scripts/patchAutomaticOrientationSync.mjs",
+        "node scripts/patchStructuredWritingEvidence.mjs",
+        "node scripts/patchSpecificWritingFeedback.mjs",
+        "node scripts/patchPublicLiveClassApi.mjs",
+        "node --check functions/index.js",
+        "node --check functions/registrationLifecycleEvents.js",
+        "node --check functions/trialAccessEmails.js",
+        "node --check functions/finalMockResultEmails.js",
+        "node --check functions/studentLearningInterventionEmails.js",
+        "node --check functions/main.js",
+        "node scripts/patchSheetRowManagementRoutes.mjs",
+        "node scripts/patchOperationalSheetAutoSyncJobs.mjs",
+        "node scripts/patchLiveClassUpdateScheduleSync.mjs",
+        "node scripts/patchHolidayClassScheduleAwareness.mjs",
+        "node scripts/patchStudentDeletionRuntime.mjs",
+        "node scripts/patchStudentLeadDeletionRuntime.mjs",
+        "node scripts/patchAttendanceConfirmationEmails.mjs",
+        "node scripts/patchAttendanceConfirmationEventDrivenV2.mjs",
+        "node scripts/patchAttendanceParticipationSummaryEmail.mjs",
+        "node scripts/patchAttendanceParticipationCanonicalIdentity.mjs",
+        "node scripts/patchAttendanceNoParticipationEncouragement.mjs",
+        "node scripts/patchAttendanceParticipationRecapGoals.mjs",
+        "node scripts/patchAttendanceParticipationRecapFailSafe.mjs",
+        "node scripts/patchAttendanceParticipationSessionWindow.mjs",
+        "node scripts/patchAttendanceStructuredParticipationEmail.mjs",
+        "node scripts/patchClassSessionReminderEmails.mjs",
+        "node scripts/patchClassReminderDiagnosticBestEffort.mjs",
+        "node scripts/patchClassReminderConciseLinks.mjs",
+        "node scripts/patchClassReminderJoinZoomLabel.mjs",
+        "node scripts/patchCheckinStatusMetadataHydration.mjs",
+        "node scripts/patchLeadClassStartReminderEmails.mjs",
+        "node scripts/patchAutoCompleteClassSessions.mjs",
+        "node scripts/patchCloudCostOptimizations.mjs",
+        "node scripts/patchCourseReviewRequestEmails.mjs",
+        "node scripts/patchGoetheExamConfig.mjs",
+        "node scripts/buildAutomaticMarking.mjs"
+      ],
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ]
+}

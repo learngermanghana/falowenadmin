@@ -1,0 +1,187 @@
+import { C1_CANONICAL_TITLES } from "./c1CanonicalCurriculum.js";
+
+export const courseDictionary = {
+  A1: {
+    "A1-Tutorial": { assignment_id: "A1-Tutorial", chapter: "0", de: "Einführung und Orientierung", en: "Orientation and Tutorial" },
+    "A1-0.1": { assignment_id: "A1-0.1", chapter: "0.1", de: "Begrüßungen und Wohlbefinden", en: "Greetings and Asking About Well-being" },
+    "A1-0.2": { assignment_id: "A1-0.2", chapter: "0.2", de: "Alphabet", en: "German Alphabet" },
+    "A1-1.1": { assignment_id: "A1-1.1", chapter: "1.1", de: "Personalpronomen und grundlegende Verbkonjugation", en: "Personal Pronouns and Verb Conjugation" },
+    "A1-1.1-practice": { assignment_id: "A1-1.1-practice", chapter: "1.1", de: "Persönliche Informationen, Artikel, Adjektive und W-Fragen", en: "Personal Information, Articles, Adjectives and W-Questions" },
+    "A1-1.2": { assignment_id: "A1-1.2", chapter: "1.2", de: "Verbkonjugation im Präsens üben", en: "Present-Tense Verb Conjugation Practice" },
+    "A1-2": { assignment_id: "A1-2", chapter: "2", de: "Zahlen, Telefonnummern und Adressen", en: "Numbers, Phone Numbers and Addresses" },
+    "A1-1.3": { assignment_id: "A1-1.3", chapter: "1.3", de: "Sich vorstellen und Artikel üben", en: "Self-Introduction Practice with Articles" },
+    "A1-2.3": { assignment_id: "A1-2.3", chapter: "2.3", de: "Familie und Hobbys", en: "Family and Hobbies" },
+    "A1-3": { assignment_id: "A1-3", chapter: "3", de: "Nach dem Preis fragen und Vorlieben ausdrücken", en: "Asking About Prices and Preferences" },
+    "A1-4": { assignment_id: "A1-4", chapter: "4", de: "Länder und Sprachen", en: "Countries and Languages" },
+    "A1-5": { assignment_id: "A1-5", chapter: "5", de: "Nominativ und Akkusativ", en: "Nominative and Accusative Cases" },
+    "A1-6": { assignment_id: "A1-6", chapter: "6", de: "Gegenstände, Farben und Possessivartikel", en: "Objects, Colors and Possessive Articles" },
+    "A1-7": { assignment_id: "A1-7", chapter: "7", de: "Die Uhrzeit und der Tagesablauf", en: "Understanding Time and Daily Routines" },
+    "A1-8": { assignment_id: "A1-8", chapter: "8", de: "Die 24-Stunden-Uhr und Datum", en: "The 24 Hour Clock and Dates" },
+    "A1-3.5": { assignment_id: "A1-3.5", chapter: "3.5", de: "Wiederholung: Zahlen, Zeit und Preise", en: "Numbers, Time and Prices Revision" },
+    "A1-3.6": { assignment_id: "A1-3.6", chapter: "3.6", de: "Modalverben", en: "Modal Verbs" },
+    "A1-4.7": { assignment_id: "A1-4.7", chapter: "4.7", de: "Aufbau der Goethe-A1-Sprechprüfung", en: "Goethe A1 Speaking Exam Structure" },
+    "A1-9": { assignment_id: "A1-9", chapter: "9", de: "Essen und Verneinung", en: "Food and Negation" },
+    "A1-10": { assignment_id: "A1-10", chapter: "10", de: "Essen und Alltag", en: "Food and Daily Life" },
+    "A1-11": { assignment_id: "A1-11", chapter: "11", de: "Anweisungen und Wegbeschreibung – Imperativ mit Sie", en: "Instructions and Directions – Polite Sie Imperative" },
+    "A1-12.1": { assignment_id: "A1-12.1", chapter: "12.1", de: "Wechselpräpositionen und Dativpräpositionen", en: "Two-Way and Dative Prepositions" },
+    "A1-5.9": { assignment_id: "A1-5.9", chapter: "5.9", de: "Goethe A1 Sprechen Training", en: "Goethe A1 Speaking Confidence Lab" },
+    "A1-12.3": { assignment_id: "A1-12.3", chapter: "12.3", de: "Einführung ins Briefeschreiben", en: "Introduction to Letter Writing" },
+    "A1-13": { assignment_id: "A1-13", chapter: "13", de: "Wetter", en: "Weather" },
+    "A1-14.1": { assignment_id: "A1-14.1", chapter: "14.1", de: "Gesundheit und Körperteile", en: "Health and Body Parts" },
+    "A1-14.2": { assignment_id: "A1-14.2", chapter: "14.2", de: "Dativ und Akkusativ Verben", en: "Dative and Accusative Verbs" },
+    "A1-5.10": { assignment_id: "A1-5.10", chapter: "5.10", de: "Gründe mit weil und nützliche Redemittel", en: "Reasons with weil and Useful A1 Phrases" },
+  },
+  A2: {
+    "A2-1.1": { assignment_id: "A2-1.1", chapter: "1.1", de: "Small Talk", en: "Small Talk" },
+    "A2-1.2": { assignment_id: "A2-1.2", chapter: "1.2", de: "Personen beschreiben", en: "Describing People" },
+    "A2-1.3": { assignment_id: "A2-1.3", chapter: "1.3", de: "Dinge und Personen vergleichen", en: "Comparing Things and People" },
+    "A2-2.4": { assignment_id: "A2-2.4", chapter: "2.4", de: "Wo möchten wir uns treffen?", en: "Where Shall We Meet?" },
+    "A2-2.5": { assignment_id: "A2-2.5", chapter: "2.5", de: "Was machst du in deiner Freizeit?", en: "What Do You Do in Your Free Time?" },
+    "A2-3.6": { assignment_id: "A2-3.6", chapter: "3.6", de: "Möbel und Räume kennenlernen", en: "Furniture and Rooms" },
+    "A2-3.7": { assignment_id: "A2-3.7", chapter: "3.7", de: "Eine Wohnung suchen", en: "Looking for an Apartment" },
+    "A2-3.8": { assignment_id: "A2-3.8", chapter: "3.8", de: "Im Restaurant – bestellen und reagieren", en: "At the Restaurant – Ordering and Responding" },
+    "A2-4.9": { assignment_id: "A2-4.9", chapter: "4.9", de: "Urlaub", en: "Vacation" },
+    "A2-4.10": { assignment_id: "A2-4.10", chapter: "4.10", de: "Eine Stadt entdecken und etwas erleben", en: "Exploring a City and Enjoying the Day" },
+    "A2-4.11": { assignment_id: "A2-4.11", chapter: "4.11", de: "Verkehrsmittel vergleichen", en: "Comparing Transportation" },
+    "A2-5.12": { assignment_id: "A2-5.12", chapter: "5.12", de: "Mein Traumberuf", en: "My Dream Job" },
+    "A2-5.13": { assignment_id: "A2-5.13", chapter: "5.13", de: "Ein Vorstellungsgespräch", en: "A Job Interview" },
+    "A2-5.14": { assignment_id: "A2-5.14", chapter: "5.14", de: "Beruf und Karriere", en: "Career and Profession" },
+    "A2-6.15": { assignment_id: "A2-6.15", chapter: "6.15", de: "Mein Lieblingssport", en: "My Favorite Sport" },
+    "A2-6.16": { assignment_id: "A2-6.16", chapter: "6.16", de: "Wohlbefinden und Entspannung", en: "Well-being and Relaxation" },
+    "A2-6.17": { assignment_id: "A2-6.17", chapter: "6.17", de: "In die Apotheke gehen", en: "Going to the Pharmacy" },
+    "A2-7.18": { assignment_id: "A2-7.18", chapter: "7.18", de: "Die Bank anrufen", en: "Calling the Bank" },
+    "A2-7.19": { assignment_id: "A2-7.19", chapter: "7.19", de: "Einkaufen – wo und wie?", en: "Shopping – Where and How" },
+    "A2-7.20": { assignment_id: "A2-7.20", chapter: "7.20", de: "Reklamationssituationen", en: "Complaint Situations" },
+    "A2-8.21": { assignment_id: "A2-8.21", chapter: "8.21", de: "Ein Wochenende planen", en: "Planning a Weekend" },
+    "A2-8.22": { assignment_id: "A2-8.22", chapter: "8.22", de: "Die Woche planen", en: "Planning the Week" },
+    "A2-9.23": { assignment_id: "A2-9.23", chapter: "9.23", de: "Wie kommst du zur Schule oder zur Arbeit?", en: "How Do You Go to School or Work" },
+    "A2-9.24": { assignment_id: "A2-9.24", chapter: "9.24", de: "Einen Urlaub planen", en: "Planning a Vacation" },
+    "A2-9.25": { assignment_id: "A2-9.25", chapter: "9.25", de: "Tagesablauf", en: "Daily Routine" },
+    "A2-10.26": { assignment_id: "A2-10.26", chapter: "10.26", de: "Gefühle beschreiben", en: "Describing Feelings" },
+    "A2-10.27": { assignment_id: "A2-10.27", chapter: "10.27", de: "Digitale Kommunikation", en: "Digital Communication" },
+    "A2-10.28": { assignment_id: "A2-10.28", chapter: "10.28", de: "Über die Zukunft sprechen", en: "Talking About the Future" },
+  },
+  B1: {
+    "B1-1.1": { assignment_id: "B1-1.1", chapter: "1.1", de: "Traumwelten", en: "Dream Worlds" },
+    "B1-1.2": { assignment_id: "B1-1.2", chapter: "1.2", de: "Freunde fürs Leben", en: "Friends for Life" },
+    "B1-1.3": { assignment_id: "B1-1.3", chapter: "1.3", de: "Erfolgsgeschichten", en: "Success Stories" },
+    "B1-2.4": { assignment_id: "B1-2.4", chapter: "2.4", de: "Wohnung suchen", en: "Looking for an Apartment" },
+    "B1-2.5": { assignment_id: "B1-2.5", chapter: "2.5", de: "Der Besichtigungstermin", en: "Apartment Viewing Appointment" },
+    "B1-2.6": { assignment_id: "B1-2.6", chapter: "2.6", de: "Leben in der Stadt oder auf dem Land", en: "Living in the City or Countryside" },
+    "B1-3.7": { assignment_id: "B1-3.7", chapter: "3.7", de: "Fast Food vs Hausmannskost", en: "Fast Food vs Home Cooking" },
+    "B1-3.8": { assignment_id: "B1-3.8", chapter: "3.8", de: "Alles für die Gesundheit", en: "Everything for Health" },
+    "B1-3.9": { assignment_id: "B1-3.9", chapter: "3.9", de: "Work-Life-Balance im modernen Arbeitsumfeld", en: "Work-Life Balance in the Modern Workplace" },
+    "B1-4.10": { assignment_id: "B1-4.10", chapter: "4.10", de: "Digitale Auszeit und Selbstfürsorge", en: "Digital Detox and Self-care" },
+    "B1-4.11": { assignment_id: "B1-4.11", chapter: "4.11", de: "Teamspiele und kooperative Aktivitäten", en: "Team Games and Cooperative Activities" },
+    "B1-4.12": { assignment_id: "B1-4.12", chapter: "4.12", de: "Abenteuer in der Natur", en: "Adventures in Nature" },
+    "B1-4.13": { assignment_id: "B1-4.13", chapter: "4.13", de: "Eine Filmkritik schreiben", en: "Writing a Film Review" },
+    "B1-5.14": { assignment_id: "B1-5.14", chapter: "5.14", de: "Traditionelles vs digitales Lernen", en: "Traditional vs Digital Learning" },
+    "B1-5.15": { assignment_id: "B1-5.15", chapter: "5.15", de: "Medien und Arbeiten im Homeoffice", en: "Media and Working from Home" },
+    "B1-5.16": { assignment_id: "B1-5.16", chapter: "5.16", de: "Prüfungsangst und Stressbewältigung", en: "Exam Anxiety and Stress Management" },
+    "B1-5.17": { assignment_id: "B1-5.17", chapter: "5.17", de: "Wie lernt man am besten?", en: "How Do We Learn Best?" },
+    "B1-6.18": { assignment_id: "B1-6.18", chapter: "6.18", de: "Wege zum Wunschberuf", en: "Paths to Your Dream Job" },
+    "B1-6.19": { assignment_id: "B1-6.19", chapter: "6.19", de: "Das Vorstellungsgespräch", en: "The Job Interview" },
+    "B1-6.20": { assignment_id: "B1-6.20", chapter: "6.20", de: "Wie wird man …? (Ausbildung und Qualifikation)", en: "How Do You Become …? (Training and Qualification)" },
+    "B1-7.21": { assignment_id: "B1-7.21", chapter: "7.21", de: "Lebensformen heute – Familie und Wohngemeinschaft", en: "Modern Lifestyles – Family and Shared Living" },
+    "B1-7.22": { assignment_id: "B1-7.22", chapter: "7.22", de: "Was ist dir in einer Beziehung wichtig?", en: "What Is Important to You in a Relationship?" },
+    "B1-7.23": { assignment_id: "B1-7.23", chapter: "7.23", de: "Erstes Date – typische Situationen", en: "First Date – Typical Situations" },
+    "B1-8.24": { assignment_id: "B1-8.24", chapter: "8.24", de: "Konsum und Nachhaltigkeit", en: "Consumption and Sustainability" },
+    "B1-8.25": { assignment_id: "B1-8.25", chapter: "8.25", de: "Online einkaufen – Rechte und Risiken", en: "Online Shopping – Rights and Risks" },
+    "B1-9.26": { assignment_id: "B1-9.26", chapter: "9.26", de: "Reiseprobleme und Lösungen", en: "Travel Problems and Solutions" },
+    "B1-10.27": { assignment_id: "B1-10.27", chapter: "10.27", de: "Umweltfreundlich im Alltag", en: "Environmentally Friendly in Everyday Life" },
+    "B1-10.28": { assignment_id: "B1-10.28", chapter: "10.28", de: "Klimafreundlich leben", en: "Living in a Climate-Friendly Way" },
+  },
+  B2: {
+    "B2-1.1": { assignment_id: "B2-1.1", chapter: "1.1", de: "Persönliche Identität und Selbstverständnis", en: "Persönliche Identität und Selbstverständnis" },
+    "B2-1.2": { assignment_id: "B2-1.2", chapter: "1.2", de: "Beziehungen und Kommunikation", en: "Beziehungen und Kommunikation" },
+    "B2-1.3": { assignment_id: "B2-1.3", chapter: "1.3", de: "Öffentliches vs. Privates Leben", en: "Öffentliches vs. Privates Leben" },
+    "B2-1.4": { assignment_id: "B2-1.4", chapter: "1.4", de: "Beruf und Karriere", en: "Beruf und Karriere" },
+    "B2-2.5": { assignment_id: "B2-2.5", chapter: "2.5", de: "Bildung und Lernen", en: "Bildung und Lernen" },
+    "B2-2.6": { assignment_id: "B2-2.6", chapter: "2.6", de: "Kultur und Gesellschaft", en: "Kultur und Gesellschaft" },
+    "B2-2.7": { assignment_id: "B2-2.7", chapter: "2.7", de: "Medien und digitale Welt", en: "Medien und digitale Welt" },
+    "B2-2.8": { assignment_id: "B2-2.8", chapter: "2.8", de: "Wissenschaft und Technologie", en: "Wissenschaft und Technologie" },
+    "B2-3.9": { assignment_id: "B2-3.9", chapter: "3.9", de: "Politik und Gesellschaft", en: "Politik und Gesellschaft" },
+    "B2-3.10": { assignment_id: "B2-3.10", chapter: "3.10", de: "Wirtschaft und Finanzen", en: "Wirtschaft und Finanzen" },
+    "B2-3.11": { assignment_id: "B2-3.11", chapter: "3.11", de: "Umwelt und Nachhaltigkeit", en: "Umwelt und Nachhaltigkeit" },
+    "B2-3.12": { assignment_id: "B2-3.12", chapter: "3.12", de: "Gesundheit und Wohlbefinden", en: "Gesundheit und Wohlbefinden" },
+    "B2-4.13": { assignment_id: "B2-4.13", chapter: "4.13", de: "Ernährung und Lebensstil", en: "Ernährung und Lebensstil" },
+    "B2-4.14": { assignment_id: "B2-4.14", chapter: "4.14", de: "Reisen und Mobilität", en: "Reisen und Mobilität" },
+    "B2-4.15": { assignment_id: "B2-4.15", chapter: "4.15", de: "Wohnen und Lebensräume", en: "Wohnen und Lebensräume" },
+    "B2-4.16": { assignment_id: "B2-4.16", chapter: "4.16", de: "Freizeit, Hobbys und Interessen", en: "Freizeit, Hobbys und Interessen" },
+    "B2-5.17": { assignment_id: "B2-5.17", chapter: "5.17", de: "Feste und Traditionen", en: "Feste und Traditionen" },
+    "B2-5.18": { assignment_id: "B2-5.18", chapter: "5.18", de: "Werte und Normen", en: "Werte und Normen" },
+    "B2-5.19": { assignment_id: "B2-5.19", chapter: "5.19", de: "Migration und Integration", en: "Migration und Integration" },
+    "B2-5.20": { assignment_id: "B2-5.20", chapter: "5.20", de: "Diskriminierung und Gleichstellung", en: "Diskriminierung und Gleichstellung" },
+    "B2-6.21": { assignment_id: "B2-6.21", chapter: "6.21", de: "Recht und Ordnung", en: "Recht und Ordnung" },
+    "B2-6.22": { assignment_id: "B2-6.22", chapter: "6.22", de: "Konfliktmanagement", en: "Konfliktmanagement" },
+    "B2-6.23": { assignment_id: "B2-6.23", chapter: "6.23", de: "Globalisierung", en: "Globalisierung" },
+    "B2-6.24": { assignment_id: "B2-6.24", chapter: "6.24", de: "Zukunft und Innovation", en: "Zukunft und Innovation" },
+    "B2-7.25": { assignment_id: "B2-7.25", chapter: "7.25", de: "Kommunikation im Berufsleben", en: "Kommunikation im Berufsleben" },
+    "B2-7.26": { assignment_id: "B2-7.26", chapter: "7.26", de: "Wissenschaftliches Arbeiten", en: "Wissenschaftliches Arbeiten" },
+    "B2-7.27": { assignment_id: "B2-7.27", chapter: "7.27", de: "Zeitmanagement und Organisation", en: "Zeitmanagement und Organisation" },
+    "B2-7.28": { assignment_id: "B2-7.28", chapter: "7.28", de: "Zusammenfassung & Prüfungsvorbereitung", en: "Zusammenfassung & Prüfungsvorbereitung" },
+  },
+  C1: Object.fromEntries(
+    C1_CANONICAL_TITLES.map((title, index) => {
+      const day = index + 1;
+      const assignmentId = `C1 ${day}`;
+      return [assignmentId, { assignment_id: assignmentId, chapter: String(day), de: title, en: title }];
+    }),
+  ),
+};
+
+function dictionarySortValue(entry = {}) {
+  const id = String(entry.assignment_id || "").trim();
+  const chapter = String(entry.chapter || "").trim();
+  const sortable = chapter || id.replace(/^[A-Z]+-/i, "");
+  return sortable.split(/[^0-9A-Za-z]+/).flatMap((part) => {
+    if (!part) return [];
+    const number = Number(part);
+    return Number.isFinite(number) && /^\d+$/.test(part) ? [number] : [part.toUpperCase()];
+  });
+}
+
+export function compareCourseDictionaryEntries(left = {}, right = {}) {
+  const leftParts = dictionarySortValue(left);
+  const rightParts = dictionarySortValue(right);
+  const length = Math.max(leftParts.length, rightParts.length);
+
+  for (let index = 0; index < length; index += 1) {
+    const leftPart = leftParts[index];
+    const rightPart = rightParts[index];
+    if (leftPart == null) return -1;
+    if (rightPart == null) return 1;
+    if (leftPart === rightPart) continue;
+    if (typeof leftPart === "number" && typeof rightPart === "number") return leftPart - rightPart;
+    return String(leftPart).localeCompare(String(rightPart), undefined, { numeric: true });
+  }
+
+  return String(left.assignment_id || "").localeCompare(String(right.assignment_id || ""), undefined, { numeric: true });
+}
+
+function getAssignmentLevel(value) {
+  const normalized = String(value || "").trim().toUpperCase();
+  return normalized.match(/^([A-Z]\d)(?:[-\s]|$)/)?.[1] || "";
+}
+
+export function getCourseDictionaryEntry(assignmentId) {
+  const normalizedId = String(assignmentId || "").trim().toUpperCase();
+  const level = normalizedId.match(/^(A1|A2|B1|B2|C1|C2)(?=[\s-]|$)/i)?.[1]?.toUpperCase();
+  if (!level || !courseDictionary[level]) return null;
+  return Object.values(courseDictionary[level]).find((entry) =>
+    String(entry.assignment_id || "").trim().toUpperCase() === normalizedId,
+  ) || null;
+}
+
+export function getUnifiedTopicLabel(assignmentId, fallbackTopic = "") {
+  const entry = getCourseDictionaryEntry(assignmentId);
+  if (!entry) return fallbackTopic;
+  const level = String(assignmentId || "").trim().match(/^(A1|A2|B1|B2|C1|C2)(?=[\s-]|$)/i)?.[1]?.toUpperCase();
+  const title = level === "A1" ? entry.en : entry.de;
+  return `${entry.chapter}. ${title || entry.de || entry.en}`;
+}
+
+// Historical teaching lookups may read this archive; schedulers use courseDictionary.
+export const retiredCourseDictionary = {
+  A1: { "A1-12.2": { assignment_id: "A1-12.2", chapter: "12.2", de: "Berufe und Präpositionen", en: "Professions and Prepositions" } },
+};

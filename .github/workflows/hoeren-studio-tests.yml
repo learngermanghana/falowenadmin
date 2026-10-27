@@ -1,0 +1,43 @@
+name: Private Hören Studio checks
+on:
+  pull_request:
+    paths:
+      - "functions/hoerenStudioApi.js"
+      - "functions/hoerenCurriculumContext.js"
+      - "src/utils/hoerenCourseCatalog.js"
+      - "src/data/courseDictionary.js"
+      - "src/data/c2PresenterSlides.js"
+      - "tests/hoeren-course-catalog.test.js"
+      - "functions/index.js"
+      - "src/components/HoerenBatchPanel.jsx"
+      - "src/utils/hoerenExamBundle.js"
+      - "src/utils/hoerenExamBundleCache.js"
+      - "tests/hoeren-bundle-export.test.js"
+      - "src/pages/HoerenStudioPage.jsx"
+      - "src/pages/HoerenStudioPage.css"
+      - "src/services/hoerenStudioService.js"
+      - "src/utils/hoerenAudio.js"
+      - "src/utils/hoerenSoundscape.js"
+      - "src/utils/hoerenMp3.js"
+      - "tests/a1-12.1-hoeren-v3-and-soundscape.test.js"
+      - "functions/hoerenQuestions.js"
+      - "src/utils/hoerenQuestions.js"
+      - "tests/hoeren-question-publishing.test.js"
+      - "src/App.css"
+      - "src/App.jsx"
+      - "api/router.js"
+      - "tests/hoeren-studio.test.js"
+      - ".github/workflows/hoeren-studio-tests.yml"
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: node --check functions/hoerenStudioApi.js && node --check functions/hoerenQuestions.js && node --check functions/hoerenCurriculumContext.js && node --check functions/index.js
+      - run: node --test tests/hoeren-studio.test.js tests/hoeren-course-catalog.test.js tests/a1-12.1-hoeren-v3-and-soundscape.test.js tests/hoeren-question-publishing.test.js tests/hoeren-bundle-export.test.js
+      - run: npm run build

@@ -1,0 +1,71 @@
+export const A2_B1_SPEAKING_DIFFICULTY = Object.freeze({
+  "A2-1.1": { easy: 1, neutral: 3, difficult: 5 },
+  "A2-1.2": { easy: 1, neutral: 3, difficult: 4 },
+  "A2-1.3": { easy: 0, neutral: 2, difficult: 3 },
+  "A2-2.4": { easy: 0, neutral: 1, difficult: 4 },
+  "A2-2.5": { easy: 0, neutral: 1, difficult: 4 },
+  "A2-3.6": { easy: 0, neutral: 1, difficult: 2 },
+  "A2-3.7": { easy: 0, neutral: 2, difficult: 3 },
+  "A2-3.8": { easy: 0, neutral: 1, difficult: 2 },
+  "A2-4.9": { easy: 0, neutral: 1, difficult: 4 },
+  "A2-4.10": { easy: 0, neutral: 1, difficult: 3 },
+  "A2-4.11": { easy: 1, neutral: 0, difficult: 4 },
+  "A2-5.12": { easy: 0, neutral: 2, difficult: 4 },
+  "A2-5.13": { easy: 0, neutral: 2, difficult: 4 },
+  "A2-5.14": { easy: 0, neutral: 2, difficult: 3 },
+  "A2-6.15": { easy: 0, neutral: 1, difficult: 4 },
+  "A2-6.16": { easy: 0, neutral: 1, difficult: 3 },
+  "A2-6.17": { easy: 0, neutral: 1, difficult: 4 },
+  "A2-7.18": { easy: 0, neutral: 1, difficult: 4 },
+  "A2-7.19": { easy: 1, neutral: 0, difficult: 3 },
+  "A2-7.20": { easy: 0, neutral: 1, difficult: 4 },
+  "A2-8.21": { easy: 0, neutral: 2, difficult: 4 },
+  "A2-8.22": { easy: 1, neutral: 3, difficult: 4 },
+  "A2-9.23": { easy: 1, neutral: 0, difficult: 2 },
+  "A2-9.24": { easy: 0, neutral: 2, difficult: 4 },
+  "A2-9.25": { easy: 0, neutral: 1, difficult: 4 },
+  "A2-10.26": { easy: 1, neutral: 0, difficult: 2 },
+  "A2-10.27": { easy: 0, neutral: 1, difficult: 3 },
+  "A2-10.28": { easy: 0, neutral: 2, difficult: 3 },
+
+  "B1-1.1": { easy: 0, neutral: 2, difficult: 4 },
+  "B1-1.2": { easy: 0, neutral: 3, difficult: 4 },
+  "B1-1.3": { easy: 0, neutral: 2, difficult: 3 },
+  "B1-2.4": { easy: 1, neutral: 2, difficult: 4 },
+  "B1-2.5": { easy: 0, neutral: 2, difficult: 3 },
+  "B1-2.6": { easy: 1, neutral: 3, difficult: 4 },
+  "B1-3.7": { easy: 0, neutral: 2, difficult: 3 },
+  "B1-3.8": { easy: 0, neutral: 1, difficult: 4 },
+  "B1-3.9": { easy: 0, neutral: 2, difficult: 4 },
+  "B1-4.10": { easy: 1, neutral: 2, difficult: 3 },
+  "B1-4.11": { easy: 1, neutral: 2, difficult: 3 },
+  "B1-4.12": { easy: 0, neutral: 2, difficult: 3 },
+  "B1-4.13": { easy: 0, neutral: 1, difficult: 3 },
+  "B1-5.14": { easy: 1, neutral: 2, difficult: 3 },
+  "B1-5.15": { easy: 0, neutral: 1, difficult: 2 },
+  "B1-5.16": { easy: 1, neutral: 2, difficult: 4 },
+  "B1-5.17": { easy: 0, neutral: 2, difficult: 4 },
+  "B1-6.18": { easy: 0, neutral: 1, difficult: 4 },
+  "B1-6.19": { easy: 0, neutral: 2, difficult: 3 },
+  "B1-6.20": { easy: 1, neutral: 0, difficult: 3 },
+  "B1-7.21": { easy: 0, neutral: 2, difficult: 3 },
+  "B1-7.22": { easy: 0, neutral: 2, difficult: 4 },
+  "B1-7.23": { easy: 0, neutral: 1, difficult: 2 },
+  "B1-8.24": { easy: 0, neutral: 1, difficult: 3 },
+  "B1-8.25": { easy: 0, neutral: 1, difficult: 4 },
+  "B1-9.26": { easy: 0, neutral: 1, difficult: 4 },
+  "B1-10.27": { easy: 0, neutral: 1, difficult: 4 },
+  "B1-10.28": { easy: 0, neutral: 1, difficult: 2 },
+});
+
+export const SPEAKING_DIFFICULTY_LEVELS = Object.freeze(["Easy", "Neutral", "Difficult"]);
+
+export function getSpeakingDifficultySelection(assignmentId = "") {
+  const key = String(assignmentId || "").trim().toUpperCase();
+  const config = A2_B1_SPEAKING_DIFFICULTY[key];
+  if (!config) return null;
+  return {
+    labels: SPEAKING_DIFFICULTY_LEVELS,
+    indexes: [config.easy, config.neutral, config.difficult],
+  };
+}

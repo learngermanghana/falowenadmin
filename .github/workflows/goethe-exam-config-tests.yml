@@ -1,0 +1,48 @@
+name: Goethe Exam Config Tests
+
+on:
+  pull_request:
+    paths:
+      - 'functions/goetheExamConfig.js'
+      - 'scripts/patchGoetheExamConfig.mjs'
+      - 'src/pages/GoetheExamConfigPage.jsx'
+      - 'src/services/goetheExamConfigService.js'
+      - 'src/App.jsx'
+      - 'tests/goethe-exam-config.test.js'
+      - 'firebase.json'
+      - '.github/workflows/deploy-firebase.yml'
+      - '.github/workflows/goethe-exam-config-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'functions/goetheExamConfig.js'
+      - 'scripts/patchGoetheExamConfig.mjs'
+      - 'src/pages/GoetheExamConfigPage.jsx'
+      - 'src/services/goetheExamConfigService.js'
+      - 'src/App.jsx'
+      - 'tests/goethe-exam-config.test.js'
+      - 'firebase.json'
+      - '.github/workflows/deploy-firebase.yml'
+      - '.github/workflows/goethe-exam-config-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Validate and patch Firebase routes
+        run: |
+          node --check functions/goetheExamConfig.js
+          node --check scripts/patchGoetheExamConfig.mjs
+          node scripts/patchGoetheExamConfig.mjs
+          node --check functions/index.js
+      - name: Test shared Goethe configuration
+        run: node --test tests/goethe-exam-config.test.js
+      - name: Build dashboard
+        run: npm run build

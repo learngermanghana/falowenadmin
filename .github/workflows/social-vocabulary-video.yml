@@ -1,0 +1,38 @@
+name: Social vocabulary animation and export checks
+
+on:
+  pull_request:
+    paths:
+      - "src/components/SocialVocabularyCreator.jsx"
+      - "src/components/SocialVocabularyVideoCreator.jsx"
+      - "src/components/SocialVocabularyVideoCreator.css"
+      - "src/utils/socialVocabularyVideo.js"
+      - "src/utils/socialMp4Export.js"
+      - "tests/social-mp4-export.test.js"
+      - "tests/social-vocabulary-video.test.js"
+      - ".github/workflows/social-vocabulary-video.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/components/SocialVocabularyCreator.jsx"
+      - "src/components/SocialVocabularyVideoCreator.jsx"
+      - "src/components/SocialVocabularyVideoCreator.css"
+      - "src/utils/socialVocabularyVideo.js"
+      - "src/utils/socialMp4Export.js"
+      - "tests/social-mp4-export.test.js"
+      - "tests/social-vocabulary-video.test.js"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Test animation and local export contracts
+        run: node --test tests/social-vocabulary-video.test.js tests/social-mp4-export.test.js
+      - name: Check bundle for mobile preview and local recording
+        run: |
+          npm ci --ignore-scripts
+          npx vite build

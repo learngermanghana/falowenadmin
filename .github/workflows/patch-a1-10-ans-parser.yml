@@ -1,0 +1,39 @@
+name: Patch A1-10 deterministic Ans parser
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/patch-a1-10-ans-parser.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Apply parser patch and edge-case fixes
+        run: |
+          python scripts/patchA110AnsDeterministicParser.py
+          python scripts/patchA110AnsDeterministicParserFollowup.py
+          sed -i 's/expected: "R"/expected: "WAHR"/g; s/expected: "F"/expected: "FALSCH"/g' tests/a1-10-ans-prefix-parser.test.js
+
+      - name: Run deterministic objective parser tests
+        run: |
+          node --test \
+            tests/a1-10-ans-prefix-parser.test.js \
+            tests/compact-objective-paste.test.js \
+            tests/auto-marking.test.js
+
+      - name: Commit parser fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/utils/autoMarking.js tests/a1-10-ans-prefix-parser.test.js
+          git commit -m "Fix A1-10 Ans-prefixed deterministic parsing" || exit 0
+          git push
