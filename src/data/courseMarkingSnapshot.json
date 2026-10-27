@@ -1886,10 +1886,13 @@
     "B1 9.26 Reiseprobleme und Lösungen": {
       "answers": {
         "teil3": {
-          "Answer1": "A) Flug-Recht24 – Kofferverlust und Entschädigung",
-          "Answer2": "C) EuroPannenschutz – Autopanne in Europa",
-          "Answer3": "B) ZugPlus App – Entschädigung bei Zugverspätung",
-          "Answer4": "E) SicherReisen – Reiserücktritt wegen Krankheit"
+          "Answer1": "A) Alpen-Trekking pur!",
+          "Answer2": "B) Schwimmschule Delphin",
+          "Answer3": "X) Keine passende Anzeige",
+          "Answer4": "D) Gratis-Kleinanzeigen-Portal",
+          "Answer5": "E) Hausgeräte-Notdienst 24/7",
+          "Answer6": "F) Spanisch am Abend",
+          "Answer7": "H) Hunde-Tagesbetreuung „Bello & Co.“"
         },
         "teil4": {
           "Answer1": "A) Richtig",
@@ -1902,7 +1905,43 @@
       "answer_url": "https://docs.google.com/spreadsheets/d/1o3axSLfa47e16kvcL2zJP5FdtYXTbOwYAEzQ4Xen1VI/gviz/tq?tqx=out:html&sheet=Key",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1o3axSLfa47e16kvcL2zJP5FdtYXTbOwYAEzQ4Xen1VI/edit",
       "format": "objective",
-      "assignment_id": "B1-9.26"
+      "assignment_id": "B1-9.26",
+      "expectedParts": [
+        "teil2",
+        "teil3",
+        "teil4"
+      ],
+      "writingParts": [
+        "teil2"
+      ],
+      "aiGradedParts": [
+        "teil2"
+      ],
+      "referenceAnswerParts": [
+        "teil3",
+        "teil4"
+      ],
+      "answerLayout": "multipart",
+      "partGrading": {
+        "teil2": {
+          "label": "Teil 2 Schreiben",
+          "hasReferenceAnswers": false,
+          "gradingMode": "ai_written_response",
+          "instruction": "Grade a 40–50-word FORMAL German email to TraumReisen GmbH about a 5-day city trip to Vienna. Assess three required points: (1) express interest in the Vienna trip, (2) ask about exact travel dates, hotel category AND excursions, (3) request a binding offer or booking documents. Require appropriate formal salutation and closing. Do NOT grade as an opinion essay, forum reply or informal personal letter. Assess completion, clarity, grammar, vocabulary and register."
+        },
+        "teil3": {
+          "label": "Teil 3 Lesen",
+          "hasReferenceAnswers": true,
+          "gradingMode": "answer_key",
+          "instruction": "Mark exactly seven Anzeigen assignments: 1 A (Alpen-Trekking), 2 B (Schwimmschule), 3 X (no suitable ad because minimum rental is 6 months), 4 D (free classifieds), 5 E (weekend appliances repair), 6 F (Spanish course from 20:15), 7 H (dog daycare). Accept X as the no-match letter; ad g is an overnight holiday kennel, not workday care."
+        },
+        "teil4": {
+          "label": "Teil 4 Hören",
+          "hasReferenceAnswers": true,
+          "gradingMode": "answer_key",
+          "instruction": "Mark five Richtig/Falsch statements A/B/B/B/A from the supplied travel-problems listening key and the audio object b1/day-26/day-26.mp3."
+        }
+      }
     },
     "B1 10.27 Umweltfreundlich im Alltag": {
       "answers": {
@@ -2559,14 +2598,14 @@
     },
     "B1-9.26": {
       "assignmentKey": "B1-9.26",
-      "title": "Goethe-Zertifikat B1 · Schreiben Teil 2 · Reiseprobleme und Lösungen",
-      "situation": "Arbeitszeit: ca. 25 Minuten. Schreiben Sie einen Forumsbeitrag von ca. 80 Wörtern. Sie haben im Internet einen Beitrag von Markus zum Thema „Reiseprobleme und Lösungen“ gelesen. Reagieren Sie darauf.\n\n„Letzten Sommer hatte mein Zug drei Stunden Verspätung und mein Koffer ist am Flughafen verloren gegangen. Reisen kann heutzutage wirklich stressig sein! Ich finde, man sollte lieber öfter zu Hause bleiben oder nur kurze Ausflüge in der Region machen, anstatt weit weg zu fahren.“",
+      "title": "Goethe B1 Schreiben Teil 2 · Formelle E-Mail – Städtereise nach Wien",
+      "situation": "Sie haben ein Angebot für eine 5-tägige Städtereise nach Wien bei TraumReisen GmbH gesehen. Schreiben Sie eine formelle E-Mail an den Kundenservice (ca. 40–50 Wörter).",
       "points": [
-        "Meinung: Äußern Sie Ihre Meinung zu Markus' Aussage.",
-        "Erfahrung/Gründe: Berichten Sie von eigenen Erfahrungen mit Reiseproblemen oder nennen Sie Gründe dafür.",
-        "Lösungen: Machen Sie Vorschläge, wie man Stress oder Probleme beim Reisen vermeiden oder lösen kann."
+        "Interesse an der Städtereise nach Wien angeben.",
+        "Nach genauen Reisedaten, Hotelkategorie und Ausflügen fragen.",
+        "Um Zusendung eines verbindlichen Angebots bitten."
       ],
-      "submissionNote": ""
+      "submissionNote": "Schreiben Sie ca. 40–50 Wörter mit formeller Anrede und Gruß."
     },
     "B1-10.27": {
       "assignmentKey": "B1-10.27",
