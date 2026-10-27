@@ -8,7 +8,7 @@ export function MusicVideoStage({ music }) {
   return (
     <section className="music-teaching-video" aria-label="Musik im Unterricht">
       <header className="music-teaching-heading">
-        <span>B1 · MUSIK HÖREN</span>
+        <span>{music.level || "B1"} · MUSIK HÖREN</span>
         <h1>{music.title}</h1>
         <p>Hört das Lied und überlegt: <strong>{music.introQuestion}</strong></p>
       </header>

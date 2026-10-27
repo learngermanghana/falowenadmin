@@ -393,6 +393,18 @@ ENTRIES["A2-6.17"].listening = {
   previewWords: ["die Lutschtabletten", "die Dosierungsangaben", "der Kassenbon"],
 };
 
+// A2 Day 18 follows B1 Day 25: YouTube is an unscored slide-2 music
+// introduction; the verified R2 bank telephone recording stays on slide 3.
+ENTRIES["A2-7.18"].musicIntro = {
+  level: "A2",
+  mediaType: "music",
+  youtubeId: "pXAxzMMXHoE",
+  title: "Meine Karte ist gesperrt! · Die Bank anrufen",
+  introQuestion: "Was macht Amir, als seine Bankkarte gesperrt ist?",
+  nextStep: "Weiter zur Hören-Aufgabe „Die Bank anrufen · Hördetektiv“ mit der bestehenden Audioaufnahme. Das Lied ist nur ein Einstieg; keine zusätzlichen Testfragen.",
+  studentPurpose: "Höre Amirs Geschichte. Wie erklärt er das Problem und welche Fragen stellt er der Bank?",
+  teacherPurpose: "Spiele das YouTube-Lyrics-Video als Einstieg. Lass die Lernenden den Grund des Anrufs und eine höfliche Frage nennen. Danach folgt das bestehende Hören aus Cloudflare R2.",
+};
 ENTRIES["A2-7.18"].listening = A2_DAY18_BANK_LISTENING;
 ENTRIES["A2-7.20"].listening = A2_DAY20_LISTENING;
 // Music uses the same Hördetektiv question/reveal flow, not the scored workbook Hören.
