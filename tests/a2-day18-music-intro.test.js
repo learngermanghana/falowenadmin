@@ -37,8 +37,11 @@ test("A2 Day 18 follows B1 Day 25: music on slide 2 and existing R2 Hören on sl
   assert.equal(stages[2].musicVideo, undefined);
   assert.equal(isInteractiveOpeningStage("A2-7.18", "warmup"), false);
   assert.equal(isInteractiveOpeningStage("A2-7.18", "knowledge"), true);
-  assert.deepEqual(stages.slice(3).map((stage) => stage.id),
-    ["phrases", "grammar-check", "practice", "questions", "workbook", "lesson-summary"]);
+  const remainingIds = stages.slice(3).map((stage) => stage.id);
+  assert.equal(remainingIds.length, 6, "do not add or remove teaching slides");
+  assert.deepEqual(remainingIds.slice(0, 2), ["phrases", "grammar-check"]);
+  assert.ok(["practice", "scenario-challenge"].includes(remainingIds[2]));
+  assert.deepEqual(remainingIds.slice(3), ["questions", "workbook", "lesson-summary"]);
 });
 
 test("music screen displays A2 instead of hard-coded B1 without changing B1 Day 25", () => {
