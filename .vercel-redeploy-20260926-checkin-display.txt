@@ -1,1 +1,0 @@
-Production redeploy trigger for CheckinDisplayPage effectiveAssignmentId initialization fix. Triggered 2026-09-26.

@@ -1,1 +1,0 @@
-Production redeploy trigger for PR #640: A1 Presenter minimum 10-question pool. Triggered 2026-09-09.
