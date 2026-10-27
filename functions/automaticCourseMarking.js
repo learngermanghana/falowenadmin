@@ -4,7 +4,7 @@ const { withMarkingTransport } = require('./automaticMarkingContext');
 const { referenceVersionProblem, scoreProblems, isTransientMarkingError } = require('./markingReliability');
 const RESULTS_URL = 'https://www.falowen.app/campus/results';
 // These mixed workbooks need an authenticated, server-owned speaking receipt.
-const A1_SPEAKING_REVIEW_ASSIGNMENTS = new Set(['A1-2', 'A1-4', 'A1-8', 'A1-11']);
+const A1_SPEAKING_REVIEW_ASSIGNMENTS = new Set(['A1-2', 'A1-4', 'A1-11']);
 async function verifiedSpeakingAssessment(db, text, studentId, assignmentKey) {
   const matches = [...text.matchAll(/^Verified speaking assessment: ([A-Za-z0-9_-]{1,128})\s*$/gm)];
   if (matches.length !== 1) return null;
