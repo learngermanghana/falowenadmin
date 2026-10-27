@@ -508,7 +508,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
     assignmentId: "B1-9.26",
     title: "B1 Day 26 · Reiseprobleme und Lösungen",
     topic: "9.26 Reiseprobleme und Lösungen",
-    objective: "Students discuss solutions to travel problems, compare five travel-help adverts, and respond to Markus with an approximately 80-word forum opinion.",
+    objective: "Students practise travel problem-solving, write a 40–50-word formal Vienna city-trip inquiry to TraumReisen GmbH, and match seven people to eight advertisements.",
     estimatedDuration: "45–60 minutes",
     warmupQuestionsDe: [
       "Welches Reiseproblem hast du schon erlebt?",
@@ -555,8 +555,8 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
     ],
     teacherNotesEn: [
       "Day 26 has no day-specific deep grammar page. Use the workbook's functional conditionals with wenn/falls, Konjunktiv II with würden/könnten and advice with sollten.",
-      "Teil 2 is a REQUIRED approximately 80-word online forum reply to Markus: respond to his opinion on avoiding distant travel, give an experience or reasons, and propose practical solutions. It is not a Max/Lisa letter.",
-      "Teil 3 is REQUIRED matching: four travel scenarios to five adverts (A–E, or 0 if none). The answers are 1A, 2C, 3B, 4E.",
+      "Teil 2 is a REQUIRED formal 40–50-word email to TraumReisen GmbH expressing interest in a five-day Vienna trip, requesting exact dates, hotel category and excursions, and asking for a binding offer. Use formal greeting and closing.",
+      "Teil 3 is REQUIRED matching: seven persons to eight adverts (a–h). For one person there is no match; select X. Verified key: 1A, 2B, 3X, 4D, 5E, 6F, 7H. Do not show the key to students.",
       "Teil 4 is REQUIRED: five Richtig/Falsch questions from b1/day-26/day-26.mp3; answers Richtig, Falsch, Falsch, Falsch, Richtig.",
       "All three graded parts must be submitted: Schreiben, Lesen and Hören, with ten minutes per graded workbook tab on the shared timer.",
     ],
@@ -565,26 +565,26 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       { phase: "Conditional practice", detailEn: "10 min: build wenn/falls clauses with würden, könnten and sollten." },
       { phase: "Service language", detailEn: "8 min: practise asking for help, rebooking, refund and emergency information politely." },
       { phase: "Travel plan", detailEn: "11 min: pairs plan destination, transport, two risks and responses." },
-      { phase: "Workbook bridge", detailEn: "8 min: outline a reply to Markus, preview the four travel-help adverts and introduce the five Richtig/Falsch listening items." },
+      { phase: "Workbook bridge", detailEn: "8 min: practise the formal Vienna inquiry, preview seven situations and eight Anzeigen, then introduce the five Richtig/Falsch listening items." },
     ],
     wrapUpTaskDe: "Beschreibe ein Reiseproblem und zwei Lösungen. Nutze einmal wenn oder falls, einmal könnten/würden und einmal sollten.",
     workbookConnection: workbookConnection(26, [
       { label: "Grammar", detailEn: "No separate deep grammar page. Functional focus from the workbook: wenn/falls conditions, würden/könnten for hypothetical solutions, sollten for advice, dass for priorities and weil for reasons." },
       { label: "Teil 1 · Sprechen", detailEn: "Plan a trip and discuss possible delays, lost luggage, hotel/reservation issues, missing documents, illness and practical solutions. Practice only." },
-      { label: "Teil 2 · Schreiben", detailEn: "REQUIRED AI-MARKED: about 80-word forum reply to Markus on travel stress, personal experiences/reasons and prevention or solutions." },
-      { label: "Teil 3 · Lesen", detailEn: "REQUIRED OBJECTIVE-MARKED: four situation-to-advert matching answers A, C, B, E (0 available but unused)." },
+      { label: "Teil 2 · Schreiben", detailEn: "REQUIRED AI-MARKED: formal 40–50-word email to TraumReisen GmbH about the five-day Vienna trip. Express interest, request travel dates, hotel category and excursions, and ask for a binding offer." },
+      { label: "Teil 3 · Lesen", detailEn: "REQUIRED OBJECTIVE-MARKED: seven person-to-advert matching answers A, B, X, D, E, F, H across eight Anzeigen." },
       { label: "Teil 4 · Hören", detailEn: "REQUIRED OBJECTIVE-MARKED: five Richtig/Falsch items using b1/day-26/day-26.mp3; key A B B B A." },
     ], {
       grammarUrl: null,
-      subtitle: "Required submissions: Teil 2 · Schreiben (Markus forum opinion), Teil 3 · Lesen (four advertisement matches) and Teil 4 · Hören (five statements using the Day 26 MP3).",
+      subtitle: "Required submissions: Teil 2 · Schreiben (formal Vienna email, 40–50 words), Teil 3 · Lesen (seven Anzeigen matches including X) and Teil 4 · Hören (five statements using the Day 26 MP3).",
     }),
     teacherSupport: {
-      lessonOverviewEn: "Day 26 teaches conditional travel problem-solving with a scored forum contribution, four advertisement matches and five listening questions.",
+      lessonOverviewEn: "Day 26 teaches conditional travel problem-solving with a formal Vienna trip inquiry, seven Anzeigen matches and five listening questions.",
       grammarFocusEn: [
         "wenn and falls introduce conditions with verb-final order.",
         "würden and könnten express hypothetical or polite solutions.",
         "sollten gives practical advice; weil explains why a preparation step is useful.",
-        "A forum response needs a clear personal position, an experience or reasons, and practical travel solutions, not letter greetings.",
+        "A formal inquiry needs a courteous greeting, specific travel questions, a binding-offer request and a formal closing.",
       ],
       modelExamplesDe: [
         "Wenn unser Flug ausfällt, würden wir den nächsten Flug buchen.",
@@ -595,8 +595,8 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       commonMistakesEn: [
         "Using main-clause word order after wenn/falls.",
         "Using würden plus a conjugated verb instead of würden + infinitive.",
-        "Writing a personal letter to Max/Lisa instead of responding to Markus in the forum.",
-        "Omitting one of four advertisement matches or any of the five scored listening statements.",
+        "Writing an informal letter or forum opinion instead of a formal inquiry to TraumReisen GmbH.",
+        "Omitting one of seven advertisement matches, choosing c for the three-month rental despite its six-month minimum, or omitting any of the five listening statements.",
       ],
     },
   },
