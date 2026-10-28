@@ -1,8 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getReusableSongDraft } from '../data/reusableMusicSongbook.js';
 import { getReusableMusicQuestions } from '../data/reusableMusicQuestions.js';
 import { getCuratedMusicByAssignment } from '../data/curatedLessonMusic.js';
 import './PublishedSongLessonStage.css';
+import './LessonSongStage.css';
+import LessonSongLyrics from './LessonSongLyrics.jsx';
+import SongTimingEditor from './SongTimingEditor.jsx';
+import useSongTiming from '../hooks/useSongTiming.js';
 
 // This is a teacher-led, unscored song activity. The separately graded
 // coursebook/Goethe Hören and private A2 Day 18 bank telephone recording
@@ -11,13 +15,18 @@ export default function PublishedSongLessonStage({ assignmentKey, onExit = null,
   const song = getReusableSongDraft(assignmentKey);
   const bank = getReusableMusicQuestions(assignmentKey);
   const recording = getCuratedMusicByAssignment(assignmentKey);
+  const audio = useRef(null);
+  const [time, setTime] = useState(0);
+  const [follow, setFollow] = useState(true);
+  const timedSong = song && recording ? {...song, id:recording.trackId, objectKey:recording.objectKey} : null;
+  const [cues, saveCues] = useSongTiming(timedSong);
   const [view, setView] = useState('listen');
   const [questionIndex, setQuestionIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [selectedOption, setSelectedOption] = useState(-1);
   const [audioError, setAudioError] = useState('');
   useEffect(() => {
-    setView('listen'); setQuestionIndex(0); setSelectedOption(-1); setShowAnswer(false); setAudioError('');
+    setView('listen'); setQuestionIndex(0); setSelectedOption(-1); setShowAnswer(false); setAudioError(''); setTime(0);
   }, [assignmentKey]);
 
   if (!song || !bank || !recording) return null;
@@ -38,7 +47,7 @@ export default function PublishedSongLessonStage({ assignmentKey, onExit = null,
       </div>
       <div className="published-song-lesson__player">
         <div><strong>♫ Lied anhören</strong><small>Das Lernlied aus Cloudflare R2 · Keine Goethe-Hörprüfung</small></div>
-        <audio controls preload="none" src={recording.audioUrl} onError={() => setAudioError('Diese Aufnahme konnte nicht geladen werden. Bitte die R2-Datei und den Falowen-Musiklink prüfen.')} aria-label={song.title}/>
+        <audio key={recording.objectKey} ref={audio} onTimeUpdate={e=>setTime(e.currentTarget.currentTime)} onSeeked={e=>setTime(e.currentTarget.currentTime)} onEnded={()=>setTime(-1)} controls preload="none" src={recording.audioUrl} onError={() => setAudioError('Diese Aufnahme konnte nicht geladen werden. Bitte die R2-Datei und den Falowen-Musiklink prüfen.')} aria-label={song.title}/>
         <a href={musicLink} target="_blank" rel="noopener noreferrer">In Falowen Music öffnen</a>
         {audioError && <p className="published-song-lesson__error" role="alert">{audioError}</p>}
       </div>
@@ -56,7 +65,10 @@ export default function PublishedSongLessonStage({ assignmentKey, onExit = null,
       {view==='lyrics' && <div className="published-song-lesson__section">
         <h3>Liedtext · {song.title}</h3>
         <p>Lies mit und achte auf die wichtigen Ausdrücke aus Kapitel {song.assignmentKey}.</p>
-        <div className="published-song-lesson__lyrics" lang="de">{song.lyrics.split(/\n\n+/).map((part,i) => <p key={i}>{part.replace(/^\[[^\]]+\]\n?/,'')}</p>)}</div>
+        <label><input type="checkbox" checked={follow} onChange={e=>setFollow(e.target.checked)}/> Mitlesen folgen</label>
+        <LessonSongLyrics song={timedSong} cues={cues} time={time} onSeek={seconds=>{if(audio.current){audio.current.currentTime=seconds;setTime(seconds);}}} follow={follow}/>
+        <SongTimingEditor song={timedSong} audio={audio} cues={cues} onSave={saveCues}/>
+
         <button type="button" onClick={()=>{setView('questions');setQuestionIndex(0);setSelectedOption(-1);setShowAnswer(false);}}>Weiter · Fragen beantworten</button>
       </div>}
       {view==='questions' && <div className="published-song-lesson__section published-song-lesson__quiz">

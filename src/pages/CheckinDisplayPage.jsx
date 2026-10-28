@@ -1,7 +1,7 @@
 import { getLessonSong } from "../data/a1Day22Music.js";
 import { getCuratedMusicForSession } from "../data/curatedLessonMusic.js";
 import { prepareLessonSong } from "../services/lessonSongService.js";
-import { readSongCues } from "../utils/songLyrics.js";
+import useSongTiming from "../hooks/useSongTiming.js";
 import LessonSongLyrics from "../components/LessonSongLyrics.jsx";
 import "../components/LessonSongStage.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -738,7 +738,7 @@ export default function CheckinDisplayPage() {
     level: waitingClassLevel, day: presenterCurriculumDay, assignmentKey: effectiveAssignmentId,
   });
   const [songPosition, setSongPosition] = useState(0);
-  const songCues = lessonSong ? readSongCues(lessonSong) : [];
+  const [songCues] = useSongTiming(lessonSong);
   const [publishedDayMusic, setPublishedDayMusic] = useState(null);
   const musicSessionKey = `${String(waitingClassLevel || "").toUpperCase()}:${presenterCurriculumDay}`;
   useEffect(() => {
