@@ -40,12 +40,17 @@ export default function AutomaticMarkingReview() {
     setBusy(true); setError(''); setMessage(''); setDetail(null);
     try {
       const next = await openAutomaticMarking(row);
-      setDetail(next); setEditing(false); setScore(String(next.score?.score ?? row.finalScore ?? row.result?.finalScore ?? row.result?.score ?? ''));
-      setFeedback(next.score?.comments || row.feedback || row.result?.feedback || ''); setReason('');
+      setDetail(next); setEditing(false);
+      // For retakes the editor must show the NEW AI grade, not the old failed score.
+      setScore(String(next.priorFailedAttempt ? (row.finalScore ?? row.result?.finalScore ?? row.result?.score ?? '') : (next.score?.score ?? row.finalScore ?? row.result?.finalScore ?? row.result?.score ?? '')));
+      setFeedback(next.priorFailedAttempt ? (row.feedback || row.result?.feedback || '') : (next.score?.comments || row.feedback || row.result?.feedback || ''));
+      setReason('');
     } catch (err) { setError(err.message); } finally { setBusy(false); }
   }
   async function save(event) {
-    event.preventDefault(); setBusy(true); setError(''); setMessage('');
+    event.preventDefault();
+    if (detail?.priorFailedAttempt && !window.confirm(`Replace this student's previous failed score of ${detail.score?.score}/100 with ${score}/100 for the new attempt? The original result will remain in marking history.`)) return;
+    setBusy(true); setError(''); setMessage('');
     try {
       await saveAutomaticMarkingReview(detail, { score, feedback, reason });
       setDetail(null);
@@ -54,6 +59,7 @@ export default function AutomaticMarkingReview() {
     } catch (err) { setError(err.message); } finally { setBusy(false); }
   }
   async function approveResult() {
+    if (detail?.priorFailedAttempt && !window.confirm(`Approve the new AI result (${detail.row.finalScore ?? detail.row.result?.finalScore ?? detail.row.result?.score}/100) in place of the previous failed score (${detail.score?.score}/100)? Both attempts will remain in history.`)) return;
     setBusy(true); setError(''); setMessage('');
     try {
       await saveAutomaticMarkingReview(detail, { approve: true });
@@ -126,6 +132,10 @@ export default function AutomaticMarkingReview() {
     {page.hasMore && <button type="button" disabled={busy} onClick={() => load(true)}>Load more</button>}
     {detail && <article style={{ marginTop: 24 }}>
       <p><strong>Status: {automaticPublicationLabel(detail.row)}</strong></p>
+      {detail.priorFailedAttempt && <p role="status" className="marking-retake-notice">
+        <strong>New attempt after an earlier failure:</strong> Previous saved score {detail.score?.score}/100 · New AI result {detail.row.finalScore ?? detail.row.result?.finalScore ?? detail.row.result?.score ?? 'not available'}/100.
+        Approve the new AI result or enter a tutor correction below. The previous score and submission will remain in the audit history.
+      </p>}
       {!isAutomaticResultPublished(detail.row) && <section aria-label="Review reasons"><h3>Why review is needed</h3>
         <ul>{automaticReviewReasons(detail).map(item => <li key={item}>{item}</li>)}</ul>
       </section>}

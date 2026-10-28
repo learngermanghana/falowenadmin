@@ -364,7 +364,7 @@ for (const scenario of ['newer-failed', 'newer-tutor-failed', 'passed', 'older',
     await worker(event);
     await worker(event);
     assert.equal(calls, 1);
-    const publish = ['newer-failed', 'newer-tutor-failed'].includes(scenario);
+    const publish = ['newer-failed', 'newer-tutor-failed', 'override'].includes(scenario);
     assert.equal(store.rows.get('scores/real__A2-6.17').score, publish ? 90 : previous.score);
     assert.equal(store.rows.get('markingResults/new').publicationStatus, publish ? 'published' : 'awaiting_approval');
     assert.equal([...store.rows.keys()].filter(key => key.startsWith('automaticScoreSync/')).length, publish ? 1 : 0);
@@ -385,4 +385,37 @@ test('legacy failed scores require a newer submission than their saved date', ()
   assert.equal(replacesFailedAttempt({ ...previous, score: null }, { submittedAt: '2026-10-28T10:00:00Z' }, 'submissions/new'), false);
   assert.equal(replacesFailedAttempt({ ...previous, score: 80, writingMinimumMet: false }, { submittedAt: '2026-10-28T10:00:00Z' }, 'submissions/new'), true);
   assert.equal(replacesFailedAttempt(previous, { submittedAt: { toMillis: () => Date.parse('2026-10-28T10:00:00Z') } }, 'submissions/new'), true);
+});
+
+test('resubmission of manually failed A2-6.17 marks new attempt at 90 with old tutor score in history', async () => {
+  const store = memoryDb({
+    'markingJobs/j': { automatic: true, submissionPath: 'submissions/new', level: 'A2', assignmentKey: 'A2-6.17', status: 'pending' },
+    'submissions/old': { submittedAt: '2026-10-28T08:30:00Z', submissionText: 'Previous work' },
+    'submissions/new': { status: 'submitted', studentId: 'uid',
+      submittedAt: '2026-10-28T10:33:00Z',
+      submissionText: 'Teil 3 1.B 2.B 3.B 4.A 5.A Teil 4 1.B 2.C 3.C 4.A 5.B' },
+    'students/uid': { studentCode: 'real' },
+    'scores/real__A2-6.17': {
+      score: 40, source: 'ai_marking', submissionPath: 'submissions/old',
+      manualScoreOverride: true, reviewedByTutor: true,
+      date: '2026-10-28T09:00:00Z',
+    },
+  });
+  await createCourseMarkingWorker({ db: store.db,
+    loadReference: async () => ({ parts: [{}], version: 'v1' }),
+    mark: async () => ({ status: 'marked', score: 90, finalScore: 90,
+      confidence: 1, feedback: 'Nine of ten correct.' }),
+  })({ data: store.snapshot('markingJobs/j') });
+  const revised = store.rows.get('scores/real__A2-6.17');
+  assert.equal(revised.score, 90);
+  assert.equal(revised.previousScore, 40);
+  assert.equal(revised.markingHistory[0].score, 40);
+  assert.equal(revised.submissionSubmittedAt, '2026-10-28T10:33:00.000Z');
+  assert.equal(store.rows.get('markingResults/new').publicationStatus, 'published');
+});
+test('prior tutor score on the SAME submission cannot be replaced automatically', async () => {
+  const { replacesFailedAttempt } = require('./automaticCourseMarking');
+  assert.equal(replacesFailedAttempt({
+    score: 40, manualScoreOverride: true, submissionPath: 'submissions/new',
+  }, { submittedAt: '2026-10-28T11:00:00Z' }, 'submissions/new', {}), false);
 });
