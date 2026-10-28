@@ -259,7 +259,7 @@ replaceOnce(
   "music title",
 );
 
-replaceOnce(
+upgradeOnce(
   '                About four minutes of original modern and cinematic piano before repeating. {musicPlaying ? `Now playing: ${currentPianoPiece}.` : ""}',
   '                Relaxing instrumental tracks play in sequence and loop while students wait. {musicPlaying ? `Now playing: ${currentMusicTrack}.` : ""}',
   "music description",
