@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { getReusableMusicQuestions } from '../src/data/reusableMusicQuestions.js';
 import { getSlidesByCourse } from '../src/data/teachingSlides.js';
 import { buildTeachingPresenterStages } from '../src/utils/teachingPresenter.js';
@@ -61,4 +62,26 @@ test('private attendance song uses native audio, repeats itself and cleans up wi
     stopWaitingMusicPlaylist(context);assert.equal(player.stopped,true);
     assert.equal(player.audio.events.timeupdate,undefined);
   } finally {globalThis.Audio=oldAudio}
+});
+
+test('A1 grammar presenter keeps lesson checks but moves a single music activity to the end of Day22', () => {
+  const src = readFileSync(new URL('../src/components/A1GrammarPresenter.jsx', import.meta.url), 'utf8');
+  assert.match(src, /const isA1HealthMusic = approvedSong\?\.assignmentKey === "A1-14\.1"/);
+  assert.match(src, /\.\.\.\(!isA1HealthMusic \? \[\{/);
+  assert.match(src, /\.\.\.\(isA1HealthMusic \? \[\{/);
+  assert.match(src, /id: "music-lesson"/);
+  const normal = getSlidesByCourse('A1').find(slide => slide.assignmentId === 'A1-14.2');
+  assert.ok(normal, 'other A1 lessons remain available');
+});
+test('music finale has all activities in one screen with lyrics, player and answer reveal', () => {
+  const stage = readFileSync(new URL('../src/components/LessonSongStage.jsx', import.meta.url), 'utf8');
+  const audio = readFileSync(new URL('../src/services/lessonSongService.js', import.meta.url), 'utf8');
+  assert.match(stage, /mode === 'all' \? step : mode/);
+  for (const item of ["chooseStep('listen')", "chooseStep('questions')", "chooseStep('speak')"]) {
+    assert.ok(stage.includes(item), item);
+  }
+  assert.match(stage, /<LessonSongLyrics/);
+  assert.match(stage, /setReveal\(!reveal\)/);
+  assert.match(audio, /getCuratedMusicByAssignment/);
+  assert.match(audio, /return approved\.audioUrl/);
 });
