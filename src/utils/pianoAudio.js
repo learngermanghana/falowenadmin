@@ -50,6 +50,9 @@ export async function startWaitingMusicPlaylist(
 
   const audio = new Audio();
   audio.preload = "auto";
+  // Cloudflare R2 music uses a public HTTPS custom domain. The Web Audio
+  // analyser requires CORS permission from that domain for audible playback.
+  audio.crossOrigin = "anonymous";
   audio.volume = 1;
   audio.playsInline = true;
 
@@ -83,7 +86,8 @@ export async function startWaitingMusicPlaylist(
   player.playTrack = playTrack;
 
   player.handleEnded = () => {
-    playTrack(player.index + 1).catch((error) => {
+    const track = tracks[player.index];
+    playTrack(track?.repeat ? player.index : player.index + 1).catch((error) => {
       onError(error?.message || "The next waiting room track could not start.");
     });
   };
@@ -111,7 +115,13 @@ export async function startWaitingMusicPlaylist(
   players.set(context, player);
 
   try {
-    await playTrack(0);
+    try {
+      await playTrack(0);
+    } catch (initialError) {
+      // A not-yet-uploaded day-specific object must not make attendance silent.
+      if (tracks.length <= 1) throw initialError;
+      await playTrack(1);
+    }
   } catch (error) {
     cleanupPlayer(context);
     throw error;
