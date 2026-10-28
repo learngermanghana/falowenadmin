@@ -2150,16 +2150,23 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
   }
   const song = getLessonMusic(normalizedAssignmentId(slide));
   if (song) {
-    // Replace the three named ending stages only for this published lesson.
-    // Preserve teaching/practice/clarification and the final lesson summary.
-    for (const [id, mode, title] of [["mistakes", "listen", song.title], ["questions", "questions", "Was passiert im Lied?"], ["wrapup", "speaking", "Jetzt seid ihr dran"]]) {
-      const index = filtered.findIndex(stage => stage.id === id);
-      if (index >= 0) filtered[index] = {
-        id, type: "lesson-music", variant: "lesson-music", mode, song, title,
-        suggestedMinutes: mode === "listen" ? 4 : 5,
-        teacherPurpose: { student: "Höre, lies mit und antworte in einfachen Sätzen.", teacher: "Nutze die gespeicherten Liedtexte. Antworten erst nach dem Versuch zeigen. Unbewertete Unterrichtsübung." },
-      };
+    // A1 Day 22 has ONE music finale, not three nearly identical closing
+    // slides. Preserve teaching/grammar/practice/workbook; move all listening,
+    // full lyrics, two comprehension questions and the speaking response into
+    // a single teacher-led screen. Other days retain their existing sequence.
+    const repetitiveClosing = new Set(["mistakes", "questions", "wrapup", "lesson-summary"]);
+    for (let i = filtered.length - 1; i >= 0; i -= 1) {
+      if (repetitiveClosing.has(filtered[i].id)) filtered.splice(i, 1);
     }
+    filtered.push({
+      id: "music-finale", type: "lesson-music", variant: "lesson-music",
+      mode: "all", song, title: song.title,
+      suggestedMinutes: 9, timingMode: "",
+      teacherPurpose: {
+        student: "Höre die Geschichte, lies mit und antworte auf drei Fragen.",
+        teacher: "Erst ohne Text hören; danach mitlesen. Zwei Hörfragen und eine Sprechfrage aus dem Wörterbuch, Lösungen nur nach der Antwort aufdecken. Keine Benotung.",
+      },
+    });
   }
   return filtered.map((stage) => ({
     ...stage,
