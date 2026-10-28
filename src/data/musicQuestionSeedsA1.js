@@ -51,11 +51,11 @@ export const MUSIC_QUESTION_SEEDS_A1 = Object.freeze([
   ],
   [
     "A1-2",
-    "Was möchte Ben wissen?",
-    "Die Telefonnummer.",
-    "Welche Hausnummer nennt die Person?",
-    "Nummer sieben.",
-    "Wie ist deine Hausnummer?"
+    "Wo wohnt die Person?",
+    "In Accra.",
+    "Wie alt ist die Person?",
+    "Zwanzig Jahre alt.",
+    "Wie heißt du und wie alt bist du?"
   ],
   [
     "A1-1.3",

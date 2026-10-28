@@ -13,7 +13,11 @@ test('every A1–B1 original song includes Falowen once, naturally at the end', 
     const parts = song.lyrics.split('[Outro]');
     assert.equal(parts.length, 2, song.assignmentKey);
     const lastLine = parts[1].trim().split('\n').at(-1);
-    assert.match(lastLine, /^(?:Bei|Mit) Falowen /, song.assignmentKey);
+    if (song.assignmentKey === 'A1-2') {
+      assert.equal(parts[1].trim(), 'Hallo! Ich heiße Ben.\nB–E–N.\nEins, zwei, drei — Falowen!\nAuf Wiedersehen!');
+    } else {
+      assert.match(lastLine, /^(?:Bei|Mit) Falowen /, song.assignmentKey);
+    }
     assert.ok(lastLine.trim().split(/\s+/).length <= 14, song.assignmentKey);
     assert.ok(song.lyrics.trim().split(/\s+/).length <= musicLyricLimit('song',120),
       `too many lyric words for minimum 2 minute song ${song.assignmentKey}`);

@@ -129,7 +129,7 @@ test("Day 15 live A2 V2 presenter actually uses the interactive Sport-Matchmaker
   assert.equal(practice[0].items.length, 1);
   assert.ok(practice[0].suggestedMinutes > 0);
   assert.equal(stages.filter(stage=>stage.id==="practice").length,1);
-  assert.deepEqual(stages.map(stage=>stage.id), ["intro","warmup","knowledge","phrases","grammar-check","practice","questions","workbook","lesson-summary"]);
+  assert.deepEqual(stages.map(stage=>stage.id), ["intro","warmup","common-mistakes","reading","grammar-check","practice","questions","workbook","lesson-summary"]);
   assert.equal(stages.some(stage=>/Finde die wichtige Information/.test(stage.title || "")),false);
   const view = readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
   const game = readFileSync(new URL("../src/components/A2SportMatchmaker.jsx", import.meta.url), "utf8");

@@ -46,7 +46,7 @@ export const MUSIC_SONG_DRAFTS_A1 = Object.freeze([
     "assignmentKey": "A1-2",
     "title": "Welche Nummer hast du?",
     "musicStyle": "Soft Funk, 92 BPM: light, friendly funk-pop with muted electric guitar, soft clavinet riffs, bouncy bass and very restrained drums. One lead singer, clear German phrases, quiet instrumental mix.",
-    "lyrics": "[Verse 1]\nIch treffe Ben vor dem Haus.\nWir wollen morgen lernen.\nEr fragt: Wie ist deine Nummer?\nIch sage: Vier, fünf, sechs.\n\n[Chorus]\nSag mir deine Nummer noch mal.\nLangsam, bitte, ich schreibe mit.\nJetzt kann ich dich anrufen.\n\n[Verse 2]\nIch sage auch meine Straße.\nIch wohne in der Gartenstraße.\nBen fragt: Welche Hausnummer?\nIch sage: Nummer sieben.\n\n[Chorus]\nSag mir deine Nummer noch mal.\nLangsam, bitte, ich schreibe mit.\nJetzt kann ich dich anrufen.\n\n[Outro]\nBen hat alles aufgeschrieben.\nWir sehen uns um zehn.\nMit Falowen kenne ich die Zahlen.",
+    "lyrics": "[Verse 1]\nHallo! Guten Tag!\nIch heiße Ben.\nWie heißt du?\nIch heiße Sam.\n\nWoher kommst du?\nIch komme aus Ghana.\nWo wohnst du?\nIch wohne in Accra.\n\n[Chorus]\nEins, zwei, drei,\nvier, fünf, sechs.\nSieben, acht, neun, zehn.\nHallo Sam! Hallo Ben!\n\nWie ist deine Nummer?\nVier, fünf, sechs.\nNoch einmal, bitte:\nVier, fünf, sechs.\n\n[Verse 2]\nWie schreibt man Ben?\nB–E–N.\nWie schreibt man Sam?\nS–A–M.\n\nWie alt bist du?\nIch bin zwanzig Jahre alt.\nWie geht es dir?\nGut, danke! Und dir?\n\n[Chorus]\nEins, zwei, drei,\nvier, fünf, sechs.\nSieben, acht, neun, zehn.\nHallo Sam! Hallo Ben!\n\nWie ist deine Nummer?\nVier, fünf, sechs.\nNoch einmal, bitte:\nVier, fünf, sechs.\n\n[Outro]\nHallo! Ich heiße Ben.\nB–E–N.\nEins, zwei, drei — Falowen!\nAuf Wiedersehen!",
     "genre": "Soft Funk"
   },
   {
