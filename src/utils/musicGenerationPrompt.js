@@ -8,16 +8,18 @@ export function musicLyricLimit(mode = "song", durationSeconds = 150) {
 }
 export function buildFalowenMusicPrompt({
   brief = "", context = "", lyrics = "", mode = "song",
-  durationSeconds = 150, vocalMode = "voice", backingLevel = "soft",
+  durationSeconds = 150, vocalMode = "voice", backingLevel = "soft", lyricTreatment = "exact",
 } = {}) {
   if (!["clip", "song"].includes(mode)) throw new Error("Choose a 30-second preview or a full song.");
   if (!["voice", "instrumental"].includes(vocalMode)) throw new Error("Choose vocals or instrumental.");
   if (!["soft", "very-soft"].includes(backingLevel)) throw new Error("Invalid backing level.");
+  if (!["exact", "story-source"].includes(lyricTreatment)) throw new Error("Invalid lyrics treatment.");
   if (mode === "song" && !FULL_DURATIONS.includes(durationSeconds)) throw new Error("Choose a full-song duration of 2, 2½ or 3 minutes.");
   const cleanBrief = String(brief).trim(), cleanLyrics = String(lyrics).trim(), cleanContext = String(context).trim();
   if (!cleanBrief) throw new Error("Add your music direction first.");
   if (vocalMode === "instrumental" && cleanLyrics) throw new Error("Instrumental music cannot use sung lyrics. Choose Vocals to include your text.");
   const limit = musicLyricLimit(mode, durationSeconds), words = countWords(cleanLyrics);
+  // Even source notes are bounded before a paid generation to avoid bloated prompts.
   if (words > limit) throw new Error(`Lyrics contain ${words} words; use at most ${limit} for this duration so the final lines have room to finish. Shorten the lyrics or choose a longer song before generating.`);
   const vocalDirection = vocalMode === "instrumental"
     ? "INSTRUMENTAL ONLY: no singer, spoken words, humming, choir or vocal samples. Keep the arrangement gentle and uncluttered."
@@ -33,7 +35,11 @@ export function buildFalowenMusicPrompt({
     "TIMING AND COMPLETE ENDING:",
     arrangement,
     `Keep generated sung lyrics to no more than approximately ${limit} words. If the supplied words are longer than the available melody, do not rush or squeeze syllables; use a shorter arrangement with a complete outro.`,
-    cleanLyrics ? `USER-SUPPLIED LYRICS (preserve language and pronunciation; build a full ending rather than cutting the final line):\n${cleanLyrics}` : "Write concise original lyrics with a complete last refrain and an explicit [Outro] section, unless instrumental-only.",
+    cleanLyrics
+      ? lyricTreatment === "story-source"
+        ? `TEACHER VOCABULARY / OLD LYRICS TO ADAPT INTO A NEW STORY (these are reference material, not fixed lyrics):\n${cleanLyrics}\nExtract suitable vocabulary and simple situations; compose fresh, naturally connected story lyrics at the lesson CEFR level. Do not recite the reference line-by-line or sing control markers such as [[A0]], [[B1]], or [:]. Avoid mechanically repeating parenthesized English glossary translations. Correct awkward German examples while preserving the learning meaning.`
+        : `USER-SUPPLIED LYRICS (preserve language and pronunciation; build a full ending rather than cutting the final line):\n${cleanLyrics}`
+      : "Write concise original lyrics with a complete last refrain and an explicit [Outro] section, unless instrumental-only.",
   ].filter(Boolean).join("\n\n");
   if (prompt.length > 8000) throw new Error("Your combined music direction and lyrics exceed 8,000 characters. Shorten the music direction or lyrics.");
   return prompt;
