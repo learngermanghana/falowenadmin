@@ -17,6 +17,7 @@ import { getPresenterSlidePhoto } from "../utils/presenterSlidePhotos.js";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import PublishedSongLessonStage from "./PublishedSongLessonStage.jsx";
 import { getCuratedMusicByAssignment } from "../data/curatedLessonMusic.js";
+import { getA1PresenterMusicStage } from "../data/a1PresenterMusicStage.js";
 import {
   A1_ACTIVITY_TIMER_PRESETS,
   DEFAULT_A1_ACTIVITY_MINUTES,
@@ -222,6 +223,7 @@ function stageList(slide, topicLabel) {
   const speaking = getA1EverydaySpeaking(slide.assignmentId);
   const approvedSong = getCuratedMusicByAssignment(slide.assignmentId);
   const isA1HealthMusic = approvedSong?.assignmentKey === "A1-14.1";
+  const a1SongStage = getA1PresenterMusicStage(slide.assignmentId);
   const mistakeItems = Array.isArray(support.commonMistakesEn) ? support.commonMistakesEn : [];
 
   return [
@@ -273,6 +275,8 @@ function stageList(slide, topicLabel) {
       title: "Common mistakes to watch",
       items: mistakeItems,
     }] : []),
+    // Music is the immediate follow-up to Common mistakes on approved A1 days.
+    ...(a1SongStage ? [a1SongStage] : []),
     ...(!isA1HealthMusic && speaking ? [
       {
         id: "mini-mission",
@@ -359,6 +363,7 @@ export default function A1GrammarPresenter({
     expired: false,
   });
   const stage = stages[stageIndex] || stages[0];
+  const isMusicStage = stage?.type === "published-music";
   const stagePhoto = getPresenterSlidePhoto(slide, stage);
   const teacherPurpose = a1TeacherPurpose(stage);
 
@@ -601,7 +606,7 @@ export default function A1GrammarPresenter({
   return (
     <div ref={presenterShellRef} className={`presenter-shell ${focusMode ? "is-presentation-mode" : ""}`} role="dialog" aria-modal="true" aria-label="A1 teaching presenter">
       <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""} ${focusMode ? "presenter-has-focus-stage-timer presenter-a1-stacked-controls" : ""} ${String(stage.title || "").length > 58 ? "presenter-title-long" : String(stage.title || "").length > 38 ? "presenter-title-medium" : ""}`}>
-        {focusMode ? (
+        {focusMode && !isMusicStage ? (
           <div className={`presenter-focus-stage-timer ${activityTimerExpired ? "is-expired" : ""}`} aria-label="A1 activity timer">
             <span>Activity timer</span>
             <strong>{formatFocusTime(activityRemainingSeconds)}</strong>
@@ -633,7 +638,7 @@ export default function A1GrammarPresenter({
           <div>
             <span className="presenter-kicker">{stage.kicker}</span>
             <span className="presenter-lesson-label">
-              {stage.examReadiness ? "A1 · Exam-readiness" : "A1 · Grammar check"}
+              {stage.examReadiness ? "A1 · Exam-readiness" : isMusicStage ? "A1 · Falowen Music" : "A1 · Grammar check"}
               {lessonBlockTotal > 1 ? ` · Day ${slide.dayNumber} · Block ${lessonBlockPosition}/${lessonBlockTotal}` : ""}
             </span>
           </div>
@@ -647,7 +652,7 @@ export default function A1GrammarPresenter({
 
           <div className="presenter-v2-tools presenter-a1-tools">
             <PresenterStageJump stages={stages} index={stageIndex} onChange={goTo} />
-            <details className="presenter-a1-activity-disclosure">
+            {!isMusicStage ? <details className="presenter-a1-activity-disclosure">
               <summary>Activity timer · {formatFocusTime(activityRemainingSeconds)}</summary>
               <div className={`presenter-timer ${activityTimerExpired ? "presenter-timer-expired" : ""}`} role="group" aria-label="A1 activity timer controls">
               <span className="presenter-timer-mode">Activity timer</span>
@@ -665,7 +670,7 @@ export default function A1GrammarPresenter({
               </button>
               <button type="button" onClick={resetActivityTimer}>Reset</button>
               </div>
-            </details>
+            </details> : null}
           </div>
 
         </header>
