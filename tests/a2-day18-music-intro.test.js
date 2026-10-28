@@ -59,7 +59,7 @@ test("Music stage uses signed R2 music, lyrics and 3 canonical questions without
 });
 
 test("only teacher-approved selected days have in-class music, even though the full songbook is available",()=>{
-  assert.equal(CURATED_MUSIC_DAYS.filter(x=>x.status==="published").length,2);
+  assert.equal(CURATED_MUSIC_DAYS.filter(x=>x.status==="published").length,3);
   assert.equal(getCuratedMusicByAssignment("A1-14.1").day,22);
   assert.equal(getCuratedMusicByAssignment("A2-7.18").day,18);
   assert.equal(getCuratedMusicByAssignment("A2-10.26"),null);

@@ -5,10 +5,10 @@ import { CURATED_MUSIC_DAYS, getCuratedMusicByAssignment, getCuratedMusicForSess
 import { getReusableMusicQuestions } from '../src/data/reusableMusicQuestions.js';
 import { getReusableSongDraft } from '../src/data/reusableMusicSongbook.js';
 
-test('only two approved R2 music songs activate in teaching slides and attendance', () => {
+test('only selected approved R2 music songs activate in teaching slides and attendance', () => {
   const published=CURATED_MUSIC_DAYS.filter(item=>item.status==='published');
-  assert.equal(published.length,2);
-  assert.deepEqual(published.map(x=>x.assignmentKey),['A1-14.1','A2-7.18']);
+  assert.equal(published.length,3);
+  assert.deepEqual(published.map(x=>x.assignmentKey),['A1-2','A1-14.1','A2-7.18']);
   for(const item of published){
     assert.ok(item.audioUrl.startsWith('https://www.falowen.app/api/music?track='));
     assert.ok(item.objectKey.startsWith('music/'));

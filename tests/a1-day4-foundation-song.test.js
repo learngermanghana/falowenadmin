@@ -20,3 +20,13 @@ test('Day 4 song questions match the new verses and omit the removed address sto
   assert.doesNotMatch(JSON.stringify(bank), /Hausnummer|Gartenstraße|Nummer sieben/);
   assert.equal(bank.questions[2].type, 'speaking');
 });
+
+
+test('approved Day 4 upload loads by exact path in slides and class waiting music', async () => {
+  const { getCuratedMusicByAssignment, getCuratedMusicForSession } = await import('../src/data/curatedLessonMusic.js');
+  const track = getCuratedMusicByAssignment('A1-2');
+  assert.equal(track.objectKey, 'music/a1/day-04/welche-nummer-hast-du.mp3');
+  assert.equal(track.trackId, 'a1-day-04-numbers');
+  assert.equal(track.day, 4);
+  assert.equal(getCuratedMusicForSession({ level: 'A1', day: 4 }), track);
+});
