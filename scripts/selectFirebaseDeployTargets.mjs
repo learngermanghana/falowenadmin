@@ -38,7 +38,7 @@ export const WORKER_TARGETS = {
 
 // Frontend-only build patches must not consume Cloud Run deployment quota.
 // This patch is used by npm sync:build, not by firebase.json predeploy.
-const FRONTEND_ONLY_BUILD_SCRIPTS = new Set(["scripts/patchA1WritingPlaceholderReferences.mjs", "scripts/patchCheckinWaitingRoomPlaylist.mjs"]);
+const FRONTEND_ONLY_BUILD_SCRIPTS = new Set(["scripts/patchA1WritingPlaceholderReferences.mjs", "scripts/patchCheckinWaitingRoomPlaylist.mjs", "scripts/auditTeachingMaterialQuality.mjs"]);
 
 export function selectFirebaseDeployTargets({ changedPaths, predeployPaths = [], full = false }) {
   if (full || changedPaths === null) return { mode: "full", targets: [], reason: "Full deployment or no reliable successful baseline." };

@@ -33,21 +33,23 @@ test("All 12 A2 missions contain three distinct realistic scenarios and nine top
  }
 });
 
-test("A2 selected days replace one practice page; all 28 retain exact nine-stage grammar and workbook spine", () => {
+test("A2 selected days replace one practice page; all 28 retain grammar and workbook with restored reading and corrections", () => {
  for (const slide of getSlidesByCourse("A2")) {
   const stages=buildTeachingPresenterStages(slide,slide.topic);
   const ids=stages.map(x=>x.id);
-  assert.equal(stages.length,9,slide.assignmentId);
-  assert.deepEqual(ids.slice(0,5),["intro","warmup","knowledge","phrases","grammar-check"],slide.assignmentId);
+  const core = stages.filter(s => s.id !== "knowledge");
+  const coreIds = core.map(s => s.id);
+  assert.equal(core.length,9,slide.assignmentId);
+  assert.deepEqual(coreIds.slice(0,5),["intro","warmup","common-mistakes","reading","grammar-check"],slide.assignmentId);
   assert.deepEqual(ids.slice(-3),["questions","workbook","lesson-summary"],slide.assignmentId);
-  assert.equal(ids[5],days.has(slide.assignmentId)?"scenario-challenge":"practice",slide.assignmentId);
+  assert.equal(coreIds[5],days.has(slide.assignmentId)?"scenario-challenge":"practice",slide.assignmentId);
   assert.equal(ids.filter(id=>["practice","scenario-challenge"].includes(id)).length,1,slide.assignmentId);
-  assert.equal(stages[7].type,"clarification",slide.assignmentId);
-  assert.equal(stages[7].title,"Was ist noch unklar?",slide.assignmentId);
-  assert.ok(stages[7].items.some(item=>item.label==="Grammatik"),slide.assignmentId);
+  assert.equal(core[7].type,"clarification",slide.assignmentId);
+  assert.equal(core[7].title,"Was ist noch unklar?",slide.assignmentId);
+  assert.ok(core[7].items.some(item=>item.label==="Grammatik"),slide.assignmentId);
   if(days.has(slide.assignmentId)) {
-   assert.equal(stages[5].items,getA2TeacherChallenge(slide.assignmentId).scenarios);
-   assert.match(stages[5].teacherPurpose.teacher,/No student login or submission/);
+   assert.equal(core[5].items,getA2TeacherChallenge(slide.assignmentId).scenarios);
+   assert.match(core[5].teacherPurpose.teacher,/No student login or submission/);
   }
  }
 });

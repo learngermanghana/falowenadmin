@@ -16,7 +16,7 @@ if (!SUPPORTED_LEVELS.has(LEVEL)) {
 }
 
 const REQUIRED_CORE_STAGES = LEVEL === "A2"
-  ? ["intro", "warmup", "knowledge", "phrases", "grammar-check", "practice", "questions", "workbook", "lesson-summary"]
+  ? ["intro", "warmup", "common-mistakes", "reading", "grammar-check", "practice", "questions", "workbook", "lesson-summary"]
   : ["intro", "warmup", "phrases", "grammar", "examples", "practice", "mistakes", "questions", "wrapup"];
 
 // Scenario and career challenges replace (rather than supplement) the focused
@@ -90,7 +90,7 @@ for (const [index, slide] of slides.entries()) {
   const warmup = stageMap.get("warmup");
   const questions = stageMap.get("questions");
   const mistakes = stageMap.get("mistakes");
-  const knowledge = stageMap.get("knowledge");
+  const knowledge = stageMap.get(LEVEL === "A2" ? "reading" : "knowledge");
   const wrapup = stageMap.get("wrapup");
   const workbook = stageMap.get("workbook");
 
@@ -119,8 +119,8 @@ for (const [index, slide] of slides.entries()) {
     slide.workbookConnection ||
     (LEVEL === "A1" && normalize(slide.assignmentId))
   );
-  // A2 uses three knowledge checks plus workbook-aligned speaking production
-  // instead of a duplicate mini-presentation or a separate mistakes page.
+  // A2 uses the three existing Lesen checks and unchanged speaking production.
+  // The topic-specific correction page precedes Lesen.
   const assess = tutorial || Boolean(
     LEVEL === "A2"
       ? knowledge && Array.isArray(knowledge.items) && knowledge.items.length === 3 && questions
