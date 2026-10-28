@@ -34,17 +34,17 @@ export function PresenterStageJump({ stages, index, onChange }) {
   </label>;
 }
 
-export default function PresenterControls({ focus = false, index, total, atStart, atEnd,
+export default function PresenterControls({ focus = false, compact = false, index, total, atStart, atEnd,
   onPrevious, onNext, onRestore, onReport, nextLabel = 'Next slide →', nextTitle = '', nextLessonHref = '', nextLessonLabel = '' }) {
   const Tag = focus ? 'nav' : 'footer';
-  return <Tag className={focus ? 'presenter-focus-dock presenter-shared-controls' : 'presenter-footer presenter-shared-controls'} aria-label="Lesson navigation">
+  return <Tag className={focus ? 'presenter-focus-dock presenter-shared-controls' : `presenter-footer presenter-shared-controls${compact ? ' is-compact' : ''}`} aria-label="Lesson navigation">
     <button type="button" onClick={onPrevious} disabled={atStart} aria-label="Previous slide">← Previous</button>
-    <div className="presenter-progress-wrap" aria-label={`Slide ${index + 1} of ${total}`}>
+    {!compact && <div className="presenter-progress-wrap" aria-label={`Slide ${index + 1} of ${total}`}>
       <span>{index + 1} / {total}</span>
       {!focus && <div className="presenter-progress-track"><div className="presenter-progress-bar" style={{ width: `${total ? (index + 1) / total * 100 : 0}%` }} /></div>}
-    </div>
+    </div>}
     {focus && <button type="button" className="presenter-restore-control" onClick={onRestore} aria-label="Restore presenter controls">Restore controls</button>}
-    {!atEnd && <button type="button" onClick={onReport}>Lesson report</button>}
+    {!atEnd && !compact && <button type="button" onClick={onReport}>Lesson report</button>}
     <button type="button" onClick={atEnd ? onReport : onNext} title={nextTitle}>{atEnd ? 'Finish lesson · report' : nextLabel}</button>
     {!focus && nextLessonHref && <a className="presenter-next-lesson" href={nextLessonHref}>Next lesson{nextLessonLabel ? ` · ${nextLessonLabel}` : ''} →</a>}
   </Tag>;
