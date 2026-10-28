@@ -8,6 +8,7 @@ import { readFileSync } from 'node:fs';
 test('84 original lesson songs provide a diverse genre library, not mostly acoustic', () => {
   const all = ['A1','A2','B1'].flatMap(level => getReusableSongDrafts(level));
   assert.equal(all.length, 84);
+  assert.ok(all.every(song => !/jazz|reggae|skank/i.test(song.genre + " " + song.musicStyle)), "Jazz and Reggae must not return in lesson arrangements");
   const genres = new Set(all.map(song => song.genre));
   assert.ok(genres.size >= 18, `Only ${genres.size} genres found`);
   const acoustic = all.filter(song => /acoustic/i.test(song.musicStyle));
@@ -21,7 +22,7 @@ test('84 original lesson songs provide a diverse genre library, not mostly acous
       `Missing explicit song genre for ${level}`);
   }
   for (const label of ['Afrobeat','German Pop','Soft R&B','Piano Ballad','Lo-fi Hip-Hop',
-    'Reggae Pop','Jazz-Pop','Soft Funk','Synth-Pop','Afro-Soul']) {
+    'Afro-Pop','Bossa Pop','Soft Funk','Synth-Pop','Afro-Soul']) {
     assert.ok(genres.has(label), `Missing genre: ${label}`);
   }
 });

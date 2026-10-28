@@ -45,14 +45,14 @@ export const MUSIC_SONG_DRAFTS_B1_PART1 = Object.freeze([
   {
     "assignmentKey": "B1-3.7",
     "title": "Heute kochen wir selbst",
-    "musicStyle": "Jazz-Pop, 91 BPM: warm jazz-pop with brushed drums, piano and soft upright bass; smooth timing and easy, conversational melody. One lead singer, clear German phrases, quiet instrumental mix.",
+    "musicStyle": "German Pop, 91 BPM: warm melodic German pop with soft steady drums, clear piano chords and gentle electric bass; easy, conversational melody. One lead singer, clear German phrases, quiet instrumental mix.",
     "lyrics": "[Verse 1]\nNach der Arbeit wollen wir etwas essen.\nBen schlägt wieder schnelle Burger vor.\nIch sage, dass wir auch kochen könnten,\ndenn zu Hause steht noch frisches Gemüse.\n\n[Chorus]\nSchnell und einfach ist nicht immer besser,\ndoch gesund muss nicht kompliziert sein.\nWir finden heute unseren Mittelweg.\n\n[Verse 2]\nWir schneiden Tomaten, Zwiebeln und Paprika.\nBen würzt den Reis mit frischen Kräutern.\nEs dauert etwas länger als Bestellen,\naber wir reden und lachen dabei.\n\n[Chorus]\nSchnell und einfach ist nicht immer besser,\ndoch gesund muss nicht kompliziert sein.\nWir finden heute unseren Mittelweg.\n\n[Outro]\nAm Ende schmeckt uns das Essen besonders gut.\nMorgen kochen wir vielleicht wieder gemeinsam.\nMit Falowen begründe ich, was für mich gesund ist.",
-    "genre": "Jazz-Pop"
+    "genre": "German Pop"
   },
   {
     "assignmentKey": "B1-3.8",
     "title": "Kleine Schritte für die Gesundheit",
-    "musicStyle": "Neo-Soul, 82 BPM: relaxed neo-soul with jazzy electric piano, restrained pocket bass and finger snaps, leaving space after each phrase. One lead singer, clear German phrases, quiet instrumental mix.",
+    "musicStyle": "Neo-Soul, 82 BPM: relaxed neo-soul with warm melodic electric piano, restrained pocket bass and finger snaps, leaving space after each phrase. One lead singer, clear German phrases, quiet instrumental mix.",
     "lyrics": "[Verse 1]\nSeit einigen Wochen schlafe ich schlecht.\nIch bin oft müde bei der Arbeit.\nBeim Arzt spreche ich über meinen Alltag,\nweil ich etwas verändern möchte.\n\n[Chorus]\nGesund bleiben beginnt im Kleinen,\nmit Ruhe, Bewegung und Zeit.\nIch höre auf, was mein Körper braucht.\n\n[Verse 2]\nDie Ärztin empfiehlt regelmäßige Pausen.\nIch gehe nun jeden Abend spazieren.\nAußerdem lege ich das Handy früher weg,\nobwohl das anfangs nicht leicht war.\n\n[Chorus]\nGesund bleiben beginnt im Kleinen,\nmit Ruhe, Bewegung und Zeit.\nIch höre auf, was mein Körper braucht.\n\n[Outro]\nHeute fühle ich mich schon viel wacher.\nIch möchte auf mich achten.\nBei Falowen finde ich Worte für mein Wohlbefinden.",
     "genre": "Neo-Soul"
   },
