@@ -131,7 +131,20 @@ function buildB1CorrectionTeacherGuide(questionDe = "", modelAnswerDe = "") {
 }
 
 export default function TeachingSlidePresenter({ slide, topicLabel, onExit, nextLessonHref = "", nextLessonLabel = "" }) {
-  const stages = useMemo(() => buildTeachingPresenterStages(slide, topicLabel), [slide, topicLabel]);
+  const stages = useMemo(() => {
+    const curriculumStages = buildTeachingPresenterStages(slide, topicLabel);
+    // Keep every original A1 curriculum stage in the source contract for
+    // teacher audits, but project the three music stages and the redundant
+    // trailing summary as ONE interactive stage in the actual presentation.
+    // The A1 grammar presenter has the equivalent one-slide finale.
+    if (String(slide.assignmentId || "").toUpperCase() !== "A1-14.1") return curriculumStages;
+    const existingSong = curriculumStages.find(stage => stage.type === "lesson-music" && stage.song);
+    if (!existingSong) return curriculumStages;
+    return [
+      ...curriculumStages.filter(stage => stage.type !== "lesson-music" && stage.id !== "lesson-summary"),
+      { ...existingSong, id: "music-finale", mode: "all", title: existingSong.song.title, suggestedMinutes: 9 },
+    ];
+  }, [slide, topicLabel]);
   const presenterShellRef = useRef(null);
   const presenterV2 = isTeachingPresenterV2Slide(slide);
   const advancedClassroom = ["B2", "C1"].includes(String(slide.course || "").toUpperCase());
