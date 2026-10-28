@@ -16,8 +16,15 @@ function cleanupPlayer(context) {
   context.removeEventListener("statechange", player.handleContextState);
   player.audio.pause();
   player.audio.currentTime = 0;
-  player.source.disconnect();
+  player.source?.disconnect();
   players.delete(context);
+}
+
+export function setWaitingMusicPlaybackVolume(context, volume) {
+  const player = players.get(context);
+  if (!player || !player.directPlayback || player.stopped) return;
+  const numeric = Number(volume);
+  if (Number.isFinite(numeric)) player.audio.volume = Math.max(0, Math.min(1, numeric));
 }
 
 export function stopWaitingMusicPlaylist(context) {
@@ -50,18 +57,20 @@ export async function startWaitingMusicPlaylist(
 
   const audio = new Audio();
   audio.preload = "auto";
-  // Cloudflare R2 music uses a public HTTPS custom domain. The Web Audio
-  // analyser requires CORS permission from that domain for audible playback.
-  audio.crossOrigin = "anonymous";
-  audio.volume = 1;
+  // Approved music redirects to a time-limited *private* R2 GET URL. Plain
+  // HTMLMediaElement playback does not require R2 CORS; routing it through a
+  // Web Audio MediaElementSource would silently mute it without CORS headers.
+  const directPlayback = tracks.some(track => track.directPlayback === true);
+  if (!directPlayback) audio.crossOrigin = "anonymous";
+  audio.volume = directPlayback ? Math.max(0, Math.min(1, Number(destination?.gain?.value ?? 0.5))) : 1;
   audio.playsInline = true;
-
-  const source = context.createMediaElementSource(audio);
-  source.connect(destination);
+  const source = directPlayback ? null : context.createMediaElementSource(audio);
+  if (source) source.connect(destination);
 
   const player = {
     audio,
     source,
+    directPlayback,
     tracks,
     index: 0,
     stopped: false,
