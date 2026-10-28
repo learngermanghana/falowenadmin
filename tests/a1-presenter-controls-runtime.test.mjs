@@ -47,6 +47,7 @@ test('A1–C2 controls retain questions, reports use live marks and switching cl
     '../data/a1EverydaySpeaking.js': { getA1EverydaySpeaking: () => null },
     './A1EverydaySpeakingStage.jsx': { __esModule: true, default: () => null },
     './PublishedSongLessonStage.jsx': { __esModule: true, default: () => null },
+    './LessonSongStage.jsx': { __esModule: true, default: () => null },
     '../data/curatedLessonMusic.js': { getCuratedMusicByAssignment: () => null },
     '../data/a1LearningPath.js': { getA1LearningPath: () => null },
     '../data/a1SlideReview.js': { buildA1SlideReviewChecks: () => [] },
