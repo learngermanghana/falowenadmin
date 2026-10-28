@@ -66,9 +66,9 @@ export const MUSIC_SONG_DRAFTS_B1_PART2 = Object.freeze([
   {
     "assignmentKey": "B1-8.24",
     "title": "Weniger kaufen, mehr erleben",
-    "musicStyle": "Reggae Pop, 91 BPM: friendly mid-tempo reggae-pop with offbeat clean electric guitar, gentle organ and soft skank rhythm; light bass and relaxed vocals. One lead singer, clear German phrases, quiet instrumental mix.",
+    "musicStyle": "Afro-Pop, 91 BPM: warm melodic Afro-pop with gentle rhythmic guitar, light shakers, soft keyboard chords and restrained bass; clear relaxed vocals. One lead singer, clear German phrases, quiet instrumental mix.",
     "lyrics": "[Verse 1]\nIm Schaufenster sehe ich ein neues Handy.\nMeins funktioniert eigentlich noch gut.\nTrotzdem möchte ich es sofort kaufen,\nweil überall Werbung für das Modell läuft.\n\n[Chorus]\nBrauche ich das wirklich heute?\nVielleicht hält das Alte noch lang.\nWeniger kaufen lässt Raum für anderes.\n\n[Verse 2]\nZu Hause spreche ich mit meinem Bruder.\nEr zeigt mir, wie ich den Akku schonen kann.\nWir beschließen, das Geld lieber zu sparen,\num im Sommer gemeinsam zu verreisen.\n\n[Chorus]\nBrauche ich das wirklich heute?\nVielleicht hält das Alte noch lang.\nWeniger kaufen lässt Raum für anderes.\n\n[Outro]\nDas neue Handy bleibt im Geschäft.\nDie Reise ist mir jetzt wichtiger.\nBei Falowen lerne ich, bewusster zu entscheiden.",
-    "genre": "Reggae Pop"
+    "genre": "Afro-Pop"
   },
   {
     "assignmentKey": "B1-8.25",
@@ -94,8 +94,8 @@ export const MUSIC_SONG_DRAFTS_B1_PART2 = Object.freeze([
   {
     "assignmentKey": "B1-10.28",
     "title": "Morgen etwas grüner",
-    "musicStyle": "Soul-Jazz, 86 BPM: soul-jazz with mellow Rhodes, very soft brushed snare, gentle upright bass and airy chord changes. One lead singer, clear German phrases, quiet instrumental mix.",
+    "musicStyle": "Afro-Soul, 86 BPM: warm melodic Afro-soul with gentle electric piano, light hand percussion, soft electric bass and clear simple chord changes. One lead singer, clear German phrases, quiet instrumental mix.",
     "lyrics": "[Verse 1]\nMein Vater fährt für jeden Weg mit dem Auto.\nIch habe ihm von meiner Idee erzählt:\nVielleicht können wir öfter den Bus nehmen,\nwenn das Wetter und die Zeit es erlauben.\n\n[Chorus]\nWir müssen nicht alles heute ändern,\ndoch morgen können wir anfangen.\nEin kleiner Weg führt uns weiter.\n\n[Verse 2]\nAm Sonntag fahren wir mit dem Fahrrad zum Markt.\nWir kaufen Gemüse aus der Region.\nSpäter sprechen wir über unseren Stromverbrauch,\nohne dass jemand alles perfekt machen muss.\n\n[Chorus]\nWir müssen nicht alles heute ändern,\ndoch morgen können wir anfangen.\nEin kleiner Weg führt uns weiter.\n\n[Outro]\nUnser Alltag sieht noch fast gleich aus.\nAber wir achten jetzt bewusster auf die Zukunft.\nBei Falowen lerne ich, über unsere Zukunft nachzudenken.",
-    "genre": "Soul-Jazz"
+    "genre": "Afro-Soul"
   }
 ]);

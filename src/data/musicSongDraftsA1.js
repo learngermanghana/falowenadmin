@@ -31,7 +31,7 @@ export const MUSIC_SONG_DRAFTS_A1 = Object.freeze([
   {
     "assignmentKey": "A1-1.1-practice",
     "title": "Wer ist das?",
-    "musicStyle": "Neo-Soul, 88 BPM: relaxed neo-soul with jazzy electric piano, restrained pocket bass and finger snaps, leaving space after each phrase. One lead singer, clear German phrases, quiet instrumental mix.",
+    "musicStyle": "Neo-Soul, 88 BPM: relaxed neo-soul with warm melodic electric piano, restrained pocket bass and finger snaps, leaving space after each phrase. One lead singer, clear German phrases, quiet instrumental mix.",
     "lyrics": "[Verse 1]\nIm Kurs sitzt ein neuer Mann.\nEr hat eine blaue Tasche.\nIch frage: Wer ist das?\nMia sagt: Das ist Herr Braun.\n\n[Chorus]\nWer, was, wo und wie?\nIch frage, du antwortest.\nEin Satz, ein Name, ein Lächeln.\n\n[Verse 2]\nIch frage: Woher kommt er?\nEr sagt: Ich komme aus Bonn.\nIst das dein neues Buch?\nJa, das ist mein Buch.\n\n[Chorus]\nWer, was, wo und wie?\nIch frage, du antwortest.\nEin Satz, ein Name, ein Lächeln.\n\n[Outro]\nJetzt kennen wir Herrn Braun.\nUnd unser Kurs beginnt.\nMit Falowen stelle ich gute Fragen.",
     "genre": "Neo-Soul"
   },
@@ -108,16 +108,16 @@ export const MUSIC_SONG_DRAFTS_A1 = Object.freeze([
   {
     "assignmentKey": "A1-3.5",
     "title": "Die Rechnung im Café",
-    "musicStyle": "Jazz-Pop, 92 BPM: warm jazz-pop with brushed drums, piano and soft upright bass; smooth timing and easy, conversational melody. One lead singer, clear German phrases, quiet instrumental mix.",
+    "musicStyle": "German Pop, 92 BPM: warm melodic German pop with soft steady drums, clear piano chords and gentle electric bass; easy, conversational melody. One lead singer, clear German phrases, quiet instrumental mix.",
     "lyrics": "[Verse 1]\nIm Café sind wir zu zweit.\nZwei Tees stehen auf dem Tisch.\nDie Uhr zeigt halb drei.\nDie Rechnung kommt jetzt auch.\n\n[Chorus]\nZwei Tees, vier Euro, danke.\nWie spät ist es? Halb drei.\nWir rechnen und wir lachen.\n\n[Verse 2]\nMia kauft noch ein Stück Kuchen.\nDas kostet drei Euro.\nWir zahlen sieben Euro.\nDann gehen wir nach Hause.\n\n[Chorus]\nZwei Tees, vier Euro, danke.\nWie spät ist es? Halb drei.\nWir rechnen und wir lachen.\n\n[Outro]\nIch kenne Zeit und Preise.\nBis morgen im Café!\nBei Falowen zählen wir zusammen.",
-    "genre": "Jazz-Pop"
+    "genre": "German Pop"
   },
   {
     "assignmentKey": "A1-3.6",
     "title": "Ich kann dir helfen",
-    "musicStyle": "Reggae Pop, 90 BPM: friendly mid-tempo reggae-pop with offbeat clean electric guitar, gentle organ and soft skank rhythm; light bass and relaxed vocals. One lead singer, clear German phrases, quiet instrumental mix.",
+    "musicStyle": "Afro-Pop, 90 BPM: warm melodic Afro-pop with gentle rhythmic guitar, light shakers, soft keyboard chords and restrained bass; clear relaxed vocals. One lead singer, clear German phrases, quiet instrumental mix.",
     "lyrics": "[Verse 1]\nMia hat ein schweres Buch.\nSie fragt: Kannst du mir helfen?\nIch sage: Ja, ich kann das.\nIch trage es nach Haus.\n\n[Chorus]\nIch kann, ich muss, ich möchte.\nDu kannst, du musst, du möchtest.\nWir helfen uns heute gern.\n\n[Verse 2]\nBen möchte Deutsch lernen.\nEr muss aber früh nach Hause.\nIch sage: Wir können morgen üben.\nEr lacht: Ja, das ist gut.\n\n[Chorus]\nIch kann, ich muss, ich möchte.\nDu kannst, du musst, du möchtest.\nWir helfen uns heute gern.\n\n[Outro]\nJetzt sind wir alle froh.\nZusammen geht es leichter.\nMit Falowen kann ich immer mehr.",
-    "genre": "Reggae Pop"
+    "genre": "Afro-Pop"
   },
   {
     "assignmentKey": "A1-4.7",
@@ -185,14 +185,14 @@ export const MUSIC_SONG_DRAFTS_A1 = Object.freeze([
   {
     "assignmentKey": "A1-14.2",
     "title": "Ich gebe dir das Buch",
-    "musicStyle": "Reggae Pop, 88 BPM: friendly mid-tempo reggae-pop with offbeat clean electric guitar, gentle organ and soft skank rhythm; light bass and relaxed vocals. One lead singer, clear German phrases, quiet instrumental mix.",
+    "musicStyle": "Afro-Pop, 88 BPM: warm melodic Afro-pop with gentle rhythmic guitar, light shakers, soft keyboard chords and restrained bass; clear relaxed vocals. One lead singer, clear German phrases, quiet instrumental mix.",
     "lyrics": "[Verse 1]\nMia sucht ihr rotes Buch.\nIch sehe es auf dem Tisch.\nSie fragt: Gibst du es mir?\nIch sage: Ja, hier bitte.\n\n[Chorus]\nIch gebe dir das Buch.\nDu zeigst mir deinen Stift.\nWir helfen uns im Kurs.\n\n[Verse 2]\nBen bringt seiner Mutter Blumen.\nIch sehe den schönen Strauß.\nEr sagt: Ich schenke ihr Blumen.\nSie sagt: Danke, lieber Ben.\n\n[Chorus]\nIch gebe dir das Buch.\nDu zeigst mir deinen Stift.\nWir helfen uns im Kurs.\n\n[Outro]\nAm Abend gehen alle heim.\nUnd alle sind zufrieden.\nMit Falowen übe ich: dir und dich.",
-    "genre": "Reggae Pop"
+    "genre": "Afro-Pop"
   },
   {
     "assignmentKey": "A1-5.10",
     "title": "Ich bleibe heute zu Hause",
-    "musicStyle": "Neo-Soul, 82 BPM: relaxed neo-soul with jazzy electric piano, restrained pocket bass and finger snaps, leaving space after each phrase. One lead singer, clear German phrases, quiet instrumental mix.",
+    "musicStyle": "Neo-Soul, 82 BPM: relaxed neo-soul with warm melodic electric piano, restrained pocket bass and finger snaps, leaving space after each phrase. One lead singer, clear German phrases, quiet instrumental mix.",
     "lyrics": "[Verse 1]\nMia fragt: Kommst du heute mit?\nIch sage: Nein, leider nicht.\nSie fragt mich: Warum denn?\nIch sage: Weil ich krank bin.\n\n[Chorus]\nWarum? Warum? Sag es mir.\nIch bleibe hier, weil ich müde bin.\nMorgen bin ich wieder da.\n\n[Verse 2]\nBen fragt: Kann ich dir helfen?\nIch sage: Ja, das ist sehr nett.\nEr bringt mir ein Glas Wasser.\nIch sage: Danke für die Hilfe.\n\n[Chorus]\nWarum? Warum? Sag es mir.\nIch bleibe hier, weil ich müde bin.\nMorgen bin ich wieder da.\n\n[Outro]\nAm Morgen geht es mir gut.\nDann komme ich wieder mit.\nBei Falowen sage ich auch warum.",
     "genre": "Neo-Soul"
   }

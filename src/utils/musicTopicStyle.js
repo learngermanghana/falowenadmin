@@ -20,8 +20,8 @@ export function getMusicTopicStyle(entry) {
 export function suggestLessonMusicDirection(entry, { instrumental = false, preferredStyle = "" } = {}) {
   const { label, style } = getMusicTopicStyle(entry);
   // A reviewed song's selected arrangement is authoritative. Do not
-  // accidentally prepend an acoustic fallback to synth-pop, Afrobeat, jazz,
-  // piano, reggae, R&B or another genre selected for the actual lesson.
+  // accidentally prepend an acoustic fallback to synth-pop, Afrobeat,
+  // piano, R&B or another genre selected for the actual lesson.
   const direction = String(preferredStyle || "").trim() || style;
   const level = String(entry?.level || "A1").toUpperCase();
   const pace = level === "A1" ? "slow and very clear, with space between short German phrases"

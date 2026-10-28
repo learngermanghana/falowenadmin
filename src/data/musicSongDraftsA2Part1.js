@@ -3,9 +3,9 @@ export const MUSIC_SONG_DRAFTS_A2_PART1 = Object.freeze([
   {
     "assignmentKey": "A2-1.1",
     "title": "Ein Gespräch im Café",
-    "musicStyle": "Jazz-Pop, 91 BPM: warm jazz-pop with brushed drums, piano and soft upright bass; smooth timing and easy, conversational melody. One lead singer, clear German phrases, quiet instrumental mix.",
+    "musicStyle": "German Pop, 91 BPM: warm melodic German pop with soft steady drums, clear piano chords and gentle electric bass; easy, conversational melody. One lead singer, clear German phrases, quiet instrumental mix.",
     "lyrics": "[Verse 1]\nIch sitze allein in einem Café.\nNeben mir sitzt eine neue Frau.\nSie fragt: Ist dieser Platz noch frei?\nIch sage: Ja, bitte setzen Sie sich.\n\n[Chorus]\nWir reden über unseren Tag,\ndas Wetter und was uns gefällt.\nEin kleines Gespräch macht den Tag schön.\n\n[Verse 2]\nSie heißt Clara und arbeitet hier.\nIch bin erst seit Montag in der Stadt.\nSie empfiehlt mir den Park am See.\nAm Samstag wollen wir uns wiedersehen.\n\n[Chorus]\nWir reden über unseren Tag,\ndas Wetter und was uns gefällt.\nEin kleines Gespräch macht den Tag schön.\n\n[Outro]\nAus einem Hallo wird ein guter Kontakt.\nVielleicht beginnt so eine Freundschaft.\nMit Falowen fällt mir der erste Satz leichter.",
-    "genre": "Jazz-Pop"
+    "genre": "German Pop"
   },
   {
     "assignmentKey": "A2-1.2",
@@ -80,7 +80,7 @@ export const MUSIC_SONG_DRAFTS_A2_PART1 = Object.freeze([
   {
     "assignmentKey": "A2-5.12",
     "title": "Mein Beruf, mein Traum",
-    "musicStyle": "Neo-Soul, 88 BPM: relaxed neo-soul with jazzy electric piano, restrained pocket bass and finger snaps, leaving space after each phrase. One lead singer, clear German phrases, quiet instrumental mix.",
+    "musicStyle": "Neo-Soul, 88 BPM: relaxed neo-soul with warm melodic electric piano, restrained pocket bass and finger snaps, leaving space after each phrase. One lead singer, clear German phrases, quiet instrumental mix.",
     "lyrics": "[Verse 1]\nAls Kind wollte ich Pilot werden.\nHeute interessiere ich mich für Medizin.\nIch möchte Menschen helfen können.\nDeshalb lese ich oft über diesen Beruf.\n\n[Chorus]\nWas willst du später machen?\nWas macht dir wirklich Freude?\nDein Weg beginnt mit einem kleinen Schritt.\n\n[Verse 2]\nMeine Freundin will Lehrerin werden.\nSie hat schon ein Praktikum gemacht.\nWir sprechen über unsere Pläne.\nDann suchen wir nach guten Kursen.\n\n[Chorus]\nWas willst du später machen?\nWas macht dir wirklich Freude?\nDein Weg beginnt mit einem kleinen Schritt.\n\n[Outro]\nNoch wissen wir nicht alles.\nAber wir gehen unseren Weg weiter.\nBei Falowen spreche ich über meine Träume.",
     "genre": "Neo-Soul"
   },

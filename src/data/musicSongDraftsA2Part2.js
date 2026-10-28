@@ -59,9 +59,9 @@ export const MUSIC_SONG_DRAFTS_A2_PART2 = Object.freeze([
   {
     "assignmentKey": "A2-9.23",
     "title": "Mein Weg zur Arbeit",
-    "musicStyle": "Reggae Pop, 94 BPM: friendly mid-tempo reggae-pop with offbeat clean electric guitar, gentle organ and soft skank rhythm; light bass and relaxed vocals. One lead singer, clear German phrases, quiet instrumental mix.",
+    "musicStyle": "Afro-Pop, 94 BPM: warm melodic Afro-pop with gentle rhythmic guitar, light shakers, soft keyboard chords and restrained bass; clear relaxed vocals. One lead singer, clear German phrases, quiet instrumental mix.",
     "lyrics": "[Verse 1]\nJeden Morgen fahre ich mit dem Bus.\nHeute steht er lange im Verkehr.\nMeine Kollegin wartet schon im Büro.\nIch schicke ihr eine kurze Nachricht.\n\n[Chorus]\nWie kommst du heute zur Arbeit?\nMit dem Bus, zu Fuß, mit dem Rad.\nJeder findet seinen Weg.\n\n[Verse 2]\nMorgen möchte ich früher losfahren.\nVielleicht ist das Fahrrad schneller.\nIch probiere den neuen Weg aus.\nUnd komme schon vor neun Uhr an.\n\n[Chorus]\nWie kommst du heute zur Arbeit?\nMit dem Bus, zu Fuß, mit dem Rad.\nJeder findet seinen Weg.\n\n[Outro]\nMein Weg ist jetzt viel entspannter.\nIch habe sogar Zeit für einen Kaffee.\nMit Falowen finde ich Worte für den Weg.",
-    "genre": "Reggae Pop"
+    "genre": "Afro-Pop"
   },
   {
     "assignmentKey": "A2-9.24",
@@ -80,7 +80,7 @@ export const MUSIC_SONG_DRAFTS_A2_PART2 = Object.freeze([
   {
     "assignmentKey": "A2-10.26",
     "title": "Heute bin ich aufgeregt",
-    "musicStyle": "Neo-Soul, 84 BPM: relaxed neo-soul with jazzy electric piano, restrained pocket bass and finger snaps, leaving space after each phrase. One lead singer, clear German phrases, quiet instrumental mix.",
+    "musicStyle": "Neo-Soul, 84 BPM: relaxed neo-soul with warm melodic electric piano, restrained pocket bass and finger snaps, leaving space after each phrase. One lead singer, clear German phrases, quiet instrumental mix.",
     "lyrics": "[Verse 1]\nMorgen habe ich eine wichtige Prüfung.\nHeute bin ich ziemlich nervös.\nMein Freund merkt das sofort.\nEr fragt: Was macht dir Sorgen?\n\n[Chorus]\nManchmal bin ich froh, manchmal traurig,\nmanchmal habe ich ein bisschen Angst.\nIch darf sagen, wie ich mich fühle.\n\n[Verse 2]\nWir sprechen lange über meine Gedanken.\nEr erzählt von seiner letzten Prüfung.\nDanach fühle ich mich ruhiger.\nIch weiß: Ich habe viel gelernt.\n\n[Chorus]\nManchmal bin ich froh, manchmal traurig,\nmanchmal habe ich ein bisschen Angst.\nIch darf sagen, wie ich mich fühle.\n\n[Outro]\nAm Morgen gehe ich mit neuem Mut los.\nEgal was kommt, ich versuche es.\nBei Falowen kann ich sagen, wie ich mich fühle.",
     "genre": "Neo-Soul"
   },
