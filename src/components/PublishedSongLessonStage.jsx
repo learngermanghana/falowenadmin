@@ -70,7 +70,7 @@ export default function PublishedSongLessonStage({ assignmentKey, onExit = null,
             <strong>{String.fromCharCode(65+i)}.</strong> {option}
           </button>)}
         </div>}
-        {question.type === 'speaking' && <p className="published-song-lesson__speaking-note">Offene Frage: Antwort in eigenen Worten. Bezug zum Thema Gesundheit herstellen.</p>}
+        {question.type === 'speaking' && <p className="published-song-lesson__speaking-note">Offene Frage: Antworte in eigenen Worten und beziehe dich auf das Unterrichtsthema.</p>}
         <button type="button" disabled={Array.isArray(question.options) && selectedOption < 0}
           onClick={()=>setShowAnswer(value=>!value)} aria-pressed={showAnswer}>
           {showAnswer?'Musterlösung verbergen':'Musterlösung für Lehrkraft zeigen'}
