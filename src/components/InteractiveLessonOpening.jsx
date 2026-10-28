@@ -84,7 +84,10 @@ export default function InteractiveLessonOpening({ stage, slide }) {
             lastError = new Error(message);
             // Never bypass 400/401/403: these are key or permissions failures,
             // not stale server locations. Avoid multiple requests in that case.
-            if (response.status < 500 && response.status !== 404) throw lastError;
+            if (response.status < 500 && response.status !== 404) {
+              lastError.stopFallback = true;
+              throw lastError;
+            }
             continue;
           }
           if (requestId !== requestCounter.current) return;
@@ -92,7 +95,7 @@ export default function InteractiveLessonOpening({ stage, slide }) {
           return;
         } catch (error) {
           lastError = error;
-          if (error?.message?.includes("Audiofreigabe")) break;
+          if (error?.stopFallback) break;
           // Network/offline exceptions can use a single alternate API origin.
         }
       }
