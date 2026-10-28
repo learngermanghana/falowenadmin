@@ -6,12 +6,15 @@ import { buildTeachingPresenterStages } from '../src/utils/teachingPresenter.js'
 import { getLessonSong, A1_DAY22_MUSIC } from '../src/data/a1Day22Music.js';
 import { lyricLines, validateLyricCues, activeLyricIndex, readSongCues } from '../src/utils/songLyrics.js';
 import { startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from '../src/utils/pianoAudio.js';
-test('A1-14.1 keeps teaching, practice and summary and uses exactly three music stages', () => {
+test('A1-14.1 keeps teaching/practice and replaces repetitive ending with exactly one music finale', () => {
   const slides = getSlidesByCourse('A1');
   const stages = buildTeachingPresenterStages(slides.find(s => s.assignmentId === 'A1-14.1'));
-  assert.equal(stages.filter(s => s.type === 'lesson-music').length, 3);
-  assert.deepEqual(stages.filter(s => s.type === 'lesson-music').map(s => s.mode), ['listen','questions','speaking']);
-  for (const id of ['grammar','practice','workbook','lesson-summary']) assert.ok(stages.some(s => s.id === id));
+  assert.equal(stages.filter(s => s.type === 'lesson-music').length, 1);
+  assert.equal(stages.at(-1).id, 'music-finale');
+  assert.equal(stages.at(-1).mode, 'all');
+  assert.deepEqual(stages.filter(s => s.type === 'lesson-music').map(s => s.song.assignmentId), ['A1-14.1']);
+  for (const id of ['grammar','practice','workbook']) assert.ok(stages.some(s => s.id === id));
+  for (const id of ['mistakes','questions','wrapup','lesson-summary']) assert.ok(!stages.some(s => s.id === id));
   assert.ok(!buildTeachingPresenterStages(slides.find(s => s.assignmentId === 'A1-14.2')).some(s => s.type === 'lesson-music'));
   assert.equal(getLessonSong({level:'A1',day:22}).objectKey,'music/a1/day-22/mein-kopf-tut-weh.mp3');
   assert.equal(getLessonSong({level:'A2',day:22}),null);
