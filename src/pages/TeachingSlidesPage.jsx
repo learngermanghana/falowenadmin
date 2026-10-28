@@ -4,6 +4,8 @@ import TeachingSlidePresenter from "../components/TeachingSlidePresenter.jsx";
 import A1GrammarPresenter from "../components/A1GrammarPresenter.jsx";
 import TeacherLessonBlocks from "../components/TeacherLessonBlocks.jsx";
 import StudentCourseSlides from "../components/StudentCourseSlides.jsx";
+import ReusableMusicQuestions from "../components/ReusableMusicQuestions.jsx";
+import { getReusableMusicQuestions } from "../data/reusableMusicQuestions.js";
 import {
   getAvailableSlideCourses,
   getCanonicalTeachingSlideId,
@@ -99,6 +101,8 @@ function CourseSlidesIndex({ courseId }) {
 
 function SlideDetail({ slide, courseId }) {
   const [handoutMode, setHandoutMode] = useState(false);
+  const [songQuestionsMode, setSongQuestionsMode] = useState(false);
+  const songQuestions = getReusableMusicQuestions(slide.assignmentId);
   const [presenterMode, setPresenterMode] = useState(() => new URLSearchParams(window.location.search).get("present") === "1");
   const { previous, next } = getSlideNavigation(slide.id, courseId);
   const nextLessonHref = next
@@ -120,6 +124,14 @@ function SlideDetail({ slide, courseId }) {
     ? `/teaching-slides/course/${encodeURIComponent(courseId)}/${encodeURIComponent(nextA1Block.id)}?${presenterQuery.toString()}`
     : "";
 
+  if (songQuestionsMode && songQuestions) {
+    return <main className="song-questions-slide">
+      <div className="slide-actions no-print" style={{ padding: '18px 24px' }}>
+        <button type="button" onClick={() => setSongQuestionsMode(false)}>← Back to lesson</button>
+      </div>
+      <ReusableMusicQuestions assignmentKey={slide.assignmentId} projector />
+    </main>;
+  }
   if (presenterMode) {
     if (a1GrammarLesson) {
       return (
@@ -141,9 +153,11 @@ function SlideDetail({ slide, courseId }) {
     <article className={`teaching-slide ${handoutMode ? "handout-mode" : ""}`}>
       <SlideHeader slide={slide} />
       <div className="slide-grid"><TeacherLessonBlocks slide={slide} handoutMode={handoutMode} /></div>
+      {songQuestions && !handoutMode && <ReusableMusicQuestions assignmentKey={slide.assignmentId} />}
 
       <footer className="slide-actions no-print">
         <button type="button" className="slide-present-button" onClick={() => setPresenterMode(true)}>Start Presenter Mode</button>
+        {songQuestions && <button type="button" onClick={() => setSongQuestionsMode(true)}>Present song questions</button>
         <button type="button" onClick={() => window.print()}>Print this teacher guide / Download PDF</button>
         <label className="handout-toggle">
           <input type="checkbox" checked={handoutMode} onChange={(event) => setHandoutMode(event.target.checked)} />
