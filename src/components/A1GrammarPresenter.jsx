@@ -638,7 +638,7 @@ export default function A1GrammarPresenter({
           <div>
             <span className="presenter-kicker">{stage.kicker}</span>
             <span className="presenter-lesson-label">
-              {stage.examReadiness ? "A1 · Exam-readiness" : isMusicStage ? "A1 · Falowen Music" : "A1 · Grammar check"}
+              {isMusicStage ? "A1 · Falowen Music" : (stage.examReadiness ? "A1 · Exam-readiness" : "A1 · Grammar check")}
               {lessonBlockTotal > 1 ? ` · Day ${slide.dayNumber} · Block ${lessonBlockPosition}/${lessonBlockTotal}` : ""}
             </span>
           </div>
