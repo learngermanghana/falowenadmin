@@ -17,8 +17,12 @@ export function getMusicTopicStyle(entry) {
   return TOPIC_MOODS.find(item => item.match.test(topic))
     || { label: "Everyday German", style: "a warm, melodic acoustic Afro-soul / soft pop arrangement with very gentle guitar and a simple memorable hook" };
 }
-export function suggestLessonMusicDirection(entry, { instrumental = false } = {}) {
+export function suggestLessonMusicDirection(entry, { instrumental = false, preferredStyle = "" } = {}) {
   const { label, style } = getMusicTopicStyle(entry);
+  // A reviewed song's selected arrangement is authoritative. Do not
+  // accidentally prepend an acoustic fallback to synth-pop, Afrobeat, jazz,
+  // piano, reggae, R&B or another genre selected for the actual lesson.
+  const direction = String(preferredStyle || "").trim() || style;
   const level = String(entry?.level || "A1").toUpperCase();
   const pace = level === "A1" ? "slow and very clear, with space between short German phrases"
     : level === "A2" ? "relaxed and clearly articulated, with short everyday dialogue"
@@ -29,7 +33,7 @@ export function suggestLessonMusicDirection(entry, { instrumental = false } = {}
     : "One intimate warm lead voice, clearly in front of every instrument. No backing choir, loud drums, heavy bass or competing solos.";
   return [
     `Falowen German lesson music — automatically matched to ${label}.`,
-    `Music style: ${style}.`,
+    `Music style: ${direction}.`,
     `CEFR ${level}: keep the rhythm ${pace}.`,
     voice,
     "Make the music support the lesson's real-life storytelling. Keep the arrangement sparse, uplifting and classroom-friendly, with a complete final cadence and gentle fade. Never drown out German consonants.",
