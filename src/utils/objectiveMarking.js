@@ -1128,7 +1128,47 @@ function subjectVerbGrammarMatches(expectedRaw = "", studentRaw = "") {
   });
 }
 
-function isCorrectAnswer(item, student) {
+// A1 Day 4 Teil 1 is a registration form. Number words and spoken-digit
+// spellings can represent the same form value, but the street-name field still
+// requires the street name. Keep this narrow; Teil 2 tests correct spelling.
+function a1Day4FormValueMatches(expectedRaw, studentRaw) {
+  const expected = normalizeAnswer(expectedRaw);
+  const student = normalizeAnswer(studentRaw);
+  if (!expected || !student) return false;
+  if (expected === student) return true;
+
+  const wordValues = {
+    "26": "sechsundzwanzig",
+    "3": "drei",
+    "240": "zweihundertvierzig",
+  };
+  if (wordValues[expected]) return student === wordValues[expected];
+
+  if (expected === "mullerstrasse 87") {
+    return student === "mullerstrasse siebenundachtzig";
+  }
+
+  if (expected === "0171 33 55 90") {
+    const digitWords = {
+      null: "0", ein: "1", eins: "1", zwei: "2", zwo: "2",
+      drei: "3", vier: "4", funf: "5", fuenf: "5",
+      sechs: "6", sieben: "7", acht: "8", neun: "9",
+    };
+    const tokens = student.split(/\\s+/).filter(Boolean);
+    const digits = tokens.every(token => /^[0-9]+$/.test(token))
+      ? tokens.join("")
+      : tokens.every(token => Object.hasOwn(digitWords, token))
+        ? tokens.map(token => digitWords[token]).join("")
+        : "";
+    return digits === "0171335590";
+  }
+  return false;
+}
+
+function isCorrectAnswer(item, student, assignmentId = "") {
+  if (normalizeAssignmentId(assignmentId) === "A1-2" && item.partId === "teil1") {
+    return a1Day4FormValueMatches(item.expectedRaw || item.expectedDisplay || item.expected, student);
+  }
   const expectedLetter = item.type === "choice" ? String(item.expected || "").toUpperCase() : extractOptionLetter(item.expectedRaw) || extractOptionLetter(item.expected);
   const studentLetter = extractOptionLetter(student);
   if (expectedLetter && studentLetter) return expectedLetter === studentLetter;
@@ -1547,7 +1587,7 @@ export function computeObjectiveScore(assignmentIdOrReferenceEntry, submissionTe
 
   referenceItems.forEach((item, index) => {
     const student = getStudentAnswerForItem({ item, index, submissionText, sections, flatAnswers, sequentialPartAnswers, hasAnyMatchingPartSections });
-    const correct = isCorrectAnswer(item, student);
+    const correct = isCorrectAnswer(item, student, assignmentId);
     if (correct) correctCount += 1;
     const detailKey = item.partId === "main" ? String(item.questionNumber || index + 1) : `${item.partId}.${item.questionNumber || index + 1}`;
     details[detailKey] = {
