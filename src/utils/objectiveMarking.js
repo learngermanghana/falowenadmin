@@ -1154,7 +1154,7 @@ function a1Day4FormValueMatches(expectedRaw, studentRaw) {
       drei: "3", vier: "4", funf: "5", fuenf: "5",
       sechs: "6", sieben: "7", acht: "8", neun: "9",
     };
-    const tokens = student.split(/\\s+/).filter(Boolean);
+    const tokens = student.split(/\s+/).filter(Boolean);
     const digits = tokens.every(token => /^[0-9]+$/.test(token))
       ? tokens.join("")
       : tokens.every(token => Object.hasOwn(digitWords, token))
