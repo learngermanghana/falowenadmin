@@ -219,6 +219,8 @@ function stageList(slide, topicLabel) {
       .filter((item) => /mistake|correct|avoid this/i.test(String(item?.questionDe || "")))
       .slice(0, 2);
   const speaking = getA1EverydaySpeaking(slide.assignmentId);
+  const approvedSong = getCuratedMusicByAssignment(slide.assignmentId);
+  const isA1HealthMusic = approvedSong?.assignmentKey === "A1-14.1";
   const mistakeItems = Array.isArray(support.commonMistakesEn) ? support.commonMistakesEn : [];
 
   return [
@@ -232,13 +234,6 @@ function stageList(slide, topicLabel) {
       duration: slide.estimatedDuration || "",
       grammarDiagnostic: true,
     },
-    ...(getCuratedMusicByAssignment(slide.assignmentId) ? [{
-      id: "music-lesson",
-      type: "published-music",
-      kicker: "Falowen Music · Hören und sprechen",
-      title: "Lied hören · Liedtext · Fragen",
-      items: [{}],
-    }] : []),
     {
       id: "quick-check",
       type: "check",
@@ -270,14 +265,14 @@ function stageList(slide, topicLabel) {
       title: "Fix the grammar mistake",
       items: correctionChecks,
     },
-    {
+    ...(!isA1HealthMusic ? [{
       id: "mistakes",
       type: "list",
       kicker: "Teacher scan",
       title: "Common mistakes to watch",
       items: mistakeItems,
-    },
-    ...(speaking ? [
+    }] : []),
+    ...(!isA1HealthMusic && speaking ? [
       {
         id: "mini-mission",
         type: "speaking-activity",
@@ -296,14 +291,24 @@ function stageList(slide, topicLabel) {
         items: [speaking.reaction],
       },
     ] : []),
-    {
+    ...(!isA1HealthMusic ? [{
       id: "exit-check",
       type: "check",
       kicker: "Exit check",
       title: "One fresh grammar check · no help",
       items: exitChecks,
       exitCheck: true,
-    },
+    }] : []),
+    // A1 Day 22: one focused music finale replaces teacher-scan,
+    // mini-mission, listen/respond and exit-check slides. The two listening
+    // questions and one speaking transfer prompt live INSIDE the final slide.
+    ...(isA1HealthMusic ? [{
+      id: "music-lesson",
+      type: "published-music",
+      kicker: "Falowen Music · Abschluss",
+      title: "Mein Kopf tut weh · Hören · Lesen · Sprechen",
+      items: [{}],
+    }] : []),
   ].filter((stage) => {
     if (stage.type === "intro") return true;
     return Array.isArray(stage.items) && stage.items.length > 0;
