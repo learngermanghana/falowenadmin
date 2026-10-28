@@ -8,7 +8,8 @@ import { buildTeachingPresenterStages } from "../utils/teachingPresenter.js";
 import { splitWarmupQuestionSegments } from "../utils/warmupText.js";
 import { pianoPlaylist } from "../data/pianoPlaylist.js";
 import { waitingRoomMusicPlaylistForSession, waitingRoomPublishedCatalogTrack } from "../utils/waitingRoomDayMusic.js";
-import { skipWaitingMusicPlaylist, startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pianoAudio.js";
+import { skipWaitingMusicPlaylist, startWaitingMusicPlaylist, stopWaitingMusicPlaylist, setWaitingMusicPlaybackVolume } from "../utils/pianoAudio.js";
+import { getCuratedMusicForSession } from "../data/curatedLessonMusic.js";
 import { checkinSessionDateKey, parseCheckinSessionDate } from "../utils/checkinSessionDate.js";
 import { presenterSessionKey } from "../utils/presenterSessionIdentity.js";
 import { getCheckinDisplayClassName, getCheckinLobbyPractice } from "../utils/checkinLobbyView.js";
@@ -749,9 +750,21 @@ export default function CheckinDisplayPage() {
     return () => controller.abort();
   }, [waitingClassLevel, presenterCurriculumDay, musicSessionKey]);
 
+  // Curated lesson tracks are deterministic and available immediately:
+  // no dependency on a cross-origin catalog request finishing first.
+  // Never silently substitute GitHub's generic track when an approved song
+  // was selected: show the actual Cloudflare playback error instead.
+  const curatedDayMusic = getCuratedMusicForSession({
+    level: waitingClassLevel, day: presenterCurriculumDay, assignmentKey: effectiveAssignmentId,
+  });
   const waitingSessionPlaylist = useMemo(() => {
+    if (curatedDayMusic) {
+      return [{ id: curatedDayMusic.trackId, title: curatedDayMusic.title,
+        src: curatedDayMusic.audioUrl, repeat: true, directPlayback: true,
+        objectKey: curatedDayMusic.objectKey }];
+    }
     if (publishedDayMusic?.key === musicSessionKey) {
-      return [publishedDayMusic.track, ...pianoPlaylist];
+      return [{ ...publishedDayMusic.track, directPlayback: true }];
     }
     return waitingRoomMusicPlaylistForSession({
       level: waitingClassLevel,
@@ -759,7 +772,7 @@ export default function CheckinDisplayPage() {
       publicBaseUrl: WAITING_ROOM_R2_PUBLIC_BASE_URL,
       fallbackPlaylist: pianoPlaylist,
     });
-  }, [waitingClassLevel, presenterCurriculumDay, musicSessionKey, publishedDayMusic]);
+  }, [curatedDayMusic, waitingClassLevel, presenterCurriculumDay, musicSessionKey, publishedDayMusic]);
   const dayMusicConfigured = Boolean(waitingSessionPlaylist[0]?.repeat);
 
   const presenterLessonUrl = useMemo(() => {
@@ -1302,6 +1315,7 @@ export default function CheckinDisplayPage() {
     const masterGain = musicGainRef.current;
     if (!context || !masterGain || context.state === "closed") return;
     masterGain.gain.setTargetAtTime(musicVolume, context.currentTime, 0.08);
+    setWaitingMusicPlaybackVolume(context, musicVolume);
   }, [musicVolume]);
 
   useEffect(() => {
@@ -1314,6 +1328,7 @@ export default function CheckinDisplayPage() {
     const remainingMs = scheduledStartAt - nowMs;
     if (remainingMs > 60000) {
       masterGain.gain.setTargetAtTime(musicVolume, context.currentTime, 0.08);
+      setWaitingMusicPlaybackVolume(context, musicVolume);
       return;
     }
 
@@ -1324,6 +1339,7 @@ export default function CheckinDisplayPage() {
         context.currentTime,
         0.35,
       );
+      setWaitingMusicPlaybackVolume(context, Math.max(0.05, musicVolume * fadeFactor));
       return;
     }
 
@@ -1332,6 +1348,7 @@ export default function CheckinDisplayPage() {
       context.currentTime,
       0.35,
     );
+    setWaitingMusicPlaybackVolume(context, Math.max(0.05, musicVolume * 0.35));
   }, [actualStartedAt, dateLabel, musicPlaying, musicVolume, nowMs, startTime]);
 
   const syncPresenterStart = useCallback(async (startedAt, { manual = false, recovery = false, handshakeAttempt = 1 } = {}) => {
@@ -2157,7 +2174,7 @@ export default function CheckinDisplayPage() {
                 <span aria-hidden="true">♫</span> Waiting room music
               </div>
               <div className="checkin-display-music-note">
-                {dayMusicConfigured ? `${waitingClassLevel} Day ${presenterCurriculumDay} music repeats for this class; the general playlist is the fallback.` : "General Falowen music plays in sequence. Day-specific Cloudflare music activates when the public R2 music domain is configured."} {musicPlaying ? `Now playing: ${currentMusicTrack}.` : ""}
+                {dayMusicConfigured ? `${waitingClassLevel} Day ${presenterCurriculumDay}: approved Cloudflare song repeats. If unavailable, an audio error appears instead of the old song.` : "General Falowen music plays on days without an approved lesson song."} {musicPlaying ? `Now playing: ${currentMusicTrack}.` : ""}
               </div>
             </div>
             <div className="checkin-display-music-visual" aria-hidden="true">
