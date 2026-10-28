@@ -23,7 +23,7 @@ export default function MusicStudioPage() {
   const context = courseMode === 'course' ? musicLessonContext(lesson, language, focus) : '';
   const [brief, setBrief] = useState(PRESETS.vocabulary);
   const [lyrics, setLyrics] = useState('');
-  const [mode, setMode] = useState('clip');
+  const [mode, setMode] = useState('song');
   const [durationSeconds, setDurationSeconds] = useState(150);
   const [vocalMode, setVocalMode] = useState('voice');
   const [backingLevel, setBackingLevel] = useState('very-soft');
@@ -79,9 +79,9 @@ export default function MusicStudioPage() {
         {vocalMode === 'voice' && <><label htmlFor="music-backing">Accompaniment behind the singer</label><select id="music-backing" value={backingLevel} onChange={e => setBackingLevel(e.target.value)}><option value="very-soft">Very quiet — voice upfront (recommended)</option><option value="soft">Soft — moderate accompaniment</option></select><p className="music-note">These settings guide Google’s mix; they cannot separately turn down instruments in an already-generated MP3.</p></>}
         <label htmlFor="music-lyrics">Your lyrics <span>(optional)</span></label><textarea id="music-lyrics" maxLength={5500} rows={9} value={lyrics} onChange={e => setLyrics(e.target.value)} placeholder={'[Verse 1]\nWrite your German and English lyrics here…\n\n[Chorus]'} />
         <p className="music-note">{lyrics.trim().split(/\s+/).filter(Boolean).length} / {musicLyricLimit(mode, durationSeconds)} suggested words for this length. Leave lyrics empty to let Google compose them. Too many lines can lead to a cut-off ending.</p>
-        <label htmlFor="music-mode">3. Choose generation</label><select id="music-mode" value={mode} onChange={e => setMode(e.target.value)}><option value="clip">30-second preview · estimated $0.04</option><option value="song">Full song · estimated $0.08</option></select>
+        <label htmlFor="music-mode">3. Choose generation</label><select id="music-mode" value={mode} onChange={e => setMode(e.target.value)}><option value="clip">30-second preview only (not a complete song) · estimated $0.04</option><option value="song">Full song · estimated $0.08</option></select>
         {mode === 'song' && <><label htmlFor="music-duration">Target song length</label><select id="music-duration" value={durationSeconds} onChange={e => setDurationSeconds(Number(e.target.value))}><option value={120}>About 2 minutes</option><option value={150}>About 2½ minutes — recommended</option><option value={180}>About 3 minutes</option></select></>}
-        <p className="music-note">A full song is a new generation, not an extension of the preview. Duration is approximate. The prompt reserves an ending with a completed final phrase, resolved chord and natural fade; Google does not guarantee an exact length or mix.</p>
+        <p className="music-note">The preview always ends after 30 seconds; choose Full song for a complete track. A full song is a new generation, not an extension of the preview. Duration is approximate. The prompt reserves an ending with a completed final phrase, resolved chord and natural fade; Google does not guarantee an exact length or mix.</p>
         {courseMode === 'course' && selectedDay && <p className="music-note">For this day’s attendance waiting room, download your finished MP3 and upload it to your dedicated public R2 music bucket as <code>{waitingRoomMusicObjectKey(level, Number(selectedDay.day)) || 'choose a numbered day'}</code>.</p>}
         <button className="music-generate" disabled={!status?.ready || capped || !brief.trim()} type="submit">{busy ? 'Creating your music…' : `Generate ${mode === 'clip' ? 'preview' : 'full song'} · ~$${(cents / 100).toFixed(2)}`}</button>
       </fieldset>
