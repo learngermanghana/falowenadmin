@@ -7,6 +7,7 @@ import { learnerLessonUrl } from "../utils/teacherLessonDashboard.js";
 import { buildTeachingPresenterStages } from "../utils/teachingPresenter.js";
 import { splitWarmupQuestionSegments } from "../utils/warmupText.js";
 import { pianoPlaylist } from "../data/pianoPlaylist.js";
+import { waitingRoomMusicPlaylistForSession } from "../utils/waitingRoomDayMusic.js";
 import { skipWaitingMusicPlaylist, startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pianoAudio.js";
 import { checkinSessionDateKey, parseCheckinSessionDate } from "../utils/checkinSessionDate.js";
 import { presenterSessionKey } from "../utils/presenterSessionIdentity.js";
@@ -27,6 +28,8 @@ import "./CheckinDisplayPage.css";
 
 const ATTENDANCE_UTC_OFFSET_HOURS = 0;
 const ATTENDANCE_TIME_ZONE = "Africa/Accra";
+// Use a separate public R2 music bucket/custom domain, never a private course-audio bucket.
+const WAITING_ROOM_R2_PUBLIC_BASE_URL = import.meta.env.VITE_WAITING_ROOM_R2_PUBLIC_BASE_URL || "";
 const ATTENDANCE_TIME_ZONE_LABEL = "Ghana time (UTC+00:00)";
 const START_HANDSHAKE_RETRY_DELAYS_MS = Object.freeze([2000, 5000, 10000]);
 const START_HANDSHAKE_MAX_ATTEMPTS = START_HANDSHAKE_RETRY_DELAYS_MS.length + 1;
@@ -720,6 +723,14 @@ export default function CheckinDisplayPage() {
     waitingWarmupTeaser?.dayNumber,
   ]);
 
+  const waitingSessionPlaylist = useMemo(() => waitingRoomMusicPlaylistForSession({
+    level: waitingClassLevel,
+    day: presenterCurriculumDay,
+    publicBaseUrl: WAITING_ROOM_R2_PUBLIC_BASE_URL,
+    fallbackPlaylist: pianoPlaylist,
+  }), [waitingClassLevel, presenterCurriculumDay]);
+  const dayMusicConfigured = Boolean(waitingSessionPlaylist[0]?.repeat);
+
   const presenterLessonUrl = useMemo(() => {
     const course = String(waitingWarmupTeaser?.course || waitingClassLevel || "").trim().toUpperCase();
     const slideId = String(waitingWarmupTeaser?.slideId || "").trim();
@@ -1152,7 +1163,7 @@ export default function CheckinDisplayPage() {
     const context = audioContextRef.current;
     audioContextRef.current = null;
     musicGainRef.current = null;
-    setCurrentMusicTrack(pianoPlaylist[0]?.title || "Waiting room music");
+    setCurrentMusicTrack(waitingSessionPlaylist[0]?.title || pianoPlaylist[0]?.title || "Waiting room music");
 
     if (context) stopWaitingMusicPlaylist(context);
     if (context && context.state !== "closed") {
@@ -1160,11 +1171,11 @@ export default function CheckinDisplayPage() {
     }
     setMusicPlaying(false);
     setMusicStarting(false);
-  }, []);
+  }, [waitingSessionPlaylist]);
 
   const skipWaitingMusic = useCallback(async () => {
     const context = audioContextRef.current;
-    if (!musicPlaying || musicStarting || pianoPlaylist.length <= 1 || !context || context.state === "closed") return;
+    if (!musicPlaying || musicStarting || waitingSessionPlaylist.length <= 1 || !context || context.state === "closed") return;
 
     try {
       setMusicError("");
@@ -1172,7 +1183,7 @@ export default function CheckinDisplayPage() {
     } catch (error) {
       setMusicError(error?.message || "The next waiting room track could not start.");
     }
-  }, [musicPlaying, musicStarting]);
+  }, [musicPlaying, musicStarting, waitingSessionPlaylist.length]);
 
   const startWaitingMusic = useCallback(async () => {
     if (musicPlaying || musicStartInFlightRef.current) return;
@@ -1225,7 +1236,7 @@ export default function CheckinDisplayPage() {
       }
 
       await startWaitingMusicPlaylist(context, masterGain, {
-        playlist: pianoPlaylist,
+        playlist: waitingSessionPlaylist,
         onTrackChange: (track) => {
           setCurrentMusicTrack(track?.title || "Waiting room music");
           setMusicError("");
@@ -1246,7 +1257,14 @@ export default function CheckinDisplayPage() {
       stopWaitingMusic();
       setMusicError(error?.message || "Waiting room music could not start. Raise the device media volume and try again.");
     }
-  }, [musicPlaying, musicVolume, stopWaitingMusic]);
+  }, [musicPlaying, musicVolume, stopWaitingMusic, waitingSessionPlaylist]);
+
+  // When a different curriculum day/class is selected, never keep playing
+  // the previous day's track. The teacher taps Start again (browser audio policy).
+  useEffect(() => {
+    if (audioContextRef.current) stopWaitingMusic();
+    else setCurrentMusicTrack(waitingSessionPlaylist[0]?.title || "Waiting room music");
+  }, [waitingSessionPlaylist, stopWaitingMusic]);
 
   useEffect(() => {
     const context = audioContextRef.current;
@@ -2108,7 +2126,7 @@ export default function CheckinDisplayPage() {
                 <span aria-hidden="true">♫</span> Waiting room music
               </div>
               <div className="checkin-display-music-note">
-                Relaxing instrumental tracks play in sequence and loop while students wait. {musicPlaying ? `Now playing: ${currentMusicTrack}.` : ""}
+                {dayMusicConfigured ? `${waitingClassLevel} Day ${presenterCurriculumDay} music repeats for this class; the general playlist is the fallback.` : "General Falowen music plays in sequence. Day-specific Cloudflare music activates when the public R2 music domain is configured."} {musicPlaying ? `Now playing: ${currentMusicTrack}.` : ""}
               </div>
             </div>
             <div className="checkin-display-music-visual" aria-hidden="true">
