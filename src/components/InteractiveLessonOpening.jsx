@@ -59,23 +59,47 @@ export default function InteractiveLessonOpening({ stage, slide }) {
     try {
       const user = auth.currentUser;
       if (!user) throw new Error("Bitte zuerst in Falowen Admin anmelden.");
-      const params = new URLSearchParams({ day: String(lesson.listening.day), key: lesson.listening.audioKey });
-      const response = await fetch(`${AUDIO_API}/course-media/${lesson.listening.level.toLowerCase()}/audio-url?${params}`, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${await user.getIdToken()}` },
-        cache: "no-store",
+      // Retain the original private R2 bank-telephone Hören and original key.
+      // Old Cloud Run URLs can become unreachable after redeploys: on network
+      // or server availability errors retry the same permission-checked
+      // course-media route via the student application's production API.
+      const params = new URLSearchParams({
+        day: String(lesson.listening.day),
+        key: lesson.listening.audioKey,
       });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data.url) {
-        const reason = response.status === 400 && /invalid .*audio request/i.test(String(data.error || ""))
-          ? "Die Audiofreigabe ist auf dem Server noch nicht aktiv. Bitte die API-Bereitstellung prüfen."
-          : response.status === 404 && !data.error
-            ? "Der Audio-Endpunkt ist auf dem Server nicht verfügbar (HTTP 404). Bitte die aktuelle Cloud-Run-API prüfen."
-            : data.error || `Audio konnte nicht geladen werden (HTTP ${response.status}).`;
-        throw new Error(reason);
+      const token = await user.getIdToken();
+      const urlPath = `/course-media/${lesson.listening.level.toLowerCase()}/audio-url?${params}`;
+      const origins = [...new Set([AUDIO_API, "https://www.falowen.app/api"])];
+      let lastError = null;
+      for (const origin of origins) {
+        try {
+          const response = await fetch(`${origin}${urlPath}`, {
+            method: "GET", headers: { Authorization: `Bearer ${token}` }, cache: "no-store",
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || !data.url) {
+            const message = response.status === 400 && /invalid .*audio request/i.test(String(data.error || ""))
+              ? "Die Audiofreigabe ist auf dem Server nicht aktiv."
+              : data.error || `Audio konnte nicht geladen werden (HTTP ${response.status}).`;
+            lastError = new Error(message);
+            // Never bypass 400/401/403: these are key or permissions failures,
+            // not stale server locations. Avoid multiple requests in that case.
+            if (response.status < 500 && response.status !== 404) {
+              lastError.stopFallback = true;
+              throw lastError;
+            }
+            continue;
+          }
+          if (requestId !== requestCounter.current) return;
+          setAudioUrl(String(data.url));
+          return;
+        } catch (error) {
+          lastError = error;
+          if (error?.stopFallback) break;
+          // Network/offline exceptions can use a single alternate API origin.
+        }
       }
-      if (requestId !== requestCounter.current) return;
-      setAudioUrl(String(data.url));
+      throw lastError || new Error("Die Aufnahme ist im Moment nicht erreichbar.");
     } catch (error) {
       if (requestId === requestCounter.current) setAudioError(error?.message || "Audio ist im Moment nicht erreichbar.");
     } finally {
