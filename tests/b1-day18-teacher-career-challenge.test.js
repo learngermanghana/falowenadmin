@@ -45,7 +45,7 @@ test("Day 18 career challenge replaces prioritization rather than adding another
   assert.equal(career.type, "career-challenge");
   assert.equal(career.items, B1_DAY18_CAREER_CHALLENGES);
   assert.deepEqual(stages.map((stage) => stage.id), [
-    "intro", "warmup", "knowledge", "phrases", "grammar-check",
+    "intro", "warmup", "common-mistakes", "reading", "grammar-check",
     "career-challenge", "questions", "workbook", "lesson-summary",
   ]);
   assert.equal(stages.length, 9, "Day 18 must use one practice slot, not an extra slide");
