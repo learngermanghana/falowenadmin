@@ -6,9 +6,14 @@ export const waitingMusicPlaylist = Object.freeze([
     "src": "/Gemeinsam%20schaffen%20wir%20das.mp3"
   },
   {
-    "id": "willkommen-bei-falowen-2",
-    "title": "Willkommen bei Falowen",
-    "src": "/Willkommen%20bei%20Falowen(1).mp3"
+    "id": "schritt-fur-schritt-2",
+    "title": "Schritt für Schritt",
+    "src": "/Schritt%20f%C3%BCr%20Schritt.mp3"
+  },
+  {
+    "id": "svchritt-fur-schritt-3",
+    "title": "Svchritt für Schritt",
+    "src": "/Svchritt%20f%C3%BCr%20Schritt.mp3"
   }
 ]);
 export const pianoPlaylist = waitingMusicPlaylist;

@@ -37,3 +37,27 @@ export function waitingRoomMusicPlaylistForSession({
     ...fallback,
   ];
 }
+
+/**
+ * Resolve an approved level/day track from the public Falowen Music catalog.
+ * The catalog is public static JSON, not a Firebase query or R2 bucket listing.
+ * A missing/unpublished song returns null so the existing playlist still works.
+ */
+export function waitingRoomPublishedCatalogTrack(catalog, { level, day } = {}) {
+  const key = waitingRoomMusicObjectKey(level, day);
+  if (!key) return null;
+  const rows = Array.isArray(catalog?.tracks) ? catalog.tracks : [];
+  const normalizedLevel = String(level).toUpperCase();
+  const row = rows.find(item => item && item.attendance === true
+    && String(item.level || "").toUpperCase() === normalizedLevel
+    && Number(item.day) === Number(day) && item.id && item.title);
+  if (!row) return null;
+  try {
+    const url = new URL(String(row.audioUrl || ""));
+    if (url.protocol !== "https:" || url.username || url.password
+      || /(?:^|\\.)r2\\.cloudflarestorage\\.com$|(?:^|\\.)dash\\.cloudflare\\.com$/i.test(url.hostname)) return null;
+    return { id: `published-${String(row.id).slice(0, 80)}`,
+      title: String(row.title).slice(0, 120), src: url.href,
+      repeat: true, objectKey: key };
+  } catch { return null; }
+}

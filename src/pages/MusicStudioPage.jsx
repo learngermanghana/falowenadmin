@@ -5,6 +5,7 @@ import { waitingRoomMusicObjectKey } from '../utils/waitingRoomDayMusic.js';
 import './MusicStudioPage.css';
 import { getMusicDays, musicLessonContext } from '../utils/musicCourseContext.js';
 import { STUDIO_COURSE_LEVELS } from '../utils/hoerenCourseCatalog.js';
+import { getMusicTopicStyle, suggestLessonMusicDirection } from '../utils/musicTopicStyle.js';
 const PRESETS = {
   welcome: 'A gentle Falowen welcome song for German learners before their Zoom class. Encourage learners not to give up: Gemeinsam schaffen wir das / Together we can. Bilingual German and English. Acoustic guitar only, one smooth warm male voice, relaxed Afro-soul feel, quiet and reassuring, no backing singers.',
   vocabulary: 'A memorable Falowen German-learning story song at the selected CEFR level. A relatable everyday situation, clear natural German dialogue, and a catchy useful-sentence chorus. Occasional short English support for beginners. Gentle acoustic guitar, one smooth warm male voice, and very quiet accompaniment.',
@@ -21,6 +22,7 @@ export default function MusicStudioPage() {
   const selectedDay = days.find(group => String(group.day) === day) || days[0];
   const lesson = selectedDay?.lessons.find(entry => entry.assignmentKey === assignment) || selectedDay?.lessons[0];
   const [brief, setBrief] = useState(PRESETS.vocabulary);
+  const [styleMode, setStyleMode] = useState('auto');
   const [lyrics, setLyrics] = useState('');
   const [mode, setMode] = useState('song');
   const [durationSeconds, setDurationSeconds] = useState(150);
@@ -30,6 +32,9 @@ export default function MusicStudioPage() {
   const [storyIdea, setStoryIdea] = useState('');
   const [lyricTreatment, setLyricTreatment] = useState('exact');
   const rewriteFromLyrics = courseMode === 'course' && vocalMode === 'voice' && songStyle === 'story' && lyricTreatment === 'story-source';
+  const effectiveBrief = styleMode === 'auto' && courseMode === 'course'
+    ? suggestLessonMusicDirection(lesson, { instrumental: vocalMode === 'instrumental' })
+    : brief;
   const context = courseMode === 'course' ? musicLessonContext(lesson, language, focus, {
     songStyle: vocalMode === 'voice' ? songStyle : 'vocabulary',
     storyIdea,
@@ -55,7 +60,7 @@ export default function MusicStudioPage() {
     if (lock.current) return;
     lock.current = true; setBusy(true); setError('');
     try {
-      const prompt = buildFalowenMusicPrompt({ brief, context, lyrics, mode, durationSeconds, vocalMode, backingLevel,
+      const prompt = buildFalowenMusicPrompt({ brief: effectiveBrief, context, lyrics, mode, durationSeconds, vocalMode, backingLevel,
         lyricTreatment: rewriteFromLyrics ? 'story-source' : 'exact' });
       const data = await musicRequest({ mode, requestId: crypto.randomUUID(), prompt });
       const url = URL.createObjectURL(musicBlob(data));
@@ -83,7 +88,7 @@ export default function MusicStudioPage() {
           <p className="music-note">The selected level, day and dictionary topic guide the song automatically. Changing lessons keeps your music direction and lyrics for you to review. Choosing a lesson is free.</p>
         </>}
         <h2>2. Shape your song</h2>
-        <div className="music-presets">{Object.entries(PRESETS).map(([id, text]) => <button type="button" key={id} onClick={() => { setBrief(text); setVocalMode(id === 'instrumental' ? 'instrumental' : 'voice'); }}>{id === 'welcome' ? 'Class welcome' : id === 'vocabulary' ? 'Lesson story song' : 'Guitar instrumental'}</button>)}</div>
+        <div className="music-presets">{Object.entries(PRESETS).map(([id, text]) => <button type="button" key={id} onClick={() => { setBrief(text); setStyleMode('custom'); setVocalMode(id === 'instrumental' ? 'instrumental' : 'voice'); }}>{id === 'welcome' ? 'Class welcome' : id === 'vocabulary' ? 'Lesson story song' : 'Guitar instrumental'}</button>)}</div>
         {courseMode === 'course' && vocalMode === 'voice' && <>
           <label htmlFor="music-story-style">Songwriting approach</label>
           <select id="music-story-style" value={songStyle} onChange={e => setSongStyle(e.target.value)}>
@@ -98,7 +103,19 @@ export default function MusicStudioPage() {
             <p className="music-note">AI uses the selected CEFR level to create a beginning, problem, dialogue and resolution. A1 uses simple sentences; higher levels add richer situations.</p>
           </>}
         </>}
-        <label htmlFor="music-brief">Music direction</label><textarea id="music-brief" required maxLength={2000} rows={6} value={brief} onChange={e => setBrief(e.target.value)} />
+        {courseMode === 'course' && <>
+          <label htmlFor="music-style-mode">Music style</label>
+          <select id="music-style-mode" value={styleMode} onChange={e => {
+            if (e.target.value === 'custom' && styleMode === 'auto') setBrief(effectiveBrief);
+            setStyleMode(e.target.value);
+          }}>
+            <option value="auto">Automatically match the lesson topic — recommended</option>
+            <option value="custom">Choose my own music direction</option>
+          </select>
+          {styleMode === 'auto' && <p className="music-note">Suggested for this topic: <strong>{getMusicTopicStyle(lesson).label}</strong>. Change the lesson to update the genre automatically. Switch to custom to edit the music direction.</p>}
+        </>}
+        <label htmlFor="music-brief">Music direction {styleMode === 'auto' && courseMode === 'course' ? '(automatically selected)' : ''}</label>
+        <textarea id="music-brief" required maxLength={2000} rows={6} value={effectiveBrief} readOnly={styleMode === 'auto' && courseMode === 'course'} onChange={e => setBrief(e.target.value)} />
         <label htmlFor="music-voice">Vocals and instrumental balance</label><select id="music-voice" value={vocalMode} onChange={e => setVocalMode(e.target.value)}><option value="voice">Clear lead vocals (recommended)</option><option value="instrumental">Instrumental only — no singer</option></select>
         {vocalMode === 'voice' && <><label htmlFor="music-backing">Accompaniment behind the singer</label><select id="music-backing" value={backingLevel} onChange={e => setBackingLevel(e.target.value)}><option value="very-soft">Very quiet — voice upfront (recommended)</option><option value="soft">Soft — moderate accompaniment</option></select><p className="music-note">These settings guide Google’s mix; they cannot separately turn down instruments in an already-generated MP3.</p></>}
         <label htmlFor="music-lyrics">Your lyrics or vocabulary draft <span>(optional)</span></label><textarea id="music-lyrics" maxLength={5500} rows={9} value={lyrics} onChange={e => setLyrics(e.target.value)} placeholder={'[Verse 1]\nWrite your German and English lyrics here…\n\n[Chorus]'} />
@@ -116,8 +133,8 @@ export default function MusicStudioPage() {
         <label htmlFor="music-mode">3. Choose generation</label><select id="music-mode" value={mode} onChange={e => setMode(e.target.value)}><option value="clip">30-second preview only (not a complete song) · estimated $0.04</option><option value="song">Full song · estimated $0.08</option></select>
         {mode === 'song' && <><label htmlFor="music-duration">Target song length</label><select id="music-duration" value={durationSeconds} onChange={e => setDurationSeconds(Number(e.target.value))}><option value={120}>About 2 minutes</option><option value={150}>About 2½ minutes — recommended</option><option value={180}>About 3 minutes</option></select></>}
         <p className="music-note">The preview always ends after 30 seconds; choose Full song for a complete track. A full song is a new generation, not an extension of the preview. Duration is approximate. The prompt reserves an ending with a completed final phrase, resolved chord and natural fade; Google does not guarantee an exact length or mix.</p>
-        {courseMode === 'course' && selectedDay && <p className="music-note">For this day’s attendance waiting room, download your finished MP3 and upload it to your dedicated public R2 music bucket as <code>{waitingRoomMusicObjectKey(level, Number(selectedDay.day)) || 'choose a numbered day'}</code>.</p>}
-        <button className="music-generate" disabled={!status?.ready || capped || !brief.trim()} type="submit">{busy ? 'Creating your music…' : `Generate ${mode === 'clip' ? 'preview' : 'full song'} · ~$${(cents / 100).toFixed(2)}`}</button>
+        {courseMode === 'course' && selectedDay && <p className="music-note">After listening and approving, publish your MP3 to the Falowen Music library as a public track for this level and day. For GitHub-hosted day music, use <code>{waitingRoomMusicObjectKey(level, Number(selectedDay.day)) || 'choose a numbered day'}</code> under the student repository’s <code>web/public/music/</code> folder and add it to the public music catalog. A dedicated public R2 music URL can also be listed there.</p>}
+        <button className="music-generate" disabled={!status?.ready || capped || !effectiveBrief.trim()} type="submit">{busy ? 'Creating your music…' : `Generate ${mode === 'clip' ? 'preview' : 'full song'} · ~$${(cents / 100).toFixed(2)}`}</button>
       </fieldset>
       {busy && <p role="status">This may take a few minutes. Keep this page open. Your request will not retry automatically.</p>}
       {error && <p role="alert" className="music-error">{error}</p>}
