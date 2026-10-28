@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { prepareLessonSong } from '../services/lessonSongService.js';
-import { lyricLines, readSongCues, validateLyricCues, songTime } from '../utils/songLyrics.js';
+import { lyricLines, songTime } from '../utils/songLyrics.js';
+import useSongTiming from '../hooks/useSongTiming.js';
+import SongTimingEditor from './SongTimingEditor.jsx';
 import LessonSongLyrics from './LessonSongLyrics.jsx';
 import './LessonSongStage.css';
 
@@ -11,7 +13,7 @@ export default function LessonSongStage({ song, mode = 'listen' }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [time, setTime] = useState(0);
-  const [cues, setCues] = useState(() => readSongCues(song));
+  const [cues, persistCues] = useSongTiming(song);
   const [question, setQuestion] = useState(0);
   const [selected, setSelected] = useState(-1);
   const [reveal, setReveal] = useState(false);
@@ -30,33 +32,6 @@ export default function LessonSongStage({ song, mode = 'listen' }) {
     try { const next = await prepareLessonSong(song, { signal: controller.signal }); if (!controller.signal.aborted) { setUrl(next); setTime(0); } }
     catch (e) { if (!controller.signal.aborted) setError(e.message); }
     finally { if (!controller.signal.aborted) setBusy(false); }
-  }
-  function saveCues(next) {
-    setCues(next);
-    try { localStorage.setItem(`falowen-song-cues:${song.id}`, JSON.stringify({ objectKey: song.objectKey, cues: next })); }
-    catch { setError('Zeitmarken konnten nicht auf diesem Gerät gespeichert werden. Bitte exportieren.'); }
-  }
-  function markNext() {
-    const raw = audio.current?.currentTime;
-    const start = Number.isFinite(raw) ? Math.round(raw * 100) / 100 : NaN;
-    if (!Number.isFinite(start) || cues.length >= lines.length) return;
-    if (cues.length && start <= cues[cues.length - 1].start) { setError('Die nächste Zeile muss nach der vorherigen Zeitmarke beginnen.'); return; }
-    setError(''); saveCues([...cues, { start: Math.round(start * 100) / 100, text: lines[cues.length] }]);
-  }
-  async function importCues(event) {
-    const file = event.target.files?.[0]; if (!file) return;
-    try {
-      if (file.size > 100000) throw new Error();
-      const data = JSON.parse(await file.text());
-      const checked = validateLyricCues(data.cues, lines);
-      if (data.objectKey !== song.objectKey || !checked.length) throw new Error();
-      saveCues(checked); setError('');
-    } catch { setError('Diese Zeitmarken passen nicht zu diesem Liedtext und dieser Aufnahme.'); }
-    event.target.value = '';
-  }
-  function exportCues() {
-    const blob = new Blob([JSON.stringify({ trackId: song.id, objectKey: song.objectKey, cues }, null, 2)], { type: 'application/json' });
-    const href = URL.createObjectURL(blob), link = document.createElement('a'); link.href = href; link.download = `${song.id}-lyrics-timing.json`; link.click(); URL.revokeObjectURL(href);
   }
   function changeQuestion(next) { setQuestion(next); setReveal(false); setSelected(-1); }
   function chooseStep(next) { setStep(next); changeQuestion(0); }
@@ -92,12 +67,6 @@ export default function LessonSongStage({ song, mode = 'listen' }) {
         </>}
       </div>
     </div>
-    {activeMode === 'listen' && <details className="lesson-song-sync"><summary>Lehrkraft · Liedtext mit der Aufnahme synchronisieren</summary><p>Spiele die fertige Aufnahme. Klicke bei jedem Zeilenanfang auf „Zeile markieren“. Die Zeiten werden auf diesem Gerät gespeichert; exportiere sie für andere Geräte.</p>
-      <strong>Nächste Zeile: {lines[cues.length] || 'Alle Zeilen sind markiert.'}</strong><div className="lesson-song-sync-actions">
-        <button type="button" disabled={!url || cues.length === lines.length} onClick={markNext}>Zeile markieren · {songTime(time)}</button>
-        <button type="button" disabled={!cues.length} onClick={() => saveCues(cues.slice(0, -1))}>Letzte Markierung zurück</button>
-        <button type="button" disabled={!cues.length} onClick={exportCues}>Zeitmarken exportieren</button>
-        <label>Zeitmarken importieren <input type="file" accept="application/json,.json" onChange={importCues} /></label>
-      </div></details>}
+    {activeMode === 'listen' && <SongTimingEditor song={song} audio={audio} cues={cues} onSave={persistCues}/>}
   </section>;
 }

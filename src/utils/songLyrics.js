@@ -21,7 +21,8 @@ export function activeLyricIndex(cues, time) {
 export function readSongCues(song, storage) {
   const lines = lyricLines(song.lyrics);
   try {
-    const saved = JSON.parse((storage || globalThis.localStorage)?.getItem(`falowen-song-cues:${song.id}`) || 'null');
+    const source = storage || globalThis.localStorage;
+    const saved = JSON.parse(source?.getItem(`falowen-song-timing:${song.objectKey}`) || source?.getItem(`falowen-song-cues:${song.id}`) || 'null');
     const checked = saved?.objectKey === song.objectKey ? validateLyricCues(saved.cues, lines) : [];
     return checked.length ? checked : validateLyricCues(song.cues, lines);
   } catch { return validateLyricCues(song.cues, lines); }

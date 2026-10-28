@@ -13,3 +13,4 @@
 .published-song-lesson__options button strong{color:#176aa1;margin-right:.4rem}
 .published-song-lesson__speaking-note{color:#285e49;font-size:.93rem}
 @media(max-width:640px){.published-song-lesson__options{grid-template-columns:1fr}}
+.published-song-lesson .lesson-song-lyrics button{color:#284c4b;font-weight:400;background:transparent;border-color:transparent}.published-song-lesson .lesson-song-lyrics button.is-active{background:#d5f17d;border-color:#7fa857;color:#153b24;font-weight:800}.published-song-lesson .lesson-song-lyrics{max-height:46vh}.published-song-lesson .lesson-song-sync{color:#244b40}.published-song-lesson .lesson-song-sync p{font-size:.9rem;line-height:1.6;margin:10px 0}.published-song-lesson .lesson-song-sync code{overflow-wrap:anywhere}.published-song-lesson .lesson-song-sync button{font-size:.85rem}
