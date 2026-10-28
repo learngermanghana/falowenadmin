@@ -32,6 +32,7 @@ export function musicDraftPackageText(song, lesson) {
   const lines = [
     "FALOWEN MUSIC · REUSABLE COURSE SONG",
     `Title: ${song.title}`,
+    `Genre: ${song.genre || "Teacher selected"}`,
     `Level: ${lesson?.level || String(song.assignmentKey).split("-")[0]}`,
     `Day: ${lesson?.day ?? "See course dictionary"}`,
     `Chapter: ${lesson?.chapter || ""}`,
