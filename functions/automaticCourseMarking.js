@@ -50,13 +50,17 @@ function timestampMillis(value) {
 function replacesFailedAttempt(previous, submission, submissionPath, previousSubmission) {
   if (!previous || previous.score == null || previous.score === ''
     || !Number.isFinite(Number(previous.score)) || Number(previous.score) < 0
-    || Number(previous.score) > 100 || previous.manualScoreOverride || previous.manualOverride) return false;
+    || Number(previous.score) > 100) return false;
   const failed = Number(previous.score) < 60 || previous.passed === false || previous.writingMinimumMet === false;
   if (!failed || previous.submissionPath === submissionPath) return false;
   const submittedAt = timestampMillis(submission.resubmittedAt || submission.submittedAt
     || submission.createdAt || submission.timestamp || submission.date);
+  // An earlier tutor correction belongs to the OLD attempt. A demonstrably
+  // newer, independently graded retake can replace that failed attempt.
+  // Prefer actual submission time: score-write timestamps may occur later.
   const previousAt = timestampMillis(previousSubmission?.resubmittedAt || previousSubmission?.submittedAt
     || previousSubmission?.createdAt || previousSubmission?.timestamp || previousSubmission?.date
+    || previous.submissionSubmittedAt || previous.submittedAt
     || previous.markedAt || previous.scoredAt || previous.updatedAt || previous.createdAt || previous.date);
   return Number.isFinite(submittedAt) && Number.isFinite(previousAt) && submittedAt > previousAt;
 }
@@ -222,6 +226,10 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
           objective_total: result.objectiveTotal ?? '', writing_score: result.writingScorePercent ?? result.writingScore ?? '',
           corrections: JSON.stringify(result.corrections || []), sheetSaved: false,
           submissionId: snap.id, submissionPath: snap.ref.path,
+          ...(Number.isFinite(timestampMillis(submission.resubmittedAt || submission.submittedAt
+            || submission.createdAt || submission.timestamp || submission.date))
+            ? { submissionSubmittedAt: new Date(timestampMillis(submission.resubmittedAt || submission.submittedAt
+              || submission.createdAt || submission.timestamp || submission.date)).toISOString() } : {}),
         });
         tx.set(scoreRef, row);
         // Persist the same inbox event used by tutor marking, atomically with the score.
