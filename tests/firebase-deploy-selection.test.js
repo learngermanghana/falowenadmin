@@ -44,6 +44,21 @@ test("frontend marking build patches do not redeploy Cloud Run functions", () =>
   }).mode, "full", "predeploy changes must never be skipped");
 });
 
+test("waiting room music patch is frontend-only and never deploys Firebase functions", () => {
+  const changedPaths = [
+    "src/pages/CheckinDisplayPage.jsx",
+    "src/pages/MusicStudioPage.jsx",
+    "src/utils/waitingRoomDayMusic.js",
+    "src/utils/musicGenerationPrompt.js",
+    "scripts/patchCheckinWaitingRoomPlaylist.mjs",
+  ];
+  assert.equal(selectFirebaseDeployTargets({ changedPaths }).mode, "skip");
+  assert.equal(selectFirebaseDeployTargets({
+    changedPaths: ["scripts/patchCheckinWaitingRoomPlaylist.mjs"],
+    predeployPaths: ["scripts/patchCheckinWaitingRoomPlaylist.mjs"],
+  }).mode, "full", "a true Firebase predeploy script is never exempt");
+});
+
 test("every selected worker belongs to an existing quota-safe deployment group", () => {
   const workflow = fs.readFileSync(".github/workflows/deploy-firebase.yml", "utf8");
   for (const targets of Object.values(WORKER_TARGETS)) {
