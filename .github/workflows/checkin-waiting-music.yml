@@ -6,6 +6,10 @@ on:
       - 'public/*.mp3'
       - 'src/data/pianoPlaylist.js'
       - 'src/utils/pianoAudio.js'
+      - 'src/utils/waitingRoomDayMusic.js'
+      - 'src/utils/musicGenerationPrompt.js'
+      - 'src/pages/MusicStudioPage.jsx'
+      - 'tests/music-studio-waiting-day-r2.test.js'
       - 'src/pages/CheckinDisplayPage.jsx'
       - 'src/pages/CheckinDisplayPage.css'
       - 'src/utils/checkinLobbyView.js'
@@ -21,6 +25,10 @@ on:
       - 'public/*.mp3'
       - 'src/data/pianoPlaylist.js'
       - 'src/utils/pianoAudio.js'
+      - 'src/utils/waitingRoomDayMusic.js'
+      - 'src/utils/musicGenerationPrompt.js'
+      - 'src/pages/MusicStudioPage.jsx'
+      - 'tests/music-studio-waiting-day-r2.test.js'
       - 'src/pages/CheckinDisplayPage.jsx'
       - 'scripts/patchCheckinWaitingRoomPlaylist.mjs'
       - 'tests/checkin-waiting-music-playlist.test.js'
@@ -45,6 +53,6 @@ jobs:
         run: |
           node --check scripts/patchCheckinWaitingRoomPlaylist.mjs
           node --check src/utils/pianoAudio.js
-          node --test tests/checkin-waiting-music-playlist.test.js tests/checkin-smart-lobby-v2.test.js
+          node --test tests/checkin-waiting-music-playlist.test.js tests/checkin-smart-lobby-v2.test.js tests/music-studio-waiting-day-r2.test.js tests/music-studio.test.js
       - name: Build production bundle
         run: npx vite build
