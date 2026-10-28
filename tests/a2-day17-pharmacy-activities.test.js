@@ -236,12 +236,13 @@ test("A2 Day 20 Reklamation preserves the uploaded Richtig/Falsch answers and wo
 });
 
 
-test("interactive Hören requests signed audio from deployed Cloud Run API instead of rate-limited website API", () => {
+test("interactive Hören uses Cloud Run except the exact staff-authenticated Day 18 bank route", () => {
   const component = readFileSync(new URL("../src/components/InteractiveLessonOpening.jsx", import.meta.url), "utf8");
   assert.match(component, /api-awc2au65xa-ew\.a\.run\.app/);
   assert.match(component, /VITE_FALOWEN_COURSE_MEDIA_API_URL/);
   assert.doesNotMatch(component, /VITE_FALOWEN_COURSE_API_URL/);
-  assert.doesNotMatch(component, /https:\/\/www\.falowen\.app\/api/);
+  assert.match(component, /lesson\.listening\.level === "A2" && lesson\.listening\.day === 18/);
+  assert.match(component, /https:\/\/www\.falowen\.app\/api\/course-media\/a2\/classroom-audio-url/);
   assert.match(component, /Authorization: `Bearer \$\{await user\.getIdToken\(\)\}`/);
   assert.match(component, /lesson\.listening\.audioKey/);
   assert.match(component, /\/course-media\/\$\{lesson\.listening\.level\.toLowerCase\(\)\}\/audio-url/);
