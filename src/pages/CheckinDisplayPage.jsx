@@ -733,7 +733,10 @@ export default function CheckinDisplayPage() {
   useEffect(() => {
     const controller = new AbortController();
     setPublishedDayMusic(null);
-    if (!waitingClassLevel || !presenterCurriculumDay) return () => controller.abort();
+    if (!waitingClassLevel || !presenterCurriculumDay
+      || getCuratedMusicForSession({ level: waitingClassLevel, day: presenterCurriculumDay, assignmentKey: effectiveAssignmentId })) {
+      return () => controller.abort();
+    }
     fetch(WAITING_ROOM_MUSIC_CATALOG_URL, { signal: controller.signal })
       .then(response => {
         if (!response.ok) throw new Error("Music catalog unavailable");
@@ -748,7 +751,7 @@ export default function CheckinDisplayPage() {
       })
       .catch(() => {}); // Missing catalog must never stop the existing waiting-room playlist.
     return () => controller.abort();
-  }, [waitingClassLevel, presenterCurriculumDay, musicSessionKey]);
+  }, [waitingClassLevel, presenterCurriculumDay, musicSessionKey, effectiveAssignmentId]);
 
   // Curated lesson tracks are deterministic and available immediately:
   // no dependency on a cross-origin catalog request finishing first.
