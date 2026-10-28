@@ -20,7 +20,7 @@ function courseLessonPrompt({ level, type, topic, kind, lessonContext }) {
   const intro = `Create original German audio for a Falowen Course Book activity at CEFR ${level}. Recording type ${type}. Requested topic: ${topic}.\n`;
   const alignment = lessonContext ? `Falowen curriculum reference: ${lessonContext.assignmentKey}; chapter ${lessonContext.chapter}; German title "${lessonContext.title}"; English title "${lessonContext.englishTitle}". Treat the topic as a subtopic. Align the script, vocabulary and all questions with this exact lesson, not another chapter.\n` : "";
   return intro + alignment +
-    "Write a practical teaching text with natural German, approximately 80–150 spoken words. Use A:/B:/C: speaker turns and optional [PAUSE 3] lines, max 18 spoken segments and 320 characters per segment. No official Goethe affiliation. " +
+    `Write a practical teaching text with natural German, approximately ${({A1:"110–145",A2:"150–195",B1:"190–235",B2:"215–260",C1:"235–280",C2:"245–290"})[level] || "150–195"} spoken words. Aim for a complete, natural conversation or listening passage with a clear beginning, useful detail, and a proper ending; do not pad with repetition. Keep vocabulary and speaking pace appropriate for ${level}. Use A:/B:/C: speaker turns and optional [PAUSE 3] lines, maximum 18 spoken segments and 320 characters per segment. No official Goethe affiliation. ` +
     questionInstructions(kind);
 }
 module.exports = { validateCourseLessonContext, courseLessonPrompt };
