@@ -11,7 +11,7 @@ for (const level of ["A2", "B1"]) {
       const stages = buildTeachingPresenterStages(slide, slide.topic);
       const summary = stages.at(-1);
       assert.equal(summary.id, "lesson-summary", slide.assignmentId);
-      assert.equal(stages.length, 9, slide.assignmentId);
+      assert.equal(stages.length, stages.some(s => s.id === "knowledge") ? 10 : 9, slide.assignmentId);
       const expressions = summary.items.find(item => item.label === "Redemittel");
       const spoken = summary.items.find(item => item.label === "Sprechprobe");
       const check = summary.items.find(item => item.label === "Selbstcheck");

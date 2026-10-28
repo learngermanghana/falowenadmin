@@ -24,9 +24,9 @@ test("all 56 reading passages have exactly three checks and valid numbered evide
     }
     const stages = buildTeachingPresenterStages(slide, slide.topic);
     assert.equal(stages[1].id, "warmup");
-    assert.equal(stages[2].id, "knowledge");
-    assert.equal(stages[2].instruction, reading.readingPurpose);
-    assert.deepEqual(stages[2].answerItems, reading.answers);
+    const restored = stages.find(stage => stage.id === "reading");
+    assert.equal(restored.instruction, reading.readingPurpose);
+    assert.deepEqual(restored.answerItems, reading.answers);
     assert.deepEqual(getA2B1KnowledgeAnswers(slide.assignmentId), reading.answers);
   }
 });

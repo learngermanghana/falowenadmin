@@ -19,7 +19,7 @@ const ASSIGNMENT_IDS = [
 ];
 
 const REQUIRED_STAGES = [
-  "intro", "warmup", "knowledge", "phrases", "grammar-check",
+  "intro", "warmup", "common-mistakes", "reading", "grammar-check",
   "questions", "workbook", "lesson-summary",
 ];
 

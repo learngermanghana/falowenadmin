@@ -37,7 +37,7 @@ test("A2 knowledge tells learners how to use the text and Day 22 uses vocabulary
   assert.ok(slide, "A2-8.22 slide missing");
 
   const knowledgeStage = buildTeachingPresenterStages(slide, slide.topic)
-    .find((stage) => stage.id === "knowledge");
+    .find((stage) => stage.id === "reading");
   assert.equal(
     knowledgeStage.instruction,
     "Findet heraus, warum Mia Zeit zwischen Terminen lässt.",

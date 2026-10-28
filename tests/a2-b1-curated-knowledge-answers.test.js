@@ -25,14 +25,14 @@ test("All 56 A2 and B1 Wissensimpuls slides reveal three verified answers, never
    assert.doesNotMatch(answer,forbidden,slide.assignmentId);
   }
   const stages=buildTeachingPresenterStages(slide,slide.topic);
-  assert.equal(stages.length,9,slide.assignmentId);
-  const stage=stages.find(s=>s.id==="knowledge");
+  assert.equal(stages.length, stages.some(s => s.id === "knowledge") ? 10 : 9, slide.assignmentId);
+  const stage=stages.find(s=>s.id==="reading");
   assert.ok(stage,slide.assignmentId);
   assert.deepEqual(stage.items,knowledge.checks,slide.assignmentId+": do not replace learner questions");
   assert.deepEqual(stage.answerItems,answers,slide.assignmentId+": reveal only question-matched answers");
   assert.deepEqual(stages.slice(-3).map(s=>s.id),["questions","workbook","lesson-summary"],slide.assignmentId);
   assert.ok(stages.find(s=>s.id==="grammar-check"),slide.assignmentId);
-  assert.ok(stages.find(s=>s.id==="phrases"),slide.assignmentId);
+  assert.ok(stages.find(s=>s.id==="reading"),slide.assignmentId);
  }
 });
 

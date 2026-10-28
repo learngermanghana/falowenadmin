@@ -14,8 +14,8 @@ import {
 const REQUIRED_STAGES = [
   "intro",
   "warmup",
-  "knowledge",
-  "phrases",
+  "common-mistakes",
+  "reading",
   "grammar-check",
   "practice",
   "questions",
@@ -23,7 +23,7 @@ const REQUIRED_STAGES = [
   "lesson-summary",
 ];
 
-test("all 28 B1 lessons use the knowledge-first Presenter spine", () => {
+test("all 28 B1 lessons use the reading and correction Presenter spine", () => {
   const slides = getSlidesByCourse("B1");
   assert.equal(slides.length, 28);
   assert.deepEqual(slides.map((slide) => slide.dayNumber), Array.from({ length: 28 }, (_, index) => index + 1));
@@ -38,9 +38,10 @@ test("all 28 B1 lessons use the knowledge-first Presenter spine", () => {
     const replacement = slide.assignmentId === "B1-6.18" ? "career-challenge"
       : TEACHER_CHALLENGE_IDS.has(slide.assignmentId) ? "scenario-challenge" : "practice";
     const expectedStages = REQUIRED_STAGES.map((id) => id === "practice" ? replacement : id);
-    assert.deepEqual(stageIds, expectedStages, `${slide.assignmentId} should have nine lesson stages without duplicated practice`);
+    if (stages.some(s => s.id === "knowledge")) expectedStages.splice(2, 0, "knowledge");
+    assert.deepEqual(stageIds, expectedStages, `${slide.assignmentId} should have one reading and one correction page without duplicated practice`);
 
-    const knowledge = stages.find((stage) => stage.id === "knowledge");
+    const knowledge = stages.find((stage) => stage.id === "reading");
     assert.equal(knowledge.type, "knowledge");
     assert.equal(knowledge.items.length, 3, `${slide.assignmentId} should have three knowledge checks`);
     assert.ok(knowledge.textDe.split(/\s+/).length >= 55, `${slide.assignmentId} knowledge brief is too thin`);

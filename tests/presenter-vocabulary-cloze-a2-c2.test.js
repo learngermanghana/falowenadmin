@@ -4,9 +4,9 @@ import fs from "node:fs";
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 
-const LEVELS = ["A2", "B1", "B2", "C1", "C2"];
+const LEVELS = ["B2", "C1", "C2"];
 
-test("A2-C2 vocabulary challenges only use real target words and three visible choices", () => {
+test("B2-C2 vocabulary challenges only use real target words and three visible choices", () => {
   const challengeCounts = Object.fromEntries(LEVELS.map((level) => [level, 0]));
 
   for (const level of LEVELS) {
@@ -54,7 +54,7 @@ test("every A2 and B1 Wissensimpuls check has a teacher cross-check answer", () 
   for (const level of ["A2", "B1"]) {
     for (const slide of getSlidesByCourse(level)) {
       const knowledge = buildTeachingPresenterStages(slide, slide.topic)
-        .find((stage) => stage.id === "knowledge");
+        .find((stage) => stage.id === "reading");
       if (!knowledge) continue;
 
       assert.equal(
@@ -79,7 +79,7 @@ test("A2 Day 22 keeps concise explicit teacher answers", () => {
   assert.ok(slide, "A2-8.22 slide missing");
 
   const knowledge = buildTeachingPresenterStages(slide, slide.topic)
-    .find((stage) => stage.id === "knowledge");
+    .find((stage) => stage.id === "reading");
 
   assert.deepEqual(knowledge.answerItems, [
     "Sie berücksichtigt Wege, Essen und freie Zeit zusätzlich zu festen Terminen. Beleg: Sätze 2–5.",

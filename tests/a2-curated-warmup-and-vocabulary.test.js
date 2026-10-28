@@ -29,30 +29,18 @@ test("All 28 A2 lessons have a distinct curated follow-up for every actual warm-
   }
 });
 
-test("Every A2 Wortschatz page asks four contextual German questions that match its exact phrases", () => {
-  const slides = getSlidesByCourse("A2");
-  assert.equal(Object.keys(A2_VOCABULARY_QUESTIONS).length, 28);
-  for (const slide of slides) {
-    const stage = buildTeachingPresenterStages(slide, slide.topic).find(s => s.id === "phrases");
-    assert.ok(stage, slide.assignmentId);
-    assert.equal(stage.type, "vocabulary", slide.assignmentId);
-    assert.equal(stage.challengeItems.length, 4, slide.assignmentId + ": four guided Redemittel questions");
-    const entries = A2_VOCABULARY_QUESTIONS[slide.assignmentId];
-    assert.deepEqual(entries.map(e => e.term), stage.items.slice(0, 4).map(item => item.term), slide.assignmentId + ": questions must be keyed to the real source phrases");
-    for (let index = 0; index < 4; index++) {
-      const entry = entries[index], challenge = stage.challengeItems[index];
-      assert.equal(challenge.answer, entry.term);
-      assert.equal(challenge.sentence, getA2VocabularyQuestion(slide.assignmentId, entry.term));
-      assert.equal(challenge.mode, "situation");
-      assert.equal(challenge.promptLabel, "Sprechsituation");
-      assert.ok(challenge.sentence.endsWith("?"), slide.assignmentId);
-      assert.ok(challenge.sentence.length >= 65, slide.assignmentId);
-      assert.ok(challenge.options.includes(entry.term));
-      assert.equal(new Set(challenge.options).size, 3);
-      assert.ok(!/Lies die konkrete Situation|Welche Formulierung passt\?/i.test(challenge.sentence), slide.assignmentId);
-    }
-    assert.equal(new Set(stage.challengeItems.map(c => c.sentence)).size, 4, slide.assignmentId);
+test("A2 retains its source expressions while the vocabulary slot becomes Lesen", () => {
+ for (const slide of getSlidesByCourse("A2")) {
+  const stages = buildTeachingPresenterStages(slide, slide.topic);
+  assert.equal(stages.some(s => s.id === "phrases"), false);
+  assert.ok(stages.find(s => s.id === "reading")?.textDe);
+  const entries = A2_VOCABULARY_QUESTIONS[slide.assignmentId];
+  assert.ok(entries.length >= 4);
+  for (const entry of entries) {
+   assert.ok(slide.keyPhrasesDe.includes(entry.term));
+   assert.ok(getA2VocabularyQuestion(slide.assignmentId, entry.term).endsWith("?"));
   }
+ }
 });
 
 test("A2 presenter gives clear spoken-task instructions while preserving other levels", () => {

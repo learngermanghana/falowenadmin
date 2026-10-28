@@ -104,13 +104,13 @@ test("Presenter 2.0 uses knowledge input for A2/B1 and the shared foundation for
     for (const slide of getSlidesByCourse(level)) {
       const ids = buildTeachingPresenterStages(slide, slide.topic).map((stage) => stage.id);
       const warmup = ids.indexOf("warmup");
-      const knowledge = ids.indexOf("knowledge");
-      const phrases = ids.indexOf("phrases");
-      const grammar = ids.indexOf("grammar");
+      const knowledge = ids.indexOf("reading");
+      const corrections = ids.indexOf("common-mistakes");
+      const grammar = ids.indexOf("grammar-check");
 
       assert.ok(warmup > -1, slide.assignmentId + " warm-up missing");
       assert.ok(knowledge > warmup, slide.assignmentId + " Wissensimpuls should follow warm-up");
-      assert.ok(phrases > knowledge, slide.assignmentId + " vocabulary should follow Wissensimpuls");
+      assert.ok(corrections > warmup && corrections < knowledge, slide.assignmentId + " corrections should precede Lesen");
       assert.ok(grammar > knowledge, slide.assignmentId + " grammar should follow Wissensimpuls");
       assert.equal(ids.includes("foundation"), false, slide.assignmentId + " should not duplicate the Wissensimpuls with another foundation page");
     }

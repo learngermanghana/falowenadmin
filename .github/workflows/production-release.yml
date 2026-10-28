@@ -97,6 +97,7 @@ jobs:
           tests/student-payment-links.test.js
           tests/student-payment-directory-access.test.js
           tests/teacher-lesson-dashboard.test.js
+          tests/a2-b1-reading-common-mistakes.test.js
           tests/student-admin-curriculum-parity.test.js
           tests/presenter-timers.test.js
           tests/teaching-presenter.test.js

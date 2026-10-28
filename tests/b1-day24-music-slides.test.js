@@ -13,7 +13,7 @@ test("B1 Day 24 has YouTube music on slide 2 and deeper lyric reading on slide 3
   const stages = buildTeachingPresenterStages(slide, slide.topic);
 
   assert.deepEqual(stages.map((item) => item.id), [
-    "intro", "warmup", "knowledge", "phrases", "grammar-check",
+    "intro", "warmup", "knowledge", "common-mistakes", "reading", "grammar-check",
     "practice", "questions", "workbook", "lesson-summary",
   ]);
 
@@ -36,11 +36,11 @@ test("B1 Day 24 has YouTube music on slide 2 and deeper lyric reading on slide 3
   // The remaining 6 stages are the existing curriculum flow, including
   // the original graded-unrelated teacher-led B1 grammar and speaking.
   assert.deepEqual(stages.slice(3).map((stage) => stage.id), [
-    "phrases", "grammar-check", "practice", "questions", "workbook", "lesson-summary",
+    "common-mistakes", "reading", "grammar-check", "practice", "questions", "workbook", "lesson-summary",
   ]);
-  assert.equal(stages[6].type, "question-reveal");
-  assert.equal(stages[6].items.length, 3);
-  assert.equal(stages[4].items.length, 3);
+  assert.equal(stages[7].type, "question-reveal");
+  assert.equal(stages[7].items.length, 3);
+  assert.equal(stages[5].items.length, 3);
 
   const song = getInteractiveLessonOpening("B1-8.24").listening;
   assert.equal(song.mediaType, "music");
@@ -94,9 +94,9 @@ test("B1 Day 24 Argumentkarte is a four-case interactive decision activity on it
   const stages = buildTeachingPresenterStages(slide, slide.topic);
   const practice = stages.find((stage) => stage.id === "practice");
 
-  assert.equal(stages.length, 9, "do not add or remove slides");
-  assert.equal(stages[5].id, "practice");
-  assert.equal(stages[6].id, "questions", "keep existing speaking tasks after practice");
+  assert.equal(stages.length, 10, "add only the correction page; reading replaces vocabulary");
+  assert.equal(stages[6].id, "practice");
+  assert.equal(stages[7].id, "questions", "keep existing speaking tasks after practice");
   assert.equal(practice.type, "flow");
   assert.equal(practice.suggestedMinutes, 7);
   assert.equal(practice.items.length, 1);

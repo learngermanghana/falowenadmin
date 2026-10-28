@@ -12,7 +12,7 @@ test("Every B1 warm-up has a distinct, contextual follow-up paired with its exac
  assert.equal(Object.keys(B1_WARMUP_FOLLOWUPS).length,28);
  for(const slide of slides) {
   const stages=buildTeachingPresenterStages(slide,slide.topic);
-  assert.equal(stages.length,9,slide.assignmentId);
+  assert.equal(stages.length, stages.some(s=>s.id==="knowledge") ? 10 : 9, slide.assignmentId);
   const warmup=stages.find(x=>x.id==="warmup");
   const paired=B1_WARMUP_FOLLOWUPS[slide.assignmentId];
   assert.deepEqual(paired.map(x=>x.questionDe),warmup.items,slide.assignmentId);
@@ -30,29 +30,17 @@ test("Every B1 warm-up has a distinct, contextual follow-up paired with its exac
  }
 });
 
-test("B1 Wortschatz offers four genuine German questions matched to the four displayed source phrases", () => {
- const slides=getSlidesByCourse("B1");
- assert.equal(Object.keys(B1_VOCABULARY_QUESTIONS).length,28);
- for (const slide of slides) {
-  const stage=buildTeachingPresenterStages(slide,slide.topic).find(x=>x.id==="phrases");
-  assert.equal(stage.type,"vocabulary",slide.assignmentId);
-  const entries=B1_VOCABULARY_QUESTIONS[slide.assignmentId];
-  assert.deepEqual(entries.map(x=>x.term),stage.items.slice(0,4).map(x=>x.term),slide.assignmentId);
-  assert.equal(stage.challengeItems.length,4,slide.assignmentId);
-  const seen=new Set();
-  for(let i=0;i<4;i++){
-   const challenge=stage.challengeItems[i], entry=entries[i];
-   assert.equal(challenge.sentence,getB1VocabularyQuestion(slide.assignmentId,entry.term),slide.assignmentId);
-   assert.equal(challenge.answer,entry.term,slide.assignmentId);
-   assert.equal(challenge.promptLabel,"Sprechsituation");
-   assert.equal(challenge.mode,"situation");
-   assert.ok(challenge.sentence.endsWith("?")&&challenge.sentence.length>=55,slide.assignmentId);
-   assert.deepEqual(new Set(challenge.options).size,3,slide.assignmentId);
-   assert.ok(challenge.options.includes(entry.term));
-   assert.doesNotMatch(challenge.sentence,/Du möchtest die kommunikative Funktion|Welche Formulierung passt\?/);
-   seen.add(challenge.sentence);
+test("B1 retains its source expressions while the vocabulary slot becomes Lesen", () => {
+ for (const slide of getSlidesByCourse("B1")) {
+  const stages = buildTeachingPresenterStages(slide, slide.topic);
+  assert.equal(stages.some(s => s.id === "phrases"), false);
+  assert.ok(stages.find(s => s.id === "reading")?.textDe);
+  const entries = B1_VOCABULARY_QUESTIONS[slide.assignmentId];
+  assert.ok(entries.length >= 4);
+  for (const entry of entries) {
+   assert.ok(slide.keyPhrasesDe.includes(entry.term));
+   assert.ok(getB1VocabularyQuestion(slide.assignmentId, entry.term).endsWith("?"));
   }
-  assert.equal(seen.size,4,slide.assignmentId);
  }
 });
 

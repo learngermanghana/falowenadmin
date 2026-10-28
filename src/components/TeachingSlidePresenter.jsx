@@ -1057,7 +1057,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
               ) : null}
               <p className="presenter-career-teacher-note">Nur für die Lehrkraft: Bildschirm teilen, Frage stellen, Antworten anhören und die Modellantwort bei Bedarf zeigen. Kein Schülerzugang und keine automatische Bewertung.</p>
             </section>
-          ) : stage.type === "grammar-check" ? (
+          ) : (stage.type === "grammar-check" || stage.type === "common-mistakes") ? (
             <section className="presenter-grammar-check">
               <div className="presenter-grammar-check-heading">
                 <span>{stage.kicker}</span>
@@ -1072,7 +1072,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                     {item.example ? <blockquote>{item.example}</blockquote> : null}
                     {item.answer ? (
                       <details>
-                        <summary>Teacher answer anzeigen</summary>
+                        <summary>{stage.type === "common-mistakes" ? "Lösung zeigen" : "Teacher answer anzeigen"}</summary>
                         <div className="presenter-grammar-check-answer">
                           <strong>{item.answerLabel || "Teacher key"}</strong>
                           <p>{item.answer}</p>
