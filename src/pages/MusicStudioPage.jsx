@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { musicRequest, musicBlob } from '../services/musicStudioService';
+import { buildFalowenMusicPrompt, musicLyricLimit } from '../utils/musicGenerationPrompt.js';
+import { waitingRoomMusicObjectKey } from '../utils/waitingRoomDayMusic.js';
 import './MusicStudioPage.css';
 import { getMusicDays, musicLessonContext } from '../utils/musicCourseContext.js';
 import { STUDIO_COURSE_LEVELS } from '../utils/hoerenCourseCatalog.js';
@@ -22,6 +24,9 @@ export default function MusicStudioPage() {
   const [brief, setBrief] = useState(PRESETS.vocabulary);
   const [lyrics, setLyrics] = useState('');
   const [mode, setMode] = useState('clip');
+  const [durationSeconds, setDurationSeconds] = useState(150);
+  const [vocalMode, setVocalMode] = useState('voice');
+  const [backingLevel, setBackingLevel] = useState('very-soft');
   const [status, setStatus] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -41,8 +46,7 @@ export default function MusicStudioPage() {
     if (lock.current) return;
     lock.current = true; setBusy(true); setError('');
     try {
-      const prompt = `${brief}\n${context}\n${mode === 'song' ? 'Aim for a complete song around two minutes long.' : 'Create a 30-second preview.'}${lyrics.trim() ? `\nLyrics:\n${lyrics.trim()}` : ''}`;
-      if (prompt.length > 8000) throw new Error('Your combined lesson context, direction and lyrics exceed 8,000 characters. Shorten the direction or lyrics.');
+      const prompt = buildFalowenMusicPrompt({ brief, context, lyrics, mode, durationSeconds, vocalMode, backingLevel });
       const data = await musicRequest({ mode, requestId: crypto.randomUUID(), prompt });
       const url = URL.createObjectURL(musicBlob(data));
       if (audioUrl.current) URL.revokeObjectURL(audioUrl.current);
@@ -69,12 +73,16 @@ export default function MusicStudioPage() {
           <p className="music-note">The selected level, day and dictionary topic guide the song automatically. Changing lessons keeps your music direction and lyrics for you to review. Choosing a lesson is free.</p>
         </>}
         <h2>2. Shape your song</h2>
-        <div className="music-presets">{Object.entries(PRESETS).map(([id, text]) => <button type="button" key={id} onClick={() => setBrief(text)}>{id === 'welcome' ? 'Class welcome' : id === 'vocabulary' ? 'Vocabulary song' : 'Guitar instrumental'}</button>)}</div>
+        <div className="music-presets">{Object.entries(PRESETS).map(([id, text]) => <button type="button" key={id} onClick={() => { setBrief(text); setVocalMode(id === 'instrumental' ? 'instrumental' : 'voice'); }}>{id === 'welcome' ? 'Class welcome' : id === 'vocabulary' ? 'Vocabulary song' : 'Guitar instrumental'}</button>)}</div>
         <label htmlFor="music-brief">Music direction</label><textarea id="music-brief" required maxLength={2000} rows={6} value={brief} onChange={e => setBrief(e.target.value)} />
+        <label htmlFor="music-voice">Vocals and instrumental balance</label><select id="music-voice" value={vocalMode} onChange={e => setVocalMode(e.target.value)}><option value="voice">Clear lead vocals (recommended)</option><option value="instrumental">Instrumental only — no singer</option></select>
+        {vocalMode === 'voice' && <><label htmlFor="music-backing">Accompaniment behind the singer</label><select id="music-backing" value={backingLevel} onChange={e => setBackingLevel(e.target.value)}><option value="very-soft">Very quiet — voice upfront (recommended)</option><option value="soft">Soft — moderate accompaniment</option></select><p className="music-note">These settings guide Google’s mix; they cannot separately turn down instruments in an already-generated MP3.</p></>}
         <label htmlFor="music-lyrics">Your lyrics <span>(optional)</span></label><textarea id="music-lyrics" maxLength={5500} rows={9} value={lyrics} onChange={e => setLyrics(e.target.value)} placeholder={'[Verse 1]\nWrite your German and English lyrics here…\n\n[Chorus]'} />
-        <p className="music-note">Leave lyrics empty to let Google compose them. Review pronunciation and wording before sharing.</p>
+        <p className="music-note">{lyrics.trim().split(/\s+/).filter(Boolean).length} / {musicLyricLimit(mode, durationSeconds)} suggested words for this length. Leave lyrics empty to let Google compose them. Too many lines can lead to a cut-off ending.</p>
         <label htmlFor="music-mode">3. Choose generation</label><select id="music-mode" value={mode} onChange={e => setMode(e.target.value)}><option value="clip">30-second preview · estimated $0.04</option><option value="song">Full song · estimated $0.08</option></select>
-        <p className="music-note">A full song is a new generation; it does not extend the preview. Duration is approximate.</p>
+        {mode === 'song' && <><label htmlFor="music-duration">Target song length</label><select id="music-duration" value={durationSeconds} onChange={e => setDurationSeconds(Number(e.target.value))}><option value={120}>About 2 minutes</option><option value={150}>About 2½ minutes — recommended</option><option value={180}>About 3 minutes</option></select></>}
+        <p className="music-note">A full song is a new generation, not an extension of the preview. Duration is approximate. The prompt reserves an ending with a completed final phrase, resolved chord and natural fade; Google does not guarantee an exact length or mix.</p>
+        {courseMode === 'course' && selectedDay && <p className="music-note">For this day’s attendance waiting room, download your finished MP3 and upload it to your dedicated public R2 music bucket as <code>{waitingRoomMusicObjectKey(level, Number(selectedDay.day)) || 'choose a numbered day'}</code>.</p>
         <button className="music-generate" disabled={!status?.ready || capped || !brief.trim()} type="submit">{busy ? 'Creating your music…' : `Generate ${mode === 'clip' ? 'preview' : 'full song'} · ~$${(cents / 100).toFixed(2)}`}</button>
       </fieldset>
       {busy && <p role="status">This may take a few minutes. Keep this page open. Your request will not retry automatically.</p>}
