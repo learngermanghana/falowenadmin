@@ -52,5 +52,5 @@ test('A1 non-fullscreen header and footer are compact, with teacher notes option
   assert.match(css,/overflow-y: auto/);
   assert.match(css,/presenter-footer\.is-compact/);
   assert.match(controls,/!compact && <div className="presenter-progress-wrap"/);
-  assert.match(controls,/!atEnd && !compact/);
+  assert.match(controls,/!atEnd && <button type="button" onClick=\{onReport\}/);
 });
