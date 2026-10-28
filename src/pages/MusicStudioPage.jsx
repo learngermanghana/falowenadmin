@@ -6,7 +6,9 @@ import './MusicStudioPage.css';
 import { getMusicDays, musicLessonContext } from '../utils/musicCourseContext.js';
 import { STUDIO_COURSE_LEVELS } from '../utils/hoerenCourseCatalog.js';
 import { getMusicTopicStyle, suggestLessonMusicDirection } from '../utils/musicTopicStyle.js';
-import { getReusableSongDraft, getReusableSongDrafts, musicDraftPackageText } from '../data/reusableMusicSongbook.js';
+import { getReusableSongDraft, getReusableSongDrafts } from '../data/reusableMusicSongbook.js';
+import { musicSongTeachingPackText } from '../data/reusableMusicQuestions.js';
+import ReusableMusicQuestions from '../components/ReusableMusicQuestions.jsx';
 import { falowenMusicFileName } from '../utils/musicExportNames.js';
 const PRESETS = {
   welcome: 'A gentle Falowen welcome song for German learners before their Zoom class. Encourage learners not to give up: Gemeinsam schaffen wir das / Together we can. Bilingual German and English. Acoustic guitar only, one smooth warm male voice, relaxed Afro-soul feel, quiet and reassuring, no backing singers.',
@@ -94,7 +96,7 @@ export default function MusicStudioPage() {
   }
   function saveCurrentLyrics() {
     const text = draft
-      ? musicDraftPackageText({ ...draft, lyrics, musicStyle: effectiveBrief }, lesson)
+      ? musicSongTeachingPackText({ ...draft, lyrics, musicStyle: effectiveBrief }, lesson)
       : `FALOWEN MUSIC\nTitle: ${trackTitle}\n\nMUSIC STYLE\n${effectiveBrief}\n\nLYRICS\n${lyrics}`;
     downloadLyricsText(text, falowenMusicFileName(lesson, trackTitle, 'txt'));
   }
@@ -102,7 +104,7 @@ export default function MusicStudioPage() {
     const text = ['A1', 'A2', 'B1'].map(songLevel => {
       const entries = getMusicDays(songLevel).flatMap(group => group.lessons);
       const songs = getReusableSongDrafts(songLevel);
-      const content = songs.map(song => musicDraftPackageText(song,
+      const content = songs.map(song => musicSongTeachingPackText(song,
         entries.find(entry => entry.assignmentKey === song.assignmentKey)))
         .join('\n\n' + '='.repeat(70) + '\n\n');
       return `FALOWEN MUSIC · ${songLevel} · ${songs.length} ORIGINAL SONGS\n\n${content}`;
@@ -114,7 +116,7 @@ export default function MusicStudioPage() {
     const entries = days.flatMap(group => group.lessons);
     const contents = getReusableSongDrafts(level).map(song => {
       const lessonEntry = entries.find(entry => entry.assignmentKey === song.assignmentKey);
-      return musicDraftPackageText(song, lessonEntry);
+      return musicSongTeachingPackText(song, lessonEntry);
     }).join('\n\n' + '='.repeat(70) + '\n\n');
     downloadLyricsText(contents, `falowen-${level.toLowerCase()}-complete-songbook-lyrics-and-styles.txt`);
   }
@@ -230,6 +232,7 @@ export default function MusicStudioPage() {
         {mode === 'song' && <><label htmlFor="music-duration">Target song length</label><select id="music-duration" value={durationSeconds} onChange={e => setDurationSeconds(Number(e.target.value))}><option value={120}>About 2 minutes</option><option value={150}>About 2½ minutes — recommended</option><option value={180}>About 3 minutes</option></select></>}
         <p className="music-note">The preview always ends after 30 seconds; choose Full song for a complete track. A full song is a new generation, not an extension of the preview. Duration is approximate. The prompt reserves an ending with a completed final phrase, resolved chord and natural fade; Google does not guarantee an exact length or mix.</p>
         {courseMode === 'course' && selectedDay && <p className="music-note">After listening and approving, publish your MP3 to the Falowen Music library as a public track for this level and day. For GitHub-hosted day music, use <code>{waitingRoomMusicObjectKey(level, Number(selectedDay.day)) || 'choose a numbered day'}</code> under the student repository’s <code>web/public/music/</code> folder and add it to the public music catalog. A dedicated public R2 music URL can also be listed there.</p>}
+        <p className="music-note">The downloadable song teaching pack also contains listening questions, a speaking activity and the teacher answer key. Copy the student-only questions below for presentation slides.</p>
         <button className="music-generate" disabled={!status?.ready || capped || !effectiveBrief.trim()} type="submit">{busy ? 'Creating your music…' : `Generate ${mode === 'clip' ? 'preview' : 'full song'} · ~$${(cents / 100).toFixed(2)}`}</button>
       </fieldset>
       {busy && <p role="status">This may take a few minutes. Keep this page open. Your request will not retry automatically.</p>}
@@ -243,5 +246,6 @@ export default function MusicStudioPage() {
       {status && !status.ready && <p>Google API configuration is required before generating.</p>}
       <p className="music-note">Estimates use Google’s listed music prices, excluding backend usage. Failed or timed-out attempts remain counted because they may be billed. Limits reset at midnight UTC / the start of each month.</p>
     </aside></div>
+    {courseMode === 'course' && draft && <ReusableMusicQuestions assignmentKey={assignmentKey} lyricsChanged={lyrics !== draft.lyrics} />}
   </main>;
 }
