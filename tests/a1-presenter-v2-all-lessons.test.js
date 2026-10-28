@@ -50,8 +50,16 @@ test("all real A1 teaching lessons use Presenter 2.0 while orientation stays cla
 
     const questions = stages.find((stage) => stage.id === "questions");
     const practice = stages.find((stage) => stage.id === "practice");
-    assert.equal(questions.type, "question-reveal", slide.assignmentId);
-    assert.ok(questions.supportItems.length >= 3, `${slide.assignmentId} missing model support`);
+    if (slide.assignmentId === "A1-14.1") {
+      // This published A1 music lesson keeps the curriculum stage ID but
+      // projects its comprehension tasks inside the one music finale.
+      assert.equal(questions.type, "lesson-music");
+      assert.equal(questions.song.questions.length, 2);
+      assert.equal(questions.song.speaking.length, 1);
+    } else {
+      assert.equal(questions.type, "question-reveal", slide.assignmentId);
+      assert.ok(questions.supportItems.length >= 3, `${slide.assignmentId} missing model support`);
+    }
     assert.equal(practice.type, "flow", slide.assignmentId);
     assert.ok(practice.items.some((item) => item.minutes > 0), `${slide.assignmentId} missing timer-ready practice`);
   }
