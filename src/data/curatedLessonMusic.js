@@ -16,7 +16,8 @@ export function getCuratedMusicByAssignment(assignmentKey) {
 }
 export function getCuratedMusicForSession({level,day,assignmentKey}={}) {
   const fromAssignment=getCuratedMusicByAssignment(assignmentKey);
-  if(fromAssignment) return fromAssignment;
+  if(fromAssignment && (!level || fromAssignment.level===String(level).toUpperCase())
+    && (!day || fromAssignment.day===Number(day))) return fromAssignment;
   const l=String(level||'').trim().toUpperCase(), d=Number(day);
   return CURATED_MUSIC_DAYS.find(item=>item.status==='published' && item.level===l && item.day===d)||null;
 }
