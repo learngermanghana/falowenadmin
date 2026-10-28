@@ -212,7 +212,7 @@ export default function MusicStudioPage() {
           <button type="button" onClick={() => { setLyricsOverrides(previous => { const next = { ...previous }; delete next[assignmentKey]; return next; }); setLyricTreatment('exact'); setCopyStatus('Original lyrics restored.'); }}>Restore original</button>
         </div>}
         {!draft && lyrics.trim() && <button type="button" onClick={saveCurrentLyrics}>Download lyrics + music style (.txt)</button>}
-        {copyStatus && <p role="status" className="music-note">{copyStatus}</p>
+        {copyStatus && <p role="status" className="music-note">{copyStatus}</p>}
         {draft && <p className="music-note">Original Falowen lyrics are loaded automatically and preserved exactly when generating the song. Edits here are only saved in the current page until you export them. To have AI rewrite this draft, select Source vocabulary below.</p>}
         {courseMode === 'course' && vocalMode === 'voice' && songStyle === 'story' && lyrics.trim() && <>
           <label htmlFor="music-lyric-treatment">Use the text above as</label>
