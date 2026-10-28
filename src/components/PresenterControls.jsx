@@ -44,7 +44,7 @@ export default function PresenterControls({ focus = false, compact = false, inde
       {!focus && <div className="presenter-progress-track"><div className="presenter-progress-bar" style={{ width: `${total ? (index + 1) / total * 100 : 0}%` }} /></div>}
     </div>}
     {focus && <button type="button" className="presenter-restore-control" onClick={onRestore} aria-label="Restore presenter controls">Restore controls</button>}
-    {!atEnd && !compact && <button type="button" onClick={onReport}>Lesson report</button>}
+    {!atEnd && <button type="button" onClick={onReport}>Lesson report</button>}
     <button type="button" onClick={atEnd ? onReport : onNext} title={nextTitle}>{atEnd ? 'Finish lesson · report' : nextLabel}</button>
     {!focus && nextLessonHref && <a className="presenter-next-lesson" href={nextLessonHref}>Next lesson{nextLessonLabel ? ` · ${nextLessonLabel}` : ''} →</a>}
   </Tag>;
