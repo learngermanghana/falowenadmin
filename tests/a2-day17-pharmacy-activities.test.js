@@ -76,11 +76,15 @@ test("chosen chapters reuse four authored 10-minute warm-up steps without invent
     }
     const stages = buildTeachingPresenterStages(slide,slide.topic);
     // Days B1-25 and A2-18 keep their authored four warm-ups as source material,
-    // but their visual warm-up slot is the unscored YouTube song.
+    // but their visual warm-up slot is the unscored music lesson.
     if (id === "B1-8.25" || id === "A2-7.18") {
       assert.equal(stages.find(s => s.id === "warmup").variant, "interactive-music-video", id);
-      assert.equal(stages.find(s => s.id === "warmup").musicVideo.youtubeId,
-        id === "A2-7.18" ? "pXAxzMMXHoE" : "ArWT0uVqUxo");
+      if (id === "A2-7.18") {
+        assert.equal(stages.find(s => s.id === "warmup").musicVideo.youtubeId, undefined);
+        assert.ok(stages.find(s => s.id === "warmup").musicVideo.audioUrl.includes("/api/music"));
+      } else {
+        assert.equal(stages.find(s => s.id === "warmup").musicVideo.youtubeId, "ArWT0uVqUxo");
+      }
     } else {
       assert.equal(stages.find(s => s.id === "warmup").variant, "interactive-warmup", id);
     }

@@ -1,11 +1,17 @@
 import { useState } from "react";
 import MusicVideoEmbed from "./MusicVideoEmbed.jsx";
+import PublishedSongLessonStage from "./PublishedSongLessonStage.jsx";
 import { musicTimestamp, musicMomentUrl } from "../utils/musicTeaching.js";
 import "./MusicTeachingStages.css";
 
 /** The listening video takes the place of a warm-up, without adding a slide. */
 export function MusicVideoStage({ music }) {
   const [readingOpen, setReadingOpen] = useState(false);
+  // A2 Day 18's approved R2 song replaces the old YouTube music-video stage.
+  // Its quiz must match the newly generated song, not the legacy Amir lyrics.
+  if (music?.assignmentKey === 'A2-7.18' && music?.audioUrl) {
+    return <PublishedSongLessonStage assignmentKey="A2-7.18" />;
+  }
   const hasInSlideReading = Boolean(
     music.readingOnVideoSlide && music.readingSections?.length && music.questions?.length,
   );

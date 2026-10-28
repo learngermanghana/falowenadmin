@@ -1,0 +1,52 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { CURATED_MUSIC_DAYS, getCuratedMusicByAssignment, getCuratedMusicForSession } from '../src/data/curatedLessonMusic.js';
+import { getReusableMusicQuestions } from '../src/data/reusableMusicQuestions.js';
+import { getReusableSongDraft } from '../src/data/reusableMusicSongbook.js';
+
+test('only two approved R2 music songs activate in teaching slides and attendance', () => {
+  const published=CURATED_MUSIC_DAYS.filter(item=>item.status==='published');
+  assert.equal(published.length,2);
+  assert.deepEqual(published.map(x=>x.assignmentKey),['A1-14.1','A2-7.18']);
+  for(const item of published){
+    assert.ok(item.audioUrl.startsWith('https://www.falowen.app/api/music?track='));
+    assert.ok(item.objectKey.startsWith('music/'));
+    assert.ok(getReusableSongDraft(item.assignmentKey)?.lyrics.includes('Falowen'));
+    assert.equal(getReusableMusicQuestions(item.assignmentKey).questions.length,3);
+    assert.equal(getCuratedMusicForSession({level:item.level,day:item.day}),item);
+    assert.equal(getCuratedMusicByAssignment(item.assignmentKey),item);
+  }
+  assert.equal(getCuratedMusicByAssignment('A2-10.26'),null);
+  assert.ok(CURATED_MUSIC_DAYS.some(item=>item.status==='planned'));
+});
+
+test('attendance uses R2 for curated lessons without waiting on a catalog or falling back to GitHub', () => {
+ const source=readFileSync(new URL('../src/pages/CheckinDisplayPage.jsx',import.meta.url),'utf8');
+ assert.match(source,/getCuratedMusicForSession/);
+ assert.match(source,/if \(curatedDayMusic\)/);
+ assert.match(source,/nativePlayback: true/);
+ assert.match(source,/src: curatedDayMusic\.audioUrl, objectKey: curatedDayMusic\.objectKey/);
+ assert.doesNotMatch(source,/\[publishedDayMusic\.track, \.\.\.pianoPlaylist\]/);
+ const player=readFileSync(new URL('../src/utils/pianoAudio.js',import.meta.url),'utf8');
+ assert.match(player,/const nativePlayback = tracks\.every\(track => track\.nativePlayback === true\)/);
+ assert.match(player,/if \(!nativePlayback\) audio\.crossOrigin/);
+ assert.match(player,/onTimeUpdate/);
+ assert.match(player,/player\.source\?\.disconnect\(\)/);
+});
+
+test('A1 presenter adds exactly a selected-day music stage and A2 uses approved R2 music', () => {
+ const a1=readFileSync(new URL('../src/components/A1GrammarPresenter.jsx',import.meta.url),'utf8');
+ const a2=readFileSync(new URL('../src/data/a2Day18BankMusic.js',import.meta.url),'utf8');
+ const music=readFileSync(new URL('../src/components/PublishedSongLessonStage.jsx',import.meta.url),'utf8');
+ assert.match(a1,/getCuratedMusicByAssignment\(slide\.assignmentId\)/);
+ assert.match(a1,/stage\.type === "published-music"/);
+ assert.match(a2,/getReusableSongDraft\(assignmentKey\)/);
+ assert.match(a2,/getReusableMusicQuestions\(assignmentKey\)/);
+ assert.doesNotMatch(a2,/youtubeId:\s*"/);
+ assert.match(music,/Hören · Liedtext verstehen · Sprechen/);
+ assert.match(music,/view==='lyrics'/);
+ assert.match(music,/view==='questions'/);
+ assert.match(music,/getReusableMusicQuestions\(assignmentKey\)/);
+ assert.match(music,/onError/);
+});

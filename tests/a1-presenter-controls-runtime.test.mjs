@@ -46,6 +46,15 @@ test('A1–C2 controls retain questions, reports use live marks and switching cl
     '../data/a1CheckCoaching.js': { buildA1CheckCoaching: check => check ? { hintDe: 'Denke an die Regel.', feedbackQuestionDe: 'Gut?', checkDe: 'Prüfe die Regel.' } : null },
     '../data/a1EverydaySpeaking.js': { getA1EverydaySpeaking: () => null },
     './A1EverydaySpeakingStage.jsx': { __esModule: true, default: () => null },
+    './PublishedSongLessonStage.jsx': { __esModule: true, default: () => null },
+    './LessonSongStage.jsx': { __esModule: true, default: () => null },
+    './B1HousingChoicePractice.jsx': { __esModule: true, default: () => null },
+    './B1SustainabilityDecisions.jsx': { __esModule: true, default: () => null },
+    './A2SportMatchmaker.jsx': { __esModule: true, default: () => null },
+    './InteractiveLessonOpening.jsx': { __esModule: true, default: () => null },
+    './C2GrammarTeaching.jsx': { __esModule: true, default: () => null },
+    './MusicTeachingStages.jsx': { MusicVideoStage: () => null, MusicReadingStage: () => null },
+    '../data/curatedLessonMusic.js': { getCuratedMusicByAssignment: () => null },
     '../data/a1LearningPath.js': { getA1LearningPath: () => null },
     '../data/a1SlideReview.js': { buildA1SlideReviewChecks: () => [] },
     '../utils/a1PresenterActivityTimer.js': { A1_ACTIVITY_TIMER_PRESETS: [2, 5, 7], DEFAULT_A1_ACTIVITY_MINUTES: 5, a1ActivityDeadline: () => 0, a1ActivitySecondsLeft: () => 300 },
@@ -123,6 +132,7 @@ test('A1–C2 controls retain questions, reports use live marks and switching cl
     mocks['../utils/presenterSentenceNumbering.js'] = { numberedPresenterSentences: () => [] };
     mocks['../data/a2B1LessonProfile.js'] = { getA2B1AdminLessonProfileForSlide: () => null };
     mocks['../data/b1Day18CareerChallenge.js'] = { nextB1Day18CareerIndex: () => 0 };
+    mocks['../data/interactiveLessonOpenings.js'] = { isInteractiveOpeningStage: () => false };
     for (const name of ['C2GrammarTeaching', 'B1HousingChoicePractice', 'A2SportMatchmaker']) mocks[`./${name}.jsx`] = { __esModule: true, default: () => null };
     const SharedPresenter = (await compile('src/components/TeachingSlidePresenter.jsx')).default;
     for (const level of ['A2', 'B1', 'B2', 'C1', 'C2']) {
