@@ -70,7 +70,7 @@ export const MUSIC_SONG_DRAFTS_A1 = Object.freeze([
     "assignmentKey": "A1-5",
     "title": "Ich sehe den Hund",
     "musicStyle": "Gentle storytelling folk pop, 88 BPM, guitar and soft rhythmic piano.",
-    "lyrics": "[Verse 1]\nIm Garten steht ein Hund.\nDer Hund ist klein und braun.\nIch sehe den Hund dort.\nEr läuft schnell zu mir.\n\n[Chorus]\nWer ist da? Der Hund ist da.\nWen sehe ich? Den kleinen Hund.\nEr möchte mit mir spielen.\n\n[Verse 2]\nEine Frau kommt aus dem Haus.\nSie hat einen roten Ball.\nIch nehme den Ball in die Hand.\nUnd werfe ihn dem Hund.\n\n[Chorus]\nWer ist da? Der Hund ist da.\nWen sehe ich? Den kleinen Hund.\nEr möchte mit mir spielen.\n\n[Outro]\nDer Hund läuft glücklich nach Hause.\nIch winke ihm noch nach."
+    "lyrics": "[Verse 1]\nIm Garten steht ein Hund.\nDer Hund ist klein und braun.\nIch sehe den Hund dort.\nEr läuft schnell zu mir.\n\n[Chorus]\nWer ist da? Der Hund ist da.\nWen sehe ich? Den kleinen Hund.\nEr möchte mit mir spielen.\n\n[Verse 2]\nEine Frau kommt aus dem Haus.\nSie hat einen roten Ball.\nIch nehme den Ball in die Hand.\nIch werfe den Ball ins Gras.\n\n[Chorus]\nWer ist da? Der Hund ist da.\nWen sehe ich? Den kleinen Hund.\nEr möchte mit mir spielen.\n\n[Outro]\nDer Hund läuft glücklich nach Hause.\nIch winke ihm noch nach."
   },
   {
     "assignmentKey": "A1-6",
@@ -94,7 +94,7 @@ export const MUSIC_SONG_DRAFTS_A1 = Object.freeze([
     "assignmentKey": "A1-3.5",
     "title": "Die Rechnung im Café",
     "musicStyle": "Playful soft bossa-pop, 92 BPM, fingerpicked guitar and shaker.",
-    "lyrics": "[Verse 1]\nIm Café sind wir zu zweit.\nZwei Tees stehen auf dem Tisch.\nDie Uhr zeigt halb drei.\nDie Rechnung kommt jetzt auch.\n\n[Chorus]\nZwei Tee, vier Euro, danke.\nWie spät ist es? Halb drei.\nWir rechnen und wir lachen.\n\n[Verse 2]\nMia kauft noch ein Stück Kuchen.\nDas kostet drei Euro.\nWir zahlen sieben Euro.\nDann gehen wir nach Hause.\n\n[Chorus]\nZwei Tee, vier Euro, danke.\nWie spät ist es? Halb drei.\nWir rechnen und wir lachen.\n\n[Outro]\nIch kenne Zeit und Preise.\nBis morgen im Café!"
+    "lyrics": "[Verse 1]\nIm Café sind wir zu zweit.\nZwei Tees stehen auf dem Tisch.\nDie Uhr zeigt halb drei.\nDie Rechnung kommt jetzt auch.\n\n[Chorus]\nZwei Tees, vier Euro, danke.\nWie spät ist es? Halb drei.\nWir rechnen und wir lachen.\n\n[Verse 2]\nMia kauft noch ein Stück Kuchen.\nDas kostet drei Euro.\nWir zahlen sieben Euro.\nDann gehen wir nach Hause.\n\n[Chorus]\nZwei Tees, vier Euro, danke.\nWie spät ist es? Halb drei.\nWir rechnen und wir lachen.\n\n[Outro]\nIch kenne Zeit und Preise.\nBis morgen im Café!"
   },
   {
     "assignmentKey": "A1-3.6",
@@ -154,7 +154,7 @@ export const MUSIC_SONG_DRAFTS_A1 = Object.freeze([
     "assignmentKey": "A1-14.1",
     "title": "Mein Kopf tut weh",
     "musicStyle": "Gentle reassuring acoustic Afro-soul, 84 BPM, soft fingerpicked guitar and very quiet piano.",
-    "lyrics": "[Verse 1]\nAm Morgen ruft Ben Mia an.\nHallo Mia, bist du da?\nJa, ich bin hier. Wie geht's dir?\nNicht so gut. Mein Kopf tut weh.\n\n[Chorus]\nWie geht's dir? Wie geht's dir?\nHeute geht es mir nicht gut.\nEin Glas Wasser tut mir gut.\n\n[Verse 2]\nHast du Fieber? Mia fragt.\nNein, aber mein Bauch tut weh.\nBrauchst du Hilfe? fragt sie.\nJa, bitte. Komm zu mir.\n\n[Chorus]\nWie geht's dir? Wie geht's dir?\nHeute geht es mir nicht gut.\nEin Glas Wasser tut mir gut.\n\n[Outro]\nMia bringt mir Wasser und Tee.\nJetzt geht es mir schon besser.\nDanke, Mia! Gute Nacht."
+    "lyrics": "[Verse 1]\nAm Morgen rufe ich Mia an.\nHallo Mia, bist du da?\nJa, ich bin hier. Wie geht's dir?\nNicht so gut. Mein Kopf tut weh.\n\n[Chorus]\nWie geht's dir? Wie geht's dir?\nHeute geht es mir nicht gut.\nEin Glas Wasser tut mir gut.\n\n[Verse 2]\nMia fragt: Hast du Fieber?\nNein, aber mein Bauch tut weh.\nSie fragt: Brauchst du Hilfe?\nJa, bitte. Komm zu mir.\n\n[Chorus]\nWie geht's dir? Wie geht's dir?\nHeute geht es mir nicht gut.\nEin Glas Wasser tut mir gut.\n\n[Outro]\nMia bringt mir Wasser und Tee.\nJetzt geht es mir schon besser.\nDanke, Mia! Gute Nacht."
   },
   {
     "assignmentKey": "A1-14.2",
