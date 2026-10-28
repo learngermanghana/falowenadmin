@@ -58,6 +58,11 @@ export default function ReusableMusicQuestions({ assignmentKey, projector = fals
           <li key={question.id}>
             <div className="reusable-music-questions__tag">{question.type === 'listening' ? 'Hörverstehen' : 'Sprechen'}</div>
             <p className="reusable-music-questions__prompt">{question.prompt}</p>
+            {Array.isArray(question.options) && <ol className="reusable-music-questions__options" type="A">
+              {question.options.map((option, index)=><li key={option}>
+                {option}{answersVisible && index === question.correctIndex ? ' ✓' : ''}
+              </li>)}
+            </ol>}
             {answersVisible && <div className="reusable-music-questions__answer">
               {question.type === 'listening' ? <>
                 <strong>Erwartete Antwort:</strong> {question.answer}

@@ -41,7 +41,14 @@ test('presentation export includes questions only, without marking answers or ly
   assert.match(student, /Was tut der Person am Morgen weh/);
   assert.match(student, /Was bringt Mia mit/);
   assert.match(student, /Was sagst du, wenn du krank bist/);
-  assert.doesNotMatch(student, /Erwartete Antwort|Textbeleg|Lehrerhinweis|Der Kopf\./);
+  assert.doesNotMatch(student, /Erwartete Antwort|Textbeleg|Lehrerhinweis/);
+  assert.match(student, /A\. Der Kopf\./);
+  assert.match(student, /B\. Wasser und Tee\./);
+  const day22 = getReusableMusicQuestions('A1-14.1');
+  assert.deepEqual(day22.questions.slice(0,2).map(q=>q.correctIndex), [0,1]);
+  assert.ok(day22.questions.slice(0,2).every(q=>q.options.length===3));
+  assert.equal(day22.questions[2].type,'speaking');
+  assert.equal(day22.questions[2].options,undefined);
   const teacher = formatReusableMusicQuestions('A1-14.1', { includeAnswers: true });
   assert.match(teacher, /Erwartete Antwort: Der Kopf/);
   assert.match(teacher, /Erwartete Antwort: Wasser und Tee/);

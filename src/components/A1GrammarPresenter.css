@@ -1,0 +1,246 @@
+/* A1 teacher dashboard / non-fullscreen presentation:
+   fit useful learning content before chrome, without changing the timed
+   fullscreen/attendance contract or other CEFR presenter layouts. */
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-stage {
+  grid-template-rows: minmax(0, auto) minmax(0,auto) minmax(0,1fr) auto;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-stage > .presenter-topbar {
+  display: grid;
+  grid-template-columns: minmax(110px,170px) minmax(0,1fr) minmax(160px,245px);
+  gap: clamp(6px,1vw,13px);
+  align-items: center;
+  padding: 8px 12px;
+  min-width: 0;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-topbar > * {
+  min-width: 0;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-topbar .presenter-kicker {
+  font-size: clamp(.85rem,1.1vw,1.1rem);
+  line-height: 1.15;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-topbar .presenter-lesson-label {
+  font-size: .8rem;
+  margin-top: 3px;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-session-timer {
+  display: grid;
+  grid-template-columns: minmax(78px,auto) minmax(0,1fr);
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  width: 100%;
+  max-width: none;
+  padding: 6px 8px;
+  border-radius: 10px;
+  overflow: visible;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-session-timer-copy {
+  min-width: 78px;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-session-timer-copy strong {
+  font-size: clamp(.95rem,1.3vw,1.25rem);
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-session-budget,
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-session-timer-copy small {
+  display: none;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-session-timer-copy > span {
+  white-space: normal;
+  line-height: 1.25;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-session-timer-actions {
+  flex: none;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-left: 0;
+  justify-content: flex-end;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-session-timer-actions button {
+  font-size: 11px;
+  min-height: 29px;
+  padding: 4px 6px;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-a1-tools {
+  width: 100%;
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  align-content: center;
+  justify-items: stretch;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-a1-tools .presenter-stage-jump {
+  width: 100%;
+  max-width: none;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-a1-tools .presenter-stage-jump select {
+  max-width: 100%;
+  min-width: 0;
+  font-size: .78rem;
+  height: 33px;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-a1-activity-disclosure {
+  position: relative;
+  width: 100%;
+  font-size: .8rem;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-a1-activity-disclosure > summary {
+  cursor: pointer;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  color: #334155;
+  font-weight: 750;
+  padding: 6px 9px;
+  line-height: 1.3;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-a1-activity-disclosure[open] > .presenter-timer {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  width: min(370px,90vw);
+  max-width: min(370px,90vw);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 11px;
+  background: #f8fafc;
+  box-shadow: 0 12px 30px #0f172a33;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-a1-activity-disclosure .presenter-timer-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-a1-activity-disclosure button {
+  min-height: 32px;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-stage > .presenter-content {
+  min-height: 0;
+  grid-row: 3;
+  display: block;
+  overflow-y: auto;
+  overflow-x: hidden;
+  align-content: start;
+  justify-content: flex-start;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+  padding: clamp(12px,2vh,20px) clamp(16px,3vw,40px) clamp(20px,4vh,36px);
+  scroll-padding-top: 12px;
+  scroll-padding-bottom: 24px;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-content h1,
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-question-reveal > h1 {
+  max-width: 100%;
+  font-size: clamp(1.5rem,2.2vw,2.45rem);
+  line-height: 1.17;
+  letter-spacing: -.025em;
+  margin: 0 0 .65rem;
+  overflow-wrap: anywhere;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-question-reveal {
+  display: grid;
+  gap: clamp(8px,1.4vh,15px);
+  align-content: start;
+  justify-content: stretch;
+  min-height: 0;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-question-reveal .presenter-question {
+  max-width: 100%;
+  font-size: clamp(1.3rem,2.1vw,2.25rem);
+  line-height: 1.35;
+  margin: 6px 0 12px;
+  overflow-wrap: anywhere;
+  letter-spacing: -.015em;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-question-counter {
+  font-size: .78rem;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-question-actions {
+  margin: 0;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-a1-teacher-details {
+  width: 100%;
+  margin: 0 0 12px;
+  font-size: .82rem;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-a1-teacher-details > summary {
+  cursor: pointer;
+  color: #496273;
+  font-weight: 700;
+  width: fit-content;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-a1-teacher-details .presenter-teacher-purpose {
+  margin-top: 7px;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-stage > .presenter-footer.is-compact {
+  display: flex;
+  grid-row: 4;
+  min-height: 44px;
+  padding: 6px 14px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-footer.is-compact > button {
+  flex: 0 1 auto;
+  min-height: 34px;
+  font-size: .85rem;
+  padding: 6px 12px;
+}
+.presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-footer.is-compact .presenter-next-lesson {
+  font-size: .8rem;
+  white-space: nowrap;
+}
+@media (max-width: 1050px) {
+  .presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-stage > .presenter-topbar {
+    grid-template-columns: minmax(100px,140px) minmax(0,1fr);
+  }
+  .presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-a1-tools {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-a1-tools > * { flex: 1 1 40%; min-width: 0; }
+}
+@media (max-width: 700px) {
+  .presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-stage {
+    width: 98vw;
+    max-height: 98dvh;
+    height: 98dvh;
+    aspect-ratio: auto;
+  }
+  .presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-stage > .presenter-topbar {
+    grid-template-columns: 1fr;
+    padding: 7px 9px;
+  }
+  .presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-session-timer {
+    grid-template-columns: minmax(75px,auto) minmax(0,1fr);
+  }
+  .presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-content h1,
+  .presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-question-reveal > h1 {
+    font-size: clamp(1.2rem,5vw,1.8rem);
+  }
+  .presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-question-reveal .presenter-question {
+    font-size: clamp(1.2rem,4.5vw,1.7rem);
+  }
+}
+@media (max-height: 700px) and (min-width: 701px) {
+  .presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-stage {
+    max-height: 98dvh;
+    height: 98dvh;
+    aspect-ratio: auto;
+  }
+  .presenter-shell[aria-label="A1 teaching presenter"]:not(.is-presentation-mode) .presenter-stage > .presenter-topbar {
+    padding-block: 4px;
+  }
+}

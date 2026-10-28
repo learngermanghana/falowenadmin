@@ -24,6 +24,7 @@ import {
   a1ActivitySecondsLeft,
 } from "../utils/a1PresenterActivityTimer.js";
 import "./TeachingSlidePresenter.css";
+import "./A1GrammarPresenter.css";
 
 const FALOWEN_BASE_URL = "https://www.falowen.app";
 const A1_GRAMMAR_CHECK_FLOW_VERSION = 3;
@@ -644,9 +645,11 @@ export default function A1GrammarPresenter({
             toolbarActions={<PresenterActions onPresent={presentFullscreen} onExit={onExit} onReport={() => setReportOpen(true)} />}
           />
 
-          <div className="presenter-v2-tools">
+          <div className="presenter-v2-tools presenter-a1-tools">
             <PresenterStageJump stages={stages} index={stageIndex} onChange={goTo} />
-            <div className={`presenter-timer ${activityTimerExpired ? "presenter-timer-expired" : ""}`} role="group" aria-label="A1 activity timer controls">
+            <details className="presenter-a1-activity-disclosure">
+              <summary>Activity timer · {formatFocusTime(activityRemainingSeconds)}</summary>
+              <div className={`presenter-timer ${activityTimerExpired ? "presenter-timer-expired" : ""}`} role="group" aria-label="A1 activity timer controls">
               <span className="presenter-timer-mode">Activity timer</span>
               <strong>{formatFocusTime(activityRemainingSeconds)}</strong>
               <div className="presenter-timer-presets" role="group" aria-label="Activity timer duration">
@@ -661,7 +664,8 @@ export default function A1GrammarPresenter({
                 {activityTimerRunning ? "Pause" : "Start"}
               </button>
               <button type="button" onClick={resetActivityTimer}>Reset</button>
-            </div>
+              </div>
+            </details>
           </div>
 
         </header>
@@ -685,7 +689,9 @@ export default function A1GrammarPresenter({
             </figure>
           ) : null}
           {!focusMode && teacherPurpose ? (
-            <aside className="presenter-teacher-purpose" aria-label="Teacher purpose">
+            <details className="presenter-a1-teacher-details" aria-label="Teacher notes">
+              <summary>Teacher notes · optional</summary>
+              <aside className="presenter-teacher-purpose" aria-label="Teacher purpose">
               <div>
                 <strong>Student</strong>
                 <span>{teacherPurpose.student}</span>
@@ -694,7 +700,8 @@ export default function A1GrammarPresenter({
                 <strong>Teacher</strong>
                 <span>{teacherPurpose.teacher}</span>
               </div>
-            </aside>
+              </aside>
+            </details>
           ) : null}
           {stage.type === "published-music" ? (
             <PublishedSongLessonStage assignmentKey={slide.assignmentId} compact />
@@ -874,7 +881,7 @@ export default function A1GrammarPresenter({
           )}
         </main>
 
-        <PresenterControls index={stageIndex} total={stages.length} atStart={atStart} atEnd={atEnd}
+        <PresenterControls compact={!focusMode} index={stageIndex} total={stages.length} atStart={atStart} atEnd={atEnd}
             onPrevious={previous} onNext={next} onRestore={exitPresentationView} onReport={() => setReportOpen(true)} nextTitle={nextTitle} nextLabel={participationCheckMode ? "Continue lesson →" : manualCheckMode && itemIndex < stage.items.length - 1 ? "Next question →" : "Next slide →"}
           nextLessonHref={nextLessonHref} nextLessonLabel={nextLessonLabel} />
       </div>

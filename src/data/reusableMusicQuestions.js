@@ -14,6 +14,18 @@ export const MUSIC_QUESTION_SEEDS = Object.freeze({
 const byAssignment = new Map(Object.values(MUSIC_QUESTION_SEEDS)
   .flat().map(row => [String(row[0]).trim().toUpperCase(), row]));
 
+// Only add choices where distractors have been reviewed against the ORIGINAL
+// recording. Other A1/A2/B1 prompts stay open until their choices are written.
+const REVIEWED_LISTENING_CHOICES = Object.freeze({
+  'A1-14.1': Object.freeze([
+    { options: ['Der Kopf.', 'Der Bauch.', 'Das Bein.'], correctIndex: 0 },
+    { options: ['Brot und Milch.', 'Wasser und Tee.', 'Saft und Obst.'], correctIndex: 1 },
+  ]),
+});
+function listeningChoice(questionKey, number) {
+  return REVIEWED_LISTENING_CHOICES[questionKey]?.[number] || {};
+}
+
 function verseEvidence(lyrics, verseNumber) {
   const label = verseNumber === 1 ? '[Verse 1]' : '[Verse 2]';
   const start = String(lyrics || '').indexOf(label);
@@ -37,8 +49,8 @@ export function getReusableMusicQuestions(assignmentKey) {
     songTitle: song.title,
     topic: song.assignmentKey,
     questions: [
-      { id: key + '-listen-1', type: 'listening', prompt: row[1], answer: row[2], evidence: verseEvidence(song.lyrics, 1) },
-      { id: key + '-listen-2', type: 'listening', prompt: row[3], answer: row[4], evidence: key === 'A1-14.1' ? 'Mia bringt mir Wasser und Tee.\nJetzt geht es mir schon besser.' : verseEvidence(song.lyrics, 2) },
+      { id: key + '-listen-1', type: 'listening', prompt: row[1], answer: row[2], evidence: verseEvidence(song.lyrics, 1), ...listeningChoice(key, 0) },
+      { id: key + '-listen-2', type: 'listening', prompt: row[3], answer: row[4], evidence: key === 'A1-14.1' ? 'Mia bringt mir Wasser und Tee.\nJetzt geht es mir schon besser.' : verseEvidence(song.lyrics, 2), ...listeningChoice(key, 1) },
       { id: key + '-speak-1', type: 'speaking', prompt: row[5], answer: null, evidence: '', teacherNote: guidance },
     ],
   };
@@ -56,6 +68,11 @@ export function formatReusableMusicQuestions(assignmentKey, { includeAnswers = f
   ];
   for (const [index, question] of data.questions.entries()) {
     result.push(`${index + 1}. [${question.type === 'speaking' ? 'SPRECHEN' : 'HÖRVERSTEHEN'}] ${question.prompt}`);
+    if (Array.isArray(question.options)) {
+      for (const [optionIndex, option] of question.options.entries()) {
+        result.push(`   ${String.fromCharCode(65 + optionIndex)}. ${option}`);
+      }
+    }
     if (includeAnswers && question.type === 'listening') {
       result.push(`   Erwartete Antwort: ${question.answer}`);
       if (includeEvidence) result.push(`   Textbeleg: ${question.evidence}`);
