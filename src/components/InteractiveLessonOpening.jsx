@@ -60,7 +60,12 @@ export default function InteractiveLessonOpening({ stage, slide }) {
       const user = auth.currentUser;
       if (!user) throw new Error("Bitte zuerst in Falowen Admin anmelden.");
       const params = new URLSearchParams({ day: String(lesson.listening.day), key: lesson.listening.audioKey });
-      const response = await fetch(`${AUDIO_API}/course-media/${lesson.listening.level.toLowerCase()}/audio-url?${params}`, {
+      // The existing Vercel audio configuration signs this exact staff-only
+      // classroom recording; no Cloud Run R2 secrets or public bucket needed.
+      const audioEndpoint = lesson.listening.level === "A2" && lesson.listening.day === 18
+        ? "https://www.falowen.app/api/course-media/a2/classroom-audio-url"
+        : `${AUDIO_API}/course-media/${lesson.listening.level.toLowerCase()}/audio-url`;
+      const response = await fetch(`${audioEndpoint}?${params}`, {
         method: "GET",
         headers: { Authorization: `Bearer ${await user.getIdToken()}` },
         cache: "no-store",

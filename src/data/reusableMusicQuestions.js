@@ -17,6 +17,10 @@ const byAssignment = new Map(Object.values(MUSIC_QUESTION_SEEDS)
 // Only add choices where distractors have been reviewed against the ORIGINAL
 // recording. Other A1/A2/B1 prompts stay open until their choices are written.
 const REVIEWED_LISTENING_CHOICES = Object.freeze({
+  'A2-7.18': Object.freeze([
+    { options: ['Die Bankkarte oder das Zahlungsgerät.', 'Das Handy der Mitarbeiterin.', 'Der Geldautomat in der Bank.'], correctIndex: 0 },
+    { options: ['Die Person bezahlt nur noch bar.', 'Nach der Erklärung der Bank funktioniert die Zahlung wieder.', 'Die Bank schickt sofort eine neue Karte.'], correctIndex: 1 },
+  ]),
   'A1-14.1': Object.freeze([
     { options: ['Der Kopf.', 'Der Bauch.', 'Das Bein.'], correctIndex: 0 },
     { options: ['Brot und Milch.', 'Wasser und Tee.', 'Saft und Obst.'], correctIndex: 1 },
@@ -25,6 +29,16 @@ const REVIEWED_LISTENING_CHOICES = Object.freeze({
 function listeningChoice(questionKey, number) {
   return REVIEWED_LISTENING_CHOICES[questionKey]?.[number] || {};
 }
+
+const SPEAKING_SUPPORT = Object.freeze({
+  'A2-7.18': Object.freeze({
+    sentenceStarters: ['Guten Tag, ich rufe an, weil …', 'Meine Karte funktioniert nicht, wenn …', 'Können Sie bitte …?'],
+    possibleAnswers: [
+      'Guten Tag, ich rufe an, weil meine Karte nicht funktioniert. Das Gerät zeigt einen Fehler. Können Sie mir bitte helfen?',
+      'Ich kann im Geschäft nicht mit meiner Karte bezahlen. Können Sie bitte meine Karte prüfen? Dann teste ich sie noch einmal.',
+    ],
+  }),
+});
 
 function verseEvidence(lyrics, verseNumber) {
   const label = verseNumber === 1 ? '[Verse 1]' : '[Verse 2]';
@@ -51,7 +65,7 @@ export function getReusableMusicQuestions(assignmentKey) {
     questions: [
       { id: key + '-listen-1', type: 'listening', prompt: row[1], answer: row[2], evidence: verseEvidence(song.lyrics, 1), ...listeningChoice(key, 0) },
       { id: key + '-listen-2', type: 'listening', prompt: row[3], answer: row[4], evidence: key === 'A1-14.1' ? 'Mia bringt mir Wasser und Tee.\nJetzt geht es mir schon besser.' : verseEvidence(song.lyrics, 2), ...listeningChoice(key, 1) },
-      { id: key + '-speak-1', type: 'speaking', prompt: row[5], answer: null, evidence: '', teacherNote: guidance },
+      { id: key + '-speak-1', type: 'speaking', prompt: row[5], answer: null, evidence: '', teacherNote: guidance, ...(SPEAKING_SUPPORT[key] || {}) },
     ],
   };
 }
@@ -73,6 +87,8 @@ export function formatReusableMusicQuestions(assignmentKey, { includeAnswers = f
         result.push(`   ${String.fromCharCode(65 + optionIndex)}. ${option}`);
       }
     }
+    if (question.sentenceStarters?.length) result.push('   Satzanfänge:', ...question.sentenceStarters.map(line => `   • ${line}`));
+    if (question.possibleAnswers?.length) result.push('   Mögliche Antworten · eigene Varianten sind willkommen:', ...question.possibleAnswers.map(line => `   • ${line}`));
     if (includeAnswers && question.type === 'listening') {
       result.push(`   Erwartete Antwort: ${question.answer}`);
       if (includeEvidence) result.push(`   Textbeleg: ${question.evidence}`);

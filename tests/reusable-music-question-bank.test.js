@@ -72,9 +72,9 @@ test('exportable teacher pack includes lyrics, genre, music direction and questi
 test('the actual slide page can project song questions without initially showing answers', () => {
   const source = readFileSync(new URL('../src/pages/TeachingSlidesPage.jsx',import.meta.url),'utf8');
   assert.match(source, /getReusableMusicQuestions\(slide\.assignmentId\)/);
-  assert.match(source, /<ReusableMusicQuestions assignmentKey=\{slide\.assignmentId\} projector/);
-  assert.match(source, /Present song questions/);
-  assert.match(source, /songQuestions && !handoutMode/);
+  assert.match(source, /<PublishedSongLessonStage assignmentKey=\{slide\.assignmentId\}/);
+  assert.match(source, /Present Falowen music \+ questions/);
+  assert.match(source, /publishedSong && !handoutMode/);
   const component = readFileSync(new URL('../src/components/ReusableMusicQuestions.jsx',import.meta.url),'utf8');
   assert.match(component, /useState\(false\)/);
   assert.match(component, /if|Hide answer key/);

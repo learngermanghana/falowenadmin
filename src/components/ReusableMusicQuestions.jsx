@@ -63,6 +63,8 @@ export default function ReusableMusicQuestions({ assignmentKey, projector = fals
                 {option}{answersVisible && index === question.correctIndex ? ' ✓' : ''}
               </li>)}
             </ol>}
+            {question.sentenceStarters?.length > 0 && <div><strong>Satzanfänge</strong><ul>{question.sentenceStarters.map(line => <li key={line}>{line}</li>)}</ul></div>}
+            {question.possibleAnswers?.length > 0 && <div><strong>Mögliche Antworten · eigene Varianten sind willkommen</strong>{question.possibleAnswers.map(line => <p key={line}>{line}</p>)}</div>}
             {answersVisible && <div className="reusable-music-questions__answer">
               {question.type === 'listening' ? <>
                 <strong>Erwartete Antwort:</strong> {question.answer}

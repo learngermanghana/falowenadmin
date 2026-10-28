@@ -74,8 +74,25 @@ test("only teacher-approved selected days have in-class music, even though the f
 test("original authorized A2 Hören can recover from unavailable Cloud Run without losing access checks",()=>{
   const src=readFileSync(new URL("../src/components/InteractiveLessonOpening.jsx",import.meta.url),"utf8");
   assert.match(src,/https:\/\/api-awc2au65xa-ew\.a\.run\.app/);
-  assert.doesNotMatch(src,/https:\/\/www\.falowen\.app\/api/);
+  assert.match(src,/https:\/\/www\.falowen\.app\/api\/course-media\/a2\/classroom-audio-url/);
   assert.match(src,/getIdToken\(\)/);
   assert.match(src,/course-media\/\$\{lesson\.listening\.level\.toLowerCase\(\)\}\/audio-url/);
   assert.match(src,/R2-Objekt/);
+});
+
+test('Day 18 dictionary provides lyric-based choices and reusable speaking examples in Studio and slides', () => {
+  const bank = getReusableMusicQuestions('A2-7.18');
+  for (const question of bank.questions.slice(0, 2)) {
+    assert.equal(question.options.length, 3);
+    assert.equal(new Set(question.options).size, 3);
+    assert.equal(question.options[question.correctIndex], question.answer);
+    assert.ok(getReusableSongDraft('A2-7.18').lyrics.includes(question.evidence));
+  }
+  const speaking = bank.questions[2];
+  assert.equal(speaking.type, 'speaking');
+  assert.equal(speaking.answer, null);
+  assert.equal(speaking.correctIndex, undefined);
+  assert.equal(speaking.possibleAnswers.length, 2);
+  assert.ok(speaking.sentenceStarters.length >= 2);
+  assert.ok(speaking.possibleAnswers.some(line => line.includes('weil')));
 });
