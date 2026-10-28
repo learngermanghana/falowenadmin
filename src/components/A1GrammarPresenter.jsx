@@ -691,7 +691,7 @@ export default function A1GrammarPresenter({
           {!focusMode && teacherPurpose ? (
             <details className="presenter-a1-teacher-details" aria-label="Teacher notes">
               <summary>Teacher notes · optional</summary>
-              <aside className="presenter-teacher-purpose">
+              <aside className="presenter-teacher-purpose" aria-label="Teacher purpose">
               <div>
                 <strong>Student</strong>
                 <span>{teacherPurpose.student}</span>
