@@ -74,9 +74,8 @@ test("only teacher-approved selected days have in-class music, even though the f
 test("original authorized A2 Hören can recover from unavailable Cloud Run without losing access checks",()=>{
   const src=readFileSync(new URL("../src/components/InteractiveLessonOpening.jsx",import.meta.url),"utf8");
   assert.match(src,/https:\/\/api-awc2au65xa-ew\.a\.run\.app/);
-  assert.match(src,/https:\/\/www\.falowen\.app\/api/);
+  assert.doesNotMatch(src,/https:\/\/www\.falowen\.app\/api/);
   assert.match(src,/getIdToken\(\)/);
-  assert.match(src,/stopFallback = true/);
   assert.match(src,/course-media\/\$\{lesson\.listening\.level\.toLowerCase\(\)\}\/audio-url/);
   assert.match(src,/R2-Objekt/);
 });
