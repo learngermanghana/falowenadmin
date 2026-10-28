@@ -189,7 +189,7 @@ test("A2 Day 18 Hören maps uploaded Bank Richtig/Falsch items without changing 
   assert.equal(isInteractiveOpeningStage("A2-7.18", "knowledge"), true);
   assert.ok(stages.find(s => s.id === "reading"), "Existing reading is restored");
   assert.equal(stages.length, buildTeachingPresenterStages({
-    ...slide, assignmentId: "A2-7.19",
+    ...slide, assignmentId: "A2-6.16",
   }, slide.topic).length + 1, "Only the selected day has the extra listening page");
 });
 
@@ -231,17 +231,17 @@ test("A2 Day 20 Reklamation preserves the uploaded Richtig/Falsch answers and wo
   assert.equal(knowledge.suggestedMinutes,6);
   assert.equal(knowledge.listeningItems.length,5);
   assert.ok(stages.find(s=>s.id==="reading"),"Restore original Lesen");
-  assert.equal(stages.length,buildTeachingPresenterStages({...slide,assignmentId:"A2-7.19"},slide.topic).length + 1);
+  assert.equal(stages.length,buildTeachingPresenterStages({...slide,assignmentId:"A2-6.16"},slide.topic).length + 1);
   assert.equal(isInteractiveOpeningStage("A2-7.20","knowledge"),true);
 });
 
 
-test("interactive Hören uses Cloud Run except the exact staff-authenticated Day 18 bank route", () => {
+test("interactive Hören uses Cloud Run except the exact staff-authenticated Day 18/19 conversation routes", () => {
   const component = readFileSync(new URL("../src/components/InteractiveLessonOpening.jsx", import.meta.url), "utf8");
   assert.match(component, /api-awc2au65xa-ew\.a\.run\.app/);
   assert.match(component, /VITE_FALOWEN_COURSE_MEDIA_API_URL/);
   assert.doesNotMatch(component, /VITE_FALOWEN_COURSE_API_URL/);
-  assert.match(component, /lesson\.listening\.level === "A2" && lesson\.listening\.day === 18/);
+  assert.match(component, /lesson\.listening\.level === "A2" && \[18, 19\]\.includes\(lesson\.listening\.day\)/);
   assert.match(component, /https:\/\/www\.falowen\.app\/api\/course-media\/a2\/classroom-audio-url/);
   assert.match(component, /Authorization: `Bearer \$\{await user\.getIdToken\(\)\}`/);
   assert.match(component, /lesson\.listening\.audioKey/);

@@ -62,7 +62,7 @@ export default function InteractiveLessonOpening({ stage, slide }) {
       const params = new URLSearchParams({ day: String(lesson.listening.day), key: lesson.listening.audioKey });
       // The existing Vercel audio configuration signs this exact staff-only
       // classroom recording; no Cloud Run R2 secrets or public bucket needed.
-      const audioEndpoint = lesson.listening.level === "A2" && lesson.listening.day === 18
+      const audioEndpoint = lesson.listening.level === "A2" && [18, 19].includes(lesson.listening.day)
         ? "https://www.falowen.app/api/course-media/a2/classroom-audio-url"
         : `${AUDIO_API}/course-media/${lesson.listening.level.toLowerCase()}/audio-url`;
       const response = await fetch(`${audioEndpoint}?${params}`, {

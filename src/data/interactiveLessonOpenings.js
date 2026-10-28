@@ -1,3 +1,4 @@
+import { A2_DAY19_LISTENING } from './a2Day19Listening.js';
 // Curated reusable 10-minute classroom warm-ups. The A2 Day 17 Hören is
 // the only verified recording; never invent audio or override scored workbook work.
 import { A2_DAY17_AUDIO_KEY, A2_DAY17_WARMUP, A2_DAY17_LISTENING, A2_DAY17_TRANSCRIPT } from "./a2Day17Opening.js";
@@ -398,6 +399,10 @@ ENTRIES["A2-6.17"].listening = {
 // YouTube and optional lyric questions together on slide 2.
 ENTRIES["A2-7.18"].musicIntro = A2_DAY18_BANK_MUSIC;
 ENTRIES["A2-7.18"].listening = A2_DAY18_BANK_LISTENING;
+ENTRIES["A2-7.19"] = {
+  assignmentId: 'A2-7.19', title: 'Einkaufen – wo und wie?',
+  warmup: [], listening: A2_DAY19_LISTENING,
+};
 ENTRIES["A2-7.20"].listening = A2_DAY20_LISTENING;
 // Music uses the same Hördetektiv question/reveal flow, not the scored workbook Hören.
 ENTRIES["B1-8.24"] = {
