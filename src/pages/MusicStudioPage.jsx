@@ -51,9 +51,10 @@ export default function MusicStudioPage() {
   const [lyricTreatment, setLyricTreatment] = useState('exact');
   const rewriteFromLyrics = courseMode === 'course' && vocalMode === 'voice' && songStyle === 'story' && lyricTreatment === 'story-source';
   const effectiveBrief = styleMode === 'auto' && courseMode === 'course'
-    ? [suggestLessonMusicDirection(lesson, { instrumental: vocalMode === 'instrumental' }),
-        draft?.musicStyle && vocalMode === 'voice' ? `For this particular story use: ${draft.musicStyle}. Keep lead vocals clearly louder than instruments.` : '',
-      ].filter(Boolean).join(' ')
+    ? suggestLessonMusicDirection(lesson, {
+        instrumental: vocalMode === 'instrumental',
+        preferredStyle: draft?.musicStyle || '',
+      })
     : brief;
   const context = courseMode === 'course' ? musicLessonContext(lesson, language, focus, {
     songStyle: vocalMode === 'voice' ? songStyle : 'vocabulary',
@@ -197,7 +198,7 @@ export default function MusicStudioPage() {
             <option value="auto">Automatically match the lesson topic — recommended</option>
             <option value="custom">Choose my own music direction</option>
           </select>
-          {styleMode === 'auto' && <p className="music-note">Suggested for this topic: <strong>{getMusicTopicStyle(lesson).label}</strong>. Change the lesson to update the genre automatically. Switch to custom to edit the music direction.</p>}
+          {styleMode === 'auto' && <p className="music-note">Music genre for this lesson: <strong>{draft?.genre || getMusicTopicStyle(lesson).label}</strong>. Every lesson has a different arrangement; change the lesson to update it. Switch to custom to edit the direction.</p>}
         </>}
         <label htmlFor="music-brief">Music direction {styleMode === 'auto' && courseMode === 'course' ? '(automatically selected)' : ''}</label>
         <textarea id="music-brief" required maxLength={2000} rows={6} value={effectiveBrief} readOnly={styleMode === 'auto' && courseMode === 'course'} onChange={e => setBrief(e.target.value)} />
