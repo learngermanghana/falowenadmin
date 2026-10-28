@@ -46,3 +46,11 @@ Automated tests cover authorization, payload restrictions, budget limits/reset,
 deduplication, failed-call accounting, stateless provider requests and MP3 parsing.
 Build and focused lint also run. Live paid generation requires deployment and an
 owner session; verify one preview, playback and MP3 download before relying on it.
+
+## CEFR storytelling for lesson songs
+
+For Course lesson mode, **Real-life storytelling** is the default songwriting approach. The selected dictionary lesson and CEFR level shape a coherent scene rather than a repeated bilingual vocabulary list. The AI is asked for a character, a realistic problem, a short dialogue, a useful German hook, resolution and explicit outro. At A1, sentences should be very short and present tense; A2 through C2 progressively add narrative complexity without losing singability. English support is brief and natural, not a parenthesized translation after each word.
+
+The A1 chapter **14.1 Gesundheit und Körperteile** has a targeted seed: a learner with a headache says "Mein Kopf tut weh", a friend asks "Was ist los?", they request help and finish "Jetzt geht es mir besser". Body-part words appear in context, and the song does not pretend every body part hurts.
+
+Teachers can write a custom story situation, switch back to **Vocabulary review / repetition**, or paste older lines as vocabulary reference by selecting **Source vocabulary — rewrite into a story**. The default **Exact lyrics — keep my words** continues to preserve teacher-provided lyrics. Bracketed transcription markers are not meant to be sung. Full songs still target 2½ minutes by default with quiet accompaniment, last 20-second outro, and no automatic retries. These are instructions to the model; the resulting MP3 and timing still require a human listen before publishing. No lyrics/audio are stored by Falowen, and the music generation budget is unchanged.
