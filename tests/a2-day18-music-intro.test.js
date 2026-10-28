@@ -1,86 +1,78 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { getInteractiveLessonOpening, isInteractiveOpeningStage } from "../src/data/interactiveLessonOpenings.js";
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 import { A2_DAY18_BANK_AUDIO_KEY, A2_DAY18_BANK_LISTENING } from "../src/data/a2Day18BankListening.js";
+import { getReusableSongDraft } from "../src/data/reusableMusicSongbook.js";
+import { getReusableMusicQuestions } from "../src/data/reusableMusicQuestions.js";
+import { getCuratedMusicByAssignment, getCuratedMusicForSession, CURATED_MUSIC_DAYS } from "../src/data/curatedLessonMusic.js";
 
-test("A2 Day 18 follows B1 Day 25: music on slide 2 and existing R2 Hören on slide 3", () => {
-  const slide = getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-7.18");
-  assert.ok(slide);
-  const stages = buildTeachingPresenterStages(slide, slide.topic);
-  const lesson = getInteractiveLessonOpening("A2-7.18");
-
-  assert.equal(stages[0].id, "intro");
-  assert.equal(stages[1].id, "warmup");
-  assert.equal(stages[1].variant, "interactive-music-video");
-  assert.equal(stages[1].musicVideo.youtubeId, "pXAxzMMXHoE");
-  assert.equal(stages[1].musicVideo.level, "A2");
-  assert.equal(stages[1].musicVideo.readingOnVideoSlide, true);
-  assert.equal(stages[1].musicVideo.readingSections.length, 4);
-  assert.equal(stages[1].musicVideo.questions.length, 5);
-  assert.ok(stages[1].musicVideo.questions.every((question) =>
-    question.options[question.correctIndex] === question.answer
-    && question.evidence && question.hint && question.explanation
-    && Number.isInteger(question.timestamp) && question.timestamp >= 0 && question.timestamp < 198
-  ));
-  assert.match(stages[1].musicVideo.title, /Meine Karte ist gesperrt/);
-  assert.equal(stages[1].suggestedMinutes, 0);
-  assert.equal(stages[1].timingMode, "");
-  assert.equal(stages[1].challengeItems?.length || 0, 0);
-  assert.match(stages[1].teacherPurpose.student, /Amirs Geschichte/);
-  assert.match(stages[1].teacherPurpose.teacher, /Cloudflare R2/);
-  assert.equal(lesson.musicIntro.mediaType, "music");
-  assert.equal(lesson.musicIntro.audioKey, undefined);
-
-  assert.equal(stages[2].id, "knowledge");
-  assert.equal(stages[2].variant, "interactive-listening");
-  assert.equal(stages[2].audioKey, "a2/day-18/bank-telefonat.mp3");
-  assert.equal(stages[2].audioKey, A2_DAY18_BANK_AUDIO_KEY);
-  assert.equal(stages[2].listeningItems.length, 5);
-  assert.strictEqual(stages[2].transcript, A2_DAY18_BANK_LISTENING.transcript);
-  assert.deepEqual(stages[2].listeningItems, A2_DAY18_BANK_LISTENING.questions);
-  assert.equal(stages[2].musicVideo, undefined);
-  assert.equal(isInteractiveOpeningStage("A2-7.18", "warmup"), false);
-  assert.equal(isInteractiveOpeningStage("A2-7.18", "knowledge"), true);
-  const remainingIds = stages.slice(3).map((stage) => stage.id);
-  assert.equal(remainingIds.length, 6, "do not add or remove teaching slides");
-  assert.deepEqual(remainingIds.slice(0, 2), ["phrases", "grammar-check"]);
-  assert.ok(["practice", "scenario-challenge"].includes(remainingIds[2]));
-  assert.deepEqual(remainingIds.slice(3), ["questions", "workbook", "lesson-summary"]);
+test("A2 Day 18 slide 2 is real Falowen R2 music with original questions, slide 3 is original private Hören", () => {
+  const slide=getSlidesByCourse("A2").find(item=>item.assignmentId==="A2-7.18");
+  const stages=buildTeachingPresenterStages(slide,slide.topic);
+  const opening=getInteractiveLessonOpening("A2-7.18");
+  const bank=stages[1].musicVideo;
+  assert.equal(stages[0].id,"intro");
+  assert.equal(stages[1].id,"warmup");
+  assert.equal(stages[1].variant,"interactive-music-video");
+  assert.equal(bank.mediaType,"music");
+  assert.equal(bank.assignmentKey,"A2-7.18");
+  assert.equal(bank.title,"Die Karte funktioniert nicht");
+  assert.match(bank.audioUrl,/\/api\/music\?track=a2-day-18-bank/);
+  assert.equal(bank.youtubeId,undefined,"old Amir YouTube song should not be shown");
+  assert.equal(bank.lyrics,getReusableSongDraft("A2-7.18").lyrics);
+  assert.deepEqual(bank.questions,getReusableMusicQuestions("A2-7.18").questions);
+  assert.equal(bank.questions.length,3);
+  assert.equal(stages[1].suggestedMinutes,0);
+  assert.equal(stages[1].timingMode,"");
+  assert.equal(stages[1].challengeItems?.length||0,0);
+  assert.match(stages[1].teacherPurpose.teacher,/Cloudflare|music|Musik/i);
+  assert.equal(opening.musicIntro.audioUrl,bank.audioUrl);
+  assert.equal(stages[2].id,"knowledge");
+  assert.equal(stages[2].variant,"interactive-listening");
+  assert.equal(stages[2].audioKey,"a2/day-18/bank-telefonat.mp3");
+  assert.equal(stages[2].audioKey,A2_DAY18_BANK_AUDIO_KEY);
+  assert.equal(stages[2].listeningItems.length,5);
+  assert.strictEqual(stages[2].transcript,A2_DAY18_BANK_LISTENING.transcript);
+  assert.deepEqual(stages[2].listeningItems,A2_DAY18_BANK_LISTENING.questions);
+  assert.equal(stages[2].musicVideo,undefined);
+  assert.equal(isInteractiveOpeningStage("A2-7.18","warmup"),false);
+  assert.equal(isInteractiveOpeningStage("A2-7.18","knowledge"),true);
+  assert.deepEqual(stages.slice(3).map(s=>s.id),["phrases","grammar-check","practice","questions","workbook","lesson-summary"]);
 });
 
-test("music screen displays A2 instead of hard-coded B1 without changing B1 Day 25", () => {
-  const stage = readFileSync(new URL("../src/components/MusicTeachingStages.jsx", import.meta.url), "utf8");
-  assert.match(stage, /music\.level \|\| "B1"/);
-  const b1Slide = getSlidesByCourse("B1").find((item) => item.assignmentId === "B1-8.25");
-  const b1Stages = buildTeachingPresenterStages(b1Slide, b1Slide.topic);
-  assert.equal(b1Stages[1].musicVideo.youtubeId, "ArWT0uVqUxo");
-  assert.equal(b1Stages[2].variant, "interactive-listening");
-  assert.equal(b1Stages[2].audioKey, "b1/day-25/day-25.mp3");
+test("Music stage uses signed R2 music, lyrics and 3 canonical questions without breaking B1 YouTube lessons",()=>{
+  const src=readFileSync(new URL("../src/components/MusicTeachingStages.jsx",import.meta.url),"utf8");
+  assert.match(src,/music\?\.assignmentKey === 'A2-7\.18'/);
+  assert.match(src,/<PublishedSongLessonStage assignmentKey="A2-7.18"/);
+  const b1=getSlidesByCourse("B1").find(x=>x.assignmentId==="B1-8.25");
+  const stages=buildTeachingPresenterStages(b1,b1.topic);
+  assert.equal(stages[1].musicVideo.youtubeId,"ArWT0uVqUxo");
+  assert.equal(stages[2].variant,"interactive-listening");
+  assert.equal(stages[2].audioKey,"b1/day-25/day-25.mp3");
 });
 
-test("A2 music quiz shares slide 2 with video and retains B1 Day 24's separate lyric slide", () => {
-  const musicComponent = readFileSync(new URL("../src/components/MusicTeachingStages.jsx", import.meta.url), "utf8");
-  const css = readFileSync(new URL("../src/components/MusicTeachingStages.css", import.meta.url), "utf8");
-  assert.match(musicComponent, /music\.readingOnVideoSlide/);
-  assert.match(musicComponent, /Liedtext &amp; 5 Fragen/);
-  assert.match(musicComponent, /MusicReadingStage music=\{music\} embedded/);
-  assert.match(css, /music-video-lesson-tabs/);
-  const b1Slide = getSlidesByCourse("B1").find((item) => item.assignmentId === "B1-8.24");
-  const b1Stages = buildTeachingPresenterStages(b1Slide, b1Slide.topic);
-  assert.equal(b1Stages[1].variant, "interactive-music-video");
-  assert.equal(b1Stages[2].variant, "interactive-music-reading");
-  assert.equal(b1Stages[1].musicVideo.readingOnVideoSlide, undefined);
+test("only teacher-approved selected days have in-class music, even though the full songbook is available",()=>{
+  assert.equal(CURATED_MUSIC_DAYS.filter(x=>x.status==="published").length,2);
+  assert.equal(getCuratedMusicByAssignment("A1-14.1").day,22);
+  assert.equal(getCuratedMusicByAssignment("A2-7.18").day,18);
+  assert.equal(getCuratedMusicByAssignment("A2-10.26"),null);
+  assert.equal(getCuratedMusicForSession({level:"A2",day:18}).assignmentKey,"A2-7.18");
+  const slides=readFileSync(new URL("../src/pages/TeachingSlidesPage.jsx",import.meta.url),"utf8");
+  assert.match(slides,/getCuratedMusicByAssignment\(slide\.assignmentId\)/);
+  const a1=readFileSync(new URL("../src/components/A1GrammarPresenter.jsx",import.meta.url),"utf8");
+  assert.match(a1,/type: "published-music"/);
+  assert.match(a1,/<PublishedSongLessonStage assignmentKey=\{slide\.assignmentId\}/);
 });
 
-test("signed classroom audio uses the currently deployed API region, not legacy URL", () => {
-  const audioComponent = readFileSync(new URL("../src/components/InteractiveLessonOpening.jsx", import.meta.url), "utf8");
-  assert.match(audioComponent, /https:\/\/api-awc2au65xa-ew\.a\.run\.app/);
-  assert.doesNotMatch(audioComponent, /us-central1-falowen-examiner-trainer\.cloudfunctions\.net/);
-  assert.match(audioComponent, /getIdToken/);
-  assert.match(audioComponent, /course-media\/\$\{lesson\.listening\.level\.toLowerCase\(\)\}\/audio-url/);
-  assert.match(audioComponent, /R2-Objekt/);
+test("original authorized A2 Hören can recover from unavailable Cloud Run without losing access checks",()=>{
+  const src=readFileSync(new URL("../src/components/InteractiveLessonOpening.jsx",import.meta.url),"utf8");
+  assert.match(src,/https:\/\/api-awc2au65xa-ew\.a\.run\.app/);
+  assert.match(src,/https:\/\/www\.falowen\.app\/api/);
+  assert.match(src,/getIdToken\(\)/);
+  assert.match(src,/stopFallback = true/);
+  assert.match(src,/course-media\/\$\{lesson\.listening\.level\.toLowerCase\(\)\}\/audio-url/);
+  assert.match(src,/R2-Objekt/);
 });
