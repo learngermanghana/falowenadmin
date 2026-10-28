@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { markVerifiedSpeakingSubmission } from "../src/utils/verifiedSpeakingMarking.js";
 
 import {
   compareAnswers,
@@ -750,3 +752,72 @@ test("A1-0.2 aligns a second 1-5 answer group without a Teil heading", () => {
   assert.equal(result.details[12].correct, true);
 });
 
+
+test("A1 Day 4: valid written form numbers and phone digits count, missing street and misspelling do not", () => {
+  const reference = JSON.parse(readFileSync(new URL("../src/data/answers_dictionary.json", import.meta.url), "utf8"))
+    ["A1 Numbers and Addresses 2"];
+  const submission = `TEIL 1
+1. Sechsundzwanzig
+2. Siebenundachtzig
+3. Null ein sieben ein drei drei funf funf neun null
+4. Drei
+5. Zweihundertvierzig
+
+TEIL 2
+1. Zwolf
+2. Sechzehn
+3. Zweihunderteinundzwanzig
+4. DreitausendveirhundertfunfunddreiBig
+5. Siebzig
+
+TEIL 3
+A1_NUMBERS_PHONE_SPEAKING_V1
+Speaking task: phone number
+Score: 8/10
+Verified speaking assessment: receipt_123
+Feedback: Number sequence understood.`;
+  const objective = computeObjectiveScore(reference, submission);
+  assert.equal(objective.totalCount, 10);
+  assert.equal(objective.correctCount, 8);
+  assert.deepEqual(Object.entries(objective.details).filter(([, row]) => !row.correct).map(([key]) => key),
+    ["teil1.2", "teil2.4"]);
+  assert.equal(objective.details["teil1.3"].correct, true);
+
+  const graded = markVerifiedSpeakingSubmission({
+    referenceEntry: reference,
+    submissionText: submission,
+    serverSpeakingAssessment: {
+      assignmentKey: "A1-2", assessmentId: "receipt_123",
+      score: 8, maxScore: 10, feedback: "Number sequence understood.",
+    },
+  });
+  assert.equal(graded.objectiveCorrect, 8);
+  assert.equal(graded.speakingScore, 8);
+  assert.equal(graded.finalScore, 80);
+  assert.equal(graded.status, "marked");
+  assert.deepEqual(graded.corrections.map(row => row.question), ["teil1.2", "teil2.4"]);
+});
+
+test("A1 Day 4 form equivalents are confined to Teil 1 and reject different digits", () => {
+  const reference = {
+    assignment_id: "A1-2",
+    format: "objective",
+    answers: { "Teil 1": { Answer1: "26", Answer2: "Müllerstraße 87",
+      Answer3: "0171 33 55 90", Answer4: "3", Answer5: "240" },
+      "Teil 2": { Answer1: "zwölf" } },
+    expectedParts: ["teil1", "teil2"], referenceAnswerParts: ["teil1", "teil2"],
+  };
+  const result = computeObjectiveScore(reference, `Teil 1
+1. Sechsundzwanzig
+2. Müllerstraße siebenundachtzig
+3. Null ein sieben ein drei drei fünf fünf acht null
+4. Drei
+5. Zweihundertvierzig
+
+Teil 2
+1. sechsundzwanzig`);
+  assert.equal(result.details["teil1.1"].correct, true);
+  assert.equal(result.details["teil1.2"].correct, true);
+  assert.equal(result.details["teil1.3"].correct, false);
+  assert.equal(result.details["teil2.1"].correct, false);
+});

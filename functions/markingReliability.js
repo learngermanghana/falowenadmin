@@ -14,6 +14,15 @@ function referenceVersionProblem(submission = {}, reference = {}) {
 function scoreProblems(result = {}) {
   const problems = [];
   const score = result.finalScore ?? result.score;
+  // A1 speaking checkpoints are scored from objective points PLUS a separately
+  // authenticated speaking receipt. They are never "objective-only".
+  const verifiedSpeaking = result.markingRubricVersion === "a1-verified-speaking-v1";
+  const validSpeaking = numeric(result.speakingScore) && numeric(result.maxSpeakingScore)
+    && Number(result.maxSpeakingScore) > 0 && Number(result.speakingScore) >= 0
+    && Number(result.speakingScore) <= Number(result.maxSpeakingScore)
+    && /^[A-Za-z0-9_-]{1,128}$/.test(value(result.speakingAssessmentId));
+  if (verifiedSpeaking && !validSpeaking)
+    problems.push("Verified speaking score or authenticated assessment receipt is missing or invalid.");
   if (!numeric(score) || Number(score) < 0 || Number(score) > 100)
     problems.push("Final score must be within 0–100.");
   if (numeric(result.finalScore) && numeric(result.score) &&
@@ -38,9 +47,17 @@ function scoreProblems(result = {}) {
         if (rows.length !== Number(total) || rows.filter(row => row.correct === true).length !== Number(correct))
           problems.push("Objective question evidence contradicts the correct/total counts.");
       }
-      if (result.writingScore === null && result.writingScorePercent === null
-          && numeric(score) && Math.abs(Number(score) - expectedPercent) > 0.51)
+      if (verifiedSpeaking) {
+        if (validSpeaking && numeric(score)) {
+          const combinedPercent = Math.round(100 * (Number(correct) + Number(result.speakingScore))
+            / (Number(total) + Number(result.maxSpeakingScore)));
+          if (Math.abs(Number(score) - combinedPercent) > 0.51)
+            problems.push("Final score contradicts combined verified objective and speaking marks.");
+        }
+      } else if (result.writingScore === null && result.writingScorePercent === null
+          && numeric(score) && Math.abs(Number(score) - expectedPercent) > 0.51) {
         problems.push("Objective-only final score contradicts the verified answers.");
+      }
     }
   }
   if (present(result.writingScore) && present(result.maxWritingScore) &&

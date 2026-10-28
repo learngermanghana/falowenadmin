@@ -41,3 +41,25 @@ test('retry only short-lived provider failures, never a bad reference or exhaust
   assert.deepEqual(scoreProblems({score:90, writingScore:0, writingScorePercent:0, maxWritingScore:100}), []);
   assert.ok(scoreProblems({score:90, writingScore:'invalid', maxWritingScore:100}).length);
 });
+
+test('A1 verified speaking checkpoints compare combined points, not objective-only percent', () => {
+  const verified = {
+    status: 'marked', score: 70, finalScore: 70, confidence: 1,
+    objectiveCorrect: 6, objectiveTotal: 10, objectiveScore: 60,
+    writingScore: null, writingScorePercent: null,
+    speakingScore: 8, maxSpeakingScore: 10, speakingAssessmentId: 'receipt_123',
+    markingRubricVersion: 'a1-verified-speaking-v1',
+  };
+  assert.deepEqual(scoreProblems(verified), []);
+  assert.deepEqual(scoreProblems({ ...verified, objectiveCorrect: 8, objectiveScore: 80,
+    score: 80, finalScore: 80 }), []);
+  assert.match(scoreProblems({ ...verified, score: 60, finalScore: 60 }).join(' '),
+    /combined verified objective and speaking/);
+  assert.match(scoreProblems({ ...verified, speakingAssessmentId: '' }).join(' '),
+    /authenticated assessment receipt/);
+  assert.match(scoreProblems({ ...verified, speakingScore: 11 }).join(' '),
+    /Verified speaking score/);
+  assert.match(scoreProblems({ score: 70, objectiveCorrect: 6, objectiveTotal: 10,
+    objectiveScore: 60, writingScore: null, writingScorePercent: null }).join(' '),
+    /Objective-only final score contradicts/);
+});
