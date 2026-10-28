@@ -5,6 +5,18 @@ import { assignmentTitle } from '../utils/assignmentTitle.js';
 import { isAutomaticResultPublished } from '../utils/automaticReviewStatus.js';
 
 const PAGE_SIZE = 25;
+// Retakes of previously failed assessments may replace that result only after
+// the teacher explicitly approves a new submission for the same identity.
+const isFailedCourseScore = score => Boolean(score && score.score !== null && score.score !== ''
+  && Number.isFinite(Number(score.score))
+  && (Number(score.score) < 60 || score.passed === false || score.writingMinimumMet === false));
+const submissionTime = data => {
+  const value = data?.resubmittedAt || data?.submittedAt || data?.createdAt || data?.timestamp || data?.date;
+  if (value?.toMillis) return value.toMillis();
+  if (value?.toDate) return value.toDate().getTime();
+  if (typeof value?.seconds === 'number') return value.seconds * 1000;
+  return typeof value === 'number' ? value : Date.parse(value || '');
+};
 export async function loadAutomaticMarkingPage(cursor = null) {
   // A single-field date index is available without a new composite deployment.
   // Filter the bounded page by source; advance by the raw page cursor even if it contains other sources.
@@ -33,21 +45,27 @@ export async function loadAutomaticMarkingPage(cursor = null) {
 
 export async function openAutomaticMarking(row) {
   if (!/^submissions\/[^/]+(?:\/[^/]+\/[^/]+)?$/.test(row.submissionPath || '')) throw new Error('Submission path unavailable.');
-  const [submission, scores, audits, reviews, jobs] = await Promise.all([
+  const [submission, audits, reviews, jobs] = await Promise.all([
     getDoc(doc(db, row.submissionPath)),
-    getDocs(query(collection(db, 'scores'), where('submissionPath', '==', row.submissionPath), limit(2))),
     getDocs(query(collection(db, 'aiMarkingAudit'), where('submissionPath', '==', row.submissionPath), limit(1))),
     getDocs(query(collection(db, 'markingResults', row.id, 'tutorReviews'), orderBy('createdAt', 'desc'), limit(20))),
     getDocs(query(collection(db, 'markingJobs'), where('submissionPath', '==', row.submissionPath), limit(1))),
   ]);
-  const score = scores.size === 1 ? scores.docs[0] : null;
   const work = submission.data() || row;
   const uid = row.studentId || work.studentId || work.uid || work.userId;
   let student = uid ? await getDoc(doc(db, 'students', uid)) : null;
   if (!student?.exists() && uid) student = (await getDocs(query(collection(db, 'students'), where('uid', '==', uid), limit(1)))).docs[0];
   if (!student?.exists() && row.studentCode) student = (await getDocs(query(collection(db, 'students'), where('studentCode', '==', row.studentCode), limit(1)))).docs[0];
+  // Score identity is student + assignment. A new attempt has a new path,
+  // so querying only by submissionPath silently hid the old failed score.
+  const code = student?.exists() ? String(student.data()?.studentCode || student.data()?.studentcode || '').trim() : '';
+  const key = row.assignmentId || row.result?.assignmentKey;
+  const canonical = code && /^(A1|A2|B1)-[0-9]+(?:[._][0-9]+)*$/.test(key || '')
+    ? `${code}__${key}`.replace(/[/#?[\]]+/g, '_') : '';
+  const scoreDoc = canonical ? await getDoc(doc(db, 'scores', canonical)) : null;
+  const score = scoreDoc?.exists() ? { ...scoreDoc.data(), id: canonical } : null;
   return { row, submission: submission.data() || row,
-    score: score ? { ...score.data(), id: score.id } : null,
+    score, priorFailedAttempt: Boolean(score && score.submissionPath !== row.submissionPath && isFailedCourseScore(score)),
     studentPath: student?.exists() ? student.ref.path : null,
     job: jobs.docs[0]?.data() || null,
     audit: audits.docs[0]?.data() || null, reviews: reviews.docs.map(entry => ({ ...entry.data(), id: entry.id })) };
@@ -64,7 +82,9 @@ export async function saveAutomaticMarkingReview(detail, { score, feedback, reas
   const studentCode = profile.data()?.studentCode || profile.data()?.studentcode;
   const assignmentId = detail.row.assignmentId || detail.row.result?.assignmentKey;
   if (!studentCode || !/^(A1|A2|B1)-[0-9]+(?:[._][0-9]+)*$/.test(assignmentId || '')) throw new Error('Registered student code or assignment identity is missing.');
-  const scoreRef = doc(db, 'scores', detail.score?.id || `${studentCode}__${assignmentId}`.replace(/[/#?[\]]+/g, '_'));
+  const canonicalId = `${studentCode}__${assignmentId}`.replace(/[/#?[\]]+/g, '_');
+  if (detail.score && detail.score.id !== canonicalId) throw new Error('Score identity changed. Reopen this result.');
+  const scoreRef = doc(db, 'scores', canonicalId);
   const submissionRef = doc(db, detail.row.submissionPath);
   const reviewRef = doc(collection(markingRef, 'tutorReviews'));
   const syncRef = doc(collection(db, 'automaticScoreSync'));
@@ -73,9 +93,29 @@ export async function saveAutomaticMarkingReview(detail, { score, feedback, reas
     if (!marking.exists() || !submission.exists() || !registered.exists()) throw new Error('This result is no longer available.');
     if ((registered.data().studentCode || registered.data().studentcode) !== studentCode) throw new Error('Student identity changed. Reopen the result.');
     const current = saved.data() || {};
+    const student = registered.data();
+    const storedCode = current.studentCode || current.studentcode;
+    const storedAssignment = current.assignmentId || current.assignment_id;
+    if ((storedCode && storedCode !== studentCode)
+      || (storedAssignment && storedAssignment !== assignmentId)
+      || (current.studentId && current.studentId !== (student.uid || detail.row.studentId)))
+      throw new Error('The existing score belongs to another identity. Nothing was changed.');
+    const sameAttempt = saved.exists() && current.submissionPath === detail.row.submissionPath;
+    const replaceFailed = saved.exists() && !sameAttempt && isFailedCourseScore(current);
     if (marking.data().updatedAt !== detail.row.updatedAt || (detail.score
-      ? !saved.exists() || current.submissionPath !== detail.row.submissionPath || current.updatedAt !== detail.score.updatedAt
-      : saved.exists())) throw new Error('This score changed or another score already exists. Reopen the result before editing.');
+      ? !saved.exists() || current.updatedAt !== detail.score.updatedAt
+        || Number(current.score) !== Number(detail.score.score)
+        || current.submissionPath !== detail.score.submissionPath
+        || (current.comments || current.feedback || '') !== (detail.score.comments || detail.score.feedback || '')
+      : saved.exists()) || (saved.exists() && !sameAttempt && !replaceFailed))
+      throw new Error('This score changed or another score already exists. Reopen the result before editing.');
+    if (replaceFailed && current.submissionPath && /^submissions\/[^/]+(?:\/[^/]+\/[^/]+)?$/.test(current.submissionPath)) {
+      const oldSubmission = await tx.get(doc(db, current.submissionPath));
+      const oldTime = submissionTime(oldSubmission.data() || {});
+      const newTime = submissionTime(submission.data() || {});
+      if (Number.isFinite(oldTime) && Number.isFinite(newTime) && newTime <= oldTime)
+        throw new Error('This submission is not newer than the saved attempt. No score was changed.');
+    }
     const ai = marking.data().result || {};
     if (approve) { score = ai.finalScore ?? ai.score; feedback = ai.feedback; reason = 'Tutor verified AI assessment'; }
     if (score === null || score === undefined || score === '' || !Number.isFinite(Number(score)) || Number(score) < 0 || Number(score) > 100 || !String(feedback || '').trim()) throw new Error('A valid AI score and feedback are required to publish.');
@@ -84,7 +124,6 @@ export async function saveAutomaticMarkingReview(detail, { score, feedback, reas
       const passed = typeof ai.passed === 'boolean' ? ai.passed : false;
       Object.assign(correction, { passed, failed: !passed, status: passed ? 'passed' : 'failed', result: passed ? 'passed' : 'failed' });
     }
-    const student = registered.data();
     const evidence = Object.fromEntries([
       'objectiveScore', 'objectiveCorrect', 'objectiveTotal', 'objectiveDetails', 'wrongAnswers',
       'writingScore', 'writingScorePercent', 'maxWritingScore', 'writingMinimumMet',
@@ -96,19 +135,38 @@ export async function saveAutomaticMarkingReview(detail, { score, feedback, reas
       objective_score: ai.objectiveScore ?? '', objective_correct: ai.objectiveCorrect ?? '',
       objective_total: ai.objectiveTotal ?? '', writing_score: ai.writingScorePercent ?? ai.writingScore ?? '',
     });
-    const updated = { ...evidence, ...current, ...correction, passStatus: correction.passed ? 'passed' : 'failed', comments: feedback.trim(), feedback: feedback.trim(),
+    // A retake cannot inherit the original attempt's grade breakdown.
+    const base = { ...current };
+    if (replaceFailed) for (const key of [
+      'objectiveScore', 'objectiveCorrect', 'objectiveTotal', 'objectiveDetails', 'wrongAnswers',
+      'writingScore', 'writingScorePercent', 'maxWritingScore', 'writingMinimumMet',
+      'markingRubricVersion', 'scoreBreakdown', 'taskPointEvidence', 'writingDimensions',
+      'taskCompletion', 'missingTaskPoints', 'improvementSummary', 'confidence',
+      'objective_score', 'objective_correct', 'objective_total', 'writing_score', 'corrections',
+    ]) delete base[key];
+    const updated = { ...base, ...evidence, ...correction, passStatus: correction.passed ? 'passed' : 'failed', comments: feedback.trim(), feedback: feedback.trim(),
       studentCode, studentcode: studentCode, studentId: student.uid || detail.row.studentId,
       studentEmail: student.email || '', name: student.name || student.fullName || detail.row.studentName || '',
       assignmentId, assignment_id: assignmentId, level: detail.row.level || assignmentId.split('-')[0],
       submissionId: detail.row.submissionId || detail.row.id, submissionPath: detail.row.submissionPath,
       source: 'automatic_course_marking', date: current.date || timestamp, createdAt: current.createdAt || timestamp,
       assignment: assignmentTitle(current.assignment, current.assignmentId, current.assignment_id),
-      reviewedByTutor: true, reviewedBy: auth.currentUser.uid, sheetSaved: false };
+      reviewedByTutor: true, reviewedBy: auth.currentUser.uid, sheetSaved: false,
+      ...(replaceFailed ? {
+        previousScore: current.score, previousSubmissionPath: current.submissionPath || '',
+        markingHistory: [...(Array.isArray(current.markingHistory) ? current.markingHistory : []), {
+          score: current.score, comments: current.comments || current.feedback || '',
+          submissionPath: current.submissionPath || '', source: current.source || '',
+          savedAt: current.updatedAt || current.createdAt || current.date || '',
+        }].slice(-10),
+      } : {}),
+    };
     updated.assignment = assignmentTitle(current.assignment, detail.row.assignmentTitle, assignmentId);
     if (!updated.studentId) throw new Error('Registered student UID is missing.');
     const review = { score: correction.score, feedback: feedback.trim(), reason: reason.trim(),
       action: approve ? 'approve' : 'edit', tutorUid: auth.currentUser.uid, createdAt: timestamp };
-    tx.set(reviewRef, { ...review, previousScore: current.score ?? null, previousFeedback: current.comments || current.feedback || '' });
+    tx.set(reviewRef, { ...review, previousScore: current.score ?? null, previousFeedback: current.comments || current.feedback || '',
+      previousSubmissionPath: current.submissionPath || '' });
     tx.set(scoreRef, updated);
     // Keep the original AI result and its evidence intact; tutor changes have a separate history.
     tx.set(markingRef, { finalScore: correction.score, feedback: feedback.trim(), tutorReview: review,
