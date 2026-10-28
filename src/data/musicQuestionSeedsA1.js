@@ -29,8 +29,8 @@ export const MUSIC_QUESTION_SEEDS_A1 = Object.freeze([
     "A1-1.1",
     "Wann lernt die Person Deutsch?",
     "Am Morgen.",
-    "Was macht Mia im Unterricht?",
-    "Sie schreibt.",
+    "Was antwortet die Person auf Mias Frage?",
+    "Ich schreibe jetzt.",
     "Was machst du heute im Deutschkurs?"
   ],
   [
@@ -203,8 +203,8 @@ export const MUSIC_QUESTION_SEEDS_A1 = Object.freeze([
   ],
   [
     "A1-14.1",
-    "Was tut der Person weh?",
-    "Der Kopf und später der Bauch.",
+    "Was tut der Person am Morgen weh?",
+    "Der Kopf.",
     "Was bringt Mia mit?",
     "Wasser und Tee.",
     "Was sagst du, wenn du krank bist?"
