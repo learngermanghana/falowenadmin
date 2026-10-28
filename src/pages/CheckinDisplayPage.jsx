@@ -7,7 +7,7 @@ import { learnerLessonUrl } from "../utils/teacherLessonDashboard.js";
 import { buildTeachingPresenterStages } from "../utils/teachingPresenter.js";
 import { splitWarmupQuestionSegments } from "../utils/warmupText.js";
 import { pianoPlaylist } from "../data/pianoPlaylist.js";
-import { waitingRoomMusicPlaylistForSession } from "../utils/waitingRoomDayMusic.js";
+import { waitingRoomMusicPlaylistForSession, waitingRoomPublishedCatalogTrack } from "../utils/waitingRoomDayMusic.js";
 import { skipWaitingMusicPlaylist, startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pianoAudio.js";
 import { checkinSessionDateKey, parseCheckinSessionDate } from "../utils/checkinSessionDate.js";
 import { presenterSessionKey } from "../utils/presenterSessionIdentity.js";
@@ -28,7 +28,9 @@ import "./CheckinDisplayPage.css";
 
 const ATTENDANCE_UTC_OFFSET_HOURS = 0;
 const ATTENDANCE_TIME_ZONE = "Africa/Accra";
-// Use a separate public R2 music bucket/custom domain, never a private course-audio bucket.
+// The verified music.falowen.app website serves the approved public catalog.
+// Legacy R2 URL is an optional fallback; never use a private course-audio bucket.
+const WAITING_ROOM_MUSIC_CATALOG_URL = "https://music.falowen.app/music/catalog.json";
 const WAITING_ROOM_R2_PUBLIC_BASE_URL = import.meta.env.VITE_WAITING_ROOM_R2_PUBLIC_BASE_URL || "";
 const ATTENDANCE_TIME_ZONE_LABEL = "Ghana time (UTC+00:00)";
 const START_HANDSHAKE_RETRY_DELAYS_MS = Object.freeze([2000, 5000, 10000]);
@@ -723,12 +725,41 @@ export default function CheckinDisplayPage() {
     waitingWarmupTeaser?.dayNumber,
   ]);
 
-  const waitingSessionPlaylist = useMemo(() => waitingRoomMusicPlaylistForSession({
-    level: waitingClassLevel,
-    day: presenterCurriculumDay,
-    publicBaseUrl: WAITING_ROOM_R2_PUBLIC_BASE_URL,
-    fallbackPlaylist: pianoPlaylist,
-  }), [waitingClassLevel, presenterCurriculumDay]);
+  // Read one small public JSON catalog when the teacher changes the class/day.
+  // No background polling, Firebase reads, or automatic music generation.
+  const [publishedDayMusic, setPublishedDayMusic] = useState(null);
+  const musicSessionKey = `${String(waitingClassLevel || "").toUpperCase()}:${presenterCurriculumDay}`;
+  useEffect(() => {
+    const controller = new AbortController();
+    setPublishedDayMusic(null);
+    if (!waitingClassLevel || !presenterCurriculumDay) return () => controller.abort();
+    fetch(WAITING_ROOM_MUSIC_CATALOG_URL, { signal: controller.signal })
+      .then(response => {
+        if (!response.ok) throw new Error("Music catalog unavailable");
+        return response.json();
+      })
+      .then(catalog => {
+        if (controller.signal.aborted) return;
+        const track = waitingRoomPublishedCatalogTrack(catalog, {
+          level: waitingClassLevel, day: presenterCurriculumDay,
+        });
+        setPublishedDayMusic(track ? { key: musicSessionKey, track } : null);
+      })
+      .catch(() => {}); // Missing catalog must never stop the existing waiting-room playlist.
+    return () => controller.abort();
+  }, [waitingClassLevel, presenterCurriculumDay, musicSessionKey]);
+
+  const waitingSessionPlaylist = useMemo(() => {
+    if (publishedDayMusic?.key === musicSessionKey) {
+      return [publishedDayMusic.track, ...pianoPlaylist];
+    }
+    return waitingRoomMusicPlaylistForSession({
+      level: waitingClassLevel,
+      day: presenterCurriculumDay,
+      publicBaseUrl: WAITING_ROOM_R2_PUBLIC_BASE_URL,
+      fallbackPlaylist: pianoPlaylist,
+    });
+  }, [waitingClassLevel, presenterCurriculumDay, musicSessionKey, publishedDayMusic]);
   const dayMusicConfigured = Boolean(waitingSessionPlaylist[0]?.repeat);
 
   const presenterLessonUrl = useMemo(() => {
