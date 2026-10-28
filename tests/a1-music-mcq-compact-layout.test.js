@@ -44,7 +44,7 @@ test('A1 non-fullscreen header and footer are compact, with teacher notes option
   const a1=readFileSync(new URL('../src/components/A1GrammarPresenter.jsx',import.meta.url),'utf8');
   const css=readFileSync(new URL('../src/components/A1GrammarPresenter.css',import.meta.url),'utf8');
   const controls=readFileSync(new URL('../src/components/PresenterControls.jsx',import.meta.url),'utf8');
-  assert.match(a1,/presenter-a1-grammar-shell/);
+  assert.match(a1,/aria-label="A1 teaching presenter"/);
   assert.match(a1,/presenter-a1-activity-disclosure/);
   assert.match(a1,/<details className="presenter-a1-teacher-details"/);
   assert.match(a1,/PresenterControls compact=\{!focusMode\}/);
