@@ -1,7 +1,7 @@
 import { MUSIC_QUESTION_SEEDS_A1 } from './musicQuestionSeedsA1.js';
 import { MUSIC_QUESTION_SEEDS_A2 } from './musicQuestionSeedsA2.js';
 import { MUSIC_QUESTION_SEEDS_B1 } from './musicQuestionSeedsB1.js';
-import { getReusableSongDraft } from './reusableMusicSongbook.js';
+import { getReusableSongDraft, musicDraftPackageText } from './reusableMusicSongbook.js';
 
 // One canonical source for reusable music exercises. No API calls or question
 // regeneration; each comprehension answer is tied to the original song lyrics.
@@ -70,4 +70,19 @@ export function formatReusableMusicQuestions(assignmentKey, { includeAnswers = f
 
 export function getReusableMusicQuestionCount() {
   return Object.values(MUSIC_QUESTION_SEEDS).flat().length * 3;
+}
+
+export function musicSongTeachingPackText(song, lesson) {
+  if (!song) return '';
+  // The question bank is keyed to the original draft. Callers must review the
+  // answers before using it with materially edited or newly generated lyrics.
+  return [
+    musicDraftPackageText(song, lesson),
+    '',
+    '='.repeat(52),
+    '',
+    formatReusableMusicQuestions(song.assignmentKey, { includeAnswers: true }),
+    '',
+    'Answer key above is based on the original saved lyric draft. Review if the lyrics change.',
+  ].join('\n');
 }
