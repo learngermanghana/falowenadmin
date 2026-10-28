@@ -6,6 +6,8 @@ import './MusicStudioPage.css';
 import { getMusicDays, musicLessonContext } from '../utils/musicCourseContext.js';
 import { STUDIO_COURSE_LEVELS } from '../utils/hoerenCourseCatalog.js';
 import { getMusicTopicStyle, suggestLessonMusicDirection } from '../utils/musicTopicStyle.js';
+import { getReusableSongDraft, getReusableSongDrafts, musicDraftPackageText } from '../data/reusableMusicSongbook.js';
+import { falowenMusicFileName } from '../utils/musicExportNames.js';
 const PRESETS = {
   welcome: 'A gentle Falowen welcome song for German learners before their Zoom class. Encourage learners not to give up: Gemeinsam schaffen wir das / Together we can. Bilingual German and English. Acoustic guitar only, one smooth warm male voice, relaxed Afro-soul feel, quiet and reassuring, no backing singers.',
   vocabulary: 'A memorable Falowen German-learning story song at the selected CEFR level. A relatable everyday situation, clear natural German dialogue, and a catchy useful-sentence chorus. Occasional short English support for beginners. Gentle acoustic guitar, one smooth warm male voice, and very quiet accompaniment.',
@@ -23,7 +25,23 @@ export default function MusicStudioPage() {
   const lesson = selectedDay?.lessons.find(entry => entry.assignmentKey === assignment) || selectedDay?.lessons[0];
   const [brief, setBrief] = useState(PRESETS.vocabulary);
   const [styleMode, setStyleMode] = useState('auto');
-  const [lyrics, setLyrics] = useState('');
+  // Prewritten A1–B1 lyrics are selected from the local dictionary; edits are
+  // scoped by assignment so changing lessons never reuses the wrong lyrics.
+  const [lyricsOverrides, setLyricsOverrides] = useState({});
+  const [customLyrics, setCustomLyrics] = useState('');
+  const [copyStatus, setCopyStatus] = useState('');
+  const draft = courseMode === 'course' ? getReusableSongDraft(lesson?.assignmentKey) : null;
+  const assignmentKey = lesson?.assignmentKey || '';
+  const lyrics = courseMode === 'course'
+    ? Object.prototype.hasOwnProperty.call(lyricsOverrides, assignmentKey)
+      ? lyricsOverrides[assignmentKey] : draft?.lyrics || ''
+    : customLyrics;
+  const setLyrics = next => {
+    if (courseMode === 'course' && assignmentKey) {
+      setLyricsOverrides(previous => ({ ...previous, [assignmentKey]: next }));
+    } else setCustomLyrics(next);
+  };
+  const trackTitle = draft?.title || lesson?.germanTitle || 'Falowen Music';
   const [mode, setMode] = useState('song');
   const [durationSeconds, setDurationSeconds] = useState(150);
   const [vocalMode, setVocalMode] = useState('voice');
@@ -33,7 +51,9 @@ export default function MusicStudioPage() {
   const [lyricTreatment, setLyricTreatment] = useState('exact');
   const rewriteFromLyrics = courseMode === 'course' && vocalMode === 'voice' && songStyle === 'story' && lyricTreatment === 'story-source';
   const effectiveBrief = styleMode === 'auto' && courseMode === 'course'
-    ? suggestLessonMusicDirection(lesson, { instrumental: vocalMode === 'instrumental' })
+    ? [suggestLessonMusicDirection(lesson, { instrumental: vocalMode === 'instrumental' }),
+        draft?.musicStyle && vocalMode === 'voice' ? `For this particular story use: ${draft.musicStyle}. Keep lead vocals clearly louder than instruments.` : '',
+      ].filter(Boolean).join(' ')
     : brief;
   const context = courseMode === 'course' ? musicLessonContext(lesson, language, focus, {
     songStyle: vocalMode === 'voice' ? songStyle : 'vocabulary',
@@ -55,6 +75,39 @@ export default function MusicStudioPage() {
     window.addEventListener('beforeunload', warn);
     return () => window.removeEventListener('beforeunload', warn);
   }, [busy, result]);
+  function downloadLyricsText(content, filename) {
+    const url = URL.createObjectURL(new Blob([content], { type: 'text/plain;charset=utf-8' }));
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function saveCurrentLyrics() {
+    const text = draft
+      ? musicDraftPackageText({ ...draft, lyrics, musicStyle: effectiveBrief }, lesson)
+      : `FALOWEN MUSIC\nTitle: ${trackTitle}\n\nMUSIC STYLE\n${effectiveBrief}\n\nLYRICS\n${lyrics}`;
+    downloadLyricsText(text, falowenMusicFileName(lesson, trackTitle, 'txt'));
+  }
+  function exportLevelSongbook() {
+    if (!['A1', 'A2', 'B1'].includes(level)) return;
+    const entries = days.flatMap(group => group.lessons);
+    const contents = getReusableSongDrafts(level).map(song => {
+      const lessonEntry = entries.find(entry => entry.assignmentKey === song.assignmentKey);
+      return musicDraftPackageText(song, lessonEntry);
+    }).join('\n\n' + '='.repeat(70) + '\n\n');
+    downloadLyricsText(contents, `falowen-${level.toLowerCase()}-complete-songbook-lyrics-and-styles.txt`);
+  }
+  async function copyDraftLyrics() {
+    try {
+      await navigator.clipboard.writeText(lyrics);
+      setCopyStatus('Lyrics copied.');
+    } catch {
+      setCopyStatus('Copy unavailable in this browser; download the lyrics text instead.');
+    }
+  }
   async function generate(event) {
     event.preventDefault();
     if (lock.current) return;
@@ -66,7 +119,7 @@ export default function MusicStudioPage() {
       const url = URL.createObjectURL(musicBlob(data));
       if (audioUrl.current) URL.revokeObjectURL(audioUrl.current);
       audioUrl.current = url;
-      setResult({ url, lyrics: data.lyrics, filename: courseMode === 'course' && lesson ? `falowen-${level.toLowerCase()}-day-${lesson.day}-${lesson.assignmentKey.toLowerCase()}.mp3` : 'falowen-music.mp3' });
+      setResult({ url, lyrics: data.lyrics, filename: courseMode === 'course' && lesson ? falowenMusicFileName(lesson, trackTitle, 'mp3') : 'falowen-custom-music.mp3' });
       setStatus(s => ({ ...s, ...data, audio: undefined, lyrics: undefined }));
     } catch (e) { setError(e.message); }
     finally { lock.current = false; setBusy(false); musicRequest().then(setStatus).catch(() => {}); }
@@ -85,8 +138,14 @@ export default function MusicStudioPage() {
           {lesson && <p className="music-lesson-summary"><strong>{lesson.germanTitle}</strong><br />{lesson.englishTitle}<br /><small>{lesson.level} · Day {lesson.day} · {lesson.assignmentKey}</small></p>}
           <label htmlFor="music-language">Song language</label><select id="music-language" value={language} onChange={e => setLanguage(e.target.value)}><option value="bilingual">German + English support</option><option value="german">German only</option></select>
           <label htmlFor="music-focus">Words or grammar to practise (optional)</label><textarea id="music-focus" rows={2} maxLength={400} value={focus} onChange={e => setFocus(e.target.value)} placeholder="Add specific words or structures from your lesson" />
-          <p className="music-note">The selected level, day and dictionary topic guide the song automatically. Changing lessons keeps your music direction and lyrics for you to review. Choosing a lesson is free.</p>
+          <p className="music-note">The selected level, day and dictionary topic guide the song automatically. Changing lessons loads the matching prewritten lyrics and style when available. Your edits stay with that lesson while the page is open. Choosing or copying lyrics is free.</p>
         </>}
+        {courseMode === 'course' && ['A1', 'A2', 'B1'].includes(level) && <div className="music-songbook-actions" style={{ padding: 12, border: '1px solid #bfdfc3', borderRadius: 12, background: '#f0f9f0', display: 'grid', gap: 8 }}>
+          <strong>Ready-to-use songbook · {getReusableSongDrafts(level).length} original songs</strong>
+          <p style={{ margin: 0, fontSize: 13 }}>Select a lesson to load its original storytelling lyrics and matching music style. Reuse the text free of charge, then generate audio only when ready.</p>
+          {draft && <p style={{ margin: 0, fontSize: 13 }}><strong>Selected song:</strong> {draft.title}</p>}
+          <button type="button" onClick={exportLevelSongbook}>Download all {level} lyrics & music styles (.txt)</button>
+        </div>}
         <h2>2. Shape your song</h2>
         <div className="music-presets">{Object.entries(PRESETS).map(([id, text]) => <button type="button" key={id} onClick={() => { setBrief(text); setStyleMode('custom'); setVocalMode(id === 'instrumental' ? 'instrumental' : 'voice'); }}>{id === 'welcome' ? 'Class welcome' : id === 'vocabulary' ? 'Lesson story song' : 'Guitar instrumental'}</button>)}</div>
         {courseMode === 'course' && vocalMode === 'voice' && <>
@@ -118,7 +177,16 @@ export default function MusicStudioPage() {
         <textarea id="music-brief" required maxLength={2000} rows={6} value={effectiveBrief} readOnly={styleMode === 'auto' && courseMode === 'course'} onChange={e => setBrief(e.target.value)} />
         <label htmlFor="music-voice">Vocals and instrumental balance</label><select id="music-voice" value={vocalMode} onChange={e => setVocalMode(e.target.value)}><option value="voice">Clear lead vocals (recommended)</option><option value="instrumental">Instrumental only — no singer</option></select>
         {vocalMode === 'voice' && <><label htmlFor="music-backing">Accompaniment behind the singer</label><select id="music-backing" value={backingLevel} onChange={e => setBackingLevel(e.target.value)}><option value="very-soft">Very quiet — voice upfront (recommended)</option><option value="soft">Soft — moderate accompaniment</option></select><p className="music-note">These settings guide Google’s mix; they cannot separately turn down instruments in an already-generated MP3.</p></>}
-        <label htmlFor="music-lyrics">Your lyrics or vocabulary draft <span>(optional)</span></label><textarea id="music-lyrics" maxLength={5500} rows={9} value={lyrics} onChange={e => setLyrics(e.target.value)} placeholder={'[Verse 1]\nWrite your German and English lyrics here…\n\n[Chorus]'} />
+        <label htmlFor="music-lyrics">{draft ? `Prewritten lyrics · ${draft.title}` : 'Your lyrics or vocabulary draft'} <span>(editable)</span></label>
+        <textarea id="music-lyrics" maxLength={5500} rows={10} value={lyrics} onChange={e => { setLyrics(e.target.value); setCopyStatus(''); }} placeholder={'[Verse 1]\\nWrite your German and English lyrics here…\\n\\n[Chorus]'} />
+        {draft && <div className="music-songbook-actions" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button type="button" onClick={copyDraftLyrics}>Copy lyrics</button>
+          <button type="button" onClick={saveCurrentLyrics}>Download lyrics + music style (.txt)</button>
+          <button type="button" onClick={() => { setLyricsOverrides(previous => { const next = { ...previous }; delete next[assignmentKey]; return next; }); setLyricTreatment('exact'); setCopyStatus('Original lyrics restored.'); }}>Restore original</button>
+        </div>}
+        {!draft && lyrics.trim() && <button type="button" onClick={saveCurrentLyrics}>Download lyrics + music style (.txt)</button>}
+        {copyStatus && <p role="status" className="music-note">{copyStatus}</p>
+        {draft && <p className="music-note">Original Falowen lyrics are loaded automatically and preserved exactly when generating the song. Edits here are only saved in the current page until you export them. To have AI rewrite this draft, select Source vocabulary below.</p>}
         {courseMode === 'course' && vocalMode === 'voice' && songStyle === 'story' && lyrics.trim() && <>
           <label htmlFor="music-lyric-treatment">Use the text above as</label>
           <select id="music-lyric-treatment" value={lyricTreatment} onChange={e => setLyricTreatment(e.target.value)}>
