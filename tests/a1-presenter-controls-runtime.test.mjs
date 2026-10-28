@@ -46,6 +46,8 @@ test('A1–C2 controls retain questions, reports use live marks and switching cl
     '../data/a1CheckCoaching.js': { buildA1CheckCoaching: check => check ? { hintDe: 'Denke an die Regel.', feedbackQuestionDe: 'Gut?', checkDe: 'Prüfe die Regel.' } : null },
     '../data/a1EverydaySpeaking.js': { getA1EverydaySpeaking: () => null },
     './A1EverydaySpeakingStage.jsx': { __esModule: true, default: () => null },
+    './PublishedSongLessonStage.jsx': { __esModule: true, default: () => null },
+    '../data/curatedLessonMusic.js': { getCuratedMusicByAssignment: () => null },
     '../data/a1LearningPath.js': { getA1LearningPath: () => null },
     '../data/a1SlideReview.js': { buildA1SlideReviewChecks: () => [] },
     '../utils/a1PresenterActivityTimer.js': { A1_ACTIVITY_TIMER_PRESETS: [2, 5, 7], DEFAULT_A1_ACTIVITY_MINUTES: 5, a1ActivityDeadline: () => 0, a1ActivitySecondsLeft: () => 300 },
