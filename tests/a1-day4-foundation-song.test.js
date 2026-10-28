@@ -14,11 +14,17 @@ test('A1 Day 4 loads the exact approved beginner lyrics from its songbook entry'
 
 test('Day 4 song questions match the new verses and omit the removed address story', () => {
   const bank = getReusableMusicQuestions('A1-2');
-  assert.deepEqual(bank.questions.slice(0, 2).map(q => q.answer), ['In Accra.', 'Zwanzig Jahre alt.']);
-  assert.match(bank.questions[0].evidence, /Ich wohne in Accra/);
+  assert.deepEqual(bank.questions.slice(0, 2).map(q => q.answer), ['Vier, fünf, sechs.', 'Zwanzig Jahre alt.']);
+  assert.match(bank.questions[0].evidence, /Vier, fünf, sechs/);
   assert.match(bank.questions[1].evidence, /Ich bin zwanzig Jahre alt/);
+  for (const question of bank.questions.slice(0, 2)) {
+    assert.equal(question.options.length, 3);
+    assert.equal(question.options[question.correctIndex], question.answer);
+  }
   assert.doesNotMatch(JSON.stringify(bank), /Hausnummer|Gartenstraße|Nummer sieben/);
   assert.equal(bank.questions[2].type, 'speaking');
+  assert.match(bank.questions[2].prompt, /erfundene Nummer/);
+  assert.ok(bank.questions[2].sentenceStarters.length >= 2);
 });
 
 
