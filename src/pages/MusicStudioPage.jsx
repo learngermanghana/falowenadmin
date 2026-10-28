@@ -66,6 +66,12 @@ export default function MusicStudioPage() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const lock = useRef(false), audioUrl = useRef(null);
+  useEffect(() => {
+    // New dictionary topics must not accidentally inherit "rewrite from source"
+    // from the previous song: prewritten lyrics default to exact playback.
+    setLyricTreatment('exact');
+    setCopyStatus('');
+  }, [assignmentKey, level]);
   useEffect(() => { let active = true;
     musicRequest().then(s => { if (active) setStatus(s); }).catch(e => { if (active) setError(e.message); });
     return () => { active = false; if (audioUrl.current) URL.revokeObjectURL(audioUrl.current); };
@@ -138,7 +144,7 @@ export default function MusicStudioPage() {
       const url = URL.createObjectURL(musicBlob(data));
       if (audioUrl.current) URL.revokeObjectURL(audioUrl.current);
       audioUrl.current = url;
-      setResult({ url, lyrics: data.lyrics, filename: courseMode === 'course' && lesson ? falowenMusicFileName(lesson, trackTitle, 'mp3') : 'falowen-custom-music.mp3' });
+      setResult({ url, title: trackTitle, level, day: lesson?.day, lyrics: data.lyrics, filename: courseMode === 'course' && lesson ? falowenMusicFileName(lesson, trackTitle, 'mp3') : 'falowen-custom-music.mp3' });
       setStatus(s => ({ ...s, ...data, audio: undefined, lyrics: undefined }));
     } catch (e) { setError(e.message); }
     finally { lock.current = false; setBusy(false); musicRequest().then(setStatus).catch(() => {}); }
@@ -228,7 +234,7 @@ export default function MusicStudioPage() {
       {busy && <p role="status">This may take a few minutes. Keep this page open. Your request will not retry automatically.</p>}
       {error && <p role="alert" className="music-error">{error}</p>}
     </form><aside className="music-card"><h2>Your listening room</h2>
-      {result ? <><audio controls src={result.url} preload="metadata" /><a className="music-download" href={result.url} download={result.filename}>Download MP3</a>{result.lyrics && <details><summary>Generated lyrics & structure</summary><pre>{result.lyrics}</pre></details>}</> : <p>Your generated song will appear here.</p>}
+      {result ? <><p><strong>Generated audio:</strong> {result.title} {result.day != null ? `· ${result.level} Day ${result.day}` : ''}</p><audio controls src={result.url} preload="metadata" /><a className="music-download" href={result.url} download={result.filename}>Download MP3</a>{result.lyrics && <details><summary>Generated lyrics & structure</summary><pre>{result.lyrics}</pre></details>}</> : <p>Your generated song will appear here.</p>}
       <p>Download before leaving. Audio stays in this page and is not saved in Falowen.</p>
       <hr /><h3>Budget controls</h3><p>Preview first. One generation at a time, with no automatic retries.</p>
       {status && <p>Today: ${(status.dailyCents / 100).toFixed(2)} / $0.80<br />This month: ${(status.monthlyCents / 100).toFixed(2)} / $5.00</p>}
