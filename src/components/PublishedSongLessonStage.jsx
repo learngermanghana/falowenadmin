@@ -24,6 +24,9 @@ export default function PublishedSongLessonStage({ assignmentKey, onExit = null,
   const questions = bank.questions;
   const question = questions[questionIndex];
   const musicLink = `https://music.falowen.app/?track=${encodeURIComponent(recording.trackId)}`;
+  const listenPrompt = recording.introQuestion || (recording.level === 'A1'
+    ? 'Welche Wörter hörst du? Wer ist im Lied?'
+    : 'Worum geht es in der Geschichte? Wer hat ein Problem? Welche Lösung findet die Person?');
   return (
     <section className={`published-song-lesson${compact ? ' published-song-lesson--compact' : ''}`}
       data-published-song={song.assignmentKey} aria-label={`Falowen Music for ${song.title}`}>
@@ -46,7 +49,7 @@ export default function PublishedSongLessonStage({ assignmentKey, onExit = null,
       </div>
       {view==='listen' && <div className="published-song-lesson__section">
         <h3>Höre zuerst zu.</h3>
-        <p>Worum geht es in der Geschichte? Wer hat ein Problem? Welche Lösung findet die Person?</p>
+        <p>{listenPrompt}</p>
         <p>Beim ersten Hören brauchst du den Text nicht. Beim zweiten Hören kannst du mitlesen.</p>
         <button type="button" onClick={()=>setView('lyrics')}>Weiter · Liedtext ansehen</button>
       </div>}
