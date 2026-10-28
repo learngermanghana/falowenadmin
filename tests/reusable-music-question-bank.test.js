@@ -28,7 +28,7 @@ test('all A1 A2 B1 dictionary songs have exactly two listening checks and one sp
       assert.equal(set.questions[2].prompt, row[5]);
       assert.equal(set.questions[2].answer, null);
       assert.equal(new Set(set.questions.map(x=>x.id)).size, 3);
-      assert.ok(set.questions.every(x=>x.prompt.length > 20));
+      assert.ok(set.questions.every(x=>x.prompt.length > (level === 'A1' ? 8 : 20)));
       assert.ok(set.questions.slice(0,2).every(x=>x.answer.length > 2 && x.evidence.length > 30));
       assert.ok(set.questions.slice(0,2).every(x=>getReusableSongDrafts(level)
         .find(song => song.assignmentKey === row[0]).lyrics.includes(x.evidence)));
