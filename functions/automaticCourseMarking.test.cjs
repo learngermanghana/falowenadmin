@@ -341,3 +341,48 @@ for (const scenario of ['valid','wrong-owner','wrong-assignment','missing','fail
  if(['valid','failed'].includes(scenario))assert.equal(checked.score,8);else assert.equal(checked,null);
  assert.equal([...store.rows.keys()].filter(x=>x.startsWith('automaticScoreSync/')).length,publish?1:0);
 });
+
+for (const scenario of ['newer-failed', 'newer-tutor-failed', 'passed', 'older', 'missing-date', 'override', 'same-attempt', 'uncertain', 'still-failed']) {
+  test(`resubmission publication: ${scenario}`, async () => {
+    const oldPath = scenario === 'same-attempt' ? 'submissions/new' : 'submissions/old';
+    const previous = { score: scenario === 'passed' ? 70 : 40, source: scenario === 'newer-tutor-failed' ? 'ai_marking' : 'automatic_course_marking',
+      submissionPath: oldPath, comments: 'Original feedback', date: '2026-10-28T11:00:00Z',
+      ...(scenario === 'override' ? { manualScoreOverride: true } : {}) };
+    const store = memoryDb({
+      'markingJobs/j': { automatic: true, submissionPath: 'submissions/new', level: 'A2', assignmentKey: 'A2-6.17', status: 'pending' },
+      'submissions/old': { submittedAt: '2026-10-28T09:00:00Z' },
+      'submissions/new': { status: 'submitted', studentId: 'uid', submissionText: 'Teil 3 1.B 2.B 3.B 4.A 5.A Teil 4 1.B 2.C 3.C 4.A 5.B',
+        ...(scenario === 'missing-date' ? {} : { submittedAt: scenario === 'older' ? '2026-10-28T08:00:00Z' : '2026-10-28T10:00:00Z' }) },
+      'students/uid': { studentCode: 'real' },
+      'scores/real__A2-6.17': previous,
+    });
+    const score = scenario === 'still-failed' ? 50 : 90;
+    let calls = 0;
+    const worker = createCourseMarkingWorker({ db: store.db, loadReference: async () => ({ parts: [{}] }),
+      mark: async () => { calls++; return { status: 'marked', score, confidence: scenario === 'uncertain' ? .5 : 1, feedback: 'New feedback' }; } });
+    const event = { data: store.snapshot('markingJobs/j') };
+    await worker(event);
+    await worker(event);
+    assert.equal(calls, 1);
+    const publish = ['newer-failed', 'newer-tutor-failed'].includes(scenario);
+    assert.equal(store.rows.get('scores/real__A2-6.17').score, publish ? 90 : previous.score);
+    assert.equal(store.rows.get('markingResults/new').publicationStatus, publish ? 'published' : 'awaiting_approval');
+    assert.equal([...store.rows.keys()].filter(key => key.startsWith('automaticScoreSync/')).length, publish ? 1 : 0);
+    assert.equal([...store.rows.keys()].filter(key => key.startsWith('studentNotifications/')).length, publish ? 1 : 0);
+    if (publish) {
+      assert.deepEqual(store.rows.get(`aiMarkingAudit/${idForPath('submissions/new')}`).replacedScore, previous);
+      assert.equal(store.rows.get('scores/real__A2-6.17').markingHistory[0].score, 40);
+      assert.equal(store.rows.get('submissions/new').finalScore, 90);
+    }
+  });
+}
+
+test('legacy failed scores require a newer submission than their saved date', () => {
+  const { replacesFailedAttempt } = require('./automaticCourseMarking');
+  const previous = { score: 40, date: '2026-10-28T09:00:00Z' };
+  assert.equal(replacesFailedAttempt(previous, { submittedAt: '2026-10-28T10:00:00Z' }, 'submissions/new'), true);
+  assert.equal(replacesFailedAttempt(previous, { submittedAt: '2026-10-28T08:00:00Z' }, 'submissions/new'), false);
+  assert.equal(replacesFailedAttempt({ ...previous, score: null }, { submittedAt: '2026-10-28T10:00:00Z' }, 'submissions/new'), false);
+  assert.equal(replacesFailedAttempt({ ...previous, score: 80, writingMinimumMet: false }, { submittedAt: '2026-10-28T10:00:00Z' }, 'submissions/new'), true);
+  assert.equal(replacesFailedAttempt(previous, { submittedAt: { toMillis: () => Date.parse('2026-10-28T10:00:00Z') } }, 'submissions/new'), true);
+});

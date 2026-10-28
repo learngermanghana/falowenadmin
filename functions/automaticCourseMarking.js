@@ -38,6 +38,29 @@ function releasable(result = {}) {
     && !scoreProblems(result).length && !result.secondExaminer?.requiresTutorReview;
 }
 
+// Only a demonstrably newer submission may supersede a saved failed attempt.
+// Compare submission times (not worker completion) so delayed jobs cannot win.
+function timestampMillis(value) {
+  if (value?.toMillis) return value.toMillis();
+  if (value?.toDate) return value.toDate().getTime();
+  if (typeof value?.seconds === 'number') return value.seconds * 1000;
+  if (typeof value === 'number') return value;
+  return value ? Date.parse(value) : NaN;
+}
+function replacesFailedAttempt(previous, submission, submissionPath, previousSubmission) {
+  if (!previous || previous.score == null || previous.score === ''
+    || !Number.isFinite(Number(previous.score)) || Number(previous.score) < 0
+    || Number(previous.score) > 100 || previous.manualScoreOverride || previous.manualOverride) return false;
+  const failed = Number(previous.score) < 60 || previous.passed === false || previous.writingMinimumMet === false;
+  if (!failed || previous.submissionPath === submissionPath) return false;
+  const submittedAt = timestampMillis(submission.resubmittedAt || submission.submittedAt
+    || submission.createdAt || submission.timestamp || submission.date);
+  const previousAt = timestampMillis(previousSubmission?.resubmittedAt || previousSubmission?.submittedAt
+    || previousSubmission?.createdAt || previousSubmission?.timestamp || previousSubmission?.date
+    || previous.markedAt || previous.scoredAt || previous.updatedAt || previous.createdAt || previous.date);
+  return Number.isFinite(submittedAt) && Number.isFinite(previousAt) && submittedAt > previousAt;
+}
+
 function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now = () => Date.now() }) {
   return async function processJob(event) {
     const jobRef = event.data.ref;
@@ -127,14 +150,18 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
           && !previous.tutorReviewed && !previous.reviewedBy
           && Number.isFinite(Number(previous.score))
           && Number(previous.score) === Number(result.finalScore ?? result.score));
-        // Never overwrite a tutor's decision or an older/different attempt.
-        const publish = release && (!existingScore.exists || existingSameAttempt);
+        const previousSubmission = previous?.submissionPath
+          && previous.submissionPath !== snap.ref.path
+          && /^submissions\/[^/]+(?:\/[^/]+\/[^/]+)?$/.test(previous.submissionPath)
+          ? (await tx.get(db.doc(previous.submissionPath))).data() : null;
+        const replacesFailed = replacesFailedAttempt(previous, submission, snap.ref.path, previousSubmission);
+        const publish = release && (!existingScore.exists || existingSameAttempt || replacesFailed);
         const status = publish ? 'marked' : 'needs_review';
         const publicationReviewReasons = publish ? [] : [
           ...(!result.incompleteAssessment && (Number(result.finalScore ?? result.score) < 60 || result.passed === false || result.writingMinimumMet === false) ? ['Failed assessment requires tutor review before publication.'] : []),
           ...(result.incompleteAssessment ? ['A required workbook section was not submitted or scored; the assessment is incomplete and has no final pass/fail status.'] : []),
           ...(speakingReviewRequired ? ['Speaking checkpoint requires verified server assessment or tutor review; student-supplied score is not authoritative.'] : []),
-          ...(existingScore.exists && !existingSameAttempt ? ['An existing score is saved for this assignment; automatic marking cannot overwrite it.'] : []),
+          ...(existingScore.exists && !existingSameAttempt && !replacesFailed ? ['An existing score is saved for this assignment; automatic marking cannot overwrite it.'] : []),
           ...(result.status !== 'marked' ? ['The marking pipeline requested tutor review.'] : []),
           ...(!Number.isFinite(Number(result.confidence)) || Number(result.confidence) < 0.8 ? ['AI confidence is below the automatic-release threshold.'] : []),
           ...(result.consistencyWarnings || []).map(value => typeof value === 'string' ? value : value.message || value.code || 'Marking consistency warning.'),
@@ -154,6 +181,7 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
           submissionId: snap.id, submissionPath: snap.ref.path, submission,
           referenceEntry, referenceVersion: referenceEntry.version || referenceEntry.updatedAt || '',
           result, status, publicationReviewReasons, automatic: true, createdAt: timestamp,
+          ...(publish && replacesFailed ? { replacedScore: previous } : {}),
         }));
         tx.set(submissionRef, clean({
           markingStatus: status, markingUpdatedAt: timestamp,
@@ -175,6 +203,14 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
             referenceEntry.title, job.assignmentKey),
           assignment_id: job.assignmentKey, assignmentId: job.assignmentKey,
           score: result.finalScore ?? result.score, comments: result.feedback,
+          ...(replacesFailed ? {
+            previousScore: previous.score, previousSubmissionPath: previous.submissionPath || '',
+            markingHistory: [...(Array.isArray(previous.markingHistory) ? previous.markingHistory : []), {
+              score: previous.score, comments: previous.comments || previous.feedback || '',
+              submissionPath: previous.submissionPath || '', source: previous.source || '',
+              savedAt: previous.updatedAt || previous.createdAt || previous.date || '',
+            }].slice(-5),
+          } : {}),
           passed: result.passed, passStatus: result.passStatus, writingMinimumMet: result.writingMinimumMet,
           markingRubricVersion: result.markingRubricVersion,
           objectiveScore: result.objectiveScore, objectiveCorrect: result.objectiveCorrect, objectiveTotal: result.objectiveTotal,
@@ -292,4 +328,4 @@ function createScoreSyncWorker({ db, config, post = fetch }) {
     }
   };
 }
-module.exports = { idForPath, eligible, releasable, createCourseMarkingWorker, createScoreSyncWorker };
+module.exports = { idForPath, eligible, releasable, replacesFailedAttempt, createCourseMarkingWorker, createScoreSyncWorker };
