@@ -14,9 +14,10 @@ export default function PublishedSongLessonStage({ assignmentKey, onExit = null,
   const [view, setView] = useState('listen');
   const [questionIndex, setQuestionIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [selectedOption, setSelectedOption] = useState(-1);
   const [audioError, setAudioError] = useState('');
   useEffect(() => {
-    setView('listen'); setQuestionIndex(0); setShowAnswer(false); setAudioError('');
+    setView('listen'); setQuestionIndex(0); setSelectedOption(-1); setShowAnswer(false); setAudioError('');
   }, [assignmentKey]);
 
   if (!song || !bank || !recording) return null;
@@ -53,7 +54,7 @@ export default function PublishedSongLessonStage({ assignmentKey, onExit = null,
         <h3>Liedtext · {song.title}</h3>
         <p>Lies mit und achte auf die wichtigen Ausdrücke aus Kapitel {song.assignmentKey}.</p>
         <div className="published-song-lesson__lyrics" lang="de">{song.lyrics.split(/\n\n+/).map((part,i) => <p key={i}>{part.replace(/^\[[^\]]+\]\n?/,'')}</p>)}</div>
-        <button type="button" onClick={()=>{setView('questions');setQuestionIndex(0);setShowAnswer(false);}}>Weiter · Fragen beantworten</button>
+        <button type="button" onClick={()=>{setView('questions');setQuestionIndex(0);setSelectedOption(-1);setShowAnswer(false);}}>Weiter · Fragen beantworten</button>
       </div>}
       {view==='questions' && <div className="published-song-lesson__section published-song-lesson__quiz">
         <div className="published-song-lesson__quizmeta"><strong>FRAGE {questionIndex+1} / {questions.length}</strong><span>{question.type==='speaking'?'SPRECHEN':'HÖRVERSTEHEN'}</span></div>
@@ -61,19 +62,29 @@ export default function PublishedSongLessonStage({ assignmentKey, onExit = null,
         {question.type==='speaking'
           ? <p>Sprich mit deinem Partner. {question.teacherNote}</p>
           : <p>Antworte mit Informationen aus dem Lied. Die Musterlösung wird erst nach deiner Antwort gezeigt.</p>}
-        <button type="button" onClick={()=>setShowAnswer(value=>!value)} aria-pressed={showAnswer}>
+        {Array.isArray(question.options) && <div className="published-song-lesson__options" role="group" aria-label="Antwortmöglichkeiten">
+          {question.options.map((option,i)=><button key={option} type="button"
+            aria-pressed={selectedOption === i}
+            className={selectedOption === i ? 'is-selected' : ''}
+            onClick={()=>{setSelectedOption(i);setShowAnswer(false);}}>
+            <strong>{String.fromCharCode(65+i)}.</strong> {option}
+          </button>)}
+        </div>}
+        {question.type === 'speaking' && <p className="published-song-lesson__speaking-note">Offene Frage: Antwort in eigenen Worten. Bezug zum Thema Gesundheit herstellen.</p>}
+        <button type="button" disabled={Array.isArray(question.options) && selectedOption < 0}
+          onClick={()=>setShowAnswer(value=>!value)} aria-pressed={showAnswer}>
           {showAnswer?'Musterlösung verbergen':'Musterlösung für Lehrkraft zeigen'}
         </button>
         {showAnswer && <div role="status" className="published-song-lesson__answer">
-          <strong>{question.type==='speaking'?'Lehrerhinweis':'Musterlösung'}</strong>
+          <strong>{question.type==='speaking'?'Lehrerhinweis':Array.isArray(question.options) ? (selectedOption === question.correctIndex ? 'Richtig!' : 'Noch einmal hören · Richtige Antwort') : 'Musterlösung'}</strong>
           <p>{question.type==='speaking'?question.teacherNote:question.answer}</p>
           {question.evidence && <details><summary>Textbeleg</summary><blockquote>{question.evidence}</blockquote></details>}
         </div>}
         <div className="published-song-lesson__quiznav">
-          <button type="button" onClick={()=>{setQuestionIndex(i=>Math.max(0,i-1));setShowAnswer(false)}} disabled={questionIndex===0}>← Vorherige</button>
+          <button type="button" onClick={()=>{setQuestionIndex(i=>Math.max(0,i-1));setShowAnswer(false);setSelectedOption(-1)}} disabled={questionIndex===0}>← Vorherige</button>
           {questionIndex===questions.length-1
-            ? <button type="button" onClick={()=>{setView('listen');setShowAnswer(false)}}>Wiederholen</button>
-            : <button type="button" onClick={()=>{setQuestionIndex(i=>Math.min(questions.length-1,i+1));setShowAnswer(false)}}>Nächste Frage →</button>}
+            ? <button type="button" onClick={()=>{setView('listen');setShowAnswer(false);setSelectedOption(-1)}}>Wiederholen</button>
+            : <button type="button" onClick={()=>{setQuestionIndex(i=>Math.min(questions.length-1,i+1));setShowAnswer(false);setSelectedOption(-1)}}>Nächste Frage →</button>}
         </div>
       </div>}
       <p className="published-song-lesson__note">Liedfragen sind unbewertete Unterrichtsübungen und beziehen sich auf den gespeicherten Liedtext. Bei abweichenden Audios die Antworten vor der Stunde prüfen.</p>
