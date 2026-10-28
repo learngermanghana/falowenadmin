@@ -9,13 +9,14 @@ export function validateLyricCues(cues, lines) {
   for (let i = 0; i < cues.length; i++) {
     const cue = cues[i];
     if (cue?.text !== lines[i] || typeof cue.start !== 'number' || !Number.isFinite(cue.start) || cue.start < 0 || cue.start <= previous) return [];
-    valid.push({ start: cue.start, text: cue.text }); previous = cue.start;
+    if (cue.end !== undefined && (!Number.isFinite(cue.end) || cue.end <= cue.start)) return [];
+    valid.push({ start: cue.start, text: cue.text, ...(cue.end !== undefined ? {end:cue.end} : {}) }); previous = cue.start;
   }
   return valid;
 }
 export function activeLyricIndex(cues, time) {
   if (!Number.isFinite(time)) return -1;
-  for (let i = cues.length - 1; i >= 0; i--) if (time >= cues[i].start) return i;
+  for (let i = cues.length - 1; i >= 0; i--) if (time >= cues[i].start) return cues[i].end === undefined || time < cues[i].end ? i : -1;
   return -1;
 }
 export function readSongCues(song, storage) {

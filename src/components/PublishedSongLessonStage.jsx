@@ -19,7 +19,8 @@ export default function PublishedSongLessonStage({ assignmentKey, onExit = null,
   const [time, setTime] = useState(0);
   const [follow, setFollow] = useState(true);
   const timedSong = song && recording ? {...song, id:recording.trackId, objectKey:recording.objectKey} : null;
-  const [cues, saveCues] = useSongTiming(timedSong);
+  const [cues, saveCues, recordedLyrics] = useSongTiming(timedSong);
+  const displaySong = timedSong ? {...timedSong, lyrics:recordedLyrics} : null;
   const [view, setView] = useState('listen');
   const [questionIndex, setQuestionIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -66,8 +67,8 @@ export default function PublishedSongLessonStage({ assignmentKey, onExit = null,
         <h3>Liedtext · {song.title}</h3>
         <p>Lies mit und achte auf die wichtigen Ausdrücke aus Kapitel {song.assignmentKey}.</p>
         <label><input type="checkbox" checked={follow} onChange={e=>setFollow(e.target.checked)}/> Mitlesen folgen</label>
-        <LessonSongLyrics song={timedSong} cues={cues} time={time} onSeek={seconds=>{if(audio.current){audio.current.currentTime=seconds;setTime(seconds);}}} follow={follow}/>
-        <SongTimingEditor song={timedSong} audio={audio} cues={cues} onSave={saveCues}/>
+        <LessonSongLyrics song={displaySong} cues={cues} time={time} onSeek={seconds=>{if(audio.current){audio.current.currentTime=seconds;setTime(seconds);}}} follow={follow}/>
+        <SongTimingEditor song={displaySong} audio={audio} cues={cues} onSave={saveCues}/>
 
         <button type="button" onClick={()=>{setView('questions');setQuestionIndex(0);setSelectedOption(-1);setShowAnswer(false);}}>Weiter · Fragen beantworten</button>
       </div>}

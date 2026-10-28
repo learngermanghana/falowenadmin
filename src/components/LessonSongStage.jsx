@@ -13,7 +13,8 @@ export default function LessonSongStage({ song, mode = 'listen' }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [time, setTime] = useState(0);
-  const [cues, persistCues] = useSongTiming(song);
+  const [cues, persistCues, recordedLyrics] = useSongTiming(song);
+  const displaySong = {...song, lyrics:recordedLyrics};
   const [question, setQuestion] = useState(0);
   const [selected, setSelected] = useState(-1);
   const [reveal, setReveal] = useState(false);
@@ -22,7 +23,7 @@ export default function LessonSongStage({ song, mode = 'listen' }) {
   // out of the stage; separate legacy modes remain available unchanged.
   const [step, setStep] = useState('listen');
   const activeMode = mode === 'all' ? step : mode;
-  const lines = lyricLines(song.lyrics);
+  const lines = lyricLines(recordedLyrics);
   const item = (activeMode === 'speak' ? song.speaking : song.questions)[question];
   useEffect(() => () => { request.current?.abort(); }, []);
   async function load() {
@@ -54,7 +55,7 @@ export default function LessonSongStage({ song, mode = 'listen' }) {
     </div>
     <div className={`lesson-song-columns ${activeMode === 'listen' ? 'is-listen' : ''}`}>
       <div><div className="lesson-song-panel-heading"><strong>Liedtext</strong><label><input type="checkbox" checked={follow} onChange={e => setFollow(e.target.checked)} /> Mitlesen folgen</label></div>
-        <LessonSongLyrics song={song} cues={cues} time={time} onSeek={url ? seek : undefined} follow={follow} />
+        <LessonSongLyrics song={displaySong} cues={cues} time={time} onSeek={url ? seek : undefined} follow={follow} />
         <p className="lesson-song-note">{cues.length === lines.length ? 'Zeilen mit Zeitmarken springen zur passenden Stelle im Lied.' : cues.length ? `${cues.length}/${lines.length} Zeilen synchronisiert. Weitere Zeitmarken können unten ergänzt werden.` : 'Der vollständige gespeicherte Liedtext ist sichtbar. Für die genaue Hervorhebung zuerst Zeitmarken zur Aufnahme setzen oder importieren.'}</p>
       </div>
       <div className="lesson-song-question">
@@ -67,6 +68,6 @@ export default function LessonSongStage({ song, mode = 'listen' }) {
         </>}
       </div>
     </div>
-    {activeMode === 'listen' && <SongTimingEditor song={song} audio={audio} cues={cues} onSave={persistCues}/>}
+    {activeMode === 'listen' && <SongTimingEditor song={displaySong} audio={audio} cues={cues} onSave={persistCues}/>}
   </section>;
 }
