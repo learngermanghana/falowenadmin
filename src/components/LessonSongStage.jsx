@@ -16,8 +16,12 @@ export default function LessonSongStage({ song, mode = 'listen' }) {
   const [selected, setSelected] = useState(-1);
   const [reveal, setReveal] = useState(false);
   const [follow, setFollow] = useState(true);
+  // "all" keeps the 3 activities on ONE projector slide with no navigation
+  // out of the stage; separate legacy modes remain available unchanged.
+  const [step, setStep] = useState('listen');
+  const activeMode = mode === 'all' ? step : mode;
   const lines = lyricLines(song.lyrics);
-  const item = (mode === 'speak' ? song.speaking : song.questions)[question];
+  const item = (activeMode === 'speak' ? song.speaking : song.questions)[question];
   useEffect(() => () => { request.current?.abort(); }, []);
   async function load() {
     request.current?.abort();
@@ -55,11 +59,17 @@ export default function LessonSongStage({ song, mode = 'listen' }) {
     const href = URL.createObjectURL(blob), link = document.createElement('a'); link.href = href; link.download = `${song.id}-lyrics-timing.json`; link.click(); URL.revokeObjectURL(href);
   }
   function changeQuestion(next) { setQuestion(next); setReveal(false); setSelected(-1); }
+  function chooseStep(next) { setStep(next); changeQuestion(0); }
   const evidenceIndex = item?.evidence ? lines.findIndex(line => lyricLines(item.evidence.replaceAll(' / ', '\n')).includes(line)) : -1;
   function seek(seconds) { if (audio.current) { audio.current.currentTime = seconds; setTime(seconds); } }
   return <section className="lesson-song-stage">
-    <header><span>A1 · DAY 22 · KAPITEL 14.1</span><h1>{mode === 'listen' ? song.title : mode === 'questions' ? 'Das Lied verstehen' : 'Jetzt seid ihr dran'}</h1>
-      <p>{mode === 'listen' ? 'Hört das Lied und lest mit. Welche Körperteile hört ihr?' : mode === 'questions' ? 'Antwortet zuerst. Zeigt danach die Lösung und die Textstelle.' : 'Sprecht zu zweit. Tauscht danach die Rollen.'}</p></header>
+    <header><span>A1 · DAY 22 · KAPITEL 14.1</span><h1>{activeMode === 'listen' ? song.title : activeMode === 'questions' ? 'Das Lied verstehen' : 'Jetzt seid ihr dran'}</h1>
+      <p>{activeMode === 'listen' ? 'Hört das Lied und lest mit. Welche Körperteile hört ihr?' : activeMode === 'questions' ? 'Antwortet zuerst. Zeigt danach die Lösung und die Textstelle.' : 'Sprecht zu zweit. Tauscht danach die Rollen.'}</p></header>
+    {mode === 'all' && <div className="lesson-song-single-slide-tabs" role="group" aria-label="Falowen Musikübung">
+      <button type="button" aria-pressed={step === 'listen'} className={step === 'listen' ? 'is-active' : ''} onClick={() => chooseStep('listen')}>1 · Hören</button>
+      <button type="button" aria-pressed={step === 'questions'} className={step === 'questions' ? 'is-active' : ''} onClick={() => chooseStep('questions')}>2 · Fragen</button>
+      <button type="button" aria-pressed={step === 'speak'} className={step === 'speak' ? 'is-active' : ''} onClick={() => chooseStep('speak')}>3 · Sprechen</button>
+    </div>}
     <div className="lesson-song-controls">
       {!url ? <button type="button" onClick={load} disabled={busy}>{busy ? 'Lied wird geladen…' : '▶ Lied laden'}</button> : <>
         <audio ref={audio} src={url} controls preload="metadata" aria-label={song.title} onTimeUpdate={e => setTime(e.currentTarget.currentTime)} onSeeked={e => setTime(e.currentTarget.currentTime)} onError={() => setError('Die Aufnahme konnte nicht geladen werden. Bitte den Audiolink erneuern.')} />
@@ -67,22 +77,22 @@ export default function LessonSongStage({ song, mode = 'listen' }) {
       </>}
       {error && <p role="alert">{error}</p>}
     </div>
-    <div className={`lesson-song-columns ${mode === 'listen' ? 'is-listen' : ''}`}>
+    <div className={`lesson-song-columns ${activeMode === 'listen' ? 'is-listen' : ''}`}>
       <div><div className="lesson-song-panel-heading"><strong>Liedtext</strong><label><input type="checkbox" checked={follow} onChange={e => setFollow(e.target.checked)} /> Mitlesen folgen</label></div>
         <LessonSongLyrics song={song} cues={cues} time={time} onSeek={url ? seek : undefined} follow={follow} />
         <p className="lesson-song-note">{cues.length === lines.length ? 'Zeilen mit Zeitmarken springen zur passenden Stelle im Lied.' : cues.length ? `${cues.length}/${lines.length} Zeilen synchronisiert. Weitere Zeitmarken können unten ergänzt werden.` : 'Der vollständige gespeicherte Liedtext ist sichtbar. Für die genaue Hervorhebung zuerst Zeitmarken zur Aufnahme setzen oder importieren.'}</p>
       </div>
       <div className="lesson-song-question">
-        {mode === 'listen' ? <><span>HÖRAUFTRAG</span><h2>Wie geht es der Person?</h2><p>Hört zuerst die ganze Geschichte. Achtet auf Kopf, Bauch und Mias Hilfe.</p><div className="lesson-song-word-list"><b>der Kopf</b><b>der Bauch</b><b>das Fieber</b><b>die Hilfe</b></div><p>Danach: die Fragen zum Lied. Diese Übung wird nicht benotet.</p></> : <>
-          <span>{mode === 'speak' ? 'SPRECHIMPULS' : 'FRAGE'} {question + 1} / {mode === 'speak' ? song.speaking.length : song.questions.length}</span><h2>{item.prompt}</h2>
+        {activeMode === 'listen' ? <><span>HÖRAUFTRAG</span><h2>Wie geht es der Person?</h2><p>Hört zuerst die ganze Geschichte. Achtet auf Kopf, Bauch und Mias Hilfe.</p><div className="lesson-song-word-list"><b>der Kopf</b><b>der Bauch</b><b>das Fieber</b><b>die Hilfe</b></div><p>Danach: die Fragen zum Lied. Diese Übung wird nicht benotet.</p></> : <>
+          <span>{activeMode === 'speak' ? 'SPRECHIMPULS' : 'FRAGE'} {question + 1} / {activeMode === 'speak' ? song.speaking.length : song.questions.length}</span><h2>{item.prompt}</h2>
           {item.options?.map((option, i) => <button type="button" key={option} className={`lesson-song-option ${selected === i ? 'is-selected' : ''}`} aria-pressed={selected === i} onClick={() => { setSelected(i); setReveal(false); }}>{String.fromCharCode(65 + i)} · {option}</button>)}
-          <button type="button" disabled={mode === 'questions' && item.options?.length > 0 && selected < 0} onClick={() => setReveal(!reveal)}>{reveal ? 'Lösung verbergen' : mode === 'speak' ? 'Beispiel zeigen' : 'Lösung zeigen'}</button>
-          {reveal && <aside className="lesson-song-answer"><strong>{mode === 'speak' ? item.model : `${item.options && selected === item.correctIndex ? 'Richtig! ' : ''}${item.answer}`}</strong>{item.evidence && <blockquote>{item.evidence}</blockquote>}<p>{item.explanation || item.teacherNote}</p>{evidenceIndex >= 0 && cues[evidenceIndex] && url && <button type="button" onClick={() => { seek(cues[evidenceIndex].start); audio.current?.play().catch(() => {}); }}>Textstelle ab {songTime(cues[evidenceIndex].start)} anhören</button>}</aside>}
-          <nav aria-label="Fragen im Lied"><button type="button" disabled={question === 0} onClick={() => changeQuestion(question - 1)}>← Zurück</button><button type="button" disabled={question === (mode === 'speak' ? song.speaking : song.questions).length - 1} onClick={() => changeQuestion(question + 1)}>Weiter →</button></nav>
+          <button type="button" disabled={activeMode === 'questions' && item.options?.length > 0 && selected < 0} onClick={() => setReveal(!reveal)}>{reveal ? 'Lösung verbergen' : activeMode === 'speak' ? 'Beispiel zeigen' : 'Lösung zeigen'}</button>
+          {reveal && <aside className="lesson-song-answer"><strong>{activeMode === 'speak' ? item.model : `${item.options && selected === item.correctIndex ? 'Richtig! ' : ''}${item.answer}`}</strong>{item.evidence && <blockquote>{item.evidence}</blockquote>}<p>{item.explanation || item.teacherNote}</p>{evidenceIndex >= 0 && cues[evidenceIndex] && url && <button type="button" onClick={() => { seek(cues[evidenceIndex].start); audio.current?.play().catch(() => {}); }}>Textstelle ab {songTime(cues[evidenceIndex].start)} anhören</button>}</aside>}
+          <nav aria-label="Fragen im Lied"><button type="button" disabled={question === 0} onClick={() => changeQuestion(question - 1)}>← Zurück</button><button type="button" disabled={question === (activeMode === 'speak' ? song.speaking : song.questions).length - 1} onClick={() => changeQuestion(question + 1)}>Weiter →</button></nav>
         </>}
       </div>
     </div>
-    {mode === 'listen' && <details className="lesson-song-sync"><summary>Lehrkraft · Liedtext mit der Aufnahme synchronisieren</summary><p>Spiele die fertige Aufnahme. Klicke bei jedem Zeilenanfang auf „Zeile markieren“. Die Zeiten werden auf diesem Gerät gespeichert; exportiere sie für andere Geräte.</p>
+    {activeMode === 'listen' && <details className="lesson-song-sync"><summary>Lehrkraft · Liedtext mit der Aufnahme synchronisieren</summary><p>Spiele die fertige Aufnahme. Klicke bei jedem Zeilenanfang auf „Zeile markieren“. Die Zeiten werden auf diesem Gerät gespeichert; exportiere sie für andere Geräte.</p>
       <strong>Nächste Zeile: {lines[cues.length] || 'Alle Zeilen sind markiert.'}</strong><div className="lesson-song-sync-actions">
         <button type="button" disabled={!url || cues.length === lines.length} onClick={markNext}>Zeile markieren · {songTime(time)}</button>
         <button type="button" disabled={!cues.length} onClick={() => saveCues(cues.slice(0, -1))}>Letzte Markierung zurück</button>
