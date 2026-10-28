@@ -157,7 +157,7 @@ function SlideDetail({ slide, courseId }) {
 
       <footer className="slide-actions no-print">
         <button type="button" className="slide-present-button" onClick={() => setPresenterMode(true)}>Start Presenter Mode</button>
-        {songQuestions && <button type="button" onClick={() => setSongQuestionsMode(true)}>Present song questions</button>
+        {songQuestions && <button type="button" onClick={() => setSongQuestionsMode(true)}>Present song questions</button>}
         <button type="button" onClick={() => window.print()}>Print this teacher guide / Download PDF</button>
         <label className="handout-toggle">
           <input type="checkbox" checked={handoutMode} onChange={(event) => setHandoutMode(event.target.checked)} />
