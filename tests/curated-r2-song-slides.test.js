@@ -25,13 +25,13 @@ test('attendance uses R2 for curated lessons without waiting on a catalog or fal
  const source=readFileSync(new URL('../src/pages/CheckinDisplayPage.jsx',import.meta.url),'utf8');
  assert.match(source,/getCuratedMusicForSession/);
  assert.match(source,/if \(curatedDayMusic\)/);
- assert.match(source,/directPlayback: true/);
- assert.match(source,/src: curatedDayMusic\.audioUrl, repeat: true/);
+ assert.match(source,/nativePlayback: true/);
+ assert.match(source,/src: curatedDayMusic\.audioUrl, objectKey: curatedDayMusic\.objectKey/);
  assert.doesNotMatch(source,/\[publishedDayMusic\.track, \.\.\.pianoPlaylist\]/);
  const player=readFileSync(new URL('../src/utils/pianoAudio.js',import.meta.url),'utf8');
- assert.match(player,/const directPlayback = tracks\.some\(track => track\.directPlayback === true\)/);
- assert.match(player,/if \(!directPlayback\) audio\.crossOrigin/);
- assert.match(player,/setWaitingMusicPlaybackVolume/);
+ assert.match(player,/const nativePlayback = tracks\.every\(track => track\.nativePlayback === true\)/);
+ assert.match(player,/if \(!nativePlayback\) audio\.crossOrigin/);
+ assert.match(player,/onTimeUpdate/);
  assert.match(player,/player\.source\?\.disconnect\(\)/);
 });
 
