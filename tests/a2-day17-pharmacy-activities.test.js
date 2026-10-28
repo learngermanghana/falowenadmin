@@ -81,7 +81,7 @@ test("chosen chapters reuse four authored 10-minute warm-up steps without invent
       assert.equal(stages.find(s => s.id === "warmup").variant, "interactive-music-video", id);
       if (id === "A2-7.18") {
         assert.equal(stages.find(s => s.id === "warmup").musicVideo.youtubeId, undefined);
-        assert.match(stages.find(s => s.id === "warmup").musicVideo.audioUrl, /api\\/music/);
+        assert.ok(stages.find(s => s.id === "warmup").musicVideo.audioUrl.includes("/api/music"));
       } else {
         assert.equal(stages.find(s => s.id === "warmup").musicVideo.youtubeId, "ArWT0uVqUxo");
       }
