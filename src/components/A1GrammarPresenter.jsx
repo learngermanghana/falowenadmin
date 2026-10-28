@@ -15,6 +15,8 @@ import A1EverydaySpeakingStage from "./A1EverydaySpeakingStage.jsx";
 import { getA1EverydaySpeaking } from "../data/a1EverydaySpeaking.js";
 import { getPresenterSlidePhoto } from "../utils/presenterSlidePhotos.js";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
+import PublishedSongLessonStage from "./PublishedSongLessonStage.jsx";
+import { getCuratedMusicByAssignment } from "../data/curatedLessonMusic.js";
 import {
   A1_ACTIVITY_TIMER_PRESETS,
   DEFAULT_A1_ACTIVITY_MINUTES,
@@ -230,6 +232,13 @@ function stageList(slide, topicLabel) {
       duration: slide.estimatedDuration || "",
       grammarDiagnostic: true,
     },
+    ...(getCuratedMusicByAssignment(slide.assignmentId) ? [{
+      id: "music-lesson",
+      type: "published-music",
+      kicker: "Falowen Music · Hören und sprechen",
+      title: "Lied hören · Liedtext · Fragen",
+      items: [{}],
+    }] : []),
     {
       id: "quick-check",
       type: "check",
@@ -682,7 +691,9 @@ export default function A1GrammarPresenter({
               </div>
             </aside>
           ) : null}
-          {stage.type === "intro" ? (
+          {stage.type === "published-music" ? (
+            <PublishedSongLessonStage assignmentKey={slide.assignmentId} compact />
+          ) : stage.type === "intro" ? (
             <>
               <h1>{stage.title}</h1>
               {stage.topic ? <p className="presenter-topic">{stage.topic}</p> : null}
