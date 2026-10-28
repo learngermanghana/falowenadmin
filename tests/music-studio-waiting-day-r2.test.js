@@ -50,7 +50,7 @@ test("day song is first and repeats; original playlist safely remains when R2 is
   assert.match(player, /track\?\.repeat \? player\.index/);
   assert.match(player, /await playTrack\(1\)/);
   const page = readFileSync(new URL("../src/pages/CheckinDisplayPage.jsx", import.meta.url), "utf8");
-  assert.match(page, /playlist: waitingSessionPlaylist/);
+  assert.match(page, /playlist,/);
   assert.match(page, /presenterCurriculumDay/);
   assert.match(page, /VITE_WAITING_ROOM_R2_PUBLIC_BASE_URL/);
 });

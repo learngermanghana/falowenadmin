@@ -56,7 +56,7 @@ test("waiting room music can skip to the next configured track", () => {
   assert.match(audio, /export async function skipWaitingMusicPlaylist/);
   assert.match(audio, /await player\.playTrack\(player\.index \+ 1\)/);
   assert.match(page, /const skipWaitingMusic = useCallback/);
-  assert.match(page, /pianoPlaylist\.length > 1/);
+  assert.match(page, /waitingSessionPlaylist\.length > 1/);
   assert.match(page, /disabled=\{!musicPlaying \|\| musicStarting\}/);
   assert.match(page, /Start waiting music before skipping tracks/);
   assert.match(page, />\s*Skip\s*<\/button>/);

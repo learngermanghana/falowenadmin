@@ -16,7 +16,8 @@ function cleanupPlayer(context) {
   context.removeEventListener("statechange", player.handleContextState);
   player.audio.pause();
   player.audio.currentTime = 0;
-  player.source.disconnect();
+  player.audio.removeEventListener("timeupdate", player.handleTimeUpdate);
+  player.source?.disconnect();
   players.delete(context);
 }
 
@@ -38,7 +39,7 @@ export async function skipWaitingMusicPlaylist(context) {
 export async function startWaitingMusicPlaylist(
   context,
   destination,
-  { playlist = [], onTrackChange = () => {}, onError = () => {} } = {},
+  { playlist = [], onTrackChange = () => {}, onError = () => {}, onTimeUpdate = () => {} } = {},
 ) {
   if (!context || !destination) throw new Error("Waiting room audio is not available.");
 
@@ -50,14 +51,19 @@ export async function startWaitingMusicPlaylist(
 
   const audio = new Audio();
   audio.preload = "auto";
-  // Cloudflare R2 music uses a public HTTPS custom domain. The Web Audio
-  // analyser requires CORS permission from that domain for audible playback.
-  audio.crossOrigin = "anonymous";
+  // Private signed classroom songs use native media playback. They must not
+  // depend on public-bucket CORS or expose the private bucket to Web Audio.
+  const nativePlayback = tracks.every(track => track.nativePlayback === true);
+  if (!nativePlayback) audio.crossOrigin = "anonymous";
   audio.volume = 1;
   audio.playsInline = true;
 
-  const source = context.createMediaElementSource(audio);
-  source.connect(destination);
+  const source = nativePlayback ? null : context.createMediaElementSource(audio);
+  source?.connect(destination);
+  const syncNativeVolume = () => {
+    if (nativePlayback) audio.volume = Math.min(1, Math.max(0, Number(destination.gain?.value ?? 1)));
+    onTimeUpdate(audio.currentTime);
+  };
 
   const player = {
     audio,
@@ -69,6 +75,7 @@ export async function startWaitingMusicPlaylist(
     handleEnded: null,
     handleError: null,
     handleContextState: null,
+    handleTimeUpdate: syncNativeVolume,
     playTrack: null,
   };
 
@@ -79,6 +86,7 @@ export async function startWaitingMusicPlaylist(
     audio.src = track.src;
     audio.currentTime = 0;
     onTrackChange(track, player.index);
+    syncNativeVolume();
     await audio.play();
     player.failedTracks = 0;
   };
@@ -109,6 +117,7 @@ export async function startWaitingMusicPlaylist(
     if (context.state === "closed") cleanupPlayer(context);
   };
 
+  audio.addEventListener("timeupdate", player.handleTimeUpdate);
   audio.addEventListener("ended", player.handleEnded);
   audio.addEventListener("error", player.handleError);
   context.addEventListener("statechange", player.handleContextState);

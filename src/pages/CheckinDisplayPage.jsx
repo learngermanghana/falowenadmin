@@ -1,3 +1,8 @@
+import { getLessonSong } from "../data/a1Day22Music.js";
+import { prepareLessonSong } from "../services/lessonSongService.js";
+import { readSongCues } from "../utils/songLyrics.js";
+import LessonSongLyrics from "../components/LessonSongLyrics.jsx";
+import "../components/LessonSongStage.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
@@ -727,12 +732,15 @@ export default function CheckinDisplayPage() {
 
   // Read one small public JSON catalog when the teacher changes the class/day.
   // No background polling, Firebase reads, or automatic music generation.
+  const lessonSong = getLessonSong({ level: waitingClassLevel, day: presenterCurriculumDay });
+  const [songPosition, setSongPosition] = useState(0);
+  const songCues = lessonSong ? readSongCues(lessonSong) : [];
   const [publishedDayMusic, setPublishedDayMusic] = useState(null);
   const musicSessionKey = `${String(waitingClassLevel || "").toUpperCase()}:${presenterCurriculumDay}`;
   useEffect(() => {
     const controller = new AbortController();
     setPublishedDayMusic(null);
-    if (!waitingClassLevel || !presenterCurriculumDay) return () => controller.abort();
+    if (lessonSong || !waitingClassLevel || !presenterCurriculumDay) return () => controller.abort();
     fetch(WAITING_ROOM_MUSIC_CATALOG_URL, { signal: controller.signal })
       .then(response => {
         if (!response.ok) throw new Error("Music catalog unavailable");
@@ -747,9 +755,11 @@ export default function CheckinDisplayPage() {
       })
       .catch(() => {}); // Missing catalog must never stop the existing waiting-room playlist.
     return () => controller.abort();
-  }, [waitingClassLevel, presenterCurriculumDay, musicSessionKey]);
+  }, [waitingClassLevel, presenterCurriculumDay, musicSessionKey, lessonSong]);
 
   const waitingSessionPlaylist = useMemo(() => {
+    if (lessonSong) return [{ id: lessonSong.id, title: lessonSong.title,
+      src: lessonSong.objectKey, objectKey: lessonSong.objectKey, repeat: true, nativePlayback: true }];
     if (publishedDayMusic?.key === musicSessionKey) {
       return [publishedDayMusic.track, ...pianoPlaylist];
     }
@@ -759,7 +769,7 @@ export default function CheckinDisplayPage() {
       publicBaseUrl: WAITING_ROOM_R2_PUBLIC_BASE_URL,
       fallbackPlaylist: pianoPlaylist,
     });
-  }, [waitingClassLevel, presenterCurriculumDay, musicSessionKey, publishedDayMusic]);
+  }, [waitingClassLevel, presenterCurriculumDay, musicSessionKey, publishedDayMusic, lessonSong]);
   const dayMusicConfigured = Boolean(waitingSessionPlaylist[0]?.repeat);
 
   const presenterLessonUrl = useMemo(() => {
@@ -1201,6 +1211,7 @@ export default function CheckinDisplayPage() {
       context.close().catch(() => {});
     }
     setMusicPlaying(false);
+    setSongPosition(0);
     setMusicStarting(false);
   }, [waitingSessionPlaylist]);
 
@@ -1266,13 +1277,26 @@ export default function CheckinDisplayPage() {
         return;
       }
 
+      // Resolve the exact approved upload on Start; never fall through to a
+      // bundled/GitHub song if this lesson has an explicitly assigned recording.
+      const playlist = lessonSong
+        ? [{ ...waitingSessionPlaylist[0], src: await prepareLessonSong(lessonSong) }]
+        : waitingSessionPlaylist;
+      if (musicStartGenerationRef.current !== startGeneration) {
+        if (context.state !== "closed") context.close().catch(() => {});
+        return;
+      }
       await startWaitingMusicPlaylist(context, masterGain, {
-        playlist: waitingSessionPlaylist,
+        playlist,
+        onTimeUpdate: setSongPosition,
         onTrackChange: (track) => {
           setCurrentMusicTrack(track?.title || "Waiting room music");
           setMusicError("");
         },
-        onError: (message) => setMusicError(message || "Waiting room music could not continue."),
+        onError: (message) => {
+          if (lessonSong) stopWaitingMusic();
+          setMusicError(message || "Waiting room music could not continue.");
+        },
       });
       if (musicStartGenerationRef.current !== startGeneration) {
         stopWaitingMusicPlaylist(context);
@@ -1288,7 +1312,7 @@ export default function CheckinDisplayPage() {
       stopWaitingMusic();
       setMusicError(error?.message || "Waiting room music could not start. Raise the device media volume and try again.");
     }
-  }, [musicPlaying, musicVolume, stopWaitingMusic, waitingSessionPlaylist]);
+  }, [musicPlaying, musicVolume, stopWaitingMusic, waitingSessionPlaylist, lessonSong]);
 
   // When a different curriculum day/class is selected, never keep playing
   // the previous day's track. The teacher taps Start again (browser audio policy).
@@ -2157,7 +2181,7 @@ export default function CheckinDisplayPage() {
                 <span aria-hidden="true">♫</span> Waiting room music
               </div>
               <div className="checkin-display-music-note">
-                {dayMusicConfigured ? `${waitingClassLevel} Day ${presenterCurriculumDay} music repeats for this class; the general playlist is the fallback.` : "General Falowen music plays in sequence. Day-specific Cloudflare music activates when the public R2 music domain is configured."} {musicPlaying ? `Now playing: ${currentMusicTrack}.` : ""}
+                {lessonSong ? `${lessonSong.title} · ${lessonSong.assignmentId} · Cloudflare. Repeats until class starts.` : dayMusicConfigured ? `${waitingClassLevel} Day ${presenterCurriculumDay} music repeats for this class; the general playlist is the fallback.` : "General Falowen music plays in sequence. Day-specific Cloudflare music activates when the public R2 music domain is configured."} {musicPlaying ? `Now playing: ${currentMusicTrack}.` : ""}
               </div>
             </div>
             <div className="checkin-display-music-visual" aria-hidden="true">
@@ -2166,7 +2190,7 @@ export default function CheckinDisplayPage() {
               <span />
               <span />
             </div>
-            {pianoPlaylist.length > 1 ? (
+            {waitingSessionPlaylist.length > 1 ? (
               <button
                 type="button"
                 className="checkin-display-music-skip-button"
@@ -2200,6 +2224,9 @@ export default function CheckinDisplayPage() {
             />
             <span>{Math.round(musicVolume * 100)}%</span>
           </label>
+          {lessonSong && <details className="checkin-song-lyrics"><summary>Liedtext · {lessonSong.title}</summary>
+            <LessonSongLyrics song={lessonSong} cues={songCues} time={songPosition} follow={musicPlaying} />
+          </details>}
           {musicError ? <div className="checkin-display-music-error" role="alert">{musicError}</div> : null}
         </div>
             {showNames ? (

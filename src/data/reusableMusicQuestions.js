@@ -38,7 +38,7 @@ export function getReusableMusicQuestions(assignmentKey) {
     topic: song.assignmentKey,
     questions: [
       { id: key + '-listen-1', type: 'listening', prompt: row[1], answer: row[2], evidence: verseEvidence(song.lyrics, 1) },
-      { id: key + '-listen-2', type: 'listening', prompt: row[3], answer: row[4], evidence: verseEvidence(song.lyrics, 2) },
+      { id: key + '-listen-2', type: 'listening', prompt: row[3], answer: row[4], evidence: key === 'A1-14.1' ? 'Mia bringt mir Wasser und Tee.\nJetzt geht es mir schon besser.' : verseEvidence(song.lyrics, 2) },
       { id: key + '-speak-1', type: 'speaking', prompt: row[5], answer: null, evidence: '', teacherNote: guidance },
     ],
   };

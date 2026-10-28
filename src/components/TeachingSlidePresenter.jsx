@@ -1,3 +1,4 @@
+import LessonSongStage from "./LessonSongStage.jsx";
 import PresenterControls, { PresenterActions, PresenterStageJump, usePresenterKeyboard } from "./PresenterControls.jsx";
 import C2GrammarTeaching from "./C2GrammarTeaching.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -194,7 +195,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
   const [readingPhase, setReadingPhase] = useState("idle");
   const [activeReadingAssignment, setActiveReadingAssignment] = useState(null);
   const stage = stages[stageIndex] || stages[0];
-  const isMusicVideoStage = stage?.variant === "interactive-music-video";
+  const isLessonMusicStage = stage?.type === "lesson-music";
+  const isMusicVideoStage = stage?.variant === "interactive-music-video" || isLessonMusicStage;
   // The Day 25 oral challenge has a taller sequence of cards than a normal
   // slide. Give it a dedicated scroll-safe layout without altering other days.
   const isDay25ScenarioStage = stage?.type === "scenario-challenge" && String(slide?.assignmentId || "").toUpperCase() === "B1-8.25";
@@ -211,7 +213,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
   const presenterLevel = String(slide.course || "").trim().toUpperCase();
   const readingEligible = ["A2", "B1"].includes(presenterLevel)
     && stage?.type === "knowledge"
-    && stage?.variant !== "interactive-listening" && stage?.variant !== "interactive-music" && !isMusicReadingStage
+    && stage?.variant !== "interactive-listening" && stage?.variant !== "interactive-music" && !isMusicReadingStage && stage?.type !== "lesson-song"
     && Boolean(String(stage?.textDe || "").trim());
   const numberedKnowledgeSentences = useMemo(
     () => numberedPresenterSentences(stage?.textDe || ""),
@@ -901,6 +903,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                 </section>
               ) : null}
             </>
+          ) : isLessonMusicStage ? (
+            <LessonSongStage key={`${slide.assignmentId}:${stage.id}`} song={{ ...stage.song, objectKey: stage.song.audioKey }} mode={stage.mode === "speaking" ? "speak" : stage.mode} />
           ) : isMusicVideoStage ? (
             <MusicVideoStage music={stage.musicVideo} />
           ) : isMusicReadingStage ? (

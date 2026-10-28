@@ -1,3 +1,4 @@
+import { getLessonMusic } from "../data/lessonMusic.js";
 import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
 import { B1_DAY18_CAREER_CHALLENGES } from "../data/b1Day18CareerChallenge.js";
 import { getB1TeacherChallenge } from "../data/b1TeacherChallenges.js";
@@ -2145,6 +2146,19 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
         nextSteps,
         studentReference,
       });
+    }
+  }
+  const song = getLessonMusic(normalizedAssignmentId(slide));
+  if (song) {
+    // Replace the three named ending stages only for this published lesson.
+    // Preserve teaching/practice/clarification and the final lesson summary.
+    for (const [id, mode, title] of [["mistakes", "listen", song.title], ["questions", "questions", "Was passiert im Lied?"], ["wrapup", "speaking", "Jetzt seid ihr dran"]]) {
+      const index = filtered.findIndex(stage => stage.id === id);
+      if (index >= 0) filtered[index] = {
+        id, type: "lesson-music", variant: "lesson-music", mode, song, title,
+        suggestedMinutes: mode === "listen" ? 4 : 5,
+        teacherPurpose: { student: "Höre, lies mit und antworte in einfachen Sätzen.", teacher: "Nutze die gespeicherten Liedtexte. Antworten erst nach dem Versuch zeigen. Unbewertete Unterrichtsübung." },
+      };
     }
   }
   return filtered.map((stage) => ({
