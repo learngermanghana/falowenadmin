@@ -738,7 +738,7 @@ export default function CheckinDisplayPage() {
     level: waitingClassLevel, day: presenterCurriculumDay, assignmentKey: effectiveAssignmentId,
   });
   const [songPosition, setSongPosition] = useState(0);
-  const [songCues] = useSongTiming(lessonSong);
+  const [songCues, , recordedSongLyrics] = useSongTiming(lessonSong);
   const [publishedDayMusic, setPublishedDayMusic] = useState(null);
   const musicSessionKey = `${String(waitingClassLevel || "").toUpperCase()}:${presenterCurriculumDay}`;
   useEffect(() => {
@@ -2237,7 +2237,7 @@ export default function CheckinDisplayPage() {
             <span>{Math.round(musicVolume * 100)}%</span>
           </label>
           {lessonSong && <details className="checkin-song-lyrics"><summary>Liedtext · {lessonSong.title}</summary>
-            <LessonSongLyrics song={lessonSong} cues={songCues} time={songPosition} follow={musicPlaying} />
+            <LessonSongLyrics song={{...lessonSong, lyrics:recordedSongLyrics}} cues={songCues} time={songPosition} follow={musicPlaying} />
           </details>}
           {musicError ? <div className="checkin-display-music-error" role="alert">{musicError}</div> : null}
         </div>
