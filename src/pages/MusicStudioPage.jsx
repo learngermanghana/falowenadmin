@@ -91,6 +91,17 @@ export default function MusicStudioPage() {
       : `FALOWEN MUSIC\nTitle: ${trackTitle}\n\nMUSIC STYLE\n${effectiveBrief}\n\nLYRICS\n${lyrics}`;
     downloadLyricsText(text, falowenMusicFileName(lesson, trackTitle, 'txt'));
   }
+  function exportCompleteSongbook() {
+    const text = ['A1', 'A2', 'B1'].map(songLevel => {
+      const entries = getMusicDays(songLevel).flatMap(group => group.lessons);
+      const songs = getReusableSongDrafts(songLevel);
+      const content = songs.map(song => musicDraftPackageText(song,
+        entries.find(entry => entry.assignmentKey === song.assignmentKey)))
+        .join('\n\n' + '='.repeat(70) + '\n\n');
+      return `FALOWEN MUSIC · ${songLevel} · ${songs.length} ORIGINAL SONGS\n\n${content}`;
+    }).join('\n\n' + '#'.repeat(70) + '\n\n');
+    downloadLyricsText(text, 'falowen-a1-to-b1-84-song-lyrics-and-music-styles.txt');
+  }
   function exportLevelSongbook() {
     if (!['A1', 'A2', 'B1'].includes(level)) return;
     const entries = days.flatMap(group => group.lessons);
@@ -99,6 +110,14 @@ export default function MusicStudioPage() {
       return musicDraftPackageText(song, lessonEntry);
     }).join('\n\n' + '='.repeat(70) + '\n\n');
     downloadLyricsText(contents, `falowen-${level.toLowerCase()}-complete-songbook-lyrics-and-styles.txt`);
+  }
+  async function copyDraftStyle() {
+    try {
+      await navigator.clipboard.writeText(effectiveBrief);
+      setCopyStatus('Music style copied.');
+    } catch {
+      setCopyStatus('Copy unavailable in this browser; download the song text instead.');
+    }
   }
   async function copyDraftLyrics() {
     try {
@@ -145,6 +164,7 @@ export default function MusicStudioPage() {
           <p style={{ margin: 0, fontSize: 13 }}>Select a lesson to load its original storytelling lyrics and matching music style. Reuse the text free of charge, then generate audio only when ready.</p>
           {draft && <p style={{ margin: 0, fontSize: 13 }}><strong>Selected song:</strong> {draft.title}</p>}
           <button type="button" onClick={exportLevelSongbook}>Download all {level} lyrics & music styles (.txt)</button>
+          <button type="button" onClick={exportCompleteSongbook}>Download complete A1–B1 songbook · 84 songs (.txt)</button>
         </div>}
         <h2>2. Shape your song</h2>
         <div className="music-presets">{Object.entries(PRESETS).map(([id, text]) => <button type="button" key={id} onClick={() => { setBrief(text); setStyleMode('custom'); setVocalMode(id === 'instrumental' ? 'instrumental' : 'voice'); }}>{id === 'welcome' ? 'Class welcome' : id === 'vocabulary' ? 'Lesson story song' : 'Guitar instrumental'}</button>)}</div>
@@ -181,6 +201,7 @@ export default function MusicStudioPage() {
         <textarea id="music-lyrics" maxLength={5500} rows={10} value={lyrics} onChange={e => { setLyrics(e.target.value); setCopyStatus(''); }} placeholder={'[Verse 1]\\nWrite your German and English lyrics here…\\n\\n[Chorus]'} />
         {draft && <div className="music-songbook-actions" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button type="button" onClick={copyDraftLyrics}>Copy lyrics</button>
+          <button type="button" onClick={copyDraftStyle}>Copy music style</button>
           <button type="button" onClick={saveCurrentLyrics}>Download lyrics + music style (.txt)</button>
           <button type="button" onClick={() => { setLyricsOverrides(previous => { const next = { ...previous }; delete next[assignmentKey]; return next; }); setLyricTreatment('exact'); setCopyStatus('Original lyrics restored.'); }}>Restore original</button>
         </div>}
