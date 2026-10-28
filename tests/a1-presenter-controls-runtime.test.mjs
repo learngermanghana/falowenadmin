@@ -132,6 +132,7 @@ test('A1–C2 controls retain questions, reports use live marks and switching cl
     mocks['../utils/presenterSentenceNumbering.js'] = { numberedPresenterSentences: () => [] };
     mocks['../data/a2B1LessonProfile.js'] = { getA2B1AdminLessonProfileForSlide: () => null };
     mocks['../data/b1Day18CareerChallenge.js'] = { nextB1Day18CareerIndex: () => 0 };
+    mocks['../data/interactiveLessonOpenings.js'] = { isInteractiveOpeningStage: () => false };
     for (const name of ['C2GrammarTeaching', 'B1HousingChoicePractice', 'A2SportMatchmaker']) mocks[`./${name}.jsx`] = { __esModule: true, default: () => null };
     const SharedPresenter = (await compile('src/components/TeachingSlidePresenter.jsx')).default;
     for (const level of ['A2', 'B1', 'B2', 'C1', 'C2']) {
