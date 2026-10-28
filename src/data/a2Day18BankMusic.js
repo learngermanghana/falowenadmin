@@ -1,103 +1,29 @@
-// Falowen A2 Day 18: lyric excerpts from the published "Meine Karte ist gesperrt!"
-// song. Unscored comprehension only; never replace the separate R2 Hören.
+// A2 Day 18 · Teacher-approved Falowen MUSIC lesson, not Goethe Hören.
+// The old Amir/YouTube lyrics are not the new Cloudflare recording; use the
+// original "Die Karte funktioniert nicht" draft and shared question dictionary.
+import { getReusableSongDraft } from './reusableMusicSongbook.js';
+import { getReusableMusicQuestions } from './reusableMusicQuestions.js';
+import { getCuratedMusicByAssignment } from './curatedLessonMusic.js';
+
+const assignmentKey = 'A2-7.18';
+const draft = getReusableSongDraft(assignmentKey);
+const questions = getReusableMusicQuestions(assignmentKey);
+const approved = getCuratedMusicByAssignment(assignmentKey);
+
 export const A2_DAY18_BANK_MUSIC = Object.freeze({
-  level: "A2",
-  mediaType: "music",
-  readingOnVideoSlide: true,
-  youtubeId: "pXAxzMMXHoE",
-  title: "Meine Karte ist gesperrt! · Die Bank anrufen",
-  introQuestion: "Warum geht Amir zur Bank, und welche Fragen stellt er dort?",
-  studentPurpose: "Höre die Geschichte von Amir. Übe danach fünf Fragen zum Liedtext.",
-  teacherPurpose: "Spiele das Lied und öffne anschließend „Liedtext & Fragen“ auf derselben Folie. Das Hörverstehen mit der R2-Aufnahme folgt auf Folie 3.",
-  nextStep: "Weiter zum Banktelefonat im Hören · Hördetektiv. Das Lied und die Fragen sind eine unbewertete Unterrichtsübung.",
-  readingSections: [
-    {
-      label: "Im Supermarkt",
-      lines: [
-        "Im Supermarkt will ich bezahlen,",
-        "doch meine Karte funktioniert nicht.",
-        "Ich gebe meine PIN noch einmal ein,",
-        "dreimal falsch – oh nein, oh nein!",
-      ],
-    },
-    {
-      label: "Der Anruf bei der Bank",
-      lines: [
-        "Guten Tag, hier spricht Amir.",
-        "Meine Karte funktioniert nicht mehr.",
-        "Seit wann haben Sie das Problem?",
-        "Seit gestern, ungefähr um zehn.",
-      ],
-    },
-    {
-      label: "In der Filiale",
-      lines: [
-        "Kommen Sie bitte in die Filiale,",
-        "und bringen Sie Ihren Ausweis mit.",
-        "Kann ich bitte Ihren Ausweis sehen?",
-        "Ja, natürlich, hier, bitteschön.",
-      ],
-    },
-    {
-      label: "Die Karte funktioniert wieder",
-      lines: [
-        "Die Frau lächelt und sagt zu mir:",
-        "Ihre Karte ist jetzt wieder frei!",
-        "Kann ich wieder damit bezahlen?",
-        "Ja, natürlich, kein Problem.",
-      ],
-    },
-  ],
-  questions: [
-    {
-      prompt: "Was passiert mit Amirs Karte im Supermarkt?",
-      options: ["Sie funktioniert nicht.", "Er verliert sie.", "Er bekommt eine neue Karte."],
-      correctIndex: 0,
-      answer: "Sie funktioniert nicht.",
-      evidence: "Im Supermarkt will ich bezahlen, doch meine Karte funktioniert nicht.",
-      timestamp: 26,
-      hint: "Hör auf die Wörter „Supermarkt“ und „funktioniert“.",
-      explanation: "Amir kann im Supermarkt nicht mit seiner Karte bezahlen.",
-    },
-    {
-      prompt: "Warum wird Amirs Karte gesperrt?",
-      options: ["Er hat sie verloren.", "Er hat die PIN dreimal falsch eingegeben.", "Sein Konto ist geschlossen."],
-      correctIndex: 1,
-      answer: "Er hat die PIN dreimal falsch eingegeben.",
-      evidence: "Ich gebe meine PIN noch einmal ein, dreimal falsch – oh nein, oh nein!",
-      timestamp: 34,
-      hint: "Wie oft ist die PIN falsch?",
-      explanation: "Im Lied wird die PIN dreimal falsch eingegeben.",
-    },
-    {
-      prompt: "Was soll Amir zur Bank mitbringen?",
-      options: ["Sein Handy", "Seinen Mietvertrag", "Seinen Ausweis"],
-      correctIndex: 2,
-      answer: "Seinen Ausweis",
-      evidence: "Kommen Sie bitte in die Filiale, und bringen Sie Ihren Ausweis mit.",
-      timestamp: 90,
-      hint: "Die Bank nennt ein Dokument.",
-      explanation: "Amir soll mit seinem Ausweis zur Filiale kommen.",
-    },
-    {
-      prompt: "Was fragt die Mitarbeiterin am Schalter?",
-      options: ["Kann ich bitte Ihren Ausweis sehen?", "Wo studieren Sie?", "Wie viel Miete zahlen Sie?"],
-      correctIndex: 0,
-      answer: "Kann ich bitte Ihren Ausweis sehen?",
-      evidence: "Kann ich bitte Ihren Ausweis sehen? Ja, natürlich, hier, bitteschön.",
-      timestamp: 114,
-      hint: "Welche höfliche Bitte hörst du?",
-      explanation: "Die Mitarbeiterin fragt höflich nach Amirs Ausweis.",
-    },
-    {
-      prompt: "Wie endet Amirs Problem?",
-      options: ["Die Bank ist geschlossen.", "Die Karte ist wieder frei.", "Amir verliert seinen Ausweis."],
-      correctIndex: 1,
-      answer: "Die Karte ist wieder frei.",
-      evidence: "Ihre Karte ist jetzt wieder frei! Kann ich wieder damit bezahlen? Ja, natürlich, kein Problem.",
-      timestamp: 134,
-      hint: "Was sagt die Mitarbeiterin über die Karte?",
-      explanation: "Nach der Prüfung kann Amir wieder mit seiner Karte bezahlen.",
-    },
-  ],
+  level: 'A2',
+  day: 18,
+  assignmentKey,
+  mediaType: 'music',
+  title: draft.title,
+  audioUrl: approved.audioUrl,
+  trackId: approved.trackId,
+  introQuestion: 'Warum funktioniert die Karte nicht, und wie hilft die Bank?',
+  studentPurpose: 'Höre die Falowen-Musikgeschichte. Lies den Liedtext und beantworte zwei Hörfragen und eine Sprechfrage.',
+  teacherPurpose: 'Slide 2: erst Musik hören, dann optional Liedtext und drei wiederverwendbare Fragen. Slide 3: separates privates Banktelefonat mit fünf Richtig/Falsch-Fragen.',
+  nextStep: 'Weiter zur eigenständigen Hören-Aufgabe: Banktelefonat mit Frau Weber. Das Musiklied ist unbewertet.',
+  lyrics: draft.lyrics,
+  questions: questions.questions,
+  // No YouTube video, obsolete Amir lyrics, fictional timestamps or alternate
+  // answer key; all quiz content uses the saved A2-7.18 Falowen songbook.
 });
