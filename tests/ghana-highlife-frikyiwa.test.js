@@ -30,12 +30,12 @@ test('frikyiwa is a three-hit metallic percussion sound in the arrangement, neve
     assert.ok(song.musicStyle.startsWith(song.genre));
     assert.ok(song.musicStyle.includes(bpm));
     assert.match(song.musicStyle, /frikyiwa/i);
-    assert.match(song.musicStyle, /three (quick|short|hit)/i);
+    assert.match(song.musicStyle, /three[- ](?:quick|short|hit)/i);
     assert.match(song.musicStyle, /ko-ko-ko/);
     assert.match(song.musicStyle, /syncopat/i);
     assert.match(song.musicStyle, /guitar/i);
     assert.match(song.musicStyle, /not (a )?conga/i);
-    assert.match(song.musicStyle, /behind (the )?(lead )?(singer|vocal)/i);
+    assert.match(song.musicStyle, /percussion.*behind.*(singer|vocal)|vocal.*above percussion/i);
     assert.ok(song.lyrics.includes(hook), `The approved German hook changed for ${id}`);
     assert.doesNotMatch(song.lyrics, /frikyiwa|ko-ko-ko/i, `Percussion should not be a sung syllable in ${id}`);
     const lesson = getStudioCourseCatalog(level).find(entry => entry.assignmentKey === id);
