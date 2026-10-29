@@ -66,9 +66,9 @@ export const MUSIC_SONG_DRAFTS_B1_PART2 = Object.freeze([
   {
     "assignmentKey": "B1-8.24",
     "title": "Weniger kaufen, mehr erleben",
-    "musicStyle": "Afro-Pop, 91 BPM: warm melodic Afro-pop with gentle rhythmic guitar, light shakers, soft keyboard chords and restrained bass; clear relaxed vocals. One lead singer, clear German phrases, quiet instrumental mix.",
+    "musicStyle": "Ghanaian Highlife, 91 BPM: thoughtful guitar-led Ghanaian highlife with sophisticated interlocking picked guitar figures, warm chordal piano, supple live bass, brushed kit, light shaker and an expressive, adult vocal melody. Include a subtle bright metallic frikyiwa (firikyiwa) castanet, repeating three short syncopated offbeat ko-ko-ko taps as an instrumental groove marker; place the strikes between the regular beat pulses, with breathing room and a natural human feel. Not conga or wooden blocks, and never pronounce ko-ko-ko aloud. Build from a contemplative verse toward a fuller soulful chorus, then resolve with a short answering guitar phrase. Keep lyrics intelligible, percussion behind the singer, and avoid childish chanting.",
     "lyrics": "[Verse 1]\nIm Schaufenster sehe ich ein neues Handy.\nMeins funktioniert eigentlich noch gut.\nTrotzdem möchte ich es sofort kaufen,\nweil überall Werbung für das Modell läuft.\n\n[Chorus]\nBrauche ich das wirklich heute?\nVielleicht hält das Alte noch lang.\nWeniger kaufen lässt Raum für anderes.\n\n[Verse 2]\nZu Hause spreche ich mit meinem Bruder.\nEr zeigt mir, wie ich den Akku schonen kann.\nWir beschließen, das Geld lieber zu sparen,\num im Sommer gemeinsam zu verreisen.\n\n[Chorus]\nBrauche ich das wirklich heute?\nVielleicht hält das Alte noch lang.\nWeniger kaufen lässt Raum für anderes.\n\n[Outro]\nDas neue Handy bleibt im Geschäft.\nDie Reise ist mir jetzt wichtiger.\nBei Falowen lerne ich, bewusster zu entscheiden.",
-    "genre": "Afro-Pop"
+    "genre": "Ghanaian Highlife"
   },
   {
     "assignmentKey": "B1-8.25",
