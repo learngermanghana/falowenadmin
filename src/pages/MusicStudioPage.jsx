@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { musicRequest, musicBlob } from '../services/musicStudioService';
+import { musicRequest, musicBlob, loadSavedMusicLyrics, overwriteSavedMusicLyrics } from '../services/musicStudioService';
 import { buildFalowenMusicPrompt, musicLyricLimit } from '../utils/musicGenerationPrompt.js';
 import { waitingRoomMusicObjectKey } from '../utils/waitingRoomDayMusic.js';
 import './MusicStudioPage.css';
@@ -34,19 +34,28 @@ export default function MusicStudioPage() {
   // Prewritten A1–B1 lyrics are selected from the local dictionary; edits are
   // scoped by assignment so changing lessons never reuses the wrong lyrics.
   const [lyricsOverrides, setLyricsOverrides] = useState({});
+  const [savedLyrics, setSavedLyrics] = useState({});
+  const [loadingLyrics, setLoadingLyrics] = useState(false);
+  const [savingLyrics, setSavingLyrics] = useState(false);
+  const [lyricsNotice, setLyricsNotice] = useState('');
   const [customLyrics, setCustomLyrics] = useState('');
   const [copyStatus, setCopyStatus] = useState('');
   const draft = courseMode === 'course' ? getReusableSongDraft(lesson?.assignmentKey) : null;
   const assignmentKey = lesson?.assignmentKey || '';
   const lyrics = courseMode === 'course'
     ? Object.prototype.hasOwnProperty.call(lyricsOverrides, assignmentKey)
-      ? lyricsOverrides[assignmentKey] : draft?.lyrics || ''
+      ? lyricsOverrides[assignmentKey]
+      : Object.prototype.hasOwnProperty.call(savedLyrics, assignmentKey) && savedLyrics[assignmentKey]
+        ? savedLyrics[assignmentKey] : draft?.lyrics || ''
     : customLyrics;
   const setLyrics = next => {
     if (courseMode === 'course' && assignmentKey) {
       setLyricsOverrides(previous => ({ ...previous, [assignmentKey]: next }));
     } else setCustomLyrics(next);
   };
+  const savedText = Object.prototype.hasOwnProperty.call(savedLyrics, assignmentKey)
+    ? savedLyrics[assignmentKey] || draft?.lyrics || '' : draft?.lyrics || '';
+  const dirtyLyrics = courseMode === 'course' && !!assignmentKey && lyrics !== savedText;
   const trackTitle = draft?.title || lesson?.germanTitle || 'Falowen Music';
   const [mode, setMode] = useState('song');
   const [durationSeconds, setDurationSeconds] = useState(150);
@@ -76,6 +85,33 @@ export default function MusicStudioPage() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const lock = useRef(false), audioUrl = useRef(null);
+  useEffect(() => {
+    if (courseMode !== 'course' || !assignmentKey) return undefined;
+    let active = true;
+    setLoadingLyrics(true);
+    setLyricsNotice('');
+    loadSavedMusicLyrics(assignmentKey).then(data => {
+      if (active) setSavedLyrics(previous => ({ ...previous, [assignmentKey]: data.found ? data.lyrics : '' }));
+    }).catch(error => {
+      if (active) setLyricsNotice('Could not check the saved lyrics: ' + error.message);
+    }).finally(() => { if (active) setLoadingLyrics(false); });
+    return () => { active = false; };
+  }, [assignmentKey, courseMode]);
+  async function overwriteLyrics() {
+    if (courseMode !== 'course' || !assignmentKey || savingLyrics || loadingLyrics || !lyrics.trim()) return;
+    const key = assignmentKey, text = lyrics;
+    setSavingLyrics(true);
+    setLyricsNotice('');
+    try {
+      const data = await overwriteSavedMusicLyrics(key, text);
+      setSavedLyrics(previous => ({ ...previous, [key]: data.lyrics }));
+      setLyricsNotice('Lyrics overwritten and saved for ' + key + '. They will be reused after refresh and appear as a course draft on Falowen Music.');
+    } catch (error) {
+      setLyricsNotice('Lyrics were NOT saved: ' + error.message);
+    } finally {
+      setSavingLyrics(false);
+    }
+  }
   useEffect(() => {
     // New dictionary topics must not accidentally inherit "rewrite from source"
     // from the previous song: prewritten lyrics default to exact playback.
@@ -225,11 +261,18 @@ export default function MusicStudioPage() {
           <button type="button" onClick={copyDraftLyrics}>Copy lyrics</button>
           <button type="button" onClick={copyDraftStyle}>Copy music style</button>
           <button type="button" onClick={saveCurrentLyrics}>Download lyrics + music style (.txt)</button>
-          <button type="button" onClick={() => { setLyricsOverrides(previous => { const next = { ...previous }; delete next[assignmentKey]; return next; }); setLyricTreatment('exact'); setCopyStatus('Original lyrics restored.'); }}>Restore original</button>
+          <button type="button" onClick={() => { setLyrics(draft.lyrics); setLyricTreatment('exact'); setCopyStatus('Original lyrics restored in the editor. Click Overwrite Lyrics to save this version.'); }}>Restore original in editor</button>
         </div>}
+        {courseMode === 'course' && assignmentKey && <div className="music-songbook-actions" style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap',marginTop:8}}>
+          <button type="button" onClick={overwriteLyrics} disabled={savingLyrics || loadingLyrics || !lyrics.trim() || lyrics.length > 5500 || !dirtyLyrics}>
+            {savingLyrics ? 'Saving lyrics…' : 'Overwrite Lyrics · Save permanently'}
+          </button>
+          <small>{loadingLyrics ? 'Checking saved lyrics…' : dirtyLyrics ? 'Unsaved lyrics for this lesson' : 'Lyrics saved or unchanged'}</small>
+        </div>}
+        {lyricsNotice && courseMode === 'course' && <p role="status" className="music-note">{lyricsNotice}</p>}
         {!draft && lyrics.trim() && <button type="button" onClick={saveCurrentLyrics}>Download lyrics + music style (.txt)</button>}
         {copyStatus && <p role="status" className="music-note">{copyStatus}</p>}
-        {draft && <p className="music-note">Original Falowen lyrics are loaded automatically. If they sound too much like a nursery rhyme, choose <strong>Source vocabulary — rewrite into a story</strong> below to create more natural adult lyrics; choose Exact lyrics to preserve your words. Edits are temporary until exported.</p>}
+        {draft && <p className="music-note">Original Falowen lyrics appear by default. Overwrite Lyrics saves the selected lesson’s edited text in the owner's private database and updates its public course-draft reference; no GitHub editing is required. For a finished MP3, always verify the recording matches these words before publishing them as verified lyrics. You can also choose <strong>Source vocabulary — rewrite into a story</strong> when generating new music.</p>}
         {courseMode === 'course' && vocalMode === 'voice' && songStyle === 'story' && lyrics.trim() && <>
           <label htmlFor="music-lyric-treatment">Use the text above as</label>
           <select id="music-lyric-treatment" value={lyricTreatment} onChange={e => setLyricTreatment(e.target.value)}>
