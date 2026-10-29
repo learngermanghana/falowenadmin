@@ -110,3 +110,49 @@ test('A2 Day 19 and Day 20 use the real Day 18 player design, lyrics and MCQs', 
   assert.doesNotMatch(player, /<iframe|&embedded=1|getReusableSongDraft|SongTimingEditor/);
   assert.match(player, /Das separate Hören-Gespräch bleibt auf der nächsten Folie/);
 });
+
+test('all 56 A2/B1 presenters use the Day 18 layout and only published music lessons have native players',()=>{
+  const courses=['A2','B1'];
+  const musicDays={
+    'A2-7.18':{day:18,curated:true},
+    'A2-7.19':{day:19},
+    'A2-7.20':{day:20},
+    'B1-8.24':{day:24},
+    'B1-8.25':{day:25},
+    'B1-9.26':{day:26},
+  };
+  const slides=courses.flatMap(getSlidesByCourse);
+  assert.equal(slides.length,56);
+  for(const slide of slides){
+    const stages=buildTeachingPresenterStages(slide,slide.topic);
+    const ids=stages.map(x=>x.id);
+    assert.equal(ids[0],'intro',slide.assignmentId);
+    assert.equal(ids[1],'warmup',slide.assignmentId);
+    assert.equal(ids.indexOf('reading'),ids.indexOf('common-mistakes')+1,slide.assignmentId);
+    assert.equal(ids.indexOf('grammar-check'),ids.indexOf('reading')+1,slide.assignmentId);
+    assert.deepEqual(ids.slice(-3),['questions','workbook','lesson-summary'],slide.assignmentId);
+    assert.equal(stages.filter(x=>x.id==='reading').length,1,slide.assignmentId);
+    assert.equal(stages.filter(x=>x.id==='common-mistakes').length,1,slide.assignmentId);
+    const expected=musicDays[slide.assignmentId];
+    const musicStage=stages[1];
+    if(expected){
+      assert.equal(musicStage.variant,'interactive-music-video',slide.assignmentId);
+      assert.equal(musicStage.musicVideo.day,expected.day,slide.assignmentId);
+      if(!expected.curated) {
+        assert.equal(musicStage.musicVideo.musicLibraryUrl,
+          'https://music.falowen.app/?level='+slide.course+'&day='+expected.day,slide.assignmentId);
+        assert.equal(musicStage.musicVideo.youtubeId,undefined,slide.assignmentId);
+      }
+    }else{
+      assert.notEqual(musicStage.variant,'interactive-music-video',slide.assignmentId);
+    }
+  }
+  // B1 Day 25 retains its separate conversation Hören; Day 26 does not invent one.
+  const b1=getSlidesByCourse('B1');
+  const day25=buildTeachingPresenterStages(b1.find(s=>s.assignmentId==='B1-8.25'));
+  const day26=buildTeachingPresenterStages(b1.find(s=>s.assignmentId==='B1-9.26'));
+  assert.equal(day25.find(s=>s.id==='knowledge')?.audioKey,'b1/day-25/day-25.mp3');
+  assert.equal(day26.find(s=>s.id==='knowledge'),undefined);
+  assert.equal(day25.length,10);
+  assert.equal(day26.length,9);
+});
