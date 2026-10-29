@@ -769,6 +769,11 @@ export default function CheckinDisplayPage() {
     // Current approved songs are always picked first and loop alone. They
     // redirect to signed R2 GET URLs and never silently play the old GitHub
     // playlist if a lesson song is unavailable.
+    // A1 Day 13 is approved but its uploaded filename is discovered, not hardcoded.
+    // Only a validated public Music track may enter the waiting-room player.
+    if (curatedDayMusic?.discover && publishedDayMusic?.key === musicSessionKey)
+      return [{ ...publishedDayMusic.track, nativePlayback:true }];
+    if (curatedDayMusic?.discover) return [];
     if (curatedDayMusic) return [{
       id: curatedDayMusic.trackId, title: curatedDayMusic.title,
       src: curatedDayMusic.audioUrl, objectKey: curatedDayMusic.objectKey,
@@ -1299,9 +1304,11 @@ export default function CheckinDisplayPage() {
       let playlist = lessonSong && !curatedDayMusic
         ? [{ ...waitingSessionPlaylist[0], src: await prepareLessonSong(lessonSong) }]
         : waitingSessionPlaylist;
-      if (!lessonSong && !curatedDayMusic && publishedDayMusic?.key !== musicSessionKey
+      if (!lessonSong && (!curatedDayMusic || curatedDayMusic.discover)
+          && (curatedDayMusic?.discover || publishedDayMusic?.key !== musicSessionKey)
           && waitingClassLevel && presenterCurriculumDay) {
-        const uploadedDay = waitingClassLevel === "A2" && [19, 20].includes(presenterCurriculumDay);
+        const uploadedDay = Boolean(curatedDayMusic?.discover)
+          || (waitingClassLevel === "A2" && [19, 20].includes(presenterCurriculumDay));
         try {
           const response = await fetch(WAITING_ROOM_DISCOVERED_MUSIC_URL, {cache: "no-store"});
           if (!response.ok) throw new Error("Falowen Music discovery unavailable");
@@ -1315,7 +1322,7 @@ export default function CheckinDisplayPage() {
             playlist = [match];
             setPublishedDayMusic({ key: musicSessionKey, track: match });
           } else if (uploadedDay) {
-            throw new Error(`The A2 Day ${presenterCurriculumDay} recording could not be identified uniquely. Check that its MP3 is published under music/a2/day-${String(presenterCurriculumDay).padStart(2, "0")}/.`);
+            throw new Error(`The ${waitingClassLevel} Day ${presenterCurriculumDay} recording could not be identified uniquely. Check the approved MP3 in music/${String(waitingClassLevel).toLowerCase()}/day-${String(presenterCurriculumDay).padStart(2, "0")}/.`);
           }
         } catch (error) {
           if (uploadedDay) {

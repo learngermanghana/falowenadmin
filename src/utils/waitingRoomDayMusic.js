@@ -67,6 +67,7 @@ export function waitingRoomPublishedCatalogTrack(catalog, { level, day } = {}) {
 // Music's existing on-demand discovery API. Do not construct filenames from
 // the Admin songbook, which might not match the actual MP3 or timed lyrics.
 const EXPECTED_ATTENDANCE_TITLES = Object.freeze({
+  'A1-3.5': 'zwei tees vier euro',
   'A2-7.19': 'lieber online oder im laden',
   'A2-7.20': 'die jacke ist zu klein',
 });
@@ -84,7 +85,7 @@ export function waitingRoomDiscoveredMusicTrack(feed, { level, day, assignmentKe
     row?.autoDiscovered === true && row.coursebook === true
     && String(row.level || '').toUpperCase() === l && Number(row.day) === n
     && String(row.objectKey || '').startsWith(folder)
-    && /^[a-zA-Z0-9_ .()äöüÄÖÜß-]+\.mp3$/i.test(String(row.objectKey || '').slice(folder.length))
+    && /^[a-zA-Z0-9_ ,.()äöüÄÖÜß-]+\.mp3$/i.test(String(row.objectKey || '').slice(folder.length))
     && String(row.id || '').startsWith(prefix)
     && /^[a-zA-Z0-9_-]{1,245}$/.test(String(row.id || ''))
     && row.audioUrl === `https://www.falowen.app/api/music?track=${row.id}`
@@ -98,7 +99,9 @@ export function waitingRoomDiscoveredMusicTrack(feed, { level, day, assignmentKe
       normalizedMusicTitle(row.title).includes(preferred)
       || normalizedMusicTitle(row.objectKey.split('/').pop()).includes(preferred));
     if (preferredMatches.length === 1) matches = preferredMatches;
-    else if (preferredMatches.length > 1) return null;
+    // Day13's pinned song was previously invented: never fall back to
+    // a different single MP3 in that folder just because it happens to exist.
+    else if (preferredMatches.length > 1 || String(assignmentKey || '').trim().toUpperCase() === 'A1-3.5') return null;
   }
   // More than one same-day recording with no unique known match is ambiguous.
   if (matches.length !== 1) return null;
