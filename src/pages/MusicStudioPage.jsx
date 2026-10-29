@@ -6,6 +6,7 @@ import './MusicStudioPage.css';
 import { getMusicDays, musicLessonContext } from '../utils/musicCourseContext.js';
 import { STUDIO_COURSE_LEVELS } from '../utils/hoerenCourseCatalog.js';
 import { getMusicTopicStyle, suggestLessonMusicDirection } from '../utils/musicTopicStyle.js';
+import { MUSIC_PRODUCTION_PROFILES, getMusicProductionProfile } from '../utils/musicProductionProfiles.js';
 import { getReusableSongDraft, getReusableSongDrafts } from '../data/reusableMusicSongbook.js';
 import { musicSongTeachingPackText } from '../data/reusableMusicQuestions.js';
 import ReusableMusicQuestions from '../components/ReusableMusicQuestions.jsx';
@@ -27,6 +28,7 @@ export default function MusicStudioPage() {
   const lesson = selectedDay?.lessons.find(entry => entry.assignmentKey === assignment) || selectedDay?.lessons[0];
   const [brief, setBrief] = useState(PRESETS.vocabulary);
   const [styleMode, setStyleMode] = useState('auto');
+  const [productionProfile, setProductionProfile] = useState('auto');
   // Prewritten A1–B1 lyrics are selected from the local dictionary; edits are
   // scoped by assignment so changing lessons never reuses the wrong lyrics.
   const [lyricsOverrides, setLyricsOverrides] = useState({});
@@ -52,6 +54,7 @@ export default function MusicStudioPage() {
   const [storyIdea, setStoryIdea] = useState('');
   const [lyricTreatment, setLyricTreatment] = useState('exact');
   const rewriteFromLyrics = courseMode === 'course' && vocalMode === 'voice' && songStyle === 'story' && lyricTreatment === 'story-source';
+  const selectedProduction = getMusicProductionProfile(productionProfile);
   const effectiveBrief = styleMode === 'auto' && courseMode === 'course'
     ? suggestLessonMusicDirection(lesson, {
         instrumental: vocalMode === 'instrumental',
@@ -95,9 +98,10 @@ export default function MusicStudioPage() {
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   function saveCurrentLyrics() {
+    const productionNote = productionProfile === 'auto' ? '' : `\n\nPRODUCTION PALETTE\n${selectedProduction.direction}`;
     const text = draft
-      ? musicSongTeachingPackText({ ...draft, lyrics, musicStyle: effectiveBrief }, lesson)
-      : `FALOWEN MUSIC\nTitle: ${trackTitle}\n\nMUSIC STYLE\n${effectiveBrief}\n\nLYRICS\n${lyrics}`;
+      ? musicSongTeachingPackText({ ...draft, lyrics, musicStyle: `${effectiveBrief}${productionNote}` }, lesson)
+      : `FALOWEN MUSIC\nTitle: ${trackTitle}\n\nMUSIC STYLE\n${effectiveBrief}${productionNote}\n\nLYRICS\n${lyrics}`;
     downloadLyricsText(text, falowenMusicFileName(lesson, trackTitle, 'txt'));
   }
   function exportCompleteSongbook() {
@@ -122,7 +126,7 @@ export default function MusicStudioPage() {
   }
   async function copyDraftStyle() {
     try {
-      await navigator.clipboard.writeText(effectiveBrief);
+      await navigator.clipboard.writeText(`${effectiveBrief}${productionProfile === 'auto' ? '' : `\n\n${selectedProduction.direction}`}`);
       setCopyStatus('Music style copied.');
     } catch {
       setCopyStatus('Copy unavailable in this browser; download the song text instead.');
@@ -142,7 +146,7 @@ export default function MusicStudioPage() {
     lock.current = true; setBusy(true); setError('');
     try {
       const prompt = buildFalowenMusicPrompt({ brief: effectiveBrief, context, lyrics, mode, durationSeconds, vocalMode, backingLevel,
-        lyricTreatment: rewriteFromLyrics ? 'story-source' : 'exact' });
+        lyricTreatment: rewriteFromLyrics ? 'story-source' : 'exact', productionProfile });
       const data = await musicRequest({ mode, requestId: crypto.randomUUID(), prompt });
       const url = URL.createObjectURL(musicBlob(data));
       if (audioUrl.current) URL.revokeObjectURL(audioUrl.current);
@@ -202,6 +206,12 @@ export default function MusicStudioPage() {
           </select>
           {styleMode === 'auto' && <p className="music-note">Music genre for this lesson: <strong>{draft?.genre || getMusicTopicStyle(lesson).label}</strong>. Every lesson has a different arrangement; change the lesson to update it. Switch to custom to edit the direction.</p>}
         </>}
+        <label htmlFor="music-production">Musical production & chord progression</label>
+        <select id="music-production" value={productionProfile} onChange={e => setProductionProfile(e.target.value)}>
+          {MUSIC_PRODUCTION_PROFILES.map(profile => <option key={profile.id} value={profile.id}>{profile.label}</option>)}
+        </select>
+        <p className="music-note">{selectedProduction.description || 'Choose a production palette with its own chords, tempo, rhythm and instrumental layering.'} {productionProfile !== 'auto' ? 'This arrangement guides the model even when a lesson has an automatic genre; it does not alter your lyrics.' : 'Choose a richer arrangement without replacing the original lesson lyrics.'}</p>
+        {productionProfile !== 'auto' && <details className="music-production-preview"><summary>Show chord, rhythm & instrument direction</summary><p>{selectedProduction.direction}</p></details>}
         <label htmlFor="music-brief">Music direction {styleMode === 'auto' && courseMode === 'course' ? '(automatically selected)' : ''}</label>
         <textarea id="music-brief" required maxLength={2000} rows={6} value={effectiveBrief} readOnly={styleMode === 'auto' && courseMode === 'course'} onChange={e => setBrief(e.target.value)} />
         <label htmlFor="music-voice">Vocals and instrumental balance</label><select id="music-voice" value={vocalMode} onChange={e => setVocalMode(e.target.value)}><option value="voice">Clear lead vocals (recommended)</option><option value="instrumental">Instrumental only — no singer</option></select>
