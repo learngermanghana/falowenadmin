@@ -106,6 +106,6 @@ test("Slide 3 and workbook use five new sustainability listening statements from
   assert.match(stage,/Ein großer Teil der Altkleider zerstört laut Lisa lokale Märkte/);
   assert.match(stage,/Jonas wusste von Anfang an genau/);
   assert.match(stage,/Lisa empfiehlt, Kleidung länger zu tragen oder Tauschpartys/);
-  assert.match(stage,/b1\\/day-24\\/day-25\\.mp3/);
+  assert.ok(stage.includes("b1/day-24/day-25.mp3"));
   assert.match(stage,/B1_DAY24_CONVERSATION_TWO/);
 });
