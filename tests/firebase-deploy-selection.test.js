@@ -120,3 +120,23 @@ test('rebuilt marking bundle and workbook snapshots deploy only their two runtim
  assert.equal(plan.mode, 'targeted');
  assert.deepEqual(plan.targets, ['api','markCourseSubmissionAutomatically']);
 });
+
+
+test("lyrics-only route updates deploy the existing API and no other workers",()=>{
+  const plan=selectFirebaseDeployTargets({changedPaths:[
+    "functions/index.js", "functions/musicStudioLyrics.js",
+    "src/pages/MusicStudioPage.jsx", "src/services/musicStudioService.js",
+    "src/firebase.js", "src/firebaseAuth.js",
+    "tests/music-studio-lyrics-overwrite.test.js",
+    "scripts/selectFirebaseDeployTargets.mjs",
+  ]});
+  assert.equal(plan.mode,"targeted");
+  assert.deepEqual(plan.targets,["api"]);
+});
+test("a batch with answer-key changes never silently skips automatic marking",()=>{
+  const plan=selectFirebaseDeployTargets({changedPaths:[
+    "functions/index.js", "functions/musicStudioLyrics.js",
+    "src/data/answers_dictionary.json",
+  ]});
+  assert.equal(plan.mode,"full");
+});

@@ -2639,6 +2639,11 @@ const musicStudioHandler = require('./musicStudio').createHandler({
   key: () => geminiAudioKeySecret.value(), runtimeConfig,
 });
 app.all('/music-studio', musicStudioHandler);
+const musicLyricsHandlers = require('./musicStudioLyrics').createLyricsHandlers({
+  db, verifyToken: token => admin.auth().verifyIdToken(token), runtimeConfig,
+});
+app.all('/music-studio/lyrics', musicLyricsHandlers.owner);
+app.all('/music-studio/public-lyrics', musicLyricsHandlers.publicRead);
 
 exports.api = onRequest({
   // Music has a 270s upstream timeout; ordinary API requests finish normally.

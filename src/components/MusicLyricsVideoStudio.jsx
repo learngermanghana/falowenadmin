@@ -17,7 +17,7 @@ function audioFilenameObjectKey(text) {
   const key=String(text||"").trim();
   return /^music\/(a1|a2|b1|b2|c1|c2)\/day-(0[1-9]|1[0-9]|2[0-8])\/[^/]{1,150}\.mp3$/i.test(key) ? key : "";
 }
-export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", title = "Falowen Music", level = "", day = "" }) {
+export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", title = "Falowen Music", level = "", day = "", onOverwriteLyrics = null, savingLyrics = false, loadingLyrics = false, lyricsSaveNotice = "" }) {
   const [file,setFile] = useState(null);
   const [fileUrl,setFileUrl] = useState("");
   const [lyricText,setLyricText] = useState(lyrics || "");
@@ -29,8 +29,19 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   const [progress,setProgress] = useState(0);
   const [objectKey,setObjectKey] = useState("");
   const canvasRef=useRef(null), audioRef=useRef(null), cancelRef=useRef(null);
+  const previousEditorLyrics=useRef(lyrics), currentLyricText=useRef(lyrics || "");
   const activeUrl=fileUrl || generated?.url || "";
-  useEffect(()=>{setLyricText(generated?.lyrics || lyrics || "");setStarts([]);},[lyrics,generated?.url,generated?.lyrics]);
+  useEffect(()=>{
+    const editorChanged=lyrics !== previousEditorLyrics.current;
+    previousEditorLyrics.current=lyrics;
+    const next=editorChanged ? lyrics || "" : generated?.lyrics || lyrics || "";
+    // Saving the same text from this video editor must not clear hand-marked timing.
+    if (next !== currentLyricText.current) {
+      currentLyricText.current=next;
+      setLyricText(next);
+      setStarts([]);
+    }
+  },[lyrics,generated?.url,generated?.lyrics]);
   useEffect(()=>{
     if(!file){setFileUrl("");return undefined;}
     const url=URL.createObjectURL(file);setFileUrl(url);
@@ -140,8 +151,14 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       onTimeUpdate={event=>{if(!exporting)drawAt(event.currentTarget.currentTime);}} />:null}
     <label style={{display:"grid",gap:5,fontWeight:700}}>Lyrics for this recording (editable)
       <textarea rows={9} style={{...fieldStyle,maxWidth:"100%",fontFamily:"inherit"}} disabled={exporting}
-        value={lyricText} onChange={event=>{setLyricText(event.target.value);setStarts([]);}} />
+        value={lyricText} onChange={event=>{currentLyricText.current=event.target.value;setLyricText(event.target.value);setStarts([]);}} />
     </label>
+    {onOverwriteLyrics && <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
+      <button type="button" disabled={!hasLyrics || savingLyrics || loadingLyrics || exporting || lyricText === lyrics}
+        onClick={()=>onOverwriteLyrics(lyricText)}>{savingLyrics ? "Saving lyrics…" : "Overwrite Lyrics · Save permanently"}</button>
+      <small>Save the edited lyric layers for this course lesson. It does not alter the MP3 or your timing marks.</small>
+      {lyricsSaveNotice && <p role="status" style={{width:"100%",fontSize:13}}>{lyricsSaveNotice}</p>}
+    </div>}
     <p style={{margin:0,fontSize:13,color:"#765616"}}>Check every lyric against the actual finished audio. A course-song draft may differ from what the singer recorded. Automatic timing is an editable starting point, not verified synchronization.</p>
     <div style={{display:"flex",flexWrap:"wrap",gap:18,alignItems:"start"}}>
       <canvas ref={canvasRef} width="720" height="1280" style={frameStyle} aria-label="Vertical lyric video preview" />
