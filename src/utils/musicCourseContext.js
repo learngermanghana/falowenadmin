@@ -37,10 +37,12 @@ export function musicLessonContext(entry, language = 'bilingual', focus = '', op
     'Falowen course song — use this selected lesson as the learning focus:',
     `CEFR level: ${entry.level}. Course day: ${entry.day}. Assignment: ${entry.assignmentKey}. Chapter: ${entry.chapter}.`,
     `Dictionary topic: ${entry.germanTitle} / ${entry.englishTitle}.`,
-    bilingual
-      ? 'Write primarily in German, with only occasional short, naturally sung English support. Do not add word-for-word English translations in parentheses after every German vocabulary item.'
-      : 'Sing in German only, without English translations.',
-    `Use vocabulary, grammar and clear pronunciation appropriate to ${entry.level}.`,
+    instrumentalOnly
+      ? 'No vocals, spoken language, choir or sung syllables in any language; convey the chosen scene with melody and chords only.'
+      : bilingual
+        ? 'Write primarily in German, with only occasional short, naturally sung English support. Do not add word-for-word English translations in parentheses after every German vocabulary item.'
+        : 'Sing in German only, without English translations.',
+    instrumentalOnly ? 'Express the topic musically rather than using vocabulary or speech.' : `Use vocabulary, grammar and clear pronunciation appropriate to ${entry.level}.`,
     'This is music for adult German learners, not a children’s nursery classroom. Prefer believable human emotion, everyday conversations, natural German word stress and a memorable melodic hook. Never force couplet rhymes, chanted vocabulary lists, artificial question-answer jingles or babyish singalong melodies. Keep the German simple at A1/A2 without making the music juvenile. If exact teacher lyrics are supplied, do not alter them: apply the mature direction to melody, chords and arrangement instead.',
     instrumentalOnly
       ? 'INSTRUMENTAL-ONLY ADULT SONG: express the lesson situation with a strong melodic motif, moving chord progression, organic guitar/piano dynamics and a thoughtful emotional arc; do not produce any lyrics, dialogue, speech, chanting, choir or humming.'
@@ -57,6 +59,6 @@ export function musicLessonContext(entry, language = 'bilingual', focus = '', op
       : 'Follow the teacher-supplied lyrics verbatim; keep pronunciation and phrasing correct without inventing a new story.',
     focus.trim() ? `Teacher-selected words or grammar to practise: ${focus.trim()}` : '',
     'The dictionary provides lesson titles, not a verbatim vocabulary list. Do not claim invented examples are quotations from the course.',
-    'Preserve teacher-supplied exact lyrics unless the teacher explicitly chooses to rewrite them into a new storytelling song.',
+    !instrumentalOnly ? 'Preserve teacher-supplied exact lyrics unless the teacher explicitly chooses to rewrite them into a new storytelling song.' : '',
   ].filter(Boolean).join('\n');
 }
