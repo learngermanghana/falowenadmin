@@ -399,11 +399,30 @@ ENTRIES["A2-6.17"].listening = {
 // YouTube and optional lyric questions together on slide 2.
 ENTRIES["A2-7.18"].musicIntro = A2_DAY18_BANK_MUSIC;
 ENTRIES["A2-7.18"].listening = A2_DAY18_BANK_LISTENING;
+// A2 Days 19 and 20 already have published music discovered by the public
+// music library; these songs are not yet pinned to the static approved catalog.
+// Link to the exact level/day filter rather than inventing an R2 key,
+// a player URL or mismatched lyrics/timestamps. Replaces warm-up only.
 ENTRIES["A2-7.19"] = {
   assignmentId: 'A2-7.19', title: 'Einkaufen – wo und wie?',
-  warmup: [], listening: A2_DAY19_LISTENING,
+  warmup: [],
+  musicIntro: {
+    mediaType: 'music', level: 'A2', day: 19,
+    title: 'Lieber online oder im Laden?',
+    introQuestion: 'Kaufst du lieber online oder im Geschäft? Warum?',
+    musicLibraryUrl: 'https://music.falowen.app/?level=A2&day=19',
+    nextStep: 'Danach folgt das separate Hören-Gespräch über den Wochenmarkt und den Online-Einkauf.',
+  },
+  listening: A2_DAY19_LISTENING,
 };
 ENTRIES["A2-7.20"].listening = A2_DAY20_LISTENING;
+ENTRIES["A2-7.20"].musicIntro = {
+  mediaType: 'music', level: 'A2', day: 20,
+  title: 'Die Jacke ist zu klein',
+  introQuestion: 'Was machst du, wenn ein gekaufter Artikel nicht passt?',
+  musicLibraryUrl: 'https://music.falowen.app/?level=A2&day=20',
+  nextStep: 'Danach folgt das separate Hören-Gespräch über die Reklamation eines falschen Hemds.',
+};
 // Music uses the same Hördetektiv question/reveal flow, not the scored workbook Hören.
 ENTRIES["B1-8.24"] = {
   assignmentId: "B1-8.24",

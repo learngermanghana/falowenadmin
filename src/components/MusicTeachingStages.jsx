@@ -12,6 +12,27 @@ export function MusicVideoStage({ music }) {
   if (music?.assignmentKey === 'A2-7.18' && music?.audioUrl) {
     return <PublishedSongLessonStage assignmentKey="A2-7.18" />;
   }
+  // These already-uploaded A2 recordings are discovered dynamically by
+  // Falowen Music; no verified fixed MP3 or timeline is pinned to this app.
+  // The library understands ?level=A2&day=N and lists the real recording.
+  if (music?.musicLibraryUrl && !music?.youtubeId) {
+    return (
+      <section className="music-teaching-video" aria-label="Musik im Unterricht">
+        <header className="music-teaching-heading">
+          <span>{music.level} · TAG {music.day} · MUSIK HÖREN</span>
+          <h1>{music.title}</h1>
+          <p>Hört das veröffentlichte Lied und besprecht: <strong>{music.introQuestion}</strong></p>
+        </header>
+        <div className="music-teaching-next-step">
+          <a href={music.musicLibraryUrl} target="_blank" rel="noopener noreferrer">
+            ♫ Falowen Music · A2 Day {music.day} öffnen
+          </a>
+          <p>Die veröffentlichte Aufnahme, ihr Liedtext und ihre Zeitmarken bleiben unverändert.</p>
+          <p><strong>Nach dem Lied:</strong> {music.nextStep}</p>
+        </div>
+      </section>
+    );
+  }
   const hasInSlideReading = Boolean(
     music.readingOnVideoSlide && music.readingSections?.length && music.questions?.length,
   );

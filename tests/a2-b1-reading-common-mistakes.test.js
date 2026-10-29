@@ -62,3 +62,29 @@ test('correction page uses existing reveal controls without a writing form', () 
   assert.match(branch, /item.answer/);
   assert.doesNotMatch(branch, /<textarea|<input|<form|submit|fetch\(/);
 });
+
+test('A2 days 18-20 retain music, separate Hören, Lesen, Common Mistakes and approved page count', () => {
+  const audio = {
+    'A2-7.18': 'a2/day-18/bank-telefonat.mp3',
+    'A2-7.19': 'a2/day-19/einkaufen-wo-und-wie.mp3',
+    'A2-7.20': 'a2/day-20/reklamation-falsches-hemd.mp3',
+  };
+  const slides = getSlidesByCourse('A2');
+  for (const [assignmentId, audioKey] of Object.entries(audio)) {
+    const slide = slides.find(row => row.assignmentId === assignmentId);
+    assert.ok(slide, assignmentId);
+    const stages = buildTeachingPresenterStages(slide, slide.topic);
+    assert.equal(stages.length, 10, assignmentId);
+    assert.deepEqual(stages.slice(0, 6).map(s => s.id),
+      ['intro', 'warmup', 'knowledge', 'common-mistakes', 'reading', 'grammar-check'], assignmentId);
+    assert.equal(stages[1].variant, 'interactive-music-video', assignmentId);
+    assert.equal(stages[1].musicVideo.mediaType, 'music', assignmentId);
+    assert.equal(stages[2].variant, 'interactive-listening', assignmentId);
+    assert.equal(stages[2].audioKey, audioKey, assignmentId);
+    assert.equal(stages[2].listeningItems.length, 5, assignmentId);
+    assert.equal(stages[4].textDe, getPresenterReadingLesson(assignmentId).textDe);
+    assert.ok(stages[3].items.length >= 2, assignmentId);
+  }
+  assert.equal(getInteractiveLessonOpening('A2-7.19').musicIntro.audioUrl, undefined);
+  assert.equal(getInteractiveLessonOpening('A2-7.20').musicIntro.youtubeId, undefined);
+});

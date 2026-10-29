@@ -19,7 +19,7 @@ test('Day 19 classroom recording uses the uploaded script and evidence-backed qu
   assert.equal(task.questions[1].prompt, 'Anna fragt, ob der Wochenmarkt zu teuer ist.');
 });
 
-test('Day 19 adds only selected listening, preserving Lesen, correction and speaking', () => {
+test('Day 19 keeps separate music and Hören alongside Lesen, correction and speaking', () => {
   const slide = getSlidesByCourse('A2').find(s => s.assignmentId === 'A2-7.19');
   const stages = buildTeachingPresenterStages(slide, slide.topic);
   assert.equal(getInteractiveLessonOpening(slide.assignmentId).listening, A2_DAY19_LISTENING);
@@ -29,6 +29,10 @@ test('Day 19 adds only selected listening, preserving Lesen, correction and spea
   assert.equal(stages[2].listeningItems.length, 5);
   assert.equal(stages[4].title, 'Günstig gekauft?');
   assert.equal(stages.find(s=>s.id==='questions').items.length, 3);
-  assert.equal(stages[1].musicVideo, undefined);
+  assert.equal(stages[1].variant, 'interactive-music-video');
+  assert.equal(stages[1].musicVideo.musicLibraryUrl, 'https://music.falowen.app/?level=A2&day=19');
+  assert.equal(stages[1].musicVideo.youtubeId, undefined);
+  assert.equal(stages[1].musicVideo.audioUrl, undefined);
+  assert.equal(stages.length, 10, 'Keep the approved 10-slide lesson structure');
   assert.equal(getCuratedMusicByAssignment('A2-7.18').objectKey, 'music/a2/day-18/die-karte-funktioniert-nicht.mp3');
 });

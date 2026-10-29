@@ -75,8 +75,9 @@ const entries = [
     ['Ich habe meine Karte in meine Jacke gefunden.', 'Ich habe meine Karte in meiner Jacke gefunden.', 'Wo war die Karte? Der Ort steht hier im Dativ.'],
   ]],
   ['A2-7.19', [
-    ['Im Geschäft kann ich die Schuhe zu probieren.', 'Im Geschäft kann ich die Schuhe probieren.', 'Nach „kann“ steht der Infinitiv ohne „zu“.'],
-    ['Online sind die Schuhe billiger wie im Laden.', 'Online sind die Schuhe billiger als im Laden.', 'Beim Komparativ verwenden wir „als“.'],
+    ['Ich bezahle bar denn mit Karte.', 'Ich bezahle bar oder mit Karte.', '„oder“ verbindet Alternativen; „denn“ leitet eine Begründung ein.'],
+    ['Ich kaufe online, denn ist es bequem.', 'Ich kaufe online, denn es ist bequem.', 'Nach „denn“ bleibt die normale Hauptsatzstellung: Subjekt + Verb.'],
+    ['Ich gehe ins Geschäft, denn ich die Schuhe anprobieren möchte.', 'Ich gehe ins Geschäft, denn ich möchte die Schuhe anprobieren.', '„denn“ verschiebt das finite Verb nicht ans Satzende – anders als „weil“.'],
   ]],
   ['A2-7.20', [
     ['Ich möchte die Jacke umtauschen, weil sie ist zu klein.', 'Ich möchte die Jacke umtauschen, weil sie zu klein ist.', 'Im weil-Satz steht „ist“ am Ende.'],
