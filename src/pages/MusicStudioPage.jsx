@@ -61,6 +61,8 @@ export default function MusicStudioPage() {
   // Preserve other saved teacher edits; the owner can permanently overwrite the stale draft.
   const obsoleteDay7Draft = assignmentKey === 'A1-3' &&
     (savedLyrics[assignmentKey] || '').includes('Auf dem Markt sehe ich Äpfel.');
+  const obsoleteDay8Draft = assignmentKey === 'A1-4' &&
+    (savedLyrics[assignmentKey] || '').includes('Im Kurs sitzt mein Freund Sam.');
   const lyrics = courseMode === 'course'
     ? Object.prototype.hasOwnProperty.call(lyricsOverrides, assignmentKey)
       ? lyricsOverrides[assignmentKey]
