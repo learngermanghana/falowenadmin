@@ -79,4 +79,6 @@ test('instrumental guitar songs contain no voice directions or lyrics', () => {
   const page = readFileSync(new URL('../src/pages/MusicStudioPage.jsx', import.meta.url), 'utf8');
   assert.match(page, /lyrics: vocalMode === 'instrumental' \? '' : lyrics/);
   assert.match(page, /instrumentalOnly: vocalMode === 'instrumental'/);
+  assert.match(page, /Acoustic guitar song/);
+  assert.match(page, /setProductionProfile\(id === 'instrumental' \? 'fingerstyle-guitar'/);
 });
