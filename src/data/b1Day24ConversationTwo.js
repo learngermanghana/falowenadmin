@@ -27,7 +27,7 @@ export const B1_DAY24_CONVERSATION_QUESTIONS = Object.freeze(statements.map(([pr
 export const B1_DAY24_CONVERSATION_TWO = Object.freeze({
   level:"B1",day:24, title:"Konsum und Nachhaltigkeit · Gespräch 2 · Altkleider",
   audioKey:B1_DAY24_AUDIO_KEY,
-  transcript:Object.freeze(transcript),
+  transcript:Object.freeze(transcript.map(line => Object.freeze([line.slice(0, 1), line.slice(3)]))),
   questions:B1_DAY24_CONVERSATION_QUESTIONS,
   suggestedMinutes:8,
   playbackNote:"Höre das Gespräch zweimal. Wähle A = Richtig oder B = Falsch.",
