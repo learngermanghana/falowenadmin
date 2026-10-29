@@ -53,9 +53,14 @@ export function selectFirebaseDeployTargets({ changedPaths, predeployPaths = [],
   const changedFunctionPaths = changedPaths.filter(path => path.startsWith("functions/"));
   if (changedFunctionPaths.includes("functions/musicStudioLyrics.js")
     && changedFunctionPaths.every(path => path === "functions/index.js" || path === "functions/musicStudioLyrics.js")
-    && !changedPaths.some(path => predeploy.has(path)
-      || path === "firebase.json"
-      || (path.startsWith("scripts/") && path !== "scripts/selectFirebaseDeployTargets.mjs"))) {
+    && changedPaths.every(path =>
+      path === "functions/index.js" || path === "functions/musicStudioLyrics.js"
+      || path === "src/pages/MusicStudioPage.jsx"
+      || path === "src/services/musicStudioService.js"
+      || path === "src/firebase.js" || path === "src/firebaseAuth.js"
+      || path === "scripts/selectFirebaseDeployTargets.mjs"
+      || path.startsWith("tests/"))
+    && !changedPaths.some(path => predeploy.has(path))) {
     return {mode:"targeted",targets:["api"],reason:"Only Music Studio lyric routes in the existing API changed."};
   }
   for (const path of changedPaths) {
