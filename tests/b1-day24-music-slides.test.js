@@ -7,7 +7,7 @@ import { getInteractiveLessonOpening, isInteractiveOpeningStage } from "../src/d
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 import { musicMomentUrl, musicTimestamp } from "../src/utils/musicTeaching.js";
 
-test("B1 Day 24 uses direct music with verified in-slide lyrics, MCQs and original deep-reading page", () => {
+test("B1 Day 24 has music intro followed by protected conversation 2 on slide 3 and keeps the deep-reading page", () => {
   const slide=getSlidesByCourse("B1").find(row=>row.assignmentId==="B1-8.24");
   const stages=buildTeachingPresenterStages(slide,slide.topic);
   assert.equal(stages.length,10);
@@ -18,10 +18,10 @@ test("B1 Day 24 uses direct music with verified in-slide lyrics, MCQs and origin
   assert.equal(stages[1].musicVideo.youtubeId,undefined);
   assert.equal(stages[1].musicVideo.musicLibraryUrl,"https://music.falowen.app/?level=B1&day=24");
   assert.equal(stages[1].timingMode,"");
-  assert.equal(stages[2].variant,"interactive-music-reading");
-  assert.equal(stages[2].musicReading.questions.length,5);
-  assert.equal(stages[2].musicReading.readingSections.length,4);
-  assert.ok(stages[2].musicReading.questions.every(q=>q.options[q.correctIndex]===q.answer));
+  assert.equal(stages[2].type,"knowledge");
+  assert.equal(stages[2].variant,"interactive-listening");
+  assert.equal(stages[2].audioKey,"b1/day-24/day-25.mp3");
+  assert.equal(stages[2].id,"knowledge");
   assert.equal(stages[3].items.length>=2,true);
   assert.ok(stages[4].textDe);
   assert.equal(isInteractiveOpeningStage("B1-8.24","warmup"),false);
@@ -96,4 +96,16 @@ test("B1 Day 24 Argumentkarte is a four-case interactive decision activity on it
   assert.match(interactive, /setRevealed/);
   assert.match(interactive, /onSetMinutes\?\.\(7\)/);
   assert.match(css, /@media\(max-width:520px\)/);
+});
+
+
+test("Slide 3 and workbook use five new sustainability listening statements from the uploaded assessment",()=>{
+  const stage=fs.readFileSync("src/data/b1Day24ConversationTwo.js","utf8");
+  assert.match(stage,/Jonas verkauft seine alten Kleider dieses Mal online/);
+  assert.match(stage,/Jonas wirft seine Kleidung in einen Altkontainer/);
+  assert.match(stage,/Ein großer Teil der Altkleider zerstört laut Lisa lokale Märkte/);
+  assert.match(stage,/Jonas wusste von Anfang an genau/);
+  assert.match(stage,/Lisa empfiehlt, Kleidung länger zu tragen oder Tauschpartys/);
+  assert.ok(stage.includes("b1/day-24/day-25.mp3"));
+  assert.match(stage,/B1_DAY24_CONVERSATION_TWO/);
 });

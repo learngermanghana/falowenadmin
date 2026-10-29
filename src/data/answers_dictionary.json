@@ -3673,9 +3673,7 @@
     "assignment_id": "B1-8.24",
     "expectedParts": [
       "teil2",
-      "teil3"
-    ],
-    "excludedParts": [
+      "teil3",
       "teil4"
     ],
     "writingParts": [
@@ -3685,7 +3683,8 @@
       "teil2"
     ],
     "referenceAnswerParts": [
-      "teil3"
+      "teil3",
+      "teil4"
     ],
     "answerLayout": "multipart",
     "partGrading": {
@@ -3700,6 +3699,12 @@
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Grade this part against the reference answers in answers."
+      },
+      "teil4": {
+        "label": "Teil 4 Hören",
+        "hasReferenceAnswers": true,
+        "gradingMode": "answer_key",
+        "instruction": "Grade five Richtig/Falsch answers to the Jonas and Lisa Altkleider conversation 2 (b1/day-24/day-25.mp3). A=Richtig and B=Falsch. Approved answer order B A A B A. Do not use the obsolete smartphone questions."
       }
     }
   },

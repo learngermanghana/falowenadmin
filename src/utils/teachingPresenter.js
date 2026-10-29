@@ -2,6 +2,7 @@ import { getA2B1CommonMistakes } from '../data/a2B1CommonMistakes.js';
 import { getPresenterReadingLesson } from '../data/presenterReadingLessons.js';
 import { getLessonMusic } from "../data/lessonMusic.js";
 import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
+import { B1_DAY24_CONVERSATION_TWO } from "../data/b1Day24ConversationTwo.js";
 import { B1_DAY18_CAREER_CHALLENGES } from "../data/b1Day18CareerChallenge.js";
 import { getB1TeacherChallenge } from "../data/b1TeacherChallenges.js";
 import { getA2TeacherChallenge } from "../data/a2TeacherChallenges.js";
@@ -2100,6 +2101,21 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
         student: "Höre das Lied und denke über seine Hauptbotschaft nach.",
         teacher: "Spiele das YouTube-Musikvideo. Kein Fragen-pro-Schüler-Warm-up auf dieser Folie.",
       },
+    };
+    if (normalizedAssignmentId(slide) === "B1-8.24" && stage.id === "knowledge") return {
+      ...stage, variant:"interactive-listening",
+      kicker:"Hören · Gespräch 2",
+      title:B1_DAY24_CONVERSATION_TWO.title,
+      listeningItems:B1_DAY24_CONVERSATION_TWO.questions,
+      transcript:B1_DAY24_CONVERSATION_TWO.transcript,
+      audioKey:B1_DAY24_CONVERSATION_TWO.audioKey,
+      audioLevel:"B1", audioDay:24,
+      previewWords:B1_DAY24_CONVERSATION_TWO.previewWords,
+      suggestedMinutes:8,
+      teacherPurpose:{
+        student:"Höre Jonas und Lisa. Entscheide bei allen fünf Aussagen Richtig oder Falsch.",
+        teacher:"Spiele das Gespräch zweimal. Belege und Lösungen erst nach den Antworten zeigen. Die fünf Antworten werden im Workbook als Teil 4 eingereicht."
+      }
     };
     if (lessonOpening.listening?.mediaType === "music" && stage.id === "knowledge") return {
       ...stage,
