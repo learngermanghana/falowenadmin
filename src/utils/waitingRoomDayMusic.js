@@ -85,7 +85,7 @@ export function waitingRoomDiscoveredMusicTrack(feed, { level, day, assignmentKe
     row?.autoDiscovered === true && row.coursebook === true
     && String(row.level || '').toUpperCase() === l && Number(row.day) === n
     && String(row.objectKey || '').startsWith(folder)
-    && /^[a-zA-Z0-9_ .()äöüÄÖÜß-]+\.mp3$/i.test(String(row.objectKey || '').slice(folder.length))
+    && /^[a-zA-Z0-9_ ,.()äöüÄÖÜß-]+\.mp3$/i.test(String(row.objectKey || '').slice(folder.length))
     && String(row.id || '').startsWith(prefix)
     && /^[a-zA-Z0-9_-]{1,245}$/.test(String(row.id || ''))
     && row.audioUrl === `https://www.falowen.app/api/music?track=${row.id}`
