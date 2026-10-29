@@ -79,7 +79,7 @@ test("A1 adult-learner context keeps language easy without childish songwriting"
   assert.match(context, /adult German learners/i);
   assert.match(context, /natural German word stress/);
   assert.match(context, /Never force couplet rhymes/);
-  assert.match(context, /no preschool characters/i);
+  assert.match(context, /not preschool characters/i);
   assert.match(context, /simple present tense/);
 });
 
