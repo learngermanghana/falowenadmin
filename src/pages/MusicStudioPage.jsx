@@ -66,7 +66,7 @@ export default function MusicStudioPage() {
   const lyrics = courseMode === 'course'
     ? Object.prototype.hasOwnProperty.call(lyricsOverrides, assignmentKey)
       ? lyricsOverrides[assignmentKey]
-      : Object.prototype.hasOwnProperty.call(savedLyrics, assignmentKey) && savedLyrics[assignmentKey] && !obsoleteDay7Draft
+      : Object.prototype.hasOwnProperty.call(savedLyrics, assignmentKey) && savedLyrics[assignmentKey] && !obsoleteDay7Draft && !obsoleteDay8Draft
         ? savedLyrics[assignmentKey] : draft?.lyrics || ''
     : customLyrics;
   const setLyrics = next => {
