@@ -2,7 +2,9 @@ import { getLessonSong } from "../data/a1Day22Music.js";
 import { getCuratedMusicForSession } from "../data/curatedLessonMusic.js";
 import { prepareLessonSong } from "../services/lessonSongService.js";
 import useSongTiming from "../hooks/useSongTiming.js";
-import LessonSongLyrics from "../components/LessonSongLyrics.jsx";
+import WaitingRoomLyricsSlide from "../components/WaitingRoomLyricsSlide.jsx";
+import useLobbySlideshow from "../hooks/useLobbySlideshow.js";
+import { hasCompleteSongTiming } from "../utils/songLyrics.js";
 import "../components/LessonSongStage.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -308,6 +310,11 @@ export default function CheckinDisplayPage() {
   const [musicVolume, setMusicVolume] = useState(0.5);
   const [musicError, setMusicError] = useState("");
   const [currentMusicTrack, setCurrentMusicTrack] = useState(pianoPlaylist[0]?.title || "Waiting room music");
+  const [currentLyricTrack,setCurrentLyricTrack]=useState(null);
+  const [songPosition,setSongPosition]=useState(0);
+  const [songCues,,recordedSongLyrics]=useSongTiming(currentLyricTrack);
+  const lobbyLyricsAvailable=musicPlaying && Boolean(currentLyricTrack?.objectKey)
+    && hasCompleteSongTiming(songCues,recordedSongLyrics);
   const audioContextRef = useRef(null);
   const musicGainRef = useRef(null);
   const [checkins, setCheckins] = useState([]);
@@ -325,7 +332,7 @@ export default function CheckinDisplayPage() {
   const [presenterLiveState, setPresenterLiveState] = useState({});
   const [presenterLiveError, setPresenterLiveError] = useState("");
   const [waitingClassLevel, setWaitingClassLevel] = useState(() => inferClassLevel({}, assignmentId, classId));
-  const [smartLobbyIndex, setSmartLobbyIndex] = useState(0);
+
   const [smartLobbyPaused, setSmartLobbyPaused] = useState(false);
   const [classStartHandoff, setClassStartHandoff] = useState({ phase: "idle", message: "" });
   const classStartStopTimerRef = useRef(null);
@@ -644,6 +651,8 @@ export default function CheckinDisplayPage() {
           ? ["lesson", "outcomes", "warmup", "starting", "checkin"]
           : ["checkin", "lesson", "outcomes", "warmup", "starting"];
 
+    if(lobbyLyricsAvailable)sequence.push("lyrics");
+    available.lyrics={id:"lyrics",label:"Song lyrics"};
     return sequence
       .map((id, index) => {
         const slide = available[id];
@@ -657,11 +666,11 @@ export default function CheckinDisplayPage() {
     nowMs,
     startTime,
     waitingWarmupTeaser,
+    lobbyLyricsAvailable,
   ]);
 
-  const activeSmartLobbySlide = smartLobbySlides[
-    Math.min(Math.max(0, smartLobbyIndex), Math.max(0, smartLobbySlides.length - 1))
-  ] || smartLobbySlides[0];
+  const {index:smartLobbyIndex,active:activeSmartLobbySlide,setIndex:setSmartLobbyIndex,lyricsHeld:lobbyLyricsHeld}=useLobbySlideshow(
+    smartLobbySlides,{paused:smartLobbyPaused,started:Boolean(actualStartedAt),intervalMs:SMART_LOBBY_ROTATION_MS,sessionKey:`${classId}:${sessionId}:${effectiveAssignmentId}`});
 
   useEffect(() => {
     setShowMiniAnswer(false);
@@ -675,32 +684,18 @@ export default function CheckinDisplayPage() {
       const total = Math.max(1, smartLobbySlides.length);
       return (current - 1 + total) % total;
     });
-  }, [smartLobbySlides.length]);
+  }, [smartLobbySlides.length,setSmartLobbyIndex]);
 
   const showNextLobbySlide = useCallback(() => {
     setSmartLobbyIndex((current) => {
       const total = Math.max(1, smartLobbySlides.length);
       return (current + 1) % total;
     });
-  }, [smartLobbySlides.length]);
+  }, [smartLobbySlides.length,setSmartLobbyIndex]);
 
   useEffect(() => {
-    setSmartLobbyIndex(0);
     setSmartLobbyPaused(false);
   }, [classId, sessionId, effectiveAssignmentId]);
-
-  useEffect(() => {
-    if (actualStartedAt || smartLobbyPaused || smartLobbySlides.length <= 1) return undefined;
-    const rotation = window.setInterval(() => {
-      setSmartLobbyIndex((current) => (current + 1) % smartLobbySlides.length);
-    }, SMART_LOBBY_ROTATION_MS);
-    return () => window.clearInterval(rotation);
-  }, [actualStartedAt, smartLobbyPaused, smartLobbySlides.length]);
-
-  useEffect(() => {
-    if (smartLobbyIndex < smartLobbySlides.length) return;
-    setSmartLobbyIndex(0);
-  }, [smartLobbyIndex, smartLobbySlides.length]);
 
   const linkSessionDate = useMemo(() => {
     const raw = String(dateLabel || "").trim();
@@ -741,8 +736,6 @@ export default function CheckinDisplayPage() {
   const curatedDayMusic = getCuratedMusicForSession({
     level: waitingClassLevel, day: presenterCurriculumDay, assignmentKey: effectiveAssignmentId,
   });
-  const [songPosition, setSongPosition] = useState(0);
-  const [songCues, , recordedSongLyrics] = useSongTiming(lessonSong);
   const [publishedDayMusic, setPublishedDayMusic] = useState(null);
   const musicSessionKey = `${String(waitingClassLevel || "").toUpperCase()}:${presenterCurriculumDay}`;
   useEffect(() => {
@@ -1232,6 +1225,7 @@ export default function CheckinDisplayPage() {
       context.close().catch(() => {});
     }
     setMusicPlaying(false);
+    setCurrentLyricTrack(null);
     setSongPosition(0);
     setMusicStarting(false);
   }, [waitingSessionPlaylist]);
@@ -1341,6 +1335,9 @@ export default function CheckinDisplayPage() {
         onTimeUpdate: setSongPosition,
         onTrackChange: (track) => {
           setCurrentMusicTrack(track?.title || "Waiting room music");
+          setSongPosition(0);
+          setCurrentLyricTrack(track?.nativePlayback && /^music\/(a1|a2|b1|b2|c1|c2)\/day-\d{2}\/[^/]+\.mp3$/i.test(track.objectKey || "")
+            ? {id:track.id,objectKey:track.objectKey,title:track.title,lyrics:""} : null);
           setMusicError("");
         },
         onError: (message) => {
@@ -2281,9 +2278,7 @@ export default function CheckinDisplayPage() {
             />
             <span>{Math.round(musicVolume * 100)}%</span>
           </label>
-          {lessonSong && <details className="checkin-song-lyrics"><summary>Liedtext · {lessonSong.title}</summary>
-            <LessonSongLyrics song={{...lessonSong, lyrics:recordedSongLyrics}} cues={songCues} time={songPosition} follow={musicPlaying} />
-          </details>}
+
           {musicError ? <div className="checkin-display-music-error" role="alert">{musicError}</div> : null}
         </div>
             {showNames ? (
@@ -2439,8 +2434,10 @@ export default function CheckinDisplayPage() {
                 </div>
                 <div className="checkin-display-lobby-controls" role="group" aria-label="Lobby slideshow controls">
                   <button type="button" onClick={showPreviousLobbySlide}>Previous</button>
-                  <button type="button" onClick={() => setSmartLobbyPaused((value) => !value)}>
-                    {smartLobbyPaused ? "Resume rotation" : "Pause rotation"}
+                  {lobbyLyricsAvailable && <button type="button" aria-pressed={lobbyLyricsHeld}
+                    onClick={()=>setSmartLobbyIndex(smartLobbySlides.findIndex(slide=>slide.id==="lyrics"))}>Show lyrics</button>}
+                  <button type="button" disabled={lobbyLyricsHeld} onClick={() => setSmartLobbyPaused((value) => !value)}>
+                    {lobbyLyricsHeld ? "Lyrics · rotation paused" : smartLobbyPaused ? "Resume rotation" : "Pause rotation"}
                   </button>
                   <button type="button" onClick={showNextLobbySlide}>Next</button>
                 </div>
@@ -2465,7 +2462,9 @@ export default function CheckinDisplayPage() {
                   ) : null}
                 </aside>
               <div className="checkin-display-lobby-stage" key={activeSmartLobbySlide.sequenceKey || activeSmartLobbySlide.id}>
-                {activeSmartLobbySlide.id === "checkin" ? (
+                {activeSmartLobbySlide.id === "lyrics" ? (
+                  <WaitingRoomLyricsSlide title={currentLyricTrack?.title} cues={songCues} time={songPosition} playing={musicPlaying}/>
+                ) : activeSmartLobbySlide.id === "checkin" ? (
                   <div className="checkin-display-lobby-content checkin-display-lobby-arrival">
                     <span className="checkin-display-lobby-eyebrow">Schön, dass du da bist!</span>
                     <h2>Willkommen in deiner Deutschklasse.</h2>
@@ -2577,7 +2576,7 @@ export default function CheckinDisplayPage() {
                   ))}
                 </div>
                 <span>
-                  {smartLobbyPaused ? "Rotation paused" : "Adaptive rotation · every 14 seconds"} · {smartLobbyIndex + 1}/{smartLobbySlides.length}
+                  {lobbyLyricsHeld ? "Lyrics · rotation paused" : smartLobbyPaused ? "Rotation paused" : "Adaptive rotation · every 14 seconds"} · {smartLobbyIndex + 1}/{smartLobbySlides.length}
                 </span>
               </div>
             </section>

@@ -22,7 +22,7 @@ export default function useSongTiming(song) {
     const local = readSongCues(record);
     setCues(local);
     setRecordedPack(null);
-    if (!objectKey || !lyrics) return () => { cancelled = true; };
+    if (!objectKey) return () => { cancelled = true; };
     if (!published.has(objectKey)) published.set(objectKey,
       fetch('https://www.falowen.app/api/music-lyrics?key=' + encodeURIComponent(objectKey), {cache:'no-cache'})
         .then(response => response.ok ? response.json() : null).then(data=>{if(!data)published.delete(objectKey);return data;}).catch(() => {published.delete(objectKey);return null;}));

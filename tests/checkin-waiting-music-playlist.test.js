@@ -578,7 +578,7 @@ test("waiting Attendance rotates a Smart Class Lobby with lesson-derived content
   assert.match(page, /id: "starting", label: "Starting soon"/);
   assert.match(page, /window\.setInterval\(\(\) => \{/);
   assert.match(page, /SMART_LOBBY_ROTATION_MS/);
-  assert.match(page, /actualStartedAt \|\| smartLobbyPaused/);
+  assert.match(page, /paused:smartLobbyPaused,started:Boolean\(actualStartedAt\)/);
   assert.match(page, /Pause rotation/);
   assert.match(page, /Resume rotation/);
   assert.match(page, />Previous<\/button>/);
@@ -641,7 +641,7 @@ test("Smart Class Lobby disappears immediately after the teacher starts class", 
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
 
   assert.match(page, /!actualStartedAt && activeSmartLobbySlide/);
-  assert.match(page, /if \(actualStartedAt \|\| smartLobbyPaused \|\| smartLobbySlides\.length <= 1\) return undefined/);
+  assert.match(page, /paused:smartLobbyPaused,started:Boolean\(actualStartedAt\)/);
   assert.match(page, /Start class & slides/);
   assert.match(page, /setActualStartedAt\(startedAt\)/);
   assert.match(page, /checkin-display-main-grid/);

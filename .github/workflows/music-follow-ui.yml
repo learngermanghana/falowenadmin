@@ -4,6 +4,11 @@ on:
     paths:
       - 'src/components/*Song*.jsx'
       - 'src/hooks/useSongTiming.js'
+      - 'src/hooks/useLobbySlideshow.js'
+      - 'src/components/WaitingRoomLyricsSlide.jsx'
+      - 'src/pages/CheckinDisplayPage.*'
+      - 'tests/waiting-room-lyrics.test.js'
+      - 'tests/waiting-room-lyrics-page.test.js'
       - 'src/utils/songLyrics.js'
       - 'src/utils/recordedLessonMusic.js'
       - 'src/data/curatedLessonMusic.js'
@@ -15,6 +20,11 @@ on:
     paths:
       - 'src/components/*Song*.jsx'
       - 'src/hooks/useSongTiming.js'
+      - 'src/hooks/useLobbySlideshow.js'
+      - 'src/components/WaitingRoomLyricsSlide.jsx'
+      - 'src/pages/CheckinDisplayPage.*'
+      - 'tests/waiting-room-lyrics.test.js'
+      - 'tests/waiting-room-lyrics-page.test.js'
       - 'src/utils/songLyrics.js'
       - 'src/utils/recordedLessonMusic.js'
       - 'src/data/curatedLessonMusic.js'
@@ -31,4 +41,4 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --ignore-scripts
-      - run: node --test tests/music-follow-ui.test.js tests/recorded-lesson-music.test.js tests/a1-music-presenter-stage.test.js
+      - run: node --test tests/music-follow-ui.test.js tests/recorded-lesson-music.test.js tests/a1-music-presenter-stage.test.js tests/waiting-room-lyrics.test.js tests/waiting-room-lyrics-page.test.js tests/checkin-smart-lobby-v2.test.js
