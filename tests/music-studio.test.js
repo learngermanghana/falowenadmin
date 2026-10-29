@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
 import { getReusableSongDraft } from '../src/data/reusableMusicSongbook.js';
 import { getMusicProductionProfile } from '../src/utils/musicProductionProfiles.js';
 import { buildFalowenMusicPrompt, buildFalowenShortMusicPrompt } from '../src/utils/musicGenerationPrompt.js';
