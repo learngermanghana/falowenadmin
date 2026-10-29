@@ -1,12 +1,14 @@
 // Conservative lock list: explicitly approved, published lesson audio from
 // falowenexamtrainer/web/public/music/catalog.json (2026-10-28).
-// Also includes user-reported music uploads for B1 days 25–26.
+// Also includes teacher-confirmed music for A2 days 19–20 and B1 days 25–26.
 // This is NOT an exhaustive inventory of manually exported R2/MP3 tracks.
 // Unlisted songs are treated as UNKNOWN, never automatically as unpublished.
 const APPROVED_AUDIO_KEYS = Object.freeze([
   'A1-2',      // A1 Day 04 · Welche Nummer hast du?
   'A1-14.1',   // A1 Day 22 · Mein Kopf tut weh
   'A2-7.18',   // A2 Day 18 · Die Karte funktioniert nicht
+  'A2-7.19',   // A2 Day 19 · Lieber online oder im Laden? (teacher-confirmed music)
+  'A2-7.20',   // A2 Day 20 · Die Jacke ist zu klein (teacher-confirmed music)
   // Also reported as uploaded in the teacher's public music workflow:
   'B1-8.25',   // B1 Day 25 · Das Paket kam nicht an
   'B1-9.26',   // B1 Day 26 · Der Zug fährt nicht
