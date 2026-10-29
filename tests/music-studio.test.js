@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { getReusableSongDraft, getReusableSongDrafts } from '../src/data/reusableMusicSongbook.js';
+import { reviewMusicStory } from '../src/utils/musicStoryReview.js';
 import { getReusableSongDraft } from '../src/data/reusableMusicSongbook.js';
 import { getMusicProductionProfile } from '../src/utils/musicProductionProfiles.js';
 import { buildFalowenMusicPrompt } from '../src/utils/musicGenerationPrompt.js';
@@ -85,4 +87,18 @@ test('Ghanaian highlife keeps German lyrics intact and adds instrumental frikyiw
   assert.match(prompt, /three short crisp offbeat taps/);
   assert.match(prompt, /VOICE FIRST/);
   assert.ok(prompt.includes(song.lyrics));
+});
+
+test('published MP3s stay untouched while 84 course song drafts shed their promo endings', () => {
+  const all = ['A1', 'A2', 'B1'].flatMap(level => getReusableSongDrafts(level));
+  assert.equal(all.length, 84);
+  for (const draft of all) {
+    assert.doesNotMatch(draft.lyrics.split('[Outro]')[1] || '', /Falowen/i, draft.assignmentKey);
+  }
+  const cafe = getReusableSongDraft('A1-3.5');
+  assert.match(cafe.lyrics, /mein Geld ist nicht da/);
+  assert.match(cafe.lyrics, /Bus steht noch da/);
+  assert.equal(reviewMusicStory(cafe.lyrics).issues.length, 0);
+  const old = reviewMusicStory('[Verse 1] Cafe.\\n[Chorus] Zwei Tees, vier Euro, halb drei.\\n[Verse 2] Kuchen.\\n[Outro] Bei Falowen zählen wir.');
+  assert.match(old.issues.join(' '), /advertisement/);
 });
