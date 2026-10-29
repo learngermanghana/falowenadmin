@@ -10,6 +10,7 @@ import { MUSIC_PRODUCTION_PROFILES, getMusicProductionProfile } from '../utils/m
 import { getReusableSongDraft, getReusableSongDrafts } from '../data/reusableMusicSongbook.js';
 import { musicSongTeachingPackText } from '../data/reusableMusicQuestions.js';
 import ReusableMusicQuestions from '../components/ReusableMusicQuestions.jsx';
+import MusicLyricsVideoStudio from '../components/MusicLyricsVideoStudio.jsx';
 import { falowenMusicFileName } from '../utils/musicExportNames.js';
 const PRESETS = {
   welcome: 'A gentle Falowen welcome song for German learners before their Zoom class. Encourage learners not to give up: Gemeinsam schaffen wir das / Together we can. Bilingual German and English. Acoustic guitar only, one smooth warm male voice, relaxed Afro-soul feel, quiet and reassuring, no backing singers.',
@@ -161,7 +162,7 @@ export default function MusicStudioPage() {
   const cents = mode === 'clip' ? 4 : 8;
   const capped = status && (status.dailyCents + cents > status.limits.dailyCents || status.monthlyCents + cents > status.limits.monthlyCents);
   return <main className="music-studio">
-    <header><p className="music-eyebrow">FALOWEN · CREATE & LEARN</p><h1>Falowen Music Studio</h1><p>Turn your lesson ideas and lyrics into music. Preview, listen, then download your MP3.</p></header>
+    <header><p className="music-eyebrow">FALOWEN · CREATE & LEARN</p><h1>Falowen Music Studio</h1><p>Turn your lesson ideas and lyrics into music. Preview, listen, download your MP3, or build a synchronized lyrics video.</p></header>
     <div className="music-layout"><form onSubmit={generate} className="music-card">
       <fieldset disabled={busy}><legend>1. Choose your lesson</legend>
         <label htmlFor="music-source">Song purpose</label><select id="music-source" value={courseMode} onChange={e => setCourseMode(e.target.value)}><option value="course">Course lesson from dictionary</option><option value="custom">Custom / class welcome</option></select>
@@ -258,6 +259,10 @@ export default function MusicStudioPage() {
       {status && !status.ready && <p>Google API configuration is required before generating.</p>}
       <p className="music-note">Estimates use Google’s listed music prices, excluding backend usage. Failed or timed-out attempts remain counted because they may be billed. Limits reset at midnight UTC / the start of each month.</p>
     </aside></div>
+    <MusicLyricsVideoStudio key={courseMode + '-' + assignmentKey}
+      generated={result && result.title === trackTitle && (courseMode === 'custom' || (result.level === level && result.day === lesson?.day)) ? result : null}
+      title={trackTitle} level={courseMode === 'course' ? level : ''} day={courseMode === 'course' ? lesson?.day : ''}
+      lyrics={lyrics} />
     {courseMode === 'course' && draft && <ReusableMusicQuestions assignmentKey={assignmentKey} lyricsChanged={lyrics !== draft.lyrics} />}
   </main>;
 }
