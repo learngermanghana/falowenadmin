@@ -135,3 +135,19 @@ The existing chill 808, piano/flute, neo-soul, nostalgic anthem, nostalgic piano
 **Lyrics control matters:** Prewritten dictionary lyrics remain preserved by default as **Exact lyrics — keep my words**. To replace nursery-like prewritten lines with a natural adult story, deliberately choose **Source vocabulary — rewrite into a story**; this treats the source text as ideas rather than exact lyrics. Original saved songbook content is not overwritten by that choice, and no generation runs until clicked.
 
 **Instrumentals:** Guitar instrumental mode no longer sends preloaded classroom lyrics to the provider; it sends a lyric-free instrumental lesson context instead. No changes to backend, R2, pricing, Firestore security, Vercel settings, storage or publication rules.
+
+## Ghanaian guitar highlife and frikyiwa percussion
+
+The Falowen A1–B1 dictionary had **no song explicitly labeled Highlife**. Three suitable guitar-led Afro-Pop song drafts are now intentionally reclassified with **Ghanaian Highlife** as their curated genre and a detailed frikyiwa musical direction:
+
+| Level | Assignment | Song | BPM |
+| --- | --- | --- | --- |
+| A1 | A1-4 | Woher kommst du? | 92 |
+| A2 | A2-9.23 | Mein Weg zur Arbeit | 94 |
+| B1 | B1-8.24 | Weniger kaufen, mehr erleben | 91 |
+
+The **lyrics are unchanged**; the new details live only in each song's `musicStyle` and `genre`, so the existing automatic lesson-style selector and songbook text export pick up the change without adding sung syllables. This change does **not** modify recordings already published to Cloudflare R2, course audio, student playback or timed lyrics. To hear the new accompaniment, create and approve a *new* recording when desired.
+
+In addition, the owner can select **Ghanaian guitar highlife · frikyiwa rhythm** for any song from the existing Music Studio production dropdown. This original production direction specifies interlocking highlife guitars, flowing bass, gentle live drums, a clear warm lead voice and a **bright metallic frikyiwa (firikyiwa) castanet**. Ask the AI for a recurring group of **three short syncopated offbeat instrumental taps** perceived as *ko-ko-ko*. These are *percussion hits*, never a vocal chant. Use a human, musical interpretation with rests and leave it behind the singer; do not replace it with conga drums or woodblocks. The three taps are a creative onomatopoeic cue, not a claim of a complete fixed traditional Sikyi timeline transcription.
+
+Preserve German CEFR teaching value while emphasizing a natural adult highlife melody and a developed arrangement, not a nursery rhyme. All lyrics/source dictionary records remain in code. No provider calls, new background jobs, billing logic changes, extra cloud storage or altered Firestore permissions are involved. Google Lyria's adherence to instrument, groove and rhythm instructions is not guaranteed and must be checked by listening before publication.
