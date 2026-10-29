@@ -12,7 +12,7 @@ const AUDIO_API = (import.meta.env.VITE_FALOWEN_COURSE_MEDIA_API_URL
 
 function RevealPanel({ activity }) {
   return <div className="pharm-reveal" role="status">
-    <span className="pharm-eyebrow">MUSTERLÖSUNG</span>
+    <span className="pharm-eyebrow">{activity.openEnded ? "HÖRNOTIZ · OFFENE FRAGE" : "MUSTERLÖSUNG"}</span>
     <p className="pharm-answer">{activity.answer}</p>
     {activity.explanation && <small>{activity.explanation}</small>}
   </div>;
@@ -146,7 +146,7 @@ export default function InteractiveLessonOpening({ stage, slide }) {
       {Array.isArray(activity.lines) && <div className="pharm-lines">{activity.lines.map((line,index)=><p key={index}>{line}</p>)}</div>}
       {showAnswer && <RevealPanel activity={activity}/>}
       <div className="pharm-actions">
-        <button type="button" className="pharm-btn pharm-btn-primary" onClick={() => setShowAnswer(!showAnswer)}>{showAnswer ? "Lösung verbergen" : "✓ Musterlösung zeigen"}</button>
+        <button type="button" className="pharm-btn pharm-btn-primary" onClick={() => setShowAnswer(!showAnswer)}>{showAnswer ? "Hinweis verbergen" : activity.openEnded ? "✓ Antwort prüfen · Lehrerhinweis" : "✓ Musterlösung zeigen"}</button>
         <button type="button" className="pharm-btn pharm-btn-soft" onClick={() => setShowHint(!showHint)}>{showHint ? "Hinweis verbergen" : "💡 Lehrerhinweis"}</button>
       </div>
       {showHint && <p className="pharm-hint"><b>Lehrer:</b> {listening ? activity.hint : activity.teacherHint}</p>}
