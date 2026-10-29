@@ -85,8 +85,8 @@ export const MUSIC_QUESTION_SEEDS_A1 = Object.freeze([
     "A1-4",
     "Woher kommt die erzählende Person?",
     "Aus Ghana.",
-    "Welche Sprache spricht Mia?",
-    "Italienisch.",
+    "Welche Sprachen spricht der Freund aus der Schweiz?",
+    "Deutsch und Französisch.",
     "Welche Sprachen sprichst du?"
   ],
   [
