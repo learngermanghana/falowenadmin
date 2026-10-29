@@ -2059,7 +2059,7 @@ function standardizeA2B1Stages(stages, slide) {
   const mistakes = getA2B1CommonMistakes(key);
   if (!reading || !mistakes.length) throw new Error(`Missing authored A2/B1 lesson content: ${key}`);
   return stages.flatMap(stage => {
-    if (stage.id === 'knowledge' && !['interactive-listening', 'interactive-music', 'interactive-music-reading'].includes(stage.variant)) return [];
+    if (stage.id === 'knowledge' && stage.type !== 'b1-day24-listening' && !['interactive-listening', 'interactive-music', 'interactive-music-reading'].includes(stage.variant)) return [];
     if (stage.id !== 'phrases') return [stage];
     return [{
       id: 'common-mistakes', type: 'common-mistakes', kicker: 'Häufige Fehler',
@@ -2093,6 +2093,7 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
   // Keep the original teacher reading and warm-up checks in their canonical
   // stages for audits; only switch their in-class visual presentation.
   const prepared = lessonOpening ? stages.map((stage) => {
+    if (normalizedAssignmentId(slide) === "B1-8.24" && stage.id === "knowledge" && stage.type === "b1-day24-listening") return stage;
     // Music lessons reuse the same nine stage IDs, but teach via video in
     // stage 2 and lyric-reading in stage 3. No extra slides or scored tasks.
     if (lessonOpening.listening?.mediaType === "music" && stage.id === "warmup") return {
@@ -2171,6 +2172,7 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
     if (stage.type === "task") return Boolean(stage.body);
     if (stage.type === "dialogue") return Array.isArray(stage.turns) && stage.turns.length > 0;
     if (stage.type === "foundation") return Boolean(stage.intro || stage.example || stage.tension || stage.question || stage.simpleEnglish);
+    if (stage.type === "b1-day24-listening") return Boolean(stage.audioKey);
     if (stage.type === "knowledge") return Boolean(stage.textDe) && Array.isArray(stage.items) && stage.items.length > 0;
     return Array.isArray(stage.items) && stage.items.length > 0;
   });
