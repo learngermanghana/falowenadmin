@@ -1,7 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { getReusableSongDraft } from '../src/data/reusableMusicSongbook.js';
+import { getReusableSongDraft, getReusableSongDrafts } from '../src/data/reusableMusicSongbook.js';
+import { reviewMusicStory } from '../src/utils/musicStoryReview.js';
+import { revisedMusicStoryLyrics } from '../src/data/musicStoryRevisions.js';
+import { canUseNewMusicStoryDraft } from '../src/data/musicPublicationGuard.js';
 import { getMusicProductionProfile } from '../src/utils/musicProductionProfiles.js';
 import { buildFalowenMusicPrompt } from '../src/utils/musicGenerationPrompt.js';
 const require = createRequire(import.meta.url);
@@ -85,4 +88,28 @@ test('Ghanaian highlife keeps German lyrics intact and adds instrumental frikyiw
   assert.match(prompt, /three short crisp offbeat taps/);
   assert.match(prompt, /VOICE FIRST/);
   assert.ok(prompt.includes(song.lyrics));
+});
+
+test('original songbook stays audio-compatible; new storyline drafts require explicit confirmation', () => {
+  const all = ['A1', 'A2', 'B1'].flatMap(level => getReusableSongDrafts(level));
+  assert.equal(all.length, 84);
+  for (const draft of all) {
+    assert.match(draft.lyrics.split('[Outro]')[1] || '', /Falowen/i, draft.assignmentKey);
+    const newRecordingOnly = revisedMusicStoryLyrics(draft.lyrics, draft.assignmentKey);
+    assert.doesNotMatch(newRecordingOnly.split('[Outro]')[1] || '', /Falowen/i, draft.assignmentKey);
+    assert.equal(draft.lyrics, getReusableSongDraft(draft.assignmentKey).lyrics);
+  }
+  assert.equal(canUseNewMusicStoryDraft({ assignmentKey: 'A1-14.1', confirmedNoAudio: true }), false);
+  for (const assignmentKey of ['A2-7.18', 'A2-7.19', 'A2-7.20']) {
+    assert.equal(canUseNewMusicStoryDraft({ assignmentKey, confirmedNoAudio: true }), false);
+    assert.match(getReusableSongDraft(assignmentKey).lyrics, /Falowen/);
+  }
+  assert.equal(canUseNewMusicStoryDraft({ assignmentKey: 'A1-3.5' }), false);
+  assert.equal(canUseNewMusicStoryDraft({ assignmentKey: 'A1-3.5', confirmedNoAudio: true }), true);
+  const cafe = revisedMusicStoryLyrics(getReusableSongDraft('A1-3.5').lyrics, 'A1-3.5');
+  assert.match(cafe, /mein Geld ist nicht da/);
+  assert.match(cafe, /Bus steht noch da/);
+  assert.equal(reviewMusicStory(cafe).issues.length, 0);
+  const old = reviewMusicStory('[Verse 1] Cafe.\\n[Chorus] Zwei Tees, vier Euro, halb drei.\\n[Verse 2] Kuchen.\\n[Outro] Bei Falowen zählen wir.');
+  assert.match(old.issues.join(' '), /advertisement/);
 });

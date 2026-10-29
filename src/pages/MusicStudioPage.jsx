@@ -9,6 +9,9 @@ import { getMusicTopicStyle, suggestLessonMusicDirection } from '../utils/musicT
 import { MUSIC_PRODUCTION_PROFILES, getMusicProductionProfile } from '../utils/musicProductionProfiles.js';
 import { getReusableSongDraft, getReusableSongDrafts } from '../data/reusableMusicSongbook.js';
 import { musicSongTeachingPackText } from '../data/reusableMusicQuestions.js';
+import { reviewMusicStory } from '../utils/musicStoryReview.js';
+import { revisedMusicStoryLyrics } from '../data/musicStoryRevisions.js';
+import { canUseNewMusicStoryDraft, isKnownPublishedMusicLesson } from '../data/musicPublicationGuard.js';
 import ReusableMusicQuestions from '../components/ReusableMusicQuestions.jsx';
 import { falowenMusicFileName } from '../utils/musicExportNames.js';
 const PRESETS = {
@@ -33,12 +36,17 @@ export default function MusicStudioPage() {
   // Prewritten A1–B1 lyrics are selected from the local dictionary; edits are
   // scoped by assignment so changing lessons never reuses the wrong lyrics.
   const [lyricsOverrides, setLyricsOverrides] = useState({});
+  const [noAudioConfirmed, setNoAudioConfirmed] = useState({});
   const [customLyrics, setCustomLyrics] = useState('');
+  // Free editorial check only; approvals apply to this exact draft in this tab.
+  const [reviewedLyrics, setReviewedLyrics] = useState({});
   const [copyStatus, setCopyStatus] = useState('');
   const draft = courseMode === 'course' ? getReusableSongDraft(lesson?.assignmentKey) : null;
   const assignmentKey = lesson?.assignmentKey || '';
+  const hasKnownPublishedAudio = isKnownPublishedMusicLesson(assignmentKey);
+  const canStartNewRecordingDraft = canUseNewMusicStoryDraft({ assignmentKey, confirmedNoAudio: noAudioConfirmed[assignmentKey] === true });
   const lyrics = courseMode === 'course'
-    ? Object.prototype.hasOwnProperty.call(lyricsOverrides, assignmentKey)
+    ? canStartNewRecordingDraft && Object.prototype.hasOwnProperty.call(lyricsOverrides, assignmentKey)
       ? lyricsOverrides[assignmentKey] : draft?.lyrics || ''
     : customLyrics;
   const setLyrics = next => {
@@ -46,6 +54,9 @@ export default function MusicStudioPage() {
       setLyricsOverrides(previous => ({ ...previous, [assignmentKey]: next }));
     } else setCustomLyrics(next);
   };
+  const storyReview = useMemo(() => reviewMusicStory(lyrics), [lyrics]);
+  const reviewKey = courseMode === 'course' ? assignmentKey : 'custom-song';
+  const isLyricsReviewed = Boolean(lyrics.trim()) && reviewedLyrics[reviewKey] === lyrics;
   const trackTitle = draft?.title || lesson?.germanTitle || 'Falowen Music';
   const [mode, setMode] = useState('song');
   const [durationSeconds, setDurationSeconds] = useState(150);
@@ -54,7 +65,7 @@ export default function MusicStudioPage() {
   const [songStyle, setSongStyle] = useState('story');
   const [storyIdea, setStoryIdea] = useState('');
   const [lyricTreatment, setLyricTreatment] = useState('exact');
-  const rewriteFromLyrics = courseMode === 'course' && vocalMode === 'voice' && songStyle === 'story' && lyricTreatment === 'story-source';
+  const rewriteFromLyrics = courseMode === 'course' && vocalMode === 'voice' && songStyle === 'story' && lyricTreatment === 'story-source' && canStartNewRecordingDraft;
   const selectedProduction = getMusicProductionProfile(productionProfile);
   const effectiveBrief = styleMode === 'auto' && courseMode === 'course'
     ? suggestLessonMusicDirection(lesson, {
@@ -219,7 +230,40 @@ export default function MusicStudioPage() {
         <label htmlFor="music-voice">Vocals and instrumental balance</label><select id="music-voice" value={vocalMode} onChange={e => setVocalMode(e.target.value)}><option value="voice">Clear lead vocals (recommended)</option><option value="instrumental">Instrumental only — no singer</option></select>
         {vocalMode === 'voice' && <><label htmlFor="music-backing">Accompaniment behind the singer</label><select id="music-backing" value={backingLevel} onChange={e => setBackingLevel(e.target.value)}><option value="very-soft">Very quiet — voice upfront (recommended)</option><option value="soft">Soft — moderate accompaniment</option></select><p className="music-note">These settings guide Google’s mix; they cannot separately turn down instruments in an already-generated MP3.</p></>}
         <label htmlFor="music-lyrics">{draft ? `Prewritten lyrics · ${draft.title}` : 'Your lyrics or vocabulary draft'} <span>(editable)</span></label>
-        <textarea id="music-lyrics" maxLength={5500} rows={10} value={lyrics} onChange={e => { setLyrics(e.target.value); setCopyStatus(''); }} placeholder={'[Verse 1]\\nWrite your German and English lyrics here…\\n\\n[Chorus]'} />
+        <textarea id="music-lyrics" maxLength={5500} rows={10} value={lyrics} readOnly={Boolean(draft) && !canStartNewRecordingDraft} onChange={e => { setLyrics(e.target.value); setCopyStatus(''); }} placeholder={'[Verse 1]\\nWrite your German and English lyrics here…\\n\\n[Chorus]'} />
+        {vocalMode === 'voice' && <section className="music-story-review" aria-label="Song storyline review">
+          <strong>Storyline check · free, no music generation</strong>
+          <p className="music-note">A memorable song needs one believable situation: a person and goal, a complication, a response, and an outcome. Sections are detected automatically; only you can judge whether the story really connects.</p>
+          <details>
+            <summary>Read the five story moments</summary>
+            <ol>{storyReview.stages.map(stage => <li key={stage.title}>
+              <strong>{stage.title}</strong> — {stage.question}
+              <p className="music-story-excerpt">{stage.text || 'No corresponding lyrics found.'}</p>
+            </li>)}</ol>
+          </details>
+          {storyReview.issues.length > 0 && <ul className="music-story-issues">{storyReview.issues.map(issue => <li key={issue}>{issue}</li>)}</ul>}
+          {storyReview.issues.length === 0 && <p className="music-note">No structural warnings found. This is not an AI assessment of the writing—listen and review it as a real song.</p>}
+          <button type="button" disabled={!lyrics.trim()} onClick={() => setReviewedLyrics(previous => ({ ...previous, [reviewKey]: lyrics }))}>{isLyricsReviewed ? 'Lyrics reviewed for this version' : 'Mark these lyrics reviewed'}</button>
+          <p className="music-note">{isLyricsReviewed ? 'Editorial review noted for this browser session. Editing the lyrics automatically clears the approval for that text.' : 'Review is optional before previewing, but recommended before spending on a full song.'} This does not approve audio or publish a track.</p>
+        </section>}
+        {draft && <section className="music-publication-guard" aria-label="Published recording protection">
+          <strong>{hasKnownPublishedAudio ? 'Published audio · lyrics protected' : 'Before changing lyrics: check whether this day already has audio'}</strong>
+          <p className="music-note">{hasKnownPublishedAudio
+            ? 'This lesson is in the approved published-music catalog. Its original lyrics stay unchanged so existing audio, classroom slides and timed captions keep matching. Create a separate version outside this workflow if you later need new lyrics.'
+            : 'An unpublished status cannot be inferred from the catalog: manually exported audio may exist on music.falowen.app or R2. Keep the original lyrics unless you have checked that there is no recording for this lesson.'}</p>
+          {!hasKnownPublishedAudio && <>
+            <label className="music-no-audio-confirmation">
+              <input type="checkbox" checked={noAudioConfirmed[assignmentKey] === true} onChange={e => setNoAudioConfirmed(previous => ({ ...previous, [assignmentKey]: e.target.checked }))} />
+              I checked music.falowen.app and the music library: this lesson has no existing audio.
+            </label>
+            <button type="button" disabled={!canStartNewRecordingDraft} onClick={() => {
+              if (!canStartNewRecordingDraft) return;
+              setLyrics(revisedMusicStoryLyrics(draft.lyrics, assignmentKey));
+              setLyricTreatment('exact');
+              setCopyStatus('New-recording storyline draft loaded for this browser session. Original published/course lyrics are still unchanged.');
+            }}>Load revised storyline for a NEW recording</button>
+          </>}
+        </section>}
         {draft && <div className="music-songbook-actions" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button type="button" onClick={copyDraftLyrics}>Copy lyrics</button>
           <button type="button" onClick={copyDraftStyle}>Copy music style</button>
@@ -228,8 +272,8 @@ export default function MusicStudioPage() {
         </div>}
         {!draft && lyrics.trim() && <button type="button" onClick={saveCurrentLyrics}>Download lyrics + music style (.txt)</button>}
         {copyStatus && <p role="status" className="music-note">{copyStatus}</p>}
-        {draft && <p className="music-note">Original Falowen lyrics are loaded automatically. If they sound too much like a nursery rhyme, choose <strong>Source vocabulary — rewrite into a story</strong> below to create more natural adult lyrics; choose Exact lyrics to preserve your words. Edits are temporary until exported.</p>}
-        {courseMode === 'course' && vocalMode === 'voice' && songStyle === 'story' && lyrics.trim() && <>
+        {draft && <p className="music-note">Original approved songbook lyrics are always loaded first. Storyline revisions are opt-in, and only available after confirming that the lesson has no published audio. Never reuse previous synchronized timestamps with revised lyrics. Choose <strong>Source vocabulary — rewrite into a story</strong> only for a separate, future recording. Local edits are temporary until exported.</p>}
+        {courseMode === 'course' && vocalMode === 'voice' && songStyle === 'story' && lyrics.trim() && canStartNewRecordingDraft && <>
           <label htmlFor="music-lyric-treatment">Use the text above as</label>
           <select id="music-lyric-treatment" value={lyricTreatment} onChange={e => setLyricTreatment(e.target.value)}>
             <option value="exact">Exact lyrics — keep my words</option>
@@ -250,7 +294,7 @@ export default function MusicStudioPage() {
       {busy && <p role="status">This may take a few minutes. Keep this page open. Your request will not retry automatically.</p>}
       {error && <p role="alert" className="music-error">{error}</p>}
     </form><aside className="music-card"><h2>Your listening room</h2>
-      {result ? <><p><strong>Generated audio:</strong> {result.title} {result.day != null ? `· ${result.level} Day ${result.day}` : ''}</p><audio controls src={result.url} preload="metadata" /><a className="music-download" href={result.url} download={result.filename}>Download MP3</a>{result.lyrics && <details><summary>Generated lyrics & structure</summary><pre>{result.lyrics}</pre></details>}</> : <p>Your generated song will appear here.</p>}
+      {result ? <><p><strong>Generated audio:</strong> {result.title} {result.day != null ? `· ${result.level} Day ${result.day}` : ''}</p><audio controls src={result.url} preload="metadata" /><a className="music-download" href={result.url} download={result.filename}>Download MP3</a><details className="music-audio-review"><summary>Before publishing: listen and approve</summary><ul><li>Clear natural German pronunciation and one intelligible lead voice</li><li>A believable character, problem, response and finished outcome</li><li>A memorable chorus with mature melody, not a vocabulary chant</li><li>Guitar, piano, bass and any frikyiwa percussion mixed behind the singer</li><li>Complete ending, no cut-off words; verify new lyric timings before any MP4 export</li></ul><p>Do not publish a recording until you have checked it. Approval and upload are manual.</p></details>{result.lyrics && <details><summary>Generated lyrics & structure</summary><pre>{result.lyrics}</pre></details>}</> : <p>Your generated song will appear here.</p>}
       <p>Download before leaving. Audio stays in this page and is not saved in Falowen.</p>
       <hr /><h3>Budget controls</h3><p>Preview first. One generation at a time, with no automatic retries.</p>
       {status && <p>Today: ${(status.dailyCents / 100).toFixed(2)} / $0.80<br />This month: ${(status.monthlyCents / 100).toFixed(2)} / $5.00</p>}

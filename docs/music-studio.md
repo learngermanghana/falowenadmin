@@ -151,3 +151,25 @@ The **lyrics are unchanged**; the new details live only in each song's `musicSty
 In addition, the owner can select **Ghanaian guitar highlife · frikyiwa rhythm** for any song from the existing Music Studio production dropdown. This original production direction specifies interlocking highlife guitars, flowing bass, gentle live drums, a clear warm lead voice and a **bright metallic frikyiwa (firikyiwa) castanet**. Ask the AI for a recurring group of **three short syncopated offbeat instrumental taps** perceived as *ko-ko-ko*. These are *percussion hits*, never a vocal chant. Use a human, musical interpretation with rests and leave it behind the singer; do not replace it with conga drums or woodblocks. The three taps are a creative onomatopoeic cue, not a claim of a complete fixed traditional Sikyi timeline transcription.
 
 Preserve German CEFR teaching value while emphasizing a natural adult highlife melody and a developed arrangement, not a nursery rhyme. All lyrics/source dictionary records remain in code. No provider calls, new background jobs, billing logic changes, extra cloud storage or altered Firestore permissions are involved. Google Lyria's adherence to instrument, groove and rhythm instructions is not guaranteed and must be checked by listening before publication.
+
+## Songwriting quality, with published lyrics protected
+
+The **84 original A1–B1 course-song lyrics remain unchanged** in `src/data/musicSongDrafts*.js`. Those are the approved audio-aligned source strings: teaching slides, existing MP3 recordings, lyric highlights and social lyric videos may depend on their exact wording. Do **not** apply bulk rewrites to those files.
+
+A separate opt-in new-recording text overlay lives in `src/data/musicStoryRevisions.js`. It contains a completely revised **A1-3.5 "Die Rechnung im Café"** story: Mia checks the time and needs to catch her bus at three, the drinks and cake cost seven euros together, Mia cannot find her money, her friend pays and she catches the bus. The other 83 overlays remove a generic sung Falowen sign-off without changing their original songbook assets. They are **proposed new-recording drafts**, not replacements for existing music; more extensive narrative improvements still require editorial review.
+
+### Protection for existing MP3 audio and timestamps
+
+The original lyrics load by default in Music Studio and remain read-only unless the teacher **positively confirms** that no recording for that specific lesson exists on the music site or music library. A user must confirm that fact for each selected lesson before they can edit or load a new story draft. Unlisted songs are considered **unknown, not automatically unpublished**.
+
+The conservative lock-list in `src/data/musicPublicationGuard.js` includes confirmed approved entries from `learngermanghana/falowenexamtrainer/web/public/music/catalog.json` (2026-10-28): **A1-2 (Day 4), A1-14.1 (Day 22), A2-7.18 (Day 18)**. It also protects teacher-confirmed A2 music for **A2-7.19 (Day 19) and A2-7.20 (Day 20)**, and user-reported B1 music uploads for **B1-8.25 (Day 25) and B1-9.26 (Day 26)**. Locked lessons cannot use the new-story overlay or AI source rewrite in this workflow, even if the user tries to confirm no audio. Since R2 may also contain manually uploaded or not-yet-catalogued tracks, the teacher still needs to inspect the music site before choosing a new draft for an otherwise unlisted lesson.
+
+Opt-in revised text is only held in the Studio's **browser memory**, never written to the existing songbook or published library. If the confirmation is unchecked, Studio reverts to the exact original approved lyrics. A separate recording needs separate manually verified timestamps. No existing MP3, R2 object, lyric timings, course slides or video is updated by this PR. New recordings are not generated automatically.
+
+### Human review rather than AI guesses
+
+Music Studio shows a free **five-stage storyline checklist**: person/place/goal; emotional hook; obstacle/change; choice/response; outcome. It detects missing structural sections, conspicuous advertising outros and number-heavy choruses. This is a **structural heuristic, not a guarantee of narrative, pronunciation or German-language quality**. The teacher can mark the current text reviewed in browser memory, and changing it clears that review marker.
+
+If the teacher has confirmed no published audio, an opt-in `Source vocabulary — rewrite into a story` prompt now asks for a single related plot rather than loosely associated examples. This cannot bypass publication safeguards for known tracks. A pre-publication listening checklist asks the teacher to verify German articulation, adult melodic progression, instrumentation, complete endings, and fresh lyric sync.
+
+This workflow adds no new provider costs, background scans, Firestore permissions, cloud storage or automated publication, and respects Vercel Hobby limitations.

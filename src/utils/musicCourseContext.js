@@ -13,6 +13,9 @@ export const MUSIC_STORY_CEFR_GUIDANCE = Object.freeze({
 function getMusicStoryScene(entry) {
   const level = String(entry.level || '').toUpperCase();
   const title = `${entry.germanTitle || ''} ${entry.englishTitle || ''}`.toLowerCase();
+  if (level === 'A1' && (String(entry.assignmentKey || '').toUpperCase() === 'A1-3.5' || /rechnung im café|café.*rechnung/.test(title))) {
+    return 'A1 CAFÉ STORY SEED: Two adults are at a café at half past two. Mia must catch a bus at three. The server brings the bill: two teas cost four euros, cake costs three, so seven euros total. A small human complication happens: Mia cannot find her money. Her friend offers to pay, they hurry to the bus stop, and Mia makes the bus. Use a warm repeated refrain about helping a friend, NOT a list of prices and clock phrases. Prices and time must be accurate and embedded in the scene. Do not end with a Falowen advertisement.';
+  }
   if (level === 'A1' && (String(entry.assignmentKey || '').toUpperCase() === 'A1-14.1' || /gesundheit|körperteile|health and body/.test(title))) {
     return 'A1 HEALTH STORY SEED: a learner feels unwell and says "Mein Kopf tut weh." A friend asks "Was ist los?" The learner asks "Kannst du mir helfen?" The friend helps them rest, and they finish with "Jetzt geht es mir besser." Work in correct everyday body-part words such as der Kopf, der Arm, das Bein and die Hand only when they naturally fit the scene. Keep the complaint believable: not every body part needs to hurt. Do not turn the lyrics into a glossary.';
   }
@@ -48,8 +51,8 @@ export function musicLessonContext(entry, language = 'bilingual', focus = '', op
       ? 'INSTRUMENTAL-ONLY ADULT SONG: express the lesson situation with a strong melodic motif, moving chord progression, organic guitar/piano dynamics and a thoughtful emotional arc; do not produce any lyrics, dialogue, speech, chanting, choir or humming.'
       : makeNewStory ? [
       'STORYTELLING SONG — NOT A VOCABULARY LIST:',
-      'Create original, coherent, singable lyrics: [Verse 1] introduce a person and situation; [Chorus] repeat a useful German sentence that advances the story; [Verse 2] show a small problem and natural dialogue; [Chorus] return to the hook; [Outro] resolve the situation and finish the last sung phrase clearly.',
-      'Include one or two short everyday dialogue turns; use the lesson words in context, not as disconnected definitions, flashcards, or repetitive dictionary translations. A chorus may repeat one meaningful line, but should not loop a vocabulary word endlessly; meaningful rhythm and emotional melody matter more than end-rhyme.',
+      'Build one coherent five-step adult story, not merely a list of thematic facts: [Verse 1] introduce a named person, concrete place and a goal with stakes; [Chorus] express the emotional hook or decision, not a vocabulary list; [Verse 2] reveal an obstacle or change and let the people act; [Bridge] optional short turning point showing a choice or kind action; [Chorus] return to the same hook with deeper meaning; [Outro] show what happened, including the consequence. One story with continuity from the first line to the last.',
+      'Include one or two short everyday dialogue turns. Each detail (time, money, clothing, route or grammar) must matter to the same real-life goal or dilemma; never assemble disconnected flashcards, dictionary translations or lists. The chorus should change the listener’s feeling, not just count or recite lesson vocabulary. No obligatory rhyme, no self-referential learning slogan, no brand advertisement in the sung outro unless the teacher specifically asks for a promotional song.',
       MUSIC_STORY_CEFR_GUIDANCE[String(entry.level || '').toUpperCase()] || MUSIC_STORY_CEFR_GUIDANCE.A1,
       getMusicStoryScene(entry),
       String(storyIdea || '').trim() ? `Teacher's preferred story situation: ${String(storyIdea).trim()}` : '',
