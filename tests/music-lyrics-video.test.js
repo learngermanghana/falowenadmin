@@ -91,3 +91,16 @@ test('export metadata follows the selected song and offers editable copy buttons
   assert.match(video,/Copy both/);
   assert.match(video,/navigator.clipboard/);
 });
+
+test("export does not silently produce an incompatible WebM or an untested MP4", () => {
+  const src=readFileSync(new URL("../src/components/MusicLyricsVideoStudio.jsx",import.meta.url),"utf8");
+  assert.match(src,/canReadVideoBlob/);
+  assert.match(src,/video\.onloadeddata/);
+  assert.match(src,/if\(format\.extension==="mp4" && !\(await isRealMp4Blob\(blob\)\)\)/);
+  assert.match(src,/supported\?\.extension==="webm"&&!allowWebm/);
+  assert.match(src,/I understand — export WebM anyway/);
+  assert.match(src,/Check your exported video/);
+  assert.match(src,/Download video again/);
+  assert.match(src,/could not be played back/);
+  assert.match(src,/fixWebmDuration/);
+});

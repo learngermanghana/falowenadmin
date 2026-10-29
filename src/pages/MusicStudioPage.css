@@ -24,3 +24,13 @@
 .music-video-posting button{justify-self:start;border:1px solid #b4cce5;background:#fff;color:#154c82;border-radius:9px;padding:9px 13px;font:inherit;font-weight:650;cursor:pointer}
 .music-video-posting button:hover{background:#edf5ff}
 .music-video-posting-buttons{display:flex;gap:9px;flex-wrap:wrap}
+
+.music-video-format-warning{border:1px solid #f0ce8b;background:#fffbeb;color:#713f12;border-radius:12px;padding:14px 16px;display:grid;gap:8px;line-height:1.5}
+.music-video-format-warning p{margin:0}
+.music-video-format-warning label{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:650}
+.music-video-format-warning input[type=checkbox]{width:18px;height:18px;flex:none}
+.music-video-export-preview{display:grid;gap:10px;background:#f0fdf4;border:1px solid #a7e3b9;border-radius:14px;padding:16px}
+.music-video-export-preview h3{margin:0}
+.music-video-export-preview video{width:min(100%,270px);max-height:480px;aspect-ratio:9/16;background:#101820;border-radius:12px;object-fit:contain}
+.music-video-export-preview p{margin:0}
+.music-video-export-preview button{justify-self:start;padding:10px 14px;border:1px solid #79b18b;border-radius:9px;background:#fff;color:#16532d;font:inherit;font-weight:700;cursor:pointer}

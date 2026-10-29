@@ -12,6 +12,33 @@ function saveBlob(blob, name) {
   document.body.appendChild(a);a.click();a.remove();
   window.setTimeout(()=>URL.revokeObjectURL(url),5000);
 }
+// Check actual local decoding before telling the owner a recorded file is playable.
+async function canReadVideoBlob(blob) {
+  if (!blob || blob.size < 1000) return false;
+  const url=URL.createObjectURL(blob);
+  const video=document.createElement("video");
+  return new Promise(resolve=>{
+    let finished=false;
+    const timer=window.setTimeout(()=>finish(false),12000);
+    function finish(ok) {
+      if(finished)return;
+      finished=true;
+      window.clearTimeout(timer);
+      video.onloadeddata=null;
+      video.onerror=null;
+      video.removeAttribute("src");
+      video.load();
+      URL.revokeObjectURL(url);
+      resolve(ok);
+    }
+    video.muted=true;
+    video.preload="auto";
+    video.onloadeddata=()=>finish(video.videoWidth>0&&video.videoHeight>0);
+    video.onerror=()=>finish(false);
+    video.src=url;
+    video.load();
+  });
+}
 function nameSlug(value) {
   return String(value||"song").normalize("NFKD").replace(/[\u0300-\u036f]/g,"")
     .toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,70)||"song";
@@ -40,6 +67,9 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   const [postingTitle,setPostingTitle] = useState("");
   const [postingDescription,setPostingDescription] = useState("");
   const [copyNotice,setCopyNotice] = useState("");
+  const [allowWebm,setAllowWebm] = useState(false);
+  const [exportedVideo,setExportedVideo] = useState(null);
+  const exportedUrlRef=useRef(null);
   const canvasRef=useRef(null), audioRef=useRef(null), cancelRef=useRef(null);
   const previousEditorLyrics=useRef(lyrics), currentLyricText=useRef(lyrics || "");
   const activeUrl=fileUrl || publishedTrack?.audioUrl || generated?.url || "";
@@ -157,7 +187,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     if(ctx) drawMusicVideoFrame(ctx,{title:videoTitle,level:videoLevel,day:videoDay,scenes,time:seconds,duration});
   };
   useEffect(()=>{if(!exporting)drawAt(audioRef.current?.currentTime||0);},[scenes,videoTitle,videoLevel,videoDay,duration,exporting]);
-  useEffect(()=>()=>{cancelRef.current?.();},[]);
+  useEffect(()=>()=>{cancelRef.current?.();if(exportedUrlRef.current)URL.revokeObjectURL(exportedUrlRef.current);},[]);
   function exportLyricsSidecar(){
     const key=audioFilenameObjectKey(objectKey);
     if(!key || !hasLyrics || !completeCues){setError("Enter the exact R2 MP3 key and mark every lyric line before exporting shared timing.");return;}
@@ -187,6 +217,10 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     }
     const format=videoRecorderFormat(mime=>MediaRecorder.isTypeSupported(mime));
     if(!format){setError("No supported video recording format is available in this browser.");return;}
+    if(format.extension==="webm"&&!allowWebm){
+      setError("This browser cannot export MP4 directly. For a widely playable video, open Falowen Music Studio in a browser with MP4 recording support. Choose WebM only if your player accepts WebM/VP8 or VP9.");
+      return;
+    }
     const AudioContextClass=window.AudioContext||window.webkitAudioContext;
     if(!AudioContextClass){setError("Browser audio mixing is unavailable.");return;}
     let context=null,canvasStream=null,source=null,recorder=null,animation=0,cancelled=false,started=false,recordingStart=0,visibilityChanged=null;
@@ -258,14 +292,29 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       source.start(startAt);
       setExporting(true);
       let blob=await complete;
-      // MediaRecorder WebM omits duration metadata, preventing normal seeking.
-      if(format.extension==="webm")blob=await fixWebmDuration(blob,performance.now()-recordingStart,{logger:false});
       if(!blob.size)throw Error("Video export returned an empty file.");
       if(format.extension==="mp4" && !(await isRealMp4Blob(blob)))
         throw Error("The browser returned a video that is not a valid MP4. No mislabeled file was downloaded.");
+      if(format.extension==="webm"){
+        // Some WebM duration repairs produce containers that other players reject.
+        // Keep the original recording and fall back to it if the repaired copy cannot decode.
+        try {
+          const repaired=await fixWebmDuration(blob,performance.now()-recordingStart,{logger:false});
+          if(await canReadVideoBlob(repaired))blob=repaired;
+        } catch { /* The original WebM can still be checked for playback. */ }
+      }
+      if(!(await canReadVideoBlob(blob)))
+        throw Error("The recording could not be played back in this browser. Nothing was downloaded. Try an MP4-capable browser (Chrome or Edge may support it), then export again.");
       const extension=format.extension;
-      saveBlob(blob,"falowen-lyrics-"+nameSlug(videoTitle)+"."+extension);
-      setMessage("Video downloaded as "+extension.toUpperCase()+" with the complete audio and three lyric lines per screen.");
+      if(exportedUrlRef.current)URL.revokeObjectURL(exportedUrlRef.current);
+      const previewUrl=URL.createObjectURL(blob);
+      exportedUrlRef.current=previewUrl;
+      const filename="falowen-lyrics-"+nameSlug(videoTitle)+"."+extension;
+      setExportedVideo({url:previewUrl,blob,filename,format:extension});
+      saveBlob(blob,filename);
+      setMessage(extension==="mp4"
+        ? "MP4 was checked for playback in this browser and downloaded. Preview the result below before sharing."
+        : "WebM was checked for playback in this browser and downloaded. Many default phone and Windows players do not support WebM; use an MP4-capable browser for an MP4 export.");
     }catch(cause){setError(cause.message||"Unable to export this song video.");}
     finally{release();}
   }
@@ -337,9 +386,19 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     <p style={{margin:0,fontSize:12,color:"#52635e"}}>{completeCues ? "Your saved timing is applied automatically. Open the teacher timing editor only if it needs correction." : "Play the song and mark each lyric line's beginning. Timings must increase in order."} Keep this browser tab open while exporting; recording runs in real time.</p>
     {exporting?<div role="status"><strong>Rendering locally… {Math.floor(progress)}s / {Math.ceil(duration)}s</strong>
       <button type="button" style={{marginLeft:12}} onClick={()=>cancelRef.current?.()}>Cancel export</button></div>:null}
-    <button type="button" className="music-generate" disabled={!activeUrl||!hasLyrics||exporting||timingStatus==="loading"||(!!publishedTrack && !completeCues)||scenes.some((scene,i)=>i>0&&scene.start<=scenes[i-1].start)}
+    {supported?.extension==="webm" && <div className="music-video-format-warning" role="note">
+      <strong>MP4 is not available in this browser.</strong>
+      <p>WebM videos may not open in your Windows or phone video player even when the file contains valid audio and video. For a widely supported MP4, export in a browser that supports native MP4 recording (often Chrome or Edge).</p>
+      <label><input type="checkbox" checked={allowWebm} onChange={event=>setAllowWebm(event.target.checked)}/> I understand — export WebM anyway</label>
+    </div>}
+    <button type="button" className="music-generate" disabled={!activeUrl||!hasLyrics||!supported||exporting||timingStatus==="loading"||(!!publishedTrack && !completeCues)||(supported?.extension==="webm"&&!allowWebm)||scenes.some((scene,i)=>i>0&&scene.start<=scenes[i-1].start)}
       onClick={exportVideo}>{exporting?"Recording music video…":"Export "+(supported?.extension==="mp4"?"MP4":supported?.extension==="webm"?"WebM":"video")+" · 9:16 with MP3"}</button>
-    {supported?.extension==="webm"&&<small>This browser records WebM rather than MP4. The download will be correctly labeled .webm; use a browser with MP4 MediaRecorder support for MP4.</small>}
+    {exportedVideo && <section className="music-video-export-preview" aria-label="Verify downloaded video">
+      <h3>Check your exported video</h3>
+      <video controls playsInline preload="metadata" src={exportedVideo.url}/>
+      <p>The downloaded {exportedVideo.format.toUpperCase()} file was checked in this browser. Play it here before uploading. To make another copy, use the button below.</p>
+      <button type="button" onClick={()=>saveBlob(exportedVideo.blob,exportedVideo.filename)}>Download video again</button>
+    </section>}
     <section className="music-video-posting" aria-label="Video title and description for publishing">
       <h3>Video title & description · ready to copy</h3>
       <p>Prepared from this song and lesson. Edit the wording for YouTube, TikTok or Instagram before copying.</p>
