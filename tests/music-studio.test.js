@@ -5,7 +5,6 @@ import { getReusableSongDraft, getReusableSongDrafts } from '../src/data/reusabl
 import { reviewMusicStory } from '../src/utils/musicStoryReview.js';
 import { revisedMusicStoryLyrics } from '../src/data/musicStoryRevisions.js';
 import { canUseNewMusicStoryDraft } from '../src/data/musicPublicationGuard.js';
-import { getReusableSongDraft } from '../src/data/reusableMusicSongbook.js';
 import { getMusicProductionProfile } from '../src/utils/musicProductionProfiles.js';
 import { buildFalowenMusicPrompt } from '../src/utils/musicGenerationPrompt.js';
 const require = createRequire(import.meta.url);
