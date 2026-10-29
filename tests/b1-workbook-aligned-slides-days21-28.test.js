@@ -122,18 +122,22 @@ test("Day 23 keeps the planned listening placeholder out of scoring", () => {
   assert.match(listening, /excludes?/i);
 });
 
-test("Day 24 scores all seven current reading statements", () => {
+test("Day 24 keeps all seven scored reading statements and submits the five new clothing-recycling listening answers", () => {
   const slide = getB1WorkbookAlignedSlideDay21To28("B1-8.24");
   const contract = contractByAssignmentId["B1-8.24"];
-  assert.deepEqual(contract.expectedParts, ["teil2", "teil3"]);
-  assert.ok(contract.excludedParts.includes("teil4"));
+  assert.deepEqual(contract.expectedParts, ["teil2", "teil3", "teil4"]);
+  assert.deepEqual(contract.referenceAnswerParts, ["teil3", "teil4"]);
+  assert.equal(contract.excludedParts, undefined);
   assert.equal(Object.keys(contract.answers.teil3).length, 7);
+  assert.deepEqual(Object.values(contract.answers.teil4), [
+    "B) Falsch", "A) Richtig", "A) Richtig", "B) Falsch", "A) Richtig",
+  ]);
   const reading = part(slide, "Teil 3 · Lesen").detailEn;
   const listening = part(slide, "Teil 4 · Hören").detailEn;
   assert.match(reading, /seven/i);
   assert.match(reading, /all seven|reference-scored/i);
-  assert.match(listening, /UNSCORED/i);
-  assert.match(listening, /excludes?/i);
+  assert.ok(listening.includes("b1/day-24/day-25.mp3"));
+  assert.match(listening, /SCORED|Submit|submitted/i);
 });
 
 test("Day 25 teacher guide matches formal Schreiben, seven Lesen and five delivery-problem Hören questions", () => {
