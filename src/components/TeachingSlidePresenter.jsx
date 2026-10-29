@@ -15,6 +15,7 @@ import { getPresenterSlidePhoto } from "../utils/presenterSlidePhotos.js";
 import { nextB1Day18CareerIndex } from "../data/b1Day18CareerChallenge.js";
 import B1HousingChoicePractice from "./B1HousingChoicePractice.jsx";
 import B1SustainabilityDecisions from "./B1SustainabilityDecisions.jsx";
+import B1Day24ListeningStage from "./B1Day24ListeningStage.jsx";
 import A2SportMatchmaker from "./A2SportMatchmaker.jsx";
 import InteractiveLessonOpening from "./InteractiveLessonOpening.jsx";
 import { MusicVideoStage, MusicReadingStage } from "./MusicTeachingStages.jsx";
@@ -1231,6 +1232,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                 ))}
               </div>
             </section>
+          ) : stage.type === "b1-day24-listening" ? (
+            <B1Day24ListeningStage />
           ) : stage.type === "knowledge" ? (
             <section className="presenter-knowledge">
               <div className="presenter-knowledge-heading">
