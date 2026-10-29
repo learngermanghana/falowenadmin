@@ -50,7 +50,9 @@ export function buildFalowenMusicPrompt({
       ? lyricTreatment === "story-source"
         ? `TEACHER VOCABULARY / OLD LYRICS TO ADAPT INTO A NEW STORY (these are reference material, not fixed lyrics):\n${cleanLyrics}\nExtract suitable vocabulary and simple situations; compose fresh, naturally connected story lyrics at the lesson CEFR level. Do not recite the reference line-by-line or sing control markers such as [[A0]], [[B1]], or [:]. Avoid mechanically repeating parenthesized English glossary translations. Correct awkward German examples while preserving the learning meaning.`
         : `USER-SUPPLIED LYRICS (preserve language and pronunciation; build a full ending rather than cutting the final line):\n${cleanLyrics}`
-      : "Write concise original lyrics with a complete last refrain and an explicit [Outro] section, unless instrumental-only.",
+      : vocalMode === "instrumental"
+        ? "Compose instrumental melody and chord movement only. No lyrics, words, spoken dialogue, humming or sampled human vocals."
+        : "Write concise original lyrics with a complete last refrain and an explicit [Outro] section.",
   ].filter(Boolean).join("\n\n");
   if (prompt.length > 8000) throw new Error("Your combined music direction and lyrics exceed 8,000 characters. Shorten the music direction or lyrics.");
   return prompt;
