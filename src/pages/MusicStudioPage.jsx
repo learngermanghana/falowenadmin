@@ -15,6 +15,7 @@ const PRESETS = {
   welcome: 'A gentle Falowen welcome song for German learners before their Zoom class. Encourage learners not to give up: Gemeinsam schaffen wir das / Together we can. Bilingual German and English. Acoustic guitar only, one smooth warm male voice, relaxed Afro-soul feel, quiet and reassuring, no backing singers.',
   vocabulary: 'An original, emotionally believable contemporary song for adult German learners, with a real scene, natural conversation and an expressive melodic chorus rather than a rhyme drill. Preserve simple CEFR German, but make the songwriting and production mature. Warm acoustic guitar, smooth male lead voice and an uncluttered arrangement.',
   instrumental: 'An original intimate fingerstyle acoustic guitar instrumental for adult listeners, with a flowing Dadd9 – A/C# – Bm7 – Gmaj7 chord progression, beautiful natural acoustic tone, expressive melody, evolving dynamics and a resolved outro. Warm, calm, unhurried. No vocals, lyrics or drums.',
+  acoustic: 'An original emotional singer-songwriter pop song with warm acoustic guitar, expressive piano chords, one rich adult lead voice, natural storytelling and a moving chorus. Clear German with musical phrasing rather than childish rhymes.',
 };
 export default function MusicStudioPage() {
   const [courseMode, setCourseMode] = useState('course');
@@ -181,7 +182,7 @@ export default function MusicStudioPage() {
           <button type="button" onClick={exportCompleteSongbook}>Download complete A1–B1 songbook · 84 songs (.txt)</button>
         </div>}
         <h2>2. Shape your song</h2>
-        <div className="music-presets">{Object.entries(PRESETS).map(([id, text]) => <button type="button" key={id} onClick={() => { setBrief(text); setStyleMode('custom'); setVocalMode(id === 'instrumental' ? 'instrumental' : 'voice'); }}>{id === 'welcome' ? 'Class welcome' : id === 'vocabulary' ? 'Lesson story song' : 'Guitar instrumental'}</button>)}</div>
+        <div className="music-presets">{Object.entries(PRESETS).map(([id, text]) => <button type="button" key={id} onClick={() => { setBrief(text); setStyleMode('custom'); setProductionProfile(id === 'instrumental' ? 'fingerstyle-guitar' : id === 'acoustic' ? 'guitar-piano-duet' : 'auto'); setVocalMode(id === 'instrumental' ? 'instrumental' : 'voice'); }}>{id === 'welcome' ? 'Class welcome' : id === 'vocabulary' ? 'Lesson story song' : id === 'acoustic' ? 'Acoustic guitar song' : 'Guitar instrumental'}</button>)}</div>
         {courseMode === 'course' && vocalMode === 'voice' && <>
           <label htmlFor="music-story-style">Songwriting approach</label>
           <select id="music-story-style" value={songStyle} onChange={e => setSongStyle(e.target.value)}>
