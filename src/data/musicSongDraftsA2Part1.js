@@ -2,9 +2,9 @@
 export const MUSIC_SONG_DRAFTS_A2_PART1 = Object.freeze([
   {
     "assignmentKey": "A2-1.1",
-    "title": "Ein Gespräch im Café",
+    "title": "Hallo, das bin ich!",
     "musicStyle": "German Pop, 91 BPM: warm melodic German pop with soft steady drums, clear piano chords and gentle electric bass; easy, conversational melody. One lead singer, clear German phrases, quiet instrumental mix.",
-    "lyrics": "[Verse 1]\nIch sitze allein in einem Café.\nNeben mir sitzt eine neue Frau.\nSie fragt: Ist dieser Platz noch frei?\nIch sage: Ja, bitte setzen Sie sich.\n\n[Chorus]\nWir reden über unseren Tag,\ndas Wetter und was uns gefällt.\nEin kleines Gespräch macht den Tag schön.\n\n[Verse 2]\nSie heißt Clara und arbeitet hier.\nIch bin erst seit Montag in der Stadt.\nSie empfiehlt mir den Park am See.\nAm Samstag wollen wir uns wiedersehen.\n\n[Chorus]\nWir reden über unseren Tag,\ndas Wetter und was uns gefällt.\nEin kleines Gespräch macht den Tag schön.\n\n[Outro]\nAus einem Hallo wird ein guter Kontakt.\nVielleicht beginnt so eine Freundschaft.\nMit Falowen fällt mir der erste Satz leichter.",
+    "lyrics": "[Verse 1]\nHallo, ich heiße Daniel. Wie heißt du?\nIch komme aus Ghana. Woher kommst du?\nIch wohne in Accra und lerne Deutsch.\nSeit einem Jahr macht mir das Spaß.\nManchmal ist es schwer, doch ich gebe nicht auf.\n\n[Chorus]\nWie geht es dir? Mir geht es gut.\nWas machst du gern? Ich höre Musik.\nEin kleines Hallo, ein neues Gespräch.\nSo lernen wir uns kennen.\n\n[Verse 2]\nAm Morgen trinke ich Kaffee oder Tee.\nDann gehe ich zur Arbeit in die Stadt.\nAm Abend lerne ich oder sehe fern.\nAm Wochenende treffe ich Freunde gern.\nWie ist das Wetter heute bei dir?\nHier scheint die Sonne. Erzähl doch von dir!\n\n[Chorus]\nWie geht es dir? Mir geht es gut.\nWas machst du gern? Ich höre Musik.\nEin kleines Hallo, ein neues Gespräch.\nSo lernen wir uns kennen.\n\n[Outro]\nIch frage, ich höre zu und erzähle von mir.\nMit jedem Gespräch wird Deutsch leichter.\nMit Falowen lerne ich jeden Tag mehr.",
     "genre": "German Pop"
   },
   {
