@@ -70,7 +70,9 @@ test('successful generation uses stateless Google API and returns downloadable M
 });
 
 test('Ghanaian highlife keeps German lyrics intact and adds instrumental frikyiwa', () => {
-  for (const id of ['A1-4', 'A2-9.23', 'B1-8.24']) {
+  // A1-4 is now the teacher-approved acoustic Afrobeat recording, not an unrecorded highlife draft.
+  assert.equal(getReusableSongDraft('A1-4').genre,'Warm Acoustic Pop');
+  for (const id of ['A2-9.23', 'B1-8.24']) {
     const song = getReusableSongDraft(id);
     assert.equal(song.genre, 'Ghanaian Highlife');
     assert.match(song.musicStyle, /frikyiwa/i);
@@ -80,7 +82,7 @@ test('Ghanaian highlife keeps German lyrics intact and adds instrumental frikyiw
   }
   const palette = getMusicProductionProfile('ghana-highlife');
   assert.equal(palette.id, 'ghana-highlife');
-  const song = getReusableSongDraft('A1-4');
+  const song = getReusableSongDraft('A2-9.23');
   const prompt = buildFalowenMusicPrompt({ brief: song.musicStyle, lyrics: song.lyrics,
     productionProfile: 'ghana-highlife', durationSeconds: 150 });
   assert.match(prompt, /three short crisp offbeat taps/);
