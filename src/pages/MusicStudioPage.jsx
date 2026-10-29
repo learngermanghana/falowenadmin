@@ -320,7 +320,7 @@ export default function MusicStudioPage() {
     </section>
     <section id="music-video-panel" role="tabpanel" aria-labelledby="music-video-tab"
       style={{display:studioTab === 'video' ? undefined : 'none'}}>
-    <MusicLyricsVideoStudio assignmentKey={assignmentKey}
+    <MusicLyricsVideoStudio active={studioTab === 'video'} assignmentKey={assignmentKey}
       generated={result && result.title === trackTitle && (courseMode === 'custom' || (result.level === level && result.day === lesson?.day)) ? result : null}
       title={trackTitle} level={courseMode === 'course' ? level : ''} day={courseMode === 'course' ? lesson?.day : ''}
       lyrics={lyrics}
