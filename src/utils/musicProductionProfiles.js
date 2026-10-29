@@ -55,7 +55,7 @@ export const MUSIC_PRODUCTION_PROFILES = Object.freeze([
     id: 'guitar-piano-duet',
     label: 'Acoustic guitar + piano · emotional pop',
     description: 'Moving guitar strums, expressive acoustic piano chords, rich chorus without excess drums.',
-    direction: 'Original warm contemporary acoustic pop with two complementary live instruments, 84 BPM in C major. Main eight-bar progression: Cadd9 – G/B – Am7 – Fmaj7 – C/E – Dm7 – Gsus4 – G. Play a restrained steel-string guitar with soft picked notes in the verses and broad, unhurried strums in the chorus; add a close-miked acoustic piano using inversions and gentle answering arpeggios. Sparse warm bass enters for the second verse; light brushed percussion only in the final chorus. Develop a moving verse to pre-chorus to cathartic chorus with natural rising melody, adult emotional color and a beautiful resolution. No nursery-rhyme bounce, children's claps or forced end-word rhymes.'
+    direction: 'Original warm contemporary acoustic pop with two complementary live instruments, 84 BPM in C major. Main eight-bar progression: Cadd9 – G/B – Am7 – Fmaj7 – C/E – Dm7 – Gsus4 – G. Play a restrained steel-string guitar with soft picked notes in the verses and broad, unhurried strums in the chorus; add a close-miked acoustic piano using inversions and gentle answering arpeggios. Sparse warm bass enters for the second verse; light brushed percussion only in the final chorus. Develop a moving verse to pre-chorus to cathartic chorus with natural rising melody, adult emotional color and a beautiful resolution. No nursery-rhyme bounce, childlike claps or forced end-word rhymes.'
   },
   {
     id: 'guitar-neo-soul',
@@ -67,7 +67,7 @@ export const MUSIC_PRODUCTION_PROFILES = Object.freeze([
     id: 'afro-acoustic-guitar',
     label: 'Acoustic Afro-soul · guitar groove',
     description: 'Beautiful plucked guitar, subtle syncopated African rhythm, warm bass and smooth vocals.',
-    direction: 'Original mellow acoustic Afro-soul / contemporary African guitar pop at 94 BPM in G major. Main four-bar progression: Gmaj9 – D/F# – Em7 – Cadd9, with Am7 – Dsus4 – D as a graceful turnaround. Lead with an organic acoustic guitar playing an intricate melodic picking figure, then gentle syncopated guitar strums, rounded bass and a tasteful soft shaker and rim percussion groove. Give a few expressive flute responses to the guitar motif, but never drown the warm single lead singer. Build the chorus with a wider guitar strum and subtle piano support; keep the groove refined, soulful, human and adult rather than a children's classroom singalong or chant.'
+    direction: 'Original mellow acoustic Afro-soul / contemporary African guitar pop at 94 BPM in G major. Main four-bar progression: Gmaj9 – D/F# – Em7 – Cadd9, with Am7 – Dsus4 – D as a graceful turnaround. Lead with an organic acoustic guitar playing an intricate melodic picking figure, then gentle syncopated guitar strums, rounded bass and a tasteful soft shaker and rim percussion groove. Give a few expressive flute responses to the guitar motif, but never drown the warm single lead singer. Build the chorus with a wider guitar strum and subtle piano support; keep the groove refined, soulful, human and adult rather than a nursery classroom singalong or chant.'
   },
   {
     id: 'piano-pop',
