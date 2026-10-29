@@ -106,7 +106,7 @@ test('A2 Day 19 and Day 20 use the real Day 18 player design, lyrics and MCQs', 
   assert.match(player, /music-lyrics\?key=/);
   assert.match(player, /Referenztext · noch nicht mit dieser MP3 abgeglichen/);
   assert.match(player, /originalen Liedtextentwurf/);
-  assert.match(player, /referenceKey=day===19/);
+  assert.match(player, /referenceKey=referenceKeys\[level\+'-'\+day\]/);
   assert.doesNotMatch(player, /<iframe|&embedded=1|getReusableSongDraft|SongTimingEditor/);
   assert.match(player, /Das separate Hören-Gespräch bleibt auf der nächsten Folie/);
 });
