@@ -162,11 +162,11 @@ export const MUSIC_QUESTION_SEEDS_A2 = Object.freeze([
   ],
   [
     "A2-8.21",
-    "Warum sind die Freunde zunächst nicht einig?",
-    "Ben möchte in die Berge, Mia lieber in der Nähe bleiben.",
-    "Worauf einigen sie sich für Samstag?",
-    "Auf einen Ausflug zum See mit einem Wanderweg.",
-    "Wie planst du ein Wochenende in einer Gruppe?"
+    "Welche Vorschläge haben Ben und Mia für das Wochenende?",
+    "Ben möchte in die Berge fahren, Mia bleibt lieber in der Stadt.",
+    "Was machen die Freunde am Sonntag?",
+    "Sie gehen ins Café, trinken Kaffee und erzählen viel.",
+    "Wie einigst du dich mit Freunden auf einen gemeinsamen Wochenendplan?"
   ],
   [
     "A2-8.22",
