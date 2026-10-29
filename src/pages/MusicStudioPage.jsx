@@ -13,8 +13,8 @@ import ReusableMusicQuestions from '../components/ReusableMusicQuestions.jsx';
 import { falowenMusicFileName } from '../utils/musicExportNames.js';
 const PRESETS = {
   welcome: 'A gentle Falowen welcome song for German learners before their Zoom class. Encourage learners not to give up: Gemeinsam schaffen wir das / Together we can. Bilingual German and English. Acoustic guitar only, one smooth warm male voice, relaxed Afro-soul feel, quiet and reassuring, no backing singers.',
-  vocabulary: 'A memorable Falowen German-learning story song at the selected CEFR level. A relatable everyday situation, clear natural German dialogue, and a catchy useful-sentence chorus. Occasional short English support for beginners. Gentle acoustic guitar, one smooth warm male voice, and very quiet accompaniment.',
-  instrumental: 'A gentle instrumental acoustic guitar piece for the Falowen classroom waiting room. Calm, warm, unobtrusive. No vocals, no lyrics, no drums.',
+  vocabulary: 'An original, emotionally believable contemporary song for adult German learners, with a real scene, natural conversation and an expressive melodic chorus rather than a rhyme drill. Preserve simple CEFR German, but make the songwriting and production mature. Warm acoustic guitar, smooth male lead voice and an uncluttered arrangement.',
+  instrumental: 'An original intimate fingerstyle acoustic guitar instrumental for adult listeners, with a flowing Dadd9 – A/C# – Bm7 – Gmaj7 chord progression, beautiful natural acoustic tone, expressive melody, evolving dynamics and a resolved outro. Warm, calm, unhurried. No vocals, lyrics or drums.',
 };
 export default function MusicStudioPage() {
   const [courseMode, setCourseMode] = useState('course');
@@ -65,8 +65,9 @@ export default function MusicStudioPage() {
   const context = courseMode === 'course' ? musicLessonContext(lesson, language, focus, {
     songStyle: vocalMode === 'voice' ? songStyle : 'vocabulary',
     storyIdea,
-    teacherLyricsProvided: Boolean(lyrics.trim()),
+    teacherLyricsProvided: vocalMode === 'voice' && Boolean(lyrics.trim()),
     rewriteFromLyrics,
+    instrumentalOnly: vocalMode === 'instrumental',
   }) : '';
   const [status, setStatus] = useState(null);
   const [error, setError] = useState('');
@@ -145,7 +146,7 @@ export default function MusicStudioPage() {
     if (lock.current) return;
     lock.current = true; setBusy(true); setError('');
     try {
-      const prompt = buildFalowenMusicPrompt({ brief: productionBrief, context, lyrics, mode, durationSeconds, vocalMode, backingLevel,
+      const prompt = buildFalowenMusicPrompt({ brief: productionBrief, context, lyrics: vocalMode === 'instrumental' ? '' : lyrics, mode, durationSeconds, vocalMode, backingLevel,
         lyricTreatment: rewriteFromLyrics ? 'story-source' : 'exact', productionProfile });
       const data = await musicRequest({ mode, requestId: crypto.randomUUID(), prompt });
       const url = URL.createObjectURL(musicBlob(data));
@@ -184,7 +185,7 @@ export default function MusicStudioPage() {
         {courseMode === 'course' && vocalMode === 'voice' && <>
           <label htmlFor="music-story-style">Songwriting approach</label>
           <select id="music-story-style" value={songStyle} onChange={e => setSongStyle(e.target.value)}>
-            <option value="story">Real-life storytelling — recommended</option>
+            <option value="story">Natural adult storytelling — recommended</option>
             <option value="vocabulary">Vocabulary review / repetition</option>
           </select>
           {songStyle === 'story' && <>
@@ -192,7 +193,7 @@ export default function MusicStudioPage() {
             <textarea id="music-story-idea" rows={2} maxLength={240} value={storyIdea} onChange={e => setStoryIdea(e.target.value)} placeholder={lesson?.assignmentKey === 'A1-14.1'
               ? 'A learner says "Mein Kopf tut weh", asks a friend for help, rests and feels better.'
               : 'For example: Two classmates solve an everyday problem using the lesson vocabulary.'} />
-            <p className="music-note">AI uses the selected CEFR level to create a beginning, problem, dialogue and resolution. A1 uses simple sentences; higher levels add richer situations.</p>
+            <p className="music-note">Make an actual contemporary song—not a nursery rhyme or vocabulary chant. A1 still uses simple German; the emotions, melodic development, guitar and piano harmony should feel grown-up.</p>
           </>}
         </>}
         {courseMode === 'course' && <>
@@ -226,7 +227,7 @@ export default function MusicStudioPage() {
         </div>}
         {!draft && lyrics.trim() && <button type="button" onClick={saveCurrentLyrics}>Download lyrics + music style (.txt)</button>}
         {copyStatus && <p role="status" className="music-note">{copyStatus}</p>}
-        {draft && <p className="music-note">Original Falowen lyrics are loaded automatically and preserved exactly when generating the song. Edits here are only saved in the current page until you export them. To have AI rewrite this draft, select Source vocabulary below.</p>}
+        {draft && <p className="music-note">Original Falowen lyrics are loaded automatically. If they sound too much like a nursery rhyme, choose <strong>Source vocabulary — rewrite into a story</strong> below to create more natural adult lyrics; choose Exact lyrics to preserve your words. Edits are temporary until exported.</p>}
         {courseMode === 'course' && vocalMode === 'voice' && songStyle === 'story' && lyrics.trim() && <>
           <label htmlFor="music-lyric-treatment">Use the text above as</label>
           <select id="music-lyric-treatment" value={lyricTreatment} onChange={e => setLyricTreatment(e.target.value)}>
@@ -234,10 +235,10 @@ export default function MusicStudioPage() {
             <option value="story-source">Source vocabulary — rewrite into a story</option>
           </select>
           <p className="music-note">{rewriteFromLyrics
-            ? 'The draft lines are references; AI will write new level-appropriate story lyrics.'
-            : 'Your exact lyrics are kept. Clear this field or choose Source vocabulary if you want a new story.'}</p>
+            ? 'The draft lines are references; AI will write natural, adult-oriented story lyrics at the selected German level. Your original text remains available under Restore original.'
+            : 'Your exact lyrics are kept. For a more mature song if these lines feel like a nursery rhyme, select Source vocabulary to rewrite them into a natural story.'}</p>
         </>}
-        <p className="music-note">{lyrics.trim().split(/\s+/).filter(Boolean).length} / {musicLyricLimit(mode, durationSeconds)} suggested words for this length. Leave the text empty for an AI-written level-appropriate story when storytelling is selected. Too many lines can lead to a cut-off ending.</p>
+        <p className="music-note">{vocalMode === 'instrumental' ? 'Instrumental mode will ignore the lyrics above and send no sung words to the music generator.' : `${lyrics.trim().split(/\s+/).filter(Boolean).length} / ${musicLyricLimit(mode, durationSeconds)} suggested words for this length. Leave the text empty for an AI-written level-appropriate story when storytelling is selected. Too many lines can lead to a cut-off ending.`}</p>
         <label htmlFor="music-mode">3. Choose generation</label><select id="music-mode" value={mode} onChange={e => setMode(e.target.value)}><option value="clip">30-second preview only (not a complete song) · estimated $0.04</option><option value="song">Full song · estimated $0.08</option></select>
         {mode === 'song' && <><label htmlFor="music-duration">Target song length</label><select id="music-duration" value={durationSeconds} onChange={e => setDurationSeconds(Number(e.target.value))}><option value={120}>About 2 minutes</option><option value={150}>About 2½ minutes — recommended</option><option value={180}>About 3 minutes</option></select></>}
         <p className="music-note">The preview always ends after 30 seconds; choose Full song for a complete track. A full song is a new generation, not an extension of the preview. Duration is approximate. The prompt reserves an ending with a completed final phrase, resolved chord and natural fade; Google does not guarantee an exact length or mix.</p>
