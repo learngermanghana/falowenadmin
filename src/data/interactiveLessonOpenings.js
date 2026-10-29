@@ -3,7 +3,7 @@ import { A2_DAY19_LISTENING } from './a2Day19Listening.js';
 // the only verified recording; never invent audio or override scored workbook work.
 import { A2_DAY17_AUDIO_KEY, A2_DAY17_WARMUP, A2_DAY17_LISTENING, A2_DAY17_TRANSCRIPT } from "./a2Day17Opening.js";
 import { B1_DAY25_LISTENING } from "./b1Day25Listening.js";
-import { B1_DAY24_MUSIC } from "./b1Day24Music.js";
+import { B1_DAY24_RECORDED_MUSIC } from "./b1Day24RecordedMusic.js";
 import { A2_DAY18_BANK_LISTENING } from "./a2Day18BankListening.js";
 import { A2_DAY18_BANK_MUSIC } from "./a2Day18BankMusic.js";
 import { A2_DAY20_LISTENING } from "./a2Day20Listening.js";
@@ -428,18 +428,29 @@ ENTRIES["B1-8.24"] = {
   assignmentId: "B1-8.24",
   title: "Konsum und Nachhaltigkeit",
   warmup: [], // Music video replaces the Day 24 warm-up, without changing other days.
-  listening: B1_DAY24_MUSIC,
+  listening: B1_DAY24_RECORDED_MUSIC,
 };
-// Day 25 uses YouTube only for the music introduction (slide 2).
-// The separate R2 Hören activity and graded workbook recording stay intact.
+// Published R2 music on Day 25 replaces the old YouTube intro only.
 ENTRIES["B1-8.25"].musicIntro = {
-  mediaType: "music",
-  youtubeId: "ArWT0uVqUxo",
-  title: "Klick mit Köpfchen · Online einkaufen – Rechte und Risiken",
-  introQuestion: "Worauf sollte man beim Online-Einkaufen achten?",
-  nextStep: "Weiter zur Hören-Aufgabe „Nachhaltig einkaufen“ mit der bestehenden Audioaufnahme. Das Lied ist nur ein kurzer Einstieg; keine zusätzlichen Testfragen.",
+  mediaType:'music',level:'B1',day:25,
+  title:'Als Kunde habe ich auch Rechte',
+  introQuestion:'Wie würdest du reagieren, wenn ein Paket nicht ankommt?',
+  musicLibraryUrl:'https://music.falowen.app/?level=B1&day=25',
+  nextStep:'Danach folgt das bestehende separate Hören-Gespräch über das Lieferproblem.',
 };
 ENTRIES["B1-8.25"].listening = B1_DAY25_LISTENING;
+// Day 26 has uploaded music, but no distinct verified conversation Hören.
+// Preserve its original 9-slide structure, correction, Lesen and practice.
+ENTRIES["B1-9.26"] = {
+  assignmentId:'B1-9.26',title:'Reiseprobleme und Lösungen',warmup:[],
+  musicIntro:{
+    mediaType:'music',level:'B1',day:26,
+    title:'Der Zug fährt nicht',
+    introQuestion:'Was kannst du tun, wenn dein Zug ausfällt?',
+    musicLibraryUrl:'https://music.falowen.app/?level=B1&day=26',
+    nextStep:'Anschließend folgen Common Mistakes, Lesen und die bisherigen Aufgaben.',
+  },
+};
 
 export const INTERACTIVE_LESSON_OPENINGS = Object.freeze(
   Object.fromEntries(Object.entries(ENTRIES).map(([key, entry]) => [

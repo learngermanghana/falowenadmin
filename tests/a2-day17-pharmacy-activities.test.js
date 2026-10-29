@@ -87,7 +87,9 @@ test("chosen chapters reuse four authored 10-minute warm-up steps without invent
           "https://music.falowen.app/?level=A2&day=20");
         assert.equal(stages.find(s => s.id === "warmup").musicVideo.audioUrl, undefined);
       } else {
-        assert.equal(stages.find(s => s.id === "warmup").musicVideo.youtubeId, "ArWT0uVqUxo");
+        assert.equal(stages.find(s => s.id === "warmup").musicVideo.youtubeId, undefined);
+        assert.equal(stages.find(s => s.id === "warmup").musicVideo.musicLibraryUrl,
+          "https://music.falowen.app/?level=B1&day=25");
       }
     } else {
       assert.equal(stages.find(s => s.id === "warmup").variant, "interactive-warmup", id);

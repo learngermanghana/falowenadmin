@@ -132,7 +132,9 @@ export function MusicReadingStage({ music, embedded = false }) {
               <p>{current.explanation}</p>
               <blockquote lang="de">{current.evidence}</blockquote>
               <div className="music-reading-timestamp">
-                <span>Textstelle im Lied: <strong>{musicTimestamp(current.timestamp)}</strong></span>
+                {music.youtubeId && Number.isFinite(current.timestamp)
+                  ? <span>Textstelle im Lied: <strong>{musicTimestamp(current.timestamp)}</strong></span>
+                  : <span>Textbeleg im veröffentlichten Lesetext · ohne unbestätigte MP3-Zeitmarke</span>}
                 {atTime && <a href={atTime} target="_blank" rel="noopener noreferrer">Im YouTube-Video ab {musicTimestamp(current.timestamp)} anhören ↗</a>}
               </div>
             </div>

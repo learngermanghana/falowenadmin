@@ -39,3 +39,28 @@ test('Day 19 chooses the uploaded Die richtige Wahl when uniquely published',()=
  assert.equal(selected.objectKey,row.objectKey);
  assert.equal(selected.repeat,true);
 });
+
+test('B1 published song selection is specific to level/day, never another Hören/audio key',()=>{
+  const b1={
+    id:'r2-b1-day-25-als-kunde-habe-ich-auch-rechte',title:'Als Kunde habe ich auch Rechte',
+    level:'B1',day:25,objectKey:'music/b1/day-25/Als Kunde habe ich auch Rechte.mp3',
+    audioUrl:'https://www.falowen.app/api/music?track=r2-b1-day-25-als-kunde-habe-ich-auch-rechte',
+    autoDiscovered:true,coursebook:true,
+  };
+  const a2={...b1,id:'r2-a2-day-25-other',level:'A2',
+    audioUrl:'https://www.falowen.app/api/music?track=r2-a2-day-25-other',
+    objectKey:'music/a2/day-25/other.mp3'};
+  const selected=selectRecordedLessonTrack({tracks:[a2,b1]},{level:'B1',day:25,assignmentKey:'B1-8.25'});
+  assert.equal(selected.objectKey,b1.objectKey);
+  assert.equal(selected.repeat,true);
+  assert.equal(selectRecordedLessonTrack({tracks:[a2,b1]},{level:'B1',day:26,assignmentKey:'B1-9.26'}),null);
+  assert.equal(selectRecordedLessonTrack({tracks:[{...b1,objectKey:'b1/day-25/hoeren.mp3'}]},
+    {level:'B1',day:25,assignmentKey:'B1-8.25'}),null);
+  const textLines=['Meins funktioniert eigentlich noch gut.','Er zeigt mir, wie ich den Akku schonen kann.'];
+  const questions=recordedSongQuestions({lyrics:textLines.join('\\n')},24,'B1');
+  assert.equal(questions.length,3);
+  assert.ok(questions[0].options.length===3);
+  assert.equal(questions[0].options[questions[0].correctIndex],questions[0].options[0]);
+  assert.equal(questions[2].type,'speaking');
+  assert.match(questions[2].prompt,/konsumieren|bewusst/i);
+});

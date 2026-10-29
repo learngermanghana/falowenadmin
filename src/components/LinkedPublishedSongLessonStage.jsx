@@ -9,6 +9,9 @@ import './LessonSongStage.css';
 // never embed the music website inside the slide or use draft lyrics.
 export default function LinkedPublishedSongLessonStage({ music }) {
   const day = Number(music?.day);
+  const level = String(music?.level || '').toUpperCase();
+  const supported = (level === 'A2' && [19,20].includes(day))
+    || (level === 'B1' && [24,25,26].includes(day));
   const [loaded, setLoaded] = useState({loading:true,track:null,pack:null,reference:null,error:''});
   const [view,setView] = useState('listen');
   const [time,setTime] = useState(0);
@@ -18,10 +21,12 @@ export default function LinkedPublishedSongLessonStage({ music }) {
   const [showAnswer,setShowAnswer] = useState(false);
   const [audioError,setAudioError] = useState('');
   const audio = useRef(null);
-  const assignmentKey = 'A2-7.'+day;
+  const assignmentKey = level === 'B1'
+    ? ({24:'B1-8.24',25:'B1-8.25',26:'B1-9.26'}[day] || '')
+    : 'A2-7.'+day;
 
   useEffect(()=>{
-    if (music?.level!=='A2' || ![19,20].includes(day)) return undefined;
+    if (!supported) return undefined;
     const controller=new AbortController();
     setLoaded({loading:true,track:null,pack:null,reference:null,error:''});
     setView('listen');setQuestionIndex(0);setSelectedOption(-1);setShowAnswer(false);setAudioError('');setTime(0);
@@ -32,8 +37,8 @@ export default function LinkedPublishedSongLessonStage({ music }) {
         const response=await fetch('/api/attendance-music-library', {signal:controller.signal});
         if (!response.ok) throw Error('Die Musikbibliothek ist nicht erreichbar.');
         const data=await response.json();
-        const track=selectRecordedLessonTrack(data,{day,assignmentKey});
-        if (!track) throw Error('Keine eindeutige veröffentlichte Aufnahme für A2 Tag '+day+' gefunden.');
+        const track=selectRecordedLessonTrack(data,{level,day,assignmentKey});
+        if (!track) throw Error('Keine eindeutige veröffentlichte Aufnahme für '+level+' Tag '+day+' gefunden.');
         if (!controller.signal.aborted) setLoaded({loading:false,track,pack:null,reference:null,error:''});
         // Music lyrics/timings only for this EXACT recording, never the
         // unrelated songbook draft or another Day 19/20 MP3.
@@ -58,14 +63,22 @@ export default function LinkedPublishedSongLessonStage({ music }) {
               // may have been re-exported with a new filename/duration. The
               // earlier *published* Day 19 manuscript remains useful to read,
               // but its timestamps MUST NOT be applied to the new audio.
-              const referenceKey=day===19
-                ? 'music/a2/day-19/lieber-online-oder-im-laden.mp3'
-                : 'music/a2/day-20/Höflich reklamieren.mp3';
-              const title=String(track.title||'').toLocaleLowerCase('de');
-              const sameSongIdentity=day===19 ? title==='die richtige wahl'
-                : (title==='höflich reklamieren' || title==='die jacke ist zu klein');
+              const referenceKeys={
+                'A2-19':'music/a2/day-19/lieber-online-oder-im-laden.mp3',
+                'A2-20':'music/a2/day-20/Höflich reklamieren.mp3',
+                'B1-24':'music/b1/day-24/Weniger kaufen.mp3',
+                'B1-25':'music/b1/day-25/Als Kunde habe ich auch Rechte.mp3',
+              };
+              const referenceKey=referenceKeys[level+'-'+day];
+              const title=String(track.title||'').toLocaleLowerCase('de').trim();
+              const sameSongIdentity=level==='A2'
+                ? (day===19 ? title==='die richtige wahl'
+                  : (title==='höflich reklamieren' || title==='die jacke ist zu klein'))
+                : (day===24 ? title==='weniger kaufen' || title==='weniger kaufen, mehr erleben'
+                  : day===25 ? title==='als kunde habe ich auch rechte' || title==='das paket kam nicht an'
+                  : false);
               if (!pack && sameSongIdentity) {
-                const original=entries.find(row=>row.objectKey===referenceKey);
+                const original=referenceKey && entries.find(row=>row.objectKey===referenceKey);
                 if (typeof original?.lyrics==='string' && original.lyrics.trim())
                   reference={lyrics:original.lyrics,objectKey:referenceKey};
               }
@@ -79,12 +92,12 @@ export default function LinkedPublishedSongLessonStage({ music }) {
       }
     })();
     return ()=>controller.abort();
-  },[day,music?.level,assignmentKey]);
+  },[day,level,assignmentKey,supported]);
 
-  if (music?.level!=='A2' || ![19,20].includes(day)) return null;
+  if (!supported) return null;
   const {track,pack,reference,loading,error}=loaded;
   const displayText=pack || reference;
-  const questions=recordedSongQuestions(displayText,day);
+  const questions=recordedSongQuestions(displayText,day,level);
   const question=questions[questionIndex];
   const musicLink=track ? 'https://music.falowen.app/?track='+encodeURIComponent(track.id) : music.musicLibraryUrl;
   const song=displayText && track ? {id:track.id,objectKey:track.objectKey,lyrics:displayText.lyrics} : null;
@@ -92,9 +105,9 @@ export default function LinkedPublishedSongLessonStage({ music }) {
   const changeTab=next=>{setView(next);setQuestionIndex(0);setShowAnswer(false);setSelectedOption(-1);};
   return (
     <section className="published-song-lesson published-song-lesson--linked" data-published-song={assignmentKey}
-      aria-label={'Falowen Music A2 Day '+day}>
+      aria-label={'Falowen Music '+level+' Day '+day}>
       <header className="published-song-lesson__head">
-        <div><span>FALOWEN MUSIC · A2 · DAY {day}</span>
+        <div><span>FALOWEN MUSIC · {level} · DAY {day}</span>
           <h2>{track?.title || music.title}</h2><p>Hören · Liedtext verstehen · Sprechen</p></div>
       </header>
       <div className="published-song-lesson__player">

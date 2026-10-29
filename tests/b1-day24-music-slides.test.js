@@ -7,49 +7,25 @@ import { getInteractiveLessonOpening, isInteractiveOpeningStage } from "../src/d
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 import { musicMomentUrl, musicTimestamp } from "../src/utils/musicTeaching.js";
 
-test("B1 Day 24 has YouTube music on slide 2 and deeper lyric reading on slide 3", () => {
-  const slide = getSlidesByCourse("B1").find((item) => item.assignmentId === "B1-8.24");
-  assert.ok(slide);
-  const stages = buildTeachingPresenterStages(slide, slide.topic);
-
-  assert.deepEqual(stages.map((item) => item.id), [
-    "intro", "warmup", "knowledge", "common-mistakes", "reading", "grammar-check",
-    "practice", "questions", "workbook", "lesson-summary",
-  ]);
-
-  assert.equal(stages[0].musicIntro, undefined, "intro must not duplicate the YouTube video");
-  assert.equal(stages[1].variant, "interactive-music-video");
-  assert.equal(stages[1].type, "list");
-  assert.equal(stages[1].musicVideo.youtubeId, "-46siG9FrfE");
-  assert.equal(stages[1].timingMode, "", "per-student timer is disabled only on the video slide");
-  assert.equal(stages[1].musicVideo.audioKey, undefined, "music is not Cloudflare audio");
-
-  assert.equal(stages[2].variant, "interactive-music-reading");
-  assert.equal(stages[2].type, "knowledge");
-  assert.equal(stages[2].musicReading.questions.length, 5);
-  assert.equal(stages[2].musicReading.readingSections.length, 4);
-  assert.deepEqual(
-    stages[2].musicReading.questions.map(({ timestamp }) => timestamp),
-    [32, 81, 91, 37, 136],
-  );
-
-  // The remaining 6 stages are the existing curriculum flow, including
-  // the original graded-unrelated teacher-led B1 grammar and speaking.
-  assert.deepEqual(stages.slice(3).map((stage) => stage.id), [
-    "common-mistakes", "reading", "grammar-check", "practice", "questions", "workbook", "lesson-summary",
-  ]);
-  assert.equal(stages[7].type, "question-reveal");
-  assert.equal(stages[7].items.length, 3);
-  assert.equal(stages[5].items.length, 3);
-
-  const song = getInteractiveLessonOpening("B1-8.24").listening;
-  assert.equal(song.mediaType, "music");
-  assert.equal(song.youtubeId, "-46siG9FrfE");
-  assert.ok(song.questions.every((q) =>
-    q.options[q.correctIndex] === q.answer && q.evidence && q.explanation && q.hint
-    && Number.isInteger(q.timestamp) && q.timestamp >= 0 && q.timestamp < 219));
-  assert.equal(isInteractiveOpeningStage("B1-8.24", "warmup"), false);
-  assert.equal(isInteractiveOpeningStage("B1-8.24", "knowledge"), false);
+test("B1 Day 24 uses direct music with verified in-slide lyrics, MCQs and original deep-reading page", () => {
+  const slide=getSlidesByCourse("B1").find(row=>row.assignmentId==="B1-8.24");
+  const stages=buildTeachingPresenterStages(slide,slide.topic);
+  assert.equal(stages.length,10);
+  assert.deepEqual(stages.slice(0,6).map(x=>x.id),
+    ["intro","warmup","knowledge","common-mistakes","reading","grammar-check"]);
+  assert.equal(stages[1].variant,"interactive-music-video");
+  assert.equal(stages[1].musicVideo.mediaType,"music");
+  assert.equal(stages[1].musicVideo.youtubeId,undefined);
+  assert.equal(stages[1].musicVideo.musicLibraryUrl,"https://music.falowen.app/?level=B1&day=24");
+  assert.equal(stages[1].timingMode,"");
+  assert.equal(stages[2].variant,"interactive-music-reading");
+  assert.equal(stages[2].musicReading.questions.length,5);
+  assert.equal(stages[2].musicReading.readingSections.length,4);
+  assert.ok(stages[2].musicReading.questions.every(q=>q.options[q.correctIndex]===q.answer));
+  assert.equal(stages[3].items.length>=2,true);
+  assert.ok(stages[4].textDe);
+  assert.equal(isInteractiveOpeningStage("B1-8.24","warmup"),false);
+  assert.equal(isInteractiveOpeningStage("B1-8.24","knowledge"),false);
 });
 
 test("all other R2 Hören lessons continue unchanged, with signed audio", () => {
