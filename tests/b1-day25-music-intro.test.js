@@ -6,54 +6,38 @@ import { getInteractiveLessonOpening, isInteractiveOpeningStage } from "../src/d
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 import { B1_DAY25_AUDIO_KEY, B1_DAY25_LISTENING } from "../src/data/b1Day25Listening.js";
 
-test("B1 Day 25 uses the published YouTube video only on slide 2 and retains R2 Hören on slide 3", () => {
-  const slide = getSlidesByCourse("B1").find((row) => row.assignmentId === "B1-8.25");
-  assert.ok(slide);
-  const stages = buildTeachingPresenterStages(slide, slide.topic);
-
-  assert.deepEqual(stages.map((stage) => stage.id), [
-    "intro", "warmup", "knowledge", "common-mistakes", "reading", "grammar-check",
-    "scenario-challenge", "questions", "workbook", "lesson-summary",
-  ]);
-  assert.equal(stages[0].musicIntro, undefined);
-  assert.equal(stages[1].variant, "interactive-music-video");
-  assert.equal(stages[1].musicVideo.youtubeId, "ArWT0uVqUxo");
-  assert.equal(stages[1].timingMode, "");
-  assert.equal(stages[1].suggestedMinutes, 0);
-  assert.match(stages[1].musicVideo.nextStep, /Hören-Aufgabe/);
-  assert.ok(!stages[1].challengeItems?.length);
-
-  assert.equal(stages[2].variant, "interactive-listening");
-  assert.equal(stages[2].audioKey, B1_DAY25_AUDIO_KEY);
-  assert.equal(stages[2].audioKey, "b1/day-25/day-25.mp3");
-  assert.equal(stages[2].listeningItems.length, 5);
-  assert.equal(stages[2].transcript, B1_DAY25_LISTENING.transcript);
-  assert.equal(stages[2].transcript.length, 0, "do not invent a transcript for the revised audio");
-  assert.equal(stages[2].musicVideo, undefined);
-  assert.equal(isInteractiveOpeningStage("B1-8.25", "warmup"), false);
-  assert.equal(isInteractiveOpeningStage("B1-8.25", "knowledge"), true);
-
-  // The remaining teaching stages, speaking, workbook, and assessment contract
-  // are unchanged. The music is a teacher-led, unscored introduction.
-  assert.deepEqual(stages.slice(3).map((stage) => stage.id), [
-    "common-mistakes", "reading", "grammar-check", "scenario-challenge", "questions", "workbook", "lesson-summary",
-  ]);
+test("B1 Day 25 has direct lesson music with its independent R2 Hören and approved slide flow", () => {
+  const slide=getSlidesByCourse("B1").find(row=>row.assignmentId==="B1-8.25");
+  const stages=buildTeachingPresenterStages(slide,slide.topic);
+  assert.deepEqual(stages.map(x=>x.id),["intro","warmup","knowledge","common-mistakes","reading","grammar-check",
+    "scenario-challenge","questions","workbook","lesson-summary"]);
+  assert.equal(stages[1].variant,"interactive-music-video");
+  assert.equal(stages[1].musicVideo.youtubeId,undefined);
+  assert.equal(stages[1].musicVideo.mediaType,"music");
+  assert.equal(stages[1].musicVideo.musicLibraryUrl,"https://music.falowen.app/?level=B1&day=25");
+  assert.equal(stages[1].timingMode,"");
+  assert.equal(stages[2].variant,"interactive-listening");
+  assert.equal(stages[2].audioKey,B1_DAY25_AUDIO_KEY);
+  assert.equal(stages[2].audioKey,"b1/day-25/day-25.mp3");
+  assert.equal(stages[2].listeningItems.length,5);
+  assert.equal(stages[2].transcript,B1_DAY25_LISTENING.transcript);
+  assert.equal(stages[2].transcript.length,0);
+  assert.equal(stages[2].musicVideo,undefined);
+  assert.equal(isInteractiveOpeningStage("B1-8.25","warmup"),false);
+  assert.equal(isInteractiveOpeningStage("B1-8.25","knowledge"),true);
 });
 
-test("B1 Day 24 original music + reading format and A2 signed-audio lessons remain separate", () => {
-  const day24 = getSlidesByCourse("B1").find((row) => row.assignmentId === "B1-8.24");
-  const stages24 = buildTeachingPresenterStages(day24, day24.topic);
-  assert.equal(stages24[1].musicVideo.youtubeId, "-46siG9FrfE");
-  assert.equal(stages24[2].variant, "interactive-music-reading");
-  for (const id of ["A2-6.17", "A2-7.18", "A2-7.20"]) {
-    const slide = getSlidesByCourse("A2").find((row) => row.assignmentId === id);
-    const stages = buildTeachingPresenterStages(slide, slide.topic);
-    const listening = getInteractiveLessonOpening(id).listening;
-    assert.ok(listening.audioKey);
-    assert.equal(stages.find((stage) => stage.id === "knowledge").variant, "interactive-listening");
+test("B1 Day 24 music-reading and A2 signed conversation Hören remain separate", () => {
+  const slide=getSlidesByCourse("B1").find(row=>row.assignmentId==="B1-8.24");
+  const stages=buildTeachingPresenterStages(slide,slide.topic);
+  assert.equal(stages[1].musicVideo.musicLibraryUrl,"https://music.falowen.app/?level=B1&day=24");
+  assert.equal(stages[2].variant,"interactive-music-reading");
+  for(const id of ["A2-6.17","A2-7.18","A2-7.20"]){
+    const s=getSlidesByCourse("A2").find(row=>row.assignmentId===id);
+    assert.ok(getInteractiveLessonOpening(id).listening.audioKey);
+    assert.equal(buildTeachingPresenterStages(s,s.topic).find(x=>x.id==="knowledge").variant,"interactive-listening");
   }
 });
-
 
 test("B1 Day 25 projector scenario remains scrollable and action buttons stay within a safe area", () => {
   const css = requireCss();
