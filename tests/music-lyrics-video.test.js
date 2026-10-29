@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { A1_DAY5_FINAL_RECORDING } from "../src/data/a1Day5FinalRecording.js";
+import { A1_DAY6_FINAL_RECORDING } from "../src/data/a1Day6FinalRecording.js";
 import { A1_DAY7_FINAL_RECORDING } from "../src/data/a1Day7FinalRecording.js";
 import { A1_DAY8_FINAL_RECORDING } from "../src/data/a1Day8FinalRecording.js";
 import { A2_DAY21_FINAL_RECORDING } from "../src/data/a2Day21FinalRecording.js";
@@ -120,8 +121,10 @@ test("A1 Day 5 matches the new singer recording, and exact-file timing remains r
   assert.doesNotMatch(day5.lyrics,/Bello|kleinen Hund/);
   assert.match(day5.musicStyle,/Afro-soul/i);
   assert.equal(A1_DAY5_FINAL_RECORDING.assignmentKey,"A1-1.3");
-  assert.equal(A1_DAY5_FINAL_RECORDING.duration,156.72);
-  assert.equal(A1_DAY5_FINAL_RECORDING.sha256.length,64);
+  assert.equal(A1_DAY5_FINAL_RECORDING.duration,144.96);
+  assert.equal(A1_DAY5_FINAL_RECORDING.sha256,"bfe8d48468fc6a2802b916ee97f9c42ff44795226e2300f6d9714a686881d3d8");
+  assert.equal(A1_DAY5_FINAL_RECORDING.level,"A1");
+  assert.equal(A1_DAY5_FINAL_RECORDING.day,5);
   assert.equal(A1_DAY5_FINAL_RECORDING.status,"draft-timing-review-required");
   const lines=videoLyricLines(day5.lyrics);
   const cues=A1_DAY5_FINAL_RECORDING.cueStarts.map((start,i)=>({start,text:lines[i]}));
@@ -300,4 +303,27 @@ test("A2 Day 22 Zeit für mich is tied to the exact recorded music and reviewabl
   const questions=readFileSync(new URL("../src/data/musicQuestionSeedsA2.js",import.meta.url),"utf8");
   assert.match(questions,/Bis wann arbeitet die Person am Dienstag/);
   assert.match(questions,/Sie kochen zusammen, essen Pasta und reden viel/);
+});
+
+test("A1 Day 6 has a recording-specific provisional 40-line timing pack", () => {
+  const song=getReusableSongDraft("A1-2.3");
+  const ref=A1_DAY6_FINAL_RECORDING;
+  assert.equal(ref.assignmentKey,"A1-2.3");
+  assert.equal(ref.title,song.title);
+  assert.equal(ref.level,"A1");
+  assert.equal(ref.day,6);
+  assert.equal(ref.sha256,"e4fc317a466a89d405cef01ff0f0dccbb1749fe9af74dc14c1c3983a6ce025ef");
+  assert.equal(ref.duration,157.632);
+  assert.equal(ref.status,"draft-timing-review-required");
+  assert.ok(!ref.objectKey,"Do not invent the R2 path if the exact name was not supplied");
+  const lines=videoLyricLines(song.lyrics);
+  const cues=ref.cueStarts.map((start,i)=>({text:lines[i],start}));
+  assert.equal(lines.length,40);
+  assert.equal(validateLyricCues(cues,lines).length,40);
+  assert.ok(cues[0].start>=0 && cues.at(-1).start<ref.duration);
+  const video=readFileSync(new URL("../src/components/MusicLyricsVideoStudio.jsx",import.meta.url),"utf8");
+  assert.match(video,/A1_DAY6_FINAL_RECORDING/);
+  assert.match(video,/hash!==reference.sha256/);
+  assert.match(video,/hash===draftReference.sha256/);
+  assert.match(video,/x.level===publishedTrack\?\.level/);
 });
