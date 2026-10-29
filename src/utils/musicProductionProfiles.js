@@ -28,6 +28,24 @@ export const MUSIC_PRODUCTION_PROFILES = Object.freeze([
     direction: 'Modern warm Afro-soul / mellow Afro-pop at 96 BPM in G major. Main four-bar progression: Gmaj7 – Em7 – Cmaj7 – Dadd9. Lead with acoustic piano and warm rhythmic guitar; restrained syncopated percussion and a steady rounded bass pulse create movement. Introduce a light flute counter-melody in the second verse and add fuller harmony in the chorus without crowding the lead. Natural, professional song production, not nursery-rhyme repetition or party drums.'
   },
   {
+    id: 'melodic-house',
+    label: 'Melodic chill house · pulsing beat',
+    description: 'Steady 4/4 pulse, atmospheric acoustic piano chords, deep melodic bass and gentle flute accents.',
+    direction: 'Original melodic chill house / soft deep house around 124 BPM in C minor, 4/4. Use a four-on-the-floor kick on beats 1, 2, 3, 4; gentle clap on 2 and 4; restrained offbeat hi-hats and a rounded syncopated bass line with controlled 808-style sub support. Main four-bar progression: Cm9 – Abmaj7 – Ebadd9 – Bbsus4 resolving to Bb. Warm acoustic piano voicings and spacious pads build the atmosphere, with soft flute answers between lines. Open with a minimal pulse, build into a broad memorable sung chorus, introduce melodic and harmonic variation through the second half, then resolve the final progression. Make an original melody, not an imitation of any existing track.'
+  },
+  {
+    id: 'anthemic-nostalgia',
+    label: 'Anthemic nostalgia · melodic hip-hop/pop',
+    description: 'Cinematic rising harmony, emotional sung chorus, intimate rhythmic verses and a memorable lift.',
+    direction: 'Write an original cinematic nostalgia anthem blending melodic hip-hop, soft pop and contemporary soul, 72 BPM with optional double-time 144 BPM percussion feel, in E minor. Main progression: Em7 – Cmaj9 – Gadd9 – Dsus4 to D, with an alternate Am7 – Cmaj9 – Dsus4 pre-chorus. Start with atmospheric solo acoustic piano and distant pads, then introduce warm sub-bass, crisp restrained half-time hip-hop kick/snare and subtle rhythmic guitar. Keep short conversational verses and a soaring, emotional, clearly sung chorus with a wider piano register and strings/pads. Use dynamic contrast and a meaningful harmonic turnaround; close with a quiet, resolved piano/flute outro. Do not copy any existing chorus, melody, lyrics or sampled recording.'
+  },
+  {
+    id: 'nostalgic-piano-pop',
+    label: 'Nostalgic piano pop · flowing chords',
+    description: 'An eight-chord emotional piano journey with a gentle rhythm and gradually richer chorus.',
+    direction: 'Create an original reflective acoustic piano pop song at 88 BPM in G major. Use a gently flowing eight-chord progression: Gadd9 – D/F# – Em7 – Bm7 – Cmaj7 – G/B – Am7 – Dsus4 resolving to D. Play a natural close-miked acoustic grand piano with graceful left-hand movement and light right-hand arpeggios. Add delicate warm bass, soft rim-click or brushed snare, barely-there atmospheric pads and short breathy flute replies only in gaps between vocal lines. Begin intimate, introduce a quietly memorable verse melody, let the chorus open emotionally with sustained notes and wide piano voicings, then add restrained textures in later sections before a complete harmonic resolution. Keep the vocals vulnerable and unhurried; avoid copying any existing song melody or hook.'
+  },
+  {
     id: 'piano-pop',
     label: 'Acoustic piano · modern pop',
     description: 'Clear pop structure, warm piano, tasteful bass and gentle percussion.',
