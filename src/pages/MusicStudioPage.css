@@ -11,3 +11,12 @@
 .music-story-review button{margin-top:6px;padding:9px 13px;border:1px solid #2e74b1;border-radius:8px;background:#fff;color:#174b80;font-weight:650;cursor:pointer}
 .music-audio-review{margin-top:14px;padding:12px;border:1px solid #dce5ef;border-radius:10px}
 .music-audio-review li{margin:8px 0;line-height:1.5}
+
+
+.music-publication-guard{margin:14px 0;padding:15px;border:1px solid #b9cfe7;background:#f2f8fd;border-radius:10px;color:#173a5c}
+.music-publication-guard>strong{font-weight:700}
+.music-no-audio-confirmation{display:flex!important;gap:10px;align-items:flex-start;font-size:14px;line-height:1.5;margin:12px 0!important}
+.music-no-audio-confirmation input{width:18px;min-width:18px;height:18px;accent-color:#125ca4;margin:2px 0 0}
+.music-publication-guard>button{padding:10px 12px;border:1px solid #3972ae;border-radius:8px;background:#fff;color:#174b80;font-weight:650;cursor:pointer}
+.music-publication-guard>button:disabled{opacity:.5;cursor:not-allowed}
+.music-card textarea[readonly]{background:#f0f4f8;color:#52657a}
