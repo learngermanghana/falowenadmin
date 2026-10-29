@@ -30,8 +30,8 @@ export function getMusicDays(level) {
 
 export function musicLessonContext(entry, language = 'bilingual', focus = '', options = {}) {
   if (!entry) return '';
-  const { songStyle = 'story', storyIdea = '', teacherLyricsProvided = false, rewriteFromLyrics = false } = options || {};
-  const makeNewStory = songStyle === 'story' && (!teacherLyricsProvided || rewriteFromLyrics);
+  const { songStyle = 'story', storyIdea = '', teacherLyricsProvided = false, rewriteFromLyrics = false, instrumentalOnly = false } = options || {};
+  const makeNewStory = !instrumentalOnly && songStyle === 'story' && (!teacherLyricsProvided || rewriteFromLyrics);
   const bilingual = language !== 'german';
   return [
     'Falowen course song — use this selected lesson as the learning focus:',
@@ -42,7 +42,9 @@ export function musicLessonContext(entry, language = 'bilingual', focus = '', op
       : 'Sing in German only, without English translations.',
     `Use vocabulary, grammar and clear pronunciation appropriate to ${entry.level}.`,
     'This is music for adult German learners, not a children’s nursery classroom. Prefer believable human emotion, everyday conversations, natural German word stress and a memorable melodic hook. Never force couplet rhymes, chanted vocabulary lists, artificial question-answer jingles or babyish singalong melodies. Keep the German simple at A1/A2 without making the music juvenile. If exact teacher lyrics are supplied, do not alter them: apply the mature direction to melody, chords and arrangement instead.',
-    makeNewStory ? [
+    instrumentalOnly
+      ? 'INSTRUMENTAL-ONLY ADULT SONG: express the lesson situation with a strong melodic motif, moving chord progression, organic guitar/piano dynamics and a thoughtful emotional arc; do not produce any lyrics, dialogue, speech, chanting, choir or humming.'
+      : makeNewStory ? [
       'STORYTELLING SONG — NOT A VOCABULARY LIST:',
       'Create original, coherent, singable lyrics: [Verse 1] introduce a person and situation; [Chorus] repeat a useful German sentence that advances the story; [Verse 2] show a small problem and natural dialogue; [Chorus] return to the hook; [Outro] resolve the situation and finish the last sung phrase clearly.',
       'Include one or two short everyday dialogue turns; use the lesson words in context, not as disconnected definitions, flashcards, or repetitive dictionary translations. A chorus may repeat one meaningful line, but should not loop a vocabulary word endlessly; meaningful rhythm and emotional melody matter more than end-rhyme.',
