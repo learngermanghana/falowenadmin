@@ -1,5 +1,7 @@
 import fixWebmDuration from "fix-webm-duration";
 import SongTimingEditor from "./SongTimingEditor.jsx";
+import { A1_DAY5_FINAL_RECORDING } from "../data/a1Day5FinalRecording.js";
+import { getReusableSongDraft } from "../data/reusableMusicSongbook.js";
 import { readSongCues, validateLyricCues } from "../utils/songLyrics.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { videoLyricLines, lyricScenes, findLyricScene, videoRecorderFormat, drawMusicVideoFrame, isRealMp4Blob, timedLyricsPack, verifiedPublishedVideoTiming, musicVideoSocialCopy } from "../utils/musicLyricsVideo.js";
@@ -67,6 +69,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   const [postingTitle,setPostingTitle] = useState("");
   const [postingDescription,setPostingDescription] = useState("");
   const [copyNotice,setCopyNotice] = useState("");
+  const [timingReview,setTimingReview] = useState(false);
   const [allowWebm,setAllowWebm] = useState(false);
   const [exportedVideo,setExportedVideo] = useState(null);
   const exportedUrlRef=useRef(null);
@@ -106,6 +109,36 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       setStarts([]);
     }
   },[lyrics,generated?.url,generated?.lyrics,publishedTrack?.objectKey]);
+
+  useEffect(()=>{
+    if(!file || assignmentKey !== A1_DAY5_FINAL_RECORDING.assignmentKey) return undefined;
+    let cancelled=false;
+    async function loadMatchingDay5Timing(){
+      try{
+        if(!window.crypto?.subtle)return;
+        const digest=await window.crypto.subtle.digest("SHA-256",await file.arrayBuffer());
+        if(cancelled)return;
+        const hash=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,"0")).join("");
+        if(hash!==A1_DAY5_FINAL_RECORDING.sha256)return;
+        const recordedLyrics=getReusableSongDraft(A1_DAY5_FINAL_RECORDING.assignmentKey)?.lyrics || "";
+        const songLines=videoLyricLines(recordedLyrics);
+        const starts=A1_DAY5_FINAL_RECORDING.cueStarts;
+        if(songLines.length!==starts.length)throw Error("Day 5 lyrics differ from the uploaded audio timing reference.");
+        const timed=songLines.map((text,i)=>({text,start:starts[i]}));
+        const key="falowen-video-timing:"+assignmentKey;
+        try{localStorage.setItem(key,JSON.stringify({lyrics:recordedLyrics,cues:timed,recordingHash:hash,reviewed:false}));}catch{}
+        currentLyricText.current=recordedLyrics;
+        setLyricText(recordedLyrics);
+        setCues(timed);
+        setStarts([]);
+        setTimingReview(true);
+        setTimingStatus("estimated");
+        setMessage("Day 5 timing loaded for the exact uploaded MP3. These are approximate marks. Play the song, adjust each line in the timing editor and save before publishing.");
+      }catch(cause){if(!cancelled)setError(cause.message||"Could not load Day 5 timing.");}
+    }
+    loadMatchingDay5Timing();
+    return ()=>{cancelled=true;};
+  },[file,assignmentKey]);
   useEffect(()=>{
     if(!file){setFileUrl("");return undefined;}
     const url=URL.createObjectURL(file);setFileUrl(url);
@@ -171,7 +204,8 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     const checked=validateLyricCues(next,lines);
     if(checked.length!==next.length)return false;
     setCues(checked);
-    if (publishedTrack?.objectKey) setTimingStatus(checked.length===lines.length ? "local" : "edited");
+    if (timingReview) setTimingReview(false);
+    if (publishedTrack?.objectKey || timingStatus==="estimated") setTimingStatus(checked.length===lines.length ? "local" : "edited");
     try {
       localStorage.setItem(timingKey,JSON.stringify({lyrics:lyricText,cues:checked}));
       if(audioFilenameObjectKey(objectKey)){
@@ -328,13 +362,13 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       <button type="button" disabled={exporting||loadingTracks} onClick={loadTracks}>{loadingTracks?"Loading songs…":"Load available Falowen songs"}</button>
       {!!tracks.length && <label>Published recording <select disabled={exporting} value={publishedTrack?.objectKey||""} onChange={event=>{
         const track=tracks.find(row=>row.objectKey===event.target.value)||null;
-        setPublishedTrack(track);setFile(null);setDuration(0);setStarts([]);setCues([]);
+        setPublishedTrack(track);setFile(null);setDuration(0);setStarts([]);setCues([]);setTimingReview(false);
         setObjectKey(track?.objectKey||"");setError("");
       }}><option value="">Choose a recording</option>{tracks.map(track=><option key={track.objectKey} value={track.objectKey}>{track.level} · Day {track.day} · {track.title}</option>)}</select></label>}
     </div>
     <label style={{display:"grid",gap:5,maxWidth:540,fontWeight:700}}>Audio source
       <input type="file" accept="audio/mpeg,audio/mp3,.mp3" disabled={exporting}
-        onChange={event=>{setFile(event.target.files?.[0]||null);setPublishedTrack(null);setObjectKey("");setCues([]);setStarts([]);setDuration(0);setError("");}} />
+        onChange={event=>{setFile(event.target.files?.[0]||null);setPublishedTrack(null);setObjectKey("");setCues([]);setStarts([]);setDuration(0);setError("");setTimingReview(false);}} />
       <small>{file?"Using uploaded MP3: "+file.name:generated?.url?"Using the generated track shown above. You can also upload a final MP3.":"Upload the approved final MP3 to make a video. No audio is uploaded to Falowen."}</small>
     </label>
     {activeUrl?<audio ref={audioRef} src={activeUrl} controls preload="metadata"
@@ -382,7 +416,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       </div>
     </div>
     {!exporting && <SongTimingEditor song={{lyrics:lyricText,objectKey:audioFilenameObjectKey(objectKey)}} audio={audioRef} cues={cues} onSave={saveCues}/>}
-    <p role="status">Shared line timing: {cues.length}/{lines.length} marked. {completeCues ? "Ready to use in the video." : "Mark missing lines or import a matching timing file."}</p>
+    <p role="status">Shared line timing: {cues.length}/{lines.length} marked. {timingReview ? "Estimated timing for this exact MP3 — not yet verified. Listen, adjust and save the marks below." : completeCues ? "Ready to use in the video." : "Mark missing lines or import a matching timing file."}</p>
     <p style={{margin:0,fontSize:12,color:"#52635e"}}>{completeCues ? "Your saved timing is applied automatically. Open the teacher timing editor only if it needs correction." : "Play the song and mark each lyric line's beginning. Timings must increase in order."} Keep this browser tab open while exporting; recording runs in real time.</p>
     {exporting?<div role="status"><strong>Rendering locally… {Math.floor(progress)}s / {Math.ceil(duration)}s</strong>
       <button type="button" style={{marginLeft:12}} onClick={()=>cancelRef.current?.()}>Cancel export</button></div>:null}
@@ -423,7 +457,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
         <input style={fieldStyle} value={objectKey} disabled={exporting} onChange={event=>setObjectKey(event.target.value)}
           placeholder="music/a1/day-13/your-approved-song.mp3" />
       </label>
-      <button type="button" disabled={!audioFilenameObjectKey(objectKey)||!completeCues||exporting} onClick={exportLyricsSidecar}>
+      <button type="button" disabled={!audioFilenameObjectKey(objectKey)||!completeCues||exporting||timingReview} onClick={exportLyricsSidecar}>
         Download matching .lyrics.json
       </button>
     </details>
