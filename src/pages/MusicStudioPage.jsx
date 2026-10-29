@@ -10,6 +10,8 @@ import { MUSIC_PRODUCTION_PROFILES, getMusicProductionProfile } from '../utils/m
 import { getReusableSongDraft, getReusableSongDrafts } from '../data/reusableMusicSongbook.js';
 import { musicSongTeachingPackText } from '../data/reusableMusicQuestions.js';
 import { reviewMusicStory } from '../utils/musicStoryReview.js';
+import { revisedMusicStoryLyrics } from '../data/musicStoryRevisions.js';
+import { canUseNewMusicStoryDraft, isKnownPublishedMusicLesson } from '../data/musicPublicationGuard.js';
 import ReusableMusicQuestions from '../components/ReusableMusicQuestions.jsx';
 import { falowenMusicFileName } from '../utils/musicExportNames.js';
 const PRESETS = {
@@ -34,12 +36,15 @@ export default function MusicStudioPage() {
   // Prewritten A1–B1 lyrics are selected from the local dictionary; edits are
   // scoped by assignment so changing lessons never reuses the wrong lyrics.
   const [lyricsOverrides, setLyricsOverrides] = useState({});
+  const [noAudioConfirmed, setNoAudioConfirmed] = useState({});
   const [customLyrics, setCustomLyrics] = useState('');
   // Free editorial check only; approvals apply to this exact draft in this tab.
   const [reviewedLyrics, setReviewedLyrics] = useState({});
   const [copyStatus, setCopyStatus] = useState('');
   const draft = courseMode === 'course' ? getReusableSongDraft(lesson?.assignmentKey) : null;
   const assignmentKey = lesson?.assignmentKey || '';
+  const hasKnownPublishedAudio = isKnownPublishedMusicLesson(assignmentKey);
+  const canStartNewRecordingDraft = canUseNewMusicStoryDraft({ assignmentKey, confirmedNoAudio: noAudioConfirmed[assignmentKey] === true });
   const lyrics = courseMode === 'course'
     ? Object.prototype.hasOwnProperty.call(lyricsOverrides, assignmentKey)
       ? lyricsOverrides[assignmentKey] : draft?.lyrics || ''
@@ -241,6 +246,24 @@ export default function MusicStudioPage() {
           <button type="button" disabled={!lyrics.trim()} onClick={() => setReviewedLyrics(previous => ({ ...previous, [reviewKey]: lyrics }))}>{isLyricsReviewed ? 'Lyrics reviewed for this version' : 'Mark these lyrics reviewed'}</button>
           <p className="music-note">{isLyricsReviewed ? 'Editorial review noted for this browser session. Editing the lyrics automatically clears the approval for that text.' : 'Review is optional before previewing, but recommended before spending on a full song.'} This does not approve audio or publish a track.</p>
         </section>}
+        {draft && <section className="music-publication-guard" aria-label="Published recording protection">
+          <strong>{hasKnownPublishedAudio ? 'Published audio · lyrics protected' : 'Before changing lyrics: check whether this day already has audio'}</strong>
+          <p className="music-note">{hasKnownPublishedAudio
+            ? 'This lesson is in the approved published-music catalog. Its original lyrics stay unchanged so existing audio, classroom slides and timed captions keep matching. Create a separate version outside this workflow if you later need new lyrics.'
+            : 'An unpublished status cannot be inferred from the catalog: manually exported audio may exist on music.falowen.app or R2. Keep the original lyrics unless you have checked that there is no recording for this lesson.'}</p>
+          {!hasKnownPublishedAudio && <>
+            <label className="music-no-audio-confirmation">
+              <input type="checkbox" checked={noAudioConfirmed[assignmentKey] === true} onChange={e => setNoAudioConfirmed(previous => ({ ...previous, [assignmentKey]: e.target.checked }))} />
+              I checked music.falowen.app and the music library: this lesson has no existing audio.
+            </label>
+            <button type="button" disabled={!canStartNewRecordingDraft} onClick={() => {
+              if (!canStartNewRecordingDraft) return;
+              setLyrics(revisedMusicStoryLyrics(draft.lyrics, assignmentKey));
+              setLyricTreatment('exact');
+              setCopyStatus('New-recording storyline draft loaded for this browser session. Original published/course lyrics are still unchanged.');
+            }}>Load revised storyline for a NEW recording</button>
+          </>}
+        </section>}
         {draft && <div className="music-songbook-actions" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button type="button" onClick={copyDraftLyrics}>Copy lyrics</button>
           <button type="button" onClick={copyDraftStyle}>Copy music style</button>
@@ -249,7 +272,7 @@ export default function MusicStudioPage() {
         </div>}
         {!draft && lyrics.trim() && <button type="button" onClick={saveCurrentLyrics}>Download lyrics + music style (.txt)</button>}
         {copyStatus && <p role="status" className="music-note">{copyStatus}</p>}
-        {draft && <p className="music-note">The revised prewritten lyrics are for new recordings. Already published MP3s and their timed captions have not been changed; verify fresh timing after recording any revised lyrics. Choose <strong>Source vocabulary — rewrite into a story</strong> only if you want a new AI-written story rather than the exact curated lyrics. Local edits are temporary until exported.</p>}
+        {draft && <p className="music-note">Original approved songbook lyrics are always loaded first. Storyline revisions are opt-in, and only available after confirming that the lesson has no published audio. Never reuse previous synchronized timestamps with revised lyrics. Choose <strong>Source vocabulary — rewrite into a story</strong> only for a separate, future recording. Local edits are temporary until exported.</p>}
         {courseMode === 'course' && vocalMode === 'voice' && songStyle === 'story' && lyrics.trim() && <>
           <label htmlFor="music-lyric-treatment">Use the text above as</label>
           <select id="music-lyric-treatment" value={lyricTreatment} onChange={e => setLyricTreatment(e.target.value)}>
