@@ -15,8 +15,9 @@ test("A1 Day 13 uses the same published-song slide style as A1 Day 4",()=>{
  assert.equal(day13.items.length,1);
  assert.match(day13.title,/Zwei Tees/);
  const recording=getCuratedMusicByAssignment("A1-3.5");
- assert.equal(recording.objectKey,"music/a1/day-13/zwei-tees-vier-euro.mp3");
- assert.equal(recording.audioUrl,"https://www.falowen.app/api/music?track=r2-a1-day-13-zwei-tees-vier-euro");
+ assert.equal(recording.discover,true);
+ assert.equal(recording.objectKey,undefined,"Do not hardcode an unverified R2 filename");
+ assert.equal(recording.audioUrl,undefined,"Use the actual signed public song discovered at runtime");
  const slide=getSlidesByCourse("A1").find(x=>x.assignmentId==="A1-3.5");
  assert.ok(slide);
  assert.match(getReusableSongDraft("A1-3.5").lyrics,/Zwei Tees, vier Euro/);
