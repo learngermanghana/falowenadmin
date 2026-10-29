@@ -2,6 +2,7 @@ import { getA2B1CommonMistakes } from '../data/a2B1CommonMistakes.js';
 import { getPresenterReadingLesson } from '../data/presenterReadingLessons.js';
 import { getLessonMusic } from "../data/lessonMusic.js";
 import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
+import { B1_DAY24_CONVERSATION_TWO } from "../data/b1Day24ConversationTwo.js";
 import { B1_DAY18_CAREER_CHALLENGES } from "../data/b1Day18CareerChallenge.js";
 import { getB1TeacherChallenge } from "../data/b1TeacherChallenges.js";
 import { getA2TeacherChallenge } from "../data/a2TeacherChallenges.js";
@@ -1699,14 +1700,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         timingMode: PER_STUDENT_WARMUP_LEVELS.has(level) ? "per-student" : "",
         timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length),
       },
-      ...(normalizedAssignmentId(slide) === "B1-8.24" ? [{
-        id: "knowledge",
-        type: "b1-day24-listening",
-        kicker: "Hören · Gespräch 2",
-        title: "Altkleider und Nachhaltigkeit",
-        audioKey: "b1/day-24/day-25.mp3",
-        suggestedMinutes: 7,
-      }] : knowledge ? [{
+      ...(knowledge ? [{
         id: "knowledge",
         type: "knowledge",
         kicker: "Wissensimpuls",
@@ -2059,7 +2053,7 @@ function standardizeA2B1Stages(stages, slide) {
   const mistakes = getA2B1CommonMistakes(key);
   if (!reading || !mistakes.length) throw new Error(`Missing authored A2/B1 lesson content: ${key}`);
   return stages.flatMap(stage => {
-    if (stage.id === 'knowledge' && stage.type !== 'b1-day24-listening' && !['interactive-listening', 'interactive-music', 'interactive-music-reading'].includes(stage.variant)) return [];
+    if (stage.id === 'knowledge' && !['interactive-listening', 'interactive-music', 'interactive-music-reading'].includes(stage.variant)) return [];
     if (stage.id !== 'phrases') return [stage];
     return [{
       id: 'common-mistakes', type: 'common-mistakes', kicker: 'Häufige Fehler',
@@ -2093,7 +2087,6 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
   // Keep the original teacher reading and warm-up checks in their canonical
   // stages for audits; only switch their in-class visual presentation.
   const prepared = lessonOpening ? stages.map((stage) => {
-    if (normalizedAssignmentId(slide) === "B1-8.24" && stage.id === "knowledge" && stage.type === "b1-day24-listening") return stage;
     // Music lessons reuse the same nine stage IDs, but teach via video in
     // stage 2 and lyric-reading in stage 3. No extra slides or scored tasks.
     if (lessonOpening.listening?.mediaType === "music" && stage.id === "warmup") return {
@@ -2108,6 +2101,21 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
         student: "Höre das Lied und denke über seine Hauptbotschaft nach.",
         teacher: "Spiele das YouTube-Musikvideo. Kein Fragen-pro-Schüler-Warm-up auf dieser Folie.",
       },
+    };
+    if (normalizedAssignmentId(slide) === "B1-8.24" && stage.id === "knowledge") return {
+      ...stage, variant:"interactive-listening",
+      kicker:"Hören · Gespräch 2",
+      title:B1_DAY24_CONVERSATION_TWO.title,
+      listeningItems:B1_DAY24_CONVERSATION_TWO.questions,
+      transcript:B1_DAY24_CONVERSATION_TWO.transcript,
+      audioKey:B1_DAY24_CONVERSATION_TWO.audioKey,
+      audioLevel:"B1", audioDay:24,
+      previewWords:B1_DAY24_CONVERSATION_TWO.previewWords,
+      suggestedMinutes:8,
+      teacherPurpose:{
+        student:"Höre Jonas und Lisa. Entscheide bei allen fünf Aussagen Richtig oder Falsch.",
+        teacher:"Spiele das Gespräch zweimal. Belege und Lösungen erst nach den Antworten zeigen. Die fünf Antworten werden im Workbook als Teil 4 eingereicht."
+      }
     };
     if (lessonOpening.listening?.mediaType === "music" && stage.id === "knowledge") return {
       ...stage,
@@ -2172,7 +2180,6 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
     if (stage.type === "task") return Boolean(stage.body);
     if (stage.type === "dialogue") return Array.isArray(stage.turns) && stage.turns.length > 0;
     if (stage.type === "foundation") return Boolean(stage.intro || stage.example || stage.tension || stage.question || stage.simpleEnglish);
-    if (stage.type === "b1-day24-listening") return Boolean(stage.audioKey);
     if (stage.type === "knowledge") return Boolean(stage.textDe) && Array.isArray(stage.items) && stage.items.length > 0;
     return Array.isArray(stage.items) && stage.items.length > 0;
   });
