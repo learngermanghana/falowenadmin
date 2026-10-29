@@ -2,6 +2,7 @@ import fixWebmDuration from "fix-webm-duration";
 import SongTimingEditor from "./SongTimingEditor.jsx";
 import { A1_DAY5_FINAL_RECORDING } from "../data/a1Day5FinalRecording.js";
 import { A1_DAY7_FINAL_RECORDING } from "../data/a1Day7FinalRecording.js";
+import { A1_DAY8_FINAL_RECORDING } from "../data/a1Day8FinalRecording.js";
 import { getReusableSongDraft } from "../data/reusableMusicSongbook.js";
 import { readSongCues, validateLyricCues } from "../utils/songLyrics.js";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -114,7 +115,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
 
   // Record-specific provisional timing is never applied to a different MP3 take.
   useEffect(()=>{
-    const reference=[A1_DAY5_FINAL_RECORDING,A1_DAY7_FINAL_RECORDING].find(x=>x.assignmentKey===assignmentKey);
+    const reference=[A1_DAY5_FINAL_RECORDING,A1_DAY7_FINAL_RECORDING,A1_DAY8_FINAL_RECORDING].find(x=>x.assignmentKey===assignmentKey);
     if(!file||!reference)return undefined;
     let cancelled=false;
     async function loadRecordedTiming(){
@@ -208,19 +209,21 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       const lineCount=videoLyricLines(recordedLyrics).length;
       const localComplete=lineCount>0 && local.length===lineCount;
       const restored=localComplete ? local : published?.cues || [];
-      // Only use bundled Day 7 draft marks with the exact published MP3 bytes.
-      if(!published&&!localComplete&&key===A1_DAY7_FINAL_RECORDING.objectKey&&window.crypto?.subtle){
+      // Only hydrate draft timing when the exact published MP3 bytes match a teacher recording.
+      const draftReference=[A1_DAY7_FINAL_RECORDING,A1_DAY8_FINAL_RECORDING]
+        .find(x=>x.objectKey===key);
+      if(!published&&!localComplete&&draftReference&&window.crypto?.subtle){
         try{
           const remote=await fetch(publishedTrack.audioUrl,{signal:controller.signal});
           if(!remote.ok)throw Error("Audio unavailable");
           const digest=await window.crypto.subtle.digest("SHA-256",await remote.arrayBuffer());
           if(controller.signal.aborted)return;
           const hash=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,"0")).join("");
-          if(hash===A1_DAY7_FINAL_RECORDING.sha256){
-            const draftLyrics=getReusableSongDraft(A1_DAY7_FINAL_RECORDING.assignmentKey)?.lyrics||"";
+          if(hash===draftReference.sha256){
+            const draftLyrics=getReusableSongDraft(draftReference.assignmentKey)?.lyrics||"";
             const draftLines=videoLyricLines(draftLyrics);
-            if(draftLines.length!==A1_DAY7_FINAL_RECORDING.cueStarts.length)throw Error("Day 7 lyric count has changed.");
-            const estimated=draftLines.map((text,i)=>({text,start:A1_DAY7_FINAL_RECORDING.cueStarts[i]}));
+            if(draftLines.length!==draftReference.cueStarts.length)throw Error("Recorded song lyric count has changed.");
+            const estimated=draftLines.map((text,i)=>({text,start:draftReference.cueStarts[i]}));
             const localKey="falowen-video-timing:"+key;
             const stored=JSON.parse(localStorage.getItem(localKey)||"null");
             const checked=validateLyricCues(stored?.cues,draftLines);
@@ -232,8 +235,8 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
             setRecordingFingerprint(hash);
             setTimingReview(!reviewed);
             setTimingStatus(reviewed?"local":"estimated");
-            setMessage(reviewed?"Reviewed Day 7 timing restored for the matching R2 song."
-              :"Published Day 7 audio matches this MP3. Estimated timing loaded for review; it is not yet published as verified R2 timing.");
+            setMessage(reviewed?"Reviewed timing restored for the matching R2 song."
+              :"Published audio matches the teacher MP3. Provisional lyric timings loaded; listen to every line before confirming and exporting R2 timing.");
             return;
           }
         }catch(e){if(controller.signal.aborted)return;/* Do not guess timings for mismatched R2 audio. */}
