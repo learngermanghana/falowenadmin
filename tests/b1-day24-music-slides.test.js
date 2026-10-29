@@ -18,7 +18,8 @@ test("B1 Day 24 has music intro followed by protected conversation 2 on slide 3 
   assert.equal(stages[1].musicVideo.youtubeId,undefined);
   assert.equal(stages[1].musicVideo.musicLibraryUrl,"https://music.falowen.app/?level=B1&day=24");
   assert.equal(stages[1].timingMode,"");
-  assert.equal(stages[2].type,"b1-day24-listening");
+  assert.equal(stages[2].type,"knowledge");
+  assert.equal(stages[2].variant,"interactive-listening");
   assert.equal(stages[2].audioKey,"b1/day-24/day-25.mp3");
   assert.equal(stages[2].id,"knowledge");
   assert.equal(stages[3].items.length>=2,true);
@@ -99,12 +100,12 @@ test("B1 Day 24 Argumentkarte is a four-case interactive decision activity on it
 
 
 test("Slide 3 and workbook use five new sustainability listening statements from the uploaded assessment",()=>{
-  const stage=fs.readFileSync("src/components/B1Day24ListeningStage.jsx","utf8");
+  const stage=fs.readFileSync("src/data/b1Day24ConversationTwo.js","utf8");
   assert.match(stage,/Jonas verkauft seine alten Kleider dieses Mal online/);
   assert.match(stage,/Jonas wirft seine Kleidung in einen Altkontainer/);
   assert.match(stage,/Ein großer Teil der Altkleider zerstört laut Lisa lokale Märkte/);
   assert.match(stage,/Jonas wusste von Anfang an genau/);
   assert.match(stage,/Lisa empfiehlt, Kleidung länger zu tragen oder Tauschpartys/);
   assert.match(stage,/b1\\/day-24\\/day-25\\.mp3/);
-  assert.match(stage,/www\\.falowen\\.app\\/api\\/course-media\\/b1\\/audio-url/);
+  assert.match(stage,/B1_DAY24_CONVERSATION_TWO/);
 });
