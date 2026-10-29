@@ -47,7 +47,7 @@ test('all 84 published-compatible original lyric texts remain intact', () => {
 });
 
 test('publication guard locks verified audio and requires positive confirmation for unlisted days', () => {
-  for (const id of ['A1-2', 'A1-14.1', 'A2-7.18', 'B1-8.25', 'B1-9.26']) {
+  for (const id of ['A1-2', 'A1-14.1', 'A2-7.18', 'A2-7.19', 'A2-7.20', 'B1-8.25', 'B1-9.26']) {
     assert.equal(isKnownPublishedMusicLesson(id), true);
     assert.equal(canUseNewMusicStoryDraft({ assignmentKey: id, confirmedNoAudio: true }), false);
     assert.equal(canUseNewMusicStoryDraft({ assignmentKey: id, confirmedNoAudio: false }), false);
