@@ -1,6 +1,7 @@
 import fixWebmDuration from "fix-webm-duration";
 import SongTimingEditor from "./SongTimingEditor.jsx";
 import { A1_DAY5_FINAL_RECORDING } from "../data/a1Day5FinalRecording.js";
+import { A1_DAY6_FINAL_RECORDING } from "../data/a1Day6FinalRecording.js";
 import { A1_DAY7_FINAL_RECORDING } from "../data/a1Day7FinalRecording.js";
 import { A1_DAY8_FINAL_RECORDING } from "../data/a1Day8FinalRecording.js";
 import { A2_DAY21_FINAL_RECORDING } from "../data/a2Day21FinalRecording.js";
@@ -117,7 +118,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
 
   // Record-specific provisional timing is never applied to a different MP3 take.
   useEffect(()=>{
-    const reference=[A1_DAY5_FINAL_RECORDING,A1_DAY7_FINAL_RECORDING,A1_DAY8_FINAL_RECORDING,A2_DAY21_FINAL_RECORDING,A2_DAY22_FINAL_RECORDING].find(x=>x.assignmentKey===assignmentKey);
+    const reference=[A1_DAY5_FINAL_RECORDING,A1_DAY6_FINAL_RECORDING,A1_DAY7_FINAL_RECORDING,A1_DAY8_FINAL_RECORDING,A2_DAY21_FINAL_RECORDING,A2_DAY22_FINAL_RECORDING].find(x=>x.assignmentKey===assignmentKey);
     if(!file||!reference)return undefined;
     let cancelled=false;
     async function loadRecordedTiming(){
@@ -212,8 +213,8 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       const localComplete=lineCount>0 && local.length===lineCount;
       const restored=localComplete ? local : published?.cues || [];
       // Only hydrate draft timing when the exact published MP3 bytes match a teacher recording.
-      const draftReference=[A1_DAY7_FINAL_RECORDING,A1_DAY8_FINAL_RECORDING,A2_DAY21_FINAL_RECORDING,A2_DAY22_FINAL_RECORDING]
-        .find(x=>x.objectKey===key);
+      const draftReference=[A1_DAY5_FINAL_RECORDING,A1_DAY6_FINAL_RECORDING,A1_DAY7_FINAL_RECORDING,A1_DAY8_FINAL_RECORDING,A2_DAY21_FINAL_RECORDING,A2_DAY22_FINAL_RECORDING]
+        .find(x=>x.objectKey===key || (!x.objectKey && x.level===publishedTrack?.level && Number(x.day)===Number(publishedTrack?.day)));
       if(!published&&!localComplete&&draftReference&&window.crypto?.subtle){
         try{
           const remote=await fetch(publishedTrack.audioUrl,{signal:controller.signal});
