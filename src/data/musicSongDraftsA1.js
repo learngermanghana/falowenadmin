@@ -65,10 +65,10 @@ export const MUSIC_SONG_DRAFTS_A1 = Object.freeze([
   },
   {
     "assignmentKey": "A1-3",
-    "title": "Wie viel kostet das?",
-    "musicStyle": "Bossa Pop, 94 BPM: gentle bossa-pop with nylon guitar, light shakers, electric piano and rounded bass; conversational and playful. One lead singer, clear German phrases, quiet instrumental mix.",
-    "lyrics": "[Verse 1]\nAuf dem Markt sehe ich Äpfel.\nIch frage: Was kostet das?\nDer Mann sagt: Zwei Euro.\nIch sage: Das ist gut.\n\n[Chorus]\nWie viel kostet das?\nIch möchte bitte zwei Stück.\nDanke schön und auf Wiedersehen.\n\n[Verse 2]\nMia möchte rote Blumen.\nSie fragt: Haben Sie Rosen?\nDie Frau sagt: Ja, hier bitte.\nMia sagt: Die mag ich gern.\n\n[Chorus]\nWie viel kostet das?\nIch möchte bitte zwei Stück.\nDanke schön und auf Wiedersehen.\n\n[Outro]\nWir tragen unsere Taschen heim.\nUnd trinken zu Hause Tee.\nBei Falowen frage ich nach Preisen.",
-    "genre": "Bossa Pop"
+    "title": "Was kostet das?",
+    "musicStyle": "Warm Acoustic Pop · Light Afrobeat · 96 BPM. Adult, natural market-shopping story with soulful piano, warm guitar, light Afro-Pop drums, expressive vocals and an emotional chorus. Keep the approved finished recording as the source of truth for sung lyrics.",
+    "lyrics": "[Verse 1]\nHeute gehe ich auf den Markt,\nIch sehe Äpfel, rot und grün.\nIch frage freundlich: „Was kostet das?“\nDer Verkäufer sagt: „Zwei Euro.“\n\nIch nehme zwei, sie sehen gut aus,\nIch kaufe noch ein Stück Brot.\nIch sage: „Danke, schönen Tag!“\nUnd gehe weiter durch den Markt.\n\n[Pre-Chorus]\nHier gibt es Obst, hier gibt es Brot,\nDie Blumen sind gelb, die Äpfel rot.\nIch sehe viel, ich frage nach,\nUnd kaufe ein, was ich gern mag.\n\n[Chorus]\nWie viel kostet das? Sag es mir!\nIch möchte zwei, was kosten die?\nEin Euro, zwei Euro, das ist okay,\nIch kaufe ein und gehe dann.\n\nHaben Sie das? Ja, natürlich!\nIch nehme es, vielen Dank!\nBitte schön und auf Wiedersehen,\nBis zum nächsten Mal!\n\n[Verse 2]\nMia möchte Blumen kaufen,\nSie sieht die Rosen nebenan.\nSie fragt die Frau: „Haben Sie Rot?“\nDie Frau sagt: „Ja, sehen Sie mal!“\n\n„Wie viel kosten diese Rosen?“\n„Drei Euro für ein Stück.“\nMia kauft zwei rote Rosen,\nUnd lächelt voller Glück.\n\n[Chorus]\nWie viel kostet das? Sag es mir!\nIch möchte zwei, was kosten die?\nEin Euro, zwei Euro, das ist okay,\nIch kaufe ein und gehe dann.\n\nHaben Sie das? Ja, natürlich!\nIch nehme es, vielen Dank!\nBitte schön und auf Wiedersehen,\nBis zum nächsten Mal!\n\n[Outro]\nWir gehen langsam wieder heim,\nDie Taschen sind nicht schwer.\nZu Hause trinken wir noch Tee,\nMorgen kommen wir wieder her.",
+    "genre": "Warm Acoustic Pop"
   },
   {
     "assignmentKey": "A1-4",
