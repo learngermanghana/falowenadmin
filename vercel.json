@@ -29,6 +29,10 @@
   ],
   "rewrites": [
     {
+      "source": "/api/attendance-music-library",
+      "destination": "https://www.falowen.app/api/music-library"
+    },
+    {
       "source": "/api/attendance-confirmation-emails/health",
       "destination": "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/attendance-confirmation-emails/health"
     },

@@ -13,7 +13,7 @@ import { learnerLessonUrl } from "../utils/teacherLessonDashboard.js";
 import { buildTeachingPresenterStages } from "../utils/teachingPresenter.js";
 import { splitWarmupQuestionSegments } from "../utils/warmupText.js";
 import { pianoPlaylist } from "../data/pianoPlaylist.js";
-import { waitingRoomMusicPlaylistForSession, waitingRoomPublishedCatalogTrack } from "../utils/waitingRoomDayMusic.js";
+import { waitingRoomMusicPlaylistForSession, waitingRoomPublishedCatalogTrack, waitingRoomDiscoveredMusicTrack } from "../utils/waitingRoomDayMusic.js";
 import { skipWaitingMusicPlaylist, startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pianoAudio.js";
 import { checkinSessionDateKey, parseCheckinSessionDate } from "../utils/checkinSessionDate.js";
 import { presenterSessionKey } from "../utils/presenterSessionIdentity.js";
@@ -37,6 +37,9 @@ const ATTENDANCE_TIME_ZONE = "Africa/Accra";
 // The verified music.falowen.app website serves the approved public catalog.
 // Legacy R2 URL is an optional fallback; never use a private course-audio bucket.
 const WAITING_ROOM_MUSIC_CATALOG_URL = "https://music.falowen.app/music/catalog.json";
+// Fixed same-origin Vercel rewrite to the already deployed, public, read-only
+// Falowen Music discovery API. Only called after the teacher presses Start.
+const WAITING_ROOM_DISCOVERED_MUSIC_URL = "/api/attendance-music-library";
 const WAITING_ROOM_R2_PUBLIC_BASE_URL = import.meta.env.VITE_WAITING_ROOM_R2_PUBLIC_BASE_URL || "";
 const ATTENDANCE_TIME_ZONE_LABEL = "Ghana time (UTC+00:00)";
 const START_HANDSHAKE_RETRY_DELAYS_MS = Object.freeze([2000, 5000, 10000]);
@@ -328,6 +331,7 @@ export default function CheckinDisplayPage() {
   const classStartStopTimerRef = useRef(null);
   const musicStartGenerationRef = useRef(0);
   const musicStartInFlightRef = useRef(false);
+  const musicSessionRef = useRef("");
   const classStartedRef = useRef(false);
   const autoPresenterRecoveryRef = useRef("");
   const presenterWindowRef = useRef(null);
@@ -1289,11 +1293,38 @@ export default function CheckinDisplayPage() {
         return;
       }
 
-      // Resolve the exact approved upload on Start; never fall through to a
-      // bundled/GitHub song if this lesson has an explicitly assigned recording.
-      const playlist = lessonSong && !curatedDayMusic
+      // Use the existing approved song first. For unpinned uploads, ask the
+      // *existing* public music-library API only when the teacher presses
+      // Start, not on a scan timer or for every attendance page view.
+      let playlist = lessonSong && !curatedDayMusic
         ? [{ ...waitingSessionPlaylist[0], src: await prepareLessonSong(lessonSong) }]
         : waitingSessionPlaylist;
+      if (!lessonSong && !curatedDayMusic && publishedDayMusic?.key !== musicSessionKey
+          && waitingClassLevel && presenterCurriculumDay) {
+        const uploadedDay = waitingClassLevel === "A2" && [19, 20].includes(presenterCurriculumDay);
+        try {
+          const response = await fetch(WAITING_ROOM_DISCOVERED_MUSIC_URL, {cache: "no-store"});
+          if (!response.ok) throw new Error("Falowen Music discovery unavailable");
+          const data = await response.json();
+          if (!data?.ok || !Array.isArray(data.tracks)) throw new Error("No music listing returned");
+          const match = waitingRoomDiscoveredMusicTrack(data, {
+            level: waitingClassLevel, day: presenterCurriculumDay,
+            assignmentKey: effectiveAssignmentId,
+          });
+          if (match) {
+            playlist = [match];
+            setPublishedDayMusic({ key: musicSessionKey, track: match });
+          } else if (uploadedDay) {
+            throw new Error(`The A2 Day ${presenterCurriculumDay} recording could not be identified uniquely. Check that its MP3 is published under music/a2/day-${String(presenterCurriculumDay).padStart(2, "0")}/.`);
+          }
+        } catch (error) {
+          if (uploadedDay) {
+            throw new Error(error?.message || "Today's uploaded Falowen Music could not be loaded.");
+          }
+          // Other days without verified uploads retain their general
+          // waiting-room playlist (including when discovery is unavailable).
+        }
+      }
       if (musicStartGenerationRef.current !== startGeneration) {
         if (context.state !== "closed") context.close().catch(() => {});
         return;
@@ -1324,14 +1355,21 @@ export default function CheckinDisplayPage() {
       stopWaitingMusic();
       setMusicError(error?.message || "Waiting room music could not start. Raise the device media volume and try again.");
     }
-  }, [musicPlaying, musicVolume, stopWaitingMusic, waitingSessionPlaylist, lessonSong, curatedDayMusic]);
+  }, [musicPlaying, musicVolume, stopWaitingMusic, waitingSessionPlaylist, lessonSong, curatedDayMusic,
+    publishedDayMusic, musicSessionKey, waitingClassLevel, presenterCurriculumDay, effectiveAssignmentId]);
 
-  // When a different curriculum day/class is selected, never keep playing
-  // the previous day's track. The teacher taps Start again (browser audio policy).
+  // Reset audio on a different class/day, not merely when an asynchronously
+  // discovered song populates the playlist for the *same* class. Otherwise
+  // selecting Day 19's R2 song during Start would immediately stop playback.
   useEffect(() => {
-    if (audioContextRef.current) stopWaitingMusic();
-    else setCurrentMusicTrack(waitingSessionPlaylist[0]?.title || "Waiting room music");
-  }, [waitingSessionPlaylist, stopWaitingMusic]);
+    if (musicSessionRef.current !== musicSessionKey) {
+      musicSessionRef.current = musicSessionKey;
+      if (audioContextRef.current) stopWaitingMusic();
+    }
+    if (!audioContextRef.current) {
+      setCurrentMusicTrack(waitingSessionPlaylist[0]?.title || pianoPlaylist[0]?.title || "Waiting room music");
+    }
+  }, [musicSessionKey, waitingSessionPlaylist, stopWaitingMusic]);
 
   useEffect(() => {
     const context = audioContextRef.current;
@@ -2193,7 +2231,7 @@ export default function CheckinDisplayPage() {
                 <span aria-hidden="true">♫</span> Waiting room music
               </div>
               <div className="checkin-display-music-note">
-                {curatedDayMusic ? `${curatedDayMusic.title} · ${curatedDayMusic.assignmentKey} · Cloudflare. Repeats for this class. A playback failure is shown rather than playing the old song.` : lessonSong ? `${lessonSong.title} · ${lessonSong.assignmentId} · Cloudflare. Repeats until class starts.` : dayMusicConfigured ? `${waitingClassLevel} Day ${presenterCurriculumDay} music repeats for this class.` : "General Falowen music plays on days without an approved lesson song."} {musicPlaying ? `Now playing: ${currentMusicTrack}.` : ""}
+                {curatedDayMusic ? `${curatedDayMusic.title} · ${curatedDayMusic.assignmentKey} · Cloudflare. Repeats for this class. A playback failure is shown rather than playing the old song.` : lessonSong ? `${lessonSong.title} · ${lessonSong.assignmentId} · Cloudflare. Repeats until class starts.` : dayMusicConfigured ? `${waitingClassLevel} Day ${presenterCurriculumDay} music repeats for this class.` : waitingClassLevel === "A2" && [19, 20].includes(presenterCurriculumDay) ? `Press Start to load today's uploaded A2 Day ${presenterCurriculumDay} song from Falowen Music.` : "General Falowen music plays on days without an approved lesson song."} {musicPlaying ? `Now playing: ${currentMusicTrack}.` : ""}
               </div>
             </div>
             <div className="checkin-display-music-visual" aria-hidden="true">

@@ -61,3 +61,48 @@ export function waitingRoomPublishedCatalogTrack(catalog, { level, day } = {}) {
       repeat: true, objectKey: key };
   } catch { return null; }
 }
+
+
+// R2 songs uploaded to music/<level>/day-XX are published through Falowen
+// Music's existing on-demand discovery API. Do not construct filenames from
+// the Admin songbook, which might not match the actual MP3 or timed lyrics.
+const EXPECTED_ATTENDANCE_TITLES = Object.freeze({
+  'A2-7.19': 'lieber online oder im laden',
+  'A2-7.20': 'die jacke ist zu klein',
+});
+function normalizedMusicTitle(value) {
+  return String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().replace(/\s+/g, ' ');
+}
+export function waitingRoomDiscoveredMusicTrack(feed, { level, day, assignmentKey } = {}) {
+  const l = String(level || '').trim().toUpperCase();
+  const n = Number(day);
+  if (!LEVELS.has(l) || !Number.isInteger(n) || n < 1 || n > 28) return null;
+  const folder = `music/${l.toLowerCase()}/day-${String(n).padStart(2, '0')}/`;
+  const prefix = `r2-${l.toLowerCase()}-day-${String(n).padStart(2, '0')}-`;
+  const tracks = (Array.isArray(feed?.tracks) ? feed.tracks : []).filter(row =>
+    row?.autoDiscovered === true && row.coursebook === true
+    && String(row.level || '').toUpperCase() === l && Number(row.day) === n
+    && String(row.objectKey || '').startsWith(folder)
+    && /^[a-zA-Z0-9_ .()äöüÄÖÜß-]+\.mp3$/i.test(String(row.objectKey || '').slice(folder.length))
+    && String(row.id || '').startsWith(prefix)
+    && /^[a-zA-Z0-9_-]{1,245}$/.test(String(row.id || ''))
+    && row.audioUrl === `https://www.falowen.app/api/music?track=${row.id}`
+    && typeof row.title === 'string' && row.title.trim()
+  );
+  if (!tracks.length) return null;
+  let matches = tracks;
+  const preferred = EXPECTED_ATTENDANCE_TITLES[String(assignmentKey || '').trim().toUpperCase()];
+  if (preferred) {
+    const preferredMatches = tracks.filter(row =>
+      normalizedMusicTitle(row.title).includes(preferred)
+      || normalizedMusicTitle(row.objectKey.split('/').pop()).includes(preferred));
+    if (preferredMatches.length === 1) matches = preferredMatches;
+    else if (preferredMatches.length > 1) return null;
+  }
+  // More than one same-day recording with no unique known match is ambiguous.
+  if (matches.length !== 1) return null;
+  const track = matches[0];
+  return { id: track.id, title: track.title.slice(0, 120), src: track.audioUrl,
+    repeat: true, objectKey: track.objectKey, nativePlayback: true };
+}

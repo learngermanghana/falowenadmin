@@ -50,3 +50,12 @@ test('A1 presenter adds exactly a selected-day music stage and A2 uses approved 
  assert.match(music,/getReusableMusicQuestions\(assignmentKey\)/);
  assert.match(music,/onError/);
 });
+
+test('attendance dynamically matches existing R2 uploads while retaining curated A2 Day 18 and unchanged lyrics', () => {
+ const page = readFileSync(new URL('../src/pages/CheckinDisplayPage.jsx', import.meta.url),'utf8');
+ assert.match(page,/if \(curatedDayMusic\) return/);
+ assert.match(page,/waitingRoomDiscoveredMusicTrack\(data/);
+ assert.match(page,/src: curatedDayMusic\.audioUrl, objectKey: curatedDayMusic\.objectKey/);
+ assert.match(page,/The A2 Day \$\{presenterCurriculumDay\} recording could not be identified uniquely/);
+ assert.doesNotMatch(page,/getReusableSongDraft\('A2-7\.19'\).*lyrics\s*=/);
+});

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { getMusicTopicStyle, suggestLessonMusicDirection } from "../src/utils/musicTopicStyle.js";
-import { waitingRoomPublishedCatalogTrack, waitingRoomMusicPlaylistForSession } from "../src/utils/waitingRoomDayMusic.js";
+import { waitingRoomPublishedCatalogTrack, waitingRoomMusicPlaylistForSession, waitingRoomDiscoveredMusicTrack } from "../src/utils/waitingRoomDayMusic.js";
 
 test("A1 14.1 health selects gentle caring style and simple CEFR pace without AI generation", () => {
   const entry = { level: "A1", germanTitle: "Gesundheit und Körperteile", englishTitle: "Health and Body Parts" };
@@ -54,4 +54,51 @@ test("existing fallback still works if public catalog is empty or unavailable", 
   assert.match(studio, /Automatically match the lesson topic/);
   assert.match(studio, /readOnly=\{productionProfile !== 'auto' \|\| styleMode === 'auto'/);
   assert.match(studio, /brief: productionBrief/);
+});
+
+test("R2-discovered uploaded A2 Day 19 and 20 songs are selected by exact course day", () => {
+  const day19 = { id: "r2-a2-day-19-lieber-online-oder-im-laden", level: "A2", day: 19,
+    title: "Lieber online oder im Laden", objectKey: "music/a2/day-19/lieber-online-oder-im-laden.mp3",
+    audioUrl: "https://www.falowen.app/api/music?track=r2-a2-day-19-lieber-online-oder-im-laden",
+    autoDiscovered: true, coursebook: true };
+  const day20 = { ...day19, id: "r2-a2-day-20-die-jacke-ist-zu-klein", day: 20,
+    title: "Die Jacke ist zu klein", objectKey: "music/a2/day-20/die-jacke-ist-zu-klein.mp3",
+    audioUrl: "https://www.falowen.app/api/music?track=r2-a2-day-20-die-jacke-ist-zu-klein" };
+  const feed = { ok: true, tracks: [day20, day19] };
+  const matching19 = waitingRoomDiscoveredMusicTrack(feed, { level: "A2", day: 19, assignmentKey: "A2-7.19" });
+  assert.equal(matching19.src, day19.audioUrl);
+  assert.equal(matching19.objectKey, day19.objectKey);
+  assert.equal(matching19.repeat, true);
+  assert.equal(matching19.nativePlayback, true);
+  assert.equal(waitingRoomDiscoveredMusicTrack(feed, { level: "A2", day: 20 }).src, day20.audioUrl);
+  assert.equal(waitingRoomDiscoveredMusicTrack(feed, { level: "B1", day: 19 }), null);
+  assert.equal(waitingRoomDiscoveredMusicTrack(feed, { level: "A2", day: 18 }), null);
+  assert.equal(waitingRoomDiscoveredMusicTrack({tracks:[{...day19,autoDiscovered:false}]},
+    { level:"A2",day:19 }), null);
+  assert.equal(waitingRoomDiscoveredMusicTrack({tracks:[{...day19,objectKey:"a2/day-19/hoeren.mp3"}]},
+    { level:"A2",day:19 }), null);
+  assert.equal(waitingRoomDiscoveredMusicTrack({tracks:[{...day19,audioUrl:"https://attacker.invalid/song.mp3"}]},
+    { level:"A2",day:19 }), null);
+  assert.equal(waitingRoomDiscoveredMusicTrack({tracks:[day19,{...day19,id:"r2-a2-day-19-other",
+    title:"Other music",audioUrl:"https://www.falowen.app/api/music?track=r2-a2-day-19-other",
+    objectKey:"music/a2/day-19/other.mp3"}]},
+    { level:"A2",day:19,assignmentKey:"A2-7.19" }).src, day19.audioUrl);
+  assert.equal(waitingRoomDiscoveredMusicTrack({tracks:[day19,{...day19,id:"r2-a2-day-19-other",
+    audioUrl:"https://www.falowen.app/api/music?track=r2-a2-day-19-other",
+    objectKey:"music/a2/day-19/other.mp3"}]},
+    { level:"A2",day:19 }), null);
+});
+
+test("attendance uses existing read-only public music API only on teacher Start, via same-origin Vercel rewrite", () => {
+  const config = JSON.parse(readFileSync(new URL("../vercel.json", import.meta.url), "utf8"));
+  const rewrite = config.rewrites.find(entry => entry.source === "/api/attendance-music-library");
+  assert.equal(rewrite.destination, "https://www.falowen.app/api/music-library");
+  const page = readFileSync(new URL("../src/pages/CheckinDisplayPage.jsx", import.meta.url), "utf8");
+  const start = page.indexOf("const startWaitingMusic = useCallback");
+  assert.ok(start > page.indexOf("const waitingSessionPlaylist"));
+  assert.ok(page.indexOf("fetch(WAITING_ROOM_DISCOVERED_MUSIC_URL", start) > start);
+  assert.match(page, /waitingRoomDiscoveredMusicTrack\(data/);
+  assert.match(page, /if \(uploadedDay\) \{\s*throw new Error/);
+  assert.match(page, /musicSessionRef\.current !== musicSessionKey/);
+  assert.doesNotMatch(page.slice(0,start), /fetch\(WAITING_ROOM_DISCOVERED_MUSIC_URL/);
 });
