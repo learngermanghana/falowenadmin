@@ -8,13 +8,14 @@ test("B1 Day 24 slide three is the protected second Hören conversation",()=>{
   const slide=getSlidesByCourse("B1").find(x=>x.assignmentId==="B1-8.24");
   const stages=buildTeachingPresenterStages(slide,slide.topic);
   assert.equal(stages[2].id,"knowledge");
-  assert.equal(stages[2].type,"b1-day24-listening");
+  assert.equal(stages[2].type,"knowledge");
+  assert.equal(stages[2].variant,"interactive-listening");
   assert.equal(stages[2].audioKey,"b1/day-24/day-25.mp3");
-  assert.equal(stages.filter(x=>x.type==="b1-day24-listening").length,1);
+  assert.equal(stages.filter(x=>x.id==="knowledge" && x.variant==="interactive-listening").length,1);
   assert.ok(stages.some(x=>x.id==="reading"),"original reading remains separate");
-  const component=fs.readFileSync("src/components/B1Day24ListeningStage.jsx","utf8");
-  assert.match(component,/www\.falowen\.app\/api\/course-media\/b1\/audio-url/);
-  assert.match(component,/Authorization:"Bearer "/);
+  const component=fs.readFileSync("src/data/b1Day24ConversationTwo.js","utf8");
+  assert.match(component,/B1_DAY24_AUDIO_KEY/);
+  assert.equal(stages[2].listeningItems.length,5);
 });
 test("B1 Day 24 approved conversation key is scored as Teil 4",()=>{
   const dictionary=JSON.parse(fs.readFileSync("src/data/answers_dictionary.json","utf8"));
