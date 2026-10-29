@@ -99,7 +99,9 @@ export function waitingRoomDiscoveredMusicTrack(feed, { level, day, assignmentKe
       normalizedMusicTitle(row.title).includes(preferred)
       || normalizedMusicTitle(row.objectKey.split('/').pop()).includes(preferred));
     if (preferredMatches.length === 1) matches = preferredMatches;
-    else if (preferredMatches.length > 1) return null;
+    // Day13's pinned song was previously invented: never fall back to
+    // a different single MP3 in that folder just because it happens to exist.
+    else if (preferredMatches.length > 1 || String(assignmentKey || '').trim().toUpperCase() === 'A1-3.5') return null;
   }
   // More than one same-day recording with no unique known match is ambiguous.
   if (matches.length !== 1) return null;
