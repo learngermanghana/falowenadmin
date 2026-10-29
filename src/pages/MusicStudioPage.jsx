@@ -46,7 +46,7 @@ export default function MusicStudioPage() {
   const hasKnownPublishedAudio = isKnownPublishedMusicLesson(assignmentKey);
   const canStartNewRecordingDraft = canUseNewMusicStoryDraft({ assignmentKey, confirmedNoAudio: noAudioConfirmed[assignmentKey] === true });
   const lyrics = courseMode === 'course'
-    ? Object.prototype.hasOwnProperty.call(lyricsOverrides, assignmentKey)
+    ? canStartNewRecordingDraft && Object.prototype.hasOwnProperty.call(lyricsOverrides, assignmentKey)
       ? lyricsOverrides[assignmentKey] : draft?.lyrics || ''
     : customLyrics;
   const setLyrics = next => {
