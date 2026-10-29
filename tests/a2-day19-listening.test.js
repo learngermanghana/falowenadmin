@@ -36,3 +36,11 @@ test('Day 19 keeps separate music and Hören alongside Lesen, correction and spe
   assert.equal(stages.length, 10, 'Keep the approved 10-slide lesson structure');
   assert.equal(getCuratedMusicByAssignment('A2-7.18').objectKey, 'music/a2/day-18/die-karte-funktioniert-nicht.mp3');
 });
+
+
+test('Day 19 music uses Day 18 song card, not a bare external link', () => {
+  const slide = getSlidesByCourse('A2').find(s => s.assignmentId === 'A2-7.19');
+  const stages = buildTeachingPresenterStages(slide, slide.topic);
+  assert.equal(stages[1].musicVideo.musicLibraryUrl, 'https://music.falowen.app/?level=A2&day=19');
+  assert.equal(stages[2].audioKey, A2_DAY19_LISTENING.audioKey);
+});
