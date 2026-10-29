@@ -1699,7 +1699,14 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         timingMode: PER_STUDENT_WARMUP_LEVELS.has(level) ? "per-student" : "",
         timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length),
       },
-      ...(knowledge ? [{
+      ...(normalizedAssignmentId(slide) === "B1-8.24" ? [{
+        id: "knowledge",
+        type: "b1-day24-listening",
+        kicker: "Hören · Gespräch 2",
+        title: "Altkleider und Nachhaltigkeit",
+        audioKey: "b1/day-24/day-25.mp3",
+        suggestedMinutes: 7,
+      }] : knowledge ? [{
         id: "knowledge",
         type: "knowledge",
         kicker: "Wissensimpuls",
