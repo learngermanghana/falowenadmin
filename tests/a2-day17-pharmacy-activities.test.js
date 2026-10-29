@@ -77,11 +77,15 @@ test("chosen chapters reuse four authored 10-minute warm-up steps without invent
     const stages = buildTeachingPresenterStages(slide,slide.topic);
     // Days B1-25 and A2-18 keep their authored four warm-ups as source material,
     // but their visual warm-up slot is the unscored music lesson.
-    if (id === "B1-8.25" || id === "A2-7.18") {
+    if (id === "B1-8.25" || id === "A2-7.18" || id === "A2-7.20") {
       assert.equal(stages.find(s => s.id === "warmup").variant, "interactive-music-video", id);
       if (id === "A2-7.18") {
         assert.equal(stages.find(s => s.id === "warmup").musicVideo.youtubeId, undefined);
         assert.ok(stages.find(s => s.id === "warmup").musicVideo.audioUrl.includes("/api/music"));
+      } else if (id === "A2-7.20") {
+        assert.equal(stages.find(s => s.id === "warmup").musicVideo.musicLibraryUrl,
+          "https://music.falowen.app/?level=A2&day=20");
+        assert.equal(stages.find(s => s.id === "warmup").musicVideo.audioUrl, undefined);
       } else {
         assert.equal(stages.find(s => s.id === "warmup").musicVideo.youtubeId, "ArWT0uVqUxo");
       }
@@ -92,7 +96,7 @@ test("chosen chapters reuse four authored 10-minute warm-up steps without invent
     assert.equal(stages.find(s=>s.id==="reading").type,"knowledge",id);
     assert.equal(Boolean(entry.listening),["A2-6.17","A2-7.18","A2-7.20","B1-8.25"].includes(id),id);
     assert.equal(stages.find(s=>s.id==="knowledge")?.variant==="interactive-listening",["A2-6.17","A2-7.18","A2-7.20","B1-8.25"].includes(id),id);
-    assert.equal(isInteractiveOpeningStage(id,"warmup"),!["B1-8.25","A2-7.18"].includes(id),id);
+    assert.equal(isInteractiveOpeningStage(id,"warmup"),!["B1-8.25","A2-7.18","A2-7.20"].includes(id),id);
     assert.equal(isInteractiveOpeningStage(id,"knowledge"),["A2-6.17","A2-7.18","A2-7.20","B1-8.25"].includes(id),id);
     assert.equal(isInteractiveOpeningStage(id,"phrases"),false,id);
   }
@@ -223,7 +227,9 @@ test("A2 Day 20 Reklamation preserves the uploaded Richtig/Falsch answers and wo
   const slide = getSlidesByCourse("A2").find(s=>s.assignmentId==="A2-7.20");
   assert.ok(slide);
   const stages=buildTeachingPresenterStages(slide,slide.topic);
-  assert.equal(stages.find(s=>s.id==="warmup").variant,"interactive-warmup");
+  assert.equal(stages.find(s=>s.id==="warmup").variant,"interactive-music-video");
+  assert.equal(stages.find(s=>s.id==="warmup").musicVideo.musicLibraryUrl,
+    "https://music.falowen.app/?level=A2&day=20");
   const knowledge=stages.find(s=>s.id==="knowledge");
   assert.equal(knowledge.variant,"interactive-listening");
   assert.equal(knowledge.type,"knowledge");
