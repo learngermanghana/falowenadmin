@@ -131,11 +131,11 @@ export const MUSIC_QUESTION_SEEDS_A1 = Object.freeze([
   ],
   [
     "A1-3.6",
-    "Wobei braucht Mia Hilfe?",
-    "Beim Tragen eines schweren Buchs.",
-    "Wann können sie Deutsch üben?",
-    "Morgen.",
-    "Was kannst du gut machen?"
+    "Auf welchem Gleis können Mia und Ben einsteigen?",
+    "Auf Gleis drei.",
+    "Wo müssen Mia und Ben umsteigen?",
+    "In Hannover.",
+    "Bilde einen Satz mit müssen und umsteigen."
   ],
   [
     "A1-4.7",
