@@ -61,9 +61,9 @@ export const MUSIC_QUESTION_SEEDS_A1 = Object.freeze([
     "A1-1.3",
     "Woher kommt Sara?",
     "Aus Accra.",
-    "Wie heißt Karims Hund?",
-    "Bello.",
-    "Wie heißt du und woher kommst du?"
+    "Welche Sprache spricht Karim?",
+    "Arabisch und etwas Deutsch.",
+    "Wie heißt du, woher kommst du und wo wohnst du?"
   ],
   [
     "A1-2.3",
