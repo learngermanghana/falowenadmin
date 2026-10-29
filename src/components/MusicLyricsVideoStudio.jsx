@@ -70,6 +70,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   const [postingDescription,setPostingDescription] = useState("");
   const [copyNotice,setCopyNotice] = useState("");
   const [timingReview,setTimingReview] = useState(false);
+  const [recordingFingerprint,setRecordingFingerprint] = useState("");
   const [allowWebm,setAllowWebm] = useState(false);
   const [exportedVideo,setExportedVideo] = useState(null);
   const exportedUrlRef=useRef(null);
@@ -120,6 +121,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
         if(cancelled)return;
         const hash=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,"0")).join("");
         if(hash!==A1_DAY5_FINAL_RECORDING.sha256)return;
+        setRecordingFingerprint(hash);
         const recordedLyrics=getReusableSongDraft(A1_DAY5_FINAL_RECORDING.assignmentKey)?.lyrics || "";
         const songLines=videoLyricLines(recordedLyrics);
         const starts=A1_DAY5_FINAL_RECORDING.cueStarts;
@@ -213,7 +215,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     setCues(checked);
     if (publishedTrack?.objectKey || timingStatus==="estimated") setTimingStatus(checked.length===lines.length ? "local" : "edited");
     try {
-      localStorage.setItem(timingKey,JSON.stringify({lyrics:lyricText,cues:checked,recordingHash:timingReview ? A1_DAY5_FINAL_RECORDING.sha256 : undefined,reviewed:!timingReview}));
+      localStorage.setItem(timingKey,JSON.stringify({lyrics:lyricText,cues:checked,recordingHash:recordingFingerprint || undefined,reviewed:!timingReview}));
       if(audioFilenameObjectKey(objectKey)){
         localStorage.setItem("falowen-song-timing:"+objectKey,JSON.stringify({objectKey,cues:checked}));
         window.dispatchEvent(new CustomEvent("falowen-song-cues-changed",{detail:objectKey}));
@@ -368,13 +370,13 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       <button type="button" disabled={exporting||loadingTracks} onClick={loadTracks}>{loadingTracks?"Loading songs…":"Load available Falowen songs"}</button>
       {!!tracks.length && <label>Published recording <select disabled={exporting} value={publishedTrack?.objectKey||""} onChange={event=>{
         const track=tracks.find(row=>row.objectKey===event.target.value)||null;
-        setPublishedTrack(track);setFile(null);setDuration(0);setStarts([]);setCues([]);setTimingReview(false);
+        setPublishedTrack(track);setFile(null);setDuration(0);setStarts([]);setCues([]);setTimingReview(false);setRecordingFingerprint("");
         setObjectKey(track?.objectKey||"");setError("");
       }}><option value="">Choose a recording</option>{tracks.map(track=><option key={track.objectKey} value={track.objectKey}>{track.level} · Day {track.day} · {track.title}</option>)}</select></label>}
     </div>
     <label style={{display:"grid",gap:5,maxWidth:540,fontWeight:700}}>Audio source
       <input type="file" accept="audio/mpeg,audio/mp3,.mp3" disabled={exporting}
-        onChange={event=>{setFile(event.target.files?.[0]||null);setPublishedTrack(null);setObjectKey("");setCues([]);setStarts([]);setDuration(0);setError("");setTimingReview(false);}} />
+        onChange={event=>{setFile(event.target.files?.[0]||null);setPublishedTrack(null);setObjectKey("");setCues([]);setStarts([]);setDuration(0);setError("");setTimingReview(false);setRecordingFingerprint("");}} />
       <small>{file?"Using uploaded MP3: "+file.name:generated?.url?"Using the generated track shown above. You can also upload a final MP3.":"Upload the approved final MP3 to make a video. No audio is uploaded to Falowen."}</small>
     </label>
     {activeUrl?<audio ref={audioRef} src={activeUrl} controls preload="metadata"
@@ -428,7 +430,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       <button type="button" disabled={exporting} onClick={()=>{
         setTimingReview(false);
         setTimingStatus("local");
-        try{localStorage.setItem(timingKey,JSON.stringify({lyrics:lyricText,cues,recordingHash:A1_DAY5_FINAL_RECORDING.sha256,reviewed:true}));}catch{}
+        try{localStorage.setItem(timingKey,JSON.stringify({lyrics:lyricText,cues,recordingHash:recordingFingerprint,reviewed:true}));}catch{}
         setMessage("You confirmed the timing for this exact Day 5 recording. You can export the matching timing sidecar once the approved MP3 has an R2 object key.");
       }}>I reviewed and confirmed all lyric time marks</button>
     </div>}}
