@@ -5,6 +5,10 @@ import { pathToFileURL } from "node:url";
 // Shared modules and unrecognised files deliberately fall back to every existing
 // deployment group. Keep targeted mappings small and explicit.
 export const WORKER_TARGETS = {
+  // This change only adds owner/public lyric endpoints to the existing API.
+  // Avoid redeploying unrelated Cloud Run workers for an editor feature.
+  "functions/musicStudioLyrics.js": ["api"],
+  "functions/index.js": ["api"],
   "functions/automaticMarkingPipeline.cjs": ["api", "markCourseSubmissionAutomatically"],
   "functions/automaticCourseMarking.js": ["markCourseSubmissionAutomatically"],
   "functions/automaticCourseMarking.test.cjs": [],
