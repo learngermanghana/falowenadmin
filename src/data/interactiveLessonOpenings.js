@@ -451,7 +451,6 @@ ENTRIES["B1-9.26"] = {
     nextStep:'Anschließend folgen Common Mistakes, Lesen und die bisherigen Aufgaben.',
   },
 };
-ing = B1_DAY25_LISTENING;
 
 export const INTERACTIVE_LESSON_OPENINGS = Object.freeze(
   Object.fromEntries(Object.entries(ENTRIES).map(([key, entry]) => [
