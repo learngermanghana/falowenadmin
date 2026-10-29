@@ -134,7 +134,7 @@ test("shared fullscreen renderer includes audio overview and optional post-audio
 
 test("B1 Day 25 classroom Hören uses the current five Richtig/Falsch answers and signed R2 audio", () => {
   const lesson = getInteractiveLessonOpening("B1-8.25");
-  assert.equal(lesson.listening.audioKey, "b1/day-25/day-25.mp3");
+  assert.equal(lesson.listening.audioKey, "b1/day-25/online-shopping-verbraucherservice.mp3");
   assert.equal(B1_DAY25_AUDIO_KEY, lesson.listening.audioKey);
   assert.equal(lesson.listening.questions.length, 5);
   assert.equal(B1_DAY25_LISTENING_QUESTIONS.length, 5);

@@ -151,7 +151,7 @@ test('all 56 A2/B1 presenters use the Day 18 layout and only published music les
   const b1=getSlidesByCourse('B1');
   const day25=buildTeachingPresenterStages(b1.find(s=>s.assignmentId==='B1-8.25'));
   const day26=buildTeachingPresenterStages(b1.find(s=>s.assignmentId==='B1-9.26'));
-  assert.equal(day25.find(s=>s.id==='knowledge')?.audioKey,'b1/day-25/day-25.mp3');
+  assert.equal(day25.find(s=>s.id==='knowledge')?.audioKey,'b1/day-25/online-shopping-verbraucherservice.mp3');
   assert.equal(day26.find(s=>s.id==='knowledge'),undefined);
   assert.equal(day25.length,10);
   assert.equal(day26.length,9);

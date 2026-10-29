@@ -53,9 +53,10 @@ test("Music stage uses signed R2 music, lyrics and 3 canonical questions without
   assert.match(src,/<PublishedSongLessonStage assignmentKey="A2-7.18"/);
   const b1=getSlidesByCourse("B1").find(x=>x.assignmentId==="B1-8.25");
   const stages=buildTeachingPresenterStages(b1,b1.topic);
-  assert.equal(stages[1].musicVideo.youtubeId,"ArWT0uVqUxo");
+  assert.equal(stages[1].musicVideo.youtubeId,undefined);
+  assert.equal(stages[1].musicVideo.musicLibraryUrl,"https://music.falowen.app/?level=B1&day=25");
   assert.equal(stages[2].variant,"interactive-listening");
-  assert.equal(stages[2].audioKey,"b1/day-25/day-25.mp3");
+  assert.equal(stages[2].audioKey,"b1/day-25/online-shopping-verbraucherservice.mp3");
 });
 
 test("only teacher-approved selected days have in-class music, even though the full songbook is available",()=>{
