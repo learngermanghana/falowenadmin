@@ -19,6 +19,7 @@ const PRESETS = {
   acoustic: 'An original emotional singer-songwriter pop song with warm acoustic guitar, expressive piano chords, one rich adult lead voice, natural storytelling and a moving chorus. Clear German with musical phrasing rather than childish rhymes.',
 };
 export default function MusicStudioPage() {
+  const [studioTab, setStudioTab] = useState('generator');
   const [courseMode, setCourseMode] = useState('course');
   const [level, setLevel] = useState('A1');
   const [day, setDay] = useState('1');
@@ -201,6 +202,17 @@ export default function MusicStudioPage() {
   const capped = status && (status.dailyCents + cents > status.limits.dailyCents || status.monthlyCents + cents > status.limits.monthlyCents);
   return <main className="music-studio">
     <header><p className="music-eyebrow">FALOWEN · CREATE & LEARN</p><h1>Falowen Music Studio</h1><p>Turn your lesson ideas and lyrics into music. Preview, listen, download your MP3, or build a synchronized lyrics video.</p></header>
+    <div className="music-studio-tabs" role="tablist" aria-label="Falowen Music workspaces">
+      <button id="music-generator-tab" type="button" role="tab" aria-controls="music-generator-panel"
+        aria-selected={studioTab === 'generator'} className={studioTab === 'generator' ? 'is-active' : ''}
+        onClick={() => setStudioTab('generator')}>Music Generator</button>
+      <button id="music-video-tab" type="button" role="tab" aria-controls="music-video-panel"
+        aria-selected={studioTab === 'video'} className={studioTab === 'video' ? 'is-active' : ''}
+        onClick={() => setStudioTab('video')}>Lyrics Video Studio</button>
+    </div>
+    {/* Keep both workspaces mounted: generated object URLs, drafts and selected MP3s survive tab changes. */}
+    <section id="music-generator-panel" role="tabpanel" aria-labelledby="music-generator-tab"
+      style={{display:studioTab === 'generator' ? undefined : 'none'}}>
     <div className="music-layout"><form onSubmit={generate} className="music-card">
       <fieldset disabled={busy}><legend>1. Choose your lesson</legend>
         <label htmlFor="music-source">Song purpose</label><select id="music-source" value={courseMode} onChange={e => setCourseMode(e.target.value)}><option value="course">Course lesson from dictionary</option><option value="custom">Custom / class welcome</option></select>
@@ -304,13 +316,17 @@ export default function MusicStudioPage() {
       {status && !status.ready && <p>Google API configuration is required before generating.</p>}
       <p className="music-note">Estimates use Google’s listed music prices, excluding backend usage. Failed or timed-out attempts remain counted because they may be billed. Limits reset at midnight UTC / the start of each month.</p>
     </aside></div>
-    <MusicLyricsVideoStudio assignmentKey={assignmentKey} key={courseMode + '-' + assignmentKey}
+    {courseMode === 'course' && draft && <ReusableMusicQuestions assignmentKey={assignmentKey} lyricsChanged={lyrics !== draft.lyrics} />}
+    </section>
+    <section id="music-video-panel" role="tabpanel" aria-labelledby="music-video-tab"
+      style={{display:studioTab === 'video' ? undefined : 'none'}}>
+    <MusicLyricsVideoStudio active={studioTab === 'video'} assignmentKey={assignmentKey}
       generated={result && result.title === trackTitle && (courseMode === 'custom' || (result.level === level && result.day === lesson?.day)) ? result : null}
       title={trackTitle} level={courseMode === 'course' ? level : ''} day={courseMode === 'course' ? lesson?.day : ''}
       lyrics={lyrics}
       onOverwriteLyrics={courseMode === 'course' && assignmentKey ? overwriteLyrics : null}
       savingLyrics={savingLyrics} loadingLyrics={loadingLyrics}
       lyricsSaveNotice={lyricsNotice} />
-    {courseMode === 'course' && draft && <ReusableMusicQuestions assignmentKey={assignmentKey} lyricsChanged={lyrics !== draft.lyrics} />}
+    </section>
   </main>;
 }

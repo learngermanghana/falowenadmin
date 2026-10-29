@@ -4,6 +4,13 @@ export function videoLyricLines(lyrics = "") {
   return String(lyrics).replace(/\\n/g, "\n").split(/\r?\n/)
     .map(line => line.trim()).filter(line => line && !/^\[.*\]$/.test(line));
 }
+// Use verified timings only for the exact public recording and its recorded lyrics.
+export function verifiedPublishedVideoTiming(data, objectKey) {
+  if (!objectKey || data?.objectKey !== objectKey || typeof data?.lyrics !== "string") return null;
+  const lines = videoLyricLines(data.lyrics);
+  const cues = validateLyricCues(data.cues, lines);
+  return lines.length && cues.length === lines.length ? {lyrics:data.lyrics,cues} : null;
+}
 export function lyricScenes(lyrics = "", duration = 0, starts = []) {
   const lines = videoLyricLines(lyrics);
   const groups = [];

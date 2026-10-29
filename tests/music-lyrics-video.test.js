@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { videoLyricLines, lyricScenes, findLyricScene, videoRecorderFormat, timedLyricsPack } from "../src/utils/musicLyricsVideo.js";
+import { videoLyricLines, lyricScenes, findLyricScene, videoRecorderFormat, timedLyricsPack, verifiedPublishedVideoTiming } from "../src/utils/musicLyricsVideo.js";
 
 test("video lyrics use at most three meaningful lines per timed screen", () => {
   const text="[Verse 1]\nHallo Welt\nIch bin da\nDu bist hier\n[Chorus]\nWir lernen\nHeute und morgen";
@@ -46,4 +46,33 @@ test("shared sidecar retains exact line marks and rejects screen-only or mismatc
   assert.throws(()=>timedLyricsPack(key,lyrics,cues.slice(0,1)),/every lyric line/);
   assert.throws(()=>timedLyricsPack(key,lyrics,[cues[1],cues[0]]),/every lyric line/);
   assert.throws(()=>timedLyricsPack("a2/day-01/private.mp3",lyrics,cues),/published MP3/);
+});
+
+test("published video timing uses only complete cues for the exact recording and recorded lyrics", () => {
+  const key="music/a1/day-13/zwei-tees-vier-euro.mp3";
+  const lyrics="[Verse]\\nZwei Tees, bitte\\nVier Euro\\nDanke schön";
+  const cues=[
+    {start:1.1,text:"Zwei Tees, bitte"},
+    {start:4.5,text:"Vier Euro"},
+    {start:7.7,text:"Danke schön"},
+  ];
+  const pack={objectKey:key,lyrics,cues};
+  assert.deepEqual(verifiedPublishedVideoTiming(pack,key),{lyrics,cues});
+  assert.equal(verifiedPublishedVideoTiming(pack,"music/a1/day-14/other.mp3"),null);
+  assert.equal(verifiedPublishedVideoTiming({...pack,cues:cues.slice(0,2)},key),null);
+  assert.equal(verifiedPublishedVideoTiming({...pack,lyrics:"Zwei Tees, bitte\\nDanke schön"},key),null);
+  assert.equal(verifiedPublishedVideoTiming({...pack,cues:[cues[1],cues[0],cues[2]]},key),null);
+});
+
+test("Falowen Music keeps both tabs mounted and the video reuses public timings", () => {
+  const studio=readFileSync(new URL("../src/pages/MusicStudioPage.jsx",import.meta.url),"utf8");
+  const video=readFileSync(new URL("../src/components/MusicLyricsVideoStudio.jsx",import.meta.url),"utf8");
+  assert.match(studio,/role="tablist"/);
+  assert.match(studio,/Music Generator/);
+  assert.match(studio,/Lyrics Video Studio/);
+  assert.ok(studio.includes("style={{display:studioTab === 'video' ? undefined : 'none'}}"));
+  assert.ok(!studio.includes("key={courseMode + '-' + assignmentKey}"));
+  assert.ok(video.includes("api/music-lyrics?key="));
+  assert.match(video,/verifiedPublishedVideoTiming/);
+  assert.match(video,/publishedTrack && !completeCues/);
 });
