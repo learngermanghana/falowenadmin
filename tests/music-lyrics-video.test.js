@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { A1_DAY5_FINAL_RECORDING } from "../src/data/a1Day5FinalRecording.js";
+import { getReusableSongDraft } from "../src/data/reusableMusicSongbook.js";
+import { validateLyricCues } from "../src/utils/songLyrics.js";
 import { videoLyricLines, lyricScenes, findLyricScene, videoRecorderFormat, timedLyricsPack, verifiedPublishedVideoTiming, musicVideoSocialCopy } from "../src/utils/musicLyricsVideo.js";
 
 test("video lyrics use at most three meaningful lines per timed screen", () => {
@@ -103,4 +106,53 @@ test("export does not silently produce an incompatible WebM or an untested MP4",
   assert.match(src,/Download video again/);
   assert.match(src,/could not be played back/);
   assert.match(src,/fixWebmDuration/);
+});
+
+test("A1 Day 5 matches the new singer recording, and exact-file timing remains reviewable", () => {
+  const day5=getReusableSongDraft("A1-1.3");
+  assert.equal(day5.title,"Schön, dich kennenzulernen");
+  assert.match(day5.lyrics,/Ich heiße Sara/);
+  assert.match(day5.lyrics,/Er spricht Arabisch und etwas Deutsch/);
+  assert.doesNotMatch(day5.lyrics,/Bello|kleinen Hund/);
+  assert.match(day5.musicStyle,/Afro-soul/i);
+  assert.equal(A1_DAY5_FINAL_RECORDING.assignmentKey,"A1-1.3");
+  assert.equal(A1_DAY5_FINAL_RECORDING.duration,156.72);
+  assert.equal(A1_DAY5_FINAL_RECORDING.sha256.length,64);
+  assert.equal(A1_DAY5_FINAL_RECORDING.status,"draft-timing-review-required");
+  const lines=videoLyricLines(day5.lyrics);
+  const cues=A1_DAY5_FINAL_RECORDING.cueStarts.map((start,i)=>({start,text:lines[i]}));
+  assert.equal(lines.length,31);
+  assert.equal(cues.length,lines.length);
+  assert.equal(validateLyricCues(cues,lines).length,lines.length);
+  assert.ok(cues.at(-1).start<A1_DAY5_FINAL_RECORDING.duration);
+  const video=readFileSync(new URL("../src/components/MusicLyricsVideoStudio.jsx",import.meta.url),"utf8");
+  assert.match(video,/crypto\.subtle\.digest\("SHA-256"/);
+  assert.match(video,/hash!==A1_DAY5_FINAL_RECORDING\.sha256/);
+  assert.match(video,/timingReview/);
+  assert.match(video,/\|\|timingReview/);
+});
+test("A1 Day 6 contains the new adult family story and its questions remain grounded", () => {
+  const song=getReusableSongDraft("A1-2.3");
+  assert.equal(song.title,"Ein Sonntag mit meiner Familie");
+  assert.match(song.musicStyle,/Light Afro-Pop Rhythm/);
+  assert.match(song.lyrics,/Meine Mutter kocht den Kaffee/);
+  assert.match(song.lyrics,/Mein Bruder spielt Gitarre dann/);
+  assert.match(song.lyrics,/Durch den Park, am See vorbei/);
+  assert.match(song.lyrics,/Die Sonne geht langsam unter/);
+  assert.doesNotMatch(song.lyrics,/Was machst du gern\? Was machst du gern\?/);
+  const seeds=readFileSync(new URL("../src/data/musicQuestionSeedsA1.js",import.meta.url),"utf8");
+  assert.match(seeds,/Welche Sprache spricht Karim\?/);
+  assert.doesNotMatch(seeds,/Wie heißt Karims Hund\?/);
+});
+
+test("timing editor supports correcting individual lines and requires owner review to publish", () => {
+  const editor=readFileSync(new URL("../src/components/SongTimingEditor.jsx",import.meta.url),"utf8");
+  const video=readFileSync(new URL("../src/components/MusicLyricsVideoStudio.jsx",import.meta.url),"utf8");
+  assert.match(editor,/updateLineTime/);
+  assert.match(editor,/onBlur=/);
+  assert.match(editor,/useCurrentTime/);
+  assert.match(video,/I reviewed and confirmed all lyric time marks/);
+  assert.match(video,/reviewed:true/);
+  assert.match(video,/recordingFingerprint/);
+  assert.match(video,/timingReview\}/);
 });

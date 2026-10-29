@@ -51,17 +51,17 @@ export const MUSIC_SONG_DRAFTS_A1 = Object.freeze([
   },
   {
     "assignmentKey": "A1-1.3",
-    "title": "Ich heiße Sara",
-    "musicStyle": "Acoustic Folk, 84 BPM: intimate acoustic folk with fingerpicked wooden guitar, very light hand percussion and a simple flowing melody. One lead singer, clear German phrases, quiet instrumental mix.",
-    "lyrics": "[Verse 1]\nHallo, ich heiße Sara.\nIch komme aus Accra.\nIch wohne jetzt in Berlin.\nUnd ich lerne gern Deutsch.\n\n[Chorus]\nWie heißt du? Woher kommst du?\nWo wohnst du? Was machst du?\nWir lernen uns heute kennen.\n\n[Verse 2]\nDas ist mein Freund Karim.\nEr hat einen kleinen Hund.\nKarim sagt: Das ist Bello.\nBello spielt vor dem Haus.\n\n[Chorus]\nWie heißt du? Woher kommst du?\nWo wohnst du? Was machst du?\nWir lernen uns heute kennen.\n\n[Outro]\nWir sagen alle: Willkommen!\nUnser Kurs ist wie ein Team.\nBei Falowen stelle ich mich vor.",
-    "genre": "Acoustic Folk"
+    "title": "Schön, dich kennenzulernen",
+    "musicStyle": "Mature acoustic Afro-soul and German pop: warm fingerpicked guitar, expressive piano, light Afro-Pop percussion, gentle electric bass and a warm melodic build from verse through chorus. Clear intimate German vocals; never nursery-rhyme style. The approved finished MP3 is the source of truth for the sung words.",
+    "lyrics": "[Verse 1]\nIch heiße Sara.\nIch bin neu hier.\nIch komme aus Accra.\nJetzt bin ich hier.\nIn Berlin beginnt mein neuer Tag.\nIch lerne Deutsch, weil ich es mag.\n\n[Pre-Chorus]\nDu lächelst mich an und sagst Hallo.\nIch lächle zurück und frage dich.\n\n[Chorus]\nWie heißt du?\nErzähl mir von dir.\nWoher kommst du?\nBleib noch hier.\nWo wohnst du?\nIch wohne in Berlin.\nSchön, dich kennenzulernen.\n\n[Verse 2]\nDas ist Karim.\nEr kommt aus Bonn.\nEr wohnt jetzt hier.\nNicht weit von mir.\nEr spricht Arabisch und etwas Deutsch.\nWir trinken Kaffee und reden viel.\n\n[Chorus]\nWie heißt du?\nErzähl mir von dir.\nWoher kommst du?\nBleib noch hier.\nWo wohnst du?\nIch wohne in Berlin.\nSchön, dich kennenzulernen.\n\n[Outro]\nEin neuer Tag, ein neues Gesicht.\nDu kennst mich jetzt und ich kenne dich.\nSchön, dich kennenzulernen.",
+    "genre": "Acoustic Afro-Soul"
   },
   {
     "assignmentKey": "A1-2.3",
-    "title": "Sonntag mit meiner Familie",
-    "musicStyle": "Soft R&B, 88 BPM: silky soft R&B with mellow Rhodes chords, understated electronic beat, gentle sub-bass and a close, intimate melody. One lead singer, clear German phrases, quiet instrumental mix.",
-    "lyrics": "[Verse 1]\nAm Sonntag bin ich zu Hause.\nMeine Mutter macht den Tee.\nMein Bruder spielt Gitarre.\nIch singe ein Lied dazu.\n\n[Chorus]\nWas machst du gern? Was machst du gern?\nIch singe gern, du spielst gern.\nZusammen sind wir froh.\n\n[Verse 2]\nMein Vater liest ein Buch.\nMeine Schwester malt ein Bild.\nWir lachen und essen zusammen.\nDann gehen wir in den Park.\n\n[Chorus]\nWas machst du gern? Was machst du gern?\nIch singe gern, du spielst gern.\nZusammen sind wir froh.\n\n[Outro]\nDas ist mein schöner Sonntag.\nIch mag meine Familie sehr.\nMit Falowen erzähle ich von zu Haus.",
-    "genre": "Soft R&B"
+    "title": "Ein Sonntag mit meiner Familie",
+    "musicStyle": "Warm Acoustic Pop · Soft Piano · Gentle Guitar · Light Afro-Pop Rhythm. Thoughtful, unhurried verses develop into a warm adult melodic chorus. Clear German vocals, natural phrasing, never childlike.",
+    "lyrics": "[Verse 1]\nAm Sonntag scheint die Sonne,\nDer Morgen fängt ganz langsam an.\nMeine Mutter kocht den Kaffee,\nMein Bruder spielt Gitarre dann.\n\nIch sitze draußen und singe,\nDie Musik klingt durch das Haus.\nWir haben heute alle frei,\nUnd niemand muss früh raus.\n\n[Pre-Chorus]\nEin bisschen Zeit, ein bisschen Ruhe,\nWir machen, was uns Freude macht.\nDie kleinen Dinge sind so schön,\nWir reden viel und lachen.\n\n[Chorus]\nWas machst du gern in deiner Zeit?\nIch singe gern, du spielst für mich.\nWir hören Musik, wir lachen viel,\nUnd jeder Tag hat seinen Klang.\n\nOh, wie schön ist dieser Tag,\nWenn die Familie zusammen ist.\nWir brauchen heute gar nicht viel,\nNur Zeit für dich und mich.\n\n[Verse 2]\nMein Vater liest auf dem Sofa,\nMeine Schwester malt ein Bild.\nWir essen später alle zusammen,\nDraußen ist es warm und still.\n\nAm Nachmittag gehen wir spazieren,\nDurch den Park, am See vorbei.\nWir sprechen über unsere Woche,\nUnd fühlen uns ganz frei.\n\n[Chorus]\nWas machst du gern in deiner Zeit?\nIch singe gern, du spielst für mich.\nWir hören Musik, wir lachen viel,\nUnd jeder Tag hat seinen Klang.\n\nOh, wie schön ist dieser Tag,\nWenn die Familie zusammen ist.\nWir brauchen heute gar nicht viel,\nNur Zeit für dich und mich.\n\n[Outro]\nDie Sonne geht langsam unter,\nWir gehen wieder nach Haus.\nEin schöner Tag mit meiner Familie,\nUnd morgen sieht die Welt anders aus.",
+    "genre": "Warm Acoustic Pop"
   },
   {
     "assignmentKey": "A1-3",
