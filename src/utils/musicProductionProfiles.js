@@ -67,7 +67,7 @@ export const MUSIC_PRODUCTION_PROFILES = Object.freeze([
     id: 'afro-acoustic-guitar',
     label: 'Acoustic Afro-soul · guitar groove',
     description: 'Beautiful plucked guitar, subtle syncopated African rhythm, warm bass and smooth vocals.',
-    direction: 'Original mellow acoustic Afro-soul / contemporary African guitar pop at 94 BPM in G major. Main four-bar progression: Gmaj9 – D/F# – Em7 – Cadd9, with Am7 – Dsus4 – D as a graceful turnaround. Lead with an organic acoustic guitar playing an intricate melodic picking figure, then gentle syncopated guitar strums, rounded bass and a tasteful soft shaker and rim percussion groove. Give a few expressive flute responses to the guitar motif, but never drown the warm single lead singer. Build the chorus with a wider guitar strum and subtle piano support; keep the groove refined, soulful and human rather than a children's classroom singalong or chant.'
+    direction: 'Original mellow acoustic Afro-soul / contemporary African guitar pop at 94 BPM in G major. Main four-bar progression: Gmaj9 – D/F# – Em7 – Cadd9, with Am7 – Dsus4 – D as a graceful turnaround. Lead with an organic acoustic guitar playing an intricate melodic picking figure, then gentle syncopated guitar strums, rounded bass and a tasteful soft shaker and rim percussion groove. Give a few expressive flute responses to the guitar motif, but never drown the warm single lead singer. Build the chorus with a wider guitar strum and subtle piano support; keep the groove refined, soulful, human and adult rather than a children's classroom singalong or chant.'
   },
   {
     id: 'piano-pop',
