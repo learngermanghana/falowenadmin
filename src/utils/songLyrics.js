@@ -31,3 +31,8 @@ export function readSongCues(song, storage) {
 export function songTime(seconds = 0) {
   return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
 }
+
+export function hasCompleteSongTiming(cues, lyrics) {
+  const lines=lyricLines(lyrics);
+  return lines.length>0 && validateLyricCues(cues,lines).length===lines.length;
+}

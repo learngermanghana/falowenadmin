@@ -25,7 +25,7 @@ export default function useSongTiming(song) {
     if (!objectKey || !lyrics) return () => { cancelled = true; };
     if (!published.has(objectKey)) published.set(objectKey,
       fetch('https://www.falowen.app/api/music-lyrics?key=' + encodeURIComponent(objectKey), {cache:'no-cache'})
-        .then(response => response.ok ? response.json() : null).catch(() => null));
+        .then(response => response.ok ? response.json() : null).then(data=>{if(!data)published.delete(objectKey);return data;}).catch(() => {published.delete(objectKey);return null;}));
     published.get(objectKey).then(data => {
       if (cancelled || edits.current !== revision) return;
       const recordedLyrics = typeof data?.lyrics === 'string' ? data.lyrics : lyrics;
