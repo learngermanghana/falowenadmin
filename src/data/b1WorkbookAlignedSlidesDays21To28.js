@@ -359,14 +359,14 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       "Day 24 has no day-specific deep grammar page. The workbook Grammar tab supplies general B1 advantage/disadvantage/opinion training; build the lesson language from the workbook's own dass/weil/um … zu/sollten/einerseits … andererseits frames.",
       "Teil 3 is Eleni's environmental-awareness/recycling text, not a shopping case study.",
       "The workbook displays seven Richtig/Falsch statements, and all seven now have matching reference answers.",
-      "The old Day 24 listening video is removed in the rendered workbook. Teil 4 is not submitted and the marking contract excludes teil4.",
+      "Slide 3 now plays Gespräch 2 about Altkleider and Globaler Süden with five Richtig/Falsch statements. The workbook Teil 4 uses b1/day-24/day-25.mp3 and requires submission of all five answers.",
     ],
     interactionFlow: [
       { phase: "Argument frame", detailEn: "8 min: build one Vorteil, one Nachteil and one opinion with examples." },
       { phase: "Purpose and reason", detailEn: "9 min: connect sustainable actions with weil/dass and um … zu." },
       { phase: "Measure comparison", detailEn: "12 min: compare Secondhand, regional products, low packaging and reduced meat consumption." },
       { phase: "Workbook writing bridge", detailEn: "9 min: outline the response to Paul with a counterargument and concrete examples." },
-      { phase: "Marking note", detailEn: "5 min: preview the seven Richtig/Falsch statements and remind students that all seven are scored." },
+      { phase: "Hören · Gespräch 2", detailEn: "7 min: play the Jonas/Lisa Altkleider conversation twice and check the five Richtig/Falsch statements (B A A B A)." },
     ],
     wrapUpTaskDe: "Nenne eine nachhaltige Maßnahme, einen Vorteil und einen Nachteil. Begründe deine Meinung mit weil und formuliere ein Ziel mit um … zu.",
     workbookConnection: workbookConnection(24, [
@@ -374,10 +374,10 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       { label: "Teil 1 · Sprechen", detailEn: "Discuss sustainable consumption across shopping, recycling, energy, transport, business responsibility and individual action; compare measures and choose one important action. Practice only." },
       { label: "Teil 2 · Schreiben", detailEn: "Write an opinion responding to Paul on whether sustainable consumption matters; include benefits, difficulties, concrete examples and a clear conclusion." },
       { label: "Teil 3 · Lesen", detailEn: "Read Eleni's text about environmental education, Sperrmüll, second-hand furniture, Altkleider, glass recycling and hazardous-waste collection. All seven Richtig/Falsch statements are reference-scored." },
-      { label: "Teil 4 · Hören", detailEn: "SELF-CHECK/UNSCORED ONLY. The old listening link is removed from the rendered workbook; no live Hören medium is currently available. The marking contract excludes teil4, so do not submit it." },
+      { label: "Teil 4 · Hören", detailEn: "SCORED · Gespräch 2: hear Jonas and Lisa discussing Altkleider recycling via b1/day-24/day-25.mp3; answer five Richtig/Falsch questions (A = Richtig, B = Falsch). Submit as Teil 4." },
     ], {
       grammarUrl: null,
-      subtitle: "Day 24 has no direct deep-grammar page. Teil 3 has seven aligned reading answers; Teil 4 remains excluded.",
+      subtitle: "Day 24 has no deep grammar page. Teil 3 keeps seven reading answers; Teil 4 now contains five submitted Hören statements.",
     }),
     teacherSupport: {
       lessonOverviewEn: "Day 24 develops B1 sustainability arguments and includes a fully aligned seven-statement reading.",
@@ -397,7 +397,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
         "Keeping main-clause order after weil or dass.",
         "Using um … zu when the two clauses have different subjects.",
         "Skipping statements 6–7; all seven current reading statements are now reference-scored.",
-        "Trying to play the removed Day 24 listening link or submitting Teil 4 despite its exclusion.",
+        "Confusing Jonas and Lisa's discussion about clothing donations and the Global South with the old smartphone conversation.",
       ],
     },
   },
