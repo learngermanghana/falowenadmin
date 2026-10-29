@@ -100,6 +100,10 @@ test('original songbook stays audio-compatible; new storyline drafts require exp
     assert.equal(draft.lyrics, getReusableSongDraft(draft.assignmentKey).lyrics);
   }
   assert.equal(canUseNewMusicStoryDraft({ assignmentKey: 'A1-14.1', confirmedNoAudio: true }), false);
+  for (const assignmentKey of ['A2-7.18', 'A2-7.19', 'A2-7.20']) {
+    assert.equal(canUseNewMusicStoryDraft({ assignmentKey, confirmedNoAudio: true }), false);
+    assert.match(getReusableSongDraft(assignmentKey).lyrics, /Falowen/);
+  }
   assert.equal(canUseNewMusicStoryDraft({ assignmentKey: 'A1-3.5' }), false);
   assert.equal(canUseNewMusicStoryDraft({ assignmentKey: 'A1-3.5', confirmedNoAudio: true }), true);
   const cafe = revisedMusicStoryLyrics(getReusableSongDraft('A1-3.5').lyrics, 'A1-3.5');
