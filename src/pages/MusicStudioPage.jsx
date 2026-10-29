@@ -61,6 +61,7 @@ export default function MusicStudioPage() {
         preferredStyle: draft?.musicStyle || '',
       })
     : brief;
+  const productionBrief = productionProfile === 'auto' ? effectiveBrief : selectedProduction.direction;
   const context = courseMode === 'course' ? musicLessonContext(lesson, language, focus, {
     songStyle: vocalMode === 'voice' ? songStyle : 'vocabulary',
     storyIdea,
@@ -98,10 +99,9 @@ export default function MusicStudioPage() {
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   function saveCurrentLyrics() {
-    const productionNote = productionProfile === 'auto' ? '' : `\n\nPRODUCTION PALETTE\n${selectedProduction.direction}`;
     const text = draft
-      ? musicSongTeachingPackText({ ...draft, lyrics, musicStyle: `${effectiveBrief}${productionNote}` }, lesson)
-      : `FALOWEN MUSIC\nTitle: ${trackTitle}\n\nMUSIC STYLE\n${effectiveBrief}${productionNote}\n\nLYRICS\n${lyrics}`;
+      ? musicSongTeachingPackText({ ...draft, lyrics, musicStyle: productionBrief }, lesson)
+      : `FALOWEN MUSIC\nTitle: ${trackTitle}\n\nMUSIC STYLE\n${productionBrief}\n\nLYRICS\n${lyrics}`;
     downloadLyricsText(text, falowenMusicFileName(lesson, trackTitle, 'txt'));
   }
   function exportCompleteSongbook() {
@@ -126,7 +126,7 @@ export default function MusicStudioPage() {
   }
   async function copyDraftStyle() {
     try {
-      await navigator.clipboard.writeText(`${effectiveBrief}${productionProfile === 'auto' ? '' : `\n\n${selectedProduction.direction}`}`);
+      await navigator.clipboard.writeText(productionBrief);
       setCopyStatus('Music style copied.');
     } catch {
       setCopyStatus('Copy unavailable in this browser; download the song text instead.');
@@ -145,7 +145,7 @@ export default function MusicStudioPage() {
     if (lock.current) return;
     lock.current = true; setBusy(true); setError('');
     try {
-      const prompt = buildFalowenMusicPrompt({ brief: effectiveBrief, context, lyrics, mode, durationSeconds, vocalMode, backingLevel,
+      const prompt = buildFalowenMusicPrompt({ brief: productionBrief, context, lyrics, mode, durationSeconds, vocalMode, backingLevel,
         lyricTreatment: rewriteFromLyrics ? 'story-source' : 'exact', productionProfile });
       const data = await musicRequest({ mode, requestId: crypto.randomUUID(), prompt });
       const url = URL.createObjectURL(musicBlob(data));
@@ -212,8 +212,8 @@ export default function MusicStudioPage() {
         </select>
         <p className="music-note">{selectedProduction.description || 'Choose a production palette with its own chords, tempo, rhythm and instrumental layering.'} {productionProfile !== 'auto' ? 'This arrangement guides the model even when a lesson has an automatic genre; it does not alter your lyrics.' : 'Choose a richer arrangement without replacing the original lesson lyrics.'}</p>
         {productionProfile !== 'auto' && <details className="music-production-preview"><summary>Show chord, rhythm & instrument direction</summary><p>{selectedProduction.direction}</p></details>}
-        <label htmlFor="music-brief">Music direction {styleMode === 'auto' && courseMode === 'course' ? '(automatically selected)' : ''}</label>
-        <textarea id="music-brief" required maxLength={2000} rows={6} value={effectiveBrief} readOnly={styleMode === 'auto' && courseMode === 'course'} onChange={e => setBrief(e.target.value)} />
+        <label htmlFor="music-brief">Music direction {productionProfile !== 'auto' ? '(selected production palette)' : styleMode === 'auto' && courseMode === 'course' ? '(automatically selected)' : ''}</label>
+        <textarea id="music-brief" required maxLength={2000} rows={6} value={productionBrief} readOnly={productionProfile !== 'auto' || styleMode === 'auto' && courseMode === 'course'} onChange={e => setBrief(e.target.value)} />
         <label htmlFor="music-voice">Vocals and instrumental balance</label><select id="music-voice" value={vocalMode} onChange={e => setVocalMode(e.target.value)}><option value="voice">Clear lead vocals (recommended)</option><option value="instrumental">Instrumental only — no singer</option></select>
         {vocalMode === 'voice' && <><label htmlFor="music-backing">Accompaniment behind the singer</label><select id="music-backing" value={backingLevel} onChange={e => setBackingLevel(e.target.value)}><option value="very-soft">Very quiet — voice upfront (recommended)</option><option value="soft">Soft — moderate accompaniment</option></select><p className="music-note">These settings guide Google’s mix; they cannot separately turn down instruments in an already-generated MP3.</p></>}
         <label htmlFor="music-lyrics">{draft ? `Prewritten lyrics · ${draft.title}` : 'Your lyrics or vocabulary draft'} <span>(editable)</span></label>
@@ -243,7 +243,7 @@ export default function MusicStudioPage() {
         <p className="music-note">The preview always ends after 30 seconds; choose Full song for a complete track. A full song is a new generation, not an extension of the preview. Duration is approximate. The prompt reserves an ending with a completed final phrase, resolved chord and natural fade; Google does not guarantee an exact length or mix.</p>
         {courseMode === 'course' && selectedDay && <p className="music-note">After listening and approving, publish your MP3 to the Falowen Music library as a public track for this level and day. For GitHub-hosted day music, use <code>{waitingRoomMusicObjectKey(level, Number(selectedDay.day)) || 'choose a numbered day'}</code> under the student repository’s <code>web/public/music/</code> folder and add it to the public music catalog. A dedicated public R2 music URL can also be listed there.</p>}
         <p className="music-note">The downloadable song teaching pack also contains listening questions, a speaking activity and the teacher answer key. Copy the student-only questions below for presentation slides.</p>
-        <button className="music-generate" disabled={!status?.ready || capped || !effectiveBrief.trim()} type="submit">{busy ? 'Creating your music…' : `Generate ${mode === 'clip' ? 'preview' : 'full song'} · ~$${(cents / 100).toFixed(2)}`}</button>
+        <button className="music-generate" disabled={!status?.ready || capped || !productionBrief.trim()} type="submit">{busy ? 'Creating your music…' : `Generate ${mode === 'clip' ? 'preview' : 'full song'} · ~$${(cents / 100).toFixed(2)}`}</button>
       </fieldset>
       {busy && <p role="status">This may take a few minutes. Keep this page open. Your request will not retry automatically.</p>}
       {error && <p role="alert" className="music-error">{error}</p>}
