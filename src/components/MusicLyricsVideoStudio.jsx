@@ -124,16 +124,23 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
         const songLines=videoLyricLines(recordedLyrics);
         const starts=A1_DAY5_FINAL_RECORDING.cueStarts;
         if(songLines.length!==starts.length)throw Error("Day 5 lyrics differ from the uploaded audio timing reference.");
-        const timed=songLines.map((text,i)=>({text,start:starts[i]}));
+        const reference=songLines.map((text,i)=>({text,start:starts[i]}));
         const key="falowen-video-timing:"+assignmentKey;
-        try{localStorage.setItem(key,JSON.stringify({lyrics:recordedLyrics,cues:timed,recordingHash:hash,reviewed:false}));}catch{}
+        let verified=false, timed=reference;
+        try{
+          const old=JSON.parse(localStorage.getItem(key)||"null");
+          const checked=validateLyricCues(old?.cues,songLines);
+          verified=old?.recordingHash===hash && old?.reviewed===true && old?.lyrics===recordedLyrics && checked.length===songLines.length;
+          if(verified)timed=checked;
+          else localStorage.setItem(key,JSON.stringify({lyrics:recordedLyrics,cues:reference,recordingHash:hash,reviewed:false}));
+        }catch{}
         currentLyricText.current=recordedLyrics;
         setLyricText(recordedLyrics);
         setCues(timed);
         setStarts([]);
-        setTimingReview(true);
-        setTimingStatus("estimated");
-        setMessage("Day 5 timing loaded for the exact uploaded MP3. These are approximate marks. Play the song, adjust each line in the timing editor and save before publishing.");
+        setTimingReview(!verified);
+        setTimingStatus(verified ? "local" : "estimated");
+        setMessage(verified ? "Previously reviewed Day 5 timing restored for the exact uploaded MP3." : "Day 5 timing loaded for the exact uploaded MP3. These are approximate marks. Play the song, adjust each line in the timing editor and confirm after listening.");
       }catch(cause){if(!cancelled)setError(cause.message||"Could not load Day 5 timing.");}
     }
     loadMatchingDay5Timing();
@@ -204,10 +211,9 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     const checked=validateLyricCues(next,lines);
     if(checked.length!==next.length)return false;
     setCues(checked);
-    if (timingReview) setTimingReview(false);
     if (publishedTrack?.objectKey || timingStatus==="estimated") setTimingStatus(checked.length===lines.length ? "local" : "edited");
     try {
-      localStorage.setItem(timingKey,JSON.stringify({lyrics:lyricText,cues:checked}));
+      localStorage.setItem(timingKey,JSON.stringify({lyrics:lyricText,cues:checked,recordingHash:timingReview ? A1_DAY5_FINAL_RECORDING.sha256 : undefined,reviewed:!timingReview}));
       if(audioFilenameObjectKey(objectKey)){
         localStorage.setItem("falowen-song-timing:"+objectKey,JSON.stringify({objectKey,cues:checked}));
         window.dispatchEvent(new CustomEvent("falowen-song-cues-changed",{detail:objectKey}));
@@ -416,6 +422,16 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       </div>
     </div>
     {!exporting && <SongTimingEditor song={{lyrics:lyricText,objectKey:audioFilenameObjectKey(objectKey)}} audio={audioRef} cues={cues} onSave={saveCues}/>}
+    {timingReview && completeCues && <div role="group" style={{border:"1px solid #e0c88b",padding:12,borderRadius:12,display:"grid",gap:8}}>
+      <strong>Time marks still require listening review</strong>
+      <p style={{margin:0,fontSize:13}}>Open the teacher timing editor above, play the uploaded A1 Day 5 MP3, adjust each sung line and confirm only after you have checked the whole recording. The published R2 timing file stays blocked until then.</p>
+      <button type="button" disabled={exporting} onClick={()=>{
+        setTimingReview(false);
+        setTimingStatus("local");
+        try{localStorage.setItem(timingKey,JSON.stringify({lyrics:lyricText,cues,recordingHash:A1_DAY5_FINAL_RECORDING.sha256,reviewed:true}));}catch{}
+        setMessage("You confirmed the timing for this exact Day 5 recording. You can export the matching timing sidecar once the approved MP3 has an R2 object key.");
+      }}>I reviewed and confirmed all lyric time marks</button>
+    </div>}}
     <p role="status">Shared line timing: {cues.length}/{lines.length} marked. {timingReview ? "Estimated timing for this exact MP3 — not yet verified. Listen, adjust and save the marks below." : completeCues ? "Ready to use in the video." : "Mark missing lines or import a matching timing file."}</p>
     <p style={{margin:0,fontSize:12,color:"#52635e"}}>{completeCues ? "Your saved timing is applied automatically. Open the teacher timing editor only if it needs correction." : "Play the song and mark each lyric line's beginning. Timings must increase in order."} Keep this browser tab open while exporting; recording runs in real time.</p>
     {exporting?<div role="status"><strong>Rendering locally… {Math.floor(progress)}s / {Math.ceil(duration)}s</strong>
