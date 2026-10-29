@@ -67,6 +67,7 @@ export function waitingRoomPublishedCatalogTrack(catalog, { level, day } = {}) {
 // Music's existing on-demand discovery API. Do not construct filenames from
 // the Admin songbook, which might not match the actual MP3 or timed lyrics.
 const EXPECTED_ATTENDANCE_TITLES = Object.freeze({
+  'A1-3.5': 'zwei tees vier euro',
   'A2-7.19': 'lieber online oder im laden',
   'A2-7.20': 'die jacke ist zu klein',
 });
