@@ -73,3 +73,20 @@ test("vocabulary-review and instrumental options still work, and story UI does n
   assert.match(page, /Exact lyrics — keep my words/);
   assert.match(page, /musicLessonContext\(lesson, language, focus/);
 });
+
+test("A1 adult-learner context keeps language easy without childish songwriting", () => {
+  const context = musicLessonContext(health, "bilingual", "", { songStyle: "story" });
+  assert.match(context, /adult German learners/i);
+  assert.match(context, /natural German word stress/);
+  assert.match(context, /Never force couplet rhymes/);
+  assert.match(context, /no preschool characters/i);
+  assert.match(context, /simple present tense/);
+});
+
+test("instrumental guitar lesson context never asks Google to sing German lyrics", () => {
+  const context = musicLessonContext(health, "german", "", { instrumentalOnly: true, teacherLyricsProvided: true });
+  assert.match(context, /INSTRUMENTAL-ONLY ADULT SONG/);
+  assert.match(context, /No vocals, spoken language/);
+  assert.doesNotMatch(context, /Sing in German only/);
+  assert.doesNotMatch(context, /STORYTELLING SONG — NOT A VOCABULARY LIST/);
+});
