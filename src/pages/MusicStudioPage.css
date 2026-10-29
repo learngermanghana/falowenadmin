@@ -7,3 +7,7 @@
 .music-studio-tabs button:focus-visible{outline:3px solid #73a8df;outline-offset:2px}
 #music-video-panel>.music-card{margin-top:0!important}
 @media(max-width:480px){.music-studio-tabs{gap:4px}.music-studio-tabs button{flex-basis:130px;font-size:14px;padding:11px 8px}}
+
+.music-video-timing-ready,.music-video-timing-review{padding:12px 15px;border-radius:10px;font-weight:650;line-height:1.5}
+.music-video-timing-ready{color:#14532d;background:#f0fdf4;border:1px solid #b8e8c4}
+.music-video-timing-review{color:#854d0e;background:#fffbeb;border:1px solid #f9df99}
