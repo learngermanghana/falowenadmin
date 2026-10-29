@@ -25,7 +25,7 @@ export function buildFalowenMusicPrompt({
   const limit = musicLyricLimit(mode, durationSeconds), words = countWords(cleanLyrics);
   // Even source notes are bounded before a paid generation to avoid bloated prompts.
   if (words > limit) throw new Error(`Lyrics contain ${words} words; use at most ${limit} for this duration so the final lines have room to finish. Shorten the lyrics or choose a longer song before generating.`);
-  const modernLowEnd = production.id === "chill-808" || /\\b808\\b|sub.?bass|lo-fi hip.hop/i.test(cleanBrief);
+  const modernLowEnd = production.id === "chill-808" || /\b808\b|sub.?bass|lo-fi hip.hop/i.test(cleanBrief);
   const lowEnd = modernLowEnd
     ? "Allow tuned, soft 808 sub-bass, restrained kick, rim and hi-hats with a comfortable pocket; avoid distorted sub, aggressive trap drops or any bass that masks German speech."
     : "Use controlled warm bass and restrained percussion; avoid booming bass drops.";
