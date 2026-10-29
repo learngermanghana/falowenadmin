@@ -170,11 +170,11 @@ export const MUSIC_QUESTION_SEEDS_A2 = Object.freeze([
   ],
   [
     "A2-8.22",
-    "Warum kann die Person am Dienstag nicht?",
-    "Sie muss länger arbeiten.",
-    "Was planen Mia und die Person für Donnerstag?",
-    "Sie wollen zusammen kochen.",
-    "Wie organisierst du deine Termine in der Woche?"
+    "Bis wann arbeitet die Person am Dienstag?",
+    "Bis acht Uhr.",
+    "Was machen Mia und die Person am Donnerstag?",
+    "Sie kochen zusammen, essen Pasta und reden viel.",
+    "Wie findest du zwischen deinen Terminen Zeit für Freunde und dich selbst?"
   ],
   [
     "A2-9.23",
