@@ -60,11 +60,19 @@ export default function InteractiveLessonOpening({ stage, slide }) {
       const user = auth.currentUser;
       if (!user) throw new Error("Bitte zuerst in Falowen Admin anmelden.");
       const params = new URLSearchParams({ day: String(lesson.listening.day), key: lesson.listening.audioKey });
-      // The existing Vercel audio configuration signs this exact staff-only
-      // classroom recording; no Cloud Run R2 secrets or public bucket needed.
-      const audioEndpoint = lesson.listening.level === "A2" && [18, 19].includes(lesson.listening.day)
-        ? "https://www.falowen.app/api/course-media/a2/classroom-audio-url"
-        : `${AUDIO_API}/course-media/${lesson.listening.level.toLowerCase()}/audio-url`;
+      // B1 Day 25 is a separate, private classroom conversation. The old
+      // Cloud Run B1 signer lacks storage configuration, so use the already
+      // configured Falowen R2 server with an exact-key teacher-only allowlist.
+      // Keep other B1 workbook and course signing routes unchanged.
+      const isB1Day25Classroom = lesson.listening.level === "B1"
+        && lesson.listening.day === 25
+        && lesson.listening.audioKey === "b1/day-25/online-shopping-verbraucherservice.mp3";
+      if (isB1Day25Classroom) params.set("level", "B1");
+      const audioEndpoint = isB1Day25Classroom
+        ? "https://www.falowen.app/api/course-media/classroom/audio-url"
+        : lesson.listening.level === "A2" && [18, 19].includes(lesson.listening.day)
+          ? "https://www.falowen.app/api/course-media/a2/classroom-audio-url"
+          : `${AUDIO_API}/course-media/${lesson.listening.level.toLowerCase()}/audio-url`;
       const response = await fetch(`${audioEndpoint}?${params}`, {
         method: "GET",
         headers: { Authorization: `Bearer ${await user.getIdToken()}` },

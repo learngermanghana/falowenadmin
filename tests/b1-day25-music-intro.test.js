@@ -18,7 +18,7 @@ test("B1 Day 25 has direct lesson music with its independent R2 Hören and appro
   assert.equal(stages[1].timingMode,"");
   assert.equal(stages[2].variant,"interactive-listening");
   assert.equal(stages[2].audioKey,B1_DAY25_AUDIO_KEY);
-  assert.equal(stages[2].audioKey,"b1/day-25/day-25.mp3");
+  assert.equal(stages[2].audioKey,"b1/day-25/online-shopping-verbraucherservice.mp3");
   assert.equal(stages[2].listeningItems.length,5);
   assert.equal(stages[2].transcript,B1_DAY25_LISTENING.transcript);
   assert.equal(stages[2].transcript.length,0);
@@ -58,3 +58,16 @@ function requireCss() {
 function requirePresenter() {
   return readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
 }
+
+// Regressions: the classroom signer must never silently choose the workbook
+// recording or the unconfigured Cloud Run B1 endpoint.
+test("B1 Day 25 signs the exact teacher conversation via the existing Falowen R2 gateway", () => {
+  const component = readFileSync(new URL("../src/components/InteractiveLessonOpening.jsx", import.meta.url), "utf8");
+  assert.match(component,/https:\/\/www\.falowen\.app\/api\/course-media\/classroom\/audio-url/);
+  assert.match(component,/isB1Day25Classroom/);
+  assert.match(component,/params\.set\("level", "B1"\)/);
+  assert.match(component,/headers: \{ Authorization: `Bearer \$\{await user\.getIdToken\(\)\}` \}/);
+  assert.match(component,/b1\/day-25\/online-shopping-verbraucherservice\.mp3/);
+  assert.equal(B1_DAY25_AUDIO_KEY, "b1/day-25/online-shopping-verbraucherservice.mp3");
+  assert.notEqual(B1_DAY25_AUDIO_KEY, "b1/day-25/day-25.mp3");
+});

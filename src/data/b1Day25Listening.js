@@ -1,6 +1,7 @@
-// B1 Day 25 classroom Hören mirrors the updated five-statement learner workbook.
-// Keep the existing signed Cloudflare R2 audio path; the YouTube song is Slide 2 only.
-export const B1_DAY25_AUDIO_KEY = "b1/day-25/day-25.mp3";
+// The teacher's separate classroom Hören conversation is NOT the student's
+// scored workbook Hören recording (b1/day-25/day-25.mp3). Never substitute
+// or publish the workbook audio for this teaching-slide activity.
+export const B1_DAY25_AUDIO_KEY = "b1/day-25/online-shopping-verbraucherservice.mp3";
 
 // The revised delivery-problem recording has no approved published transcript.
 // Never display the obsolete sustainable-shopping dialogue as its script.
