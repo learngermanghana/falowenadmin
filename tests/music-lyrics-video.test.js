@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { videoLyricLines, lyricScenes, findLyricScene, videoRecorderFormat, timedLyricsPack, verifiedPublishedVideoTiming } from "../src/utils/musicLyricsVideo.js";
+import { videoLyricLines, lyricScenes, findLyricScene, videoRecorderFormat, timedLyricsPack, verifiedPublishedVideoTiming, musicVideoSocialCopy } from "../src/utils/musicLyricsVideo.js";
 
 test("video lyrics use at most three meaningful lines per timed screen", () => {
   const text="[Verse 1]\nHallo Welt\nIch bin da\nDu bist hier\n[Chorus]\nWir lernen\nHeute und morgen";
@@ -75,4 +75,19 @@ test("Falowen Music keeps both tabs mounted and the video reuses public timings"
   assert.ok(video.includes("api/music-lyrics?key="));
   assert.match(video,/verifiedPublishedVideoTiming/);
   assert.match(video,/publishedTrack && !completeCues/);
+});
+
+test('export metadata follows the selected song and offers editable copy buttons', () => {
+  const copy=musicVideoSocialCopy({title:'Zwei Tees, vier Euro',level:'A1',day:13});
+  assert.match(copy.title,/Zwei Tees, vier Euro/);
+  assert.match(copy.title,/German A1 Song/);
+  assert.match(copy.description,/Level: A1/);
+  assert.match(copy.description,/Day 13/);
+  assert.match(copy.description,/music.falowen.app/);
+  assert.ok(copy.title.length <= 100);
+  const video=readFileSync(new URL('../src/components/MusicLyricsVideoStudio.jsx',import.meta.url),'utf8');
+  assert.match(video,/Copy title/);
+  assert.match(video,/Copy description/);
+  assert.match(video,/Copy both/);
+  assert.match(video,/navigator.clipboard/);
 });

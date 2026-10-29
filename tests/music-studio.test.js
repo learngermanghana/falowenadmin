@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
 import { getReusableSongDraft } from '../src/data/reusableMusicSongbook.js';
 import { getMusicProductionProfile } from '../src/utils/musicProductionProfiles.js';
-import { buildFalowenMusicPrompt } from '../src/utils/musicGenerationPrompt.js';
+import { buildFalowenMusicPrompt, buildFalowenShortMusicPrompt } from '../src/utils/musicGenerationPrompt.js';
 const require = createRequire(import.meta.url);
 const { validate, reserve, extract, createHandler } = require('../functions/musicStudio');
 const request = { mode: 'song', prompt: 'A quiet guitar song', requestId: '12345678-1234-1234-1234-123456789012' };
@@ -85,4 +86,27 @@ test('Ghanaian highlife keeps German lyrics intact and adds instrumental frikyiw
   assert.match(prompt, /three short crisp offbeat taps/);
   assert.match(prompt, /VOICE FIRST/);
   assert.ok(prompt.includes(song.lyrics));
+});
+
+test('short music prompt sends simple editable direction without an automatic composition essay', () => {
+  const input='Create a hip-hop song with an Afrobeats feel.';
+  const prompt=buildFalowenShortMusicPrompt({brief:input,mode:'song',durationSeconds:150});
+  assert.ok(prompt.startsWith(input));
+  assert.ok(prompt.length < 130);
+  assert.doesNotMatch(prompt,/ADULT MUSICAL COMPOSITION|SELECTED PRODUCTION PALETTE|chord progression|VOICE FIRST|lesson dictionary/);
+  const withLyrics=buildFalowenShortMusicPrompt({brief:input,lyrics:'[Chorus] Falowen, wir sind hier.'});
+  assert.match(withLyrics,/Sing these lyrics exactly/);
+  assert.match(withLyrics,/Falowen, wir sind hier/);
+  assert.throws(()=>buildFalowenShortMusicPrompt({brief:''}),/short music prompt/i);
+  assert.throws(()=>buildFalowenShortMusicPrompt({brief:'x'.repeat(1501)}),/1,500/);
+});
+
+test('short prompt is the default, editable and selected for the actual provider request', () => {
+  const page=readFileSync(new URL('../src/pages/MusicStudioPage.jsx',import.meta.url),'utf8');
+  assert.match(page,/useState\('short'\)/);
+  assert.match(page,/id="music-short-prompt"/);
+  assert.match(page,/onChange=\{e => setShortPrompt\(e.target.value\)\}/);
+  assert.match(page,/promptMode === 'short'/);
+  assert.match(page,/buildFalowenShortMusicPrompt\(\{ brief: shortPrompt/);
+  assert.match(page,/onChange=\{e => setDirectionOverride\(e.target.value\)\}/);
 });

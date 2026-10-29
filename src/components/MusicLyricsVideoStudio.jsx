@@ -2,7 +2,7 @@ import fixWebmDuration from "fix-webm-duration";
 import SongTimingEditor from "./SongTimingEditor.jsx";
 import { readSongCues, validateLyricCues } from "../utils/songLyrics.js";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { videoLyricLines, lyricScenes, findLyricScene, videoRecorderFormat, drawMusicVideoFrame, isRealMp4Blob, timedLyricsPack, verifiedPublishedVideoTiming } from "../utils/musicLyricsVideo.js";
+import { videoLyricLines, lyricScenes, findLyricScene, videoRecorderFormat, drawMusicVideoFrame, isRealMp4Blob, timedLyricsPack, verifiedPublishedVideoTiming, musicVideoSocialCopy } from "../utils/musicLyricsVideo.js";
 
 const frameStyle = {width:"min(100%,270px)",aspectRatio:"9/16",borderRadius:14,background:"#102f34",boxShadow:"0 6px 20px #102f3426"};
 const fieldStyle = {width:"100%",maxWidth:520,padding:"8px",borderRadius:8,border:"1px solid #cbd5e1",boxSizing:"border-box"};
@@ -37,12 +37,32 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   const [exporting,setExporting] = useState(false);
   const [progress,setProgress] = useState(0);
   const [objectKey,setObjectKey] = useState("");
+  const [postingTitle,setPostingTitle] = useState("");
+  const [postingDescription,setPostingDescription] = useState("");
+  const [copyNotice,setCopyNotice] = useState("");
   const canvasRef=useRef(null), audioRef=useRef(null), cancelRef=useRef(null);
   const previousEditorLyrics=useRef(lyrics), currentLyricText=useRef(lyrics || "");
   const activeUrl=fileUrl || publishedTrack?.audioUrl || generated?.url || "";
   const videoTitle=publishedTrack?.title || title;
   const videoLevel=publishedTrack?.level || level;
   const videoDay=publishedTrack?.day ?? day;
+  const postingDefaults=useMemo(()=>musicVideoSocialCopy({title:videoTitle,level:videoLevel,day:videoDay}),
+    [videoTitle,videoLevel,videoDay]);
+  useEffect(()=>{
+    // Reset only when the selected recording changes, never after an edit to the posting text.
+    setPostingTitle(postingDefaults.title);
+    setPostingDescription(postingDefaults.description);
+    setCopyNotice("");
+  },[postingDefaults]);
+  async function copyPostingText(value,what) {
+    try {
+      if(!value.trim() || !navigator.clipboard?.writeText) throw Error("Clipboard unavailable");
+      await navigator.clipboard.writeText(value);
+      setCopyNotice(what+" copied. Paste it when uploading your video.");
+    } catch {
+      setCopyNotice("Copy was blocked by your browser. Select the text above and copy it manually.");
+    }
+  }
   useEffect(()=>{
     const editorChanged=lyrics !== previousEditorLyrics.current;
     previousEditorLyrics.current=lyrics;
@@ -320,6 +340,24 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     <button type="button" className="music-generate" disabled={!activeUrl||!hasLyrics||exporting||timingStatus==="loading"||(!!publishedTrack && !completeCues)||scenes.some((scene,i)=>i>0&&scene.start<=scenes[i-1].start)}
       onClick={exportVideo}>{exporting?"Recording music video…":"Export "+(supported?.extension==="mp4"?"MP4":supported?.extension==="webm"?"WebM":"video")+" · 9:16 with MP3"}</button>
     {supported?.extension==="webm"&&<small>This browser records WebM rather than MP4. The download will be correctly labeled .webm; use a browser with MP4 MediaRecorder support for MP4.</small>}
+    <section className="music-video-posting" aria-label="Video title and description for publishing">
+      <h3>Video title & description · ready to copy</h3>
+      <p>Prepared from this song and lesson. Edit the wording for YouTube, TikTok or Instagram before copying.</p>
+      <label htmlFor="music-video-post-title">Video title
+        <input id="music-video-post-title" type="text" maxLength={150} value={postingTitle}
+          onChange={event=>setPostingTitle(event.target.value)} />
+      </label>
+      <button type="button" onClick={()=>copyPostingText(postingTitle,"Title")}>Copy title</button>
+      <label htmlFor="music-video-post-description">Video description
+        <textarea id="music-video-post-description" rows={7} value={postingDescription}
+          onChange={event=>setPostingDescription(event.target.value)} />
+      </label>
+      <div className="music-video-posting-buttons">
+        <button type="button" onClick={()=>copyPostingText(postingDescription,"Description")}>Copy description</button>
+        <button type="button" onClick={()=>copyPostingText(postingTitle+"\n\n"+postingDescription,"Title and description")}>Copy both</button>
+      </div>
+      {copyNotice && <p role="status">{copyNotice}</p>}
+    </section>
     <details><summary>Publish matching lyrics to Falowen Music (optional)</summary>
       <p>Mark each sung line above to publish one timing layer for all players. Enter the exact R2 key for the published recording, export the JSON, and upload the file beside its MP3 in the existing Cloudflare bucket. This does not upload anything automatically.</p>
       <label style={{display:"grid",gap:5}}>Published R2 MP3 object key

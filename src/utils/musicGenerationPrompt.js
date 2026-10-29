@@ -8,6 +8,46 @@ const countWords = text => String(text || "").trim().split(/\s+/).filter(Boolean
 export function musicLyricLimit(mode = "song", durationSeconds = 150) {
   return mode === "clip" ? 32 : WORD_LIMITS[durationSeconds] || WORD_LIMITS[150];
 }
+// Short-prompt mode is intentionally direct: never append the detailed
+// production palette, songbook/story context, chord rules or mixing essay.
+// Only the teacher's editable direction, a brief length hint, and any
+// explicitly supplied lyrics are sent to the provider.
+export function buildFalowenShortMusicPrompt({
+  brief = "", lyrics = "", mode = "song", durationSeconds = 150,
+  vocalMode = "voice", lyricTreatment = "exact",
+} = {}) {
+  if (!["clip", "song"].includes(mode)) throw new Error("Choose a 30-second preview or a full song.");
+  if (!["voice", "instrumental"].includes(vocalMode)) throw new Error("Choose vocals or instrumental.");
+  if (!["exact", "story-source"].includes(lyricTreatment)) throw new Error("Invalid lyrics treatment.");
+  if (mode === "song" && !FULL_DURATIONS.includes(durationSeconds)) {
+    throw new Error("Choose a full-song duration of 2, 2½ or 3 minutes.");
+  }
+  const cleanBrief = String(brief).trim();
+  const cleanLyrics = String(lyrics).trim();
+  if (!cleanBrief) throw new Error("Write a short music prompt before generating.");
+  if (cleanBrief.length > 1500) throw new Error("Keep your short music prompt under 1,500 characters.");
+  if (vocalMode === "instrumental" && cleanLyrics) {
+    throw new Error("Instrumental music cannot use sung lyrics. Choose Vocals to include your text.");
+  }
+  const limit = musicLyricLimit(mode, durationSeconds);
+  const words = countWords(cleanLyrics);
+  if (words > limit) {
+    throw new Error(`Lyrics contain ${words} words; use at most ${limit} for this duration so the final lines have room to finish. Shorten the lyrics or choose a longer song before generating.`);
+  }
+  const durationHint = mode === "clip" ? "30-second preview." :
+    `Full song, about ${durationSeconds / 60} minutes. Finish naturally.`;
+  const lyricInstruction = vocalMode === "instrumental"
+    ? "Instrumental only, no vocals."
+    : cleanLyrics
+      ? lyricTreatment === "story-source"
+        ? `Use these words as inspiration, not fixed lyrics:\n${cleanLyrics}`
+        : `Sing these lyrics exactly:\n${cleanLyrics}`
+      : "";
+  const prompt = [cleanBrief, durationHint, lyricInstruction].filter(Boolean).join("\n\n");
+  if (prompt.length > 8000) throw new Error("Your music prompt and lyrics exceed 8,000 characters.");
+  return prompt;
+}
+
 export function buildFalowenMusicPrompt({
   brief = "", context = "", lyrics = "", mode = "song",
   durationSeconds = 150, vocalMode = "voice", backingLevel = "soft", lyricTreatment = "exact", productionProfile = "auto",

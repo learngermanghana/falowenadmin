@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { musicRequest, musicBlob, loadSavedMusicLyrics, overwriteSavedMusicLyrics } from '../services/musicStudioService';
-import { buildFalowenMusicPrompt, musicLyricLimit } from '../utils/musicGenerationPrompt.js';
+import { buildFalowenMusicPrompt, buildFalowenShortMusicPrompt, musicLyricLimit } from '../utils/musicGenerationPrompt.js';
 import { waitingRoomMusicObjectKey } from '../utils/waitingRoomDayMusic.js';
 import './MusicStudioPage.css';
 import { getMusicDays, musicLessonContext } from '../utils/musicCourseContext.js';
@@ -30,6 +30,15 @@ export default function MusicStudioPage() {
   const selectedDay = days.find(group => String(group.day) === day) || days[0];
   const lesson = selectedDay?.lessons.find(entry => entry.assignmentKey === assignment) || selectedDay?.lessons[0];
   const [brief, setBrief] = useState(PRESETS.vocabulary);
+  const [promptMode, setPromptMode] = useState('short');
+  const [shortPrompt, setShortPrompt] = useState(() => {
+    try { return localStorage.getItem('falowen-music-short-prompt') || 'Create a hip-hop song with an Afrobeats feel.'; }
+    catch { return 'Create a hip-hop song with an Afrobeats feel.'; }
+  });
+  const [directionOverride, setDirectionOverride] = useState(null);
+  useEffect(() => {
+    try { localStorage.setItem('falowen-music-short-prompt', shortPrompt); } catch { /* Optional device-only draft. */ }
+  }, [shortPrompt]);
   const [styleMode, setStyleMode] = useState('auto');
   const [productionProfile, setProductionProfile] = useState('auto');
   // Prewritten A1–B1 lyrics are selected from the local dictionary; edits are
@@ -73,7 +82,7 @@ export default function MusicStudioPage() {
         preferredStyle: draft?.musicStyle || '',
       })
     : brief;
-  const productionBrief = productionProfile === 'auto' ? effectiveBrief : selectedProduction.direction;
+  const productionBrief = directionOverride ?? (productionProfile === 'auto' ? effectiveBrief : selectedProduction.direction);
   const context = courseMode === 'course' ? musicLessonContext(lesson, language, focus, {
     songStyle: vocalMode === 'voice' ? songStyle : 'vocabulary',
     storyIdea,
@@ -120,7 +129,8 @@ export default function MusicStudioPage() {
     // from the previous song: prewritten lyrics default to exact playback.
     setLyricTreatment('exact');
     setCopyStatus('');
-  }, [assignmentKey, level]);
+    setDirectionOverride(null);
+  }, [assignmentKey, level, courseMode]);
   useEffect(() => { let active = true;
     musicRequest().then(s => { if (active) setStatus(s); }).catch(e => { if (active) setError(e.message); });
     return () => { active = false; if (audioUrl.current) URL.revokeObjectURL(audioUrl.current); };
@@ -187,8 +197,11 @@ export default function MusicStudioPage() {
     if (lock.current) return;
     lock.current = true; setBusy(true); setError('');
     try {
-      const prompt = buildFalowenMusicPrompt({ brief: productionBrief, context, lyrics: vocalMode === 'instrumental' ? '' : lyrics, mode, durationSeconds, vocalMode, backingLevel,
-        lyricTreatment: rewriteFromLyrics ? 'story-source' : 'exact', productionProfile });
+      const prompt = promptMode === 'short'
+        ? buildFalowenShortMusicPrompt({ brief: shortPrompt, lyrics: vocalMode === 'instrumental' ? '' : lyrics,
+          mode, durationSeconds, vocalMode, lyricTreatment: rewriteFromLyrics ? 'story-source' : 'exact' })
+        : buildFalowenMusicPrompt({ brief: productionBrief, context, lyrics: vocalMode === 'instrumental' ? '' : lyrics, mode, durationSeconds, vocalMode, backingLevel,
+          lyricTreatment: rewriteFromLyrics ? 'story-source' : 'exact', productionProfile });
       const data = await musicRequest({ mode, requestId: crypto.randomUUID(), prompt });
       const url = URL.createObjectURL(musicBlob(data));
       if (audioUrl.current) URL.revokeObjectURL(audioUrl.current);
@@ -233,6 +246,19 @@ export default function MusicStudioPage() {
           <button type="button" onClick={exportCompleteSongbook}>Download complete A1–B1 songbook · 84 songs (.txt)</button>
         </div>}
         <h2>2. Shape your song</h2>
+        <label htmlFor="music-prompt-mode">Music prompt mode</label>
+        <select id="music-prompt-mode" value={promptMode} onChange={e => setPromptMode(e.target.value)}>
+          <option value="short">Short & editable — recommended</option>
+          <option value="detailed">Detailed arrangement & production</option>
+        </select>
+        {promptMode === 'short' && <div className="music-short-prompt">
+          <label htmlFor="music-short-prompt">Your music prompt (edit freely)</label>
+          <textarea id="music-short-prompt" required rows={3} maxLength={1500} value={shortPrompt}
+            onChange={e => setShortPrompt(e.target.value)}
+            placeholder="Create a hip-hop song with an Afrobeats feel." />
+          <p className="music-note">Your exact direction is sent with only a short duration hint and any lyrics below. No hidden chords, genre overrides, long mixing instructions or automatic lesson story are added. Your edited direction is kept on this device.</p>
+        </div>}
+        {promptMode === 'detailed' && <>
         <div className="music-presets">{Object.entries(PRESETS).map(([id, text]) => <button type="button" key={id} onClick={() => { setBrief(text); setStyleMode('custom'); setProductionProfile(id === 'instrumental' ? 'fingerstyle-guitar' : id === 'acoustic' ? 'guitar-piano-duet' : 'auto'); setVocalMode(id === 'instrumental' ? 'instrumental' : 'voice'); }}>{id === 'welcome' ? 'Class welcome' : id === 'vocabulary' ? 'Lesson story song' : id === 'acoustic' ? 'Acoustic guitar song' : 'Guitar instrumental'}</button>)}</div>
         {courseMode === 'course' && vocalMode === 'voice' && <>
           <label htmlFor="music-story-style">Songwriting approach</label>
@@ -253,6 +279,7 @@ export default function MusicStudioPage() {
           <select id="music-style-mode" value={styleMode} onChange={e => {
             if (e.target.value === 'custom' && styleMode === 'auto') setBrief(effectiveBrief);
             setStyleMode(e.target.value);
+            setDirectionOverride(null);
           }}>
             <option value="auto">Automatically match the lesson topic — recommended</option>
             <option value="custom">Choose my own music direction</option>
@@ -260,15 +287,19 @@ export default function MusicStudioPage() {
           {styleMode === 'auto' && <p className="music-note">Music genre for this lesson: <strong>{draft?.genre || getMusicTopicStyle(lesson).label}</strong>. Every lesson has a different arrangement; change the lesson to update it. Switch to custom to edit the direction.</p>}
         </>}
         <label htmlFor="music-production">Musical production & chord progression</label>
-        <select id="music-production" value={productionProfile} onChange={e => setProductionProfile(e.target.value)}>
+        <select id="music-production" value={productionProfile} onChange={e => { setProductionProfile(e.target.value); setDirectionOverride(null); }}>
           {MUSIC_PRODUCTION_PROFILES.map(profile => <option key={profile.id} value={profile.id}>{profile.label}</option>)}
         </select>
         <p className="music-note">{selectedProduction.description || 'Choose a production palette with its own chords, tempo, rhythm and instrumental layering.'} {productionProfile !== 'auto' ? 'This arrangement guides the model even when a lesson has an automatic genre; it does not alter your lyrics.' : 'Choose a richer arrangement without replacing the original lesson lyrics.'}</p>
         {productionProfile !== 'auto' && <details className="music-production-preview"><summary>Show chord, rhythm & instrument direction</summary><p>{selectedProduction.direction}</p></details>}
-        <label htmlFor="music-brief">Music direction {productionProfile !== 'auto' ? '(selected production palette)' : styleMode === 'auto' && courseMode === 'course' ? '(automatically selected)' : ''}</label>
-        <textarea id="music-brief" required maxLength={2000} rows={6} value={productionBrief} readOnly={productionProfile !== 'auto' || styleMode === 'auto' && courseMode === 'course'} onChange={e => setBrief(e.target.value)} />
+        <label htmlFor="music-brief">Music direction (fully editable)</label>
+        <textarea id="music-brief" required maxLength={2000} rows={6} value={productionBrief}
+          onChange={e => setDirectionOverride(e.target.value)} />
+        <button type="button" className="music-reset-direction" onClick={() => setDirectionOverride(null)}
+          disabled={directionOverride === null}>Reset to suggested direction</button>
+        </>}
         <label htmlFor="music-voice">Vocals and instrumental balance</label><select id="music-voice" value={vocalMode} onChange={e => setVocalMode(e.target.value)}><option value="voice">Clear lead vocals (recommended)</option><option value="instrumental">Instrumental only — no singer</option></select>
-        {vocalMode === 'voice' && <><label htmlFor="music-backing">Accompaniment behind the singer</label><select id="music-backing" value={backingLevel} onChange={e => setBackingLevel(e.target.value)}><option value="very-soft">Very quiet — voice upfront (recommended)</option><option value="soft">Soft — moderate accompaniment</option></select><p className="music-note">These settings guide Google’s mix; they cannot separately turn down instruments in an already-generated MP3.</p></>}
+        {promptMode === 'detailed' && vocalMode === 'voice' && <><label htmlFor="music-backing">Accompaniment behind the singer</label><select id="music-backing" value={backingLevel} onChange={e => setBackingLevel(e.target.value)}><option value="very-soft">Very quiet — voice upfront (recommended)</option><option value="soft">Soft — moderate accompaniment</option></select><p className="music-note">These settings guide Google’s mix; they cannot separately turn down instruments in an already-generated MP3.</p></>}
         <label htmlFor="music-lyrics">{draft ? `Prewritten lyrics · ${draft.title}` : 'Your lyrics or vocabulary draft'} <span>(editable)</span></label>
         <textarea id="music-lyrics" maxLength={5500} rows={10} value={lyrics} onChange={e => { setLyrics(e.target.value); setCopyStatus(''); }} placeholder={'[Verse 1]\\nWrite your German and English lyrics here…\\n\\n[Chorus]'} />
         {draft && <div className="music-songbook-actions" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -300,10 +331,10 @@ export default function MusicStudioPage() {
         <p className="music-note">{vocalMode === 'instrumental' ? 'Instrumental mode will ignore the lyrics above and send no sung words to the music generator.' : `${lyrics.trim().split(/\s+/).filter(Boolean).length} / ${musicLyricLimit(mode, durationSeconds)} suggested words for this length. Leave the text empty for an AI-written level-appropriate story when storytelling is selected. Too many lines can lead to a cut-off ending.`}</p>
         <label htmlFor="music-mode">3. Choose generation</label><select id="music-mode" value={mode} onChange={e => setMode(e.target.value)}><option value="clip">30-second preview only (not a complete song) · estimated $0.04</option><option value="song">Full song · estimated $0.08</option></select>
         {mode === 'song' && <><label htmlFor="music-duration">Target song length</label><select id="music-duration" value={durationSeconds} onChange={e => setDurationSeconds(Number(e.target.value))}><option value={120}>About 2 minutes</option><option value={150}>About 2½ minutes — recommended</option><option value={180}>About 3 minutes</option></select></>}
-        <p className="music-note">The preview always ends after 30 seconds; choose Full song for a complete track. A full song is a new generation, not an extension of the preview. Duration is approximate. The prompt reserves an ending with a completed final phrase, resolved chord and natural fade; Google does not guarantee an exact length or mix.</p>
+        <p className="music-note">The preview always ends after 30 seconds; a full song is generated separately. Duration is approximate. {promptMode === 'short' ? 'Short mode sends your direction without the detailed arrangement essay.' : 'Detailed mode requests a complete outro and fade, but the provider does not guarantee exact song length or mix.'}</p>
         {courseMode === 'course' && selectedDay && <p className="music-note">After listening and approving, publish your MP3 to the Falowen Music library as a public track for this level and day. For GitHub-hosted day music, use <code>{waitingRoomMusicObjectKey(level, Number(selectedDay.day)) || 'choose a numbered day'}</code> under the student repository’s <code>web/public/music/</code> folder and add it to the public music catalog. A dedicated public R2 music URL can also be listed there.</p>}
         <p className="music-note">The downloadable song teaching pack also contains listening questions, a speaking activity and the teacher answer key. Copy the student-only questions below for presentation slides.</p>
-        <button className="music-generate" disabled={!status?.ready || capped || !productionBrief.trim()} type="submit">{busy ? 'Creating your music…' : `Generate ${mode === 'clip' ? 'preview' : 'full song'} · ~$${(cents / 100).toFixed(2)}`}</button>
+        <button className="music-generate" disabled={!status?.ready || capped || !(promptMode === 'short' ? shortPrompt : productionBrief).trim()} type="submit">{busy ? 'Creating your music…' : `Generate ${mode === 'clip' ? 'preview' : 'full song'} · ~$${(cents / 100).toFixed(2)}`}</button>
       </fieldset>
       {busy && <p role="status">This may take a few minutes. Keep this page open. Your request will not retry automatically.</p>}
       {error && <p role="alert" className="music-error">{error}</p>}
