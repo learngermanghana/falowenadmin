@@ -428,7 +428,9 @@ ENTRIES["B1-8.24"] = {
   assignmentId: "B1-8.24",
   title: "Konsum und Nachhaltigkeit",
   warmup: [], // Music video replaces the Day 24 warm-up, without changing other days.
-  listening: B1// Published R2 music on Day 25 replaces the old YouTube intro only.
+  listening: B1_DAY24_RECORDED_MUSIC,
+};
+// Published R2 music on Day 25 replaces the old YouTube intro only.
 ENTRIES["B1-8.25"].musicIntro = {
   mediaType:'music',level:'B1',day:25,
   title:'Als Kunde habe ich auch Rechte',
