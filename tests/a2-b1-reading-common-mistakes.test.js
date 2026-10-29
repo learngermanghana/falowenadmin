@@ -89,18 +89,21 @@ test('A2 days 18-20 retain music, separate Hören, Lesen, Common Mistakes and ap
   assert.equal(getInteractiveLessonOpening('A2-7.20').musicIntro.youtubeId, undefined);
 });
 
-test('A2 Day 19 and Day 20 reuse the Day 18 visual music card, not just a text link', () => {
+test('A2 Day 19 and Day 20 use the real Day 18 player design, lyrics and MCQs', () => {
   const musicStages = readFileSync(new URL('../src/components/MusicTeachingStages.jsx', import.meta.url), 'utf8');
   const player = readFileSync(new URL('../src/components/LinkedPublishedSongLessonStage.jsx', import.meta.url), 'utf8');
   const day18 = readFileSync(new URL('../src/components/PublishedSongLessonStage.jsx', import.meta.url), 'utf8');
   assert.match(musicStages, /<LinkedPublishedSongLessonStage music=\{music\}/);
-  for (const selector of ['published-song-lesson__head', 'published-song-lesson__player',
-    'published-song-lesson__tabs', 'published-song-lesson__section', 'published-song-lesson__quiz']) {
+  for (const selector of ['published-song-lesson__head','published-song-lesson__player',
+    'published-song-lesson__tabs','published-song-lesson__section','published-song-lesson__options',
+    'published-song-lesson__quiz']) {
     assert.ok(player.includes(selector), selector);
     assert.ok(day18.includes(selector), selector);
   }
-  assert.match(player, /music\.musicLibraryUrl/);
-  assert.match(player, /&embedded=1/);
-  assert.doesNotMatch(player, /getReusableSongDraft|getReusableMusicQuestions|setInterval\(/);
-  assert.match(player, /Das separate Hören-Gespräch kommt auf der nächsten Folie/);
+  assert.match(player, /<audio key=\{track\.objectKey\}/);
+  assert.match(player, /<LessonSongLyrics song=\{song\} cues=\{pack\.cues\}/);
+  assert.match(player, /recordedSongQuestions\(pack,day\)/);
+  assert.match(player, /music-lyrics\?key=/);
+  assert.doesNotMatch(player, /<iframe|&embedded=1|getReusableSongDraft|SongTimingEditor/);
+  assert.match(player, /Das separate Hören-Gespräch bleibt auf der nächsten Folie/);
 });

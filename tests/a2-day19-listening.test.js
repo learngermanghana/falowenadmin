@@ -44,3 +44,10 @@ test('Day 19 music uses Day 18 song card, not a bare external link', () => {
   assert.equal(stages[1].musicVideo.musicLibraryUrl, 'https://music.falowen.app/?level=A2&day=19');
   assert.equal(stages[2].audioKey, A2_DAY19_LISTENING.audioKey);
 });
+
+test('Day 19 uses direct published audio and actual recorded lyrics rather than music site iframe', () => {
+  const slide=getSlidesByCourse('A2').find(s=>s.assignmentId==='A2-7.19');
+  const stages=buildTeachingPresenterStages(slide,slide.topic);
+  assert.equal(stages[1].variant,'interactive-music-video');
+  assert.equal(stages[2].audioKey,'a2/day-19/einkaufen-wo-und-wie.mp3');
+});
