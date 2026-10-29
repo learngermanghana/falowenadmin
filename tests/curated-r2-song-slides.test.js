@@ -10,8 +10,14 @@ test('only selected approved R2 music songs activate in teaching slides and atte
   assert.equal(published.length,4);
   assert.deepEqual(published.map(x=>x.assignmentKey),['A1-2','A1-3.5','A1-14.1','A2-7.18']);
   for(const item of published){
-    assert.ok(item.audioUrl.startsWith('https://www.falowen.app/api/music?track='));
-    assert.ok(item.objectKey.startsWith('music/'));
+    if (item.discover) {
+      assert.equal(item.assignmentKey,'A1-3.5');
+      assert.equal(item.audioUrl,undefined);
+      assert.equal(item.objectKey,undefined);
+    } else {
+      assert.ok(item.audioUrl.startsWith('https://www.falowen.app/api/music?track='));
+      assert.ok(item.objectKey.startsWith('music/'));
+    }
     assert.ok(getReusableSongDraft(item.assignmentKey)?.lyrics.includes('Falowen'));
     assert.equal(getReusableMusicQuestions(item.assignmentKey).questions.length,3);
     assert.equal(getCuratedMusicForSession({level:item.level,day:item.day}),item);
@@ -56,6 +62,6 @@ test('attendance dynamically matches existing R2 uploads while retaining curated
  assert.match(page,/if \(curatedDayMusic\) return/);
  assert.match(page,/waitingRoomDiscoveredMusicTrack\(data/);
  assert.match(page,/src: curatedDayMusic\.audioUrl, objectKey: curatedDayMusic\.objectKey/);
- assert.match(page,/The A2 Day \$\{presenterCurriculumDay\} recording could not be identified uniquely/);
+ assert.match(page,/could not be identified uniquely/);
  assert.doesNotMatch(page,/getReusableSongDraft\('A2-7\.19'\).*lyrics\s*=/);
 });

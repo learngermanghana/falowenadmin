@@ -53,6 +53,6 @@ jobs:
         run: |
           node --check scripts/patchCheckinWaitingRoomPlaylist.mjs
           node --check src/utils/pianoAudio.js
-          node --test tests/checkin-waiting-music-playlist.test.js tests/checkin-smart-lobby-v2.test.js tests/music-studio-waiting-day-r2.test.js tests/music-studio.test.js
+          node --test tests/checkin-waiting-music-playlist.test.js tests/checkin-smart-lobby-v2.test.js tests/music-studio-waiting-day-r2.test.js tests/music-studio.test.js tests/a1-day13-r2-actual-playback.test.js tests/a1-day13-published-music-slide.test.js
       - name: Build production bundle
         run: npx vite build

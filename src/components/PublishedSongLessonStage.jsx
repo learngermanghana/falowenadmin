@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { getReusableSongDraft } from '../data/reusableMusicSongbook.js';
 import { getReusableMusicQuestions } from '../data/reusableMusicQuestions.js';
 import { getCuratedMusicByAssignment } from '../data/curatedLessonMusic.js';
+import { waitingRoomDiscoveredMusicTrack } from '../utils/waitingRoomDayMusic.js';
 import './PublishedSongLessonStage.css';
 import './LessonSongStage.css';
 import LessonSongLyrics from './LessonSongLyrics.jsx';
@@ -16,7 +17,37 @@ import useSongTiming from '../hooks/useSongTiming.js';
 export default function PublishedSongLessonStage({ assignmentKey, onExit = null, compact = false }) {
   const song = getReusableSongDraft(assignmentKey);
   const bank = getReusableMusicQuestions(assignmentKey);
-  const recording = getCuratedMusicByAssignment(assignmentKey);
+  const approvedRecording = getCuratedMusicByAssignment(assignmentKey);
+  const resolveByDiscovery = approvedRecording?.discover === true;
+  const [publishedTrack, setPublishedTrack] = useState(null);
+  const [discoveryError, setDiscoveryError] = useState('');
+  useEffect(() => {
+    if (!resolveByDiscovery) { setPublishedTrack(null); setDiscoveryError(''); return undefined; }
+    const controller = new AbortController();
+    setPublishedTrack(null);
+    setDiscoveryError('');
+    // The recording already plays in Falowen Music. Resolve its *actual*
+    // published R2 objectKey and reversible ID rather than guessing a filename.
+    fetch('/api/attendance-music-library', { signal: controller.signal, cache:'no-store' })
+      .then(response => { if (!response.ok) throw new Error('Falowen Music ist nicht erreichbar.'); return response.json(); })
+      .then(data => {
+        if (controller.signal.aborted) return;
+        if (data?.ok !== true || !Array.isArray(data.tracks)) throw new Error('Die Musikbibliothek hat keine gültige Aufnahmeliste zurückgegeben.');
+        const track = waitingRoomDiscoveredMusicTrack(data, {
+          level:'A1', day:13, assignmentKey:'A1-3.5',
+        });
+        if (!track) throw new Error('Keine eindeutige Day-13-Aufnahme „Zwei Tees, vier Euro“ gefunden. Bitte den Musikordner prüfen.');
+        setPublishedTrack(track);
+      }).catch(error => { if (!controller.signal.aborted) setDiscoveryError(error?.message || 'Das Lied konnte nicht gefunden werden.'); });
+    return () => controller.abort();
+  }, [assignmentKey, resolveByDiscovery]);
+  const recording = resolveByDiscovery
+    ? { ...approvedRecording,
+        trackId:publishedTrack?.id || '', objectKey:publishedTrack?.objectKey || '',
+        audioUrl:publishedTrack?.src || '',
+        title:publishedTrack?.title || approvedRecording.title,
+      }
+    : approvedRecording;
   const audio = useRef(null);
   const [time, setTime] = useState(0);
   const [follow, setFollow] = useState(true);
@@ -36,7 +67,9 @@ export default function PublishedSongLessonStage({ assignmentKey, onExit = null,
   const questions = recordedLyrics !== song.lyrics ? recordedSongQuestions({lyrics:recordedLyrics},recording.day,recording.level) : bank.questions;
   const synchronized=hasCompleteSongTiming(cues,recordedLyrics);
   const question = questions[questionIndex];
-  const musicLink = `https://music.falowen.app/?track=${encodeURIComponent(recording.trackId)}`;
+  const musicLink = recording.trackId
+    ? `https://music.falowen.app/?track=${encodeURIComponent(recording.trackId)}`
+    : 'https://music.falowen.app/?level=A1&day=13';
   const listenPrompt = recording.introQuestion || (recording.level === 'A1'
     ? 'Welche Wörter hörst du? Wer ist im Lied?'
     : 'Worum geht es in der Geschichte? Wer hat ein Problem? Welche Lösung findet die Person?');
@@ -51,7 +84,9 @@ export default function PublishedSongLessonStage({ assignmentKey, onExit = null,
       </div>
       <div className="published-song-lesson__player">
         <div><strong>♫ Lied anhören</strong><small>Das Lernlied aus Cloudflare R2 · Keine Goethe-Hörprüfung</small></div>
-        <audio key={recording.objectKey} ref={audio} onTimeUpdate={e=>setTime(e.currentTarget.currentTime)} onSeeked={e=>setTime(e.currentTarget.currentTime)} onEnded={()=>setTime(-1)} controls preload="none" src={recording.audioUrl} onError={() => setAudioError('Diese Aufnahme konnte nicht geladen werden. Bitte die R2-Datei und den Falowen-Musiklink prüfen.')} aria-label={song.title}/>
+        {recording.audioUrl
+          ? <audio key={recording.objectKey} ref={audio} onTimeUpdate={e=>setTime(e.currentTarget.currentTime)} onSeeked={e=>setTime(e.currentTarget.currentTime)} onEnded={()=>setTime(-1)} controls preload="none" src={recording.audioUrl} onError={() => setAudioError('Diese Aufnahme konnte nicht geladen werden. Bitte die R2-Datei und den Falowen-Musiklink prüfen.')} aria-label={song.title}/>
+          : <p role="status">{discoveryError || 'Die veröffentlichte Day-13-Aufnahme wird in Falowen Music gesucht…'}</p>}
         <a href={musicLink} target="_blank" rel="noopener noreferrer">In Falowen Music öffnen</a>
         {audioError && <p className="published-song-lesson__error" role="alert">{audioError}</p>}
       </div>
