@@ -144,3 +144,15 @@ test("A1 Day 6 contains the new adult family story and its questions remain grou
   assert.match(seeds,/Welche Sprache spricht Karim\?/);
   assert.doesNotMatch(seeds,/Wie heißt Karims Hund\?/);
 });
+
+test("timing editor supports correcting individual lines and requires owner review to publish", () => {
+  const editor=readFileSync(new URL("../src/components/SongTimingEditor.jsx",import.meta.url),"utf8");
+  const video=readFileSync(new URL("../src/components/MusicLyricsVideoStudio.jsx",import.meta.url),"utf8");
+  assert.match(editor,/updateLineTime/);
+  assert.match(editor,/onBlur=/);
+  assert.match(editor,/useCurrentTime/);
+  assert.match(video,/I reviewed and confirmed all lyric time marks/);
+  assert.match(video,/reviewed:true/);
+  assert.match(video,/recordingFingerprint/);
+  assert.match(video,/timingReview\}/);
+});
