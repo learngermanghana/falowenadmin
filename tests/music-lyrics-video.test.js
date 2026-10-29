@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { videoLyricLines, lyricScenes, findLyricScene, videoRecorderFormat } from "../src/utils/musicLyricsVideo.js";
+import { videoLyricLines, lyricScenes, findLyricScene, videoRecorderFormat, timedLyricsPack } from "../src/utils/musicLyricsVideo.js";
 
 test("video lyrics use at most three meaningful lines per timed screen", () => {
   const text="[Verse 1]\nHallo Welt\nIch bin da\nDu bist hier\n[Chorus]\nWir lernen\nHeute und morgen";
@@ -35,4 +35,15 @@ test("Music Studio includes the local video workflow and exact R2 lyrics sidecar
   assert.match(video,/reference|review|matching lyrics/i);
   assert.match(video,/\.lyrics\.json/);
   assert.doesNotMatch(video,/cloudfunctions\.net|uploadBytes|setDoc/);
+});
+
+test("shared sidecar retains exact line marks and rejects screen-only or mismatched timing", () => {
+  const key="music/a2/day-01/Ein neues Gespräch.mp3";
+  const lyrics="[Verse]\nHallo\nWie geht es dir?";
+  const cues=[{start:2.4,text:"Hallo"},{start:5.9,text:"Wie geht es dir?"}];
+  assert.deepEqual(timedLyricsPack(key,lyrics,cues),{version:1,objectKey:key,lyrics,cues});
+  assert.throws(()=>timedLyricsPack(key,lyrics,[]),/every lyric line/);
+  assert.throws(()=>timedLyricsPack(key,lyrics,cues.slice(0,1)),/every lyric line/);
+  assert.throws(()=>timedLyricsPack(key,lyrics,[cues[1],cues[0]]),/every lyric line/);
+  assert.throws(()=>timedLyricsPack("a2/day-01/private.mp3",lyrics,cues),/published MP3/);
 });

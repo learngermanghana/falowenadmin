@@ -37,7 +37,7 @@ export default function SongTimingEditor({song, audio, cues, onSave}) {
     <div className="lesson-song-sync-actions">
       <button type="button" disabled={cues.length>=lines.length} onClick={mark}>Zeilenanfang markieren</button>
       <button type="button" disabled={!cues.length} onClick={()=>save(cues.slice(0,-1))}>Letzte Markierung zurück</button>
-      <button type="button" disabled={!lines.length || cues.length!==lines.length} onClick={exportFile}>Zeitmarken für Cloudflare exportieren</button>
+      <button type="button" disabled={!objectKey || !lines.length || cues.length!==lines.length} onClick={exportFile}>Zeitmarken für Cloudflare exportieren</button>
       <label>Zeitmarken importieren <input type="file" accept="application/json,.json" onChange={importFile}/></label>
     </div>
     <p>Nach der Prüfung: <strong>{filename}</strong> neben der MP3 in <code>{objectKey?.slice(0,objectKey.lastIndexOf('/')+1)}</code> hochladen. Admin-Folien und Falowen Music lesen dieselbe Datei. Die MP3 bleibt unverändert.</p>

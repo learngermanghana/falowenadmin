@@ -1,3 +1,4 @@
+import { validateLyricCues } from "./songLyrics.js";
 // Browser-only music video frames. No external rendering service or upload.
 export function videoLyricLines(lyrics = "") {
   return String(lyrics).replace(/\\n/g, "\n").split(/\r?\n/)
@@ -80,4 +81,15 @@ export async function isRealMp4Blob(blob) {
   if (!blob || !/video\/mp4/.test(blob.type)) return false;
   const bytes = new Uint8Array(await blob.slice(0,12).arrayBuffer());
   return bytes.length >= 8 && String.fromCharCode(...bytes.slice(4,8)) === "ftyp";
+}
+
+// Shared by the public music API, course book and teacher slides.
+export function timedLyricsPack(objectKey, lyrics, cues) {
+  if (!/^music\/(a1|a2|b1|b2|c1|c2)\/day-(0[1-9]|1[0-9]|2[0-8])\/[^/]{1,150}\.mp3$/i.test(objectKey))
+    throw Error("Choose the exact published MP3 object key.");
+  const lines=videoLyricLines(lyrics);
+  const checked=validateLyricCues(cues,lines);
+  if (!lines.length || checked.length!==lines.length)
+    throw Error("Mark every lyric line in order before exporting shared timing.");
+  return {version:1,objectKey,lyrics,cues:checked};
 }

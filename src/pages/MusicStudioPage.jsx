@@ -304,7 +304,7 @@ export default function MusicStudioPage() {
       {status && !status.ready && <p>Google API configuration is required before generating.</p>}
       <p className="music-note">Estimates use Google’s listed music prices, excluding backend usage. Failed or timed-out attempts remain counted because they may be billed. Limits reset at midnight UTC / the start of each month.</p>
     </aside></div>
-    <MusicLyricsVideoStudio key={courseMode + '-' + assignmentKey}
+    <MusicLyricsVideoStudio assignmentKey={assignmentKey} key={courseMode + '-' + assignmentKey}
       generated={result && result.title === trackTitle && (courseMode === 'custom' || (result.level === level && result.day === lesson?.day)) ? result : null}
       title={trackTitle} level={courseMode === 'course' ? level : ''} day={courseMode === 'course' ? lesson?.day : ''}
       lyrics={lyrics}

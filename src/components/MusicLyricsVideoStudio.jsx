@@ -1,5 +1,8 @@
+import fixWebmDuration from "fix-webm-duration";
+import SongTimingEditor from "./SongTimingEditor.jsx";
+import { validateLyricCues } from "../utils/songLyrics.js";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { videoLyricLines, lyricScenes, findLyricScene, videoRecorderFormat, drawMusicVideoFrame, isRealMp4Blob } from "../utils/musicLyricsVideo.js";
+import { videoLyricLines, lyricScenes, findLyricScene, videoRecorderFormat, drawMusicVideoFrame, isRealMp4Blob, timedLyricsPack } from "../utils/musicLyricsVideo.js";
 
 const frameStyle = {width:"min(100%,270px)",aspectRatio:"9/16",borderRadius:14,background:"#102f34",boxShadow:"0 6px 20px #102f3426"};
 const fieldStyle = {width:"100%",maxWidth:520,padding:"8px",borderRadius:8,border:"1px solid #cbd5e1",boxSizing:"border-box"};
@@ -17,12 +20,16 @@ function audioFilenameObjectKey(text) {
   const key=String(text||"").trim();
   return /^music\/(a1|a2|b1|b2|c1|c2)\/day-(0[1-9]|1[0-9]|2[0-8])\/[^/]{1,150}\.mp3$/i.test(key) ? key : "";
 }
-export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", title = "Falowen Music", level = "", day = "", onOverwriteLyrics = null, savingLyrics = false, loadingLyrics = false, lyricsSaveNotice = "" }) {
+export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", title = "Falowen Music", level = "", day = "", onOverwriteLyrics = null, savingLyrics = false, loadingLyrics = false, lyricsSaveNotice = "", assignmentKey = "" }) {
   const [file,setFile] = useState(null);
+  const [tracks,setTracks] = useState([]);
+  const [publishedTrack,setPublishedTrack] = useState(null);
+  const [loadingTracks,setLoadingTracks] = useState(false);
   const [fileUrl,setFileUrl] = useState("");
   const [lyricText,setLyricText] = useState(lyrics || "");
   const [duration,setDuration] = useState(0);
   const [starts,setStarts] = useState([]);
+  const [cues,setCues] = useState([]);
   const [error,setError] = useState("");
   const [message,setMessage] = useState("");
   const [exporting,setExporting] = useState(false);
@@ -30,7 +37,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   const [objectKey,setObjectKey] = useState("");
   const canvasRef=useRef(null), audioRef=useRef(null), cancelRef=useRef(null);
   const previousEditorLyrics=useRef(lyrics), currentLyricText=useRef(lyrics || "");
-  const activeUrl=fileUrl || generated?.url || "";
+  const activeUrl=fileUrl || publishedTrack?.audioUrl || generated?.url || "";
   useEffect(()=>{
     const editorChanged=lyrics !== previousEditorLyrics.current;
     previousEditorLyrics.current=lyrics;
@@ -47,7 +54,30 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     const url=URL.createObjectURL(file);setFileUrl(url);
     return ()=>URL.revokeObjectURL(url);
   },[file]);
-  const scenes=useMemo(()=>lyricScenes(lyricText,duration,starts),[lyricText,duration,starts]);
+  const lines=useMemo(()=>videoLyricLines(lyricText),[lyricText]);
+  const completeCues=lines.length>0 && validateLyricCues(cues,lines).length===lines.length;
+  const scenes=useMemo(()=>lyricScenes(lyricText,duration,
+    completeCues ? cues.filter((_,i)=>i%3===0).map(c=>c.start) : starts),[lyricText,duration,starts,cues,completeCues]);
+  const timingKey="falowen-video-timing:"+(assignmentKey || objectKey || "custom");
+  useEffect(()=>{
+    try {
+      const saved=JSON.parse(localStorage.getItem(timingKey)||"null");
+      setCues(saved?.lyrics===lyricText ? validateLyricCues(saved.cues,lines) : []);
+    } catch { setCues([]); }
+  },[timingKey,lyricText,lines]);
+  function saveCues(next){
+    const checked=validateLyricCues(next,lines);
+    if(checked.length!==next.length)return false;
+    setCues(checked);
+    try {
+      localStorage.setItem(timingKey,JSON.stringify({lyrics:lyricText,cues:checked}));
+      if(audioFilenameObjectKey(objectKey)){
+        localStorage.setItem("falowen-song-timing:"+objectKey,JSON.stringify({objectKey,cues:checked}));
+        window.dispatchEvent(new CustomEvent("falowen-song-cues-changed",{detail:objectKey}));
+      }
+      return true;
+    }catch{return false;}
+  }
   const hasLyrics=videoLyricLines(lyricText).length>0;
   const drawAt=(seconds)=>{
     const canvas=canvasRef.current,ctx=canvas?.getContext("2d");
@@ -57,12 +87,23 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   useEffect(()=>()=>{cancelRef.current?.();},[]);
   function exportLyricsSidecar(){
     const key=audioFilenameObjectKey(objectKey);
-    if(!key || !hasLyrics){setError("Enter the exact published R2 MP3 object key and its matching lyrics first.");return;}
-    const payload={version:1,objectKey:key,lyrics:lyricText,cues:[]};
+    if(!key || !hasLyrics || !completeCues){setError("Enter the exact R2 MP3 key and mark every lyric line before exporting shared timing.");return;}
+    const payload=timedLyricsPack(key,lyricText,cues);
     saveBlob(new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}),
       key.split("/").pop().replace(/\.mp3$/i,".lyrics.json"));
-    setMessage("Downloaded the untimed lyrics sidecar. Review the text against the final MP3 before uploading it alongside that MP3 to R2.");
+    setMessage("Downloaded the timed lyrics sidecar for music, course book and slides. Upload it alongside the matching MP3 in R2.");
     setError("");
+  }
+  async function loadTracks(){
+    setLoadingTracks(true);setError("");
+    try {
+      const response=await fetch("https://www.falowen.app/api/music-library");
+      if(!response.ok)throw Error("Could not load the public song catalog.");
+      const data=await response.json();
+      setTracks((data.tracks||[]).filter(track=>audioFilenameObjectKey(track.objectKey) &&
+        track.audioUrl==="https://www.falowen.app/api/music?track="+track.id));
+    }catch(cause){setError(cause.message);}
+    finally{setLoadingTracks(false);}
   }
   async function exportVideo(){
     if(exporting||!activeUrl||!hasLyrics)return;
@@ -75,9 +116,10 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     if(!format){setError("No supported video recording format is available in this browser.");return;}
     const AudioContextClass=window.AudioContext||window.webkitAudioContext;
     if(!AudioContextClass){setError("Browser audio mixing is unavailable.");return;}
-    let context=null,canvasStream=null,source=null,recorder=null,animation=0,cancelled=false,started=false;
+    let context=null,canvasStream=null,source=null,recorder=null,animation=0,cancelled=false,started=false,recordingStart=0,visibilityChanged=null;
     const release=()=>{
-      cancelAnimationFrame(animation);canvasStream?.getTracks().forEach(track=>track.stop());
+      clearInterval(animation);
+      if(visibilityChanged)document.removeEventListener("visibilitychange",visibilityChanged);canvasStream?.getTracks().forEach(track=>track.stop());
       try{source?.disconnect();}catch{}
       if(context && context.state!=="closed")context.close().catch(()=>{});
       cancelRef.current=null;
@@ -91,8 +133,17 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       context=new AudioContextClass();
       const buffer=await context.decodeAudioData(bytes);
       if(!Number.isFinite(buffer.duration)||buffer.duration<1||buffer.duration>600)throw Error("Use an audio track between 1 second and 10 minutes.");
+      if(completeCues && cues.at(-1).start>=buffer.duration)
+        throw Error("The last lyric mark is outside this recording. Check the MP3 and timing marks.");
       await context.resume();
-      canvasStream=canvas.captureStream(24);
+      // Record a dedicated canvas: preview effects cannot overwrite export frames.
+      const exportCanvas=document.createElement("canvas");
+      exportCanvas.width=canvas.width;exportCanvas.height=canvas.height;
+      const exportContext=exportCanvas.getContext("2d");
+      const exportScenes=lyricScenes(lyricText,buffer.duration,
+        completeCues ? cues.filter((_,i)=>i%3===0).map(c=>c.start) : starts);
+      drawMusicVideoFrame(exportContext,{title,level,day,scenes:exportScenes,time:0,duration:buffer.duration});
+      canvasStream=exportCanvas.captureStream(24);
       const destination=context.createMediaStreamDestination();
       source=context.createBufferSource();source.buffer=buffer;source.connect(destination);
       const stream=new MediaStream([...canvasStream.getVideoTracks(),...destination.stream.getAudioTracks()]);
@@ -108,16 +159,24 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
         try{if(started)source.stop();}catch{}
         try{if(recorder.state!=="inactive")recorder.stop();}catch{}
       };
-      recorder.start(500);
+      audioRef.current?.pause();
+      visibilityChanged=()=>{
+        if(document.hidden){cancelRef.current?.();setError("Export stopped because this tab was hidden. Keep it visible for the complete recording.");}
+      };
+      document.addEventListener("visibilitychange",visibilityChanged);
+      recordingStart=performance.now();
+      recorder.start();
       started=true;
       const startAt=context.currentTime+0.08;
       const draw=()=>{
         const t=Math.max(0,context.currentTime-startAt);
-        drawMusicVideoFrame(canvas.getContext("2d"),{title,level,day,scenes,time:t,duration:buffer.duration});
+        drawMusicVideoFrame(exportContext,{title,level,day,scenes:exportScenes,time:t,duration:buffer.duration});
+        canvas.getContext("2d").drawImage(exportCanvas,0,0);
         setProgress(previous=>Math.abs(previous-t)>0.5?Math.min(buffer.duration,t):previous);
-        if(recorder.state!=="inactive")animation=requestAnimationFrame(draw);
+
       };
       draw();
+      animation=window.setInterval(draw,1000/24);
       source.onended=()=>{
         if(recorder.state!=="inactive")window.setTimeout(()=>{
           if(recorder.state!=="inactive")recorder.stop();
@@ -125,7 +184,9 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       };
       source.start(startAt);
       setExporting(true);
-      const blob=await complete;
+      let blob=await complete;
+      // MediaRecorder WebM omits duration metadata, preventing normal seeking.
+      if(format.extension==="webm")blob=await fixWebmDuration(blob,performance.now()-recordingStart,{logger:false});
       if(!blob.size)throw Error("Video export returned an empty file.");
       if(format.extension==="mp4" && !(await isRealMp4Blob(blob)))
         throw Error("The browser returned a video that is not a valid MP4. No mislabeled file was downloaded.");
@@ -141,12 +202,21 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     <div><h2 style={{margin:"0 0 6px"}}>4. Lyrics video studio</h2>
       <p style={{margin:0}}>Preview three lyric lines per screen, mark their timing against your MP3, and export a vertical music video locally. No extra AI generation or cloud rendering.</p>
     </div>
+    <div>
+      <button type="button" disabled={exporting||loadingTracks} onClick={loadTracks}>{loadingTracks?"Loading songs…":"Load available Falowen songs"}</button>
+      {!!tracks.length && <label>Published recording <select disabled={exporting} value={publishedTrack?.objectKey||""} onChange={event=>{
+        const track=tracks.find(row=>row.objectKey===event.target.value)||null;
+        setPublishedTrack(track);setFile(null);setDuration(0);setStarts([]);setCues([]);
+        setObjectKey(track?.objectKey||"");
+      }}><option value="">Choose a recording</option>{tracks.map(track=><option key={track.objectKey} value={track.objectKey}>{track.level} · Day {track.day} · {track.title}</option>)}</select></label>}
+    </div>
     <label style={{display:"grid",gap:5,maxWidth:540,fontWeight:700}}>Audio source
       <input type="file" accept="audio/mpeg,audio/mp3,.mp3" disabled={exporting}
-        onChange={event=>{setFile(event.target.files?.[0]||null);setStarts([]);setDuration(0);setError("");}} />
+        onChange={event=>{setFile(event.target.files?.[0]||null);setPublishedTrack(null);setCues([]);setStarts([]);setDuration(0);setError("");}} />
       <small>{file?"Using uploaded MP3: "+file.name:generated?.url?"Using the generated track shown above. You can also upload a final MP3.":"Upload the approved final MP3 to make a video. No audio is uploaded to Falowen."}</small>
     </label>
     {activeUrl?<audio ref={audioRef} src={activeUrl} controls preload="metadata"
+      onSeeked={event=>{if(!exporting)drawAt(event.currentTarget.currentTime);}}
       onLoadedMetadata={event=>{const value=event.currentTarget.duration;setDuration(Number.isFinite(value)?value:0);}}
       onTimeUpdate={event=>{if(!exporting)drawAt(event.currentTarget.currentTime);}} />:null}
     <label style={{display:"grid",gap:5,fontWeight:700}}>Lyrics for this recording (editable)
@@ -169,9 +239,9 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
           <div style={{fontSize:13,whiteSpace:"pre-line"}}>{scene.lines.join("\n")}</div>
           <div style={{display:"flex",gap:7,alignItems:"center",flexWrap:"wrap"}}>
             <label style={{fontSize:12}}>Start (seconds) <input style={{width:90,padding:5}} type="number" min="0" step="0.1"
-              max={duration||600} value={scene.start} disabled={exporting}
+              max={duration||600} value={scene.start} disabled={exporting||completeCues}
               onChange={event=>{const v=Number(event.target.value);setStarts(old=>scenes.map((s,i)=>i===index?(Number.isFinite(v)?v:0):s.start));}} /></label>
-            <button type="button" disabled={!activeUrl||exporting} onClick={()=>{
+            <button type="button" disabled={!activeUrl||exporting||completeCues} onClick={()=>{
               const t=Math.round((audioRef.current?.currentTime||0)*10)/10;
               setStarts(scenes.map((s,i)=>i===index?t:s.start));
             }}>Mark at player time</button>
@@ -182,6 +252,8 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
         </div>)}
       </div>
     </div>
+    {!exporting && <SongTimingEditor song={{lyrics:lyricText,objectKey:audioFilenameObjectKey(objectKey)}} audio={audioRef} cues={cues} onSave={saveCues}/>}
+    <p role="status">Shared line timing: {cues.length}/{lines.length} marked. Complete line marks also control the video screens.</p>
     <p style={{margin:0,fontSize:12,color:"#52635e"}}>Play the song and use “Mark at player time” at the beginning of each lyric group. Timings should increase from the first screen to the last. Keep this browser tab open while exporting; recording runs in real time.</p>
     {exporting?<div role="status"><strong>Rendering locally… {Math.floor(progress)}s / {Math.ceil(duration)}s</strong>
       <button type="button" style={{marginLeft:12}} onClick={()=>cancelRef.current?.()}>Cancel export</button></div>:null}
@@ -189,12 +261,12 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       onClick={exportVideo}>{exporting?"Recording music video…":"Export "+(supported?.extension==="mp4"?"MP4":supported?.extension==="webm"?"WebM":"video")+" · 9:16 with MP3"}</button>
     {supported?.extension==="webm"&&<small>This browser records WebM rather than MP4. The download will be correctly labeled .webm; use a browser with MP4 MediaRecorder support for MP4.</small>}
     <details><summary>Publish matching lyrics to Falowen Music (optional)</summary>
-      <p>The public player can display your reviewed lyrics before full line-by-line timing is available. Enter the exact R2 key for the published recording, export the JSON, and upload the file beside its MP3 in the existing Cloudflare bucket. This does not upload anything automatically.</p>
+      <p>Mark each sung line above to publish one timing layer for all players. Enter the exact R2 key for the published recording, export the JSON, and upload the file beside its MP3 in the existing Cloudflare bucket. This does not upload anything automatically.</p>
       <label style={{display:"grid",gap:5}}>Published R2 MP3 object key
         <input style={fieldStyle} value={objectKey} disabled={exporting} onChange={event=>setObjectKey(event.target.value)}
           placeholder="music/a1/day-13/your-approved-song.mp3" />
       </label>
-      <button type="button" disabled={!audioFilenameObjectKey(objectKey)||!hasLyrics||exporting} onClick={exportLyricsSidecar}>
+      <button type="button" disabled={!audioFilenameObjectKey(objectKey)||!completeCues||exporting} onClick={exportLyricsSidecar}>
         Download matching .lyrics.json
       </button>
     </details>
