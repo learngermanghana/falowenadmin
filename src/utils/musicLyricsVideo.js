@@ -30,6 +30,30 @@ export function lyricScenes(lyrics = "", duration = 0, starts = []) {
   }
   return groups;
 }
+// Reusable, editable posting text for a downloaded lyrics video.
+// Keep links on known public homepages; no invented deep link or exam claim.
+export function musicVideoSocialCopy({title = "",level = "",day = ""} = {}) {
+  const songTitle = String(title || "").trim() || "Falowen Music";
+  const cleanLevel = /^(A1|A2|B1|B2|C1|C2)$/.test(String(level).toUpperCase())
+    ? String(level).toUpperCase() : "";
+  const numberDay = Number(day);
+  const cleanDay = day !== "" && day != null && Number.isInteger(numberDay) && numberDay >= 1 && numberDay <= 28
+    ? numberDay : null;
+  const subject = cleanLevel ? `German ${cleanLevel} Song` : "Lyrics Video";
+  const postingTitle = `${songTitle.slice(0, 64)} | ${subject} | Falowen Music`.slice(0, 100);
+  const lesson = cleanLevel ? `\nLevel: ${cleanLevel}${cleanDay ? ` · Day ${cleanDay}` : ""}` : "";
+  const description = [
+    `Sing along to "${songTitle}" — a Falowen Music lyrics video.`,
+    cleanLevel ? "Follow the lyrics on screen and practise your German listening, vocabulary and pronunciation." :
+      "Follow the words on screen and enjoy the music.",
+    lesson.trim(),
+    "Discover more music: https://music.falowen.app/",
+    "Learn German with Falowen: https://www.falowen.app/",
+    cleanLevel ? `#FalowenMusic #LearnGerman #German${cleanLevel} #GermanMusic` : "#FalowenMusic #LyricsVideo #OriginalMusic",
+  ].filter(Boolean).join("\n\n");
+  return {title:postingTitle,description};
+}
+
 export function findLyricScene(scenes = [], seconds = 0) {
   let index = 0;
   scenes.forEach((scene, i) => { if (seconds >= scene.start) index = i; });
