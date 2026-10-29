@@ -20,8 +20,20 @@ function RevealPanel({ activity }) {
 
 export default function InteractiveLessonOpening({ stage, slide }) {
   const lesson = getInteractiveLessonOpening(slide?.assignmentId);
+  // On B1 Day 24, slide 2 remains a music introduction while slide 3 is
+  // a distinct protected scored listening conversation. The stage wins here.
+  const resolvedListening = stage?.variant === "interactive-listening" && stage?.audioKey
+    ? {
+        ...(lesson?.listening || {}),
+        mediaType:"conversation",
+        title:stage.title, level:stage.audioLevel, day:stage.audioDay,
+        audioKey:stage.audioKey, transcript:stage.transcript || [],
+        questions:stage.listeningItems || [], playbackNote:"Höre das Gespräch zweimal. Wähle A = Richtig oder B = Falsch.",
+        youtubeId:null, musicLibraryUrl:null,
+      } : lesson?.listening;
+
   const listening = stage.id === "knowledge" && Boolean(lesson?.listening);
-  const music = listening && lesson.listening.mediaType === "music";
+  const music = listening && resolvedListening.mediaType === "music";
   const [step, setStep] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [showHint, setShowHint] = useState(false);
@@ -59,20 +71,23 @@ export default function InteractiveLessonOpening({ stage, slide }) {
     try {
       const user = auth.currentUser;
       if (!user) throw new Error("Bitte zuerst in Falowen Admin anmelden.");
-      const params = new URLSearchParams({ day: String(lesson.listening.day), key: lesson.listening.audioKey });
+      const params = new URLSearchParams({ day: String(resolvedListening.day), key: resolvedListening.audioKey });
       // B1 Day 25 is a separate, private classroom conversation. The old
       // Cloud Run B1 signer lacks storage configuration, so use the already
       // configured Falowen R2 server with an exact-key teacher-only allowlist.
       // Keep other B1 workbook and course signing routes unchanged.
-      const isB1Day25Classroom = lesson.listening.level === "B1"
-        && lesson.listening.day === 25
-        && lesson.listening.audioKey === "b1/day-25/online-shopping-verbraucherservice.mp3";
-      if (isB1Day25Classroom) params.set("level", "B1");
-      const audioEndpoint = isB1Day25Classroom
+      const isB1Day25Classroom = resolvedListening.level === "B1"
+        && resolvedListening.day === 25
+        && resolvedListening.audioKey === "b1/day-25/online-shopping-verbraucherservice.mp3";
+      const isB1Day24Classroom = resolvedListening.level === "B1"
+        && resolvedListening.day === 24
+        && resolvedListening.audioKey === "b1/day-24/day-25.mp3";
+      if (isB1Day25Classroom || isB1Day24Classroom) params.set("level", "B1");
+      const audioEndpoint = isB1Day25Classroom || isB1Day24Classroom
         ? "https://www.falowen.app/api/course-media/classroom/audio-url"
-        : lesson.listening.level === "A2" && [18, 19].includes(lesson.listening.day)
+        : resolvedListening.level === "A2" && [18, 19].includes(resolvedListening.day)
           ? "https://www.falowen.app/api/course-media/a2/classroom-audio-url"
-          : `${AUDIO_API}/course-media/${lesson.listening.level.toLowerCase()}/audio-url`;
+          : `${AUDIO_API}/course-media/${resolvedListening.level.toLowerCase()}/audio-url`;
       const response = await fetch(`${audioEndpoint}?${params}`, {
         method: "GET",
         headers: { Authorization: `Bearer ${await user.getIdToken()}` },
@@ -96,32 +111,32 @@ export default function InteractiveLessonOpening({ stage, slide }) {
     }
   }
 
-  return <section className="pharm-activity" aria-label={music ? `${lesson.listening.title} Musik` : listening ? `${lesson.listening.title} Hören` : `${lesson.title} Warm-up`}>
+  return <section className="pharm-activity" aria-label={music ? `${resolvedListening.title} Musik` : listening ? `${resolvedListening.title} Hören` : `${lesson.title} Warm-up`}>
     <div className="pharm-head">
       <div>
         <span className="pharm-eyebrow">{slide.course} · TAG {slide.dayNumber} · {music ? "MUSIK / LIED VERSTEHEN" : listening ? "HÖREN / HÖRDETEKTIV" : "INTERAKTIVER WARM-UP"}</span>
-        <h1>{listening ? lesson.listening.title : lesson.title}</h1>
+        <h1>{listening ? resolvedListening.title : lesson.title}</h1>
       </div>
     </div>
     {listening && <div className="pharm-audio">
-      <div className="pharm-audio-label"><span aria-hidden="true">♫</span><div><strong>{lesson.listening.title}</strong><small>{music ? "Höre das Lied und beantworte die Fragen. Das Video zeigt den Liedtext." : "Lies zuerst die Fragen. Höre danach ohne das Skript zu."}</small></div></div>
-      {lesson.listening.playbackNote ? <p className="pharm-playback-note" role="note">{lesson.listening.playbackNote} · Fragen bleiben während des Abspielens sichtbar.</p> : null}
-      {lesson.listening.youtubeId ? (
-        <MusicVideoEmbed videoId={lesson.listening.youtubeId} title={lesson.listening.title} variant="listening" />
+      <div className="pharm-audio-label"><span aria-hidden="true">♫</span><div><strong>{resolvedListening.title}</strong><small>{music ? "Höre das Lied und beantworte die Fragen. Das Video zeigt den Liedtext." : "Lies zuerst die Fragen. Höre danach ohne das Skript zu."}</small></div></div>
+      {resolvedListening.playbackNote ? <p className="pharm-playback-note" role="note">{resolvedListening.playbackNote} · Fragen bleiben während des Abspielens sichtbar.</p> : null}
+      {resolvedListening.youtubeId ? (
+        <MusicVideoEmbed videoId={resolvedListening.youtubeId} title={resolvedListening.title} variant="listening" />
       ) : !audioUrl ? (
         <button type="button" className="pharm-btn pharm-btn-primary" onClick={prepareAudio} disabled={audioBusy}>{audioBusy ? "Audio wird vorbereitet…" : "▶ Audio laden"}</button>
       ) : <>
-        <audio key={audioUrl} ref={audioRef} src={audioUrl} controls preload="none" aria-label={`${lesson.listening.title} Audio`} onError={() => setAudioError("Der signierte Audiolink kann nicht abgespielt werden. Bitte prüfen, ob das R2-Objekt existiert und die Audiodatei verfügbar ist.")} onEnded={() => { if (autoReview) { setReviewMode(true); chooseStep(0); } }} />
+        <audio key={audioUrl} ref={audioRef} src={audioUrl} controls preload="none" aria-label={`${resolvedListening.title} Audio`} onError={() => setAudioError("Der signierte Audiolink kann nicht abgespielt werden. Bitte prüfen, ob das R2-Objekt existiert und die Audiodatei verfügbar ist.")} onEnded={() => { if (autoReview) { setReviewMode(true); chooseStep(0); } }} />
         <button type="button" className="pharm-btn pharm-btn-soft" onClick={() => { audioRef.current?.pause(); setAudioUrl(""); prepareAudio(); }}>↻ Audiolink erneuern</button>
       </>}
-      {audioError && <p className="pharm-audio-error" role="alert">{audioError} · R2-Objekt: {lesson.listening.audioKey}</p>}
-      {lesson.listening.youtubeId
+      {audioError && <p className="pharm-audio-error" role="alert">{audioError} · R2-Objekt: {resolvedListening.audioKey}</p>}
+      {resolvedListening.youtubeId
         ? <p className="pharm-playback-note">Nach dem Hören: Klick auf „Antworten einzeln besprechen“. Die Lösungen bleiben zunächst verborgen.</p>
         : <label className="pharm-review-checkbox"><input type="checkbox" checked={autoReview} onChange={(event) => setAutoReview(event.target.checked)} /> Nach Audioende automatisch zu Frage 1 wechseln (optional)</label>}
-      {(stage.transcript?.length || lesson.listening.transcript?.length) ? (
+      {(stage.transcript?.length || resolvedListening.transcript?.length) ? (
         <details className="pharm-script" open={showTranscript} onToggle={(event) => setShowTranscript(event.currentTarget.open)}>
           <summary>{showTranscript ? (music ? "Liedtext-Auszüge ausblenden" : "Skript ausblenden") : (music ? "Liedtext-Auszüge anzeigen" : "Skript für die Klasse anzeigen")} <span>OPTIONAL</span></summary>
-          <div className="pharm-transcript" lang="de">{(stage.transcript?.length ? stage.transcript : lesson.listening.transcript).map(([speaker, line],index)=>
+          <div className="pharm-transcript" lang="de">{(stage.transcript?.length ? stage.transcript : resolvedListening.transcript).map(([speaker, line],index)=>
             <p key={index}><b className={speaker === "A" ? "is-a" : "is-b"}>{speaker}</b> <span>{line}</span></p>
           )}</div>
         </details>
@@ -158,7 +173,7 @@ export default function InteractiveLessonOpening({ stage, slide }) {
     </div>
     </> : <section className="pharm-overview" aria-label="Alle Hörfragen vor dem Hören">
       <div className="pharm-overview-head"><div><span className="pharm-eyebrow">{music ? "VOR DEM LIED" : "VOR DEM HÖREN"} · 1 MINUTE</span><h2>Lies zuerst alle Fragen</h2><p>Notiere nur kurze Antworten oder die Buchstaben – nicht die ganzen Fragen.</p></div><button type="button" className="pharm-btn pharm-btn-primary" onClick={() => { setReviewMode(true); chooseStep(0); }}>Antworten einzeln besprechen →</button></div>
-      {lesson.listening.previewWords?.length ? <div className="pharm-word-list"><b>Wichtige Wörter:</b> {lesson.listening.previewWords.map(word => <span key={word}>{word}</span>)}</div> : null}
+      {resolvedListening.previewWords?.length ? <div className="pharm-word-list"><b>Wichtige Wörter:</b> {resolvedListening.previewWords.map(word => <span key={word}>{word}</span>)}</div> : null}
       <ol className="pharm-question-overview">{items.map((q,index) => <li key={index}><strong>{index + 1}. {q.prompt}</strong><div>{(q.options || []).map((option,i) => <span key={i}>{String.fromCharCode(65+i)}. {option}</span>)}</div></li>)}</ol>
     </section>}
     <p className="pharm-footnote">Lehrer steuert die Antworten. Die Fragen wechseln nicht automatisch. {music ? "Musiktraining über YouTube – unbewertete Unterrichtsübung." : "Keine Schülerbewertung."}</p>
