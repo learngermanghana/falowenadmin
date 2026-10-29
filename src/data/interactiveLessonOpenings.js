@@ -4,6 +4,7 @@ import { A2_DAY19_LISTENING } from './a2Day19Listening.js';
 import { A2_DAY17_AUDIO_KEY, A2_DAY17_WARMUP, A2_DAY17_LISTENING, A2_DAY17_TRANSCRIPT } from "./a2Day17Opening.js";
 import { B1_DAY25_LISTENING } from "./b1Day25Listening.js";
 import { B1_DAY24_RECORDED_MUSIC } from "./b1Day24RecordedMusic.js";
+import { B1_DAY24_CONVERSATION2 } from "./b1Day24Conversation2.js";
 import { A2_DAY18_BANK_LISTENING } from "./a2Day18BankListening.js";
 import { A2_DAY18_BANK_MUSIC } from "./a2Day18BankMusic.js";
 import { A2_DAY20_LISTENING } from "./a2Day20Listening.js";
@@ -427,8 +428,9 @@ ENTRIES["A2-7.20"].musicIntro = {
 ENTRIES["B1-8.24"] = {
   assignmentId: "B1-8.24",
   title: "Konsum und Nachhaltigkeit",
-  warmup: [], // Music video replaces the Day 24 warm-up, without changing other days.
-  listening: B1_DAY24_RECORDED_MUSIC,
+  warmup: [], // Preserve the Day 24 music introduction on slide 2.
+  musicIntro: B1_DAY24_RECORDED_MUSIC,
+  listening: B1_DAY24_CONVERSATION2, // Separate R2 Hören on slide 3.
 };
 // Published R2 music on Day 25 replaces the old YouTube intro only.
 ENTRIES["B1-8.25"].musicIntro = {

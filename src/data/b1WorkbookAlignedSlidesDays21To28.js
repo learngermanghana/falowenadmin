@@ -359,7 +359,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       "Day 24 has no day-specific deep grammar page. The workbook Grammar tab supplies general B1 advantage/disadvantage/opinion training; build the lesson language from the workbook's own dass/weil/um … zu/sollten/einerseits … andererseits frames.",
       "Teil 3 is Eleni's environmental-awareness/recycling text, not a shopping case study.",
       "The workbook displays seven Richtig/Falsch statements, and all seven now have matching reference answers.",
-      "The old Day 24 listening video is removed in the rendered workbook. Teil 4 is not submitted and the marking contract excludes teil4.",
+      "Slide 2 remains a music introduction; slide 3 is the separate R2 Conversation 2 at b1/day-24/day-25.mp3. Five open listening prompts replace the obsolete smartphone Richtig/Falsch questions. Hören remains an unscored self-check, excluded from marking.",
     ],
     interactionFlow: [
       { phase: "Argument frame", detailEn: "8 min: build one Vorteil, one Nachteil and one opinion with examples." },
@@ -374,10 +374,10 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       { label: "Teil 1 · Sprechen", detailEn: "Discuss sustainable consumption across shopping, recycling, energy, transport, business responsibility and individual action; compare measures and choose one important action. Practice only." },
       { label: "Teil 2 · Schreiben", detailEn: "Write an opinion responding to Paul on whether sustainable consumption matters; include benefits, difficulties, concrete examples and a clear conclusion." },
       { label: "Teil 3 · Lesen", detailEn: "Read Eleni's text about environmental education, Sperrmüll, second-hand furniture, Altkleider, glass recycling and hazardous-waste collection. All seven Richtig/Falsch statements are reference-scored." },
-      { label: "Teil 4 · Hören", detailEn: "SELF-CHECK/UNSCORED ONLY. The old listening link is removed from the rendered workbook; no live Hören medium is currently available. The marking contract excludes teil4, so do not submit it." },
+      { label: "Teil 4 · Hören", detailEn: "SELF-CHECK/UNSCORED ONLY. New Conversation 2 is playable from the protected R2 key b1/day-24/day-25.mp3 with five open listening questions; the old smartphone questions and audio are removed. Do not submit Teil 4." },
     ], {
       grammarUrl: null,
-      subtitle: "Day 24 has no direct deep-grammar page. Teil 3 has seven aligned reading answers; Teil 4 remains excluded.",
+      subtitle: "Day 24 has no direct deep-grammar page. Teil 3 has seven aligned reading answers; Teil 4 is a new unscored Hören 2 conversation.",
     }),
     teacherSupport: {
       lessonOverviewEn: "Day 24 develops B1 sustainability arguments and includes a fully aligned seven-statement reading.",
@@ -397,7 +397,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
         "Keeping main-clause order after weil or dass.",
         "Using um … zu when the two clauses have different subjects.",
         "Skipping statements 6–7; all seven current reading statements are now reference-scored.",
-        "Trying to play the removed Day 24 listening link or submitting Teil 4 despite its exclusion.",
+        "Submitting Teil 4 even though this new Hören 2 conversation is a teacher-reviewed self-check with no approved answer key.",
       ],
     },
   },
