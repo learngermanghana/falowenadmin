@@ -13,22 +13,25 @@ function component(path){
 }
 const Published=component('src/components/PublishedSongLessonStage.jsx');
 const Linked=component('src/components/LinkedPublishedSongLessonStage.jsx');
-for(const [level,day,assignmentKey] of [['A1',14,'A1-3.6'],['A2',18,'A2-7.18'],['B1',24,'B1-8.24']]){
- test(level+' slide follows playback, seek and repeat; questions select and reveal',async()=>{
+for(const [level,day,assignmentKey] of [['A1',14,'A1-3.6'],['A1',13,'A1-3.5'],['A2',18,'A2-7.18'],['B1',24,'B1-8.24']]){
+ test(level+' Day '+day+' slide follows playback, seek and repeat; questions select and reveal',async()=>{
   const dom=new JSDOM('<div id="root"></div>',{url:'https://admin.falowen.app'});const w=dom.window;
   Object.assign(globalThis,{window:w,document:w.document,localStorage:w.localStorage,IS_REACT_ACT_ENVIRONMENT:true});
   w.matchMedia=()=>({matches:true});let scrolls=0;
   w.HTMLElement.prototype.scrollTo=function({top}){scrolls++;this.scrollTop=top;};
   w.HTMLElement.prototype.getBoundingClientRect=function(){return {top:Number(this.dataset.line||0)*120};};
   Object.defineProperty(w.HTMLElement.prototype,'clientHeight',{get(){return 80;}});
-  const recording=level==='B1'?{objectKey:'music/b1/day-24/Weniger kaufen.mp3'}:getCuratedMusicByAssignment(assignmentKey);
+  const recording=day===13?{objectKey:'music/a1/day-13/Zwei Tees, vier Euro.mp3'}:level==='B1'?{objectKey:'music/b1/day-24/Weniger kaufen.mp3'}:getCuratedMusicByAssignment(assignmentKey);
+  const discoveredId=day===13?'r2-a1-day-13-b64_WndlaSBUZWVzLCB2aWVyIEV1cm8ubXAz':'r2-b1-day-24-weniger-kaufen';
+  const requested=[];
   const lyrics=['Heute fahren wir gemeinsam nach Berlin.','Am Bahnhof wartet unser guter Freund.','Heute fahren wir gemeinsam nach Berlin.'];
   const pack={objectKey:recording.objectKey,lyrics:lyrics.join('\n'),cues:lyrics.map((text,i)=>({start:10+i*5,end:14+i*5,text}))};
-  globalThis.fetch=async url=>({ok:true,json:async()=>String(url).includes('attendance-music-library')?{tracks:[{id:'r2-b1-day-24-weniger-kaufen',title:'Weniger kaufen',level,day,objectKey:recording.objectKey,audioUrl:'https://www.falowen.app/api/music?track=r2-b1-day-24-weniger-kaufen',autoDiscovered:true,coursebook:true}]}:pack});
+  globalThis.fetch=async url=>{requested.push(String(url));return {ok:true,json:async()=>String(url).includes('attendance-music-library')?{ok:true,tracks:[{id:discoveredId,title:day===13?'Zwei Tees, vier Euro':'Weniger kaufen',level,day,objectKey:recording.objectKey,audioUrl:'https://www.falowen.app/api/music?track='+discoveredId,autoDiscovered:true,coursebook:true}]}:pack};};
   const root=createRoot(w.document.getElementById('root'));
   await act(async()=>{root.render(level==='B1'?React.createElement(Linked,{music:{level,day,title:'Weniger kaufen'}}):React.createElement(Published,{assignmentKey}));});
   const buttons=()=>[...w.document.querySelectorAll('button')];
   const click=async text=>{const b=buttons().find(b=>b.textContent.includes(text));assert.ok(b,text);await act(async()=>b.click());return b;};
+  if(day===13)assert.ok(requested.some(url=>decodeURIComponent(url).includes(recording.objectKey)),'Day13 lyrics request uses the actual discovered MP3 key');
   await click('2 · Liedtext');const checkbox=w.document.querySelector('input[type=checkbox]');assert.equal(checkbox.disabled,false);
   const audio=w.document.querySelector('audio');
   const at=async seconds=>act(async()=>{audio.currentTime=seconds;audio.dispatchEvent(new w.Event('timeupdate',{bubbles:true}));});
