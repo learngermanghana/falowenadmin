@@ -4,6 +4,8 @@
 // Song Timing Editor before exporting an R2 .lyrics.json sidecar.
 export const A1_DAY5_FINAL_RECORDING = Object.freeze({
   assignmentKey: "A1-1.3",
+  level: "A1",
+  day: 5,
   title: "Schön, dich kennenzulernen",
   sha256: "bfe8d48468fc6a2802b916ee97f9c42ff44795226e2300f6d9714a686881d3d8",
   duration: 144.96,
