@@ -97,14 +97,16 @@ export default function MusicStudioPage() {
     }).finally(() => { if (active) setLoadingLyrics(false); });
     return () => { active = false; };
   }, [assignmentKey, courseMode]);
-  async function overwriteLyrics() {
-    if (courseMode !== 'course' || !assignmentKey || savingLyrics || loadingLyrics || !lyrics.trim()) return;
-    const key = assignmentKey, text = lyrics;
+  async function overwriteLyrics(replacementLyrics = null) {
+    const text = typeof replacementLyrics === 'string' ? replacementLyrics : lyrics;
+    if (courseMode !== 'course' || !assignmentKey || savingLyrics || loadingLyrics || !text.trim()) return;
+    const key = assignmentKey;
     setSavingLyrics(true);
     setLyricsNotice('');
     try {
       const data = await overwriteSavedMusicLyrics(key, text);
       setSavedLyrics(previous => ({ ...previous, [key]: data.lyrics }));
+      setLyricsOverrides(previous => ({ ...previous, [key]: data.lyrics }));
       setLyricsNotice('Lyrics overwritten and saved for ' + key + '. They will be reused after refresh and appear as a course draft on Falowen Music.');
     } catch (error) {
       setLyricsNotice('Lyrics were NOT saved: ' + error.message);
@@ -264,7 +266,7 @@ export default function MusicStudioPage() {
           <button type="button" onClick={() => { setLyrics(draft.lyrics); setLyricTreatment('exact'); setCopyStatus('Original lyrics restored in the editor. Click Overwrite Lyrics to save this version.'); }}>Restore original in editor</button>
         </div>}
         {courseMode === 'course' && assignmentKey && <div className="music-songbook-actions" style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap',marginTop:8}}>
-          <button type="button" onClick={overwriteLyrics} disabled={savingLyrics || loadingLyrics || !lyrics.trim() || lyrics.length > 5500 || !dirtyLyrics}>
+          <button type="button" onClick={() => overwriteLyrics()} disabled={savingLyrics || loadingLyrics || !lyrics.trim() || lyrics.length > 5500 || !dirtyLyrics}>
             {savingLyrics ? 'Saving lyrics…' : 'Overwrite Lyrics · Save permanently'}
           </button>
           <small>{loadingLyrics ? 'Checking saved lyrics…' : dirtyLyrics ? 'Unsaved lyrics for this lesson' : 'Lyrics saved or unchanged'}</small>
@@ -305,7 +307,10 @@ export default function MusicStudioPage() {
     <MusicLyricsVideoStudio key={courseMode + '-' + assignmentKey}
       generated={result && result.title === trackTitle && (courseMode === 'custom' || (result.level === level && result.day === lesson?.day)) ? result : null}
       title={trackTitle} level={courseMode === 'course' ? level : ''} day={courseMode === 'course' ? lesson?.day : ''}
-      lyrics={lyrics} />
+      lyrics={lyrics}
+      onOverwriteLyrics={courseMode === 'course' && assignmentKey ? overwriteLyrics : null}
+      savingLyrics={savingLyrics} loadingLyrics={loadingLyrics}
+      lyricsSaveNotice={lyricsNotice} />
     {courseMode === 'course' && draft && <ReusableMusicQuestions assignmentKey={assignmentKey} lyricsChanged={lyrics !== draft.lyrics} />}
   </main>;
 }
