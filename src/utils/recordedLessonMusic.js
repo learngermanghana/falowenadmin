@@ -3,25 +3,24 @@ import { waitingRoomDiscoveredMusicTrack } from './waitingRoomDayMusic.js';
 
 // Public Falowen Music's actual R2 object key—not an Admin songbook title—
 // identifies the recording. Never manufacture a track ID or an R2 filename.
-export function selectRecordedLessonTrack(feed, {day, assignmentKey} = {}) {
-  const rows = (Array.isArray(feed?.tracks) ? feed.tracks : []).filter(row =>
-    row?.level === 'A2' && Number(row.day) === Number(day));
-  // The current uploaded Day 19 song is titled "Die richtige Wahl".
-  // Prefer it when several uploads exist; otherwise preserve the existing
-  // strict single-recording selection shared with attendance.
-  if (Number(day) === 19) {
-    const matches = rows.filter(row =>
-      String(row.title || '').trim().toLowerCase() === 'die richtige wahl');
-    if (matches.length === 1) {
-      const published = waitingRoomDiscoveredMusicTrack({tracks: matches}, {
-        level:'A2',day:19,assignmentKey:'',
-      });
-      if (published) return published;
-    }
+export function selectRecordedLessonTrack(feed, {level='A2',day,assignmentKey} = {}) {
+  const normalized=String(level||'').toUpperCase();
+  const rows=(Array.isArray(feed?.tracks)?feed.tracks:[]).filter(row=>
+    String(row?.level||'').toUpperCase()===normalized && Number(row.day)===Number(day));
+  // Prefer the teacher-identified recording if the folder has multiple MP3s.
+  // Every candidate is still validated by the shared read-only music guard.
+  const titles={
+    'A2-19':['die richtige wahl'],
+    'B1-24':['weniger kaufen','weniger kaufen, mehr erleben'],
+    'B1-25':['als kunde habe ich auch rechte','das paket kam nicht an'],
+    'B1-26':['der zug fährt nicht'],
+  }[normalized+'-'+Number(day)]||[];
+  const matches=rows.filter(row=>titles.includes(String(row.title||'').trim().toLocaleLowerCase('de')));
+  if(matches.length===1) {
+    const track=waitingRoomDiscoveredMusicTrack({tracks:matches},{level:normalized,day,assignmentKey:''});
+    if(track)return track;
   }
-  return waitingRoomDiscoveredMusicTrack(feed, {
-    level:'A2',day,assignmentKey,
-  });
+  return waitingRoomDiscoveredMusicTrack(feed,{level:normalized,day,assignmentKey});
 }
 
 export function verifiedRecordedLyrics(pack, track) {
@@ -34,7 +33,7 @@ export function verifiedRecordedLyrics(pack, track) {
 }
 
 const LESSON_CHECKS = {
-  19: [
+  'A2-19': [
     {prompt:'Warum gehen Mia und ihre Begleitung zuerst ins Geschäft?',
       options:['Weil Mia ihre Schuhgröße nicht genau kennt.','Weil alle Schuhe online ausverkauft sind.','Weil das Geschäft heute schließt.'],
       correctIndex:0,answer:'Mia kennt ihre Schuhgröße nicht genau.',
@@ -44,7 +43,7 @@ const LESSON_CHECKS = {
       correctIndex:1,answer:'Das zweite, bequemere Paar.',
       evidence:'Das zweite sitzt viel bequemer.'},
   ],
-  20: [
+  'A2-20': [
     {prompt:'Warum geht die Person mit der Jacke zurück ins Geschäft?',
       options:['Die Jacke ist zu teuer.','Die Jacke ist zu klein.','Die Jacke hat keine Taschen.'],
       correctIndex:1,answer:'Die Jacke ist zu klein.',
@@ -54,12 +53,38 @@ const LESSON_CHECKS = {
       correctIndex:2,answer:'Sie bringt die Jacke eine Nummer größer.',
       evidence:'Sie bringt die Jacke eine Nummer größer.'},
   ],
+  'B1-24':[
+    {prompt:'Warum entscheidet sich die Person, das neue Handy nicht zu kaufen?',
+      options:['Das alte Handy funktioniert noch; die Reise wird wichtiger.','Das Geschäft ist heute geschlossen.','Die Werbung nennt keinen Preis.'],
+      correctIndex:0,answer:'Das alte Handy funktioniert noch; die Reise ist wichtiger.',
+      evidence:'Meins funktioniert eigentlich noch gut.'},
+    {prompt:'Wie hilft der Bruder bei der Entscheidung?',
+      options:['Er kauft ein neues Handy.','Er zeigt, wie man den Akku schonen kann.','Er schickt die Person zum Reparaturdienst.'],
+      correctIndex:1,answer:'Er zeigt, wie der Akku länger hält.',
+      evidence:'Er zeigt mir, wie ich den Akku schonen kann.'},
+  ],
+  'B1-25':[
+    {prompt:'Was ist das Problem mit der Lieferung?',
+      options:['Das Paket wurde storniert.','Die Sendung gilt als zugestellt, aber das Paket fehlt.','Die Schuhe haben die falsche Größe.'],
+      correctIndex:1,answer:'Die Sendung wird als zugestellt angezeigt, obwohl kein Paket da ist.',
+      evidence:'obwohl vor meiner Tür kein Paket liegt.'},
+    {prompt:'Wo wurde das Paket schließlich abgegeben?',
+      options:['Bei einem Nachbarn.','In einem anderen Geschäft.','Bei der Schule.'],
+      correctIndex:0,answer:'Bei einem Nachbarn.',
+      evidence:'Das Paket wurde beim Nachbarn abgegeben.'},
+  ],
 };
 const SPEAKING = {
-  19:{prompt:'Was kaufst du lieber online und was im Geschäft? Warum?',
+  'A2-19':{prompt:'Was kaufst du lieber online und was im Geschäft? Warum?',
       answer:'Ich kaufe Kleidung lieber im Geschäft, weil ich sie dort anprobieren kann.'},
-  20:{prompt:'Wie reklamierst du höflich ein Kleidungsstück, das nicht passt?',
+  'A2-20':{prompt:'Wie reklamierst du höflich ein Kleidungsstück, das nicht passt?',
       answer:'Entschuldigung, diese Jacke ist zu klein. Kann ich sie bitte umtauschen?'},
+  'B1-24':{prompt:'Wie kannst du bewusst konsumieren? Begründe deinen Vorschlag.',
+    answer:'Ich überlege zuerst, ob ich etwas wirklich brauche, und repariere Dinge, wenn das möglich ist.'},
+  'B1-25':{prompt:'Wie fragst du höflich nach einer fehlenden Lieferung?',
+    answer:'Guten Tag, meine Sendung gilt als zugestellt, aber ich habe das Paket nicht erhalten. Könnten Sie bitte nachforschen?'},
+  'B1-26':{prompt:'Was würdest du tun, wenn dein Zug kurzfristig ausfällt?',
+    answer:'Ich frage nach einer anderen Verbindung, informiere die betroffenen Personen und bleibe ruhig.'},
 };
 
 function makeLiteralWordQuestion(line, position) {
@@ -78,10 +103,11 @@ function makeLiteralWordQuestion(line, position) {
     answer:word,evidence:line};
 }
 
-export function recordedSongQuestions(pack, day) {
+export function recordedSongQuestions(pack,day,level='A2') {
   const lines=lyricLines(pack?.lyrics);
-  if (!lines.length) return [];
-  const checks = LESSON_CHECKS[Number(day)];
+  if(!lines.length)return [];
+  const key=String(level).toUpperCase()+'-'+Number(day);
+  const checks=LESSON_CHECKS[key];
   let questions = checks && checks.every(q=>lines.some(line=>line.trim()===q.evidence))
     ? checks.map((q,i)=>({...q,type:'listening',id:'heard-'+i}))
     : [];
@@ -92,5 +118,5 @@ export function recordedSongQuestions(pack, day) {
     questions = selected.map((line,i)=>makeLiteralWordQuestion(line,i)).filter(Boolean);
   }
   return [...questions.slice(0,2), {type:'speaking',id:'transfer',
-    ...(SPEAKING[Number(day)] || SPEAKING[19])}];
+    ...(SPEAKING[key] || SPEAKING['A2-19'])}];
 }
