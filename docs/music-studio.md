@@ -159,3 +159,13 @@ A1 Day 14 (`A1-3.6`) uses the exact published `Einsteigen – Wir fahren los.mp3
 A1–B1 slide DOM interaction tests cover actual React components: highlighted lyric at playback time, seeking, repeat to the intro, follow off/on, question selection, and teacher answer reveal. Missing timings disable Follow and line seeking. The dedicated music UI workflow runs these tests for future changes. DOM tests simulate media time/layout; they do not certify acoustic timing precision.
 
 Validation: 17 targeted tests and production build pass. The broader music suite reports seven unrelated failures, reproduced unchanged on main `a118ca99` (signature/songbook content, guitar prompt expectation, story defaults, attendance fallback expectations, and legacy social soundtrack files).
+
+## Attendance lobby lyric slide
+
+The existing Smart Class Lobby now offers **Song lyrics** in the right-hand stage when the currently playing public lesson recording has complete matching timestamps. **Show lyrics** selects it directly. QR check-in, attendance count and the class countdown stay in their existing positions; hiding teacher controls does not hide this slide.
+
+The card shows previous/current/next lines, highlights the current line, and shows “Listen to the music…” during the intro and instrumental gaps. Playback repeat resets the lyric clock. Stop, track changes, unavailable metadata and class start remove unavailable lyrics rather than showing another recording's text. No new audio is created or uploaded, and metadata uses the existing read-only music API.
+
+Rotation holds while Lyrics is selected; Next/Previous returns to the other cards and respects the teacher's existing pause setting. Selection is tracked by slide ID so adaptive attendance/start-time reordering cannot interrupt Lyrics. Class/session changes reset the selection.
+
+Validation: 73 targeted checks pass, including a real attendance-page React DOM test with mocked network/audio/Firebase boundaries. It starts the discovered Day 13 track, opens Lyrics, hides teacher controls, advances playback through a line and a gap, verifies persistent QR/countdown/count, navigates Next and stops playback. Hook tests also cover adaptive slide order, repeat, missing/incorrect metadata and timer cleanup. Production Vite build passes.

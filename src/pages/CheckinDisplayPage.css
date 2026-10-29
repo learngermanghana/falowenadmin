@@ -2471,3 +2471,51 @@
     animation: none;
   }
 }
+
+/* The lyrics reuse the right-hand lobby stage; QR/countdown stay in place. */
+.checkin-display-lobby-lyrics {
+  min-width: 0;
+  text-align: center;
+  gap: 12px;
+}
+.checkin-display-lobby-lyrics h2 {
+  font-size: clamp(1.2rem, 2.3vw, 2rem);
+  overflow-wrap: anywhere;
+}
+.checkin-display-lyric-window {
+  display: grid;
+  align-content: center;
+  gap: 12px;
+  min-height: 215px;
+}
+.checkin-display-lyric-window p {
+  margin: 0;
+  color: #64748b;
+  font-size: clamp(1rem, 2vw, 1.6rem);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.checkin-display-lyric-window p.is-current {
+  color: #194fc5;
+  background: #edf3ff;
+  border-radius: 16px;
+  padding: 16px 12px;
+  font-size: clamp(1.3rem, 2.8vw, 2.3rem);
+  font-weight: 850;
+}
+.checkin-display-lyrics-break {
+  min-height: 215px;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  color: #475569;
+}
+.checkin-display-lyrics-break > span { font-size: 3rem; color: #4672c8; }
+.checkin-display-lobby-lyrics > .checkin-display-lyrics-hint {
+  font-size: .85rem;
+  color: #64748b;
+}
+@media (max-width: 600px) {
+  .checkin-display-lyric-window { min-height: 180px; gap: 8px; }
+  .checkin-display-lyric-window p.is-current { padding: 12px 8px; }
+}
