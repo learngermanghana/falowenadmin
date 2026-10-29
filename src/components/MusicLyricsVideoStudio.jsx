@@ -1,6 +1,7 @@
 import fixWebmDuration from "fix-webm-duration";
 import SongTimingEditor from "./SongTimingEditor.jsx";
 import { A1_DAY5_FINAL_RECORDING } from "../data/a1Day5FinalRecording.js";
+import { A1_DAY7_FINAL_RECORDING } from "../data/a1Day7FinalRecording.js";
 import { getReusableSongDraft } from "../data/reusableMusicSongbook.js";
 import { readSongCues, validateLyricCues } from "../utils/songLyrics.js";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -111,41 +112,47 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     }
   },[lyrics,generated?.url,generated?.lyrics,publishedTrack?.objectKey]);
 
+  // Record-specific provisional timing is never applied to a different MP3 take.
   useEffect(()=>{
-    if(!file || assignmentKey !== A1_DAY5_FINAL_RECORDING.assignmentKey) return undefined;
+    const reference=[A1_DAY5_FINAL_RECORDING,A1_DAY7_FINAL_RECORDING].find(x=>x.assignmentKey===assignmentKey);
+    if(!file||!reference)return undefined;
     let cancelled=false;
-    async function loadMatchingDay5Timing(){
+    async function loadRecordedTiming(){
       try{
         if(!window.crypto?.subtle)return;
         const digest=await window.crypto.subtle.digest("SHA-256",await file.arrayBuffer());
         if(cancelled)return;
-        const hash=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,"0")).join("");
-        if(hash!==A1_DAY5_FINAL_RECORDING.sha256)return;
-        setRecordingFingerprint(hash);
-        const recordedLyrics=getReusableSongDraft(A1_DAY5_FINAL_RECORDING.assignmentKey)?.lyrics || "";
-        const songLines=videoLyricLines(recordedLyrics);
-        const starts=A1_DAY5_FINAL_RECORDING.cueStarts;
-        if(songLines.length!==starts.length)throw Error("Day 5 lyrics differ from the uploaded audio timing reference.");
-        const reference=songLines.map((text,i)=>({text,start:starts[i]}));
+        const hash=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,"0")).join("");
+        if(hash!==reference.sha256)return;
+        const recordedLyrics=getReusableSongDraft(reference.assignmentKey)?.lyrics || "";
+        const recordedLines=videoLyricLines(recordedLyrics);
+        if(recordedLines.length!==reference.cueStarts.length)throw Error("Recorded lyrics and draft timestamp counts do not match.");
+        const estimated=recordedLines.map((text,i)=>({text,start:reference.cueStarts[i]}));
         const key="falowen-video-timing:"+assignmentKey;
-        let verified=false, timed=reference;
+        let reviewed=false,selected=estimated;
         try{
-          const old=JSON.parse(localStorage.getItem(key)||"null");
-          const checked=validateLyricCues(old?.cues,songLines);
-          verified=old?.recordingHash===hash && old?.reviewed===true && old?.lyrics===recordedLyrics && checked.length===songLines.length;
-          if(verified)timed=checked;
-          else localStorage.setItem(key,JSON.stringify({lyrics:recordedLyrics,cues:reference,recordingHash:hash,reviewed:false}));
+          const stored=JSON.parse(localStorage.getItem(key)||"null");
+          const checked=validateLyricCues(stored?.cues,recordedLines);
+          reviewed=stored?.recordingHash===hash && stored?.reviewed===true &&
+            stored?.lyrics===recordedLyrics && checked.length===recordedLines.length;
+          if(reviewed)selected=checked;
+          else localStorage.setItem(key,JSON.stringify({lyrics:recordedLyrics,cues:estimated,recordingHash:hash,reviewed:false}));
         }catch{}
+        if(cancelled)return;
+        setRecordingFingerprint(hash);
+        setObjectKey(reference.objectKey||"");
         currentLyricText.current=recordedLyrics;
         setLyricText(recordedLyrics);
-        setCues(timed);
+        setCues(selected);
         setStarts([]);
-        setTimingReview(!verified);
-        setTimingStatus(verified ? "local" : "estimated");
-        setMessage(verified ? "Previously reviewed Day 5 timing restored for the exact uploaded MP3." : "Day 5 timing loaded for the exact uploaded MP3. These are approximate marks. Play the song, adjust each line in the timing editor and confirm after listening.");
-      }catch(cause){if(!cancelled)setError(cause.message||"Could not load Day 5 timing.");}
+        setTimingReview(!reviewed);
+        setTimingStatus(reviewed?"local":"estimated");
+        setMessage(reviewed
+          ?"Previously reviewed timings restored for this exact MP3."
+          :"Draft timing loaded for this exact MP3. Listen to all lyric lines, correct their starts and confirm before publishing shared timing.");
+      }catch(cause){if(!cancelled)setError(cause.message||"Could not load the recording timing.");}
     }
-    loadMatchingDay5Timing();
+    loadRecordedTiming();
     return ()=>{cancelled=true;};
   },[file,assignmentKey]);
   useEffect(()=>{
@@ -201,6 +208,36 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       const lineCount=videoLyricLines(recordedLyrics).length;
       const localComplete=lineCount>0 && local.length===lineCount;
       const restored=localComplete ? local : published?.cues || [];
+      // Only use bundled Day 7 draft marks with the exact published MP3 bytes.
+      if(!published&&!localComplete&&key===A1_DAY7_FINAL_RECORDING.objectKey&&window.crypto?.subtle){
+        try{
+          const remote=await fetch(publishedTrack.audioUrl,{signal:controller.signal});
+          if(!remote.ok)throw Error("Audio unavailable");
+          const digest=await window.crypto.subtle.digest("SHA-256",await remote.arrayBuffer());
+          if(controller.signal.aborted)return;
+          const hash=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,"0")).join("");
+          if(hash===A1_DAY7_FINAL_RECORDING.sha256){
+            const draftLyrics=getReusableSongDraft(A1_DAY7_FINAL_RECORDING.assignmentKey)?.lyrics||"";
+            const draftLines=videoLyricLines(draftLyrics);
+            if(draftLines.length!==A1_DAY7_FINAL_RECORDING.cueStarts.length)throw Error("Day 7 lyric count has changed.");
+            const estimated=draftLines.map((text,i)=>({text,start:A1_DAY7_FINAL_RECORDING.cueStarts[i]}));
+            const localKey="falowen-video-timing:"+key;
+            const stored=JSON.parse(localStorage.getItem(localKey)||"null");
+            const checked=validateLyricCues(stored?.cues,draftLines);
+            const reviewed=stored?.recordingHash===hash&&stored?.reviewed===true&&stored?.lyrics===draftLyrics&&checked.length===draftLines.length;
+            if(!reviewed)localStorage.setItem(localKey,JSON.stringify({lyrics:draftLyrics,cues:estimated,recordingHash:hash,reviewed:false}));
+            currentLyricText.current=draftLyrics;
+            setLyricText(draftLyrics);
+            setCues(reviewed?checked:estimated);
+            setRecordingFingerprint(hash);
+            setTimingReview(!reviewed);
+            setTimingStatus(reviewed?"local":"estimated");
+            setMessage(reviewed?"Reviewed Day 7 timing restored for the matching R2 song."
+              :"Published Day 7 audio matches this MP3. Estimated timing loaded for review; it is not yet published as verified R2 timing.");
+            return;
+          }
+        }catch(e){if(controller.signal.aborted)return;/* Do not guess timings for mismatched R2 audio. */}
+      }
       currentLyricText.current=recordedLyrics;
       setLyricText(recordedLyrics);
       setCues(restored);
@@ -216,7 +253,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     if (publishedTrack?.objectKey || timingStatus==="estimated") setTimingStatus(checked.length===lines.length ? "local" : "edited");
     try {
       localStorage.setItem(timingKey,JSON.stringify({lyrics:lyricText,cues:checked,recordingHash:recordingFingerprint || undefined,reviewed:!timingReview}));
-      if(audioFilenameObjectKey(objectKey)){
+      if(audioFilenameObjectKey(objectKey) && !timingReview){
         localStorage.setItem("falowen-song-timing:"+objectKey,JSON.stringify({objectKey,cues:checked}));
         window.dispatchEvent(new CustomEvent("falowen-song-cues-changed",{detail:objectKey}));
       }
@@ -426,12 +463,18 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     {!exporting && <SongTimingEditor song={{lyrics:lyricText,objectKey:audioFilenameObjectKey(objectKey)}} audio={audioRef} cues={cues} onSave={saveCues}/>}
     {timingReview && completeCues && <div role="group" style={{border:"1px solid #e0c88b",padding:12,borderRadius:12,display:"grid",gap:8}}>
       <strong>Time marks still require listening review</strong>
-      <p style={{margin:0,fontSize:13}}>Open the teacher timing editor above, play the uploaded A1 Day 5 MP3, adjust each sung line and confirm only after you have checked the whole recording. The published R2 timing file stays blocked until then.</p>
+      <p style={{margin:0,fontSize:13}}>Open the teacher timing editor above, play this uploaded MP3, adjust each sung line and confirm only after you have checked the whole recording. The published R2 timing file stays blocked until then.</p>
       <button type="button" disabled={exporting} onClick={()=>{
         setTimingReview(false);
         setTimingStatus("local");
-        try{localStorage.setItem(timingKey,JSON.stringify({lyrics:lyricText,cues,recordingHash:recordingFingerprint,reviewed:true}));}catch{}
-        setMessage("You confirmed the timing for this exact Day 5 recording. You can export the matching timing sidecar once the approved MP3 has an R2 object key.");
+        try{
+          localStorage.setItem(timingKey,JSON.stringify({lyrics:lyricText,cues,recordingHash:recordingFingerprint,reviewed:true}));
+          if(audioFilenameObjectKey(objectKey)){
+            localStorage.setItem("falowen-song-timing:"+objectKey,JSON.stringify({objectKey,cues}));
+            window.dispatchEvent(new CustomEvent("falowen-song-cues-changed",{detail:objectKey}));
+          }
+        }catch{}
+        setMessage("You confirmed this MP3 timing. Export its matching .lyrics.json sidecar and upload it beside the approved R2 audio file.");
       }}>I reviewed and confirmed all lyric time marks</button>
     </div>}}
     <p role="status">Shared line timing: {cues.length}/{lines.length} marked. {timingReview ? "Estimated timing for this exact MP3 — not yet verified. Listen, adjust and save the marks below." : completeCues ? "Ready to use in the video." : "Mark missing lines or import a matching timing file."}</p>

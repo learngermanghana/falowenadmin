@@ -57,10 +57,14 @@ export default function MusicStudioPage() {
   const [copyStatus, setCopyStatus] = useState('');
   const draft = courseMode === 'course' ? getReusableSongDraft(lesson?.assignmentKey) : null;
   const assignmentKey = lesson?.assignmentKey || '';
+  // A previous saved short Day 7 draft must not mask the newly approved recording lyrics.
+  // Preserve other saved teacher edits; the owner can permanently overwrite the stale draft.
+  const obsoleteDay7Draft = assignmentKey === 'A1-3' &&
+    (savedLyrics[assignmentKey] || '').includes('Auf dem Markt sehe ich Äpfel.');
   const lyrics = courseMode === 'course'
     ? Object.prototype.hasOwnProperty.call(lyricsOverrides, assignmentKey)
       ? lyricsOverrides[assignmentKey]
-      : Object.prototype.hasOwnProperty.call(savedLyrics, assignmentKey) && savedLyrics[assignmentKey]
+      : Object.prototype.hasOwnProperty.call(savedLyrics, assignmentKey) && savedLyrics[assignmentKey] && !obsoleteDay7Draft
         ? savedLyrics[assignmentKey] : draft?.lyrics || ''
     : customLyrics;
   const setLyrics = next => {

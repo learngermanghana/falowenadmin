@@ -75,10 +75,10 @@ export const MUSIC_QUESTION_SEEDS_A1 = Object.freeze([
   ],
   [
     "A1-3",
-    "Wie viel kosten die Äpfel?",
+    "Welchen Preis nennt der Verkäufer für die Äpfel?",
     "Zwei Euro.",
-    "Was möchte Mia kaufen?",
-    "Rote Rosen beziehungsweise Blumen.",
+    "Wie viel kostet eine Rose?",
+    "Drei Euro.",
     "Was kaufst du gern auf dem Markt?"
   ],
   [
