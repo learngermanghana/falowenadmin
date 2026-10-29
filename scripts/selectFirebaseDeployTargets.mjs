@@ -8,7 +8,6 @@ export const WORKER_TARGETS = {
   // This change only adds owner/public lyric endpoints to the existing API.
   // Avoid redeploying unrelated Cloud Run workers for an editor feature.
   "functions/musicStudioLyrics.js": ["api"],
-  "functions/index.js": ["api"],
   "functions/automaticMarkingPipeline.cjs": ["api", "markCourseSubmissionAutomatically"],
   "functions/automaticCourseMarking.js": ["markCourseSubmissionAutomatically"],
   "functions/automaticCourseMarking.test.cjs": [],
@@ -48,6 +47,17 @@ export function selectFirebaseDeployTargets({ changedPaths, predeployPaths = [],
   if (full || changedPaths === null) return { mode: "full", targets: [], reason: "Full deployment or no reliable successful baseline." };
   const targets = new Set();
   const predeploy = new Set(predeployPaths);
+  // The index module exports every function. It is safe to target only the API
+  // specifically when the only changed function sources are its route registration
+  // and the new lyric-handler module. Any other function modification remains full.
+  const changedFunctionPaths = changedPaths.filter(path => path.startsWith("functions/"));
+  if (changedFunctionPaths.includes("functions/musicStudioLyrics.js")
+    && changedFunctionPaths.every(path => path === "functions/index.js" || path === "functions/musicStudioLyrics.js")
+    && !changedPaths.some(path => predeploy.has(path)
+      || path === "firebase.json"
+      || (path.startsWith("scripts/") && path !== "scripts/selectFirebaseDeployTargets.mjs"))) {
+    return {mode:"targeted",targets:["api"],reason:"Only Music Studio lyric routes in the existing API changed."};
+  }
   for (const path of changedPaths) {
     if (FRONTEND_ONLY_BUILD_SCRIPTS.has(path) && !predeploy.has(path)) continue;
     if (WORKER_TARGETS[path]) {
