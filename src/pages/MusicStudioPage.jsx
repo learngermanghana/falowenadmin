@@ -63,10 +63,11 @@ export default function MusicStudioPage() {
     (savedLyrics[assignmentKey] || '').includes('Auf dem Markt sehe ich Äpfel.');
   const obsoleteDay8Draft = assignmentKey === 'A1-4' &&
     (savedLyrics[assignmentKey] || '').includes('Im Kurs sitzt mein Freund Sam.');
+  const supersededWeekendLyrics = assignmentKey === 'A2-8.21' && (savedLyrics[assignmentKey] || '').startsWith('[Verse 1]\nAm Freitag fragen wir');
   const lyrics = courseMode === 'course'
     ? Object.prototype.hasOwnProperty.call(lyricsOverrides, assignmentKey)
       ? lyricsOverrides[assignmentKey]
-      : Object.prototype.hasOwnProperty.call(savedLyrics, assignmentKey) && savedLyrics[assignmentKey] && !obsoleteDay7Draft && !obsoleteDay8Draft
+      : Object.prototype.hasOwnProperty.call(savedLyrics, assignmentKey) && savedLyrics[assignmentKey] && !obsoleteDay7Draft && !obsoleteDay8Draft && !supersededWeekendLyrics
         ? savedLyrics[assignmentKey] : draft?.lyrics || ''
     : customLyrics;
   const setLyrics = next => {
