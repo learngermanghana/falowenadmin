@@ -15,6 +15,24 @@ export default function SongTimingEditor({song, audio, cues, onSave}) {
     if (cues.length && start <= cues.at(-1).start) { setError('Die nächste Zeile muss nach der letzten Markierung beginnen.'); return; }
     if (cues.length < lines.length) save([...cues,{start,text:lines[cues.length]}]);
   }
+  function updateLineTime(index,value) {
+    const parsed=Number(value);
+    const previous=index>0 ? cues[index-1]?.start : -1;
+    const next=index<cues.length-1 ? cues[index+1]?.start : Number.POSITIVE_INFINITY;
+    if(!Number.isFinite(parsed)||parsed<0||parsed<=previous||parsed>=next){
+      setError('Diese Zeitmarke muss zwischen der vorherigen und der nächsten Zeile liegen.');
+      return;
+    }
+    save(cues.map((cue,i)=>i===index?{...cue,start:Math.round(parsed*100)/100}:cue));
+  }
+  function useCurrentTime(index) {
+    const player=audio.current;
+    if(!player || player.readyState<1 || !Number.isFinite(player.currentTime)){
+      setError('Bitte zuerst das Lied laden und abspielen.');
+      return;
+    }
+    updateLineTime(index,player.currentTime);
+  }
   async function importFile(event) {
     const file=event.target.files?.[0]; if(!file) return;
     try {
@@ -40,6 +58,17 @@ export default function SongTimingEditor({song, audio, cues, onSave}) {
       <button type="button" disabled={!objectKey || !lines.length || cues.length!==lines.length} onClick={exportFile}>Zeitmarken für Cloudflare exportieren</button>
       <label>Zeitmarken importieren <input type="file" accept="application/json,.json" onChange={importFile}/></label>
     </div>
+    {cues.length>0 && <div className="music-timing-line-editor" style={{maxHeight:360,overflowY:"auto",border:"1px solid #dbe5df",borderRadius:12,padding:10,display:"grid",gap:8}}>
+      <strong>Jede Liedzeile zeitlich korrigieren</strong>
+      <small>Spiele die Aufnahme, setze den Anfang jeder gesungenen Zeile und verlasse das Zahlenfeld zum Speichern.</small>
+      {cues.map((cue,i)=><div key={i} style={{display:"grid",gridTemplateColumns:"minmax(0,1fr) auto auto",alignItems:"center",gap:7,paddingBottom:6,borderBottom:"1px solid #e6eee9"}}>
+        <span style={{fontSize:13}}>{i+1}. {cue.text}</span>
+        <input type="number" min="0" step="0.01" key={i+"-"+cue.start} defaultValue={cue.start}
+          aria-label={"Zeilenanfang "+(i+1)+" (Sekunden)"}
+          style={{width:82,maxWidth:"100%"}} onBlur={event=>updateLineTime(i,event.currentTarget.value)}/>
+        <button type="button" onClick={()=>useCurrentTime(i)}>Jetzt</button>
+      </div>)}
+    </div>}
     <p>Nach der Prüfung: <strong>{filename}</strong> neben der MP3 in <code>{objectKey?.slice(0,objectKey.lastIndexOf('/')+1)}</code> hochladen. Admin-Folien und Falowen Music lesen dieselbe Datei. Die MP3 bleibt unverändert.</p>
     {cues.length>0 && <p>Letzte Markierung: {songTime(cues.at(-1).start)}</p>}
     {error && <p role="alert">{error}</p>}
