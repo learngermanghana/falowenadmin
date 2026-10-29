@@ -65,7 +65,7 @@ export default function MusicStudioPage() {
   const [songStyle, setSongStyle] = useState('story');
   const [storyIdea, setStoryIdea] = useState('');
   const [lyricTreatment, setLyricTreatment] = useState('exact');
-  const rewriteFromLyrics = courseMode === 'course' && vocalMode === 'voice' && songStyle === 'story' && lyricTreatment === 'story-source';
+  const rewriteFromLyrics = courseMode === 'course' && vocalMode === 'voice' && songStyle === 'story' && lyricTreatment === 'story-source' && canStartNewRecordingDraft;
   const selectedProduction = getMusicProductionProfile(productionProfile);
   const effectiveBrief = styleMode === 'auto' && courseMode === 'course'
     ? suggestLessonMusicDirection(lesson, {
@@ -230,7 +230,7 @@ export default function MusicStudioPage() {
         <label htmlFor="music-voice">Vocals and instrumental balance</label><select id="music-voice" value={vocalMode} onChange={e => setVocalMode(e.target.value)}><option value="voice">Clear lead vocals (recommended)</option><option value="instrumental">Instrumental only — no singer</option></select>
         {vocalMode === 'voice' && <><label htmlFor="music-backing">Accompaniment behind the singer</label><select id="music-backing" value={backingLevel} onChange={e => setBackingLevel(e.target.value)}><option value="very-soft">Very quiet — voice upfront (recommended)</option><option value="soft">Soft — moderate accompaniment</option></select><p className="music-note">These settings guide Google’s mix; they cannot separately turn down instruments in an already-generated MP3.</p></>}
         <label htmlFor="music-lyrics">{draft ? `Prewritten lyrics · ${draft.title}` : 'Your lyrics or vocabulary draft'} <span>(editable)</span></label>
-        <textarea id="music-lyrics" maxLength={5500} rows={10} value={lyrics} onChange={e => { setLyrics(e.target.value); setCopyStatus(''); }} placeholder={'[Verse 1]\\nWrite your German and English lyrics here…\\n\\n[Chorus]'} />
+        <textarea id="music-lyrics" maxLength={5500} rows={10} value={lyrics} readOnly={Boolean(draft) && !canStartNewRecordingDraft} onChange={e => { setLyrics(e.target.value); setCopyStatus(''); }} placeholder={'[Verse 1]\\nWrite your German and English lyrics here…\\n\\n[Chorus]'} />
         {vocalMode === 'voice' && <section className="music-story-review" aria-label="Song storyline review">
           <strong>Storyline check · free, no music generation</strong>
           <p className="music-note">A memorable song needs one believable situation: a person and goal, a complication, a response, and an outcome. Sections are detected automatically; only you can judge whether the story really connects.</p>
@@ -273,7 +273,7 @@ export default function MusicStudioPage() {
         {!draft && lyrics.trim() && <button type="button" onClick={saveCurrentLyrics}>Download lyrics + music style (.txt)</button>}
         {copyStatus && <p role="status" className="music-note">{copyStatus}</p>}
         {draft && <p className="music-note">Original approved songbook lyrics are always loaded first. Storyline revisions are opt-in, and only available after confirming that the lesson has no published audio. Never reuse previous synchronized timestamps with revised lyrics. Choose <strong>Source vocabulary — rewrite into a story</strong> only for a separate, future recording. Local edits are temporary until exported.</p>}
-        {courseMode === 'course' && vocalMode === 'voice' && songStyle === 'story' && lyrics.trim() && <>
+        {courseMode === 'course' && vocalMode === 'voice' && songStyle === 'story' && lyrics.trim() && canStartNewRecordingDraft && <>
           <label htmlFor="music-lyric-treatment">Use the text above as</label>
           <select id="music-lyric-treatment" value={lyricTreatment} onChange={e => setLyricTreatment(e.target.value)}>
             <option value="exact">Exact lyrics — keep my words</option>
