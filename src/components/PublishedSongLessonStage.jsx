@@ -1,3 +1,5 @@
+import { hasCompleteSongTiming } from '../utils/songLyrics.js';
+import { recordedSongQuestions } from '../utils/recordedLessonMusic.js';
 import { useEffect, useRef, useState } from 'react';
 import { getReusableSongDraft } from '../data/reusableMusicSongbook.js';
 import { getReusableMusicQuestions } from '../data/reusableMusicQuestions.js';
@@ -62,7 +64,8 @@ export default function PublishedSongLessonStage({ assignmentKey, onExit = null,
   }, [assignmentKey]);
 
   if (!song || !bank || !recording) return null;
-  const questions = bank.questions;
+  const questions = recordedLyrics !== song.lyrics ? recordedSongQuestions({lyrics:recordedLyrics},recording.day,recording.level) : bank.questions;
+  const synchronized=hasCompleteSongTiming(cues,recordedLyrics);
   const question = questions[questionIndex];
   const musicLink = recording.trackId
     ? `https://music.falowen.app/?track=${encodeURIComponent(recording.trackId)}`
@@ -101,7 +104,8 @@ export default function PublishedSongLessonStage({ assignmentKey, onExit = null,
       {view==='lyrics' && <div className="published-song-lesson__section">
         <h3>Liedtext · {song.title}</h3>
         <p>Lies mit und achte auf die wichtigen Ausdrücke aus Kapitel {song.assignmentKey}.</p>
-        <label><input type="checkbox" checked={follow} onChange={e=>setFollow(e.target.checked)}/> Mitlesen folgen</label>
+        <label><input type="checkbox" disabled={!synchronized} checked={synchronized && follow} onChange={e=>setFollow(e.target.checked)}/> Mitlesen folgen</label>
+        {!synchronized && <p role="status">Zeitmarken fehlen für diese Aufnahme. Mitlesen wird nach der Veröffentlichung der passenden Zeitmarken verfügbar.</p>}
         <LessonSongLyrics song={displaySong} cues={cues} time={time} onSeek={seconds=>{if(audio.current){audio.current.currentTime=seconds;setTime(seconds);}}} follow={follow}/>
         <SongTimingEditor song={displaySong} audio={audio} cues={cues} onSave={saveCues}/>
 

@@ -7,8 +7,8 @@ import { getReusableSongDraft } from '../src/data/reusableMusicSongbook.js';
 
 test('only selected approved R2 music songs activate in teaching slides and attendance', () => {
   const published=CURATED_MUSIC_DAYS.filter(item=>item.status==='published');
-  assert.equal(published.length,4);
-  assert.deepEqual(published.map(x=>x.assignmentKey),['A1-2','A1-3.5','A1-14.1','A2-7.18']);
+  assert.equal(published.length,5);
+  assert.deepEqual(published.map(x=>x.assignmentKey),['A1-2','A1-3.5','A1-3.6','A1-14.1','A2-7.18']);
   for(const item of published){
     if (item.discover) {
       assert.equal(item.assignmentKey,'A1-3.5');

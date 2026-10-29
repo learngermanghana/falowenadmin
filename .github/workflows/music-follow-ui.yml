@@ -1,0 +1,34 @@
+name: Music lyric following and questions
+on:
+  pull_request:
+    paths:
+      - 'src/components/*Song*.jsx'
+      - 'src/hooks/useSongTiming.js'
+      - 'src/utils/songLyrics.js'
+      - 'src/utils/recordedLessonMusic.js'
+      - 'src/data/curatedLessonMusic.js'
+      - 'tests/music-follow-ui.test.js'
+      - 'package*.json'
+      - '.github/workflows/music-follow-ui.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/components/*Song*.jsx'
+      - 'src/hooks/useSongTiming.js'
+      - 'src/utils/songLyrics.js'
+      - 'src/utils/recordedLessonMusic.js'
+      - 'src/data/curatedLessonMusic.js'
+      - 'tests/music-follow-ui.test.js'
+jobs:
+  music-ui:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: node --test tests/music-follow-ui.test.js tests/recorded-lesson-music.test.js tests/a1-music-presenter-stage.test.js

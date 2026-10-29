@@ -33,6 +33,10 @@ export function verifiedRecordedLyrics(pack, track) {
 }
 
 const LESSON_CHECKS = {
+  'A1-14': [
+    {prompt:'Wo müssen Mia und Ben umsteigen?',options:['In Hannover.','In Berlin.','In Accra.'],correctIndex:0,answer:'In Hannover.',evidence:'Wir müssen in Hannover umsteigen,'},
+    {prompt:'Wo möchten sie ankommen?',options:['In Hamburg.','In Berlin.','In München.'],correctIndex:1,answer:'In Berlin.',evidence:'wir möchten in Berlin ankommen.'},
+  ],
   'A2-19': [
     {prompt:'Warum gehen Mia und ihre Begleitung zuerst ins Geschäft?',
       options:['Weil Mia ihre Schuhgröße nicht genau kennt.','Weil alle Schuhe online ausverkauft sind.','Weil das Geschäft heute schließt.'],
@@ -75,6 +79,7 @@ const LESSON_CHECKS = {
   ],
 };
 const SPEAKING = {
+  'A1-14':{prompt:'Wohin möchtest du mit dem Zug fahren? Wo musst du umsteigen?',answer:'Ich möchte nach Berlin fahren. Ich muss in Hannover umsteigen.'},
   'A2-19':{prompt:'Was kaufst du lieber online und was im Geschäft? Warum?',
       answer:'Ich kaufe Kleidung lieber im Geschäft, weil ich sie dort anprobieren kann.'},
   'A2-20':{prompt:'Wie reklamierst du höflich ein Kleidungsstück, das nicht passt?',
@@ -118,5 +123,5 @@ export function recordedSongQuestions(pack,day,level='A2') {
     questions = selected.map((line,i)=>makeLiteralWordQuestion(line,i)).filter(Boolean);
   }
   return [...questions.slice(0,2), {type:'speaking',id:'transfer',
-    ...(SPEAKING[key] || SPEAKING['A2-19'])}];
+    ...(SPEAKING[key] || {prompt:'Worum geht es in diesem Lied? Erzähle in deinen eigenen Worten.',answer:'Benutze einen Ausdruck aus dem Lied.'})}];
 }

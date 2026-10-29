@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { prepareLessonSong } from '../services/lessonSongService.js';
-import { lyricLines, songTime } from '../utils/songLyrics.js';
+import { lyricLines, songTime, hasCompleteSongTiming } from '../utils/songLyrics.js';
 import useSongTiming from '../hooks/useSongTiming.js';
 import SongTimingEditor from './SongTimingEditor.jsx';
 import LessonSongLyrics from './LessonSongLyrics.jsx';
@@ -24,6 +24,7 @@ export default function LessonSongStage({ song, mode = 'listen' }) {
   const [step, setStep] = useState('listen');
   const activeMode = mode === 'all' ? step : mode;
   const lines = lyricLines(recordedLyrics);
+  const synchronized=hasCompleteSongTiming(cues,recordedLyrics);
   const item = (activeMode === 'speak' ? song.speaking : song.questions)[question];
   useEffect(() => () => { request.current?.abort(); }, []);
   async function load() {
@@ -54,7 +55,7 @@ export default function LessonSongStage({ song, mode = 'listen' }) {
       {error && <p role="alert">{error}</p>}
     </div>
     <div className={`lesson-song-columns ${activeMode === 'listen' ? 'is-listen' : ''}`}>
-      <div><div className="lesson-song-panel-heading"><strong>Liedtext</strong><label><input type="checkbox" checked={follow} onChange={e => setFollow(e.target.checked)} /> Mitlesen folgen</label></div>
+      <div><div className="lesson-song-panel-heading"><strong>Liedtext</strong><label><input type="checkbox" disabled={!synchronized} checked={synchronized && follow} onChange={e => setFollow(e.target.checked)} /> Mitlesen folgen</label></div>
         <LessonSongLyrics song={displaySong} cues={cues} time={time} onSeek={url ? seek : undefined} follow={follow} />
         <p className="lesson-song-note">{cues.length === lines.length ? 'Zeilen mit Zeitmarken springen zur passenden Stelle im Lied.' : cues.length ? `${cues.length}/${lines.length} Zeilen synchronisiert. Weitere Zeitmarken können unten ergänzt werden.` : 'Der vollständige gespeicherte Liedtext ist sichtbar. Für die genaue Hervorhebung zuerst Zeitmarken zur Aufnahme setzen oder importieren.'}</p>
       </div>
