@@ -8,6 +8,11 @@ import { STUDIO_COURSE_LEVELS } from '../utils/hoerenCourseCatalog.js';
 import { getMusicTopicStyle, suggestLessonMusicDirection } from '../utils/musicTopicStyle.js';
 import { MUSIC_PRODUCTION_PROFILES, getMusicProductionProfile } from '../utils/musicProductionProfiles.js';
 import { getReusableSongDraft, getReusableSongDrafts } from '../data/reusableMusicSongbook.js';
+function isSupersededMusicLyrics(key, text) {
+  return (key === 'A1-1.3' && text.includes('Karim sagt: Das ist Bello.') && text.includes('Hallo, ich heiße Sara.')) ||
+    (key === 'A1-2.3' && text.includes('Am Sonntag bin ich zu Hause.') && text.includes('Mein Vater liest ein Buch.'));
+}
+
 import { musicSongTeachingPackText } from '../data/reusableMusicQuestions.js';
 import ReusableMusicQuestions from '../components/ReusableMusicQuestions.jsx';
 import MusicLyricsVideoStudio from '../components/MusicLyricsVideoStudio.jsx';
@@ -101,7 +106,16 @@ export default function MusicStudioPage() {
     setLoadingLyrics(true);
     setLyricsNotice('');
     loadSavedMusicLyrics(assignmentKey).then(data => {
-      if (active) setSavedLyrics(previous => ({ ...previous, [assignmentKey]: data.found ? data.lyrics : '' }));
+      if (!active) return;
+      setSavedLyrics(previous => ({ ...previous, [assignmentKey]: data.found ? data.lyrics : '' }));
+      if (data.found && isSupersededMusicLyrics(assignmentKey, data.lyrics)) {
+        const updated = getReusableSongDraft(assignmentKey)?.lyrics;
+        if (updated) {
+          setLyricsOverrides(previous => Object.prototype.hasOwnProperty.call(previous, assignmentKey)
+            ? previous : { ...previous, [assignmentKey]: updated });
+          setLyricsNotice('New approved course lyrics are loaded. The cloud still holds the older draft. Click Overwrite Lyrics to save this new version permanently.');
+        }
+      }
     }).catch(error => {
       if (active) setLyricsNotice('Could not check the saved lyrics: ' + error.message);
     }).finally(() => { if (active) setLoadingLyrics(false); });
