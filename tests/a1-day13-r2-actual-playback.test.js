@@ -27,6 +27,7 @@ test('Day13 selects the genuine published MP3 including spaces, commas and capit
 });
 
 test('never select unknown files or a duplicate ambiguous Day13 song',()=>{
+  assert.equal(waitingRoomDiscoveredMusicTrack({tracks:[other]}, {level:'A1',day:13,assignmentKey:'A1-3.5'}),null);
   const payload={tracks:[other,approved]};
   assert.equal(waitingRoomDiscoveredMusicTrack(payload,{level:'A1',day:13,assignmentKey:'A1-999'}),null);
   const duplicate={...approved,id:'r2-a1-day-13-another',objectKey:'music/a1/day-13/another.mp3',
