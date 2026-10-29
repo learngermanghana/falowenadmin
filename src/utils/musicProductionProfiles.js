@@ -46,6 +46,30 @@ export const MUSIC_PRODUCTION_PROFILES = Object.freeze([
     direction: 'Create an original reflective acoustic piano pop song at 88 BPM in G major. Use a gently flowing eight-chord progression: Gadd9 – D/F# – Em7 – Bm7 – Cmaj7 – G/B – Am7 – Dsus4 resolving to D. Play a natural close-miked acoustic grand piano with graceful left-hand movement and light right-hand arpeggios. Add delicate warm bass, soft rim-click or brushed snare, barely-there atmospheric pads and short breathy flute replies only in gaps between vocal lines. Begin intimate, introduce a quietly memorable verse melody, let the chorus open emotionally with sustained notes and wide piano voicings, then add restrained textures in later sections before a complete harmonic resolution. Keep the vocals vulnerable and unhurried; avoid copying any existing song melody or hook.'
   },
   {
+    id: 'fingerstyle-guitar',
+    label: 'Fingerstyle acoustic · intimate storytelling',
+    description: 'Warm steel-string fingerpicking, emotional adult singer-songwriter melody, no drums.',
+    direction: 'Original intimate singer-songwriter acoustic folk-pop, 76 BPM in D major. Main four-bar progression: Dadd9 – A/C# – Bm7 – Gmaj7, with a gentle Em7 – Gadd9 – Asus4 – A pre-chorus lift. Record a real, close, warm steel-string acoustic guitar with a moving fingerpicked bass line and understated high-string arpeggios. Begin alone with guitar and one emotionally honest lead voice; use a second soft guitar harmony only for the last chorus. Avoid drums, handclaps, bells, novelty percussion, group chants and childlike singalong rhythms. Let verse phrasing breathe, write a mature conversational melodic hook and finish with a softly resolved acoustic cadence.'
+  },
+  {
+    id: 'guitar-piano-duet',
+    label: 'Acoustic guitar + piano · emotional pop',
+    description: 'Moving guitar strums, expressive acoustic piano chords, rich chorus without excess drums.',
+    direction: 'Original warm contemporary acoustic pop with two complementary live instruments, 84 BPM in C major. Main eight-bar progression: Cadd9 – G/B – Am7 – Fmaj7 – C/E – Dm7 – Gsus4 – G. Play a restrained steel-string guitar with soft picked notes in the verses and broad, unhurried strums in the chorus; add a close-miked acoustic piano using inversions and gentle answering arpeggios. Sparse warm bass enters for the second verse; light brushed percussion only in the final chorus. Develop a moving verse to pre-chorus to cathartic chorus with natural rising melody, adult emotional color and a beautiful resolution. No nursery-rhyme bounce, children's claps or forced end-word rhymes.'
+  },
+  {
+    id: 'guitar-neo-soul',
+    label: 'Soul guitar · mellow R&B groove',
+    description: 'Clean electric guitar chord extensions, rich harmony and a laid-back bass-and-snare pocket.',
+    direction: 'Original mellow guitar-led neo-soul / soft R&B at 82 BPM in A minor. Main four-bar progression: Am9 – D13 – Gmaj9 – Cmaj7, with Bm7b5 – E7sus4 – E7 as an occasional turnaround back to Am9. Clean warm electric guitar plays sophisticated muted chord stabs, melodic fills in spaces between the vocals and soft upper-register voicings. Support with rounded melodic electric bass, subtle rim snare and pocket kick, occasional understated acoustic piano and short breathy flute replies. Verse intimate and rhythmic, chorus emotionally wider with extended chords and expressive adult melodic phrasing. No childish call-and-response, novelty whistles or busy guitar solos over lyrics.'
+  },
+  {
+    id: 'afro-acoustic-guitar',
+    label: 'Acoustic Afro-soul · guitar groove',
+    description: 'Beautiful plucked guitar, subtle syncopated African rhythm, warm bass and smooth vocals.',
+    direction: 'Original mellow acoustic Afro-soul / contemporary African guitar pop at 94 BPM in G major. Main four-bar progression: Gmaj9 – D/F# – Em7 – Cadd9, with Am7 – Dsus4 – D as a graceful turnaround. Lead with an organic acoustic guitar playing an intricate melodic picking figure, then gentle syncopated guitar strums, rounded bass and a tasteful soft shaker and rim percussion groove. Give a few expressive flute responses to the guitar motif, but never drown the warm single lead singer. Build the chorus with a wider guitar strum and subtle piano support; keep the groove refined, soulful and human rather than a children's classroom singalong or chant.'
+  },
+  {
     id: 'piano-pop',
     label: 'Acoustic piano · modern pop',
     description: 'Clear pop structure, warm piano, tasteful bass and gentle percussion.',
