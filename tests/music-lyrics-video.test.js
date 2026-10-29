@@ -70,9 +70,9 @@ test("Falowen Music keeps both tabs mounted and the video reuses public timings"
   assert.match(studio,/role="tablist"/);
   assert.match(studio,/Music Generator/);
   assert.match(studio,/Lyrics Video Studio/);
-  assert.match(studio,/style=\\{\\{display:studioTab === 'video' \\? undefined : 'none'\\}\\}/);
-  assert.doesNotMatch(studio,/key=\\{courseMode \\+ '-' \\+ assignmentKey\\}/);
-  assert.match(video,/api\\/music-lyrics\\?key=/);
+  assert.ok(studio.includes("style={{display:studioTab === 'video' ? undefined : 'none'}}"));
+  assert.ok(!studio.includes("key={courseMode + '-' + assignmentKey}"));
+  assert.ok(video.includes("api/music-lyrics?key="));
   assert.match(video,/verifiedPublishedVideoTiming/);
   assert.match(video,/publishedTrack && !completeCues/);
 });
