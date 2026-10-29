@@ -46,6 +46,12 @@ export const MUSIC_PRODUCTION_PROFILES = Object.freeze([
     direction: 'Create an original reflective acoustic piano pop song at 88 BPM in G major. Use a gently flowing eight-chord progression: Gadd9 – D/F# – Em7 – Bm7 – Cmaj7 – G/B – Am7 – Dsus4 resolving to D. Play a natural close-miked acoustic grand piano with graceful left-hand movement and light right-hand arpeggios. Add delicate warm bass, soft rim-click or brushed snare, barely-there atmospheric pads and short breathy flute replies only in gaps between vocal lines. Begin intimate, introduce a quietly memorable verse melody, let the chorus open emotionally with sustained notes and wide piano voicings, then add restrained textures in later sections before a complete harmonic resolution. Keep the vocals vulnerable and unhurried; avoid copying any existing song melody or hook.'
   },
   {
+    id: 'ghana-highlife',
+    label: 'Ghanaian guitar highlife · frikyiwa rhythm',
+    description: 'Interlocking Ghanaian highlife guitars with a recurring three-hit metallic frikyiwa ko-ko-ko accent.',
+    direction: 'Original Ghanaian guitar-band highlife with palm-wine-guitar character, 94 BPM in G major, easy 4/4 pulse and a lightly syncopated pocket. Main four-bar progression: Gmaj7 – D/F# – Em7 – Cadd9, with a short Am7 – D7 turnaround before the chorus. Two clean interlocking electric guitars trade lyrical highlife melodies: one plucked repeating rhythmic figure, the other a warm melodic response between vocal lines. Add smooth live bass, restrained kick/snare and soft shaker; most importantly add a real-sounding high-pitched metallic FRIKYIWA / FIRIKYIWA castanet-like percussion. Its recognizable pattern is three short crisp offbeat taps—ko-ko-ko—repeated as a subtle Ghanaian highlife timeline against the steady pulse, with natural rests and human timing. The three taps are an instrumental percussion cue, never sung or spoken as words. It is NOT a conga, wooden block or loud novelty sound. Keep the frikyiwa audible yet behind the lead vocal, and let the guitar counter-rhythms weave around it. Verse sparse, second verse develops the groove, chorus broad and soulful with a gentle harmonic lift, final guitar turnaround and resolved outro. Mature warm Ghanaian highlife, never children's music or a chant; do not imitate a particular recording.'
+  },
+  {
     id: 'fingerstyle-guitar',
     label: 'Fingerstyle acoustic · intimate storytelling',
     description: 'Warm steel-string fingerpicking, emotional adult singer-songwriter melody, no drums.',
