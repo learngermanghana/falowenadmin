@@ -59,9 +59,9 @@ export const MUSIC_SONG_DRAFTS_A2_PART2 = Object.freeze([
   {
     "assignmentKey": "A2-9.23",
     "title": "Mein Weg zur Arbeit",
-    "musicStyle": "Afro-Pop, 94 BPM: warm melodic Afro-pop with gentle rhythmic guitar, light shakers, soft keyboard chords and restrained bass; clear relaxed vocals. One lead singer, clear German phrases, quiet instrumental mix.",
+    "musicStyle": "Ghanaian Highlife, 94 BPM: lively but relaxed mature Ghanaian highlife for a commuting story, with flowing clean interlocking lead and rhythm guitars, warm bass, gentle drum-kit pulse, small piano flourishes and soft shaker. A real-sounding high metallic frikyiwa / firikyiwa castanet plays the recurring three-hit syncopated offbeat ko-ko-ko rhythmic motif with human timing and brief rests; it is percussion, never a sung lyric. Not a conga, not a woodblock. Expand the guitar melody naturally in the chorus and add a tasteful instrumental guitar turnaround before the resolved outro. Preserve natural German pronunciation and keep the lead vocal clearly above percussion.",
     "lyrics": "[Verse 1]\nJeden Morgen fahre ich mit dem Bus.\nHeute steht er lange im Verkehr.\nMeine Kollegin wartet schon im Büro.\nIch schicke ihr eine kurze Nachricht.\n\n[Chorus]\nWie kommst du heute zur Arbeit?\nMit dem Bus, zu Fuß, mit dem Rad.\nJeder findet seinen Weg.\n\n[Verse 2]\nMorgen möchte ich früher losfahren.\nVielleicht ist das Fahrrad schneller.\nIch probiere den neuen Weg aus.\nUnd komme schon vor neun Uhr an.\n\n[Chorus]\nWie kommst du heute zur Arbeit?\nMit dem Bus, zu Fuß, mit dem Rad.\nJeder findet seinen Weg.\n\n[Outro]\nMein Weg ist jetzt viel entspannter.\nIch habe sogar Zeit für einen Kaffee.\nMit Falowen finde ich Worte für den Weg.",
-    "genre": "Afro-Pop"
+    "genre": "Ghanaian Highlife"
   },
   {
     "assignmentKey": "A2-9.24",

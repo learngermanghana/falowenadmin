@@ -73,9 +73,9 @@ export const MUSIC_SONG_DRAFTS_A1 = Object.freeze([
   {
     "assignmentKey": "A1-4",
     "title": "Woher kommst du?",
-    "musicStyle": "Afro-Pop, 92 BPM: bright Afro-pop with gentle syncopated electric guitar, warm keyboard chords, light hand percussion and a subtle bass groove; uplifting and easy to sing. One lead singer, clear German phrases, quiet instrumental mix.",
+    "musicStyle": "Ghanaian Highlife, 92 BPM: warm guitar-band highlife with crisp interlocking clean electric-guitar phrases, a melodic bass line, light live kit, restrained shaker and warm piano chords. Add a clearly recognizable frikyiwa (firikyiwa) metallic castanet percussion figure: three quick syncopated offbeat taps, ko-ko-ko, repeating against the steady guitar groove with natural gaps. Instrumental taps only; do not sing ko-ko-ko. This is a Ghanaian iron castanet sound, not conga or woodblock. Let the counter-melodic guitar and frikyiwa answer the verses, build a joyful mature chorus, then finish with a complete warm cadence. One articulate German lead singer, percussion well behind vocals.",
     "lyrics": "[Verse 1]\nIm Kurs sitzt mein Freund Sam.\nEr fragt: Woher kommst du?\nIch sage: Aus Ghana.\nUnd du? Aus Österreich.\n\n[Chorus]\nWoher kommst du? Welche Sprache sprichst du?\nIch spreche Deutsch und Englisch.\nWir verstehen uns jeden Tag.\n\n[Verse 2]\nMia kommt aus Italien.\nSie spricht Italienisch.\nWir sprechen heute Deutsch.\nUnd lernen neue Wörter.\n\n[Chorus]\nWoher kommst du? Welche Sprache sprichst du?\nIch spreche Deutsch und Englisch.\nWir verstehen uns jeden Tag.\n\n[Outro]\nViele Länder, viele Sprachen.\nEin Kurs, ein schönes Hallo.\nMit Falowen spreche ich über Länder.",
-    "genre": "Afro-Pop"
+    "genre": "Ghanaian Highlife"
   },
   {
     "assignmentKey": "A1-5",

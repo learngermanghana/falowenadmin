@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { getReusableSongDraft } from '../src/data/reusableMusicSongbook.js';
+import { getMusicProductionProfile } from '../src/utils/musicProductionProfiles.js';
+import { buildFalowenMusicPrompt } from '../src/utils/musicGenerationPrompt.js';
 const require = createRequire(import.meta.url);
 const { validate, reserve, extract, createHandler } = require('../functions/musicStudio');
 const request = { mode: 'song', prompt: 'A quiet guitar song', requestId: '12345678-1234-1234-1234-123456789012' };
@@ -63,4 +66,23 @@ test('successful generation uses stateless Google API and returns downloadable M
   const res = response(); await handler({ headers: {}, method: 'POST', body: request }, res);
   assert.equal(res.code, 200); assert.equal(res.body.audio, 'YWJj'); assert.equal(db.read().busyUntil, 0);
   assert.equal(JSON.stringify(db.read()).includes(request.prompt), false);
+});
+
+test('Ghanaian highlife keeps German lyrics intact and adds instrumental frikyiwa', () => {
+  for (const id of ['A1-4', 'A2-9.23', 'B1-8.24']) {
+    const song = getReusableSongDraft(id);
+    assert.equal(song.genre, 'Ghanaian Highlife');
+    assert.match(song.musicStyle, /frikyiwa/i);
+    assert.match(song.musicStyle, /ko-ko-ko/);
+    assert.match(song.musicStyle, /guitar/i);
+    assert.doesNotMatch(song.lyrics, /ko-ko-ko|frikyiwa/i);
+  }
+  const palette = getMusicProductionProfile('ghana-highlife');
+  assert.equal(palette.id, 'ghana-highlife');
+  const song = getReusableSongDraft('A1-4');
+  const prompt = buildFalowenMusicPrompt({ brief: song.musicStyle, lyrics: song.lyrics,
+    productionProfile: 'ghana-highlife', durationSeconds: 150 });
+  assert.match(prompt, /three short crisp offbeat taps/);
+  assert.match(prompt, /VOICE FIRST/);
+  assert.ok(prompt.includes(song.lyrics));
 });

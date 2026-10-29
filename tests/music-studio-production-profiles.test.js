@@ -7,7 +7,7 @@ import { buildFalowenMusicPrompt } from '../src/utils/musicGenerationPrompt.js';
 test('production profiles are unique, chord-led, and free to inspect', () => {
   const ids = MUSIC_PRODUCTION_PROFILES.map(profile => profile.id);
   assert.equal(new Set(ids).size, ids.length);
-  for (const id of ['chill-808', 'piano-flute', 'neo-soul', 'afro-soul', 'piano-pop', 'melodic-house', 'anthemic-nostalgia', 'nostalgic-piano-pop']) {
+  for (const id of ['chill-808', 'piano-flute', 'neo-soul', 'afro-soul', 'piano-pop', 'melodic-house', 'anthemic-nostalgia', 'nostalgic-piano-pop', 'fingerstyle-guitar', 'guitar-piano-duet', 'guitar-neo-soul', 'afro-acoustic-guitar']) {
     const profile = getMusicProductionProfile(id);
     assert.equal(profile.id, id);
     assert.match(profile.direction, /progression:/i);
@@ -51,4 +51,34 @@ test('Studio UI applies the selected palette to generation, copy and text export
   assert.match(page, /musicStyle: productionBrief/);
   assert.match(page, /clipboard\.writeText\(productionBrief\)/);
   assert.match(page, /productionProfile \}\)/);
+});
+
+test('guitar styles use mature arrangements and expressive chord motion', () => {
+  const ideas = ['fingerstyle-guitar', 'guitar-piano-duet', 'guitar-neo-soul', 'afro-acoustic-guitar'];
+  for (const id of ideas) {
+    const direction = getMusicProductionProfile(id).direction;
+    assert.match(direction, /guitar/i);
+    assert.match(direction, /progression:/i);
+    assert.match(direction, /chorus/i);
+    assert.match(direction, /no nursery|no child|adult|not a children/i);
+    const prompt = buildFalowenMusicPrompt({ brief: direction, productionProfile: id, mode: 'song', durationSeconds: 150 });
+    assert.match(prompt, /ADULT MUSICAL COMPOSITION/);
+    assert.match(prompt, /not a nursery rhyme/);
+    assert.match(prompt, /forced end-word rhymes/);
+    assert.match(prompt, /harmonic/);
+    assert.ok(prompt.length <= 8000);
+  }
+});
+
+test('instrumental guitar songs contain no voice directions or lyrics', () => {
+  const p = getMusicProductionProfile('fingerstyle-guitar');
+  const prompt = buildFalowenMusicPrompt({ brief: p.direction, productionProfile: p.id, vocalMode: 'instrumental', mode: 'song' });
+  assert.match(prompt, /INSTRUMENTAL ONLY: no singer/);
+  assert.match(prompt, /Dadd9 – A\/C# – Bm7 – Gmaj7/);
+  assert.doesNotMatch(prompt, /USER-SUPPLIED LYRICS/);
+  const page = readFileSync(new URL('../src/pages/MusicStudioPage.jsx', import.meta.url), 'utf8');
+  assert.match(page, /lyrics: vocalMode === 'instrumental' \? '' : lyrics/);
+  assert.match(page, /instrumentalOnly: vocalMode === 'instrumental'/);
+  assert.match(page, /Acoustic guitar song/);
+  assert.match(page, /setProductionProfile\(id === 'instrumental' \? 'fingerstyle-guitar'/);
 });

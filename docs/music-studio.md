@@ -118,3 +118,36 @@ All production palettes are versioned, deterministic text instructions and consu
 The production direction specifies an original key, tempo, chord movement, instrumental layering and song development: sparse intro, purposeful verse, melodic chorus, second-verse contrast and resolved outro. Chill 808 and melodic house are allowed a controlled kick, hats and tuned sub-bass rather than being silently disallowed by the general quiet-accompaniment guideline. German consonants and a single clear voice retain priority. These are **creative prompts, not verified audio controls**: the provider may not follow exact chords, beat timing, instrument choice or finished-song length. Listen before publication.
 
 The nostalgic anthemic style emphasizes the broad hook and verse/chorus dynamic contrast of classic emotional pop/hip-hop; the flowing piano style uses eight-chord descending movement and gradual textural growth. These are original production ideas and must not copy another artist's melody, lyrics or samples. The old songbook lyrics, public music catalog, publishing workflow and existing $0.80/day / $5/month budget limits are unchanged. No additional storage, Firestore rules, Cloud Functions, background jobs or paid preview requests are introduced.
+
+## Adult songwriting and guitar-led production
+
+**Audience:** Falowen's learner music is for adults, including A1 learners with limited German. CEFR simplicity must not translate into babyish melodies. The default guidance now asks for believable adult situations, natural German stresses, emotional chord movement and a developed verse-to-chorus arc rather than forced rhymes, repetitive vocabulary chants or nursery-school singalongs. This is a preference conveyed to the AI model, not a hard guarantee of output quality; listen and approve before publication.
+
+Four new **Musical production & chord progression** choices are available for both custom and course songwriting, with original specified chords and rhythms:
+
+- **Fingerstyle acoustic · intimate storytelling:** Dadd9 – A/C# – Bm7 – Gmaj7; warm real steel-string guitar, a single expressive voice, no drums.
+- **Acoustic guitar + piano · emotional pop:** Cadd9 – G/B – Am7 – Fmaj7 – C/E – Dm7 – Gsus4 – G; smooth guitar and piano interplay with a gradually wider chorus.
+- **Soul guitar · mellow R&B groove:** Am9 – D13 – Gmaj9 – Cmaj7; warm electric guitar voicings, melodic bass, relaxed pocket rhythm and tasteful flute fills.
+- **Acoustic Afro-soul · guitar groove:** Gmaj9 – D/F# – Em7 – Cadd9; syncopated acoustic picking, subtle percussion and soulful melody.
+
+The existing chill 808, piano/flute, neo-soul, nostalgic anthem, nostalgic piano pop and melodic house options remain available. These are **genre and chord directions for original music**, not requests to reproduce existing copyrighted recordings, melodies or samples.
+
+**Lyrics control matters:** Prewritten dictionary lyrics remain preserved by default as **Exact lyrics — keep my words**. To replace nursery-like prewritten lines with a natural adult story, deliberately choose **Source vocabulary — rewrite into a story**; this treats the source text as ideas rather than exact lyrics. Original saved songbook content is not overwritten by that choice, and no generation runs until clicked.
+
+**Instrumentals:** Guitar instrumental mode no longer sends preloaded classroom lyrics to the provider; it sends a lyric-free instrumental lesson context instead. No changes to backend, R2, pricing, Firestore security, Vercel settings, storage or publication rules.
+
+## Ghanaian guitar highlife and frikyiwa percussion
+
+The Falowen A1–B1 dictionary had **no song explicitly labeled Highlife**. Three suitable guitar-led Afro-Pop song drafts are now intentionally reclassified with **Ghanaian Highlife** as their curated genre and a detailed frikyiwa musical direction:
+
+| Level | Assignment | Song | BPM |
+| --- | --- | --- | --- |
+| A1 | A1-4 | Woher kommst du? | 92 |
+| A2 | A2-9.23 | Mein Weg zur Arbeit | 94 |
+| B1 | B1-8.24 | Weniger kaufen, mehr erleben | 91 |
+
+The **lyrics are unchanged**; the new details live only in each song's `musicStyle` and `genre`, so the existing automatic lesson-style selector and songbook text export pick up the change without adding sung syllables. This change does **not** modify recordings already published to Cloudflare R2, course audio, student playback or timed lyrics. To hear the new accompaniment, create and approve a *new* recording when desired.
+
+In addition, the owner can select **Ghanaian guitar highlife · frikyiwa rhythm** for any song from the existing Music Studio production dropdown. This original production direction specifies interlocking highlife guitars, flowing bass, gentle live drums, a clear warm lead voice and a **bright metallic frikyiwa (firikyiwa) castanet**. Ask the AI for a recurring group of **three short syncopated offbeat instrumental taps** perceived as *ko-ko-ko*. These are *percussion hits*, never a vocal chant. Use a human, musical interpretation with rests and leave it behind the singer; do not replace it with conga drums or woodblocks. The three taps are a creative onomatopoeic cue, not a claim of a complete fixed traditional Sikyi timeline transcription.
+
+Preserve German CEFR teaching value while emphasizing a natural adult highlife melody and a developed arrangement, not a nursery rhyme. All lyrics/source dictionary records remain in code. No provider calls, new background jobs, billing logic changes, extra cloud storage or altered Firestore permissions are involved. Google Lyria's adherence to instrument, groove and rhythm instructions is not guaranteed and must be checked by listening before publication.

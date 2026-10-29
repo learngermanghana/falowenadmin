@@ -46,6 +46,36 @@ export const MUSIC_PRODUCTION_PROFILES = Object.freeze([
     direction: 'Create an original reflective acoustic piano pop song at 88 BPM in G major. Use a gently flowing eight-chord progression: Gadd9 – D/F# – Em7 – Bm7 – Cmaj7 – G/B – Am7 – Dsus4 resolving to D. Play a natural close-miked acoustic grand piano with graceful left-hand movement and light right-hand arpeggios. Add delicate warm bass, soft rim-click or brushed snare, barely-there atmospheric pads and short breathy flute replies only in gaps between vocal lines. Begin intimate, introduce a quietly memorable verse melody, let the chorus open emotionally with sustained notes and wide piano voicings, then add restrained textures in later sections before a complete harmonic resolution. Keep the vocals vulnerable and unhurried; avoid copying any existing song melody or hook.'
   },
   {
+    id: 'ghana-highlife',
+    label: 'Ghanaian guitar highlife · frikyiwa rhythm',
+    description: 'Interlocking Ghanaian highlife guitars with a recurring three-hit metallic frikyiwa ko-ko-ko accent.',
+    direction: 'Original Ghanaian guitar-band highlife with palm-wine-guitar character, 94 BPM in G major, easy 4/4 pulse and a lightly syncopated pocket. Main four-bar progression: Gmaj7 – D/F# – Em7 – Cadd9, with a short Am7 – D7 turnaround before the chorus. Two clean interlocking electric guitars trade lyrical highlife melodies: one plucked repeating rhythmic figure, the other a warm melodic response between vocal lines. Add smooth live bass, restrained kick/snare and soft shaker; most importantly add a real-sounding high-pitched metallic FRIKYIWA / FIRIKYIWA castanet-like percussion. Its recognizable pattern is three short crisp offbeat taps—ko-ko-ko—repeated as a subtle Ghanaian highlife timeline against the steady pulse, with natural rests and human timing. The three taps are an instrumental percussion cue, never sung or spoken as words. It is NOT a conga, wooden block or loud novelty sound. Keep the frikyiwa audible yet behind the lead vocal, and let the guitar counter-rhythms weave around it. Verse sparse, second verse develops the groove, chorus broad and soulful with a gentle harmonic lift, final guitar turnaround and resolved outro. Mature warm Ghanaian highlife, never childish music or a chant; do not imitate a particular recording.'
+  },
+  {
+    id: 'fingerstyle-guitar',
+    label: 'Fingerstyle acoustic · intimate storytelling',
+    description: 'Warm steel-string fingerpicking, emotional adult singer-songwriter melody, no drums.',
+    direction: 'Original intimate singer-songwriter acoustic folk-pop, 76 BPM in D major. Main four-bar progression: Dadd9 – A/C# – Bm7 – Gmaj7, with a gentle Em7 – Gadd9 – Asus4 – A pre-chorus lift. Record a real, close, warm steel-string acoustic guitar with a moving fingerpicked bass line and understated high-string arpeggios. Begin alone with guitar and one emotionally honest lead voice; use a second soft guitar harmony only for the last chorus. Avoid drums, handclaps, bells, novelty percussion, group chants and childlike singalong rhythms. Let verse phrasing breathe, write a mature conversational melodic hook and finish with a softly resolved acoustic cadence.'
+  },
+  {
+    id: 'guitar-piano-duet',
+    label: 'Acoustic guitar + piano · emotional pop',
+    description: 'Moving guitar strums, expressive acoustic piano chords, rich chorus without excess drums.',
+    direction: 'Original warm contemporary acoustic pop with two complementary live instruments, 84 BPM in C major. Main eight-bar progression: Cadd9 – G/B – Am7 – Fmaj7 – C/E – Dm7 – Gsus4 – G. Play a restrained steel-string guitar with soft picked notes in the verses and broad, unhurried strums in the chorus; add a close-miked acoustic piano using inversions and gentle answering arpeggios. Sparse warm bass enters for the second verse; light brushed percussion only in the final chorus. Develop a moving verse to pre-chorus to cathartic chorus with natural rising melody, adult emotional color and a beautiful resolution. No nursery-rhyme bounce, childlike claps or forced end-word rhymes.'
+  },
+  {
+    id: 'guitar-neo-soul',
+    label: 'Soul guitar · mellow R&B groove',
+    description: 'Clean electric guitar chord extensions, rich harmony and a laid-back bass-and-snare pocket.',
+    direction: 'Original mellow guitar-led neo-soul / soft R&B at 82 BPM in A minor. Main four-bar progression: Am9 – D13 – Gmaj9 – Cmaj7, with Bm7b5 – E7sus4 – E7 as an occasional turnaround back to Am9. Clean warm electric guitar plays sophisticated muted chord stabs, melodic fills in spaces between the vocals and soft upper-register voicings. Support with rounded melodic electric bass, subtle rim snare and pocket kick, occasional understated acoustic piano and short breathy flute replies. Verse intimate and rhythmic, chorus emotionally wider with extended chords and expressive adult melodic phrasing. No childish call-and-response, novelty whistles or busy guitar solos over lyrics.'
+  },
+  {
+    id: 'afro-acoustic-guitar',
+    label: 'Acoustic Afro-soul · guitar groove',
+    description: 'Beautiful plucked guitar, subtle syncopated African rhythm, warm bass and smooth vocals.',
+    direction: 'Original mellow acoustic Afro-soul / contemporary African guitar pop at 94 BPM in G major. Main four-bar progression: Gmaj9 – D/F# – Em7 – Cadd9, with Am7 – Dsus4 – D as a graceful turnaround. Lead with an organic acoustic guitar playing an intricate melodic picking figure, then gentle syncopated guitar strums, rounded bass and a tasteful soft shaker and rim percussion groove. Give a few expressive flute responses to the guitar motif, but never drown the warm single lead singer. Build the chorus with a wider guitar strum and subtle piano support; keep the groove refined, soulful, human and adult rather than a nursery classroom singalong or chant.'
+  },
+  {
     id: 'piano-pop',
     label: 'Acoustic piano · modern pop',
     description: 'Clear pop structure, warm piano, tasteful bass and gentle percussion.',

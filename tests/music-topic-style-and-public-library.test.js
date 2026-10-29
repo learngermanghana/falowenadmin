@@ -52,6 +52,6 @@ test("existing fallback still works if public catalog is empty or unavailable", 
   const studio = readFileSync(new URL("../src/pages/MusicStudioPage.jsx", import.meta.url), "utf8");
   assert.match(studio, /useState\('auto'\)/);
   assert.match(studio, /Automatically match the lesson topic/);
-  assert.match(studio, /readOnly=\{styleMode === 'auto'/);
-  assert.match(studio, /brief: effectiveBrief/);
+  assert.match(studio, /readOnly=\{productionProfile !== 'auto' \|\| styleMode === 'auto'/);
+  assert.match(studio, /brief: productionBrief/);
 });

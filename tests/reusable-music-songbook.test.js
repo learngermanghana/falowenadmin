@@ -60,7 +60,7 @@ test('Music Studio preloads originals without a paid network call and retains pe
   const s = readFileSync(new URL('../src/pages/MusicStudioPage.jsx', import.meta.url), 'utf8');
   assert.match(s, /getReusableSongDraft\(lesson\?\.assignmentKey\)/);
   assert.match(s, /Object\.prototype\.hasOwnProperty\.call\(lyricsOverrides, assignmentKey\)/);
-  assert.match(s, /brief: effectiveBrief/);
+  assert.match(s, /brief: productionBrief/);
   assert.match(s, /lyricTreatment === 'story-source'/);
   assert.match(s, /falowenMusicFileName\(lesson, trackTitle, 'mp3'\)/);
   assert.match(s, /Download all \{level\} lyrics & music styles/);
