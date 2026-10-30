@@ -25,12 +25,12 @@ test("All 56 A2 and B1 Wissensimpuls slides reveal three verified answers, never
    assert.doesNotMatch(answer,forbidden,slide.assignmentId);
   }
   const stages=buildTeachingPresenterStages(slide,slide.topic);
-  assert.equal(stages.length, (stages.some(s => s.id === "knowledge") ? 10 : 9) + (slide.course === "A2" ? 1 : 0), slide.assignmentId);
+  assert.equal(stages.length, (stages.some(s => s.id === "knowledge") ? 10 : 9) + 1, slide.assignmentId);
   const stage=stages.find(s=>s.id==="reading");
   assert.ok(stage,slide.assignmentId);
   assert.deepEqual(stage.items,knowledge.checks,slide.assignmentId+": do not replace learner questions");
   assert.deepEqual(stage.answerItems,answers,slide.assignmentId+": reveal only question-matched answers");
-  assert.deepEqual(stages.slice(slide.course === "A2" ? -4 : -3).map(s=>s.id),slide.course === "A2" ? ["questions","workbook-presentation","workbook","lesson-summary"] : ["questions","workbook","lesson-summary"],slide.assignmentId);
+  assert.deepEqual(stages.slice(-4).map(s=>s.id), ["questions","workbook-presentation","workbook","lesson-summary"],slide.assignmentId);
   assert.ok(stages.find(s=>s.id==="grammar-check"),slide.assignmentId);
   assert.ok(stages.find(s=>s.id==="reading"),slide.assignmentId);
  }

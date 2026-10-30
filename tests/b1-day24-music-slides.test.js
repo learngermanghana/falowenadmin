@@ -10,7 +10,7 @@ import { musicMomentUrl, musicTimestamp } from "../src/utils/musicTeaching.js";
 test("B1 Day 24 uses direct music with verified in-slide lyrics, MCQs and original deep-reading page", () => {
   const slide=getSlidesByCourse("B1").find(row=>row.assignmentId==="B1-8.24");
   const stages=buildTeachingPresenterStages(slide,slide.topic);
-  assert.equal(stages.length,10);
+  assert.equal(stages.length,11);
   assert.deepEqual(stages.slice(0,6).map(x=>x.id),
     ["intro","warmup","knowledge","common-mistakes","reading","grammar-check"]);
   assert.equal(stages[1].variant,"interactive-music-video");
@@ -70,7 +70,7 @@ test("B1 Day 24 Argumentkarte is a four-case interactive decision activity on it
   const stages = buildTeachingPresenterStages(slide, slide.topic);
   const practice = stages.find((stage) => stage.id === "practice");
 
-  assert.equal(stages.length, 10, "add only the correction page; reading replaces vocabulary");
+  assert.equal(stages.length, 11, "keep correction and music pages plus the workbook presentation");
   assert.equal(stages[6].id, "practice");
   assert.equal(stages[7].id, "questions", "keep existing speaking tasks after practice");
   assert.equal(practice.type, "flow");

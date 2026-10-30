@@ -1,3 +1,4 @@
+import { B1_WORKBOOK_PRESENTATIONS } from '../data/b1WorkbookPresentations.js';
 import { A2_WORKBOOK_PRESENTATIONS } from '../data/a2WorkbookPresentations.js';
 import { getA2B1CommonMistakes } from '../data/a2B1CommonMistakes.js';
 import { getPresenterReadingLesson } from '../data/presenterReadingLessons.js';
@@ -2057,7 +2058,7 @@ function standardizeA2B1Stages(stages, slide) {
     if (stage.id !== 'phrases') return [stage];
     return [{
       id: 'common-mistakes', type: 'common-mistakes', kicker: 'Häufige Fehler',
-      title: classroomLevel(slide) === 'A2' ? 'Common mistakes · Häufige Fehler' : 'Fehler finden und verbessern',
+      title: 'Common mistakes · Häufige Fehler',
       instruction: 'Korrigiert die Sätze gemeinsam. Erst danach zeigt die Lehrkraft die Lösungen.',
       items: mistakes, suggestedMinutes: 4,
       teacherPurpose: {
@@ -2169,6 +2170,17 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
       kicker: "Workbook · Sprechen", title: presentation.mode === "roleplay" ? "Teil 1 Sprechen · Restaurant-Rollenspiel" : "Presentation · Teil 1 Sprechen",
       presentation, items: presentation.branches || presentation.choices, suggestedMinutes: 5,
       teacherPurpose: {student: "Beantworte die vorhandene Workbook-Aufgabe mündlich.", teacher: "Die Aufgabe direkt auf der Folie zeigen. Dies ist Unterrichtspraxis, keine neue Abgabe oder Bewertung."},
+    });
+  }
+  if (presenterV2 && level === "B1") {
+    const presentation = B1_WORKBOOK_PRESENTATIONS[Number(normalizedAssignmentId(slide).split(".").at(-1))];
+    if (!presentation) throw new Error(`Missing B1 workbook presentation: ${slide.id}`);
+    const workbookIndex = classroomStages.findIndex(stage => stage.id === "workbook");
+    classroomStages.splice(workbookIndex < 0 ? classroomStages.length : workbookIndex, 0, {
+      id: "workbook-presentation", type: "b1-workbook-presentation",
+      kicker: "Workbook · B1 Sprechen", title: presentation.roleplay ? "Sprechen · Rollenspiel" : "Presentation · B1 Sprechen",
+      presentation, items: presentation.structure, suggestedMinutes: 6,
+      teacherPurpose: {student: "Bearbeite die vorhandene B1-Workbook-Aufgabe und begründe deine Aussagen.", teacher: "Aufgabe, Gliederung und Ideen getrennt zeigen. Keine neue Abgabe oder automatische Bewertung."},
     });
   }
   const filtered = classroomStages.filter((stage) => {

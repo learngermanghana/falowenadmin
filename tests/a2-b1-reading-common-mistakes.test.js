@@ -130,7 +130,7 @@ test('all 56 A2/B1 presenters use the Day 18 layout and only published music les
     assert.equal(ids[1],'warmup',slide.assignmentId);
     assert.equal(ids.indexOf('reading'),ids.indexOf('common-mistakes')+1,slide.assignmentId);
     assert.equal(ids.indexOf('grammar-check'),ids.indexOf('reading')+1,slide.assignmentId);
-    assert.deepEqual(ids.slice(slide.course==='A2'?-4:-3),slide.course==='A2'?['questions','workbook-presentation','workbook','lesson-summary']:['questions','workbook','lesson-summary'],slide.assignmentId);
+    assert.deepEqual(ids.slice(-4),['questions','workbook-presentation','workbook','lesson-summary'],slide.assignmentId);
     assert.equal(stages.filter(x=>x.id==='reading').length,1,slide.assignmentId);
     assert.equal(stages.filter(x=>x.id==='common-mistakes').length,1,slide.assignmentId);
     const expected=musicDays[slide.assignmentId];
@@ -153,6 +153,6 @@ test('all 56 A2/B1 presenters use the Day 18 layout and only published music les
   const day26=buildTeachingPresenterStages(b1.find(s=>s.assignmentId==='B1-9.26'));
   assert.equal(day25.find(s=>s.id==='knowledge')?.audioKey,'b1/day-25/online-shopping-verbraucherservice.mp3');
   assert.equal(day26.find(s=>s.id==='knowledge'),undefined);
-  assert.equal(day25.length,10);
-  assert.equal(day26.length,9);
+  assert.equal(day25.length,11);
+  assert.equal(day26.length,10);
 });

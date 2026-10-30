@@ -8,6 +8,7 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import {getSlidesByCourse} from '../src/data/teachingSlides.js';
 import {buildTeachingPresenterStages} from '../src/utils/teachingPresenter.js';
+import {B1_WORKBOOK_PRESENTATIONS} from '../src/data/b1WorkbookPresentations.js';
 import {A2_WORKBOOK_PRESENTATIONS} from '../src/data/a2WorkbookPresentations.js';
 import {PRESENTER_READING_TRANSLATIONS} from '../src/data/presenterReadingTranslations.js';
 
@@ -55,6 +56,33 @@ for(const level of ['A2','B1'])test(level+' all 28 real reading slides reveal on
   await act(async()=>{jump.value=String(index);jump.dispatchEvent(new w.Event('change',{bubbles:true}));});
   assert.equal(document.querySelector('.presenter-translation-meaning'),null,'returning to the reading keeps English hidden');
   assert.equal(button('Select a sentence to translate').disabled,true);
+  if(level==='B1'){
+   const navigate=async id=>{await act(async()=>{jump.value=String(stages.findIndex(s=>s.id===id));jump.dispatchEvent(new w.Event('change',{bubbles:true}));});};
+   await navigate('common-mistakes');
+   assert.equal(document.querySelector('.presenter-grammar-check h1').textContent,'Common mistakes · Häufige Fehler');
+   await navigate('workbook-presentation');
+   const task=B1_WORKBOOK_PRESENTATIONS[slide.dayNumber],panel=()=>document.querySelector('[role="tabpanel"]');
+   const tab=text=>[...document.querySelectorAll('[role="tab"]')].find(b=>b.textContent===text);
+   assert.equal(document.querySelector('.presenter-b1-presentation h2').textContent,task.choices?.[0].prompt||task.prompt);
+   assert.ok(panel().textContent.includes(task.instructions));
+   assert.equal(document.querySelector('.presenter-b1-presentation-outline'),null,'outline is hidden until requested');
+   await click(tab('Gliederung'));
+   assert.equal(document.querySelectorAll('.presenter-b1-presentation-outline > li').length,task.structure.length);
+   const starter=panel().querySelector('details');if(starter){assert.equal(starter.open,false);await click(starter.querySelector('summary'));assert.equal(starter.open,true);}
+   if(tab('Ideen & Redemittel')){await click(tab('Ideen & Redemittel'));const idea=panel().querySelector('details');assert.equal(idea.open,false);await click(idea.querySelector('summary'));assert.equal(idea.open,true);}
+   if(task.choices){
+    const select=document.querySelector('.presenter-b1-presentation-choice select');
+    await act(async()=>{select.value='1';select.dispatchEvent(new w.Event('change',{bubbles:true}));});
+    assert.equal(document.querySelector('.presenter-b1-presentation h2').textContent,task.choices[1].prompt);
+    assert.equal(tab('Aufgabe').getAttribute('aria-selected'),'true');
+   }
+   await click(tab('Gliederung'));
+   await act(async()=>tab('Gliederung').dispatchEvent(new w.KeyboardEvent('keydown',{key:'Home',bubbles:true})));
+   assert.equal(tab('Aufgabe').getAttribute('aria-selected'),'true','keyboard tab navigation selects task');
+   await click(button('Next slide →'));assert.equal(document.querySelector('[aria-label="B1 workbook presentation"]'),null);
+   await navigate('workbook-presentation');assert.equal(tab('Aufgabe').getAttribute('aria-selected'),'true','navigation resets the panel');
+   const select=document.querySelector('.presenter-b1-presentation-choice select');if(select)assert.equal(select.value,'0');
+  }
   if(level==='A2'){
    const navigate=async id=>{await act(async()=>{jump.value=String(stages.findIndex(s=>s.id===id));jump.dispatchEvent(new w.Event('change',{bubbles:true}));});};
    await navigate('common-mistakes');
