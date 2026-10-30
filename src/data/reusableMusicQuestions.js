@@ -26,8 +26,8 @@ const REVIEWED_LISTENING_CHOICES = Object.freeze({
     {options:['In Bonn.','In Berlin.','In Hamburg.'],correctIndex:0},
   ]),
   'A1-2': Object.freeze([
-    { options: ['Eins, zwei, drei.', 'Vier, fünf, sechs.', 'Sieben, acht, neun.'], correctIndex: 1 },
-    { options: ['Zehn Jahre alt.', 'Zwanzig Jahre alt.', 'Dreißig Jahre alt.'], correctIndex: 1 },
+    { options: ['Zwanzig Jahre alt.', 'Vierundzwanzig Jahre alt.', 'Vierzehn Jahre alt.'], correctIndex: 1 },
+    { options: ['Null, zwei, vier.', 'Null, vier, zwei.', 'Zwei, null, fünf.'], correctIndex: 0 },
   ]),
   'A2-7.18': Object.freeze([
     { options: ['Die Bankkarte oder das Zahlungsgerät.', 'Das Handy der Mitarbeiterin.', 'Der Geldautomat in der Bank.'], correctIndex: 0 },
@@ -44,8 +44,8 @@ function listeningChoice(questionKey, number) {
 
 const SPEAKING_SUPPORT = Object.freeze({
   'A1-2': Object.freeze({
-    sentenceStarters: ['Ich heiße …', 'Meine Übungsnummer ist …'],
-    possibleAnswers: ['Ich heiße Ama. Meine Übungsnummer ist vier, fünf, sechs.'],
+    sentenceStarters: ['Ich bin … Jahre alt.', 'Meine Hausnummer ist …', 'Meine Telefonnummer ist …'],
+    possibleAnswers: ['Ich bin zwanzig Jahre alt. Meine Hausnummer ist zwölf. Meine Übungstelefonnummer ist null, zwei, vier, fünf, sechs, sieben.'],
   }),
   'A2-7.18': Object.freeze({
     sentenceStarters: ['Guten Tag, ich rufe an, weil …', 'Meine Karte funktioniert nicht, wenn …', 'Können Sie bitte …?'],
