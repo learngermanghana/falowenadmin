@@ -177,3 +177,13 @@ Validation: 73 targeted checks pass, including a real attendance-page React DOM 
 - **A2 Day 23 (A2-9.23):** `music/a2/day-23/Fahrrad zur Schule.mp3`; its 36 sung lyric lines replace “Mein Weg zur Arbeit”. The new listening questions cover cycling to school, environmental protection and using a bus when it rains.
 - Both tracks use the existing reversible `r2-<level>-day-XX-b64_<filename>` public music lookup; no changes to R2 object bytes or Goethe workbook tasks.
 - **Per-line sync is not yet published.** The private Cloudflare dashboard URLs confirm the expected filenames but do not supply MP3 bytes for acoustic alignment in the repository connector. In Admin Music Lyrics Video Studio, select the exact published MP3, verify each sung line's start by listening, and download the `.lyrics.json` sidecar. Upload that next to its MP3 in R2. Until a valid, exact-object sidecar exists, the lyric player must not invent timestamps.
+
+
+## A2 Day 24 — Endlich Urlaub (30 October 2026)
+
+- Curated assignment: `A2-9.24`, registered Cloudflare R2 object: `music/a2/day-24/Endlich Urlaub.mp3`.
+- Replaces the old reusable draft “Wir fahren nach Hamburg” with the teacher-supplied 38 sung lines: Verse 1, chorus, Verse 2, repeated chorus, outro and softly repeated outro with both closing “Doo-doo” lines.
+- Class waiting-room music and lesson slides use the same approved recording through the existing public Falowen music redirect, without copying MP3 bytes or creating a new storage endpoint.
+- Listening and speaking prompts now follow the solo traveller's savings, hotel booking and Saturday 08:00 train to Hamburg. The graded workbook and Hören exam files are unchanged.
+- Old saved Music Studio drafts for `A2-9.24` are recognized and replaced in the editable display with the new songbook text; owners can use **Overwrite Lyrics** to replace the cloud draft.
+- **Sync pending audio verification:** No audio bytes were available from the Cloudflare dashboard URL here. The 38 lyric cue times have not been fabricated. In Music Lyrics Video Studio select the exact Day 24 published recording, listen and mark each line, then export `Endlich Urlaub.lyrics.json` beside the MP3 in R2.
