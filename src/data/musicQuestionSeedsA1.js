@@ -195,19 +195,19 @@ export const MUSIC_QUESTION_SEEDS_A1 = Object.freeze([
   ],
   [
     "A1-13",
-    "Wie ist das Wetter am Morgen?",
-    "Es regnet.",
-    "Wie wird das Wetter am Mittag?",
-    "Die Sonne kommt.",
-    "Wie ist das Wetter heute bei dir?"
+    "Warum sagt die Person das Treffen mit Mia ab?",
+    "Weil es stark regnet und draußen kalt ist.",
+    "Wann möchten Mia und die Person sich stattdessen treffen?",
+    "Morgen um drei Uhr.",
+    "Wie sagst du ein Treffen höflich ab?"
   ],
   [
     "A1-14.1",
-    "Was tut der Person am Morgen weh?",
-    "Der Kopf.",
-    "Was bringt Mia mit?",
-    "Wasser und Tee.",
-    "Was sagst du, wenn du krank bist?"
+    "Um wie viel Uhr hat die Person einen Arzttermin?",
+    "Um zehn Uhr.",
+    "Was empfiehlt der Arzt?",
+    "Viel Wasser trinken und heute zu Hause bleiben.",
+    "Wie beschreibst du deine Beschwerden bei einem Arzt?"
   ],
   [
     "A1-14.2",
