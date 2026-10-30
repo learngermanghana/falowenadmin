@@ -170,10 +170,10 @@ export const MUSIC_SONG_DRAFTS_A1 = Object.freeze([
   },
   {
     "assignmentKey": "A1-13",
-    "title": "Heute regnet es",
-    "musicStyle": "Flute Chill, 84 BPM: air-filled flute-led chill-pop with gentle marimba, light downtempo percussion and warm pads; calm and open. One lead singer, clear German phrases, quiet instrumental mix.",
-    "lyrics": "[Verse 1]\nIch schaue aus dem Fenster.\nDer Himmel ist heute grau.\nMia fragt: Wie ist das Wetter?\nIch sage: Heute regnet es.\n\n[Chorus]\nRegen, Sonne, Wind und Schnee.\nWie ist das Wetter heute?\nIch nehme meinen Schirm mit.\n\n[Verse 2]\nAm Mittag kommt die Sonne.\nDer Wind ist nicht mehr kalt.\nWir gehen in den Garten.\nUnd lachen in der Sonne.\n\n[Chorus]\nRegen, Sonne, Wind und Schnee.\nWie ist das Wetter heute?\nIch nehme meinen Schirm mit.\n\n[Outro]\nMorgen scheint vielleicht die Sonne.\nWir sehen morgen nach.\nMit Falowen spreche ich über das Wetter.",
-    "genre": "Flute Chill"
+    "title": "Heute kann ich leider nicht",
+    "musicStyle": "Warm German Pop · Acoustic Guitar · Soft Piano · Gentle Afrobeat · One Singer. Adult melodic German-pop with a warm lead voice, mellow guitar, soft piano, gentle Afrobeat groove and expressive rising choruses. Preserve the finished song as recorded; no need to regenerate audio.",
+    "lyrics": "[Verse 1]\nHeute ist das Wetter schlecht,\nDer Himmel ist grau, es regnet stark.\nIch möchte Mia im Park treffen,\nDoch draußen ist es nass und kalt.\n\nIch schaue auf mein Handy,\nUnd rufe meine Freundin an.\nIch sage: „Mia, es tut mir leid,\nHeute kann ich leider nicht.“\n\n[Chorus]\nEs regnet, es regnet, der Wind ist kalt,\nIch bleibe heute lieber zu Haus.\nDie Sonne scheint nicht, der Himmel ist grau,\nIch gehe heute nicht mehr raus.\n\nKönnen wir uns morgen treffen?\nVielleicht scheint dann die Sonne.\nHeute muss ich leider absagen,\nDoch morgen habe ich Zeit.\n\n[Verse 2]\nAm Nachmittag kommt ein Gewitter,\nEs blitzt und donnert draußen.\nIch mache meine Fenster zu,\nUnd trinke einen warmen Tee.\n\nAm Abend wird der Regen weniger,\nIch schaue noch einmal hinaus.\nMia schreibt: „Morgen um drei?“\nIch antworte: „Ja, das passt mir gut!“\n\n[Chorus]\nEs regnet, es regnet, der Wind ist kalt,\nIch bleibe heute lieber zu Haus.\nDie Sonne scheint nicht, der Himmel ist grau,\nIch gehe heute nicht mehr raus.\n\nKönnen wir uns morgen treffen?\nVielleicht scheint dann die Sonne.\nHeute muss ich leider absagen,\nDoch morgen habe ich Zeit.\n\n[Outro]\nAm nächsten Tag scheint die Sonne,\nDer Himmel ist wieder blau.\nIch treffe Mia um drei im Park,\nUnd freue mich auf den Tag.",
+    "genre": "Warm German Pop"
   },
   {
     "assignmentKey": "A1-14.1",
