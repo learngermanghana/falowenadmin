@@ -14,7 +14,8 @@ function isSupersededMusicLyrics(key, text) {
     (key === 'A1-1.3' && text.includes('Karim sagt: Das ist Bello.') && text.includes('Hallo, ich heiße Sara.')) ||
     (key === 'A1-2.3' && text.includes('Am Sonntag bin ich zu Hause.') && text.includes('Mein Vater liest ein Buch.')) ||
     (key === 'A1-2' && text.includes('Ich heiße Sam.') && text.includes('Wie ist deine Nummer?')) ||
-    (key === 'A2-9.23' && text.includes('Meine Kollegin wartet schon im Büro.') && text.includes('Wie kommst du heute zur Arbeit?'));
+    (key === 'A2-9.23' && text.includes('Meine Kollegin wartet schon im Büro.') && text.includes('Wie kommst du heute zur Arbeit?')) ||
+    (key === 'A2-9.24' && text.includes('Mia sucht ein Zimmer in der Altstadt.') && text.includes('Wir buchen, packen und freuen uns.'));
 }
 
 import { musicSongTeachingPackText } from '../data/reusableMusicQuestions.js';
