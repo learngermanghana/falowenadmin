@@ -1,3 +1,5 @@
+import PresenterReadingTranslation from "./PresenterReadingTranslation.jsx";
+import useReadingTranslation from "../hooks/useReadingTranslation.js";
 import LessonSongStage from "./LessonSongStage.jsx";
 import PresenterControls, { PresenterActions, PresenterStageJump, usePresenterKeyboard } from "./PresenterControls.jsx";
 import C2GrammarTeaching from "./C2GrammarTeaching.jsx";
@@ -208,6 +210,11 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
   const [readingPhase, setReadingPhase] = useState("idle");
   const [activeReadingAssignment, setActiveReadingAssignment] = useState(null);
   const stage = stages[stageIndex] || stages[0];
+  const readingTranslation=useReadingTranslation(slide.assignmentId,JSON.stringify([
+    stage?.id,stage?.textDe,stage?.intro,stage?.example,stage?.tension,stage?.question,
+    activeReadingAssignment?.chunk?.text || ""
+  ]));
+  const translatableReading=["A2","B1"].includes(String(slide.course||"").toUpperCase()) && stage?.variant==="lesson-reading";
   const isLessonMusicStage = stage?.type === "lesson-music";
   const isMusicVideoStage = stage?.variant === "interactive-music-video" || isLessonMusicStage;
   // The Day 25 oral challenge has a taller sequence of cards than a normal
@@ -459,7 +466,12 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
   }
 
   function selectKnowledgeSentence(number) {
-    setActiveKnowledgeSentence((current) => current === number ? 0 : number);
+    const next=activeKnowledgeSentence===number?0:number;
+    setActiveKnowledgeSentence(next);
+    if(translatableReading){
+      const sentence=numberedKnowledgeSentences.find(row=>row.number===next);
+      readingTranslation.select(sentence?{section:"reading",index:next-1,text:sentence.text,label:"sentence "+next}:null);
+    }
   }
 
   function resetPresenterTimer() {
@@ -642,7 +654,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
       window.cancelAnimationFrame(frame);
       observer.disconnect();
     };
-  }, [stage?.id, stage?.type, stage?.items, fitMode, contentPageSize, contentPage]);
+  }, [stage?.id, stage?.type, stage?.items, fitMode, contentPageSize, contentPage, readingTranslation.open, readingTranslation.target?.text]);
 
   useEffect(() => {
     if (!timerRunning || timerRemaining <= 0) return undefined;
@@ -1232,7 +1244,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
               </div>
             </section>
           ) : stage.type === "knowledge" ? (
-            <section className="presenter-knowledge">
+            <section className={`presenter-knowledge${translatableReading ? " has-saved-translations" : ""}`}>
               <div className="presenter-knowledge-heading">
                 <span>{stage.kicker || "Wissensimpuls"}</span>
                 <h1>{stage.title}</h1>
@@ -1318,6 +1330,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                   </p>
                 </article>
               )}
+              {translatableReading && <PresenterReadingTranslation translation={readingTranslation}/>}
               {!knowledgeChecksVisible ? (
                 <button
                   type="button"

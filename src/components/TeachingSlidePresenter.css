@@ -5247,3 +5247,47 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Saved sentence support stays in normal flow, below the German text. */
+.presenter-reading-translation {
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  display: grid;
+  gap: 8px;
+}
+.presenter-translation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+.presenter-translation-actions button {
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #fff;
+  color: #1d4ed8;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: .88rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+.presenter-translation-actions button:disabled { opacity: .65; cursor: default; }
+.presenter-translation-actions small { color: #475569; font-size: .78rem; overflow-wrap: anywhere; }
+.presenter-translation-meaning { min-width: 0; max-height: 23dvh; overflow-y: auto; overflow-wrap: anywhere; }
+.presenter-translation-meaning strong { color: #475569; font-size: .72rem; letter-spacing: .04em; text-transform: uppercase; }
+.presenter-translation-meaning p { margin: 4px 0 0; font-size: clamp(1rem, 1.45vw, 1.25rem); line-height: 1.4; color: #1e293b; }
+.presenter-knowledge.has-saved-translations { min-width: 0; gap: clamp(.5rem, 1.2vh, .85rem); }
+.presenter-knowledge.has-saved-translations .presenter-knowledge-text p { font-size: clamp(1rem, 2.5vh, 1.5rem); line-height: 1.4; }
+@media (max-width: 760px) {
+  .presenter-translation-actions { align-items: flex-start; }
+  .presenter-translation-meaning { max-height: 28dvh; }
+}
+@media (max-height: 650px) and (min-width: 761px) {
+  .has-saved-translations .presenter-knowledge-heading h1 { font-size: clamp(1.3rem, 3.8vh, 1.85rem); }
+  .presenter-reading-translation { padding: 7px 10px; gap: 4px; }
+  .presenter-translation-meaning p { font-size: .98rem; }
+}
