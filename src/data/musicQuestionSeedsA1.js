@@ -99,11 +99,11 @@ export const MUSIC_QUESTION_SEEDS_A1 = Object.freeze([
   ],
   [
     "A1-6",
-    "Welche Farbe hat die Tasche im Bus?",
-    "Blau.",
-    "Wo liegt Bens schwarzer Schal?",
-    "Auf dem Stuhl.",
-    "Welche Farbe hat deine Tasche?"
+    "Welche Farbe hat die Tasche der singenden Person?",
+    "Dunkelblau.",
+    "Was liegt neben dem Handy?",
+    "Die Brille.",
+    "Welche Sachen gehören dir?"
   ],
   [
     "A1-7",
