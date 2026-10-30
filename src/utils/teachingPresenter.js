@@ -1,3 +1,4 @@
+import { A2_WORKBOOK_PRESENTATIONS } from '../data/a2WorkbookPresentations.js';
 import { getA2B1CommonMistakes } from '../data/a2B1CommonMistakes.js';
 import { getPresenterReadingLesson } from '../data/presenterReadingLessons.js';
 import { getLessonMusic } from "../data/lessonMusic.js";
@@ -2056,7 +2057,7 @@ function standardizeA2B1Stages(stages, slide) {
     if (stage.id !== 'phrases') return [stage];
     return [{
       id: 'common-mistakes', type: 'common-mistakes', kicker: 'Häufige Fehler',
-      title: 'Fehler finden und verbessern',
+      title: classroomLevel(slide) === 'A2' ? 'Common mistakes · Häufige Fehler' : 'Fehler finden und verbessern',
       instruction: 'Korrigiert die Sätze gemeinsam. Erst danach zeigt die Lehrkraft die Lösungen.',
       items: mistakes, suggestedMinutes: 4,
       teacherPurpose: {
@@ -2159,6 +2160,17 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
   }) : stages;
   const classroomStages = presenterV2 && ['A2', 'B1'].includes(level)
     ? standardizeA2B1Stages(prepared, slide) : prepared;
+  if (presenterV2 && level === "A2") {
+    const presentation = A2_WORKBOOK_PRESENTATIONS[Number(normalizedAssignmentId(slide).split(".").at(-1))];
+    if (!presentation) throw new Error(`Missing A2 workbook presentation: ${slide.id}`);
+    const workbookIndex = classroomStages.findIndex(stage => stage.id === "workbook");
+    classroomStages.splice(workbookIndex < 0 ? classroomStages.length : workbookIndex, 0, {
+      id: "workbook-presentation", type: "workbook-presentation",
+      kicker: "Workbook · Sprechen", title: presentation.mode === "roleplay" ? "Teil 1 Sprechen · Restaurant-Rollenspiel" : "Presentation · Teil 1 Sprechen",
+      presentation, items: presentation.branches || presentation.choices, suggestedMinutes: 5,
+      teacherPurpose: {student: "Beantworte die vorhandene Workbook-Aufgabe mündlich.", teacher: "Die Aufgabe direkt auf der Folie zeigen. Dies ist Unterrichtspraxis, keine neue Abgabe oder Bewertung."},
+    });
+  }
   const filtered = classroomStages.filter((stage) => {
     if (stage.type === "intro") return Boolean(stage.title || stage.topic || stage.objective);
     if (stage.type === "task") return Boolean(stage.body);

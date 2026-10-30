@@ -8,6 +8,7 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import {getSlidesByCourse} from '../src/data/teachingSlides.js';
 import {buildTeachingPresenterStages} from '../src/utils/teachingPresenter.js';
+import {A2_WORKBOOK_PRESENTATIONS} from '../src/data/a2WorkbookPresentations.js';
 import {PRESENTER_READING_TRANSLATIONS} from '../src/data/presenterReadingTranslations.js';
 
 // Keep the real presenter, numbered reading, navigation and translation controls.
@@ -54,6 +55,35 @@ for(const level of ['A2','B1'])test(level+' all 28 real reading slides reveal on
   await act(async()=>{jump.value=String(index);jump.dispatchEvent(new w.Event('change',{bubbles:true}));});
   assert.equal(document.querySelector('.presenter-translation-meaning'),null,'returning to the reading keeps English hidden');
   assert.equal(button('Select a sentence to translate').disabled,true);
+  if(level==='A2'){
+   const navigate=async id=>{await act(async()=>{jump.value=String(stages.findIndex(s=>s.id===id));jump.dispatchEvent(new w.Event('change',{bubbles:true}));});};
+   await navigate('common-mistakes');
+   assert.equal(document.querySelector('.presenter-grammar-check h1').textContent,'Common mistakes · Häufige Fehler');
+   const correction=document.querySelector('.presenter-grammar-check details');
+   assert.equal(correction.open,false);
+   await click(correction.querySelector('summary'));assert.equal(correction.open,true);
+   await navigate('workbook-presentation');
+   const task=A2_WORKBOOK_PRESENTATIONS[slide.dayNumber];
+   assert.ok(document.querySelector('[aria-label="Workbook presentation"]'));
+   if(task.mode!=='speaking-mock'){
+    assert.equal(document.querySelector('.presenter-workbook-presentation h2').textContent,task.prompt);
+    assert.equal(document.querySelectorAll('.presenter-presentation-points li').length,task.branches.length);
+    const starter=document.querySelector('.presenter-presentation-points details');
+    if(starter){assert.equal(starter.open,false);await click(starter.querySelector('summary'));assert.equal(starter.open,true);
+    assert.equal(starter.querySelector('p').textContent,task.branches[0].starter);}
+   }else{
+    const select=document.querySelector('.presenter-presentation-choice select');
+    assert.equal(select.options.length,task.choices.length);
+    await act(async()=>{select.value='1';select.dispatchEvent(new w.Event('change',{bubbles:true}));});
+    assert.equal(document.querySelector('.presenter-workbook-presentation h2').textContent,task.choices[1].prompt);
+   }
+   await click(button('Next slide →'));
+   assert.equal(document.querySelector('[aria-label="Workbook presentation"]'),null);
+   await navigate('workbook-presentation');
+   assert.ok(document.querySelector('[aria-label="Workbook presentation"]'));
+   const select=document.querySelector('.presenter-presentation-choice select');
+   if(select)assert.equal(select.value,'0','mock selection resets on navigation');
+  }
  }
  assert.equal(fetches,0);
 });

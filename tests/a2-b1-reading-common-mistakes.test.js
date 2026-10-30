@@ -74,7 +74,7 @@ test('A2 days 18-20 retain music, separate Hören, Lesen, Common Mistakes and ap
     const slide = slides.find(row => row.assignmentId === assignmentId);
     assert.ok(slide, assignmentId);
     const stages = buildTeachingPresenterStages(slide, slide.topic);
-    assert.equal(stages.length, 10, assignmentId);
+    assert.equal(stages.length, 11, assignmentId);
     assert.deepEqual(stages.slice(0, 6).map(s => s.id),
       ['intro', 'warmup', 'knowledge', 'common-mistakes', 'reading', 'grammar-check'], assignmentId);
     assert.equal(stages[1].variant, 'interactive-music-video', assignmentId);
@@ -130,7 +130,7 @@ test('all 56 A2/B1 presenters use the Day 18 layout and only published music les
     assert.equal(ids[1],'warmup',slide.assignmentId);
     assert.equal(ids.indexOf('reading'),ids.indexOf('common-mistakes')+1,slide.assignmentId);
     assert.equal(ids.indexOf('grammar-check'),ids.indexOf('reading')+1,slide.assignmentId);
-    assert.deepEqual(ids.slice(-3),['questions','workbook','lesson-summary'],slide.assignmentId);
+    assert.deepEqual(ids.slice(slide.course==='A2'?-4:-3),slide.course==='A2'?['questions','workbook-presentation','workbook','lesson-summary']:['questions','workbook','lesson-summary'],slide.assignmentId);
     assert.equal(stages.filter(x=>x.id==='reading').length,1,slide.assignmentId);
     assert.equal(stages.filter(x=>x.id==='common-mistakes').length,1,slide.assignmentId);
     const expected=musicDays[slide.assignmentId];
