@@ -186,11 +186,11 @@ export const MUSIC_QUESTION_SEEDS_A2 = Object.freeze([
   ],
   [
     "A2-9.24",
-    "Wohin möchten die Freunde verreisen?",
+    "In welche Stadt fährt die Person in den Urlaub?",
     "Nach Hamburg.",
-    "Was bucht die erzählende Person?",
-    "Die Zugtickets für Samstag.",
-    "Was muss man vor einer Reise organisieren?"
+    "Um wie viel Uhr fährt der Zug am Samstag ab?",
+    "Um acht Uhr.",
+    "Was planst du vor deinem Urlaub, und warum?"
   ],
   [
     "A2-9.25",
