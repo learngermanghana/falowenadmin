@@ -211,10 +211,10 @@ export const MUSIC_QUESTION_SEEDS_A2 = Object.freeze([
   [
     "A2-10.27",
     "Warum antwortet die Person Mia erst am Abend?",
-    "Sie war unterwegs und hatte die Nachricht nicht gesehen.",
-    "Was planen beide für den nächsten Tag?",
-    "Ein persönliches Treffen.",
-    "Wann schreibst du lieber eine Nachricht und wann telefonierst du?"
+    "Sie ist auf dem Weg zur Arbeit und sieht die Nachricht erst am Abend.",
+    "Wann und wo möchten sie sich treffen?",
+    "Am nächsten Tag um vier Uhr nachmittags in einem kleinen Café.",
+    "Wie entschuldigst du dich, wenn du auf eine Nachricht zu spät antwortest?"
   ],
   [
     "A2-10.28",
