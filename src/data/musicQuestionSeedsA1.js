@@ -109,9 +109,9 @@ export const MUSIC_QUESTION_SEEDS_A1 = Object.freeze([
     "A1-7",
     "Wann beginnt der Deutschkurs?",
     "Um neun Uhr.",
-    "Wen ruft die Person um sechs an?",
-    "Mama.",
-    "Wann stehst du morgens auf?"
+    "Was macht die Person um halb neun am Abend?",
+    "Sie liest ein Buch.",
+    "Wie sieht dein Tagesablauf von morgens bis abends aus?"
   ],
   [
     "A1-8",
