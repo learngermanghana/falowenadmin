@@ -6,6 +6,8 @@ import {getReusableMusicQuestions} from '../src/data/reusableMusicQuestions.js';
 import {getCuratedMusicByAssignment} from '../src/data/curatedLessonMusic.js';
 import {getA1PresenterMusicStage} from '../src/data/a1PresenterMusicStage.js';
 import {A1_DAY22_MUSIC} from '../src/data/a1Day22Music.js';
+import {A1_DAY22_FINAL_RECORDING} from '../src/data/a1Day22FinalRecording.js';
+import {validateLyricCues} from '../src/utils/songLyrics.js';
 import {lyricLines} from '../src/utils/songLyrics.js';
 
 test('Days 2 and 3 retain every supplied lyric line, section, repeated chorus and style',()=>{
@@ -38,4 +40,16 @@ test('Day 22 completion uses Arzttermin playback, the ten o’clock appointment 
  const questions=A1_DAY22_MUSIC.questions;assert.deepEqual(questions.map(q=>q.answer),['Um zehn Uhr.','Viel Wasser trinken und heute zu Hause bleiben.']);
  for(const q of questions){assert.equal(q.options[q.correctIndex],q.answer);for(const line of lyricLines(q.evidence))assert.ok(lyricLines(A1_DAY22_MUSIC.lyrics).includes(line));}
  assert.doesNotMatch(questions.map(q=>q.evidence).join(' '),/Mia bringt/);
+});
+
+test('superseded PR 1292 keeps the full Day 21 replacement and Day 22 recording-specific review gate',()=>{
+ const weather=getReusableSongDraft('A1-13');assert.equal(weather.title,'Heute kann ich leider nicht');
+ assert.equal(lyricLines(weather.lyrics).length,36);assert.match(weather.lyrics,/Ich treffe Mia um drei im Park/);
+ const recording=A1_DAY22_FINAL_RECORDING,lines=lyricLines(getReusableSongDraft('A1-14.1').lyrics);
+ assert.equal(recording.objectKey,A1_DAY22_MUSIC.audioKey);
+ assert.equal(recording.sha256,'2ec00cb7004809e6b34e103e943ac1a6fe29d9bab4d410f4febe0d00412a349b');
+ assert.equal(recording.duration,176.76);assert.equal(recording.status,'draft-timing-review-required');
+ assert.equal(lines.length,33);assert.equal(recording.cueStarts.length,33);
+ const cues=recording.cueStarts.map((start,i)=>({start,text:lines[i]}));assert.equal(validateLyricCues(cues,lines).length,33);
+ assert.ok(cues.at(-1).start<recording.duration);
 });
