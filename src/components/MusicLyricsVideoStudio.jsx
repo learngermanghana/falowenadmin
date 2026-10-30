@@ -213,17 +213,22 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       const lineCount=videoLyricLines(recordedLyrics).length;
       const localComplete=lineCount>0 && local.length===lineCount;
       const restored=localComplete ? local : published?.cues || [];
-      // Day 11's R2 song is already named, but we have not received its MP3 bytes.
-      // Show the teacher-approved lyrics without pretending any old sidecar
-      // belongs to this replacement. The editor can mark the published audio.
-      if(key==="music/a1/day-11/Mein Tag – Von morgens bis.mp3"){
-        const approvedLyrics=getReusableSongDraft("A1-7")?.lyrics||"";
+      // These approved songbook lyrics supersede the older short published
+      // catalog metadata. We have not received their MP3 bytes, so the
+      // owner's timing editor must remain blank until real audio is marked.
+      const approvedUnreviewedSong={
+        "music/a1/day-11/Mein Tag – Von morgens bis.mp3":"A1-7",
+        "music/a1/day-12/Zeit und Datum.mp3":"A1-8",
+      };
+      const approvedAssignment=approvedUnreviewedSong[key];
+      if(approvedAssignment){
+        const approvedLyrics=getReusableSongDraft(approvedAssignment)?.lyrics||"";
         if(approvedLyrics && recordedLyrics!==approvedLyrics){
           currentLyricText.current=approvedLyrics;
           setLyricText(approvedLyrics);
           setCues([]);
           setTimingStatus("missing");
-          setMessage("Updated Day 11 lyrics loaded. Listen to the published MP3 and mark each lyric line; no unverified timestamps have been inserted.");
+          setMessage("Approved lesson lyrics loaded for the R2 song. No unverified timestamps have been inserted. Play the published MP3 and mark each line before saving the shared timing.");
           return;
         }
       }
