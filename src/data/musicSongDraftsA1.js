@@ -86,10 +86,10 @@ export const MUSIC_SONG_DRAFTS_A1 = Object.freeze([
   },
   {
     "assignmentKey": "A1-6",
-    "title": "Ist das deine blaue Tasche?",
-    "musicStyle": "Synth-Pop, 96 BPM: gentle synth-pop with warm analog pads, melodic electric keys and very soft programmed drums; playful, uncluttered and steady. One lead singer, clear German phrases, quiet instrumental mix.",
-    "lyrics": "[Verse 1]\nIm Bus liegt eine Tasche.\nSie ist blau und ziemlich klein.\nIch frage: Ist das deine Tasche?\nMia sagt: Nein, meine ist rot.\n\n[Chorus]\nMeine Tasche, deine Tasche.\nMein Buch, dein grüner Stift.\nJeder findet seine Sachen.\n\n[Verse 2]\nBen sucht seinen schwarzen Schal.\nEr liegt auf meinem Stuhl.\nIch sage: Ben, hier ist er!\nBen lacht: Ja, das ist mein Schal.\n\n[Chorus]\nMeine Tasche, deine Tasche.\nMein Buch, dein grüner Stift.\nJeder findet seine Sachen.\n\n[Outro]\nNun hat jeder seine Sachen.\nUnd unser Bus fährt los.\nMit Falowen lerne ich neue Farben.",
-    "genre": "Synth-Pop"
+    "title": "Das gehört mir!",
+    "musicStyle": "Warm German Pop · Acoustic Guitar · Soft Afrobeat · 94 BPM. Warm guitar, gentle piano, understated Afrobeat drums and rounded bass, a natural adult lead vocal, expressive transitions and singable choruses. Use the actual approved recording for sung line content and timing.",
+    "lyrics": "[Verse 1]\nIch habe eine kleine Tasche,\nMeine Tasche ist dunkelblau.\nDarin habe ich meine Bücher,\nUnd ein Heft, das brauche ich auch.\n\nMein Handy liegt auf dem Tisch,\nMeine Brille liegt daneben.\nIch habe einen neuen Stift,\nDen hat mir mein Freund gegeben.\n\n[Pre-Chorus]\nDas ist mein Buch, das ist mein Heft,\nUnd hier liegt auch mein Schlüssel.\nIch habe alles, was ich brauche,\nUnd packe meine Tasche ein.\n\n[Chorus]\nDas ist mein Buch, das ist mein Stift,\nDas ist meine Tasche hier.\nDas ist dein Handy, das ist dein Heft,\nUnd diese Jacke gehört dir.\n\nMein und dein, das ist ganz leicht,\nJeder hat die Sachen, die er braucht.\nWas gehört dir? Was gehört mir?\nZeig mir deine Sachen hier!\n\n[Post-Chorus]\nZeig mir deine Sachen hier!\nZeig mir deine Sachen hier!\n\n[Verse 2]\nZu Hause habe ich ein Fahrrad,\nMein Fahrrad ist rot und klein.\nIn meinem Zimmer steht ein Schreibtisch,\nDort lerne ich oft allein.\n\nMeine Schuhe sind ganz neu,\nMeine Jacke ist schon alt.\nIch habe auch eine schöne Uhr,\nUnd einen Rucksack für den Alltag.\n\n[Chorus]\nDas ist mein Buch, das ist mein Stift,\nDas ist meine Tasche hier.\nDas ist dein Handy, das ist dein Heft,\nUnd diese Jacke gehört dir.\n\nMein und dein, das ist ganz leicht,\nJeder hat die Sachen, die er braucht.\nWas gehört dir? Was gehört mir?\nZeig mir deine Sachen hier!\n\n[Post-Chorus]\nZeig mir deine Sachen hier!\n\n[Outro]\nMein Buch, mein Stift, mein Handy,\nMeine Tasche und mein Schuh.\nIch kenne jetzt meine Sachen,\nUnd was gehört denn dir dazu?",
+    "genre": "Warm German Pop"
   },
   {
     "assignmentKey": "A1-7",
