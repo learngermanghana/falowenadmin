@@ -86,3 +86,22 @@ test("curated Day 21 and Day 22 songs use the new uploaded R2 audio instead of o
     assert.equal(song.audioUrl,"https://www.falowen.app/api/music?track="+song.trackId);
   }
 });
+
+
+test('A2 Day 23 school cycling song is linked to the exact uploaded recording with no invented timing', () => {
+  const track = getCuratedMusicByAssignment('A2-9.23');
+  const song = getReusableSongDraft('A2-9.23');
+  assert.equal(track?.day, 23);
+  assert.equal(track?.objectKey, 'music/a2/day-23/Fahrrad zur Schule.mp3');
+  assert.equal(track?.title, 'Fahrrad zur Schule');
+  assert.equal(track?.trackId, 'r2-a2-day-23-b64_RmFocnJhZCB6dXIgU2NodWxlLm1wMw');
+  assert.equal(Buffer.from(track.trackId.split('b64_')[1], 'base64url').toString('utf8'), 'Fahrrad zur Schule.mp3');
+  assert.match(song.lyrics, /Weil ich die Umwelt schützen will/);
+  assert.match(song.lyrics, /Wenn es regnet, nehme ich den Bus/);
+  assert.doesNotMatch(song.lyrics, /Meine Kollegin wartet schon im Büro/);
+  const sung = song.lyrics.split('\\n').filter(line => line.trim() && !/^\\[.*\\]$/.test(line));
+  assert.equal(sung.length, 36);
+  assert.equal(getReusableMusicQuestions('A2-9.23').questions[0].answer, 'Weil sie die Umwelt schützen will.');
+  assert.equal(getReusableMusicQuestions('A2-9.23').questions[1].answer, 'Den Bus.');
+  assert.equal(track.cues, undefined, 'Never publish guessed vocal timings');
+});
