@@ -70,6 +70,8 @@ export default function MusicStudioPage() {
     (savedLyrics[assignmentKey] || '').includes('Im Bus liegt eine Tasche.');
   const obsoleteA1Day11Draft = assignmentKey === 'A1-7' &&
     (savedLyrics[assignmentKey] || '').includes('Um sieben stehe ich auf.');
+  const obsoleteA1Day12Draft = assignmentKey === 'A1-8' &&
+    (savedLyrics[assignmentKey] || '').includes('Mein Handy zeigt sechzehn Uhr.');
   const lyrics = courseMode === 'course'
     ? Object.prototype.hasOwnProperty.call(lyricsOverrides, assignmentKey)
       ? lyricsOverrides[assignmentKey]
