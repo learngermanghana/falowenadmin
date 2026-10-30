@@ -14,7 +14,7 @@ test('A1-14.1 keeps teaching, practice and summary and uses exactly three music 
   assert.deepEqual(stages.filter(s => s.type === 'lesson-music').map(s => s.mode), ['listen','questions','speaking']);
   for (const id of ['grammar','practice','workbook','lesson-summary']) assert.ok(stages.some(s => s.id === id));
   assert.ok(!buildTeachingPresenterStages(slides.find(s => s.assignmentId === 'A1-14.2')).some(s => s.type === 'lesson-music'));
-  assert.equal(getLessonSong({level:'A1',day:22}).objectKey,'music/a1/day-22/mein-kopf-tut-weh.mp3');
+  assert.equal(getLessonSong({level:'A1',day:22}).objectKey,'music/a1/day-22/Arzttermin.mp3');
   assert.equal(getLessonSong({level:'A2',day:22}),null);
   assert.equal(getLessonSong({assignmentId:'A1-14.1'}).id,A1_DAY22_MUSIC.id);
 });
@@ -26,7 +26,7 @@ test('song questions have evidence from the saved lyrics and do not use workbook
     assert.ok(q.answer);
     for (const evidence of lyricLines(q.evidence)) assert.ok(lines.includes(evidence),evidence);
   }
-  assert.equal(lines.filter(line => line === "Wie geht's dir? Wie geht's dir?").length,2);
+  assert.equal(lines.filter(line => line === "Mir geht es nicht gut, ich bin krank.").length,2);
 });
 test('real audio time handles pause/seek and rejects mismatched or unordered imported lyrics', () => {
   const lines=['Hallo','Noch einmal','Hallo'];

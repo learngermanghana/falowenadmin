@@ -16,17 +16,17 @@ export const MUSIC_SONG_DRAFTS_A1 = Object.freeze([
   },
   {
     "assignmentKey": "A1-0.2",
-    "title": "Ein Name am Telefon",
-    "musicStyle": "Synth-Pop, 88 BPM: gentle synth-pop with warm analog pads, melodic electric keys and very soft programmed drums; playful, uncluttered and steady. One lead singer, clear German phrases, quiet instrumental mix.",
-    "lyrics": "[Verse 1]\nMein Name ist Lena, hallo!\nIch rufe bei der Schule an.\nDie Frau fragt: Wie heißt du?\nIch sage: L-E-N-A.\n\n[Chorus]\nA, B, C, wir hören zu.\nIch sage meinen Namen, du auch.\nBuchstabe für Buchstabe,\njetzt ist mein Name klar.\n\n[Verse 2]\nDie Frau sagt: Bitte noch mal.\nIch spreche langsam: L-E-N-A.\nSie sagt: Danke, liebe Lena!\nDer Kurs beginnt um zehn.\n\n[Chorus]\nA, B, C, wir hören zu.\nIch sage meinen Namen, du auch.\nBuchstabe für Buchstabe,\njetzt ist mein Name klar.\n\n[Outro]\nIch lege mein Handy weg.\nMein Name steht jetzt auf der Liste.\nMit Falowen kann ich Namen schreiben.",
-    "genre": "Synth-Pop"
+    "title": "Ich heiße Bina – B-I-N-A!",
+    "musicStyle": "Warm German Afro-Pop · Acoustic Guitar · Soft Piano · Light Afrobeat · 96 BPM · One Singer",
+    "lyrics": "[Intro]\nHmm, hmm, hmm …\nOh-oh, yeah …\nHmm, hmm, hmm …\n\n[Verse 1]\nHeute rufe ich die Schule an,\nIch möchte einen Deutschkurs machen.\nDie Frau sagt freundlich: „Guten Tag!\nWie heißen Sie? Sagen Sie es mir.“\n\nIch sage: „Hallo, ich heiße Bina,\nIch komme aus Ghana, das ist mein Land.“\nSie fragt: „Wie schreibt man Ihren Namen?“\nIch buchstabiere langsam dann.\n\n[Chorus]\nIch heiße Bina, B – I – N – A!\nOh-oh, das ist mein Name, ja!\nB – I – N – A, hmm, hmm, hmm,\nSo schreibt man meinen Namen!\n\nWie heißt du? Sag es mir!\nIch heiße Bina, und wie heißt du?\nOh-oh, hmm, hmm, hmm,\nJetzt kennst du meinen Namen!\n\n[Verse 2]\nDie Frau fragt: „Wo wohnen Sie?“\nIch sage: „In Accra, hier bin ich.“\nSie sagt: „Bitte noch einmal Ihren Namen!“\nIch sage langsam: „B – I – N – A.“\n\nSie schreibt meinen Namen auf,\nUnd sagt: „Danke, alles klar!\nIhr Deutschkurs beginnt am Montag.“\nIch freue mich, ich bin bald da!\n\n[Chorus]\nIch heiße Bina, B – I – N – A!\nOh-oh, das ist mein Name, ja!\nB – I – N – A, hmm, hmm, hmm,\nSo schreibt man meinen Namen!\n\nWie heißt du? Sag es mir!\nIch heiße Bina, und wie heißt du?\nOh-oh, hmm, hmm, hmm,\nJetzt kennst du meinen Namen!\n\n[Outro]\nHmm, hmm, hmm …\nIch heiße Bina, B – I – N – A.\nOh-oh, und wie heißt du?\nHmm, hmm, hmm …",
+    "genre": "Warm German Afro-Pop"
   },
   {
     "assignmentKey": "A1-1.1",
-    "title": "Ich lerne, du lernst",
-    "musicStyle": "German Pop, 90 BPM: contemporary German pop with clean electric guitar, gentle electronic drums and a memorable melodic keyboard hook; confident and conversational. One lead singer, clear German phrases, quiet instrumental mix.",
-    "lyrics": "[Verse 1]\nIch bin Ali, du bist Mia.\nSie ist hier, er ist da.\nIch lerne Deutsch am Morgen.\nDu lernst Deutsch am Abend.\n\n[Chorus]\nIch lerne, du lernst, wir lernen.\nIch komme, du kommst, wir kommen.\nZusammen sprechen wir Deutsch.\n\n[Verse 2]\nMia fragt: Was machst du?\nIch sage: Ich schreibe jetzt.\nBen fragt: Was macht ihr?\nWir sagen: Wir lesen hier.\n\n[Chorus]\nIch lerne, du lernst, wir lernen.\nIch komme, du kommst, wir kommen.\nZusammen sprechen wir Deutsch.\n\n[Outro]\nJetzt sprechen alle mit.\nUnd morgen lernen wir noch mehr.\nBei Falowen üben wir die Verben.",
-    "genre": "German Pop"
+    "title": "Wer bist du? Sag es mir!",
+    "musicStyle": "Warm German Pop · Acoustic Guitar · Soft Afrobeat · 96 BPM · One Singer",
+    "lyrics": "[Verse 1]\nHeute kommt ein neuer Schüler,\nEr hat ein Buch und einen Stift.\nIch frage freundlich: „Wie heißt du?“\nEr sagt: „Hallo, ich heiße Ben.“\n\n„Woher kommst du?“, frage ich,\nEr sagt: „Ich komme aus Berlin.“\nIch sage: „Schön, dich hier zu sehen!“\nJetzt lernen wir zusammen Deutsch.\n\n[Chorus]\nWer bist du? Wie heißt du?\nWoher kommst du? Sag es mir!\nWo wohnst du? Was machst du gern?\nIch möchte dich gern kennenlernen.\n\nOh-oh, ich frage dich,\nHmm-hmm, du antwortest mir.\nSo lernen wir uns besser kennen,\nUnd sprechen jeden Tag ein bisschen mehr.\n\n[Verse 2]\nIch frage Ben: „Wo wohnst du jetzt?“\nEr sagt: „Ich wohne hier in Bonn.“\n„Was machst du gern am Wochenende?“\n„Ich höre Musik und spiele gern.“\n\n„Wann beginnt der Deutschkurs morgen?“\nEr sagt: „Um neun Uhr, wie heute.“\nIch sage: „Danke, bis morgen!“\nEr lächelt und sagt: „Bis dann!“\n\n[Chorus]\nWer bist du? Wie heißt du?\nWoher kommst du? Sag es mir!\nWo wohnst du? Was machst du gern?\nIch möchte dich gern kennenlernen.\n\nOh-oh, ich frage dich,\nHmm-hmm, du antwortest mir.\nSo lernen wir uns besser kennen,\nUnd sprechen jeden Tag ein bisschen mehr.\n\n[Outro]\nHmm, hmm, jetzt kenne ich Ben,\nOh-oh, wir sehen uns morgen.\nIch frage gern, ich höre zu,\nUnd lerne jeden Tag Deutsch.\n\nHmm, hmm, bis morgen!",
+    "genre": "Warm German Pop"
   },
   {
     "assignmentKey": "A1-1.1-practice",

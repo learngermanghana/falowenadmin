@@ -19,19 +19,19 @@ export const MUSIC_QUESTION_SEEDS_A1 = Object.freeze([
   ],
   [
     "A1-0.2",
-    "Wer ruft bei der Schule an?",
-    "Lena.",
-    "Wann beginnt der Kurs?",
-    "Um zehn Uhr.",
+    "Wie heißt die Person, die bei der Schule anruft?",
+    "Bina.",
+    "Wann beginnt der Deutschkurs?",
+    "Am Montag.",
     "Wie buchstabierst du deinen Namen?"
   ],
   [
     "A1-1.1",
-    "Wann lernt die Person Deutsch?",
-    "Am Morgen.",
-    "Was antwortet die Person auf Mias Frage?",
-    "Ich schreibe jetzt.",
-    "Was machst du heute im Deutschkurs?"
+    "Woher kommt Ben?",
+    "Aus Berlin.",
+    "Wo wohnt Ben jetzt?",
+    "In Bonn.",
+    "Frage deinen Partner nach Name, Herkunft und Wohnort."
   ],
   [
     "A1-1.1-practice",
