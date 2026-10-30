@@ -72,10 +72,14 @@ export default function MusicStudioPage() {
     (savedLyrics[assignmentKey] || '').includes('Um sieben stehe ich auf.');
   const obsoleteA1Day12Draft = assignmentKey === 'A1-8' &&
     (savedLyrics[assignmentKey] || '').includes('Mein Handy zeigt sechzehn Uhr.');
+  const obsoleteA1Day17Draft = assignmentKey === 'A1-11' &&
+    (savedLyrics[assignmentKey] || '').includes('Ich suche den Bahnhof.');
+  const obsoleteA1Day18Draft = assignmentKey === 'A1-12.1' &&
+    (savedLyrics[assignmentKey] || '').includes('Er liegt nicht auf dem Tisch.');
   const lyrics = courseMode === 'course'
     ? Object.prototype.hasOwnProperty.call(lyricsOverrides, assignmentKey)
       ? lyricsOverrides[assignmentKey]
-      : Object.prototype.hasOwnProperty.call(savedLyrics, assignmentKey) && savedLyrics[assignmentKey] && !obsoleteDay7Draft && !obsoleteDay8Draft && !supersededWeekendLyrics && !supersededA2Day22Draft && !obsoleteA1Day10Draft && !obsoleteA1Day11Draft && !obsoleteA1Day12Draft
+      : Object.prototype.hasOwnProperty.call(savedLyrics, assignmentKey) && savedLyrics[assignmentKey] && !obsoleteDay7Draft && !obsoleteDay8Draft && !supersededWeekendLyrics && !supersededA2Day22Draft && !obsoleteA1Day10Draft && !obsoleteA1Day11Draft && !obsoleteA1Day12Draft && !obsoleteA1Day17Draft && !obsoleteA1Day18Draft
         ? savedLyrics[assignmentKey] : draft?.lyrics || ''
     : customLyrics;
   const setLyrics = next => {
