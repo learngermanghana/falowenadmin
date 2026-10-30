@@ -43,9 +43,9 @@ test("All six B1 missions replace focused practice with no duplicate slide, pres
     const ids = core.map(s => s.id);
     assert.deepEqual(ids, [
       "intro", "warmup", "common-mistakes", "reading", "grammar-check",
-      "scenario-challenge", "questions", "workbook", "lesson-summary",
+      "scenario-challenge", "questions", "workbook-presentation", "workbook", "lesson-summary",
     ], assignmentId);
-    assert.equal(ids.length, 9);
+    assert.equal(ids.length, 10);
     const challenge = core[5];
     assert.equal(challenge.title, title);
     assert.equal(challenge.items, getB1TeacherChallenge(assignmentId).scenarios);

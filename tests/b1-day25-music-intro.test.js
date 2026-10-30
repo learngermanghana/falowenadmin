@@ -10,7 +10,7 @@ test("B1 Day 25 has direct lesson music with its independent R2 Hören and appro
   const slide=getSlidesByCourse("B1").find(row=>row.assignmentId==="B1-8.25");
   const stages=buildTeachingPresenterStages(slide,slide.topic);
   assert.deepEqual(stages.map(x=>x.id),["intro","warmup","knowledge","common-mistakes","reading","grammar-check",
-    "scenario-challenge","questions","workbook","lesson-summary"]);
+    "scenario-challenge","questions","workbook-presentation","workbook","lesson-summary"]);
   assert.equal(stages[1].variant,"interactive-music-video");
   assert.equal(stages[1].musicVideo.youtubeId,undefined);
   assert.equal(stages[1].musicVideo.mediaType,"music");

@@ -1,3 +1,4 @@
+import B1WorkbookPresentation from "./B1WorkbookPresentation.jsx";
 import A2WorkbookPresentation from "./A2WorkbookPresentation.jsx";
 import PresenterReadingTranslation from "./PresenterReadingTranslation.jsx";
 import useReadingTranslation from "../hooks/useReadingTranslation.js";
@@ -1070,6 +1071,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
               ) : null}
               <p className="presenter-career-teacher-note">Nur für die Lehrkraft: Bildschirm teilen, Frage stellen, Antworten anhören und die Modellantwort bei Bedarf zeigen. Kein Schülerzugang und keine automatische Bewertung.</p>
             </section>
+          ) : stage.type === "b1-workbook-presentation" ? (
+            <B1WorkbookPresentation key={`${slide.id}:${stage.id}`} stage={stage}/>
           ) : stage.type === "workbook-presentation" ? (
             <A2WorkbookPresentation key={`${slide.id}:${stage.id}`} stage={stage}/>
           ) : (stage.type === "grammar-check" || stage.type === "common-mistakes") ? (

@@ -19,6 +19,7 @@ const REQUIRED_STAGES = [
   "grammar-check",
   "practice",
   "questions",
+  "workbook-presentation",
   "workbook",
   "lesson-summary",
 ];

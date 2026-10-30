@@ -1,0 +1,21 @@
+.presenter-b1-presentation { min-width: 0; display: grid; gap: clamp(8px, 1.5vh, 16px); }
+.presenter-b1-presentation header span { color: #475569; font-weight: 700; }
+.presenter-b1-presentation h1 { margin: 0; font-size: clamp(1.4rem, 3.8vh, 2.3rem); }
+.presenter-b1-presentation h2 { margin: 0; font-size: clamp(1.15rem, 2.8vh, 1.9rem); line-height: 1.35; overflow-wrap: anywhere; }
+.presenter-b1-presentation-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.presenter-b1-presentation-tabs button { border: 1px solid #cbd5e1; border-radius: 10px; background: #f8fafc; color: #1e293b; padding: 8px 14px; font: inherit; cursor: pointer; }
+.presenter-b1-presentation-tabs button[aria-selected="true"] { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
+.presenter-b1-presentation-panel { min-width: 0; max-height: 48dvh; overflow-y: auto; padding: clamp(10px, 2vh, 20px); border: 1px solid #cbd5e1; border-radius: 14px; background: #f8fafc; overflow-wrap: anywhere; }
+.presenter-b1-presentation-task { margin: 0 0 10px; font-size: clamp(1rem, 2.4vh, 1.4rem); line-height: 1.5; }
+.presenter-b1-presentation-outline { margin: 0; padding-left: 24px; display: grid; gap: 8px; }
+.presenter-b1-presentation-outline li { padding-left: 4px; line-height: 1.4; }
+.presenter-b1-presentation summary { cursor: pointer; color: #1d4ed8; }
+.presenter-b1-presentation details p { margin: 5px 0; line-height: 1.5; }
+.presenter-b1-presentation-ideas { display: grid; gap: 10px; }
+.presenter-b1-presentation-ideas ul { margin: 8px 0; padding-left: 22px; line-height: 1.5; }
+.presenter-b1-presentation-choice { display: grid; gap: 6px; }
+.presenter-b1-presentation-choice select { width: 100%; min-width: 0; max-width: 100%; padding: 10px; font: inherit; }
+@media (max-width: 700px) {
+ .presenter-b1-presentation-tabs button { flex: 1 1 auto; padding: 8px 10px; }
+ .presenter-b1-presentation-panel { padding: 12px; }
+}
