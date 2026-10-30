@@ -7,6 +7,7 @@ import { A1_DAY8_FINAL_RECORDING } from "../data/a1Day8FinalRecording.js";
 import { A1_DAY10_FINAL_RECORDING } from "../data/a1Day10FinalRecording.js";
 import { A1_DAY17_FINAL_RECORDING } from "../data/a1Day17FinalRecording.js";
 import { A1_DAY18_FINAL_RECORDING } from "../data/a1Day18FinalRecording.js";
+import { A1_DAY22_FINAL_RECORDING } from "../data/a1Day22FinalRecording.js";
 import { A2_DAY21_FINAL_RECORDING } from "../data/a2Day21FinalRecording.js";
 import { A2_DAY22_FINAL_RECORDING } from "../data/a2Day22FinalRecording.js";
 import { getReusableSongDraft } from "../data/reusableMusicSongbook.js";
@@ -121,7 +122,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
 
   // Record-specific provisional timing is never applied to a different MP3 take.
   useEffect(()=>{
-    const reference=[A1_DAY5_FINAL_RECORDING,A1_DAY6_FINAL_RECORDING,A1_DAY7_FINAL_RECORDING,A1_DAY8_FINAL_RECORDING,A1_DAY10_FINAL_RECORDING,A1_DAY17_FINAL_RECORDING,A1_DAY18_FINAL_RECORDING,A2_DAY21_FINAL_RECORDING,A2_DAY22_FINAL_RECORDING].find(x=>x.assignmentKey===assignmentKey);
+    const reference=[A1_DAY5_FINAL_RECORDING,A1_DAY6_FINAL_RECORDING,A1_DAY7_FINAL_RECORDING,A1_DAY8_FINAL_RECORDING,A1_DAY10_FINAL_RECORDING,A1_DAY17_FINAL_RECORDING,A1_DAY18_FINAL_RECORDING,A1_DAY22_FINAL_RECORDING,A2_DAY21_FINAL_RECORDING,A2_DAY22_FINAL_RECORDING].find(x=>x.assignmentKey===assignmentKey);
     if(!file||!reference)return undefined;
     let cancelled=false;
     async function loadRecordedTiming(){
@@ -221,6 +222,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       const approvedUnreviewedSong={
         "music/a1/day-11/Mein Tag – Von morgens bis.mp3":"A1-7",
         "music/a1/day-12/Zeit und Datum.mp3":"A1-8",
+        "music/a1/day-21/Heute kann ich leider nicht.mp3":"A1-13",
       };
       const approvedAssignment=approvedUnreviewedSong[key];
       if(approvedAssignment){
@@ -235,9 +237,13 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
         }
       }
       // Only hydrate draft timing when the exact published MP3 bytes match a teacher recording.
-      const draftReference=[A1_DAY5_FINAL_RECORDING,A1_DAY6_FINAL_RECORDING,A1_DAY7_FINAL_RECORDING,A1_DAY8_FINAL_RECORDING,A1_DAY10_FINAL_RECORDING,A1_DAY17_FINAL_RECORDING,A1_DAY18_FINAL_RECORDING,A2_DAY21_FINAL_RECORDING,A2_DAY22_FINAL_RECORDING]
+      const draftReference=[A1_DAY5_FINAL_RECORDING,A1_DAY6_FINAL_RECORDING,A1_DAY7_FINAL_RECORDING,A1_DAY8_FINAL_RECORDING,A1_DAY10_FINAL_RECORDING,A1_DAY17_FINAL_RECORDING,A1_DAY18_FINAL_RECORDING,A1_DAY22_FINAL_RECORDING,A2_DAY21_FINAL_RECORDING,A2_DAY22_FINAL_RECORDING]
         .find(x=>x.objectKey===key || (!x.objectKey && x.level===publishedTrack?.level && Number(x.day)===Number(publishedTrack?.day)));
-      if(!published&&!localComplete&&draftReference&&window.crypto?.subtle){
+      // Day 22 replaced a previously published short song. Check the new MP3
+      // even when an old sidecar is present, so stale lyrics/cues cannot win.
+      const day22Replacement=draftReference?.assignmentKey==="A1-14.1" &&
+        recordedLyrics!==getReusableSongDraft("A1-14.1")?.lyrics;
+      if(((!published&&!localComplete)||day22Replacement)&&draftReference&&window.crypto?.subtle){
         try{
           const remote=await fetch(publishedTrack.audioUrl,{signal:controller.signal});
           if(!remote.ok)throw Error("Audio unavailable");
@@ -265,6 +271,19 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
             return;
           }
         }catch(e){if(controller.signal.aborted)return;/* Do not guess timings for mismatched R2 audio. */}
+      }
+      if(day22Replacement){
+        // Fail closed: if the new R2 audio is inaccessible or doesn't match the
+        // user-uploaded take, show the approved text but never borrow old cues.
+        const approvedLyrics=getReusableSongDraft("A1-14.1")?.lyrics||"";
+        if(approvedLyrics){
+          currentLyricText.current=approvedLyrics;
+          setLyricText(approvedLyrics);
+          setCues([]);
+          setTimingStatus("missing");
+          setMessage("Day 22 approved lyrics are loaded. The published MP3 could not be verified against the supplied recording, so no timing was attached. Upload the same MP3 here or check its R2 URL.");
+          return;
+        }
       }
       currentLyricText.current=recordedLyrics;
       setLyricText(recordedLyrics);
