@@ -367,3 +367,27 @@ test("A1 Day 10 uses approved Das gehört mir lyrics and the actual song recordi
   assert.match(questions,/Was liegt neben dem Handy/);
   assert.doesNotMatch(questions,/Wo liegt Bens schwarzer Schal/);
 });
+
+test("A1 Day 11 keeps approved Tagesablauf lyrics and never invents unverified timing", () => {
+  const song=getReusableSongDraft("A1-7");
+  assert.equal(song.title,"Mein Tag – Von morgens bis abends");
+  assert.match(song.musicStyle,/96 BPM/);
+  assert.match(song.lyrics,/Um sieben Uhr stehe ich auf/);
+  assert.match(song.lyrics,/Mein Deutschkurs fängt um neun Uhr an/);
+  assert.match(song.lyrics,/Von neun bis zwölf lerne ich Deutsch/);
+  assert.match(song.lyrics,/Um halb neun lese ich ein Buch/);
+  assert.match(song.lyrics,/Wie spät ist es\? Wie viel Uhr haben wir\?/);
+  assert.match(song.lyrics,/Und ein neuer Tag beginnt/);
+  assert.doesNotMatch(song.lyrics,/Um acht trinke ich Tee/);
+  const lines=videoLyricLines(song.lyrics);
+  assert.equal(lines.length,44);
+  const studio=readFileSync(new URL("../src/components/MusicLyricsVideoStudio.jsx",import.meta.url),"utf8");
+  assert.match(studio,/music\/a1\/day-11\/Mein Tag – Von morgens bis\.mp3/);
+  assert.match(studio,/getReusableSongDraft\("A1-7"\)/);
+  assert.match(studio,/no unverified timestamps have been inserted/);
+  const page=readFileSync(new URL("../src/pages/MusicStudioPage.jsx",import.meta.url),"utf8");
+  assert.match(page,/obsoleteA1Day11Draft/);
+  const questions=readFileSync(new URL("../src/data/musicQuestionSeedsA1.js",import.meta.url),"utf8");
+  assert.match(questions,/Was macht die Person um halb neun am Abend/);
+  assert.match(questions,/Sie liest ein Buch/);
+});
