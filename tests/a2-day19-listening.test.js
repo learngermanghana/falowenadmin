@@ -33,7 +33,7 @@ test('Day 19 keeps separate music and Hören alongside Lesen, correction and spe
   assert.equal(stages[1].musicVideo.musicLibraryUrl, 'https://music.falowen.app/?level=A2&day=19');
   assert.equal(stages[1].musicVideo.youtubeId, undefined);
   assert.equal(stages[1].musicVideo.audioUrl, undefined);
-  assert.equal(stages.length, 10, 'Keep the approved 10-slide lesson structure');
+  assert.equal(stages.length, 11, 'Keep the classroom stages and add the workbook presentation');
   assert.equal(getCuratedMusicByAssignment('A2-7.18').objectKey, 'music/a2/day-18/die-karte-funktioniert-nicht.mp3');
 });
 

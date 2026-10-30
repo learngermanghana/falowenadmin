@@ -11,7 +11,7 @@ for (const level of ["A2", "B1"]) {
       const stages = buildTeachingPresenterStages(slide, slide.topic);
       const summary = stages.at(-1);
       assert.equal(summary.id, "lesson-summary", slide.assignmentId);
-      assert.equal(stages.length, stages.some(s => s.id === "knowledge") ? 10 : 9, slide.assignmentId);
+      assert.equal(stages.length, (stages.some(s => s.id === "knowledge") ? 10 : 9) + (slide.course === "A2" ? 1 : 0), slide.assignmentId);
       const expressions = summary.items.find(item => item.label === "Redemittel");
       const spoken = summary.items.find(item => item.label === "Sprechprobe");
       const check = summary.items.find(item => item.label === "Selbstcheck");
@@ -23,7 +23,7 @@ for (const level of ["A2", "B1"]) {
       assert.ok(spoken.detail.includes(slide.studentQuestionsDe.at(-1)), slide.assignmentId);
       assert.equal(check.detail, slide.wrapUpTaskDe, slide.assignmentId);
       assert.doesNotMatch([expressions.detail, spoken.detail].join(" "), /You can talk about|You can use today.s target grammar accurately/i, slide.assignmentId);
-      assert.deepEqual(stages.slice(-3).map(s => s.id), ["questions", "workbook", "lesson-summary"], slide.assignmentId);
+      assert.deepEqual(stages.slice(level === "A2" ? -4 : -3).map(s => s.id), level === "A2" ? ["questions", "workbook-presentation", "workbook", "lesson-summary"] : ["questions", "workbook", "lesson-summary"], slide.assignmentId);
     }
   });
 

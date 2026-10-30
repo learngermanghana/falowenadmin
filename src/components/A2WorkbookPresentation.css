@@ -1,0 +1,12 @@
+.presenter-workbook-presentation { min-width: 0; display: grid; gap: clamp(8px, 1.5vh, 16px); }
+.presenter-workbook-presentation header span { color: #475569; font-weight: 700; }
+.presenter-workbook-presentation h1 { margin: 0; font-size: clamp(1.4rem, 3.8vh, 2.4rem); }
+.presenter-workbook-presentation h2 { margin: 0; font-size: clamp(1.15rem, 2.8vh, 1.9rem); line-height: 1.35; overflow-wrap: anywhere; }
+.presenter-presentation-points { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.presenter-presentation-points li { min-width: 0; border: 1px solid #cbd5e1; border-radius: 12px; padding: 10px 14px; background: #f8fafc; overflow-wrap: anywhere; }
+.presenter-presentation-points p { margin: 4px 0; font-size: clamp(.95rem, 2vh, 1.15rem); line-height: 1.4; }
+.presenter-presentation-points summary { cursor: pointer; color: #1d4ed8; font-size: .9rem; }
+.presenter-presentation-instruction, .presenter-presentation-keywords { margin: 0; line-height: 1.5; }
+.presenter-presentation-choice { display: grid; gap: 6px; }
+.presenter-presentation-choice select { max-width: 100%; min-width: 0; width: 100%; padding: 10px; font: inherit; }
+@media (max-width: 700px) { .presenter-presentation-points { grid-template-columns: 1fr; } }

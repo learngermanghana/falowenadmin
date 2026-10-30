@@ -4,6 +4,10 @@ on:
     paths:
       - 'src/components/TeachingSlidePresenter.*'
       - 'src/components/PresenterReadingTranslation.jsx'
+      - 'src/components/A2WorkbookPresentation.*'
+      - 'src/data/a2WorkbookPresentations.js'
+      - 'scripts/syncA2WorkbookPresentations.mjs'
+      - 'tests/a2-workbook-presentations.test.js'
       - 'src/hooks/useReadingTranslation.js'
       - 'src/utils/presenterReadingTranslation.js'
       - 'src/utils/presenterSentenceNumbering.js'
@@ -16,6 +20,10 @@ on:
     paths:
       - 'src/components/TeachingSlidePresenter.*'
       - 'src/components/PresenterReadingTranslation.jsx'
+      - 'src/components/A2WorkbookPresentation.*'
+      - 'src/data/a2WorkbookPresentations.js'
+      - 'scripts/syncA2WorkbookPresentations.mjs'
+      - 'tests/a2-workbook-presentations.test.js'
       - 'src/hooks/useReadingTranslation.js'
       - 'src/utils/presenterReadingTranslation.js'
       - 'src/utils/presenterSentenceNumbering.js'
@@ -34,4 +42,4 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --ignore-scripts
-      - run: node --test tests/presenter-reading-translations.test.js tests/presenter-reading-translation-ui.test.js tests/presenter-sentence-numbering.test.js tests/a2-b1-reading-common-mistakes.test.js
+      - run: node --test tests/a2-workbook-presentations.test.js tests/presenter-reading-translations.test.js tests/presenter-reading-translation-ui.test.js tests/presenter-sentence-numbering.test.js tests/a2-b1-reading-common-mistakes.test.js
