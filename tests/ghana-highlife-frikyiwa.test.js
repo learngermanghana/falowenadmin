@@ -8,7 +8,7 @@ import { buildFalowenMusicPrompt } from '../src/utils/musicGenerationPrompt.js';
 
 const HIGH_LIFE_SONGS = Object.freeze([
   ['A1', 'A1-4', 'Woher kommst du?', '92 BPM', 'Woher kommst du? Welche Sprache sprichst du?'],
-  ['A2', 'A2-9.23', 'Mein Weg zur Arbeit', '94 BPM', 'Wie kommst du heute zur Arbeit?'],
+  ['A2', 'A2-9.23', 'Fahrrad zur Schule', '94 BPM', 'Hey-ya, hey-ya, der Morgen ist da,'],
   ['B1', 'B1-8.24', 'Weniger kaufen, mehr erleben', '91 BPM', 'Brauche ich das wirklich heute?'],
 ]);
 
