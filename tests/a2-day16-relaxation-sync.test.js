@@ -56,3 +56,17 @@ test("teacher slide task copy matches the new student workbook and listening sto
   assert.match(listening.detailEn, /Lena and Max/);
   assert.doesNotMatch(writing.detailEn, /doctor/);
 });
+
+test('Leonard’s invitation with weekend before Lust satisfies all three content points',()=>{
+ const sample='Lieber Markus, Zur Entspannung lese ich ein Buch und dann schlafe genug, weil beides für mich gesund ist. Danach fahre ich mit dem Fahrrad im Park. Hast du nächstes Wochenende Lust, Yoga zu machen? Viele Grüße, Leonard';
+ const evidence=evaluateWritingTaskEvidence(getA2WritingTaskSpec('A2-6.16'),sample);
+ assert.deepEqual(evidence.map(point=>point.status),['met','met','met']);
+ assert.equal(evidence[2].evidence,'Hast du nächstes Wochenende Lust, Yoga zu machen?');
+});
+test('relaxation invitations accept natural time placement while still requiring an invitation and weekend',()=>{
+ const task=getA2WritingTaskSpec('A2-6.16');
+ for(const invitation of ['Hast du nächstes Wochenende Lust, Yoga zu machen?','Hast du am Samstag Lust, mitzukommen?']){
+  assert.equal(evaluateWritingTaskEvidence(task,invitation)[2].status,'met',invitation);
+ }
+ for(const text of ['Nächstes Wochenende mache ich Yoga.','Ich habe nächstes Wochenende Lust, Yoga zu machen.','Hast du am Montag Lust, Yoga zu machen?'])assert.equal(evaluateWritingTaskEvidence(task,text)[2].status,'missing',text);
+});

@@ -2740,16 +2740,11 @@
         "Answer12": "E) Anzeige E"
       },
       "teil4": {
-        "Answer1": "F) Veranstaltung uber gesunde Ernahrung und Zuckerreduktion",
-        "Answer2": "B) Werbung fur ein neues Diat – Programm",
-        "Answer3": "C) Angebot fur zuckerfreie SuBigkeiten",
-        "Answer4": "D) Eroffnung eines neuen Restuarants mit gesunden Gerichten",
-        "Answer5": "E) Rabbatt auf Schokolade im Onlne-Shop",
-        "Answer6": "B) In vielen Fertiggerichten und Softdrinks",
-        "Answer7": "B) Er gibt uns Kurzzeitig Energie",
-        "Answer8": "A) Man fuhlt sich energielos und mude",
-        "Answer9": "A) Erhohtes Risiko fur Ubergewicht und Diabetes Typ 2",
-        "Answer10": "B) Den Zuckerkonsum zu reduzieren und mehr frische Lebensmittel zu essen"
+        "Answer1": "B) In vielen Fertiggerichten und Softdrinks",
+        "Answer2": "B) Er gibt uns kurzzeitig Energie",
+        "Answer3": "A) Man fühlt sich energielos und müde",
+        "Answer4": "A) Erhöhtes Risiko für Übergewicht und Diabetes Typ 2",
+        "Answer5": "B) Den Zuckerkonsum zu reduzieren und mehr frische Lebensmittel zu essen"
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1COQA_nlpRTk-FTLD5fL3HkWoVAvUh0XVrpc4TLE3i-w/gviz/tq?tqx=out:html&sheet=Key",

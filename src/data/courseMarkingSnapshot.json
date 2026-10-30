@@ -1,6 +1,6 @@
 {
   "repository": "learngermanghana/falowenexamtrainer",
-  "revision": "e301bf3ec62af70a84c04a4836fadbb32c4317cc",
+  "revision": "775c9326f31df0671b33a8ee75ecf768cfbb9d46",
   "answerKeys": {
     "A1 Greetings and Asking About Well-being 0.1": {
       "answers": {
@@ -1491,16 +1491,11 @@
           "Answer12": "E) Anzeige E"
         },
         "teil4": {
-          "Answer1": "F) Veranstaltung uber gesunde Ernahrung und Zuckerreduktion",
-          "Answer2": "B) Werbung fur ein neues Diat – Programm",
-          "Answer3": "C) Angebot fur zuckerfreie SuBigkeiten",
-          "Answer4": "D) Eroffnung eines neuen Restuarants mit gesunden Gerichten",
-          "Answer5": "E) Rabbatt auf Schokolade im Onlne-Shop",
-          "Answer6": "B) In vielen Fertiggerichten und Softdrinks",
-          "Answer7": "B) Er gibt uns Kurzzeitig Energie",
-          "Answer8": "A) Man fuhlt sich energielos und mude",
-          "Answer9": "A) Erhohtes Risiko fur Ubergewicht und Diabetes Typ 2",
-          "Answer10": "B) Den Zuckerkonsum zu reduzieren und mehr frische Lebensmittel zu essen"
+          "Answer1": "B) In vielen Fertiggerichten und Softdrinks",
+          "Answer2": "B) Er gibt uns kurzzeitig Energie",
+          "Answer3": "A) Man fühlt sich energielos und müde",
+          "Answer4": "A) Erhöhtes Risiko für Übergewicht und Diabetes Typ 2",
+          "Answer5": "B) Den Zuckerkonsum zu reduzieren und mehr frische Lebensmittel zu essen"
         }
       },
       "answer_url": "https://docs.google.com/spreadsheets/d/1COQA_nlpRTk-FTLD5fL3HkWoVAvUh0XVrpc4TLE3i-w/gviz/tq?tqx=out:html&sheet=Key",
@@ -2610,29 +2605,27 @@
     },
     "B1-10.27": {
       "assignmentKey": "B1-10.27",
-      "title": "Kann jeder Mensch umweltfreundlich leben? Schreiben Sie Ihre Meinung.",
-      "situation": "Lesen Sie Ahmeds Meinung. Schreiben Sie danach Ihre eigene Meinung und begründen Sie Ihren Standpunkt.\n\nIch denke, dass jeder Mensch umweltfreundlich leben kann, aber es ist manchmal nicht so einfach. Manche Menschen leben in Städten, wo sie kein Auto brauchen, andere auf dem Land, wo es keine Busse gibt. Ich finde, man kann auch kleine Dinge tun: zum Beispiel Stofftaschen benutzen oder das Licht ausschalten, wenn man den Raum verlässt. Das kostet nichts und hilft trotzdem der Umwelt. Außerdem ist es wichtig, dass man in der Schule oder in den Medien über Umweltschutz spricht. So lernen mehr Menschen, warum es wichtig ist. Was meinen Sie dazu?",
+      "title": "Goethe B1 Schreiben Teil 1 · Umweltfreundlich im Alltag",
+      "situation": "Sie haben im Fernsehen die Dokumentation „Umweltfreundlich im Alltag – Kann jeder von uns etwas bewirken?“ gesehen. Im Online-Gästebuch lesen Sie Felix (26 Jahre): „Ich versuche schon seit einem Jahr, Plastik im Alltag komplett zu vermeiden. Ich kaufe Obst und Gemüse nur noch ohne Verpackung und fahre immer mit dem Fahrrad zur Arbeit. Jede kleine Veränderung hilft unserer Umwelt!“ Schreiben Sie nun einen Blog- oder Forenbeitrag (ca. 80 Wörter) zu allen vier Punkten.",
       "points": [
-        "Sagen Sie, ob Sie Ahmed zustimmen oder nicht.",
-        "Erklären Sie, warum umweltfreundliches Leben wichtig ist.",
-        "Nennen Sie Beispiele aus dem Alltag.",
-        "Beschreiben Sie Schwierigkeiten.",
-        "Formulieren Sie einen klaren Schluss."
+        "Äußern Sie Ihre Meinung zum umweltfreundlichen Leben im Alltag.",
+        "Nennen Sie Gründe, warum Umweltschutz im Alltag wichtig ist.",
+        "Nennen Sie weitere Möglichkeiten, wie man im Alltag die Umwelt schonen kann.",
+        "Nennen Sie Vor- oder Nachteile von umweltfreundlichem Verhalten."
       ],
-      "submissionNote": ""
+      "submissionNote": "Blog- oder Forenbeitrag, ca. 80 Wörter; alle vier Punkte bearbeiten."
     },
     "B1-10.28": {
       "assignmentKey": "B1-10.28",
-      "title": "Kann jeder Mensch klimafreundlich leben? Schreiben Sie Ihre Meinung.",
-      "situation": "Schreiben Sie einen Meinungstext und beziehen Sie sich auf konkrete Beispiele aus dem Alltag.\n\nIn der heutigen Zeit ist der Klimawandel ein großes Problem. Viele Menschen fragen sich, was sie persönlich tun können, um die Umwelt zu schützen. Meiner Meinung nach kann jeder im Alltag kleine Schritte machen. Man kann zum Beispiel öfter mit dem Fahrrad fahren oder öffentliche Verkehrsmittel nutzen, statt mit dem Auto zu fahren. Auch beim Einkaufen kann man klimafreundlich handeln – etwa durch den Kauf regionaler Produkte oder durch Vermeidung von Plastik. Zu Hause hilft es, Strom zu sparen, Geräte nicht im Standby-Modus zu lassen und weniger zu heizen. Natürlich ist es manchmal nicht einfach, klimafreundlich zu leben, besonders wenn man auf dem Land wohnt oder wenig Geld hat. Trotzdem glaube ich, dass jeder einen Beitrag leisten kann. Zusammenfassend denke ich, dass viele kleine Taten eine große Wirkung haben können, wenn alle mitmachen.",
+      "title": "Goethe B1 Schreiben Teil 1 · Umweltfreundlich im Alltag",
+      "situation": "Sie haben im Fernsehen eine Dokumentation zum Thema „Umweltfreundlich im Alltag – Wie viel kann der Einzelne tun?“ gesehen. Im Online-Gästebuch finden Sie die Meinung von Laura (24 Jahre): „Ich versuche seit einigen Monaten, im Alltag möglichst plastikfrei zu leben. Ich kaufe Obst und Gemüse nur noch unverpackt auf dem Markt und nutze Stoffbeutel. Jede kleine Veränderung hilft der Umwelt!“ Schreiben Sie nun einen Blogbeitrag / Forenbeitrag zum Thema (ca. 80 Wörter). Bearbeiten Sie alle vier Punkte.",
       "points": [
-        "Sagen Sie, ob jeder Mensch klimafreundlich leben kann.",
-        "Nennen Sie Beispiele aus Verkehr, Einkaufen oder Haushalt.",
-        "Beschreiben Sie Schwierigkeiten, zum Beispiel Land, Geld oder Gewohnheiten.",
-        "Begründen Sie Ihre Meinung.",
-        "Formulieren Sie einen Schluss."
+        "Meinung: Äußern Sie Ihre Meinung zum umweltfreundlichen Leben im Alltag.",
+        "Gründe: Nennen Sie Gründe, warum Umweltschutz im Alltag wichtig ist.",
+        "Möglichkeiten: Nennen Sie weitere Möglichkeiten, wie man im Alltag umweltbewusst handeln kann.",
+        "Vor- und Nachteile: Nennen Sie Vor- oder Nachteile einer nachhaltigen Lebensweise."
       ],
-      "submissionNote": ""
+      "submissionNote": "Blog- oder Forenbeitrag mit ca. 80 Wörtern; alle vier Punkte bearbeiten."
     }
   },
   "a1WritingTasks": {

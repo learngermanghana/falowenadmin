@@ -140,3 +140,8 @@ test("a batch with answer-key changes never silently skips automatic marking",()
   ]});
   assert.equal(plan.mode,"full");
 });
+
+test('marking key and evidence fixes deploy only the API and automatic worker, including their bundle regression tests',()=>{
+ const plan=selectFirebaseDeployTargets({changedPaths:['src/data/answers_dictionary.json','src/data/courseMarkingSnapshot.json','src/utils/writingTaskEvidence.js','functions/automaticMarkingPipeline.cjs','functions/automaticMarkingPipeline.test.cjs','scripts/selectFirebaseDeployTargets.mjs']});
+ assert.equal(plan.mode,'targeted');assert.deepEqual(plan.targets,['api','markCourseSubmissionAutomatically']);
+});

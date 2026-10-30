@@ -84,7 +84,7 @@ function ruleForPoint(label = "", assignmentKey = "") {
     if (/invite markus to relax together next weekend/.test(value)) {
       return [
         /\b(?:n[aä]chstes?\s+wochenende|am\s+samstag|am\s+sonntag|n[aä]chsten\s+samstag|n[aä]chsten\s+sonntag)\b/i,
-        /\b(?:hast\s+du\s+lust|kommst\s+du\s+mit|wollen\s+wir|m[oö]chtest\s+du|willst\s+du|k[oö]nnen\s+wir|lass\s+uns|mitkommen|zusammen|gemeinsam)\b/i,
+        /\b(?:hast\s+du(?:\s+(?:(?:n[aä]chstes?|kommendes?)\s+wochenende|(?:am|n[aä]chsten)\s+(?:samstag|sonntag)))?\s+lust|kommst\s+du\s+mit|wollen\s+wir|m[oö]chtest\s+du|willst\s+du|k[oö]nnen\s+wir|lass\s+uns|mitkommen|zusammen|gemeinsam)\b/i,
       ];
     }
   }
