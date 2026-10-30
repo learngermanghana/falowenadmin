@@ -2,6 +2,8 @@
 // every course day. Public playback is restricted to teacher-approved keys.
 // Future days are planned only: never show an unuploaded MP3 as playable.
 export const CURATED_MUSIC_DAYS = Object.freeze([
+  {"assignmentKey": "A1-0.2", "level": "A1", "day": 2, "title": "Ich heiße Bina – B-I-N-A!", "status": "published", "trackId": "r2-a1-day-02-b64_SWNoIGhlacOfZSBCaW5hLm1wMw", "audioUrl": "https://www.falowen.app/api/music?track=r2-a1-day-02-b64_SWNoIGhlacOfZSBCaW5hLm1wMw", "objectKey": "music/a1/day-02/Ich heiße Bina.mp3"},
+  {"assignmentKey": "A1-1.1", "level": "A1", "day": 3, "title": "Wer bist du? Sag es mir!", "status": "published", "trackId": "r2-a1-day-03-b64_V2VyIGJpc3QgZHVfIFNhZyBlcyBtaXIhLm1wMw", "audioUrl": "https://www.falowen.app/api/music?track=r2-a1-day-03-b64_V2VyIGJpc3QgZHVfIFNhZyBlcyBtaXIhLm1wMw", "objectKey": "music/a1/day-03/Wer bist du_ Sag es mir!.mp3"},
   { assignmentKey:'A1-2', level:'A1', day:4, title:'Welche Nummer hast du?', introQuestion:'Wie heißen die Personen? Welche Nummer hörst du?', status:'published', trackId:'a1-day-04-numbers', audioUrl:'https://www.falowen.app/api/music?track=a1-day-04-numbers', objectKey:'music/a1/day-04/welche-nummer-hast-du.mp3' },
   // Day 13 is published, but the actual MP3 filename comes from the on-demand R2 discovery feed. Never guess the object key or track ID.
   { assignmentKey:'A1-3.5', level:'A1', day:13, title:'Zwei Tees, vier Euro', introQuestion:'Wie viele Tees stehen auf dem Tisch, und wie viel bezahlen sie zusammen?', status:'published', discover:true },

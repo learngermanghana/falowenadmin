@@ -12,6 +12,7 @@ on:
       - 'src/utils/songLyrics.js'
       - 'src/utils/recordedLessonMusic.js'
       - 'src/data/curatedLessonMusic.js'
+      - 'tests/a1-day02-day03-recordings.test.js'
       - 'tests/music-follow-ui.test.js'
       - 'package*.json'
       - '.github/workflows/music-follow-ui.yml'
@@ -28,6 +29,7 @@ on:
       - 'src/utils/songLyrics.js'
       - 'src/utils/recordedLessonMusic.js'
       - 'src/data/curatedLessonMusic.js'
+      - 'tests/a1-day02-day03-recordings.test.js'
       - 'tests/music-follow-ui.test.js'
 jobs:
   music-ui:
@@ -41,4 +43,4 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --ignore-scripts
-      - run: node --test tests/music-follow-ui.test.js tests/recorded-lesson-music.test.js tests/a1-music-presenter-stage.test.js tests/waiting-room-lyrics.test.js tests/waiting-room-lyrics-page.test.js tests/checkin-smart-lobby-v2.test.js
+      - run: node --test tests/a1-day02-day03-recordings.test.js tests/day22-lesson-song.test.js tests/music-follow-ui.test.js tests/recorded-lesson-music.test.js tests/a1-music-presenter-stage.test.js tests/waiting-room-lyrics.test.js tests/waiting-room-lyrics-page.test.js tests/checkin-smart-lobby-v2.test.js

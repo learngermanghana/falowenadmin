@@ -17,6 +17,14 @@ const byAssignment = new Map(Object.values(MUSIC_QUESTION_SEEDS)
 // Only add choices where distractors have been reviewed against the ORIGINAL
 // recording. Other A1/A2/B1 prompts stay open until their choices are written.
 const REVIEWED_LISTENING_CHOICES = Object.freeze({
+  'A1-0.2': Object.freeze([
+    {options:['Bina.','Lena.','Mia.'],correctIndex:0},
+    {options:['Am Sonntag.','Am Montag.','Am Freitag.'],correctIndex:1},
+  ]),
+  'A1-1.1': Object.freeze([
+    {options:['Aus Bonn.','Aus Accra.','Aus Berlin.'],correctIndex:2},
+    {options:['In Bonn.','In Berlin.','In Hamburg.'],correctIndex:0},
+  ]),
   'A1-2': Object.freeze([
     { options: ['Eins, zwei, drei.', 'Vier, fünf, sechs.', 'Sieben, acht, neun.'], correctIndex: 1 },
     { options: ['Zehn Jahre alt.', 'Zwanzig Jahre alt.', 'Dreißig Jahre alt.'], correctIndex: 1 },
@@ -26,8 +34,8 @@ const REVIEWED_LISTENING_CHOICES = Object.freeze({
     { options: ['Die Person bezahlt nur noch bar.', 'Nach der Erklärung der Bank funktioniert die Zahlung wieder.', 'Die Bank schickt sofort eine neue Karte.'], correctIndex: 1 },
   ]),
   'A1-14.1': Object.freeze([
-    { options: ['Der Kopf.', 'Der Bauch.', 'Das Bein.'], correctIndex: 0 },
-    { options: ['Brot und Milch.', 'Wasser und Tee.', 'Saft und Obst.'], correctIndex: 1 },
+    { options: ['Um neun Uhr.', 'Um zehn Uhr.', 'Um elf Uhr.'], correctIndex: 1 },
+    { options: ['Viel Wasser trinken und heute zu Hause bleiben.', 'Sport machen und zur Schule gehen.', 'Nur Tee trinken und sofort arbeiten.'], correctIndex: 0 },
   ]),
 });
 function listeningChoice(questionKey, number) {
@@ -54,7 +62,7 @@ function chorusEvidence(lyrics) {
 }
 
 function verseEvidence(lyrics, verseNumber) {
-  const label = verseNumber === 1 ? '[Verse 1]' : '[Verse 2]';
+  const label = `[Verse ${verseNumber}]`;
   const start = String(lyrics || '').indexOf(label);
   if (start < 0) return '';
   const next = String(lyrics).indexOf('[', start + label.length);
@@ -76,8 +84,8 @@ export function getReusableMusicQuestions(assignmentKey) {
     songTitle: song.title,
     topic: song.assignmentKey,
     questions: [
-      { id: key + '-listen-1', type: 'listening', prompt: row[1], answer: row[2], evidence: key === 'A1-2' ? chorusEvidence(song.lyrics) : verseEvidence(song.lyrics, 1), ...listeningChoice(key, 0) },
-      { id: key + '-listen-2', type: 'listening', prompt: row[3], answer: row[4], evidence: key === 'A1-14.1' ? 'Mia bringt mir Wasser und Tee.\nJetzt geht es mir schon besser.' : verseEvidence(song.lyrics, 2), ...listeningChoice(key, 1) },
+      { id: key + '-listen-1', type: 'listening', prompt: row[1], answer: row[2], evidence: key === 'A1-2' ? chorusEvidence(song.lyrics) : verseEvidence(song.lyrics, key === 'A1-14.1' ? 2 : 1), ...listeningChoice(key, 0) },
+      { id: key + '-listen-2', type: 'listening', prompt: row[3], answer: row[4], evidence: verseEvidence(song.lyrics, key === 'A1-14.1' ? 3 : 2), ...listeningChoice(key, 1) },
       { id: key + '-speak-1', type: 'speaking', prompt: row[5], answer: null, evidence: '', teacherNote: guidance, ...(SPEAKING_SUPPORT[key] || {}) },
     ],
   };

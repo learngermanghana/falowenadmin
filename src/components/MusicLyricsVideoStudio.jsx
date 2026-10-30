@@ -220,6 +220,8 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       // catalog metadata. We have not received their MP3 bytes, so the
       // owner's timing editor must remain blank until real audio is marked.
       const approvedUnreviewedSong={
+        "music/a1/day-02/Ich heiße Bina.mp3":"A1-0.2",
+        "music/a1/day-03/Wer bist du_ Sag es mir!.mp3":"A1-1.1",
         "music/a1/day-11/Mein Tag – Von morgens bis.mp3":"A1-7",
         "music/a1/day-12/Zeit und Datum.mp3":"A1-8",
         "music/a1/day-21/Heute kann ich leider nicht.mp3":"A1-13",
