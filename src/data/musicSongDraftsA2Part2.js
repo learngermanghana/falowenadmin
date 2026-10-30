@@ -86,9 +86,9 @@ export const MUSIC_SONG_DRAFTS_A2_PART2 = Object.freeze([
   },
   {
     "assignmentKey": "A2-10.27",
-    "title": "Eine Nachricht kommt zu spät",
+    "title": "Eine Nachricht von Mia",
     "musicStyle": "Electro-Soul, 88 BPM: modern electro-soul with dreamy synthesizer layers, warm Rhodes and understated R&B rhythm. One lead singer, clear German phrases, quiet instrumental mix.",
-    "lyrics": "[Verse 1]\nMia schreibt mir eine Nachricht.\nSie fragt, ob ich heute Zeit habe.\nIch bin unterwegs und sehe sie nicht.\nErst am Abend öffne ich mein Handy.\n\n[Chorus]\nEine Nachricht, ein kleiner Gruß,\nwir bleiben in Kontakt.\nDoch manchmal braucht man auch eine Pause.\n\n[Verse 2]\nIch schreibe: Entschuldige die späte Antwort.\nMia sagt: Kein Problem, ich verstehe.\nWir machen einen Termin für morgen.\nDann legen wir beide das Handy weg.\n\n[Chorus]\nEine Nachricht, ein kleiner Gruß,\nwir bleiben in Kontakt.\nDoch manchmal braucht man auch eine Pause.\n\n[Outro]\nAm nächsten Tag reden wir persönlich.\nDas ist manchmal einfach schöner.\nMit Falowen schreibe ich klare Nachrichten.",
+    "lyrics": "[Verse 1]\nHeute Morgen schreibt mir Mia,\nsie fragt: „Hast du heute Zeit?“\nDoch ich bin schon auf dem Weg zur Arbeit,\nund mein Handy liegt ganz weit.\nErst am Abend seh’ ich ihre Nachricht,\nich denke: „Oh, das tut mir leid!“\nIch wollte ihr schon früher schreiben,\ndoch der Tag ging viel zu schnell vorbei.\n\n[Chorus]\nEine Nachricht, ein kleiner Gruß,\nwir bleiben in Kontakt.\nDoch manchmal leg' ich mein Handy weg,\nweil das echte Leben Freude macht.\n\n[Verse 2]\nIch schreibe Mia: „Tut mir leid,\nich hatte heute leider keine Zeit.“\nSie antwortet: „Mach dir keine Sorgen,\nwie wär’s mit einem Treffen morgen?“\nWir verabreden uns im kleinen Café,\num vier Uhr nachmittags, ganz in der Näh’.\nDann legen wir die Handys weg,\nund freuen uns auf unser Treffen.\n\n[Chorus]\nEine Nachricht, ein kleiner Gruß,\nwir bleiben in Kontakt.\nDoch manchmal leg' ich mein Handy weg,\nweil das echte Leben Freude macht.\n\n[Outro]\nAm nächsten Tag sitz' ich mit Mia,\nwir erzählen uns so viel.\nDie Handys bleiben in den Taschen,\ndenn heute zählt nur unser Gespräch.",
     "genre": "Electro-Soul"
   },
   {
