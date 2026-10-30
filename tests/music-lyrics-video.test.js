@@ -6,6 +6,8 @@ import { A1_DAY6_FINAL_RECORDING } from "../src/data/a1Day6FinalRecording.js";
 import { A1_DAY7_FINAL_RECORDING } from "../src/data/a1Day7FinalRecording.js";
 import { A1_DAY8_FINAL_RECORDING } from "../src/data/a1Day8FinalRecording.js";
 import { A1_DAY10_FINAL_RECORDING } from "../src/data/a1Day10FinalRecording.js";
+import { A1_DAY17_FINAL_RECORDING } from "../src/data/a1Day17FinalRecording.js";
+import { A1_DAY18_FINAL_RECORDING } from "../src/data/a1Day18FinalRecording.js";
 import { A2_DAY21_FINAL_RECORDING } from "../src/data/a2Day21FinalRecording.js";
 import { A2_DAY22_FINAL_RECORDING } from "../src/data/a2Day22FinalRecording.js";
 import { getReusableSongDraft } from "../src/data/reusableMusicSongbook.js";
@@ -415,4 +417,80 @@ test("A1 Day 12 Zeit und Datum keeps the user-supplied 44 lyric lines, correct l
   const questions=readFileSync(new URL("../src/data/musicQuestionSeedsA1.js",import.meta.url),"utf8");
   assert.match(questions,/In welchem Monat hat die Person Geburtstag/);
   assert.match(questions,/Im Mai/);
+});
+
+test("A1 Day 17 Wo ist der Bahnhof keeps full directions and timing for its exact MP3",()=>{
+  const song=getReusableSongDraft("A1-11");
+  const reference=A1_DAY17_FINAL_RECORDING;
+  assert.equal(song.title,"Wo ist der Bahnhof?");
+  assert.match(song.musicStyle,/95 BPM/);
+  for(const line of [
+    "Ich bin heute in einer neuen Stadt",
+    "Ich stehe vor dem Rathaus",
+    "Dann kommen Sie zur Ampel",
+    "Geradeaus und dann nach rechts",
+    "An der Ampel biege ich rechts ab",
+    "Jetzt kenne ich den Weg",
+    "Wie schön, dass ich den Weg jetzt kann",
+  ]) assert.ok(song.lyrics.includes(line),line);
+  assert.doesNotMatch(song.lyrics,/Dann gehen Sie nach links\./);
+  assert.equal(reference.assignmentKey,"A1-11");
+  assert.equal(reference.title,song.title);
+  assert.equal(reference.day,17);
+  assert.equal(reference.level,"A1");
+  assert.equal(reference.objectKey,"music/a1/day-17/Wo ist der Bahnhof_.mp3");
+  assert.equal(reference.sha256,"e71ab6989d1d075b5d70e7c0da7c62ea2f004f429b327fefc019728d259b505a");
+  assert.equal(reference.duration,144.984);
+  assert.equal(reference.status,"draft-timing-review-required");
+  const lines=videoLyricLines(song.lyrics);
+  const cues=reference.cueStarts.map((start,i)=>({start,text:lines[i]}));
+  assert.equal(lines.length,44);
+  assert.equal(validateLyricCues(cues,lines).length,44);
+  assert.ok(cues.every((c,i)=>i===0||c.start>cues[i-1].start));
+  assert.ok(cues.at(-1).start<reference.duration);
+});
+test("A1 Day 18 Wo ist mein Schlüssel keeps full locations and timing for its exact MP3",()=>{
+  const song=getReusableSongDraft("A1-12.1");
+  const reference=A1_DAY18_FINAL_RECORDING;
+  assert.equal(song.title,"Wo ist mein Schlüssel?");
+  assert.match(song.musicStyle,/95 BPM/);
+  for(const line of [
+    "Ich möchte heute einkaufen gehen",
+    "Vielleicht liegt er unter dem Bett",
+    "Unter dem Stuhl oder hinter der Tür",
+    "Zwischen den Büchern im Regal",
+    "Unter dem Buch liegt mein Schlüssel",
+    "Jetzt können wir endlich gehen",
+    "Jetzt habe ich meinen Schlüssel",
+    "Jetzt kann der Tag beginnen",
+  ]) assert.ok(song.lyrics.includes(line),line);
+  assert.doesNotMatch(song.lyrics,/Bei Falowen weiß ich, wo es liegt/);
+  assert.equal(reference.assignmentKey,"A1-12.1");
+  assert.equal(reference.day,18);
+  assert.equal(reference.level,"A1");
+  assert.equal(reference.title,song.title);
+  assert.equal(reference.objectKey,"music/a1/day-18/Wo ist mein Schlüssel_.mp3");
+  assert.equal(reference.sha256,"78f01a9df35bb0ea09b8218a730ab190ede2f4c91ed7d7cf163611ffa516b54e");
+  assert.equal(reference.duration,148.68);
+  assert.equal(reference.status,"draft-timing-review-required");
+  const lines=videoLyricLines(song.lyrics);
+  const cues=reference.cueStarts.map((start,i)=>({start,text:lines[i]}));
+  assert.equal(lines.length,44);
+  assert.equal(validateLyricCues(cues,lines).length,44);
+  assert.ok(cues.every((c,i)=>i===0||c.start>cues[i-1].start));
+  assert.ok(cues.at(-1).start<reference.duration);
+});
+test("A1 Day 17–18 load recording-specific cues without replacing teacher-revised lyrics",()=>{
+  const studio=readFileSync(new URL("../src/components/MusicLyricsVideoStudio.jsx",import.meta.url),"utf8");
+  const page=readFileSync(new URL("../src/pages/MusicStudioPage.jsx",import.meta.url),"utf8");
+  const questionSeeds=readFileSync(new URL("../src/data/musicQuestionSeedsA1.js",import.meta.url),"utf8");
+  assert.match(studio,/A1_DAY17_FINAL_RECORDING/);
+  assert.match(studio,/A1_DAY18_FINAL_RECORDING/);
+  assert.match(studio,/hash!==reference.sha256/);
+  assert.match(studio,/hash===draftReference.sha256/);
+  assert.match(studio,/timingReview/);
+  assert.match(page,/obsoleteA1Day17Draft/);
+  assert.match(page,/obsoleteA1Day18Draft/);
+  assert.match(questionSeeds,/Wo steht die Person, als sie nach dem Bahnhof fragt/);
+  assert.match(questionSeeds,/Wo findet Mia den Schlüssel/);
 });
