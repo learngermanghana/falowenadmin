@@ -99,7 +99,7 @@ test('A2 Day 23 school cycling song is linked to the exact uploaded recording wi
   assert.match(song.lyrics, /Weil ich die Umwelt schützen will/);
   assert.match(song.lyrics, /Wenn es regnet, nehme ich den Bus/);
   assert.doesNotMatch(song.lyrics, /Meine Kollegin wartet schon im Büro/);
-  const sung = song.lyrics.split('\\n').filter(line => line.trim() && !/^\\[.*\\]$/.test(line));
+  const sung = song.lyrics.split(String.fromCharCode(10)).filter(line => line.trim() && !(line.startsWith('[') && line.endsWith(']')));
   assert.equal(sung.length, 36);
   assert.equal(getReusableMusicQuestions('A2-9.23').questions[0].answer, 'Weil sie die Umwelt schützen will.');
   assert.equal(getReusableMusicQuestions('A2-9.23').questions[1].answer, 'Den Bus.');
