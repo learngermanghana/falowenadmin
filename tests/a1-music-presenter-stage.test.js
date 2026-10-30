@@ -10,13 +10,13 @@ test('Day 4 has one approved A1 music slide with original R2 audio and song ques
   const stage = getA1PresenterMusicStage('A1-2');
   assert.equal(stage?.id, 'music-lesson');
   assert.equal(stage?.type, 'published-music');
-  assert.match(stage.title, /Welche Nummer hast du/);
+  assert.match(stage.title, /Meine Nummer, meine Adresse/);
   assert.equal(stage.items.length, 1);
-  assert.equal(getCuratedMusicByAssignment('A1-2').objectKey, 'music/a1/day-04/welche-nummer-hast-du.mp3');
-  assert.match(getCuratedMusicByAssignment('A1-2').introQuestion, /Welche Nummer/);
+  assert.equal(getCuratedMusicByAssignment('A1-2').objectKey, 'music/a1/day-04/Meine Nummer, meine Adresse.mp3');
+  assert.match(getCuratedMusicByAssignment('A1-2').introQuestion, /Wie alt ist Ben/);
   const song = getReusableSongDraft('A1-2');
   assert.match(song.lyrics, /Ich heiße Ben/);
-  assert.match(song.lyrics, /Ich heiße Sam/);
+  assert.match(song.lyrics, /Blumenstraße/);
   assert.deepEqual(getReusableMusicQuestions('A1-2').questions.map(question => question.type), ['listening', 'listening', 'speaking']);
 });
 

@@ -143,10 +143,10 @@ The Falowen A1–B1 dictionary had **no song explicitly labeled Highlife**. Thre
 | Level | Assignment | Song | BPM |
 | --- | --- | --- | --- |
 | A1 | A1-4 | Woher kommst du? | 92 |
-| A2 | A2-9.23 | Mein Weg zur Arbeit | 94 |
+| A2 | A2-9.23 | Fahrrad zur Schule | 94 |
 | B1 | B1-8.24 | Weniger kaufen, mehr erleben | 91 |
 
-The **lyrics are unchanged**; the new details live only in each song's `musicStyle` and `genre`, so the existing automatic lesson-style selector and songbook text export pick up the change without adding sung syllables. This change does **not** modify recordings already published to Cloudflare R2, course audio, student playback or timed lyrics. To hear the new accompaniment, create and approve a *new* recording when desired.
+The original highlife arrangement changed only `musicStyle` and `genre`. On 30 October 2026, the teacher approved a new recording and replacement lyrics for A2 Day 23; the songbook now follows that recorded school-and-environment story. This change does **not** modify recordings already published to Cloudflare R2, course audio, student playback or timed lyrics. To hear the new accompaniment, create and approve a *new* recording when desired.
 
 In addition, the owner can select **Ghanaian guitar highlife · frikyiwa rhythm** for any song from the existing Music Studio production dropdown. This original production direction specifies interlocking highlife guitars, flowing bass, gentle live drums, a clear warm lead voice and a **bright metallic frikyiwa (firikyiwa) castanet**. Ask the AI for a recurring group of **three short syncopated offbeat instrumental taps** perceived as *ko-ko-ko*. These are *percussion hits*, never a vocal chant. Use a human, musical interpretation with rests and leave it behind the singer; do not replace it with conga drums or woodblocks. The three taps are a creative onomatopoeic cue, not a claim of a complete fixed traditional Sikyi timeline transcription.
 
@@ -169,3 +169,11 @@ The card shows previous/current/next lines, highlights the current line, and sho
 Rotation holds while Lyrics is selected; Next/Previous returns to the other cards and respects the teacher's existing pause setting. Selection is tracked by slide ID so adaptive attendance/start-time reordering cannot interrupt Lyrics. Class/session changes reset the selection.
 
 Validation: 73 targeted checks pass, including a real attendance-page React DOM test with mocked network/audio/Firebase boundaries. It starts the discovered Day 13 track, opens Lyrics, hides teacher controls, advances playback through a line and a gap, verifies persistent QR/countdown/count, navigates Next and stops playback. Hook tests also cover adaptive slide order, repeat, missing/incorrect metadata and timer cleanup. Production Vite build passes.
+
+
+## Recorded music update · 30 October 2026
+
+- **A1 Day 4 (A1-2):** `music/a1/day-04/Meine Nummer, meine Adresse.mp3`; its 39 sung lyric lines replace the old “Welche Nummer hast du?” manuscript in slides and Music Studio.
+- **A2 Day 23 (A2-9.23):** `music/a2/day-23/Fahrrad zur Schule.mp3`; its 36 sung lyric lines replace “Mein Weg zur Arbeit”. The new listening questions cover cycling to school, environmental protection and using a bus when it rains.
+- Both tracks use the existing reversible `r2-<level>-day-XX-b64_<filename>` public music lookup; no changes to R2 object bytes or Goethe workbook tasks.
+- **Per-line sync is not yet published.** The private Cloudflare dashboard URLs confirm the expected filenames but do not supply MP3 bytes for acoustic alignment in the repository connector. In Admin Music Lyrics Video Studio, select the exact published MP3, verify each sung line's start by listening, and download the `.lyrics.json` sidecar. Upload that next to its MP3 in R2. Until a valid, exact-object sidecar exists, the lyric player must not invent timestamps.

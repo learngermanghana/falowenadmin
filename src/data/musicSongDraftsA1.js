@@ -44,10 +44,10 @@ export const MUSIC_SONG_DRAFTS_A1 = Object.freeze([
   },
   {
     "assignmentKey": "A1-2",
-    "title": "Welche Nummer hast du?",
-    "musicStyle": "Soft Funk, 92 BPM: light, friendly funk-pop with muted electric guitar, soft clavinet riffs, bouncy bass and very restrained drums. One lead singer, clear German phrases, quiet instrumental mix.",
-    "lyrics": "[Verse 1]\nHallo! Guten Tag!\nIch heiße Ben.\nWie heißt du?\nIch heiße Sam.\n\nWoher kommst du?\nIch komme aus Ghana.\nWo wohnst du?\nIch wohne in Accra.\n\n[Chorus]\nEins, zwei, drei,\nvier, fünf, sechs.\nSieben, acht, neun, zehn.\nHallo Sam! Hallo Ben!\n\nWie ist deine Nummer?\nVier, fünf, sechs.\nNoch einmal, bitte:\nVier, fünf, sechs.\n\n[Verse 2]\nWie schreibt man Ben?\nB–E–N.\nWie schreibt man Sam?\nS–A–M.\n\nWie alt bist du?\nIch bin zwanzig Jahre alt.\nWie geht es dir?\nGut, danke! Und dir?\n\n[Chorus]\nEins, zwei, drei,\nvier, fünf, sechs.\nSieben, acht, neun, zehn.\nHallo Sam! Hallo Ben!\n\nWie ist deine Nummer?\nVier, fünf, sechs.\nNoch einmal, bitte:\nVier, fünf, sechs.\n\n[Outro]\nHallo! Ich heiße Ben.\nB–E–N.\nEins, zwei, drei — Falowen!\nAuf Wiedersehen!",
-    "genre": "Soft Funk"
+    "title": "Meine Nummer, meine Adresse",
+    "musicStyle": "Warm German Afro-Pop · Acoustic Guitar · Soft Piano · Light Afrobeat · 96 BPM · One Singer. Clear natural German A1 pronunciation; retain this finished recording's sung lyrics verbatim.",
+    "lyrics": "[Intro]\nHmm, hmm, hmm …\nOh-oh, eins, zwei, drei!\nHmm, hmm, hier bin ich!\n\n[Verse 1]\nHallo, ich heiße Ben,\nIch komme aus Ghana, aus Accra.\nIch bin vierundzwanzig Jahre alt,\nUnd heute stelle ich mich vor.\n\nIch wohne in der Blumenstraße,\nMeine Hausnummer ist eins zwei drei.\nDie Postleitzahl ist eins zwei drei vier fünf,\nHier bin ich zu Hause, hier bin ich gern.\n\n[Chorus]\nEins, zwei, drei, vier, fünf, sechs,\nSieben, acht, neun und zehn.\nElf, zwölf, dreizehn, vierzehn, fünfzehn,\nSechzehn, siebzehn, achtzehn, neunzehn, zwanzig!\n\nOh-oh, wie alt bist du?\nIch bin vierundzwanzig, und du?\nHmm-hmm, sag es mir,\nWie ist deine Hausnummer hier?\n\n[Verse 2]\nMeine Telefonnummer ist ganz einfach,\nNull, zwei, vier – fünf, sechs, sieben.\nAcht, neun, null – eins, zwei, drei,\nIch sage sie noch einmal langsam.\n\nNull, zwei, vier – fünf, sechs, sieben,\nAcht, neun, null – eins, zwei, drei.\n„Wie ist deine Telefonnummer?“\nJetzt kannst du sie auch sagen!\n\n[Chorus]\nEins, zwei, drei, vier, fünf, sechs,\nSieben, acht, neun und zehn.\nElf, zwölf, dreizehn, vierzehn, fünfzehn,\nSechzehn, siebzehn, achtzehn, neunzehn, zwanzig!\n\nOh-oh, wie alt bist du?\nIch bin vierundzwanzig, und du?\nHmm-hmm, sag es mir,\nWie ist deine Hausnummer hier?\n\n[Outro]\nHmm, hmm, mein Name ist Ben,\nVierundzwanzig Jahre, das bin ich.\nBlumenstraße, eins zwei drei,\nOh-oh, jetzt kennst du mich!",
+    "genre": "Warm German Afro-Pop"
   },
   {
     "assignmentKey": "A1-1.3",

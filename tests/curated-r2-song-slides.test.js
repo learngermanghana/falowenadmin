@@ -7,8 +7,8 @@ import { getReusableSongDraft } from '../src/data/reusableMusicSongbook.js';
 
 test('only selected approved R2 music songs activate in teaching slides and attendance', () => {
   const published=CURATED_MUSIC_DAYS.filter(item=>item.status==='published');
-  assert.equal(published.length,8);
-  assert.deepEqual(published.map(x=>x.assignmentKey),['A1-0.2','A1-1.1','A1-2','A1-3.5','A1-3.6','A1-13','A1-14.1','A2-7.18']);
+  assert.equal(published.length,9);
+  assert.deepEqual(published.map(x=>x.assignmentKey),['A1-0.2','A1-1.1','A1-2','A1-3.5','A1-3.6','A1-13','A1-14.1','A2-9.23','A2-7.18']);
   for(const item of published){
     if (item.discover) {
       assert.equal(item.assignmentKey,'A1-3.5');
@@ -85,4 +85,23 @@ test("curated Day 21 and Day 22 songs use the new uploaded R2 audio instead of o
     assert.equal(Buffer.from(match[2],"base64url").toString("utf8"),song.objectKey.split("/").at(-1));
     assert.equal(song.audioUrl,"https://www.falowen.app/api/music?track="+song.trackId);
   }
+});
+
+
+test('A2 Day 23 school cycling song is linked to the exact uploaded recording with no invented timing', () => {
+  const track = getCuratedMusicByAssignment('A2-9.23');
+  const song = getReusableSongDraft('A2-9.23');
+  assert.equal(track?.day, 23);
+  assert.equal(track?.objectKey, 'music/a2/day-23/Fahrrad zur Schule.mp3');
+  assert.equal(track?.title, 'Fahrrad zur Schule');
+  assert.equal(track?.trackId, 'r2-a2-day-23-b64_RmFocnJhZCB6dXIgU2NodWxlLm1wMw');
+  assert.equal(Buffer.from(track.trackId.split('b64_')[1], 'base64url').toString('utf8'), 'Fahrrad zur Schule.mp3');
+  assert.match(song.lyrics, /Weil ich die Umwelt schützen will/);
+  assert.match(song.lyrics, /Wenn es regnet, nehme ich den Bus/);
+  assert.doesNotMatch(song.lyrics, /Meine Kollegin wartet schon im Büro/);
+  const sung = song.lyrics.split(String.fromCharCode(10)).filter(line => line.trim() && !(line.startsWith('[') && line.endsWith(']')));
+  assert.equal(sung.length, 36);
+  assert.equal(getReusableMusicQuestions('A2-9.23').questions[0].answer, 'Weil sie die Umwelt schützen will.');
+  assert.equal(getReusableMusicQuestions('A2-9.23').questions[1].answer, 'Den Bus.');
+  assert.equal(track.cues, undefined, 'Never publish guessed vocal timings');
 });

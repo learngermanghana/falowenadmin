@@ -178,11 +178,11 @@ export const MUSIC_QUESTION_SEEDS_A2 = Object.freeze([
   ],
   [
     "A2-9.23",
-    "Was passiert mit dem Bus am Morgen?",
-    "Er steht lange im Verkehr.",
-    "Welches Verkehrsmittel probiert die Person am nächsten Tag?",
-    "Das Fahrrad.",
-    "Wie würdest du dich bei Verspätung entschuldigen?"
+    "Warum fährt die Person mit dem Fahrrad zur Schule?",
+    "Weil sie die Umwelt schützen will.",
+    "Welches Verkehrsmittel nimmt die Person, wenn es regnet?",
+    "Den Bus.",
+    "Wie kommst du zur Schule oder Arbeit, und wie schützt du dabei die Umwelt?"
   ],
   [
     "A2-9.24",

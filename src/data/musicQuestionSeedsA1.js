@@ -51,11 +51,11 @@ export const MUSIC_QUESTION_SEEDS_A1 = Object.freeze([
   ],
   [
     "A1-2",
-    "Welche drei Zahlen werden als Nummer wiederholt?",
-    "Vier, fünf, sechs.",
-    "Wie alt ist die Person im Lied?",
-    "Zwanzig Jahre alt.",
-    "Wie heißt du? Sag eine erfundene Nummer mit drei Ziffern."
+    "Wie alt ist Ben?",
+    "Vierundzwanzig Jahre alt.",
+    "Mit welchen drei Ziffern beginnt Bens Telefonnummer?",
+    "Null, zwei, vier.",
+    "Wie alt bist du? Wie lauten deine erfundene Hausnummer und Telefonnummer?"
   ],
   [
     "A1-1.3",
