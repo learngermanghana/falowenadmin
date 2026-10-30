@@ -213,6 +213,20 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       const lineCount=videoLyricLines(recordedLyrics).length;
       const localComplete=lineCount>0 && local.length===lineCount;
       const restored=localComplete ? local : published?.cues || [];
+      // Day 11's R2 song is already named, but we have not received its MP3 bytes.
+      // Show the teacher-approved lyrics without pretending any old sidecar
+      // belongs to this replacement. The editor can mark the published audio.
+      if(key==="music/a1/day-11/Mein Tag – Von morgens bis.mp3"){
+        const approvedLyrics=getReusableSongDraft("A1-7")?.lyrics||"";
+        if(approvedLyrics && recordedLyrics!==approvedLyrics){
+          currentLyricText.current=approvedLyrics;
+          setLyricText(approvedLyrics);
+          setCues([]);
+          setTimingStatus("missing");
+          setMessage("Updated Day 11 lyrics loaded. Listen to the published MP3 and mark each lyric line; no unverified timestamps have been inserted.");
+          return;
+        }
+      }
       // Only hydrate draft timing when the exact published MP3 bytes match a teacher recording.
       const draftReference=[A1_DAY5_FINAL_RECORDING,A1_DAY6_FINAL_RECORDING,A1_DAY7_FINAL_RECORDING,A1_DAY8_FINAL_RECORDING,A1_DAY10_FINAL_RECORDING,A2_DAY21_FINAL_RECORDING,A2_DAY22_FINAL_RECORDING]
         .find(x=>x.objectKey===key || (!x.objectKey && x.level===publishedTrack?.level && Number(x.day)===Number(publishedTrack?.day)));
