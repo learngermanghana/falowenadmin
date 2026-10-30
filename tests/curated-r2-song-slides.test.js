@@ -7,8 +7,8 @@ import { getReusableSongDraft } from '../src/data/reusableMusicSongbook.js';
 
 test('only selected approved R2 music songs activate in teaching slides and attendance', () => {
   const published=CURATED_MUSIC_DAYS.filter(item=>item.status==='published');
-  assert.equal(published.length,11);
-  assert.deepEqual(published.map(x=>x.assignmentKey),['A1-0.2','A1-1.1','A1-2','A1-3.5','A1-3.6','A1-13','A1-14.1','A2-9.23','A2-9.24','A2-9.25','A2-7.18']);
+  assert.equal(published.length,12);
+  assert.deepEqual(published.map(x=>x.assignmentKey),['A1-0.2','A1-1.1','A1-2','A1-3.5','A1-3.6','A1-13','A1-14.1','A2-9.23','A2-9.24','A2-9.25','A2-10.27','A2-7.18']);
   for(const item of published){
     if (item.discover) {
       assert.equal(item.assignmentKey,'A1-3.5');
@@ -104,4 +104,24 @@ test('A2 Day 23 school cycling song is linked to the exact uploaded recording wi
   assert.equal(getReusableMusicQuestions('A2-9.23').questions[0].answer, 'Weil sie die Umwelt schützen will.');
   assert.equal(getReusableMusicQuestions('A2-9.23').questions[1].answer, 'Den Bus.');
   assert.equal(track.cues, undefined, 'Never publish guessed vocal timings');
+});
+
+
+test('A2 Day 27 uses Handys weg recording, the full Mia story and the correct café questions',()=>{
+  const track=getCuratedMusicByAssignment('A2-10.27');
+  const draft=getReusableSongDraft('A2-10.27');
+  const questions=getReusableMusicQuestions('A2-10.27').questions;
+  assert.equal(track?.objectKey,'music/a2/day-27/Handys weg.mp3');
+  assert.equal(track?.trackId,'r2-a2-day-27-b64_SGFuZHlzIHdlZy5tcDM');
+  assert.equal(Buffer.from(track.trackId.split('b64_')[1],'base64url').toString('utf8'),'Handys weg.mp3');
+  assert.equal(track.title,'Eine Nachricht von Mia');
+  assert.equal(draft.title,track.title);
+  assert.match(draft.lyrics,/Heute Morgen schreibt mir Mia,/);
+  assert.match(draft.lyrics,/um vier Uhr nachmittags, ganz in der Näh’/);
+  assert.match(draft.lyrics,/denn heute zählt nur unser Gespräch/);
+  assert.doesNotMatch(draft.lyrics,/Mit Falowen schreibe ich klare Nachrichten/);
+  const lines=draft.lyrics.split('\\n').filter(line=>line.trim()&&!line.startsWith('['));
+  assert.equal(lines.length,28);
+  assert.match(questions[1].answer,/vier Uhr/);
+  assert.equal(track.cues,undefined,'No audio-verified timing available yet');
 });
