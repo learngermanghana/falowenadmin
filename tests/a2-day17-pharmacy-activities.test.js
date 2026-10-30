@@ -249,7 +249,7 @@ test("interactive Hören uses Cloud Run except the exact staff-authenticated Day
   assert.match(component, /api-awc2au65xa-ew\.a\.run\.app/);
   assert.match(component, /VITE_FALOWEN_COURSE_MEDIA_API_URL/);
   assert.doesNotMatch(component, /VITE_FALOWEN_COURSE_API_URL/);
-  assert.match(component, /lesson\.listening\.level === "A2" && \[18, 19\]\.includes\(lesson\.listening\.day\)/);
+  assert.match(component, /lesson\.listening\.level === "A2" && \[18, 19, 20\]\.includes\(lesson\.listening\.day\)/);
   assert.match(component, /https:\/\/www\.falowen\.app\/api\/course-media\/a2\/classroom-audio-url/);
   assert.match(component, /Authorization: `Bearer \$\{await user\.getIdToken\(\)\}`/);
   assert.match(component, /lesson\.listening\.audioKey/);
