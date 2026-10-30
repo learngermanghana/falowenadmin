@@ -33,7 +33,7 @@ for (const level of ["A2", "B1"]) {
       const stages = buildTeachingPresenterStages(slide, slide.topic);
       const ids = stages.map((stage) => stage.id);
 
-      assert.deepEqual(ids.slice(-3), ["questions", "workbook", "lesson-summary"], `${slide.assignmentId} should finish with production, workbook and summary`);
+      assert.deepEqual(ids.slice(level === "A2" ? -4 : -3), level === "A2" ? ["questions", "workbook-presentation", "workbook", "lesson-summary"] : ["questions", "workbook", "lesson-summary"], `${slide.assignmentId} should finish with production, workbook and summary`);
       assert.equal(ids.filter((id) => id === "grammar-check").length, 1, `${slide.assignmentId} should contain one compact grammar diagnostic`);
       const practiceId = level === "B1" && slide.assignmentId === "B1-6.18"
         ? "career-challenge"
