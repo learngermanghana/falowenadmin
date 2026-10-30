@@ -8,6 +8,7 @@ import { A1_DAY8_FINAL_RECORDING } from "../src/data/a1Day8FinalRecording.js";
 import { A1_DAY10_FINAL_RECORDING } from "../src/data/a1Day10FinalRecording.js";
 import { A1_DAY17_FINAL_RECORDING } from "../src/data/a1Day17FinalRecording.js";
 import { A1_DAY18_FINAL_RECORDING } from "../src/data/a1Day18FinalRecording.js";
+import { A1_DAY22_FINAL_RECORDING } from "../src/data/a1Day22FinalRecording.js";
 import { A2_DAY21_FINAL_RECORDING } from "../src/data/a2Day21FinalRecording.js";
 import { A2_DAY22_FINAL_RECORDING } from "../src/data/a2Day22FinalRecording.js";
 import { getReusableSongDraft } from "../src/data/reusableMusicSongbook.js";
@@ -493,4 +494,71 @@ test("A1 Day 17–18 load recording-specific cues without replacing teacher-revi
   assert.match(page,/obsoleteA1Day18Draft/);
   assert.match(questionSeeds,/Wo steht die Person, als sie nach dem Bahnhof fragt/);
   assert.match(questionSeeds,/Wo findet Mia den Schlüssel/);
+});
+
+test("A1 Day 21 weather cancellation uses the new approved full song with no invented audio timing",()=>{
+  const song=getReusableSongDraft("A1-13");
+  assert.equal(song.title,"Heute kann ich leider nicht");
+  assert.match(song.musicStyle,/Gentle Afrobeat/);
+  for(const line of [
+    "Heute ist das Wetter schlecht",
+    "Ich möchte Mia im Park treffen",
+    "Heute kann ich leider nicht",
+    "Heute muss ich leider absagen",
+    "Am Nachmittag kommt ein Gewitter",
+    "Mia schreibt: „Morgen um drei?“",
+    "Ich treffe Mia um drei im Park",
+  ]) assert.ok(song.lyrics.includes(line),line);
+  assert.doesNotMatch(song.lyrics,/Mia fragt: Wie ist das Wetter/);
+  assert.equal(videoLyricLines(song.lyrics).length,36);
+  const studio=readFileSync(new URL("../src/components/MusicLyricsVideoStudio.jsx",import.meta.url),"utf8");
+  assert.match(studio,/"music\/a1\/day-21\/Heute kann ich leider nicht\.mp3":"A1-13"/);
+  const page=readFileSync(new URL("../src/pages/MusicStudioPage.jsx",import.meta.url),"utf8");
+  assert.match(page,/obsoleteA1Day21Draft/);
+  const seeds=readFileSync(new URL("../src/data/musicQuestionSeedsA1.js",import.meta.url),"utf8");
+  assert.match(seeds,/Warum sagt die Person das Treffen mit Mia ab/);
+  assert.match(seeds,/Morgen um drei Uhr/);
+});
+test("A1 Day 22 Arzttermin lyrics and reviewed-file gate match the uploaded MP3",()=>{
+  const song=getReusableSongDraft("A1-14.1");
+  assert.equal(song.title,"Arzttermin");
+  assert.match(song.musicStyle,/Soft Piano/);
+  for(const line of [
+    "Heute fühle ich mich nicht gut",
+    "Mein Kopf tut weh, mein Hals ist rot",
+    "Die Frau sagt: „Ja, um zehn Uhr.“",
+    "Mir geht es nicht gut, ich bin krank",
+    "Ich möchte einen Termin beim Arzt",
+    "Er fragt mich: „Was fehlt Ihnen?“",
+    "und bleiben Sie heute zu Haus",
+    "Ich gehe danach zur Apotheke",
+    "Dann bin ich wieder fit",
+  ]) assert.ok(song.lyrics.includes(line),line);
+  assert.doesNotMatch(song.lyrics,/Am Morgen rufe ich Mia an/);
+  const rec=A1_DAY22_FINAL_RECORDING;
+  assert.equal(rec.assignmentKey,"A1-14.1");
+  assert.equal(rec.title,song.title);
+  assert.equal(rec.day,22);
+  assert.equal(rec.level,"A1");
+  assert.equal(rec.objectKey,"music/a1/day-22/Arzttermin.mp3");
+  assert.equal(rec.sha256,"2ec00cb7004809e6b34e103e943ac1a6fe29d9bab4d410f4febe0d00412a349b");
+  assert.equal(rec.duration,176.76);
+  assert.equal(rec.status,"draft-timing-review-required");
+  const lines=videoLyricLines(song.lyrics);
+  const cues=rec.cueStarts.map((start,i)=>({start,text:lines[i]}));
+  assert.equal(lines.length,33);
+  assert.equal(validateLyricCues(cues,lines).length,33);
+  assert.ok(cues.every((c,i)=>i===0||c.start>cues[i-1].start));
+  assert.ok(cues.at(-1).start<rec.duration);
+  const studio=readFileSync(new URL("../src/components/MusicLyricsVideoStudio.jsx",import.meta.url),"utf8");
+  assert.match(studio,/A1_DAY22_FINAL_RECORDING/);
+  assert.match(studio,/day22Replacement/);
+  assert.match(studio,/hash===draftReference.sha256/);
+  assert.match(studio,/timingReview/);
+  assert.match(studio,/published MP3 could not be verified/);
+  const page=readFileSync(new URL("../src/pages/MusicStudioPage.jsx",import.meta.url),"utf8");
+  assert.match(page,/obsoleteA1Day22Draft/);
+  const seeds=readFileSync(new URL("../src/data/musicQuestionSeedsA1.js",import.meta.url),"utf8");
+  assert.match(seeds,/Um wie viel Uhr hat die Person einen Arzttermin/);
+  assert.match(seeds,/Viel Wasser trinken und heute zu Hause bleiben/);
 });
