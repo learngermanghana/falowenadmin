@@ -163,19 +163,19 @@ export const MUSIC_QUESTION_SEEDS_A1 = Object.freeze([
   ],
   [
     "A1-11",
-    "Welchen Ort sucht die Person?",
-    "Den Bahnhof.",
-    "Wohin soll die Person an der Ampel gehen?",
+    "Wo steht die Person, als sie nach dem Bahnhof fragt?",
+    "Vor dem Rathaus.",
+    "In welche Richtung muss die Person an der Ampel gehen?",
     "Nach rechts.",
-    "Wie kommst du zum Bahnhof?"
+    "Wie kommst du zum Bahnhof? Beschreibe den Weg mit geradeaus, links und rechts."
   ],
   [
     "A1-12.1",
-    "Was sucht die Person?",
-    "Den Schlüssel.",
-    "Wo liegt der Schlüssel am Ende?",
-    "Unter dem Buch.",
-    "Wo liegt dein Handy jetzt?"
+    "Was sucht die Person im ganzen Haus?",
+    "Ihren Schlüssel.",
+    "Wo findet Mia den Schlüssel?",
+    "Unter dem Buch auf dem kleinen Tisch.",
+    "Wo liegt dein Schlüssel normalerweise? Verwende auf, unter, neben oder in."
   ],
   [
     "A1-5.9",
