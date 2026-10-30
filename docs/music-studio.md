@@ -187,3 +187,11 @@ Validation: 73 targeted checks pass, including a real attendance-page React DOM 
 - Listening and speaking prompts now follow the solo traveller's savings, hotel booking and Saturday 08:00 train to Hamburg. The graded workbook and Hören exam files are unchanged.
 - Old saved Music Studio drafts for `A2-9.24` are recognized and replaced in the editable display with the new songbook text; owners can use **Overwrite Lyrics** to replace the cloud draft.
 - **Sync pending audio verification:** No audio bytes were available from the Cloudflare dashboard URL here. The 38 lyric cue times have not been fabricated. In Music Lyrics Video Studio select the exact Day 24 published recording, listen and mark each line, then export `Endlich Urlaub.lyrics.json` beside the MP3 in R2.
+
+
+## A2 Day 25 — Endlich Urlaub (30 October 2026)
+
+- Recordings must be identified by exact R2 key, **not filename alone**: Day 24 is `music/a2/day-24/Endlich Urlaub.mp3`; Day 25 is `music/a2/day-25/Endlich Urlaub.mp3`.
+- Day 25 is an entirely different 177.120-second warm, guitar-led reggae-pop performance with whistled hook, male lead, answering female vocals and the repeated `Die Reise geht los` refrain. Its user-uploaded MP3 has SHA-256 `84d4697e7c03467ae8bbe2b13e6e8700029f2e3bbb287d1ba9067cea0791fd29`.
+- The old `Ein anderer Tagesablauf` draft has been replaced by a recording-based 49-line transcription and related Hamburg/travel questions. Teacher verification of the lyrics remains important before using word-by-word highlighting; no guessed timestamps were added.
+- The public site at `music.falowen.app` belongs to the separate **learngermanghana/falowenexamtrainer** student repo. Publishing new Admin songbook text alone does **not** refresh its static catalog, learning content or stale timing records. Update both repositories when replacing approved recordings.
