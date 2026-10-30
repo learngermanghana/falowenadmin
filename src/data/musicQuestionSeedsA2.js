@@ -194,11 +194,11 @@ export const MUSIC_QUESTION_SEEDS_A2 = Object.freeze([
   ],
   [
     "A2-9.25",
-    "Warum war die Person früher morgens in Eile?",
-    "Sie ist zu spät aufgestanden.",
-    "Was macht sie jetzt vor dem Schlafengehen?",
-    "Sie liest ein Buch und legt das Handy weg.",
-    "Welche kleine Änderung macht deinen Tagesablauf besser?"
+    "Wohin möchte die Person verreisen?",
+    "Nach Hamburg.",
+    "Wann fährt der Zug ab?",
+    "Am Samstag um acht Uhr.",
+    "Wie bereitest du dich auf eine Reise vor?"
   ],
   [
     "A2-10.26",

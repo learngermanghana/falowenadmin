@@ -71,11 +71,11 @@ export const MUSIC_SONG_DRAFTS_A2_PART2 = Object.freeze([
     "genre": "Afro-Pop"
   },
   {
-    "assignmentKey": "A2-9.25",
-    "title": "Ein anderer Tagesablauf",
-    "musicStyle": "Lo-fi Hip-Hop, 91 BPM: laid-back lo-fi hip-hop with dusty keys, lightly swung percussion and mellow bass; sung or softly spoken clear German, never fast rap. One lead singer, clear German phrases, quiet instrumental mix.",
-    "lyrics": "[Verse 1]\nFrüher bin ich sehr spät aufgestanden.\nDann war ich immer in Eile.\nSeit Montag klingelt mein Wecker früher.\nJetzt frühstücke ich ganz in Ruhe.\n\n[Chorus]\nMorgens Zeit, am Abend Ruhe,\njeder Tag hat seinen Rhythmus.\nIch finde meinen eigenen Weg.\n\n[Verse 2]\nNach der Arbeit gehe ich spazieren.\nDanach koche ich etwas Einfaches.\nBevor ich schlafe, lese ich ein Buch.\nMein Handy liegt nicht neben dem Bett.\n\n[Chorus]\nMorgens Zeit, am Abend Ruhe,\njeder Tag hat seinen Rhythmus.\nIch finde meinen eigenen Weg.\n\n[Outro]\nDer neue Tagesablauf tut mir gut.\nSo möchte ich weitermachen.\nMit Falowen beschreibe ich meinen Tagesablauf.",
-    "genre": "Lo-fi Hip-Hop"
+      "assignmentKey": "A2-9.25",
+      "title": "Endlich Urlaub",
+      "musicStyle": "Warm German reggae-pop: bright offbeat clean guitar, warm piano, soft bass, gentle Afro-pop percussion, melodic male lead and answering female harmonies; breezy whistle hook and a natural, repeated singalong chorus. Preserve the performance of the supplied recording.",
+      "lyrics": "[Intro]\nHeya, heya!\nDie Reise geht los.\n\n[Verse 1]\nSeit Monaten spar ich Geld,\nIch möchte endlich etwas sehen.\nMein Traum ist eine Reise nach Hamburg,\nJetzt kann ich wirklich fahren.\nIch suche ein Hotel im Internet,\nEin schönes Zimmer, nicht zu teuer.\nMein Ticket buche ich am Montag,\nAm Samstag geht die Reise los.\n\n[Chorus]\nEndlich Urlaub, endlich frei.\nEndlich Urlaub, endlich frei.\nMein Koffer steht schon längst bereit.\nMein Koffer steht schon längst bereit.\nHeya, heya!\nIch bin bereit.\nHeya, heya!\nEs ist so weit.\nDie Reise geht los.\nDie Reise geht los.\nHamburg, ich freue mich auf dich!\n\n[Post-Chorus]\nIch freue mich auf dich!\n\n[Verse 2]\nAm Freitag packe ich meinen Koffer,\nMein Handy und die Kamera.\nAm Samstag stehe ich früh auf,\nMein Zug fährt schon um acht Uhr ab.\nIch sitze ruhig am Fenster,\nDie Sonne scheint, der Himmel ist blau.\nIch sehe Felder, Häuser, Bäume\nUnd freue mich auf meine Reise.\n\n[Chorus]\nEndlich Urlaub, endlich frei.\nEndlich Urlaub, endlich frei.\nMein Koffer steht schon längst bereit.\nMein Koffer steht schon längst bereit.\nHeya, heya!\nIch bin bereit.\nHeya, heya!\nEs ist so weit.\nDie Reise geht los.\nDie Reise geht los.\nHamburg, ich freue mich auf dich!\n\n[Outro]\nEndlich Urlaub, endlich frei.\nEndlich Urlaub, endlich frei.\nHeya, heya!\nDie Reise geht los.\nHeya, heya!\nDie Reise geht los.\nHmm …\nDie Reise geht los.",
+      "genre": "Warm Reggae-Pop"
   },
   {
     "assignmentKey": "A2-10.26",
