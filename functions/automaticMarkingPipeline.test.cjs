@@ -152,3 +152,28 @@ for(const [assignmentKey,student,reading,listening] of [
  assert.deepEqual(Array.from(result.missingTaskPoints),[]);
  assert.ok(!/missing points|required writing points are missing|answer was blank/i.test(result.feedback));
 });
+
+test('bundled automatic worker uses the current five-question B1 Day 7 listening key without AI',async()=>{
+ const pipeline=loadPipeline();let calls=0;
+ const result=await withMarkingTransport(async()=>{calls++;throw Error('No AI needed for objective answers');},()=>pipeline.markSubmissionWithAI({
+  referenceEntry:pipeline.canonicalCourseReference('B1-3.7'),submission:{level:'B1',assignmentKey:'B1-3.7'},
+  submissionText:'TEIL 3 1. A 2. B 3. B 4. B 5. B 6. C 7. A 8. F 9. B 10. C 11. D 12. E TEIL 4 1. B 2. B 3. A 4. A 5. B',
+ }));
+ assert.equal(result.objectiveTotal,17);assert.equal(result.objectiveCorrect,17);assert.equal(result.finalScore,100);assert.equal(calls,0);
+ assert.match(result.feedback,/Teil 4: 5\/5 correct/);assert.doesNotMatch(result.feedback,/1\/10|questions? 6/);
+});
+
+test('Leonard’s A2 Day 16 weekend-before-Lust invitation releases without false missing-point or examiner holds',async()=>{
+ const pipeline=loadPipeline();let calls=0;
+ const submissionText='TEIL 2 Lieber Markus, Zur Entspannung lese ich ein Buch und dann schlafe genug, weil beides für mich gesund ist. Danach fahre ich mit dem Fahrrad im Park. Hast du nächstes Wochenende Lust, Yoga zu machen? Viele Grüße, Leonard TEIL 3 1. B 2. C 3. D 4. A 5. C TEIL 4 1. B 2. A 3. C 4. B 5. A';
+ const result=await withMarkingTransport(async()=>{calls++;return {
+  level:'A2',assignmentKey:'A2-6.16',score:92,finalScore:92,writingScore:80,writingScorePercent:80,confidence:.99,status:'marked',shouldSendAutomatically:true,
+  taskCompletion:{completed:3,total:3,missing:[]},feedback:'The invitation clearly proposes a shared activity next weekend. Write “dann schlafe ich genug” instead of “dann schlafe genug”.',
+  parts:[{partId:'teil2',partType:'writing',score:80,maxScore:100}],
+ };},()=>pipeline.markSubmissionWithAI({referenceEntry:pipeline.canonicalCourseReference('A2-6.16'),submission:{level:'A2',assignmentKey:'A2-6.16'},submissionText}));
+ assert.equal(calls,2);assert.equal(result.objectiveCorrect,10);assert.equal(result.objectiveTotal,10);
+ assert.equal(result.taskCompletion.completed,3);assert.equal(result.taskCompletion.missing.length,0);
+ assert.equal(result.secondExaminer.scoreDelta,0);assert.equal(result.secondExaminer.requiresTutorReview,false);
+ assert.equal(result.status,'marked');assert.equal(result.finalScore,92);
+ assert.doesNotMatch(result.feedback,/2 of 3|Invite Markus.*missing|required content point.*addressed/);
+});

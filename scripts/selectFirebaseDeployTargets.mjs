@@ -11,6 +11,7 @@ export const WORKER_TARGETS = {
   "functions/automaticMarkingPipeline.cjs": ["api", "markCourseSubmissionAutomatically"],
   "functions/automaticCourseMarking.js": ["markCourseSubmissionAutomatically"],
   "functions/automaticCourseMarking.test.cjs": [],
+  "functions/automaticMarkingPipeline.test.cjs": [],
   "src/utils/verifiedSpeakingMarking.js": ["api", "markCourseSubmissionAutomatically"],
   "src/utils/a1WritingTaskEvidence.js": ["api", "markCourseSubmissionAutomatically"],
   "src/utils/questionAwareWritingMarking.js": ["api", "markCourseSubmissionAutomatically"],
