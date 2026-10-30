@@ -177,10 +177,10 @@ export const MUSIC_SONG_DRAFTS_A1 = Object.freeze([
   },
   {
     "assignmentKey": "A1-14.1",
-    "title": "Mein Kopf tut weh",
-    "musicStyle": "Acoustic Afro-Soul, 84 BPM: gentle acoustic Afro-soul with fingerpicked guitar, sparse piano and warm soft percussion; quietly reassuring. One lead singer, clear German phrases, quiet instrumental mix.",
-    "lyrics": "[Verse 1]\nAm Morgen rufe ich Mia an.\nHallo Mia, bist du da?\nJa, ich bin hier. Wie geht's dir?\nNicht so gut. Mein Kopf tut weh.\n\n[Chorus]\nWie geht's dir? Wie geht's dir?\nHeute geht es mir nicht gut.\nEin Glas Wasser tut mir gut.\n\n[Verse 2]\nMia fragt: Hast du Fieber?\nNein, aber mein Bauch tut weh.\nSie fragt: Brauchst du Hilfe?\nJa, bitte. Komm zu mir.\n\n[Chorus]\nWie geht's dir? Wie geht's dir?\nHeute geht es mir nicht gut.\nEin Glas Wasser tut mir gut.\n\n[Outro]\nMia bringt mir Wasser und Tee.\nJetzt geht es mir schon besser.\nDanke, Mia! Gute Nacht.\nBei Falowen lerne ich: Gute Besserung!",
-    "genre": "Acoustic Afro-Soul"
+    "title": "Arzttermin",
+    "genre": "Warm German Pop",
+    "musicStyle": "Warm German Pop · Acoustic Guitar · Soft Piano · Gentle Afrobeat · One Singer. Mature warm low male lead vocal, melodic guitar, soft piano, light Afrobeat pulse, distinctive mellow brass/saxophone fills, calm reflective closing. Preserve the teacher-uploaded recording and its actual sung text.",
+    "lyrics": "[Verse 1]\nHeute fühle ich mich nicht gut,\nMein Kopf tut weh, mein Hals ist rot.\nIch habe Fieber und bin müde,\nIch möchte heute nicht zur Schule.\n\n[Verse 2]\nIch rufe bei meinem Arzt an\nund frage: „Haben Sie heute Zeit?“\nDie Frau sagt: „Ja, um zehn Uhr.“\nIch sage: „Danke, ich komme gleich.“\n\n[Chorus]\nMir geht es nicht gut, ich bin krank.\nMein Kopf tut weh, ich brauche Hilfe.\nIch möchte einen Termin beim Arzt,\nam besten noch heute, bitte.\n\nIch habe Husten, ich habe Fieber.\nIch brauche Ruhe und etwas Zeit.\nIch hoffe, morgen geht es mir besser,\ndann bin ich wieder fit.\n\n[Verse 3]\nUm zehn Uhr sitze ich beim Arzt.\nEr fragt mich: „Was fehlt Ihnen?“\nIch sage: „Mein Hals tut weh,\nund seit gestern habe ich Fieber.“\n\nDer Arzt sagt: „Trinken Sie viel Wasser\nund bleiben Sie heute zu Haus.“\nIch gehe danach zur Apotheke\nund ruhe mich zu Hause aus.\n\n[Final Chorus]\nMir geht es nicht gut, ich bin krank.\nMein Kopf tut weh, ich brauche Hilfe.\nIch möchte einen Termin beim Arzt,\nam besten noch heute, bitte.\n\nIch habe Husten, ich habe Fieber.\nIch brauche Ruhe und etwas Zeit.\nIch hoffe, morgen geht es mir besser,\ndann bin ich wieder fit.\n\n[Outro]\nDann bin ich wieder fit."
   },
   {
     "assignmentKey": "A1-14.2",
