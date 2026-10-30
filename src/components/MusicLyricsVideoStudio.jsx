@@ -213,6 +213,25 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       const lineCount=videoLyricLines(recordedLyrics).length;
       const localComplete=lineCount>0 && local.length===lineCount;
       const restored=localComplete ? local : published?.cues || [];
+      // These approved songbook lyrics supersede the older short published
+      // catalog metadata. We have not received their MP3 bytes, so the
+      // owner's timing editor must remain blank until real audio is marked.
+      const approvedUnreviewedSong={
+        "music/a1/day-11/Mein Tag – Von morgens bis.mp3":"A1-7",
+        "music/a1/day-12/Zeit und Datum.mp3":"A1-8",
+      };
+      const approvedAssignment=approvedUnreviewedSong[key];
+      if(approvedAssignment){
+        const approvedLyrics=getReusableSongDraft(approvedAssignment)?.lyrics||"";
+        if(approvedLyrics && recordedLyrics!==approvedLyrics){
+          currentLyricText.current=approvedLyrics;
+          setLyricText(approvedLyrics);
+          setCues([]);
+          setTimingStatus("missing");
+          setMessage("Approved lesson lyrics loaded for the R2 song. No unverified timestamps have been inserted. Play the published MP3 and mark each line before saving the shared timing.");
+          return;
+        }
+      }
       // Only hydrate draft timing when the exact published MP3 bytes match a teacher recording.
       const draftReference=[A1_DAY5_FINAL_RECORDING,A1_DAY6_FINAL_RECORDING,A1_DAY7_FINAL_RECORDING,A1_DAY8_FINAL_RECORDING,A1_DAY10_FINAL_RECORDING,A2_DAY21_FINAL_RECORDING,A2_DAY22_FINAL_RECORDING]
         .find(x=>x.objectKey===key || (!x.objectKey && x.level===publishedTrack?.level && Number(x.day)===Number(publishedTrack?.day)));

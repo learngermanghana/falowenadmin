@@ -68,10 +68,14 @@ export default function MusicStudioPage() {
     (savedLyrics[assignmentKey] || '').includes('Am Montag habe ich einen Deutschkurs.');
   const obsoleteA1Day10Draft = assignmentKey === 'A1-6' &&
     (savedLyrics[assignmentKey] || '').includes('Im Bus liegt eine Tasche.');
+  const obsoleteA1Day11Draft = assignmentKey === 'A1-7' &&
+    (savedLyrics[assignmentKey] || '').includes('Um sieben stehe ich auf.');
+  const obsoleteA1Day12Draft = assignmentKey === 'A1-8' &&
+    (savedLyrics[assignmentKey] || '').includes('Mein Handy zeigt sechzehn Uhr.');
   const lyrics = courseMode === 'course'
     ? Object.prototype.hasOwnProperty.call(lyricsOverrides, assignmentKey)
       ? lyricsOverrides[assignmentKey]
-      : Object.prototype.hasOwnProperty.call(savedLyrics, assignmentKey) && savedLyrics[assignmentKey] && !obsoleteDay7Draft && !obsoleteDay8Draft && !supersededWeekendLyrics && !supersededA2Day22Draft && !obsoleteA1Day10Draft
+      : Object.prototype.hasOwnProperty.call(savedLyrics, assignmentKey) && savedLyrics[assignmentKey] && !obsoleteDay7Draft && !obsoleteDay8Draft && !supersededWeekendLyrics && !supersededA2Day22Draft && !obsoleteA1Day10Draft && !obsoleteA1Day11Draft && !obsoleteA1Day12Draft
         ? savedLyrics[assignmentKey] : draft?.lyrics || ''
     : customLyrics;
   const setLyrics = next => {
