@@ -39,3 +39,13 @@ test('advanced controls and video editor remain available but collapsed', () => 
   assert.match(page, /<summary>Lyrics Video Studio<\/summary>/);
   assert.match(page, /<MusicLyricsVideoStudio/);
 });
+
+test('Music Generator and Lyrics Video Studio are visible, top-level workspaces', () => {
+  assert.match(page, /id="music-generator-tab"/);
+  assert.match(page, /id="music-video-tab"/);
+  assert.match(page, /id="music-generator-panel" role="tabpanel"/);
+  assert.match(page, /id="music-video-panel" role="tabpanel"/);
+  assert.match(page, /onClick=\{\(\) => setStudioTab\('video'\)\}/);
+  assert.match(page, /onClick=\{\(\) => setStudioTab\('generator'\)\}/);
+  assert.doesNotMatch(page, /<summary>Lyrics Video Studio<\/summary>/);
+});
