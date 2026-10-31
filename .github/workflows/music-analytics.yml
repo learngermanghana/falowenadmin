@@ -1,0 +1,31 @@
+name: Music Analytics checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'functions/musicAnalytics.js'
+      - 'functions/index.js'
+      - 'functions/package.json'
+      - 'functions/package-lock.json'
+      - 'src/pages/MusicAnalyticsPage.*'
+      - 'src/services/musicAnalyticsService.js'
+      - 'src/App.jsx'
+      - 'tests/music-analytics.test.js'
+      - '.github/workflows/music-analytics.yml'
+
+jobs:
+  music-analytics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm ci
+        working-directory: functions
+      - run: node --check functions/musicAnalytics.js
+      - run: node --test tests/music-analytics.test.js
+      - run: npm run build
