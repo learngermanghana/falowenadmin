@@ -51,10 +51,10 @@ export const MUSIC_SONG_DRAFTS_A2_PART1 = Object.freeze([
   },
   {
     "assignmentKey": "A2-3.8",
-    "title": "Ein Tisch für zwei",
-    "musicStyle": "Latin Pop, 93 BPM: sunny light Latin-pop with soft congas, muted keyboard stabs, round bass and gentle rhythmic guitar. One lead singer, clear German phrases, quiet instrumental mix.",
-    "lyrics": "[Verse 1]\nIm Restaurant ist heute viel los.\nWir haben einen Tisch reserviert.\nDer Kellner bringt uns die Speisekarte.\nMia möchte eine Suppe bestellen.\n\n[Chorus]\nFür mich bitte das Gemüse,\nund ein Glas Wasser dazu.\nWir bestellen freundlich und sagen danke.\n\n[Verse 2]\nIch bekomme zuerst das falsche Essen.\nDer Kellner fragt: Ist alles in Ordnung?\nIch erkläre ihm ruhig den Fehler.\nEr bringt mir gleich den richtigen Teller.\n\n[Chorus]\nFür mich bitte das Gemüse,\nund ein Glas Wasser dazu.\nWir bestellen freundlich und sagen danke.\n\n[Outro]\nAm Ende schmeckt uns alles sehr gut.\nWir bezahlen und gehen zufrieden heim.\nBei Falowen übe ich, freundlich zu bestellen.",
-    "genre": "Latin Pop"
+    "title": "Ein Abend zu zweit",
+    "musicStyle": "Warm piano-led chill pop / soft R&B: mellow electric-piano chords, restrained round bass, light rim-and-kick groove, intimate alternating German voices, and a gentle humming outro. Keep the instrumental spacious so each A2 line is easy to hear.",
+    "lyrics": "[Intro]\nEin Abend im Restaurant.\n\n[Verse 1]\nAm Freitagabend geh’ ich mit Mia aus.\n\n[Chorus]\nFür mich bitte Gemüse mit Reis,\nfür Mia die Suppe, schön heiß.\nZwei Gläser Wasser, danke sehr.\nEin Abend zu zweit, was wollen wir mehr?\n\n[Verse 2]\nDoch plötzlich steht ein Fisch vor mir.\nIch schaue auf den Teller und sage zu ihr:\n„Das habe ich doch gar nicht bestellt!“\nDer Kellner kommt und fragt: „Was fehlt?“\nIch sage freundlich:\n„Das ist nicht mein Essen.“\nEr sagt: „Entschuldigung,\nich hab’s verwechselt.“\nKurz darauf bringt er mein richtiges Gericht.\nMia lacht und sagt:\n„Jetzt fehlt uns nichts.“\n\n[Chorus]\nFür mich bitte Gemüse mit Reis,\nfür Mia die Suppe, schön heiß.\nZwei Gläser Wasser, danke sehr.\nEin Abend zu zweit, was wollen wir mehr?\n\n[Final Chorus]\nMmm, für mich bitte Gemüse mit Reis,\nfür Mia die Suppe, schön heiß.\nZwei Gläser Wasser, danke sehr.\nMmm, ein Abend zu zweit,\nwas wollen wir mehr?\n\n[Outro]\nMmm, mmm, mmm.\nMmm, mmm, mmm.\nMmm, mmm.",
+    "genre": "Chill Piano Pop"
   },
   {
     "assignmentKey": "A2-4.9",
