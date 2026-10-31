@@ -33,10 +33,9 @@ test('saved lyrics remain editable and load from the existing lesson library', (
   assert.match(page, /onClick=\{\(\) => overwriteLyrics\(\)\}/);
 });
 
-test('advanced controls and video editor remain available but collapsed', () => {
+test('advanced controls are collapsed while the video editor remains available', () => {
   assert.match(page, /<details className="music-simple-extra">/);
   assert.match(page, /<summary>Advanced music controls<\/summary>/);
-  assert.match(page, /<summary>Lyrics Video Studio<\/summary>/);
   assert.match(page, /<MusicLyricsVideoStudio/);
 });
 
