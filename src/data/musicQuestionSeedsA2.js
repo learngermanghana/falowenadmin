@@ -82,11 +82,11 @@ export const MUSIC_QUESTION_SEEDS_A2 = Object.freeze([
   ],
   [
     "A2-4.11",
-    "Warum denkt Ben über ein Fahrrad nach?",
-    "Weil sein Bus oft zu spät kommt.",
-    "Wann fährt er lieber mit dem Bus?",
-    "Wenn es regnet.",
-    "Wie kommst du zur Arbeit oder zum Kurs?"
+    "Womit fährt die Person am Morgen?",
+    "Mit dem Rad.",
+    "Womit fährt die Person am Nachmittag?",
+    "Mit dem Zug.",
+    "Mit welchem Verkehrsmittel kommst du zum Kurs oder zur Arbeit?"
   ],
   [
     "A2-5.12",
