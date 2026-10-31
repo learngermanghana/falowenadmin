@@ -484,32 +484,26 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
     }
   },
   "A1-4.7": {
-    "words": [
-      "der Name",
-      "das Alter",
-      "der Wohnort",
-      "das Hobby",
-      "buchstabieren"
-    ],
+    "words": ["die Flasche", "der Bleistift", "das Wasser", "das Radio", "die Tür"],
     "mission": {
-      "title": "Prüfungsteil 1 · Kurz vorstellen",
-      "situation": "Du übst nur eine kurze Vorstellung, noch keine ganze Prüfung.",
-      "prompt": "Sage deinen Namen, dein Alter und deinen Wohnort in drei Sätzen.",
-      "model": "Ich heiße Ama. Ich bin 22 Jahre alt. Ich wohne in Accra.",
-      "hint": "Eine andere eigene Angabe ist genauso richtig.",
-      "secondRound": "Buchstabiere danach deinen Vornamen."
+      "title": "Prüfungsteil 3 · Bildkarte",
+      "situation": "Du siehst einen Gegenstand auf einer Goethe-A1-Bildkarte. Wähle selbst ein passendes Verb.",
+      "prompt": "Bildkarte: die Flasche. Bilde eine höfliche Bitte ohne Hilfe.",
+      "model": "Können Sie bitte die Flasche öffnen?",
+      "hint": "Können Sie bitte ...? Das passende Vollverb steht am Ende.",
+      "secondRound": "Neue Bildkarte: das Glas Wasser. Formuliere eine andere Bitte."
     },
     "reaction": {
-      "title": "Die Prüferfrage",
-      "situation": "Deine Lehrkraft spielt kurz den Prüfer.",
-      "prompt": "Die Lehrkraft fragt: „Wie heißen Sie?“ Antworte mit einem ganzen Satz.",
-      "model": "Ich heiße Ama.",
-      "note": "Nutze die höfliche Prüfungsfrage mit Sie; eigener Name ist richtig.",
+      "title": "Bitten und reagieren",
+      "situation": "Deine Partnerin oder dein Partner bittet dich um einen Gegenstand.",
+      "prompt": "Dein Partner fragt: „Können Sie mir bitte den Stift geben?“ Antworte natürlich.",
+      "model": "Ja, gern. Hier bitte.",
+      "note": "Eine kurze passende Zusage oder höfliche Absage zählt; nicht nur den Gegenstand wiederholen.",
       "second": {
-        "situation": "Eine kurze Frage in der Prüfung.",
-        "prompt": "Die Lehrkraft fragt höflich: „Wo wohnen Sie?“ Antworte.",
-        "model": "Ich wohne in Accra.",
-        "note": "Eigener Ort erlaubt; antworten mit ich wohne."
+        "situation": "Du zeigst auf das Radio. Deine Partnerin soll es ausschalten.",
+        "prompt": "Bilde selbst eine höfliche Bitte zu „das Radio“.",
+        "model": "Können Sie bitte das Radio ausmachen?",
+        "note": "Auch eine andere passende Bitte zum Radio ist richtig, wenn sie höflich und verständlich ist."
       }
     }
   },
