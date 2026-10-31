@@ -9,7 +9,8 @@ import { getMusicTopicStyle, suggestLessonMusicDirection } from '../utils/musicT
 import { MUSIC_PRODUCTION_PROFILES, getMusicProductionProfile } from '../utils/musicProductionProfiles.js';
 import { getReusableSongDraft, getReusableSongDrafts } from '../data/reusableMusicSongbook.js';
 function isSupersededMusicLyrics(key, text) {
-  return (key === 'A1-0.2' && text.includes('Mein Name ist Lena, hallo!') && text.includes('Ich sage: L-E-N-A.')) ||
+  return (key === 'A2-3.8' && text.includes('Im Restaurant ist heute viel los.')) ||
+    (key === 'A1-0.2' && text.includes('Mein Name ist Lena, hallo!') && text.includes('Ich sage: L-E-N-A.')) ||
     (key === 'A1-1.1' && text.includes('Ich bin Ali, du bist Mia.') && text.includes('Ich lerne Deutsch am Morgen.')) ||
     (key === 'A1-1.3' && text.includes('Karim sagt: Das ist Bello.') && text.includes('Hallo, ich heiße Sara.')) ||
     (key === 'A1-2.3' && text.includes('Am Sonntag bin ich zu Hause.') && text.includes('Mein Vater liest ein Buch.')) ||
