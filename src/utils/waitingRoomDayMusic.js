@@ -95,6 +95,12 @@ export function waitingRoomDiscoveredMusicTrack(feed, { level, day, assignmentKe
   );
   if (!tracks.length) return null;
   let matches = tracks;
+  // The teacher supplied this exact A2 Day 12 R2 object key; a similarly named
+  // recording must not replace it in the lesson or waiting room.
+  if (String(assignmentKey || '').trim().toUpperCase() === 'A2-5.12') {
+    matches = tracks.filter(row => row.objectKey === 'music/a2/day-12/Träume ändern sich.mp3');
+    if (matches.length !== 1) return null;
+  }
   const preferred = EXPECTED_ATTENDANCE_TITLES[String(assignmentKey || '').trim().toUpperCase()];
   if (preferred) {
     const preferredMatches = tracks.filter(row =>
