@@ -96,7 +96,7 @@ export default function MusicAnalyticsPage() {
         <section className="music-analytics-notice" role="status">
           <h2>Analytics needs one-time configuration</h2>
           <p>{report.message}</p>
-          <p>Configure the music website's public GA4 measurement ID separately. Until then, listening remains fully functional and no analytics calls are sent.</p>
+          <p>The music website Measurement ID (G-Q7BNDTQ68B) is already in its source code. To enable this report, set the numeric GA4 Property ID on the Admin Functions service, grant its service account Viewer access, and deploy both changes.</p>
           <p>See <code>docs/music-analytics.md</code> in the Admin repository for setup instructions. No paid GA4 account, AI, Firestore event logging or scheduler is required.</p>
         </section>
       ) : null}
