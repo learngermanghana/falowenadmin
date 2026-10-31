@@ -281,7 +281,7 @@ export default function MusicStudioPage() {
       if (audioUrl.current) URL.revokeObjectURL(audioUrl.current);
       audioUrl.current = url;
       const generatedTitle = simple && !usingLessonLyrics ? 'Falowen Music' : trackTitle;
-      setResult({ url, title: generatedTitle, level: usingLessonLyrics ? level : '',
+      setResult({ url, title: generatedTitle, isFreeform: simple && !usingLessonLyrics, level: usingLessonLyrics ? level : '',
         day: usingLessonLyrics ? lesson?.day : undefined, lyrics: data.lyrics,
         filename: usingLessonLyrics && lesson
           ? falowenMusicFileName(lesson, generatedTitle, 'mp3') : 'falowen-custom-music.mp3' });
@@ -506,11 +506,13 @@ export default function MusicStudioPage() {
       <details className="music-simple-extra" onToggle={event => setStudioTab(event.currentTarget.open ? 'video' : 'generator')}>
         <summary>Lyrics Video Studio</summary>
         <section id="music-video-panel">
-    <MusicLyricsVideoStudio active={studioTab === 'video'} assignmentKey={assignmentKey}
-      generated={result && result.title === trackTitle && (courseMode === 'custom' || (result.level === level && result.day === lesson?.day)) ? result : null}
-      title={trackTitle} level={courseMode === 'course' ? level : ''} day={courseMode === 'course' ? lesson?.day : ''}
-      lyrics={lyrics}
-      onOverwriteLyrics={courseMode === 'course' && assignmentKey ? overwriteLyrics : null}
+    <MusicLyricsVideoStudio active={studioTab === 'video'} assignmentKey={result?.isFreeform ? '' : assignmentKey}
+      generated={result?.isFreeform ? result : result && result.title === trackTitle && (courseMode === 'custom' || (result.level === level && result.day === lesson?.day)) ? result : null}
+      title={result?.isFreeform ? result.title : trackTitle}
+      level={result?.isFreeform ? '' : courseMode === 'course' ? level : ''}
+      day={result?.isFreeform ? '' : courseMode === 'course' ? lesson?.day : ''}
+      lyrics={result?.isFreeform ? result.lyrics || '' : lyrics}
+      onOverwriteLyrics={!result?.isFreeform && courseMode === 'course' && assignmentKey ? overwriteLyrics : null}
       savingLyrics={savingLyrics} loadingLyrics={loadingLyrics}
       lyricsSaveNotice={lyricsNotice} />
 
