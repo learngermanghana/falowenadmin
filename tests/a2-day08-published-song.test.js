@@ -25,7 +25,9 @@ test('A2 Day 8 uses the newly uploaded Ein Abend zu zweit recording and sung tex
 
 test('older saved Day 8 studio lyrics are marked superseded, rather than masking the recording', () => {
   const src = readFileSync('src/pages/MusicStudioPage.jsx', 'utf8');
-  assert.match(src, /key === 'A2-3\.8' && text\.includes\('Im Restaurant ist heute viel los\.'\)/);
+  assert.ok(src.includes("key === 'A2-3.8'"));
+  assert.ok(src.includes("text.includes('Im Restaurant ist heute viel los.')"));
+  assert.ok(src.includes("text.includes('Wir haben einen Tisch am Fenster reserviert')"));
   assert.match(src, /setLyricsOverrides/);
   assert.match(src, /New approved course lyrics are loaded/);
 });
