@@ -7,7 +7,7 @@ import { getInteractiveLessonOpening, isInteractiveOpeningStage } from "../src/d
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 import { musicMomentUrl, musicTimestamp } from "../src/utils/musicTeaching.js";
 
-test("B1 Day 24 uses direct music with verified in-slide lyrics, MCQs and original deep-reading page", () => {
+test("B1 Day 24 keeps the published music on slide 2 and switches slide 3 to the verified conversation Hören", () => {
   const slide=getSlidesByCourse("B1").find(row=>row.assignmentId==="B1-8.24");
   const stages=buildTeachingPresenterStages(slide,slide.topic);
   assert.equal(stages.length,11);
@@ -18,14 +18,17 @@ test("B1 Day 24 uses direct music with verified in-slide lyrics, MCQs and origin
   assert.equal(stages[1].musicVideo.youtubeId,undefined);
   assert.equal(stages[1].musicVideo.musicLibraryUrl,"https://music.falowen.app/?level=B1&day=24");
   assert.equal(stages[1].timingMode,"");
-  assert.equal(stages[2].variant,"interactive-music-reading");
-  assert.equal(stages[2].musicReading.questions.length,5);
-  assert.equal(stages[2].musicReading.readingSections.length,4);
-  assert.ok(stages[2].musicReading.questions.every(q=>q.options[q.correctIndex]===q.answer));
+  assert.equal(stages[2].variant,"interactive-listening");
+  assert.equal(stages[2].audioKey,"b1/day-25/online-shopping-verbraucherservice.mp3");
+  assert.equal(stages[2].listeningItems.length,5);
+  assert.ok(stages[2].listeningItems.every(q=>q.options[q.correctIndex]===q.answer));
+  assert.ok(stages[2].transcript.length > 10);
+  assert.equal(stages[2].musicReading,undefined);
+  assert.equal(stages[2].musicVideo,undefined);
   assert.equal(stages[3].items.length>=2,true);
   assert.ok(stages[4].textDe);
   assert.equal(isInteractiveOpeningStage("B1-8.24","warmup"),false);
-  assert.equal(isInteractiveOpeningStage("B1-8.24","knowledge"),false);
+  assert.equal(isInteractiveOpeningStage("B1-8.24","knowledge"),true);
 });
 
 test("all other R2 Hören lessons continue unchanged, with signed audio", () => {
@@ -70,7 +73,7 @@ test("B1 Day 24 Argumentkarte is a four-case interactive decision activity on it
   const stages = buildTeachingPresenterStages(slide, slide.topic);
   const practice = stages.find((stage) => stage.id === "practice");
 
-  assert.equal(stages.length, 11, "keep correction and music pages plus the workbook presentation");
+  assert.equal(stages.length, 11, "keep correction, music intro, Hören and workbook presentation");
   assert.equal(stages[6].id, "practice");
   assert.equal(stages[7].id, "questions", "keep existing speaking tasks after practice");
   assert.equal(practice.type, "flow");
