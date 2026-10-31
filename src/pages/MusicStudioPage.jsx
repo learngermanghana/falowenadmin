@@ -33,6 +33,7 @@ const PRESETS = {
 };
 export default function MusicStudioPage() {
   const [studioTab, setStudioTab] = useState('generator');
+  const [composerTab, setComposerTab] = useState('prompt');
   const [courseMode, setCourseMode] = useState('course');
   const [level, setLevel] = useState('A1');
   const [day, setDay] = useState('1');
@@ -256,41 +257,129 @@ export default function MusicStudioPage() {
       setCopyStatus('Copy unavailable in this browser; download the lyrics text instead.');
     }
   }
-  async function generate(event) {
+  async function generate(event, source = 'advanced') {
     event.preventDefault();
     if (lock.current) return;
     lock.current = true; setBusy(true); setError('');
     try {
-      const prompt = promptMode === 'short'
-        ? buildFalowenShortMusicPrompt({ brief: shortPrompt, lyrics: vocalMode === 'instrumental' ? '' : lyrics,
-          mode, durationSeconds, vocalMode, lyricTreatment: rewriteFromLyrics ? 'story-source' : 'exact' })
-        : buildFalowenMusicPrompt({ brief: productionBrief, context, lyrics: vocalMode === 'instrumental' ? '' : lyrics, mode, durationSeconds, vocalMode, backingLevel,
-          lyricTreatment: rewriteFromLyrics ? 'story-source' : 'exact', productionProfile });
-      const data = await musicRequest({ mode, requestId: crypto.randomUUID(), prompt });
+      const simple = source === 'simple';
+      const usingLessonLyrics = simple ? composerTab === 'saved' : courseMode === 'course';
+      const generationMode = simple ? 'song' : mode;
+      // Simple generation sends only the prompt plus explicitly selected lyrics.
+      const prompt = simple
+        ? buildFalowenShortMusicPrompt({
+            brief: shortPrompt, lyrics: usingLessonLyrics ? lyrics : '',
+            mode: 'song', durationSeconds: 150, vocalMode: 'voice', lyricTreatment: 'exact',
+          })
+        : promptMode === 'short'
+          ? buildFalowenShortMusicPrompt({ brief: shortPrompt, lyrics: vocalMode === 'instrumental' ? '' : lyrics,
+              mode, durationSeconds, vocalMode, lyricTreatment: rewriteFromLyrics ? 'story-source' : 'exact' })
+          : buildFalowenMusicPrompt({ brief: productionBrief, context, lyrics: vocalMode === 'instrumental' ? '' : lyrics, mode, durationSeconds, vocalMode, backingLevel,
+              lyricTreatment: rewriteFromLyrics ? 'story-source' : 'exact', productionProfile });
+      const data = await musicRequest({ mode: generationMode, requestId: crypto.randomUUID(), prompt });
       const url = URL.createObjectURL(musicBlob(data));
       if (audioUrl.current) URL.revokeObjectURL(audioUrl.current);
       audioUrl.current = url;
-      setResult({ url, title: trackTitle, level, day: lesson?.day, lyrics: data.lyrics, filename: courseMode === 'course' && lesson ? falowenMusicFileName(lesson, trackTitle, 'mp3') : 'falowen-custom-music.mp3' });
+      const generatedTitle = simple && !usingLessonLyrics ? 'Falowen Music' : trackTitle;
+      setResult({ url, title: generatedTitle, level: usingLessonLyrics ? level : '',
+        day: usingLessonLyrics ? lesson?.day : undefined, lyrics: data.lyrics,
+        filename: usingLessonLyrics && lesson
+          ? falowenMusicFileName(lesson, generatedTitle, 'mp3') : 'falowen-custom-music.mp3' });
       setStatus(s => ({ ...s, ...data, audio: undefined, lyrics: undefined }));
     } catch (e) { setError(e.message); }
     finally { lock.current = false; setBusy(false); musicRequest().then(setStatus).catch(() => {}); }
   }
   const cents = mode === 'clip' ? 4 : 8;
   const capped = status && (status.dailyCents + cents > status.limits.dailyCents || status.monthlyCents + cents > status.limits.monthlyCents);
-  return <main className="music-studio">
-    <header><p className="music-eyebrow">FALOWEN · CREATE & LEARN</p><h1>Falowen Music Studio</h1><p>Turn your lesson ideas and lyrics into music. Preview, listen, download your MP3, or build a synchronized lyrics video.</p></header>
-    <div className="music-studio-tabs" role="tablist" aria-label="Falowen Music workspaces">
-      <button id="music-generator-tab" type="button" role="tab" aria-controls="music-generator-panel"
-        aria-selected={studioTab === 'generator'} className={studioTab === 'generator' ? 'is-active' : ''}
-        onClick={() => setStudioTab('generator')}>Music Generator</button>
-      <button id="music-video-tab" type="button" role="tab" aria-controls="music-video-panel"
-        aria-selected={studioTab === 'video'} className={studioTab === 'video' ? 'is-active' : ''}
-        onClick={() => setStudioTab('video')}>Lyrics Video Studio</button>
-    </div>
-    {/* Keep both workspaces mounted: generated object URLs, drafts and selected MP3s survive tab changes. */}
-    <section id="music-generator-panel" role="tabpanel" aria-labelledby="music-generator-tab"
-      style={{display:studioTab === 'generator' ? undefined : 'none'}}>
-    <div className="music-layout"><form onSubmit={generate} className="music-card">
+  const simpleCapped = status && (status.dailyCents + 8 > status.limits.dailyCents || status.monthlyCents + 8 > status.limits.monthlyCents);
+  const simpleReady = Boolean(status?.ready) && !simpleCapped && !busy && Boolean(shortPrompt.trim()) &&
+    (composerTab === 'prompt' || Boolean(lyrics.trim()));
+  return <main className="music-studio music-studio-simple">
+    <header className="music-simple-header">
+      <p className="music-eyebrow">FALOWEN · MUSIC GENERATOR</p>
+      <h1>Create music</h1>
+      <p>Write a prompt or choose saved lesson lyrics. Generate a complete song without a complicated setup.</p>
+    </header>
+    <section className="music-simple-shell" aria-label="Create your song">
+      <form onSubmit={event => generate(event, 'simple')} className="music-simple-form">
+        <div className="music-create-tabs" role="tablist" aria-label="Music creation modes">
+          <button id="music-prompt-tab" type="button" role="tab" aria-controls="music-simple-compose"
+            aria-selected={composerTab === 'prompt'} className={composerTab === 'prompt' ? 'is-active' : ''}
+            disabled={busy} onClick={() => setComposerTab('prompt')}>Prompt</button>
+          <button id="music-saved-tab" type="button" role="tab" aria-controls="music-simple-compose"
+            aria-selected={composerTab === 'saved'} className={composerTab === 'saved' ? 'is-active' : ''}
+            disabled={busy} onClick={() => { setCourseMode('course'); setComposerTab('saved'); }}>Saved Lyrics</button>
+        </div>
+        <div id="music-simple-compose" role="tabpanel" aria-labelledby={composerTab === 'saved' ? 'music-saved-tab' : 'music-prompt-tab'}>
+          {composerTab === 'saved' && <div className="music-simple-library">
+            <div className="music-simple-selects">
+              <div><label htmlFor="music-saved-level">Level</label>
+                <select id="music-saved-level" value={level} disabled={busy} onChange={e => { setLevel(e.target.value); setDay('1'); setAssignment(''); setFocus(''); }}>
+                  {STUDIO_COURSE_LEVELS.map(value => <option key={value}>{value}</option>)}
+                </select>
+              </div>
+              <div><label htmlFor="music-saved-day">Day</label>
+                <select id="music-saved-day" value={selectedDay?.day ?? ''} disabled={busy} onChange={e => { setDay(e.target.value); setAssignment(''); setFocus(''); }}>
+                  {days.map(group => <option key={group.day} value={group.day}>{group.day === 0 ? 'Orientation' : 'Day ' + group.day}</option>)}
+                </select>
+              </div>
+            </div>
+            <label htmlFor="music-saved-lesson">Saved song / lesson</label>
+            <select id="music-saved-lesson" value={lesson?.assignmentKey ?? ''} disabled={busy} onChange={e => { setAssignment(e.target.value); setFocus(''); }}>
+              {(selectedDay?.lessons || []).map(entry => <option key={entry.assignmentKey} value={entry.assignmentKey}>{entry.label}</option>)}
+            </select>
+            {draft && <p className="music-simple-track-name">{draft.title} · {draft?.genre || getMusicTopicStyle(lesson).label}</p>}
+          </div>}
+          <label htmlFor="music-create-prompt">{composerTab === 'saved' ? 'Music style prompt' : 'Describe your song'}</label>
+          <textarea id="music-create-prompt" rows={composerTab === 'saved' ? 3 : 6}
+            maxLength={1500} required disabled={busy} value={shortPrompt} onChange={e => setShortPrompt(e.target.value)}
+            placeholder="A heartfelt Afro-soul song, clear German vocals, a memorable chorus and warm piano…" />
+          {composerTab === 'saved' && <div className="music-simple-saved-editor">
+            <label htmlFor="music-create-lyrics">Lyrics</label>
+            <textarea id="music-create-lyrics" rows={11} maxLength={5500} disabled={busy || loadingLyrics}
+              value={lyrics} onChange={e => { setLyrics(e.target.value); setCopyStatus(''); }}
+              placeholder="Choose a lesson with saved lyrics or write your own." />
+            <div className="music-simple-save-row">
+              <span>{loadingLyrics ? 'Loading saved lyrics…' : dirtyLyrics ? 'Unsaved changes' : 'Lyrics ready'}</span>
+              <button type="button" className="music-simple-save" onClick={() => overwriteLyrics()}
+                disabled={busy || savingLyrics || loadingLyrics || !lyrics.trim() || !dirtyLyrics}>
+                {savingLyrics ? 'Saving…' : 'Save lyrics'}
+              </button>
+            </div>
+            {lyricsNotice && <p role="status" className="music-note">{lyricsNotice}</p>}
+          </div>}
+        </div>
+        <div className="music-simple-action">
+          <button className="music-generate" disabled={!simpleReady} type="submit">
+            {busy ? 'Generating your song…' : '✦ Generate music'}
+          </button>
+          <span>Full song · about 2½ minutes · estimated $0.08</span>
+        </div>
+        {busy && <p role="status" className="music-simple-message">Creating music with Google Lyria. Keep this page open; attempts do not retry automatically.</p>}
+        {error && <p role="alert" className="music-error">{error}</p>}
+        {simpleCapped && <p role="status" className="music-simple-message">Music budget reached for this generation. Try after the budget resets.</p>}
+        {status && !status.ready && <p role="status" className="music-simple-message">Google music generation is not configured yet.</p>}
+      </form>
+    </section>
+    <section className="music-simple-listen" aria-label="Your generated song">
+      <div className="music-simple-result-head"><h2>Your music</h2><span>{result ? 'Ready to listen' : 'Your song will appear here'}</span></div>
+      {result ? <>
+        <p className="music-simple-result-title">{result.title}{result.day != null ? ' · ' + result.level + ' Day ' + result.day : ''}</p>
+        <audio controls src={result.url} preload="metadata" />
+        <a className="music-download" href={result.url} download={result.filename}>Download MP3</a>
+        {result.lyrics && <details className="music-simple-generated-lyrics"><summary>Generated lyrics</summary><pre>{result.lyrics}</pre></details>}
+      </> : <p className="music-simple-placeholder">Start with a prompt or choose a saved lesson song.</p>}
+      <p className="music-simple-footnote">Download before leaving; generated audio is not automatically stored.</p>
+      {status && <p className="music-simple-footnote">
+        {'Budget: $' + (status.dailyCents / 100).toFixed(2) + ' / $0.80 today · $' +
+          (status.monthlyCents / 100).toFixed(2) + ' / $5.00 this month'}
+      </p>}
+    </section>
+    <div className="music-simple-extras">
+      <details className="music-simple-extra">
+        <summary>Advanced music controls</summary>
+        <p className="music-simple-extra-note">Optional previews, instrumental music, lesson packs and detailed arrangements.</p>
+    <div className="music-layout"><form onSubmit={event => generate(event, 'advanced')} className="music-card">
       <fieldset disabled={busy}><legend>1. Choose your lesson</legend>
         <label htmlFor="music-source">Song purpose</label><select id="music-source" value={courseMode} onChange={e => setCourseMode(e.target.value)}><option value="course">Course lesson from dictionary</option><option value="custom">Custom / class welcome</option></select>
         {courseMode === 'course' && <>
@@ -412,9 +501,11 @@ export default function MusicStudioPage() {
       <p className="music-note">Estimates use Google’s listed music prices, excluding backend usage. Failed or timed-out attempts remain counted because they may be billed. Limits reset at midnight UTC / the start of each month.</p>
     </aside></div>
     {courseMode === 'course' && draft && <ReusableMusicQuestions assignmentKey={assignmentKey} lyricsChanged={lyrics !== draft.lyrics} />}
-    </section>
-    <section id="music-video-panel" role="tabpanel" aria-labelledby="music-video-tab"
-      style={{display:studioTab === 'video' ? undefined : 'none'}}>
+
+      </details>
+      <details className="music-simple-extra" onToggle={event => setStudioTab(event.currentTarget.open ? 'video' : 'generator')}>
+        <summary>Lyrics Video Studio</summary>
+        <section id="music-video-panel">
     <MusicLyricsVideoStudio active={studioTab === 'video'} assignmentKey={assignmentKey}
       generated={result && result.title === trackTitle && (courseMode === 'custom' || (result.level === level && result.day === lesson?.day)) ? result : null}
       title={trackTitle} level={courseMode === 'course' ? level : ''} day={courseMode === 'course' ? lesson?.day : ''}
@@ -422,6 +513,9 @@ export default function MusicStudioPage() {
       onOverwriteLyrics={courseMode === 'course' && assignmentKey ? overwriteLyrics : null}
       savingLyrics={savingLyrics} loadingLyrics={loadingLyrics}
       lyricsSaveNotice={lyricsNotice} />
-    </section>
+
+        </section>
+      </details>
+    </div>
   </main>;
 }
