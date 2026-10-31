@@ -423,12 +423,16 @@ ENTRIES["A2-7.20"].musicIntro = {
   musicLibraryUrl: 'https://music.falowen.app/?level=A2&day=20',
   nextStep: 'Danach folgt das separate Hören-Gespräch über die Reklamation eines falschen Hemds.',
 };
-// Music uses the same Hördetektiv question/reveal flow, not the scored workbook Hören.
+// Day 24 follows the existing A2 pattern: slide 2 keeps its published
+// independent lesson music, while slide 3 is a real conversation Hören.
+// The supplied Verbraucherservice recording is labelled B1 D25, so share its
+// verified classroom key and answer bank rather than inventing an R2 object.
 ENTRIES["B1-8.24"] = {
   assignmentId: "B1-8.24",
   title: "Konsum und Nachhaltigkeit",
-  warmup: [], // Music video replaces the Day 24 warm-up, without changing other days.
-  listening: B1_DAY24_RECORDED_MUSIC,
+  warmup: [],
+  musicIntro: B1_DAY24_RECORDED_MUSIC,
+  listening: B1_DAY25_LISTENING,
 };
 // Published R2 music on Day 25 replaces the old YouTube intro only.
 ENTRIES["B1-8.25"].musicIntro = {
