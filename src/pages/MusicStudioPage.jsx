@@ -145,20 +145,17 @@ export default function MusicStudioPage() {
       // continue to preserve custom cloud edits.
       const approvedDay10 = assignmentKey === 'A2-4.10' ? getReusableSongDraft(assignmentKey)?.lyrics : '';
       if (approvedDay10 && data.lyrics !== approvedDay10) {
-        const approved = approvedDay10;
-        {
-          setLyricsOverrides(previous => ({ ...previous, [assignmentKey]: approved }));
-          try {
-            const saved = await overwriteSavedMusicLyrics(assignmentKey, approved);
-            if (!active) return;
-            setSavedLyrics(previous => ({ ...previous, [assignmentKey]: saved.lyrics }));
-            setLyricsNotice('A2 Day 10 Traveller lyrics overwritten with the approved recording text and saved to the cloud.');
-            return;
-          } catch (error) {
-            if (!active) return;
-            setLyricsNotice('Approved Traveller lyrics are loaded, but the cloud overwrite failed: ' + error.message + '. Click Overwrite Lyrics as the Music Studio owner to retry.');
-            return;
-          }
+        setLyricsOverrides(previous => ({ ...previous, [assignmentKey]: approvedDay10 }));
+        try {
+          const saved = await overwriteSavedMusicLyrics(assignmentKey, approvedDay10);
+          if (!active) return;
+          setSavedLyrics(previous => ({ ...previous, [assignmentKey]: saved.lyrics }));
+          setLyricsNotice('A2 Day 10 Traveller lyrics overwritten with the approved recording text and saved to the cloud.');
+          return;
+        } catch (error) {
+          if (!active) return;
+          setLyricsNotice('Approved Traveller lyrics are loaded, but the cloud overwrite failed: ' + error.message + '. Click Overwrite Lyrics as the Music Studio owner to retry.');
+          return;
         }
       }
       if (superseded) {
