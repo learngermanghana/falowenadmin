@@ -65,9 +65,9 @@ export const MUSIC_SONG_DRAFTS_A2_PART1 = Object.freeze([
   },
   {
     "assignmentKey": "A2-4.10",
-    "title": "Ein Tag in der fremden Stadt",
+    "title": "Die Welt entdecken – The Traveller",
     "musicStyle": "Afro-Fusion, 95 BPM: warm gentle Afro-fusion with subtle polyrhythmic hand percussion, soft electric guitar, quiet synth textures and a relaxed bass groove. One lead singer, clear German phrases, quiet instrumental mix.",
-    "lyrics": "[Verse 1]\nWir besuchen heute eine neue Stadt.\nAm Bahnhof holen wir einen Stadtplan.\nZuerst möchten wir den Dom sehen.\nDanach gehen wir über den Markt.\n\n[Chorus]\nLinks ist ein Platz, rechts ein Café,\nhinter der Brücke fließt der Fluss.\nWir entdecken Schritt für Schritt die Stadt.\n\n[Verse 2]\nPlötzlich finden wir die Straße nicht.\nEine Frau zeigt uns den Weg.\nSie empfiehlt uns auch ein kleines Museum.\nDort verbringen wir den Nachmittag.\n\n[Chorus]\nLinks ist ein Platz, rechts ein Café,\nhinter der Brücke fließt der Fluss.\nWir entdecken Schritt für Schritt die Stadt.\n\n[Outro]\nZum Schluss trinken wir Kaffee am Fluss.\nSo ein Tag macht richtig Spaß.\nBei Falowen entdecke ich neue deutsche Wörter.",
+    "lyrics": "[Verse 1]\nMein Koffer steht schon vor der Tür,\nmein Reisepass liegt neben mir.\nMorgen fliege ich nach Nigeria,\nich freue mich, bald bin ich da.\n\nEin Zimmer habe ich reserviert,\ndie ganze Reise gut organisiert.\nIch möchte neue Menschen treffen\nund durch die bunten Straßen gehen.\n\n[Chorus]\nIch möchte nach Amerika reisen,\nnach Nigeria und Kanada.\nIch will die ganze Welt entdecken,\ndoch Ghana bleibt mir immer nah.\n\n[Verse 2]\nIch träume von New York bei Nacht,\nvon Dubai, wo die Sonne lacht.\nIn Tokio möchte ich viel sehen,\nin Paris durch die Straßen gehen.\n\nAuch Island steht auf meinem Plan,\nich schaue mir die schönen Berge an.\nSo viele Länder, so viel zu sehen,\nich möchte immer weitergehen.\n\n[Chorus]\nIch möchte nach Amerika reisen,\nnach Nigeria und Kanada.\nIch will die ganze Welt entdecken,\ndoch Ghana bleibt mir immer nah.\n\n[Outro]\nEgal, wohin die Reise geht,\negal, wo ich am Ende steh'.\nIch denke immer gern an Ghana,\nGott segne mein Heimatland.",
     "genre": "Afro-Fusion"
   },
   {

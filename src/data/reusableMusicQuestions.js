@@ -85,7 +85,7 @@ export function getReusableMusicQuestions(assignmentKey) {
     topic: song.assignmentKey,
     questions: [
       { id: key + '-listen-1', type: 'listening', prompt: row[1], answer: row[2], evidence: key === 'A1-2' ? chorusEvidence(song.lyrics) : verseEvidence(song.lyrics, key === 'A1-14.1' ? 2 : 1), ...listeningChoice(key, 0) },
-      { id: key + '-listen-2', type: 'listening', prompt: row[3], answer: row[4], evidence: verseEvidence(song.lyrics, key === 'A1-14.1' ? 3 : 2), ...listeningChoice(key, 1) },
+      { id: key + '-listen-2', type: 'listening', prompt: row[3], answer: row[4], evidence: key === 'A2-4.10' ? chorusEvidence(song.lyrics) : verseEvidence(song.lyrics, key === 'A1-14.1' ? 3 : 2), ...listeningChoice(key, 1) },
       { id: key + '-speak-1', type: 'speaking', prompt: row[5], answer: null, evidence: '', teacherNote: guidance, ...(SPEAKING_SUPPORT[key] || {}) },
     ],
   };
