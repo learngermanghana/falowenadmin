@@ -181,6 +181,14 @@ async function loadReport({ propertyId, days, getAccessToken, fetchImpl, now }) 
   return normalizeResponse({ days, summary, events, songs, countries, daily, catalog, now });
 }
 
+// This numeric GA4 Property ID is not a credential. An explicitly supplied runtime
+// value can override it (or be blank to display the unconfigured notice).
+const DEFAULT_MUSIC_GA4_PROPERTY_ID = '515909911';
+function resolveGa4PropertyId(env = process.env) {
+  const configured = env.FALOWEN_MUSIC_GA4_PROPERTY_ID;
+  return String(configured == null ? DEFAULT_MUSIC_GA4_PROPERTY_ID : configured).trim();
+}
+
 function registerMusicAnalyticsRoutes({
   app,
   verifyToken,
@@ -207,7 +215,7 @@ function registerMusicAnalyticsRoutes({
       return res.status(401).json({ ok: false, error: 'Invalid admin session.' });
     }
 
-    const propertyId = String(env.FALOWEN_MUSIC_GA4_PROPERTY_ID || '').trim();
+    const propertyId = resolveGa4PropertyId(env);
     if (!/^\d{6,20}$/.test(propertyId)) {
       return res.json({
         ok: true,
@@ -241,4 +249,4 @@ function registerMusicAnalyticsRoutes({
   });
 }
 
-module.exports = { registerMusicAnalyticsRoutes, parseDays, trackIdFromPath, normalizeResponse, reportBody };
+module.exports = { registerMusicAnalyticsRoutes, parseDays, trackIdFromPath, normalizeResponse, reportBody, resolveGa4PropertyId };

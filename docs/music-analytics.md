@@ -6,12 +6,12 @@ Falowen Music is public and static. Analytics is optional, and it does not write
 
 1. Use the existing **falowen-examiner-trainer** Google Analytics 4 property and its **Falowen Music** web stream for https://music.falowen.app/.
 2. The public Measurement ID **G-Q7BNDTQ68B** is already configured in the companion student website PR, including the build generator. You do **not** need to paste the Google tag or configure a Vercel environment variable. Redeploy the student site after merging PR #3268; its build writes music/analytics-config.js. The optional MUSIC_GA4_MEASUREMENT_ID environment variable may override the default if ever deliberately changed.
-3. Copy the separate GA4 **numeric Property ID**. In the **Falowen Admin Firebase Functions** environment, set FALOWEN_MUSIC_GA4_PROPERTY_ID to that number.
+3. The numeric GA4 **Property ID** is **515909911**. The Admin Firebase reporting endpoint defaults to this non-secret public property identifier; no additional Firebase environment-variable step is required. An explicitly set `FALOWEN_MUSIC_GA4_PROPERTY_ID` overrides the default.
 4. Enable Google Analytics Data API in the Admin Firebase Cloud project.
 5. In GA4 Property Access Management, grant the Cloud Functions runtime service account **Viewer** access to the property. The server uses Google Application Default Credentials with analytics.readonly scope, not a public API key.
 6. Deploy the Admin Firebase api Function and the Admin frontend. Visit Falowen Admin > Music Analytics.
 
-The music tracker loads Google Analytics only after the visitor accepts consent. If the numeric property ID is unset, Admin shows a setup notice rather than invented report counts.
+The music tracker loads Google Analytics only after the visitor accepts consent. The server uses Property ID `515909911` unless an explicit environment override is supplied. If that override is empty or invalid, Admin shows setup guidance rather than invented report counts. A Property ID alone does not grant reporting permission.
 
 ## Privacy
 

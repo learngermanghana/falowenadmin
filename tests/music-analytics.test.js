@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const {
-  parseDays, trackIdFromPath, normalizeResponse, reportBody, registerMusicAnalyticsRoutes,
+  parseDays, trackIdFromPath, normalizeResponse, reportBody, registerMusicAnalyticsRoutes, resolveGa4PropertyId,
 } = require('../functions/musicAnalytics.js');
 
 function report(rows) {
@@ -12,6 +12,12 @@ function report(rows) {
     metricValues: [{ value: String(number) }],
   })) };
 }
+
+test('public Falowen Music GA4 property ID is preconfigured while overrides remain possible', () => {
+  assert.equal(resolveGa4PropertyId({}), '515909911');
+  assert.equal(resolveGa4PropertyId({ FALOWEN_MUSIC_GA4_PROPERTY_ID: '123456789' }), '123456789');
+  assert.equal(resolveGa4PropertyId({ FALOWEN_MUSIC_GA4_PROPERTY_ID: '' }), '');
+});
 
 test('only supported date ranges are accepted', () => {
   assert.equal(parseDays('1'), 1);
@@ -70,7 +76,7 @@ test('GA4 endpoint denies unauthenticated and nonowner users, skips GA calls if 
   let endpoint;
   const app = { get(path, handler) { assert.equal(path, '/music-analytics/summary'); endpoint = handler; } };
   let externalCalls = 0;
-  const env = { HOEREN_STUDIO_OWNER_UID: 'the-owner' };
+  const env = { HOEREN_STUDIO_OWNER_UID: 'the-owner', FALOWEN_MUSIC_GA4_PROPERTY_ID: '' };
   registerMusicAnalyticsRoutes({
     app,
     env,
