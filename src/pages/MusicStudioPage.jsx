@@ -140,11 +140,13 @@ export default function MusicStudioPage() {
       if (!active) return;
       setSavedLyrics(previous => ({ ...previous, [assignmentKey]: data.found ? data.lyrics : '' }));
       const superseded = data.found && isSupersededMusicLyrics(assignmentKey, data.lyrics);
-      // The owner requested one explicit migration of the A2 Day 10 Traveller song.
-      // Preserve any other custom saved lyrics and do not alter other lessons.
-      if (assignmentKey === 'A2-4.10' && (!data.found || superseded)) {
-        const approved = getReusableSongDraft(assignmentKey)?.lyrics;
-        if (approved) {
+      // The owner explicitly requested overwriting A2 Day 10 with the complete
+      // approved Traveller text. Only this key is migrated; all other keys
+      // continue to preserve custom cloud edits.
+      const approvedDay10 = assignmentKey === 'A2-4.10' ? getReusableSongDraft(assignmentKey)?.lyrics : '';
+      if (approvedDay10 && data.lyrics !== approvedDay10) {
+        const approved = approvedDay10;
+        {
           setLyricsOverrides(previous => ({ ...previous, [assignmentKey]: approved }));
           try {
             const saved = await overwriteSavedMusicLyrics(assignmentKey, approved);
