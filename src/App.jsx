@@ -33,6 +33,7 @@ const StudentHubPage = lazy(() => import("./pages/StudentHubPage.jsx"));
 const LeadsPage = lazy(() => import("./pages/LeadsPage.jsx"));
 const SocialMediaPage = lazy(() => import("./pages/SocialMediaPage.jsx"));
 const MusicStudioPage = lazy(() => import("./pages/MusicStudioPage.jsx"));
+const MusicAnalyticsPage = lazy(() => import("./pages/MusicAnalyticsPage.jsx"));
 const HoerenStudioPage = lazy(() => import("./pages/HoerenStudioPage.jsx"));
 const WritingSubmissionTrackerPage = lazy(() => import("./pages/WritingSubmissionTrackerPage"));
 const TimedAssignmentAttemptsPage = lazy(() => import("./pages/TimedAssignmentAttemptsPage.jsx"));
@@ -166,7 +167,7 @@ function TopBar() {
                 <Link to="/exam-file" onClick={() => setMenuOpen(false)}>Goethe Exam File</Link>
                 <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
                 <Link to="/social-media" onClick={() => setMenuOpen(false)}>Social Media</Link>
-                {String(import.meta.env.VITE_HOEREN_STUDIO_OWNER_UID || "").trim() === user.uid ? <><Link to="/ai-studio" onClick={() => setMenuOpen(false)}>AI Hören Studio</Link><Link to="/music-studio" onClick={() => setMenuOpen(false)}>Falowen Music Studio</Link></> : null}
+                {String(import.meta.env.VITE_HOEREN_STUDIO_OWNER_UID || "").trim() === user.uid ? <><Link to="/ai-studio" onClick={() => setMenuOpen(false)}>AI Hören Studio</Link><Link to="/music-studio" onClick={() => setMenuOpen(false)}>Falowen Music Studio</Link><Link to="/music-analytics" onClick={() => setMenuOpen(false)}>Music Analytics</Link></> : null}
                 <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
                 <Link to="/timed-attempts" onClick={() => setMenuOpen(false)}>Mock Monitoring & Timers</Link>
                 <Link to="/exam-tracking" onClick={() => setMenuOpen(false)}>Exam Tracking</Link>
@@ -215,6 +216,13 @@ function ToastViewport() {
 
 function MarkingRoute() {
   return <ProtectedRoute allowStaff={false}><MarkingHubPage /></ProtectedRoute>;
+}
+
+function OwnerMusicAnalyticsRoute() {
+  const { user, loading, isStaff } = useAuth();
+  const ownerUid = String(import.meta.env.VITE_HOEREN_STUDIO_OWNER_UID || "").trim();
+  if (!loading && user && (isStaff || !ownerUid || user.uid !== ownerUid)) return <Navigate to="/" replace />;
+  return <ProtectedRoute allowStaff={false}><MusicAnalyticsPage /></ProtectedRoute>;
 }
 
 function OwnerStudioRoute({ music = false }) {
@@ -291,6 +299,7 @@ export default function App() {
           <Route path="/social-media" element={<ProtectedRoute allowStaff={false}><SocialMediaPage /></ProtectedRoute>} />
           <Route path="/ai-studio" element={<OwnerStudioRoute />} />
           <Route path="/music-studio" element={<OwnerStudioRoute music />} />
+          <Route path="/music-analytics" element={<OwnerMusicAnalyticsRoute />} />
           <Route path="/visitor-guide" element={<PublicVisitorGuideRedirect />} />
           <Route path="/visitor-guide/edit" element={<PublicVisitorGuideRedirect />} />
           <Route path="/writing-submissions" element={<ProtectedRoute allowStaff={false}><WritingSubmissionTrackerPage /></ProtectedRoute>} />
