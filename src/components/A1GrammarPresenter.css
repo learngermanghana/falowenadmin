@@ -244,3 +244,35 @@
     padding-block: 4px;
   }
 }
+
+/* Goethe A1 Day 15: object first, speech before the answer is revealed. */
+.presenter-a1-teil3-object-card {
+  display: grid;
+  justify-items: center;
+  gap: clamp(6px, 1.5vh, 12px);
+  width: min(100%, 680px);
+  margin: 8px auto 18px;
+  padding: clamp(16px, 3vw, 28px);
+  text-align: center;
+  border: 2px solid #c7d2fe;
+  border-radius: 24px;
+  background: linear-gradient(145deg, #f8faff 0%, #eef2ff 100%);
+  box-shadow: 0 12px 30px rgba(49, 46, 129, .08);
+}
+.presenter-a1-teil3-object-symbol {
+  font-size: clamp(72px, 14vmin, 154px);
+  line-height: 1.15;
+}
+.presenter-a1-teil3-object-card > strong {
+  font-size: clamp(28px, 4.8vw, 50px);
+  line-height: 1.15;
+  color: #1e1b4b;
+}
+.presenter-a1-teil3-object-translation { font-size: .88rem; color: #475569; }
+.presenter-a1-teil3-object-card p { margin: 4px 0 0; font-weight: 750; font-size: clamp(18px, 2.7vw, 27px); }
+.presenter-a1-teil3-object-card small { font-size: clamp(13px, 1.7vw, 16px); color: #3730a3; }
+@media (max-height: 700px) {
+  .presenter-a1-teil3-object-card { gap: 5px; padding: 10px; margin-block: 4px 10px; }
+  .presenter-a1-teil3-object-symbol { font-size: clamp(56px, 10vh, 90px); }
+  .presenter-a1-teil3-object-card > strong { font-size: clamp(24px, 4vw, 36px); }
+}

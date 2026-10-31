@@ -81,20 +81,22 @@ export const A1_TOPIC_TEACHER_SUPPORT = {
   },
   "A1-4.7": {
     grammarFocusEn: [
-      "Teil 1 tests basic personal information and self-introduction.",
-      "Teil 2 requires a simple question and an appropriate answer on a familiar topic.",
-      "Teil 3 requires a request or instruction and a suitable reaction.",
+      "Teil 1 is a short introduction; Teil 2 uses topic questions and answers.",
+      "Teil 3 starts from a concrete picture card: choose a matching verb and make a polite request.",
+      "Use Können Sie (mir) bitte ... + infinitive? with the action verb at the end.",
+      "React naturally with Ja, gern / Natürlich / Tut mir leid, das geht leider nicht.",
     ],
     modelExamplesDe: [
-      "Ich heiße Felix. Ich komme aus Ghana und wohne in Accra.",
-      "Was machst du am Wochenende? – Ich treffe Freunde.",
-      "Kannst du mir bitte den Stift geben? – Ja, natürlich.",
-      "Bitte öffnen Sie das Fenster. – Gern.",
+      "Können Sie bitte die Flasche öffnen? – Ja, gern.",
+      "Können Sie mir bitte den Bleistift geben? – Natürlich, hier bitte.",
+      "Können Sie mir bitte ein Glas Wasser bringen? – Ja, natürlich.",
+      "Können Sie bitte das Radio ausmachen? – Ja, gern.",
     ],
     commonMistakesEn: [
-      "Giving only one-word answers when a short complete sentence is possible.",
-      "Answering a Teil 2 question without asking or responding to the required interaction.",
-      "Ignoring bitte or an appropriate reaction in the request task.",
+      "Naming the object or explaining the exam instead of making a complete request.",
+      "Choosing an action that does not fit the object.",
+      "Forgetting bitte, using incorrect formal Sie word order or omitting the final infinitive.",
+      "Not giving a partner reaction after the request.",
     ],
   },
   "A1-9": {

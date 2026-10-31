@@ -134,6 +134,6 @@ test("A1 presenter checks the rule before the per-student grammar challenge", ()
   assert.ok(reactionIndex > missionIndex, "Listening response must follow the speaking mission");
   assert.match(presenter, /items:\s*quickChecks/);
   assert.match(presenter, /items:\s*mainChecks/);
-  assert.match(presenter, /kicker:\s*"Verständnis prüfen"/);
-  assert.match(presenter, /title:\s*"One understanding question per student"/);
+  assert.match(presenter, /kicker:\s*isDay15ObjectLesson\s*\?\s*"Bildkarten · Sprechen Teil 3"\s*:\s*"Verständnis prüfen"/);
+  assert.match(presenter, /title:\s*isDay15ObjectLesson\s*\?\s*"Eine Bildkarte pro Student · Bitte und Reaktion"\s*:\s*"One understanding question per student"/);
 });

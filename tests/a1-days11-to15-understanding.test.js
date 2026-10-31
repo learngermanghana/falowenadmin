@@ -97,10 +97,13 @@ test("Days 11–14 are comprehension-first, while Day 15 preserves the real Goet
   assert.match(day15.teacherNotesEn.join(" "), /A1-5\.9/);
   const questions = getA1Days11To15UnderstandingChecks("A1-4.7");
   const response = questions.map((q) => q.questionDe + " " + q.answerDe).join("\n");
-  assert.match(response, /make a polite request|Kannst du mir bitte/i);
-  assert.match(response, /respond positively|Ja, gern|Ja, natürlich/i);
-  assert.match(response, /do not want to use können|imperative/i);
-  assert.match(response, /refuse politely|Tut mir leid/i);
+  assert.match(response, /Bildkarte flasche:/);
+  assert.match(response, /Bildkarte radio:/);
+  assert.match(response, /Können Sie bitte die Flasche öffnen/);
+  assert.match(response, /Können Sie mir bitte den Bleistift geben/);
+  assert.match(response, /Ja, gern|Ja, natürlich/);
+  assert.match(response, /Tut mir leid/);
+  assert.ok(questions.slice(0, -1).every((q) => q.responseMode === "performance"));
   assert.doesNotMatch(response, /Was machst du am Wochenende|make a new sentence of your own/i);
 });
 

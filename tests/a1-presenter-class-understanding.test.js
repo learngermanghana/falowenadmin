@@ -99,10 +99,13 @@ test("A1-4.7 Teil 3 uses practical request-and-response understanding questions"
 
   assert.equal(resolved.length, 11);
   assert.equal(new Set(resolved.map((item) => item.questionDe)).size, 11);
-  assert.match(questions, /make a polite request|Kannst du mir bitte/i);
-  assert.match(questions, /respond positively|Ja, gern|Ja, natürlich/i);
-  assert.match(questions, /do not want to use können|imperative/i);
-  assert.match(questions, /refuse politely|Tut mir leid/i);
+  assert.match(questions, /Bildkarte flasche:/);
+  assert.match(questions, /Bildkarte bleistift:/);
+  assert.match(questions, /Können Sie bitte die Flasche öffnen/);
+  assert.match(questions, /Können Sie mir bitte ein Glas Wasser bringen/);
+  assert.match(questions, /Ja, gern|Ja, natürlich/);
+  assert.match(questions, /Tut mir leid/);
+  assert.ok(resolved.every((item) => item.responseMode === "performance"));
   assert.doesNotMatch(questions, /Was machst du am Wochenende|make a new sentence of your own/i);
 });
 

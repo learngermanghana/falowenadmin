@@ -56,6 +56,7 @@ test('A1–C2 controls retain questions, reports use live marks and switching cl
     './MusicTeachingStages.jsx': { MusicVideoStage: () => null, MusicReadingStage: () => null },
     '../data/curatedLessonMusic.js': { getCuratedMusicByAssignment: () => null },
     '../data/a1PresenterMusicStage.js': { getA1PresenterMusicStage: () => null },
+    '../data/a1Teil3ObjectCards.js': { getA1Teil3ObjectCard: () => null },
     '../data/a1LearningPath.js': { getA1LearningPath: () => null },
     '../data/a1SlideReview.js': { buildA1SlideReviewChecks: () => [] },
     '../utils/a1PresenterActivityTimer.js': { A1_ACTIVITY_TIMER_PRESETS: [2, 5, 7], DEFAULT_A1_ACTIVITY_MINUTES: 5, a1ActivityDeadline: () => 0, a1ActivitySecondsLeft: () => 300 },
