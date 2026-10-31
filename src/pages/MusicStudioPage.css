@@ -98,3 +98,9 @@
   .music-simple-form select{padding:12px 8px;font-size:14px}
   .music-simple-result-head{align-items:start;flex-direction:column;gap:4px}
 }
+
+/* Keep Lyrics Video Studio as a full-size top-level workspace. */
+.music-studio-simple>.music-studio-tabs{max-width:820px;margin:0 auto 22px}
+.music-studio-simple>#music-generator-panel{min-width:0}
+.music-studio-simple>#music-video-panel{max-width:1120px;margin:0 auto;min-width:0}
+.music-video-main{min-width:0}
