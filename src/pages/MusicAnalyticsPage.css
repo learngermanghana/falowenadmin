@@ -1,0 +1,45 @@
+.music-analytics-page{max-width:1200px;margin:0 auto;padding:24px 18px 56px;color:#18283f;font-family:inherit}
+.music-analytics-head{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;flex-wrap:wrap;margin-bottom:24px}
+.music-analytics-head h1{font-size:clamp(26px,3vw,36px);line-height:1.2;margin:6px 0 12px}
+.music-analytics-head p{max-width:730px;line-height:1.6;color:#52617a;margin:0}
+.music-analytics-eyebrow{color:#4f46e5!important;font-size:12px!important;font-weight:800;letter-spacing:.08em}
+.music-analytics-actions{display:flex;gap:9px;flex-wrap:wrap}
+.music-analytics-actions a,.music-analytics-actions button,.music-analytics-range button{padding:10px 14px;border:1px solid #d9e1ee;border-radius:10px;background:#fff;color:#273e5e;text-decoration:none;font-size:13px;font-weight:700;cursor:pointer}
+.music-analytics-actions button:disabled{opacity:.5;cursor:not-allowed}
+.music-analytics-range{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 22px}
+.music-analytics-range button[aria-pressed=true]{background:#243f72;color:#fff;border-color:#243f72}
+.music-analytics-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-bottom:20px}
+.music-analytics-metric{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:19px;box-shadow:0 3px 14px #18345f08}
+.music-analytics-metric p{font-size:12px;color:#576882;font-weight:700;margin:0 0 8px}
+.music-analytics-metric strong{display:block;font-size:clamp(24px,3vw,32px);line-height:1.1;color:#172944;letter-spacing:-.03em}
+.music-analytics-metric span{display:block;margin-top:8px;font-size:11px;color:#687b92}
+.music-analytics-columns{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;margin-bottom:20px}
+.music-analytics-panel{border:1px solid #e0e7ef;background:#fff;border-radius:16px;padding:22px;min-width:0;margin-bottom:18px}
+.music-analytics-panel h2,.music-analytics-notice h2{margin:0 0 18px;font-size:17px;color:#1b304d}
+.music-analytics-subhead{margin-top:28px!important}
+.music-analytics-table-wrap{max-height:530px;overflow:auto}
+.music-analytics-table-wrap table{width:100%;border-collapse:collapse;text-align:left;font-size:13px}
+.music-analytics-table-wrap th{font-size:11px;color:#60728e;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #e2e8f0;padding:11px 10px}
+.music-analytics-table-wrap td{padding:11px 10px;border-bottom:1px solid #edf1f6;vertical-align:top}
+.music-analytics-table-wrap td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:800}
+.music-analytics-table-wrap a{color:#294d99;font-weight:700;text-decoration:none;overflow-wrap:anywhere}
+.music-analytics-table-wrap small{display:block;color:#76849a;margin-top:3px}
+.music-analytics-bars{display:grid;gap:13px}
+.music-analytics-bar-caption{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:#4c5c76}
+.music-analytics-bar-caption span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.music-analytics-bar-caption strong{font-variant-numeric:tabular-nums}
+.music-analytics-track{height:9px;margin-top:5px;background:#ecf0f6;border-radius:100px;overflow:hidden}
+.music-analytics-track>span{display:block;background:#5572d2;height:100%;border-radius:100px}
+.music-analytics-daily{display:flex;align-items:end;gap:7px;min-height:190px;overflow-x:auto;padding-top:10px}
+.music-analytics-day{flex:1;min-width:24px;max-width:105px;text-align:center;display:flex;flex-direction:column;align-items:center;font-size:11px;color:#69788f}
+.music-analytics-day strong{font-size:10px}
+.music-analytics-day-column{height:155px;width:100%;display:flex;align-items:end;justify-content:center}
+.music-analytics-day-column span{width:min(80%,42px);background:#8299e5;border-radius:5px 5px 0 0;min-height:2px}
+.music-analytics-day small{margin-top:8px}
+.music-analytics-empty{color:#66778e;line-height:1.6;font-size:13px}
+.music-analytics-notice{border:1px solid #c6d8fc;background:#eef4ff;border-radius:13px;padding:20px;margin:15px 0;color:#314e77;line-height:1.6}
+.music-analytics-notice.error{border-color:#f4c3c3;background:#fff4f4;color:#8b2525}
+.music-analytics-notice p{margin:6px 0}
+.music-analytics-footnote{font-size:12px;color:#67768e;line-height:1.7}
+.music-analytics-back{margin:20px 0}.music-analytics-back a{color:#3e5cc4}
+@media(max-width:800px){.music-analytics-columns{grid-template-columns:1fr}.music-analytics-page{padding:16px 10px 40px}.music-analytics-panel{padding:16px}}
