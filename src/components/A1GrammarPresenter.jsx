@@ -18,6 +18,7 @@ import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import PublishedSongLessonStage from "./PublishedSongLessonStage.jsx";
 import { getCuratedMusicByAssignment } from "../data/curatedLessonMusic.js";
 import { getA1PresenterMusicStage } from "../data/a1PresenterMusicStage.js";
+import { getA1Teil3ObjectCard } from "../data/a1Teil3ObjectCards.js";
 import {
   A1_ACTIVITY_TIMER_PRESETS,
   DEFAULT_A1_ACTIVITY_MINUTES,
@@ -117,6 +118,7 @@ function a1TeacherPurpose(stage = {}) {
 
 function stageList(slide, topicLabel) {
   const isSpeakingReadiness = String(slide?.assignmentId || "").trim().toUpperCase() === "A1-5.9";
+  const isDay15ObjectLesson = String(slide?.assignmentId || "").trim().toUpperCase() === "A1-4.7";
   const support = buildTeacherSlideSupport(slide);
   const grammarChecks = getA1GrammarChecks(slide.assignmentId, slide);
   const checks = getA1PresenterUnderstandingChecks(
@@ -235,13 +237,13 @@ function stageList(slide, topicLabel) {
       topic: topicLabel || slide.topic || "",
       objective: slide.objective || "",
       duration: slide.estimatedDuration || "",
-      grammarDiagnostic: true,
+      grammarDiagnostic: !isDay15ObjectLesson,
     },
     {
       id: "quick-check",
       type: "check",
-      kicker: "Quick check",
-      title: "Do you remember the grammar rule?",
+      kicker: isDay15ObjectLesson ? "Goethe A1 · Teil 3" : "Quick check",
+      title: isDay15ObjectLesson ? "Eine höfliche Bitte bilden" : "Do you remember the grammar rule?",
       items: quickChecks,
     },
     // Optional lesson-specific grammar slides (currently A1-7).
@@ -257,8 +259,9 @@ function stageList(slide, topicLabel) {
     {
       id: "grammar-check",
       type: "check",
-      kicker: "Verständnis prüfen",
-      title: "One understanding question per student",
+      kicker: isDay15ObjectLesson ? "Bildkarten · Sprechen Teil 3" : "Verständnis prüfen",
+      title: isDay15ObjectLesson ? "Eine Bildkarte pro Student · Bitte und Reaktion" : "One understanding question per student",
+      teil3ObjectCards: isDay15ObjectLesson,
       items: mainChecks,
     },
     {
@@ -299,8 +302,9 @@ function stageList(slide, topicLabel) {
     ...(!isA1HealthMusic ? [{
       id: "exit-check",
       type: "check",
-      kicker: "Exit check",
-      title: "One fresh grammar check · no help",
+      kicker: isDay15ObjectLesson ? "Teil 3 · Abschluss" : "Exit check",
+      title: isDay15ObjectLesson ? "Neue Bildkarte · ohne Hilfe" : "One fresh grammar check · no help",
+      teil3ObjectCards: isDay15ObjectLesson,
       items: exitChecks,
       exitCheck: true,
     }] : []),
@@ -376,6 +380,9 @@ export default function A1GrammarPresenter({
       ? stage.items[itemIndex]
       : null;
   const activeExamPerformance = Boolean(stage?.examReadiness && activeCheck?.responseMode === "performance");
+  const activeTeil3Card = stage?.teil3ObjectCards
+    ? getA1Teil3ObjectCard(activeCheck?.sourceQuestion || activeCheck?.questionDe)
+    : null;
   const activeCoaching = stage?.examReadiness ? null : buildA1CheckCoaching(activeCheck, slide);
   // Do not give hints during the scored one-question-per-student diagnostic
   // or the final unaided exit check. Teacher checks appear after reveal only.
@@ -717,7 +724,7 @@ export default function A1GrammarPresenter({
               {stage.objective ? <p className="presenter-objective">{stage.objective}</p> : null}
               {stage.duration ? <p className="presenter-duration">{stage.duration}</p> : null}
               <div className="presenter-model-support" style={{ marginTop: 24 }}>
-                <strong>{stage.examReadiness ? "A1 speaking readiness method" : "A1 grammar-check method"}</strong>
+                <strong>{stage.examReadiness ? "A1 speaking readiness method" : String(slide?.assignmentId || "").trim().toUpperCase() === "A1-4.7" ? "A1 Teil 3 · Bildkartenmethode" : "A1 grammar-check method"}</strong>
                 <p>{stage.examReadiness
                   ? "Warm-up diagnosis → exam map → Teil 1 → live performance/knowledge checks → mini mock exam → readiness decision → fresh exit check."
                   : (Array.isArray(slide.grammarTeachingSections)
@@ -725,7 +732,9 @@ export default function A1GrammarPresenter({
                     : "Grammar notes first → check understanding → correct the target rule → five-word Mini-Mission → listen and respond → unaided exit check.")}</p>
                 <small>{stage.examReadiness
                   ? "Use grammar only when it blocks the speaking task. During the mock exam, reduce teacher help and judge whether the student can perform independently."
-                  : "Use the grammar page to teach. Presenter should not reteach the lesson: it checks whether each learner can recognize, correct and apply the grammar. Record only Correct or Needs review."}</small>
+                  : (String(slide?.assignmentId || "").trim().toUpperCase() === "A1-4.7"
+                    ? "Show the object first; the student chooses a fitting verb and makes a polite request. Ask for a short reaction, then reveal the model. Mark the actual oral performance Correct or Needs review."
+                    : "Use the grammar page to teach. Presenter should not reteach the lesson: it checks whether each learner can recognize, correct and apply the grammar. Record only Correct or Needs review.")}</small>
               </div>
               {Array.isArray(slide.grammarTeachingSections) && slide.workbookConnection ? (
                 <div className="presenter-workbook-actions">
@@ -760,7 +769,15 @@ export default function A1GrammarPresenter({
                 </div>
               ) : (
                 <>
-                  <p className="presenter-question">{activeCheck?.questionDe}</p>
+                  {activeTeil3Card ? (
+                    <div className="presenter-a1-teil3-object-card" aria-label={`Bildkarte: ${activeTeil3Card.objectDe}`}>
+                      <span className="presenter-a1-teil3-object-symbol" role="img" aria-label={activeTeil3Card.objectEn}>{activeTeil3Card.symbol}</span>
+                      <strong>{activeTeil3Card.objectDe}</strong>
+                      <span className="presenter-a1-teil3-object-translation">{activeTeil3Card.objectEn}</span>
+                      <p>Welche höfliche Bitte passt zu diesem Gegenstand?</p>
+                      <small>1. Bilde eine Bitte. 2. Reagiere auf die Bitte deines Partners.</small>
+                    </div>
+                  ) : <p className="presenter-question">{activeCheck?.questionDe}</p>}
                   <div className="presenter-question-actions">
                     {canShowHint && !showAnswer ? (
                       <button type="button" aria-expanded={showHint} onClick={() => setShowHint((current) => !current)}>
@@ -785,6 +802,7 @@ export default function A1GrammarPresenter({
                     <div className="presenter-model-support">
                       <strong>{activeCoaching?.flexibleAnswer ? "Mögliche Antwort / teacher guide" : "Richtige Antwort / teacher guide"}</strong>
                       <p>{activeCheck?.answerDe}</p>
+                      {activeTeil3Card ? <small>Passendes Verb: {activeTeil3Card.verb}. Andere sinnvolle und höfliche A1-Bitten sowie kurze passende Reaktionen gelten ebenfalls.</small> : null}
                       {participationCheckMode ? (
                         <small>{stage.examReadiness
                           ? activeExamPerformance
