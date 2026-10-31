@@ -10,6 +10,7 @@ import { MUSIC_PRODUCTION_PROFILES, getMusicProductionProfile } from '../utils/m
 import { getReusableSongDraft, getReusableSongDrafts } from '../data/reusableMusicSongbook.js';
 function isSupersededMusicLyrics(key, text) {
   return (key === 'A2-4.10' && (text.includes('Wir besuchen heute eine neue Stadt.') || text.includes('Links ist ein Platz, rechts ein Café'))) ||
+    (key === 'A2-5.12' && text.includes('Heute interessiere ich mich für Medizin.') && text.includes('Dein Weg beginnt mit einem kleinen Schritt.')) ||
     (key === 'A2-3.8' && (text.includes('Im Restaurant ist heute viel los.') || text.includes('Wir haben einen Tisch am Fenster reserviert'))) ||
     (key === 'A1-0.2' && text.includes('Mein Name ist Lena, hallo!') && text.includes('Ich sage: L-E-N-A.')) ||
     (key === 'A1-1.1' && text.includes('Ich bin Ali, du bist Mia.') && text.includes('Ich lerne Deutsch am Morgen.')) ||
@@ -141,21 +142,23 @@ export default function MusicStudioPage() {
       if (!active) return;
       setSavedLyrics(previous => ({ ...previous, [assignmentKey]: data.found ? data.lyrics : '' }));
       const superseded = data.found && isSupersededMusicLyrics(assignmentKey, data.lyrics);
-      // The owner explicitly requested overwriting A2 Day 10 with the complete
-      // approved Traveller text. Only this key is migrated; all other keys
-      // continue to preserve custom cloud edits.
+      // The owner explicitly approved the final recorded A2 Day 10 and Day 12 lyrics.
+      // Keep the corresponding saved cloud draft in sync with the songbook;
+      // all other assignments continue to preserve custom cloud edits.
       const approvedDay10 = assignmentKey === 'A2-4.10' ? getReusableSongDraft(assignmentKey)?.lyrics : '';
-      if (approvedDay10 && data.lyrics !== approvedDay10) {
-        setLyricsOverrides(previous => ({ ...previous, [assignmentKey]: approvedDay10 }));
+      const approvedDay12 = assignmentKey === 'A2-5.12' ? getReusableSongDraft(assignmentKey)?.lyrics : '';
+      const approvedRecordingLyrics = approvedDay10 || approvedDay12;
+      if (approvedRecordingLyrics && data.lyrics !== approvedRecordingLyrics) {
+        setLyricsOverrides(previous => ({ ...previous, [assignmentKey]: approvedRecordingLyrics }));
         try {
-          const saved = await overwriteSavedMusicLyrics(assignmentKey, approvedDay10);
+          const saved = await overwriteSavedMusicLyrics(assignmentKey, approvedRecordingLyrics);
           if (!active) return;
           setSavedLyrics(previous => ({ ...previous, [assignmentKey]: saved.lyrics }));
-          setLyricsNotice('A2 Day 10 Traveller lyrics overwritten with the approved recording text and saved to the cloud.');
+          setLyricsNotice(approvedDay12 ? 'A2 Day 12 Träume ändern sich lyrics saved to the cloud.' : 'A2 Day 10 Traveller lyrics overwritten with the approved recording text and saved to the cloud.');
           return;
         } catch (error) {
           if (!active) return;
-          setLyricsNotice('Approved Traveller lyrics are loaded, but the cloud overwrite failed: ' + error.message + '. Click Overwrite Lyrics as the Music Studio owner to retry.');
+          setLyricsNotice('Approved recorded lyrics are loaded, but the cloud overwrite failed: ' + error.message + '. Click Overwrite Lyrics as the Music Studio owner to retry.');
           return;
         }
       }
