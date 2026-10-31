@@ -1,4 +1,5 @@
 import { A1_PUBLISHED_WORKBOOK_BY_ASSIGNMENT } from "./a1PublishedWorkbookRoutes.js";
+import { A1_TEIL3_OBJECT_CARDS } from "./a1Teil3ObjectCards.js";
 
 // Five authoritative A1 class days already mapped in courseSessionGroups.
 // Never invent workbook sections or call a page tutor-marked without a known
@@ -224,13 +225,7 @@ const CONTENT = Object.freeze({
       "Accept different suitable short polite requests, not only the model. Mark Correct only after hearing a complete request and an appropriate reaction.",
       "Keep the existing published music activity. The later A1-5.9 lesson remains the full speaking-readiness mock, and this introduction does not create new graded submissions.",
     ],
-    studentQuestionsDe: [
-      "Bildkarte: die Flasche. Formuliere eine höfliche Bitte.",
-      "Bildkarte: der Bleistift. Formuliere eine höfliche Bitte.",
-      "Bildkarte: das Glas Wasser. Formuliere eine höfliche Bitte.",
-      "Bildkarte: das Radio. Formuliere eine höfliche Bitte.",
-      "Bildkarte: die Tür. Formuliere eine höfliche Bitte.",
-    ],
+    studentQuestionsDe: A1_TEIL3_OBJECT_CARDS.slice(0, 10).map((card) => `Bildkarte: ${card.objectDe}. Formuliere eine höfliche Bitte und reagiere passend.`),
     flow: [
       { phase: "Prüfungsteile erkennen", detailEn: "6 min: briefly distinguish Teil 1, Teil 2 and Teil 3. Do not make this a memorisation quiz." },
       { phase: "Bitte bauen", detailEn: "6 min: demonstrate Können Sie (mir) bitte + object + infinitive and one formal Sie imperative. Choose verbs that match real object cards." },
