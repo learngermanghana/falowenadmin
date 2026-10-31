@@ -14,9 +14,9 @@ const trackId = 'r2-a2-day-12-b64_' + Buffer.from(filename, 'utf8').toString('ba
 test('A2 Day 12 songbook matches the teacher-recorded 8/4/8/4/outro layout', () => {
   const song = getReusableSongDraft(assignmentKey);
   assert.equal(song.title, 'Träume ändern sich');
-  const sections = [...song.lyrics.matchAll(/\\[(Verse 1|Verse 2|Chorus|Outro)\\]([\\s\\S]*?)(?=\\[(?:Verse 1|Verse 2|Chorus|Outro)\\]|$)/g)];
+  const sections = [...song.lyrics.matchAll(/\[(Verse 1|Verse 2|Chorus|Outro)\]([\s\S]*?)(?=\[(?:Verse 1|Verse 2|Chorus|Outro)\]|$)/g)];
   assert.deepEqual(sections.map(m => m[1]), ['Verse 1','Chorus','Verse 2','Chorus','Outro']);
-  assert.deepEqual(sections.map(m => m[2].split(/\\r?\\n/).map(x=>x.trim()).filter(Boolean).length),[8,4,8,4,4]);
+  assert.deepEqual(sections.map(m => m[2].split(/\r?\n/).map(x=>x.trim()).filter(Boolean).length),[8,4,8,4,4]);
   assert.match(song.lyrics, /Jetzt interessiert mich die Medizin,/);
   assert.match(song.lyrics, /Wir dürfen neue Wege finden,/);
   assert.match(song.lyrics, /Bei Falowen sprechen wir von Träumen,/);
