@@ -30,7 +30,7 @@ export function a1Teil3ObjectCheck(card, { exit = false } = {}) {
   return {
     questionDe: a1Teil3ObjectPrompt(card, { exit }),
     answerDe: `${card.requestDe} – ${card.reactionDe}`,
-    noteEn: `Show ${card.objectDe} first, let the learner choose a sensible action verb and speak independently. Accept other polite requests that fit the object, plus an appropriate short reaction. Do not show the model before the answer.`,
+    noteEn: `Goethe A1 Sprechen Teil 3: Show ${card.objectDe} first, let the learner choose a sensible action verb and speak independently. Accept other polite requests that fit the object, plus an appropriate short reaction. Do not show the model before the answer.`,
     responseMode: "performance",
     conceptLabel: "Teil 3 · Bildkarte",
   };
