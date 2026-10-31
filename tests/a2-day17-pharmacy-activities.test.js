@@ -138,8 +138,8 @@ test("B1 Day 25 classroom Hören uses the current five Richtig/Falsch answers an
   assert.equal(B1_DAY25_AUDIO_KEY, lesson.listening.audioKey);
   assert.equal(lesson.listening.questions.length, 5);
   assert.equal(B1_DAY25_LISTENING_QUESTIONS.length, 5);
-  assert.deepEqual(lesson.listening.questions.map(q=>q.answer[0]), ["A","B","A","B","A"]);
-  assert.equal(B1_DAY25_TRANSCRIPT.length, 0);
+  assert.deepEqual(lesson.listening.questions.map(q=>q.answer[0]), ["A","B","B","A","A"]);
+  assert.ok(B1_DAY25_TRANSCRIPT.length > 10);
   for (const q of lesson.listening.questions) {
     assert.equal(q.options.length, 2);
     assert.deepEqual(q.options.map(x => x[0]), ["A", "B"]);
