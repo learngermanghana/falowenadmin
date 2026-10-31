@@ -388,7 +388,7 @@ export default function A1GrammarPresenter({
   const activeTeil3Card = stage?.teil3ObjectCards
     ? getA1Teil3ObjectCard(activeCheck?.sourceQuestion || activeCheck?.questionDe)
     : null;
-  const activeCoaching = stage?.examReadiness ? null : buildA1CheckCoaching(activeCheck, slide);
+  const activeCoaching = stage?.examReadiness || stage?.teil3ObjectCards ? null : buildA1CheckCoaching(activeCheck, slide);
   // Do not give hints during the scored one-question-per-student diagnostic
   // or the final unaided exit check. Teacher checks appear after reveal only.
   const canShowHint = Boolean(activeCoaching && !participationCheckMode && !stage?.exitCheck);
@@ -650,7 +650,7 @@ export default function A1GrammarPresenter({
           <div>
             <span className="presenter-kicker">{stage.kicker}</span>
             <span className="presenter-lesson-label">
-              {isMusicStage ? "A1 · Falowen Music" : (stage.examReadiness ? "A1 · Exam-readiness" : "A1 · Grammar check")}
+              {isMusicStage ? "A1 · Falowen Music" : (stage.examReadiness ? "A1 · Exam-readiness" : String(slide?.assignmentId || "").trim().toUpperCase() === "A1-4.7" ? "A1 · Sprechen Teil 3" : "A1 · Grammar check")}
               {lessonBlockTotal > 1 ? ` · Day ${slide.dayNumber} · Block ${lessonBlockPosition}/${lessonBlockTotal}` : ""}
             </span>
           </div>
@@ -809,7 +809,7 @@ export default function A1GrammarPresenter({
                   ) : null}
                   {showAnswer ? (
                     <div className="presenter-model-support">
-                      <strong>{activeCoaching?.flexibleAnswer ? "Mögliche Antwort / teacher guide" : "Richtige Antwort / teacher guide"}</strong>
+                      <strong>{stage.teil3ObjectCards ? "Mögliche Antwort · Teil 3" : activeCoaching?.flexibleAnswer ? "Mögliche Antwort / teacher guide" : "Richtige Antwort / teacher guide"}</strong>
                       <p>{activeCheck?.answerDe}</p>
                       {activeTeil3Card ? <small>Passendes Verb: {activeTeil3Card.verb}. Andere sinnvolle und höfliche A1-Bitten sowie kurze passende Reaktionen gelten ebenfalls.</small> : null}
                       {participationCheckMode ? (
