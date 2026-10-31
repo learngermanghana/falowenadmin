@@ -79,10 +79,10 @@ export const MUSIC_SONG_DRAFTS_A2_PART1 = Object.freeze([
   },
   {
     "assignmentKey": "A2-5.12",
-    "title": "Mein Beruf, mein Traum",
-    "musicStyle": "Neo-Soul, 88 BPM: relaxed neo-soul with warm melodic electric piano, restrained pocket bass and finger snaps, leaving space after each phrase. One lead singer, clear German phrases, quiet instrumental mix.",
-    "lyrics": "[Verse 1]\nAls Kind wollte ich Pilot werden.\nHeute interessiere ich mich für Medizin.\nIch möchte Menschen helfen können.\nDeshalb lese ich oft über diesen Beruf.\n\n[Chorus]\nWas willst du später machen?\nWas macht dir wirklich Freude?\nDein Weg beginnt mit einem kleinen Schritt.\n\n[Verse 2]\nMeine Freundin will Lehrerin werden.\nSie hat schon ein Praktikum gemacht.\nWir sprechen über unsere Pläne.\nDann suchen wir nach guten Kursen.\n\n[Chorus]\nWas willst du später machen?\nWas macht dir wirklich Freude?\nDein Weg beginnt mit einem kleinen Schritt.\n\n[Outro]\nNoch wissen wir nicht alles.\nAber wir gehen unseren Weg weiter.\nBei Falowen spreche ich über meine Träume.",
-    "genre": "Neo-Soul"
+    "title": "Träume ändern sich",
+    "musicStyle": "German acoustic pop / gentle Afro-soul, warm intimate vocals with natural A2 German pronunciation, mellow clean guitar, soft piano chords, round bass, subtle hand percussion and a restrained rhythmic pulse. Two narrative verses, a memorable four-line chorus repeated twice, and a quiet four-line outro. Keep vocals clear and relaxed.",
+    "lyrics": "[Verse 1]\nAls Kind wollte ich Pilot werden,\nden Himmel sehen, frei und weit.\nJetzt interessiert mich die Medizin,\nich nehme mir zum Lernen Zeit.\nIch möchte Menschen Hoffnung geben,\nund jeden Tag etwas Neues sehen.\nVielleicht verändert sich mein Leben,\ndoch ich will meinen Weg weitergehen.\n\n[Chorus]\nWas willst du später machen?\nWas fühlt sich richtig an?\nWir dürfen neue Wege finden,\nweil jeder Traum sich ändern kann.\n\n[Verse 2]\nMeine Freundin will Lehrerin werden,\nein Praktikum hat sie gemacht.\nSie hat den Kindern vorgelesen,\nmit ihnen gelernt und viel gelacht.\nWir reden oft von unseren Plänen,\nund suchen Kurse, die uns passen.\nWir wissen noch nicht, was mal kommt,\ndoch wollen wir uns Zeit dafür lassen.\n\n[Chorus]\nWas willst du später machen?\nWas fühlt sich richtig an?\nWir dürfen neue Wege finden,\nweil jeder Traum sich ändern kann.\n\n[Outro]\nWir wissen noch nicht alles,\ndoch wir lernen jeden Tag.\nBei Falowen sprechen wir von Träumen,\nund davon, was die Zukunft bringen mag.",
+    "genre": "Acoustic Pop / Afro-Soul"
   },
   {
     "assignmentKey": "A2-5.13",
