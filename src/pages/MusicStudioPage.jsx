@@ -136,10 +136,30 @@ export default function MusicStudioPage() {
     let active = true;
     setLoadingLyrics(true);
     setLyricsNotice('');
-    loadSavedMusicLyrics(assignmentKey).then(data => {
+    loadSavedMusicLyrics(assignmentKey).then(async data => {
       if (!active) return;
       setSavedLyrics(previous => ({ ...previous, [assignmentKey]: data.found ? data.lyrics : '' }));
-      if (data.found && isSupersededMusicLyrics(assignmentKey, data.lyrics)) {
+      const superseded = data.found && isSupersededMusicLyrics(assignmentKey, data.lyrics);
+      // The owner requested one explicit migration of the A2 Day 10 Traveller song.
+      // Preserve any other custom saved lyrics and do not alter other lessons.
+      if (assignmentKey === 'A2-4.10' && (!data.found || superseded)) {
+        const approved = getReusableSongDraft(assignmentKey)?.lyrics;
+        if (approved) {
+          setLyricsOverrides(previous => ({ ...previous, [assignmentKey]: approved }));
+          try {
+            const saved = await overwriteSavedMusicLyrics(assignmentKey, approved);
+            if (!active) return;
+            setSavedLyrics(previous => ({ ...previous, [assignmentKey]: saved.lyrics }));
+            setLyricsNotice('A2 Day 10 Traveller lyrics overwritten with the approved recording text and saved to the cloud.');
+            return;
+          } catch (error) {
+            if (!active) return;
+            setLyricsNotice('Approved Traveller lyrics are loaded, but the cloud overwrite failed: ' + error.message + '. Click Overwrite Lyrics as the Music Studio owner to retry.');
+            return;
+          }
+        }
+      }
+      if (superseded) {
         const updated = getReusableSongDraft(assignmentKey)?.lyrics;
         if (updated) {
           setLyricsOverrides(previous => Object.prototype.hasOwnProperty.call(previous, assignmentKey)
