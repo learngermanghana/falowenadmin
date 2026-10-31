@@ -300,6 +300,17 @@ export default function MusicStudioPage() {
       <h1>Create music</h1>
       <p>Write a prompt or choose saved lesson lyrics. Generate a complete song without a complicated setup.</p>
     </header>
+    <div className="music-studio-tabs" role="tablist" aria-label="Falowen Music workspaces">
+      <button id="music-generator-tab" type="button" role="tab" aria-controls="music-generator-panel"
+        aria-selected={studioTab === 'generator'} className={studioTab === 'generator' ? 'is-active' : ''}
+        onClick={() => setStudioTab('generator')}>Music Generator</button>
+      <button id="music-video-tab" type="button" role="tab" aria-controls="music-video-panel"
+        aria-selected={studioTab === 'video'} className={studioTab === 'video' ? 'is-active' : ''}
+        onClick={() => setStudioTab('video')}>Lyrics Video Studio</button>
+    </div>
+    {/* Keep both workspaces mounted so drafts and generated audio survive tab changes. */}
+    <div id="music-generator-panel" role="tabpanel" aria-labelledby="music-generator-tab"
+      style={{ display: studioTab === 'generator' ? undefined : 'none' }}>
     <section className="music-simple-shell" aria-label="Create your song">
       <form onSubmit={event => generate(event, 'simple')} className="music-simple-form">
         <div className="music-create-tabs" role="tablist" aria-label="Music creation modes">
@@ -503,9 +514,11 @@ export default function MusicStudioPage() {
     {courseMode === 'course' && draft && <ReusableMusicQuestions assignmentKey={assignmentKey} lyricsChanged={lyrics !== draft.lyrics} />}
 
       </details>
-      <details className="music-simple-extra" onToggle={event => setStudioTab(event.currentTarget.open ? 'video' : 'generator')}>
-        <summary>Lyrics Video Studio</summary>
-        <section id="music-video-panel">
+    </div>
+    </div>
+    <section id="music-video-panel" role="tabpanel" aria-labelledby="music-video-tab"
+      style={{ display: studioTab === 'video' ? undefined : 'none' }}>
+      <div className="music-video-main">
     <MusicLyricsVideoStudio active={studioTab === 'video'} assignmentKey={result?.isFreeform ? '' : assignmentKey}
       generated={result?.isFreeform ? result : result && result.title === trackTitle && (courseMode === 'custom' || (result.level === level && result.day === lesson?.day)) ? result : null}
       title={result?.isFreeform ? result.title : trackTitle}
@@ -515,9 +528,7 @@ export default function MusicStudioPage() {
       onOverwriteLyrics={!result?.isFreeform && courseMode === 'course' && assignmentKey ? overwriteLyrics : null}
       savingLyrics={savingLyrics} loadingLyrics={loadingLyrics}
       lyricsSaveNotice={lyricsNotice} />
-
-        </section>
-      </details>
-    </div>
+      </div>
+    </section>
   </main>;
 }
