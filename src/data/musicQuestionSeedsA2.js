@@ -90,8 +90,8 @@ export const MUSIC_QUESTION_SEEDS_A2 = Object.freeze([
   ],
   [
     "A2-5.12",
-    "Welchen Beruf möchte die erzählende Person später ausüben?",
-    "Sie interessiert sich für Medizin und möchte Menschen helfen.",
+    "Wofür interessiert sich die Person heute, und warum?",
+    "Für Medizin, weil sie Menschen helfen möchte.",
     "Was hat die Freundin schon gemacht?",
     "Ein Praktikum.",
     "Welchen Beruf würdest du gern ausprobieren?"
