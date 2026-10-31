@@ -74,11 +74,11 @@ export const MUSIC_QUESTION_SEEDS_A2 = Object.freeze([
   ],
   [
     "A2-4.10",
-    "Was möchten die Freunde zuerst in der Stadt sehen?",
-    "Den Dom.",
-    "Wie finden sie nach dem Verlaufen wieder den Weg?",
-    "Eine Frau erklärt ihnen den Weg.",
-    "Welche Sehenswürdigkeiten würdest du Besuchern zeigen?"
+    "In welches afrikanische Land fliegt die Person morgen?",
+    "Nach Nigeria.",
+    "Welches Land bleibt der Person immer nah?",
+    "Ghana.",
+    "Welche Länder möchtest du selbst besuchen, und warum?"
   ],
   [
     "A2-4.11",
