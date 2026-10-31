@@ -158,7 +158,7 @@ export default function MusicStudioPage() {
           return;
         } catch (error) {
           if (!active) return;
-          setLyricsNotice('Approved Traveller lyrics are loaded, but the cloud overwrite failed: ' + error.message + '. Click Overwrite Lyrics as the Music Studio owner to retry.');
+          setLyricsNotice('Approved recorded lyrics are loaded, but the cloud overwrite failed: ' + error.message + '. Click Overwrite Lyrics as the Music Studio owner to retry.');
           return;
         }
       }
