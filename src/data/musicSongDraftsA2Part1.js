@@ -72,10 +72,10 @@ export const MUSIC_SONG_DRAFTS_A2_PART1 = Object.freeze([
   },
   {
     "assignmentKey": "A2-4.11",
-    "title": "Mit Bus oder Fahrrad?",
-    "musicStyle": "Soft Funk, 94 BPM: light, friendly funk-pop with muted electric guitar, soft clavinet riffs, bouncy bass and very restrained drums. One lead singer, clear German phrases, quiet instrumental mix.",
-    "lyrics": "[Verse 1]\nBen fährt jeden Morgen zur Arbeit.\nSein Bus kommt heute wieder zu spät.\nEr denkt über ein Fahrrad nach.\nDer Weg ist nur vier Kilometer lang.\n\n[Chorus]\nWas ist schneller, was ist besser?\nDer Bus ist bequem, das Rad ist frei.\nWir wählen, was zum Alltag passt.\n\n[Verse 2]\nAm Montag probiert er das Fahrrad.\nEr kommt pünktlich und gut gelaunt an.\nBei Regen nimmt er lieber den Bus.\nSo kann er beide Wege nutzen.\n\n[Chorus]\nWas ist schneller, was ist besser?\nDer Bus ist bequem, das Rad ist frei.\nWir wählen, was zum Alltag passt.\n\n[Outro]\nJetzt ist Ben viel entspannter.\nDer Morgen beginnt ohne Stress.\nMit Falowen vergleiche ich Wege und Zeiten.",
-    "genre": "Soft Funk"
+    "title": "Mit dem Rad, mit dem Zug",
+    "musicStyle": "German acoustic Afro-soul with melodic guitar, soft piano, warm bass, gentle Afrobeat percussion and smooth solo vocals with clear pronunciation.",
+    "lyrics": "[Intro]\nMit dem Rad, mit dem Zug.\n\n[Verse 1]\nAm Morgen fahre ich mit dem Rad,\ndie Sonne scheint auf meine Stadt.\nDer Wind ist frisch, die Luft ist klar,\nich fahre los, wie wunderbar.\n\n[Chorus]\nMit dem Rad, mit dem Zug, ich bin unterwegs,\ndurch die Stadt, durch das Land, ich finde meinen Weg.\nMal schnell, mal langsam, ich komme gut an.\n\n[Verse 2]\nAm Nachmittag nehme ich den Zug,\nich habe heute noch nicht genug.\nIch kaufe mir eine Fahrkarte\nund steige ein, bevor ich starte.\nDie Häuser ziehen schnell vorbei,\nich schaue raus und fühle mich frei.\nAm Bahnhof wartest du auf mich,\nich steige aus und freue mich.\n\n[Chorus]\nMit dem Rad, mit dem Zug, ich bin unterwegs,\ndurch die Stadt, durch das Land, ich finde meinen Weg.\nMal schnell, mal langsam, ich komme gut an,\nweil ich mit dir die Welt entdecken kann.\n\n[Outro]\nMal fahre ich Rad, mal nehme ich den Zug,\nich bin unterwegs, das gefällt mir gut.\nOb nah, ob fern, ich komme an,\nweil jeder Weg uns verbinden kann.",
+    "genre": "Acoustic Afro-Soul"
   },
   {
     "assignmentKey": "A2-5.12",
