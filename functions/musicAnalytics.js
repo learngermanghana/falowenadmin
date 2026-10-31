@@ -132,7 +132,7 @@ function normalizeResponse({ days, summary, events, songs, countries, daily, cat
       day: known?.day || null,
       plays,
     };
-  }).sort((a, b) => b.plays - a.plays).slice(0, 30);
+  }).sort((a, b) => b.plays - a.plays);
 
   const levelMap = new Map();
   for (const track of topTracks) levelMap.set(track.level, (levelMap.get(track.level) || 0) + track.plays);
@@ -156,7 +156,7 @@ function normalizeResponse({ days, summary, events, songs, countries, daily, cat
     completions: eventTotals.music_complete || 0,
     shares: eventTotals.music_share || 0,
     classClicks: eventTotals.music_signup_click || 0,
-    topTracks,
+    topTracks: topTracks.slice(0, 30),
     levels: Array.from(levelMap.entries()).map(([level, plays]) => ({ level, plays })).sort((a, b) => b.plays - a.plays),
     countries: reportRows(countries).map(row => ({ country: value(row) || 'Unknown', visitors: metric(row) })).sort((a, b) => b.visitors - a.visitors).slice(0, 12),
     daily: dateRows,
