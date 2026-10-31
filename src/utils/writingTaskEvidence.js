@@ -298,19 +298,19 @@ function ruleForPoint(label = "", assignmentKey = "") {
   if (/dosage or side effects/.test(value)) return /\b(?:dosierung|wie\s+oft|wie\s+viele|einnehmen|nebenwirkung|nebenwirkungen)\b/i;
   if (/blocked card can be unblocked/.test(value)) {
     // A2 Day 18: a bank-card enquiry must request unblocking, not merely
-    // describe a blocked card. "Bankkarte" is a compound, so /\\bkarte\\b/
+    // describe a blocked card. "Bankkarte" is a compound, so /\bkarte\b/
     // misses the normal student phrasing. Accept a polite statement of intent
     // ("ich möchte meine Bankkarte entsperren") as well as direct questions.
     return (source) => {
       const lines = sentences(source);
-      const cardPattern = /\\b(?:bankkarte|karte|ec-?karte|girokarte|kreditkarte)\\b/i;
-      const unblockPattern = /\\b(?:entsperren|freischalten|entsperrt\\s+(?:werden|wird)|freigeschaltet\\s+(?:werden|wird))\\b/i;
+      const cardPattern = /\b(?:bankkarte|karte|ec-?karte|girokarte|kreditkarte)\b/i;
+      const unblockPattern = /\b(?:entsperren|freischalten|entsperrt\s+(?:werden|wird)|freigeschaltet\s+(?:werden|wird))\b/i;
       return lines.some((sentence, index) => {
         const hasCard = cardPattern.test(sentence)
-          || (index > 0 && /\\b(?:sie|diese)\\b/i.test(sentence) && cardPattern.test(lines[index - 1]));
-        const requestsAction = /\\?/.test(sentence)
-          || /\\b(?:ich|wir)\\b[^.!?]{0,125}\\b(?:m[oö]chte|m[oö]chten|will|wollen|w[uü]rde(?:n)?(?:\\s+gern)?)\\b/i.test(sentence)
-          || /\\b(?:ich|wir)\\s+bitte(?:n)?\\s+sie\\b/i.test(sentence);
+          || (index > 0 && /\b(?:sie|diese)\b/i.test(sentence) && cardPattern.test(lines[index - 1]));
+        const requestsAction = /\?/.test(sentence)
+          || /\b(?:ich|wir)\b[^.!?]{0,125}\b(?:m[oö]chte|m[oö]chten|will|wollen|w[uü]rde(?:n)?(?:\s+gern)?)\b/i.test(sentence)
+          || /\b(?:ich|wir)\s+bitte(?:n)?\s+sie\b/i.test(sentence);
         return hasCard && unblockPattern.test(sentence) && requestsAction;
       });
     };
