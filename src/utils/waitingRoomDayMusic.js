@@ -69,6 +69,7 @@ export function waitingRoomPublishedCatalogTrack(catalog, { level, day } = {}) {
 const EXPECTED_ATTENDANCE_TITLES = Object.freeze({
   'A1-3.5': 'zwei tees vier euro',
   'A1-4.7': 'ich bin bereit zu sprechen',
+  'A2-5.12': 'traume andern sich',
   'A2-7.19': 'lieber online oder im laden',
   'A2-7.20': 'die jacke ist zu klein',
 });
@@ -102,7 +103,7 @@ export function waitingRoomDiscoveredMusicTrack(feed, { level, day, assignmentKe
     if (preferredMatches.length === 1) matches = preferredMatches;
     // Day13's pinned song was previously invented: never fall back to
     // a different single MP3 in that folder just because it happens to exist.
-    else if (preferredMatches.length > 1 || String(assignmentKey || '').trim().toUpperCase() === 'A1-3.5') return null;
+    else if (preferredMatches.length > 1 || ['A1-3.5', 'A2-5.12'].includes(String(assignmentKey || '').trim().toUpperCase())) return null;
   }
   // More than one same-day recording with no unique known match is ambiguous.
   if (matches.length !== 1) return null;
