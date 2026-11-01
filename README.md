@@ -1,8 +1,18 @@
-# Falowen Dashboard (Firebase + React)
+# Falowen Admin — Teacher and Operations Platform
 
-Attendance management app for teachers with two capture modes:
-- Manual attendance marking in the dashboard.
-- Student self check-in via QR with email + phone validation through Firebase Cloud Functions..
+Falowen Admin is the teacher, staff and operations workspace for the Falowen German-learning platform. It supports live classes and attendance, learner administration, communication, Music Studio, consent-aware music analytics, examination content and automatic/tutor-reviewed marking. The student Campus, public music site, and read-only ChatGPT Learning Companion belong to the separate [learner repository](https://github.com/learngermanghana/falowenexamtrainer).
+
+**For AI coding agents:** read [AGENTS.md](AGENTS.md), [Admin AI docs](docs/ai/README.md), the [architecture](docs/ai/architecture.md) and [source-of-truth matrix](docs/ai/content-source-of-truth.md) before changing code.
+
+## AI documentation and safety
+
+- [Automatic course marking](docs/automatic-course-marking.md) and [structured submission contract](docs/structured-submission-contract.md) define official scoring boundaries.
+- [Music Studio](docs/music-studio.md) and [opt-in Music Analytics](docs/music-analytics.md) document owner permissions and privacy.
+- [Integration Event Hub](docs/integration-event-hub.md) and [live-class curriculum](docs/live-class-curriculum-contract.md) document cross-service behavior.
+- Run `node scripts/checkAiDocumentation.mjs` when AI instructions or documentation change.
+- Use [`.env.example`](.env.example) for local setup. The existing tracked `.env` contains browser-side Vite config and is retained pending a verified environment migration; it must **not** be used for server secrets.
+
+Attendance still supports manual teacher marking and student QR self check-in, with server-side Firebase validation.
 
 ## Architecture
 
