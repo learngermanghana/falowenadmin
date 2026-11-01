@@ -43,3 +43,11 @@
 .music-analytics-footnote{font-size:12px;color:#67768e;line-height:1.7}
 .music-analytics-back{margin:20px 0}.music-analytics-back a{color:#3e5cc4}
 @media(max-width:800px){.music-analytics-columns{grid-template-columns:1fr}.music-analytics-page{padding:16px 10px 40px}.music-analytics-panel{padding:16px}}
+
+.music-analytics-student-heading{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:16px}
+.music-analytics-student-heading h2{margin:0 0 6px}
+.music-analytics-student-heading p{margin:0;color:#60728e;font-size:13px;line-height:1.5}
+.music-analytics-student-heading>strong{font-size:13px;color:#185741;background:#ebf7ef;border:1px solid #cfebd9;border-radius:999px;padding:8px 12px}
+.music-analytics-public-title{font-size:17px;color:#1b304d;margin:22px 0 16px}
+.music-analytics-table-wrap th,.music-analytics-table-wrap td{white-space:normal}
+.music-analytics-table-wrap td:first-child{min-width:170px}
