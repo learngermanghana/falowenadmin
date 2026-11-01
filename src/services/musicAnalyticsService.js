@@ -17,3 +17,22 @@ export async function loadMusicAnalytics(days = 7, { signal } = {}) {
   if (!response.ok || !body.ok) throw new Error(body.error || 'Unable to load music analytics.');
   return body;
 }
+
+
+// Separate from anonymous GA4 reporting: this reads authenticated Campus practice.
+export async function loadStudentMusicPractice(days = 7, { signal } = {}) {
+  const current = auth.currentUser;
+  if (!current) throw new Error('Sign in to Falowen Admin first.');
+  const token = await current.getIdToken();
+  const endpoint = String(import.meta.env.VITE_MUSIC_PRACTICE_API_URL || API.replace(/\/summary$/, '/students'));
+  const url = new URL(endpoint);
+  url.searchParams.set('days', String([1, 7, 30].includes(Number(days)) ? days : 7));
+  const response = await fetch(url, {
+    headers: { Authorization: 'Bearer ' + token, Accept: 'application/json' },
+    cache: 'no-store',
+    signal,
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok || !body.ok) throw new Error(body.error || 'Unable to load student practice.');
+  return body;
+}

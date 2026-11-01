@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { loadMusicAnalytics } from '../services/musicAnalyticsService.js';
+import { loadMusicAnalytics, loadStudentMusicPractice } from '../services/musicAnalyticsService.js';
 import './MusicAnalyticsPage.css';
 
 const RANGES = [
@@ -46,6 +46,7 @@ export default function MusicAnalyticsPage() {
   const [days, setDays] = useState(7);
   const [refresh, setRefresh] = useState(0);
   const [status, setStatus] = useState({ loading: true, report: null, error: '' });
+  const [studentStatus, setStudentStatus] = useState({ loading: true, report: null, error: '' });
 
   useEffect(() => {
     const controller = new AbortController();
@@ -57,6 +58,15 @@ export default function MusicAnalyticsPage() {
       .catch(error => {
         if (!controller.signal.aborted) setStatus({ loading: false, report: null, error: error.message || 'Unable to load analytics.' });
       });
+    return () => controller.abort();
+  }, [days, refresh]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setStudentStatus(previous => ({ ...previous, loading: true, error: '' }));
+    loadStudentMusicPractice(days, { signal: controller.signal })
+      .then(report => { if (!controller.signal.aborted) setStudentStatus({ loading: false, report, error: '' }); })
+      .catch(error => { if (!controller.signal.aborted) setStudentStatus({ loading: false, report: null, error: error.message || 'Unable to load student practice.' }); });
     return () => controller.abort();
   }, [days, refresh]);
 
@@ -72,7 +82,7 @@ export default function MusicAnalyticsPage() {
         <div>
           <p className="music-analytics-eyebrow">FALOWEN ADMIN · MUSIC PERFORMANCE</p>
           <h1>Music Analytics</h1>
-          <p>See how listeners discover your published German songs. This dashboard uses opt-in GA4 aggregates—not student accounts or Firebase listening logs.</p>
+          <p>Track signed-in students practising inside Falowen Campus, alongside anonymous listening statistics from the public Music website.</p>
         </div>
         <div className="music-analytics-actions">
           <a href="https://music.falowen.app/" target="_blank" rel="noreferrer">Open Music site</a>
@@ -87,7 +97,49 @@ export default function MusicAnalyticsPage() {
         ))}
       </div>
 
-      {status.loading ? <p className="music-analytics-notice" role="status">Loading music reports…</p> : null}
+      <section className="music-analytics-panel" aria-label="Signed-in student music practice">
+        <div className="music-analytics-student-heading">
+          <div>
+            <h2>Student Practice · Campus</h2>
+            <p>Loaded only when you open this page, change dates or choose Refresh. No automatic polling. Public Music visitors remain anonymous.</p>
+          </div>
+          {studentStatus.report ? <strong>{formatNumber(studentStatus.report.count)} active students</strong> : null}
+        </div>
+        {studentStatus.loading ? <p role="status" className="music-analytics-empty">Loading signed-in practice…</p> : null}
+        {studentStatus.error ? <p role="alert" className="music-analytics-notice error">Student practice unavailable: {studentStatus.error}</p> : null}
+        {!studentStatus.loading && studentStatus.report?.students?.length ? (
+          <div className="music-analytics-table-wrap">
+            <table>
+              <thead><tr><th>Student account</th><th>Last song</th><th>Plays</th><th>Full listens</th><th>Quizzes checked</th><th>Last activity</th></tr></thead>
+              <tbody>
+                {studentStatus.report.students.map(student => (
+                  <tr key={student.uid}>
+                    <td><strong>{student.name || student.email || 'Student'}</strong>
+                      {student.name && student.email ? <small>{student.email}</small> : null}
+                    </td>
+                    <td>{student.lastTrack?.title || student.lastTrack?.id || '—'}
+                      <small>{[student.lastTrack?.level, student.lastTrack?.day ? 'Day ' + student.lastTrack.day : ''].filter(Boolean).join(' · ')}</small>
+                    </td>
+                    <td>{formatNumber(student.plays)}</td>
+                    <td>{formatNumber(student.completions)}</td>
+                    <td>{formatNumber(student.quizzes)}</td>
+                    <td>{student.lastAt ? new Date(student.lastAt).toLocaleString('en-GH') : '—'}
+                      <small>{student.lastEvent === 'quiz' ? 'Questions checked' : student.lastEvent === 'complete' ? 'Song finished' : 'Song started'}</small>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+        {!studentStatus.loading && studentStatus.report && !studentStatus.report.students.length ? (
+          <p className="music-analytics-empty">No signed-in Campus music practice recorded for this period yet. Activity is shown only after the updated Campus and Admin API are deployed; older anonymous listens cannot be attributed to accounts.</p>
+        ) : null}
+        {studentStatus.report?.capped ? <p className="music-analytics-empty">Showing the most recent 500 student accounts.</p> : null}
+        <p className="music-analytics-footnote">Plays count a song starting, full listens count a song finishing, and quizzes count completed listening-question checks. These are engagement indicators, not assignment grades. Practice is saved in small batches, so very recent actions can take a few minutes to appear. Daily activity is reported for the selected period; older daily counts are pruned when a student next practises.</p>
+      </section>
+
+      {status.loading ? <p className="music-analytics-notice" role="status">Loading public music reports…</p> : null}
       {status.error ? <section className="music-analytics-notice error" role="alert">
         <strong>Could not load music reports</strong><p>{status.error}</p>
       </section> : null}
@@ -103,6 +155,7 @@ export default function MusicAnalyticsPage() {
 
       {report?.configured ? (
         <>
+          <h2 className="music-analytics-public-title">Public Music website · Anonymous visitors</h2>
           <section className="music-analytics-metrics" aria-label="Key music performance numbers">
             <Metric label="Active visitors" value={report.visitors} note="Consenting website visitors" />
             <Metric label="Page views" value={report.pageViews} note="Music website views" />
