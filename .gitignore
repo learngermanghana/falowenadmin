@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Future local settings: never commit a new environment file.
+.env
+.env.*
+!.env.example
