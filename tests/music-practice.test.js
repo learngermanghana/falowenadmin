@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const { normalizePractice, applyPracticeEvent, practiceRows, registerMusicPracticeRoutes } = require('../functions/musicPractice.js');
+const { normalizePractice, normalizePracticeBatch, applyPracticeEvent, applyPracticeBatch, practiceRows, registerMusicPracticeRoutes } = require('../functions/musicPractice.js');
 
 const at = new Date('2026-11-01T10:00:00.000Z');
 const activity = { event: 'play', trackId: 'r2-a1-day-02', title: 'Hallo', level: 'A1', day: 2 };
@@ -18,6 +18,10 @@ test('only accepted song IDs and activity types are stored', () => {
   assert.equal(normalizePractice({ ...activity, trackId: '../private' }), null);
   assert.equal(normalizePractice({ ...activity, event: 'speech' }), null);
   assert.equal(normalizePractice({ ...activity, event: 'quiz', title: '<b>test</b>' }).title, '<b>test</b>');
+  assert.equal(normalizePracticeBatch({ batchId: 'longbatch1', events: [activity] }).events.length, 1);
+  assert.equal(normalizePracticeBatch({ batchId: 'longbatch1', events: [{ ...activity, event: 'speech' }] }), null);
+  assert.equal(normalizePracticeBatch({ batchId: 'short', events: [activity] }), null);
+  assert.equal(normalizePracticeBatch({ batchId: 'longbatch1', events: Array(25).fill(activity) }), null);
 });
 
 test('roll up activity per authenticated student and prune old daily records', () => {
@@ -29,9 +33,13 @@ test('roll up activity per authenticated student and prune old daily records', (
   const first = applyPracticeEvent(previous, activity, identity, at);
   assert.deepEqual(first.daily['2026-11-01'], { plays: 1, completions: 0, quizzes: 0 });
   assert.equal(first.daily['2026-08-01'], undefined);
-  const second = applyPracticeEvent(first, { ...activity, event: 'complete' }, identity, new Date(at.getTime() + 50000));
+  const second = applyPracticeBatch(first, [
+    { ...activity, event: 'complete' }, { ...activity, event: 'quiz' },
+  ], identity, new Date(at.getTime() + 50000), 'somebatch123');
   assert.equal(second.daily['2026-11-01'].plays, 1);
   assert.equal(second.daily['2026-11-01'].completions, 1);
+  assert.equal(second.daily['2026-11-01'].quizzes, 1);
+  assert.equal(second.lastBatchId, 'somebatch123');
   assert.equal(second.uid, 'learner-1');
   const snap = { id: 'learner-1', data: () => second };
   assert.equal(practiceRows([snap], 1, at).length, 1);
@@ -66,7 +74,7 @@ test('authenticated player updates one compact record and owner sees account act
       assert.equal(name, 'musicPracticeSummaries');
       return {
         doc: () => ref,
-        orderBy: () => ({ limit: () => ({ get: async () => ({ docs: stored ? [{ id: 'learner-1', data: () => stored }] : [], size: stored ? 1 : 0 }) }) }),
+        where: () => ({ orderBy: () => ({ limit: () => ({ get: async () => ({ docs: stored ? [{ id: 'learner-1', data: () => stored }] : [], size: stored ? 1 : 0 }) }) }) }),
       };
     },
     async runTransaction(fn) {
@@ -86,7 +94,10 @@ test('authenticated player updates one compact record and owner sees account act
     db, verifyToken: async token => ({ uid: token, email: token + '@example.com' }),
     env: { HOEREN_STUDIO_OWNER_UID: 'owner' }, now: () => at,
   });
-  const req = { get: () => 'Bearer learner-1', body: activity };
+  const req = { get: () => 'Bearer learner-1', body: {
+    batchId: 'recordingbatch123',
+    events: [activity, { ...activity, event: 'complete' }, { ...activity, event: 'quiz' }],
+  } };
   const first = res();
   await routes['POST /music-analytics/practice'](req, first);
   assert.equal(first.body.counted, true);
@@ -99,4 +110,6 @@ test('authenticated player updates one compact record and owner sees account act
   await routes['GET /music-analytics/students']({ get: () => 'Bearer owner', query: { days: '7' } }, report);
   assert.equal(report.body.students[0].name, 'Student One');
   assert.equal(report.body.students[0].plays, 1);
+  assert.equal(report.body.students[0].completions, 1);
+  assert.equal(report.body.students[0].quizzes, 1);
 });
