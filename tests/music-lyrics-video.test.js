@@ -13,7 +13,7 @@ import { A2_DAY21_FINAL_RECORDING } from "../src/data/a2Day21FinalRecording.js";
 import { A2_DAY22_FINAL_RECORDING } from "../src/data/a2Day22FinalRecording.js";
 import { getReusableSongDraft } from "../src/data/reusableMusicSongbook.js";
 import { validateLyricCues } from "../src/utils/songLyrics.js";
-import { videoLyricLines, lyricScenes, findLyricScene, videoRecorderFormat, timedLyricsPack, verifiedPublishedVideoTiming, musicVideoSocialCopy } from "../src/utils/musicLyricsVideo.js";
+import { videoLyricLines, lyricScenes, findLyricScene, activeVideoLyricIndex, videoEnglishLines, presetVideoEnglish, videoRecorderFormat, timedLyricsPack, verifiedPublishedVideoTiming, musicVideoSocialCopy } from "../src/utils/musicLyricsVideo.js";
 
 test("video lyrics use at most three meaningful lines per timed screen", () => {
   const text="[Verse 1]\nHallo Welt\nIch bin da\nDu bist hier\n[Chorus]\nWir lernen\nHeute und morgen";
@@ -31,6 +31,47 @@ test("manual lyric timing stays separate from the draft and never exceeds three 
   assert.deepEqual(scenes.map(x=>x.start),[0,7]);
   assert.equal(scenes[1].lines.length,3);
 });
+test("video highlighting follows the actual sung line and respects silent gaps", () => {
+  const text="[Verse]\nLine one\nLine two\nLine three\nLine four";
+  const cues=[
+    {start:3,end:5,text:"Line one"},
+    {start:6,end:9,text:"Line two"},
+    {start:11,end:14,text:"Line three"},
+    {start:18,end:20,text:"Line four"},
+  ];
+  const scenes=lyricScenes(text,24,[3,18],cues,["One","Two","Three","Four"]);
+  assert.equal(scenes.length,2);
+  assert.equal(activeVideoLyricIndex(scenes[0],2),-1);
+  assert.equal(activeVideoLyricIndex(scenes[0],4),0);
+  assert.equal(activeVideoLyricIndex(scenes[0],5.5),-1);
+  assert.equal(activeVideoLyricIndex(scenes[0],7),1);
+  assert.equal(activeVideoLyricIndex(scenes[0],12),2);
+  assert.equal(activeVideoLyricIndex(scenes[1],19),0);
+  assert.equal(activeVideoLyricIndex(scenes[1],21),-1);
+  assert.deepEqual(scenes[1].englishLines,["Four"]);
+  const untimed=lyricScenes(text,24,[3,18]);
+  assert.equal(activeVideoLyricIndex(untimed[0],4),-1);
+});
+test("B1 Day 2 English is complete and bound to exact studio lyrics", () => {
+  const song=getReusableSongDraft("B1-1.2");
+  const english=presetVideoEnglish(song.lyrics,song.title,"B1",2);
+  const german=videoLyricLines(song.lyrics);
+  assert.equal(german.length,17);
+  assert.equal(videoEnglishLines(english,german).length,17);
+  assert.match(english,/We often used to sit by the river/);
+  assert.equal(presetVideoEnglish(song.lyrics.replace("Früher saßen","Früher standen"),song.title,"B1",2),"");
+  assert.equal(presetVideoEnglish(song.lyrics,song.title,"B1",3),"");
+  assert.deepEqual(videoEnglishLines("Only one line",german),[]);
+});
+test("the MP4 exporter uses per-line timings and an optional English subtitle layer", () => {
+  const video=readFileSync(new URL("../src/components/MusicLyricsVideoStudio.jsx",import.meta.url),"utf8");
+  assert.match(video,/cues, showEnglish \? englishLines : \[\]/);
+  assert.match(video,/English subtitles/);
+  assert.match(video,/Show English translation/);
+  assert.match(video,/!completeCues/);
+  assert.match(video,/This recording has no complete line-by-line lyric timing/);
+});
+
 test("format selection never renames WebM as MP4", () => {
   assert.deepEqual(videoRecorderFormat(mime=>mime==="video/webm"),{mime:"video/webm",extension:"webm"});
   assert.deepEqual(videoRecorderFormat(mime=>mime==="video/mp4"),{mime:"video/mp4",extension:"mp4"});
@@ -86,7 +127,7 @@ test("Falowen Music keeps both tabs mounted and the video reuses public timings"
   assert.ok(!studio.includes("key={courseMode + '-' + assignmentKey}"));
   assert.ok(video.includes("api/music-lyrics?key="));
   assert.match(video,/verifiedPublishedVideoTiming/);
-  assert.match(video,/publishedTrack && !completeCues/);
+  assert.match(video,/\|\|!completeCues/);
 });
 
 test('export metadata follows the selected song and offers editable copy buttons', () => {

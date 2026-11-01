@@ -13,7 +13,7 @@ import { A2_DAY22_FINAL_RECORDING } from "../data/a2Day22FinalRecording.js";
 import { getReusableSongDraft } from "../data/reusableMusicSongbook.js";
 import { readSongCues, validateLyricCues } from "../utils/songLyrics.js";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { videoLyricLines, lyricScenes, findLyricScene, videoRecorderFormat, drawMusicVideoFrame, isRealMp4Blob, timedLyricsPack, verifiedPublishedVideoTiming, musicVideoSocialCopy } from "../utils/musicLyricsVideo.js";
+import { videoLyricLines, lyricScenes, findLyricScene, videoRecorderFormat, drawMusicVideoFrame, isRealMp4Blob, timedLyricsPack, verifiedPublishedVideoTiming, musicVideoSocialCopy, videoEnglishLines, presetVideoEnglish } from "../utils/musicLyricsVideo.js";
 
 const frameStyle = {width:"min(100%,270px)",aspectRatio:"9/16",borderRadius:14,background:"#102f34",boxShadow:"0 6px 20px #102f3426"};
 const fieldStyle = {width:"100%",maxWidth:520,padding:"8px",borderRadius:8,border:"1px solid #cbd5e1",boxSizing:"border-box"};
@@ -67,6 +67,8 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   const [timingStatus,setTimingStatus] = useState("");
   const [fileUrl,setFileUrl] = useState("");
   const [lyricText,setLyricText] = useState(lyrics || "");
+  const [englishText,setEnglishText] = useState("");
+  const [showEnglish,setShowEnglish] = useState(true);
   const [duration,setDuration] = useState(0);
   const [starts,setStarts] = useState([]);
   const [cues,setCues] = useState([]);
@@ -89,6 +91,14 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   const videoTitle=publishedTrack?.title || title;
   const videoLevel=publishedTrack?.level || level;
   const videoDay=publishedTrack?.day ?? day;
+  const englishStorageKey="falowen-video-english:"+(publishedTrack?.objectKey || assignmentKey || videoLevel+"-"+videoDay+"-"+videoTitle);
+  useEffect(()=>{
+    // Exact lyric matching prevents a different recording's English from surviving a song change.
+    let saved=null;
+    try{saved=JSON.parse(localStorage.getItem(englishStorageKey)||"null");}catch{}
+    setEnglishText(saved?.lyrics===lyricText && typeof saved?.english==="string"
+      ? saved.english : presetVideoEnglish(lyricText,videoTitle,videoLevel,videoDay));
+  },[englishStorageKey,lyricText,videoTitle,videoLevel,videoDay]);
   const postingDefaults=useMemo(()=>musicVideoSocialCopy({title:videoTitle,level:videoLevel,day:videoDay}),
     [videoTitle,videoLevel,videoDay]);
   useEffect(()=>{
@@ -170,8 +180,11 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   },[file]);
   const lines=useMemo(()=>videoLyricLines(lyricText),[lyricText]);
   const completeCues=lines.length>0 && validateLyricCues(cues,lines).length===lines.length;
+  const englishLines=useMemo(()=>videoEnglishLines(englishText,lines),[englishText,lines]);
   const scenes=useMemo(()=>lyricScenes(lyricText,duration,
-    completeCues ? cues.filter((_,i)=>i%3===0).map(c=>c.start) : starts),[lyricText,duration,starts,cues,completeCues]);
+    completeCues ? cues.filter((_,i)=>i%3===0).map(c=>c.start) : starts,
+    completeCues ? cues : [], showEnglish ? englishLines : []),
+    [lyricText,duration,starts,cues,completeCues,showEnglish,englishLines]);
   const timingKey="falowen-video-timing:"+(publishedTrack?.objectKey || assignmentKey || objectKey || "custom");
   useEffect(()=>{
     // The published recording's verified timings are hydrated separately below.
@@ -342,6 +355,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   }
   async function exportVideo(){
     if(exporting||!activeUrl||!hasLyrics)return;
+    if(!completeCues){setError("This recording has no complete line-by-line lyric timing. Mark each sung line in the timing editor before exporting; screen timings alone cannot highlight the current lyric accurately.");return;}
     setError("");setMessage("");setProgress(0);
     const canvas=canvasRef.current;
     if(!canvas?.captureStream || typeof MediaRecorder==="undefined" || !MediaRecorder.isTypeSupported){
@@ -380,7 +394,8 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       exportCanvas.width=canvas.width;exportCanvas.height=canvas.height;
       const exportContext=exportCanvas.getContext("2d");
       const exportScenes=lyricScenes(lyricText,buffer.duration,
-        completeCues ? cues.filter((_,i)=>i%3===0).map(c=>c.start) : starts);
+        cues.filter((_,i)=>i%3===0).map(c=>c.start),
+        cues, showEnglish ? englishLines : []);
       drawMusicVideoFrame(exportContext,{title:videoTitle,level:videoLevel,day:videoDay,scenes:exportScenes,time:0,duration:buffer.duration});
       canvasStream=exportCanvas.captureStream(24);
       const destination=context.createMediaStreamDestination();
@@ -477,7 +492,27 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       <textarea rows={9} style={{...fieldStyle,maxWidth:"100%",fontFamily:"inherit"}} disabled={exporting}
         value={lyricText} onChange={event=>{currentLyricText.current=event.target.value;setLyricText(event.target.value);setStarts([]);if(publishedTrack?.objectKey){setCues([]);setTimingStatus("edited");}}} />
     </label>
-    {onOverwriteLyrics && <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
+    <section aria-label="English subtitles" style={{display:"grid",gap:7,border:"1px solid #b5d7ba",borderRadius:12,padding:12}}>
+      <label style={{display:"flex",gap:8,alignItems:"center",fontWeight:700}}>
+        <input type="checkbox" checked={showEnglish} disabled={exporting} onChange={event=>setShowEnglish(event.target.checked)}/>
+        Show English translation below the highlighted German line
+      </label>
+      <label style={{display:"grid",gap:5,fontWeight:600,fontSize:13}}>English translation · one line for each German sung line ({lines.length} lines)
+        <textarea rows={5} style={{...fieldStyle,maxWidth:"100%",fontFamily:"inherit",fontSize:13}}
+          disabled={exporting} value={englishText} placeholder="Enter one English translation per German sung line, without verse/chorus headings."
+          onChange={event=>{
+            const next=event.target.value;
+            setEnglishText(next);
+            try{localStorage.setItem(englishStorageKey,JSON.stringify({lyrics:lyricText,english:next}));}catch{}
+          }}/>
+      </label>
+      <small role="status" style={{color:englishLines.length===lines.length?"#24613a":"#715826"}}>
+        {englishLines.length===lines.length
+          ? "English lines match this song. They will appear under the active German line when Show English is checked."
+          : "No complete matching English translation for this recording. You can enter or paste one translation for each German line. No AI or additional cloud cost."}
+      </small>
+    </section>
+        {onOverwriteLyrics && <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
       <button type="button" disabled={!hasLyrics || savingLyrics || loadingLyrics || exporting || lyricText === lyrics}
         onClick={()=>onOverwriteLyrics(lyricText)}>{savingLyrics ? "Saving lyrics…" : "Overwrite Lyrics · Save permanently"}</button>
       <small>Save the edited lyric layers for this course lesson. It does not alter the MP3 or your timing marks.</small>
@@ -531,7 +566,9 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       }}>I reviewed and confirmed all lyric time marks</button>
     </div>}}
     <p role="status">Shared line timing: {cues.length}/{lines.length} marked. {timingReview ? "Estimated timing for this exact MP3 — not yet verified. Listen, adjust and save the marks below." : completeCues ? "Ready to use in the video." : "Mark missing lines or import a matching timing file."}</p>
-    <p style={{margin:0,fontSize:12,color:"#52635e"}}>{completeCues ? "Your saved timing is applied automatically. Open the teacher timing editor only if it needs correction." : "Play the song and mark each lyric line's beginning. Timings must increase in order."} Keep this browser tab open while exporting; recording runs in real time.</p>
+    <p style={{margin:0,fontSize:12,color:"#52635e"}}>{completeCues
+      ? "The exported video follows each sung line using its saved timing, including the matching English translation when enabled."
+      : "To export real active-line highlighting, play the song and mark every lyric line's beginning in the timing editor. Screen-only estimates are not sufficient."} Keep this browser tab open while exporting; recording runs in real time.</p>
     {exporting?<div role="status"><strong>Rendering locally… {Math.floor(progress)}s / {Math.ceil(duration)}s</strong>
       <button type="button" style={{marginLeft:12}} onClick={()=>cancelRef.current?.()}>Cancel export</button></div>:null}
     {supported?.extension==="webm" && <div className="music-video-format-warning" role="note">
@@ -539,7 +576,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       <p>WebM videos may not open in your Windows or phone video player even when the file contains valid audio and video. For a widely supported MP4, export in a browser that supports native MP4 recording (often Chrome or Edge).</p>
       <label><input type="checkbox" checked={allowWebm} onChange={event=>setAllowWebm(event.target.checked)}/> I understand — export WebM anyway</label>
     </div>}
-    <button type="button" className="music-generate" disabled={!activeUrl||!hasLyrics||!supported||exporting||timingStatus==="loading"||(!!publishedTrack && !completeCues)||(supported?.extension==="webm"&&!allowWebm)||scenes.some((scene,i)=>i>0&&scene.start<=scenes[i-1].start)}
+    <button type="button" className="music-generate" disabled={!activeUrl||!hasLyrics||!supported||exporting||timingStatus==="loading"||!completeCues||(supported?.extension==="webm"&&!allowWebm)||scenes.some((scene,i)=>i>0&&scene.start<=scenes[i-1].start)}
       onClick={exportVideo}>{exporting?"Recording music video…":"Export "+(supported?.extension==="mp4"?"MP4":supported?.extension==="webm"?"WebM":"video")+" · 9:16 with MP3"}</button>
     {exportedVideo && <section className="music-video-export-preview" aria-label="Verify downloaded video">
       <h3>Check your exported video</h3>

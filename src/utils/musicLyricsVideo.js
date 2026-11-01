@@ -11,13 +11,15 @@ export function verifiedPublishedVideoTiming(data, objectKey) {
   const cues = validateLyricCues(data.cues, lines);
   return lines.length && cues.length === lines.length ? {lyrics:data.lyrics,cues} : null;
 }
-export function lyricScenes(lyrics = "", duration = 0, starts = []) {
+export function lyricScenes(lyrics = "", duration = 0, starts = [], cues = [], translations = []) {
   const lines = videoLyricLines(lyrics);
   const groups = [];
   for (let i = 0; i < lines.length; i += 3) {
     groups.push({
       index: groups.length,
       lines: lines.slice(i, i + 3),
+      lineCues: cues.length === lines.length ? cues.slice(i, i + 3) : [],
+      englishLines: translations.length === lines.length ? translations.slice(i, i + 3) : [],
       start: Number.isFinite(Number(starts[groups.length]))
         ? Math.max(0, Number(starts[groups.length]))
         : 0,
@@ -29,6 +31,52 @@ export function lyricScenes(lyrics = "", duration = 0, starts = []) {
     });
   }
   return groups;
+}
+// Never guess a sung line from the position of its three-line screen.
+export function activeVideoLyricIndex(scene, time) {
+  if (!Number.isFinite(time) || !scene?.lineCues?.length) return -1;
+  const cues=scene.lineCues;
+  for(let i=cues.length-1;i>=0;i--){
+    const cue=cues[i];
+    if(time<cue.start)continue;
+    if(cue.end!==undefined && time>=cue.end)return -1;
+    return i;
+  }
+  return -1;
+}
+// An English line must be supplied for EVERY German sung line, in the same order.
+// This keeps English subtitles tied to the actual selected lyrics, not another draft.
+export function videoEnglishLines(text = "", germanLines = []) {
+  const english=String(text||"").trim().split(/\r?\n/).map(line=>line.trim());
+  return germanLines.length && english.length===germanLines.length && english.every(Boolean) ? english : [];
+}
+// Editorial translation for the exact B1 Day 2 studio song, not a generic AI guess.
+// Other songs can have their approved translations entered in the editor.
+const B1_DAY2_ENGLISH=[
+  ["Früher saßen wir oft am Fluss.","We often used to sit by the river."],
+  ["Ben und ich erzählten uns alles.","Ben and I told each other everything."],
+  ["Dann ist er in eine andere Stadt gezogen,","Then he moved to another city,"],
+  ["und unser Kontakt wurde immer seltener.","and we kept in touch less and less."],
+  ["Gute Freunde bleiben nicht nur im Bild,","Good friends are not just in photos,"],
+  ["sie hören zu, wenn das Leben laut wird.","they listen when life gets loud."],
+  ["Ein Anruf kann uns wieder näherbringen.","A phone call can bring us closer again."],
+  ["Heute rufe ich ihn nach langer Zeit an.","Today I call him after a long time."],
+  ["Er sagt, dass er oft an mich gedacht hat.","He says he has often thought of me."],
+  ["Wir lachen über unsere Schulzeit","We laugh about our school days"],
+  ["und planen ein Treffen im nächsten Monat.","and plan to meet next month."],
+  ["Gute Freunde bleiben nicht nur im Bild,","Good friends are not just in photos,"],
+  ["sie hören zu, wenn das Leben laut wird.","they listen when life gets loud."],
+  ["Ein Anruf kann uns wieder näherbringen.","A phone call can bring us closer again."],
+  ["An der alten Bank am Fluss warten wir.","We wait at the old bench by the river."],
+  ["Manche Freundschaften finden zurück.","Some friendships find their way back."],
+  ["Bei Falowen erzähle ich, was Freundschaft für mich bedeutet.","At Falowen I explain what friendship means to me."],
+];
+export function presetVideoEnglish(lyrics, title, level, day) {
+  const lines=videoLyricLines(lyrics);
+  if(String(title).trim()!=="Die Bank am Fluss" || String(level).toUpperCase()!=="B1" || Number(day)!==2 ||
+     lines.length!==B1_DAY2_ENGLISH.length ||
+     lines.some((line,i)=>line!==B1_DAY2_ENGLISH[i][0]))return "";
+  return B1_DAY2_ENGLISH.map(pair=>pair[1]).join("\n");
 }
 // Reusable, editable posting text for a downloaded lyrics video.
 // Keep links on known public homepages; no invented deep link or exam claim.
@@ -95,10 +143,24 @@ export function drawMusicVideoFrame(ctx, {title = "Falowen Music", level = "", d
   if(scene){
     const lineSpacing=90;
     const firstY=h*0.48-(scene.lines.length-1)*lineSpacing/2;
+    const active=activeVideoLyricIndex(scene,time);
     scene.lines.forEach((line,i)=>{
-      ctx.fillStyle=i===0?"#d9f99d":"#ffffff";
-      drawFit(ctx,line,firstY+i*lineSpacing,w-100,48,700);
+      const y=firstY+i*lineSpacing;
+      if(i===active){
+        ctx.fillStyle="rgba(201,240,128,0.16)";
+        ctx.fillRect(34,y-39,w-68,78);
+      }
+      ctx.fillStyle=i===active?"#d9f99d":"#ffffff";
+      drawFit(ctx,line,y,w-100,48,i===active?800:700);
     });
+    // Keep the translation below the three German lines, never over the karaoke.
+    const english=active>=0 ? scene.englishLines?.[active] : "";
+    if(english){
+      ctx.fillStyle="rgba(228,244,232,0.78)";
+      drawFit(ctx,"ENGLISH",h*0.655,w-100,19,700);
+      ctx.fillStyle="#ffffff";
+      drawFit(ctx,english,h*0.705,w-80,31,600);
+    }
   }else{
     ctx.fillStyle="#ffffff";drawFit(ctx,"Listen · Learn · Practise",h*0.5,w-100,36);
   }
