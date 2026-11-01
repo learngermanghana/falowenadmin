@@ -118,7 +118,13 @@ function registerMusicPracticeRoutes({ app, db, verifyToken, runtimeConfig = {},
         let student = {};
         if (!snapshot.exists) {
           const profile = await transaction.get(db.collection('students').doc(identity.uid));
-          student = profile.exists ? profile.data() : {};
+          if (profile.exists) {
+            student = profile.data();
+          } else {
+            // Some legacy student records use a student code as document ID.
+            const matches = await transaction.get(db.collection('students').where('uid', '==', identity.uid).limit(1));
+            student = matches.docs?.[0]?.data() || {};
+          }
         }
         const name = student.name || student.fullName || student.studentName || identity.name || '';
         const updated = applyPracticeEvent(previous, activity,
