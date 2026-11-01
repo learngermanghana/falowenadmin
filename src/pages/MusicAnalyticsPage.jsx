@@ -136,7 +136,7 @@ export default function MusicAnalyticsPage() {
           <p className="music-analytics-empty">No signed-in Campus music practice recorded for this period yet. Activity is shown only after the updated Campus and Admin API are deployed; older anonymous listens cannot be attributed to accounts.</p>
         ) : null}
         {studentStatus.report?.capped ? <p className="music-analytics-empty">Showing the most recent 500 student accounts.</p> : null}
-        <p className="music-analytics-footnote">Plays count a song starting, full listens count a song finishing, and quizzes count completed listening-question checks. These are engagement indicators, not assignment grades. Only the last 35 days of detailed daily counts are retained.</p>
+        <p className="music-analytics-footnote">Plays count a song starting, full listens count a song finishing, and quizzes count completed listening-question checks. These are engagement indicators, not assignment grades. Daily activity is reported for the selected period; older daily counts are pruned when a student next practises.</p>
       </section>
 
       {status.loading ? <p className="music-analytics-notice" role="status">Loading public music reports…</p> : null}
