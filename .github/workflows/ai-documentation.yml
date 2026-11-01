@@ -1,0 +1,35 @@
+name: Admin AI documentation checks
+
+on:
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - "README.md"
+      - "docs/ai/**"
+      - "docs/CHANGELOG.md"
+      - ".env.example"
+      - ".gitignore"
+      - "scripts/checkAiDocumentation.mjs"
+      - ".github/workflows/ai-documentation.yml"
+  push:
+    branches: [main]
+    paths:
+      - "AGENTS.md"
+      - "docs/ai/**"
+      - "scripts/checkAiDocumentation.mjs"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check Admin AI guides and config template
+        run: node scripts/checkAiDocumentation.mjs
