@@ -14,6 +14,7 @@ const { setGlobalOptions } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
 const { registerHoerenStudioRoutes } = require("./hoerenStudioApi.js");
 const { registerMusicAnalyticsRoutes } = require("./musicAnalytics.js");
+const { registerMusicPracticeRoutes } = require("./musicPractice.js");
 const { registerTimedDraftRecoveryRoutes } = require("./timedDraftRecovery.js");
 const { registerDraftHistoryRoutes } = require("./draftHistory.js");
 const { registerMarkingHealthRoutes } = require("./markingHealth.js");
@@ -2635,6 +2636,7 @@ exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob(
 
 registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey: geminiAudioKeySecret, runtimeConfig });
 registerMusicAnalyticsRoutes({ app, runtimeConfig, verifyToken: token => admin.auth().verifyIdToken(token) });
+registerMusicPracticeRoutes({ app, db, runtimeConfig, verifyToken: token => admin.auth().verifyIdToken(token) });
 
 const musicStudioHandler = require('./musicStudio').createHandler({
   db, verifyToken: token => admin.auth().verifyIdToken(token),
