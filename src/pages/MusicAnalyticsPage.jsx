@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { loadMusicAnalytics } from '../services/musicAnalyticsService.js';
 import './MusicAnalyticsPage.css';
+import StudentMusicPracticePanel from '../components/StudentMusicPracticePanel.jsx';
 
 const RANGES = [
   { label: 'Today', days: 1 },
@@ -43,11 +44,13 @@ function PopularityBars({ rows, valueKey, labelKey, emptyLabel }) {
 }
 
 export default function MusicAnalyticsPage() {
+  const [tab, setTab] = useState('visitors');
   const [days, setDays] = useState(7);
   const [refresh, setRefresh] = useState(0);
   const [status, setStatus] = useState({ loading: true, report: null, error: '' });
 
   useEffect(() => {
+    if (tab !== 'visitors') return;
     const controller = new AbortController();
     setStatus(previous => ({ ...previous, loading: true, error: '' }));
     loadMusicAnalytics(days, { signal: controller.signal })
@@ -58,7 +61,7 @@ export default function MusicAnalyticsPage() {
         if (!controller.signal.aborted) setStatus({ loading: false, report: null, error: error.message || 'Unable to load analytics.' });
       });
     return () => controller.abort();
-  }, [days, refresh]);
+  }, [days, refresh, tab]);
 
   const report = status.report;
   const total = Number(report?.plays || 0);
@@ -72,7 +75,7 @@ export default function MusicAnalyticsPage() {
         <div>
           <p className="music-analytics-eyebrow">FALOWEN ADMIN · MUSIC PERFORMANCE</p>
           <h1>Music Analytics</h1>
-          <p>See how listeners discover your published German songs. This dashboard uses opt-in GA4 aggregates—not student accounts or Firebase listening logs.</p>
+          <p>See public music visitors through opt-in GA4 and monitor signed-in Falowen Campus students in the separate Student Practice tab.</p>
         </div>
         <div className="music-analytics-actions">
           <a href="https://music.falowen.app/" target="_blank" rel="noreferrer">Open Music site</a>
@@ -80,6 +83,14 @@ export default function MusicAnalyticsPage() {
         </div>
       </header>
 
+      <div className="music-analytics-range" role="tablist" aria-label="Music analytics view">
+        <button type="button" role="tab" aria-selected={tab === 'visitors'} aria-pressed={tab === 'visitors'}
+          onClick={() => setTab('visitors')}>Public visitors</button>
+        <button type="button" role="tab" aria-selected={tab === 'students'} aria-pressed={tab === 'students'}
+          onClick={() => setTab('students')}>Student Practice</button>
+      </div>
+      {tab === 'students' ? <StudentMusicPracticePanel /> : (
+        <>
       <div className="music-analytics-range" role="group" aria-label="Analytics date range">
         {RANGES.map(item => (
           <button key={item.days} type="button" aria-pressed={days === item.days}
@@ -167,6 +178,8 @@ export default function MusicAnalyticsPage() {
           </footer>
         </>
       ) : null}
+        </>
+      )}
       <p className="music-analytics-back"><Link to="/music-studio">← Music Studio</Link></p>
     </main>
   );
