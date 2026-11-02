@@ -21,7 +21,10 @@ function firstEvidence(source = "", pattern) {
     return [...new Set(pattern.map((item) => firstEvidence(source, item)).filter(Boolean))].join(" | ");
   }
   if (typeof pattern === "function") {
-    return list.find((sentence) => test(pattern, sentence)) || (test(pattern, source) ? list.slice(0, 2).join(" | ") : "");
+    // A contextual semantic rule can require another sentence (such as a prior
+    // complaint). Quote the request itself rather than the greeting.
+    const evidenceMatcher = typeof pattern.evidenceMatcher === "function" ? pattern.evidenceMatcher : pattern;
+    return list.find((sentence) => test(evidenceMatcher, sentence)) || (test(pattern, source) ? list.slice(0, 2).join(" | ") : "");
   }
   return list.find((sentence) => test(pattern, sentence)) || "";
 }
@@ -324,6 +327,21 @@ function ruleForPoint(label = "", assignmentKey = "") {
   if (/friend's daily routine/.test(value)) return /(?:dein(?:e|en)?\s+tagesablauf|was\s+machst\s+du\s+(?:morgens|abends|jeden\s+tag)|wie\s+sieht\s+dein\s+tag)/i;
   if (/help benefited you/.test(value)) return /\b(?:geholfen|hilfe|dadurch|deshalb|weil|besser|entlastet|krank)\b/i;
   if (/return the favour|give something back/.test(value)) return /\b(?:revanchieren|zur[uü]ckgeben|gerne\s+helfen|einladen|etwas\s+f[uü]r\s+(?:sie|dich))\b/i;
+  if (normalizedAssignmentKey === "A2-7.20" && /exact product problem/.test(value)) {
+    // An exact complaint can be about size, fit or colour, not just a defect.
+    // Do not require the learner to say "defekt" or "falsch".
+    return /\b(?:kaputt|defekt|besch[aä]digt|funktioniert\s+nicht|falsch(?:e|er|es|en)?|zu\s+(?:klein|gro[ßs]|eng|weit)|passen?\s+(?:mir\s+)?nicht|farbe\s+gef[aä]llt\s+mir\s+nicht|nicht\s+wie\s+(?:bestellt|beschrieben)|problem\s+mit)\b/i;
+  }
+  if (normalizedAssignmentKey === "A2-7.20" && /exchange, repair or refund/.test(value)) {
+    const directRequest = /\b(?:umtausch\w*|austausch\w*|reparier\w*|reparatur|zur[uü]ckgeben|zur[uü]ckerstatt\w*|r[uü]ckerstattung|r[uü]ckzahlung|erstattung|geld\s+zur[uü]ck|ersetz\w*|ersatz)\b/i;
+    // "Ich möchte größere Schuhe in Rot, Größe 39" communicates a
+    // replacement request in a complaint about the shoes bought.
+    const replacementRequest = /\b(?:ich\s+(?:m[oö]chte|will|brauche|h[aä]tte\s+gern|w[uü]nsche(?:\s+mir)?)|(?:k[oö]nnen|k[oö]nnten)\s+sie)\b[^.!?]{0,120}\b(?:gr[oö][ßs]ere|kleinere|andere|neue|passende|rote|blaue|schwarze)\s+(?:schuhe|jacke|hose|handy|telefon|ger[aä]t|produkt)\b/i;
+    const complaintContext = /\b(?:beschwer\w*|reklamier\w*|gekauft|bestellt|falsch\w*|zu\s+(?:klein|gro[ßs]|eng|weit)|nicht\s+wie\s+bestellt|farbe\s+gef[aä]llt\s+mir\s+nicht)\b/i; 
+    const rule = (source) => directRequest.test(source) || (complaintContext.test(source) && replacementRequest.test(source));
+    rule.evidenceMatcher = (sentence) => directRequest.test(sentence) || replacementRequest.test(sentence);
+    return rule;
+  }
   if (/exact product problem/.test(value)) return /\b(?:kaputt|defekt|funktioniert\s+nicht|falsch|besch[aä]digt|schlecht|problem)\b/i;
   if (/exchange, repair or refund/.test(value)) return /\b(?:umtausch|umtauschen|reparieren|reparatur|geld\s+zur[uü]ck|erstattung|zur[uü]ckerstatten)\b/i;
   if (/why you need a new phone/.test(value)) return /\b(?:handy|telefon|smartphone)\b[\s\S]{0,140}\b(?:verloren|weg|brauche|ben[oö]tige|neu)\b/i;
