@@ -34,3 +34,20 @@ async function lyricsRequest(assignmentKey, lyrics) {
 }
 export const loadSavedMusicLyrics = assignmentKey => lyricsRequest(assignmentKey);
 export const overwriteSavedMusicLyrics = (assignmentKey, lyrics) => lyricsRequest(assignmentKey, lyrics);
+
+/** Publish reviewed line timings to the same R2 sidecar the public music player reads. */
+export async function savePublishedMusicTiming(payload) {
+  if (!auth?.currentUser) throw new Error('Sign in to Falowen Admin first.');
+  const response = await fetch('https://www.falowen.app/api/music-lyrics-save', {
+    method: 'POST', cache: 'no-store',
+    headers: {
+      Authorization: 'Bearer ' + await auth.currentUser.getIdToken(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || result.ok !== true || result.saved !== true)
+    throw new Error(result.error || 'Could not publish the timing. Your local corrections were kept.');
+  return result;
+}
