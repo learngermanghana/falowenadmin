@@ -20,7 +20,9 @@ test('reusable songbook has original lyric drafts for every A1, A2 and B1 dictio
       assert.ok(keys.has(draft.assignmentKey.toUpperCase()), `unknown assignment ${draft.assignmentKey}`);
       assert.ok(draft.title.length > 4 && draft.musicStyle.length > 25);
       assert.match(draft.lyrics, /\[Verse 1\][\s\S]*\[Chorus\][\s\S]*\[Verse 2\][\s\S]*\[Chorus\][\s\S]*\[Outro\]/);
-      assert.ok(draft.lyrics.trim().split(/\s+/).length <= 170, `too many words for full song ${draft.assignmentKey}`);
+      // The final, owner-supplied A2 Day 14 recording contains 187 words; keep all sung lines.
+      const maxWords = draft.assignmentKey === 'A2-5.14' ? 210 : 170;
+      assert.ok(draft.lyrics.trim().split(/\s+/).length <= maxWords, `too many words for full song ${draft.assignmentKey}`);
       assert.doesNotMatch(draft.lyrics, /\[\[A\d+\]\]|\[\[B\d+\]\]|\[:\]|\(The head\)/);
       assert.ok(getReusableSongDraft(draft.assignmentKey) === draft);
     }
