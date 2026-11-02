@@ -10,7 +10,7 @@ const BLOCKED_SESSION_STATUSES = new Set([
   "cancelled", "canceled", "completed", "superseded", "deleted",
 ]);
 const BLOCKED_CLASS_STATUSES = new Set([
-  "archived", "inactive", "deleted", "cancelled", "canceled",
+  "archived", "inactive", "deleted", "cancelled", "canceled", "graduated",
 ]);
 
 function text(value) {
@@ -98,6 +98,14 @@ function isSuppressedSession(session = {}) {
     || session.isSuperseded === true
     || session.schoolClosed === true
     || session.holidayClosed === true;
+}
+
+// A shortened course must not send reminders for stale future class sessions,
+// even if an old timetable alias was never cleaned up.
+function isAfterShortenedCourseEnd(klass = {}, session = {}) {
+  const cutoff = text(klass.shortenedCourseEndDate);
+  return /^\d{4}-\d{2}-\d{2}$/.test(cutoff)
+    && isoDate(sessionStart(session), text(klass.timezone) || TZ) > cutoff;
 }
 
 function assignmentIds(session = {}) {
@@ -241,6 +249,11 @@ function findDueSessionReminders({
 
   dedupeSessions(sessions, classes).forEach((session) => {
     if (isSuppressedSession(session)) return;
+    if (classes.length) {
+      const klass = resolveClassForSession(session, classes);
+      if (klass && (BLOCKED_CLASS_STATUSES.has(comparable(klass.status))
+        || !classReminderEnabled(klass) || isAfterShortenedCourseEnd(klass, session))) return;
+    }
     const startsAt = sessionStart(session);
     if (!startsAt) return;
     const minutesUntilStart = (startsAt.getTime() - nowDate.getTime()) / 60000;
@@ -629,6 +642,9 @@ async function processReminder({ admin, db, due, classes, students, config, now,
   // while the check-in page correctly shows today's lesson.
   const attendanceSession = await loadAttendanceSession(db, klass, session);
   session = applyAttendanceSessionMetadata(session, attendanceSession);
+  if (isAfterShortenedCourseEnd(klass, session)) {
+    return { sent: 0, skipped: "after_shortened_course_end" };
+  }
 
   const holiday = await loadHoliday(db, klass, session);
   if (isHolidayClosed({ holiday, klass, session })) {
@@ -790,6 +806,7 @@ module.exports = {
     findDueSessionReminders,
     formatTime24,
     isHolidayClosed,
+    isAfterShortenedCourseEnd,
     isSuppressedSession,
     loadAttendanceSession,
     normalizeLeads,
