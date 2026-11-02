@@ -14,7 +14,7 @@ import { A2_DAY22_FINAL_RECORDING } from "../data/a2Day22FinalRecording.js";
 import { getReusableSongDraft } from "../data/reusableMusicSongbook.js";
 import { readSongCues, validateLyricCues } from "../utils/songLyrics.js";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { videoLyricLines, lyricScenes, findLyricScene, videoRecorderFormat, drawMusicVideoFrame, isRealMp4Blob, timedLyricsPack, verifiedPublishedVideoTiming, musicVideoSocialCopy, videoEnglishLines, presetVideoEnglish, VIDEO_EXPORT_PRESETS } from "../utils/musicLyricsVideo.js";
+import { videoLyricLines, lyricScenes, findLyricScene, videoRecorderFormat, drawMusicVideoFrame, isRealMp4Blob, timedLyricsPack, verifiedPublishedVideoTiming, musicVideoSocialCopy, videoEnglishLines, publishedVideoEnglish, musicVideoAudioUrl, VIDEO_EXPORT_PRESETS } from "../utils/musicLyricsVideo.js";
 
 const frameStyle = {width:"min(100%,440px)",borderRadius:14,background:"#102f34",boxShadow:"0 6px 20px #102f3426"};
 const fieldStyle = {width:"100%",maxWidth:520,padding:"8px",borderRadius:8,border:"1px solid #cbd5e1",boxSizing:"border-box"};
@@ -71,6 +71,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   const [fileUrl,setFileUrl] = useState("");
   const [lyricText,setLyricText] = useState(lyrics || "");
   const [englishText,setEnglishText] = useState("");
+  const [publishedMetadata,setPublishedMetadata] = useState(null);
   const [showEnglish,setShowEnglish] = useState(true);
   const [duration,setDuration] = useState(0);
   const [starts,setStarts] = useState([]);
@@ -103,8 +104,8 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     let saved=null;
     try{saved=JSON.parse(localStorage.getItem(englishStorageKey)||"null");}catch{}
     setEnglishText(saved?.lyrics===lyricText && typeof saved?.english==="string"
-      ? saved.english : presetVideoEnglish(lyricText,videoTitle,videoLevel,videoDay));
-  },[englishStorageKey,lyricText,videoTitle,videoLevel,videoDay]);
+      ? saved.english : publishedVideoEnglish(publishedMetadata,publishedTrack?.objectKey,lyricText));
+  },[englishStorageKey,lyricText,publishedMetadata,publishedTrack?.objectKey]);
   const postingDefaults=useMemo(()=>musicVideoSocialCopy({title:videoTitle,level:videoLevel,day:videoDay}),
     [videoTitle,videoLevel,videoDay]);
   useEffect(()=>{
@@ -207,6 +208,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   },[active,catalogRequested]);
   useEffect(()=>{
     const key=publishedTrack?.objectKey;
+    setPublishedMetadata(null);
     if (!key) {setTimingStatus("");return undefined;}
     const controller=new AbortController();
     setTimingStatus("loading");
@@ -227,6 +229,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
         failed=true;
       }
       if (controller.signal.aborted) return;
+      setPublishedMetadata(responseData);
       const published=verifiedPublishedVideoTiming(responseData,key);
       // Use the recorded text only for this exact R2 object. Never borrow a different lesson's draft.
       const recordedLyrics=published?.lyrics || (responseData?.objectKey===key && typeof responseData?.lyrics==="string"
@@ -401,7 +404,12 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       setExporting(false);
     };
     try{
-      const audioResponse=await fetch(activeUrl);
+      let audioResponse;
+      try {
+        audioResponse=await fetch(musicVideoAudioUrl(activeUrl,publishedTrack), {signal:AbortSignal.timeout(45000)});
+      } catch {
+        throw Error("Could not download the MP3 for video export. Retry while connected; if this continues, the published music download service needs deployment or is unavailable.");
+      }
       if(!audioResponse.ok)throw Error("Unable to read the MP3 for local video export. Upload the MP3 from your computer.");
       const bytes=await audioResponse.arrayBuffer();
       if(bytes.byteLength>40_000_000)throw Error("The selected audio is too large for browser-only rendering (40 MB maximum).");
@@ -535,6 +543,9 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
           ? "English lines match this song. They will appear under the active German line when Show English is checked."
           : "No complete matching English translation for this recording. You can enter or paste one translation for each German line. No AI or additional cloud cost."}
       </small>
+      {publishedMetadata?.englishTranslation?.source==="course-draft" &&
+        publishedVideoEnglish(publishedMetadata,publishedTrack?.objectKey,lyricText) &&
+        <small>English translates the matching course draft; it is not a teacher-verified recording transcript.</small>}
     </section>
         {onOverwriteLyrics && <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
       <button type="button" disabled={!hasLyrics || savingLyrics || loadingLyrics || exporting || lyricText === lyrics}

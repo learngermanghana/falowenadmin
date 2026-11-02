@@ -17,6 +17,19 @@ export function verifiedPublishedVideoTiming(data, objectKey) {
   const cues = validateLyricCues(data.cues, lines);
   return lines.length && cues.length === lines.length ? {lyrics:data.lyrics,cues} : null;
 }
+// The metadata endpoint binds translations to an exact MP3 path and German text.
+export function publishedVideoEnglish(data, objectKey, lyrics) {
+  if (!objectKey || data?.objectKey!==objectKey) return "";
+  const german=videoLyricLines(lyrics), lines=data.englishTranslation?.lines;
+  if (!german.length || !Array.isArray(lines) || lines.length!==german.length ||
+      lines.some((line,i)=>line?.de!==german[i] || typeof line.en!=="string" || !line.en.trim())) return "";
+  return lines.map(line=>line.en).join("\n");
+}
+// Keep published exports on the owned API rather than fetching R2 redirects.
+export function musicVideoAudioUrl(activeUrl, track) {
+  const expected="https://www.falowen.app/api/music?track="+track?.id;
+  return track?.id && activeUrl===expected ? expected+"&download=1" : activeUrl;
+}
 export function lyricScenes(lyrics = "", duration = 0, starts = [], cues = [], translations = []) {
   const lines = videoLyricLines(lyrics);
   const groups = [];

@@ -212,3 +212,20 @@ all 17 exact German lines. The display title is not a translation identity:
 `Freundschaft am Fluss` and the earlier `Die Bank am Fluss` title both retain
 the matching translation. Changed German lines or a different level/day do
 not inherit it. No recording title, audio or timing is changed.
+
+## Shared path-based video English — 2 November 2026
+
+For any selected published MP3, the video editor reads `englishTranslation` from
+the existing learner music-lyrics API response. The exact recording object key
+and all German lines must match; titles and filenames alone are insufficient.
+This replaces the active exporter's B1-only preset with the shared translation
+registry across levels. Saved manual English for the same path and German text
+is preserved. A local upload without a published path needs manual English.
+Both learner API and Admin UI changes must deploy. Songs without matching
+translations remain blank; nothing is generated or assumed verified.
+
+Published video exports request `download=1` on the existing public music audio
+API. It streams only the validated public music track, with a 40 MB limit and
+30-second upstream timeout, so the browser need not read a signed R2 redirect.
+Normal audio playback still redirects. Uploaded local audio remains local.
+Export network failures now identify the MP3 download stage.
