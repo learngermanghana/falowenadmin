@@ -126,7 +126,7 @@ export default function SocialPhotoGallery({ onSelect, activeId = "", defaultOpe
           </div>
         ))}
       </div>
-      {!photos.length && <p style={small}>{unusedOnly ? "No unused photos match. Turn off the unused filter to reuse or reset a picture." : "No matching photos. Try another search or category."}</p>
+      {!photos.length && <p style={small}>{unusedOnly ? "No unused photos match. Turn off the unused filter to reuse or reset a picture." : "No matching photos. Try another search or category."}</p>}
       {error && <p role="alert" style={{ color: "#b91c1c", fontSize: 13 }}>{error}</p>}
       {!error && lastSelected && activeId === lastSelected && <p role="status" style={{ color: "#166534", fontSize: 12 }}>Photo applied. Your PNG export will use a local, export-safe copy.</p>}
       <p style={{ ...small, marginBottom: 0 }}>
