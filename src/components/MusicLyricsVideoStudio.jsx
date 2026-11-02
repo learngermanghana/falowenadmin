@@ -335,7 +335,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     const canvas=canvasRef.current,ctx=canvas?.getContext("2d");
     if(ctx) drawMusicVideoFrame(ctx,{title:videoTitle,level:videoLevel,day:videoDay,scenes,time:seconds,duration});
   };
-  useEffect(()=>{if(!exporting)drawAt(audioRef.current?.currentTime||0);},[scenes,videoTitle,videoLevel,videoDay,duration,exporting]);
+  useEffect(()=>{if(!exporting)drawAt(audioRef.current?.currentTime||0);},[scenes,videoTitle,videoLevel,videoDay,duration,exporting,videoPresetId]);
   useEffect(()=>()=>{cancelRef.current?.();if(exportedUrlRef.current)URL.revokeObjectURL(exportedUrlRef.current);},[]);
   async function publishTimingDirectly(){
     if(savingTiming || exporting || timingReview)return;
