@@ -38,3 +38,27 @@ Standard GA4 and its API can be used within free quotas. Server calls and normal
 Run: node --test tests/music-analytics.test.js, node --check functions/musicAnalytics.js, and npm run build in the Admin repository.
 Run: node --check web/public/music/analytics.js, and node web/scripts/write-music-analytics-config.mjs in the learner repository.
 GA4 reporting can take time; the dashboard is not a real-time analytics log. Aggregate counts exclude visitors who decline consent and may include anonymized/pseudonymous GA4 processing.
+
+
+## Signed-in Campus Student Practice (separate from GA4)
+
+**Student Practice** is a separate tab under Admin > Music Analytics. It is intentionally NOT a GA4 user-ID feature, and visitors using \`https://music.falowen.app/\` remain anonymous.
+
+- In the authenticated **/campus/music** page on \`www.falowen.app\`, the same-origin embedded music player sends \`start\`, \`progress\` (pause / track change) and \`complete\` (audio ended) messages to its parent frame. The parent validates the frame source, the exact origin and payload, and sends a Firebase ID token to Admin's API. Only signed-in non-anonymous Firebase students are recorded.
+- \`POST /music-practice/record\` verifies the Firebase ID token on the server, ignores any claimed client UID/name/email and records the **verified identity** in one Firestore document per student / UTC day / song. Only counts and approximate elapsed listening seconds are stored. No transcript, quiz answers, recording, speech, analytics cookie or IP is added.
+- Updates occur on start / pause / completion, not per second. The API caps events at 600 seconds and rate-limits 24 updates per authenticated account per minute (instance-local best effort). A Firestore \`expireAt\` field is written 90 days ahead; enable the **Firestore TTL policy for collection group \`studentMusicPractice\` field \`expireAt\`** to enforce automatic expiry. Until that TTL policy is enabled, historical records will not be deleted automatically.
+- \`GET /music-practice/summary?days=1|7|30\` is owner-only (same guard as Music Studio), reads at most the latest 300 matching documents once when the Student Practice tab is opened or refreshed, and reports unique student accounts, starts, completions, listening time, last activity and song details. The interface flags when 300 documents cap the report. No polling, export job or AI call is required.
+- Records are indicative playback activity, **not evidence of attentive learning** and not marks or assignment completion. A song's level is not necessarily the student's enrolled course level.
+- Only Campus Music listens occurring *after deployment* are identifiable. Previously consented GA4 events cannot be linked back to student accounts, and the public music site continues to show only anonymous aggregates. Listening via other lesson-specific players is not part of this initial tracking integration.
+
+The student Campus page discloses practice logging above the music player. Review the platform privacy notice and, if required, offer a school-managed opt-out before requiring use. Admin reports contain student identifiers and are restricted to authorised owners. No new third-party analytics vendor or paid API was added.
+
+### Release order
+
+1. Merge/deploy Admin backend Firebase \`api\` function and Admin frontend.
+2. Merge/deploy the learner \`CampusMusicPage\` and public music static player file.
+3. Sign in as a test student, open \`/campus/music\`, play and pause a song, and finish one. Check Admin > Music Analytics > Student Practice for this student's account.
+4. Test signed-out listening on the public \`music.falowen.app\` domain to confirm **no student record** is written. Test the endpoint with no token (401), another signed-in student for report (403), and owner (200).
+5. Enable the Firestore TTL policy described above separately. This cannot be enabled by checking in a document field alone.
+
+Test files: \`tests/student-music-practice.test.js\` (Admin), \`web/src/components/musicPracticeTracking.test.mjs\` (learner). The existing GA4 dashboard is unchanged.
