@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useToast } from "../context/ToastContext.jsx";
+import { useAuth } from "../context/AuthContext";
 import { buildClassEndDateMismatchWarning } from "../utils/classEndDateWarning.js";
 import { validateIanaTimezone } from "../utils/liveClassScheduling.js";
 import {
@@ -61,6 +62,7 @@ function validateForm(form = {}) {
 
 export default function ClassEditorCard({ klass, onSaved }) {
   const toast = useToast();
+  const { user } = useAuth();
   const [form, setForm] = useState(() => initialForm(klass));
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -141,7 +143,7 @@ export default function ClassEditorCard({ klass, onSaved }) {
     setBusy(true); setMessage("");
     try {
       const result = await applyShortenedCourseEndDate({
-        classId: klass.id, endDate: form.endDate, adminId: "class-editor",
+        classId: klass.id, endDate: form.endDate, adminId: user?.uid || user?.email || "admin",
       });
       setMessage(`Shortened course saved. ${result.retired} outdated future session(s) retired; attendance history preserved and reminders stopped beyond ${result.endDate}.`);
       await onSaved?.(klass.id);
