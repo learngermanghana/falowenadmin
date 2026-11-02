@@ -8,6 +8,22 @@ const { isStudioOwner } = require('./hoerenStudioApi');
 const MAX_DAYS = new Set([1, 7, 30]);
 const TRACK_ID_RE = /^[a-zA-Z0-9_-]{1,245}$/;
 const LEVELS = new Set(['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'ALL']);
+const RATE_WINDOW_MS = 60 * 1000;
+const MAX_WRITES_PER_MINUTE = 24;
+const recordRateBuckets = new Map();
+function allowPracticeWrite(uid, time) {
+  const t = time.getTime();
+  // Bound cache to keep this zero-scheduler, min-instances=0 API cheap.
+  if (recordRateBuckets.size > 1000) recordRateBuckets.clear();
+  const bucket = recordRateBuckets.get(uid);
+  if (!bucket || t - bucket.since >= RATE_WINDOW_MS) {
+    recordRateBuckets.set(uid, { since: t, count: 1 });
+    return true;
+  }
+  if (bucket.count >= MAX_WRITES_PER_MINUTE) return false;
+  bucket.count += 1;
+  return true;
+}
 
 function parsePracticeDays(input) {
   const days = Number(input);
@@ -118,6 +134,9 @@ function registerMusicPracticeRoutes({ app, db, verifyToken, fieldValue, runtime
     const event = normalizedEvent(req.body);
     if (!event) return res.status(400).json({ ok: false, error: 'Invalid music practice event.' });
     const date = now();
+    if (!allowPracticeWrite(user.uid, date)) {
+      return res.status(429).json({ ok: false, error: 'Too many practice updates. Continue listening and try later.' });
+    }
     const key = dateKey(date);
     const id = practiceDocumentId(user.uid, event.trackId, key);
     const ref = db.collection('studentMusicPractice').doc(id);
@@ -128,6 +147,8 @@ function registerMusicPracticeRoutes({ app, db, verifyToken, fieldValue, runtime
         email: String(user.email || '').slice(0, 160),
         trackId: event.trackId, title: event.title, level: event.level, day: event.day,
         date: key,
+        // Configure Firestore TTL on expireAt for automatic 90-day retention.
+        expireAt: new Date(date.getTime() + 90 * 86400000),
         lastActiveAt: fieldValue.serverTimestamp(),
         ...(event.kind === 'start' ? { plays: fieldValue.increment(1) } : {}),
         ...(event.kind === 'complete' ? { completions: fieldValue.increment(1) } : {}),
