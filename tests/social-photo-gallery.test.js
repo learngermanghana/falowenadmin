@@ -9,7 +9,16 @@ import {
 const page = path => readFileSync(new URL("../" + path, import.meta.url), "utf8");
 
 test("gallery uses a small fixed collection of source-attributed, commercially usable Pexels photos", () => {
-  assert.ok(SOCIAL_PHOTO_GALLERY.length >= 8);
+  assert.equal(SOCIAL_PHOTO_GALLERY.length, 20, "replace the 9 used photos with 20 fresh choices");
+  assert.equal(new Set(SOCIAL_PHOTO_GALLERY.map(photo => photo.photoId)).size, 20);
+  assert.deepEqual(
+    SOCIAL_PHOTO_CATEGORIES,
+    ["All", "Students", "Online learning", "Study spaces", "Germany"],
+  );
+  const replacedPhotoIds = [6146987, 5940708, 6281831, 5965559, 895465, 17556501, 606539, 15348624, 34220597];
+  for (const id of replacedPhotoIds) {
+    assert.equal(SOCIAL_PHOTO_GALLERY.some(photo => photo.photoId === id), false, "old photo " + id + " removed");
+  }
   assert.deepEqual(new Set(SOCIAL_PHOTO_GALLERY.map(x => x.id)).size, SOCIAL_PHOTO_GALLERY.length);
   assert.ok(SOCIAL_PHOTO_LICENSE_URL.startsWith("https://www.pexels.com/"));
   for (const item of SOCIAL_PHOTO_GALLERY) {
@@ -42,6 +51,10 @@ test("all three poster editors use the shared, export-safe picker", () => {
   assert.match(picker, /canvas\.toDataURL\("image\/jpeg"/);
   assert.match(picker, /onSelect\(localImage, photo\)/);
   assert.match(picker, /role="alert"/);
+  assert.match(picker, /Show only unused pictures/);
+  assert.match(picker, /Mark used/);
+  assert.match(picker, /falowen-social-gallery-used-v1/);
+  assert.match(picker, /localStorage\.setItem\(USED_PHOTOS_KEY/);
   assert.match(vocab, /data:image/);
   assert.match(ads, /setPhotoUrl\(image\)/);
   assert.match(classes, /setPhotoSrc\(image\)/);
