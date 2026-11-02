@@ -59,6 +59,9 @@ test("B1 Day 2 English is complete and bound to exact studio lyrics", () => {
   assert.equal(german.length,17);
   assert.equal(videoEnglishLines(english,german).length,17);
   assert.match(english,/We often used to sit by the river/);
+  assert.equal(presetVideoEnglish(song.lyrics,"Freundschaft am Fluss","B1",2),english);
+  assert.equal(presetVideoEnglish(song.lyrics.replace("Früher saßen","Früher standen"),"Freundschaft am Fluss","B1",2),"");
+  assert.equal(presetVideoEnglish(song.lyrics,"Freundschaft am Fluss","A2",2),"");
   assert.equal(presetVideoEnglish(song.lyrics.replace("Früher saßen","Früher standen"),song.title,"B1",2),"");
   assert.equal(presetVideoEnglish(song.lyrics,song.title,"B1",3),"");
   assert.deepEqual(videoEnglishLines("Only one line",german),[]);
