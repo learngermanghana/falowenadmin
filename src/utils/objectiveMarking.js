@@ -48,6 +48,7 @@ function normalizePartId(value = "") {
   if (/teil(?:2|zwei)|part(?:2|two)|schreiben|writing/.test(normalized)) return "teil2";
   if (/teil(?:3|drei)|part(?:3|three)|lesen|reading/.test(normalized)) return "teil3";
   if (/teil(?:4|vier)|part(?:4|four)|horen|hoeren|listening|audio/.test(normalized)) return "teil4";
+  if (/teil(?:5|funf|fuenf)|part(?:5|five)/.test(normalized)) return "teil5";
   return "main";
 }
 
@@ -275,7 +276,7 @@ function buildReferenceItems(referenceEntry = {}) {
     }
     if (!source || typeof source !== "object") continue;
     const entries = Object.entries(source);
-    const hasPartKeys = entries.some(([key]) => /teil\s*[1-4]|part\s*[1-4]|lesen|h[oö]ren|hoeren|schreiben|writing|reading|listening/i.test(key));
+    const hasPartKeys = entries.some(([key]) => /teil\s*[1-5]|part\s*[1-5]|lesen|h[oö]ren|hoeren|schreiben|writing|reading|listening/i.test(key));
     if (hasPartKeys) {
       for (const [key, nested] of entries) {
         const partId = normalizePartId(key);
@@ -306,7 +307,7 @@ function splitIntoAnswerBlocks(text = "") {
 
 function leadingUnlabelledSubmissionText(text = "") {
   const sourceText = String(text || "");
-  const markerRegex = /(?:^|\n)[ \t]*((?:teil|part)[ \t]*[1-4]\b[^\n]*|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)[ \t]*(?=\n|$)/i;
+  const markerRegex = /(?:^|\n)[ \t]*((?:teil|part)[ \t]*[1-5]\b[^\n]*|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)[ \t]*(?=\n|$)/i;
   const marker = markerRegex.exec(sourceText);
   return marker ? sourceText.slice(0, marker.index).trim() : sourceText.trim();
 }
