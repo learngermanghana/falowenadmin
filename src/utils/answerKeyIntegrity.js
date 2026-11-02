@@ -9,7 +9,7 @@ export function normalizeIntegrityPartId(value = "") {
     .replace(/\s+/g, "")
     .trim();
   if (!raw || raw === "main") return "main";
-  const numbered = raw.match(/(?:teil|tiel|part)([1-4])/);
+  const numbered = raw.match(/(?:teil|tiel|part)([1-5])/);
   if (numbered) return `teil${numbered[1]}`;
   if (/schreiben|writing/.test(raw)) return "teil2";
   if (/lesen|reading/.test(raw)) return "teil3";
