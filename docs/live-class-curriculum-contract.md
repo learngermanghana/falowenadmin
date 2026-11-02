@@ -33,3 +33,10 @@ The timing hook also accepts exact-object published lyric text with an empty
 cue array: updated recording lyrics must replace an older songwriting draft
 even before synchronization is available. Untimed text cannot enable Follow
 or lyric seeking.
+
+
+The shared music players preserve `timingStatus`, `referenceOnly` and
+`transcriptionStatus` from the recording API. Acoustic estimates still support
+line highlighting and seeking, while automatic transcript drafts carry a
+visible teacher-review warning. Recognized words must never silently become
+teacher-approved recording text just because their cues are complete.

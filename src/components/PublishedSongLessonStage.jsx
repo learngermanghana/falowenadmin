@@ -53,7 +53,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
   const [time, setTime] = useState(0);
   const [follow, setFollow] = useState(true);
   const timedSong = song && recording ? {...song, id:recording.trackId, objectKey:recording.objectKey} : null;
-  const [cues, saveCues, recordedLyrics] = useSongTiming(timedSong);
+  const [cues, saveCues, recordedLyrics, recordingMetadata] = useSongTiming(timedSong);
   const displaySong = timedSong ? {...timedSong, lyrics:recordedLyrics} : null;
   const [view, setView] = useState('listen');
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -91,6 +91,11 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
         <a href={musicLink} target="_blank" rel="noopener noreferrer">In Falowen Music öffnen</a>
         {audioError && <p className="published-song-lesson__error" role="alert">{audioError}</p>}
       </div>
+      {recordingMetadata?.transcriptionStatus==='automatic'
+        ? <p role="status">AUTOMATISCHER TRANSKRIPTENTWURF · Wörter und Zeitmarken stammen aus der Aufnahme. Erkennungsfehler sind möglich; bitte beim Hören prüfen. Fragen dazu sind unbewertete Lese-/Sprechübungen.</p>
+        : recordingMetadata?.timingStatus==='estimated'
+          ? <p role="status">Geschätzte Zeitmarken · Bitte die Zeilengrenzen beim Hören prüfen.</p>
+          : null}
       <div className="published-song-lesson__tabs" role="group" aria-label="Musik-Lernschritte">
         <button type="button" aria-pressed={view==='listen'} className={view==='listen'?'is-active':''} onClick={()=>setView('listen')}>1 · Hören</button>
         <button type="button" aria-pressed={view==='lyrics'} className={view==='lyrics'?'is-active':''} onClick={()=>setView('lyrics')}>2 · Liedtext</button>

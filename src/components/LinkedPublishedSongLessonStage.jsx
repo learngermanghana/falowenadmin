@@ -101,7 +101,8 @@ export default function LinkedPublishedSongLessonStage({ music }) {
   const question=questions[questionIndex];
   const musicLink=track ? 'https://music.falowen.app/?track='+encodeURIComponent(track.id) : music.musicLibraryUrl;
   const song=displayText && track ? {id:track.id,objectKey:track.objectKey,lyrics:displayText.lyrics} : null;
-  const verified=Boolean(pack);
+  const verified=Boolean(pack && !pack.referenceOnly);
+  const synchronized=Boolean(pack);
   const changeTab=next=>{setView(next);setQuestionIndex(0);setShowAnswer(false);setSelectedOption(-1);};
   return (
     <section className="published-song-lesson published-song-lesson--linked" data-published-song={assignmentKey}
@@ -124,6 +125,11 @@ export default function LinkedPublishedSongLessonStage({ music }) {
         {error && <p className="published-song-lesson__error" role="alert">{error}</p>}
         {audioError && <p className="published-song-lesson__error" role="alert">{audioError}</p>}
       </div>
+      {pack?.transcriptionStatus==='automatic'
+        ? <p role="status">AUTOMATISCHER TRANSKRIPTENTWURF · Wörter und Zeitmarken sind noch nicht von der Lehrkraft geprüft; Erkennungsfehler sind möglich.</p>
+        : pack?.timingStatus==='estimated'
+          ? <p role="status">Geschätzte Zeitmarken · Bitte beim Hören prüfen.</p>
+          : null}
 
       <div className="published-song-lesson__tabs" role="group" aria-label="Musik-Lernschritte">
         <button type="button" className={view==='listen'?'is-active':''}
@@ -143,13 +149,15 @@ export default function LinkedPublishedSongLessonStage({ music }) {
       {view==='lyrics' && <div className="published-song-lesson__section">
         <h3>Liedtext · {track?.title || music.title}</h3>
         {song ? <>
-          {verified
+          {pack?.referenceOnly
+            ? <p>Ungeprüfter Aufnahme-Entwurf · Nutzt den Text zum Mitlesen und prüft die Wörter beim Hören.</p>
+            : verified
             ? <p>Lies mit und achte auf die Ausdrücke, die du im Lied hörst.</p>
             : <p role="status"><strong>Referenztext · noch nicht mit dieser MP3 abgeglichen.</strong> Dieser originale Day-{day}-Liedtext ist bereits veröffentlicht, aber die aktuelle Aufnahme hat einen anderen Dateinamen. Deshalb sind die Zeilen hier nicht zeitgesteuert. Bitte den Text beim Hören mit der Aufnahme vergleichen.</p>}
-          {verified && <label><input type="checkbox" checked={follow} onChange={e=>setFollow(e.target.checked)}/> Mitlesen folgen</label>}
-          <LessonSongLyrics song={song} cues={verified ? pack.cues : []} time={time}
-            onSeek={verified ? (seconds=>{if(audio.current){audio.current.currentTime=seconds;setTime(seconds);}}) : undefined}
-            follow={verified && follow}/>
+          {synchronized && <label><input type="checkbox" checked={follow} onChange={e=>setFollow(e.target.checked)}/> Mitlesen folgen</label>}
+          <LessonSongLyrics song={song} cues={synchronized ? pack.cues : []} time={time}
+            onSeek={synchronized ? (seconds=>{if(audio.current){audio.current.currentTime=seconds;setTime(seconds);}}) : undefined}
+            follow={synchronized && follow}/>
         </> : <p role="status">{loading ? 'Der Liedtext wird geladen…' :
           'Für genau diese veröffentlichte MP3 ist noch kein geprüfter Liedtext mit Zeitmarken hinterlegt. Bitte die passende .lyrics.json neben dem MP3 in R2 veröffentlichen; ein anderer Liedtext wird nicht eingeblendet.'}</p>}
         <button type="button" disabled={!song} onClick={()=>changeTab('questions')}>Weiter · Fragen beantworten</button>
