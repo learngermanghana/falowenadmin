@@ -12,6 +12,12 @@ on:
       - 'src/utils/songLyrics.js'
       - 'src/utils/recordedLessonMusic.js'
       - 'src/data/curatedLessonMusic.js'
+      - 'src/data/musicSongDraftsA2Part1.js'
+      - 'src/data/musicQuestionSeedsA2.js'
+      - 'tests/a2-days01-02-maria-song.test.js'
+      - 'tests/reusable-music-songbook.test.js'
+      - 'tests/reusable-music-question-bank.test.js'
+      - 'tests/curated-r2-song-slides.test.js'
       - 'tests/a1-day02-day03-recordings.test.js'
       - 'tests/music-follow-ui.test.js'
       - 'package*.json'
@@ -29,6 +35,12 @@ on:
       - 'src/utils/songLyrics.js'
       - 'src/utils/recordedLessonMusic.js'
       - 'src/data/curatedLessonMusic.js'
+      - 'src/data/musicSongDraftsA2Part1.js'
+      - 'src/data/musicQuestionSeedsA2.js'
+      - 'tests/a2-days01-02-maria-song.test.js'
+      - 'tests/reusable-music-songbook.test.js'
+      - 'tests/reusable-music-question-bank.test.js'
+      - 'tests/curated-r2-song-slides.test.js'
       - 'tests/a1-day02-day03-recordings.test.js'
       - 'tests/music-follow-ui.test.js'
 jobs:
@@ -43,4 +55,4 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --ignore-scripts
-      - run: node --test tests/a1-day02-day03-recordings.test.js tests/day22-lesson-song.test.js tests/music-follow-ui.test.js tests/recorded-lesson-music.test.js tests/a1-music-presenter-stage.test.js tests/waiting-room-lyrics.test.js tests/waiting-room-lyrics-page.test.js tests/checkin-smart-lobby-v2.test.js
+      - run: node --test tests/a1-day02-day03-recordings.test.js tests/day22-lesson-song.test.js tests/music-follow-ui.test.js tests/recorded-lesson-music.test.js tests/a1-music-presenter-stage.test.js tests/waiting-room-lyrics.test.js tests/waiting-room-lyrics-page.test.js tests/checkin-smart-lobby-v2.test.js tests/a2-days01-02-maria-song.test.js tests/reusable-music-songbook.test.js tests/reusable-music-question-bank.test.js tests/curated-r2-song-slides.test.js
