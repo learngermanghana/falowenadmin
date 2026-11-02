@@ -58,3 +58,21 @@ test('a slide without complete timings disables Follow and lyric seeking',async(
  assert.ok([...document.querySelectorAll('.lesson-song-lyrics button')].every(b=>b.disabled));
  await act(async()=>root.unmount());dom.window.close();
 });
+
+test('new exact recording lyrics replace an older draft even before timestamps exist',async()=>{
+ const dom=new JSDOM('<div id="root"></div>',{url:'https://admin.falowen.app'});
+ Object.assign(globalThis,{window:dom.window,document:dom.window.document,localStorage:dom.window.localStorage,IS_REACT_ACT_ENVIRONMENT:true});
+ const id='r2-a1-day-05-new-lyrics';
+ const objectKey='music/a1/day-05/Schön, dich kennenzulernen.mp3';
+ globalThis.fetch=async url=>({ok:true,json:async()=>String(url).includes('attendance-music-library')
+  ?{ok:true,tracks:[{id,objectKey,title:'Schön, dich kennenzulernen',level:'A1',day:5,autoDiscovered:true,coursebook:true,audioUrl:'https://www.falowen.app/api/music?track='+id}]}
+  :{objectKey,lyrics:'Diese Aufnahme hat einen neuen Text.\nWir lernen heute zusammen.',cues:[]}});
+ const root=createRoot(document.getElementById('root'));
+ try{
+  await act(async()=>root.render(React.createElement(Published,{assignmentKey:'A1-1.3',courseDay:5})));
+  await act(async()=>[...document.querySelectorAll('button')].find(b=>b.textContent.includes('2 · Liedtext')).click());
+  assert.match(document.querySelector('.lesson-song-lyrics').textContent,/Diese Aufnahme hat einen neuen Text/);
+  assert.equal(document.querySelector('input[type=checkbox]').disabled,true);
+  assert.ok([...document.querySelectorAll('.lesson-song-lyrics button')].every(b=>b.disabled));
+ }finally{await act(async()=>root.unmount());dom.window.close();}
+});

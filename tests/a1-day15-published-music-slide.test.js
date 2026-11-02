@@ -60,5 +60,5 @@ test('A1 projector fetches Day 15 audio dynamically without hardcoding Day 13',(
   assert.match(src,/view==='questions'/);
   const presenter=readFileSync(new URL('../src/components/A1GrammarPresenter.jsx',import.meta.url),'utf8');
   assert.match(presenter,/\.\.\.\(a1SongStage \? \[a1SongStage\] : \[\]\)/);
-  assert.match(presenter,/<PublishedSongLessonStage assignmentKey=\{slide\.assignmentId\} compact/);
+  assert.match(presenter,/<PublishedSongLessonStage assignmentKey=\{slide\.assignmentId\} courseDay=\{slide\.dayNumber\} compact/);
 });

@@ -31,7 +31,11 @@ export default function useSongTiming(song) {
       const recordedLyrics = typeof data?.lyrics === 'string' ? data.lyrics : lyrics;
       const recording = {...record, lyrics:recordedLyrics};
       const checked = validatePublishedTiming(data, recording);
-      if (checked.length) {
+      // Published text does not require line timing. Show the exact recording's
+      // new lyrics even when its cue file is still untimed; never keep an older
+      // songwriting draft merely because timestamps have not been added.
+      if (data?.objectKey === objectKey && typeof data.lyrics === 'string' &&
+          recordedLyrics.trim() && recordedLyrics.length <= 60000) {
         setRecordedPack({objectKey, lyrics:recordedLyrics});
         const saved = readSongCues(recording);
         setCues(saved.length === lyricLines(recordedLyrics).length ? saved : checked);

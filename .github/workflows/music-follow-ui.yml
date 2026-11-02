@@ -3,6 +3,9 @@ on:
   pull_request:
     paths:
       - 'src/components/*Song*.jsx'
+      - 'src/components/A1GrammarPresenter.jsx'
+      - 'src/data/a1PresenterMusicStage.js'
+      - 'tests/a1-all-lessons-music.test.mjs'
       - 'src/hooks/useSongTiming.js'
       - 'src/hooks/useLobbySlideshow.js'
       - 'src/components/WaitingRoomLyricsSlide.jsx'
@@ -23,6 +26,9 @@ on:
     branches: [main]
     paths:
       - 'src/components/*Song*.jsx'
+      - 'src/components/A1GrammarPresenter.jsx'
+      - 'src/data/a1PresenterMusicStage.js'
+      - 'tests/a1-all-lessons-music.test.mjs'
       - 'src/hooks/useSongTiming.js'
       - 'src/hooks/useLobbySlideshow.js'
       - 'src/components/WaitingRoomLyricsSlide.jsx'
@@ -49,4 +55,5 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --ignore-scripts
+      - run: node --test tests/a1-all-lessons-music.test.mjs
       - run: node --test tests/a1-day02-day03-recordings.test.js tests/day22-lesson-song.test.js tests/music-follow-ui.test.js tests/recorded-lesson-music.test.js tests/a1-music-presenter-stage.test.js tests/waiting-room-lyrics.test.js tests/waiting-room-lyrics-page.test.js tests/checkin-smart-lobby-v2.test.js tests/a2-day14-mein-traumberuf-song.test.js

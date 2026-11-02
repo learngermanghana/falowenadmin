@@ -121,7 +121,7 @@ function a1TeacherPurpose(stage = {}) {
 }
 
 
-function stageList(slide, topicLabel) {
+export function stageList(slide, topicLabel) {
   const isSpeakingReadiness = String(slide?.assignmentId || "").trim().toUpperCase() === "A1-5.9";
   const isDay15ObjectLesson = String(slide?.assignmentId || "").trim().toUpperCase() === "A1-4.7";
   const support = buildTeacherSlideSupport(slide);
@@ -133,6 +133,7 @@ function stageList(slide, topicLabel) {
   );
   const mainChecks = checks.slice(0, Math.max(1, checks.length - 1));
   const exitChecks = checks.slice(Math.max(1, checks.length - 1));
+  const a1SongStage = getA1PresenterMusicStage(slide.assignmentId, slide.dayNumber);
 
   if (isSpeakingReadiness) {
     const flow = Array.isArray(slide.interactionFlow) ? slide.interactionFlow : [];
@@ -209,6 +210,7 @@ function stageList(slide, topicLabel) {
         items: exitChecks,
         exitCheck: true,
       },
+      ...(a1SongStage ? [a1SongStage] : []),
     ]
       .filter((stage) => stage.type === "intro" || (Array.isArray(stage.items) && stage.items.length > 0))
       .map((stage) => ({ ...stage, examReadiness: true }));
@@ -230,7 +232,6 @@ function stageList(slide, topicLabel) {
   const speaking = getA1EverydaySpeaking(slide.assignmentId);
   const approvedSong = getCuratedMusicByAssignment(slide.assignmentId);
   const isA1HealthMusic = approvedSong?.assignmentKey === "A1-14.1";
-  const a1SongStage = getA1PresenterMusicStage(slide.assignmentId);
   const mistakeItems = Array.isArray(support.commonMistakesEn) ? support.commonMistakesEn : [];
 
   return [
@@ -283,7 +284,7 @@ function stageList(slide, topicLabel) {
       title: "Common mistakes to watch",
       items: mistakeItems,
     }] : []),
-    // Music is the immediate follow-up to Common mistakes on approved A1 days.
+    // Match A1 Day 14: music immediately follows Common mistakes.
     ...(a1SongStage ? [a1SongStage] : []),
     ...(!isA1HealthMusic && speaking ? [
       {
@@ -721,7 +722,7 @@ export default function A1GrammarPresenter({
             </details>
           ) : null}
           {stage.type === "published-music" ? (
-            <PublishedSongLessonStage assignmentKey={slide.assignmentId} compact />
+            <PublishedSongLessonStage assignmentKey={slide.assignmentId} courseDay={slide.dayNumber} compact />
           ) : stage.type === "intro" ? (
             <>
               <h1>{stage.title}</h1>
