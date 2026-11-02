@@ -50,6 +50,6 @@ test("Day 15 presenter uses projected picture-card UI and keeps published music"
   const presenter = fs.readFileSync("src/components/A1GrammarPresenter.jsx", "utf8");
   assert.match(presenter, /presenter-a1-teil3-object-card/);
   assert.match(presenter, /getA1Teil3ObjectCard\(activeCheck\?\.sourceQuestion/);
-  assert.match(presenter, /getA1PresenterMusicStage\(slide\.assignmentId\)/);
+  assert.match(presenter, /getA1PresenterMusicStage\(slide\.assignmentId, slide\.dayNumber\)/);
   assert.match(presenter, /id: "music-lesson"/);
 });

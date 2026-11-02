@@ -12,3 +12,24 @@ The shared fields are:
 All three ID arrays contain the same canonical assignment IDs. New sessions are mapped in chronological order from the selected level's course dictionary. Existing sessions are repaired when the class dashboard opens only when curriculum data is missing; populated manual mappings and topics are retained.
 
 Student-facing Falowen clients should read `assignmentIds` first, then fall back to `chapterIds`, `curriculumIds`, and legacy `assignment_id`.
+
+## A1 presenter music — 2 November 2026
+
+All 27 teaching blocks across A1 Days 1–24 use `A1GrammarPresenter` and include
+one music stage, including Day 5 introducing yourself and Day 19 speaking
+readiness. Orientation remains separate. Standard lessons place music after
+Common mistakes, matching A1 Day 14's own layout (not the A2/B1 presenter);
+the readiness lesson appends it after the exit check, and
+Day 22 retains its existing single music finale.
+
+The guide and presenter use `getA1PresenterRecording`: existing curated exact
+recordings take precedence; other lessons discover a unique public recording
+by the canonical slide day through the existing attendance music-library API.
+Neither MP3 filenames nor playable URLs are inferred from draft song titles.
+Missing or ambiguous uploads show a status message and no audio player.
+Course-draft text and questions remain labelled as unverified against the
+recording; this does not publish or approve lyrics, cues or assessment keys.
+The timing hook also accepts exact-object published lyric text with an empty
+cue array: updated recording lyrics must replace an older songwriting draft
+even before synchronization is available. Untimed text cannot enable Follow
+or lyric seeking.

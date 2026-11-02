@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { getReusableSongDraft } from '../data/reusableMusicSongbook.js';
 import { getReusableMusicQuestions } from '../data/reusableMusicQuestions.js';
 import { getCuratedMusicByAssignment } from '../data/curatedLessonMusic.js';
+import { getA1PresenterRecording } from '../data/a1PresenterMusicStage.js';
 import { waitingRoomDiscoveredMusicTrack } from '../utils/waitingRoomDayMusic.js';
 import './PublishedSongLessonStage.css';
 import './LessonSongStage.css';
@@ -14,10 +15,10 @@ import useSongTiming from '../hooks/useSongTiming.js';
 // This is a teacher-led, unscored song activity. The separately graded
 // coursebook/Goethe Hören and private A2 Day 18 bank telephone recording
 // remain separate and retain their own source, transcript and answer key.
-export default function PublishedSongLessonStage({ assignmentKey, onExit = null, compact = false }) {
+export default function PublishedSongLessonStage({ assignmentKey, courseDay, onExit = null, compact = false }) {
   const song = getReusableSongDraft(assignmentKey);
   const bank = getReusableMusicQuestions(assignmentKey);
-  const approvedRecording = getCuratedMusicByAssignment(assignmentKey);
+  const approvedRecording = getCuratedMusicByAssignment(assignmentKey) || getA1PresenterRecording(assignmentKey, courseDay);
   const resolveByDiscovery = approvedRecording?.discover === true;
   const [publishedTrack, setPublishedTrack] = useState(null);
   const [discoveryError, setDiscoveryError] = useState('');
@@ -40,7 +41,7 @@ export default function PublishedSongLessonStage({ assignmentKey, onExit = null,
         setPublishedTrack(track);
       }).catch(error => { if (!controller.signal.aborted) setDiscoveryError(error?.message || 'Das Lied konnte nicht gefunden werden.'); });
     return () => controller.abort();
-  }, [assignmentKey, resolveByDiscovery, approvedRecording]);
+  }, [assignmentKey, resolveByDiscovery, approvedRecording?.level, approvedRecording?.day]);
   const recording = resolveByDiscovery
     ? { ...approvedRecording,
         trackId:publishedTrack?.id || '', objectKey:publishedTrack?.objectKey || '',
@@ -78,7 +79,7 @@ export default function PublishedSongLessonStage({ assignmentKey, onExit = null,
       data-published-song={song.assignmentKey} aria-label={`Falowen Music for ${song.title}`}>
       <div className="published-song-lesson__head">
         <div><span>FALOWEN MUSIC · {recording.level} · DAY {recording.day}</span>
-          <h2>{song.title}</h2><p>Hören · Liedtext verstehen · Sprechen</p>
+          <h2>{recording.title}</h2><p>Hören · Liedtext verstehen · Sprechen</p>
         </div>
         {onExit && <button type="button" onClick={onExit} className="published-song-lesson__exit">← Zurück zu den Folien</button>}
       </div>
@@ -86,7 +87,7 @@ export default function PublishedSongLessonStage({ assignmentKey, onExit = null,
         <div><strong>♫ Lied anhören</strong><small>Das Lernlied aus Cloudflare R2 · Keine Goethe-Hörprüfung</small></div>
         {recording.audioUrl
           ? <audio key={recording.objectKey} ref={audio} onTimeUpdate={e=>setTime(e.currentTarget.currentTime)} onSeeked={e=>setTime(e.currentTarget.currentTime)} onEnded={()=>setTime(-1)} controls preload="none" src={recording.audioUrl} onError={() => setAudioError('Diese Aufnahme konnte nicht geladen werden. Bitte die R2-Datei und den Falowen-Musiklink prüfen.')} aria-label={song.title}/>
-          : <p role="status">{discoveryError || `Die veröffentlichte ${recording.level}-Day-${recording.day}-Aufnahme wird in Falowen Music gesucht…`}</p>}
+          : <p role="status">{discoveryError || `Die ${recording.level}-Day-${recording.day}-Aufnahme wird in Falowen Music gesucht…`}</p>}
         <a href={musicLink} target="_blank" rel="noopener noreferrer">In Falowen Music öffnen</a>
         {audioError && <p className="published-song-lesson__error" role="alert">{audioError}</p>}
       </div>
@@ -102,6 +103,7 @@ export default function PublishedSongLessonStage({ assignmentKey, onExit = null,
         <button type="button" onClick={()=>setView('lyrics')}>Weiter · Liedtext ansehen</button>
       </div>}
       {view==='lyrics' && <div className="published-song-lesson__section">
+        {recordedLyrics === song.lyrics && <p role="status">KURSENTWURF · Dieser Text und seine Übungsfragen sind noch nicht gegen die ausgewählte Aufnahme geprüft.</p>}
         <h3>Liedtext · {song.title}</h3>
         <p>Lies mit und achte auf die wichtigen Ausdrücke aus Kapitel {song.assignmentKey}.</p>
         <label><input type="checkbox" disabled={!synchronized} checked={synchronized && follow} onChange={e=>setFollow(e.target.checked)}/> Mitlesen folgen</label>

@@ -167,7 +167,7 @@ test("A1-5.9 propagates exam-readiness context and distinguishes performance fro
   assert.match(source, /Knowledge check/);
   assert.match(source, /Do not mark an unrelated answer Correct/);
   assert.match(source, /This leaves the exam-readiness live check/);
-  assert.match(source, /stage\.examReadiness \? "A1 · Exam-readiness" : "A1 · Grammar check"/);
+  assert.match(source, /stage\.examReadiness \? "A1 · Exam-readiness" : [^\n]+"A1 · Sprechen Teil 3" : "A1 · Grammar check"/);
 });
 
 

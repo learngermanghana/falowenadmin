@@ -6,6 +6,7 @@ import TeacherLessonBlocks from "../components/TeacherLessonBlocks.jsx";
 import StudentCourseSlides from "../components/StudentCourseSlides.jsx";
 import PublishedSongLessonStage from "../components/PublishedSongLessonStage.jsx";
 import { getCuratedMusicByAssignment } from "../data/curatedLessonMusic.js";
+import { getA1PresenterRecording } from "../data/a1PresenterMusicStage.js";
 import { getReusableMusicQuestions } from "../data/reusableMusicQuestions.js";
 import {
   getAvailableSlideCourses,
@@ -103,9 +104,10 @@ function CourseSlidesIndex({ courseId }) {
 function SlideDetail({ slide, courseId }) {
   const [handoutMode, setHandoutMode] = useState(false);
   const [songQuestionsMode, setSongQuestionsMode] = useState(false);
-  // Do not add music to every day just because lyrics exist in Music Studio.
-  // Only teacher-approved published song days receive a slide activity.
-  const publishedSong = getCuratedMusicByAssignment(slide.assignmentId);
+  // A1 resolves each canonical lesson day against the public music library.
+  // Other levels retain their existing curated-only behavior.
+  const publishedSong = getCuratedMusicByAssignment(slide.assignmentId)
+    || (slide.course === "A1" ? getA1PresenterRecording(slide.assignmentId, slide.dayNumber) : null);
   const songQuestions = publishedSong ? getReusableMusicQuestions(slide.assignmentId) : null;
   const [presenterMode, setPresenterMode] = useState(() => new URLSearchParams(window.location.search).get("present") === "1");
   const { previous, next } = getSlideNavigation(slide.id, courseId);
@@ -133,7 +135,7 @@ function SlideDetail({ slide, courseId }) {
       <div className="slide-actions no-print" style={{ padding: '18px 24px' }}>
         <button type="button" onClick={() => setSongQuestionsMode(false)}>← Back to lesson</button>
       </div>
-      <PublishedSongLessonStage assignmentKey={slide.assignmentId} onExit={() => setSongQuestionsMode(false)} />
+      <PublishedSongLessonStage assignmentKey={slide.assignmentId} courseDay={slide.dayNumber} onExit={() => setSongQuestionsMode(false)} />
     </main>;
   }
   if (presenterMode) {
@@ -157,7 +159,7 @@ function SlideDetail({ slide, courseId }) {
     <article className={`teaching-slide ${handoutMode ? "handout-mode" : ""}`}>
       <SlideHeader slide={slide} />
       <div className="slide-grid"><TeacherLessonBlocks slide={slide} handoutMode={handoutMode} /></div>
-      {publishedSong && !handoutMode && <PublishedSongLessonStage assignmentKey={slide.assignmentId} compact />}
+      {publishedSong && !handoutMode && <PublishedSongLessonStage assignmentKey={slide.assignmentId} courseDay={slide.dayNumber} compact />}
 
       <footer className="slide-actions no-print">
         <button type="button" className="slide-present-button" onClick={() => setPresenterMode(true)}>Start Presenter Mode</button>

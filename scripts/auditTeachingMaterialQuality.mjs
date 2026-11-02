@@ -101,7 +101,11 @@ for (const [index, slide] of slides.entries()) {
   );
   const hasSpeakingSupport = Boolean(questions && (
     (Array.isArray(questions.supportItems) && questions.supportItems.length >= 3) ||
-    (questions.type === "flow" && Array.isArray(questions.items) && questions.items.length >= 2)
+    (questions.type === "flow" && Array.isArray(questions.items) && questions.items.length >= 2) ||
+    // Day 22's questions are inside the single music activity. Count the
+    // actual comprehension and speaking tasks, not just a conventional list.
+    (questions.type === "lesson-music" && questions.song?.questions?.length >= 2 &&
+      questions.song?.speaking?.length >= 1)
   ));
   const check = tutorial || Boolean(
     hasSpeakingSupport &&

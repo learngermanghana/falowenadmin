@@ -16,14 +16,14 @@ import {
 } from "../src/data/a1Days11To15Understanding.js";
 
 const expected = {
-  "A1-7": [11, "tutor-marked"],
+  "A1-7": [11, "review"],
   "A1-8": [12, "tutor-marked"],
   "A1-3.5": [13, "review"],
   "A1-3.6": [14, "review"],
   "A1-4.7": [15, "review"],
 };
 
-test("A1 Days 11–15 include 75 unique checks, correct answers and teacher explanations", () => {
+test("A1 Days 11–15 include 76 unique checks, correct answers and teacher explanations", () => {
   const slides = getSlidesByCourse("A1");
   assert.deepEqual([...A1_DAYS11_TO15_ASSIGNMENTS].sort(), Object.keys(expected).sort());
   let total = 0;
@@ -41,36 +41,33 @@ test("A1 Days 11–15 include 75 unique checks, correct answers and teacher expl
     const selected = getA1PresenterUnderstandingChecks(id,
       getA1GrammarChecks(id, slide), { slide, support: buildTeacherSlideSupport(slide) });
     assert.deepEqual(selected, verified, id + ": presenter must use lesson bank");
-    assert.equal(verified.length, 11);
-    assert.match(verified[10].questionDe, /^Exit-Check:/);
+    assert.equal(verified.length, id === "A1-7" ? 12 : 11);
+    assert.match(verified.at(-1).questionDe, /^Exit-Check:/);
     const quick = getA1Days11To15QuickChecks(id);
     const applied = getA1Days11To15ApplicationChecks(id);
     assert.equal(quick.length, 2);
     assert.equal(applied.length, 2);
     const all = [...verified, ...quick, ...applied];
     const questionKeys = all.map((item) => item.questionDe.trim().toLocaleLowerCase("de-DE"));
-    assert.equal(new Set(questionKeys).size, 15, id + ": duplicated question across stages");
+    assert.equal(new Set(questionKeys).size, id === "A1-7" ? 16 : 15, id + ": duplicated question across stages");
     assert.ok(all.every((item) => item.questionDe && item.answerDe && item.noteEn?.length >= 20),
       id + ": answer or teacher explanation missing");
     assert.equal(buildA1SlideReviewChecks(verified, 2).length, 2, id + ": insufficient reveal cards");
     total += all.length;
   }
-  assert.equal(total, 75);
+  assert.equal(total, 76);
 });
 
-test("Days 11 and 12 preserve only the verified Lesen and Hören workbook parts", () => {
+test("Days 11 and 12 preserve their distinct published workbook parts and grammar links", () => {
   const slides = getSlidesByCourse("A1");
-  for (const id of ["A1-7", "A1-8"]) {
-    const slide = slides.find((s) => s.assignmentId === id);
-    const parts = slide.workbookConnection.parts;
-    assert.equal(parts.length, 2);
-    assert.match(parts[0].label, /Lesen/);
-    assert.match(parts[1].label, /Hören/);
-    assert.ok(slide.workbookConnection.subtitle.includes("Tutor-marked"));
-    assert.equal(slide.workbookConnection.grammarUrl, null);
-  }
-  const day12 = slides.find((s) => s.assignmentId === "A1-8");
-  assert.match(day12.workbookConnection.subtitle, /12-hour conversion is unscored/);
+  const day11 = slides.find(s => s.assignmentId === "A1-7");
+  const day12 = slides.find(s => s.assignmentId === "A1-8");
+  assert.deepEqual(day11.workbookConnection.parts.map(p=>p.label), ["Teil 1 · Lesen", "Teil 2 · Hören"]);
+  assert.deepEqual(day12.workbookConnection.parts.map(p=>p.label), ["Teil 1 · Lesen (Richtig/Falsch)", "Teil 2 · Lesen (A/B/C)"]);
+  assert.equal(day11.workbookConnection.grammarUrl, "/campus/course/the-12-hour-clock-system-in-german-chapter-7");
+  assert.equal(day12.workbookConnection.grammarUrl, "/campus/course/a1-day-12-the-24-hour-clock-and-dates");
+  assert.match(day12.workbookConnection.subtitle, /tutor-marked.*two Lesen parts/i);
+  assert.match(day12.workbookConnection.subtitle, /six-question grammar knowledge check is unscored/);
 });
 
 test("Days 13–15 use Course Book links without inventing scored sections", () => {
@@ -89,7 +86,7 @@ test("Days 11–14 are comprehension-first, while Day 15 preserves the real Goet
     const slide = slides.find((s) => s.assignmentId === id);
     assert.ok(slide.interactionFlow.every((step) => !/role.play|pair interview|mini dialogue|speaking round/i.test(step.phase)),
       id + ": generic speaking activity reintroduced");
-    assert.match(slide.wrapUpTaskDe, /Schreibe|Ergänze|Unterstreiche/);
+    assert.match(slide.wrapUpTaskDe, /Schreibe|Ergänze|Unterstreiche|Erkläre|Lies/);
   }
   const day15 = slides.find((s) => s.assignmentId === "A1-4.7");
   assert.match(day15.workbookConnection.subtitle, /Goethe A1 exam-format/);
