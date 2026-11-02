@@ -93,9 +93,9 @@ export const MUSIC_SONG_DRAFTS_A2_PART1 = Object.freeze([
   },
   {
     "assignmentKey": "A2-5.14",
-    "title": "Ein neuer Schritt im Beruf",
-    "musicStyle": "Soft Pop-Rock, 90 BPM: light pop-rock with clean electric guitars, soft live drum kit, gentle bass and a singable, uplifting hook. One lead singer, clear German phrases, quiet instrumental mix.",
-    "lyrics": "[Verse 1]\nNora arbeitet seit zwei Jahren im Büro.\nSie möchte neue Aufgaben übernehmen.\nDeshalb besucht sie einen Abendkurs.\nEs ist manchmal schwer nach der Arbeit.\n\n[Chorus]\nSchritt für Schritt wächst mein Mut,\nich lerne Neues und bleibe dran.\nEin neuer Weg kann heute beginnen.\n\n[Verse 2]\nIhr Chef sieht ihre Fortschritte.\nEr bietet ihr ein kleines Projekt an.\nNora plant die Aufgaben mit dem Team.\nAm Ende gelingt das Projekt gut.\n\n[Chorus]\nSchritt für Schritt wächst mein Mut,\nich lerne Neues und bleibe dran.\nEin neuer Weg kann heute beginnen.\n\n[Outro]\nJetzt hat Nora mehr Verantwortung.\nSie ist stolz auf ihren neuen Weg.\nBei Falowen lerne ich Neues für meinen Beruf.",
-    "genre": "Soft Pop-Rock"
+    "title": "Mein Traumberuf",
+    "musicStyle": "German acoustic pop with gentle Afro-soul rhythm, smooth clear German vocals, warm bass, soft piano, delicate guitar and understated percussion; optimistic melodic storytelling about becoming an engineer.",
+    "lyrics": "[Verse 1]\nSchon als Kind hatte ich einen Traum,\nich wollte Häuser und Brücken bauen.\nHeute weiß ich, was ich werden will,\nIngenieur zu sein, das ist mein Ziel.\n\n[Bridge]\nDer Weg ist lang, das weiß ich gut,\ndoch meine Träume machen Mut.\n\n[Chorus]\nMein Traumberuf, mein großer Plan,\nich glaube fest, dass ich es kann.\nIch lerne heute für meine Zukunft,\nund hoffe auf eine gute Chance.\n\n[Verse 2]\nZurzeit besuche ich einen Deutschkurs,\ndenn später möchte ich studieren.\nMathe übe ich jeden Tag,\nweil ich mit Zahlen arbeiten mag.\nEin Praktikum steht auch auf dem Plan,\ndort sehe ich mir die Arbeit an.\nSpäter möchte ich im Team arbeiten,\nund eigene Projekte leiten.\n\n[Chorus]\nMein Traumberuf, mein großer Plan,\nich glaube fest, dass ich es kann.\nIch lerne heute für meine Zukunft,\nund hoffe auf eine gute Chance.\nMein Traumberuf, mein großes Ziel,\ndafür lerne ich jeden Tag viel.\nIch will im Beruf erfolgreich sein,\nund stolz auf meine Arbeit sein.\n\n[Outro]\nIch gebe meinen Traum nicht auf,\nmeine Zukunft nimmt ihren Lauf.\nEin guter Beruf, ein schönes Leben,\ndafür will ich mein Bestes geben.",
+    "genre": "German Acoustic Pop / Afro-Soul"
   }
 ]);

@@ -106,11 +106,11 @@ export const MUSIC_QUESTION_SEEDS_A2 = Object.freeze([
   ],
   [
     "A2-5.14",
-    "Warum besucht Nora einen Abendkurs?",
-    "Weil sie neue Aufgaben im Beruf übernehmen möchte.",
-    "Welches Angebot bekommt Nora von ihrem Chef?",
-    "Sie darf ein kleines Projekt übernehmen.",
-    "Welche Fähigkeit möchtest du beruflich verbessern?"
+    "Welchen Traumberuf hat die Person?",
+    "Sie möchte Ingenieur werden.",
+    "Warum besucht die Person zurzeit einen Deutschkurs?",
+    "Weil sie später studieren möchte.",
+    "Welchen Traumberuf hast du, und was machst du dafür?"
   ],
   [
     "A2-6.15",
