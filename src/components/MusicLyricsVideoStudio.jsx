@@ -64,6 +64,8 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   const [tracks,setTracks] = useState([]);
   const [publishedTrack,setPublishedTrack] = useState(null);
   const [loadingTracks,setLoadingTracks] = useState(false);
+  const [catalogError,setCatalogError] = useState("");
+  const [catalogLoaded,setCatalogLoaded] = useState(false);
   const [catalogRequested,setCatalogRequested] = useState(false);
   const [timingStatus,setTimingStatus] = useState("");
   const [fileUrl,setFileUrl] = useState("");
@@ -361,14 +363,16 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     setError("");
   }
   async function loadTracks(){
-    setLoadingTracks(true);setError("");
+    setLoadingTracks(true);setCatalogError("");setCatalogLoaded(false);
     try {
-      const response=await fetch("https://www.falowen.app/api/music-library");
+      const response=await fetch("https://www.falowen.app/api/music-library", {cache:"no-cache",signal:AbortSignal.timeout(15000)});
       if(!response.ok)throw Error("Could not load the public song catalog.");
       const data=await response.json();
-      setTracks((data.tracks||[]).filter(track=>audioFilenameObjectKey(track.objectKey) &&
+      if (!Array.isArray(data.tracks) || data.ok === false) throw Error("The song catalog is unavailable. Please retry.");
+      setTracks(data.tracks.filter(track=>audioFilenameObjectKey(track.objectKey) &&
         track.audioUrl==="https://www.falowen.app/api/music?track="+track.id));
-    }catch(cause){setError(cause.message);}
+      setCatalogLoaded(true);
+    }catch(cause){setCatalogError("Could not load Falowen songs. Check your connection and retry. " + (cause.message || ""));}
     finally{setLoadingTracks(false);}
   }
   async function exportVideo(){
@@ -491,6 +495,8 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     </div>
     <div>
       <button type="button" disabled={exporting||loadingTracks} onClick={loadTracks}>{loadingTracks?"Loading songs…":"Load available Falowen songs"}</button>
+      {catalogError && <p role="alert" style={{color:"#b91c1c"}}>{catalogError}</p>}
+      {catalogLoaded && <p role="status">{tracks.length ? tracks.length+" published songs loaded. Choose a recording below to load its lyrics and timing." : "No published songs are available. Retry loading the catalog."}</p>}
       {!!tracks.length && <label>Published recording <select disabled={exporting} value={publishedTrack?.objectKey||""} onChange={event=>{
         const track=tracks.find(row=>row.objectKey===event.target.value)||null;
         setPublishedTrack(track);setFile(null);setDuration(0);setStarts([]);setCues([]);setTimingReview(false);setRecordingFingerprint("");
