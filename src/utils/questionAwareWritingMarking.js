@@ -536,6 +536,31 @@ function deterministicLanguageCorrections(source = "", partId = "teil2", task = 
   return corrections;
 }
 
+function isSemanticTaskRewrite(correction = {}, task = {}) {
+  if (typeof correction !== "object" || !correction) return false;
+  const from = clean(correction.from);
+  const to = clean(correction.to);
+  // This question is already grammatically valid. Changing it into an
+  // unblocking request is task advice, not a correction of the student's words.
+  return task.assignmentKey === "A2-7.18"
+    && /\b(?:warum|weshalb|wieso)\b/i.test(from)
+    && /\b(?:karte|bankkarte)\b/i.test(from)
+    && /\b(?:entsperr\w*|freischalt\w*)\b/i.test(to)
+    && !/\b(?:entsperr\w*|freischalt\w*)\b/i.test(from);
+}
+
+function removeSemanticRewriteAdvice(value = "", rejectedCorrections = []) {
+  let text = String(value || "");
+  for (const correction of rejectedCorrections) {
+    const from = clean(correction.from);
+    const to = clean(correction.to);
+    if (!from || !to) continue;
+    const pattern = new RegExp(`\\b(?:Correct|Change|Replace)\\s+[“"']?${escapeRegExp(from)}[”"']?\\s+(?:to|with|→)\\s+[“"']?${escapeRegExp(to)}[”"']?\\.?`, "gi");
+    text = text.replace(pattern, " ");
+  }
+  return clean(text);
+}
+
 function mergeCorrections(existing = [], additions = []) {
   const rows = [...(Array.isArray(existing) ? existing : []), ...(Array.isArray(additions) ? additions : [])];
   const seen = new Set();
@@ -797,8 +822,11 @@ function buildCanonicalStudentFormatFeedback(task = {}, { genreMismatch = false,
   ]);
 }
 
-function buildCanonicalStudentImprovement(missingTaskPoints = []) {
+function buildCanonicalStudentImprovement(missingTaskPoints = [], task = {}) {
   const missing = [...new Set((Array.isArray(missingTaskPoints) ? missingTaskPoints : []).map(clean).filter(Boolean))];
+  if (task.assignmentKey === "A2-7.18" && missing.some((label) => /blocked card can be unblocked/i.test(label))) {
+    return "Next step: keep your valid question about why the card is blocked and add a separate request, for example: „Könnten Sie meine Bankkarte bitte entsperren?“";
+  }
   return missing.length ? `Next step: add ${missing.join("; ")}.` : "";
 }
 
@@ -868,7 +896,7 @@ export function enforceA2B1WritingConsistency(result = {}, {
   ]);
   const improvementSummary = joinStudentFeedback([
     languageImprovement,
-    buildCanonicalStudentImprovement(canonicalMissing),
+    buildCanonicalStudentImprovement(canonicalMissing, task),
     canonicalFormatFeedback,
   ]);
 
@@ -1068,6 +1096,11 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     };
   }
   const deterministicCorrections = task.modality === "spoken_transcript" ? [] : deterministicLanguageCorrections(source, primaryWritingPartId(task), task);
+  const rejectedCorrections = (Array.isArray(result.corrections) ? result.corrections : [])
+    .filter((correction) => isSemanticTaskRewrite(correction, task));
+  const acceptedCorrections = (Array.isArray(result.corrections) ? result.corrections : [])
+    .filter((correction) => !isSemanticTaskRewrite(correction, task));
+  const safeCorrections = mergeCorrections(acceptedCorrections, deterministicCorrections);
   const structured = readStructuredTask(result);
   const currentA1123 = task.level === "A1" && task.assignmentKey === "A1-12.3"
     && task.taskVersion === "A1-12.3-INVITATION-COURSE-V2";
@@ -1132,8 +1165,8 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     ? localRecoveredWritingScore
     : currentWritingScore;
   const recoveredSuspiciousZero = suspiciousZeroWriting && effectiveWritingScore > 0;
-  const prunedFeedback = pruneResolvedTaskClaims(result.feedback, taskPointEvidence);
-  const prunedImprovementSummary = pruneResolvedTaskClaims(result.improvementSummary, taskPointEvidence);
+  const prunedFeedback = pruneResolvedTaskClaims(removeSemanticRewriteAdvice(result.feedback, rejectedCorrections), taskPointEvidence);
+  const prunedImprovementSummary = pruneResolvedTaskClaims(removeSemanticRewriteAdvice(result.improvementSummary, rejectedCorrections), taskPointEvidence);
   const studentLanguageFeedback = sanitizeStudentWritingFeedback(prunedFeedback, taskPointEvidence);
   const studentLanguageImprovement = sanitizeStudentWritingFeedback(prunedImprovementSummary, taskPointEvidence);
   const canonicalTaskFeedback = buildCanonicalStudentTaskFeedback(taskPointEvidence, missingTaskPoints, total);
@@ -1145,7 +1178,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
   ]);
   const studentImprovementSummary = joinStudentFeedback([
     studentLanguageImprovement,
-    buildCanonicalStudentImprovement(missingTaskPoints),
+    buildCanonicalStudentImprovement(missingTaskPoints, task),
     canonicalFormatFeedback,
   ]);
   const finalizeWritingResult = (nextResult) => enforceA2B1WritingConsistency({
@@ -1180,7 +1213,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
         taskCompletion: semanticTask ? { completed, total, missing: [] } : result.taskCompletion,
         ...(semanticTask ? { missingTaskPoints: [] } : {}),
         taskPointEvidence,
-        corrections: mergeCorrections(result.corrections, deterministicCorrections),
+        corrections: safeCorrections,
         writingDimensions: dimensions,
         reviewReasons: mergeReviewReasons(baseReviewReasons, contradictionReviewReasons(contradictions)),
         feedback: studentFeedback,
@@ -1216,7 +1249,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
       taskCompletion: { completed, total, missing: [] },
       missingTaskPoints: [],
       taskPointEvidence,
-      corrections: mergeCorrections(result.corrections, deterministicCorrections),
+      corrections: safeCorrections,
       writingDimensions: dimensions,
       reviewReasons: mergeReviewReasons(baseReviewReasons, contradictionReviewReasons(contradictions)),
       feedback: studentFeedback,
@@ -1308,7 +1341,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     missingTaskPoints,
     partialTaskPoints: partialTaskPoints.map((point) => ({ label: point.label, missingDetails: point.missingDetails })),
     taskPointEvidence,
-    corrections: mergeCorrections(result.corrections, deterministicCorrections),
+    corrections: safeCorrections,
     writingDimensions: dimensions,
     reviewReasons: mergeReviewReasons(
       verifiedA1Omission
