@@ -2,19 +2,19 @@
 export const MUSIC_QUESTION_SEEDS_A2 = Object.freeze([
   [
     "A2-1.1",
-    "Wo beginnt das Gespräch mit Clara?",
-    "In einem Café.",
-    "Welchen Ort empfiehlt Clara?",
-    "Den Park am See.",
-    "Worüber sprichst du gern mit neuen Menschen?"
+    "Wo treffen sich die beiden Personen am Freitagabend?",
+    "In einem Restaurant.",
+    "Was bestellen sie während ihres Gesprächs?",
+    "Pizza und etwas zu trinken.",
+    "Worüber sprichst du gern, wenn du jemanden neu kennenlernst?"
   ],
   [
     "A2-1.2",
-    "Wie sieht die neue Kollegin Lea aus?",
-    "Sie trägt eine Brille und hat kurze braune Haare.",
-    "Was möchte die erzählende Person mit Lea probieren?",
-    "Tennis spielen.",
-    "Welche Eigenschaften sind dir bei Kollegen wichtig?"
+    "Wie heißt die Mutter, und welche Augenfarbe hat sie?",
+    "Sie heißt Maria und hat braune Augen.",
+    "Wo arbeitet Maria?",
+    "Im Krankenhaus.",
+    "Wie würdest du deine Mutter oder eine andere wichtige Person beschreiben?"
   ],
   [
     "A2-1.3",
