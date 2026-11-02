@@ -29,7 +29,10 @@ export function verifiedRecordedLyrics(pack, track) {
   const lines = lyricLines(pack.lyrics);
   const cues = validateLyricCues(pack.cues, lines);
   if (!lines.length || cues.length !== lines.length) return null;
-  return {objectKey:track.objectKey,lyrics:pack.lyrics,cues};
+  return {objectKey:track.objectKey,lyrics:pack.lyrics,cues,
+    ...(pack.referenceOnly ? {referenceOnly:true} : {}),
+    ...(pack.transcriptionStatus==='automatic' ? {transcriptionStatus:'automatic'} : {}),
+    ...(pack.timingStatus==='estimated' ? {timingStatus:'estimated'} : {})};
 }
 
 const LESSON_CHECKS = {

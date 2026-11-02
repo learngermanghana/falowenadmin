@@ -76,3 +76,30 @@ test('new exact recording lyrics replace an older draft even before timestamps e
   assert.ok([...document.querySelectorAll('.lesson-song-lyrics button')].every(b=>b.disabled));
  }finally{await act(async()=>root.unmount());dom.window.close();}
 });
+
+for(const [level,day,assignmentKey,Component] of [['A1',6,'A1-2.3',Published],['B1',25,'B1-8.25',Linked]]){
+ test(`${level} automatic transcript keeps draft warnings while its real cues highlight lines`,async()=>{
+  const dom=new JSDOM('<div id="root"></div>',{url:'https://admin.falowen.app'});
+  Object.assign(globalThis,{window:dom.window,document:dom.window.document,localStorage:dom.window.localStorage,IS_REACT_ACT_ENVIRONMENT:true});
+  dom.window.matchMedia=()=>({matches:true});dom.window.HTMLElement.prototype.scrollTo=function(){};
+  const id=`r2-${level.toLowerCase()}-day-${String(day).padStart(2,'0')}-estimated`;
+  const objectKey=`music/${level.toLowerCase()}/day-${String(day).padStart(2,'0')}/Test.mp3`;
+  const lyrics='Wir lernen zusammen.\nEin neuer Tag beginnt.';
+  const pack={objectKey,lyrics,referenceOnly:true,transcriptionStatus:'automatic',timingStatus:'estimated',
+    cues:[{text:'Wir lernen zusammen.',start:4,end:6},{text:'Ein neuer Tag beginnt.',start:9,end:12}]};
+  globalThis.fetch=async url=>({ok:true,json:async()=>String(url).includes('attendance-music-library')
+    ?{ok:true,tracks:[{id,objectKey,title:'Test',level,day,autoDiscovered:true,coursebook:true,audioUrl:'https://www.falowen.app/api/music?track='+id}]}
+    :pack});
+  const root=createRoot(document.getElementById('root'));
+  try{
+   await act(async()=>root.render(React.createElement(Component,Component===Published
+    ?{assignmentKey,courseDay:day}:{music:{level,day,title:'Test',musicLibraryUrl:`https://music.falowen.app/?level=${level}&day=${day}`}})));
+   assert.match(document.body.textContent,/AUTOMATISCHER TRANSKRIPTENTWURF/);
+   await act(async()=>[...document.querySelectorAll('button')].find(b=>b.textContent.includes('2 · Liedtext')).click());
+   assert.equal(document.querySelector('input[type=checkbox]').disabled,false);
+   const audio=document.querySelector('audio');
+   await act(async()=>{audio.currentTime=10;audio.dispatchEvent(new dom.window.Event('timeupdate',{bubbles:true}));});
+   assert.equal(document.querySelector('[aria-current="true"]')?.dataset.line,'1');
+  }finally{await act(async()=>root.unmount());dom.window.close();}
+ });
+}

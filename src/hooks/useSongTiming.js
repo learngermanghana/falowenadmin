@@ -36,7 +36,10 @@ export default function useSongTiming(song) {
       // songwriting draft merely because timestamps have not been added.
       if (data?.objectKey === objectKey && typeof data.lyrics === 'string' &&
           recordedLyrics.trim() && recordedLyrics.length <= 60000) {
-        setRecordedPack({objectKey, lyrics:recordedLyrics});
+        setRecordedPack({objectKey, lyrics:recordedLyrics,
+          referenceOnly:data.referenceOnly===true,
+          transcriptionStatus:data.transcriptionStatus,
+          timingStatus:data.timingStatus});
         const saved = readSongCues(recording);
         setCues(saved.length === lyricLines(recordedLyrics).length ? saved : checked);
       }
@@ -61,5 +64,5 @@ export default function useSongTiming(song) {
       return true;
     } catch { return false; }
   }, [objectKey, displayLyrics]);
-  return [cues, save, displayLyrics];
+  return [cues, save, displayLyrics,recordedPack?.objectKey===objectKey?recordedPack:null];
 }

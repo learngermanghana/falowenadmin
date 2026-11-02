@@ -101,7 +101,7 @@ test('A2 Day 19 and Day 20 use the real Day 18 player design, lyrics and MCQs', 
     assert.ok(day18.includes(selector), selector);
   }
   assert.match(player, /<audio key=\{track\.objectKey\}/);
-  assert.match(player, /<LessonSongLyrics song=\{song\} cues=\{verified \? pack\.cues : \[\]\}/);
+  assert.match(player, /<LessonSongLyrics song=\{song\} cues=\{synchronized \? pack\.cues : \[\]\}/);
   assert.match(player, /recordedSongQuestions\(displayText,day,level\)/);
   assert.match(player, /music-lyrics\?key=/);
   assert.match(player, /Referenztext · noch nicht mit dieser MP3 abgeglichen/);
