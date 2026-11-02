@@ -84,14 +84,14 @@ export default function SocialPhotoGallery({ onSelect, activeId = "", defaultOpe
   return (
     <details open={defaultOpen} style={{ border: "1px solid #dbe3ed", borderRadius: 12, background: "#f8fafc", padding: 12 }}>
       <summary style={{ cursor: "pointer", fontWeight: 800 }}>Built-in photo gallery · {SOCIAL_PHOTO_GALLERY.length} fresh photos · {unusedCount} unused</summary>
-      <p style={{ ...small, margin: "9px 0" }}>New study, student, online class and Germany backgrounds for Falowen posters. Choose one to apply it automatically. Free Pexels photos; no upload or API key required.</p>
+      <p style={{ ...small, margin: "9px 0" }}>African-centred students, learning groups, tutors and online classes, including real scenes from Ghana and Africa. Choose a picture for your Falowen poster. No upload or API key required.</p>
       <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, margin: "8px 0" }}>
         <input type="checkbox" checked={unusedOnly} onChange={event => setUnusedOnly(event.target.checked)} />
         Show only unused pictures ({unusedCount} remaining)
       </label>
       <label style={{ display: "grid", gap: 5, fontSize: 13, fontWeight: 650 }}>
         Find a photo
-        <input aria-label="Search built-in photos" value={query} onChange={event => setQuery(event.target.value)} placeholder="Students, studying, Berlin…" style={fieldStyle} />
+        <input aria-label="Search built-in photos" value={query} onChange={event => setQuery(event.target.value)} placeholder="Ghana, students, online class…" style={fieldStyle} />
       </label>
       <div role="group" aria-label="Photo categories" style={{ display: "flex", flexWrap: "wrap", gap: 6, margin: "10px 0" }}>
         {SOCIAL_PHOTO_CATEGORIES.map(name => (
@@ -132,7 +132,7 @@ export default function SocialPhotoGallery({ onSelect, activeId = "", defaultOpe
       <p style={{ ...small, marginBottom: 0 }}>
         Used/unused labels are saved only in this browser and do not change published posts.
         Pexels photos are free for use in original branded designs; credit is appreciated.
-        Models do not endorse Falowen. Do not redistribute unaltered photos.
+        These are illustrative stock photos, not actual Falowen students or staff. Models do not endorse Falowen. Do not redistribute unaltered photos.
         {" "}<a href={SOCIAL_PHOTO_LICENSE_URL} target="_blank" rel="noopener noreferrer">Read the Pexels license ↗</a>
       </p>
     </details>
