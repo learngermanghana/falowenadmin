@@ -654,7 +654,13 @@ function pruneResolvedWritingReviewReasons(existing = [], {
 } = {}) {
   return (Array.isArray(existing) ? existing : []).filter((item) => {
     const code = clean(typeof item === "string" ? "" : item?.code).toLowerCase();
-    if (!missingTaskPoints.length && code === "missing_task_points") return false;
+    // An earlier keyword-only canonical check may have generated both a
+    // missing-point warning and a contradiction with the examiner's full-credit
+    // assessment. Do not retain those derived warnings after re-evaluation
+    // confirms all communicative points; preserve independent examiner disputes.
+    if (!missingTaskPoints.length && [
+      "missing_task_points", "task_completion_conflict", "writing_score_task_conflict",
+    ].includes(code)) return false;
     if (!genreMismatch && code === "writing_text_type_mismatch") return false;
     if (!wrongRegister && code === "writing_register_mismatch") return false;
     return true;
