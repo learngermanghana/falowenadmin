@@ -204,3 +204,11 @@ and can be retried. The learner music-library API must allow the Admin browser
 origin; both repositories require deployment for this fix. Selecting a published
 recording loads its exact lyric/timing metadata; uploading a local MP3 alone
 does not identify it as a published recording.
+
+## B1 Day 2 video English — 2 November 2026
+
+The video exporter recognizes the B1 Day 2 English preset by level, day and
+all 17 exact German lines. The display title is not a translation identity:
+`Freundschaft am Fluss` and the earlier `Die Bank am Fluss` title both retain
+the matching translation. Changed German lines or a different level/day do
+not inherit it. No recording title, audio or timing is changed.

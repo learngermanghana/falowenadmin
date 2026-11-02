@@ -77,9 +77,10 @@ const B1_DAY2_ENGLISH=[
   ["Manche Freundschaften finden zurück.","Some friendships find their way back."],
   ["Bei Falowen erzähle ich, was Freundschaft für mich bedeutet.","At Falowen I explain what friendship means to me."],
 ];
-export function presetVideoEnglish(lyrics, title, level, day) {
+export function presetVideoEnglish(lyrics, _title, level, day) {
   const lines=videoLyricLines(lyrics);
-  if(String(title).trim()!=="Die Bank am Fluss" || String(level).toUpperCase()!=="B1" || Number(day)!==2 ||
+  // Display titles may change; the level, day and every German line identify this translation.
+  if(String(level).toUpperCase()!=="B1" || Number(day)!==2 ||
      lines.length!==B1_DAY2_ENGLISH.length ||
      lines.some((line,i)=>line!==B1_DAY2_ENGLISH[i][0]))return "";
   return B1_DAY2_ENGLISH.map(pair=>pair[1]).join("\n");
