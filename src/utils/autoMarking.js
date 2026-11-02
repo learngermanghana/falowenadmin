@@ -3,7 +3,7 @@ import { allowsConnectorAssessment } from "./a1ConnectorPolicy.js";
 import { stripMarkingEmojis } from "./markingFeedbackText.js";
 import { selectVersionedObjectiveReferenceEntry } from "./objectiveMarking.js";
 
-const PART_IDS = ["teil1", "teil2", "teil3", "teil4", "unknown"];
+const PART_IDS = ["teil1", "teil2", "teil3", "teil4", "teil5", "unknown"];
 const WRITING_CONFIDENCE_THRESHOLD = 0.75;
 const OBJECTIVE_OPTION_LETTERS = "ABCDEFX";
 
@@ -97,6 +97,7 @@ function findPartId(value = "") {
   if (/\bteil\s*(?:2|zwei|ii)\b|\bpart\s*(?:2|two|ii)\b|\bschreiben\b|\bwriting\b/.test(normalized)) return "teil2";
   if (/\bteil\s*(?:3|drei|iii)\b|\bpart\s*(?:3|three|iii)\b|\blesen\b|\breading\b/.test(normalized)) return "teil3";
   if (/\bteil\s*(?:4|vier|iv)\b|\bpart\s*(?:4|four|iv)\b|\bhoren\b|\bhoeren\b|\blistening\b/.test(normalized)) return "teil4";
+  if (/\bteil\s*(?:5|funf|fuenf|v)\b|\bpart\s*(?:5|five|v)\b/.test(normalized)) return "teil5";
   return "unknown";
 }
 
@@ -105,15 +106,15 @@ function splitSubmissionIntoParts(submissionText = "") {
   if (!text) return [{ partId: "unknown", title: "Unknown", text: "", confidence: 0 }];
 
   // Preserve same-line payloads instead of swallowing them into the heading.
-  if (/^\s*(?:teil|tiel|part)\s*[1-4]\b/i.test(text)
-      && /\b(?:teil|tiel|part)\s*[1-4](?:\s+(?:\d+\s*[).:]|hallo\b|liebe\w*\b|sehr\s+geehrt)|\s*·\s*(?:lesen|h[oö]ren|hoeren)\b)/i.test(text)) {
+  if (/^\s*(?:teil|tiel|part)\s*[1-5]\b/i.test(text)
+      && /\b(?:teil|tiel|part)\s*[1-5](?:\s+(?:\d+\s*[).:]|hallo\b|liebe\w*\b|sehr\s+geehrt)|\s*·\s*(?:lesen|h[oö]ren|hoeren)\b)/i.test(text)) {
     return parseSubmissionSections(text).map(section => ({
       partId: section.partId === "main" ? "unknown" : section.partId,
       title: section.heading || "Unlabelled submission", text: section.text, confidence: 0.9,
     }));
   }
 
-  const markerRegex = /(?:^|\n)\s*((?:teil|part)\s*(?:[1-4]|iv|iii|ii|i|eins|zwei|drei|vier|one|two|three|four)\b[^\n]*|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\b[^\n]*)\s*:?\s*(?=\n|$)/gi;
+  const markerRegex = /(?:^|\n)\s*((?:teil|part)\s*(?:[1-5]|v|iv|iii|ii|i|eins|zwei|drei|vier|fuenf|funf|one|two|three|four|five)\b[^\n]*|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\b[^\n]*)\s*:?\s*(?=\n|$)/gi;
   const markers = [];
   let match;
   while ((match = markerRegex.exec(text))) {
@@ -465,7 +466,7 @@ function extractObjectiveEntries(referenceAnswers = {}, path = []) {
 
 function extractReferenceTextForPart(text = "", partId = "unknown") {
   const lines = String(text || "").split(/\r?\n/);
-  const markerPattern = /^\s*((?:teil|part)\s*(?:[1-4]|eins|zwei|drei|vier|one|two|three|four)\b|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\b)\s*:?[ \t]*(.*)$/i;
+  const markerPattern = /^\s*((?:teil|part)\s*(?:[1-5]|eins|zwei|drei|vier|one|two|three|four)\b|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\b)\s*:?[ \t]*(.*)$/i;
   let currentPart = "unknown";
   let sawPartMarker = false;
   const selected = [];
@@ -1188,7 +1189,7 @@ function getReferenceObjectivePartIds(referenceEntry = {}) {
   }
   const textSources = [referenceEntry.answers, referenceEntry.answerKeys, referenceEntry.key].filter((value) => typeof value === "string");
   for (const text of textSources) {
-    const matches = String(text).match(/\b(?:teil|part)\s*(?:[1-4]|eins|zwei|drei|vier|one|two|three|four)\b|\b(?:lesen|h[oö]ren|hoeren|reading|listening)\b/gi) || [];
+    const matches = String(text).match(/\b(?:teil|part)\s*(?:[1-5]|eins|zwei|drei|vier|one|two|three|four)\b|\b(?:lesen|h[oö]ren|hoeren|reading|listening)\b/gi) || [];
     matches.map(findPartId).filter((partId) => partId !== "unknown").forEach((partId) => partIds.push(partId));
   }
   return [...new Set(partIds)].filter((partId) =>
