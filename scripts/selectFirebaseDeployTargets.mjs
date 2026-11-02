@@ -52,6 +52,18 @@ export function selectFirebaseDeployTargets({ changedPaths, predeployPaths = [],
   // specifically when the only changed function sources are its route registration
   // and the new lyric-handler module. Any other function modification remains full.
   const changedFunctionPaths = changedPaths.filter(path => path.startsWith("functions/"));
+  // New student practice routes only extend the shared API, not background workers.
+  if (changedFunctionPaths.includes("functions/musicPractice.js")
+    && changedFunctionPaths.every(path => ["functions/index.js", "functions/musicPractice.js"].includes(path))
+    && changedPaths.every(path =>
+      ["functions/index.js", "functions/musicPractice.js", "src/pages/MusicAnalyticsPage.jsx",
+       "src/pages/MusicAnalyticsPage.css", "src/components/StudentMusicPracticePanel.jsx",
+       "src/services/musicPracticeService.js", "scripts/selectFirebaseDeployTargets.mjs",
+       "docs/music-analytics.md", ".github/workflows/music-analytics.yml"].includes(path)
+       || path.startsWith("tests/"))
+    && !changedPaths.some(path => predeploy.has(path))) {
+    return { mode: "targeted", targets: ["api"], reason: "Only authenticated student practice routes were added to API." };
+  }
   if (changedFunctionPaths.includes("functions/musicStudioLyrics.js")
     && changedFunctionPaths.every(path => path === "functions/index.js" || path === "functions/musicStudioLyrics.js")
     && changedPaths.every(path =>
