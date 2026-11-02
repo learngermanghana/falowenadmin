@@ -43,3 +43,14 @@
 .music-analytics-footnote{font-size:12px;color:#67768e;line-height:1.7}
 .music-analytics-back{margin:20px 0}.music-analytics-back a{color:#3e5cc4}
 @media(max-width:800px){.music-analytics-columns{grid-template-columns:1fr}.music-analytics-page{padding:16px 10px 40px}.music-analytics-panel{padding:16px}}
+
+.music-analytics-practice-header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:14px;margin:4px 0 18px}
+.music-analytics-practice-header h2{margin:0 0 5px;font-size:20px;color:#1b304d}
+.music-analytics-practice-header p{margin:0;max-width:740px;font-size:13px;color:#576882;line-height:1.6}
+.music-analytics-practice-header button{padding:10px 14px;background:#fff;border:1px solid #d9e1ee;border-radius:10px;font-size:13px;color:#273e5e;cursor:pointer}
+.music-analytics-practice-header button:disabled{opacity:.55}
+.music-practice-panel .music-analytics-table-wrap table{min-width:670px}
+.music-practice-panel .music-analytics-table-wrap td:first-child{min-width:145px}
+.music-practice-panel .music-analytics-table-wrap td:last-child{text-align:left;font-weight:400}
+.music-practice-panel .music-analytics-table-wrap td strong{font-weight:700}
+.music-practice-panel .music-analytics-table-wrap td small{overflow-wrap:anywhere}

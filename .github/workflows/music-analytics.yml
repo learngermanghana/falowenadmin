@@ -5,13 +5,17 @@ on:
     branches: [main]
     paths:
       - 'functions/musicAnalytics.js'
+      - 'functions/musicPractice.js'
       - 'functions/index.js'
       - 'functions/package.json'
       - 'functions/package-lock.json'
       - 'src/pages/MusicAnalyticsPage.*'
+      - 'src/components/StudentMusicPracticePanel.jsx'
+      - 'src/services/musicPracticeService.js'
       - 'src/services/musicAnalyticsService.js'
       - 'src/App.jsx'
       - 'tests/music-analytics.test.js'
+      - 'tests/student-music-practice.test.js'
       - '.github/workflows/music-analytics.yml'
 
 jobs:
@@ -27,5 +31,6 @@ jobs:
       - run: npm ci
         working-directory: functions
       - run: node --check functions/musicAnalytics.js
-      - run: node --test tests/music-analytics.test.js
+      - run: node --check functions/musicPractice.js
+      - run: node --test tests/music-analytics.test.js tests/student-music-practice.test.js
       - run: npm run build
