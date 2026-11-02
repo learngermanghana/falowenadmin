@@ -81,3 +81,91 @@ test("A2-7.20 repairs the incorrect 1/3 task-completion assessment without false
   assert.equal(result.reviewReasons.some((reason) => reason.code === "missing_task_points"), false);
   assert.doesNotMatch(result.feedback, /1 of 3|problem is missing/i);
 });
+
+const leonardSubmission = [
+  "TEIL 2",
+  "Sehr geehrte Damen und Herren,",
+  "Ich wende mich an Sie, weil ich vor zwei Tagen ein Handy gekauft habe.",
+  "Leider es funktioniert nicht.",
+  "Ich habe das Gerät bereit neu gestartet.",
+  "Ich möchte wissen, Könnten Sie das Produkt bitte umtauschen?",
+  "Wenn das möglichkeit ist, hätte ich mein Geld zurück?",
+  "Ihr freue mich auf Antwort.",
+  "Mit freundlichen Grüßen, Leo Mark.",
+  "TEIL 3",
+  "1. B 2. C 3. B 4. A 5. B",
+  "TEIL 4",
+  "1. B 2. C 3. C 4. C 5. A",
+].join("\n");
+
+test("A2-7.20 recognises Leonard's formal contact, phone purchase, defect and exchange request", () => {
+  const evidence = evaluateWritingTaskEvidence(task, leonardSubmission);
+  assert.deepEqual(evidence.map(({ status }) => status), ["met", "met", "met"]);
+  assert.deepEqual(missingTaskPointsFromEvidence(evidence), []);
+  assert.match(evidence[0].evidence, /wende mich an Sie.*Handy gekauft/i);
+  assert.match(evidence[1].evidence, /funktioniert nicht/i);
+  assert.match(evidence[2].evidence, /umtauschen/i);
+});
+
+test("A2-7.20 credits an implicit complaint across sentences without special opening vocabulary", () => {
+  const examples = [
+    "Ich habe vor zwei Tagen ein Handy gekauft. Leider funktioniert es nicht.",
+    "Ich wende mich an Sie, weil ich Schuhe gekauft habe. Die Schuhe sind zu klein.",
+    "Ich reklamiere das defekte Handy.",
+  ];
+  for (const sample of examples) {
+    const evidence = evaluateWritingTaskEvidence(task, sample);
+    assert.equal(evidence[0].status, "met", sample);
+  }
+});
+
+test("A2-7.20 does not assume that a purchase or negated defect is a complaint", () => {
+  const examples = [
+    "Ich habe ein Handy gekauft. Es funktioniert gut.",
+    "Ich habe ein Handy gekauft. Es ist nicht defekt.",
+    "Ich möchte ein Handy kaufen. Können Sie mir bitte helfen?",
+  ];
+  for (const sample of examples) {
+    const evidence = evaluateWritingTaskEvidence(task, sample);
+    assert.equal(evidence[0].status, "missing", sample);
+  }
+});
+
+test("A2-7.20 repairs Leonard's false missing-point warnings but keeps genuine examiner review", () => {
+  const result = applyQuestionAwareWritingGuard({
+    level: "A2",
+    assignmentKey: "A2-7.20",
+    objectiveScore: 100,
+    objectiveCorrect: 10,
+    objectiveTotal: 10,
+    score: 90,
+    finalScore: 90,
+    writingScore: 80,
+    writingScorePercent: 80,
+    taskCompletion: { completed: 3, total: 3, missing: [] },
+    missingTaskPoints: ["Explain why you are writing or complaining and what you bought"],
+    confidence: 0.84,
+    feedback: "The opening clearly identifies both the complaint and the product. You covered 2 of 3 task points; Explain why you are writing or complaining and what you bought is missing. Correct Leider es funktioniert nicht to Leider funktioniert es nicht.",
+    reviewReasons: [
+      { code: "missing_task_points", message: "Required writing points are missing: Explain why you are writing or complaining and what you bought.", source: "question_aware_writing" },
+      { code: "task_completion_conflict", message: "AI taskCompletion reports complete work while canonical task evidence shows missing points.", source: "question_aware_writing" },
+      { code: "second_examiner_disagreement", message: "Independent examiners require review (writing delta: 21).", source: "second_examiner" },
+    ],
+    secondExaminer: { requiresTutorReview: true, writingScoreDelta: 21 },
+    status: "needs_review",
+    shouldSendAutomatically: false,
+  }, {
+    referenceEntry: { assignmentKey: "A2-7.20", level: "A2", writingParts: ["teil2"], aiGradedParts: ["teil2"] },
+    submission: { assignmentKey: "A2-7.20", level: "A2" },
+  }, leonardSubmission);
+
+  assert.deepEqual(result.taskPointEvidence.map(({ status }) => status), ["met", "met", "met"]);
+  assert.equal(result.taskCompletion.completed, 3);
+  assert.deepEqual(result.missingTaskPoints, []);
+  assert.doesNotMatch(result.feedback, /2 of 3|is missing|still missing/i);
+  assert.match(result.feedback, /Leider funktioniert es nicht/i);
+  assert.equal(result.reviewReasons.some(({ code }) => code === "missing_task_points" || code === "task_completion_conflict"), false);
+  assert.equal(result.reviewReasons.some(({ code }) => code === "second_examiner_disagreement"), true);
+  assert.equal(result.shouldSendAutomatically, false);
+  assert.equal(result.status, "needs_review");
+});
