@@ -9,6 +9,7 @@ import {
 } from "../utils/liveClassScheduleRules.js";
 import { defaultTuitionForLevel, updateClassCohort } from "../services/classCohortUpdateService.js";
 import { deleteClassCohort } from "../services/classDeletionService.js";
+import { applyShortenedCourseEndDate } from "../services/shortenedCourseSessionService.js";
 import { rebuildClassSessionsFromSchedule } from "../services/liveClassService.js";
 import { presenterSessionMinutes } from "../utils/presenterSessionTiming.js";
 
@@ -131,6 +132,26 @@ export default function ClassEditorCard({ klass, onSaved }) {
     }
   }
 
+  async function shortenCourse() {
+    if (!form.endDate || form.endDate < form.startDate) {
+      setMessage("Choose a valid final class date first.");
+      return;
+    }
+    if (!window.confirm(`Finish the timetable on ${form.endDate}? Later scheduled A1 lessons will be retired, their automated check-ins and reminder emails stopped, and existing attendance kept. This applies to ${klass.name || "this class"} only.`)) return;
+    setBusy(true); setMessage("");
+    try {
+      const result = await applyShortenedCourseEndDate({
+        classId: klass.id, endDate: form.endDate, adminId: "class-editor",
+      });
+      setMessage(`Shortened course saved. ${result.retired} outdated future session(s) retired; attendance history preserved and reminders stopped beyond ${result.endDate}.`);
+      await onSaved?.(klass.id);
+    } catch (error) {
+      setMessage(error?.message || "Could not reconcile shortened course sessions.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function removeClass() {
     const className = form.name || klass?.name || klass?.id || "this class";
     if (!window.confirm(`Permanently delete ${className}? This removes the class, its sessions and attendance records.`)) return;
@@ -152,7 +173,7 @@ export default function ClassEditorCard({ klass, onSaved }) {
     }
   }
 
-  const messageIsSuccess = message.startsWith("Class updated") || message.startsWith("Class settings saved") || message.startsWith("Sessions rebuilt successfully");
+  const messageIsSuccess = message.startsWith("Class updated") || message.startsWith("Class settings saved") || message.startsWith("Sessions rebuilt successfully") || message.startsWith("Shortened course saved");
   const endDateWarning = buildClassEndDateMismatchWarning(klass);
   const duplicateDays = duplicateScheduleWeekdays(klass?.scheduleRules || []);
 
@@ -193,6 +214,11 @@ export default function ClassEditorCard({ klass, onSaved }) {
     {message ? <div style={{ padding: 10, borderRadius: 8, background: messageIsSuccess ? "#f0fdf4" : "#fef2f2" }}>{message}</div> : null}
     <button type="submit" disabled={busy}>{busy ? "Saving…" : "Save class changes"}</button>
     <button type="button" disabled={busy} onClick={rebuildSessions}>{busy ? "Saving and rebuilding…" : "Save and rebuild sessions from start date and timetable"}</button>
+    <div style={{ padding: 12, border: "1px solid #dbeafe", borderRadius: 8 }}>
+      <strong>Shortened course / old attendance sessions</strong>
+      <p style={{ margin: "6px 0 10px", fontSize: 13 }}>Set the final date above, then retire sessions scheduled after it. Past attendance is kept, and obsolete lessons stop appearing in Attendance or sending class reminders. This is separate from a normal timetable rebuild.</p>
+      <button type="button" disabled={busy} onClick={shortenCourse}>{busy ? "Updating…" : "Apply final date & retire extra sessions"}</button>
+    </div>
     <div style={{ marginTop: 10, paddingTop: 14, borderTop: "1px solid #fecaca" }}>
       <strong style={{ color: "#991b1b" }}>Danger zone</strong>
       <p style={{ margin: "6px 0 10px", fontSize: 13 }}>Deletion is allowed only after the class end date, when no unfinished sessions or open student contracts remain.</p>
