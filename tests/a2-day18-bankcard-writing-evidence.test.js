@@ -116,3 +116,65 @@ test("A2-7.18 does not cap a fully covered submission or trigger a false second-
   assert.equal(agreement.writingScoreDelta, 0);
   assert.equal(agreement.requiresTutorReview, false);
 });
+
+const victoriaSubmission = [
+  "TEIL 2",
+  "Sehr geehrte Frau Schneider,",
+  "Ich schreibe Ihnen, weil meine Bankkarte seit drei Tagen gesperrt ist.",
+  "Ich möchte wissen, warum meine Karte gesperrt ist.",
+  "Könnten Sie mir Helfen, mein Konto zu überprüfen?",
+  "Welche Dokumente soll ich mitbringen?",
+  "Ich möchte auch fragen, wie lange es dauert.",
+  "Ich freue mich auf Ihre Antwort.",
+  "Mit freundlichen Grüßen",
+  "Victoria Odoom",
+  "TEIL 3",
+  "1. A 2. B 3. B 4. C 5. B",
+  "TEIL 4",
+  "1. B 2. B 3. B 4. A 5. D",
+].join("\n");
+
+test("A2-7.18 distinguishes why a card was blocked from requesting it be unblocked", () => {
+  const evidence = evaluateWritingTaskEvidence(task, victoriaSubmission);
+  assert.deepEqual(evidence.map(({ status }) => status), ["missing", "met", "met"]);
+  assert.deepEqual(missingTaskPointsFromEvidence(evidence), ["Ask whether the blocked card can be unblocked"]);
+});
+
+test("A2-7.18 never rewrites a valid why-question as a grammar correction", () => {
+  const from = "Ich möchte wissen, warum meine Karte gesperrt ist.";
+  const to = "Könnten Sie meine Karte bitte entsperren?";
+  const result = applyQuestionAwareWritingGuard({
+    assignmentKey: "A2-7.18",
+    level: "A2",
+    objectiveScore: 100,
+    objectiveCorrect: 10,
+    objectiveTotal: 10,
+    writingScore: 84,
+    writingScorePercent: 84,
+    score: 92,
+    finalScore: 92,
+    confidence: 0.99,
+    taskCompletion: { completed: 3, total: 3, missing: [] },
+    missingTaskPoints: [],
+    corrections: [
+      { partId: "teil2", from, to, reason: "Ask the bank to unblock the card." },
+      { partId: "teil2", from: "Könnten Sie mir Helfen", to: "Könnten Sie mir helfen", reason: "Lowercase the verb helfen." },
+    ],
+    feedback: 'Well done. Correct “' + from + '” to “' + to + '”. The questions about documents and duration are clear.',
+    status: "marked",
+    shouldSendAutomatically: true,
+  }, {
+    referenceEntry: { assignmentKey: "A2-7.18", level: "A2", writingParts: ["teil2"], aiGradedParts: ["teil2"] },
+    submission: { assignmentKey: "A2-7.18", level: "A2" },
+  }, victoriaSubmission);
+
+  assert.deepEqual(result.taskPointEvidence.map(({ status }) => status), ["missing", "met", "met"]);
+  assert.deepEqual(result.taskCompletion.missing, ["Ask whether the blocked card can be unblocked"]);
+  assert.equal(result.status, "needs_review");
+  assert.equal(result.shouldSendAutomatically, false);
+  assert.equal(result.corrections.some((entry) => entry.from === from), false);
+  assert.equal(result.corrections.some((entry) => /Helfen/.test(entry.from)), true);
+  assert.doesNotMatch(result.feedback, /Correct.*warum.*entsperren/i);
+  assert.match(result.improvementSummary, /keep your valid question.*separate request/i);
+  assert.ok(result.reviewReasons.some((entry) => entry.code === "missing_task_points"));
+});
