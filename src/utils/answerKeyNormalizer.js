@@ -1,6 +1,6 @@
-const PART_ID_PATTERN = /teil\s*[1-4]|part\s*[1-4]|lesen|h[oö]ren|hoeren|schreiben|writing|reading|listening/i;
+const PART_ID_PATTERN = /teil\s*[1-5]|part\s*[1-5]|lesen|h[oö]ren|hoeren|schreiben|writing|reading|listening/i;
 const ANSWER_KEY_PATTERN = /^(?:answer|antwort|frage|aufgabe|task|exercise|question|q|nr\.?)?[\s_-]*\d{1,3}$/i;
-const VALID_PART_IDS = new Set(["main", "teil1", "teil2", "teil3", "teil4"]);
+const VALID_PART_IDS = new Set(["main", "teil1", "teil2", "teil3", "teil4", "teil5"]);
 
 export function safeRegistryId(value) {
   return String(value || "")
@@ -19,6 +19,7 @@ export function inferPartId(value = "") {
   if (/teil\s*2|part\s*2|schreiben|writing/.test(normalized)) return "teil2";
   if (/teil\s*3|part\s*3|lesen|reading/.test(normalized)) return "teil3";
   if (/teil\s*4|part\s*4|horen|hoeren|listening/.test(normalized)) return "teil4";
+  if (/teil\s*5|part\s*5/.test(normalized)) return "teil5";
   if (/teil\s*1|part\s*1/.test(normalized)) return "teil1";
   return "unknown";
 }
