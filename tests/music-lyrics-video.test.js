@@ -13,7 +13,7 @@ import { A2_DAY21_FINAL_RECORDING } from "../src/data/a2Day21FinalRecording.js";
 import { A2_DAY22_FINAL_RECORDING } from "../src/data/a2Day22FinalRecording.js";
 import { getReusableSongDraft } from "../src/data/reusableMusicSongbook.js";
 import { validateLyricCues } from "../src/utils/songLyrics.js";
-import { videoLyricLines, lyricScenes, findLyricScene, activeVideoLyricIndex, videoEnglishLines, presetVideoEnglish, videoRecorderFormat, timedLyricsPack, verifiedPublishedVideoTiming, musicVideoSocialCopy } from "../src/utils/musicLyricsVideo.js";
+import { videoLyricLines, lyricScenes, findLyricScene, activeVideoLyricIndex, videoEnglishLines, presetVideoEnglish, videoRecorderFormat, VIDEO_EXPORT_PRESETS, timedLyricsPack, verifiedPublishedVideoTiming, musicVideoSocialCopy } from "../src/utils/musicLyricsVideo.js";
 
 test("video lyrics use at most three meaningful lines per timed screen", () => {
   const text="[Verse 1]\nHallo Welt\nIch bin da\nDu bist hier\n[Chorus]\nWir lernen\nHeute und morgen";
@@ -602,4 +602,29 @@ test("A1 Day 22 Arzttermin lyrics and reviewed-file gate match the uploaded MP3"
   const seeds=readFileSync(new URL("../src/data/musicQuestionSeedsA1.js",import.meta.url),"utf8");
   assert.match(seeds,/Um wie viel Uhr hat die Person einen Arzttermin/);
   assert.match(seeds,/Viel Wasser trinken und heute zu Hause bleiben/);
+});
+
+test("YouTube uses a true 16:9 canvas and TikTok/Shorts retain vertical 9:16",()=>{
+  assert.equal(VIDEO_EXPORT_PRESETS.youtube.width,1280);
+  assert.equal(VIDEO_EXPORT_PRESETS.youtube.height,720);
+  assert.equal(VIDEO_EXPORT_PRESETS.tiktok.width,720);
+  assert.equal(VIDEO_EXPORT_PRESETS.tiktok.height,1280);
+  assert.equal(VIDEO_EXPORT_PRESETS.square.width,VIDEO_EXPORT_PRESETS.square.height);
+  const video=readFileSync(new URL("../src/components/MusicLyricsVideoStudio.jsx",import.meta.url),"utf8");
+  assert.match(video,/useState\("youtube"\)/);
+  assert.match(video,/id="music-video-aspect"/);
+  assert.match(video,/width={videoPreset.width} height={videoPreset.height}/);
+  assert.match(video,/exportCanvas.width=videoPreset.width/);
+  assert.match(video,/videoPreset.suffix/);
+  assert.match(video,/videoPresetId\]/);
+});
+test("reviewed timestamps save straight to the R2 sidecar via an owner token",()=>{
+  const video=readFileSync(new URL("../src/components/MusicLyricsVideoStudio.jsx",import.meta.url),"utf8");
+  const service=readFileSync(new URL("../src/services/musicStudioService.js",import.meta.url),"utf8");
+  assert.match(video,/Save Timing to Falowen · Cloudflare R2/);
+  assert.match(video,/savePublishedMusicTiming\(payload\)/);
+  assert.match(video,/timingReview\|\|!completeCues/);
+  assert.match(service,/api\/music-lyrics-save/);
+  assert.match(service,/auth.currentUser.getIdToken/);
+  assert.match(video,/Download matching \.lyrics.json/);
 });
