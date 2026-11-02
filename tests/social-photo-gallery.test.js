@@ -8,14 +8,18 @@ import {
 
 const page = path => readFileSync(new URL("../" + path, import.meta.url), "utf8");
 
-test("gallery uses a small fixed collection of source-attributed, commercially usable Pexels photos", () => {
-  assert.equal(SOCIAL_PHOTO_GALLERY.length, 20, "replace the 9 used photos with 20 fresh choices");
+test("gallery has 20 source-attributed, African-centred Pexels photos", () => {
+  assert.equal(SOCIAL_PHOTO_GALLERY.length, 20, "keep twenty African-centred options for future posters");
   assert.equal(new Set(SOCIAL_PHOTO_GALLERY.map(photo => photo.photoId)).size, 20);
   assert.deepEqual(
     SOCIAL_PHOTO_CATEGORIES,
-    ["All", "Students", "Online learning", "Study spaces", "Germany"],
+    ["All", "Ghana & Africa", "Students", "Online learning", "Teachers"],
   );
-  const replacedPhotoIds = [6146987, 5940708, 6281831, 5965559, 895465, 17556501, 606539, 15348624, 34220597];
+  const replacedPhotoIds = [
+    16420458,8199165,29558433,5940844,6281829,6238120,6549361,
+    4492189,7594214,8055482,8472882,20593094,6446245,7670739,5538622,
+    37120347,12903730,4213371,18899163,21316226,
+  ];
   for (const id of replacedPhotoIds) {
     assert.equal(SOCIAL_PHOTO_GALLERY.some(photo => photo.photoId === id), false, "old photo " + id + " removed");
   }
@@ -31,7 +35,10 @@ test("gallery uses a small fixed collection of source-attributed, commercially u
 
 test("gallery filters by type and words, and image sizes are bounded", () => {
   assert.equal(filterSocialPhotos("Students", "").every(x => x.category === "Students"), true);
-  assert.equal(filterSocialPhotos("Germany", "Berlin").length, 2);
+  assert.equal(filterSocialPhotos("Ghana & Africa", "").length, 3);
+  assert.equal(filterSocialPhotos("Online learning", "").length, 5);
+  assert.equal(filterSocialPhotos("Teachers", "").length, 4);
+  assert.ok(filterSocialPhotos("All", "Ghana").length >= 1);
   assert.equal(filterSocialPhotos("All", "not a real category").length, 0);
   assert.match(socialPhotoImageUrl(SOCIAL_PHOTO_GALLERY[0], 999999), /w=1800$/);
   assert.match(socialPhotoImageUrl(SOCIAL_PHOTO_GALLERY[0], 4), /w=240$/);
@@ -52,6 +59,8 @@ test("all three poster editors use the shared, export-safe picker", () => {
   assert.match(picker, /onSelect\(localImage, photo\)/);
   assert.match(picker, /role="alert"/);
   assert.match(picker, /Show only unused pictures/);
+  assert.match(picker, /illustrative stock photos/);
+  assert.match(picker, /including real scenes from Ghana and Africa/);
   assert.match(picker, /Mark used/);
   assert.match(picker, /falowen-social-gallery-used-v1/);
   assert.match(picker, /localStorage\.setItem\(USED_PHOTOS_KEY/);
