@@ -219,10 +219,28 @@ function ruleForPoint(label = "", assignmentKey = "") {
     /\b(?:trainingszeit|training|wann|uhrzeit|tage|stunden)\b/i,
     /\b(?:preis|preise|kosten|wie\s+viel|geb[uü]hr|beitrag)\b/i,
   ];
-  if (/writing or complaining and what you bought/.test(value)) return [
-    /\b(?:beschwerde|reklamation|reklamieren|ich\s+schreibe|problem)\b/i,
-    /\b(?:produkt|ware|artikel|bestellung|handy|telefon|schuhe|jacke|hose|ger[aä]t|computer|laptop|m[oö]bel)\b/i,
-  ];
+  if (/writing or complaining and what you bought/.test(value)) {
+    // Communicative points are about meaning, not one model phrase. Students
+    // may state the purchase and then describe a defect in the next sentence,
+    // without using "Beschwerde", "Problem" or "Ich schreibe".
+    const product = /\b(?:produkt|ware|artikel|bestellung|handy|smartphone|telefon|schuhe?|jacke|hose|ger[aä]t|computer|laptop|tablet|kopfh[oö]rer|m[oö]bel)\b/i;
+    const purchase = /\b(?:gekauft|bestellt|erhalten|bekommen)\b/i;
+    const explicitComplaint = /\b(?:beschwer\w*|reklamier\w*|reklamation)\b/i;
+    const problem = /\b(?:probleme?|kaputt|defekt|besch[aä]digt|falsch(?:e|er|es|en)?|funktioniert\s+nicht|geht\s+nicht|zu\s+(?:klein|gro[ßs]|eng|weit)|passt\s+(?:mir\s+)?nicht|nicht\s+wie\s+(?:bestellt|beschrieben)|gef[aä]llt\s+mir\s+nicht)\b/i;
+    const negatedDefect = /\b(?:nicht\s+(?:kaputt|defekt|besch[aä]digt)|keine?\s+probleme?)\b/i;
+    const rule = (source) => {
+      const hasComplaintReason = sentences(source).some(
+        (sentence) => (explicitComplaint.test(sentence) || problem.test(sentence))
+          && !negatedDefect.test(sentence),
+      );
+      return product.test(source) && hasComplaintReason
+        && (purchase.test(source) || explicitComplaint.test(source));
+    };
+    // Quote the actual purchase/complaint sentence. A greeting is not evidence.
+    rule.evidenceMatcher = (sentence) => product.test(sentence)
+      && (purchase.test(sentence) || explicitComplaint.test(sentence));
+    return rule;
+  }
   if (/ordering and delivery/.test(value)) return [
     /\b(?:bestellen|bestellung|online\s+bestellen|kaufen)\b/i,
     /\b(?:lieferung|liefern|versand|wie\s+lange)\b/i,
