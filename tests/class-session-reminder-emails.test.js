@@ -211,3 +211,35 @@ test("exact class ID and student membership are used before class-name fallback"
   assert.equal(studentBelongsToClass({ classId: "a1-bonn-current" }, current), true);
   assert.equal(studentBelongsToClass({ classId: "a1-bonn-stale" }, current), false);
 });
+
+test("shortened cohorts and graduated classes cannot send old future lesson reminders", () => {
+  const session = {
+    id: "a1-day-23",
+    classId: "a1-berlin",
+    startsAt: "2026-11-02T11:00:00.000Z",
+    status: "scheduled",
+  };
+  const active = {
+    id: "a1-berlin",
+    name: "A1 Berlin Klasse",
+    status: "active",
+    timezone: "Africa/Accra",
+  };
+  const atThirty = new Date("2026-11-02T10:30:00.000Z");
+  assert.equal(findDueSessionReminders({ sessions: [session], classes: [active], now: atThirty }).length, 1);
+  assert.equal(findDueSessionReminders({
+    sessions: [session],
+    classes: [{ ...active, shortenedCourseEndDate: "2026-10-30" }],
+    now: atThirty,
+  }).length, 0);
+  assert.equal(findDueSessionReminders({
+    sessions: [session],
+    classes: [{ ...active, status: "graduated" }],
+    now: atThirty,
+  }).length, 0);
+  assert.equal(findDueSessionReminders({
+    sessions: [session],
+    classes: [{ ...active, shortenedCourseEndDate: "2026-11-02" }],
+    now: atThirty,
+  }).length, 1);
+});

@@ -6,7 +6,7 @@ const BLOCKED_SESSION_STATUSES = new Set([
   "cancelled", "canceled", "completed", "superseded", "deleted",
 ]);
 const BLOCKED_CLASS_STATUSES = new Set([
-  "archived", "inactive", "deleted", "cancelled", "canceled",
+  "archived", "inactive", "deleted", "cancelled", "canceled", "graduated",
 ]);
 
 function text(value) {
@@ -116,6 +116,12 @@ function classIsActive(klass = {}) {
   return !BLOCKED_CLASS_STATUSES.has(comparable(klass.status));
 }
 
+function isAfterShortenedCourseEnd(klass = {}, session = {}) {
+  const cutoff = text(klass.shortenedCourseEndDate);
+  return /^\d{4}-\d{2}-\d{2}$/.test(cutoff)
+    && isoDate(sessionStart(session), text(klass.timezone) || TZ) > cutoff;
+}
+
 async function holidayClosesSession({ db, klass, session }) {
   const timezone = text(klass.timezone) || TZ;
   const date = isoDate(sessionStart(session), timezone);
@@ -131,7 +137,7 @@ async function holidayClosesSession({ db, klass, session }) {
 }
 
 function dueForAutoOpen({ session, klass, now, runtimeConfig }) {
-  if (!isSessionEligible(session) || !classIsActive(klass)) return false;
+  if (!isSessionEligible(session) || !classIsActive(klass) || isAfterShortenedCourseEnd(klass, session)) return false;
   const settings = autoOpenSettings(klass, runtimeConfig);
   if (!settings.enabled) return false;
   const startsAt = sessionStart(session);

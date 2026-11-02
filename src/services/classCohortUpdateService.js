@@ -168,7 +168,10 @@ export async function updateClassCohort(classId, payload) {
     ...normalizedPayload,
     excludedDates: closureDates,
   });
-  const endDate = exactOrCalculatedEndDate(normalizedPayload, calculatedEndDate);
+  const unshortenedEndDate = exactOrCalculatedEndDate(normalizedPayload, calculatedEndDate);
+  const shorter = String(normalizedPayload.shortenedCourseEndDate || "").trim();
+  const endDate = /^\d{4}-\d{2}-\d{2}$/.test(shorter)
+    && shorter < unshortenedEndDate ? shorter : unshortenedEndDate;
   const preparedPayload = { ...normalizedPayload, endDate };
   const repairingDuplicateTimetable = duplicateScheduleWeekdays(current.scheduleRules || []).length > 0;
   const baseResult = normalizedPayload.historicalMode === true

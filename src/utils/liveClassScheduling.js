@@ -155,6 +155,7 @@ export function generateSessionOccurrences({
   totalSessions,
   startDate,
   endDate,
+  shortenedCourseEndDate = "",
   timezone = "Africa/Accra",
   scheduleRules = [],
   excludedDates,
@@ -168,7 +169,9 @@ export function generateSessionOccurrences({
   const sessionLimit = resolveSessionLimit(levelId, totalSessions);
   const excluded = toExcludedDateSet(excludedDates);
   const sessions = [];
-  const finalDate = new Date(`${endDate}T00:00:00.000Z`);
+  const cappedEndDate = /^\d{4}-\d{2}-\d{2}$/.test(String(shortenedCourseEndDate))
+    && shortenedCourseEndDate < endDate ? shortenedCourseEndDate : endDate;
+  const finalDate = new Date(`${cappedEndDate}T00:00:00.000Z`);
 
   for (
     let cursor = new Date(`${startDate}T00:00:00.000Z`);

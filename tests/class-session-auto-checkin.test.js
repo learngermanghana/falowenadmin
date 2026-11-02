@@ -313,3 +313,14 @@ test("automatic opening can be disabled per class", async () => {
   assert.equal(result.opened, 0);
   assert.equal(result.refreshed, 0);
 });
+
+test("graduated and shortened classes do not automatically open stale check-ins", () => {
+  const { klass, session } = fixture();
+  const now = new Date("2026-09-02T18:30:00.000Z");
+  const check = (attributes) => _test.dueForAutoOpen({
+    klass: { ...klass, ...attributes }, session, now, runtimeConfig: {},
+  });
+  assert.equal(check({ shortenedCourseEndDate: "2026-09-01" }), false);
+  assert.equal(check({ shortenedCourseEndDate: "2026-09-02" }), true);
+  assert.equal(check({ status: "graduated" }), false);
+});
