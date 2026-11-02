@@ -195,3 +195,12 @@ Validation: 73 targeted checks pass, including a real attendance-page React DOM 
 - Day 25 is an entirely different 177.120-second warm, guitar-led reggae-pop performance with whistled hook, male lead, answering female vocals and the repeated `Die Reise geht los` refrain. Its user-uploaded MP3 has SHA-256 `84d4697e7c03467ae8bbe2b13e6e8700029f2e3bbb287d1ba9067cea0791fd29`.
 - The old `Ein anderer Tagesablauf` draft has been replaced by a recording-based 49-line transcription and related Hamburg/travel questions. Teacher verification of the lyrics remains important before using word-by-word highlighting; no guessed timestamps were added.
 - The public site at `music.falowen.app` belongs to the separate **learngermanghana/falowenexamtrainer** student repo. Publishing new Admin songbook text alone does **not** refresh its static catalog, learning content or stale timing records. Update both repositories when replacing approved recordings.
+
+## Catalog loading feedback — 2 November 2026
+
+Lyrics Video Studio shows catalog failures, empty results and the loaded song
+count beside Load available Falowen songs. Requests time out after 15 seconds
+and can be retried. The learner music-library API must allow the Admin browser
+origin; both repositories require deployment for this fix. Selecting a published
+recording loads its exact lyric/timing metadata; uploading a local MP3 alone
+does not identify it as a published recording.
