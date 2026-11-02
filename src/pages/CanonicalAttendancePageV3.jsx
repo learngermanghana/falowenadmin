@@ -157,8 +157,18 @@ export default function CanonicalAttendancePageV3() {
         ]);
         if (!active) return;
         const saved = { ...savedByName, ...savedById };
+        const timezone = dashboard.klass.timezone || TIMEZONE;
+        const cutoff = String(dashboard.klass.shortenedCourseEndDate || "").trim();
+        const visibleSessions = dashboard.sessions.filter((session) => {
+          if (session.shortenedCourseSuperseded === true) return false;
+          const status = String(session.status || "scheduled").toLowerCase();
+          if (["scheduled", "rescheduled"].includes(status)
+            && /^\d{4}-\d{2}-\d{2}$/.test(cutoff)
+            && localDate(session.startsAt, timezone) > cutoff) return false;
+          return true;
+        });
         const template = studentTemplate(students);
-        const map = Object.fromEntries(dashboard.sessions.map((session) => {
+        const map = Object.fromEntries(visibleSessions.map((session) => {
           const stored = saved[session.id] || {};
           const ids = session.assignmentIds || session.chapterIds || session.curriculumIds || stored.assignmentIds || [];
           return [session.id, {
@@ -167,10 +177,9 @@ export default function CanonicalAttendancePageV3() {
             students: mergeStudents(template, stored.students || {}),
           }];
         }));
-        const timezone = dashboard.klass.timezone || TIMEZONE;
-        const chosen = chooseSession(dashboard.sessions, timezone, searchParams.get("session") || "");
+        const chosen = chooseSession(visibleSessions, timezone, searchParams.get("session") || "");
         setKlass(dashboard.klass);
-        setSessions(dashboard.sessions);
+        setSessions(visibleSessions);
         setAttendance(map);
         setSelectedId(chosen?.id || "");
       } catch (cause) {
