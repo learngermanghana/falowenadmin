@@ -21,7 +21,10 @@ function firstEvidence(source = "", pattern) {
     return [...new Set(pattern.map((item) => firstEvidence(source, item)).filter(Boolean))].join(" | ");
   }
   if (typeof pattern === "function") {
-    return list.find((sentence) => test(pattern, sentence)) || (test(pattern, source) ? list.slice(0, 2).join(" | ") : "");
+    // A contextual semantic rule can require another sentence (such as a prior
+    // complaint). Quote the request itself rather than the greeting.
+    const evidenceMatcher = typeof pattern.evidenceMatcher === "function" ? pattern.evidenceMatcher : pattern;
+    return list.find((sentence) => test(evidenceMatcher, sentence)) || (test(pattern, source) ? list.slice(0, 2).join(" | ") : "");
   }
   return list.find((sentence) => test(pattern, sentence)) || "";
 }
@@ -330,14 +333,14 @@ function ruleForPoint(label = "", assignmentKey = "") {
     return /\b(?:kaputt|defekt|besch[aä]digt|funktioniert\s+nicht|falsch(?:e|er|es|en)?|zu\s+(?:klein|gro[ßs]|eng|weit)|passen?\s+(?:mir\s+)?nicht|farbe\s+gef[aä]llt\s+mir\s+nicht|nicht\s+wie\s+(?:bestellt|beschrieben)|problem\s+mit)\b/i;
   }
   if (normalizedAssignmentKey === "A2-7.20" && /exchange, repair or refund/.test(value)) {
-    return (source) => {
-      const directRequest = /\b(?:umtausch\w*|austausch\w*|reparier\w*|reparatur|zur[uü]ckgeben|zur[uü]ckerstatt\w*|erstattung|geld\s+zur[uü]ck|ersetz\w*|ersatz)\b/i;
-      // "Ich möchte größere Schuhe in Rot, Größe 39" communicates a
-      // replacement request in a complaint about the shoes bought.
-      const replacementRequest = /\b(?:ich\s+(?:m[oö]chte|will|brauche|h[aä]tte\s+gern|w[uü]nsche(?:\s+mir)?)|(?:k[oö]nnen|k[oö]nnten)\s+sie)\b[^.!?]{0,120}\b(?:gr[oö][ßs]ere|kleinere|andere|neue|passende|rote|blaue|schwarze)\s+(?:schuhe|jacke|hose|handy|telefon|ger[aä]t|produkt)\b/i;
-      const complaintContext = /\b(?:beschwer\w*|reklamier\w*|gekauft|bestellt|falsch\w*|zu\s+(?:klein|gro[ßs]|eng|weit)|nicht\s+wie\s+bestellt|farbe\s+gef[aä]llt\s+mir\s+nicht)\b/i;
-      return directRequest.test(source) || (complaintContext.test(source) && replacementRequest.test(source));
-    };
+    const directRequest = /\b(?:umtausch\w*|austausch\w*|reparier\w*|reparatur|zur[uü]ckgeben|zur[uü]ckerstatt\w*|r[uü]ckerstattung|r[uü]ckzahlung|erstattung|geld\s+zur[uü]ck|ersetz\w*|ersatz)\b/i;
+    // "Ich möchte größere Schuhe in Rot, Größe 39" communicates a
+    // replacement request in a complaint about the shoes bought.
+    const replacementRequest = /\b(?:ich\s+(?:m[oö]chte|will|brauche|h[aä]tte\s+gern|w[uü]nsche(?:\s+mir)?)|(?:k[oö]nnen|k[oö]nnten)\s+sie)\b[^.!?]{0,120}\b(?:gr[oö][ßs]ere|kleinere|andere|neue|passende|rote|blaue|schwarze)\s+(?:schuhe|jacke|hose|handy|telefon|ger[aä]t|produkt)\b/i;
+    const complaintContext = /\b(?:beschwer\w*|reklamier\w*|gekauft|bestellt|falsch\w*|zu\s+(?:klein|gro[ßs]|eng|weit)|nicht\s+wie\s+bestellt|farbe\s+gef[aä]llt\s+mir\s+nicht)\b/i; 
+    const rule = (source) => directRequest.test(source) || (complaintContext.test(source) && replacementRequest.test(source));
+    rule.evidenceMatcher = (sentence) => directRequest.test(sentence) || replacementRequest.test(sentence);
+    return rule;
   }
   if (/exact product problem/.test(value)) return /\b(?:kaputt|defekt|funktioniert\s+nicht|falsch|besch[aä]digt|schlecht|problem)\b/i;
   if (/exchange, repair or refund/.test(value)) return /\b(?:umtausch|umtauschen|reparieren|reparatur|geld\s+zur[uü]ck|erstattung|zur[uü]ckerstatten)\b/i;
