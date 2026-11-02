@@ -1,4 +1,10 @@
 import { validateLyricCues } from "./songLyrics.js";
+export const VIDEO_EXPORT_PRESETS = Object.freeze({
+  youtube: Object.freeze({label:"YouTube landscape · 16:9",width:1280,height:720,ratio:"16/9",suffix:"youtube"}),
+  tiktok: Object.freeze({label:"TikTok / Shorts / Reels · 9:16",width:720,height:1280,ratio:"9/16",suffix:"vertical"}),
+  square: Object.freeze({label:"Square social post · 1:1",width:960,height:960,ratio:"1/1",suffix:"square"}),
+});
+
 // Browser-only music video frames. No external rendering service or upload.
 export function videoLyricLines(lyrics = "") {
   return String(lyrics).replace(/\\n/g, "\n").split(/\r?\n/)
@@ -141,25 +147,28 @@ export function drawMusicVideoFrame(ctx, {title = "Falowen Music", level = "", d
   ctx.fillStyle="#ffffff";drawFit(ctx,title,h*0.20,w-80,42,800);
   const scene=scenes[findLyricScene(scenes,time)];
   if(scene){
-    const lineSpacing=90;
-    const firstY=h*0.48-(scene.lines.length-1)*lineSpacing/2;
+    // Landscape needs a compact lyric stack and a lower English caption;
+    // these positions keep every layer inside the chosen export canvas.
+    const landscape=w>h;
+    const lineSpacing=landscape?65:90;
+    const firstY=h*(landscape?0.46:0.48)-(scene.lines.length-1)*lineSpacing/2;
     const active=activeVideoLyricIndex(scene,time);
     scene.lines.forEach((line,i)=>{
       const y=firstY+i*lineSpacing;
       if(i===active){
         ctx.fillStyle="rgba(201,240,128,0.16)";
-        ctx.fillRect(34,y-39,w-68,78);
+        ctx.fillRect(w*0.05,y-(landscape?31:39),w*0.90,landscape?62:78);
       }
       ctx.fillStyle=i===active?"#d9f99d":"#ffffff";
-      drawFit(ctx,line,y,w-100,48,i===active?800:700);
+      drawFit(ctx,line,y,w*0.88,landscape?45:48,i===active?800:700);
     });
     // Keep the translation below the three German lines, never over the karaoke.
     const english=active>=0 ? scene.englishLines?.[active] : "";
     if(english){
       ctx.fillStyle="rgba(228,244,232,0.78)";
-      drawFit(ctx,"ENGLISH",h*0.655,w-100,19,700);
+      drawFit(ctx,"ENGLISH",h*(landscape?0.68:0.655),w*0.88,19,700);
       ctx.fillStyle="#ffffff";
-      drawFit(ctx,english,h*0.705,w-80,31,600);
+      drawFit(ctx,english,h*(landscape?0.74:0.705),w*0.88,landscape?29:31,600);
     }
   }else{
     ctx.fillStyle="#ffffff";drawFit(ctx,"Listen · Learn · Practise",h*0.5,w-100,36);
