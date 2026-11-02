@@ -63,7 +63,7 @@ test("A1 exam-readiness and scored class checks stay independent from optional h
   const presenter = fs.readFileSync("src/components/A1GrammarPresenter.jsx", "utf8");
   assert.match(presenter, /A1_GRAMMAR_CHECK_FLOW_VERSION = 3/);
   assert.match(presenter, /buildA1CheckCoaching\(activeCheck, slide\)/);
-  assert.match(presenter, /stage\?\.examReadiness \? null/);
+  assert.match(presenter, /stage\?\.examReadiness \|\| stage\?\.teil3ObjectCards \? null/);
   assert.match(presenter, /!participationCheckMode && !stage\?\.exitCheck/);
   assert.match(presenter, /showHint && canShowHint && !showAnswer/);
   assert.match(presenter, /showAnswer \? \(/);

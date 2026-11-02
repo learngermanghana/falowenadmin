@@ -10,7 +10,7 @@ import { A1_PUBLISHED_WORKBOOK_BY_ASSIGNMENT } from "../src/data/a1PublishedWork
 
 const slides = getSlidesByCourse("A1");
 const expected = {
-  "A1-7": [11, "tutor-marked"],
+  "A1-7": [11, "review"],
   "A1-8": [12, "tutor-marked"],
   "A1-3.5": [13, "review"],
   "A1-3.6": [14, "review"],
@@ -31,10 +31,10 @@ for (const id of A1_DAYS11_TO15_ASSIGNMENTS) {
   const rows = getA1Days11To15UnderstandingChecks(id) || [];
   const quick = getA1Days11To15QuickChecks(id) || [];
   const applied = getA1Days11To15ApplicationChecks(id) || [];
-  if (rows.length !== 11 || quick.length !== 2 || applied.length !== 2) {
-    errors.push(id + ": missing a 10+1+2+2 question stage");
+  if (rows.length !== (id === "A1-7" ? 12 : 11) || quick.length !== 2 || applied.length !== 2) {
+    errors.push(id + ": missing a authored class, exit, recall or application stage");
   }
-  if (!String(rows[10]?.questionDe || "").startsWith("Exit-Check:")) {
+  if (!String(rows.at(-1)?.questionDe || "").startsWith("Exit-Check:")) {
     errors.push(id + ": final check not independent");
   }
   const all = [...rows, ...quick, ...applied];
@@ -53,7 +53,7 @@ for (const id of A1_DAYS11_TO15_ASSIGNMENTS) {
   }
   checksCount += all.length;
   console.log((errors.some((e) => e.startsWith(id + ":")) ? "REVIEW " : "PASS ") +
-    id + " · Day " + slide.dayNumber + " · " + mode?.kind + " · 15 sourced checks");
+    id + " · Day " + slide.dayNumber + " · " + mode?.kind + " · " + all.length + " sourced checks");
 }
 console.log("A1 Days 11–15 quality audit: " + A1_DAYS11_TO15_ASSIGNMENTS.length +
   " lessons; " + checksCount + " checks with answers and teacher guidance.");

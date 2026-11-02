@@ -154,7 +154,7 @@ test("A1 presenter keeps class participation available from the first slide and 
   assert.match(presenter, /10 distinct lesson questions/);
   assert.match(presenter, /Next student →/);
   assert.match(presenter, /Continue lesson →/);
-  assert.match(presenter, /if \(participationCheckMode\) return;/);
+  assert.match(presenter, /preventNext: participationCheckMode/);
   assert.match(presenter, /className="presenter-participation-dock"/);
   assert.match(presenter, /aria-label="Class participation controls"/);
   assert.match(presenter, /questionContext=\{participationCheckMode \? stage\.id : "class-participation"\}/);

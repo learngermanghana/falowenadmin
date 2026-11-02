@@ -1,5 +1,5 @@
 // Course-wide A1 slide-quality gate. This checks *all* twenty-four class
-// days and all twenty-eight published lesson blocks, not only the newest pack.
+// days and all twenty-seven published lesson blocks, not only the newest pack.
 // It reads teaching metadata; never alters submissions, progress or scores.
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { getCourseSessionGroups } from "../src/data/courseSessionGroups.js";
@@ -39,7 +39,7 @@ const error = [];
 let teacherAnswers = 0;
 let readyReviews = 0;
 
-if (lessons.length !== 28) error.push("Expected exactly 28 A1 published teaching blocks, found " + lessons.length);
+if (lessons.length !== 27) error.push("Expected exactly 27 A1 published teaching blocks, found " + lessons.length);
 if (groups.length !== 25) error.push("Expected Day 0 orientation + 24 class days, found " + groups.length);
 const ids = lessons.map(s => text(s.assignmentId).toUpperCase());
 if (new Set(ids).size !== ids.length) error.push("Duplicate A1 assignment identifiers");
@@ -48,7 +48,7 @@ for (const day of Array.from({ length: 24 }, (_, i) => i + 1)) {
   const matching = lessons.filter(s => Number(s.dayNumber) === day);
   if (!matching.length) error.push("No presentation for A1 class Day " + day);
   if (day === 16 && matching.length !== 2) error.push("Day 16 must have distinct A1-9 and A1-10");
-  if (day === 18 && matching.length !== 2) error.push("Day 18 must have distinct A1-12.1 and A1-12.2");
+  if (day === 18 && (matching.length !== 1 || matching[0].assignmentId !== "A1-12.1")) error.push("Day 18 must use the combined A1-12.1 teaching slide");
   const group = groups.find(g => g.day === day);
   if (!group) error.push("No curriculum session group on Day " + day);
   else for (const s of matching) if (!group.assignmentIds.some(id => normalized(id) === normalized(s.assignmentId))) {
@@ -62,7 +62,7 @@ for (const slide of lessons) {
   const grammar = getA1GrammarChecks(id,slide);
   const checks = getA1PresenterUnderstandingChecks(id,grammar,{ slide, support });
   const isSpeakingMock = id === "A1-5.9";
-  if (checks.length !== 11) error.push(id+": expected ten student questions plus one final check");
+  if (checks.length !== (id === "A1-7" ? 12 : id === "A1-12.1" ? 14 : 11)) error.push(id+": expected the full authored question bank plus its final check");
   if (new Set(checks.map(row=>normalized(row.questionDe))).size !== checks.length) {
     error.push(id+": duplicate or repeated final question");
   }
@@ -115,7 +115,7 @@ for (const slide of lessons) {
     if (Number(slide.dayNumber) !== 19 || slide.interactionFlow.length !== 7) {
       error.push("A1-5.9 speaking readiness must remain on Day 19 in the dedicated flow");
     }
-    if (getA1LearningPath(slide) !== null) error.push(id+": Goethe mock got normal assignment mode");
+    if (getA1LearningPath(slide)?.kind !== "graded-speaking") error.push(id+": Goethe mock lost its required speaking assignment mode");
   }
 }
 

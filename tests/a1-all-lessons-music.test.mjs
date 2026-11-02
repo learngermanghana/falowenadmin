@@ -27,6 +27,7 @@ async function loadStageBuilder(){
 test('every real A1 lesson uses the shared presenter with exactly one music stage, including Day 5 and readiness',async()=>{
  const stagesFor=await loadStageBuilder();
  const slides=getSlidesByCourse('A1').filter(s=>s.dayNumber>0);
+ assert.equal(slides.length,27);
  assert.equal(new Set(slides.map(s=>s.dayNumber)).size,24);
  for(const slide of slides){
   const stages=stagesFor(slide,slide.topic);

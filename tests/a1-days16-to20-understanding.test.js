@@ -14,7 +14,7 @@ import { A1_DAYS16_TO20_ASSIGNMENTS, getA1Days16To20UnderstandingChecks,
 const target = { "A1-9":16, "A1-10":16, "A1-11":17, "A1-12.1":18, "A1-12.2":18, "A1-12.3":20 };
 const slide = (id) => getTeachingSlideByAssignmentId(id);
 
-test("six A1 Days 16–20 regular blocks supply ninety source-backed questions and teacher explanations", () => {
+test("six A1 Days 16–20 regular blocks supply ninety-three source-backed questions and teacher explanations", () => {
   assert.deepEqual([...A1_DAYS16_TO20_ASSIGNMENTS].sort(), Object.keys(target).sort());
   let total = 0;
   for (const [id, day] of Object.entries(target)) {
@@ -25,14 +25,14 @@ test("six A1 Days 16–20 regular blocks supply ninety source-backed questions a
       { slide:s, support:buildTeacherSlideSupport(s) });
     const authored = getA1Days16To20UnderstandingChecks(id);
     assert.deepEqual(chosen, authored, id + ": Presenter must use verified lesson bank");
-    assert.equal(authored.length, 11, id);
-    assert.match(authored[10].questionDe, /^Exit-Check:/);
+    assert.equal(authored.length, id === "A1-12.1" ? 14 : 11, id);
+    assert.match(authored.at(-1).questionDe, /^Exit-Check:/);
     const quick = getA1Days16To20QuickChecks(id);
     const applied = getA1Days16To20ApplicationChecks(id);
     assert.equal(quick.length, 2, id);
     assert.equal(applied.length, 2, id);
     const items = [...authored, ...quick, ...applied];
-    assert.equal(new Set(items.map(x=>x.questionDe.trim().toLowerCase())).size, 15, id);
+    assert.equal(new Set(items.map(x=>x.questionDe.trim().toLowerCase())).size, id === "A1-12.1" ? 18 : 15, id);
     assert.ok(items.every(x=>x.questionDe && x.answerDe && x.noteEn?.length >= 20), id);
     assert.equal(buildA1SlideReviewChecks(authored,2).length,2,id);
     total += items.length;
@@ -40,7 +40,7 @@ test("six A1 Days 16–20 regular blocks supply ninety source-backed questions a
     assert.equal(getA1LearningPath(s)?.kind, "review",
       id + ": answer-key or AI writing scores alone do not verify manual tutor marking");
   }
-  assert.equal(total, 90);
+  assert.equal(total, 93);
 });
 
 test("Day 18 combines grammar while the legacy 12.2 teaching bank remains available", () => {

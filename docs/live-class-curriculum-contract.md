@@ -15,7 +15,7 @@ Student-facing Falowen clients should read `assignmentIds` first, then fall back
 
 ## A1 presenter music — 2 November 2026
 
-All 26 teaching blocks across A1 Days 1–24 use `A1GrammarPresenter` and include
+All 27 teaching blocks across A1 Days 1–24 use `A1GrammarPresenter` and include
 one music stage, including Day 5 introducing yourself and Day 19 speaking
 readiness. Orientation remains separate. Standard lessons place music after
 Common mistakes, matching A1 Day 14's own layout (not the A2/B1 presenter);
