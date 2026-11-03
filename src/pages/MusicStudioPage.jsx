@@ -4,6 +4,7 @@ import { buildFalowenMusicPrompt, buildFalowenShortMusicPrompt, musicLyricLimit 
 import { waitingRoomMusicObjectKey } from '../utils/waitingRoomDayMusic.js';
 import './MusicStudioPage.css';
 import { getMusicDays, musicLessonContext } from '../utils/musicCourseContext.js';
+import { matchingMusicEnglishDraft } from '../utils/musicEnglishDrafts.js';
 import { STUDIO_COURSE_LEVELS } from '../utils/hoerenCourseCatalog.js';
 import { getMusicTopicStyle, suggestLessonMusicDirection } from '../utils/musicTopicStyle.js';
 import { MUSIC_PRODUCTION_PROFILES, getMusicProductionProfile } from '../utils/musicProductionProfiles.js';
@@ -104,6 +105,7 @@ export default function MusicStudioPage() {
     ? savedLyrics[assignmentKey] || draft?.lyrics || '' : draft?.lyrics || '';
   const dirtyLyrics = courseMode === 'course' && !!assignmentKey && lyrics !== savedText;
   const trackTitle = draft?.title || lesson?.germanTitle || 'Falowen Music';
+  const englishDraft = courseMode === 'course' ? matchingMusicEnglishDraft(assignmentKey, lyrics) : null;
   const [mode, setMode] = useState('song');
   const [durationSeconds, setDurationSeconds] = useState(150);
   const [vocalMode, setVocalMode] = useState('voice');
@@ -358,6 +360,13 @@ export default function MusicStudioPage() {
               </button>
             </div>
             {lyricsNotice && <p role="status" className="music-note">{lyricsNotice}</p>}
+            {englishDraft ? <details className="music-english-translation">
+              <summary>English translation · {englishDraft.count} lines</summary>
+              <p>{englishDraft.source === 'machine-draft'
+                ? 'Machine-assisted English draft. Review meaning before publishing or using in public videos.'
+                : 'English translation of the exact German lyrics above.'}</p>
+              <pre lang="en">{englishDraft.text}</pre>
+            </details> : draft && lyrics.trim() && <p className="music-note">English subtitles are hidden because these German lyrics differ from the reviewed songbook text. This prevents mismatched translations.</p>}
           </div>}
         </div>
         <div className="music-simple-action">
