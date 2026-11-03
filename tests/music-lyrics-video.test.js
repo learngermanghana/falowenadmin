@@ -186,6 +186,12 @@ test("song title and genre remain searchable under YouTube's 100-character title
   assert.match(copy.description,/https:\/\/music\.falowen\.app\//);
   assert.match(copy.description,/https:\/\/www\.falowen\.app\//);
   assert.match(copy.description,/English translations are available on supported tracks/);
+  const extremelyLongGenre=musicVideoSocialCopy({
+    title:"Mit Freunden zusammen",level:"A1",
+    genre:"Modern very experimental and extensively described acoustic fusion style of music"
+  });
+  assert.ok(extremelyLongGenre.title.length<=100,extremelyLongGenre.title);
+  assert.ok(extremelyLongGenre.title.endsWith(" | Falowen Music"));
 });
 
 test("export does not silently produce an incompatible WebM or an untested MP4", () => {
