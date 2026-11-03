@@ -426,7 +426,7 @@ ENTRIES["A2-8.21"] = {
   warmup: [],
   musicIntro: {
     mediaType: "music", level: "A2", day: 21,
-    title: "Ein Wochenende planen",
+    title: "Endlich Wochenende!",
     introQuestion: "Was machst du am Wochenende, wenn das Wetter gut ist?",
     musicLibraryUrl: "https://music.falowen.app/?level=A2&day=21",
     nextStep: "Danach folgt ein separates Hören-Gespräch: Lisa und Tom planen einen Ausflug an den See.",
