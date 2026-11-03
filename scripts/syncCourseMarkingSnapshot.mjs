@@ -4,7 +4,15 @@ import assert from 'node:assert/strict';
 const repository = 'learngermanghana/falowenexamtrainer';
 const target = new URL('../src/data/courseMarkingSnapshot.json', import.meta.url);
 async function json(url) {
-  const response = await fetch(url, { signal: AbortSignal.timeout(30000), headers: { 'User-Agent': 'Falowen-marking-sync' } });
+  const token = String(process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '').trim();
+  // Authenticated calls avoid the shared, very low anonymous GitHub API limit
+  // on release runners. Do not log or embed the token in the snapshot.
+  const headers = { 'User-Agent': 'Falowen-marking-sync' };
+  if (token && new URL(url).hostname === 'api.github.com') {
+    headers.Authorization = `Bearer ${token}`;
+    headers.Accept = 'application/vnd.github+json';
+  }
+  const response = await fetch(url, { signal: AbortSignal.timeout(30000), headers });
   if (!response.ok) throw new Error(`Coursebook contract unavailable: ${response.status}`);
   return response.json();
 }
