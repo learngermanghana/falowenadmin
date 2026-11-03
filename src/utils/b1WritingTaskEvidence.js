@@ -40,9 +40,17 @@ const sportHabit = makeRule(/\b(?:ich\b[^.!?]{0,55}\b(?:sport\s+(?:mache|treibe)
 // The learner coursebook's B1-3.8 task has four explicit communicative
 // requirements. Its 80–100-word opinion format can be assessed for structure
 // separately; an optional conclusion must not become a fifth required point.
+const sportBenefitExplicit = /\b(?:sport|sporteinheiten|training|bewegung)\b[^.!?]{0,145}\b(?:vorteil\w*|energie|stressabbau|krankheit\w*|immunsystem|risiko|blutdruck|blutzucker)\b/i;
+const sportBenefitFitness = /\b(?:sport|sporteinheiten|training|bewegung)\b[^.!?]{0,145}\b(?:fit|gesundheit|st[aä]rk\w*)\b/i;
+const sportBenefits = {
+  test: (source) => Boolean(sentenceFor(source, sportBenefitExplicit) || sentenceFor(source, sportBenefitFitness)),
+  evidence: (source) => sentenceFor(source, sportBenefitExplicit) || sentenceFor(source, sportBenefitFitness),
+  reason: "Explain an actual benefit of exercise; repeating the topic question is not sufficient.",
+};
+
 const PUBLISHED_B1_SPORT_RULES = [
   opinionPosition,
-  makeRule(/\b(?:sport|sporteinheiten|training|bewegung)\b[^.!?]{0,145}\b(?:vorteil\w*|energie|fit|gesund\w*|st[aä]rk\w*|stressabbau|krankheit\w*|immunsystem|risiko|blutdruck|blutzucker)\b/i),
+  sportBenefits,
   makeRule(/\b(?:ern[aä]hrung|essen|lebensmittel|obst|gem[uü]se)\b[^.!?]{0,125}\b(?:gesund\w*|fit|krankheit\w*|risiko|stressabbau|energie|ausgewogen|immunsystem|blutdruck|blutzucker)\b/i),
   sportHabit,
 ];
