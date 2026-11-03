@@ -84,7 +84,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   const [objectKey,setObjectKey] = useState("");
   const [postingTitle,setPostingTitle] = useState("");
   const [postingDescription,setPostingDescription] = useState("");
-  const [postingGenreOverride,setPostingGenreOverride] = useState("");
+  const [postingGenreOverride,setPostingGenreOverride] = useState(null);
   const [copyNotice,setCopyNotice] = useState("");
   const [timingReview,setTimingReview] = useState(false);
   const [recordingFingerprint,setRecordingFingerprint] = useState("");
@@ -105,8 +105,8 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   // Every other track uses published recording metadata, then the saved draft.
   const titleGenre=resolveMusicVideoGenre({title:videoTitle});
   const defaultPostingGenre=titleGenre || publishedTrack?.genre || draftGenre || "";
-  const selectedPostingGenre=postingGenreOverride.trim() || defaultPostingGenre;
-  useEffect(()=>{setPostingGenreOverride("");},[videoTitle,publishedTrack?.objectKey]);
+  const selectedPostingGenre=postingGenreOverride === null ? defaultPostingGenre : postingGenreOverride;
+  useEffect(()=>{setPostingGenreOverride(null);},[videoTitle,publishedTrack?.objectKey]);
 
   const englishStorageKey="falowen-video-english:"+(publishedTrack?.objectKey || assignmentKey || videoLevel+"-"+videoDay+"-"+videoTitle);
   useEffect(()=>{
@@ -666,7 +666,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       </label>
       <small>Use the actual sound of this recording. Changing the genre regenerates the suggested title and description; you can edit both afterwards.</small>
       <label htmlFor="music-video-post-title">Video title
-        <input id="music-video-post-title" type="text" maxLength={150} value={postingTitle}
+        <input id="music-video-post-title" type="text" maxLength={100} value={postingTitle}
           onChange={event=>setPostingTitle(event.target.value)} />
       </label>
       <button type="button" onClick={()=>copyPostingText(postingTitle,"Title")}>Copy title</button>
