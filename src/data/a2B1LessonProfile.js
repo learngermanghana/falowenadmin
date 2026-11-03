@@ -21,7 +21,7 @@ const B1_ASSIGNMENT_KEYS = Object.freeze({
 });
 
 const A2_NO_PART4 = new Set([14, 25]);
-const A2_SELF_CHECK_PART4 = new Set([21, 22, 23]);
+const A2_SELF_CHECK_PART4 = new Set([22, 23]);
 
 const B1_NO_PART4 = new Set([21, 23]);
 const B1_READING_FALLBACK_PART4 = new Set([19, 22]);

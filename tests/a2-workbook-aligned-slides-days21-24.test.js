@@ -75,11 +75,12 @@ test("A2 days 21-24 teacher support matches the grammar actually taught in Falow
   }
 });
 
-test("Day 21 keeps Goethe self-check listening while Days 22-23 do not expose stale presenter Hören", () => {
+test("Day 21 assigns graded workbook Hören while Days 22–23 do not expose stale presenter Hören", () => {
   const day21 = getA2WorkbookAlignedSlideDay21To24("A2-8.21");
   const day21Listening = day21.workbookConnection.parts.find((part) => part.label === "Teil 4 · Hören");
-  assert.match(day21Listening.detailEn, /Goethe/i);
-  assert.match(day21Listening.detailEn, /self-check|check their own|correct their own/i);
+  assert.match(day21Listening.detailEn, /graded workbook Hören/i);
+  assert.match(day21Listening.detailEn, /Claudia–Thomas/i);
+  assert.match(day21Listening.detailEn, /Lisa–Tom.*ungraded/i);
 
   for (const assignmentId of ["A2-8.22", "A2-9.23"]) {
     const slide = getA2WorkbookAlignedSlideDay21To24(assignmentId);
@@ -92,12 +93,13 @@ test("Day 21 keeps Goethe self-check listening while Days 22-23 do not expose st
   assert.match(day24Listening.detailEn, /five graded questions/i);
 });
 
-test("Day 21 keeps the Stefan Berger reading separate from weekend-condition grammar", () => {
+test("Day 21 uses the current Köln reading separate from classroom dialogue and condition grammar", () => {
   const slide = getA2WorkbookAlignedSlideDay21To24("A2-8.21");
   const reading = slide.workbookConnection.parts.find((part) => part.label === "Teil 3 · Lesen");
-  assert.match(reading.detailEn, /Separate comprehension topic/i);
-  assert.match(reading.detailEn, /Stefan Berger|TV chef/i);
-  assert.match(slide.teacherNotesEn.join(" "), /separate biography|Stefan Berger/i);
+  assert.match(reading.detailEn, /Separate comprehension task/i);
+  assert.match(reading.detailEn, /Mara and Daniel.*Köln/i);
+  assert.match(slide.teacherNotesEn.join(" "), /(Köln|Cologne).*Claudia–Thomas/i);
+  assert.doesNotMatch(JSON.stringify(slide), /Stefan Berger|Goethe-standard YouTube self-check/i);
 });
 
 test("Day 22 presenter is fully synchronized to the Hamburg reading", () => {

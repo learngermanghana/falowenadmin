@@ -7,6 +7,7 @@ import { B1_DAY24_RECORDED_MUSIC } from "./b1Day24RecordedMusic.js";
 import { A2_DAY18_BANK_LISTENING } from "./a2Day18BankListening.js";
 import { A2_DAY18_BANK_MUSIC } from "./a2Day18BankMusic.js";
 import { A2_DAY20_LISTENING } from "./a2Day20Listening.js";
+import { A2_DAY21_CLASSROOM_LISTENING } from "./a2Day21ClassroomListening.js";
 
 const ENTRIES = {
   "A2-3.8":   {
@@ -416,6 +417,24 @@ ENTRIES["A2-7.19"] = {
   listening: A2_DAY19_LISTENING,
 };
 ENTRIES["A2-7.20"].listening = A2_DAY20_LISTENING;
+// Day 21 matches the modern Day 19 classroom pattern: the already-uploaded
+// published music is discovered by level/day; separate authenticated R2
+// Hören uses Lisa and Tom, not the student's graded Claudia–Thomas recording.
+ENTRIES["A2-8.21"] = {
+  assignmentId: "A2-8.21",
+  title: "Ein Wochenende planen",
+  warmup: [],
+  musicIntro: {
+    mediaType: "music", level: "A2", day: 21,
+    title: "Ein Wochenende planen",
+    introQuestion: "Was machst du am Wochenende, wenn das Wetter gut ist?",
+    musicLibraryUrl: "https://music.falowen.app/?level=A2&day=21",
+    nextStep: "Danach folgt ein separates Hören-Gespräch: Lisa und Tom planen einen Ausflug an den See.",
+    studentPurpose: "Höre das veröffentlichte Lied für A2 Tag 21 und nenne eine Wochenendaktivität.",
+    teacherPurpose: "Das vorhandene Lied aus der Musikbibliothek abspielen, eine kurze Frage besprechen und anschließend zur separaten Hörübung mit Lisa und Tom wechseln.",
+  },
+  listening: A2_DAY21_CLASSROOM_LISTENING,
+};
 ENTRIES["A2-7.20"].musicIntro = {
   mediaType: 'music', level: 'A2', day: 20,
   title: 'Die Jacke ist zu klein',

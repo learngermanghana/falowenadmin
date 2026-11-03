@@ -117,6 +117,7 @@ test('all 56 A2/B1 presenters use the Day 18 layout and only published music les
     'A2-7.18':{day:18,curated:true},
     'A2-7.19':{day:19},
     'A2-7.20':{day:20},
+    'A2-8.21':{day:21},
     'B1-8.24':{day:24},
     'B1-8.25':{day:25},
     'B1-9.26':{day:26},
