@@ -139,7 +139,8 @@ export function musicVideoSocialCopy({
     numberDay >= 1 && numberDay <= 28 ? numberDay : null;
   const genreName = resolveMusicVideoGenre({title: songTitle, genre});
   const subject = cleanLevel ? "German " + cleanLevel + " Song" : "German Lyrics Song";
-  const suffix = " | " + subject + (genreName ? " – " + genreName : "") + " | Falowen Music";
+  const titleGenre = genreName.slice(0, 38).trim();
+  const suffix = " | " + subject + (titleGenre ? " – " + titleGenre : "") + " | Falowen Music";
   // YouTube title max: 100 characters. Preserve the branding and genre
   // and shorten only an unusually long song title.
   const maxSongLength = Math.max(10, 100 - suffix.length);
