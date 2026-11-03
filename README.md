@@ -102,6 +102,10 @@ firebase deploy --only firestore:indexes
 Tip: when a query needs a new composite index, Firestore returns an error with a direct "Create index" link.
 Use that link once, then run `firebase firestore:indexes > firestore.indexes.json` (or copy from console) to keep the file in sync.
 
+## Reducing Vercel requests
+
+Vite's content-hashed `/assets/` files use a one-year immutable browser cache; HTML and the build-identity file retain their existing freshness rules. Deployment status respects the endpoint's existing short cache and refreshes every five minutes only while visible. Student check-in status retains its 30-second visible refresh and refreshes on return to the tab. Brochure engagement refreshes once per minute while visible; its manual refresh remains available. These polling tasks share `startVisiblePolling`, which prevents overlapping requests and stops background polling in hidden tabs.
+
 ## Vercel API Routing
 
 The Vercel deployment uses one API entrypoint: `api/router.js`. Keep the `/api/(.*)` rewrite pointed at that router instead of adding separate Vercel function files for proxied Falowen routes. The router preserves request methods, JSON bodies, query parameters, authorization headers, and content types when forwarding selected requests to `FALOWEN_FUNCTION_BASE_URL`.

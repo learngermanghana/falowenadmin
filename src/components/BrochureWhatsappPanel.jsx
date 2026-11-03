@@ -1,3 +1,4 @@
+import { startVisiblePolling } from "../utils/visiblePolling.js";
 import { useEffect, useMemo, useState } from "react";
 import { loadShareablePublicClasses } from "../services/publicBrochureClassService.js";
 import {
@@ -116,11 +117,10 @@ export default function BrochureWhatsappPanel({ pushToast }) {
       if (!active) return;
       await refreshEngagementStatus(engagementRef);
     };
-    refresh();
-    const timer = window.setInterval(refresh, 15000);
+    const stopPolling = startVisiblePolling(refresh, 60000);
     return () => {
       active = false;
-      window.clearInterval(timer);
+      stopPolling();
     };
   }, [engagementRef]);
 
