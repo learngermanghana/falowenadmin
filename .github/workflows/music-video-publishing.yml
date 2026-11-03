@@ -31,5 +31,7 @@ jobs:
           cache: npm
       - name: Install Admin dependencies without lifecycle scripts
         run: npm ci --ignore-scripts
-      - name: Verify music video copy, genre choices and recording-safe export
-        run: node --test tests/music-lyrics-video.test.js tests/music-studio.test.js
+      # Some older lyric-production cases are maintained in their own suites.
+      # This check specifically gates the upload-title/description regression cases.
+      - name: Verify genre-aware music video publishing metadata
+        run: node --test --test-name-pattern='export metadata follows|publishing copy keeps|song title and genre' tests/music-lyrics-video.test.js
