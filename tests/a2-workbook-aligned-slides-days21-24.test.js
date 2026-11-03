@@ -98,7 +98,7 @@ test("Day 21 uses the current Köln reading separate from classroom dialogue and
   const reading = slide.workbookConnection.parts.find((part) => part.label === "Teil 3 · Lesen");
   assert.match(reading.detailEn, /Separate comprehension task/i);
   assert.match(reading.detailEn, /Mara and Daniel.*Köln/i);
-  assert.match(slide.teacherNotesEn.join(" "), /Köln.*Claudia–Thomas/i);
+  assert.match(slide.teacherNotesEn.join(" "), /(Köln|Cologne).*Claudia–Thomas/i);
   assert.doesNotMatch(JSON.stringify(slide), /Stefan Berger|Goethe-standard YouTube self-check/i);
 });
 
