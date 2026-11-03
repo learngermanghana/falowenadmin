@@ -56,7 +56,7 @@ function contextualB1FormalSentence(result = {}, source = "") {
 }
 
 function contextualB1OpinionSentence(source = "") {
-  const position = /\b(?:meiner meinung nach|ich bin der meinung|ich denke|ich finde|ich glaube|ich vertrete die ansicht)\b/i.test(source);
+  const position = /\b(?:meiner meinung nach|ich bin der meinung|ich denke|ich finde|ich glaube|ich vertrete die ansicht|ich stimme\s+(?:\w+|der\s+(?:meinung|aussage|ansicht))\s+zu|ich bin (?:davon )?[uü]berzeugt)\b/i.test(source);
   const contrast = (/\beinerseits\b/i.test(source) && /\bandererseits\b/i.test(source))
     || /\b(?:jedoch|allerdings|dagegen|während)\b/i.test(source);
   const exampleSentence = quoteSentence(source, /\b(?:zum beispiel|beispielsweise|bei einer|ein beispiel|etwa)\b/i);
@@ -126,7 +126,7 @@ export function writingDepthSentences(result = {}, submission = "", explicitLeve
   }
 
   const formal = /\bsehr geehrte\b/i.test(source) && /\bmit freundlichen gr(?:ü|u)(?:ß|ss)en\b/i.test(source);
-  const opinion = /\b(?:meiner meinung nach|ich bin der meinung|ich denke|ich finde|ich glaube|einerseits|andererseits|zusammenfassend)\b/i.test(source);
+  const opinion = /\b(?:meiner meinung nach|ich bin der meinung|ich denke|ich finde|ich glaube|ich stimme\s+(?:\w+|der\s+(?:meinung|aussage|ansicht))\s+zu|ich bin (?:davon )?[uü]berzeugt|einerseits|andererseits|zusammenfassend)\b/i.test(source);
   const contextual = formal && !opinion
     ? contextualB1FormalSentence(result, source)
     : contextualB1OpinionSentence(source);

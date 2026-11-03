@@ -40,6 +40,17 @@ function applyAuthoritativeWritingOverride(task = {}) {
     && Boolean(task.sourceVersion) && b1Spec && clean(task.taskText);
   const publishedA1 = task.source === "learner-coursebook" && task.sourceVersion
     && a1Spec && task.taskVersion === 'A1-12.3-INVITATION-COURSE-V2';
+  // The current learner workbook publishes B1 Day 8's four communicative
+  // instructions as one situation paragraph. Expand that verified prompt
+  // into four explicit requirements; a conclusion is useful essay structure,
+  // but is not a separate mandatory point in this published instruction.
+  // Do not re-use these rules when the published question changes.
+  const currentB1SportPrompt = publishedB1 && assignmentKey === "B1-3.8"
+    && task.taskPointsDe?.length === 1
+    && /\bMax\s+sagt\b/i.test(task.taskSituationDe || "")
+    && /Vorteile\s+von\s+Sport/i.test(task.taskSituationDe || "")
+    && /Rolle\s+von\s+Ern[aä]hrung/i.test(task.taskSituationDe || "")
+    && /pers[oö]nlich\s+im\s+Alltag/i.test(task.taskSituationDe || "");
   const next = publishedA1 ? {
     ...a1Spec, ...task, level: 'A1', taskPoints: [...task.taskPointsDe],
     rubricVersion: task.taskVersion,
@@ -68,6 +79,15 @@ function applyAuthoritativeWritingOverride(task = {}) {
 
   return {
     ...next,
+    ...(currentB1SportPrompt ? {
+      taskPoints: [
+        "Respond to Max and state a view on regular sport and health",
+        "Explain at least one health benefit of regular sport",
+        "Explain how healthy nutrition helps health or fitness",
+        "Describe personal exercise habits or a concrete improvement plan",
+      ],
+      semanticEvidenceRuleSet: "B1-3.8-published",
+    } : {}),
     gradingInstruction: [
       "Grade the " + next.level + " writing against this exact assignment task, not merely against the general topic: " + next.taskText,
       "Check every required communicative point separately. Return taskCompletion, missingTaskPoints, and evidence for every task point.",
@@ -1035,7 +1055,7 @@ function calibratedCompleteWritingScore({
     && configuredTotal === 3
     && localMissing.length === 0;
   // Semantic A1/A2/B1 evidence validates task completion; it does not manufacture a higher language score.
-  if ([A1_WRITING_RUBRIC_VERSION, A2_WRITING_RUBRIC_VERSION, B1_WRITING_RUBRIC_VERSION].includes(task.rubricVersion)) {
+  if (taskEvidence.length > 0 || [A1_WRITING_RUBRIC_VERSION, A2_WRITING_RUBRIC_VERSION, B1_WRITING_RUBRIC_VERSION].includes(task.rubricVersion)) {
     return currentWritingScore;
   }
   if (!structuredComplete && !deterministicFriendshipComplete) return currentWritingScore;
@@ -1115,7 +1135,8 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     ? evaluateA1WritingTaskEvidence(task, source)
     : task.level === "A2"
       ? evaluateWritingTaskEvidence(task, source)
-      : task.level === "B1" && task.rubricVersion === B1_WRITING_RUBRIC_VERSION
+      : task.level === "B1" && (task.rubricVersion === B1_WRITING_RUBRIC_VERSION
+        || task.semanticEvidenceRuleSet === "B1-3.8-published")
         ? evaluateB1WritingTaskEvidence(task, source)
         : [];
   const canonicalSemanticMissing = taskPointEvidence.length
@@ -1141,7 +1162,8 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
   const missingTaskPoints = evidenceAuthoritative
     ? [...new Set(canonicalSemanticMissing)]
     : [...new Set([...structuredMissing, ...localMissing])];
-  const semanticTask = currentA1123 || [A1_WRITING_RUBRIC_VERSION, A2_WRITING_RUBRIC_VERSION, B1_WRITING_RUBRIC_VERSION].includes(task.rubricVersion);
+  const semanticTask = currentA1123 || taskPointEvidence.length > 0
+    || [A1_WRITING_RUBRIC_VERSION, A2_WRITING_RUBRIC_VERSION, B1_WRITING_RUBRIC_VERSION].includes(task.rubricVersion);
   const total = semanticTask
     ? (task.taskPoints?.length || 0)
     : Math.max(structured.total || 0, task.taskPoints?.length || 0, missingTaskPoints.length ? 3 : 0);
