@@ -229,3 +229,11 @@ API. It streams only the validated public music track, with a 40 MB limit and
 30-second upstream timeout, so the browser need not read a signed R2 redirect.
 Normal audio playback still redirects. Uploaded local audio remains local.
 Export network failures now identify the MP3 download stage.
+
+## Genre-aware video titles and descriptions (2026-11-03)
+
+The Lyrics Video Studio prepares editable YouTube title/description text when a song is selected. The title follows **Song Title | German A1/A2/B1 Song – Actual Musical Genre | Falowen Music** and is capped at 100 characters without truncating the brand and genre. Genres come from the selected track's published metadata or reusable song draft; unknown songs do **not** inherit a blanket Afrobeat tag. The owner can change the style in the **Musical genre for this recording** field and then copy the updated title, description or both. This is publishing metadata only; it does not alter the original audio, lyrics or published YouTube videos.
+
+**Curated example:** `Zwei Tees, vier Euro | German A1 Song – West African Palm-Wine Afrobeat | Falowen Music`. The owner identified this recording's palm-wine/Afrobeat blend, so the example uses that sound; another song may correctly be German Pop, Highlife, Acoustic Afro-Pop or something else. Genre text can be overridden per recording in Studio. The description describes the song's café learning theme, German listening and vocabulary, relevant genre, Falowen Music and Campus links, and a few meaningful hashtags. English lyrics are mentioned as available *only on supported tracks*.
+
+No YouTube API or third-party service is contacted. The copy buttons only place text on the clipboard; the owner still uploads and edits YouTube metadata manually. This change does not rename R2 files or change SEO metadata on older already-published YouTube videos. Test with `node --test tests/music-lyrics-video.test.js`.
