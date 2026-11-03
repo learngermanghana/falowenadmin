@@ -12,6 +12,7 @@ import { A1_DAY22_FINAL_RECORDING } from "../data/a1Day22FinalRecording.js";
 import { A2_DAY21_FINAL_RECORDING } from "../data/a2Day21FinalRecording.js";
 import { A2_DAY22_FINAL_RECORDING } from "../data/a2Day22FinalRecording.js";
 import { getReusableSongDraft } from "../data/reusableMusicSongbook.js";
+import { matchingMusicEnglishDraft } from "../utils/musicEnglishDrafts.js";
 import { readSongCues, validateLyricCues } from "../utils/songLyrics.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { videoLyricLines, lyricScenes, findLyricScene, videoRecorderFormat, drawMusicVideoFrame, isRealMp4Blob, timedLyricsPack, verifiedPublishedVideoTiming, musicVideoSocialCopy, videoEnglishLines, publishedVideoEnglish, musicVideoAudioUrl, VIDEO_EXPORT_PRESETS } from "../utils/musicLyricsVideo.js";
@@ -103,9 +104,11 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     // Exact lyric matching prevents a different recording's English from surviving a song change.
     let saved=null;
     try{saved=JSON.parse(localStorage.getItem(englishStorageKey)||"null");}catch{}
+    const approved = publishedVideoEnglish(publishedMetadata,publishedTrack?.objectKey,lyricText);
+    const songbook = matchingMusicEnglishDraft(assignmentKey,lyricText);
     setEnglishText(saved?.lyrics===lyricText && typeof saved?.english==="string"
-      ? saved.english : publishedVideoEnglish(publishedMetadata,publishedTrack?.objectKey,lyricText));
-  },[englishStorageKey,lyricText,publishedMetadata,publishedTrack?.objectKey]);
+      ? saved.english : (approved || songbook?.text || ""));
+  },[englishStorageKey,lyricText,publishedMetadata,publishedTrack?.objectKey,assignmentKey]);
   const postingDefaults=useMemo(()=>musicVideoSocialCopy({title:videoTitle,level:videoLevel,day:videoDay}),
     [videoTitle,videoLevel,videoDay]);
   useEffect(()=>{
