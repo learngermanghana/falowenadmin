@@ -28,11 +28,24 @@ function makeCountRule(patterns, minimum, reason = "") {
   };
 }
 
-const opinionPosition = makeRule(/\b(?:ich\s+(?:denke|finde|glaube|meine)|meiner\s+meinung\s+nach|f[uü]r\s+mich|ich\s+bin\s+der\s+meinung|meine\s+meinung\s+ist|ich\s+halte)\b/i);
+const opinionPosition = makeRule(/\b(?:ich\s+(?:denke|finde|glaube|meine)|ich\s+stimme\s+(?:\w+|der\s+(?:meinung|aussage|ansicht))\s+zu|ich\s+bin\s+(?:davon\s+)?[uü]berzeugt|meiner\s+meinung\s+nach|f[uü]r\s+mich|ich\s+bin\s+der\s+meinung|meine\s+meinung\s+ist|ich\s+halte)\b/i);
 const conclusion = makeRule(/\b(?:zusammenfassend|abschlie[ßs]end|deshalb\s+denke\s+ich|daher\s+denke\s+ich|insgesamt|zum\s+schluss|meiner\s+meinung\s+nach)\b/i);
 const example = makeRule(/\b(?:zum\s+beispiel|beispielsweise|in\s+meinem\s+fall|bei\s+mir|ich\s+habe|ich\s+kenne|in\s+meinem\s+land|in\s+ghana)\b/i);
 const advantage = makeRule(/\b(?:vorteil|positiv|praktisch|bequem|flexibel|hilfreich|gut\s+ist|der\s+pluspunkt)\b/i);
 const disadvantage = makeRule(/\b(?:nachteil|problem|schwierig|risiko|negativ|stress|gef[aä]hrlich|ung[uü]nstig|der\s+minuspunkt)\b/i);
+
+// Actual exercise habits and a prospective change count as a personal example.
+const sportHabit = makeRule(/\b(?:ich\b[^.!?]{0,55}\b(?:sport\s+(?:mache|treibe)|jogge|joggen|tennis\s+spiele|fu[ßs]ball\s+spiele|trainiere)|ich\s+w[uü]rde\s+gerne\b[^.!?]{0,90}\b(?:sport|joggen|tennis|fu[ßs]ball|trainieren)|ich\s+(?:will|m[oö]chte|plane)\b[^.!?]{0,90}\b(?:sport|joggen|tennis|fu[ßs]ball|trainieren))\b/i);
+
+// The learner coursebook's B1-3.8 task has four explicit communicative
+// requirements. Its 80–100-word opinion format can be assessed for structure
+// separately; an optional conclusion must not become a fifth required point.
+const PUBLISHED_B1_SPORT_RULES = [
+  opinionPosition,
+  makeRule(/\b(?:sport|sporteinheiten|training|bewegung)\b[^.!?]{0,145}\b(?:vorteil\w*|energie|fit|gesund\w*|st[aä]rk\w*|stressabbau|krankheit\w*|immunsystem|risiko|blutdruck|blutzucker)\b/i),
+  makeRule(/\b(?:ern[aä]hrung|essen|lebensmittel|obst|gem[uü]se)\b[^.!?]{0,125}\b(?:gesund\w*|fit|krankheit\w*|risiko|stressabbau|energie|ausgewogen|immunsystem|blutdruck|blutzucker)\b/i),
+  sportHabit,
+];
 
 const RULES = {
   "B1-1.1": [
@@ -84,7 +97,7 @@ const RULES = {
     opinionPosition,
     makeRule(/\b(?:sport|bewegung|trainieren|training)\b/i),
     makeRule(/\b(?:ern[aä]hrung|essen|lebensmittel|obst|gem[uü]se|zucker|wasser)\b/i),
-    example,
+    sportHabit,
     conclusion,
   ],
   "B1-4.9": [
@@ -235,7 +248,9 @@ const RULES = {
 
 export function evaluateB1WritingTaskEvidence(task = {}, source = "") {
   const taskPoints = Array.isArray(task.taskPoints) ? task.taskPoints : [];
-  const rules = RULES[String(task.assignmentKey || "").toUpperCase()] || [];
+  const rules = task.semanticEvidenceRuleSet === "B1-3.8-published"
+    ? PUBLISHED_B1_SPORT_RULES
+    : (RULES[String(task.assignmentKey || "").toUpperCase()] || []);
   return taskPoints.map((label, index) => {
     const rule = rules[index];
     if (!rule) {
