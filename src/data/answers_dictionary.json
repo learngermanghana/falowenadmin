@@ -2004,11 +2004,18 @@
   "A2 8.21 Ein Wochenende planen": {
     "answers": {
       "teil3": {
-        "Answer1": "A) Richtig",
-        "Answer2": "A) Richtig",
-        "Answer3": "B) Falsch",
-        "Answer4": "B) Falsch",
-        "Answer5": "A) Richtig"
+        "Answer1": "A) Mit dem Zug",
+        "Answer2": "B) Am Rhein spazieren",
+        "Answer3": "B) Restaurant und Konzert",
+        "Answer4": "A) Sie gehen in ein Museum.",
+        "Answer5": "C) Um 17:00 Uhr"
+      },
+      "teil4": {
+        "Answer1": "A) Sie hat frisches Obst gekauft.",
+        "Answer2": "B) Sie war lange spazieren.",
+        "Answer3": "C) Er hat ein Buch gelesen.",
+        "Answer4": "A) Weil sie am Freitag das Meeting planen müssen.",
+        "Answer5": "B) Um zehn Uhr."
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/16SKkqpJNa7NyqrnH5xyiyD5VH6AmmyJWG4dc2SiIVO4/gviz/tq?tqx=out:html&sheet=Key",
@@ -2017,11 +2024,10 @@
     "assignment_id": "A2-8.21",
     "expectedParts": [
       "teil2",
-      "teil3"
-    ],
-    "excludedParts": [
+      "teil3",
       "teil4"
     ],
+    "excludedParts": [],
     "writingParts": [
       "teil2"
     ],
@@ -2029,7 +2035,8 @@
       "teil2"
     ],
     "referenceAnswerParts": [
-      "teil3"
+      "teil3",
+      "teil4"
     ],
     "answerLayout": "multipart",
     "partGrading": {
@@ -2044,6 +2051,12 @@
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Grade this part against the reference answers in answers."
+      },
+      "teil4": {
+        "label": "Teil 4 Hören",
+        "hasReferenceAnswers": true,
+        "gradingMode": "answer_key",
+        "instruction": "Mark the five Claudia–Thomas Small Talk listening questions strictly from the A2 Day 21 answer key (A, B, C, A, B). This is submitted timed Hören, not an optional self-check."
       }
     }
   },
