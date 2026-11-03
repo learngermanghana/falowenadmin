@@ -1,3 +1,4 @@
+import { startVisiblePolling } from "../utils/visiblePolling.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { findScheduleItemBySessionId } from "../data/classSchedules";
@@ -184,11 +185,10 @@ export default function CheckinPage() {
       }
     };
 
-    loadStatus();
-    const poll = window.setInterval(loadStatus, 30000);
+    const stopPolling = startVisiblePolling(loadStatus, 30000);
     return () => {
       canceled = true;
-      window.clearInterval(poll);
+      stopPolling();
     };
   }, [classId, sessionId, statusApiUrl]);
 

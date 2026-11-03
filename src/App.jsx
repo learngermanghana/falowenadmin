@@ -3,6 +3,7 @@ import { Navigate, Routes, Route, Link, useLocation, useNavigate } from "react-r
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
+import { startVisiblePolling } from "./utils/visiblePolling.js";
 import "./App.css";
 import "./LiveClassesMobile.css";
 
@@ -73,13 +74,12 @@ function TopBar() {
     }
 
     let active = true;
-    let timerId = null;
+    let stopPolling = null;
 
     const refreshDeploymentStatus = async () => {
       try {
         const response = await fetch("/api/deployment-status", {
           headers: { accept: "application/json" },
-          cache: "no-store",
         });
         if (!response.ok) return;
         const payload = await response.json();
@@ -92,20 +92,23 @@ function TopBar() {
     let idleId = null;
     let startupTimerId = null;
 
+    const startPolling = () => {
+      if (active) stopPolling = startVisiblePolling(refreshDeploymentStatus, 5 * 60 * 1000);
+    };
+
     // Deployment freshness is useful, but it must not compete with the first
     // route chunk and its data on slower mobile connections.
     if ("requestIdleCallback" in window) {
-      idleId = window.requestIdleCallback(refreshDeploymentStatus, { timeout: 2500 });
+      idleId = window.requestIdleCallback(startPolling, { timeout: 2500 });
     } else {
-      startupTimerId = window.setTimeout(refreshDeploymentStatus, 1200);
+      startupTimerId = window.setTimeout(startPolling, 1200);
     }
-    timerId = window.setInterval(refreshDeploymentStatus, 5 * 60 * 1000);
 
     return () => {
       active = false;
       if (idleId != null && "cancelIdleCallback" in window) window.cancelIdleCallback(idleId);
       if (startupTimerId != null) window.clearTimeout(startupTimerId);
-      if (timerId) window.clearInterval(timerId);
+      stopPolling?.();
     };
   }, [user]);
 
