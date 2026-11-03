@@ -223,10 +223,10 @@ function ruleForPoint(label = "", assignmentKey = "") {
     // Communicative points are about meaning, not one model phrase. Students
     // may state the purchase and then describe a defect in the next sentence,
     // without using "Beschwerde", "Problem" or "Ich schreibe".
-    const product = /\b(?:produkt|ware|artikel|bestellung|handy|smartphone|telefon|schuhe?|jacke|hose|ger[aä]t|computer|laptop|tablet|kopfh[oö]rer|m[oö]bel)\b/i;
+    const product = /\b(?:produkt|ware|artikel|bestellung|handy|smartphone|telefon|schuhe?|jacke|hose|ger[aä]t|computer|laptop|tablet|kopfh[oö]rer|m[oö]bel|mixer|k[uü]chenmaschine|kaffeemaschine|staubsauger)\b/i;
     const purchase = /\b(?:gekauft|bestellt|erhalten|bekommen)\b/i;
     const explicitComplaint = /\b(?:beschwer\w*|reklamier\w*|reklamation)\b/i;
-    const problem = /\b(?:probleme?|kaputt|defekt|besch[aä]digt|falsch(?:e|er|es|en)?|funktioniert\s+(?:es\s+)?nicht|geht\s+nicht|zu\s+(?:klein|gro[ßs]|eng|weit)|passt\s+(?:mir\s+)?nicht|nicht\s+wie\s+(?:bestellt|beschrieben)|gef[aä]llt\s+mir\s+nicht)\b/i;
+    const problem = /\b(?:probleme?|kaputt|defekt|besch[aä]digt|falsch(?:e|er|es|en)?|funktioniert\s+(?:es\s+)?nicht|mixt\s+nicht|l[aä](?:ss|ß)t\s+sich\s+nicht\s+einschalten|schaltet\s+sich\s+nicht\s+ein|geht\s+nicht(?:\s+an)?|l[aä]uft\s+nicht|zu\s+(?:klein|gro[ßs]|eng|weit)|passt\s+(?:mir\s+)?nicht|nicht\s+wie\s+(?:bestellt|beschrieben)|gef[aä]llt\s+mir\s+nicht)\b/i;
     const negatedDefect = /\b(?:nicht\s+(?:kaputt|defekt|besch[aä]digt)|keine?\s+probleme?)\b/i;
     const rule = (source) => {
       const hasComplaintReason = sentences(source).some(
@@ -348,7 +348,7 @@ function ruleForPoint(label = "", assignmentKey = "") {
   if (normalizedAssignmentKey === "A2-7.20" && /exact product problem/.test(value)) {
     // An exact complaint can be about size, fit or colour, not just a defect.
     // Do not require the learner to say "defekt" or "falsch".
-    return /\b(?:kaputt|defekt|besch[aä]digt|funktioniert\s+(?:es\s+)?nicht|falsch(?:e|er|es|en)?|zu\s+(?:klein|gro[ßs]|eng|weit)|passen?\s+(?:mir\s+)?nicht|farbe\s+gef[aä]llt\s+mir\s+nicht|nicht\s+wie\s+(?:bestellt|beschrieben)|problem\s+mit)\b/i;
+    return /\b(?:kaputt|defekt|besch[aä]digt|funktioniert\s+(?:es\s+)?nicht|mixt\s+nicht|l[aä](?:ss|ß)t\s+sich\s+nicht\s+einschalten|schaltet\s+sich\s+nicht\s+ein|geht\s+nicht(?:\s+an)?|l[aä]uft\s+nicht|falsch(?:e|er|es|en)?|zu\s+(?:klein|gro[ßs]|eng|weit)|passen?\s+(?:mir\s+)?nicht|farbe\s+gef[aä]llt\s+mir\s+nicht|nicht\s+wie\s+(?:bestellt|beschrieben)|problem\s+mit)\b/i;
   }
   if (normalizedAssignmentKey === "A2-7.20" && /exchange, repair or refund/.test(value)) {
     const directRequest = /\b(?:umtausch\w*|austausch\w*|reparier\w*|reparatur|zur[uü]ckgeben|zur[uü]ckerstatt\w*|r[uü]ckerstattung|r[uü]ckzahlung|erstattung|geld\s+zur[uü]ck|ersetz\w*|ersatz)\b/i;
