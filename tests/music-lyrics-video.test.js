@@ -141,11 +141,57 @@ test('export metadata follows the selected song and offers editable copy buttons
   assert.match(copy.description,/Day 13/);
   assert.match(copy.description,/music.falowen.app/);
   assert.ok(copy.title.length <= 100);
+  assert.match(copy.title,/West African Palm-Wine Afrobeat/);
+  assert.match(copy.description,/West African palm-wine-inspired guitar/);
+  assert.match(copy.description,/prices, numbers/);
+  assert.match(copy.description,/#PalmWineMusic/);
+  assert.match(copy.description,/#GermanA1/);
   const video=readFileSync(new URL('../src/components/MusicLyricsVideoStudio.jsx',import.meta.url),'utf8');
   assert.match(video,/Copy title/);
   assert.match(video,/Copy description/);
   assert.match(video,/Copy both/);
   assert.match(video,/navigator.clipboard/);
+  assert.match(video,/music-video-post-genre/);
+  assert.match(video,/MUSIC_VIDEO_GENRE_SUGGESTIONS/);
+  assert.match(video,/publishedTrack\?\.genre/);
+  assert.match(video,/setPostingGenreOverride/);
+});
+
+test("publishing copy keeps each song's real style instead of labeling all songs Afrobeat", () => {
+  const highlife=musicVideoSocialCopy({
+    title:"Mit dem Rad, mit dem Zug",level:"A2",day:11,
+    genre:"Ghanaian Highlife",topic:"Transport and travel"
+  });
+  assert.match(highlife.title,/Ghanaian Highlife/);
+  assert.match(highlife.description,/Ghanaian Highlife/);
+  assert.match(highlife.description,/Transport and travel/);
+  assert.doesNotMatch(highlife.title,/Afrobeat/);
+  assert.match(highlife.description,/#Highlife/);
+  const unspecified=musicVideoSocialCopy({title:"Mein neuer Tag",level:"B1",day:2});
+  assert.doesNotMatch(unspecified.title,/Afrobeat|Highlife|Palm-Wine/);
+  assert.doesNotMatch(unspecified.description,/Genre:/);
+  const overridden=musicVideoSocialCopy({title:"Zwei Tees, vier Euro",level:"A1",genre:"Acoustic Pop"});
+  assert.match(overridden.title,/Acoustic Pop/);
+  assert.doesNotMatch(overridden.title,/Palm-Wine/);
+  assert.doesNotMatch(overridden.description,/#PalmWineMusic/);
+});
+
+test("song title and genre remain searchable under YouTube's 100-character title limit", () => {
+  const longTitle="Eine wunderschöne und besonders lange Geschichte über " + "Freundschaft ".repeat(12);
+  const copy=musicVideoSocialCopy({title:longTitle,level:"B2",genre:"West African Palm-Wine Afrobeat"});
+  assert.ok(copy.title.length<=100,copy.title);
+  assert.ok(copy.title.endsWith(" | Falowen Music"),copy.title);
+  assert.match(copy.title,/German B2 Song/);
+  assert.match(copy.title,/Palm-Wine Afrobeat/);
+  assert.match(copy.description,/https:\/\/music\.falowen\.app\//);
+  assert.match(copy.description,/https:\/\/www\.falowen\.app\//);
+  assert.match(copy.description,/English translations are available on supported tracks/);
+  const extremelyLongGenre=musicVideoSocialCopy({
+    title:"Mit Freunden zusammen",level:"A1",
+    genre:"Modern very experimental and extensively described acoustic fusion style of music"
+  });
+  assert.ok(extremelyLongGenre.title.length<=100,extremelyLongGenre.title);
+  assert.ok(extremelyLongGenre.title.endsWith(" | Falowen Music"));
 });
 
 test("export does not silently produce an incompatible WebM or an untested MP4", () => {

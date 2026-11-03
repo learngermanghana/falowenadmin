@@ -98,28 +98,92 @@ export function presetVideoEnglish(lyrics, _title, level, day) {
      lines.some((line,i)=>line!==B1_DAY2_ENGLISH[i][0]))return "";
   return B1_DAY2_ENGLISH.map(pair=>pair[1]).join("\n");
 }
-// Reusable, editable posting text for a downloaded lyrics video.
-// Keep links on known public homepages; no invented deep link or exam claim.
-export function musicVideoSocialCopy({title = "",level = "",day = ""} = {}) {
-  const songTitle = String(title || "").trim() || "Falowen Music";
+// Genres are per recording. Do not label every Falowen song Afrobeat.
+// A title-specific direction is only used when the publisher has identified
+// that recording's sound; explicit genre metadata or owner edits take priority.
+export const MUSIC_VIDEO_GENRE_SUGGESTIONS = Object.freeze([
+  "West African Palm-Wine Afrobeat",
+  "Ghanaian Highlife",
+  "Afrobeat",
+  "Afro-Pop",
+  "Afro-Soul",
+  "Acoustic Afro-Pop",
+  "German Pop",
+  "Bossa Pop",
+  "Acoustic Ballad",
+  "R&B / Afro-Fusion",
+]);
+const isTeaSong = title => /^zwei tees,?\s+vier euro\b/i.test(String(title || "").trim());
+
+export function resolveMusicVideoGenre({title = "", genre = ""} = {}) {
+  const recorded = String(genre || "").trim().replace(/\s+/g, " ").slice(0, 68);
+  if (recorded && !/^(unknown|other|teacher selected|automatic|not set)$/i.test(recorded)) {
+    return recorded;
+  }
+  // This specific track's musical blend was confirmed by the publisher.
+  if (isTeaSong(title)) return "West African Palm-Wine Afrobeat";
+  return "";
+}
+
+// Edit-friendly YouTube metadata (no new API/AI call).
+// Put song, learning level and specific sound in the title, not an invented
+// genre derived from the language level or an unrelated lesson.
+export function musicVideoSocialCopy({
+  title = "", level = "", day = "", genre = "", topic = "",
+} = {}) {
+  const songTitle = String(title || "").trim().replace(/\s+/g, " ") || "Falowen Music";
   const cleanLevel = /^(A1|A2|B1|B2|C1|C2)$/.test(String(level).toUpperCase())
     ? String(level).toUpperCase() : "";
   const numberDay = Number(day);
-  const cleanDay = day !== "" && day != null && Number.isInteger(numberDay) && numberDay >= 1 && numberDay <= 28
-    ? numberDay : null;
-  const subject = cleanLevel ? `German ${cleanLevel} Song` : "Lyrics Video";
-  const postingTitle = `${songTitle.slice(0, 64)} | ${subject} | Falowen Music`.slice(0, 100);
-  const lesson = cleanLevel ? `\nLevel: ${cleanLevel}${cleanDay ? ` · Day ${cleanDay}` : ""}` : "";
+  const cleanDay = day !== "" && day != null && Number.isInteger(numberDay) &&
+    numberDay >= 1 && numberDay <= 28 ? numberDay : null;
+  const genreName = resolveMusicVideoGenre({title: songTitle, genre});
+  const subject = cleanLevel ? "German " + cleanLevel + " Song" : "German Lyrics Song";
+  const titleGenre = genreName.slice(0, 38).trim();
+  const suffix = " | " + subject + (titleGenre ? " – " + titleGenre : "") + " | Falowen Music";
+  // YouTube title max: 100 characters. Preserve the branding and genre
+  // and shorten only an unusually long song title.
+  const maxSongLength = Math.max(10, 100 - suffix.length);
+  const postingTitle = songTitle.slice(0, maxSongLength).trimEnd() + suffix;
+  const validTopic = String(topic || "").trim().replace(/\s+/g, " ").slice(0, 180);
+  const focus = validTopic && !/^(day\s*\d+\s*[·:–-]\s*)?(german learning|learning story|lesson song)$/i.test(validTopic)
+    && !/^day\s*\d+\s*[·:–-]\s*german learning$/i.test(validTopic)
+    ? validTopic : "";
+  const teaSong = isTeaSong(songTitle);
+  const opening = teaSong
+    ? "☕ Two teas, four euros — learn everyday German with a relaxed café song!"
+    : "🎶 Learn German through music with \"" + songTitle + "\" by Falowen Music.";
+  const sound = genreName
+    ? (teaSong && /palm.wine/i.test(genreName)
+      ? "This German-language song blends West African palm-wine-inspired guitar melodies with a warm Afrobeat groove."
+      : "Musical style: " + genreName + ". German lyrics meet an engaging rhythm for listening and sing-along practice.")
+    : "Sing along with the German lyrics and enjoy the music.";
+  const learning = teaSong
+    ? "🎯 Practise: ordering tea, everyday prices, numbers and polite café expressions."
+    : focus ? "🎯 German practice topic: " + focus + "."
+      : "🎯 Practise German listening, vocabulary and pronunciation with the song.";
+  const lesson = cleanLevel ? "Level: " + cleanLevel + (cleanDay ? " · Day " + cleanDay : "") : "";
+  const hashtags = [
+    "#FalowenMusic", "#LearnGerman",
+    cleanLevel ? "#German" + cleanLevel : "#GermanMusic",
+    /afrobeat/i.test(genreName) ? "#Afrobeat" : "",
+    /palm.wine/i.test(genreName) ? "#PalmWineMusic" : "",
+    /highlife/i.test(genreName) ? "#Highlife" : "",
+    /afro.soul/i.test(genreName) ? "#AfroSoul" : "",
+  ].filter(Boolean).join(" ");
   const description = [
-    `Sing along to "${songTitle}" — a Falowen Music lyrics video.`,
-    cleanLevel ? "Follow the lyrics on screen and practise your German listening, vocabulary and pronunciation." :
-      "Follow the words on screen and enjoy the music.",
-    lesson.trim(),
-    "Discover more music: https://music.falowen.app/",
-    "Learn German with Falowen: https://www.falowen.app/",
-    cleanLevel ? `#FalowenMusic #LearnGerman #German${cleanLevel} #GermanMusic` : "#FalowenMusic #LyricsVideo #OriginalMusic",
+    opening,
+    sound,
+    learning,
+    "📝 Follow the on-screen German lyrics. English translations are available on supported tracks.",
+    genreName ? "Genre: " + genreName : "",
+    lesson,
+    "🎧 Discover more Falowen Music: https://music.falowen.app/",
+    "📚 Learn German with Falowen: https://www.falowen.app/",
+    "Share your favourite German phrase from this song in the comments!",
+    hashtags,
   ].filter(Boolean).join("\n\n");
-  return {title:postingTitle,description};
+  return {title: postingTitle, description, genre: genreName};
 }
 
 export function findLyricScene(scenes = [], seconds = 0) {

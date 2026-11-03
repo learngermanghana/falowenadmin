@@ -15,7 +15,7 @@ import { getReusableSongDraft } from "../data/reusableMusicSongbook.js";
 import { matchingMusicEnglishDraft } from "../utils/musicEnglishDrafts.js";
 import { readSongCues, validateLyricCues } from "../utils/songLyrics.js";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { videoLyricLines, lyricScenes, findLyricScene, videoRecorderFormat, drawMusicVideoFrame, isRealMp4Blob, timedLyricsPack, verifiedPublishedVideoTiming, musicVideoSocialCopy, videoEnglishLines, publishedVideoEnglish, musicVideoAudioUrl, VIDEO_EXPORT_PRESETS } from "../utils/musicLyricsVideo.js";
+import { videoLyricLines, lyricScenes, findLyricScene, videoRecorderFormat, drawMusicVideoFrame, isRealMp4Blob, timedLyricsPack, verifiedPublishedVideoTiming, musicVideoSocialCopy, resolveMusicVideoGenre, MUSIC_VIDEO_GENRE_SUGGESTIONS, videoEnglishLines, publishedVideoEnglish, musicVideoAudioUrl, VIDEO_EXPORT_PRESETS } from "../utils/musicLyricsVideo.js";
 
 const frameStyle = {width:"min(100%,440px)",borderRadius:14,background:"#102f34",boxShadow:"0 6px 20px #102f3426"};
 const fieldStyle = {width:"100%",maxWidth:520,padding:"8px",borderRadius:8,border:"1px solid #cbd5e1",boxSizing:"border-box"};
@@ -84,6 +84,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   const [objectKey,setObjectKey] = useState("");
   const [postingTitle,setPostingTitle] = useState("");
   const [postingDescription,setPostingDescription] = useState("");
+  const [postingGenreOverride,setPostingGenreOverride] = useState(null);
   const [copyNotice,setCopyNotice] = useState("");
   const [timingReview,setTimingReview] = useState(false);
   const [recordingFingerprint,setRecordingFingerprint] = useState("");
@@ -99,6 +100,14 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   const videoTitle=publishedTrack?.title || title;
   const videoLevel=publishedTrack?.level || level;
   const videoDay=publishedTrack?.day ?? day;
+  const draftGenre=getReusableSongDraft(publishedTrack?.assignmentKey || assignmentKey)?.genre || "";
+  // The creator confirmed this song's palm-wine/Afrobeat arrangement.
+  // Every other track uses published recording metadata, then the saved draft.
+  const titleGenre=resolveMusicVideoGenre({title:videoTitle});
+  const defaultPostingGenre=titleGenre || publishedTrack?.genre || draftGenre || "";
+  const selectedPostingGenre=postingGenreOverride === null ? defaultPostingGenre : postingGenreOverride;
+  useEffect(()=>{setPostingGenreOverride(null);},[videoTitle,publishedTrack?.objectKey]);
+
   const englishStorageKey="falowen-video-english:"+(publishedTrack?.objectKey || assignmentKey || videoLevel+"-"+videoDay+"-"+videoTitle);
   useEffect(()=>{
     // Exact lyric matching prevents a different recording's English from surviving a song change.
@@ -109,10 +118,13 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     setEnglishText(saved?.lyrics===lyricText && typeof saved?.english==="string"
       ? saved.english : (approved || songbook?.text || ""));
   },[englishStorageKey,lyricText,publishedMetadata,publishedTrack?.objectKey,assignmentKey]);
-  const postingDefaults=useMemo(()=>musicVideoSocialCopy({title:videoTitle,level:videoLevel,day:videoDay}),
-    [videoTitle,videoLevel,videoDay]);
+  const postingDefaults=useMemo(()=>musicVideoSocialCopy({
+    title:videoTitle,level:videoLevel,day:videoDay,genre:selectedPostingGenre,
+    topic:publishedTrack?.topic || "",
+  }),[videoTitle,videoLevel,videoDay,selectedPostingGenre,publishedTrack?.topic]);
   useEffect(()=>{
-    // Reset only when the selected recording changes, never after an edit to the posting text.
+    // A new recording or deliberate genre edit regenerates the suggested copy.
+    // Typing in the title/description itself never replaces a manual wording edit.
     setPostingTitle(postingDefaults.title);
     setPostingDescription(postingDefaults.description);
     setCopyNotice("");
@@ -642,9 +654,19 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     </section>}
     <section className="music-video-posting" aria-label="Video title and description for publishing">
       <h3>Video title & description · ready to copy</h3>
-      <p>Prepared from this song and lesson. Edit the wording for YouTube, TikTok or Instagram before copying.</p>
+      <p>Prepared from the song's own genre and lesson (not a generic Afrobeat label). Edit the style, title or description before copying to YouTube, TikTok or Instagram.</p>
+      <label htmlFor="music-video-post-genre">Musical genre for this recording
+        <input id="music-video-post-genre" type="text" list="music-video-genre-options"
+          maxLength={68} value={selectedPostingGenre}
+          placeholder="Select or type the verified music style"
+          onChange={event=>setPostingGenreOverride(event.target.value)}/>
+        <datalist id="music-video-genre-options">
+          {MUSIC_VIDEO_GENRE_SUGGESTIONS.map(genre=><option key={genre} value={genre}/>)}
+        </datalist>
+      </label>
+      <small>Use the actual sound of this recording. Changing the genre regenerates the suggested title and description; you can edit both afterwards.</small>
       <label htmlFor="music-video-post-title">Video title
-        <input id="music-video-post-title" type="text" maxLength={150} value={postingTitle}
+        <input id="music-video-post-title" type="text" maxLength={100} value={postingTitle}
           onChange={event=>setPostingTitle(event.target.value)} />
       </label>
       <button type="button" onClick={()=>copyPostingText(postingTitle,"Title")}>Copy title</button>
