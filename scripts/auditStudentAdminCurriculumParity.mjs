@@ -17,7 +17,7 @@ const EXPECTED_SOURCE_BLOBS = Object.freeze({
   "web/src/components/C1TopicIntroduction.jsx": "c2c221a6c850c8ad1f689827d417d62e8910c664",
   "web/src/data/c1ContentRefresh.js": "d090f0d4a32d08d56bc9a166090cf588ca068ad1",
   "web/src/data/c2TopicKnowledge.js": "6c39d126a82527566bb38fd14d2744e4beee8a1a",
-  "web/src/data/c2ExamStandardContent.js": "10997bdf9974e0dc58cb8bacdbdb45f0fc6e29c9",
+  "web/src/data/c2ExamStandardContent.js": "84465011451ff180c848579714aa7743a2324dae",
   "web/src/components/C1Day1To6GrammarNotes.js": "2894491bcdd034ee210f7b5d4539421552033767",
   "web/src/components/C1Day7ReisenGrammarNotes.js": "96fd017458ac225fa86ae377261610e604ba3819",
   "web/src/components/C1Day8To10GrammarNotes.js": "c3f52c2a9b25df7a1960a412bff0f2f10a517ce8",
