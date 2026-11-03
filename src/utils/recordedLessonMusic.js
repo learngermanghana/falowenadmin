@@ -15,6 +15,19 @@ export function selectRecordedLessonTrack(feed, {level='A2',day,assignmentKey} =
     'B1-25':['als kunde habe ich auch rechte','das paket kam nicht an'],
     'B1-26':['der zug fährt nicht'],
   }[normalized+'-'+Number(day)]||[];
+  // A2 Day 21 already has a teacher-approved uploaded song. If several MP3s
+  // exist for the day, select the exact known R2 recording rather than leaving
+  // the presenter without music or playing another song.
+  const knownObjectKey = normalized === 'A2' && Number(day) === 21
+    ? 'music/a2/day-21/Endlich Wochenende.mp3' : '';
+  if (knownObjectKey) {
+    const pinned = rows.filter(row => row.objectKey === knownObjectKey);
+    if (pinned.length === 1) {
+      const approved = waitingRoomDiscoveredMusicTrack(
+        { tracks: pinned }, { level: normalized, day, assignmentKey: '' });
+      if (approved) return approved;
+    }
+  }
   const matches=rows.filter(row=>titles.includes(String(row.title||'').trim().toLocaleLowerCase('de')));
   if(matches.length===1) {
     const track=waitingRoomDiscoveredMusicTrack({tracks:matches},{level:normalized,day,assignmentKey:''});
