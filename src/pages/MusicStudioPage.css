@@ -104,3 +104,9 @@
 .music-studio-simple>#music-generator-panel{min-width:0}
 .music-studio-simple>#music-video-panel{max-width:1120px;margin:0 auto;min-width:0}
 .music-video-main{min-width:0}
+
+/* Course translations are free read-only songbook assets, not AI calls. */
+.music-english-translation{margin-top:12px;border:1px solid #d5e4dc;border-radius:12px;padding:12px;background:#f6faf7}
+.music-english-translation summary{cursor:pointer;font-weight:700;color:#19463f}
+.music-english-translation p{font-size:12px;color:#50645c;margin:10px 0}
+.music-english-translation pre{font:inherit;font-size:13px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;max-height:360px;overflow:auto;margin:0;color:#233b35}
