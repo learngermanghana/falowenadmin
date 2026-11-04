@@ -39,7 +39,8 @@ export default function useSongTiming(song) {
         setRecordedPack({objectKey, lyrics:recordedLyrics,
           referenceOnly:data.referenceOnly===true,
           transcriptionStatus:data.transcriptionStatus,
-          timingStatus:data.timingStatus});
+          timingStatus:data.timingStatus,
+          englishTranslation:data.englishTranslation});
         const saved = readSongCues(recording);
         setCues(saved.length === lyricLines(recordedLyrics).length ? saved : checked);
       }

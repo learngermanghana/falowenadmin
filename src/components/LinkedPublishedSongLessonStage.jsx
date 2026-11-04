@@ -100,7 +100,7 @@ export default function LinkedPublishedSongLessonStage({ music }) {
   const questions=recordedSongQuestions(displayText,day,level);
   const question=questions[questionIndex];
   const musicLink=track ? 'https://music.falowen.app/?track='+encodeURIComponent(track.id) : music.musicLibraryUrl;
-  const song=displayText && track ? {id:track.id,objectKey:track.objectKey,lyrics:displayText.lyrics} : null;
+  const song=displayText && track ? {id:track.id,objectKey:track.objectKey,lyrics:displayText.lyrics, englishTranslation:pack?.englishTranslation} : null;
   const verified=Boolean(pack && !pack.referenceOnly);
   const synchronized=Boolean(pack);
   const changeTab=next=>{setView(next);setQuestionIndex(0);setShowAnswer(false);setSelectedOption(-1);};

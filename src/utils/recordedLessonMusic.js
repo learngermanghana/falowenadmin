@@ -43,6 +43,7 @@ export function verifiedRecordedLyrics(pack, track) {
   const cues = validateLyricCues(pack.cues, lines);
   if (!lines.length || cues.length !== lines.length) return null;
   return {objectKey:track.objectKey,lyrics:pack.lyrics,cues,
+    englishTranslation:pack.englishTranslation,
     ...(pack.referenceOnly ? {referenceOnly:true} : {}),
     ...(pack.transcriptionStatus==='automatic' ? {transcriptionStatus:'automatic'} : {}),
     ...(pack.timingStatus==='estimated' ? {timingStatus:'estimated'} : {})};
