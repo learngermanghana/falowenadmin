@@ -47,18 +47,47 @@ function nameOrPhoneFromLegacyContact(student) {
   return (raw.replace(/\D/g, "").length >= 7) ? { name: "", phone: raw } : { name: raw, phone: "" };
 }
 
+// These are the three values the Admin Profile form actually writes. Presence of
+// any canonical field marks the top-level contact as authoritative, including
+// intentional empty strings. Never revive an obsolete nested phone after an edit.
+const EDITABLE_CONTACT_FIELDS = [
+  "emergencyContactName", "emergencyContactPhoneNumber", "emergencyContactRelationship",
+];
+
 export function getStudentEmergencyContact(student = {}) {
   const record = student && typeof student === "object" ? student : {};
-  const nested = nestedEmergency(record);
-  const legacy = nameOrPhoneFromLegacyContact(record);
-  const phone = fromFields(nested, ["phone", "phoneNumber", "telephone", ...PHONE_KEYS])
-    || fromFields(record, PHONE_KEYS) || legacy.phone;
-  const name = fromFields(nested, ["name", "fullName", "contactPerson", ...NAME_KEYS])
-    || fromFields(record, NAME_KEYS) || legacy.name;
-  const relationship = fromFields(nested, ["relationship", "relation", ...RELATIONSHIP_KEYS])
-    || fromFields(record, RELATIONSHIP_KEYS);
+  const canonicalExists = EDITABLE_CONTACT_FIELDS.some((field) =>
+    Object.prototype.hasOwnProperty.call(record, field));
 
-  if (phone || name || relationship) return { phone, name, relationship, source: "emergency" };
+  if (canonicalExists) {
+    const contact = {
+      name: blank(record.emergencyContactName),
+      phone: blank(record.emergencyContactPhoneNumber),
+      relationship: blank(record.emergencyContactRelationship),
+    };
+    return { ...contact, source: contact.name || contact.phone || contact.relationship ? "emergency" : "missing" };
+  }
+
+  // Older records may contain top-level aliases or nested objects. Read one
+  // coherent source at a time; never combine different people's details.
+  const direct = {
+    phone: fromFields(record, PHONE_KEYS),
+    name: fromFields(record, NAME_KEYS),
+    relationship: fromFields(record, RELATIONSHIP_KEYS),
+  };
+  if (direct.phone || direct.name || direct.relationship) return { ...direct, source: "emergency" };
+
+  const nested = nestedEmergency(record);
+  const nestedContact = {
+    phone: fromFields(nested, ["phone", "phoneNumber", "telephone", ...PHONE_KEYS]),
+    name: fromFields(nested, ["name", "fullName", "contactPerson", ...NAME_KEYS]),
+    relationship: fromFields(nested, ["relationship", "relation", ...RELATIONSHIP_KEYS]),
+  };
+  if (nestedContact.phone || nestedContact.name || nestedContact.relationship)
+    return { ...nestedContact, source: "emergency" };
+
+  const legacy = nameOrPhoneFromLegacyContact(record);
+  if (legacy.phone || legacy.name) return { ...legacy, relationship: "", source: "emergency" };
 
   // A guardian/next of kin is not automatically a designated emergency
   // contact: label this distinctly so teachers do not mistake the two.
@@ -76,10 +105,29 @@ export function getStudentEmergencyContact(student = {}) {
   if (!populated(guardian) && !populated(nextOfKin)) {
     return { phone: "", name: "", relationship: "", source: "missing" };
   }
-  // Prefer the complete callable record, never combine separate people's
-  // contact details into one misleading phone/name pair.
   const useGuardian = Boolean((guardian.phone || !nextOfKin.phone) && populated(guardian));
   return { ...(useGuardian ? guardian : nextOfKin), source: useGuardian ? "guardian" : "nextOfKin" };
+}
+
+// Fill the editable form from older saved emergency-contact shapes. Guardian
+// fallback remains read-only and is not silently converted into a contact.
+export function emergencyContactEditorValues(student = {}) {
+  const contact = getStudentEmergencyContact(student);
+  return {
+    emergencyContactName: contact.source === "emergency" ? contact.name : "",
+    emergencyContactPhoneNumber: contact.source === "emergency" ? contact.phone : "",
+    emergencyContactRelationship: contact.source === "emergency" ? contact.relationship : "",
+  };
+}
+
+// Once any emergency field changes, persist the whole contact. This makes
+// replacements and deliberate clears authoritative even for nested legacy rows.
+export function emergencyContactEditedFields(student = {}, draft = {}) {
+  const original = emergencyContactEditorValues(student);
+  if (!EDITABLE_CONTACT_FIELDS.some((field) =>
+    String(draft[field] ?? "").trim() !== original[field])) return {};
+  return Object.fromEntries(EDITABLE_CONTACT_FIELDS.map((field) =>
+    [field, String(draft[field] ?? "").trim()]));
 }
 
 export function resolveEmergencyContactPhone(student = {}) {

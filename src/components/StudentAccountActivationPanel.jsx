@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../firebase.js";
+import { emergencyContactEditedFields } from "../utils/studentEmergencyContact.js";
 import {
   getStudentAccountStatus,
   prepareStudentAccount,
@@ -34,8 +35,9 @@ export default function StudentAccountActivationPanel({ student, draft = {}, onS
   const studentId = clean(student.id);
   const savedEmail = clean(student.email).toLowerCase();
   const savedName = clean(student.name);
-  const unsavedProfileChanges = ["name", "email", "phone", "emergencyContactName", "emergencyContactPhoneNumber", "emergencyContactRelationship"].some((field) =>
-    clean(draft[field]) !== clean(student[field]));
+  const unsavedProfileChanges = ["name", "email", "phone"].some((field) =>
+    clean(draft[field]) !== clean(student[field]))
+    || Object.keys(emergencyContactEditedFields(student, draft)).length > 0;
   const accountState = status?.state
     || (student.uid ? student.activationEmailSentAt ? "invited" : "ready_to_invite" : "not_prepared");
 

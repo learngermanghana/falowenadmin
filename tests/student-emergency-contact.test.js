@@ -4,6 +4,7 @@ import fs from "node:fs";
 import {
   getStudentEmergencyContact, resolveEmergencyContactPhone,
   resolveEmergencyContactName, callEmergencyContactUrl,
+  emergencyContactEditorValues, emergencyContactEditedFields,
 } from "../src/utils/studentEmergencyContact.js";
 import { matchesStudentDirectorySearch } from "../src/utils/studentDirectorySearch.js";
 
@@ -104,4 +105,67 @@ test("staff-only Student Profile renders emergency contacts without another data
   assert.match(css, /\.student-emergency-contact-details/);
   assert.match(patch, /if \(!directorySource\.includes\(emergencyMarker\)\)/);
   assert.doesNotMatch(card, /fetch\(|getDocs\(|setDoc\(|updateDoc\(/);
+});
+
+test("nested legacy emergency contacts are prefilled and replacement edits control summary and Call", () => {
+  for (const key of ["emergencyContact", "emergency_contact"]) {
+    const old = { [key]: { name: "Old Person", phone: "0241111111", relationship: "Parent" } };
+    assert.deepEqual(emergencyContactEditorValues(old), {
+      emergencyContactName: "Old Person",
+      emergencyContactPhoneNumber: "0241111111",
+      emergencyContactRelationship: "Parent",
+    });
+    const updated = { ...emergencyContactEditorValues(old), emergencyContactName: "New Person", emergencyContactPhoneNumber: "0552223333", emergencyContactRelationship: "Sister" };
+    const patch = emergencyContactEditedFields(old, updated);
+    assert.deepEqual(patch, updated, "saving any contact edit writes the complete contact");
+    const saved = { ...old, ...patch };
+    assert.deepEqual(getStudentEmergencyContact(saved), {
+      name: "New Person", phone: "0552223333", relationship: "Sister", source: "emergency",
+    });
+    assert.equal(resolveEmergencyContactName(saved), "New Person");
+    assert.equal(callEmergencyContactUrl(resolveEmergencyContactPhone(saved)), "tel:0552223333");
+    assert.equal(emergencyContactEditedFields(saved, emergencyContactEditorValues(saved)).emergencyContactPhoneNumber, undefined);
+  }
+});
+
+test("clearing a saved emergency number never revives stale nested numbers or guardian fallback", () => {
+  const old = {
+    emergencyContact: { name: "Old Contact", phone: "0241234567", relationship: "Brother" },
+    guardianName: "Legacy Guardian", guardianPhone: "0278889999",
+  };
+  const clearedPhone = { ...emergencyContactEditorValues(old), emergencyContactPhoneNumber: "" };
+  const patch = emergencyContactEditedFields(old, clearedPhone);
+  const updated = { ...old, ...patch };
+  assert.deepEqual(getStudentEmergencyContact(updated), {
+    name: "Old Contact", phone: "", relationship: "Brother", source: "emergency",
+  });
+  assert.equal(callEmergencyContactUrl(resolveEmergencyContactPhone(updated)), "");
+  const clearedAll = {
+    emergencyContactName: "", emergencyContactPhoneNumber: "", emergencyContactRelationship: "",
+  };
+  assert.deepEqual(getStudentEmergencyContact({ ...old, ...clearedAll }), {
+    name: "", phone: "", relationship: "", source: "missing",
+  });
+});
+
+test("canonical top-level records stay coherent without mixing stale nested contact details", () => {
+  const mixed = {
+    emergency_contact: { name: "Old Person", phone: "0241111111", relationship: "Mother" },
+    emergencyContactName: "New Person",
+  };
+  assert.deepEqual(getStudentEmergencyContact(mixed), {
+    name: "New Person", phone: "", relationship: "", source: "emergency",
+  });
+  assert.equal(resolveEmergencyContactPhone(mixed), "");
+  assert.deepEqual(emergencyContactEditorValues({ guardianName: "Guardian", guardianPhone: "0551112222" }), {
+    emergencyContactName: "", emergencyContactPhoneNumber: "", emergencyContactRelationship: "",
+  });
+});
+
+test("the Admin editor normalizes legacy values before save and activation dirty checks", () => {
+  const directory = fs.readFileSync("src/pages/StudentDirectoryPage.jsx", "utf8");
+  const activation = fs.readFileSync("src/components/StudentAccountActivationPanel.jsx", "utf8");
+  assert.match(directory, /emergencyContactEditorValues\(student\)/);
+  assert.match(directory, /Object.assign\(payload, emergencyContactEditedFields\(student, draft\)\)/);
+  assert.match(activation, /emergencyContactEditedFields\(student, draft\)/);
 });
