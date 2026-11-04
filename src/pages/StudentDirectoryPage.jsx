@@ -17,6 +17,7 @@ import StudentClassTransferPanel from "../components/StudentClassTransferPanel.j
 import StudentLearningStatusPanel from "../components/StudentLearningStatusPanel.jsx";
 import StudentEmergencyContact from "../components/StudentEmergencyContact.jsx";
 import { matchesStudentDirectorySearch } from "../utils/studentDirectorySearch.js";
+import { emergencyContactEditorValues, emergencyContactEditedFields } from "../utils/studentEmergencyContact.js";
 import { calculatePaystackCharge, calculatePaystackGrossAmount, parseMoneyValue, PAYSTACK_CHARGE_RATE, STUDENT_PAYSTACK_CHARGE_SHARE } from "../utils/paystackCharges";
 import { getEffectiveClassEndDate } from "../utils/liveClassScheduling";
 import { isArchivedStudent, isTrialOrUnpaidStudent, resolveStudentLearningStatus, sortStudentsByAttention, summarizeStudentAttention } from "../utils/studentAttention";
@@ -439,8 +440,11 @@ export default function StudentDirectoryPage() {
     const currentDraft = drafts[student.id];
     if (currentDraft) return currentDraft;
 
+    const emergencyFields = emergencyContactEditorValues(student);
     return editableFields.reduce((acc, field) => {
-      const normalized = dateFields.has(field) ? normalizeDateValue(student[field]) : normalizeEditableValue(student[field]);
+      const normalized = Object.prototype.hasOwnProperty.call(emergencyFields, field)
+        ? emergencyFields[field]
+        : dateFields.has(field) ? normalizeDateValue(student[field]) : normalizeEditableValue(student[field]);
       acc[field] = normalized;
       return acc;
     }, {});
@@ -476,7 +480,9 @@ export default function StudentDirectoryPage() {
     const draft = getDraft(student);
     const payload = {};
 
+    const emergencyFields = emergencyContactEditorValues(student);
     for (const field of editableFields) {
+      if (Object.prototype.hasOwnProperty.call(emergencyFields, field)) continue;
       const incomingValue = normalizeEditableValue(draft[field]).trim();
       const originalValue = dateFields.has(field)
         ? normalizeDateValue(student[field]).trim()
@@ -486,6 +492,8 @@ export default function StudentDirectoryPage() {
         payload[field] = dateFields.has(field) && !incomingValue ? null : incomingValue;
       }
     }
+
+    Object.assign(payload, emergencyContactEditedFields(student, draft));
 
     if (Object.keys(payload).length === 0) {
       pushToast({ type: "info", message: `No changes to save for ${student.name || student.id}.` });
