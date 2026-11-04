@@ -13,3 +13,9 @@ The learner repository's existing `onStudentCreated` / `onStudentUpdated` trigge
 Backend: `functions/organisationEnrolment.js`, registered in the Admin `api` Firebase function; same-origin Vercel proxy in `api/router.js`. Deploy both Firebase and Vercel. Submission uses a client-generated request ID for safe retries, honeypot, explicit consent, server validation, row caps and atomic per-contact daily quota. The two new collections are server-only (existing default-deny rules); no public Firestore access is required. Quota documents contain hashed keys; expiry timestamps can use a Firestore TTL policy for housekeeping. No new scheduled job is installed.
 
 Validation: `node --test functions/organisationEnrolment.test.cjs functions/studentAccountActivation.test.cjs tests/student-emergency-contact.test.js`; `npm run build`.
+
+## Unexpected HTML response
+
+The client reads response text and validates JSON before accepting success. An HTML fallback, empty response or network failure keeps all form entries and the original request ID available for retry. The Vercel proxy converts non-JSON organisation API replies to a JSON 502 instead of forwarding HTML. Do not treat this message as confirmation of a saved submission; only a reference receipt confirms it.
+
+Regression coverage: `tests/organisation-enrolment-request.test.js` covers public submissions, retries, owner-token handling, list/review methods, validation errors, network errors, HTML/empty replies and actual Vercel router dispatch to the Firebase proxy. Backend tests cover validation, duplicates, approval, rejection, access control, idempotency and quotas.
