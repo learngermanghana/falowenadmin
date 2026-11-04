@@ -251,3 +251,12 @@ clears in gaps. Landscape, vertical and square presets share proportional
 geometry. Published covers use anonymous CORS loading so unsafe images cannot
 taint the export canvas; the gradient remains available on failure. A local
 PNG/JPEG/WebP under 10 MB can be chosen without an upload.
+
+## Studio catalog browser access — 4 November 2026
+
+Lyrics Video Studio loads public songs on demand through the existing Admin
+`/api/attendance-music-library` rewrite. This same-origin request avoids CORS
+failures when an upstream cache retains a response allowed only for
+`music.falowen.app`. The rewrite still uses the learner public music catalog;
+track URLs and exact recording validation remain unchanged. There is no new
+function, background polling or automatic retry.
