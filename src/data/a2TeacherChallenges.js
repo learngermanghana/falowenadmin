@@ -1,5 +1,83 @@
 // A2 teacher-led oral missions. Each replaces exactly one existing focused-practice page.
 const definitions = [
+{
+  "assignmentId": "A2-1.1",
+  "title": "Small Talk Challenge",
+  "eyebrow": "Ein Gespräch beginnen und höflich reagieren",
+  "grammar": "Fragen stellen · weil / denn / deshalb",
+  "goal": "Begin a friendly conversation, explain a reason and respond politely to a personal question.",
+  "scenarios": [
+    {
+      "id": "scenario-1",
+      "label": "Im Deutschkurs",
+      "icon": "👋",
+      "context": "Du bist zum ersten Mal im Deutschkurs. Neben dir sitzt eine neue Person. Ihr wartet auf die Lehrerin und möchtet euch kennenlernen.",
+      "steps": [
+        {
+          "actionDe": "Gespräch beginnen",
+          "questionDe": "Wie begrüßt du die neue Person und fragst nach ihrem Namen?",
+          "modelDe": "Hallo, ich heiße Felix. Wie heißt du?"
+        },
+        {
+          "actionDe": "Interesse zeigen",
+          "questionDe": "Wie fragst du freundlich nach ihrem Grund für den Deutschkurs?",
+          "modelDe": "Warum lernst du Deutsch? Ich lerne Deutsch, weil ich in Deutschland studieren möchte."
+        },
+        {
+          "actionDe": "Gemeinsamkeit finden",
+          "questionDe": "Wie fragst du nach einem Hobby und nennst dein eigenes Hobby?",
+          "modelDe": "Was machst du gern in deiner Freizeit? Ich höre gern Musik."
+        }
+      ]
+    },
+    {
+      "id": "scenario-2",
+      "label": "Frage oder zu privat?",
+      "icon": "💬",
+      "context": "Ihr unterhaltet euch in der Pause. Die andere Person fragt plötzlich nach deinem Gehalt. Du möchtest freundlich bleiben und das Thema wechseln.",
+      "steps": [
+        {
+          "actionDe": "Passende Frage wählen",
+          "questionDe": "Welche Frage passt besser zum ersten Small Talk: Wochenende oder Gehalt?",
+          "modelDe": "Was machst du am Wochenende? Diese Frage passt gut zum ersten Small Talk."
+        },
+        {
+          "actionDe": "Höflich reagieren",
+          "questionDe": "Wie reagierst du freundlich, wenn du nicht über dein Gehalt sprechen möchtest?",
+          "modelDe": "Darüber möchte ich lieber nicht sprechen. Was machst du gern in deiner Freizeit?"
+        },
+        {
+          "actionDe": "Einen Grund nennen",
+          "questionDe": "Wie erklärst du mit denn, warum du lieber über Hobbys sprichst?",
+          "modelDe": "Ich spreche lieber über Hobbys, denn Geld ist für mich ein privates Thema."
+        }
+      ]
+    },
+    {
+      "id": "scenario-3",
+      "label": "Nach dem Unterricht",
+      "icon": "🤝",
+      "context": "Der Unterricht ist vorbei. Du hast mit einer neuen Person über Musik gesprochen. Ihr möchtet das Gespräch beim nächsten Mal fortsetzen.",
+      "steps": [
+        {
+          "actionDe": "Nachfragen",
+          "questionDe": "Wie fragst du nach der Musik, die die andere Person gern hört?",
+          "modelDe": "Welche Musik hörst du gern? Ich höre gern Afrobeat und deutsche Lieder."
+        },
+        {
+          "actionDe": "Einen Vorschlag machen",
+          "questionDe": "Wie schlägst du vor, in der nächsten Pause zusammen einen Kaffee zu trinken?",
+          "modelDe": "Hast du in der nächsten Pause Zeit? Wir könnten zusammen einen Kaffee trinken."
+        },
+        {
+          "actionDe": "Gespräch beenden",
+          "questionDe": "Wie beendest du das Gespräch freundlich und bestätigst euren Plan?",
+          "modelDe": "Das war ein nettes Gespräch. Dann sehen wir uns in der nächsten Pause. Bis bald!"
+        }
+      ]
+    }
+  ]
+},
   {
     "assignmentId": "A2-2.4",
     "title": "Meeting Planner",

@@ -242,6 +242,14 @@ No YouTube API or third-party service is contacted. The copy buttons only place 
 
 A1, A2 and B1 teaching music players show available English beneath each German lyric line by default, with an English translation checkbox. The existing recording metadata request supplies the translation; no additional per-play translation or AI request is made. The exact MP3 object key and every German sung line must match before English appears. Draft translations remain labelled, and missing or stale translations leave German visible. Seeking and highlighting still use only matching cues.
 
+## Estimated recording timing — 4 November 2026
+
+The published-timing adapter retains estimated status and the recording fingerprint.
+Complete estimated cues remain previewable but require listening review before
+shared timing publication; a full cue count is not evidence of exact alignment.
+The replacement A2 Day 1 MP3 supplied on 4 November matches the recorded SHA-256
+`edb408a57611d459cad14f2e13dd57d67ae5e726a665573cf8cfb47618daf928`.
+
 ### Artwork-led lyrics exports
 
 Video preview and export share an artwork backdrop with a dark legibility layer,

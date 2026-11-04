@@ -677,3 +677,11 @@ test("reviewed timestamps save straight to the R2 sidecar via an owner token",()
   assert.match(service,/auth.currentUser.getIdToken/);
   assert.match(video,/Download matching \.lyrics.json/);
 });
+
+test("published timing preserves estimated status and exact recording fingerprint",()=>{
+ const key="music/a2/day-01/Ein nettes Gespräch.mp3";
+ const pack={objectKey:key,lyrics:"Hallo\nGuten Tag",cues:[{text:"Hallo",start:1},{text:"Guten Tag",start:3}],timingStatus:"estimated",recordingSha256:"a".repeat(64)};
+ const result=verifiedPublishedVideoTiming(pack,key);
+ assert.equal(result.timingStatus,"estimated");
+ assert.equal(result.recordingSha256,pack.recordingSha256);
+});
