@@ -27,12 +27,18 @@ for(const [level,day,assignmentKey] of [['A1',14,'A1-3.6'],['A1',13,'A1-3.5'],['
   const lyrics=['Heute fahren wir gemeinsam nach Berlin.','Am Bahnhof wartet unser guter Freund.','Heute fahren wir gemeinsam nach Berlin.'];
   const pack={objectKey:recording.objectKey,lyrics:lyrics.join('\n'),cues:lyrics.map((text,i)=>({start:10+i*5,end:14+i*5,text}))};
   globalThis.fetch=async url=>{requested.push(String(url));return {ok:true,json:async()=>String(url).includes('attendance-music-library')?{ok:true,tracks:[{id:discoveredId,title:day===13?'Zwei Tees, vier Euro':'Weniger kaufen',level,day,objectKey:recording.objectKey,audioUrl:'https://www.falowen.app/api/music?track='+discoveredId,autoDiscovered:true,coursebook:true}]}:pack};};
+  pack.englishTranslation={source:'recording',lines:lyrics.map((de,i)=>({de,en:'English line '+i}))};
   const root=createRoot(w.document.getElementById('root'));
   await act(async()=>{root.render(level==='B1'?React.createElement(Linked,{music:{level,day,title:'Weniger kaufen'}}):React.createElement(Published,{assignmentKey}));});
   const buttons=()=>[...w.document.querySelectorAll('button')];
   const click=async text=>{const b=buttons().find(b=>b.textContent.includes(text));assert.ok(b,text);await act(async()=>b.click());return b;};
   if(day===13)assert.ok(requested.some(url=>decodeURIComponent(url).includes(recording.objectKey)),'Day13 lyrics request uses the actual discovered MP3 key');
   await click('2 · Liedtext');const checkbox=w.document.querySelector('input[type=checkbox]');assert.equal(checkbox.disabled,false);
+  assert.equal(w.document.querySelectorAll('.lesson-song-english').length,3);
+  assert.equal(w.document.querySelector('.lesson-song-english').lang,'en');
+  const englishToggle=w.document.querySelector('.lesson-song-english-toggle input');
+  await act(async()=>englishToggle.click());assert.equal(w.document.querySelector('.lesson-song-english'),null);
+  await act(async()=>englishToggle.click());assert.equal(w.document.querySelectorAll('.lesson-song-english').length,3);
   const audio=w.document.querySelector('audio');
   const at=async seconds=>act(async()=>{audio.currentTime=seconds;audio.dispatchEvent(new w.Event('timeupdate',{bubbles:true}));});
   await at(10.1);assert.equal(w.document.querySelector('[aria-current="true"]').dataset.line,'0');

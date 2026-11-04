@@ -237,3 +237,7 @@ The Lyrics Video Studio prepares editable YouTube title/description text when a 
 **Curated example:** `Zwei Tees, vier Euro | German A1 Song – West African Palm-Wine Afrobeat | Falowen Music`. The owner identified this recording's palm-wine/Afrobeat blend, so the example uses that sound; another song may correctly be German Pop, Highlife, Acoustic Afro-Pop or something else. Genre text can be overridden per recording in Studio. The description describes the song's café learning theme, German listening and vocabulary, relevant genre, Falowen Music and Campus links, and a few meaningful hashtags. English lyrics are mentioned as available *only on supported tracks*.
 
 No YouTube API or third-party service is contacted. The copy buttons only place text on the clipboard; the owner still uploads and edits YouTube metadata manually. This change does not rename R2 files or change SEO metadata on older already-published YouTube videos. Test with `node --test tests/music-lyrics-video.test.js`.
+
+### English on teaching music slides
+
+A1, A2 and B1 teaching music players show available English beneath each German lyric line by default, with an English translation checkbox. The existing recording metadata request supplies the translation; no additional per-play translation or AI request is made. The exact MP3 object key and every German sung line must match before English appears. Draft translations remain labelled, and missing or stale translations leave German visible. Seeking and highlighting still use only matching cues.

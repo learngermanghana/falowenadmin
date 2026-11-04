@@ -10,3 +10,5 @@
 .presenter-content-published-music{display:block!important;min-height:0!important;overflow-y:auto!important;align-content:start!important;padding-bottom:5rem!important}
 .presenter-content-published-music .published-song-lesson{max-width:1100px;margin-inline:auto}
 @media(max-width:650px){.lesson-song-single-slide-tabs{gap:.3rem}.lesson-song-single-slide-tabs button{padding:.6rem .35rem;font-size:.87rem}}
+
+.lesson-song-lyric-text{display:block;min-width:0}.lesson-song-english{display:block;font-size:.85em;font-weight:400;color:#48635f;margin-top:.2rem}.lesson-song-english-toggle{display:flex;align-items:center;gap:.5rem;margin:.5rem 0;font-size:1rem}
