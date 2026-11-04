@@ -94,6 +94,10 @@
       "destination": "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/admin/signup-account-lookup"
     },
     {
+      "source": "/api/admin/student-accounts/(.*)",
+      "destination": "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/admin/student-accounts/$1"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/router?path=$1"
     },
