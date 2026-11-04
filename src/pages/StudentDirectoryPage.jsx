@@ -7,6 +7,7 @@ import { createStudent, listAllStudents, updateStudentById, activateExistingStud
 import { listClassCohorts } from "../services/liveClassService";
 import { useToast } from "../context/ToastContext";
 import StudentSupportTools from "../components/StudentSupportTools";
+import StudentAccountActivationPanel from "../components/StudentAccountActivationPanel.jsx";
 import SignupAccountLookup from "../components/SignupAccountLookup.jsx";
 import StudentPaymentTools from "../components/StudentPaymentTools";
 import StudentUpgradeTools from "../components/StudentUpgradeTools";
@@ -56,6 +57,9 @@ const addStudentFields = [
   "name",
   "email",
   "phone",
+  "emergencyContactName",
+  "emergencyContactPhoneNumber",
+  "emergencyContactRelationship",
   "studentCode",
   "studentcode",
   "className",
@@ -77,13 +81,15 @@ const addStudentFields = [
   "contractTermMonths",
   "enrollDate",
   "dailyLimit",
-  "uid",
 ];
 
 const addStudentLabels = {
   name: "Name",
   email: "Email",
   phone: "Phone",
+  emergencyContactName: "Emergency contact name",
+  emergencyContactPhoneNumber: "Emergency contact phone number",
+  emergencyContactRelationship: "Emergency contact relationship",
   studentCode: "Student code",
   studentcode: "Student code (legacy)",
   className: "Class name",
@@ -105,13 +111,15 @@ const addStudentLabels = {
   contractTermMonths: "Contract term months",
   enrollDate: "Enroll date",
   dailyLimit: "Daily limit",
-  uid: "UID",
 };
 
 const addStudentDefaultDraft = {
   name: "",
   email: "",
   phone: "",
+  emergencyContactName: "",
+  emergencyContactPhoneNumber: "",
+  emergencyContactRelationship: "",
   studentCode: "",
   studentcode: "",
   className: "",
@@ -126,14 +134,13 @@ const addStudentDefaultDraft = {
   balanceDue: "0",
   balance: "0",
   paid: "0",
-  status: "Paid",
-  paymentStatus: "Paid",
+  status: "Pending",
+  paymentStatus: "Pending",
   contractStart: "",
   contractEnd: "",
   contractTermMonths: "2",
   enrollDate: "",
   dailyLimit: "0",
-  uid: "",
 };
 
 const addStudentNumericFields = new Set(["tuitionFee", "initialPaymentAmount", "paymentIntentAmount", "balanceDue", "balance", "paid", "dailyLimit"]);
@@ -594,6 +601,10 @@ export default function StudentDirectoryPage() {
     const candidateCode = normalizeEditableValue(createDraft.studentCode || createDraft.studentcode).trim();
     const studentCode = candidateCode || buildStudentCodeFromName(name);
     const studentId = studentCode;
+    if (students.some((row) => row.id === studentId || row.studentCode === studentCode)) {
+      pushToast({ type: "error", message: "Student code already exists. Choose another code before saving." });
+      return;
+    }
     const nextPayload = {
       ...createDraft,
       name,
@@ -972,6 +983,7 @@ export default function StudentDirectoryPage() {
                             )}
                             {renderEditableFields(tab.fields)}
                             {/* STUDENT_EMERGENCY_CONTACT_FIELD: Emergency contact stays in the staff-only Profile tab. */}
+                            {tab.id === "profile" && <StudentAccountActivationPanel student={selectedStudent} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast} />}
                             {tab.id === "profile" && <StudentEmergencyContact student={selectedStudent} />}
                             {tab.id === "payments" && (
                               <>
