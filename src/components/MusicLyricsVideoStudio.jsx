@@ -358,7 +358,10 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       currentLyricText.current=recordedLyrics;
       setLyricText(recordedLyrics);
       setCues(restored);
-      setTimingStatus(localComplete ? "local" : published ? "published" : failed ? "unavailable" : "missing");
+      const estimated = !localComplete && published?.timingStatus === "estimated";
+      setTimingReview(estimated);
+      setRecordingFingerprint(published?.recordingSha256 || "");
+      setTimingStatus(localComplete ? "local" : estimated ? "estimated" : published ? "published" : failed ? "unavailable" : "missing");
     }
     restorePublishedTiming();
     return ()=>controller.abort();
@@ -598,6 +601,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     </div>}
     {publishedTrack?.objectKey && <p role="status" className={completeCues ? "music-video-timing-ready" : "music-video-timing-review"}>
       {timingStatus==="loading" ? "Loading the published recording's lyrics and timing…" :
+        timingStatus === "estimated" ? "Approximate timing loaded for this recording. Listen and correct delayed lines before confirming or saving." :
         completeCues ? "Timing ready: "+cues.length+"/"+lines.length+" lines from "+(timingStatus==="local" ? "saved corrections" : "the published recording")+". No new marking needed." :
         timingStatus==="unavailable" ? "Could not reach the published lyrics file. You can import saved timings or retry selecting the song." :
         timingStatus==="missing" ? "No matching verified timing found for this recording. Add or import line timings before exporting." :

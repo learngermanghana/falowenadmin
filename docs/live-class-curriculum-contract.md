@@ -83,6 +83,13 @@ is inferred from evidence snippets. This is ungraded classroom practice and
 does not replace scored workbook questions, answer keys or submission rules.
 Admin and learner signing-registry updates deploy separately.
 
+## A2 Day 1 scenario practice — 4 November 2026
+
+A2-1.1 replaces its word-sorting focused practice with the same scenario-challenge
+renderer as Days 20 and 21. Three small-talk situations show one question at a
+time and reveal model answers only on request. This replaces one practice stage;
+lesson media, grammar, assessment identity and workbook tasks remain intact.
+
 ## App speaking assessments — 4 November 2026
 
 A2 Day 22 (`A2-8.22`) and B1 Day 23 (`B1-7.23`) are app assessments with

@@ -15,7 +15,9 @@ export function verifiedPublishedVideoTiming(data, objectKey) {
   if (!objectKey || data?.objectKey !== objectKey || typeof data?.lyrics !== "string") return null;
   const lines = videoLyricLines(data.lyrics);
   const cues = validateLyricCues(data.cues, lines);
-  return lines.length && cues.length === lines.length ? {lyrics:data.lyrics,cues} : null;
+  return lines.length && cues.length === lines.length ? {lyrics:data.lyrics,cues,
+    ...(data.timingStatus === "estimated" ? {timingStatus:"estimated"} : {}),
+    ...(data.recordingSha256 ? {recordingSha256:data.recordingSha256} : {})} : null;
 }
 // The metadata endpoint binds translations to an exact MP3 path and German text.
 export function publishedVideoEnglish(data, objectKey, lyrics) {
