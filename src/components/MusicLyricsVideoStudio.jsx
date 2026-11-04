@@ -94,10 +94,37 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   const videoPreset=VIDEO_EXPORT_PRESETS[videoPresetId];
   const [exportedVideo,setExportedVideo] = useState(null);
   const exportedUrlRef=useRef(null);
+  const [coverImage,setCoverImage]=useState(null);
+  const [coverNotice,setCoverNotice]=useState('');
+  const [customCover,setCustomCover]=useState('');
   const canvasRef=useRef(null), audioRef=useRef(null), cancelRef=useRef(null);
   const previousEditorLyrics=useRef(lyrics), currentLyricText=useRef(lyrics || "");
   const activeUrl=fileUrl || publishedTrack?.audioUrl || generated?.url || "";
   const videoTitle=publishedTrack?.title || title;
+  useEffect(()=>{
+    let cancelled=false;
+    setCoverImage(null);setCoverNotice('');
+    (async()=>{
+      let source=customCover;
+      if(!source){
+        try {
+          const response=await fetch('https://music.falowen.app/music/covers/artwork-map.json');
+          if(!response.ok)throw Error('Artwork unavailable');
+          const map=await response.json();
+          const name=map.byObjectKey?.[publishedTrack?.objectKey] || map.default || 'music';
+          if(!/^[a-z-]+$/.test(name))throw Error('Invalid artwork');
+          source='https://music.falowen.app/music/covers/photos/'+name+'.jpg';
+        }catch{if(!cancelled)setCoverNotice('Using the Falowen gradient. Choose artwork below to add a background.');return;}
+      }
+      const image=new Image();image.crossOrigin='anonymous';
+      image.onload=()=>{if(!cancelled)setCoverImage(image);};
+      image.onerror=()=>{if(!cancelled)setCoverNotice('Artwork could not load safely for export. Choose a local image or use the gradient.');};
+      image.src=source;
+    })();
+    return()=>{cancelled=true;};
+  },[publishedTrack?.objectKey,customCover]);
+  useEffect(()=>()=>{if(customCover)URL.revokeObjectURL(customCover);},[customCover]);
+
   const videoLevel=publishedTrack?.level || level;
   const videoDay=publishedTrack?.day ?? day;
   const draftGenre=getReusableSongDraft(publishedTrack?.assignmentKey || assignmentKey)?.genre || "";
@@ -350,12 +377,13 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       return true;
     }catch{return false;}
   }
+  const reviewNote=publishedMetadata?.transcriptionStatus==='automatic' ? 'Automatic lyric draft' : timingReview ? 'Estimated timing' : '';
   const hasLyrics=videoLyricLines(lyricText).length>0;
   const drawAt=(seconds)=>{
     const canvas=canvasRef.current,ctx=canvas?.getContext("2d");
-    if(ctx) drawMusicVideoFrame(ctx,{title:videoTitle,level:videoLevel,day:videoDay,scenes,time:seconds,duration});
+    if(ctx) drawMusicVideoFrame(ctx,{title:videoTitle,level:videoLevel,day:videoDay,scenes,time:seconds,duration,artwork:coverImage,reviewNote});
   };
-  useEffect(()=>{if(!exporting)drawAt(audioRef.current?.currentTime||0);},[scenes,videoTitle,videoLevel,videoDay,duration,exporting,videoPresetId]);
+  useEffect(()=>{if(!exporting)drawAt(audioRef.current?.currentTime||0);},[scenes,videoTitle,videoLevel,videoDay,duration,exporting,videoPresetId,coverImage,reviewNote]);
   useEffect(()=>()=>{cancelRef.current?.();if(exportedUrlRef.current)URL.revokeObjectURL(exportedUrlRef.current);},[]);
   async function publishTimingDirectly(){
     if(savingTiming || exporting || timingReview)return;
@@ -441,7 +469,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       const exportScenes=lyricScenes(lyricText,buffer.duration,
         cues.filter((_,i)=>i%3===0).map(c=>c.start),
         cues, showEnglish ? englishLines : []);
-      drawMusicVideoFrame(exportContext,{title:videoTitle,level:videoLevel,day:videoDay,scenes:exportScenes,time:0,duration:buffer.duration});
+      drawMusicVideoFrame(exportContext,{title:videoTitle,level:videoLevel,day:videoDay,scenes:exportScenes,time:0,duration:buffer.duration,artwork:coverImage,reviewNote});
       canvasStream=exportCanvas.captureStream(24);
       const destination=context.createMediaStreamDestination();
       source=context.createBufferSource();source.buffer=buffer;source.connect(destination);
@@ -469,7 +497,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       const startAt=context.currentTime+0.08;
       const draw=()=>{
         const t=Math.max(0,context.currentTime-startAt);
-        drawMusicVideoFrame(exportContext,{title:videoTitle,level:videoLevel,day:videoDay,scenes:exportScenes,time:t,duration:buffer.duration});
+        drawMusicVideoFrame(exportContext,{title:videoTitle,level:videoLevel,day:videoDay,scenes:exportScenes,time:t,duration:buffer.duration,artwork:coverImage,reviewNote});
         canvas.getContext("2d").drawImage(exportCanvas,0,0);
         setProgress(previous=>Math.abs(previous-t)>0.5?Math.min(buffer.duration,t):previous);
 
@@ -585,6 +613,17 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
         {Object.entries(VIDEO_EXPORT_PRESETS).map(([id,preset])=><option key={id} value={id}>{preset.label} · {preset.width}×{preset.height}</option>)}
       </select>
       <small>Choose YouTube for normal widescreen videos, or vertical for TikTok, YouTube Shorts and Reels. The downloaded video uses this exact ratio.</small>
+    </label>
+    <label style={{display:'grid',gap:6}}>Video artwork (optional)
+      <input type="file" accept="image/png,image/jpeg,image/webp" disabled={exporting} onChange={event=>{
+        const file=event.target.files?.[0];
+        if(!file)return;
+        if(!['image/png','image/jpeg','image/webp'].includes(file.type) || file.size>10*1024*1024){setCoverNotice('Choose a PNG, JPEG or WebP image under 10 MB.');return;}
+        setCustomCover(URL.createObjectURL(file));
+      }}/>
+      <small>{coverNotice || 'Published song artwork loads automatically when available. Your selected image stays in this browser.'}</small>
+      {customCover && <button type="button" disabled={exporting} onClick={()=>setCustomCover('')}>Use song artwork instead</button>}
+      <a href="https://music.falowen.app/music/covers/credits.html" target="_blank" rel="noopener noreferrer">Song artwork credits</a>
     </label>
     <div style={{display:"flex",flexWrap:"wrap",gap:18,alignItems:"start"}}>
       <canvas ref={canvasRef} width={videoPreset.width} height={videoPreset.height}
