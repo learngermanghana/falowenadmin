@@ -169,3 +169,43 @@ test("the Admin editor normalizes legacy values before save and activation dirty
   assert.match(directory, /Object.assign\(payload, emergencyContactEditedFields\(student, draft\)\)/);
   assert.match(activation, /emergencyContactEditedFields\(student, draft\)/);
 });
+
+test("Falowen signup phone-only emergency contact is readable in Admin", () => {
+  const student = { name: "Student", emergencyContactPhone: "+233 24 555 6677" };
+  assert.deepEqual(getStudentEmergencyContact(student), {
+    name: "", phone: "+233 24 555 6677", relationship: "", source: "emergency",
+  });
+  assert.equal(emergencyContactEditorValues(student).emergencyContactPhoneNumber, "+233 24 555 6677");
+  assert.equal(callEmergencyContactUrl(resolveEmergencyContactPhone(student)), "tel:+233245556677");
+});
+
+test("editing only emergency phone preserves legacy name and relationship", () => {
+  const old = { emergencyContact: { name: "Esi Older", phone: "0240001111", relationship: "Parent" } };
+  const onlyPhone = { emergencyContactPhoneNumber: "0551113333" };
+  const patch = emergencyContactEditedFields(old, onlyPhone);
+  assert.deepEqual(patch, {
+    emergencyContactName: "Esi Older",
+    emergencyContactPhoneNumber: "0551113333",
+    emergencyContactRelationship: "Parent",
+  });
+  assert.deepEqual(getStudentEmergencyContact({ ...old, ...patch }), {
+    name: "Esi Older", phone: "0551113333", relationship: "Parent", source: "emergency",
+  });
+  assert.deepEqual(emergencyContactEditedFields(old, { emergencyContactPhoneNumber: "0240001111" }), {});
+  const cleared = { ...old, ...emergencyContactEditedFields(old, { emergencyContactPhoneNumber: "" }) };
+  assert.equal(resolveEmergencyContactPhone(cleared), "");
+  assert.equal(callEmergencyContactUrl(resolveEmergencyContactPhone(cleared)), "");
+});
+
+test("Admin only asks for emergency contact number, consistent with student signup", () => {
+  const page = fs.readFileSync("src/pages/StudentDirectoryPage.jsx", "utf8");
+  const tabs = fs.readFileSync("src/utils/studentDetailTabs.js", "utf8");
+  const summary = fs.readFileSync("src/components/StudentEmergencyContact.jsx", "utf8");
+  assert.match(page, /emergencyContactPhoneNumber: "Emergency contact number"/);
+  assert.match(tabs, /"emergencyContactPhoneNumber"/);
+  assert.doesNotMatch(tabs, /"emergencyContactName"|"emergencyContactRelationship"/);
+  assert.doesNotMatch(page, /emergencyContactName: "Emergency contact name"/);
+  assert.doesNotMatch(page, /emergencyContactRelationship: "Emergency contact relationship"/);
+  assert.match(summary, /name \? <div>/);
+  assert.match(summary, /relationship \? <div>/);
+});
