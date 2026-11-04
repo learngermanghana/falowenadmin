@@ -1,3 +1,5 @@
+import { isAppAssessment } from "./appAssessment.js";
+
 const DEFAULT_TIMEZONE = "Africa/Accra";
 export const DEFAULT_LATE_MINUTES = 15;
 
@@ -221,6 +223,7 @@ export function buildAttendanceAnalytics({
   orderedSessions.forEach((session) => {
     const id = sessionIdentity(session);
     const savedDoc = findAttendanceDoc(attendanceBySession, session);
+    if (isAppAssessment({ ...savedDoc, ...session })) return;
     const savedStudents = savedDoc.students || {};
     const sessionCheckins = checkinsBySession.get(id) || [];
     const startsAt = sessionStart(session);

@@ -1,3 +1,4 @@
+const { isAppAssessment } = require("./appAssessment.js");
 const crypto = require("crypto");
 const { runAutoOpenCheckins } = require("./classSessionAutoCheckin.js");
 
@@ -92,7 +93,7 @@ function sessionStatus(session = {}) {
 }
 
 function isSuppressedSession(session = {}) {
-  return BLOCKED_SESSION_STATUSES.has(sessionStatus(session))
+  return isAppAssessment(session) || BLOCKED_SESSION_STATUSES.has(sessionStatus(session))
     || session.remindersSuppressed === true
     || session.superseded === true
     || session.isSuperseded === true
@@ -629,6 +630,7 @@ async function processReminder({ admin, db, due, classes, students, config, now,
   // while the check-in page correctly shows today's lesson.
   const attendanceSession = await loadAttendanceSession(db, klass, session);
   session = applyAttendanceSessionMetadata(session, attendanceSession);
+  if (isAppAssessment(session)) return { sent: 0, skipped: "app_assessment" };
 
   const holiday = await loadHoliday(db, klass, session);
   if (isHolidayClosed({ holiday, klass, session })) {

@@ -1,3 +1,4 @@
+const { isAppAssessment } = require("./appAssessment.js");
 const crypto = require("node:crypto");
 const { _test: attendanceHelpers } = require("./attendanceConfirmationEmails.js");
 
@@ -126,7 +127,7 @@ function dedupeOfficialSessions(sessions = []) {
 
 function isTeachingSession(session = {}) {
   const kind = text(session.sessionType || session.type || session.kind || session.category || session.topic || session.title);
-  if (NON_TEACHING_TYPES.test(kind)) return false;
+  if (isAppAssessment(session) || NON_TEACHING_TYPES.test(kind)) return false;
   return curriculumIndex(session) !== null
     || assignmentIds(session).length > 0
     || Boolean(text(session.topic || session.title));

@@ -82,3 +82,16 @@ questions come from the supplied question key (indices 1,0,2,0,1); no transcript
 is inferred from evidence snippets. This is ungraded classroom practice and
 does not replace scored workbook questions, answer keys or submission rules.
 Admin and learner signing-registry updates deploy separately.
+
+## App speaking assessments — 4 November 2026
+
+A2 Day 22 (`A2-8.22`) and B1 Day 23 (`B1-7.23`) are app assessments with
+no live class. Their timetable slots and canonical assignment IDs stay intact;
+subsequent lessons must not move to a different date or day. Learners complete
+the existing three-part AI speaking mock; its cloud progress and final result
+remain authoritative. Opening the page does not count as submission.
+Admin excludes these IDs from live attendance analytics and completion attendance,
+live reminder emails, attendance confirmations and automatic check-in opening.
+The attendance page links to the learner task instead of present/absent controls.
+Existing session metadata is identified by assignment IDs even before repair.
+No new background requests or assessment scoring changes are introduced.

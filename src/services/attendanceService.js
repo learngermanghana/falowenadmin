@@ -1,3 +1,4 @@
+import { isAppAssessment } from "../utils/appAssessment.js";
 import {
   collection,
   collectionGroup,
@@ -134,6 +135,7 @@ export async function saveAttendanceToFirestore(classId, attendanceMap) {
 }
 
 export async function saveCanonicalAttendanceSession({ classRecordId, className, session, students, markedBy }) {
+  if (isAppAssessment(session)) throw new Error("This app assessment does not require live attendance.");
   const safeClassId = normalizeClassId(classRecordId);
   const sessionId = String(session?.id || session?.classSessionId || "").trim();
   if (!safeClassId || !sessionId) throw new Error("Class and session are required to save attendance.");

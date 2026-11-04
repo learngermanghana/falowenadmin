@@ -1,3 +1,4 @@
+const { isAppAssessment } = require("./appAssessment.js");
 const { parseAssignmentChapter } = require("./assignmentChapter.js");
 const TZ = "Africa/Accra";
 const DEFAULT_AUTO_OPEN_LEAD_MINUTES = 30;
@@ -104,7 +105,7 @@ function autoOpenSettings(klass = {}, runtimeConfig = {}) {
 
 function isSessionEligible(session = {}) {
   const status = comparable(session.status || session.sessionStatus || "scheduled");
-  return !BLOCKED_SESSION_STATUSES.has(status)
+  return !isAppAssessment(session) && !BLOCKED_SESSION_STATUSES.has(status)
     && session.remindersSuppressed !== true
     && session.superseded !== true
     && session.isSuperseded !== true

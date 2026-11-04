@@ -1,3 +1,4 @@
+const { isAppAssessment } = require("./appAssessment.js");
 const crypto = require("crypto");
 const { acceptClassNameSessionMatch } = require("./attendanceSessionClassIdentity.js");
 
@@ -98,7 +99,7 @@ function modeForClass(klass = {}) {
 
 function isActiveSession(session = {}) {
   const status = normalize(session.status || session.sessionStatus).toLowerCase();
-  return !["cancelled", "canceled", "superseded", "deleted"].includes(status)
+  return !isAppAssessment(session) && !["cancelled", "canceled", "superseded", "deleted"].includes(status)
     && session.superseded !== true
     && session.isSuperseded !== true;
 }
@@ -741,6 +742,7 @@ async function sendAssignmentAttendanceCreditEmail({
   studentEmail = "",
   fetchImpl = fetch,
 }) {
+  if (isAppAssessment({ assignmentId })) return { sent: false, skipped: "app_assessment" };
   const email = normalize(studentEmail);
   if (!email) return { sent: false, skipped: "missing_email" };
 
