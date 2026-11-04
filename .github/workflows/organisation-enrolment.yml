@@ -9,6 +9,8 @@ on:
       - 'src/pages/StudentHubPage.jsx'
       - 'src/App.jsx'
       - 'api/router.js'
+      - 'src/utils/organisationEnrolmentRequest.js'
+      - 'tests/organisation-enrolment-request.test.js'
       - '.github/workflows/organisation-enrolment.yml'
   push:
     branches: [main]
@@ -27,5 +29,5 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: node --test functions/organisationEnrolment.test.cjs functions/studentAccountActivation.test.cjs tests/student-emergency-contact.test.js
+      - run: node --test tests/organisation-enrolment-request.test.js functions/organisationEnrolment.test.cjs functions/studentAccountActivation.test.cjs tests/student-emergency-contact.test.js
       - run: npm run build

@@ -1,3 +1,4 @@
+import { organisationEnrolmentRequest } from "../utils/organisationEnrolmentRequest.js";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { auth } from "../firebase.js";
@@ -5,18 +6,9 @@ import "./OrganisationEnrolmentPage.css";
 
 const columns = [["name", "Full name"], ["email", "Student email"], ["phone", "Phone"], ["level", "Level"], ["location", "Location"], ["emergencyContactPhone", "Emergency number"]];
 const emptyRow = () => Object.fromEntries(columns.map(([key]) => [key, ""]));
-async function request(path, body, staff = false) {
-  const token = staff ? await auth.currentUser?.getIdToken() : null;
-  if (staff && !token) throw new Error("Sign in to Admin first.");
-  const response = await fetch(`/api/${path}`, {
-    method: body ? "POST" : "GET", cache: "no-store",
-    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  });
-  const data = await response.json();
-  if (!response.ok || !data.ok) throw new Error(data.error || "Request failed. Please retry.");
-  return data;
-}
+const request = (path, body, staff = false) => organisationEnrolmentRequest(path, body, {
+  staff, getToken: () => auth.currentUser?.getIdToken(),
+});
 export default function OrganisationEnrolmentPage({ review = false }) {
   const [organisation, setOrganisation] = useState({ name: "", contactName: "", email: "", phone: "" });
   const [rows, setRows] = useState([emptyRow(), emptyRow(), emptyRow()]);
