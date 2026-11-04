@@ -47,7 +47,7 @@ function nameOrPhoneFromLegacyContact(student) {
   return (raw.replace(/\D/g, "").length >= 7) ? { name: "", phone: raw } : { name: raw, phone: "" };
 }
 
-// These are the three values the Admin Profile form actually writes. Presence of
+// These are the canonical student profile values, including optional legacy metadata. Presence of
 // any canonical field marks the top-level contact as authoritative, including
 // intentional empty strings. Never revive an obsolete nested phone after an edit.
 const EDITABLE_CONTACT_FIELDS = [
@@ -120,14 +120,22 @@ export function emergencyContactEditorValues(student = {}) {
   };
 }
 
-// Once any emergency field changes, persist the whole contact. This makes
+// Once an available emergency field changes, persist the whole contact. This makes
 // replacements and deliberate clears authoritative even for nested legacy rows.
 export function emergencyContactEditedFields(student = {}, draft = {}) {
   const original = emergencyContactEditorValues(student);
-  if (!EDITABLE_CONTACT_FIELDS.some((field) =>
+  // Some forms (including public signup) collect only the emergency phone.
+  // Unprovided fields are not edits: keep existing legacy name/relationship,
+  // rather than accidentally clearing them when staff changes the number.
+  const supplied = EDITABLE_CONTACT_FIELDS.filter((field) =>
+    Object.prototype.hasOwnProperty.call(draft, field));
+  if (!supplied.some((field) =>
     String(draft[field] ?? "").trim() !== original[field])) return {};
-  return Object.fromEntries(EDITABLE_CONTACT_FIELDS.map((field) =>
-    [field, String(draft[field] ?? "").trim()]));
+  return Object.fromEntries(EDITABLE_CONTACT_FIELDS.map((field) => [
+    field,
+    Object.prototype.hasOwnProperty.call(draft, field)
+      ? String(draft[field] ?? "").trim() : original[field],
+  ]));
 }
 
 export function resolveEmergencyContactPhone(student = {}) {

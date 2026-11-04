@@ -38,6 +38,7 @@ const fieldLabels = {
   name: "Name",
   email: "Contact email",
   phone: "Phone",
+  emergencyContactPhoneNumber: "Emergency contact number",
   studentCode: "Student code",
   level: "Level",
   className: "Class name",
@@ -58,9 +59,7 @@ const addStudentFields = [
   "name",
   "email",
   "phone",
-  "emergencyContactName",
   "emergencyContactPhoneNumber",
-  "emergencyContactRelationship",
   "studentCode",
   "studentcode",
   "className",
@@ -88,9 +87,7 @@ const addStudentLabels = {
   name: "Name",
   email: "Email",
   phone: "Phone",
-  emergencyContactName: "Emergency contact name",
-  emergencyContactPhoneNumber: "Emergency contact phone number",
-  emergencyContactRelationship: "Emergency contact relationship",
+  emergencyContactPhoneNumber: "Emergency contact number",
   studentCode: "Student code",
   studentcode: "Student code (legacy)",
   className: "Class name",
@@ -118,9 +115,7 @@ const addStudentDefaultDraft = {
   name: "",
   email: "",
   phone: "",
-  emergencyContactName: "",
   emergencyContactPhoneNumber: "",
-  emergencyContactRelationship: "",
   studentCode: "",
   studentcode: "",
   className: "",
@@ -716,7 +711,7 @@ export default function StudentDirectoryPage() {
                   </button>
                 </div>
               ) : (
-                <input type="text" value={draft[field]}
+                <input type={field === "emergencyContactPhoneNumber" ? "tel" : "text"} value={draft[field]}
                   onChange={(event) => updateDraftField(selectedStudent.id, field, event.target.value, selectedStudent)}
                   style={{ width: "100%", padding: "8px 9px", borderRadius: 6, border: "1px solid #ccd4e2" }}
                   disabled={isSaving}/>
@@ -1177,7 +1172,7 @@ export default function StudentDirectoryPage() {
                     </select>
                   ) : (
                     <input
-                      type={addStudentDateFields.has(field) ? "date" : "text"}
+                      type={addStudentDateFields.has(field) ? "date" : field === "emergencyContactPhoneNumber" ? "tel" : "text"}
                       value={createDraft[field]}
                       onChange={(event) => updateCreateDraftField(field, event.target.value)}
                       style={{ width: "100%", padding: "8px 9px", borderRadius: 6, border: "1px solid #ccd4e2" }}

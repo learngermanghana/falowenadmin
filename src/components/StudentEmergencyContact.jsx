@@ -16,8 +16,8 @@ export default function StudentEmergencyContact({ student }) {
         <p className="student-emergency-contact-empty">Not recorded in this student profile.</p>
       ) : (
         <dl className="student-emergency-contact-details">
-          <div><dt>Contact name</dt><dd>{name || "Not provided"}</dd></div>
-          <div><dt>Relationship</dt><dd>{relationship || "Not provided"}</dd></div>
+          {name ? <div><dt>Contact name (older record)</dt><dd>{name}</dd></div> : null}
+          {relationship ? <div><dt>Relationship (older record)</dt><dd>{relationship}</dd></div> : null}
           <div className="student-emergency-contact-phone">
             <dt>Phone number</dt>
             <dd>
