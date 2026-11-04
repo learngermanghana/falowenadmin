@@ -21,7 +21,7 @@ function statusLabel(state) {
   }
 }
 
-export default function StudentAccountActivationPanel({ student, onStudentUpdated, pushToast }) {
+export default function StudentAccountActivationPanel({ student, draft = {}, onStudentUpdated, pushToast }) {
   const [busy, setBusy] = useState("");
   const [status, setStatus] = useState(null);
   const [error, setError] = useState("");
@@ -34,6 +34,8 @@ export default function StudentAccountActivationPanel({ student, onStudentUpdate
   const studentId = clean(student.id);
   const savedEmail = clean(student.email).toLowerCase();
   const savedName = clean(student.name);
+  const unsavedProfileChanges = ["name", "email", "phone", "emergencyContactName", "emergencyContactPhoneNumber", "emergencyContactRelationship"].some((field) =>
+    clean(draft[field]) !== clean(student[field]));
   const accountState = status?.state
     || (student.uid ? student.activationEmailSentAt ? "invited" : "ready_to_invite" : "not_prepared");
 
@@ -52,6 +54,10 @@ export default function StudentAccountActivationPanel({ student, onStudentUpdate
   };
 
   const send = async () => {
+    if (unsavedProfileChanges) {
+      setError("Save the edited student profile before sending an activation email.");
+      return;
+    }
     if (!validEmail(savedEmail) || !savedName) {
       setError("Save a valid student name and email in the profile first.");
       return;
@@ -137,7 +143,7 @@ export default function StudentAccountActivationPanel({ student, onStudentUpdate
       </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <button type="button" onClick={send}
-          disabled={Boolean(busy) || !validEmail(savedEmail) || !savedName || accountState === "active" || accountState === "disabled"}>
+          disabled={Boolean(busy) || unsavedProfileChanges || !validEmail(savedEmail) || !savedName || accountState === "active" || accountState === "disabled"}>
           {busy === "send" ? "Sending..." : accountState === "invited" ? "Resend activation email" : "Send activation email"}
         </button>
         <button type="button" onClick={check} disabled={Boolean(busy)}
@@ -145,6 +151,7 @@ export default function StudentAccountActivationPanel({ student, onStudentUpdate
           {busy === "check" ? "Checking..." : "Check activation status"}
         </button>
       </div>
+      {unsavedProfileChanges ? <small style={{ color: "#92400e" }}>Unsaved profile changes detected. Save the student before sending an invitation.</small> : null}
       <small style={{ color: "#64748b" }}>
         Firebase currently sends its configured password-reset email as the secure account-setup invitation.
         "Email requested" does not prove delivery or activation; only a subsequent student sign-in confirms activation.
