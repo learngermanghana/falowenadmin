@@ -70,3 +70,15 @@ Admin requests the exact object through the existing authenticated
 day 26. The learner repository must deploy its matching exact-object allowlist
 entry. This does not publish private Hören as music or replace the separate
 graded workbook questions, answers or audio.
+
+## A2 Day 1 classroom media
+
+`A2-1.1` / `a2-day-1-small-talk` retains its Small Talk, self-introduction and
+weil/denn/deshalb teaching content. Its opening now matches the modern Day 19/21
+sequence: intro, published A2 Day 1 music discovered by exact level/day, then
+the separate teacher-supplied Small Talk conversation. Hören signs only
+`a2/day-01/small-talk.mp3` through the staff-only A2 classroom endpoint. Its five
+questions come from the supplied question key (indices 1,0,2,0,1); no transcript
+is inferred from evidence snippets. This is ungraded classroom practice and
+does not replace scored workbook questions, answer keys or submission rules.
+Admin and learner signing-registry updates deploy separately.

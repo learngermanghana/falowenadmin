@@ -1,0 +1,59 @@
+{
+  "mode": "course",
+  "level": "A2",
+  "examPart": "",
+  "title": "Small Talk",
+  "kind": "multiple-choice",
+  "questions": [
+    {
+      "question": "Woher kommt der neue Kollege Thomas?",
+      "evidence": "er heißt Thomas und kommt aus Hamburg",
+      "options": [
+        "Aus Berlin",
+        "Aus Hamburg",
+        "Aus München"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "question": "In welcher Abteilung arbeitet Thomas?",
+      "evidence": "Er arbeitet jetzt im Marketing.",
+      "options": [
+        "Im Marketing",
+        "Im Personalwesen",
+        "In der Buchhaltung"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "Wie lange wohnt Thomas schon in München?",
+      "evidence": "Erst seit zwei Wochen.",
+      "options": [
+        "Seit zwei Monaten",
+        "Seit einem Jahr",
+        "Erst seit zwei Wochen"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "question": "Was sucht Thomas im Moment noch?",
+      "evidence": "Er sucht noch eine schöne Wohnung.",
+      "options": [
+        "Eine schöne Wohnung",
+        "Einen neuen Job",
+        "Ein Auto"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "Wann gehen die beiden in die Kantine?",
+      "evidence": "Ja, um halb eins.",
+      "options": [
+        "Um zwölf Uhr",
+        "Um halb eins",
+        "Um ein Uhr"
+      ],
+      "correctIndex": 1
+    }
+  ]
+}

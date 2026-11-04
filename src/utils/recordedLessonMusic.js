@@ -18,8 +18,10 @@ export function selectRecordedLessonTrack(feed, {level='A2',day,assignmentKey} =
   // A2 Day 21 already has a teacher-approved uploaded song. If several MP3s
   // exist for the day, select the exact known R2 recording rather than leaving
   // the presenter without music or playing another song.
-  const knownObjectKey = normalized === 'A2' && Number(day) === 21
-    ? 'music/a2/day-21/Endlich Wochenende.mp3' : '';
+  const knownObjectKey = normalized === 'A2' && Number(day) === 1
+    ? 'music/a2/day-01/Ein nettes Gespräch.mp3'
+    : normalized === 'A2' && Number(day) === 21
+      ? 'music/a2/day-21/Endlich Wochenende.mp3' : '';
   if (knownObjectKey) {
     const pinned = rows.filter(row => row.objectKey === knownObjectKey);
     if (pinned.length === 1) {
