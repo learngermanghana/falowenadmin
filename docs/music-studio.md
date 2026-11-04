@@ -241,3 +241,13 @@ No YouTube API or third-party service is contacted. The copy buttons only place 
 ### English on teaching music slides
 
 A1, A2 and B1 teaching music players show available English beneath each German lyric line by default, with an English translation checkbox. The existing recording metadata request supplies the translation; no additional per-play translation or AI request is made. The exact MP3 object key and every German sung line must match before English appears. Draft translations remain labelled, and missing or stale translations leave German visible. Seeking and highlighting still use only matching cues.
+
+### Artwork-led lyrics exports
+
+Video preview and export share an artwork backdrop with a dark legibility layer,
+Falowen mark, responsive title/level labels, larger German and smaller wrapped
+English captions. Active-line highlighting still uses existing line cues and
+clears in gaps. Landscape, vertical and square presets share proportional
+geometry. Published covers use anonymous CORS loading so unsafe images cannot
+taint the export canvas; the gradient remains available on failure. A local
+PNG/JPEG/WebP under 10 MB can be chosen without an upload.

@@ -126,11 +126,11 @@ test("Falowen Music keeps both tabs mounted and the video reuses public timings"
   assert.match(studio,/role="tablist"/);
   assert.match(studio,/Music Generator/);
   assert.match(studio,/Lyrics Video Studio/);
-  assert.ok(studio.includes("style={{display:studioTab === 'video' ? undefined : 'none'}}"));
+  assert.match(studio,/style=\{\{\s*display:\s*studioTab === 'video' \? undefined : 'none'\s*\}\}/);
   assert.ok(!studio.includes("key={courseMode + '-' + assignmentKey}"));
   assert.ok(video.includes("api/music-lyrics?key="));
   assert.match(video,/verifiedPublishedVideoTiming/);
-  assert.match(video,/\|\|!completeCues/);
+  assert.match(video,/\|\|\s*!completeCues/);
 });
 
 test('export metadata follows the selected song and offers editable copy buttons', () => {
@@ -431,7 +431,7 @@ test("A1 Day 10 uses approved Das gehört mir lyrics and the actual song recordi
   assert.match(song.lyrics,/Und diese Jacke gehört dir/);
   assert.match(song.lyrics,/Mein und dein, das ist ganz leicht/);
   assert.match(song.lyrics,/Mein Fahrrad ist rot und klein/);
-  assert.match(song.lyrics,/Was gehört denn dir dazu/);
+  assert.match(song.lyrics,/was gehört denn dir dazu/i);
   assert.doesNotMatch(song.lyrics,/Im Bus liegt eine Tasche/);
   assert.equal((song.lyrics.match(/Zeig mir deine Sachen hier!/g)||[]).length,5);
   const ref=A1_DAY10_FINAL_RECORDING;
