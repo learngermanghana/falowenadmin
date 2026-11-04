@@ -1,291 +1,376 @@
 // Saved from the existing A2 workbook speaking tasks. No runtime requests.
-export const A2_PRESENTATION_SOURCE_SHA = "115248583072c538f944bc73c9243d10ab56a6af";
+export const A2_PRESENTATION_SOURCE_SHA = "674fd734da0102789321d465b9c05dafa52fda42";
 export const A2_WORKBOOK_PRESENTATIONS = {
   "1": {
     "day": 1,
-    "sourcePath": "web/src/components/A2Day2SmallTalkWorkbookEnhancedPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Wie führst du ein kurzes freundliches Gespräch?",
-    "centralQuestion": "Wie führst du ein kurzes freundliches Gespräch?",
+    "prompt": "Wer bist du?",
+    "centralQuestion": "Wer bist du?",
+    "keywords": [
+      "Name und Herkunft",
+      "Familie und Wohnort",
+      "Sprachen und Beruf",
+      "Freizeit"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "begruessung",
-        "label": "Begrüßung",
-        "question": "Wie begrüßt du die Person freundlich?",
-        "starter": "Hallo! Wie geht es dir?"
+        "id": "point-1",
+        "label": "Name und Herkunft",
+        "question": "Name und Herkunft?",
+        "starter": "Ich heiße ...",
+        "modelSentence": "Ich heiße Ama und komme aus Ghana."
       },
       {
-        "id": "kennenlernen",
-        "label": "Kennenlernen",
-        "question": "Was möchtest du über die Person erfahren?",
-        "starter": "Wie heißt du und woher kommst du?"
+        "id": "point-2",
+        "label": "Familie und Wohnort",
+        "question": "Familie und Wohnort?",
+        "starter": "Ich wohne ...",
+        "modelSentence": "Ich wohne mit meiner Familie in Accra."
       },
       {
-        "id": "arbeit-studium",
-        "label": "Arbeit oder Studium",
-        "question": "Wie sprecht ihr über Arbeit oder Studium?",
-        "starter": "Was machst du beruflich? Ich ..."
+        "id": "point-3",
+        "label": "Sprachen und Beruf",
+        "question": "Sprachen und Beruf?",
+        "starter": "Ich spreche ...",
+        "modelSentence": "Ich spreche Englisch und Twi und arbeite als Verkäuferin."
       },
       {
-        "id": "freizeit",
+        "id": "point-4",
         "label": "Freizeit",
-        "question": "Wie fragst du nach Hobbys und Freizeit?",
-        "starter": "Was machst du gern in deiner Freizeit?"
-      },
-      {
-        "id": "abschluss",
-        "label": "Gespräch beenden",
-        "question": "Wie beendest du das Gespräch freundlich?",
-        "starter": "Es war schön, mit dir zu sprechen. ..."
+        "question": "Freizeit?",
+        "starter": "In meiner Freizeit ...",
+        "modelSentence": "In meiner Freizeit spiele ich gern Fußball, weil ich Sport mag."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day2SmallTalkWorkbookEnhancedPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "2": {
     "day": 2,
-    "sourcePath": "web/src/components/A2Day2PersonenBeschreibenWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Kannst du eine Person beschreiben? Wie sieht sie aus und was für ein Mensch ist sie?",
-    "centralQuestion": "Kannst du eine Person beschreiben? Wie sieht sie aus und was für ein Mensch ist sie?",
+    "prompt": "Welche Person ist dir wichtig?",
+    "centralQuestion": "Welche Person ist dir wichtig?",
+    "keywords": [
+      "Beziehung",
+      "Aussehen",
+      "Charakter",
+      "Gemeinsame Zeit"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "aussehen",
+        "id": "point-1",
+        "label": "Beziehung",
+        "question": "Beziehung?",
+        "starter": "Ich möchte ... vorstellen.",
+        "modelSentence": "Ich möchte meine Schwester vorstellen, weil sie mir sehr wichtig ist."
+      },
+      {
+        "id": "point-2",
         "label": "Aussehen",
-        "question": "Wie sieht die Person aus?",
-        "starter": "Die Person ist ... und hat ..."
+        "question": "Aussehen?",
+        "starter": "Sie ist ... und hat ...",
+        "modelSentence": "Sie ist groß und hat kurze schwarze Haare."
       },
       {
-        "id": "charakter",
+        "id": "point-3",
         "label": "Charakter",
-        "question": "Was für ein Mensch ist die Person?",
-        "starter": "Die Person ist ..."
+        "question": "Charakter?",
+        "starter": "Ich finde sie ...",
+        "modelSentence": "Ich finde sie freundlich, denn sie hilft mir oft."
       },
       {
-        "id": "kleidung",
-        "label": "Kleidung",
-        "question": "Was trägt die Person?",
-        "starter": "Die Person trägt ..."
-      },
-      {
-        "id": "besondere-merkmale",
-        "label": "Besondere Merkmale",
-        "question": "Welche besonderen Merkmale hat die Person?",
-        "starter": "Ein besonderes Merkmal ist ..."
+        "id": "point-4",
+        "label": "Gemeinsame Zeit",
+        "question": "Gemeinsame Zeit?",
+        "starter": "Wir ... gern zusammen.",
+        "modelSentence": "Wir kochen am Wochenende gern zusammen."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day2PersonenBeschreibenWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "3": {
     "day": 3,
-    "sourcePath": "web/src/components/A2Day3ComparisonsWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Vergleiche zwei Personen, Dinge oder Orte.",
-    "centralQuestion": "Was vergleichst du und was ist anders oder gleich?",
+    "prompt": "Was gefällt dir besser: dein altes oder dein neues Handy?",
+    "centralQuestion": "Was gefällt dir besser: dein altes oder dein neues Handy?",
+    "keywords": [
+      "Gemeinsamkeiten",
+      "Unterschiede",
+      "Preis",
+      "Deine Wahl"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "auswahl",
-        "label": "Auswahl",
-        "question": "Welche zwei Personen oder Dinge vergleichst du?",
-        "starter": "Ich vergleiche ... mit ..."
-      },
-      {
-        "id": "gemeinsamkeiten",
+        "id": "point-1",
         "label": "Gemeinsamkeiten",
-        "question": "Was ist bei beiden gleich oder ähnlich?",
-        "starter": "Beide sind ... / ... ist so ... wie ..."
+        "question": "Gemeinsamkeiten?",
+        "starter": "Beide Handys ...",
+        "modelSentence": "Beide Handys haben eine Kamera und sind einfach zu benutzen."
       },
       {
-        "id": "unterschiede",
+        "id": "point-2",
         "label": "Unterschiede",
-        "question": "Welcher wichtige Unterschied fällt dir auf?",
-        "starter": "... ist ...er als ..."
+        "question": "Unterschiede?",
+        "starter": "Das neue Handy ist ...",
+        "modelSentence": "Das neue Handy ist schneller als das alte."
       },
       {
-        "id": "preis-qualitaet",
-        "label": "Preis und Qualität",
-        "question": "Wie unterscheiden sich Preis und Qualität?",
-        "starter": "... ist teurer, aber ..."
+        "id": "point-3",
+        "label": "Preis",
+        "question": "Preis?",
+        "starter": "Mein neues Handy kostet ...",
+        "modelSentence": "Mein neues Handy kostet mehr, aber der Akku hält länger."
       },
       {
-        "id": "meinung",
-        "label": "Meinung",
-        "question": "Welche Person oder welches Ding findest du besser und warum?",
-        "starter": "Ich finde ... besser, weil ..."
+        "id": "point-4",
+        "label": "Deine Wahl",
+        "question": "Deine Wahl?",
+        "starter": "Ich finde ... besser, weil ...",
+        "modelSentence": "Ich finde das neue Handy besser, weil ich damit gute Fotos machen kann."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day3ComparisonsWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "4": {
     "day": 4,
-    "sourcePath": "web/src/components/A2Day4WoMoechtenWirUnsTreffenWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Wo möchtest du dich mit deinen Freunden treffen? Wie kommst du dorthin?",
-    "centralQuestion": "Wo und wann möchtest du dich treffen?",
+    "prompt": "Wo triffst du dich gern mit Freunden?",
+    "centralQuestion": "Wo triffst du dich gern mit Freunden?",
+    "keywords": [
+      "Treffpunkt",
+      "Zeit",
+      "Aktivitäten",
+      "Anreise"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "aktivitaet",
-        "label": "Aktivität",
-        "question": "Was möchtet ihr zusammen machen?",
-        "starter": "Wollen wir ...?"
-      },
-      {
-        "id": "ort",
+        "id": "point-1",
         "label": "Treffpunkt",
-        "question": "Wo genau möchtet ihr euch treffen?",
-        "starter": "Treffen wir uns ..."
+        "question": "Treffpunkt?",
+        "starter": "Ich treffe mich gern ...",
+        "modelSentence": "Ich treffe mich gern mit meinen Freunden im Café."
       },
       {
-        "id": "zeit",
+        "id": "point-2",
         "label": "Zeit",
-        "question": "An welchem Tag und um wie viel Uhr passt es?",
-        "starter": "Hast du am ... um ... Zeit?"
+        "question": "Zeit?",
+        "starter": "Wir treffen uns ...",
+        "modelSentence": "Wir treffen uns meistens am Samstag um drei Uhr."
       },
       {
-        "id": "anreise",
+        "id": "point-3",
+        "label": "Aktivitäten",
+        "question": "Aktivitäten?",
+        "starter": "Wir ... zusammen.",
+        "modelSentence": "Wir trinken Kaffee und erzählen von unserer Woche."
+      },
+      {
+        "id": "point-4",
         "label": "Anreise",
-        "question": "Wie kommt ihr zum Treffpunkt?",
-        "starter": "Ich komme mit ..."
-      },
-      {
-        "id": "bestaetigung",
-        "label": "Bestätigung",
-        "question": "Wie bestätigt ihr den Plan oder nennt eine Alternative?",
-        "starter": "Gut, dann treffen wir uns ..."
+        "question": "Anreise?",
+        "starter": "Ich komme ...",
+        "modelSentence": "Ich komme mit dem Bus, weil das Café weit weg ist."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day4WoMoechtenWirUnsTreffenWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "5": {
     "day": 5,
-    "sourcePath": "web/src/components/A2Day5FreizeitWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Welche Freizeitaktivitäten machst du gern und warum?",
+    "prompt": "Was machst du gern in deiner Freizeit?",
     "centralQuestion": "Was machst du gern in deiner Freizeit?",
+    "keywords": [
+      "Hobbys",
+      "Wann und wie oft?",
+      "Wo und mit wem?",
+      "Warum?"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "hobby",
-        "label": "Hobby",
-        "question": "Welches Hobby hast du?",
-        "starter": "In meiner Freizeit ..."
+        "id": "point-1",
+        "label": "Hobbys",
+        "question": "Hobbys?",
+        "starter": "In meiner Freizeit ...",
+        "modelSentence": "In meiner Freizeit spiele ich gern Fußball."
       },
       {
-        "id": "zeit",
-        "label": "Zeit und Häufigkeit",
-        "question": "Wann und wie oft machst du das?",
-        "starter": "Ich ... jeden / jede ..."
+        "id": "point-2",
+        "label": "Wann und wie oft?",
+        "question": "Wann und wie oft??",
+        "starter": "Ich ... zweimal pro Woche.",
+        "modelSentence": "Ich trainiere zweimal pro Woche nach der Arbeit."
       },
       {
-        "id": "ort",
-        "label": "Ort",
-        "question": "Wo machst du deine Freizeitaktivität?",
-        "starter": "Ich mache das ..."
+        "id": "point-3",
+        "label": "Wo und mit wem?",
+        "question": "Wo und mit wem??",
+        "starter": "Ich ... mit ...",
+        "modelSentence": "Ich spiele mit meinen Freunden auf dem Sportplatz."
       },
       {
-        "id": "personen",
-        "label": "Mit wem?",
-        "question": "Mit wem verbringst du deine Freizeit?",
-        "starter": "Ich mache das mit ..."
-      },
-      {
-        "id": "grund",
-        "label": "Grund und Gefühl",
-        "question": "Warum magst du dieses Hobby?",
-        "starter": "Ich mag ..., weil ..."
+        "id": "point-4",
+        "label": "Warum?",
+        "question": "Warum??",
+        "starter": "Ich mag ..., weil ...",
+        "modelSentence": "Ich mag Fußball, weil ich mich dabei bewege und Freunde treffe."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day5FreizeitWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "6": {
     "day": 6,
-    "sourcePath": "web/src/components/A2Day6MoebelRaeumeWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Beschreibe deine Wohnung, die Zimmer und wichtige Möbel.",
-    "centralQuestion": "Wie beschreibst du dein Zimmer oder deine Wohnung?",
+    "prompt": "Wie sieht dein Zimmer aus?",
+    "centralQuestion": "Wie sieht dein Zimmer aus?",
+    "keywords": [
+      "Größe",
+      "Möbel",
+      "Position",
+      "Lieblingsplatz"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "raum",
-        "label": "Raum",
-        "question": "Welchen Raum beschreibst du?",
-        "starter": "Ich beschreibe mein ..."
+        "id": "point-1",
+        "label": "Größe",
+        "question": "Größe?",
+        "starter": "Mein Zimmer ist ...",
+        "modelSentence": "Mein Zimmer ist klein, aber sehr hell."
       },
       {
-        "id": "moebel",
+        "id": "point-2",
         "label": "Möbel",
-        "question": "Welche Möbel gibt es dort?",
-        "starter": "In dem Raum gibt es ..."
+        "question": "Möbel?",
+        "starter": "In meinem Zimmer gibt es ...",
+        "modelSentence": "In meinem Zimmer gibt es ein Bett, einen Schrank und einen Tisch."
       },
       {
-        "id": "position",
+        "id": "point-3",
         "label": "Position",
-        "question": "Wo stehen oder liegen die Möbel?",
-        "starter": "... steht neben / vor / zwischen ..."
+        "question": "Position?",
+        "starter": "Der Tisch steht ...",
+        "modelSentence": "Der Tisch steht neben dem Fenster, und das Bett steht an der Wand."
       },
       {
-        "id": "farben-zustand",
-        "label": "Farben und Zustand",
-        "question": "Wie sehen die Möbel und der Raum aus?",
-        "starter": "Die Möbel sind ..."
-      },
-      {
-        "id": "lieblingsplatz",
+        "id": "point-4",
         "label": "Lieblingsplatz",
-        "question": "Welcher Platz gefällt dir am besten und warum?",
-        "starter": "Am liebsten sitze ich ..."
+        "question": "Lieblingsplatz?",
+        "starter": "Am liebsten ...",
+        "modelSentence": "Am liebsten sitze ich am Fenster, weil ich dort gut lesen kann."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day6MoebelRaeumeWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "7": {
     "day": 7,
-    "sourcePath": "web/src/components/A2Day7WohnungSuchenWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Beschreibe, welche Wohnung du suchst und warum sie zu dir passt.",
-    "centralQuestion": "Welche Wohnung suchst du und warum?",
+    "prompt": "Wie möchtest du wohnen?",
+    "centralQuestion": "Wie möchtest du wohnen?",
+    "keywords": [
+      "Größe und Zimmer",
+      "Lage",
+      "Miete",
+      "Ausstattung"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "groesse",
+        "id": "point-1",
         "label": "Größe und Zimmer",
-        "question": "Wie groß soll die Wohnung sein?",
-        "starter": "Ich suche eine Wohnung mit ..."
+        "question": "Größe und Zimmer?",
+        "starter": "Ich suche eine Wohnung mit ...",
+        "modelSentence": "Ich suche eine Wohnung mit zwei Zimmern und einer Küche."
       },
       {
-        "id": "lage",
+        "id": "point-2",
         "label": "Lage",
-        "question": "Wo soll die Wohnung liegen?",
-        "starter": "Die Wohnung soll ... liegen."
+        "question": "Lage?",
+        "starter": "Ich möchte ... wohnen.",
+        "modelSentence": "Ich möchte in der Nähe meiner Arbeit wohnen."
       },
       {
-        "id": "kosten",
-        "label": "Miete und Kosten",
-        "question": "Wie viel darf die Wohnung kosten?",
-        "starter": "Die Miete darf höchstens ... kosten."
+        "id": "point-3",
+        "label": "Miete",
+        "question": "Miete?",
+        "starter": "Die Miete darf ...",
+        "modelSentence": "Die Miete darf höchstens 500 Euro pro Monat kosten."
       },
       {
-        "id": "ausstattung",
+        "id": "point-4",
         "label": "Ausstattung",
-        "question": "Welche Ausstattung ist dir wichtig?",
-        "starter": "Mir ist wichtig, dass ..."
-      },
-      {
-        "id": "besichtigung",
-        "label": "Besichtigung",
-        "question": "Wie fragst du nach einem Besichtigungstermin?",
-        "starter": "Könnte ich die Wohnung ... besichtigen?"
+        "question": "Ausstattung?",
+        "starter": "Mir ist ... wichtig.",
+        "modelSentence": "Mir ist ein Balkon wichtig, weil ich gern draußen sitze."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day7WohnungSuchenWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "8": {
     "day": 8,
     "sourcePath": "web/src/components/A2Day8RezepteUndEssenWorkbookPage.js",
     "mode": "roleplay",
+    "presentationPractice": {
+      "day": 8,
+      "mode": "presentation",
+      "prompt": "Was machst du, wenn du ins Restaurant gehst?",
+      "centralQuestion": "Was machst du, wenn du ins Restaurant gehst?",
+      "keywords": [
+        "Wie oft und mit wem?",
+        "Essen und Getränke",
+        "Auswahl",
+        "Bezahlen"
+      ],
+      "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+      "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
+      "branches": [
+        {
+          "id": "point-1",
+          "label": "Wie oft und mit wem?",
+          "question": "Wie oft und mit wem??",
+          "starter": "Ich gehe ... ins Restaurant.",
+          "modelSentence": "Ich gehe einmal im Monat mit meiner Familie ins Restaurant."
+        },
+        {
+          "id": "point-2",
+          "label": "Essen und Getränke",
+          "question": "Essen und Getränke?",
+          "starter": "Ich bestelle gern ...",
+          "modelSentence": "Ich bestelle gern Reis mit Gemüse und ein Wasser."
+        },
+        {
+          "id": "point-3",
+          "label": "Auswahl",
+          "question": "Auswahl?",
+          "starter": "Ich wähle ein Restaurant, weil ...",
+          "modelSentence": "Ich wähle ein kleines Restaurant, weil das Essen dort frisch ist."
+        },
+        {
+          "id": "point-4",
+          "label": "Bezahlen",
+          "question": "Bezahlen?",
+          "starter": "Wir bezahlen meistens ...",
+          "modelSentence": "Wir bezahlen meistens mit Karte und teilen die Rechnung."
+        }
+      ]
+    },
     "prompt": "Im Restaurant bestellen, nachfragen, auf ein Problem reagieren und bezahlen.",
     "situation": "Situation: Du bist mit einer Freundin oder einem Freund in einem Restaurant. Eine Person ist Gast, die andere Person ist Kellnerin oder Kellner.",
     "instruction": "Nutze mindestens drei Redemittel: Ich hätte gern ..., Könnte ich bitte ...?, Was empfehlen Sie?, Entschuldigung, ich habe ... bestellt., Wir möchten bitte zahlen.",
@@ -319,536 +404,601 @@ export const A2_WORKBOOK_PRESENTATIONS = {
   },
   "9": {
     "day": 9,
-    "sourcePath": "web/src/components/A2Day9UrlaubWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Sprich über deinen letzten Urlaub oder deinen Traumurlaub.",
-    "centralQuestion": "Wie war dein Urlaub oder wie planst du Urlaub?",
+    "prompt": "Wie war dein letzter Urlaub?",
+    "centralQuestion": "Wie war dein letzter Urlaub?",
+    "keywords": [
+      "Reiseziel und Zeit",
+      "Reise und Begleitung",
+      "Aktivitäten und Wetter",
+      "Deine Meinung"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "ort",
-        "label": "Ort",
-        "question": "Was sagst du über ort?",
-        "starter": "Bei ort sage ich:"
+        "id": "point-1",
+        "label": "Reiseziel und Zeit",
+        "question": "Reiseziel und Zeit?",
+        "starter": "Letztes Jahr bin ich ...",
+        "modelSentence": "Letztes Jahr bin ich im August nach Cape Coast gefahren."
       },
       {
-        "id": "reise",
-        "label": "Reise",
-        "question": "Was sagst du über reise?",
-        "starter": "Bei reise sage ich:"
+        "id": "point-2",
+        "label": "Reise und Begleitung",
+        "question": "Reise und Begleitung?",
+        "starter": "Ich bin mit ... gereist.",
+        "modelSentence": "Ich bin mit meiner Schwester mit dem Bus gereist."
       },
       {
-        "id": "aktivitaeten",
-        "label": "Aktivitäten",
-        "question": "Was sagst du über aktivitäten?",
-        "starter": "Bei aktivitäten sage ich:"
+        "id": "point-3",
+        "label": "Aktivitäten und Wetter",
+        "question": "Aktivitäten und Wetter?",
+        "starter": "Wir haben ...",
+        "modelSentence": "Wir haben die Stadt besucht und sind am Strand spazieren gegangen. Das Wetter war sonnig."
       },
       {
-        "id": "wetter",
-        "label": "Wetter",
-        "question": "Was sagst du über wetter?",
-        "starter": "Bei wetter sage ich:"
-      },
-      {
-        "id": "meinung",
-        "label": "Meinung",
-        "question": "Was sagst du über meinung?",
-        "starter": "Bei meinung sage ich:"
+        "id": "point-4",
+        "label": "Deine Meinung",
+        "question": "Deine Meinung?",
+        "starter": "Mir hat ... gefallen, weil ...",
+        "modelSentence": "Mir hat der Urlaub gefallen, weil ich mich gut erholt habe."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day9UrlaubWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "10": {
     "day": 10,
-    "sourcePath": "web/src/components/A2Day10TourismusTraditionelleFesteWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Sprich über eine Stadt oder einen neuen Ort, den du gern entdecken möchtest.",
-    "centralQuestion": "Welche Stadt oder welchen neuen Ort möchtest du entdecken und was möchtest du dort machen?",
+    "prompt": "Welche Stadt möchtest du kennenlernen?",
+    "centralQuestion": "Welche Stadt möchtest du kennenlernen?",
+    "keywords": [
+      "Stadt und Grund",
+      "Sehenswürdigkeiten",
+      "Essen",
+      "Begleitung und Reise"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "ort",
-        "label": "Ort",
-        "question": "Was sagst du über ort?",
-        "starter": "Bei ort sage ich:"
+        "id": "point-1",
+        "label": "Stadt und Grund",
+        "question": "Stadt und Grund?",
+        "starter": "Ich möchte ... besuchen, weil ...",
+        "modelSentence": "Ich möchte Köln besuchen, weil ich den Dom sehen möchte."
       },
       {
-        "id": "erster-stopp",
-        "label": "Erster Stopp",
-        "question": "Was sagst du über erster stopp?",
-        "starter": "Bei erster stopp sage ich:"
+        "id": "point-2",
+        "label": "Sehenswürdigkeiten",
+        "question": "Sehenswürdigkeiten?",
+        "starter": "Zuerst möchte ich ...",
+        "modelSentence": "Zuerst möchte ich den Dom besichtigen und danach am Rhein spazieren gehen."
       },
       {
-        "id": "essen-oder-caf",
-        "label": "Essen oder Café",
-        "question": "Was sagst du über essen oder café?",
-        "starter": "Bei essen oder café sage ich:"
+        "id": "point-3",
+        "label": "Essen",
+        "question": "Essen?",
+        "starter": "Mittags möchte ich ...",
+        "modelSentence": "Mittags möchte ich in einem kleinen Café etwas essen."
       },
       {
-        "id": "aktivitaet",
-        "label": "Aktivität",
-        "question": "Was sagst du über aktivität?",
-        "starter": "Bei aktivität sage ich:"
-      },
-      {
-        "id": "tipp",
-        "label": "Tipp",
-        "question": "Was sagst du über tipp?",
-        "starter": "Bei tipp sage ich:"
+        "id": "point-4",
+        "label": "Begleitung und Reise",
+        "question": "Begleitung und Reise?",
+        "starter": "Ich möchte mit ... reisen.",
+        "modelSentence": "Ich möchte mit meiner Freundin mit dem Zug reisen."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day10TourismusTraditionelleFesteWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "11": {
     "day": 11,
-    "sourcePath": "web/src/components/A2Day11UnterwegsVerkehrsmittelWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Vergleiche verschiedene Verkehrsmittel.",
-    "centralQuestion": "Welches Verkehrsmittel benutzt du und warum?",
+    "prompt": "Welches Verkehrsmittel benutzt du am liebsten?",
+    "centralQuestion": "Welches Verkehrsmittel benutzt du am liebsten?",
+    "keywords": [
+      "Alltag",
+      "Preis",
+      "Dauer und Komfort",
+      "Vergleich und Grund"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "verkehrsmittel",
-        "label": "Verkehrsmittel",
-        "question": "Was sagst du über verkehrsmittel?",
-        "starter": "Bei verkehrsmittel sage ich:"
+        "id": "point-1",
+        "label": "Alltag",
+        "question": "Alltag?",
+        "starter": "Ich fahre meistens ...",
+        "modelSentence": "Ich fahre meistens mit dem Bus zur Arbeit."
       },
       {
-        "id": "preis",
+        "id": "point-2",
         "label": "Preis",
-        "question": "Was sagst du über preis?",
-        "starter": "Bei preis sage ich:"
+        "question": "Preis?",
+        "starter": "Die Fahrt kostet ...",
+        "modelSentence": "Die Fahrt kostet wenig und ist günstiger als ein Taxi."
       },
       {
-        "id": "zeit",
-        "label": "Zeit",
-        "question": "Was sagst du über zeit?",
-        "starter": "Bei zeit sage ich:"
+        "id": "point-3",
+        "label": "Dauer und Komfort",
+        "question": "Dauer und Komfort?",
+        "starter": "Mit dem Bus brauche ich ...",
+        "modelSentence": "Mit dem Bus brauche ich dreißig Minuten, aber ich kann unterwegs lesen."
       },
       {
-        "id": "komfort",
-        "label": "Komfort",
-        "question": "Was sagst du über komfort?",
-        "starter": "Bei komfort sage ich:"
-      },
-      {
-        "id": "meinung",
-        "label": "Meinung",
-        "question": "Was sagst du über meinung?",
-        "starter": "Bei meinung sage ich:"
+        "id": "point-4",
+        "label": "Vergleich und Grund",
+        "question": "Vergleich und Grund?",
+        "starter": "Ich finde ... besser als ...",
+        "modelSentence": "Ich finde den Bus besser als das Auto, weil ich keinen Parkplatz suchen muss."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day11UnterwegsVerkehrsmittelWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "12": {
     "day": 12,
-    "sourcePath": "web/src/components/A2Day12MeinTraumberufWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Was ist dein Traumberuf und warum?",
-    "centralQuestion": "Was ist dein Traumberuf und warum?",
+    "prompt": "Was ist dein Traumberuf?",
+    "centralQuestion": "Was ist dein Traumberuf?",
+    "keywords": [
+      "Beruf",
+      "Aufgaben und Arbeitsplatz",
+      "Stärken",
+      "Vorbereitung"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "beruf",
+        "id": "point-1",
         "label": "Beruf",
-        "question": "Was sagst du über beruf?",
-        "starter": "Bei beruf sage ich:"
+        "question": "Beruf?",
+        "starter": "Ich möchte ... werden.",
+        "modelSentence": "Ich möchte Koch werden."
       },
       {
-        "id": "aufgaben",
-        "label": "Aufgaben",
-        "question": "Was sagst du über aufgaben?",
-        "starter": "Bei aufgaben sage ich:"
+        "id": "point-2",
+        "label": "Aufgaben und Arbeitsplatz",
+        "question": "Aufgaben und Arbeitsplatz?",
+        "starter": "Ich möchte ... arbeiten.",
+        "modelSentence": "Ich möchte in einem Restaurant arbeiten und Gerichte zubereiten."
       },
       {
-        "id": "ort",
-        "label": "Ort",
-        "question": "Was sagst du über ort?",
-        "starter": "Bei ort sage ich:"
-      },
-      {
-        "id": "staerken",
+        "id": "point-3",
         "label": "Stärken",
-        "question": "Was sagst du über stärken?",
-        "starter": "Bei stärken sage ich:"
+        "question": "Stärken?",
+        "starter": "Ich kann gut ...",
+        "modelSentence": "Ich kann gut kochen und arbeite gern mit anderen Menschen."
       },
       {
-        "id": "ziel",
-        "label": "Ziel",
-        "question": "Was sagst du über ziel?",
-        "starter": "Bei ziel sage ich:"
+        "id": "point-4",
+        "label": "Vorbereitung",
+        "question": "Vorbereitung?",
+        "starter": "Ich lerne ..., weil ...",
+        "modelSentence": "Ich lerne Deutsch, weil ich eine Ausbildung in Deutschland machen möchte."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day12MeinTraumberufWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "13": {
     "day": 13,
-    "sourcePath": "web/src/components/A2Day13VorstellungsgespraechWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Sie sind bei Amazon im Vorstellungsgespräch. Wie stellen Sie sich vor?",
-    "centralQuestion": "Sie sind bei Amazon im Vorstellungsgespräch. Wie stellen Sie sich vor?",
+    "prompt": "Was erzählst du bei einer Bewerbung über dich?",
+    "centralQuestion": "Was erzählst du bei einer Bewerbung über dich?",
+    "keywords": [
+      "Ausbildung",
+      "Erfahrung",
+      "Fähigkeiten",
+      "Wunschstelle"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "vorstellung",
-        "label": "Vorstellung",
-        "question": "Wer sind Sie?",
-        "starter": "Guten Tag, mein Name ist ..."
-      },
-      {
-        "id": "ausbildung",
+        "id": "point-1",
         "label": "Ausbildung",
-        "question": "Welche Ausbildung bringen Sie mit?",
-        "starter": "Ich habe eine Ausbildung als ... gemacht."
+        "question": "Ausbildung?",
+        "starter": "Ich habe ... gelernt.",
+        "modelSentence": "Ich habe eine Ausbildung im Verkauf gemacht."
       },
       {
-        "id": "berufserfahrung",
-        "label": "Berufserfahrung",
-        "question": "Welche Berufserfahrung haben Sie?",
-        "starter": "Ich habe bereits als ... gearbeitet."
+        "id": "point-2",
+        "label": "Erfahrung",
+        "question": "Erfahrung?",
+        "starter": "Früher habe ich ...",
+        "modelSentence": "Früher habe ich in einem Geschäft gearbeitet und Kunden beraten."
       },
       {
-        "id": "faehigkeiten",
+        "id": "point-3",
         "label": "Fähigkeiten",
-        "question": "Welche Fähigkeiten und Qualifikationen besitzen Sie?",
-        "starter": "Ich bin ... und kann gut ..."
+        "question": "Fähigkeiten?",
+        "starter": "Ich kann gut ...",
+        "modelSentence": "Ich kann gut mit Menschen sprechen und arbeite gern im Team."
       },
       {
-        "id": "motivation",
-        "label": "Motivation",
-        "question": "Warum interessieren Sie sich für diese Position bei Amazon?",
-        "starter": "Ich interessiere mich für diese Stelle, weil ..."
+        "id": "point-4",
+        "label": "Wunschstelle",
+        "question": "Wunschstelle?",
+        "starter": "Ich möchte ..., weil ...",
+        "modelSentence": "Ich möchte im Kundenservice arbeiten, weil ich gern anderen helfe."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day13VorstellungsgespraechWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "14": {
     "day": 14,
-    "sourcePath": "web/src/components/A2Day14BerufUndKarriereWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Was ist Ihr Beruf, wie sind Sie zu diesem Job gekommen und was möchten Sie in Zukunft machen?",
-    "centralQuestion": "Was ist Ihr Beruf, wie sind Sie zu diesem Job gekommen und was möchten Sie in Zukunft machen?",
+    "prompt": "Wie sieht dein Berufsleben aus?",
+    "centralQuestion": "Wie sieht dein Berufsleben aus?",
+    "keywords": [
+      "Beruf oder Studium",
+      "Aufgaben",
+      "Weg zum Beruf",
+      "Zukunft"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "beruf",
-        "label": "Beruf",
-        "question": "Was ist Ihr Beruf und wo arbeiten Sie?",
-        "starter": "Ich bin ... und arbeite ..."
+        "id": "point-1",
+        "label": "Beruf oder Studium",
+        "question": "Beruf oder Studium?",
+        "starter": "Ich arbeite als ...",
+        "modelSentence": "Ich arbeite als Verkäuferin in einem Geschäft."
       },
       {
-        "id": "aufgaben",
+        "id": "point-2",
         "label": "Aufgaben",
-        "question": "Welche Aufgaben haben Sie?",
-        "starter": "Zu meinen Aufgaben gehören ..."
+        "question": "Aufgaben?",
+        "starter": "Bei der Arbeit ...",
+        "modelSentence": "Bei der Arbeit berate ich Kunden und räume die Waren ein."
       },
       {
-        "id": "weg-zum-beruf",
+        "id": "point-3",
         "label": "Weg zum Beruf",
-        "question": "Wie sind Sie zu diesem Beruf gekommen?",
-        "starter": "Nach meiner Ausbildung / meinem Praktikum ..."
+        "question": "Weg zum Beruf?",
+        "starter": "Nach meiner Ausbildung ...",
+        "modelSentence": "Nach meiner Ausbildung habe ich ein Praktikum gemacht und eine Stelle gefunden."
       },
       {
-        "id": "staerken",
-        "label": "Stärken",
-        "question": "Welche Stärken helfen Ihnen bei der Arbeit?",
-        "starter": "Bei meiner Arbeit hilft mir, dass ich ..."
-      },
-      {
-        "id": "zukunft",
+        "id": "point-4",
         "label": "Zukunft",
-        "question": "Was möchten Sie in Zukunft machen?",
-        "starter": "In Zukunft möchte ich ..."
+        "question": "Zukunft?",
+        "starter": "In Zukunft möchte ich ...",
+        "modelSentence": "In Zukunft möchte ich einen Kurs besuchen, um mehr zu lernen."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day14BerufUndKarriereWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "15": {
     "day": 15,
-    "sourcePath": "web/src/components/A2Day15MeinLieblingssportWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Was ist Ihr Lieblingssport? Seit wann machen Sie diesen Sport, wie oft trainieren Sie und warum gefällt er Ihnen?",
-    "centralQuestion": "Welchen Sport magst du und warum?",
+    "prompt": "Welchen Sport machst du gern?",
+    "centralQuestion": "Welchen Sport machst du gern?",
+    "keywords": [
+      "Sportart",
+      "Seit wann und wie oft?",
+      "Ort und Personen",
+      "Warum?"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "sportart",
+        "id": "point-1",
         "label": "Sportart",
-        "question": "Was sagst du über sportart?",
-        "starter": "Bei sportart sage ich:"
+        "question": "Sportart?",
+        "starter": "Mein Lieblingssport ist ...",
+        "modelSentence": "Mein Lieblingssport ist Fußball."
       },
       {
-        "id": "ort",
-        "label": "Ort",
-        "question": "Was sagst du über ort?",
-        "starter": "Bei ort sage ich:"
+        "id": "point-2",
+        "label": "Seit wann und wie oft?",
+        "question": "Seit wann und wie oft??",
+        "starter": "Ich spiele seit ...",
+        "modelSentence": "Ich spiele seit zwei Jahren und trainiere zweimal pro Woche."
       },
       {
-        "id": "personen",
-        "label": "Personen",
-        "question": "Was sagst du über personen?",
-        "starter": "Bei personen sage ich:"
+        "id": "point-3",
+        "label": "Ort und Personen",
+        "question": "Ort und Personen?",
+        "starter": "Ich trainiere ...",
+        "modelSentence": "Ich trainiere mit meinen Freunden auf einem Sportplatz."
       },
       {
-        "id": "training",
-        "label": "Training",
-        "question": "Was sagst du über training?",
-        "starter": "Bei training sage ich:"
-      },
-      {
-        "id": "gefuehl",
-        "label": "Gefühl",
-        "question": "Was sagst du über gefühl?",
-        "starter": "Bei gefühl sage ich:"
+        "id": "point-4",
+        "label": "Warum?",
+        "question": "Warum??",
+        "starter": "Ich mag ..., weil ...",
+        "modelSentence": "Ich mag Fußball, weil ich danach glücklich bin und mich fit fühle."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day15MeinLieblingssportWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "16": {
     "day": 16,
-    "sourcePath": "web/src/components/A2Day16WohlbefindenUndEntspannungWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Was machen Sie für Ihr Wohlbefinden, Ihre Entspannung und Ihre Gesundheit?",
-    "centralQuestion": "Was machst du für dein Wohlbefinden?",
+    "prompt": "Wie entspannst du dich im Alltag?",
+    "centralQuestion": "Wie entspannst du dich im Alltag?",
+    "keywords": [
+      "Stress",
+      "Entspannung",
+      "Schlaf und Bewegung",
+      "Wirkung"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "stress",
+        "id": "point-1",
         "label": "Stress",
-        "question": "Was sagst du über stress?",
-        "starter": "Bei stress sage ich:"
+        "question": "Stress?",
+        "starter": "Ich bin gestresst, wenn ...",
+        "modelSentence": "Ich bin gestresst, wenn ich viel Arbeit habe."
       },
       {
-        "id": "entspannung",
+        "id": "point-2",
         "label": "Entspannung",
-        "question": "Was sagst du über entspannung?",
-        "starter": "Bei entspannung sage ich:"
+        "question": "Entspannung?",
+        "starter": "Nach der Arbeit ...",
+        "modelSentence": "Nach der Arbeit ruhe ich mich aus und höre Musik."
       },
       {
-        "id": "schlaf",
-        "label": "Schlaf",
-        "question": "Was sagst du über schlaf?",
-        "starter": "Bei schlaf sage ich:"
+        "id": "point-3",
+        "label": "Schlaf und Bewegung",
+        "question": "Schlaf und Bewegung?",
+        "starter": "Ich versuche ...",
+        "modelSentence": "Ich versuche acht Stunden zu schlafen und gehe jeden Tag spazieren."
       },
       {
-        "id": "bewegung",
-        "label": "Bewegung",
-        "question": "Was sagst du über bewegung?",
-        "starter": "Bei bewegung sage ich:"
-      },
-      {
-        "id": "tipp",
-        "label": "Tipp",
-        "question": "Was sagst du über tipp?",
-        "starter": "Bei tipp sage ich:"
+        "id": "point-4",
+        "label": "Wirkung",
+        "question": "Wirkung?",
+        "starter": "Danach fühle ich mich ...",
+        "modelSentence": "Danach fühle ich mich besser, weil ich Zeit für mich habe."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day16WohlbefindenUndEntspannungWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "17": {
     "day": 17,
-    "sourcePath": "web/src/components/A2Day17InDieApothekeGehenWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Sie sind in der Apotheke. Was sagen und fragen Sie?",
-    "centralQuestion": "Sie sind in der Apotheke. Was sagen und fragen Sie?",
+    "prompt": "Was machst du, wenn du krank bist?",
+    "centralQuestion": "Was machst du, wenn du krank bist?",
+    "keywords": [
+      "Beschwerden",
+      "Hilfe",
+      "Fragen",
+      "Erholung"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "problem",
-        "label": "Problem",
-        "question": "Warum gehen Sie in die Apotheke?",
-        "starter": "Guten Tag. Ich fühle mich seit ... nicht gut."
+        "id": "point-1",
+        "label": "Beschwerden",
+        "question": "Beschwerden?",
+        "starter": "Wenn ich krank bin, ...",
+        "modelSentence": "Wenn ich krank bin, habe ich oft Halsschmerzen und fühle mich müde."
       },
       {
-        "id": "symptome",
-        "label": "Symptome",
-        "question": "Welche Symptome haben Sie?",
-        "starter": "Ich habe ..."
+        "id": "point-2",
+        "label": "Hilfe",
+        "question": "Hilfe?",
+        "starter": "Ich gehe ...",
+        "modelSentence": "Ich gehe in die Apotheke und beschreibe meine Beschwerden."
       },
       {
-        "id": "medikament-rat",
-        "label": "Medikament und Rat",
-        "question": "Welches Medikament oder welchen Rat brauchen Sie?",
-        "starter": "Ich brauche etwas gegen ..."
-      },
-      {
-        "id": "fragen",
+        "id": "point-3",
         "label": "Fragen",
-        "question": "Was müssen Sie über das Medikament fragen?",
-        "starter": "Wie oft soll ich ...?"
+        "question": "Fragen?",
+        "starter": "Ich frage, ...",
+        "modelSentence": "Ich frage, wie oft ich das Medikament nehmen soll."
       },
       {
-        "id": "abschluss",
-        "label": "Abschluss",
-        "question": "Wie beenden Sie das Gespräch höflich?",
-        "starter": "Vielen Dank für ..."
+        "id": "point-4",
+        "label": "Erholung",
+        "question": "Erholung?",
+        "starter": "Zu Hause ...",
+        "modelSentence": "Zu Hause ruhe ich mich aus und schlafe viel."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day17InDieApothekeGehenWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "18": {
     "day": 18,
-    "sourcePath": "web/src/components/A2Day18DieBankAnrufenWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Sie rufen bei einer Bank an. Warum rufen Sie an? Welche Informationen brauchen Sie? Welche höflichen Fragen stellen Sie?",
-    "centralQuestion": "Warum rufst du die Bank an?",
+    "prompt": "Wie erledigst du deine Bankgeschäfte?",
+    "centralQuestion": "Wie erledigst du deine Bankgeschäfte?",
+    "keywords": [
+      "Konto",
+      "Bargeld",
+      "Online-Banking",
+      "Hilfe bei Problemen"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "konto-karte-sperren",
-        "label": "Konto oder Karte sperren",
-        "question": "Warum musst du die Bank schnell anrufen?",
-        "starter": "Ich rufe an, weil ich ..."
+        "id": "point-1",
+        "label": "Konto",
+        "question": "Konto?",
+        "starter": "Ich benutze mein Konto für ...",
+        "modelSentence": "Ich benutze mein Konto für mein Gehalt und die Miete."
       },
       {
-        "id": "geld-abheben",
-        "label": "Geld abheben",
-        "question": "Was möchtest du über Geldabheben fragen?",
-        "starter": "Ich möchte Geld abheben, aber ..."
+        "id": "point-2",
+        "label": "Bargeld",
+        "question": "Bargeld?",
+        "starter": "Ich hebe ... ab.",
+        "modelSentence": "Ich hebe einmal pro Woche Geld am Automaten ab."
       },
       {
-        "id": "konto-eroeffnen",
-        "label": "Konto eröffnen",
-        "question": "Welche Informationen brauchst du für ein neues Konto?",
-        "starter": "Ich möchte ein Konto eröffnen. Welche ...?"
+        "id": "point-3",
+        "label": "Online-Banking",
+        "question": "Online-Banking?",
+        "starter": "Mit Online-Banking ...",
+        "modelSentence": "Mit Online-Banking bezahle ich Rechnungen und prüfe meinen Kontostand."
       },
       {
-        "id": "kontostand-ueberweisung",
-        "label": "Kontostand und Überweisung",
-        "question": "Welche Kontoinformationen brauchst du?",
-        "starter": "Könnten Sie bitte meinen ...?"
-      },
-      {
-        "id": "abschluss",
-        "label": "Höflich abschließen",
-        "question": "Wie beendest du das Bankgespräch höflich?",
-        "starter": "Vielen Dank für Ihre Hilfe. ..."
+        "id": "point-4",
+        "label": "Hilfe bei Problemen",
+        "question": "Hilfe bei Problemen?",
+        "starter": "Wenn meine Karte nicht funktioniert, ...",
+        "modelSentence": "Wenn meine Karte nicht funktioniert, rufe ich die Bank an und bitte um Hilfe."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day18DieBankAnrufenWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "19": {
     "day": 19,
-    "sourcePath": "web/src/components/A2Day19EinkaufenWoUndWieWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Wo kaufst du gern ein? Sprich über Geschäft oder Online-Shop, Produkte, Preis, Qualität und deine Meinung.",
-    "centralQuestion": "Wo kaufst du gern ein und warum?",
+    "prompt": "Wo und wie kaufst du gern ein?",
+    "centralQuestion": "Wo und wie kaufst du gern ein?",
+    "keywords": [
+      "Geschäfte",
+      "Produkte",
+      "Preis und Qualität",
+      "Online oder vor Ort?"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "geschaeft",
-        "label": "Geschäft",
-        "question": "Was sagst du über geschäft?",
-        "starter": "Bei geschäft sage ich:"
+        "id": "point-1",
+        "label": "Geschäfte",
+        "question": "Geschäfte?",
+        "starter": "Ich kaufe meistens ...",
+        "modelSentence": "Ich kaufe Lebensmittel meistens auf dem Markt."
       },
       {
-        "id": "produkte",
+        "id": "point-2",
         "label": "Produkte",
-        "question": "Was sagst du über produkte?",
-        "starter": "Bei produkte sage ich:"
+        "question": "Produkte?",
+        "starter": "Dort kaufe ich ...",
+        "modelSentence": "Dort kaufe ich Obst, Gemüse und Reis."
       },
       {
-        "id": "preis",
-        "label": "Preis",
-        "question": "Was sagst du über preis?",
-        "starter": "Bei preis sage ich:"
+        "id": "point-3",
+        "label": "Preis und Qualität",
+        "question": "Preis und Qualität?",
+        "starter": "Mir ist ... wichtig.",
+        "modelSentence": "Mir ist gute Qualität wichtig, aber ich vergleiche auch die Preise."
       },
       {
-        "id": "qualitaet",
-        "label": "Qualität",
-        "question": "Was sagst du über qualität?",
-        "starter": "Bei qualität sage ich:"
-      },
-      {
-        "id": "meinung",
-        "label": "Meinung",
-        "question": "Was sagst du über meinung?",
-        "starter": "Bei meinung sage ich:"
+        "id": "point-4",
+        "label": "Online oder vor Ort?",
+        "question": "Online oder vor Ort??",
+        "starter": "Ich kaufe lieber ..., weil ...",
+        "modelSentence": "Ich kaufe lieber im Geschäft, weil ich die Produkte sehen kann."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day19EinkaufenWoUndWieWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "20": {
     "day": 20,
-    "sourcePath": "web/src/components/A2Day20TypischeReklamationssituationenWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Du möchtest ein defektes oder falsches Produkt reklamieren. Erkläre das Problem höflich und sage, welche Lösung du möchtest.",
-    "centralQuestion": "Wie reklamierst du ein Problem höflich?",
+    "prompt": "Was machst du, wenn ein gekauftes Produkt kaputt ist?",
+    "centralQuestion": "Was machst du, wenn ein gekauftes Produkt kaputt ist?",
+    "keywords": [
+      "Produkt und Kauf",
+      "Problem",
+      "Reklamation und Beleg",
+      "Gewünschte Lösung"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "produkt",
-        "label": "Produkt",
-        "question": "Was sagst du über produkt?",
-        "starter": "Bei produkt sage ich:"
+        "id": "point-1",
+        "label": "Produkt und Kauf",
+        "question": "Produkt und Kauf?",
+        "starter": "Ich habe einmal ... gekauft.",
+        "modelSentence": "Ich habe einmal einen Wasserkocher in einem Geschäft gekauft."
       },
       {
-        "id": "problem",
+        "id": "point-2",
         "label": "Problem",
-        "question": "Was sagst du über problem?",
-        "starter": "Bei problem sage ich:"
+        "question": "Problem?",
+        "starter": "Leider ...",
+        "modelSentence": "Leider hat er nach zwei Tagen nicht mehr funktioniert."
       },
       {
-        "id": "wunsch",
-        "label": "Wunsch",
-        "question": "Was sagst du über wunsch?",
-        "starter": "Bei wunsch sage ich:"
+        "id": "point-3",
+        "label": "Reklamation und Beleg",
+        "question": "Reklamation und Beleg?",
+        "starter": "Ich bin ...",
+        "modelSentence": "Ich bin mit dem Kassenbon ins Geschäft gegangen und habe das Problem erklärt."
       },
       {
-        "id": "beleg",
-        "label": "Beleg",
-        "question": "Was sagst du über beleg?",
-        "starter": "Bei beleg sage ich:"
-      },
-      {
-        "id": "loesung",
-        "label": "Lösung",
-        "question": "Was sagst du über lösung?",
-        "starter": "Bei lösung sage ich:"
+        "id": "point-4",
+        "label": "Gewünschte Lösung",
+        "question": "Gewünschte Lösung?",
+        "starter": "Ich wollte ..., weil ...",
+        "modelSentence": "Ich wollte einen neuen Wasserkocher, weil ich ihn jeden Tag brauche."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day20TypischeReklamationssituationenWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "21": {
     "day": 21,
-    "sourcePath": "web/src/components/A2Day21EinWochenendePlanenWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Plane ein Wochenende. Sage, was du am Samstag und Sonntag machen möchtest, mit wem du unterwegs bist und was du bei gutem oder schlechtem Wetter machst.",
-    "centralQuestion": "Was planst du für das Wochenende?",
+    "prompt": "Was möchtest du am nächsten Wochenende machen?",
+    "centralQuestion": "Was möchtest du am nächsten Wochenende machen?",
+    "keywords": [
+      "Aktivitäten",
+      "Mit wem und wohin?",
+      "Zeit und Anreise",
+      "Wetter und Plan B"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "tag",
-        "label": "Tag",
-        "question": "Was sagst du über tag?",
-        "starter": "Bei tag sage ich:"
+        "id": "point-1",
+        "label": "Aktivitäten",
+        "question": "Aktivitäten?",
+        "starter": "Am Wochenende möchte ich ...",
+        "modelSentence": "Am Wochenende möchte ich einen Ausflug machen."
       },
       {
-        "id": "aktivitaet",
-        "label": "Aktivität",
-        "question": "Was sagst du über aktivität?",
-        "starter": "Bei aktivität sage ich:"
+        "id": "point-2",
+        "label": "Mit wem und wohin?",
+        "question": "Mit wem und wohin??",
+        "starter": "Ich möchte mit ...",
+        "modelSentence": "Ich möchte mit meinen Freunden an den See fahren."
       },
       {
-        "id": "personen",
-        "label": "Personen",
-        "question": "Was sagst du über personen?",
-        "starter": "Bei personen sage ich:"
+        "id": "point-3",
+        "label": "Zeit und Anreise",
+        "question": "Zeit und Anreise?",
+        "starter": "Wir fahren ...",
+        "modelSentence": "Wir fahren am Samstag um neun Uhr mit dem Bus los."
       },
       {
-        "id": "ort",
-        "label": "Ort",
-        "question": "Was sagst du über ort?",
-        "starter": "Bei ort sage ich:"
-      },
-      {
-        "id": "plan-b",
-        "label": "Plan B",
-        "question": "Was sagst du über plan b?",
-        "starter": "Bei plan b sage ich:"
+        "id": "point-4",
+        "label": "Wetter und Plan B",
+        "question": "Wetter und Plan B?",
+        "starter": "Falls es regnet, ...",
+        "modelSentence": "Falls es regnet, gehen wir ins Museum. Ich weiß noch nicht, ob alle Zeit haben."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day21EinWochenendePlanenWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "22": {
     "day": 22,
@@ -912,248 +1062,278 @@ export const A2_WORKBOOK_PRESENTATIONS = {
   },
   "23": {
     "day": 23,
-    "sourcePath": "web/src/components/A2Day23WieKommstDuZurSchuleOderZurArbeitWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Beschreibe deinen Weg zur Schule oder zur Arbeit. Sage, welche Verkehrsmittel du benutzt, wie lange der Weg dauert und warum du diese Möglichkeit wählst.",
+    "prompt": "Wie kommst du zur Schule oder zur Arbeit?",
     "centralQuestion": "Wie kommst du zur Schule oder zur Arbeit?",
+    "keywords": [
+      "Verkehrsmittel",
+      "Zeit und Dauer",
+      "Weg und Kosten",
+      "Probleme und Alternative"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "verkehrsmittel",
+        "id": "point-1",
         "label": "Verkehrsmittel",
-        "question": "Was sagst du über verkehrsmittel?",
-        "starter": "Bei verkehrsmittel sage ich:"
+        "question": "Verkehrsmittel?",
+        "starter": "Ich fahre ...",
+        "modelSentence": "Ich fahre mit dem Bus zur Arbeit."
       },
       {
-        "id": "dauer",
-        "label": "Dauer",
-        "question": "Was sagst du über dauer?",
-        "starter": "Bei dauer sage ich:"
+        "id": "point-2",
+        "label": "Zeit und Dauer",
+        "question": "Zeit und Dauer?",
+        "starter": "Ich fahre um ... los.",
+        "modelSentence": "Ich fahre um sieben Uhr los und brauche dreißig Minuten."
       },
       {
-        "id": "route",
-        "label": "Route",
-        "question": "Was sagst du über route?",
-        "starter": "Bei route sage ich:"
+        "id": "point-3",
+        "label": "Weg und Kosten",
+        "question": "Weg und Kosten?",
+        "starter": "Die Fahrt ...",
+        "modelSentence": "Die Fahrt kostet zwei Euro, und ich muss einmal umsteigen."
       },
       {
-        "id": "kosten",
-        "label": "Kosten",
-        "question": "Was sagst du über kosten?",
-        "starter": "Bei kosten sage ich:"
-      },
-      {
-        "id": "problem",
-        "label": "Problem",
-        "question": "Was sagst du über problem?",
-        "starter": "Bei problem sage ich:"
+        "id": "point-4",
+        "label": "Probleme und Alternative",
+        "question": "Probleme und Alternative?",
+        "starter": "Wenn ..., ...",
+        "modelSentence": "Wenn der Bus zu spät kommt, nehme ich ein Taxi."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day23WieKommstDuZurSchuleOderZurArbeitWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "24": {
     "day": 24,
-    "sourcePath": "web/src/components/A2Day24EinenUrlaubPlanenWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Plane einen Urlaub. Nenne Reiseziel, Zeitraum, Budget, Transport, Unterkunft, Aktivitäten und wichtige Vorbereitungen.",
-    "centralQuestion": "Wie planst du deinen nächsten Urlaub?",
+    "prompt": "Wie stellst du dir deinen nächsten Urlaub vor?",
+    "centralQuestion": "Wie stellst du dir deinen nächsten Urlaub vor?",
+    "keywords": [
+      "Reiseziel und Zeit",
+      "Transport und Unterkunft",
+      "Aktivitäten",
+      "Geld und Vorbereitung"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "reiseziel",
-        "label": "Reiseziel",
-        "question": "Was sagst du über reiseziel?",
-        "starter": "Bei reiseziel sage ich:"
+        "id": "point-1",
+        "label": "Reiseziel und Zeit",
+        "question": "Reiseziel und Zeit?",
+        "starter": "Ich möchte ...",
+        "modelSentence": "Ich möchte im Sommer eine Woche nach Hamburg fahren."
       },
       {
-        "id": "unterkunft",
-        "label": "Unterkunft",
-        "question": "Was sagst du über unterkunft?",
-        "starter": "Bei unterkunft sage ich:"
+        "id": "point-2",
+        "label": "Transport und Unterkunft",
+        "question": "Transport und Unterkunft?",
+        "starter": "Ich fahre ... und wohne ...",
+        "modelSentence": "Ich fahre mit dem Zug und wohne in einem kleinen Hotel."
       },
       {
-        "id": "transport",
-        "label": "Transport",
-        "question": "Was sagst du über transport?",
-        "starter": "Bei transport sage ich:"
-      },
-      {
-        "id": "aktivitaeten",
+        "id": "point-3",
         "label": "Aktivitäten",
-        "question": "Was sagst du über aktivitäten?",
-        "starter": "Bei aktivitäten sage ich:"
+        "question": "Aktivitäten?",
+        "starter": "Ich möchte dort ...",
+        "modelSentence": "Ich möchte dort den Hafen besuchen und Fotos machen."
       },
       {
-        "id": "budget",
-        "label": "Budget",
-        "question": "Was sagst du über budget?",
-        "starter": "Bei budget sage ich:"
+        "id": "point-4",
+        "label": "Geld und Vorbereitung",
+        "question": "Geld und Vorbereitung?",
+        "starter": "Ich spare ..., um ...",
+        "modelSentence": "Ich spare Geld, um die Reise zu bezahlen, und buche das Hotel früh."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day24EinenUrlaubPlanenWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "25": {
     "day": 25,
-    "sourcePath": "web/src/components/A2Day25TagesablaufWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Beschreibe deinen Tagesablauf vom Aufstehen bis zum Schlafengehen. Nenne Uhrzeiten, Arbeit oder Schule, Essen, Freizeit und Abendroutine.",
+    "prompt": "Wie sieht dein normaler Tag aus?",
     "centralQuestion": "Wie sieht dein normaler Tag aus?",
+    "keywords": [
+      "Morgen",
+      "Arbeit oder Schule",
+      "Freizeit",
+      "Abend"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "morgen",
+        "id": "point-1",
         "label": "Morgen",
-        "question": "Was sagst du über morgen?",
-        "starter": "Bei morgen sage ich:"
+        "question": "Morgen?",
+        "starter": "Morgens stehe ich ...",
+        "modelSentence": "Morgens stehe ich um sechs Uhr auf und frühstücke."
       },
       {
-        "id": "mittag",
-        "label": "Mittag",
-        "question": "Was sagst du über mittag?",
-        "starter": "Bei mittag sage ich:"
+        "id": "point-2",
+        "label": "Arbeit oder Schule",
+        "question": "Arbeit oder Schule?",
+        "starter": "Danach ...",
+        "modelSentence": "Danach fahre ich zur Arbeit und arbeite bis fünf Uhr."
       },
       {
-        "id": "nachmittag",
-        "label": "Nachmittag",
-        "question": "Was sagst du über nachmittag?",
-        "starter": "Bei nachmittag sage ich:"
+        "id": "point-3",
+        "label": "Freizeit",
+        "question": "Freizeit?",
+        "starter": "Nach der Arbeit ...",
+        "modelSentence": "Nach der Arbeit treffe ich Freunde oder kaufe ein."
       },
       {
-        "id": "abend",
+        "id": "point-4",
         "label": "Abend",
-        "question": "Was sagst du über abend?",
-        "starter": "Bei abend sage ich:"
-      },
-      {
-        "id": "routine",
-        "label": "Routine",
-        "question": "Was sagst du über routine?",
-        "starter": "Bei routine sage ich:"
+        "question": "Abend?",
+        "starter": "Abends ...",
+        "modelSentence": "Abends koche ich, sehe kurz fern und gehe um zehn Uhr schlafen."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day25TagesablaufWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "26": {
     "day": 26,
-    "sourcePath": "web/src/components/A2Day26GefuehleInVerschiedenenSituationenWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Wie fühlst du dich in verschiedenen Situationen und warum?",
-    "centralQuestion": "Wie fühlst du dich in verschiedenen Situationen?",
+    "prompt": "Wie fühlst du dich in verschiedenen Alltagssituationen?",
+    "centralQuestion": "Wie fühlst du dich in verschiedenen Alltagssituationen?",
+    "keywords": [
+      "Freude",
+      "Nervosität",
+      "Stress",
+      "Unterstützung"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "freude",
+        "id": "point-1",
         "label": "Freude",
-        "question": "Was sagst du über freude?",
-        "starter": "Bei freude sage ich:"
+        "question": "Freude?",
+        "starter": "Ich freue mich, wenn ...",
+        "modelSentence": "Ich freue mich, wenn ich meine Freunde sehe."
       },
       {
-        "id": "stress",
+        "id": "point-2",
+        "label": "Nervosität",
+        "question": "Nervosität?",
+        "starter": "Vor ... fühle ich mich ...",
+        "modelSentence": "Vor einer Prüfung fühle ich mich nervös, weil ich gute Noten bekommen möchte."
+      },
+      {
+        "id": "point-3",
         "label": "Stress",
-        "question": "Was sagst du über stress?",
-        "starter": "Bei stress sage ich:"
+        "question": "Stress?",
+        "starter": "Wenn ich Stress habe, ...",
+        "modelSentence": "Wenn ich Stress habe, gehe ich spazieren und höre Musik."
       },
       {
-        "id": "angst",
-        "label": "Angst",
-        "question": "Was sagst du über angst?",
-        "starter": "Bei angst sage ich:"
-      },
-      {
-        "id": "ueberraschung",
-        "label": "Überraschung",
-        "question": "Was sagst du über überraschung?",
-        "starter": "Bei überraschung sage ich:"
-      },
-      {
-        "id": "hilfe",
-        "label": "Hilfe",
-        "question": "Was sagst du über hilfe?",
-        "starter": "Bei hilfe sage ich:"
+        "id": "point-4",
+        "label": "Unterstützung",
+        "question": "Unterstützung?",
+        "starter": "Mir hilft ...",
+        "modelSentence": "Mir hilft ein Gespräch mit meiner Schwester. Danach fühle ich mich ruhiger."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day26GefuehleInVerschiedenenSituationenWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "27": {
     "day": 27,
-    "sourcePath": "web/src/components/A2Day27DigitaleKommunikationWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Welche digitalen Kommunikationsmittel benutzt du am meisten?",
-    "centralQuestion": "Wie kommunizierst du digital?",
+    "prompt": "Wie hältst du digital Kontakt zu anderen?",
+    "centralQuestion": "Wie hältst du digital Kontakt zu anderen?",
+    "keywords": [
+      "Apps und Geräte",
+      "Mit wem?",
+      "Wann und wie oft?",
+      "Vorteile und Probleme"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "app",
-        "label": "App",
-        "question": "Was sagst du über app?",
-        "starter": "Bei app sage ich:"
+        "id": "point-1",
+        "label": "Apps und Geräte",
+        "question": "Apps und Geräte?",
+        "starter": "Ich benutze ...",
+        "modelSentence": "Ich benutze mein Handy und WhatsApp."
       },
       {
-        "id": "nachricht",
-        "label": "Nachricht",
-        "question": "Was sagst du über nachricht?",
-        "starter": "Bei nachricht sage ich:"
+        "id": "point-2",
+        "label": "Mit wem?",
+        "question": "Mit wem??",
+        "starter": "Ich schreibe ...",
+        "modelSentence": "Ich schreibe meinen Freunden und telefoniere mit meiner Familie."
       },
       {
-        "id": "anruf",
-        "label": "Anruf",
-        "question": "Was sagst du über anruf?",
-        "starter": "Bei anruf sage ich:"
+        "id": "point-3",
+        "label": "Wann und wie oft?",
+        "question": "Wann und wie oft??",
+        "starter": "Ich ... jeden Tag.",
+        "modelSentence": "Ich schicke jeden Tag Nachrichten, aber bei der Arbeit bleibt mein Handy leise."
       },
       {
-        "id": "regeln",
-        "label": "Regeln",
-        "question": "Was sagst du über regeln?",
-        "starter": "Bei regeln sage ich:"
-      },
-      {
-        "id": "problem",
-        "label": "Problem",
-        "question": "Was sagst du über problem?",
-        "starter": "Bei problem sage ich:"
+        "id": "point-4",
+        "label": "Vorteile und Probleme",
+        "question": "Vorteile und Probleme?",
+        "starter": "Ich finde ..., weil ...",
+        "modelSentence": "Ich finde Videoanrufe praktisch, weil meine Familie weit weg wohnt. Manchmal ist das Internet langsam."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day27DigitaleKommunikationWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   },
   "28": {
     "day": 28,
-    "sourcePath": "web/src/components/A2Day28UeberDieZukunftSprechenWorkbookPage.js",
-    "sourceMindMapPath": "web/src/data/speakingMindMaps/a2/index.js",
     "mode": "presentation",
-    "prompt": "Was planst du für deine Zukunft und warum?",
-    "centralQuestion": "Was möchtest du in der Zukunft machen?",
+    "prompt": "Was möchtest du in Zukunft machen?",
+    "centralQuestion": "Was möchtest du in Zukunft machen?",
+    "keywords": [
+      "Deutsch und Ausbildung",
+      "Beruf",
+      "Persönliche Wünsche",
+      "Vorbereitung und Grund"
+    ],
+    "instruction": "Erzähle etwas über dich und dein Leben. Sprich zu allen vier Stichpunkten in ganzen Sätzen. Ergänze Details, Beispiele oder einen Grund.",
+    "instructionEn": "Give a short individual talk about yourself and your life. Cover all four keywords in full sentences and add details, examples or a reason. This is classroom practice for Goethe A2 Speaking Part 2.",
     "branches": [
       {
-        "id": "plan",
-        "label": "Plan",
-        "question": "Was sagst du über plan?",
-        "starter": "Bei plan sage ich:"
+        "id": "point-1",
+        "label": "Deutsch und Ausbildung",
+        "question": "Deutsch und Ausbildung?",
+        "starter": "Nächstes Jahr möchte ich ...",
+        "modelSentence": "Nächstes Jahr möchte ich meine Deutschkenntnisse verbessern und einen Kurs besuchen."
       },
       {
-        "id": "beruf",
+        "id": "point-2",
         "label": "Beruf",
-        "question": "Was sagst du über beruf?",
-        "starter": "Bei beruf sage ich:"
+        "question": "Beruf?",
+        "starter": "Später möchte ich ...",
+        "modelSentence": "Später möchte ich in einem Krankenhaus arbeiten."
       },
       {
-        "id": "familie",
-        "label": "Familie",
-        "question": "Was sagst du über familie?",
-        "starter": "Bei familie sage ich:"
+        "id": "point-3",
+        "label": "Persönliche Wünsche",
+        "question": "Persönliche Wünsche?",
+        "starter": "Ich wünsche mir ...",
+        "modelSentence": "Ich wünsche mir eine eigene Wohnung und möchte mehr reisen."
       },
       {
-        "id": "reise",
-        "label": "Reise",
-        "question": "Was sagst du über reise?",
-        "starter": "Bei reise sage ich:"
-      },
-      {
-        "id": "wunsch",
-        "label": "Wunsch",
-        "question": "Was sagst du über wunsch?",
-        "starter": "Bei wunsch sage ich:"
+        "id": "point-4",
+        "label": "Vorbereitung und Grund",
+        "question": "Vorbereitung und Grund?",
+        "starter": "Heute ..., weil ...",
+        "modelSentence": "Heute lerne ich jeden Tag, weil ich meine Ziele erreichen möchte."
       }
     ],
-    "instruction": "Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb."
+    "sourcePath": "web/src/components/A2Day28UeberDieZukunftSprechenWorkbookPage.js",
+    "sourceMindMapPath": "web/src/data/a2PresentationCards.js"
   }
 };

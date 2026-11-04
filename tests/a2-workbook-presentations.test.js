@@ -28,8 +28,8 @@ test('every A2 lesson exposes one named correction slide and its existing workbo
  }
 });
 test('Day 20 copies its complaint task; Day 22 uses the current mock pool rather than the retired weekly plan',()=>{
- assert.equal(A2_WORKBOOK_PRESENTATIONS[20].prompt,'Du möchtest ein defektes oder falsches Produkt reklamieren. Erkläre das Problem höflich und sage, welche Lösung du möchtest.');
- assert.deepEqual(A2_WORKBOOK_PRESENTATIONS[20].branches.map(b=>b.label),['Produkt','Problem','Wunsch','Beleg','Lösung']);
+ assert.equal(A2_WORKBOOK_PRESENTATIONS[20].prompt,'Was machst du, wenn ein gekauftes Produkt kaputt ist?');
+ assert.deepEqual(A2_WORKBOOK_PRESENTATIONS[20].branches.map(b=>b.label),['Produkt und Kauf','Problem','Reklamation und Beleg','Gewünschte Lösung']);
  const mock=A2_WORKBOOK_PRESENTATIONS[22];
  assert.equal(mock.mode,'speaking-mock');
  assert.ok(mock.choices.length>1);
@@ -48,4 +48,19 @@ test('Day 8 preserves the workbook restaurant role-play instead of the unused co
  assert.equal(task.branches[0].question,'Begrüße und bitte um die Speisekarte.');
  assert.equal(task.branches.at(-1).question,'Bitte am Ende um die Rechnung.');
  assert.doesNotMatch(task.branches.map(b=>b.question).join(' '),/Rezept|Zutaten/);
+});
+
+test('every individual presentation has a clear personal question and four matching cues',()=>{
+ for(const task of Object.values(A2_WORKBOOK_PRESENTATIONS)){
+  const card=task.presentationPractice || task;
+  if(task.mode==='speaking-mock')continue;
+  assert.equal(card.keywords.length,4);
+  assert.deepEqual(card.branches.map(point=>point.label),card.keywords);
+  assert.match(card.instruction,/ganzen Sätzen/);
+  assert.ok(card.instructionEn.includes('individual talk'));
+  assert.doesNotMatch(card.prompt,/^Kannst du/);
+  assert.ok(card.branches.every(point=>point.starter&&point.modelSentence));
+ }
+ assert.equal(A2_WORKBOOK_PRESENTATIONS[1].prompt,'Wer bist du?');
+ assert.deepEqual(A2_WORKBOOK_PRESENTATIONS[1].keywords,['Name und Herkunft','Familie und Wohnort','Sprachen und Beruf','Freizeit']);
 });
