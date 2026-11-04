@@ -16,7 +16,7 @@ test('catalog failure and retry provide visible feedback without clearing the up
   assert.equal(failed.LoadingTracks,false);
   assert.equal(failed.CatalogLoaded,false);
   const track={id:'b1',objectKey:'music/b1/day-15/song.mp3',audioUrl:'https://www.falowen.app/api/music?track=b1'};
-  const success=await run(async(url,options)=>{assert.ok(options.signal);return {ok:true,json:async()=>({ok:true,tracks:[track]})};});
+  const success=await run(async(url,options)=>{assert.equal(url,"/api/attendance-music-library");assert.ok(options.signal);return {ok:true,json:async()=>({ok:true,tracks:[track]})};});
   assert.equal(success.Tracks.length,1);
   assert.equal(success.CatalogError,'');
   assert.equal(success.CatalogLoaded,true);

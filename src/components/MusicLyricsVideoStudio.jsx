@@ -411,7 +411,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   async function loadTracks(){
     setLoadingTracks(true);setCatalogError("");setCatalogLoaded(false);
     try {
-      const response=await fetch("https://www.falowen.app/api/music-library", {cache:"no-cache",signal:AbortSignal.timeout(15000)});
+      const response=await fetch("/api/attendance-music-library", {cache:"no-cache",signal:AbortSignal.timeout(15000)});
       if(!response.ok)throw Error("Could not load the public song catalog.");
       const data=await response.json();
       if (!Array.isArray(data.tracks) || data.ok === false) throw Error("The song catalog is unavailable. Please retry.");
