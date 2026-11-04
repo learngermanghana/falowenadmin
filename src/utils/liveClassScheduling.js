@@ -1,3 +1,4 @@
+import { isAppAssessment } from "./appAssessment.js";
 import { getCourseDictionaryEntry } from "../data/courseDictionary.js";
 import { getCourseSessionCount } from "../data/courseSessionGroups.js";
 
@@ -232,7 +233,7 @@ export function getEffectiveClassEndDate(klass = {}, sessions = []) {
 
 export function selectNextSession(sessions = [], now = new Date()) {
   const nowMs = new Date(now).getTime();
-  return [...sessions].filter((s) => !["cancelled", "completed"].includes(s.status) && Number.isFinite(toSessionDate(s.startsAt)?.getTime()) && toSessionDate(s.startsAt).getTime() >= nowMs).sort((a, b) => toSessionDate(a.startsAt).getTime() - toSessionDate(b.startsAt).getTime())[0] || null;
+  return [...sessions].filter((s) => !isAppAssessment(s) && !["cancelled", "completed"].includes(s.status) && Number.isFinite(toSessionDate(s.startsAt)?.getTime()) && toSessionDate(s.startsAt).getTime() >= nowMs).sort((a, b) => toSessionDate(a.startsAt).getTime() - toSessionDate(b.startsAt).getTime())[0] || null;
 }
 
 export function selectLatestCompletedSession(sessions = []) {

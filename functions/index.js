@@ -1,3 +1,4 @@
+const { isAppAssessment } = require("./appAssessment.js");
 const { resolveChatModel, buildChatRequest } = require("./chatModelConfig.js");
 const { stripMarkingEmojis } = require("./markingFeedbackText.js");
 const admin = require("firebase-admin");
@@ -376,6 +377,7 @@ app.post("/openSession", async (req, res) => {
     const existing = await ref.get();
     const existingSession = existing.exists ? existing.data() : {};
     const metadata = resolveSessionMetadata({ assignmentId, sessionLabel, lesson, topic, chapter, existingSession });
+    if (isAppAssessment({ ...existingSession, ...metadata })) return res.status(409).json({ error: "App assessment: no live class or attendance check-in." });
     const payload = {
       classId,
       sessionId,
@@ -440,6 +442,7 @@ app.post("/checkin", async (req, res) => {
 
     const session = sessionSnap.data();
     const metadata = resolveSessionMetadata({ assignmentId, sessionLabel, lesson, topic, chapter, existingSession: session });
+    if (isAppAssessment(session)) return res.status(409).json({ error: "Complete this speaking assessment in the app; no live check-in is required." });
     if (!session.opened) return res.status(400).json({ error: "Check-in is closed" });
 
     const now = admin.firestore.Timestamp.now();

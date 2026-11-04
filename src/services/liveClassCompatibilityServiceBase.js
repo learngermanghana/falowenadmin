@@ -231,6 +231,7 @@ function attendanceMetadata(klass, session, patch) {
     startsAt,
     endsAt: merged.endsAt || "",
     sessionStatus: merged.status || "scheduled",
+    ...(merged.sessionType === "app_assessment" ? { sessionType: "app_assessment", attendanceRequired: false } : {}),
     assignmentIds,
     chapterIds: assignmentIds,
     curriculumIds: assignmentIds,

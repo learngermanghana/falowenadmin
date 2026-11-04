@@ -1,3 +1,4 @@
+import { isAppAssessment } from "../utils/appAssessment.js";
 
 import { learnerLessonLinksForAttendanceSession, resolveTeacherLessonSlide } from "../utils/teacherLessonDashboard.js";
 import { parseAssignmentChapter } from "../utils/assignmentChapter.js";
@@ -354,7 +355,7 @@ export default function CanonicalAttendancePageV3() {
   }
 
   async function changeCheckin(action) {
-    if (!klass || !selected) return;
+    if (!klass || !selected || isAppAssessment(selected)) return;
     setSessionBusy(true);
     try {
       if (action === "open") {
@@ -398,7 +399,7 @@ export default function CanonicalAttendancePageV3() {
   }
 
   async function save() {
-    if (!klass || !selected) return;
+    if (!klass || !selected || isAppAssessment(selected)) return;
     setSaving(true);
     try {
       await saveCanonicalAttendanceSession({
@@ -459,7 +460,7 @@ export default function CanonicalAttendancePageV3() {
         </> : null}
       </article>
 
-      {selected ? <>
+      {selected && isAppAssessment(selected) ? <article className="card"><h2>App Assessment · No live class</h2><p>Students complete all three speaking parts with the Falowen AI examiner in the app. Progress and saved results appear in their assignment. This day is excluded from live attendance.</p>{lessonLinks.map(({ url, label }) => <a key={url} href={url} target="_blank" rel="noopener noreferrer">{label}</a>)}</article> : selected ? <>
         <article className="card">
           <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
             <strong>Student QR Check-in</strong>

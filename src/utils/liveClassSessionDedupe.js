@@ -1,3 +1,4 @@
+import { isAppAssessment } from "./appAssessment.js";
 import { sessionDateInTimezone, toSessionDate } from "./liveClassScheduling.js";
 
 function normalize(value) {
@@ -202,6 +203,7 @@ function applyCurriculumGroup(session, group, index) {
     curriculumIds: group.assignmentIds,
     assignment_id: group.assignmentIds[0] || "",
     topic: group.topic,
+    ...(isAppAssessment(group) ? { sessionType: "app_assessment", attendanceRequired: false } : {}),
     curriculumIndex: group.index || index + 1,
     curriculumDay: group.day,
     curriculumTaskCount: group.assignmentIds.length,

@@ -7,6 +7,7 @@ export function buildDisplayedCurriculumPatch(stored = {}, displayed = {}) {
   if (!Number.isInteger(day) || day < 1 || !Number.isInteger(index)
     || !Array.isArray(ids) || !ids.length || !displayed.topic) return null;
   const patch = {
+    ...(displayed.sessionType === "app_assessment" ? { sessionType: "app_assessment", attendanceRequired: false } : {}),
     curriculumDay: day,
     curriculumIndex: index,
     topic: displayed.topic,
