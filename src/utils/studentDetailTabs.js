@@ -1,5 +1,5 @@
 export const STUDENT_DETAIL_TABS = [
-  { id: "profile", label: "Profile", fields: ["name", "email", "phone", "studentCode", "location", "status"] },
+  { id: "profile", label: "Profile", fields: ["name", "email", "phone", "emergencyContactName", "emergencyContactPhoneNumber", "emergencyContactRelationship", "studentCode", "location", "status"] },
   { id: "payments", label: "Payments", fields: ["tuitionFee", "initialPaymentAmount", "paymentIntentAmount", "balanceDue", "paymentStatus"] },
   { id: "class", label: "Class", fields: ["level", "program", "contractStart", "contractEnd", "contractTermMonths"] },
   { id: "support", label: "Support", fields: [] },
