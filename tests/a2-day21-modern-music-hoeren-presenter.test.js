@@ -107,8 +107,8 @@ test("Day 21 teacher notes describe the current Köln reading and separately gra
 test("Day 21 music player reuses the published-song layout and teacher audio uses staff-only signing", () => {
   const player=readFileSync("src/components/LinkedPublishedSongLessonStage.jsx","utf8");
   const audio=readFileSync("src/components/InteractiveLessonOpening.jsx","utf8");
-  assert.match(player,/\[19,20,21\]\.includes\(day\)/);
+  assert.match(player,/\[1,19,20,21\]\.includes\(day\)/);
   assert.match(player,/day === 21 \? 'A2-8\.21'/);
-  assert.match(audio,/\[18, 19, 20, 21\]\.includes\(lesson\.listening\.day\)/);
+  assert.match(audio,/\[1, 18, 19, 20, 21\]\.includes\(lesson\.listening\.day\)/);
   assert.match(audio,/course-media\/a2\/classroom-audio-url/);
 });

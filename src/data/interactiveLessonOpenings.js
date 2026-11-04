@@ -1,3 +1,4 @@
+import { A2_DAY1_LISTENING } from './a2Day1Listening.js';
 import { A2_DAY19_LISTENING } from './a2Day19Listening.js';
 // Curated reusable 10-minute classroom warm-ups. The A2 Day 17 Hören is
 // the only verified recording; never invent audio or override scored workbook work.
@@ -11,6 +12,18 @@ import { A2_DAY20_LISTENING } from "./a2Day20Listening.js";
 import { A2_DAY21_CLASSROOM_LISTENING } from "./a2Day21ClassroomListening.js";
 
 const ENTRIES = {
+  'A2-1.1': {
+    assignmentId:'A2-1.1', title:'Small Talk', warmup:[],
+    musicIntro:{
+      mediaType:'music', level:'A2', day:1, title:'Ein nettes Gespräch',
+      introQuestion:'Wie beginnst du ein Gespräch mit einem neuen Kollegen?',
+      musicLibraryUrl:'https://music.falowen.app/?level=A2&day=1',
+      studentPurpose:'Höre das veröffentlichte Lied und nenne eine passende Small-Talk-Frage.',
+      teacherPurpose:'Spiele das vorhandene A2-Tag-1-Lied ab. Danach folgt die separate Hörübung über den neuen Kollegen Thomas.',
+      nextStep:'Danach: Small Talk über Thomas · fünf Fragen zur separaten Gesprächsaufnahme.',
+    },
+    listening:A2_DAY1_LISTENING,
+  },
   "A2-3.8":   {
     "assignmentId": "A2-3.8",
     "title": "Restaurant · Bestellen und reagieren",
