@@ -20,6 +20,7 @@ const { registerTimedDraftRecoveryRoutes } = require("./timedDraftRecovery.js");
 const { registerDraftHistoryRoutes } = require("./draftHistory.js");
 const { registerMarkingHealthRoutes } = require("./markingHealth.js");
 const { registerSignupAccountLookup } = require("./signupAccountLookup.js");
+const { registerStudentAccountActivationRoutes } = require("./studentAccountActivation.js");
 const { createAttendanceConfirmationEmailJob, sendAssignmentAttendanceCreditEmail } = require("./attendanceConfirmationEmails.js");
 const { retryFailedAttendanceDeliveries, listAttendanceDeliveryHealth } = require("./attendanceConfirmationRetry.js");
 const { registerCompletionDocumentRoute } = require("./completionParticipationDocument.js");
@@ -2412,6 +2413,7 @@ registerTimedDraftRecoveryRoutes(app, { admin, db, requireAuth });
 registerDraftHistoryRoutes(app, { admin, db });
 registerMarkingHealthRoutes(app, { admin, db });
 registerSignupAccountLookup(app, { admin, db });
+registerStudentAccountActivationRoutes(app, { admin, db });
 
 // Marking runs on Firebase, using the same generated pipeline as tutor marking.
 const { createCourseMarkingWorker, createScoreSyncWorker } = require("./automaticCourseMarking");

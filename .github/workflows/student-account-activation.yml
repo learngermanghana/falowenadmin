@@ -1,0 +1,38 @@
+name: Manual student account activation
+
+on:
+  pull_request:
+    paths:
+      - "functions/studentAccountActivation.js"
+      - "functions/studentAccountActivation.test.cjs"
+      - "functions/index.js"
+      - "functions/studentProfileUpdate.js"
+      - "src/components/StudentAccountActivationPanel.jsx"
+      - "src/pages/StudentDirectoryPage.jsx"
+      - "src/services/studentAccountActivationService.js"
+      - "src/utils/studentDetailTabs.js"
+      - "vercel.json"
+      - ".github/workflows/student-account-activation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  activation-security-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Verify Firebase route syntax
+        run: |
+          node --check functions/studentAccountActivation.js
+          node --check functions/index.js
+      - name: Test account creation security and invitation states
+        run: node --test functions/studentAccountActivation.test.cjs
+      - name: Verify Admin frontend build
+        run: |
+          npm ci
+          npm run build
