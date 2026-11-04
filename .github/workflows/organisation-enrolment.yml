@@ -1,0 +1,31 @@
+name: Organisation enrolment
+on:
+  pull_request:
+    paths:
+      - 'functions/organisationEnrolment*'
+      - 'functions/index.js'
+      - 'src/pages/OrganisationEnrolment*'
+      - 'src/pages/StudentDirectoryPage.jsx'
+      - 'src/pages/StudentHubPage.jsx'
+      - 'src/App.jsx'
+      - 'api/router.js'
+      - '.github/workflows/organisation-enrolment.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'functions/organisationEnrolment*'
+      - 'src/pages/OrganisationEnrolment*'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node --test functions/organisationEnrolment.test.cjs functions/studentAccountActivation.test.cjs tests/student-emergency-contact.test.js
+      - run: npm run build

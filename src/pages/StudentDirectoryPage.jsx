@@ -354,7 +354,7 @@ export default function StudentDirectoryPage() {
   const [students, setStudents] = useState([]);
   const [classes, setClasses] = useState([]);
   const [drafts, setDrafts] = useState({});
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(() => searchParams.get("search") || "");
   const [selectedStudentId, setSelectedStudentId] = useState("");
   const [detailTab, setDetailTab] = useState("profile");
   const [mobileDetails, setMobileDetails] = useState(false);
