@@ -2414,6 +2414,7 @@ registerDraftHistoryRoutes(app, { admin, db });
 registerMarkingHealthRoutes(app, { admin, db });
 registerSignupAccountLookup(app, { admin, db });
 registerStudentAccountActivationRoutes(app, { admin, db });
+require("./organisationEnrolment.js").registerOrganisationEnrolmentRoutes(app, { admin, db });
 
 // Marking runs on Firebase, using the same generated pipeline as tutor marking.
 const { createCourseMarkingWorker, createScoreSyncWorker } = require("./automaticCourseMarking");

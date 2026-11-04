@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import StudentDirectoryPage from "./StudentDirectoryPage";
 
 export default function StudentHubPage() {
@@ -24,6 +25,7 @@ export default function StudentHubPage() {
         </div>
       </section>
 
+      <p><Link to="/organisation-submissions">Review organisation submissions</Link> · <Link to="/organisation-enrolment">Public organisation enrolment form</Link></p>
       <StudentDirectoryPage />
     </div>
   );
