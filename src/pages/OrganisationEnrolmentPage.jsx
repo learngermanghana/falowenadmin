@@ -38,6 +38,13 @@ export default function OrganisationEnrolmentPage({ review = false }) {
     setSubmissions(old => cursor ? [...old, ...data.submissions] : data.submissions);
     setNextCursor(data.nextCursor);
   };
+  const removeSubmission = batch => {
+    if (!window.confirm(`Delete the submission from ${batch.organisation.name}? This removes its submitted details. Any approved student records and accounts will remain.`)) return;
+    run(async () => {
+      await request(`admin/organisation-enrolments/${batch.id}/delete`, {}, true);
+      setSubmissions(old => old.filter(item => item.id !== batch.id));
+    });
+  };
   if (review) return <section className="org-enrol"><h1>Organisation submissions</h1>
     <p>Verify the organisation agreement and payment arrangement before approving. Approval creates a pending student; configure their class and contract in Students before inviting them.</p>
     <p><Link to="/organisation-enrolment">Open public submission page</Link> · <Link to="/students">Student directory and activation emails</Link></p>
@@ -45,6 +52,7 @@ export default function OrganisationEnrolmentPage({ review = false }) {
     {error && <p role="alert">{error}</p>}
     {submissions?.length === 0 && <p>No submissions yet.</p>}
     {submissions?.map(batch => <article key={batch.id}><h2>{batch.organisation.name}</h2>
+      <button type="button" disabled={busy} onClick={() => removeSubmission(batch)}>Delete submission</button>
       <p>{batch.organisation.contactName} · {batch.organisation.email} · {batch.organisation.phone}</p><small>Reference: {batch.id}</small>
       <div className="org-scroll"><table><thead><tr><th>Student</th><th>Email</th><th>Phone</th><th>Level</th><th>Location</th><th>Emergency number</th><th>Status</th><th>Review</th></tr></thead>
         <tbody>{batch.students.map((student, index) => <tr key={index}><td>{student.name}</td><td>{student.email}</td><td>{student.phone}</td><td>{student.level}</td><td>{student.location || "—"}</td><td>{student.emergencyContactPhone || "—"}</td><td>{student.status}</td>

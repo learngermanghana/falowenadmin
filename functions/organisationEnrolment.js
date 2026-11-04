@@ -34,7 +34,9 @@ async function reviewRow({ db, admin, batchId, index, decision, actor }) {
   const ref = db.collection("organisationEnrolments").doc(batchId);
   return db.runTransaction(async tx => {
     const snap = await tx.get(ref); if (!snap.exists) fail(404, "Submission not found.");
-    const batch = snap.data(), rows = [...batch.students], row = rows[index];
+    const batch = snap.data();
+    if (batch.deleted) fail(404, "Submission not found.");
+    const rows = [...batch.students], row = rows[index];
     if (!row) fail(404, "Student row not found.");
     if (row.status !== "pending") return { ok: true, studentId: row.studentId || null, status: row.status };
     const now = admin.firestore.FieldValue.serverTimestamp();
@@ -61,6 +63,19 @@ async function reviewRow({ db, admin, batchId, index, decision, actor }) {
     return { ok: true, studentId, status: rows[index].status };
   });
 }
+async function deleteSubmission({ db, admin, batchId, actor }) {
+  if (!/^[a-zA-Z0-9_-]{1,100}$/.test(batchId)) fail(400, "Invalid submission reference.");
+  const ref = db.collection("organisationEnrolments").doc(batchId);
+  await db.runTransaction(async tx => {
+    const snap = await tx.get(ref);
+    if (!snap.exists || snap.data().deleted) return;
+    // Replace submitted personal data; retain only a retry marker and audit metadata.
+    // Student accounts and sheet records are managed independently in Students.
+    tx.set(ref, { deleted: true, createdAt: snap.data().createdAt || admin.firestore.FieldValue.serverTimestamp(),
+      deletedAt: admin.firestore.FieldValue.serverTimestamp(), deletedBy: actor.email });
+  });
+  return { ok: true };
+}
 function registerOrganisationEnrolmentRoutes(app, { db, admin }) {
   const handle = fn => async (req, res) => {
     res.set("Cache-Control", "no-store");
@@ -75,7 +90,10 @@ function registerOrganisationEnrolmentRoutes(app, { db, admin }) {
     const quota = db.collection("organisationEnrolmentLimits").doc(hash(`${data.organisation.email}:${new Date().toISOString().slice(0, 10)}`));
     await db.runTransaction(async tx => {
       const prior = await tx.get(ref), limit = await tx.get(quota);
-      if (prior.exists) return;
+      if (prior.exists) {
+        if (prior.data().deleted) fail(409, "This submission was deleted by Falowen. Start a new submission if needed.");
+        return;
+      }
       const count = limit.exists ? limit.data().count || 0 : 0;
       if (count >= 10) fail(429, "Daily submission limit reached. Contact Falowen for help.");
       tx.set(quota, { count: count + 1, expiresAt: new Date(Date.now() + 2 * 86400000) });
@@ -94,8 +112,9 @@ function registerOrganisationEnrolmentRoutes(app, { db, admin }) {
       query = query.startAfter(last);
     }
     const snapshot = await query.limit(50).get();
-    return { ok: true, submissions: snapshot.docs.map(d => ({ id: d.id, ...d.data() })), nextCursor: snapshot.docs.length === 50 ? snapshot.docs.at(-1).id : null };
+    return { ok: true, submissions: snapshot.docs.filter(d => !d.data().deleted).map(d => ({ id: d.id, ...d.data() })), nextCursor: snapshot.docs.length === 50 ? snapshot.docs.at(-1).id : null };
   }));
+  app.post("/admin/organisation-enrolments/:batchId/delete", handle(async req => deleteSubmission({ db, admin, actor: await owner(req, admin), batchId: req.params.batchId })));
   app.post("/admin/organisation-enrolments/:batchId/review", handle(async req => reviewRow({ db, admin, actor: await owner(req, admin), batchId: req.params.batchId, index: req.body.index, decision: req.body.decision })));
 }
-module.exports = { validateSubmission, owner, reviewRow, registerOrganisationEnrolmentRoutes };
+module.exports = { deleteSubmission, validateSubmission, owner, reviewRow, registerOrganisationEnrolmentRoutes };

@@ -19,3 +19,7 @@ Validation: `node --test functions/organisationEnrolment.test.cjs functions/stud
 The client reads response text and validates JSON before accepting success. An HTML fallback, empty response or network failure keeps all form entries and the original request ID available for retry. The Vercel proxy converts non-JSON organisation API replies to a JSON 502 instead of forwarding HTML. Do not treat this message as confirmation of a saved submission; only a reference receipt confirms it.
 
 Regression coverage: `tests/organisation-enrolment-request.test.js` covers public submissions, retries, owner-token handling, list/review methods, validation errors, network errors, HTML/empty replies and actual Vercel router dispatch to the Firebase proxy. Backend tests cover validation, duplicates, approval, rejection, access control, idempotency and quotas.
+
+## Delete submissions
+
+The owner can choose **Delete submission** and confirm. This removes the submitted organisation/student details from the batch and hides it from the queue. Approved student documents, Firebase accounts and sheet rows remain untouched. A minimal deletion marker retains the reference, original creation time and deletion audit metadata so an old public retry cannot recreate the batch. Review of a deleted submission returns 404. Deleting the same reference again is safe.
