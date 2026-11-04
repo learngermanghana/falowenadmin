@@ -983,7 +983,7 @@ export default function StudentDirectoryPage() {
                             )}
                             {renderEditableFields(tab.fields)}
                             {/* STUDENT_EMERGENCY_CONTACT_FIELD: Emergency contact stays in the staff-only Profile tab. */}
-                            {tab.id === "profile" && <StudentAccountActivationPanel student={selectedStudent} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast} />}
+                            {tab.id === "profile" && <StudentAccountActivationPanel student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast} />}
                             {tab.id === "profile" && <StudentEmergencyContact student={selectedStudent} />}
                             {tab.id === "payments" && (
                               <>
