@@ -2,6 +2,7 @@ import { A2_DAY19_LISTENING } from './a2Day19Listening.js';
 // Curated reusable 10-minute classroom warm-ups. The A2 Day 17 Hören is
 // the only verified recording; never invent audio or override scored workbook work.
 import { A2_DAY17_AUDIO_KEY, A2_DAY17_WARMUP, A2_DAY17_LISTENING, A2_DAY17_TRANSCRIPT } from "./a2Day17Opening.js";
+import { B1_DAY26_LISTENING } from "./b1Day26Listening.js";
 import { B1_DAY25_LISTENING } from "./b1Day25Listening.js";
 import { B1_DAY24_RECORDED_MUSIC } from "./b1Day24RecordedMusic.js";
 import { A2_DAY18_BANK_LISTENING } from "./a2Day18BankListening.js";
@@ -462,16 +463,16 @@ ENTRIES["B1-8.25"].musicIntro = {
   nextStep:'Danach folgt das bestehende separate Hören-Gespräch über das Lieferproblem.',
 };
 ENTRIES["B1-8.25"].listening = B1_DAY25_LISTENING;
-// Day 26 has uploaded music, but no distinct verified conversation Hören.
-// Preserve its original 9-slide structure, correction, Lesen and practice.
+// Day 26 keeps its lesson music, followed by the teacher-supplied hotel conversation.
 ENTRIES["B1-9.26"] = {
   assignmentId:'B1-9.26',title:'Reiseprobleme und Lösungen',warmup:[],
+  listening: B1_DAY26_LISTENING,
   musicIntro:{
     mediaType:'music',level:'B1',day:26,
     title:'Der Zug fährt nicht',
     introQuestion:'Was kannst du tun, wenn dein Zug ausfällt?',
     musicLibraryUrl:'https://music.falowen.app/?level=B1&day=26',
-    nextStep:'Anschließend folgen Common Mistakes, Lesen und die bisherigen Aufgaben.',
+    nextStep:'Danach folgt das separate Hören-Gespräch über ein überbuchtes Hotel.',
   },
 };
 

@@ -67,8 +67,14 @@ export default function InteractiveLessonOpening({ stage, slide }) {
       const isB1Day25Classroom = lesson.listening.level === "B1"
         && lesson.listening.day === 25
         && lesson.listening.audioKey === "b1/day-25/online-shopping-verbraucherservice.mp3";
-      if (isB1Day25Classroom) params.set("level", "B1");
-      const audioEndpoint = isB1Day25Classroom
+      // The Day 26 recording was deliberately uploaded under a2/day-26.
+      // Route it as B1 Day 26 using only the exact teacher-approved object.
+      const isB1Day26Classroom = lesson.listening.level === "B1"
+        && lesson.listening.day === 26
+        && lesson.listening.audioKey === "a2/day-26/reiseprobleme-und-losungen.mp3";
+      const isB1Classroom = isB1Day25Classroom || isB1Day26Classroom;
+      if (isB1Classroom) params.set("level", "B1");
+      const audioEndpoint = isB1Classroom
         ? "https://www.falowen.app/api/course-media/classroom/audio-url"
         : lesson.listening.level === "A2" && [18, 19, 20, 21].includes(lesson.listening.day)
           ? "https://www.falowen.app/api/course-media/a2/classroom-audio-url"

@@ -55,3 +55,18 @@ an individual talk inspired by Goethe A2 Sprechen Teil 2. Small Talk is Day 1
 shows personal restaurant presentation practice before the separate restaurant
 role-play. Day 22 retains its speaking mock question pool and task IDs. These
 are static teaching notes; no new grading flow or runtime fetch is introduced.
+
+## B1 Day 26 classroom Hören — 4 November 2026
+
+`B1-9.26` presents its existing lesson music, then a separate hotel-overbooking
+conversation with five teacher-supplied multiple-choice questions. The uploaded
+object is `a2/day-26/reiseprobleme-und-losungen.mp3`; the storage prefix does not
+change its B1 Day 26 lesson identity. `src/data/b1Day26Listening.js` owns this
+ungraded classroom activity and the supplied key B, A, C, A, B. Only answer
+evidence excerpts were supplied, so no full transcript is displayed.
+
+Admin requests the exact object through the existing authenticated
+`www.falowen.app/api/course-media/classroom/audio-url` gateway with level B1 and
+day 26. The learner repository must deploy its matching exact-object allowlist
+entry. This does not publish private Hören as music or replace the separate
+graded workbook questions, answers or audio.
