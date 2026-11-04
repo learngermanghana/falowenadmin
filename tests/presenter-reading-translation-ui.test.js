@@ -94,7 +94,9 @@ for(const level of ['A2','B1'])test(level+' all 28 real reading slides reveal on
    const task=A2_WORKBOOK_PRESENTATIONS[slide.dayNumber];
    assert.ok(document.querySelector('[aria-label="Workbook presentation"]'));
    if(task.mode!=='speaking-mock'){
-    assert.equal(document.querySelector('.presenter-workbook-presentation h2').textContent,task.prompt);
+    assert.equal(document.querySelector('.presenter-workbook-presentation h2').textContent,task.presentationPractice?.prompt || task.prompt);
+    if(task.presentationPractice)assert.ok(document.querySelector('[aria-label="Individual presentation practice"]'));
+    if(task.keywords)for(const keyword of task.keywords)assert.ok(document.querySelector('.presenter-presentation-keywords').textContent.includes(keyword));
     assert.equal(document.querySelectorAll('.presenter-presentation-points li').length,task.branches.length);
     const starter=document.querySelector('.presenter-presentation-points details');
     if(starter){assert.equal(starter.open,false);await click(starter.querySelector('summary'));assert.equal(starter.open,true);

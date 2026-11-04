@@ -8,6 +8,7 @@ async function bundled(path){
  return import('data:text/javascript;base64,'+Buffer.from(result.outputFiles[0].text).toString('base64'));
 }
 const {a2SpeakingMindMaps}=await bundled('web/src/data/speakingMindMaps/a2/index.js');
+const {A2_PRESENTATION_CARDS}=await bundled('web/src/data/a2PresentationCards.js');
 const {speakingQuestionDictionary}=await bundled('web/src/data/speakingDictionary.js');
 const pages=new Map();
 for(const name of readdirSync(resolve(root,'web/src/components')).filter(n=>n.includes('Workbook')&&/Page\.(js|jsx)$/.test(n))){
@@ -29,11 +30,13 @@ for(const c of a2SpeakingMindMaps){
   const plain=text=>text.replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
   const paragraphs=[...spoken.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/g)].map(m=>plain(m[1]));
   const steps=[...spoken.matchAll(/<li>([\s\S]*?)<\/li>/g)].map(m=>plain(m[1]));
-  lessons[c.day]={day:c.day,sourcePath:page.path,mode:'roleplay',prompt:page.prompt,situation:paragraphs[0],instruction:paragraphs.at(-1),branches:steps.map((question,index)=>({id:'step-'+(index+1),label:'Schritt '+(index+1),question}))};
+  lessons[c.day]={day:c.day,sourcePath:page.path,mode:'roleplay',presentationPractice:A2_PRESENTATION_CARDS[c.day],prompt:page.prompt,situation:paragraphs[0],instruction:paragraphs.at(-1),branches:steps.map((question,index)=>({id:'step-'+(index+1),label:'Schritt '+(index+1),question}))};
   continue;
  }
 
- lessons[c.day]={day:c.day,sourcePath:page.path,sourceMindMapPath:'web/src/data/speakingMindMaps/a2/index.js',mode:'presentation',prompt:page.prompt&&page.prompt!==c.title&&page.prompt.length>30?page.prompt:c.centralQuestion,centralQuestion:c.centralQuestion,branches:c.branches.map(b=>({id:b.id,label:b.label,question:b.guidingQuestion,starter:b.sentenceStarter})),instruction:'Einleitung → 2–3 Details → Beispiel → kurzer Schluss. Sprich 30–60 Sekunden. Nutze und, oder, weil oder deshalb.'};
+ const card=A2_PRESENTATION_CARDS[c.day];
+ if(!card||card.keywords.length!==4)throw Error('Missing four-keyword presentation card for day '+c.day);
+ lessons[c.day]={...card,sourcePath:page.path,sourceMindMapPath:'web/src/data/a2PresentationCards.js'};
 }
 if(Object.keys(lessons).length!==28)throw Error('Expected all 28 A2 lessons');
 const sha=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim();

@@ -2167,7 +2167,7 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
     const workbookIndex = classroomStages.findIndex(stage => stage.id === "workbook");
     classroomStages.splice(workbookIndex < 0 ? classroomStages.length : workbookIndex, 0, {
       id: "workbook-presentation", type: "workbook-presentation",
-      kicker: "Workbook · Sprechen", title: presentation.mode === "roleplay" ? "Teil 1 Sprechen · Restaurant-Rollenspiel" : "Presentation · Teil 1 Sprechen",
+      kicker: "Workbook · Sprechen", title: presentation.mode === "speaking-mock" ? "Sprechprüfung üben · Von sich erzählen" : "Präsentation · Von sich erzählen",
       presentation, items: presentation.branches || presentation.choices, suggestedMinutes: 5,
       teacherPurpose: {student: "Beantworte die vorhandene Workbook-Aufgabe mündlich.", teacher: "Die Aufgabe direkt auf der Folie zeigen. Dies ist Unterrichtspraxis, keine neue Abgabe oder Bewertung."},
     });
