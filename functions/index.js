@@ -2644,6 +2644,7 @@ exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob(
 registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey: geminiAudioKeySecret, runtimeConfig });
 registerMusicAnalyticsRoutes({ app, runtimeConfig, verifyToken: token => admin.auth().verifyIdToken(token) });
 registerMusicPracticeRoutes({ app, db, runtimeConfig, fieldValue: admin.firestore.FieldValue, verifyToken: token => admin.auth().verifyIdToken(token) });
+require("./examWritingTutorEmail.js").registerExamWritingTutorEmail({ app, db, runtimeConfig, verifyToken: token => admin.auth().verifyIdToken(token) });
 
 const musicStudioHandler = require('./musicStudio').createHandler({
   db, verifyToken: token => admin.auth().verifyIdToken(token),
