@@ -72,7 +72,10 @@ export default function InteractiveLessonOpening({ stage, slide }) {
       const isB1Day26Classroom = lesson.listening.level === "B1"
         && lesson.listening.day === 26
         && lesson.listening.audioKey === "a2/day-26/reiseprobleme-und-losungen.mp3";
-      const isB1Classroom = isB1Day25Classroom || isB1Day26Classroom;
+      const isB1Day27Classroom = lesson.listening.level === "B1"
+        && lesson.listening.day === 27
+        && lesson.listening.audioKey === "b1/day-27/umweltfreundlich-im-alltag.mp3";
+      const isB1Classroom = isB1Day25Classroom || isB1Day26Classroom || isB1Day27Classroom;
       if (isB1Classroom) params.set("level", "B1");
       const audioEndpoint = isB1Classroom
         ? "https://www.falowen.app/api/course-media/classroom/audio-url"
