@@ -23,3 +23,13 @@ Regression coverage: `tests/organisation-enrolment-request.test.js` covers publi
 ## Delete submissions
 
 The owner can choose **Delete submission** and confirm. This removes the submitted organisation/student details from the batch and hides it from the queue. Approved student documents, Firebase accounts and sheet rows remain untouched. A minimal deletion marker retains the reference, original creation time and deletion audit metadata so an old public retry cannot recreate the batch. Review of a deleted submission returns 404. Deleting the same reference again is safe.
+
+## Partnership and referral programme
+
+The public `/partnerships` page links institutions to the existing group form. Referral applicants use a separate form, accept the versioned terms and enter the owner queue at `/referral-review` (Students → Referral applications and commissions). Verify the contact before approval, then send the approved link to the contact manually. Repeated applications and approvals preserve the original record and invitation.
+
+Learners open the partner link, consent to matching their email, then continue to the regular Campus signup with that email. The first invitation registered for an email retains attribution. An invitation creates neither a student account nor a payment. Check attribution with the learner before approving a commission.
+
+Open the owner queue on demand. Inspect the earliest completed tuition payment for the learner across Admin payment links and Campus webhook records. Confirm the learner’s identity, any earlier offline payments and disputes. Approval verifies the selected reference, student metadata, payment time, tuition and refunds directly with Paystack using the existing bound PAYSTACK_SECRET. The commission is 10% of tuition on the first completed payment, rounded to the nearest pesewa. A refunded first payment cannot be replaced with a later instalment. The ledger excludes institutional enrolments and self-referrals. Cash payments alone have no provider record to verify and require separate manual handling outside this ledger.
+
+After paying a partner externally, record the payout receipt once. Use **Recheck refund with Paystack** on later review or **Cancel referral / record refund** for an offline decision. A subsequent refund cancels the commission and retains the payout history for recovery. Refund rechecks run on demand. The programme adds no scheduled jobs, public collection reads, automatic emails or money transfers.
