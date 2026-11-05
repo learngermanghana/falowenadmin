@@ -28,7 +28,7 @@ export const MUSIC_SONG_DRAFTS_C2_PART4 = defineAdvancedSongDrafts([
   {
     "key": "C2-5.1",
     "title": "Der Fehlerbalken",
-    "genre": "Minimal Jazz-Soul",
+    "genre": "Minimal Soul",
     "tempo": 76,
     "arrangement": "Muted piano seventh chords, delicate percussion, fretless bass and an understated vibraphone countermelody.",
     "lyrics": "[Verse 1]\nDie Grafik steigt wie eine Treppe,\ndie Schlagzeile verkündet einen Trend.\nDoch in der Ecke steht ein Balken,\nder auf den ersten Blick kaum auffällt.\n\n[Chorus]\nZwischen Daten und Deutung\nliegt ein weiter, schmaler Weg.\nWer die Unsicherheit verschweigt,\nhat noch nichts wirklich erklärt.\n\n[Verse 2]\nWir prüfen Zeitraum und Vergleichsgruppe,\nden Maßstab und die fehlenden Werte.\nDie These klingt noch immer möglich,\naber nicht mehr unvermeidlich.\nIch schreibe unter meine Folie:\n„Das Ergebnis bleibt vorläufig.“\n\n[Bridge]\nEin Fehlerbalken ist kein Makel,\nsondern eine Form von Genauigkeit.\n\n[Outro]\nDas Publikum stellt neue Fragen.\nDie Kurve hält sie diesmal aus."
