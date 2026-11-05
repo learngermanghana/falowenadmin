@@ -1,10 +1,9 @@
 // B1 Day 28 teacher-provided five-question classroom Hören, "Klimafreundlich leben".
-// The supplied Cloudflare link is for B1 Day 27 and must NOT be used for this
-// dialogue about Anna, Jonas, CO₂, transport and energy saving.
-// No Day 28 recording key was supplied. Keep playback disabled until the exact
-// Day 28 R2 key is verified and approved by the staff-only signer.
+// Teacher confirmed that this classroom Day 28 Hören uses an MP3 stored in
+// the R2 Day 27 folder. Keep the exact key and the Day 28 lesson identity.
+
 // This is independent of graded workbook Teil 4 and does not alter its answer key.
-export const B1_DAY28_AUDIO_KEY = "";
+export const B1_DAY28_AUDIO_KEY = "b1/day-27/umweltfreundlich-im-alltag.mp3";
 
 export const B1_DAY28_LISTENING_QUESTIONS = Object.freeze([
   {
@@ -73,6 +72,6 @@ export const B1_DAY28_LISTENING = Object.freeze({
   transcript: Object.freeze([]),
   questions: B1_DAY28_LISTENING_QUESTIONS,
   suggestedMinutes: 8,
-  playbackNote: "Die fünf Originalfragen sind vorbereitet. Die Aufnahme für B1 Tag 28 ist noch nicht verknüpft; der geteilte Cloudflare-Link gehört zu Tag 27.",
+  playbackNote: "Lies die fünf Fragen vor dem Hören. Die Lehrkraft hat diese Aufnahme für Tag 28 bestätigt; sie liegt in R2 unter day-27. Wähle A, B oder C.",
   previewWords: Object.freeze(["der ökologische Fußabdruck", "Fleischkonsum", "öffentliche Verkehrsmittel", "im Winter", "Standby-Modus"]),
 });
