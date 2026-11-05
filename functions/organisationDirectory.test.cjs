@@ -67,10 +67,18 @@ test("organisation confirmation is idempotent and sends only after account invit
   assert.equal((await sendOrganisationStudentConfirmation(args)).sent, false);
   assert.equal(sends, 1);
 });
-test("Firestore payment watcher can distinguish organisation funding", () => {
-  // The watcher is guarded before sending a personal receipt for an organisation-funded student.
-  const fs = require("node:fs");
-  const source = fs.readFileSync(require.resolve("./studentPaymentUpdateEmails"), "utf8");
-  assert.match(source, /organisation_funded_company_is_payer/);
+test("Firestore payment watcher does not send a personal receipt to organisation-funded students", async () => {
+  const { processStudentPaymentUpdate } = require("./studentPaymentUpdateEmails");
+  const event = {
+    params: { studentId: "A" },
+    data: {
+      before: { data: () => ({ email: "a@example.org", paid: 0, balance: 500 }) },
+      after: { data: () => ({ email: "a@example.org", paid: 450, balance: 0,
+        billingResponsibility: "organisation", lastPaymentReference: "FAL-ORG-123" }) },
+    },
+  };
+  const result = await processStudentPaymentUpdate({ event });
+  assert.equal(result.sent, false);
+  assert.equal(result.reason, "organisation_funded_company_is_payer");
   assert.equal(payment.paymentSnapshot({ paid: 300 }).paid, 300);
 });
