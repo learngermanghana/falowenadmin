@@ -1,15 +1,11 @@
-# Automatic orientation sync after payment
+# Automatic orientation sync for eligible students
 
-Falowen now syncs an eligible student to the Orientation Sheet after the student record changes from unpaid to partially paid or paid.
+The Orientation sheet is updated from **canonical student Firestore changes**, not only single-student payment-document updates. Group Paystack payments create allocation documents and mark the parent payment paid, but those parent records have no single studentId. The previous payment-document listener therefore missed organisation students.
 
-The trigger reads the selected class from the student record, matches it to the existing class in Firestore, and uses that class's level and start date. A1, A2, and B1 are supported.
+An existing `autoSyncPaidStudentOrientation` function now listens to `students/{studentId}` updates, including (1) verified first or subsequent tuition recorded on the student, (2) staff-confirmed class assignment or change, and (3) status changes for an already-paid student. It does not treat Admin `initialPaymentAmount` (a proposed payment) as received funds. An active unpaid trial continues to be handled by the separate operational trial sync; a pending/unpaid organisation approval does not receive paid Orientation treatment.
 
-The student record receives an `orientationAutoSync` object with `pending`, `success`, or `failed` status. Its sync key combines the student, level, class, and start date so repeated payment events do not create another successful sync for the same target.
+An organisation's requested class is assigned on owner approval **only when** its ID, class name, CEFR level and start date match the existing Firestore class exactly. Unmatched or stale requests remain unassigned, and `organisationClassAssignmentPending` stays true for the owner's review. The Orientation handler returns `confirmed_class_missing` with the student's `orientationAutoSync.status = waiting_for_class` rather than repeatedly failing or sending to a guessed class.
 
-Deploy with:
+The sync uses the selected live class's level/start date, and writes a status marker `orientationAutoSync` on the student record. After success the existing `syncKey` prevents another send for the same student/class/date. The existing Orientations Apps Script can upsert by student code/email. Manual `/orientation` remains an available repair path for existing records without a fresh update; no new poller, separate paid service or duplicate account is needed.
 
-```bash
-npm run deploy:falowenadmin
-```
-
-After a test payment, confirm that `orientationAutoSync.status` becomes `success` and that one matching row appears in the Orientation Sheet. The manual `/orientation` page remains available for old records and incomplete class data.
+Deployment: `scripts/patchAutomaticOrientationSync.mjs` regenerates `functions/index.js` for the Firebase deploy. In Firebase, confirm the `autoSyncPaidStudentOrientation` event trigger has **students/{studentId}** (not `payments/{reference}`) and the existing `ORIENTATION_APPS_SCRIPT_URL` and `ORIENTATION_SYNC_SECRET` are configured. After a test group payment or staff-approved class assignment, check `orientationAutoSync.status` and one Orientation sheet row. If the approved learner is not yet paid and has no active trial, the correct behavior is to wait for eligibility rather than send a false paid Orientation message.
