@@ -23,7 +23,7 @@ content = content.replace(
 );
 
 const legacyHelperRequire = 'const { createOrientationAutoSyncHandler } = require("./orientationAutoSync");\n';
-const helperRequire = 'const { createOrientationAutoSyncHandler } = require("./orientationAutoSync");\n';
+const helperRequire = 'const { createOrientationAutoSyncHandler, hasQualifyingPayment, studentIdentityFingerprint } = require("./orientationAutoSync");\n';
 const helperAnchor = 'const { defineSecret } = require("firebase-functions/params");\n';
 if (content.includes(legacyHelperRequire)) {
   content = content.replace(legacyHelperRequire, helperRequire);
@@ -53,19 +53,95 @@ const block = `${beginMarker}const automaticPaidStudentOrientationHandler = crea
   ).trim(),
 });
 
-// Listening to payment/{reference} updates misses organisation group tuition:
-// the parent payment has no studentId and each allocation is CREATED rather
-// than updated. The canonical students/{studentId} write contains the verified
-// amount, approved class and eligibility. Reuse the existing function name so
-// no additional poller or billed function is introduced.
+async function automaticPaidPaymentOrientationHandler(event) {
+  const beforePayment = event?.data?.before?.exists ? event.data.before.data() || {} : {};
+  const afterPayment = event?.data?.after?.exists ? event.data.after.data() || {} : {};
+  const beforeStatus = String(beforePayment.status || "").trim().toLowerCase();
+  const afterStatus = String(afterPayment.status || "").trim().toLowerCase();
+
+  if (afterStatus !== "paid" || beforeStatus === "paid") {
+    return { skipped: true, reason: "payment_not_newly_paid" };
+  }
+  // The group parent invoice has no single studentId. Organisation student
+  // documents are processed by autoSyncApprovedStudentOrientation.
+  if (afterPayment.purpose === "organisation_group") {
+    return { skipped: true, reason: "group_payment_synced_from_student_records" };
+  }
+
+  const studentId = String(afterPayment.studentId || "").trim();
+  if (!studentId) throw new Error("Paid payment is missing studentId for orientation sync.");
+
+  const studentRef = db.collection("students").doc(studentId);
+  const studentSnapshot = await studentRef.get();
+  if (!studentSnapshot.exists) {
+    throw new Error("Student record not found for paid payment: " + studentId);
+  }
+
+  const currentStudent = studentSnapshot.data() || {};
+  const syntheticBefore = {
+    ...currentStudent,
+    paymentStatus: "pending",
+    payment_status: "pending",
+    paid: 0,
+    paidAmount: 0,
+    initialPaymentAmount: 0,
+  };
+  const beforeStudentSnapshot = {
+    exists: true,
+    id: studentSnapshot.id || studentId,
+    ref: studentRef,
+    data: () => syntheticBefore,
+  };
+
+  return automaticPaidStudentOrientationHandler({
+    ...event,
+    params: {
+      ...(event?.params || {}),
+      studentCode: studentSnapshot.id || studentId,
+    },
+    data: {
+      before: beforeStudentSnapshot,
+      after: studentSnapshot,
+    },
+  });
+}
+
 exports.autoSyncPaidStudentOrientation = onDocumentUpdated(
+  {
+    region: "europe-west1",
+    document: "payments/{reference}",
+    secrets: [orientationSyncSecret, orientationAppsScriptUrlSecret],
+    timeoutSeconds: 60,
+  },
+  automaticPaidPaymentOrientationHandler
+);
+
+async function automaticApprovedStudentOrientationHandler(event) {
+  const before = event?.data?.before?.exists ? event.data.before.data() || {} : {};
+  const after = event?.data?.after?.exists ? event.data.after.data() || {} : {};
+  if (!event?.data?.after?.exists) return { skipped: true, reason: "student_deleted" };
+  const organisationFunded =
+    String(after.billingResponsibility || "").trim().toLowerCase() === "organisation" ||
+    String(after.enrolmentSource || "").trim().toLowerCase() === "organisation" ||
+    Boolean(after.organisationSubmissionId);
+  // Individual student receipts already have the original payment listener.
+  // Only their later class or approval changes require this fallback.
+  if (!organisationFunded &&
+      (!hasQualifyingPayment(before) ||
+       studentIdentityFingerprint(before) === studentIdentityFingerprint(after))) {
+    return { skipped: true, reason: "individual_payment_handled_by_existing_trigger" };
+  }
+  return automaticPaidStudentOrientationHandler(event);
+}
+
+exports.autoSyncApprovedStudentOrientation = onDocumentUpdated(
   {
     region: "europe-west1",
     document: "students/{studentId}",
     secrets: [orientationSyncSecret, orientationAppsScriptUrlSecret],
     timeoutSeconds: 60,
   },
-  automaticPaidStudentOrientationHandler
+  automaticApprovedStudentOrientationHandler
 );
 ${endMarker}`;
 
