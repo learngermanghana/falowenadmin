@@ -50,6 +50,8 @@ test("a first partial or full payment qualifies for automatic orientation sync",
   assert.equal(hasQualifyingPayment({ paymentStatus: "partial", paid: 2000 }), true);
   assert.equal(hasQualifyingPayment({ paymentStatus: "Paid", paid: 3000 }), true);
   assert.equal(hasQualifyingPayment({ paymentStatus: "pending", initialPaymentAmount: 3000, paid: 0 }), false);
+  assert.equal(hasQualifyingPayment({ paymentStatus: "Paid", paid: 0 }), false);
+  assert.equal(hasQualifyingPayment({ paymentStatus: "Partially Paid", paid: 2000, status: "Suspended" }), false);
 
   assert.equal(
     shouldAutoSyncAfterUpdate(
