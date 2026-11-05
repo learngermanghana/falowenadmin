@@ -60,7 +60,7 @@ export default function OrganisationEnrolmentPage({ review = false }) {
     </article>)}
     {nextCursor && <button disabled={busy} onClick={() => run(() => load(nextCursor))}>Load older submissions</button>}
   </section>;
-  return <section className="org-enrol"><div className="org-intro"><span>FALOWEN · ORGANISATION ENROLMENT</span><h1>Register your students together</h1><p>Fill one row for each student. Falowen will review your submission and confirm your agreement before sending account setup invitations.</p></div>
+  return <section className="org-enrol"><div className="org-intro"><Link to="/partnerships">Partnership &amp; Referral Programme</Link><h1>Register your students together</h1><p>Fill one row for each student. Falowen will review your submission and confirm your agreement before sending account setup invitations.</p></div>
     {reference ? <div role="status"><h2>Submission received</h2><p>Your reference is <strong>{reference}</strong>. Falowen will contact your organisation after review. Students do not have accounts yet.</p><button onClick={() => { setReference(""); setRows([emptyRow()]); setRequestId(crypto.randomUUID()); setConsent(false); }}>Add another group of students</button></div> : <form onSubmit={event => { event.preventDefault(); run(async () => {
       const students = rows.filter(row => Object.values(row).some(value => value.trim()));
       const data = await request("organisation-enrolments", { organisation, students, consent, website, requestId });

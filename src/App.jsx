@@ -7,6 +7,8 @@ import { startVisiblePolling } from "./utils/visiblePolling.js";
 import "./App.css";
 import "./LiveClassesMobile.css";
 
+const PartnershipPage = lazy(() => import("./pages/PartnershipPage.jsx"));
+const ReferralReviewPage = lazy(() => import("./pages/ReferralReviewPage.jsx"));
 const OrganisationEnrolmentPage = lazy(() => import("./pages/OrganisationEnrolmentPage.jsx"));
 const ADMIN_BUILD_SHA = String(import.meta.env.VITE_FALOWEN_BUILD_SHA || "dev");
 const ADMIN_BUILD_ENV = String(import.meta.env.VITE_FALOWEN_BUILD_ENV || "local");
@@ -268,6 +270,8 @@ export default function App() {
       <main className={isFullscreenRoute ? undefined : "page-shell"} data-route={location.pathname}>
         <Suspense fallback={<RouteFallback />}>
           <Routes>
+          <Route path="/partnerships" element={<PartnershipPage />} />
+          <Route path="/referral-review" element={<ProtectedRoute allowStaff={false}><ReferralReviewPage /></ProtectedRoute>} />
           <Route path="/organisation-enrolment" element={<OrganisationEnrolmentPage />} />
           <Route path="/organisation-submissions" element={<ProtectedRoute allowStaff={false}><OrganisationEnrolmentPage review /></ProtectedRoute>} />
           <Route path="/login" element={<LoginPage />} />

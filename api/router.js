@@ -1108,7 +1108,7 @@ async function proxyToFalowenFunction(req, res, path, url) {
       const deterministic = path === "marking/ai" ? buildDeterministicObjectiveResult(req.body || {}, baseResult) : null;
       return res.json(mergeDeterministicMarkingResponse(parsed, deterministic));
     } catch {
-      if (path === "organisation-enrolments" || path.startsWith("admin/organisation-enrolments")) {
+      if (path.startsWith("referrals/") || path.startsWith("admin/referrals/") || path === "organisation-enrolments" || path.startsWith("admin/organisation-enrolments")) {
         return res.status(502).json({ ok: false, error: "The enrolment service is temporarily unavailable. Please retry shortly; your entries have been kept." });
       }
       return res.send(text);
@@ -1301,6 +1301,10 @@ export default async function handler(req, res) {
     return proxyToFalowenFunction(req, res, path, url);
   }
 
+  if (path.startsWith("referrals/") || path.startsWith("admin/referrals/")) {
+    res.setHeader("Cache-Control", "private, no-store");
+    return proxyToFalowenFunction(req, res, path, url);
+  }
   if (path === "organisation-enrolments" || path.startsWith("admin/organisation-enrolments") || path.startsWith("admin/student-accounts/")) return proxyToFalowenFunction(req, res, path, url);
 
   if (path.startsWith("ai-studio/")) return proxyToFalowenFunction(req, res, path, url);
