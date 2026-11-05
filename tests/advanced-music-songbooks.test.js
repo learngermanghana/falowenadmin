@@ -21,7 +21,7 @@ test("every canonical B2, C1 and C2 lesson has its own drafted song", () => {
       assert.equal(getReusableSongDraft(song.assignmentKey), song);
       assert.ok(song.title.length > 6);
       assert.ok(song.musicStyle.startsWith(song.genre + ", "), song.assignmentKey);
-      assert.match(song.lyrics, /^\[Verse 1\][\s\S]*\[Chorus\][\s\S]*\[Verse 2\][\s\S]*\[Outro\]$/);
+      assert.match(song.lyrics, /^\[Verse 1\][\s\S]*\[Chorus\][\s\S]*\[Verse 2\][\s\S]*\[Outro\][\s\S]+\S$/);
       assert.doesNotMatch(song.lyrics, /falowen|\[\[.*\]\]/i, song.assignmentKey);
       assert.doesNotMatch(song.genre, /jazz|reggae/i);
       const words = song.lyrics.trim().split(/\s+/);
