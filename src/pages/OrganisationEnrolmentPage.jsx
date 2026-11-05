@@ -47,7 +47,7 @@ export default function OrganisationEnrolmentPage({ review = false }) {
   };
   if (review) return <section className="org-enrol"><h1>Organisation submissions</h1>
     <p>Verify the organisation agreement and payment arrangement before approving. Approval creates a pending student; configure their class and contract in Students before inviting them.</p>
-    <p><Link to="/organisation-enrolment">Open public submission page</Link> · <Link to="/students">Student directory and activation emails</Link></p>
+    <p><a href="https://www.falowen.app/organisation-enrolment">Open public submission page</a> · <Link to="/students">Student directory and activation emails</Link></p>
     <button disabled={busy} onClick={() => run(() => load())}>Load / refresh submissions</button>
     {error && <p role="alert">{error}</p>}
     {submissions?.length === 0 && <p>No submissions yet.</p>}
@@ -60,7 +60,7 @@ export default function OrganisationEnrolmentPage({ review = false }) {
     </article>)}
     {nextCursor && <button disabled={busy} onClick={() => run(() => load(nextCursor))}>Load older submissions</button>}
   </section>;
-  return <section className="org-enrol"><div className="org-intro"><Link to="/partnerships">Partnership &amp; Referral Programme</Link><h1>Register your students together</h1><p>Fill one row for each student. Falowen will review your submission and confirm your agreement before sending account setup invitations.</p></div>
+  return <section className="org-enrol"><div className="org-intro"><a href="https://www.falowen.app/partnerships">Partnership &amp; Referral Programme</a><h1>Register your students together</h1><p>Fill one row for each student. Falowen will review your submission and confirm your agreement before sending account setup invitations.</p></div>
     {reference ? <div role="status"><h2>Submission received</h2><p>Your reference is <strong>{reference}</strong>. Falowen will contact your organisation after review. Students do not have accounts yet.</p><button onClick={() => { setReference(""); setRows([emptyRow()]); setRequestId(crypto.randomUUID()); setConsent(false); }}>Add another group of students</button></div> : <form onSubmit={event => { event.preventDefault(); run(async () => {
       const students = rows.filter(row => Object.values(row).some(value => value.trim()));
       const data = await request("organisation-enrolments", { organisation, students, consent, website, requestId });
