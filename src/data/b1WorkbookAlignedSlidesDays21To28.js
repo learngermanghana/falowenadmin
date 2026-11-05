@@ -755,7 +755,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
     teacherNotesEn: [
       "Day 28 has no day-specific deep grammar page. Use the workbook's general B1 argument training and the lesson's indem/dass/weil/trotzdem contrast-and-reason frames.",
       "Teil 3 is a separate seven-question reading about water as a scarce resource, water saving, pollution and government responsibility.",
-      "Teacher slide 3 contains the five original Klimafreundlich leben multiple-choice questions (A B C B A). The teacher explicitly confirmed that Day 28 Hören uses the exact private R2 key b1/day-27/umweltfreundlich-im-alltag.mp3 despite the Day 27 folder name. Playback uses the staff-only signer.",
+      "Teacher slide 3 contains the five original Klimafreundlich leben multiple-choice questions (A B C B A). The teacher supplied the corrected Day 28 Hören object: b1/day-28/klimafreundlich-leben.mp3. Playback uses the existing staff-only signer; Day 27's audio remains separate.",
       "The teacher slide Hören and graded workbook Teil 4 are separate activities. Do not substitute the teacher multiple-choice answers for the separate workbook scoring key; its media mismatch remains unresolved.",
     ],
     interactionFlow: [
