@@ -72,7 +72,14 @@ export default function InteractiveLessonOpening({ stage, slide }) {
       const isB1Day26Classroom = lesson.listening.level === "B1"
         && lesson.listening.day === 26
         && lesson.listening.audioKey === "a2/day-26/reiseprobleme-und-losungen.mp3";
-      const isB1Classroom = isB1Day25Classroom || isB1Day26Classroom;
+      const isB1Day27Classroom = lesson.listening.level === "B1"
+        && lesson.listening.day === 27
+        && lesson.listening.audioKey === "b1/day-27/umweltfreundlich-im-alltag.mp3";
+      // Day 28 uses its own approved private R2 recording; keep Day 27 separate.
+      const isB1Day28Classroom = lesson.listening.level === "B1"
+        && lesson.listening.day === 28
+        && lesson.listening.audioKey === "b1/day-28/klimafreundlich-leben.mp3";
+      const isB1Classroom = isB1Day25Classroom || isB1Day26Classroom || isB1Day27Classroom || isB1Day28Classroom;
       if (isB1Classroom) params.set("level", "B1");
       const audioEndpoint = isB1Classroom
         ? "https://www.falowen.app/api/course-media/classroom/audio-url"
@@ -112,7 +119,9 @@ export default function InteractiveLessonOpening({ stage, slide }) {
     {listening && <div className="pharm-audio">
       <div className="pharm-audio-label"><span aria-hidden="true">♫</span><div><strong>{lesson.listening.title}</strong><small>{music ? "Höre das Lied und beantworte die Fragen. Das Video zeigt den Liedtext." : "Lies zuerst die Fragen. Höre danach ohne das Skript zu."}</small></div></div>
       {lesson.listening.playbackNote ? <p className="pharm-playback-note" role="note">{lesson.listening.playbackNote} · Fragen bleiben während des Abspielens sichtbar.</p> : null}
-      {lesson.listening.youtubeId ? (
+      {!lesson.listening.audioKey && !lesson.listening.youtubeId ? (
+        <p className="pharm-audio-error" role="status">Für diese Hörübung ist keine Aufnahme freigegeben. Die Fragen können ohne Audio besprochen werden.</p>
+      ) : lesson.listening.youtubeId ? (
         <MusicVideoEmbed videoId={lesson.listening.youtubeId} title={lesson.listening.title} variant="listening" />
       ) : !audioUrl ? (
         <button type="button" className="pharm-btn pharm-btn-primary" onClick={prepareAudio} disabled={audioBusy}>{audioBusy ? "Audio wird vorbereitet…" : "▶ Audio laden"}</button>
@@ -123,7 +132,7 @@ export default function InteractiveLessonOpening({ stage, slide }) {
       {audioError && <p className="pharm-audio-error" role="alert">{audioError} · R2-Objekt: {lesson.listening.audioKey}</p>}
       {lesson.listening.youtubeId
         ? <p className="pharm-playback-note">Nach dem Hören: Klick auf „Antworten einzeln besprechen“. Die Lösungen bleiben zunächst verborgen.</p>
-        : <label className="pharm-review-checkbox"><input type="checkbox" checked={autoReview} onChange={(event) => setAutoReview(event.target.checked)} /> Nach Audioende automatisch zu Frage 1 wechseln (optional)</label>}
+        : lesson.listening.audioKey ? <label className="pharm-review-checkbox"><input type="checkbox" checked={autoReview} onChange={(event) => setAutoReview(event.target.checked)} /> Nach Audioende automatisch zu Frage 1 wechseln (optional)</label> : null}
       {(stage.transcript?.length || lesson.listening.transcript?.length) ? (
         <details className="pharm-script" open={showTranscript} onToggle={(event) => setShowTranscript(event.currentTarget.open)}>
           <summary>{showTranscript ? (music ? "Liedtext-Auszüge ausblenden" : "Skript ausblenden") : (music ? "Liedtext-Auszüge anzeigen" : "Skript für die Klasse anzeigen")} <span>OPTIONAL</span></summary>

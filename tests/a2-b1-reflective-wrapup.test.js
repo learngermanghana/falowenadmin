@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 
-const A2_CHALLENGE_IDS = new Set(["A2-2.4","A2-3.8","A2-6.17","A2-7.18","A2-7.20","A2-9.24","A2-3.6","A2-4.11","A2-5.13","A2-8.21","A2-10.27","A2-10.28"]);
+const A2_CHALLENGE_IDS = new Set(["A2-1.1","A2-2.4","A2-3.8","A2-6.17","A2-7.18","A2-7.20","A2-9.24","A2-3.6","A2-4.11","A2-5.13","A2-8.21","A2-10.27","A2-10.28"]);
 
 const OLD_REPETITIVE_IDS = new Set([
   "vocabulary-retrieval",

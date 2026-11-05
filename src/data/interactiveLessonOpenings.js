@@ -4,6 +4,8 @@ import { A2_DAY19_LISTENING } from './a2Day19Listening.js';
 // the only verified recording; never invent audio or override scored workbook work.
 import { A2_DAY17_AUDIO_KEY, A2_DAY17_WARMUP, A2_DAY17_LISTENING, A2_DAY17_TRANSCRIPT } from "./a2Day17Opening.js";
 import { B1_DAY26_LISTENING } from "./b1Day26Listening.js";
+import { B1_DAY27_LISTENING } from "./b1Day27Listening.js";
+import { B1_DAY28_LISTENING } from "./b1Day28Listening.js";
 import { B1_DAY25_LISTENING } from "./b1Day25Listening.js";
 import { B1_DAY24_RECORDED_MUSIC } from "./b1Day24RecordedMusic.js";
 import { A2_DAY18_BANK_LISTENING } from "./a2Day18BankListening.js";
@@ -487,6 +489,35 @@ ENTRIES["B1-9.26"] = {
     musicLibraryUrl:'https://music.falowen.app/?level=B1&day=26',
     nextStep:'Danach folgt das separate Hören-Gespräch über ein überbuchtes Hotel.',
   },
+};
+
+// Day 27 follows the modern B1 Day 25/26 opening: published music on slide 2,
+// then the independent teacher-supplied private Hören quiz on slide 3.
+ENTRIES["B1-10.27"] = {
+  assignmentId: "B1-10.27", title: "Umweltfreundlich im Alltag", warmup: [],
+  musicIntro: {
+    mediaType: "music", level: "B1", day: 27,
+    title: "Umweltfreundlich im Alltag · Musik",
+    introQuestion: "Welche kleinen Gewohnheiten helfen der Umwelt?",
+    musicLibraryUrl: "https://music.falowen.app/?level=B1&day=27",
+    nextStep: "Danach folgt die separate Hörübung über umweltfreundliches Einkaufen und Energiesparen.",
+  },
+  listening: B1_DAY27_LISTENING,
+};
+
+// Day 28 keeps the Day 27-approved modern music and Hören slide layout.
+// The uploaded question sheet is genuine Day 28 content, but the supplied
+// Cloudflare object link points to Day 27: never attach that audio to these questions.
+ENTRIES["B1-10.28"] = {
+  assignmentId: "B1-10.28", title: "Klimafreundlich leben", warmup: [],
+  musicIntro: {
+    mediaType: "music", level: "B1", day: 28,
+    title: "Klimafreundlich leben · Musik",
+    introQuestion: "Welche Maßnahmen helfen, im Alltag CO₂ zu sparen?",
+    musicLibraryUrl: "https://music.falowen.app/?level=B1&day=28",
+    nextStep: "Danach die separate Hörübung zu Fleischkonsum, Verkehr und Energie besprechen.",
+  },
+  listening: B1_DAY28_LISTENING,
 };
 
 export const INTERACTIVE_LESSON_OPENINGS = Object.freeze(

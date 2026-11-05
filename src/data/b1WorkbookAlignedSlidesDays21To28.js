@@ -656,15 +656,15 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
     teacherNotesEn: [
       "Day 27 has no day-specific deep grammar page; use the workbook Grammar tab's general B1 argument training and the lesson's own indem/dass/wenn/könnte frames.",
       "Teil 3 is a coherent seven-question environment text on recycling, energy, transport and consumption.",
-      "Critical operational mismatch: the workbook copy calls Hören self-check and the old video is removed from the rendered page, but the current marking contract expects teil4 and contains five reference answers.",
-      "Do not invent audio or fabricated answers. Tell teachers that Teil 4 is currently blocked by a source mismatch: it is score-required by the contract but has no live medium in the workbook. This must be resolved before assigning/scoring the listening part.",
+      "Slide 3 now uses the teacher-supplied B1 Day 27 classroom Hören: five multiple-choice questions with private R2 audio b1/day-27/umweltfreundlich-im-alltag.mp3.",
+      "Keep this teacher-led classroom Hören separate from the learner workbook Teil 4: its grading contract remains distinct, and the new classroom MC answer key must not be silently substituted for scored workbook answers.",
     ],
     interactionFlow: [
       { phase: "Method language", detailEn: "8 min: build environmental actions with indem man …" },
       { phase: "Reason and condition", detailEn: "9 min: add dass/when clauses and practical reasons." },
       { phase: "Everyday plan", detailEn: "12 min: groups plan realistic changes for home, shopping, mobility and school/work." },
       { phase: "Opinion rehearsal", detailEn: "9 min: respond to Ahmed with examples, difficulty and conclusion." },
-      { phase: "Contract warning", detailEn: "6 min: flag the unresolved Teil 4 scoring/media contradiction before assigning the workbook." },
+      { phase: "Hören practice", detailEn: "8 min: play the separate classroom recording and discuss the five multiple-choice questions after students listen." },
     ],
     wrapUpTaskDe: "Nenne drei umweltfreundliche Maßnahmen. Nutze indem man, einen dass-Satz und eine realistische Schwierigkeit.",
     workbookConnection: workbookConnection(27, [
@@ -672,13 +672,13 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       { label: "Teil 1 · Sprechen", detailEn: "Plan practical environmental changes at home, while shopping, in transport and at school/work; compare what is easy, difficult and realistic. Practice only." },
       { label: "Teil 2 · Schreiben", detailEn: "Opinion response to Ahmed on whether everyone can live environmentally friendly; include importance, everyday examples, difficulties and a clear conclusion." },
       { label: "Teil 3 · Lesen", detailEn: "Scored seven-question reading ‘Die Umwelt schützen: Was können wir tun?’ on recycling, energy, renewable sources, transport, consumption and individual responsibility." },
-      { label: "Teil 4 · Hören", detailEn: "BLOCKING MISMATCH: the marking contract expects/scored teil4 with five reference answers, but the current workbook labels Hören self-check and the old video is removed, so there is no live listening medium. Do not invent or assign fabricated audio answers; resolve the assessment source before scoring Teil 4." },
+      { label: "Teil 4 · Hören", detailEn: "Teacher slide 3 uses the newly supplied classroom recording b1/day-27/umweltfreundlich-im-alltag.mp3 and five A/B/C questions. The graded learner workbook Teil 4 uses a separate scoring contract; its missing or mismatched media must still be reconciled before scoring. Never reuse the classroom answer key for workbook grading." },
     ], {
       grammarUrl: null,
-      subtitle: "Day 27 has an unresolved Teil 4 source mismatch: grading expects five Hören answers, while the rendered workbook has no live listening medium. Do not invent a task.",
+      subtitle: "Teacher slide 3 now contains verified classroom Hören questions and the private Day 27 recording. The learner workbook Teil 4 remains separate; confirm its own scoring/media contract before assigning it.",
     }),
     teacherSupport: {
-      lessonOverviewEn: "Day 27 has coherent environmental production and reading content, but its listening assessment cannot currently be delivered honestly because the grading contract and rendered workbook disagree.",
+      lessonOverviewEn: "Day 27 uses the modern teaching opening: published music on slide 2, then five teacher-supplied private Hören questions on slide 3. This ungraded classroom activity must remain distinct from the unresolved graded workbook listening contract.",
       grammarFocusEn: [
         "indem + subordinate clause explains how an environmental action is carried out.",
         "dass clauses state opinions or difficulties with verb-final order.",
@@ -694,8 +694,8 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       commonMistakesEn: [
         "Using indem with main-clause word order.",
         "Giving only environmental slogans without a concrete action or example.",
-        "Calling the missing Day 27 listening safely self-check when the grading contract still expects teil4.",
-        "Inventing five listening answers or an audio source simply because the marking contract contains five reference answers.",
+        "Treating the teacher-led Day 27 classroom Hören quiz as if it satisfied the separately graded workbook Teil 4.",
+        "Replacing the workbook listening answer key with the new classroom multiple-choice key without confirming that both tasks use the same recording and questions.",
       ],
     },
   },
@@ -755,15 +755,15 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
     teacherNotesEn: [
       "Day 28 has no day-specific deep grammar page. Use the workbook's general B1 argument training and the lesson's indem/dass/weil/trotzdem contrast-and-reason frames.",
       "Teil 3 is a separate seven-question reading about water as a scarce resource, water saving, pollution and government responsibility.",
-      "Critical operational mismatch: the workbook calls Hören self-check and the old video is removed from the rendered page, but the current marking contract expects teil4 and stores five reference answers.",
-      "Do not fabricate a listening task. Treat Teil 4 as an unresolved assessment-source blocker until a live medium/question set or a corrected grading contract is provided.",
+      "Teacher slide 3 contains the five original Klimafreundlich leben multiple-choice questions (A B C B A). The teacher supplied the corrected Day 28 Hören object: b1/day-28/klimafreundlich-leben.mp3. Playback uses the existing staff-only signer; Day 27's audio remains separate.",
+      "The teacher slide Hören and graded workbook Teil 4 are separate activities. Do not substitute the teacher multiple-choice answers for the separate workbook scoring key; its media mismatch remains unresolved.",
     ],
     interactionFlow: [
       { phase: "Climate-action map", detailEn: "8 min: sort actions into energy, transport, consumption, food, recycling and education." },
       { phase: "Language links", detailEn: "9 min: connect methods with indem, reasons with weil and obstacles with dass/trotzdem." },
       { phase: "Country comparison", detailEn: "11 min: discuss what is realistic in the learner's country and why." },
       { phase: "Opinion rehearsal", detailEn: "10 min: prepare a structured answer with measures, obstacles and conclusion." },
-      { phase: "Contract warning", detailEn: "6 min: flag the unresolved scored-Teil4/no-media contradiction before assignment." },
+      { phase: "Hören practice", detailEn: "8 min: play the teacher-confirmed recording for B1 Day 28 and discuss the five multiple-choice questions after listening." },
     ],
     wrapUpTaskDe: "Erkläre eine klimafreundliche Maßnahme, einen Vorteil und ein Hindernis. Nutze indem, weil und trotzdem.",
     workbookConnection: workbookConnection(28, [
@@ -794,7 +794,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
         "Using indem or weil with main-clause word order.",
         "Using trotzdem like a subordinate conjunction and putting the verb at the end.",
         "Talking only about abstract climate policy without concrete everyday measures.",
-        "Inventing a Day 28 listening task merely because the grading contract currently contains five teil4 answers.",
+        "Using an unapproved R2 object for B1 Day 28 or treating the classroom answers as graded workbook Teil 4 answers.",
       ],
     },
   },

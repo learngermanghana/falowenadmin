@@ -114,6 +114,7 @@ test('A2 Day 19 and Day 20 use the real Day 18 player design, lyrics and MCQs', 
 test('all 56 A2/B1 presenters use the Day 18 layout and only published music lessons have native players',()=>{
   const courses=['A2','B1'];
   const musicDays={
+    'A2-1.1':{day:1},
     'A2-7.18':{day:18,curated:true},
     'A2-7.19':{day:19},
     'A2-7.20':{day:20},
@@ -121,6 +122,8 @@ test('all 56 A2/B1 presenters use the Day 18 layout and only published music les
     'B1-8.24':{day:24},
     'B1-8.25':{day:25},
     'B1-9.26':{day:26},
+    'B1-10.27':{day:27},
+    'B1-10.28':{day:28},
   };
   const slides=courses.flatMap(getSlidesByCourse);
   assert.equal(slides.length,56);
@@ -152,8 +155,11 @@ test('all 56 A2/B1 presenters use the Day 18 layout and only published music les
   const b1=getSlidesByCourse('B1');
   const day25=buildTeachingPresenterStages(b1.find(s=>s.assignmentId==='B1-8.25'));
   const day26=buildTeachingPresenterStages(b1.find(s=>s.assignmentId==='B1-9.26'));
+  const day27=buildTeachingPresenterStages(b1.find(s=>s.assignmentId==='B1-10.27'));
   assert.equal(day25.find(s=>s.id==='knowledge')?.audioKey,'b1/day-25/online-shopping-verbraucherservice.mp3');
   assert.equal(day26.find(s=>s.id==='knowledge')?.audioKey,'a2/day-26/reiseprobleme-und-losungen.mp3');
+  assert.equal(day27.find(s=>s.id==='knowledge')?.audioKey,'b1/day-27/umweltfreundlich-im-alltag.mp3');
   assert.equal(day25.length,11);
   assert.equal(day26.length,11);
+  assert.equal(day27.length,11);
 });
