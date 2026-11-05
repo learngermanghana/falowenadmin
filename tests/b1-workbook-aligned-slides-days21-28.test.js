@@ -187,7 +187,7 @@ test("Day 27 teacher guide now distinguishes classroom slide 3 Hören from workb
   const contract = contractByAssignmentId["B1-10.27"];
   assert.deepEqual(contract.expectedParts, ["teil2", "teil3", "teil4"]);
   assert.equal(Object.keys(contract.answers.teil4).length, 5);
-  assert.match(part(slide, "Teil 4 · Hören").detailEn, /b1\\/day-27\\/umweltfreundlich-im-alltag\\.mp3/);
+  assert.ok(part(slide, "Teil 4 · Hören").detailEn.includes("b1/day-27/umweltfreundlich-im-alltag.mp3"));
   assert.match(part(slide, "Teil 4 · Hören").detailEn, /separate scoring contract/i);
   assert.match(slide.workbookConnection.subtitle, /Teacher slide 3 now contains/i);
   assert.doesNotMatch(slide.workbookConnection.subtitle, /no live listening medium/i);
