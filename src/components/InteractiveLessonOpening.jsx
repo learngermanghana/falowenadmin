@@ -75,7 +75,11 @@ export default function InteractiveLessonOpening({ stage, slide }) {
       const isB1Day27Classroom = lesson.listening.level === "B1"
         && lesson.listening.day === 27
         && lesson.listening.audioKey === "b1/day-27/umweltfreundlich-im-alltag.mp3";
-      const isB1Classroom = isB1Day25Classroom || isB1Day26Classroom || isB1Day27Classroom;
+      // Day 28 Hören uses this exact R2 key despite its Day 27 folder.
+      const isB1Day28Classroom = lesson.listening.level === "B1"
+        && lesson.listening.day === 28
+        && lesson.listening.audioKey === "b1/day-27/umweltfreundlich-im-alltag.mp3";
+      const isB1Classroom = isB1Day25Classroom || isB1Day26Classroom || isB1Day27Classroom || isB1Day28Classroom;
       if (isB1Classroom) params.set("level", "B1");
       const audioEndpoint = isB1Classroom
         ? "https://www.falowen.app/api/course-media/classroom/audio-url"
@@ -116,7 +120,7 @@ export default function InteractiveLessonOpening({ stage, slide }) {
       <div className="pharm-audio-label"><span aria-hidden="true">♫</span><div><strong>{lesson.listening.title}</strong><small>{music ? "Höre das Lied und beantworte die Fragen. Das Video zeigt den Liedtext." : "Lies zuerst die Fragen. Höre danach ohne das Skript zu."}</small></div></div>
       {lesson.listening.playbackNote ? <p className="pharm-playback-note" role="note">{lesson.listening.playbackNote} · Fragen bleiben während des Abspielens sichtbar.</p> : null}
       {!lesson.listening.audioKey && !lesson.listening.youtubeId ? (
-        <p className="pharm-audio-error" role="status">Die Aufnahme für B1 Tag 28 ist noch nicht verknüpft. Der angegebene R2-Link gehört zu Tag 27. Die Originalfragen können besprochen werden, aber ein falsches Audio wird nicht abgespielt.</p>
+        <p className="pharm-audio-error" role="status">Für diese Hörübung ist keine Aufnahme freigegeben. Die Fragen können ohne Audio besprochen werden.</p>
       ) : lesson.listening.youtubeId ? (
         <MusicVideoEmbed videoId={lesson.listening.youtubeId} title={lesson.listening.title} variant="listening" />
       ) : !audioUrl ? (
