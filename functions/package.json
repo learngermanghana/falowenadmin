@@ -13,11 +13,13 @@
   },
   "main": "main.js",
   "dependencies": {
+    "@pdf-lib/fontkit": "^1.1.1",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "firebase-admin": "^13.6.1",
     "firebase-functions": "^7.0.0",
-    "google-auth-library": "^9.15.1"
+    "google-auth-library": "^9.15.1",
+    "pdf-lib": "^1.17.1"
   },
   "devDependencies": {
     "firebase-functions-test": "^3.4.1"

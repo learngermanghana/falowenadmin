@@ -4,6 +4,12 @@ on:
     paths:
       - 'functions/organisationEnrolment*'
       - 'functions/organisationPayments*'
+      - 'functions/partnership*'
+      - 'functions/referralPayouts*'
+      - 'functions/main.js'
+      - 'functions/package*'
+      - 'functions/assets/*'
+      - 'src/components/SignedPartnershipForm.jsx'
       - 'src/pages/PaystackPage.jsx'
       - 'scripts/patchStudentPaymentLinks.mjs'
       - 'functions/referralProgramme*'
@@ -24,6 +30,12 @@ on:
     paths:
       - 'functions/organisationEnrolment*'
       - 'functions/organisationPayments*'
+      - 'functions/partnership*'
+      - 'functions/referralPayouts*'
+      - 'functions/main.js'
+      - 'functions/package*'
+      - 'functions/assets/*'
+      - 'src/components/SignedPartnershipForm.jsx'
       - 'src/pages/PaystackPage.jsx'
       - 'scripts/patchStudentPaymentLinks.mjs'
       - 'functions/referralProgramme*'
@@ -43,5 +55,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: node --test functions/organisationPayments.test.cjs tests/referral-pages.test.js functions/referralProgramme.test.cjs tests/organisation-enrolment-request.test.js functions/organisationEnrolment.test.cjs functions/studentAccountActivation.test.cjs tests/student-emergency-contact.test.js
+      - run: npm ci --prefix functions --ignore-scripts
+      - run: node --test functions/partnershipAgreements.test.cjs functions/referralPayouts.test.cjs functions/organisationPayments.test.cjs tests/referral-pages.test.js functions/referralProgramme.test.cjs tests/organisation-enrolment-request.test.js functions/organisationEnrolment.test.cjs functions/studentAccountActivation.test.cjs tests/student-emergency-contact.test.js
       - run: npm run build

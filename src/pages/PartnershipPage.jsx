@@ -1,3 +1,4 @@
+import SignedPartnershipForm from "../components/SignedPartnershipForm.jsx";
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { organisationEnrolmentRequest as request } from "../utils/organisationEnrolmentRequest.js";
@@ -9,6 +10,7 @@ const signup = "https://www.falowen.app/signup?program=german";
 export default function PartnershipPage() {
   const [params] = useSearchParams();
   const invited = params.has("ref");
+  const [institutional, setInstitutional] = useState(false);
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -29,11 +31,13 @@ export default function PartnershipPage() {
     {!invited && <section><h2>Institutional partnerships</h2>
       <p>Schools, employers and sponsoring organisations can enrol a group under an agreement with Falowen. Our team reviews the group and confirms who will pay before inviting students.</p>
       <Link to="/organisation-enrolment">Open the organisation enrolment form →</Link>
+      <p><button onClick={() => setInstitutional(value => !value)}>{institutional ? "Hide institutional agreement" : "Read and sign institutional terms"}</button></p>
+      {institutional && <SignedPartnershipForm kind="institutional" />}
     </section>}
     <section><h2>{invited ? "Register your referral" : "Referral partnerships"}</h2>
       <p>{invited ? "Use the same email for this invitation and your Falowen course account so we can match your enrolment." : "Individuals and organisations can apply to introduce new learners. Falowen reviews your application and, if approved, sends you a unique link to share."}</p>
       <p><strong>Standard referral terms.</strong> Subject to Falowen approval, an approved partner earns 10% of a referred learner’s first completed, non-refunded course payment. The amount is based on tuition received, excluding processing fees. Later instalments, renewals, institutional enrolments and self-referrals are excluded. A refund cancels the commission.</p>
-      {done ? <div role="status"><strong>{invited ? "Invitation received." : "Application received."}</strong>
+      {!invited ? <SignedPartnershipForm kind="referral" /> : done ? <div role="status"><strong>{invited ? "Invitation received." : "Application received."}</strong>
         <p>{invited ? <a href={signup}>Continue to Falowen course signup →</a> : "Falowen will contact you by email after review."}</p></div> :
         <form onSubmit={submit}><fieldset disabled={busy}>
           <div className="org-contact">
