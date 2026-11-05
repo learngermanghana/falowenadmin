@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 const require = createRequire(import.meta.url);
 const {
   firstPaymentTransition,
+  isOrganisationFunded,
   registrationRow,
   resolveRegistrationDocsConfig,
   _test,
@@ -33,6 +34,16 @@ test("student creation payload uses canonical registration identity", () => {
   assert.equal(row.level, "A1");
   assert.equal(row.paid, 500);
   assert.equal(row.balance, 2300);
+});
+
+test("organisation-funded tuition is excluded from the student-documents first-payment sender", () => {
+  assert.equal(isOrganisationFunded({ billingResponsibility: "organisation" }), true);
+  assert.equal(isOrganisationFunded({ enrolmentSource: "organisation" }), true);
+  assert.equal(isOrganisationFunded({ lastPaymentReference: "FAL-ORG-1234" }), true);
+  assert.equal(isOrganisationFunded({ billingResponsibility: "student", lastPaymentReference: "FAL-100" }), false);
+  const source = read("functions/registrationLifecycleEvents.js");
+  assert.match(source, /initialPaid > 0 && !isOrganisationFunded\(student\)/);
+  assert.match(source, /if \(isOrganisationFunded\(after\)\) return \{ processed: false, reason: "organisation_billed_separately" \}/);
 });
 
 test("first paid increase confirms enrollment once", () => {
