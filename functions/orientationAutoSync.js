@@ -33,7 +33,7 @@ function hasQualifyingPayment(student = {}) {
     student.paidAmount,
     student.amountPaid,
     student.amount_paid,
-    student.initialPaymentAmount,
+    // initialPaymentAmount is a proposed collection amount, not verified cash.
   ].some((value) => money(value) > 0);
 }
 
@@ -42,7 +42,6 @@ function paymentFingerprint(student = {}) {
     paymentStatus: comparable(student.paymentStatus || student.payment_status),
     paid: money(student.paid),
     paidAmount: money(student.paidAmount),
-    initialPaymentAmount: money(student.initialPaymentAmount),
   });
 }
 
@@ -68,6 +67,8 @@ function studentIdentityFingerprint(student = {}) {
     email: comparable(student.email),
     name: comparable(student.name || student.fullName),
     level: normalizedLevel(student.level),
+    // Also respond when an owner confirms or reactivates an already-paid student.
+    status: comparable(student.status),
     classes: studentClassTokens(student).sort(),
   });
 }
@@ -213,7 +214,14 @@ function createOrientationAutoSyncHandler({
       const classes = await listClasses(db);
       const klass = findMatchingClass(current, classes);
       if (!klass) {
-        throw new Error(`No created class matches ${text(current.className || current.classId || "the student's class")}.`);
+        const reason = "Assign a confirmed class from the live class catalogue before Orientation sync.";
+        if (studentRef?.set) {
+          await studentRef.set({ orientationAutoSync: {
+            status: "waiting_for_class", syncKey, lastError: reason,
+            attemptedAt: now().toISOString(),
+          } }, { merge: true });
+        }
+        return { skipped: true, reason: "confirmed_class_missing" };
       }
 
       const target = buildOrientationTarget(current, klass);
