@@ -70,10 +70,39 @@ async function applyGroupPayment({ transaction: tx, paymentRef, payment, eventDa
     verifiedCurrency: "GHS", verifiedAmountSubunit: Number(eventData.amount) });
   return { group: true, duplicate: false, reference: payment.reference };
 }
+// The upstream announcement service may return a private error message.
+// Expose only a stable, operator-actionable classification to the signed-in owner.
+function receiptFailure(error) {
+  const detail = String(error?.message || "");
+  if (/webhook is not configured/i.test(detail)) return {
+    code: "email_webhook_not_configured", status: 503,
+    message: "Company receipt email service is not configured. The tuition payment is safely recorded; ask an administrator to configure the payment-update email webhook.",
+  };
+  if (/receipt is being delivered/i.test(detail)) return {
+    code: "receipt_in_progress", status: 409,
+    message: "A company receipt attempt is already in progress. Refresh payment history before retrying; the tuition payment remains recorded.",
+  };
+  const upstreamStatus = detail.match(/webhook returned HTTP (\d{3})/i);
+  if (upstreamStatus) return {
+    code: "email_provider_http_" + upstreamStatus[1], status: 502,
+    message: "Company receipt email service returned HTTP " + upstreamStatus[1] + ". The tuition payment remains recorded. Check the email webhook configuration and delivery logs.",
+  };
+  if (/fetch failed|econnreset|enotfound|eai_again|etimedout|network|aborterror/i.test(detail)) return {
+    code: "email_provider_unreachable", status: 502,
+    message: "Company receipt email service could not be reached. The tuition payment remains recorded. Check the email service endpoint and retry later.",
+  };
+  return {
+    code: "email_delivery_failed", status: 502,
+    message: "Company receipt email delivery failed. The tuition payment remains recorded. Check the email service logs or use the manual confirmation fallback.",
+  };
+}
+
 async function sendGroupReceipt({ db, admin, reference, runtimeConfig, send = postPaymentRow }) {
   const ref = db.collection("payments").doc(reference);
   const snap = await ref.get(), payment = snap.data();
-  if (!payment || !["organisation_group", "organisation_manual"].includes(payment.purpose) || payment.status !== "paid" || payment.receiptStatus === "sent") return;
+  if (!payment) fail(404, "Payment reference was not found.");
+  if (!["organisation_group", "organisation_manual"].includes(payment.purpose) || payment.status !== "paid") fail(409, "A company receipt requires an existing paid organisation payment.");
+  if (payment.receiptStatus === "sent") return { status: "sent", alreadySent: true };
   // A short lease prevents overlapping webhook retries from sending together.
   const reserved = await db.runTransaction(async tx => {
     const current = (await tx.get(ref)).data();
@@ -138,9 +167,21 @@ async function sendGroupReceipt({ db, admin, reference, runtimeConfig, send = po
         net_tuition: Number(line.tuitionCredit),
       })),
     });
-    await ref.update({ receiptStatus: "sent", receiptSentAt: admin.firestore.FieldValue.serverTimestamp(), receiptLeaseUntil: 0 });
+    await ref.update({
+      receiptStatus: "sent", receiptSentAt: admin.firestore.FieldValue.serverTimestamp(),
+      receiptLeaseUntil: 0, receiptErrorCode: "",
+    });
+    return { status: "sent", alreadySent: false };
   } catch (error) {
-    await ref.update({ receiptStatus: "failed", receiptLeaseUntil: 0 }); throw error;
+    const failure = receiptFailure(error);
+    // Persist a safe reason without storing secrets or raw provider response.
+    await ref.update({
+      receiptStatus: "failed", receiptLeaseUntil: 0,
+      receiptErrorCode: failure.code,
+      receiptFailedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    console.warn("organisation_receipt_delivery_failed", { reference, code: failure.code });
+    throw error;
   }
 }
 
@@ -297,7 +338,10 @@ function registerOrganisationPaymentRoutes(app, { db, admin, initializePaystackP
   const handle = action => async (req, res) => {
     res.set("Cache-Control", "no-store");
     try { const actor = await owner(req, admin); res.json({ ok: true, ...await action(req, actor) }); }
-    catch (error) { res.status(error.status || 500).json({ ok: false, error: error.status ? error.message : "Payment service unavailable. Retry shortly." }); }
+    catch (error) { res.status(error.status || 500).json({
+      ok: false, error: error.status ? error.message : "Payment service unavailable. Retry shortly.",
+      ...(error.publicCode ? { code: error.publicCode } : {}),
+    }); }
   };
   app.get("/payments/organisations/:batchId", handle(async req => {
     const id = String(req.params.batchId);
@@ -377,7 +421,14 @@ function registerOrganisationPaymentRoutes(app, { db, admin, initializePaystackP
   }));
   app.post("/payments/organisations/receipt/:reference", handle(async req => {
     if (!/^FAL-ORG-[a-f0-9-]{36}$/.test(req.params.reference) && !/^FAL-ORG-MAN-[a-f0-9]{48}$/.test(req.params.reference)) fail(400, "Invalid reference.");
-    await sendGroupReceipt({ db, admin, reference: req.params.reference, runtimeConfig }); return {};
+    try {
+      const delivery = await sendGroupReceipt({ db, admin, reference: req.params.reference, runtimeConfig });
+      return { receiptStatus: delivery?.status || "sent", alreadySent: Boolean(delivery?.alreadySent) };
+    } catch (error) {
+      if (error.status) throw error;
+      const failure = receiptFailure(error);
+      throw Object.assign(new Error(failure.message), { status: failure.status, publicCode: failure.code });
+    }
   }));
 }
-module.exports = { minor, validateLines, balanceOf, applyGroupPayment, sendGroupReceipt, recordManualOrganisationPayment, registerOrganisationPaymentRoutes };
+module.exports = { minor, validateLines, balanceOf, applyGroupPayment, sendGroupReceipt, receiptFailure, recordManualOrganisationPayment, registerOrganisationPaymentRoutes };
