@@ -167,7 +167,7 @@ test("Day 26 teacher guide matches formal Vienna Schreiben and seven Anzeigen wi
   assert.doesNotMatch(guideText,/Markus|Max\/Lisa|Urlaubsland Deutschland|Hören is self-check|Hören.*excluded/i);
 });
 
-for (const assignmentId of ["B1-10.27", "B1-10.28"]) {
+for (const assignmentId of ["B1-10.28"]) {
   test(`${assignmentId} blocks Teil 4 instead of inventing audio when the grader expects five answers`, () => {
     const slide = getB1WorkbookAlignedSlideDay21To28(assignmentId);
     const contract = contractByAssignmentId[assignmentId];
@@ -181,6 +181,17 @@ for (const assignmentId of ["B1-10.27", "B1-10.28"]) {
     assert.match(slide.workbookConnection.subtitle, /unresolved Teil 4 source mismatch/i);
   });
 }
+
+test("Day 27 teacher guide now distinguishes classroom slide 3 Hören from workbook grading", () => {
+  const slide = getB1WorkbookAlignedSlideDay21To28("B1-10.27");
+  const contract = contractByAssignmentId["B1-10.27"];
+  assert.deepEqual(contract.expectedParts, ["teil2", "teil3", "teil4"]);
+  assert.equal(Object.keys(contract.answers.teil4).length, 5);
+  assert.match(part(slide, "Teil 4 · Hören").detailEn, /b1\\/day-27\\/umweltfreundlich-im-alltag\\.mp3/);
+  assert.match(part(slide, "Teil 4 · Hören").detailEn, /separate scoring contract/i);
+  assert.match(slide.workbookConnection.subtitle, /Teacher slide 3 now contains/i);
+  assert.doesNotMatch(slide.workbookConnection.subtitle, /no live listening medium/i);
+});
 
 test("all 28 B1 assignments now resolve to workbook-aligned teacher guides", () => {
   const b1Slides = getSlidesByCourse("B1");
