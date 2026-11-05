@@ -288,12 +288,16 @@ test("deployment patch listens for student payment and confirmed class updates",
   assert.match(patch, /exports\.autoSyncPaidStudentOrientation/);
   assert.match(patch, /onDocumentUpdated/);
   assert.match(patch, /document: "students\/\{studentId\}"/);
-  assert.doesNotMatch(patch, /document: "payments\/\{reference\}"/);
-  assert.doesNotMatch(patch, /payment_not_newly_paid/);
+  assert.match(patch, /document: "payments\/\{reference\}"/);
+  assert.match(patch, /payment_not_newly_paid/);
+  assert.match(patch, /group_payment_synced_from_student_records/);
+  assert.match(patch, /exports\.autoSyncApprovedStudentOrientation/);
+  assert.match(patch, /studentIdentityFingerprint/);
   assert.match(patch, /orientationAppsScriptUrlSecret/);
   assert.match(patch, /orientationSyncSecret/);
   assert.match(packageJson, /patchAutomaticOrientationSync\.mjs/);
   assert.match(firebaseJson, /patchAutomaticOrientationSync\.mjs/);
   assert.match(workflow, /patchAutomaticOrientationSync\.mjs/);
   assert.match(workflow, /functions:falowenadmin:autoSyncPaidStudentOrientation/);
+  assert.match(workflow, /functions:falowenadmin:autoSyncApprovedStudentOrientation/);
 });
