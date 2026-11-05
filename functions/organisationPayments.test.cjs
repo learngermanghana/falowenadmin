@@ -173,7 +173,7 @@ test("manual tuition rejects unverified transfers, discounting, incorrect balanc
   }
   const f = manualFixture();
   f.data.get("students/A").balanceDue = 0;
-  await assert.rejects(f.record(), /outstanding balance/);
+  await assert.rejects(f.record(), /unpaid balance/);
   assert.equal(f.data.get("students/A").paid, 0);
   const g = manualFixture();
   g.data.get("students/A").paymentStatus = "Paid";
