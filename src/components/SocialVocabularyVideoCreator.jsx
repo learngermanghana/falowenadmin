@@ -96,6 +96,8 @@ export default function SocialVocabularyVideoCreator({ word }) {
     if (!playing || !word) return undefined;
     const start = performance.now();
     let id = 0, lastUpdate = 0;
+    const preview = canvasRef.current;
+    if (preview) { preview.width = 540; preview.height = Math.round(540 * videoSize.height / videoSize.width); }
     const sourceCanvas = document.createElement("canvas");
     const frame = now => {
       const time = ((now - start) / 1000) % Number(duration);
