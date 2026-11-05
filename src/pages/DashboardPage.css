@@ -506,3 +506,5 @@
 }
 
 .action-card-amber a { background: linear-gradient(135deg, #d97706, #b45309); }
+
+.analytics-hero--overview { grid-template-columns: 1fr; }
