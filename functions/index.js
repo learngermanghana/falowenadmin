@@ -2413,7 +2413,7 @@ registerTimedDraftRecoveryRoutes(app, { admin, db, requireAuth });
 registerDraftHistoryRoutes(app, { admin, db });
 registerMarkingHealthRoutes(app, { admin, db });
 registerSignupAccountLookup(app, { admin, db });
-registerStudentAccountActivationRoutes(app, { admin, db });
+registerStudentAccountActivationRoutes(app, { admin, db, runtimeConfig });
 require("./referralProgramme.js").registerReferralRoutes(app, { admin, db });
 require("./partnershipAgreements.js").registerAgreementRoutes(app, { admin, db });
 require("./referralPayouts.js").registerPayoutRoutes(app, { admin, db });

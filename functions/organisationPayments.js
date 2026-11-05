@@ -52,6 +52,9 @@ async function applyGroupPayment({ transaction: tx, paymentRef, payment, eventDa
       paid: (paidOf(student) + minor(line.tuitionCredit)) / 100,
       tuitionDiscount: (minor(student.tuitionDiscount ?? 0) + minor(line.discount)) / 100,
       balanceDue: nextBalance, balance: nextBalance, paymentStatus: nextBalance === 0 ? "Paid" : "Partially Paid",
+      organisationPaymentReference: payment.reference,
+      organisationPaymentGross: line.grossAmount, organisationRetainedShare: line.discount,
+      organisationNetTuition: line.tuitionCredit, billingResponsibility: "organisation",
       lastPaymentAmount: line.tuitionCredit, lastPaymentReference: payment.reference,
       lastPaymentProvider: "Paystack", lastPaymentAt: paidAt, syncedToSheets: false, updated_at: now,
     }, { merge: true });
@@ -79,15 +82,46 @@ async function sendGroupReceipt({ db, admin, reference, runtimeConfig, send = po
   });
   if (!reserved) throw new Error("Company receipt is being delivered; retry shortly.");
   try {
-    const breakdown = payment.lines.map(line => `${line.studentName}: GHS ${line.tuitionCredit.toFixed(2)} paid to Falowen; partner share deduction GHS ${line.discount.toFixed(2)}`).join("\n");
+    const format = value => "GHS " + Number(value || 0).toFixed(2);
+    const breakdown = payment.lines.map((line, index) =>
+      [index + 1, line.studentName || line.studentId, "Gross " + format(line.grossAmount),
+        "retained organisation share " + format(line.discount), "net tuition allocated " + format(line.tuitionCredit)].join(" | ")
+    ).join("\n");
+    const processing = Number(payment.processingShare ?? (payment.checkoutAmount - payment.tuitionCredit));
+    const gross = Number(payment.tuitionCredit) + Number(payment.discount);
     await send(resolveWebhookConfig(runtimeConfig), {
-      email: payment.email, topic: "Falowen organisation payment receipt", announcement: [
-        `Hello ${payment.organisationName},`, `Payment received. Reference: ${reference}`,
-        breakdown, `Tuition paid: GHS ${payment.tuitionCredit.toFixed(2)}`,
-        `Partner share deduction: GHS ${payment.discount.toFixed(2)}`, `Checkout total including processing share: GHS ${payment.checkoutAmount.toFixed(2)}`,
-        "The payment has been allocated to the listed student accounts.",
-      ].join("\n\n"), delivery_mode: "individual", allow_bcc_fallback: "FALSE", email_type: "payment_update",
-      show_app_button: "FALSE", show_progress: "FALSE", show_review: "FALSE", attach_certificate: "FALSE", receipt_reference: reference,
+      email: payment.email,
+      topic: "Falowen organisation tuition receipt — " + reference,
+      announcement: [
+        "Dear " + payment.organisationName + ",",
+        "Falowen confirms receipt of your organisation-funded group tuition payment.",
+        "Payment reference: " + reference,
+        "Organisation: " + payment.organisationName,
+        "Billing email: " + payment.email,
+        "Payment status: Verified and allocated to student accounts",
+        "Student tuition breakdown:",
+        breakdown,
+        "Gross tuition before retained share: " + format(gross),
+        "Retained 10% organisation share: " + format(payment.discount),
+        "Net tuition paid to Falowen: " + format(payment.tuitionCredit),
+        "Checkout processing charges: " + format(processing),
+        "Total charged to organisation: " + format(payment.checkoutAmount),
+        "The retained organisation share is a deduction from the first tuition payment, not a second payout. Processing charges are not tuition credited to students.",
+        "Each class lasts 10 weeks. Student access is six months from account activation. Any class change needs approval and availability and does not extend access.",
+        "Please retain this reference and breakdown as your organisation payment receipt. Your students will receive separate enrolment confirmations when their class and account invitations are ready.",
+        "Falowen · Learn Language Education Academy",
+      ].join("\n\n"),
+      delivery_mode: "individual", allow_bcc_fallback: "FALSE", email_type: "organisation_payment_receipt",
+      show_app_button: "FALSE", show_progress: "FALSE", show_review: "FALSE", attach_certificate: "FALSE",
+      receipt_reference: reference, organisation_name: payment.organisationName,
+      organisation_billing_email: payment.email, gross_tuition: gross,
+      organisation_share: Number(payment.discount), net_tuition: Number(payment.tuitionCredit),
+      processing_charges: processing, checkout_total: Number(payment.checkoutAmount),
+      student_allocations: payment.lines.map(line => ({
+        student_id: line.studentId, student_name: line.studentName,
+        gross_tuition: Number(line.grossAmount), organisation_share: Number(line.discount),
+        net_tuition: Number(line.tuitionCredit),
+      })),
     });
     await ref.update({ receiptStatus: "sent", receiptSentAt: admin.firestore.FieldValue.serverTimestamp(), receiptLeaseUntil: 0 });
   } catch (error) {
@@ -127,6 +161,15 @@ function registerOrganisationPaymentRoutes(app, { db, admin, initializePaystackP
       students.forEach((snap, i) => {
         if (!approved.has(lines[i].studentId) || !snap.exists || snap.data().organisationSubmissionId !== batchId) fail(409, "Only approved students in this organisation can be billed.");
         if (minor(lines[i].grossAmount) > balanceOf(snap.data())) fail(409, "An amount exceeds a student's outstanding balance.");
+        // Retain 10% only on the first tuition payment, never a later instalment.
+        const shareMinor = minor(lines[i].discount);
+        const expectedFirstShare = Math.round(minor(lines[i].grossAmount) * 0.1);
+        if (paidOf(snap.data()) === 0 && shareMinor !== expectedFirstShare) {
+          fail(409, "The first tuition payment must retain exactly the agreed 10% organisation share.");
+        }
+        if (paidOf(snap.data()) > 0 && shareMinor !== 0) {
+          fail(409, "Organisation share applies only to each student's first tuition payment.");
+        }
         if (lines[i].discount && !String(req.body.discountReason || "").trim()) fail(400, "Enter a reason for the partner share deduction.");
         lines[i].studentName = snap.data().name || snap.data().fullName || lines[i].studentId;
       });

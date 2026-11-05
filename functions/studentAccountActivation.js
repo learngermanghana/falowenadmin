@@ -1,6 +1,7 @@
 "use strict";
 
 const crypto = require("node:crypto");
+const { sendOrganisationStudentConfirmation } = require("./organisationConfirmations");
 const OWNER_EMAIL = "moxflex@gmail.com";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const clean = (value) => String(value ?? "").trim();
@@ -136,7 +137,7 @@ async function prepareAccount({ db, admin, studentId, actor }) {
   return { ...(await accountStatus({ db, admin, studentId })), created: true };
 }
 
-async function recordInvitation({ db, admin, studentId, actor }) {
+async function recordInvitation({ db, admin, studentId, actor, runtimeConfig = {} }) {
   const { ref, student } = await readStudent(db, studentId);
   const authUser = await linkedAuthUser(admin, student);
   if (!authUser) throw httpError(409, "Prepare the student's Firebase login before emailing.");
@@ -150,10 +151,13 @@ async function recordInvitation({ db, admin, studentId, actor }) {
     accountActivationState: "invited",
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
-  return { ok: true, studentId, email: lower(authUser.email), state: "invited" };
+  let confirmation = { sent: false, reason: "not_applicable" };
+  try { confirmation = await sendOrganisationStudentConfirmation({ db, admin, studentId, runtimeConfig }); }
+  catch (error) { console.error("organisation_student_confirmation_failed", { studentId, message: error?.message }); confirmation = { sent: false, reason: "delivery_failed" }; }
+  return { ok: true, studentId, email: lower(authUser.email), state: "invited", confirmation };
 }
 
-function registerStudentAccountActivationRoutes(app, { admin, db }) {
+function registerStudentAccountActivationRoutes(app, { admin, db, runtimeConfig = {} }) {
   if (!app?.get || !app?.post || !admin?.auth || !db?.collection) {
     throw new Error("Student account activation route dependencies are incomplete.");
   }
@@ -166,7 +170,8 @@ function registerStudentAccountActivationRoutes(app, { admin, db }) {
       let result;
       if (operation === "status") result = await accountStatus({ db, admin, studentId });
       else if (operation === "prepare") result = await prepareAccount({ db, admin, studentId, actor });
-      else result = await recordInvitation({ db, admin, studentId, actor });
+      else if (operation === "organisation-confirmation") result = { ok: true, ...(await sendOrganisationStudentConfirmation({ db, admin, studentId, runtimeConfig })) };
+      else result = await recordInvitation({ db, admin, studentId, actor, runtimeConfig });
       return res.json(result);
     } catch (error) {
       const status = Number(error.status) || 500;
@@ -181,6 +186,7 @@ function registerStudentAccountActivationRoutes(app, { admin, db }) {
   app.get("/admin/student-accounts/:studentId", (req, res) => handle(req, res, "status"));
   app.post("/admin/student-accounts/:studentId/prepare", (req, res) => handle(req, res, "prepare"));
   app.post("/admin/student-accounts/:studentId/invitation-sent", (req, res) => handle(req, res, "invitation"));
+  app.post("/admin/student-accounts/:studentId/organisation-confirmation", (req, res) => handle(req, res, "organisation-confirmation"));
 }
 
 module.exports = {

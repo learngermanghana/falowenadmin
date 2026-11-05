@@ -56,7 +56,7 @@ test("company receipt retries do not allocate payment again and sent receipts ar
   const f = fixture(); await f.apply(); let sends = 0;
   const args = { ...f, admin, reference: f.payment.reference, runtimeConfig: {}, send: async () => { throw new Error("offline"); } };
   await assert.rejects(sendGroupReceipt(args)); assert.equal(f.data.get("payments/FAL-ORG-test").receiptStatus, "failed");
-  args.send = async (config, row) => { sends++; assert.equal(row.email, "company@example.test"); assert.match(row.announcement, /A: GHS 500.00/); };
+  args.send = async (config, row) => { sends++; assert.equal(row.email, "company@example.test"); assert.equal(row.email_type, "organisation_payment_receipt"); assert.ok(row.announcement.includes('A | Gross GHS 600.00')); assert.ok(row.announcement.includes("net tuition allocated GHS 500.00")); assert.ok(row.announcement.includes("Retained 10% organisation share: GHS 100.00")); assert.ok(row.announcement.includes("Checkout processing charges: GHS 10.00")); };
   await sendGroupReceipt(args); await sendGroupReceipt(args);
   assert.equal(sends, 1); assert.equal(f.data.get("students/A").paid, 600);
 });
@@ -71,6 +71,7 @@ test("all group endpoints enforce verified owner auth before database access", a
 });
 test("group link uses approved student records, company email and one reference across retries", async () => {
   const f = fixture();
+  f.data.get("students/A").paid = 0; // First tuition payment is eligible for the agreed 10% share.
   f.data.set("organisationEnrolments/batch", { organisation: { name: "Company" }, students: [{ studentId: "A", status: "approved" }] });
   const routes = new Map(); let initializations = 0;
   const ownerAdmin = { ...admin, auth: () => ({ verifyIdToken: async () => ({ email: "moxflex@gmail.com", email_verified: true, uid: "owner" }) }) };
@@ -78,7 +79,7 @@ test("group link uses approved student records, company email and one reference 
     ...f, admin: ownerAdmin, calculateStudentCheckoutAmount: amount => amount + 10,
     initializePaystackPayment: async args => { initializations++; assert.equal(args.email, "billing@example.test"); return { authorization_url: "https://checkout.example.test/group" }; },
   });
-  const body = { batchId: "batch", requestId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", email: "billing@example.test", agreement: "Institutional agreement 1", discountReason: "Agreed reduction", lines: [{ studentId: "A", amount: 500, discount: 100 }] };
+  const body = { batchId: "batch", requestId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", email: "billing@example.test", agreement: "Institutional agreement 1", discountReason: "10% first tuition", lines: [{ studentId: "A", amount: 500, discount: 50 }] };
   const call = async payload => {
     let status = 200, value;
     const res = { set() {}, status(n) { status = n; return this; }, json(data) { value = data; } };
@@ -87,9 +88,12 @@ test("group link uses approved student records, company email and one reference 
   };
   const first = await call(body), retry = await call(body);
   assert.equal(first.status, 200); assert.equal(retry.status, 200); assert.equal(initializations, 1);
-  assert.equal(first.value.payment.tuitionCredit, 400); assert.equal(first.value.payment.discount, 100);
+  assert.equal(first.value.payment.tuitionCredit, 450); assert.equal(first.value.payment.discount, 50);
   assert.equal(first.value.payment.lines[0].studentName, "A"); assert.equal(first.value.payment.referralEligible, false);
-  assert.equal(f.data.get("students/A").paid, 100);
+  assert.equal(f.data.get("students/A").paid, 0);
+  assert.equal((await call({ ...body, requestId: "dddddddd-dddd-dddd-dddd-dddddddddddd", lines: [{ studentId: "A", amount: 500, discount: 10 }] })).status, 409);
+  f.data.get("students/A").paid = 100;
+  assert.equal((await call({ ...body, requestId: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee", lines: [{ studentId: "A", amount: 200, discount: 20 }] })).status, 409);
   assert.equal((await call({ ...body, email: "changed@example.test" })).status, 409);
   assert.equal((await call({ ...body, requestId: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", lines: [{ studentId: "B", amount: 100 }] })).status, 409);
   assert.equal((await call({ ...body, requestId: "cccccccc-cccc-cccc-cccc-cccccccccccc", lines: [{ studentId: "A", amount: 1500 }] })).status, 409);

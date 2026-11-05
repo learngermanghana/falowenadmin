@@ -69,6 +69,15 @@ function registrationRow(student = {}, studentId = "", now = new Date()) {
       ?? student.balance_due,
     ),
     payment_reference: paymentReference(student),
+    billing_responsibility: text(student.billingResponsibility),
+    organisation_name: text(student.organisationName),
+    organisation_payment_reference: text(student.organisationPaymentReference || paymentReference(student)),
+    organisation_retained_share: numberValue(student.organisationRetainedShare),
+    organisation_net_tuition: numberValue(student.organisationNetTuition),
+    organisation_payment_gross: numberValue(student.organisationPaymentGross),
+    organisation_submission_id: text(student.organisationSubmissionId),
+    organisation_id: text(student.organisationId),
+    organisation_billing_email: lower(student.organisationBillingEmail || student.organisationContactEmail),
     registration_date: text(
       student.registrationDate
       || student.registeredAt

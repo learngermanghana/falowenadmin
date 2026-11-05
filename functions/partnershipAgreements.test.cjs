@@ -39,6 +39,8 @@ test('PDF creation supports Unicode signing names and unsigned samples',async()=
 test('organisation agreement states non-refundable tuition and distinct class/access periods',()=>{
  const terms=TERMS.institutional.join(" ");
  assert.match(terms,/Tuition payments are non-refundable/);
+ assert.doesNotMatch(terms,/GHS\\s+[\\d,]+/);
+ assert.match(ORGANISATION_VERSION,/v6$/);
  assert.match(terms,/Each class lasts 10 weeks/);
  assert.match(terms,/six months of Falowen access from account activation/);
  assert.match(terms,/does not restart or extend/);

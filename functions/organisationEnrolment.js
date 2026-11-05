@@ -1,5 +1,6 @@
 "use strict";
 const crypto = require("node:crypto");
+const { organisationId, loadOrganisationDirectory } = require("./organisationDirectory");
 const clean = v => String(v ?? "").trim();
 const email = v => clean(v).toLowerCase();
 const validEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
@@ -56,7 +57,7 @@ async function reviewRow({ db, admin, batchId, index, decision, actor }) {
         level: row.level, location: row.location, emergencyContactPhone: row.emergencyContactPhone,
         role: "student", studentCode: studentId, studentcode: studentId, program: "german",
         organisationName: batch.organisation.name, organisationContactEmail: batch.organisation.email,
-        organisationSubmissionId: batchId, enrolmentSource: "organisation", billingResponsibility: "organisation",
+        organisationSubmissionId: batchId, organisationId: organisationId(batch.organisation.email), enrolmentSource: "organisation", billingResponsibility: "organisation",
         status: "pending", paymentStatus: "pending", className: "", contractStart: "", contractEnd: "",
         accountActivationState: "not_prepared", syncedToSheets: false, joined_at: new Date().toISOString(),
         createdAt: now, updated_at: now,
@@ -105,9 +106,13 @@ function registerOrganisationEnrolmentRoutes(app, { db, admin }) {
       const count = limit.exists ? limit.data().count || 0 : 0;
       if (count >= 10) fail(429, "Daily submission limit reached. Contact Falowen for help.");
       tx.set(quota, { count: count + 1, expiresAt: new Date(Date.now() + 2 * 86400000) });
-      tx.create(ref, { ...data, createdAt: admin.firestore.FieldValue.serverTimestamp() });
+      tx.create(ref, { ...data, organisationId: organisationId(data.organisation.email), createdAt: admin.firestore.FieldValue.serverTimestamp() });
     });
     return { ok: true, reference: key };
+  }));
+  app.get("/admin/organisations", handle(async req => {
+    await owner(req, admin);
+    return { ok: true, ...await loadOrganisationDirectory(db) };
   }));
   app.get("/admin/organisation-enrolments", handle(async req => {
     await owner(req, admin);
