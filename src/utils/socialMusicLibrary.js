@@ -11,9 +11,9 @@ export function validCloudflareSocialTrack(row) {
   if (!row || !/^[a-zA-Z0-9_-]{1,245}$/.test(String(row.id || ""))) return null;
   if (!/^music\/(a1|a2|b1|b2|c1|c2)\/day-(0[1-9]|1[0-9]|2[0-8])\/[^/]{1,150}\.mp3$/i.test(String(row.objectKey || ""))) return null;
   const src = PUBLIC_MUSIC_ORIGIN + "/api/music?track=" + row.id + "&download=1";
-  if (row.audioUrl !== PUBLIC_MUSIC_ORIGIN + "/api/music?track=" + row.id) return null;
-  if (!String(row.title || "").trim()) return null;
-  return { id: row.id, label: String(row.level || "").toUpperCase() + " · Day " + row.day + " · " + String(row.title).slice(0, 120),
+  if (row.audioUrl !== PUBLIC_MUSIC_ORIGIN + "/api/music?track=" + row.id && row.src !== src) return null;
+  if (!String(row.title || row.label || "").trim()) return null;
+  return { id: row.id, label: row.label || (String(row.level || "").toUpperCase() + " · Day " + row.day + " · " + String(row.title).slice(0, 120)),
     src, objectKey: row.objectKey };
 }
 
