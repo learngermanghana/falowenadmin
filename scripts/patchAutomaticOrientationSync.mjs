@@ -22,12 +22,14 @@ content = content.replace(
   'const { ' + firestoreTriggers.join(", ") + ' } = require("firebase-functions/v2/firestore");',
 );
 
-const legacyHelperRequire = 'const { createOrientationAutoSyncHandler } = require("./orientationAutoSync");\n';
-const helperRequire = 'const { createOrientationAutoSyncHandler, hasQualifyingPayment, studentIdentityFingerprint } = require("./orientationAutoSync");\n';
-const helperAnchor = 'const { defineSecret } = require("firebase-functions/params");\n';
-if (content.includes(legacyHelperRequire)) {
-  content = content.replace(legacyHelperRequire, helperRequire);
-} else if (!content.includes(helperRequire)) {
+const helperRequire = 'const { createOrientationAutoSyncHandler, hasQualifyingPayment, studentIdentityFingerprint } = require("./orientationAutoSync");\\n';
+const helperAnchor = 'const { defineSecret } = require("firebase-functions/params");\\n';
+// Idempotently replace either older helper import shape, including repeated
+// patch runs in the same build, without creating duplicate const bindings.
+const existingHelperImport = /^const \\{[^}]*createOrientationAutoSyncHandler[^}]*\\} = require\\("\\.\\/orientationAutoSync"\\);\\n/m;
+if (existingHelperImport.test(content)) {
+  content = content.replace(existingHelperImport, helperRequire);
+} else {
   if (!content.includes(helperAnchor)) {
     throw new Error("Automatic orientation sync patch could not find the Firebase params import.");
   }
