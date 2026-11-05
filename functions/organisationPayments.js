@@ -109,13 +109,20 @@ async function sendGroupReceipt({ db, admin, reference, runtimeConfig, send = po
         ] : []),
         "Student tuition breakdown:",
         breakdown,
-        manual ? "Full tuition received: " + format(gross) : "Gross tuition before retained share: " + format(gross),
+        manual ? "Tuition payment received: " + format(gross) : "Gross tuition before retained share: " + format(gross),
+        ...(manual ? payment.lines.map(line => (
+          (line.studentName || line.studentId) + " | Course tuition " + format(line.courseTuitionFee ?? line.grossAmount) +
+          " | Remaining balance " + format(line.remainingBalance ?? 0) +
+          (Number(line.remainingBalance || 0) > 0 ? " | One-month paid access until " + (line.accessEndDate || "see student contract") : "")
+        )) : []),
         manual ? "Partner deduction from Falowen tuition: GHS 0.00 (legacy full-tuition arrangement)" : "Retained 10% organisation share: " + format(payment.discount),
         "Net tuition paid to Falowen: " + format(payment.tuitionCredit),
         manual ? "Payment processing charge deducted by Falowen: GHS 0.00" : "Checkout processing charges: " + format(processing),
         manual ? "Total received by Falowen: " + format(payment.checkoutAmount) : "Total charged to organisation: " + format(payment.checkoutAmount),
-        manual ? "Falowen received the full tuition amount. No organisation commission or Paystack fee was deducted from this payment." : "The retained organisation share is a deduction from the first tuition payment, not a second payout. Processing charges are not tuition credited to students.",
-        "Each class lasts 10 weeks. Student access is six months from account activation. Any class change needs approval and availability and does not extend access.",
+        manual ? "No organisation commission or Paystack fee was deducted from this payment. An outstanding balance, where shown, remains payable to Falowen." : "The retained organisation share is a deduction from the first tuition payment, not a second payout. Processing charges are not tuition credited to students.",
+        manual && payment.lines.some(line => Number(line.remainingBalance || 0) > 0)
+          ? "This is a partial tuition payment. One-month paid access runs from the recorded receipt date, subject to student account invitation. The remaining tuition is still due; it is not a full-paid six-month contract."
+          : "Each class lasts 10 weeks. Student access is six months from account activation. Any class change needs approval and availability and does not extend access.",
         "Please retain this reference and breakdown as your organisation payment receipt. Your students will receive separate enrolment confirmations when their class and account invitations are ready.",
         "Falowen · Learn Language Education Academy",
       ].join("\n\n"),
@@ -142,6 +149,17 @@ const MANUAL_METHOD_LABELS = Object.freeze({
   mobile_money: "Mobile money",
   cash: "Cash",
 });
+
+function oneCalendarMonthFrom(value) {
+  const date = new Date(value);
+  const year = date.getUTCFullYear(), month = date.getUTCMonth(), day = date.getUTCDate();
+  const lastDay = new Date(Date.UTC(year, month + 2, 0)).getUTCDate();
+  const next = new Date(date);
+  next.setUTCDate(1);
+  next.setUTCMonth(month + 1);
+  next.setUTCDate(Math.min(day, lastDay));
+  return next.toISOString();
+}
 
 function confirmedPaidOf(student) {
   for (const key of ["paid", "amountPaid", "paidAmount", "amount_paid", "totalPaid"]) {
@@ -210,19 +228,40 @@ async function recordManualOrganisationPayment({ db, admin, actor, body = {} }) 
         fail(409, "Configure the student's tuition fee and outstanding balance in Students first.");
       }
       const balance = balanceOf(student);
-      if (balance === 0 || minor(line.tuitionCredit) !== balance ||
+      const credit = minor(line.tuitionCredit);
+      const tuition = minor(student.tuitionFee);
+      if (balance === 0 || credit > balance || confirmedPaidOf(student) + credit > tuition ||
           String(student.paymentStatus || "").trim().toLowerCase() === "paid") {
-        fail(409, "Legacy full tuition must exactly match the student's unpaid balance. Review any existing payments first.");
+        fail(409, "The recorded amount must not exceed the student's unpaid balance or agreed course tuition. Review any existing payments first.");
+      }
+      if (credit < balance && String(student.contractEnd || "").trim()) {
+        fail(409, "This student already has contract access dates. Review the existing contract before granting one-month partial-payment access.");
       }
       line.studentName = student.name || student.fullName || line.studentId;
+      line.courseTuitionFee = tuition / 100;
+      line.remainingBalance = (balance - credit) / 100;
+      if (line.remainingBalance > 0) {
+        line.accessStartDate = date.toISOString();
+        line.accessEndDate = oneCalendarMonthFrom(date);
+      }
     });
     const totalMinor = lines.reduce((sum, line) => sum + minor(line.tuitionCredit), 0);
     snapshots.forEach((snap, i) => {
       const line = lines[i];
       const student = snap.data();
+      const remainingBalance = line.remainingBalance;
+      const partial = remainingBalance > 0;
+      const accessEndDate = partial ? new Date(line.accessEndDate) : null;
       tx.set(snap.ref, {
         paid: (confirmedPaidOf(student) + minor(line.tuitionCredit)) / 100,
-        balanceDue: 0, balance: 0, paymentStatus: "Paid",
+        balanceDue: remainingBalance, balance: remainingBalance,
+        paymentStatus: partial ? "Partially Paid" : "Paid",
+        ...(partial ? {
+          status: accessEndDate.getTime() > Date.now() ? "Active" : "Expired",
+          trialStatus: "converted", trialConvertedAt: paidAt,
+          contractStart: line.accessStartDate, contractEnd: line.accessEndDate,
+          contractTermMonths: "1", paidLevel: student.level || student.paidLevel || "",
+        } : {}),
         organisationPaymentReference: reference, organisationPaymentGross: line.grossAmount,
         organisationRetainedShare: 0, organisationNetTuition: line.tuitionCredit,
         billingResponsibility: "organisation", lastPaymentAmount: line.tuitionCredit,
@@ -234,6 +273,7 @@ async function recordManualOrganisationPayment({ db, admin, actor, body = {} }) 
         studentId: line.studentId, studentName: line.studentName, email: student.email,
         purpose: "organisation_allocation", billingResponsibility: "organisation",
         referralEligible: false, tuitionCredit: line.tuitionCredit, discount: 0,
+        courseTuitionFee: line.courseTuitionFee, remainingBalance: line.remainingBalance,
         currency: "GHS", provider: "Manual", method, status: "paid", paidAt, createdAt: now,
       });
     });

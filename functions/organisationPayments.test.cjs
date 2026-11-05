@@ -160,7 +160,7 @@ test("manual tuition rejects unverified transfers, discounting, incorrect balanc
     { agreementType: "current_10_percent" },
     { receivedDate: "2030-02-10" },
     { lines: [{ studentId: "A", amount: 3000, discount: 300 }] },
-    { lines: [{ studentId: "A", amount: 2999, discount: 0 }] },
+    { lines: [{ studentId: "A", amount: 3001, discount: 0 }] },
     { lines: [{ studentId: "B", amount: 500, discount: 0 }] },
     { verificationNote: "" },
     { agreementNote: "" },
@@ -180,6 +180,60 @@ test("manual tuition rejects unverified transfers, discounting, incorrect balanc
   await assert.rejects(g.record(), /unpaid balance/);
   assert.equal(g.data.get("students/A").paid, 0);
 });
+
+test("legacy partial tuition credits only GH₵2,000 of GH₵3,000 and grants one calendar month", async () => {
+  const f = manualFixture();
+  const recorded = await f.record(manualBody({
+    lines: [{ studentId: "A", amount: 2000, discount: 0 }],
+  }));
+  const student = f.data.get("students/A"), payment = f.data.get("payments/" + recorded.reference);
+  assert.equal(student.tuitionFee, 3000);
+  assert.equal(student.paid, 2000);
+  assert.equal(student.balanceDue, 1000);
+  assert.equal(student.balance, 1000);
+  assert.equal(student.paymentStatus, "Partially Paid");
+  assert.equal(student.status, "Active");
+  assert.equal(student.contractTermMonths, "1");
+  assert.equal(student.contractStart, "2026-11-04T12:00:00.000Z");
+  assert.equal(student.contractEnd, "2026-12-04T12:00:00.000Z");
+  assert.equal(student.accountActivationState, "not_prepared");
+  assert.equal(payment.tuitionCredit, 2000);
+  assert.equal(payment.lines[0].courseTuitionFee, 3000);
+  assert.equal(payment.lines[0].remainingBalance, 1000);
+  assert.equal(payment.lines[0].accessEndDate, "2026-12-04T12:00:00.000Z");
+  assert.equal(f.data.get("payments/" + recorded.reference + "-0").remainingBalance, 1000);
+  const retry = await f.record(manualBody({
+    lines: [{ studentId: "A", amount: 2000, discount: 0 }],
+  }));
+  assert.equal(retry.duplicate, true);
+  assert.equal(f.data.get("students/A").paid, 2000);
+});
+test("partial receipt states outstanding tuition and one-month expiry without claiming full settlement", async () => {
+  const f = manualFixture();
+  const { reference } = await f.record(manualBody({ lines: [{ studentId: "A", amount: 2000, discount: 0 }] }));
+  await sendGroupReceipt({ ...f, admin, reference, runtimeConfig: {}, send: async (_conf, row) => {
+    assert.equal(row.email, "company@example.test");
+    assert.match(row.announcement, /Tuition payment received: GHS 2000\.00/);
+    assert.match(row.announcement, /Course tuition GHS 3000\.00 \| Remaining balance GHS 1000\.00/);
+    assert.match(row.announcement, /One-month paid access until 2026-12-04T12:00:00.000Z/);
+    assert.match(row.announcement, /This is a partial tuition payment/);
+    assert.doesNotMatch(row.announcement, /Falowen received the full tuition amount/);
+    assert.doesNotMatch(row.announcement, /Student access is six months from account activation/);
+    assert.equal(row.student_allocations[0].net_tuition, 2000);
+  }});
+});
+test("one-month partial access clamps end-of-month and rejects preexisting contract or overpayment", async () => {
+  const f = manualFixture();
+  await assert.rejects(f.record(manualBody({
+    lines: [{ studentId: "A", amount: 3100, discount: 0 }],
+  })), /must not exceed/);
+  f.data.get("students/A").contractEnd = "2027-01-01T00:00:00.000Z";
+  await assert.rejects(f.record(manualBody({
+    lines: [{ studentId: "A", amount: 2000, discount: 0 }],
+  })), /already has contract access dates/);
+  assert.equal(f.data.get("students/A").paid, 0);
+});
+
 test("the same manual external reference cannot be reused for a different company, amount or payment method", async () => {
   const f = manualFixture();
   const first = await f.record();
