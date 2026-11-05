@@ -33,6 +33,30 @@ async function owner(req, admin) {
   if (!actor.email_verified || email(actor.email) !== "moxflex@gmail.com") fail(403, "Owner access required.");
   return actor;
 }
+function dateOnly(value) {
+  if (!value) return "";
+  const dt = typeof value.toDate === "function" ? value.toDate() : value;
+  if (dt instanceof Date) return Number.isNaN(dt.getTime()) ? "" : dt.toISOString().slice(0, 10);
+  return String(dt).slice(0, 10);
+}
+
+async function confirmedRequestedClass(tx, db, row) {
+  const id = clean(row.requestedClassId);
+  if (!/^[a-zA-Z0-9_-]{1,100}$/.test(id)) return null;
+  const snapshot = await tx.get(db.collection("classes").doc(id));
+  if (!snapshot.exists) return null;
+  const klass = snapshot.data() || {};
+  const name = clean(klass.name || klass.title || klass.className);
+  const level = clean(klass.levelId || klass.level).toUpperCase();
+  const startDate = dateOnly(klass.startDate);
+  // The request came from the public form, so always revalidate it against
+  // the server-owned class before accepting it as an actual assignment.
+  if (!name || !startDate || level !== clean(row.level).toUpperCase()
+    || name.toLowerCase() !== clean(row.requestedClassName).toLowerCase()
+    || startDate !== dateOnly(row.requestedClassStartDate)) return null;
+  return { classId: id, className: name, classStartDate: startDate };
+}
+
 function organisationStudentCode(name, identity, attempt = 0) {
   const safeName = clean(name).replace(/[^a-zA-Z0-9]/g, "").slice(0, 48) || "Student";
   const digits = 100 + (parseInt(hash("student-code:" + email(identity) + ":" + attempt).slice(0, 8), 16) % 900);
@@ -68,6 +92,7 @@ async function reviewRow({ db, admin, batchId, index, decision, actor }) {
       const canonical = await tx.get(studentRef);
       if (!existing.empty || canonical.exists) fail(409, "A student already uses this email. Review the existing student in the directory; no duplicate was created.");
       publicCode = await uniqueOrganisationCode({ tx, db, name: row.name, identity: row.email, studentId });
+      const approvedClass = await confirmedRequestedClass(tx, db, row);
       tx.create(studentRef, {
         name: row.name, fullName: row.name, email: row.email, phone: row.phone,
         requestedClassId: row.requestedClassId || "", requestedClassName: row.requestedClassName || "", requestedClassStartDate: row.requestedClassStartDate || "",
@@ -75,7 +100,10 @@ async function reviewRow({ db, admin, batchId, index, decision, actor }) {
         role: "student", studentCode: publicCode, studentcode: publicCode, program: "german",
         organisationName: batch.organisation.name, organisationContactEmail: batch.organisation.email,
         organisationSubmissionId: batchId, organisationId: batch.organisationId || organisationId(batch.organisation.email), enrolmentSource: "organisation", billingResponsibility: "organisation",
-        status: "pending", paymentStatus: "pending", className: "", contractStart: "", contractEnd: "",
+        status: "pending", paymentStatus: "pending",
+        ...(approvedClass || { className: "" }),
+        organisationClassAssignmentPending: !approvedClass,
+        contractStart: "", contractEnd: "",
         accountActivationState: "not_prepared", syncedToSheets: false, joined_at: new Date().toISOString(),
         createdAt: now, updated_at: now,
       });
