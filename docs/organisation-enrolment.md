@@ -22,6 +22,12 @@ Backend: `functions/organisationEnrolment.js`, registered in the Admin `api` Fir
 
 Validation: `node --test functions/organisationEnrolment.test.cjs functions/studentAccountActivation.test.cjs tests/student-emergency-contact.test.js`; `npm run build`.
 
+## Readable student codes and existing organisation records
+
+Organisation approvals retain the stable internal Firestore document ID `ORG-<hash>` as the linked `studentId`, so payment allocations, Firebase UID linking and audit references remain valid. Their **public student code** is now the normal `FirstLast###` format: name characters plus a deterministic three-digit suffix, with server-side collision checks. New records store it in both `studentCode` and `studentcode`, and the review list exposes a separate `displayStudentCode`.
+
+Old approved records may still display the internal `ORG-` ID. The owner's **Fix student code** action on `/organisation-submissions` updates only the readable code fields, updates the review row's display value, adds an audit entry and requests the existing learner-side student-sheet upsert. It does not rename the Firestore document, create a second student, change the Auth UID, alter payment references, change tuition/balance/contract dates or send receipts. The learner Sheets writer matches the existing sheet row by email as well as code, preventing a second row when the public code changes. The learner-side sync must deploy its fix to prefer verified `paid` over `initialPaymentAmount`, which is a payment intent; otherwise the sheet may show 0 received even when the canonical student payment is nonzero. Inspect the live student ledger and spreadsheet after using the repair action rather than hand-overwriting a sheet row.
+
 ## Unexpected HTML response
 
 The client reads response text and validates JSON before accepting success. An HTML fallback, empty response or network failure keeps all form entries and the original request ID available for retry. The Vercel proxy converts non-JSON organisation API replies to a JSON 502 instead of forwarding HTML. Do not treat this message as confirmation of a saved submission; only a reference receipt confirms it.
