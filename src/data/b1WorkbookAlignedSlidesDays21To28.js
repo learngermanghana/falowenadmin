@@ -755,7 +755,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
     teacherNotesEn: [
       "Day 28 has no day-specific deep grammar page. Use the workbook's general B1 argument training and the lesson's indem/dass/weil/trotzdem contrast-and-reason frames.",
       "Teil 3 is a separate seven-question reading about water as a scarce resource, water saving, pollution and government responsibility.",
-      "Teacher slide 3 now contains the five original Klimafreundlich leben multiple-choice questions (A B C B A). The R2 link provided for this lesson is actually b1/day-27/umweltfreundlich-im-alltag.mp3, so Day 28 classroom playback stays disabled until the correct Day 28 recording is identified.",
+      "Teacher slide 3 contains the five original Klimafreundlich leben multiple-choice questions (A B C B A). The teacher explicitly confirmed that Day 28 Hören uses the exact private R2 key b1/day-27/umweltfreundlich-im-alltag.mp3 despite the Day 27 folder name. Playback uses the staff-only signer.",
       "The teacher slide Hören and graded workbook Teil 4 are separate activities. Do not substitute the teacher multiple-choice answers for the separate workbook scoring key; its media mismatch remains unresolved.",
     ],
     interactionFlow: [
@@ -763,7 +763,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       { phase: "Language links", detailEn: "9 min: connect methods with indem, reasons with weil and obstacles with dass/trotzdem." },
       { phase: "Country comparison", detailEn: "11 min: discuss what is realistic in the learner's country and why." },
       { phase: "Opinion rehearsal", detailEn: "10 min: prepare a structured answer with measures, obstacles and conclusion." },
-      { phase: "Listening preview", detailEn: "8 min: review the five supplied classroom questions on climate habits and wait for a verified Day 28 recording before playing audio." },
+      { phase: "Hören practice", detailEn: "8 min: play the teacher-confirmed recording for B1 Day 28 and discuss the five multiple-choice questions after listening." },
     ],
     wrapUpTaskDe: "Erkläre eine klimafreundliche Maßnahme, einen Vorteil und ein Hindernis. Nutze indem, weil und trotzdem.",
     workbookConnection: workbookConnection(28, [
@@ -794,7 +794,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
         "Using indem or weil with main-clause word order.",
         "Using trotzdem like a subordinate conjunction and putting the verb at the end.",
         "Talking only about abstract climate policy without concrete everyday measures.",
-        "Playing the B1 Day 27 conversation for the Day 28 question bank or treating classroom answers as graded Teil 4 answers.",
+        "Using an unapproved R2 object for B1 Day 28 or treating the classroom answers as graded workbook Teil 4 answers.",
       ],
     },
   },
