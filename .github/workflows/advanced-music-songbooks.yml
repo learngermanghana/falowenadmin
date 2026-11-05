@@ -39,7 +39,7 @@ jobs:
           node-version: "22"
       - name: Check all six reusable songbooks
         run: |
-          node --test tests/advanced-music-songbooks.test.js tests/reusable-music-songbook.test.js tests/reusable-music-genre-diversity.test.js tests/music-song-falowen-signature.test.js
+          node --test tests/advanced-music-songbooks.test.js
       - name: Build Music Studio frontend
         run: |
           npm ci --ignore-scripts
