@@ -56,7 +56,7 @@ test("company receipt retries do not allocate payment again and sent receipts ar
   const f = fixture(); await f.apply(); let sends = 0;
   const args = { ...f, admin, reference: f.payment.reference, runtimeConfig: {}, send: async () => { throw new Error("offline"); } };
   await assert.rejects(sendGroupReceipt(args)); assert.equal(f.data.get("payments/FAL-ORG-test").receiptStatus, "failed");
-  args.send = async (config, row) => { sends++; assert.equal(row.email, "company@example.test"); assert.match(row.announcement, /A: GHS 500.00/); };
+  args.send = async (config, row) => { sends++; assert.equal(row.email, "company@example.test"); assert.equal(row.email_type, "organisation_payment_receipt"); assert.match(row.announcement, /A \\| Gross GHS 600\\.00/); assert.match(row.announcement, /net tuition allocated GHS 500\\.00/); assert.match(row.announcement, /Retained 10% organisation share: GHS 100\\.00/); assert.match(row.announcement, /Checkout processing charges: GHS 10\\.00/); };
   await sendGroupReceipt(args); await sendGroupReceipt(args);
   assert.equal(sends, 1); assert.equal(f.data.get("students/A").paid, 600);
 });
