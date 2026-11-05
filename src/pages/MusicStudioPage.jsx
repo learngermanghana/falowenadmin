@@ -51,12 +51,13 @@ export default function MusicStudioPage() {
     catch { return 'Create a hip-hop song with an Afrobeats feel.'; }
   });
   const [directionOverride, setDirectionOverride] = useState(null);
+  const [advancedSavedPromptOverride, setAdvancedSavedPromptOverride] = useState("");
   useEffect(() => {
     try { localStorage.setItem('falowen-music-short-prompt', shortPrompt); } catch { /* Optional device-only draft. */ }
   }, [shortPrompt]);
   const [styleMode, setStyleMode] = useState('auto');
   const [productionProfile, setProductionProfile] = useState('auto');
-  // Prewritten A1–B1 lyrics are selected from the local dictionary; edits are
+  // Prewritten A1–C2 lyrics are selected from the local dictionary; edits are
   // scoped by assignment so changing lessons never reuses the wrong lyrics.
   const [lyricsOverrides, setLyricsOverrides] = useState({});
   const [savedLyrics, setSavedLyrics] = useState({});
@@ -67,6 +68,10 @@ export default function MusicStudioPage() {
   const [copyStatus, setCopyStatus] = useState('');
   const draft = courseMode === 'course' ? getReusableSongDraft(lesson?.assignmentKey) : null;
   const assignmentKey = lesson?.assignmentKey || '';
+  const isAdvancedSavedSong = courseMode === 'course' && ['B2','C1','C2'].includes(level) && !!draft;
+  const simpleSavedPrompt = isAdvancedSavedSong
+    ? (advancedSavedPromptOverride || draft.musicStyle)
+    : shortPrompt;
   // A previous saved short Day 7 draft must not mask the newly approved recording lyrics.
   // Preserve other saved teacher edits; the owner can permanently overwrite the stale draft.
   const obsoleteDay7Draft = assignmentKey === 'A1-3' &&
@@ -195,6 +200,7 @@ export default function MusicStudioPage() {
     // New dictionary topics must not accidentally inherit "rewrite from source"
     // from the previous song: prewritten lyrics default to exact playback.
     setLyricTreatment('exact');
+    setAdvancedSavedPromptOverride("");
     setCopyStatus('');
     setDirectionOverride(null);
   }, [assignmentKey, level, courseMode]);
@@ -224,7 +230,7 @@ export default function MusicStudioPage() {
     downloadLyricsText(text, falowenMusicFileName(lesson, trackTitle, 'txt'));
   }
   function exportCompleteSongbook() {
-    const text = ['A1', 'A2', 'B1'].map(songLevel => {
+    const text = STUDIO_COURSE_LEVELS.map(songLevel => {
       const entries = getMusicDays(songLevel).flatMap(group => group.lessons);
       const songs = getReusableSongDrafts(songLevel);
       const content = songs.map(song => musicSongTeachingPackText(song,
@@ -232,10 +238,10 @@ export default function MusicStudioPage() {
         .join('\n\n' + '='.repeat(70) + '\n\n');
       return `FALOWEN MUSIC · ${songLevel} · ${songs.length} ORIGINAL SONGS\n\n${content}`;
     }).join('\n\n' + '#'.repeat(70) + '\n\n');
-    downloadLyricsText(text, 'falowen-a1-to-b1-84-song-lyrics-and-music-styles.txt');
+    downloadLyricsText(text, 'falowen-a1-to-c2-168-song-lyrics-and-music-styles.txt');
   }
   function exportLevelSongbook() {
-    if (!['A1', 'A2', 'B1'].includes(level)) return;
+    if (!STUDIO_COURSE_LEVELS.includes(level)) return;
     const entries = days.flatMap(group => group.lessons);
     const contents = getReusableSongDrafts(level).map(song => {
       const lessonEntry = entries.find(entry => entry.assignmentKey === song.assignmentKey);
@@ -270,7 +276,7 @@ export default function MusicStudioPage() {
       // Simple generation sends only the prompt plus explicitly selected lyrics.
       const prompt = simple
         ? buildFalowenShortMusicPrompt({
-            brief: shortPrompt, lyrics: usingLessonLyrics ? lyrics : '',
+            brief: usingLessonLyrics ? simpleSavedPrompt : shortPrompt, lyrics: usingLessonLyrics ? lyrics : '',
             mode: 'song', durationSeconds: 150, vocalMode: 'voice', lyricTreatment: 'exact',
           })
         : promptMode === 'short'
@@ -294,7 +300,7 @@ export default function MusicStudioPage() {
   const cents = mode === 'clip' ? 4 : 8;
   const capped = status && (status.dailyCents + cents > status.limits.dailyCents || status.monthlyCents + cents > status.limits.monthlyCents);
   const simpleCapped = status && (status.dailyCents + 8 > status.limits.dailyCents || status.monthlyCents + 8 > status.limits.monthlyCents);
-  const simpleReady = Boolean(status?.ready) && !simpleCapped && !busy && Boolean(shortPrompt.trim()) &&
+  const simpleReady = Boolean(status?.ready) && !simpleCapped && !busy && Boolean((composerTab === 'saved' ? simpleSavedPrompt : shortPrompt).trim()) &&
     (composerTab === 'prompt' || Boolean(lyrics.trim()));
   return <main className="music-studio music-studio-simple">
     <header className="music-simple-header">
@@ -345,8 +351,11 @@ export default function MusicStudioPage() {
           </div>}
           <label htmlFor="music-create-prompt">{composerTab === 'saved' ? 'Music style prompt' : 'Describe your song'}</label>
           <textarea id="music-create-prompt" rows={composerTab === 'saved' ? 3 : 6}
-            maxLength={1500} required disabled={busy} value={shortPrompt} onChange={e => setShortPrompt(e.target.value)}
+            maxLength={1500} required disabled={busy}
+            value={composerTab === 'saved' ? simpleSavedPrompt : shortPrompt}
+            onChange={e => (composerTab === 'saved' && isAdvancedSavedSong ? setAdvancedSavedPromptOverride(e.target.value) : setShortPrompt(e.target.value))}
             placeholder="A heartfelt Afro-soul song, clear German vocals, a memorable chorus and warm piano…" />
+          {composerTab === 'saved' && isAdvancedSavedSong && <p className="music-note">The curated {level} arrangement is selected for this song. Edit the music style above if you want another sound. It will reset to the next lesson's arrangement when you change songs.</p>}
           {composerTab === 'saved' && <div className="music-simple-saved-editor">
             <label htmlFor="music-create-lyrics">Lyrics</label>
             <textarea id="music-create-lyrics" rows={11} maxLength={5500} disabled={busy || loadingLyrics}
@@ -411,12 +420,12 @@ export default function MusicStudioPage() {
           <label htmlFor="music-focus">Words or grammar to practise (optional)</label><textarea id="music-focus" rows={2} maxLength={400} value={focus} onChange={e => setFocus(e.target.value)} placeholder="Add specific words or structures from your lesson" />
           <p className="music-note">The selected level, day and dictionary topic guide the song automatically. Changing lessons loads the matching prewritten lyrics and style when available. Your edits stay with that lesson while the page is open. Choosing or copying lyrics is free.</p>
         </>}
-        {courseMode === 'course' && ['A1', 'A2', 'B1'].includes(level) && <div className="music-songbook-actions" style={{ padding: 12, border: '1px solid #bfdfc3', borderRadius: 12, background: '#f0f9f0', display: 'grid', gap: 8 }}>
+        {courseMode === 'course' && STUDIO_COURSE_LEVELS.includes(level) && <div className="music-songbook-actions" style={{ padding: 12, border: '1px solid #bfdfc3', borderRadius: 12, background: '#f0f9f0', display: 'grid', gap: 8 }}>
           <strong>Ready-to-use songbook · {getReusableSongDrafts(level).length} original songs</strong>
           <p style={{ margin: 0, fontSize: 13 }}>Select a lesson to load its original storytelling lyrics and matching music style. Reuse the text free of charge, then generate audio only when ready.</p>
           {draft && <p style={{ margin: 0, fontSize: 13 }}><strong>Selected song:</strong> {draft.title}</p>}
           <button type="button" onClick={exportLevelSongbook}>Download all {level} lyrics & music styles (.txt)</button>
-          <button type="button" onClick={exportCompleteSongbook}>Download complete A1–B1 songbook · 84 songs (.txt)</button>
+          <button type="button" onClick={exportCompleteSongbook}>Download complete A1–C2 songbook · 168 songs (.txt)</button>
         </div>}
         <h2>2. Shape your song</h2>
         <label htmlFor="music-prompt-mode">Music prompt mode</label>

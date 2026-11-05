@@ -1,0 +1,46 @@
+name: Advanced Music Songbooks
+
+on:
+  pull_request:
+    paths:
+      - "src/data/advancedMusicSongTools.js"
+      - "src/data/musicSongDraftsB2Part*.js"
+      - "src/data/musicSongDraftsC1Part*.js"
+      - "src/data/musicSongDraftsC2Part*.js"
+      - "src/data/reusableMusicSongbook.js"
+      - "src/data/reusableMusicQuestions.js"
+      - "src/pages/MusicStudioPage.jsx"
+      - "src/utils/musicCourseContext.js"
+      - "tests/advanced-music-songbooks.test.js"
+      - "tests/reusable-music-songbook.test.js"
+      - ".github/workflows/advanced-music-songbooks.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/data/advancedMusicSongTools.js"
+      - "src/data/musicSongDraftsB2Part*.js"
+      - "src/data/musicSongDraftsC1Part*.js"
+      - "src/data/musicSongDraftsC2Part*.js"
+      - "src/data/reusableMusicSongbook.js"
+      - "src/data/reusableMusicQuestions.js"
+      - "src/pages/MusicStudioPage.jsx"
+      - "src/utils/musicCourseContext.js"
+      - "tests/advanced-music-songbooks.test.js"
+      - "tests/reusable-music-songbook.test.js"
+      - ".github/workflows/advanced-music-songbooks.yml"
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check all six reusable songbooks
+        run: |
+          node --test tests/advanced-music-songbooks.test.js
+      - name: Build Music Studio frontend
+        run: |
+          npm ci --ignore-scripts
+          npx vite build
