@@ -7,6 +7,7 @@ import { startVisiblePolling } from "./utils/visiblePolling.js";
 import "./App.css";
 import "./LiveClassesMobile.css";
 
+const PaystackPage = lazy(() => import("./pages/PaystackPage.jsx"));
 const PartnershipPage = lazy(() => import("./pages/PartnershipPage.jsx"));
 const ReferralReviewPage = lazy(() => import("./pages/ReferralReviewPage.jsx"));
 const OrganisationEnrolmentPage = lazy(() => import("./pages/OrganisationEnrolmentPage.jsx"));
@@ -271,6 +272,7 @@ export default function App() {
         <Suspense fallback={<RouteFallback />}>
           <Routes>
           <Route path="/partnerships" element={<PartnershipPage />} />
+          <Route path="/paystack" element={<ProtectedRoute allowStaff={false}><PaystackPage /></ProtectedRoute>} />
           <Route path="/referral-review" element={<ProtectedRoute allowStaff={false}><ReferralReviewPage /></ProtectedRoute>} />
           <Route path="/organisation-enrolment" element={<OrganisationEnrolmentPage />} />
           <Route path="/organisation-submissions" element={<ProtectedRoute allowStaff={false}><OrganisationEnrolmentPage review /></ProtectedRoute>} />

@@ -440,6 +440,8 @@ function createStudentPaymentUpdateEmailTrigger({
 }
 
 module.exports = {
+  resolveWebhookConfig,
+  postPaymentRow,
   createStudentPaymentUpdateEmailTrigger,
   processStudentPaymentUpdate,
   _test: {
