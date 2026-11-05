@@ -115,7 +115,9 @@ export default function InteractiveLessonOpening({ stage, slide }) {
     {listening && <div className="pharm-audio">
       <div className="pharm-audio-label"><span aria-hidden="true">♫</span><div><strong>{lesson.listening.title}</strong><small>{music ? "Höre das Lied und beantworte die Fragen. Das Video zeigt den Liedtext." : "Lies zuerst die Fragen. Höre danach ohne das Skript zu."}</small></div></div>
       {lesson.listening.playbackNote ? <p className="pharm-playback-note" role="note">{lesson.listening.playbackNote} · Fragen bleiben während des Abspielens sichtbar.</p> : null}
-      {lesson.listening.youtubeId ? (
+      {!lesson.listening.audioKey && !lesson.listening.youtubeId ? (
+        <p className="pharm-audio-error" role="status">Die Aufnahme für B1 Tag 28 ist noch nicht verknüpft. Der angegebene R2-Link gehört zu Tag 27. Die Originalfragen können besprochen werden, aber ein falsches Audio wird nicht abgespielt.</p>
+      ) : lesson.listening.youtubeId ? (
         <MusicVideoEmbed videoId={lesson.listening.youtubeId} title={lesson.listening.title} variant="listening" />
       ) : !audioUrl ? (
         <button type="button" className="pharm-btn pharm-btn-primary" onClick={prepareAudio} disabled={audioBusy}>{audioBusy ? "Audio wird vorbereitet…" : "▶ Audio laden"}</button>
@@ -126,7 +128,7 @@ export default function InteractiveLessonOpening({ stage, slide }) {
       {audioError && <p className="pharm-audio-error" role="alert">{audioError} · R2-Objekt: {lesson.listening.audioKey}</p>}
       {lesson.listening.youtubeId
         ? <p className="pharm-playback-note">Nach dem Hören: Klick auf „Antworten einzeln besprechen“. Die Lösungen bleiben zunächst verborgen.</p>
-        : <label className="pharm-review-checkbox"><input type="checkbox" checked={autoReview} onChange={(event) => setAutoReview(event.target.checked)} /> Nach Audioende automatisch zu Frage 1 wechseln (optional)</label>}
+        : lesson.listening.audioKey ? <label className="pharm-review-checkbox"><input type="checkbox" checked={autoReview} onChange={(event) => setAutoReview(event.target.checked)} /> Nach Audioende automatisch zu Frage 1 wechseln (optional)</label> : null}
       {(stage.transcript?.length || lesson.listening.transcript?.length) ? (
         <details className="pharm-script" open={showTranscript} onToggle={(event) => setShowTranscript(event.currentTarget.open)}>
           <summary>{showTranscript ? (music ? "Liedtext-Auszüge ausblenden" : "Skript ausblenden") : (music ? "Liedtext-Auszüge anzeigen" : "Skript für die Klasse anzeigen")} <span>OPTIONAL</span></summary>
