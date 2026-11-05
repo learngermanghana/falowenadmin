@@ -6,6 +6,6 @@ export async function requestOrganisationAgreement(path, body) {
 }
 export async function loadOrganisationAgreement() {
   const data = await requestOrganisationAgreement("agreement-terms?kind=institutional");
-  if (data.partnerShareRate !== 0.1 || data.shareSettlement !== "invoice_deduction") throw new Error("The updated 10% organisation agreement is not available yet. Please try again shortly.");
+  if (data.partnerShareRate !== 0.1 || data.shareSettlement !== "invoice_deduction" || data.tuitionRefundable !== false || data.classDurationWeeks !== 10 || data.accessMonths !== 6 || data.accessStartsAt !== "account_activation") throw new Error("The updated organisation agreement is not available yet. Please try again shortly.");
   return data;
 }

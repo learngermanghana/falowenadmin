@@ -2,7 +2,7 @@
 const crypto = require("node:crypto");
 const { owner } = require("./organisationEnrolment");
 const VERSION = "partnership-2026-11-05-v2";
-const ORGANISATION_VERSION = "organisation-partnership-2026-11-05-v4";
+const ORGANISATION_VERSION = "organisation-partnership-2026-11-05-v5";
 const hash = text => crypto.createHash("sha256").update(text).digest("hex");
 const fail = (status, message) => { throw Object.assign(new Error(message), { status }); };
 const TERMS = {
@@ -15,7 +15,9 @@ TERMS.institutional = [
   "How payment works — After signing, submit your students through the organisation enrolment form. Falowen reviews and approves the list, confirms the tuition amounts and issues one group Paystack payment link. The organisation keeps its agreed 10% share and pays the remaining tuition. No bank details, separate commission transfer or Paystack split is required. Any checkout processing charge is displayed separately.",
   "Example — If the approved first tuition payments total GHS 5,000, the organisation keeps GHS 500 and the tuition payable to Falowen is GHS 4,500, plus any displayed checkout processing charge.",
   "Student enrolment — The organisation supplies accurate student details with permission to share them. Approval creates pending records for billing. After payment is verified, Falowen allocates the payment and partner-share deduction to each approved student, then completes the class, contract and account-invitation arrangements. A signed agreement or submitted student list is not proof of payment.",
-  "Refunds, cancellations and corrections — A refunded, reversed or cancelled tuition payment cancels the related organisation share. Falowen reviews and reconciles any retained share and student balances under the agreed payment terms. An incorrect or duplicate payment must be reported for review; it does not create an additional entitlement.",
+  "Non-refundable tuition — Tuition payments are non-refundable. A student who cannot attend may request a class change during their existing six-month contract, subject to Falowen's approval and class availability; no refund is offered. An incorrect or duplicate payment must be reported to Falowen for review and does not create an additional organisation share.",
+  "Class duration and Falowen access — Each class lasts 10 weeks. The organisation selects each student's German level and preferred available class/start date in the organisation enrolment form, subject to Falowen's confirmation. Each student receives six months of Falowen access from account activation. Completing the class earlier does not end access: students can continue using Falowen for the remainder of that six-month period. Class duration and platform access are different periods.",
+  "Class-change requests — Students may request a change of class at any time while they remain within their six-month contract. Falowen reviews requests and confirms an available suitable class. A class change does not restart or extend the original six-month access period; all continued attendance and access must remain within that period.",
   "Organisation responsibilities — The authorised representative confirms they can sign for the organisation, submit the student details and manage the group payment. The organisation must provide accurate contact details and must not promise examination results, visas or commitments on Falowen's behalf.",
   "Electronic consent and records — By entering their full name and accepting the signing consent, the representative signs electronically for the organisation. Falowen saves the accepted terms, version, signing time and receipt reference, and provides a downloadable PDF bearing the representative's signature and the authorised Falowen director signature. Keep that copy for your records.",
 ];
@@ -133,7 +135,7 @@ function registerAgreementRoutes(app, { db, admin, getSecret = () => process.env
   }));
   app.get("/referrals/agreement-terms", handle(async (req, res) => {
     const kind = "institutional";
-    res.json({ ok: true, version: ORGANISATION_VERSION, kind, terms: TERMS[kind], partnerShareRate: 0.1, shareSettlement: "invoice_deduction" });
+    res.json({ ok: true, version: ORGANISATION_VERSION, kind, terms: TERMS[kind], partnerShareRate: 0.1, shareSettlement: "invoice_deduction", tuitionRefundable: false, classDurationWeeks: 10, accessMonths: 6, accessStartsAt: "account_activation" });
   }));
   app.get("/referrals/agreement-sample", handle(async (req, res) => {
     const kind = "institutional";
@@ -142,7 +144,7 @@ function registerAgreementRoutes(app, { db, admin, getSecret = () => process.env
   }));
   app.post("/referrals/apply-signed", handle(async (req, res) => {
     const { publicData, bank, tokenHash } = validateApplication(req.body);
-    const id = hash("organisation-v4:" + publicData.email);
+    const id = hash("organisation-v5:" + publicData.email);
     const ref = partners.doc(id), secretRef = privateData.doc(id);
     const signedAt = new Date().toISOString();
     const record = { ...publicData, id, status: "pending", signedAt, termsSnapshot: TERMS[publicData.kind], termsHash: hash(JSON.stringify(TERMS[publicData.kind])),

@@ -178,7 +178,7 @@ function registerPayoutTriggers({ db, admin, onDocumentWritten, paystackSecret }
   exports.notifyApprovedPartnership = onDocumentWritten({ document: "referralApplications/{id}", retry: true, secrets: [paystackSecret] }, async event => {
     const after = event.data?.after; if (!after?.exists) return;
     const partner = after.data(), before = event.data.before?.data() || {};
-    if (partner.status !== "approved" || ![VERSION, "organisation-partnership-2026-11-05-v3", ORGANISATION_VERSION].includes(partner.terms)) return;
+    if (partner.status !== "approved" || ![VERSION, "organisation-partnership-2026-11-05-v3", "organisation-partnership-2026-11-05-v4", ORGANISATION_VERSION].includes(partner.terms)) return;
     if (before.status !== "approved") {
       const marker = db.collection("partnershipNotifications").doc(after.id), current = await marker.get();
       if (!current.exists || current.data().status !== "sent") {
