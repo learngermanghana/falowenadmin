@@ -23,7 +23,7 @@ content = content.replace(
 );
 
 const legacyHelperRequire = 'const { createOrientationAutoSyncHandler } = require("./orientationAutoSync");\n';
-const helperRequire = 'const { createOrientationAutoSyncHandler, hasQualifyingPayment } = require("./orientationAutoSync");\n';
+const helperRequire = 'const { createOrientationAutoSyncHandler } = require("./orientationAutoSync");\n';
 const helperAnchor = 'const { defineSecret } = require("firebase-functions/params");\n';
 if (content.includes(legacyHelperRequire)) {
   content = content.replace(legacyHelperRequire, helperRequire);
@@ -53,62 +53,19 @@ const block = `${beginMarker}const automaticPaidStudentOrientationHandler = crea
   ).trim(),
 });
 
-async function automaticPaidPaymentOrientationHandler(event) {
-  const beforePayment = event?.data?.before?.exists ? event.data.before.data() || {} : {};
-  const afterPayment = event?.data?.after?.exists ? event.data.after.data() || {} : {};
-  const beforeStatus = String(beforePayment.status || "").trim().toLowerCase();
-  const afterStatus = String(afterPayment.status || "").trim().toLowerCase();
-
-  if (afterStatus !== "paid" || beforeStatus === "paid") {
-    return { skipped: true, reason: "payment_not_newly_paid" };
-  }
-
-  const studentId = String(afterPayment.studentId || "").trim();
-  if (!studentId) throw new Error("Paid payment is missing studentId for orientation sync.");
-
-  const studentRef = db.collection("students").doc(studentId);
-  const studentSnapshot = await studentRef.get();
-  if (!studentSnapshot.exists) {
-    throw new Error("Student record not found for paid payment: " + studentId);
-  }
-
-  const currentStudent = studentSnapshot.data() || {};
-  const syntheticBefore = {
-    ...currentStudent,
-    paymentStatus: "pending",
-    payment_status: "pending",
-    paid: 0,
-    paidAmount: 0,
-    initialPaymentAmount: 0,
-  };
-  const beforeStudentSnapshot = {
-    exists: true,
-    id: studentSnapshot.id || studentId,
-    ref: studentRef,
-    data: () => syntheticBefore,
-  };
-
-  return automaticPaidStudentOrientationHandler({
-    ...event,
-    params: {
-      ...(event?.params || {}),
-      studentCode: studentSnapshot.id || studentId,
-    },
-    data: {
-      before: beforeStudentSnapshot,
-      after: studentSnapshot,
-    },
-  });
-}
-
+// Listening to payment/{reference} updates misses organisation group tuition:
+// the parent payment has no studentId and each allocation is CREATED rather
+// than updated. The canonical students/{studentId} write contains the verified
+// amount, approved class and eligibility. Reuse the existing function name so
+// no additional poller or billed function is introduced.
 exports.autoSyncPaidStudentOrientation = onDocumentUpdated(
   {
     region: "europe-west1",
-    document: "payments/{reference}",
+    document: "students/{studentId}",
     secrets: [orientationSyncSecret, orientationAppsScriptUrlSecret],
     timeoutSeconds: 60,
   },
-  automaticPaidPaymentOrientationHandler
+  automaticPaidStudentOrientationHandler
 );
 ${endMarker}`;
 
