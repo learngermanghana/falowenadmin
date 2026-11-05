@@ -44,7 +44,7 @@ export const MUSIC_SONG_DRAFTS_C2_PART2 = defineAdvancedSongDrafts([
   {
     "key": "C2-2.6",
     "title": "Das Echo einer Muttersprache",
-    "genre": "Afro-Jazz Ballad",
+    "genre": "Afro-Soul Ballad",
     "tempo": 82,
     "arrangement": "Lyrical saxophone, mellow highlife guitar, brushed drums, gentle piano voicings and warm bass.",
     "lyrics": "[Verse 1]\nIm Traum spreche ich die Sprache,\nin der mein Vater Geschichten fand.\nAm Morgen denke ich in anderen Sätzen,\nund keiner davon klingt wie Verrat.\n\n[Chorus]\nEin Wort kann eine Brücke sein,\ndoch auch ein Ufer, das uns trennt.\nWer mehrere Sprachen in sich trägt,\nhat mehr als einen Ort zum Ankommen.\n\n[Verse 2]\nDie Lehrerin verbessert meine Endung,\nein Freund fragt nach dem Klang von früher.\nIch übersetze eine alte Redensart,\ndoch ihre Wärme lässt sich nicht übertragen.\nWir suchen weiter nach einem Bild,\nund finden plötzlich eine gemeinsame Melodie.\n\n[Outro]\nAm Telefon sage ich gute Nacht.\nZwei Sprachen bleiben noch im Zimmer."
