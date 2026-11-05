@@ -135,3 +135,9 @@ Deploy the new Admin agreement API before the public page: clients require metad
 ## Organisation class selection and price links — 5 November 2026
 
 The public organisation enrolment form loads the public class catalogue when opened and keeps a manual refresh button for retries. Class choices are filtered by each student's selected level. The dropdown explains loading, missing level and no matching classes rather than showing an empty selectable list. The duration/access clause in the agreement UI and the enrolment introduction link to https://www.falowen.app/classes for upcoming classes and current prices. Existing signed agreement snapshots and PDFs are unchanged. Class selection remains a request subject to Falowen confirmation.
+
+## Homepage partnership preview
+
+The Admin homepage replaces tutor-review, student-record and learning-attention shortcuts, class-group bars, assignment previews and grammar-report previews with a compact partnership-request preview. It no longer imports or invokes the submission, tutor-review or grammar-report readers; those workspaces load their own records when opened. The remaining Marking, Exam Review and Grammar shortcuts do not fetch their queues on the homepage.
+
+A verified owner opens the homepage and makes one request to the existing `/admin/referrals/applications` endpoint (maximum 40 recent applications). The preview displays up to five pending institutional applications and links to `/referral-review`. Counts explicitly cover this loaded batch, not all historical pending applications. Older results remain accessible through the review page. Staff do not call this owner-only API. StrictMode effect replay reuses the request; there is no listener, interval, polling, history scan, new backend endpoint or scheduled work. A load error remains distinct from an empty queue. Opening the homepage again loads a fresh snapshot.

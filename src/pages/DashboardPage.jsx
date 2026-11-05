@@ -1,8 +1,6 @@
+import DashboardPartnershipRequests from "../components/DashboardPartnershipRequests.jsx";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { loadSubmissions } from "../services/markingService";
-import { loadPendingTutorReviews } from "../services/tutorReviewService";
-import { loadGrammarIssueReports } from "../services/grammarIssueService";
 import { loadWhatsappReminderDashboard } from "../services/whatsappRemindersService";
 import { getUpcomingHolidays } from "../services/holidayCalendarService";
 import { listClassCohorts } from "../services/liveClassService";
@@ -10,7 +8,6 @@ import { getEffectiveClassEndDate } from "../utils/liveClassScheduling";
 import { listAllStudents } from "../services/studentsService";
 import { useAuth } from "../context/AuthContext";
 import { summarizeLeadNotifications } from "../services/leadNotificationService.js";
-import { summarizeStudentAttention } from "../utils/studentAttention.js";
 import { fetchStudentLeads } from "../services/studentLeadService.js";
 import "./DashboardPage.css";
 
@@ -100,19 +97,6 @@ function pct(value, total) {
   return Math.round((value / total) * 100);
 }
 
-function groupTopClasses(students) {
-  const map = new Map();
-  for (const student of students) {
-    const label = classLabel(student);
-    const current = map.get(label) || { label, count: 0, paid: 0, balance: 0 };
-    current.count += 1;
-    if (isPaidStudent(student)) current.paid += 1;
-    current.balance += studentBalance(student);
-    map.set(label, current);
-  }
-  return [...map.values()].sort((a, b) => b.count - a.count).slice(0, 6);
-}
-
 function isSchoolClosed(holiday = {}) {
   if (holiday.schoolClosed === true) return true;
   return ["true", "yes", "1", "closed"].includes(normalize(holiday.schoolClosed));
@@ -200,9 +184,6 @@ export default function DashboardPage() {
   const [initialCache] = useState(() => readDashboardCache());
   const [students, setStudents] = useState(() => initialCache?.students || []);
   const [liveClasses, setLiveClasses] = useState(() => initialCache?.liveClasses || []);
-  const [incomingAssignments, setIncomingAssignments] = useState([]);
-  const [pendingTutorReviewsCount, setPendingTutorReviewsCount] = useState(0);
-  const [grammarIssueReports, setGrammarIssueReports] = useState([]);
   const [contractEndingSoon, setContractEndingSoon] = useState([]);
   const [upcomingHolidays, setUpcomingHolidays] = useState([]);
   const [studentLeads, setStudentLeads] = useState([]);
@@ -245,18 +226,12 @@ export default function DashboardPage() {
 
       const currentYear = new Date().getFullYear();
       const secondaryTask = Promise.allSettled([
-        loadSubmissions(),
-        loadPendingTutorReviews(),
-        loadGrammarIssueReports(),
         loadWhatsappReminderDashboard(),
         getUpcomingHolidays({ year: currentYear, countryCode: "GH" }),
         fetchStudentLeads(),
       ]).then((results) => {
         if (!active) return;
-        const [submissions, tutorReviews, grammarIssues, reminders, holidays, leads] = results;
-        if (submissions.status === "fulfilled") setIncomingAssignments(submissions.value);
-        if (tutorReviews.status === "fulfilled") setPendingTutorReviewsCount(tutorReviews.value.length);
-        if (grammarIssues.status === "fulfilled") setGrammarIssueReports(grammarIssues.value);
+        const [reminders, holidays, leads] = results;
         if (reminders.status === "fulfilled") setContractEndingSoon(reminders.value.contractEndingSoon || []);
         if (holidays.status === "fulfilled") setUpcomingHolidays(holidays.value);
         if (leads.status === "fulfilled") setStudentLeads(leads.value.leads || []);
@@ -282,23 +257,17 @@ export default function DashboardPage() {
     const paidStudents = students.filter(isPaidStudent).length;
     const studentsWithBalance = students.filter((student) => studentBalance(student) > 0);
     const totalBalance = studentsWithBalance.reduce((sum, student) => sum + studentBalance(student), 0);
-    const classBreakdown = groupTopClasses(students);
-    const workQueue = incomingAssignments.length + pendingTutorReviewsCount + grammarIssueReports.length;
     return {
       totalStudents,
       activeStudents,
       paidStudents,
       studentsWithBalance,
       totalBalance,
-      classBreakdown,
-      workQueue,
       paymentRate: pct(paidStudents, totalStudents),
       activeRate: pct(activeStudents, totalStudents),
     };
-  }, [grammarIssueReports.length, incomingAssignments.length, pendingTutorReviewsCount, students]);
+  }, [students]);
 
-  const incomingAssignmentPreview = useMemo(() => incomingAssignments.slice(0, 5), [incomingAssignments]);
-  const grammarIssuePreview = useMemo(() => grammarIssueReports.slice(0, 5), [grammarIssueReports]);
   const contractEndingSoonPreview = useMemo(() => contractEndingSoon.slice(0, 6), [contractEndingSoon]);
   const upcomingHolidayPreview = useMemo(
     () => upcomingHolidays.slice(0, 8).map((holiday) => ({
@@ -318,11 +287,6 @@ export default function DashboardPage() {
     [studentLeads, user],
   );
 
-  const learningAttention = useMemo(
-    () => summarizeStudentAttention(students),
-    [students],
-  );
-
   const balancePreview = useMemo(
     () => analytics.studentsWithBalance
       .slice()
@@ -336,19 +300,14 @@ export default function DashboardPage() {
       {error ? <p className="analytics-error">{error}</p> : null}
       {refreshing ? <p className="analytics-refresh-status">Refreshing dashboard data…</p> : null}
 
-      <section className="analytics-hero">
+      <section className="analytics-hero analytics-hero--overview">
         <div>
           <p className="analytics-eyebrow">Falowen Admin Analytics</p>
           <h1>School operations dashboard</h1>
           <p>
-            Track students, marking workload, tutor reviews, grammar issues, WhatsApp reminders,
-            and holiday planning from one control center.
+            Track students, partnerships, balances, reminders and holiday planning.
+            Open Marking or Grammar Issues when you need to review that work.
           </p>
-        </div>
-        <div className="hero-score-card">
-          <span>Operational queue</span>
-          <strong>{analytics.workQueue}</strong>
-          <p>{analytics.workQueue === 0 ? "No urgent admin work pending." : "items need attention"}</p>
         </div>
       </section>
 
@@ -363,7 +322,7 @@ export default function DashboardPage() {
       <section className="quick-actions-grid">
         <ActionCard
           title="Marking workspace"
-          body={`${incomingAssignments.length} assignment${incomingAssignments.length === 1 ? "" : "s"} waiting. Opens one page with Mark Work, AI Audit, and Answer Keys tabs.`}
+          body="Load assignments when you open Marking. Review work, AI audits and answer keys there."
           to="/marking"
           label="Open Marking"
           tone="indigo"
@@ -375,73 +334,11 @@ export default function DashboardPage() {
           label="Open Exam Review"
           tone="blue"
         />
-        <ActionCard
-          title="Tutor review workflow"
-          body={`${pendingTutorReviewsCount} tutor review message${pendingTutorReviewsCount === 1 ? "" : "s"} pending final review.`}
-          to="/campus/tutor-marking"
-          label="Open tutor marking"
-          tone="violet"
-        />
-        <ActionCard
-          title="Student records"
-          body="Review student status, class, balance, contract dates, and contact details."
-          to="/students"
-          label="Open students"
-          tone="emerald"
-        />
-        <ActionCard
-          title="Learning attention"
-          body={
-            learningAttention.total
-              ? `${learningAttention.total} student${learningAttention.total === 1 ? "" : "s"} need attention · ${learningAttention.inactive} inactive · ${learningAttention.needsImprovement} need correction · ${learningAttention.waitingForTutor} waiting for tutor.`
-              : "No supported learning-risk signals are currently present in the loaded student records."
-          }
-          to="/students?view=attention"
-          label="View students"
-          tone="amber"
-        />
+        <ActionCard title="Grammar workspace" body="Load grammar issue reports only when you open the workspace." to="/grammar-issues" label="Open Grammar Issues" tone="violet" />
       </section>
 
       <section className="analytics-grid two-one">
-        <article className="analytics-panel">
-          <div className="panel-header">
-            <div>
-              <p className="analytics-eyebrow">Class insight</p>
-              <h2>Top active class groups</h2>
-            </div>
-            <Link to="/students">Manage students</Link>
-          </div>
-          {analytics.classBreakdown.length ? (
-            <div className="class-bars">
-              {analytics.classBreakdown.map((row) => {
-                const progress = pct(row.paid, row.count);
-                return (
-                  <div key={row.label} className="class-bar-row">
-                    <div className="class-bar-top">
-                      <strong>{row.label}</strong>
-                      <span>{row.count} student{row.count === 1 ? "" : "s"}</span>
-                    </div>
-                    <div
-                      className="class-bar-track"
-                      role="progressbar"
-                      aria-label={`${row.label} paid or active students`}
-                      aria-valuemin="0"
-                      aria-valuemax="100"
-                      aria-valuenow={progress}
-                    >
-                      <span style={{ width: `${progress}%` }} />
-                    </div>
-                    <small>
-                      {row.paid} of {row.count} paid/active · {progress}% · {moneyFormatter.format(row.balance)} balance
-                    </small>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="empty-state">No student class data found yet.</p>
-          )}
-        </article>
+        <DashboardPartnershipRequests user={user} />
 
         <article className="analytics-panel focus-panel">
           <p className="analytics-eyebrow">Payment focus</p>
@@ -463,61 +360,7 @@ export default function DashboardPage() {
         </article>
       </section>
 
-      <section className="analytics-grid three">
-        <article className="analytics-panel">
-          <div className="panel-header compact">
-            <div>
-              <p className="analytics-eyebrow">Assignments</p>
-              <h2>Incoming work</h2>
-            </div>
-            <Link to="/marking">Open</Link>
-          </div>
-          <MiniList
-            items={incomingAssignmentPreview}
-            emptyText="No incoming assignments to review right now."
-            renderItem={(submission) => {
-              const studentName = submission.studentName || submission.studentCode || "Unknown student";
-              const title = submission.assignment || "Untitled assignment";
-              return (
-                <li key={submission.path || submission.id}>
-                  <span className="avatar-chip">{initials(studentName)}</span>
-                  <span>
-                    <strong>{studentName}</strong>
-                    <small>{title}</small>
-                  </span>
-                </li>
-              );
-            }}
-          />
-        </article>
-
-        <article className="analytics-panel">
-          <div className="panel-header compact">
-            <div>
-              <p className="analytics-eyebrow">Grammar</p>
-              <h2>Issue reports</h2>
-            </div>
-            <Link to="/grammar-issues">Open</Link>
-          </div>
-          <MiniList
-            items={grammarIssuePreview}
-            emptyText="No grammar issue reports right now."
-            renderItem={(report) => {
-              const student = report.studentName || report.studentId || report.student_code || "Unknown student";
-              const issueText = report.issue || report.description || report.text || report.message || "No issue text";
-              return (
-                <li key={report.id}>
-                  <span className="avatar-chip warning">!</span>
-                  <span>
-                    <strong>{student}</strong>
-                    <small>{issueText}</small>
-                  </span>
-                </li>
-              );
-            }}
-          />
-        </article>
-
+      <section className="analytics-grid">
         <article className="analytics-panel">
           <div className="panel-header compact">
             <div>
