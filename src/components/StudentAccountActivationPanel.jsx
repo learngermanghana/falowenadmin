@@ -6,6 +6,7 @@ import {
   getStudentAccountStatus,
   prepareStudentAccount,
   recordStudentInvitationSent,
+  sendOrganisationEnrolmentConfirmation,
 } from "../services/studentAccountActivationService.js";
 
 const OWNER_EMAIL = "moxflex@gmail.com";
@@ -121,6 +122,15 @@ export default function StudentAccountActivationPanel({ student, draft = {}, onS
     }
   };
 
+  const orgFunded = String(student.billingResponsibility || "").toLowerCase() === "organisation";
+  const sendOrgNotice = async () => {
+    setBusy("org-confirmation"); setError(""); setNotice("");
+    try {
+      const result = await sendOrganisationEnrolmentConfirmation(studentId);
+      setNotice(result.sent ? "Organisation-funded enrolment confirmation accepted for delivery." : "No new confirmation: " + (result.reason || "already sent or not ready"));
+    } catch (err) { setError(err?.message || "Could not send organisation enrolment confirmation."); }
+    finally { setBusy(""); }
+  };
   return (
     <section
       aria-label="Student login and activation"
@@ -148,6 +158,10 @@ export default function StudentAccountActivationPanel({ student, draft = {}, onS
           disabled={Boolean(busy) || unsavedProfileChanges || !validEmail(savedEmail) || !savedName || accountState === "active" || accountState === "disabled"}>
           {busy === "send" ? "Sending..." : accountState === "invited" ? "Resend activation email" : "Send activation email"}
         </button>
+        {orgFunded && ["invited", "active"].includes(accountState) && <button type="button" onClick={sendOrgNotice}
+          disabled={Boolean(busy) || unsavedProfileChanges || !clean(student.className) || Number(student.paid || student.amountPaid || 0) <= 0}>
+          {busy === "org-confirmation" ? "Sending confirmation…" : "Send organisation-paid confirmation"}
+        </button>}
         <button type="button" onClick={check} disabled={Boolean(busy)}
           style={{ background: "#fff", color: "#1e40af", border: "1px solid #93c5fd" }}>
           {busy === "check" ? "Checking..." : "Check activation status"}
