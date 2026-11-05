@@ -14,9 +14,10 @@ function validateSubmission(body = {}) {
   if (!Array.isArray(body.students) || !body.students.length || body.students.length > 50) fail(400, "Submit between 1 and 50 students.");
   const seen = new Set();
   const students = body.students.map((row, i) => {
-    const student = Object.fromEntries(["name", "email", "phone", "level", "location", "emergencyContactPhone"].map(k => [k, clean(row?.[k]).slice(0, 254)]));
+    const student = Object.fromEntries(["name", "email", "phone", "level", "location", "emergencyContactPhone", "requestedClassId", "requestedClassName", "requestedClassStartDate"].map(k => [k, clean(row?.[k]).slice(0, 254)]));
     student.email = email(student.email); student.level = student.level.toUpperCase();
     if (!student.name || !validEmail(student.email) || !student.phone || !["A1", "A2", "B1", "B2", "C1", "C2"].includes(student.level)) fail(400, `Row ${i + 1}: name, valid email, phone and level are required.`);
+    if (body.schemaVersion === 2 && (!student.requestedClassId || !student.requestedClassName || !/^\d{4}-\d{2}-\d{2}$/.test(student.requestedClassStartDate))) fail(400, `Row ${i + 1}: select a class and start date.`);
     if (seen.has(student.email)) fail(400, `Row ${i + 1}: duplicate email in this submission.`);
     seen.add(student.email); return { ...student, status: "pending" };
   });
@@ -51,6 +52,7 @@ async function reviewRow({ db, admin, batchId, index, decision, actor }) {
       if (!existing.empty || canonical.exists) fail(409, "A student already uses this email. Review the existing student in the directory; no duplicate was created.");
       tx.create(studentRef, {
         name: row.name, fullName: row.name, email: row.email, phone: row.phone,
+        requestedClassId: row.requestedClassId || "", requestedClassName: row.requestedClassName || "", requestedClassStartDate: row.requestedClassStartDate || "",
         level: row.level, location: row.location, emergencyContactPhone: row.emergencyContactPhone,
         role: "student", studentCode: studentId, studentcode: studentId, program: "german",
         organisationName: batch.organisation.name, organisationContactEmail: batch.organisation.email,

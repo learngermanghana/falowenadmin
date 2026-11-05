@@ -42,7 +42,7 @@ async function render(Page, path) {
 test("one organisation application has signing but no bank or referral choices", async () => {
   const requests = [];
   global.fetch = async (path, opts) => {
-    if (path.includes("agreement-terms")) return Response.json({ ok: true, version: "org-v3", partnerShareRate: 0.1, shareSettlement: "invoice_deduction", terms: ["Organisation agreement"] });
+    if (path.includes("agreement-terms")) return Response.json({ ok: true, version: "org-v3", partnerShareRate: 0.1, shareSettlement: "invoice_deduction", tuitionRefundable: false, classDurationWeeks: 10, accessMonths: 6, accessStartsAt: "account_activation", terms: ["Organisation agreement"] });
     if (path.endsWith("agreement-copy")) return new Response("PDF", { headers: { "Content-Type": "application/pdf" } });
     requests.push({ path, body: JSON.parse(opts.body) }); return Response.json({ ok: true, reference: "a".repeat(64) });
   };
@@ -71,7 +71,7 @@ test("query parameters cannot expose an individual signup or a second programme"
   try {assert.equal(document.querySelector('a[href*="signup"]'),null);assert.equal(document.querySelectorAll('[role="tab"]').length,3);assert.equal(calls,0);} finally {await unmount();}
 });
 test("tabs preserve registration details and support keyboard navigation", async () => {
-  global.fetch=async()=>Response.json({ok:true,version:"org-v4",partnerShareRate:0.1,shareSettlement:"invoice_deduction",terms:["Your 10% organisation share — Deducted from the invoice."]});
+  global.fetch=async()=>Response.json({ok:true,version:"org-v4",partnerShareRate:0.1,shareSettlement:"invoice_deduction",tuitionRefundable:false,classDurationWeeks:10,accessMonths:6,accessStartsAt:"account_activation",terms:["Your 10% organisation share — Deducted from the invoice."]});
   const unmount=await render(PublicPage,"/partnerships");
   try {
     await act(()=>document.getElementById("partner-tab-2").click());

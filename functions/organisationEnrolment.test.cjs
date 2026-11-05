@@ -35,3 +35,17 @@ test('student lists retain their signed agreement and require its organisation e
  const mismatch={...payload,requestId:'22345678-1234-1234-1234-123456789012',organisation:{...payload.organisation,email:'other@example.org'}};
  assert.equal((await f.call('/organisation-enrolments',mismatch)).status,409);
 });
+
+test('new student lists require class requests and retain them without assigning a confirmed class',async()=>{
+ const b={...body(),schemaVersion:2};
+ assert.throws(()=>validateSubmission(b),{status:400});
+ Object.assign(b.students[0],{requestedClassId:'a1-example',requestedClassName:'A1 Example',requestedClassStartDate:'2027-01-04',className:'injected',contractEnd:'2099-01-01'});
+ const validated=validateSubmission(b);
+ assert.equal(validated.students[0].requestedClassId,'a1-example');
+ assert.equal(validated.students[0].className,undefined);
+ const f=fixture();f.records.set('organisationEnrolments/batch1',validated);
+ const result=await reviewRow({...f,decision:'approve'});
+ const student=f.records.get('students/'+result.studentId);
+ assert.equal(student.requestedClassName,'A1 Example');assert.equal(student.requestedClassStartDate,'2027-01-04');
+ assert.equal(student.className,'');assert.equal(student.contractEnd,'');
+});

@@ -30,8 +30,18 @@ test('save creates an immediate signed immutable receipt; replay is safe and tok
 });
 test('missing Falowen signature fails before accepting a signed application',async()=>{
  const f=fixture();registerAgreementRoutes(f.app,{...f,getSecret:()=> 'secret',loadSignature:async()=>{throw Object.assign(new Error('Configure signature'),{status:503});},pdf:async()=>Buffer.from('PDF')});
- assert.equal((await f.call('/referrals/apply-signed',body)).status,503);assert.equal(f.data.has('referralApplications/'+hash('organisation-v4:'+body.email)),false);
+ assert.equal((await f.call('/referrals/apply-signed',body)).status,503);assert.equal(f.data.has('referralApplications/'+hash('organisation-v5:'+body.email)),false);
 });
 test('PDF creation supports Unicode signing names and unsigned samples',async()=>{
  const bytes=await buildAgreementPdf({...body,id:'example',signedAt:'2026-11-05T00:00:00Z',termsSnapshot:TERMS.institutional},{sample:true});assert.equal(bytes.subarray(0,5).toString(),'%PDF-');assert.ok(bytes.length>10000);
+});
+
+test('organisation agreement states non-refundable tuition and distinct class/access periods',()=>{
+ const terms=TERMS.institutional.join(" ");
+ assert.match(terms,/Tuition payments are non-refundable/);
+ assert.match(terms,/Each class lasts 10 weeks/);
+ assert.match(terms,/six months of Falowen access from account activation/);
+ assert.match(terms,/does not restart or extend/);
+ assert.doesNotMatch(terms,/A refunded, reversed or cancelled/);
+ assert.throws(()=>validateApplication({...body,termsVersion:'organisation-partnership-2026-11-05-v4'}),{status:400});
 });
