@@ -44,6 +44,46 @@ test('repair rejects a mismatched student identity instead of changing another a
   assert.equal(f.records.get('students/'+a.studentId).studentCode!==a.studentId,true);
 });
 
+test('approved organisation request assigns an existing matching class without trusting form-only values',async()=>{
+  const b={...body(),schemaVersion:2};
+  Object.assign(b.students[0], {
+    requestedClassId:'a1-example',requestedClassName:'A1 Example',
+    requestedClassStartDate:'2027-01-04',
+  });
+  const f=fixture();
+  f.records.set('organisationEnrolments/batch1',validateSubmission(b));
+  f.records.set('classes/a1-example',{
+    name:'A1 Example', levelId:'A1', startDate:'2027-01-04',
+  });
+  const approved=await reviewRow({...f,decision:'approve'});
+  const student=f.records.get('students/'+approved.studentId);
+  assert.equal(student.classId,'a1-example');
+  assert.equal(student.className,'A1 Example');
+  assert.equal(student.classStartDate,'2027-01-04');
+  assert.equal(student.organisationClassAssignmentPending,false);
+  assert.equal(student.paymentStatus,'pending');
+  assert.equal(student.paid,undefined);
+  assert.equal(student.syncedToSheets,false);
+});
+
+test('a mismatched class request remains unassigned for owner review',async()=>{
+  const b={...body(),schemaVersion:2};
+  Object.assign(b.students[0], {
+    requestedClassId:'a1-example',requestedClassName:'A1 Example',
+    requestedClassStartDate:'2027-01-04',
+  });
+  const f=fixture();
+  f.records.set('organisationEnrolments/batch1',validateSubmission(b));
+  f.records.set('classes/a1-example',{
+    name:'A1 Example', levelId:'A1', startDate:'2027-02-01',
+  });
+  const approved=await reviewRow({...f,decision:'approve'});
+  const student=f.records.get('students/'+approved.studentId);
+  assert.equal(student.className,'');
+  assert.equal(student.classId,undefined);
+  assert.equal(student.organisationClassAssignmentPending,true);
+});
+
 test('duplicate student email blocks approval without creating another student',async()=>{const f=fixture({duplicate:true});await assert.rejects(reviewRow({...f,decision:'approve'}),{status:409});assert.equal(f.records.size,1);assert.equal(f.records.get('organisationEnrolments/batch1').students[0].status,'pending');});
 test('rejection never creates a student account',async()=>{const f=fixture();assert.equal((await reviewRow({...f,decision:'reject'})).status,'rejected');assert.equal(f.records.size,1);});
 test('review/list handlers enforce owner auth',async()=>{const routes={};registerOrganisationEnrolmentRoutes({post:(p,h)=>routes[p]=h,get:(p,h)=>routes[p]=h},{db:{},admin:{}});for(const path of ['/admin/organisation-enrolments','/admin/organisation-enrolments/:batchId/review','/admin/organisation-enrolments/:batchId/repair-student-code']){let code;let data;const res={set(){},status(s){code=s;return this;},json(v){data=v;}};await routes[path]({headers:{},params:{},body:{}},res);assert.equal(code,401);assert.equal(data.ok,false);}});
