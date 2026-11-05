@@ -40,11 +40,63 @@ test("allocates cash and discounts separately to all students, and duplicate con
   assert.equal(f.data.get("students/B").paid, 200);
   assert.equal(f.data.get("students/B").balanceDue, 300);
   assert.equal(f.data.get("students/A").syncedToSheets, false);
+  assert.equal(f.data.get("students/A").status, "Active");
+  assert.equal(f.data.get("students/A").paymentStatus, "Partially Paid");
+  assert.equal(f.data.get("students/A").contractTermMonths, "1");
+  assert.equal(f.data.get("students/B").status, "Active");
+  assert.equal(f.data.get("students/B").trialStatus, "converted");
+  assert.equal(f.data.get("students/B").organisationClassAssignmentPending, true);
+  assert.equal(f.data.get("payments/FAL-ORG-test").lines[0].remainingBalance, 400);
+  assert.equal(f.data.get("payments/FAL-ORG-test").lines[1].remainingBalance, 300);
   assert.equal(f.data.get("payments/FAL-ORG-test-0").referralEligible, false);
   assert.equal(f.data.get("payments/FAL-ORG-test").status, "paid");
   assert.equal((await f.apply()).duplicate, true);
   assert.equal(f.data.get("students/A").paid, 600);
 });
+test("verified company Paystack payment grants one month to partial student and remains idempotent", async () => {
+  const f = fixture();
+  f.eventData.paid_at = "2026-11-05T12:00:00.000Z";
+  f.data.get("students/A").className = "A1 Stuttgart";
+  const result = await f.apply();
+  assert.deepEqual(result, { group: true, duplicate: false, reference: "FAL-ORG-test" });
+  const student = f.data.get("students/A");
+  assert.equal(student.status, "Active");
+  assert.equal(student.className, "A1 Stuttgart");
+  assert.equal(student.organisationClassAssignmentPending, false);
+  assert.equal(student.contractStart, "2026-11-05T12:00:00.000Z");
+  assert.equal(student.contractEnd, "2026-12-05T12:00:00.000Z");
+  assert.equal(student.contractTermMonths, "1");
+  assert.equal(student.balanceDue, 400);
+  assert.equal(student.syncedToSheets, false);
+  const recordedLine = f.data.get("payments/FAL-ORG-test").lines[0];
+  assert.equal(recordedLine.studentName, "A");
+  assert.equal(recordedLine.remainingBalance, 400);
+  assert.equal(recordedLine.accessEndDate, "2026-12-05T12:00:00.000Z");
+  assert.deepEqual(await f.apply(), { group: true, duplicate: true, reference: "FAL-ORG-test" });
+  assert.equal(f.data.get("students/A").paid, 600);
+  assert.equal(f.data.get("payments/FAL-ORG-test").receiptStatus, "pending");
+});
+
+test("full-paid partnership student is marked active and six-month term starts only on real activation", async () => {
+  const f = fixture();
+  const a = f.data.get("students/A");
+  delete a.paid;
+  a.initialPaymentAmount = 3000;
+  a.balanceDue = 600;
+  a.className = "A1 Berlin";
+  await f.apply();
+  const result = f.data.get("students/A");
+  assert.equal(result.paid, 500);
+  assert.equal(result.balanceDue, 0);
+  assert.equal(result.paymentStatus, "Paid");
+  assert.equal(result.status, "Active");
+  assert.equal(result.contractTermMonths, "6");
+  assert.equal(result.contractStart, undefined);
+  assert.equal(result.contractEnd, undefined);
+  assert.equal(result.organisationClassAssignmentPending, false);
+  assert.equal(result.accountActivationState, undefined);
+});
+
 test("rejects incorrect amount, currency and missing students without partial credits", async () => {
   for (const mutate of [f => f.eventData.amount++, f => f.eventData.currency = "USD", f => f.data.delete("students/B")]) {
     const f = fixture(); mutate(f); await assert.rejects(f.apply());
