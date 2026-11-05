@@ -1,12 +1,13 @@
 import {chooseSocialVideoFormat, requireValidSocialVideo} from "../utils/socialMp4Export.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  VIDEO_DURATIONS, VIDEO_RESOLUTIONS, VIDEO_THEMES, MUSIC_CHOICES,
+  VIDEO_DURATIONS, VIDEO_THEMES, MUSIC_CHOICES,
   chooseVocabularyVideoMime, originalMusicNotes, renderVocabularyFrame, videoFileStem,
 } from "../utils/socialVocabularyVideo.js";
 import "./SocialVocabularyVideoCreator.css";
 import { SOCIAL_MUSIC_TRACKS, addSocialMusic } from "../utils/socialMusicLibrary.js";
 import SocialMusicPicker, { EMPTY_SOCIAL_MUSIC } from "./SocialMusicPicker.jsx";
+import { SOCIAL_VIDEO_ASPECTS, SOCIAL_VIDEO_QUALITIES, socialVideoDimensions, drawSocialPosterVideoFrame } from "../utils/socialVideoFormats.js";
 
 const CTA = "social-vocab-video-button";
 const WAIT = "Keep this tab open and the screen awake until the recording finishes.";
@@ -17,6 +18,16 @@ function downloadBlob(blob, filename) {
   anchor.href = url; anchor.download = filename;
   document.body.appendChild(anchor); anchor.click(); anchor.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+// Keep the full 9:16 vocabulary composition visible when exported as 4:5,
+ // square or landscape; never stretch the word art or cut off text.
+function renderVocabularyAspectFrame(canvas, word, settings, seconds, aspect, sourceCanvas) {
+  if (aspect === "tiktok") return renderVocabularyFrame(canvas, word, settings, seconds);
+  const base = sourceCanvas || document.createElement("canvas");
+  if (base.width !== 540 || base.height !== 960) { base.width = 540; base.height = 960; }
+  renderVocabularyFrame(base, word, settings, seconds);
+  const ctx = canvas.getContext("2d");
+  if (ctx) drawSocialPosterVideoFrame(ctx, base, canvas.width, canvas.height, seconds, settings.duration);
 }
 const videoSupported = () => typeof HTMLCanvasElement !== "undefined"
   && typeof HTMLCanvasElement.prototype.captureStream === "function"
@@ -57,6 +68,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
   const [theme, setTheme] = useState("blue");
   const [duration, setDuration] = useState(12);
   const [quality, setQuality] = useState("standard");
+  const [videoAspect, setVideoAspect] = useState("tiktok");
   const [exportFormat, setExportFormat] = useState("auto");
   const [music, setMusic] = useState("gentle");
   const [falowenSelection, setFalowenSelection] = useState(EMPTY_SOCIAL_MUSIC);
@@ -70,28 +82,30 @@ export default function SocialVocabularyVideoCreator({ word }) {
   const canvasSupported = typeof HTMLCanvasElement !== "undefined";
   const mime = videoSupported() ? chooseSocialVideoFormat(type => MediaRecorder.isTypeSupported(type), exportFormat, { audioRequired: music !== "none" || !!voiceFile || falowenTrack !== "none" }) : null;
   const currentSettings = { theme, duration };
+  const videoSize = socialVideoDimensions(videoAspect, quality);
 
   useEffect(() => {
     if (canvasRef.current && word && !playing) {
       const canvas = canvasRef.current;
-      canvas.width = 540; canvas.height = 960;
-      renderVocabularyFrame(canvas, word, currentSettings, Number(duration) * .67);
+      canvas.width = 540; canvas.height = Math.round(540 * videoSize.height / videoSize.width);
+      renderVocabularyAspectFrame(canvas, word, currentSettings, Number(duration) * .67, videoAspect);
     }
-  }, [word, theme, duration, playing]);
+  }, [word, theme, duration, videoAspect, playing]);
 
   useEffect(() => {
     if (!playing || !word) return undefined;
     const start = performance.now();
     let id = 0, lastUpdate = 0;
+    const sourceCanvas = document.createElement("canvas");
     const frame = now => {
       const time = ((now - start) / 1000) % Number(duration);
-      if (canvasRef.current) renderVocabularyFrame(canvasRef.current, word, currentSettings, time);
+      if (canvasRef.current) renderVocabularyAspectFrame(canvasRef.current, word, currentSettings, time, videoAspect, sourceCanvas);
       if (now - lastUpdate > 200) { setPreviewTime(time); lastUpdate = now; }
       id = window.requestAnimationFrame(frame);
     };
     id = window.requestAnimationFrame(frame);
     return () => window.cancelAnimationFrame(id);
-  }, [playing, word, duration, theme]);
+  }, [playing, word, duration, theme, videoAspect]);
 
   useEffect(() => () => {
     if (recordingRef.current) {
@@ -116,14 +130,15 @@ export default function SocialVocabularyVideoCreator({ word }) {
     if (!word) return;
     try {
       const canvas = document.createElement("canvas");
-      canvas.width = 1080; canvas.height = 1920;
-      renderVocabularyFrame(canvas, word, currentSettings, Number(duration) * .69);
+      const size = socialVideoDimensions(videoAspect, "full");
+      canvas.width = size.width; canvas.height = size.height;
+      renderVocabularyAspectFrame(canvas, word, currentSettings, Number(duration) * .69, videoAspect);
       canvas.toBlob(blob => {
-        if (blob) { downloadBlob(blob, videoFileStem(word) + "-story.png"); setMessage("1080 × 1920 PNG exported."); }
+        if (blob) { downloadBlob(blob, videoFileStem(word) + "-" + videoAspect + ".png"); setMessage(size.width + " × " + size.height + " PNG exported."); }
         else setError("PNG encoding is unavailable on this device.");
       }, "image/png");
     } catch (cause) { setError(readableError(cause)); }
-  }, [word, theme, duration]);
+  }, [word, theme, duration, videoAspect]);
 
   const exportVideo = async () => {
     if (!word || busy) return;
@@ -146,10 +161,11 @@ export default function SocialVocabularyVideoCreator({ word }) {
     setBusy(true);
     try {
       // MediaRecorder encodes a real-time canvas stream entirely on this device.
-      const resolution = VIDEO_RESOLUTIONS.find(item => item.id === quality) || VIDEO_RESOLUTIONS[0];
+      const resolution = socialVideoDimensions(videoAspect, quality);
       const canvas = document.createElement("canvas");
+      const sourceCanvas = document.createElement("canvas");
       canvas.width = resolution.width; canvas.height = resolution.height;
-      renderVocabularyFrame(canvas, word, currentSettings, 0);
+      renderVocabularyAspectFrame(canvas, word, currentSettings, 0, videoAspect, sourceCanvas);
       const visualStream = canvas.captureStream(30);
       const tracks = [...visualStream.getVideoTracks()];
       if (!tracks.length) throw new Error("This device did not provide a video track.");
@@ -188,7 +204,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
         const start = performance.now();
         const frame = now => {
           const elapsed = Math.min(Number(duration), (now - start) / 1000);
-          renderVocabularyFrame(canvas, word, currentSettings, elapsed);
+          renderVocabularyAspectFrame(canvas, word, currentSettings, elapsed, videoAspect, sourceCanvas);
           if (recorder.state === "recording" && elapsed < Number(duration)) frameId = requestAnimationFrame(frame);
         };
         frameId = requestAnimationFrame(frame);
@@ -200,7 +216,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
         if (recorder.state === "recording") recorder.stop();
         const blob = await resultPromise;
         await requireValidSocialVideo(blob, mime);
-        downloadBlob(blob, videoFileStem(word) + "-" + duration + "s." + mime.extension);
+        downloadBlob(blob, videoFileStem(word) + "-" + videoAspect + "-" + duration + "s." + mime.extension);
         setMessage(mime.extension.toUpperCase() + " video exported with " + (falowenTrack !== "none" ? (falowenSelection.track?.label || SOCIAL_MUSIC_TRACKS.find(track => track.id === falowenTrack)?.label || "Falowen song") : music === "none" ? "no music" : "original Falowen music")
           + (voiceFile ? " and your attached German audio." : ".")
 );
@@ -218,7 +234,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
         const start = performance.now();
         const frame = now => {
           const elapsed = Math.min(Number(duration), (now - start) / 1000);
-          renderVocabularyFrame(canvas, word, currentSettings, elapsed);
+          renderVocabularyAspectFrame(canvas, word, currentSettings, elapsed, videoAspect, sourceCanvas);
           if (recorder.state === "recording" && elapsed < Number(duration)) frameId = requestAnimationFrame(frame);
         };
         frameId = requestAnimationFrame(frame);
@@ -230,7 +246,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
         if (recorder.state === "recording") recorder.stop();
         const blob = await resultPromise;
         await requireValidSocialVideo(blob, mime);
-        downloadBlob(blob, videoFileStem(word) + "-" + duration + "s." + mime.extension);
+        downloadBlob(blob, videoFileStem(word) + "-" + videoAspect + "-" + duration + "s." + mime.extension);
         setMessage(mime.extension.toUpperCase() + " video exported.");
       }
     } catch (cause) { setError(readableError(cause)); setMessage(""); }
@@ -251,7 +267,7 @@ export default function SocialVocabularyVideoCreator({ word }) {
         <h3>Animated Vocabulary of the Day</h3>
         <p>Branded intro → German word → meaning → example → ending. No paid video API.</p>
       </div>
-      <span className="social-vocab-video-pill">9:16 · Shorts / Reels / TikTok</span>
+      <span className="social-vocab-video-pill">{videoSize.label}</span>
     </div>
     <div className="social-vocab-video-layout">
       <div className="social-vocab-video-controls">
@@ -265,11 +281,17 @@ export default function SocialVocabularyVideoCreator({ word }) {
             {VIDEO_DURATIONS.map(value => <option key={value} value={value}>{value} seconds</option>)}
           </select>
         </label>
-        <label>Video resolution
-          <select value={quality} disabled={busy} onChange={e => setQuality(e.target.value)}>
-            {VIDEO_RESOLUTIONS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+        <label>Export aspect ratio / social platform
+          <select value={videoAspect} disabled={busy} onChange={e => setVideoAspect(e.target.value)}>
+            {SOCIAL_VIDEO_ASPECTS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
           </select>
         </label>
+        <label>Video resolution
+          <select value={quality} disabled={busy} onChange={e => setQuality(e.target.value)}>
+            {SOCIAL_VIDEO_QUALITIES.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+          </select>
+        </label>
+        <small className="social-vocab-video-note">Video output: {videoSize.width} × {videoSize.height}px. TikTok uses 9:16, with all vocabulary text kept visible in other ratios.</small>
         <label>Video file format
           <select value={exportFormat} disabled={busy} onChange={e => setExportFormat(e.target.value)}>
             <option value="auto">Auto (MP4 preferred, WebM fallback)</option>
@@ -294,16 +316,16 @@ export default function SocialVocabularyVideoCreator({ word }) {
         <p className="social-vocab-video-note">Choose a built-in or Cloudflare Falowen song and select the part to loop in the video, or keep the original tones. Auto uses WebM when this browser cannot record MP4 with audio. When a Falowen song is selected, it replaces the generated tones. No paid music API is required. Device text-to-speech is only for preview. Attach an approved voice recording to embed pronunciation in the video.</p>
       </div>
       <div className="social-vocab-video-preview">
-        <div className="social-vocab-video-screen">
+        <div className="social-vocab-video-screen" style={{aspectRatio: videoSize.width + " / " + videoSize.height}}>
           <canvas ref={canvasRef} width={540} height={960} aria-label="Animated vocabulary video preview"/>
         </div>
         <div className="social-vocab-video-actions">
           <button type="button" className={CTA} disabled={busy || !word} onClick={() => { setPlaying(x => !x); setError(""); }}>
             {playing ? "Pause preview" : "Play animation"}
           </button>
-          <button type="button" className={CTA} disabled={busy || !word || !canvasSupported} onClick={exportPng}>Export story PNG</button>
+          <button type="button" className={CTA} disabled={busy || !word || !canvasSupported} onClick={exportPng}>Export {videoAspect === "tiktok" ? "TikTok 9:16" : videoAspect} PNG</button>
           <button type="button" className={CTA + " primary"} disabled={busy || !word || !mime} onClick={exportVideo}>
-            {busy ? "Encoding video…" : `Export ${mime?.extension?.toUpperCase() || "video"} video`}
+            {busy ? "Encoding video…" : `Export ${videoAspect === "tiktok" ? "TikTok 9:16" : videoAspect} ${mime?.extension?.toUpperCase() || "video"}`}
           </button>
         </div>
         {playing && <small aria-live="off">Preview · {previewTime.toFixed(1)}s / {duration}s</small>}
