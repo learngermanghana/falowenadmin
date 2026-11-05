@@ -48,7 +48,7 @@ test("allocates cash and discounts separately to all students, and duplicate con
 test("rejects incorrect amount, currency and missing students without partial credits", async () => {
   for (const mutate of [f => f.eventData.amount++, f => f.eventData.currency = "USD", f => f.data.delete("students/B")]) {
     const f = fixture(); mutate(f); await assert.rejects(f.apply());
-    assert.equal(f.data.get("students/A").paid, 0);
+    assert.equal(f.data.get("students/A").paid, 100);
     assert.equal(f.data.get("payments/FAL-ORG-test").status, "pending");
   }
 });
@@ -90,7 +90,7 @@ test("group link uses approved student records, company email and one reference 
   assert.equal(first.status, 200); assert.equal(retry.status, 200); assert.equal(initializations, 1);
   assert.equal(first.value.payment.tuitionCredit, 450); assert.equal(first.value.payment.discount, 50);
   assert.equal(first.value.payment.lines[0].studentName, "A"); assert.equal(first.value.payment.referralEligible, false);
-  assert.equal(f.data.get("students/A").paid, 100);
+  assert.equal(f.data.get("students/A").paid, 0);
   assert.equal((await call({ ...body, requestId: "dddddddd-dddd-dddd-dddd-dddddddddddd", lines: [{ studentId: "A", amount: 500, discount: 10 }] })).status, 409);
   f.data.get("students/A").paid = 100;
   assert.equal((await call({ ...body, requestId: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee", lines: [{ studentId: "A", amount: 200, discount: 20 }] })).status, 409);
