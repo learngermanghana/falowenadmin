@@ -1,3 +1,4 @@
+import DashboardReviewNotifications from "../components/DashboardReviewNotifications.jsx";
 import DashboardPartnershipRequests from "../components/DashboardPartnershipRequests.jsx";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -336,6 +337,8 @@ export default function DashboardPage() {
         />
         <ActionCard title="Grammar workspace" body="Load grammar issue reports only when you open the workspace." to="/grammar-issues" label="Open Grammar Issues" tone="violet" />
       </section>
+
+      <DashboardReviewNotifications user={user} />
 
       <section className="analytics-grid two-one">
         <DashboardPartnershipRequests user={user} />

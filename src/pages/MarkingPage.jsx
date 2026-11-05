@@ -1,3 +1,4 @@
+import { useSearchParams } from "react-router-dom";
 import { familyRecordingReference } from "../utils/a1FamilyRecordingReference.js";
 import { tryStoreMarkingDraft } from "../utils/markingDraftStorage.js";
 import { useAdminRefresh } from "../hooks/useAdminRefresh.js";
@@ -190,7 +191,9 @@ function findRosterMatchForSubmission(roster = [], submission = {}) {
 }
 
 export default function MarkingPage() {
-  const [tab, setTab] = useState('incoming');
+  const [params, setParams] = useSearchParams();
+  const tab = params.get('tab') === 'automatic' ? 'automatic' : 'incoming';
+  const setTab = value => { const next = new URLSearchParams(params); next.set('tab', value); setParams(next); };
   return <>
     <nav aria-label="Marking sections" style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
       <button type="button" aria-pressed={tab === 'incoming'} onClick={() => setTab('incoming')}>Submissions to mark</button>
