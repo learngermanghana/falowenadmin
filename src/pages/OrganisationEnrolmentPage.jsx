@@ -51,7 +51,7 @@ export default function OrganisationEnrolmentPage({ review = false }) {
     <button disabled={busy} onClick={() => run(() => load())}>Load / refresh submissions</button>
     {error && <p role="alert">{error}</p>}
     {submissions?.length === 0 && <p>No submissions yet.</p>}
-    {submissions?.map(batch => <article key={batch.id}><h2>{batch.organisation.name}</h2>
+    {submissions?.map(batch => <article key={batch.id}><h2>{batch.organisation.name}</h2><Link to={`/paystack?batch=${encodeURIComponent(batch.id)}`}>Create group payment link</Link>
       <button type="button" disabled={busy} onClick={() => removeSubmission(batch)}>Delete submission</button>
       <p>{batch.organisation.contactName} · {batch.organisation.email} · {batch.organisation.phone}</p><small>Reference: {batch.id}</small>
       <div className="org-scroll"><table><thead><tr><th>Student</th><th>Email</th><th>Phone</th><th>Level</th><th>Location</th><th>Emergency number</th><th>Status</th><th>Review</th></tr></thead>

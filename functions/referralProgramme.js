@@ -23,7 +23,7 @@ function firstPayment(adminDocs, campusDocs, claimedAt) {
     const p = doc.data();
     if (p.status === "paid" || p.status === "refunded" || p.paidAt) history.push({
       ref: doc.id, amount: p.tuitionCredit, time: millis(p.paidAt), currency: p.currency,
-      eligible: p.status === "paid" && !p.refundedAt && !p.refunded && !p.refundStatus && !["renewal", "level_upgrade"].includes(p.purpose),
+      eligible: p.status === "paid" && p.referralEligible !== false && !["organisation_group", "organisation_allocation"].includes(p.purpose) && !p.refundedAt && !p.refunded && !p.refundStatus && !["renewal", "level_upgrade"].includes(p.purpose),
     });
   }
   for (const doc of campusDocs) {
