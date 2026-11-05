@@ -22,6 +22,7 @@ before(async () => {
   global.window = dom.window;
   global.document = dom.window.document;
   global.FormData = dom.window.FormData;
+  dom.window.HTMLAnchorElement.prototype.click = function () {};
   global.IS_REACT_ACT_ENVIRONMENT = true;
 });
 after(async () => {
@@ -38,23 +39,27 @@ async function render(Page, path) {
   await act(() => root.render(React.createElement(MemoryRouter, { initialEntries: [path] }, React.createElement(Page))));
   return () => act(() => root.unmount());
 }
-test("programme links to the existing group form and submits a separate application", async () => {
+test("programme signs the published terms, saves once and offers a protected PDF copy", async () => {
+  const requests = [];
+  global.fetch = async (path, opts) => {
+    if (path.includes("agreement-terms")) return Response.json({ ok: true, version: "test-v1", terms: ["Existing referral terms"] });
+    if (path.includes("payout-banks")) return Response.json({ ok: true, banks: [{ code: "123", name: "Example Bank" }] });
+    if (path.endsWith("agreement-copy")) return new Response("PDF", { headers: { "Content-Type": "application/pdf" } });
+    requests.push({ path, body: JSON.parse(opts.body) }); return Response.json({ ok: true, reference: "a".repeat(64) });
+  };
   const unmount = await render(PublicPage, "/partnerships");
   try {
     assert.ok(document.querySelector('a[href="/organisation-enrolment"]'));
-    let request;
-    global.fetch = async (path, opts) => {
-      request = { path, body: JSON.parse(opts.body) };
-      return Response.json({ ok: true });
-    };
+    await act(() => [...document.querySelectorAll("button")].find(button => button.textContent === "Read agreement and apply").click());
     const form = document.querySelector("form");
-    form.elements.name.value = "Example school";
-    form.elements.email.value = "school@example.org";
-    form.elements.consent.checked = true;
+    for (const [key, value] of Object.entries({ name: "Example school", email: "school@example.org", phone: "0200000000", address: "Accra", signerName: "Example Director", signerRole: "Director", accountName: "School", accountNumber: "0123456789", bankCode: "123" })) form.elements[key].value = value;
+    for (const key of ["consent", "signatureConsent", "payoutConsent"]) form.elements[key].checked = true;
     await act(() => form.dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true })));
-    assert.equal(request.path, "/api/referrals/apply");
-    assert.equal(request.body.consent, true);
-    assert.match(document.body.textContent, /Application received/);
+    assert.equal(requests[0].path, "/api/referrals/apply-signed");
+    assert.equal(requests[0].body.signatureConsent, true);assert.equal(requests[0].body.termsVersion, "test-v1");
+    assert.match(requests[0].body.receiptToken, /^[a-f0-9]{64}$/);
+    assert.match(document.body.textContent, /Signed application saved/);
+    assert.ok([...document.querySelectorAll("button")].find(button => /Download signed PDF receipt/.test(button.textContent)));
   } finally { await unmount(); }
 });
 test("learner invitation retains email on failure, retries, then offers Campus signup", async () => {

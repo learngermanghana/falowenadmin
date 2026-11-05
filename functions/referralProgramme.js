@@ -131,7 +131,7 @@ function registerReferralRoutes(app, { db, admin, getSecret = () => process.env.
       if (!snap.exists) fail(404, "Application not found.");
       if (snap.data().status === status) return;
       if (snap.data().status !== "pending") fail(409, "This application was already reviewed.");
-      const code = status === "approved" ? randomBytes(16).toString("hex") : null;
+      const code = status === "approved" && snap.data().kind !== "institutional" ? randomBytes(16).toString("hex") : null;
       if (code) tx.create(codes.doc(code), { partnerId: ref.id, name: snap.data().name, email: snap.data().email });
       tx.update(ref, { status, code, reviewedBy: actor.uid, reviewedAt: now() });
     });
@@ -158,6 +158,7 @@ function registerReferralRoutes(app, { db, admin, getSecret = () => process.env.
       if (!snap.exists) fail(404, "Referral not found.");
       const claim = snap.data();
       if (action === "record-payout") {
+        if (claim.transferReference) fail(409, "An automatic transfer is already recorded. Verify its status before making any separate payout.");
         if (claim.status !== "approved" || claim.reference !== req.body.reference) fail(409, "Refresh the commission record.");
         const payoutReference = String(req.body.payoutReference || "").trim();
         if (!payoutReference || payoutReference.length > 120) fail(400, "Enter the payout receipt reference.");
@@ -173,7 +174,7 @@ function registerReferralRoutes(app, { db, admin, getSecret = () => process.env.
       }
       if (action === "reverse" || action === "check-refund") {
         if (claim.status === "reversed") return;
-        tx.update(ref, { status: "reversed", reversedBy: actor.uid, reversedAt: now(), reason: action === "check-refund" ? "provider-refund" : "owner-review" });
+        tx.update(ref, { status: "reversed", recoveryRequired: Boolean(claim.payoutReference || claim.transferReference), reversedBy: actor.uid, reversedAt: now(), reason: action === "check-refund" ? "provider-refund" : "owner-review" });
         return { refunded: action === "check-refund" };
       }
       if (claim.status === "approved") return;
@@ -196,4 +197,4 @@ function registerReferralRoutes(app, { db, admin, getSecret = () => process.env.
     });
   }));
 }
-module.exports = { registerReferralRoutes, firstPayment, verifyReceipt };
+module.exports = { registerReferralRoutes, firstPayment, verifyReceipt, confirmReceipt };

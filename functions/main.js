@@ -122,3 +122,8 @@ module.exports.sendSaturdayClassSessionReminderEmails = onSchedule({
   retryCount: 1,
 }, runClassReminderIfOpen);
 
+
+Object.assign(module.exports, require("./referralPayouts").registerPayoutTriggers({
+  db, admin, onDocumentWritten: require("firebase-functions/v2/firestore").onDocumentWritten,
+  paystackSecret: require("firebase-functions/params").defineSecret("PAYSTACK_SECRET"),
+}));
