@@ -1,3 +1,4 @@
+import SignatureUploadPanel from "../components/SignatureUploadPanel.jsx";
 import { useState } from "react";
 import { auth } from "../firebase.js";
 import { organisationEnrolmentRequest } from "../utils/organisationEnrolmentRequest.js";
@@ -39,24 +40,16 @@ function ReviewList({ kind }) {
     await request(kind + "/" + row.id, body);
     await load();
   }
-  return <section><h2>{apps ? "Partner applications" : "Referrals and commissions"}</h2>
+  return <section><h2>{apps ? "Organisation applications" : "Historical commissions"}</h2>
     <button disabled={busy} onClick={() => run(() => load())}>Load / refresh {kind}</button>
     {notice && <p role="status">{notice}</p>}
     {error && <p role="alert">{error}</p>}
     {rows?.length === 0 && <p>No {kind} yet.</p>}
     {rows?.map(row => <article key={row.id}><h3>{row.name || row.email}</h3>
       <p>{apps ? row.email : [row.partnerName, row.partnerEmail].filter(Boolean).join(" · ") || row.partnerId} · {row.status}</p>
-      {apps && row.signedAt && <><p>{row.kind === "institutional" ? "Institutional partnership" : "Referral partner"} · Signed by {row.signerName} · {row.signedAt}</p><button disabled={busy} onClick={() => run(() => downloadAgreement(row.id))}>Download signed agreement</button></>}
-      {apps && row.payoutSummary && <p>Payout: {row.payoutSummary.accountName} · {row.payoutSummary.type} · account ending {row.payoutSummary.last4} · {row.autoPayoutEnabled ? "Payout destination approved" : "Payout review required"}</p>}
-      {apps && row.status === "approved" && row.kind === "referral" && row.signedAt && !row.autoPayoutEnabled && <button disabled={busy} onClick={() => {
-        if (window.confirm("Confirm you have verified this partner’s identity and payout destination. Enable eligible automatic commission payments to this account?")) run(async () => {
-          const result = await request("payout-account/" + row.id, { confirmed: true }); await load(); setNotice(result.automaticTransfersConfigured ? "Payout account enabled." : "Payout account approved. Enable automatic transfers in backend configuration to start processing.");
-        });
-      }}>Verify payout destination and enable commissions</button>}
-      {apps && row.status === "pending" && <div className="org-actions">{["approved", "rejected"].map(status =>
+      {apps && row.signedAt && <><p>{row.kind === "institutional" ? "Organisation partnership" : "Legacy referral application"} · Signed by {row.signerName} · {row.signedAt}</p><button disabled={busy} onClick={() => run(() => downloadAgreement(row.id))}>Download signed agreement</button></>}
+      {apps && row.status === "pending" && row.kind === "institutional" && <div className="org-actions">{["approved", "rejected"].map(status =>
         <button key={status} disabled={busy} onClick={() => run(() => decide(row, { status }))}>{status === "approved" ? "Approve partner" : "Reject application"}</button>)}</div>}
-      {apps && row.code && <p>Send this invitation to the approved contact<br />
-        <a href={"https://www.falowen.app/partnerships?ref=" + row.code}>https://www.falowen.app/partnerships?ref={row.code}</a></p>}
       {!apps && <><p>Automatic payout: {row.payoutState || "awaiting eligible payment"}{row.recoveryRequired ? " · Refund recovery requires review" : ""}</p><button disabled={busy} onClick={() => run(async () => { const data = await request("process/" + row.id, {}); await load(); setNotice(data.result?.skipped || data.result?.state || "Checked."); })}>Process / recheck automatic commission</button></>}
       {!apps && row.reference && <p>{row.reference} · {money(row.tuitionMinor)} tuition · {money(row.commissionMinor)} commission {row.status === "reversed" ? "(cancelled)" : ""}</p>}
       {!apps && row.status === "pending" && <button disabled={busy} onClick={() => run(async () => {
@@ -87,18 +80,10 @@ function ReviewList({ kind }) {
   </section>;
 }
 export default function ReferralReviewPage() {
-  const [signatureStatus, setSignatureStatus] = useState("");
-  return <section className="org-enrol partnerships"><h1>Partnership and referral review</h1>
-    <p>Signed institutional and referral applications appear below. Signing creates a saved receipt; approval and payout verification remain separate.</p>
-    <label>Install / replace the authorised Falowen director signature (private PNG, max 70 KB)<input type="file" accept="image/png" onChange={async event => {
-      const file = event.target.files?.[0]; if (!file) return;
-      try {
-        if (file.size > 70000) throw new Error("Choose a PNG under 70 KB.");
-        const bytes = new Uint8Array(await file.arrayBuffer()); let binary = ""; for (const byte of bytes) binary += String.fromCharCode(byte);
-        await request("signature", { png: btoa(binary) }); setSignatureStatus("Signature saved privately. New receipts use it; existing PDFs are unchanged.");
-      } catch (e) { setSignatureStatus(e.message); }
-    }} /></label>{signatureStatus && <p role="status">{signatureStatus}</p>}
+  return <section className="org-enrol partnerships"><h1>Organisation partnership review</h1>
+    <p>Review organisation applications and download signed receipts. Clients paying for themselves use normal signup at full tuition; no referral commission applies.</p>
+    <SignatureUploadPanel request={request} />
     <a href="https://www.falowen.app/partnerships">Open public partnership programme</a>
-    <ReviewList kind="applications" /><ReviewList kind="claims" />
+    <ReviewList kind="applications" />
   </section>;
 }

@@ -79,12 +79,12 @@ async function sendGroupReceipt({ db, admin, reference, runtimeConfig, send = po
   });
   if (!reserved) throw new Error("Company receipt is being delivered; retry shortly.");
   try {
-    const breakdown = payment.lines.map(line => `${line.studentName}: GHS ${line.tuitionCredit.toFixed(2)} paid; discount GHS ${line.discount.toFixed(2)}`).join("\n");
+    const breakdown = payment.lines.map(line => `${line.studentName}: GHS ${line.tuitionCredit.toFixed(2)} paid to Falowen; partner share deduction GHS ${line.discount.toFixed(2)}`).join("\n");
     await send(resolveWebhookConfig(runtimeConfig), {
       email: payment.email, topic: "Falowen organisation payment receipt", announcement: [
         `Hello ${payment.organisationName},`, `Payment received. Reference: ${reference}`,
         breakdown, `Tuition paid: GHS ${payment.tuitionCredit.toFixed(2)}`,
-        `Discount: GHS ${payment.discount.toFixed(2)}`, `Checkout total including processing share: GHS ${payment.checkoutAmount.toFixed(2)}`,
+        `Partner share deduction: GHS ${payment.discount.toFixed(2)}`, `Checkout total including processing share: GHS ${payment.checkoutAmount.toFixed(2)}`,
         "The payment has been allocated to the listed student accounts.",
       ].join("\n\n"), delivery_mode: "individual", allow_bcc_fallback: "FALSE", email_type: "payment_update",
       show_app_button: "FALSE", show_progress: "FALSE", show_review: "FALSE", attach_certificate: "FALSE", receipt_reference: reference,
@@ -127,7 +127,7 @@ function registerOrganisationPaymentRoutes(app, { db, admin, initializePaystackP
       students.forEach((snap, i) => {
         if (!approved.has(lines[i].studentId) || !snap.exists || snap.data().organisationSubmissionId !== batchId) fail(409, "Only approved students in this organisation can be billed.");
         if (minor(lines[i].grossAmount) > balanceOf(snap.data())) fail(409, "An amount exceeds a student's outstanding balance.");
-        if (lines[i].discount && !String(req.body.discountReason || "").trim()) fail(400, "Enter a reason for the discount.");
+        if (lines[i].discount && !String(req.body.discountReason || "").trim()) fail(400, "Enter a reason for the partner share deduction.");
         lines[i].studentName = snap.data().name || snap.data().fullName || lines[i].studentId;
       });
       const tuitionCredit = lines.reduce((sum, line) => sum + minor(line.tuitionCredit), 0) / 100;

@@ -1,5 +1,13 @@
 # Organisation enrolment
 
+## Current organisation partner workflow
+
+The public `/partnerships` page is one programme for education consultants, travel agencies and organisations. The organisation signs the agreement and immediately downloads its receipt with both signatures, then follows the organisation student-list form. Its contact details and signed agreement reference are carried into that form through browser session storage. If that storage is unavailable, contact details can still be entered manually. A submitted signed reference is checked server-side against the organisation contact email; previous unsigned-reference submissions remain supported for compatibility.
+
+Falowen reviews and approves the submitted students, prepares their tuition/class/contract details and creates one group Paystack link. The agreed partner share is a fixed GHS invoice deduction per student: gross tuition minus retained partner share equals tuition paid to Falowen, plus the displayed existing processing share. No Paystack split, bank details or separate commission payout is needed for this programme. The company receipt shows net tuition and each retained share; cash and deductions remain separately recorded. Verified payment updates student balances; staff complete account invitations/enrolment after payment. The agreement reference pre-fills on the Admin invoice screen.
+
+Clients paying for themselves use normal signup and pay the full advertised tuition without earning any partner commission. New referral applications/claims are closed (HTTP 410), old referral links lead to normal signup, and legacy pending referral applications cannot be newly approved. Historical signed PDFs and commission/refund audit records are retained; they are not rewritten or silently deleted. The historical sections below describe legacy behaviour, not the new organisation programme. New organisation receipts use `organisation-partnership-2026-11-05-v3`; older stored receipts remain unchanged.
+
 Public route: `https://www.falowen.app/organisation-enrolment`. No organisation login or CSV upload. The organisation enters contact details once, types student rows or pastes tab-separated cells, and submits up to 50 students. Blank rows are ignored; name, student email, phone and level are required. No prior submission or student data is readable publicly. The same public URL can be reused for future groups.
 
 Owner review route: `/organisation-submissions`, linked from Students. Load recent batches, page through older ones, and approve/reject each student. Verify the organisation, permission, agreement and payment arrangement before approval. Organisation identity is self-reported. A verified owner ID token is required server-side for reads and review, matching existing account activation permissions.
@@ -24,7 +32,7 @@ Regression coverage: `tests/organisation-enrolment-request.test.js` covers publi
 
 The owner can choose **Delete submission** and confirm. This removes the submitted organisation/student details from the batch and hides it from the queue. Approved student documents, Firebase accounts and sheet rows remain untouched. A minimal deletion marker retains the reference, original creation time and deletion audit metadata so an old public retry cannot recreate the batch. Review of a deleted submission returns 404. Deleting the same reference again is safe.
 
-## Partnership and referral programme
+## Historical partnership and referral programme (closed to new applications)
 
 The public `https://www.falowen.app/partnerships` page links institutions to the existing group form. Referral applicants use a separate form, accept the versioned terms and enter the owner queue at `/referral-review` (Students → Referral applications and commissions). Verify the contact before approval, then send the approved link to the contact manually. Repeated applications and approvals preserve the original record and invitation.
 
@@ -60,7 +68,7 @@ Referral applications additionally collect Ghana bank or mobile money payout det
 
 After partner approval, the owner verifies the identity/destination, then chooses **Verify payout destination and enable commissions**. Paystack account resolution must match the account number and holder name before creating a GHS transfer recipient. Name mismatches fail closed for correction. Signing alone neither approves the partner nor enables money movement. The approved-partnership event sends the unique referral link by the existing announcement/payment email service; repeated events use a delivery marker (an email can still duplicate if a crash happens after delivery but before saving the marker).
 
-## Automatic eligible commissions
+## Historical automatic eligible commissions
 
 Automation is implemented behind `REFERRAL_AUTO_PAYOUTS_ENABLED=true`, disabled by default. Event-driven Functions observe completed Admin payments and Campus Paystack webhook records; there is no new cron or polling loop. Only an approved current signed referral partner with a verified enabled payout destination qualifies. Signup alone does not earn anything. The first eligible tuition payment across both existing ledgers is checked directly with Paystack and its refund records, and the commission is 10% of that first tuition amount, in pesewas. Later instalments, renewals, sponsorship, self-referrals, ambiguous offline history and refunded payments cannot generate automatic payouts. The student commission lock prevents another claim earning for the same student.
 

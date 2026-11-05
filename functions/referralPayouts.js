@@ -1,6 +1,6 @@
 "use strict";
 const { owner } = require("./organisationEnrolment");
-const { hash, decryptBank, VERSION } = require("./partnershipAgreements");
+const { hash, decryptBank, VERSION, ORGANISATION_VERSION } = require("./partnershipAgreements");
 const { firstPayment, verifyReceipt, confirmReceipt } = require("./referralProgramme");
 const fail = (status, message) => { throw Object.assign(new Error(message), { status }); };
 const enabled = () => process.env.REFERRAL_AUTO_PAYOUTS_ENABLED === "true";
@@ -178,7 +178,7 @@ function registerPayoutTriggers({ db, admin, onDocumentWritten, paystackSecret }
   exports.notifyApprovedPartnership = onDocumentWritten({ document: "referralApplications/{id}", retry: true, secrets: [paystackSecret] }, async event => {
     const after = event.data?.after; if (!after?.exists) return;
     const partner = after.data(), before = event.data.before?.data() || {};
-    if (partner.status !== "approved" || partner.terms !== VERSION) return;
+    if (partner.status !== "approved" || ![VERSION, ORGANISATION_VERSION].includes(partner.terms)) return;
     if (before.status !== "approved") {
       const marker = db.collection("partnershipNotifications").doc(after.id), current = await marker.get();
       if (!current.exists || current.data().status !== "sent") {
@@ -192,8 +192,8 @@ function registerPayoutTriggers({ db, admin, onDocumentWritten, paystackSecret }
           try {
             const { postPaymentRow, resolveWebhookConfig } = require("./studentPaymentUpdateEmails");
             const runtimeConfig = JSON.parse(process.env.CLOUD_RUNTIME_CONFIG || "{}");
-            const link = partner.kind === "referral" ? "https://www.falowen.app/partnerships?ref=" + partner.code : "https://www.falowen.app/organisation-enrolment";
-            await postPaymentRow(resolveWebhookConfig(runtimeConfig), { email: partner.email, topic: "Falowen partnership approved", announcement: `Hello ${partner.name},\nYour Falowen partnership has been approved.\n${partner.kind === "referral" ? "Your unique referral link:" : "Submit your students here:"}\n${link}\nReferral commission is earned only after an eligible first tuition payment, never for signup alone.`, link, button_label: "Open partnership link", delivery_mode: "individual", allow_bcc_fallback: "FALSE", show_progress: "FALSE", show_review: "FALSE", show_app_button: "TRUE", attach_certificate: "FALSE" });
+            const link = partner.kind === "institutional" && partner.billingResponsibility === "organisation" ? "https://www.falowen.app/organisation-enrolment" : "https://www.falowen.app/signup?program=german";
+            await postPaymentRow(resolveWebhookConfig(runtimeConfig), { email: partner.email, topic: "Falowen partnership approved", announcement: `Hello ${partner.name},\nYour Falowen partnership has been approved.\n${partner.kind === "institutional" && partner.billingResponsibility === "organisation" ? "Submit your organisation-paid students here:" : "Clients paying for themselves can use normal signup here:"}\n${link}\nClients paying individually use normal signup and pay the full advertised fee. No referral commission applies.`, link, button_label: "Open partnership link", delivery_mode: "individual", allow_bcc_fallback: "FALSE", show_progress: "FALSE", show_review: "FALSE", show_app_button: "TRUE", attach_certificate: "FALSE" });
             await marker.set({ status: "sent", sentAt: admin.firestore.FieldValue.serverTimestamp(), leaseUntil: 0 });
           } catch (error) { await marker.set({ status: "failed", leaseUntil: 0 }); throw error; }
         }

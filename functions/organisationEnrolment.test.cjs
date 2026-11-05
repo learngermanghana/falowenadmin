@@ -23,3 +23,15 @@ test('delete endpoint requires verified owner and validates submission reference
  await routes['/admin/organisation-enrolments/:batchId/delete']({headers:{},params:{batchId:'batch1'}},res);assert.equal(code,401);
  const {deleteSubmission}=require('./organisationEnrolment.js');await assert.rejects(deleteSubmission({batchId:'../students',db:{}}),{status:400});
 });
+test('student lists retain their signed agreement and require its organisation email',async()=>{
+ const {fixture:createFixture}=require('./partnershipTestFixture.cjs');const f=createFixture();
+ const agreementReference='a'.repeat(64);
+ f.data.set('referralApplications/'+agreementReference,{kind:'institutional',signedAt:'2026-11-05T00:00:00Z',status:'pending',email:'coordinator@example.org'});
+ registerOrganisationEnrolmentRoutes(f.app,f);
+ const requestId='12345678-1234-1234-1234-123456789012';
+ const payload={...body(),requestId,agreementReference};
+ assert.equal((await f.call('/organisation-enrolments',payload)).status,200);
+ assert.equal(f.data.get('organisationEnrolments/'+requestId).agreementReference,agreementReference);
+ const mismatch={...payload,requestId:'22345678-1234-1234-1234-123456789012',organisation:{...payload.organisation,email:'other@example.org'}};
+ assert.equal((await f.call('/organisation-enrolments',mismatch)).status,409);
+});
