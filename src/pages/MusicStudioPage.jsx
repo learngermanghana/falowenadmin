@@ -56,7 +56,7 @@ export default function MusicStudioPage() {
   }, [shortPrompt]);
   const [styleMode, setStyleMode] = useState('auto');
   const [productionProfile, setProductionProfile] = useState('auto');
-  // Prewritten A1–B1 lyrics are selected from the local dictionary; edits are
+  // Prewritten A1–C2 lyrics are selected from the local dictionary; edits are
   // scoped by assignment so changing lessons never reuses the wrong lyrics.
   const [lyricsOverrides, setLyricsOverrides] = useState({});
   const [savedLyrics, setSavedLyrics] = useState({});
@@ -224,7 +224,7 @@ export default function MusicStudioPage() {
     downloadLyricsText(text, falowenMusicFileName(lesson, trackTitle, 'txt'));
   }
   function exportCompleteSongbook() {
-    const text = ['A1', 'A2', 'B1'].map(songLevel => {
+    const text = STUDIO_COURSE_LEVELS.map(songLevel => {
       const entries = getMusicDays(songLevel).flatMap(group => group.lessons);
       const songs = getReusableSongDrafts(songLevel);
       const content = songs.map(song => musicSongTeachingPackText(song,
@@ -232,10 +232,10 @@ export default function MusicStudioPage() {
         .join('\n\n' + '='.repeat(70) + '\n\n');
       return `FALOWEN MUSIC · ${songLevel} · ${songs.length} ORIGINAL SONGS\n\n${content}`;
     }).join('\n\n' + '#'.repeat(70) + '\n\n');
-    downloadLyricsText(text, 'falowen-a1-to-b1-84-song-lyrics-and-music-styles.txt');
+    downloadLyricsText(text, 'falowen-a1-to-c2-168-song-lyrics-and-music-styles.txt');
   }
   function exportLevelSongbook() {
-    if (!['A1', 'A2', 'B1'].includes(level)) return;
+    if (!STUDIO_COURSE_LEVELS.includes(level)) return;
     const entries = days.flatMap(group => group.lessons);
     const contents = getReusableSongDrafts(level).map(song => {
       const lessonEntry = entries.find(entry => entry.assignmentKey === song.assignmentKey);
@@ -411,12 +411,12 @@ export default function MusicStudioPage() {
           <label htmlFor="music-focus">Words or grammar to practise (optional)</label><textarea id="music-focus" rows={2} maxLength={400} value={focus} onChange={e => setFocus(e.target.value)} placeholder="Add specific words or structures from your lesson" />
           <p className="music-note">The selected level, day and dictionary topic guide the song automatically. Changing lessons loads the matching prewritten lyrics and style when available. Your edits stay with that lesson while the page is open. Choosing or copying lyrics is free.</p>
         </>}
-        {courseMode === 'course' && ['A1', 'A2', 'B1'].includes(level) && <div className="music-songbook-actions" style={{ padding: 12, border: '1px solid #bfdfc3', borderRadius: 12, background: '#f0f9f0', display: 'grid', gap: 8 }}>
+        {courseMode === 'course' && STUDIO_COURSE_LEVELS.includes(level) && <div className="music-songbook-actions" style={{ padding: 12, border: '1px solid #bfdfc3', borderRadius: 12, background: '#f0f9f0', display: 'grid', gap: 8 }}>
           <strong>Ready-to-use songbook · {getReusableSongDrafts(level).length} original songs</strong>
           <p style={{ margin: 0, fontSize: 13 }}>Select a lesson to load its original storytelling lyrics and matching music style. Reuse the text free of charge, then generate audio only when ready.</p>
           {draft && <p style={{ margin: 0, fontSize: 13 }}><strong>Selected song:</strong> {draft.title}</p>}
           <button type="button" onClick={exportLevelSongbook}>Download all {level} lyrics & music styles (.txt)</button>
-          <button type="button" onClick={exportCompleteSongbook}>Download complete A1–B1 songbook · 84 songs (.txt)</button>
+          <button type="button" onClick={exportCompleteSongbook}>Download complete A1–C2 songbook · 168 songs (.txt)</button>
         </div>}
         <h2>2. Shape your song</h2>
         <label htmlFor="music-prompt-mode">Music prompt mode</label>
