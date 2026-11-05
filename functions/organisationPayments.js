@@ -85,6 +85,7 @@ async function sendGroupReceipt({ db, admin, reference, runtimeConfig, send = po
     const manual = payment.purpose === "organisation_manual";
     const format = value => "GHS " + Number(value || 0).toFixed(2);
     const breakdown = payment.lines.map((line, index) =>
+      manual ? [index + 1, line.studentName || line.studentId, "Tuition received " + format(line.tuitionCredit)].join(" | ") :
       [index + 1, line.studentName || line.studentId, "Gross " + format(line.grossAmount),
         "retained organisation share " + format(line.discount), "net tuition allocated " + format(line.tuitionCredit)].join(" | ")
     ).join("\n");
@@ -103,16 +104,16 @@ async function sendGroupReceipt({ db, admin, reference, runtimeConfig, send = po
         ...(manual ? [
           "Payment method: " + (MANUAL_METHOD_LABELS[payment.method] || "Verified manual payment"),
           "External receipt/transfer reference: " + payment.transactionReference,
-          "Received date: " + (payment.paidAt?.toDate?.()?.toISOString?.().slice(0, 10) || "Verified by Falowen"),
+          "Received date: " + (payment.receivedDate || payment.paidAt?.toDate?.()?.toISOString?.().slice(0, 10) || "Verified by Falowen"),
           "Original full-tuition arrangement: " + payment.agreement,
         ] : []),
         "Student tuition breakdown:",
         breakdown,
-        "Gross tuition before retained share: " + format(gross),
+        manual ? "Full tuition received: " + format(gross) : "Gross tuition before retained share: " + format(gross),
         manual ? "Partner deduction from Falowen tuition: GHS 0.00 (legacy full-tuition arrangement)" : "Retained 10% organisation share: " + format(payment.discount),
         "Net tuition paid to Falowen: " + format(payment.tuitionCredit),
-        "Checkout processing charges: " + format(processing),
-        "Total charged to organisation: " + format(payment.checkoutAmount),
+        manual ? "Payment processing charge deducted by Falowen: GHS 0.00" : "Checkout processing charges: " + format(processing),
+        manual ? "Total received by Falowen: " + format(payment.checkoutAmount) : "Total charged to organisation: " + format(payment.checkoutAmount),
         manual ? "Falowen received the full tuition amount. No organisation commission or Paystack fee was deducted from this payment." : "The retained organisation share is a deduction from the first tuition payment, not a second payout. Processing charges are not tuition credited to students.",
         "Each class lasts 10 weeks. Student access is six months from account activation. Any class change needs approval and availability and does not extend access.",
         "Please retain this reference and breakdown as your organisation payment receipt. Your students will receive separate enrolment confirmations when their class and account invitations are ready.",
@@ -240,7 +241,7 @@ async function recordManualOrganisationPayment({ db, admin, actor, body = {} }) 
       reference, requestSignature: signature, organisationSubmissionId: batchId,
       organisationName: String(batch.organisation?.name || "").trim(), email: billingEmail,
       agreement: agreementNote, agreementType: "legacy_full_tuition",
-      verificationNote, transactionReference, method, lines,
+      verificationNote, transactionReference, receivedDate, method, lines,
       tuitionCredit: totalMinor / 100, discount: 0, checkoutAmount: totalMinor / 100,
       processingShare: 0, currency: "GHS", provider: "Manual",
       purpose: "organisation_manual", referralEligible: false, status: "paid",
