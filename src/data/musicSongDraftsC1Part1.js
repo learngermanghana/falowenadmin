@@ -12,7 +12,7 @@ export const MUSIC_SONG_DRAFTS_C1_PART1 = defineAdvancedSongDrafts([
   {
     "key": "C1 2",
     "title": "Zwischen allen Ufern",
-    "genre": "Afro-Jazz Soul",
+    "genre": "Afro-Soul",
     "tempo": 86,
     "arrangement": "Highlife guitar flourishes, deep Rhodes chords, restrained hand drums and melodic horn harmonies.",
     "lyrics": "[Verse 1]\nAm Telefon wechselt meine Stimme,\nals öffnete sich ein zweites Fenster.\nIn einer Sprache bin ich Tochter,\nin einer anderen längst Kollegin.\n\n[Chorus]\nIch lebe zwischen allen Ufern,\ndoch nirgendwo nur halb.\nDie Sprachen, die mich tragen,\nmachen meine Welt nicht kleiner.\n\n[Verse 2]\nEin Fremder fragt nach meiner Herkunft,\nund meint damit ein einziges Land.\nIch könnte ihm den Namen nennen,\ndoch damit wäre wenig gesagt.\nIn jeder Stadt blieb etwas hängen,\nein Blick, ein Satz, ein neuer Takt.\n\n[Bridge]\nWurzeln können tiefer wachsen,\nohne meine Schritte festzuhalten.\n\n[Outro]\nIch antworte mit meiner Geschichte.\nSie passt in keinen kurzen Rahmen."
