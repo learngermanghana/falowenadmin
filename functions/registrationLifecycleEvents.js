@@ -55,11 +55,11 @@ function registrationRow(student = {}, studentId = "", now = new Date()) {
     class_id: text(student.classId || student.classRecordId || student.assignedClassId),
     level: text(student.level || student.levelId).toUpperCase(),
     paid: numberValue(
+      // Do not infer received money from a proposed signup payment amount.
       student.paid
       ?? student.amountPaid
       ?? student.amount_paid
-      ?? student.totalPaid
-      ?? student.initialPaymentAmount,
+      ?? student.totalPaid,
     ),
     balance: numberValue(
       student.balanceDue
@@ -364,8 +364,7 @@ function paymentAmount(student = {}) {
     student.paid
     ?? student.amountPaid
     ?? student.amount_paid
-    ?? student.totalPaid
-    ?? student.initialPaymentAmount,
+    ?? student.totalPaid,
   );
 }
 
@@ -429,12 +428,9 @@ function firstPaymentTransition(before = {}, after = {}) {
     return { confirmed: true, source: "paid_increase", amount: afterPaid - beforePaid };
   }
 
-  const beforeBalance = balanceAmount(before);
-  const afterBalance = balanceAmount(after);
-  if (beforePaid <= 0 && afterPaid <= 0 && beforeBalance > 0 && afterBalance >= 0 && afterBalance < beforeBalance) {
-    return { confirmed: true, source: "balance_decrease", amount: beforeBalance - afterBalance };
-  }
-
+  // A balance reduction can be a scholarship, discount, correction, or
+  // provisional signup edit. Never issue enrollment documents or reactivate
+  // a trial merely because the balance fell.
   return { confirmed: false, source: "", amount: 0 };
 }
 
