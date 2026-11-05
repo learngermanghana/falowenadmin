@@ -82,3 +82,12 @@ test("Firestore payment watcher does not send a personal receipt to organisation
   assert.equal(result.reason, "organisation_funded_company_is_payer");
   assert.equal(payment.paymentSnapshot({ paid: 300 }).paid, 300);
 });
+test('prepared profile overlays contact changes without splitting historical groups', () => {
+ const email='partner@example.test',id=organisationId(email);
+ const rows=organisationDirectoryRows([], [{id:'old',organisation:{email,name:'School',phone:'old'},students:[]}], [{id,loginEmail:email,name:'School',contactName:'New contact',phone:'new'}]);
+ assert.equal(rows.length,1);assert.equal(rows[0].phone,'new');assert.equal(rows[0].submissions[0].id,'old');assert.equal(rows[0].accountPrepared,true);
+});
+test('same company name across different emails warns without merging identities', () => {
+ const rows=organisationDirectoryRows([], [{id:'one',organisation:{email:'one@example.test',name:'School!'},students:[]},{id:'two',organisation:{email:'two@example.test',name:'SCHOOL'},students:[]}]);
+ assert.equal(rows.length,2);assert.ok(rows.every(row=>row.possibleDuplicate));assert.notEqual(rows[0].id,rows[1].id);
+});

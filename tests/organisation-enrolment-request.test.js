@@ -52,3 +52,12 @@ test('organisation directory rejects methods other than GET at the router', asyn
     assert.equal(res.code, 405);
   } finally { global.fetch = saved; }
 });
+test('partner API proxy preserves tokens for profile reads and owner activation', async () => {
+ const saved=global.fetch;
+ try {
+  for (const [path,method] of [['organisation-partners/me','GET'],['admin/organisation-partners/prepare','POST']]) {
+   global.fetch=async(url,options)=>{assert.ok(url.endsWith('/'+path));assert.equal(options.headers.authorization,'Bearer scoped-token');return reply({ok:true});};
+   const res=responseMock();await handler({method,url:'/api/'+path,headers:{authorization:'Bearer scoped-token',host:'admin.falowen.app'},body:{}},res);assert.equal(res.data.ok,true);
+  }
+ } finally {global.fetch=saved;}
+});

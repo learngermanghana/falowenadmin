@@ -2418,6 +2418,7 @@ require("./referralProgramme.js").registerReferralRoutes(app, { admin, db });
 require("./partnershipAgreements.js").registerAgreementRoutes(app, { admin, db });
 require("./referralPayouts.js").registerPayoutRoutes(app, { admin, db });
 require("./organisationEnrolment.js").registerOrganisationEnrolmentRoutes(app, { admin, db });
+require("./organisationPartners.js").registerOrganisationPartnerRoutes(app, { admin, db });
 
 // Marking runs on Firebase, using the same generated pipeline as tutor marking.
 const { createCourseMarkingWorker, createScoreSyncWorker } = require("./automaticCourseMarking");

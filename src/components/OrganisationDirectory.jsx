@@ -1,9 +1,11 @@
+import { sendPasswordResetEmail } from "firebase/auth";
+import { partnerAuth } from "../utils/organisationPartnerAccount.js";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { auth } from "../firebase.js";
 import { organisationEnrolmentRequest } from "../utils/organisationEnrolmentRequest.js";
 
-const request = path => organisationEnrolmentRequest(path, null, {
+const request = (path, body = null) => organisationEnrolmentRequest(path, body, {
   staff: true, getToken: () => auth.currentUser?.getIdToken(),
 });
 const money = amount => "GH₵" + Number(amount || 0).toFixed(2);
@@ -15,6 +17,17 @@ export default function OrganisationDirectory() {
   const [error, setError] = useState("");
   const [truncated, setTruncated] = useState(false);
   const [details, setDetails] = useState({});
+  const [inviting, setInviting] = useState(null), [notice, setNotice] = useState("");
+  async function activatePartner(org) {
+    if (!window.confirm(`Prepare the partner account for ${org.name} (${org.contactEmail}) and send a password setup/reset email? Verify this is the authorised company contact first.`)) return;
+    setInviting(org.id); setError(""); setNotice("");
+    try {
+      const result = await request("admin/organisation-partners/prepare", { email: org.contactEmail });
+      await sendPasswordResetEmail(partnerAuth, result.email, { url: "https://www.falowen.app/partnerships" });
+      setNotice(`Partner account prepared. Password setup/reset email requested for ${result.email}. They must also verify their email before accessing records.`);
+    } catch(e) { setError(e.message + " If the account was prepared but email failed, retry this action or ask the partner to use Set password on the public page."); }
+    finally { setInviting(null); }
+  }
   async function load() {
     setLoading(true); setError("");
     try {
@@ -50,14 +63,14 @@ export default function OrganisationDirectory() {
   }
   return <section aria-label="Organisation directory">
     <h2>Organisation directory</h2>
-    <p>Signed registrations appear here immediately, even when no students have been submitted. Each organisation is grouped by its registered email; historical records remain unchanged.</p>
+    <p>Signed registrations appear here immediately, even when no students have been submitted. Each organisation keeps one partner profile. Verify the authorised contact before preparing account access; historical student and payment records remain unchanged.</p>
     <button type="button" disabled={loading} onClick={load}>{loading ? "Loading…" : "Refresh organisations"}</button>
-    {error && <p role="alert">{error}</p>}
+    {error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}
     {loaded && !organisations.length && <p>No registered organisations or submitted student groups found.</p>}
-    {truncated && <p role="status">Showing the first 100 agreements and first 100 submissions. Older records remain stored; use the agreement/submission history pages for older entries.</p>}
+    {truncated && <p role="status">Showing up to 100 profiles, 100 agreements and 100 submissions. Older records remain stored; use the agreement/submission history pages for older entries.</p>}
     {organisations.map(org => <article key={org.id}>
-      <h3>{org.name || "Organisation (name awaiting verification)"}</h3>
-      <p><strong>Agreement:</strong> {org.agreementSignedAt ? "Signed · " + org.agreementStatus : "Not linked"}{org.agreementSignedAt && <span> · {String(org.agreementSignedAt).slice(0,10)}</span>}</p>
+      <h3>{org.name || "Organisation (name awaiting verification)"}</h3><button type="button" disabled={Boolean(inviting)} onClick={() => activatePartner(org)}>{inviting === org.id ? "Preparing…" : "Prepare partner account / send setup email"}</button>
+      <p><strong>Partner account:</strong> {org.accountPrepared ? org.accountDisabled ? "Disabled" : "Prepared" : "Not prepared"}</p>{org.possibleDuplicate && <p role="alert">Possible duplicate company name. Verify these records before preparing access. Names alone do not link accounts; contact Falowen support for a reviewed correction.</p>}<p><strong>Agreement:</strong> {org.agreementSignedAt ? "Signed · " + org.agreementStatus : "Not linked"}{org.agreementSignedAt && <span> · {String(org.agreementSignedAt).slice(0,10)}</span>}</p>
       <p><strong>Contact:</strong> {org.contactName || "—"} · {org.contactEmail} · {org.phone || "—"}</p>
       <p><strong>Billing email:</strong> {org.billingEmail} · <strong>Student submissions:</strong> {org.submissions.length} · <strong>Students:</strong> {org.studentCount} ({org.approvedCount} approved)</p>
       {org.agreementReference && org.agreementSignedAt && <button type="button" onClick={() => downloadAgreement(org.agreementReference)}>Download signed agreement</button>}
