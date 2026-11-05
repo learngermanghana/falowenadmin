@@ -128,8 +128,11 @@ export function getReusableMusicQuestionCount() {
 
 export function musicSongTeachingPackText(song, lesson) {
   if (!song) return '';
-  // The question bank is keyed to the original draft. Callers must review the
-  // answers before using it with materially edited or newly generated lyrics.
+  // Questions exist only for the manually reviewed A1–B1 recordings.
+  // Never attach an empty answer key or imply the new advanced lyrics have
+  // graded listening questions until those have been separately authored.
+  const questions = getReusableMusicQuestions(song.assignmentKey);
+  if (!questions) return musicDraftPackageText(song, lesson);
   return [
     musicDraftPackageText(song, lesson),
     '',
