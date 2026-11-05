@@ -8,6 +8,11 @@ on:
       - "src/components/SocialVocabularyVideoCreator.css"
       - "src/utils/socialVocabularyVideo.js"
       - "src/utils/socialMp4Export.js"
+      - "src/utils/socialMusicLibrary.js"
+      - "src/components/SocialMusicPicker.jsx"
+      - "src/components/SocialGermanChallenges.jsx"
+      - "src/pages/SocialMediaPage.jsx"
+      - "tests/social-cloudflare-music-loop.test.js"
       - "tests/social-mp4-export.test.js"
       - "tests/social-vocabulary-video.test.js"
       - ".github/workflows/social-vocabulary-video.yml"
@@ -19,6 +24,11 @@ on:
       - "src/components/SocialVocabularyVideoCreator.css"
       - "src/utils/socialVocabularyVideo.js"
       - "src/utils/socialMp4Export.js"
+      - "src/utils/socialMusicLibrary.js"
+      - "src/components/SocialMusicPicker.jsx"
+      - "src/components/SocialGermanChallenges.jsx"
+      - "src/pages/SocialMediaPage.jsx"
+      - "tests/social-cloudflare-music-loop.test.js"
       - "tests/social-mp4-export.test.js"
       - "tests/social-vocabulary-video.test.js"
 
@@ -31,7 +41,7 @@ jobs:
         with:
           node-version: "22"
       - name: Test animation and local export contracts
-        run: node --test tests/social-vocabulary-video.test.js tests/social-mp4-export.test.js
+        run: node --test tests/social-vocabulary-video.test.js tests/social-mp4-export.test.js tests/social-falowen-music.test.js tests/social-cloudflare-music-loop.test.js
       - name: Check bundle for mobile preview and local recording
         run: |
           npm ci --ignore-scripts
