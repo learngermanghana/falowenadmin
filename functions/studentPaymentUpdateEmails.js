@@ -373,6 +373,11 @@ async function processStudentPaymentUpdate({
   const after = event?.data?.after?.data?.() || {};
   const studentId = text(event?.params?.studentId || event?.data?.after?.id || event?.data?.before?.id);
   if (!studentId) return { sent: false, reason: "missing_student_id" };
+  // Organisation tuition is receipted to the billing company. The student receives a
+  // distinct enrolment confirmation after their account/class are prepared.
+  if (text(after.billingResponsibility).toLowerCase() === "organisation") {
+    return { sent: false, reason: "organisation_funded_company_is_payer" };
+  }
 
   const change = detectPaymentChange(before, after);
   if (!change) return { sent: false, reason: "no_payment_change" };
