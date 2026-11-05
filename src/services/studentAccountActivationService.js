@@ -38,3 +38,7 @@ export function prepareStudentAccount(studentId) {
 export function recordStudentInvitationSent(studentId) {
   return requestStudentAccount(studentId, "POST", "/invitation-sent");
 }
+
+export function sendOrganisationEnrolmentConfirmation(studentId) {
+  return requestStudentAccount(studentId, "POST", "/organisation-confirmation");
+}
