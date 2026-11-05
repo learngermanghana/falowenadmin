@@ -161,6 +161,15 @@ function registerOrganisationPaymentRoutes(app, { db, admin, initializePaystackP
       students.forEach((snap, i) => {
         if (!approved.has(lines[i].studentId) || !snap.exists || snap.data().organisationSubmissionId !== batchId) fail(409, "Only approved students in this organisation can be billed.");
         if (minor(lines[i].grossAmount) > balanceOf(snap.data())) fail(409, "An amount exceeds a student's outstanding balance.");
+        // Retain 10% only on the first tuition payment, never a later instalment.
+        const shareMinor = minor(lines[i].discount);
+        const expectedFirstShare = Math.round(minor(lines[i].grossAmount) * 0.1);
+        if (paidOf(snap.data()) === 0 && shareMinor !== expectedFirstShare) {
+          fail(409, "The first tuition payment must retain exactly the agreed 10% organisation share.");
+        }
+        if (paidOf(snap.data()) > 0 && shareMinor !== 0) {
+          fail(409, "Organisation share applies only to each student's first tuition payment.");
+        }
         if (lines[i].discount && !String(req.body.discountReason || "").trim()) fail(400, "Enter a reason for the partner share deduction.");
         lines[i].studentName = snap.data().name || snap.data().fullName || lines[i].studentId;
       });
