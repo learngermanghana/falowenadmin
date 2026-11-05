@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "functions/studentAccountActivation.js"
+      - "functions/organisationConfirmations.js"
+      - "functions/organisationConfirmations.test.cjs"
       - "functions/studentAccountActivation.test.cjs"
       - "functions/index.js"
       - "functions/studentProfileUpdate.js"
