@@ -1,5 +1,6 @@
 import {chooseSocialVideoFormat, requireValidSocialVideo} from "../utils/socialMp4Export.js";
 import { SOCIAL_MUSIC_TRACKS, addSocialMusic } from "../utils/socialMusicLibrary.js";
+import SocialMusicPicker, { EMPTY_SOCIAL_MUSIC } from "./SocialMusicPicker.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CHALLENGE_LEVELS, CHALLENGE_TYPES, challengeCopy,
@@ -53,7 +54,8 @@ export default function SocialGermanChallenges() {
   const [exportFormat, setExportFormat] = useState("auto");
   const [statuses, setStatuses] = useState(getStatuses);
   const [working, setWorking] = useState(false);
-  const [falowenTrack, setFalowenTrack] = useState("none");
+  const [falowenSelection, setFalowenSelection] = useState(EMPTY_SOCIAL_MUSIC);
+  const falowenTrack = falowenSelection.id;
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const canvasRef = useRef(null);
@@ -187,7 +189,7 @@ export default function SocialGermanChallenges() {
         audioContext = new Context();
         await audioContext.resume();
         const output = audioContext.createMediaStreamDestination();
-        soundtrack = await addSocialMusic(audioContext, output, falowenTrack, CHALLENGE_VIDEO_SECONDS);
+        soundtrack = await addSocialMusic(audioContext, output, falowenTrack, CHALLENGE_VIDEO_SECONDS, 0.22, { selection: falowenSelection, tracks: [falowenSelection.track].filter(Boolean) });
         await audioContext.resume();
         if (audioContext.state !== "running") throw new Error("Audio is paused by this browser. Keep the tab active and try export again.");
         stream = new MediaStream([...stream.getVideoTracks(), ...output.stream.getAudioTracks()]);
@@ -222,7 +224,7 @@ export default function SocialGermanChallenges() {
         if (!blob.size) throw new Error("The video was empty. Please retry in a supported desktop browser.");
         await requireValidSocialVideo(blob, videoMime);
         download(blob, fileStem + "-12s." + videoMime.extension);
-        setNotice("12-second " + videoMime.extension.toUpperCase() + " exported" + (falowenTrack === "none" ? " without music." : " with " + (SOCIAL_MUSIC_TRACKS.find(track => track.id === falowenTrack)?.label || "Falowen music") + "."));
+        setNotice("12-second " + videoMime.extension.toUpperCase() + " exported" + (falowenTrack === "none" ? " without music." : " with " + (falowenSelection.track?.label || SOCIAL_MUSIC_TRACKS.find(track => track.id === falowenTrack)?.label || "Falowen music") + "."));
       }
     } catch (cause) {
       setError(cause?.message || "Video export failed.");
@@ -311,14 +313,10 @@ export default function SocialGermanChallenges() {
             <option value="webm">WebM · Chrome/Firefox</option>
           </select>
         </label>
-        <label>Falowen background song for video
-          <select style={FIELD} disabled={working} value={falowenTrack} onChange={(event) => setFalowenTrack(event.target.value)}>
-            {SOCIAL_MUSIC_TRACKS.map(track => <option key={track.id} value={track.id}>{track.label}</option>)}
-          </select>
-        </label>
+        <SocialMusicPicker label="Falowen background song for video" selection={falowenSelection} onChange={setFalowenSelection} disabled={working} />
         <button type="button" disabled={working || !videoMime} onClick={exportVideo}>{working ? "Recording your 12-second video…" : "Export 12-second video"}</button>
         {!videoMime && <p style={NOTE}>Selected video format unavailable. Choose Auto or WebM, or export PNG.</p>}
-        <p style={NOTE}>Videos are recorded on your device, vertically at 720 × 1280, without watermarks or paid AI tokens. Choose one of the two Falowen songs to embed it into the MP4, or export without music.</p>
+        <p style={NOTE}>Videos are recorded on your device, vertically at 720 × 1280, without watermarks or paid AI tokens. Choose a built-in song or load your published Cloudflare R2 library. Select the precise start/end to repeat in the export, or export without music.</p>
         {notice && <p role="status" style={{ margin: 0, color: "#166534", fontWeight: 600 }}>{notice}</p>}
         {error && <p role="alert" style={{ margin: 0, color: "#b91c1c" }}>{error}</p>}
       </section>}
