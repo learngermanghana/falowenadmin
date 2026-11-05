@@ -65,15 +65,19 @@ async function applyGroupPayment({ transaction: tx, paymentRef, payment, eventDa
       // Do not start a six-month clock merely because the company paid.
       contractTermMonths: "6",
     } : {});
+    line.studentName = payment.lines[i].studentName || student.name || line.studentId;
     line.remainingBalance = nextBalance;
     line.courseTuitionFee = Number(student.tuitionFee || 0);
     if (partial && !student.contractEnd) line.accessEndDate = termPatch.contractEnd;
+    const effectiveEnd = termPatch.contractEnd || student.contractEnd;
+    const active = !partial || !effectiveEnd || Number.isNaN(Date.parse(String(effectiveEnd)))
+      || Date.parse(String(effectiveEnd)) > Date.now();
     tx.set(snap.ref, {
       paid: (paidOf(student) + minor(line.tuitionCredit)) / 100,
       tuitionDiscount: (minor(student.tuitionDiscount ?? 0) + minor(line.discount)) / 100,
       balanceDue: nextBalance, balance: nextBalance,
       paymentStatus: partial ? "Partially Paid" : "Paid",
-      status: "Active",
+      status: active ? "Active" : "Expired",
       ...(firstPayment ? { trialStatus: "converted", trialConvertedAt: paidAt } : {}),
       ...termPatch,
       paidLevel: student.level || student.paidLevel || "",
@@ -94,7 +98,9 @@ async function applyGroupPayment({ transaction: tx, paymentRef, payment, eventDa
     });
   });
   tx.update(paymentRef, { status: "paid", paidAt, updatedAt: now, receiptStatus: "pending", paystackTransactionId: eventData.id || null,
-    verifiedCurrency: "GHS", verifiedAmountSubunit: Number(eventData.amount) });
+    // Persist the actual per-student allocation so the same company receipt
+    // displays an accurate remainder and first-month access end date.
+    lines, verifiedCurrency: "GHS", verifiedAmountSubunit: Number(eventData.amount) });
   return { group: true, duplicate: false, reference: payment.reference };
 }
 // The upstream announcement service may return a private error message.
