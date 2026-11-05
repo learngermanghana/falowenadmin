@@ -46,8 +46,16 @@ test('repair rejects a mismatched student identity instead of changing another a
 
 test('duplicate student email blocks approval without creating another student',async()=>{const f=fixture({duplicate:true});await assert.rejects(reviewRow({...f,decision:'approve'}),{status:409});assert.equal(f.records.size,1);assert.equal(f.records.get('organisationEnrolments/batch1').students[0].status,'pending');});
 test('rejection never creates a student account',async()=>{const f=fixture();assert.equal((await reviewRow({...f,decision:'reject'})).status,'rejected');assert.equal(f.records.size,1);});
-test('only submission is public; review/list handlers enforce owner auth',async()=>{const routes={};registerOrganisationEnrolmentRoutes({post:(p,h)=>routes[p]=h,get:(p,h)=>routes[p]=h},{db:{},admin:{}});for(const path of ['/admin/organisation-enrolments','/admin/organisation-enrolments/:batchId/review','/admin/organisation-enrolments/:batchId/repair-student-code']){let code;let data;const res={set(){},status(s){code=s;return this;},json(v){data=v;}};await routes[path]({headers:{},params:{},body:{}},res);assert.equal(code,401);assert.equal(data.ok,false);}});
-test('public submission is idempotent and quota rejects new submissions over its limit',async()=>{const records=new Map();const routes={};const db={collection:c=>({doc:id=>({key:`${c}/${id}`})}),runTransaction:async fn=>fn({get:async r=>({exists:records.has(r.key),data:()=>records.get(r.key)}),create:(r,v)=>records.set(r.key,v),set:(r,v)=>records.set(r.key,v)})};registerOrganisationEnrolmentRoutes({post:(p,h)=>routes[p]=h,get(){}},{db,admin:{firestore:{FieldValue:{serverTimestamp:()=>null}}}});async function submit(id){let status=200,payload;await routes['/organisation-enrolments']({body:{...body(),requestId:id}},{set(){},status(s){status=s;return this;},json(v){payload=v;}});return{status,payload};}const id='12345678-1234-1234-1234-123456789012';assert.equal((await submit(id)).status,200);assert.equal((await submit(id)).status,200);assert.equal([...records.keys()].filter(k=>k.startsWith('organisationEnrolments/')).length,1);const quota=[...records.keys()].find(k=>k.startsWith('organisationEnrolmentLimits/'));assert.equal(records.get(quota).count,1);records.set(quota,{count:10});assert.equal((await submit('22345678-1234-1234-1234-123456789012')).status,429);});
+test('review/list handlers enforce owner auth',async()=>{const routes={};registerOrganisationEnrolmentRoutes({post:(p,h)=>routes[p]=h,get:(p,h)=>routes[p]=h},{db:{},admin:{}});for(const path of ['/admin/organisation-enrolments','/admin/organisation-enrolments/:batchId/review','/admin/organisation-enrolments/:batchId/repair-student-code']){let code;let data;const res={set(){},status(s){code=s;return this;},json(v){data=v;}};await routes[path]({headers:{},params:{},body:{}},res);assert.equal(code,401);assert.equal(data.ok,false);}});
+test('partner submission is idempotent and quota rejects new submissions over its limit',async()=>{
+ const {fixture,seedPartner}=require('./partnershipTestFixture.cjs');const f=fixture();seedPartner(f);registerOrganisationEnrolmentRoutes(f.app,f);
+ const id='12345678-1234-1234-1234-123456789012';
+ const submit=id=>f.call('/organisation-enrolments',{...body(),requestId:id},'partner');
+ assert.equal((await submit(id)).status,200);assert.equal((await submit(id)).status,200);
+ assert.equal([...f.data.keys()].filter(k=>k.startsWith('organisationEnrolments/')).length,1);
+ const quota=[...f.data.keys()].find(k=>k.startsWith('organisationEnrolmentLimits/'));assert.equal(f.data.get(quota).count,1);f.data.set(quota,{count:10});
+ assert.equal((await submit('22345678-1234-1234-1234-123456789012')).status,429);
+});
 test('delete removes batch personal data, preserves student records, and is repeat-safe',async()=>{
  const {deleteSubmission}=require('./organisationEnrolment.js');const f=fixture();const approved=await reviewRow({...f,decision:'approve'});const student=structuredClone(f.records.get(`students/${approved.studentId}`));
  const original=f.db.runTransaction;f.db.runTransaction=fn=>original(tx=>fn({...tx,set:(r,v)=>f.records.set(r.key,v)}));
@@ -60,17 +68,14 @@ test('delete endpoint requires verified owner and validates submission reference
  await routes['/admin/organisation-enrolments/:batchId/delete']({headers:{},params:{batchId:'batch1'}},res);assert.equal(code,401);
  const {deleteSubmission}=require('./organisationEnrolment.js');await assert.rejects(deleteSubmission({batchId:'../students',db:{}}),{status:400});
 });
-test('student lists retain their signed agreement and require its organisation email',async()=>{
- const {fixture:createFixture}=require('./partnershipTestFixture.cjs');const f=createFixture();
- const agreementReference='a'.repeat(64);
- f.data.set('referralApplications/'+agreementReference,{kind:'institutional',signedAt:'2026-11-05T00:00:00Z',status:'pending',email:'coordinator@example.org'});
- registerOrganisationEnrolmentRoutes(f.app,f);
- const requestId='12345678-1234-1234-1234-123456789012';
- const payload={...body(),requestId,agreementReference};
- assert.equal((await f.call('/organisation-enrolments',payload)).status,200);
- assert.equal(f.data.get('organisationEnrolments/'+requestId).agreementReference,agreementReference);
- const mismatch={...payload,requestId:'22345678-1234-1234-1234-123456789012',organisation:{...payload.organisation,email:'other@example.org'}};
- assert.equal((await f.call('/organisation-enrolments',mismatch)).status,409);
+test('student lists use the verified profile and reject unauthenticated or pending partnerships',async()=>{
+ const {fixture,seedPartner}=require('./partnershipTestFixture.cjs');const f=fixture();const id=seedPartner(f);registerOrganisationEnrolmentRoutes(f.app,f);
+ const requestId='12345678-1234-1234-1234-123456789012';const payload={...body(),requestId,agreementReference:'a'.repeat(64)};
+ assert.equal((await f.call('/organisation-enrolments',payload)).status,401);
+ assert.equal((await f.call('/organisation-enrolments',payload,'partner')).status,200);
+ const batch=f.data.get('organisationEnrolments/'+requestId);assert.equal(batch.agreementReference,id);assert.equal(batch.organisation.email,'partner@example.test');assert.equal(batch.organisation.name,'Example partner');
+ f.data.get('referralApplications/'+id).status='pending';
+ assert.equal((await f.call('/organisation-enrolments',{...payload,requestId:'22345678-1234-1234-1234-123456789012'},'partner')).status,403);
 });
 
 test('new student lists require class requests and retain them without assigning a confirmed class',async()=>{

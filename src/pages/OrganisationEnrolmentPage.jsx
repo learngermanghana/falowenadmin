@@ -1,6 +1,7 @@
+import PartnerAccount from "../components/PartnerAccount.jsx";
+import { partnerRequest } from "../utils/organisationPartnerAccount.js";
 import { loadOrganisationClasses } from "../utils/organisationClasses.js";
 import OrganisationDirectory from "../components/OrganisationDirectory.jsx";
-import { loadOrganisationPartnerContext } from "../utils/organisationPartnerContext.js";
 import { organisationEnrolmentRequest } from "../utils/organisationEnrolmentRequest.js";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -13,11 +14,15 @@ const request = (path, body, staff = false) => organisationEnrolmentRequest(path
   staff, getToken: () => auth.currentUser?.getIdToken(),
 });
 export default function OrganisationEnrolmentPage({ review = false }) {
+  if (review) return <OrganisationEnrolmentForm review />;
+  return <PartnerAccount enrolment>{({ profile }) => <OrganisationEnrolmentForm key={profile.id} profile={profile} />}</PartnerAccount>;
+}
+function OrganisationEnrolmentForm({ review = false, profile }) {
   const [classes, setClasses] = useState([]), [classLoading, setClassLoading] = useState(false), [classError, setClassError] = useState("");
   const loadClasses = useCallback(async () => { setClassLoading(true); setClassError(""); try { setClasses(await loadOrganisationClasses()); } catch (e) { setClassError(e.message); } finally { setClassLoading(false); } }, []);
   useEffect(() => { if (!review) void loadClasses(); }, [loadClasses, review]);
-  const [partnerContext] = useState(loadOrganisationPartnerContext);
-  const [organisation, setOrganisation] = useState(() => partnerContext?.organisation || { name: "", contactName: "", email: "", phone: "" });
+  const partnerContext = profile?.agreement ? { agreementReference: profile.agreement.reference } : null;
+  const organisation = profile || { name: "", contactName: "", email: "", phone: "" };
   const [rows, setRows] = useState([emptyRow(), emptyRow(), emptyRow()]);
   const [consent, setConsent] = useState(false), [website, setWebsite] = useState("");
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
@@ -74,10 +79,10 @@ export default function OrganisationEnrolmentPage({ review = false }) {
         if (!selected) throw new Error(`Student ${index + 1}: select an available class matching their level.`);
         return { ...row, requestedClassId: selected.id, requestedClassName: selected.name, requestedClassStartDate: selected.startDate };
       });
-      const data = await request("organisation-enrolments", { organisation, students, consent, website, requestId, schemaVersion: 2, ...(partnerContext?.agreementReference ? { agreementReference: partnerContext.agreementReference } : {}) });
+      const data = await partnerRequest("organisation-enrolments", { organisation, students, consent, website, requestId, schemaVersion: 2, ...(partnerContext?.agreementReference ? { agreementReference: partnerContext.agreementReference } : {}) });
       setReference(data.reference);
     }); }}>
-      <fieldset disabled={busy}><legend>Organisation contact</legend>{partnerContext?.agreementReference && <p>Signed agreement: {partnerContext.agreementReference}</p>}<div className="org-contact">{[["name", "Organisation name"], ["contactName", "Contact person"], ["email", "Contact email"], ["phone", "Contact phone"]].map(([key, label]) => <label key={key}>{label}<input required maxLength={254} type={key === "email" ? "email" : key === "phone" ? "tel" : "text"} value={organisation[key]} onChange={e => setOrganisation({ ...organisation, [key]: e.target.value })}/></label>)}</div>
+      <fieldset disabled={busy}><legend>Organisation contact</legend>{partnerContext?.agreementReference && <p>Signed agreement: {partnerContext.agreementReference}</p>}<div className="org-contact">{[["name", "Organisation name"], ["contactName", "Contact person"], ["email", "Contact email"], ["phone", "Contact phone"]].map(([key, label]) => <label key={key}>{label}<input required maxLength={254} type={key === "email" ? "email" : key === "phone" ? "tel" : "text"} value={organisation[key]} readOnly/></label>)}</div>
       <label className="org-trap" aria-hidden="true">Website<input tabIndex={-1} autoComplete="off" value={website} onChange={e => setWebsite(e.target.value)}/></label>
       <h2>Student details</h2><p>Paste rows from Excel or Google Sheets into a cell, or type directly. Columns: name, email, phone, level, location, emergency number. Use A1, A2, B1, B2, C1 or C2. Maximum 50 students. Available classes load automatically. Select a level, then choose a class/start date for each student. Class choices are requests for Falowen to confirm.</p><button type="button" disabled={classLoading} onClick={loadClasses}>{classLoading ? "Loading classes…" : "Load / refresh available classes"}</button>{classError && <p role="alert">{classError}</p>}{!classLoading && classes.length === 0 && <p>No available classes were found. Refresh the list or view upcoming classes and contact Falowen before submitting.</p>}
       <div className="org-scroll"><table><thead><tr><th>#</th>{columns.map(([key, label]) => <th key={key}>{label}{["name", "email", "phone", "level"].includes(key) ? " *" : ""}</th>)}<th>Requested class / start date *</th><th>Remove</th></tr></thead>

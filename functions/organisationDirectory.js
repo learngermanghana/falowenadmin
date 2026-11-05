@@ -5,7 +5,7 @@ const crypto = require("node:crypto");
 // Old records do not need rewriting: the directory joins them by normalized email.
 const organisationId = address => crypto.createHash("sha256").update("organisation-v5:" + String(address || "").trim().toLowerCase()).digest("hex");
 const asString = value => String(value ?? "").trim();
-function organisationDirectoryRows(agreements, submissions) {
+function organisationDirectoryRows(agreements, submissions, profiles = []) {
   const groups = new Map();
   const upsert = email => {
     const normalized = asString(email).toLowerCase();
@@ -52,18 +52,39 @@ function organisationDirectoryRows(agreements, submissions) {
     entry.studentCount += students.length;
     entry.approvedCount += students.filter(s => s.status === "approved").length;
   }
+  for (const profile of profiles) {
+    const entry = upsert(profile.loginEmail);
+    if (!entry || entry.id !== profile.id) continue;
+    entry.name = profile.name || entry.name;
+    entry.contactName = profile.contactName || entry.contactName;
+    entry.phone = profile.phone || entry.phone;
+    entry.address = profile.address || entry.address;
+    entry.accountPrepared = true;
+    entry.accountDisabled = Boolean(profile.disabled);
+  }
+  const names = new Map();
+  for (const row of groups.values()) {
+    const key = row.name.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+    if (key) names.set(key, (names.get(key) || 0) + 1);
+  }
+  for (const row of groups.values()) {
+    const key = row.name.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+    row.possibleDuplicate = (names.get(key) || 0) > 1;
+  }
   return [...groups.values()].sort((a,b) => Number(Boolean(b.agreementSignedAt)) - Number(Boolean(a.agreementSignedAt)) || a.name.localeCompare(b.name));
 }
 async function loadOrganisationDirectory(db, limit = 100) {
   // Single-field indexed queries; existing historical records are not modified.
-  const [agreements, submissions] = await Promise.all([
+  const [agreements, submissions, profiles] = await Promise.all([
     db.collection("referralApplications").where("kind", "==", "institutional").limit(limit).get(),
     db.collection("organisationEnrolments").orderBy("createdAt", "desc").limit(limit).get(),
+    db.collection("organisationPartners").limit(limit).get(),
   ]);
   const rows = organisationDirectoryRows(
     agreements.docs.map(doc => ({ id: doc.id, ...doc.data() })),
     submissions.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+    profiles.docs.map(doc => ({ id: doc.id, ...doc.data() })),
   );
-  return { organisations: rows, truncated: agreements.docs.length === limit || submissions.docs.length === limit };
+  return { organisations: rows, truncated: agreements.docs.length === limit || submissions.docs.length === limit || profiles.docs.length === limit };
 }
 module.exports = { organisationId, organisationDirectoryRows, loadOrganisationDirectory };

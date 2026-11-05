@@ -74,7 +74,7 @@ async function reviewRow({ db, admin, batchId, index, decision, actor }) {
         level: row.level, location: row.location, emergencyContactPhone: row.emergencyContactPhone,
         role: "student", studentCode: publicCode, studentcode: publicCode, program: "german",
         organisationName: batch.organisation.name, organisationContactEmail: batch.organisation.email,
-        organisationSubmissionId: batchId, organisationId: organisationId(batch.organisation.email), enrolmentSource: "organisation", billingResponsibility: "organisation",
+        organisationSubmissionId: batchId, organisationId: batch.organisationId || organisationId(batch.organisation.email), enrolmentSource: "organisation", billingResponsibility: "organisation",
         status: "pending", paymentStatus: "pending", className: "", contractStart: "", contractEnd: "",
         accountActivationState: "not_prepared", syncedToSheets: false, joined_at: new Date().toISOString(),
         createdAt: now, updated_at: now,
@@ -149,7 +149,9 @@ function registerOrganisationEnrolmentRoutes(app, { db, admin }) {
     try { return res.json(await fn(req)); } catch (e) { return res.status(e.status || 500).json({ ok: false, error: e.status ? e.message : "Enrolment service unavailable. Please retry." }); }
   };
   app.post("/organisation-enrolments", handle(async req => {
-    const data = validateSubmission(req.body);
+    const { profile, agreement } = await require('./organisationPartners').partnerProfile(req, { db, admin });
+    if (!agreement || agreement.status !== 'approved') fail(403, 'Falowen must approve your signed partnership before you add students.');
+    const data = validateSubmission({ ...req.body, organisation: { name: profile.name, contactName: profile.contactName, email: profile.loginEmail, phone: profile.phone }, agreementReference: profile.id });
     const key = clean(req.body.requestId);
     if (!/^[a-f0-9-]{36}$/.test(key)) fail(400, "Refresh the page and try again.");
     const ref = db.collection("organisationEnrolments").doc(key);
@@ -162,13 +164,14 @@ function registerOrganisationEnrolmentRoutes(app, { db, admin }) {
         if (!agreement.exists || agreement.data().kind !== "institutional" || !agreement.data().signedAt || agreement.data().status === "rejected" || agreement.data().email !== data.organisation.email) fail(409, "Use the contact email from your signed organisation agreement.");
       }
       if (prior.exists) {
+        if (prior.data().organisationId !== profile.id) fail(409, "This reference belongs to another organisation. Start a new submission.");
         if (prior.data().deleted) fail(409, "This submission was deleted by Falowen. Start a new submission if needed.");
         return;
       }
       const count = limit.exists ? limit.data().count || 0 : 0;
       if (count >= 10) fail(429, "Daily submission limit reached. Contact Falowen for help.");
       tx.set(quota, { count: count + 1, expiresAt: new Date(Date.now() + 2 * 86400000) });
-      tx.create(ref, { ...data, organisationId: organisationId(data.organisation.email), createdAt: admin.firestore.FieldValue.serverTimestamp() });
+      tx.create(ref, { ...data, organisationId: profile.id, createdAt: admin.firestore.FieldValue.serverTimestamp() });
     });
     return { ok: true, reference: key };
   }));

@@ -1,6 +1,6 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
-const {fixture}=require('./partnershipTestFixture.cjs');
+const {fixture,seedPartner}=require('./partnershipTestFixture.cjs');
 const {VERSION,ORGANISATION_VERSION,TERMS,validateApplication,encryptBank,decryptBank,registerAgreementRoutes,buildAgreementPdf,hash}=require('./partnershipAgreements');
 const body={kind:'institutional',billingResponsibility:'organisation',name:'Example partner',email:'partner@example.test',phone:'0200000000',address:'Accra',signerName:'Ama Ési',signerRole:'Director',termsVersion:ORGANISATION_VERSION,receiptToken:'a'.repeat(64),consent:true,signatureConsent:true,payoutConsent:true,payoutType:'ghipss',bankCode:'123',accountNumber:'0123456789',accountName:'Example partner'};
 test('organisation agreement explains the 10% invoice share and keeps legacy terms separate',()=>{
@@ -17,20 +17,20 @@ test('payout account numbers are authenticated-encrypted, never stored in the ap
  assert.ok(!JSON.stringify(encrypted).includes(bank.account_number));assert.deepEqual(decryptBank(encrypted,'test-secret'),bank);assert.throws(()=>decryptBank(encrypted,'wrong-secret'));
 });
 test('save creates an immediate signed immutable receipt; replay is safe and tokens protect download',async()=>{
- const f=fixture();let receivedSignature;
+ const f=fixture();seedPartner(f,{signed:false});let receivedSignature;
  registerAgreementRoutes(f.app,{...f,getSecret:()=> 'secret',loadSignature:async()=>Buffer.from('private-director-signature'),pdf:async(record,opts)=>{receivedSignature=opts?.signature;return Buffer.from('PDF:'+record.signerName);}});
- const saved=await f.call('/referrals/apply-signed',body);assert.equal(saved.status,200);assert.equal(receivedSignature.toString(),'private-director-signature');
+ const saved=await f.call('/referrals/apply-signed',body,'partner');assert.equal(saved.status,200);assert.equal(receivedSignature.toString(),'private-director-signature');
  const id=saved.result.reference, stored=f.data.get('referralApplications/'+id);assert.equal(stored.status,'pending');assert.equal(stored.signatureMethod,'typed-name-with-explicit-consent');assert.ok(!JSON.stringify(stored).includes(body.accountNumber));
  const privateStored=f.data.get('partnershipPrivate/'+id);assert.equal(privateStored.tokenHash,hash(body.receiptToken));assert.ok(privateStored.pendingPdf);
- assert.equal((await f.call('/referrals/apply-signed',body)).status,200);
- assert.equal((await f.call('/referrals/apply-signed',{...body,receiptToken:'b'.repeat(64)})).status,409);
+ assert.equal((await f.call('/referrals/apply-signed',body,'partner')).status,200);
+ assert.equal((await f.call('/referrals/apply-signed',{...body,receiptToken:'b'.repeat(64)},'partner')).status,409);
  assert.equal((await f.call('/referrals/agreement-copy',{reference:id,receiptToken:'b'.repeat(64)})).status,404);
  const downloaded=await f.call('/referrals/agreement-copy',{reference:id,receiptToken:body.receiptToken});assert.equal(downloaded.status,200);assert.equal(downloaded.headers['Cache-Control'],'no-store');assert.equal(downloaded.result.toString(),'PDF:'+body.signerName);
  assert.equal((await f.call('/admin/referrals/agreements/:id/copy',{},false,id)).status,401);
 });
 test('missing Falowen signature fails before accepting a signed application',async()=>{
- const f=fixture();registerAgreementRoutes(f.app,{...f,getSecret:()=> 'secret',loadSignature:async()=>{throw Object.assign(new Error('Configure signature'),{status:503});},pdf:async()=>Buffer.from('PDF')});
- assert.equal((await f.call('/referrals/apply-signed',body)).status,503);assert.equal(f.data.has('referralApplications/'+hash('organisation-v5:'+body.email)),false);
+ const f=fixture();seedPartner(f,{signed:false});registerAgreementRoutes(f.app,{...f,getSecret:()=> 'secret',loadSignature:async()=>{throw Object.assign(new Error('Configure signature'),{status:503});},pdf:async()=>Buffer.from('PDF')});
+ assert.equal((await f.call('/referrals/apply-signed',body,'partner')).status,503);assert.equal(f.data.has('referralApplications/'+hash('organisation-v5:'+body.email)),false);
 });
 test('PDF creation supports Unicode signing names and unsigned samples',async()=>{
  const bytes=await buildAgreementPdf({...body,id:'example',signedAt:'2026-11-05T00:00:00Z',termsSnapshot:TERMS.institutional},{sample:true});assert.equal(bytes.subarray(0,5).toString(),'%PDF-');assert.ok(bytes.length>10000);
@@ -40,7 +40,7 @@ test('organisation agreement states non-refundable tuition and distinct class/ac
  const terms=TERMS.institutional.join(" ");
  assert.match(terms,/Tuition payments are non-refundable/);
  assert.doesNotMatch(terms,/GHS\\s+[\\d,]+/);
- assert.match(ORGANISATION_VERSION,/v6$/);
+ assert.match(ORGANISATION_VERSION,/v7$/);
  assert.match(terms,/Each class lasts 10 weeks/);
  assert.match(terms,/six months of Falowen access from account activation/);
  assert.match(terms,/does not restart or extend/);
