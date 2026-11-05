@@ -67,31 +67,25 @@ function fixture() {
   }
   return { records, routes, call, proof };
 }
-test("apply, approve, attribute once, approve once and reverse a later refund", async () => {
+test("new referrals are closed, organisation approval creates no code, and historical commissions remain auditable", async () => {
   const { records, call, routes, proof } = fixture();
   for (const path of routes.keys()) {
     if (path.startsWith("/admin/")) assert.equal((await call(path, {})).status, 401);
   }
   const partner = { email: "partner@example.org", name: "Partner", consent: true };
-  assert.equal((await call("/referrals/apply", { ...partner, consent: false })).status, 400);
+  assert.equal((await call("/referrals/apply", partner)).status, 410);
+  assert.equal((await call("/referrals/claim", { email: "new@example.org", code: "a".repeat(32), consent: true })).status, 410);
+  const institution = id("institution");
+  records.set("referralApplications/" + institution, { kind: "institutional", status: "pending", name: "Agency", email: "agency@example.org" });
+  await call("/admin/referrals/applications/:id", { status: "approved" }, institution, true);
+  assert.equal(records.get("referralApplications/" + institution).status, "approved");
+  assert.equal(records.get("referralApplications/" + institution).code, null);
   const application = id(partner.email);
-  const review = status => call("/admin/referrals/applications/:id", { status }, application, true);
-  await call("/referrals/apply", { ...partner, status: "approved", code: "injected" });
-  assert.equal(records.get("referralApplications/" + application).status, "pending");
-  await call("/referrals/apply", partner);
-  assert.equal((await review("approved")).status, 200);
-  const code = records.get("referralApplications/" + application).code;
-  assert.match(code, /^[0-9a-f]{32}$/);
-  await review("approved");
-  assert.equal(records.get("referralApplications/" + application).code, code);
-  assert.equal((await review("rejected")).status, 409);
-  const email = "learner@example.org";
-  const claim = id(email);
-  const submit = (email, code) => call("/referrals/claim", { email, code, consent: true });
-  assert.equal((await submit(partner.email, code)).status, 400);
-  assert.equal((await submit(email, "0".repeat(32))).status, 400);
-  await submit(email, code);
-  await submit(email, code);
+  records.set("referralApplications/" + application, { ...partner, status: "pending" });
+  assert.equal((await call("/admin/referrals/applications/:id", { status: "approved" }, application, true)).status, 409);
+  // Previously earned/claimed records remain available for audit and refund handling.
+  const email = "learner@example.org", claim = id(email);
+  records.set("referralClaims/" + claim, { email, partnerId: application, status: "pending", createdAt: claimed });
   records.set("students/student", { email });
   const decide = (action, extra) => call("/admin/referrals/claims/:id", { action, confirmed: true, ...extra }, claim, true);
   assert.equal((await decide("inspect")).status, 409);

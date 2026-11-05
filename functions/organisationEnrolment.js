@@ -20,7 +20,9 @@ function validateSubmission(body = {}) {
     if (seen.has(student.email)) fail(400, `Row ${i + 1}: duplicate email in this submission.`);
     seen.add(student.email); return { ...student, status: "pending" };
   });
-  return { organisation, students };
+  const agreementReference = clean(body.agreementReference);
+  if (agreementReference && !/^[a-f0-9]{64}$/.test(agreementReference)) fail(400, "Invalid agreement reference.");
+  return { organisation, students, ...(agreementReference ? { agreementReference } : {}) };
 }
 async function owner(req, admin) {
   const token = clean(req.headers?.authorization).match(/^Bearer (\S+)$/)?.[1];
@@ -90,6 +92,10 @@ function registerOrganisationEnrolmentRoutes(app, { db, admin }) {
     const quota = db.collection("organisationEnrolmentLimits").doc(hash(`${data.organisation.email}:${new Date().toISOString().slice(0, 10)}`));
     await db.runTransaction(async tx => {
       const prior = await tx.get(ref), limit = await tx.get(quota);
+      if (data.agreementReference && !prior.exists) {
+        const agreement = await tx.get(db.collection("referralApplications").doc(data.agreementReference));
+        if (!agreement.exists || agreement.data().kind !== "institutional" || !agreement.data().signedAt || agreement.data().status === "rejected" || agreement.data().email !== data.organisation.email) fail(409, "Use the contact email from your signed organisation agreement.");
+      }
       if (prior.exists) {
         if (prior.data().deleted) fail(409, "This submission was deleted by Falowen. Start a new submission if needed.");
         return;

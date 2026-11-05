@@ -1,15 +1,15 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {fixture}=require('./partnershipTestFixture.cjs');
-const {VERSION,TERMS,validateApplication,encryptBank,decryptBank,registerAgreementRoutes,buildAgreementPdf,hash}=require('./partnershipAgreements');
-const body={kind:'referral',name:'Example partner',email:'partner@example.test',phone:'0200000000',address:'Accra',signerName:'Ama Ési',signerRole:'Director',termsVersion:VERSION,receiptToken:'a'.repeat(64),consent:true,signatureConsent:true,payoutConsent:true,payoutType:'ghipss',bankCode:'123',accountNumber:'0123456789',accountName:'Example partner'};
+const {VERSION,ORGANISATION_VERSION,TERMS,validateApplication,encryptBank,decryptBank,registerAgreementRoutes,buildAgreementPdf,hash}=require('./partnershipAgreements');
+const body={kind:'institutional',billingResponsibility:'organisation',name:'Example partner',email:'partner@example.test',phone:'0200000000',address:'Accra',signerName:'Ama Ési',signerRole:'Director',termsVersion:ORGANISATION_VERSION,receiptToken:'a'.repeat(64),consent:true,signatureConsent:true,payoutConsent:true,payoutType:'ghipss',bankCode:'123',accountNumber:'0123456789',accountName:'Example partner'};
 test('preserves published terms without adding a different contract',()=>{
  assert.equal(TERMS.referral.length,1);assert.match(TERMS.referral[0],/10%/);assert.match(TERMS.referral[0],/A refund cancels the commission\.$/);
  assert.equal(TERMS.institutional[0],'Schools, employers and sponsoring organisations can enrol a group under an agreement with Falowen. Our team reviews the group and confirms who will pay before inviting students.');
 });
-test('electronic consent, current terms, bank consent and typed signature are required',()=>{
- assert.equal(validateApplication(body).bank.account_number,'0123456789');
- for(const patch of [{signatureConsent:false},{consent:false},{termsVersion:'old'},{signerName:''},{payoutConsent:false},{accountNumber:'bad'},{receiptToken:'short'},{website:'spam'}])assert.throws(()=>validateApplication({...body,...patch}));
+test('organisation consent, current terms, payer choice and typed signature are required',()=>{
+ assert.equal(validateApplication(body).bank,null);
+ for(const patch of [{signatureConsent:false},{consent:false},{termsVersion:'old'},{signerName:''},{kind:'referral'},{billingResponsibility:'unknown'},{receiptToken:'short'},{website:'spam'}])assert.throws(()=>validateApplication({...body,...patch}));
  assert.equal(validateApplication({...body,kind:'institutional',billingResponsibility:'organisation',payoutConsent:false,accountNumber:''}).bank,null);
 });
 test('payout account numbers are authenticated-encrypted, never stored in the application summary',()=>{
@@ -30,7 +30,7 @@ test('save creates an immediate signed immutable receipt; replay is safe and tok
 });
 test('missing Falowen signature fails before accepting a signed application',async()=>{
  const f=fixture();registerAgreementRoutes(f.app,{...f,getSecret:()=> 'secret',loadSignature:async()=>{throw Object.assign(new Error('Configure signature'),{status:503});},pdf:async()=>Buffer.from('PDF')});
- assert.equal((await f.call('/referrals/apply-signed',body)).status,503);assert.equal(f.data.has('referralApplications/'+hash(body.email)),false);
+ assert.equal((await f.call('/referrals/apply-signed',body)).status,503);assert.equal(f.data.has('referralApplications/'+hash('organisation-v3:'+body.email)),false);
 });
 test('PDF creation supports Unicode signing names and unsigned samples',async()=>{
  const bytes=await buildAgreementPdf({...body,id:'example',signedAt:'2026-11-05T00:00:00Z',termsSnapshot:TERMS.referral},{sample:true});assert.equal(bytes.subarray(0,5).toString(),'%PDF-');assert.ok(bytes.length>10000);

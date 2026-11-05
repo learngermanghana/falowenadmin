@@ -1,3 +1,4 @@
+import { loadOrganisationPartnerContext } from "../utils/organisationPartnerContext.js";
 import { organisationEnrolmentRequest } from "../utils/organisationEnrolmentRequest.js";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -10,7 +11,8 @@ const request = (path, body, staff = false) => organisationEnrolmentRequest(path
   staff, getToken: () => auth.currentUser?.getIdToken(),
 });
 export default function OrganisationEnrolmentPage({ review = false }) {
-  const [organisation, setOrganisation] = useState({ name: "", contactName: "", email: "", phone: "" });
+  const [partnerContext] = useState(loadOrganisationPartnerContext);
+  const [organisation, setOrganisation] = useState(() => partnerContext?.organisation || { name: "", contactName: "", email: "", phone: "" });
   const [rows, setRows] = useState([emptyRow(), emptyRow(), emptyRow()]);
   const [consent, setConsent] = useState(false), [website, setWebsite] = useState("");
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
@@ -53,20 +55,20 @@ export default function OrganisationEnrolmentPage({ review = false }) {
     {submissions?.length === 0 && <p>No submissions yet.</p>}
     {submissions?.map(batch => <article key={batch.id}><h2>{batch.organisation.name}</h2><Link to={`/paystack?batch=${encodeURIComponent(batch.id)}`}>Create group payment link</Link>
       <button type="button" disabled={busy} onClick={() => removeSubmission(batch)}>Delete submission</button>
-      <p>{batch.organisation.contactName} · {batch.organisation.email} · {batch.organisation.phone}</p><small>Reference: {batch.id}</small>
+      <p>{batch.organisation.contactName} · {batch.organisation.email} · {batch.organisation.phone}</p><small>Reference: {batch.id}</small>{batch.agreementReference && <p>Signed agreement: {batch.agreementReference}</p>}
       <div className="org-scroll"><table><thead><tr><th>Student</th><th>Email</th><th>Phone</th><th>Level</th><th>Location</th><th>Emergency number</th><th>Status</th><th>Review</th></tr></thead>
         <tbody>{batch.students.map((student, index) => <tr key={index}><td>{student.name}</td><td>{student.email}</td><td>{student.phone}</td><td>{student.level}</td><td>{student.location || "—"}</td><td>{student.emergencyContactPhone || "—"}</td><td>{student.status}</td>
           <td>{student.status === "pending" ? <div className="org-actions">{["approve", "reject"].map(decision => <button key={decision} disabled={busy} onClick={() => run(async () => { await request(`admin/organisation-enrolments/${batch.id}/review`, { index, decision }, true); await load(); })}>{decision === "approve" ? "Approve" : "Reject"}</button>)}</div> : student.studentId ? <Link to={`/students?search=${encodeURIComponent(student.email)}`}>Manage {student.studentId} / send invitation</Link> : "—"}</td></tr>)}</tbody></table></div>
     </article>)}
     {nextCursor && <button disabled={busy} onClick={() => run(() => load(nextCursor))}>Load older submissions</button>}
   </section>;
-  return <section className="org-enrol"><div className="org-intro"><a href="https://www.falowen.app/partnerships">Partnership &amp; Referral Programme</a><h1>Register your students together</h1><p>Fill one row for each student. Falowen will review your submission and confirm your agreement before sending account setup invitations.</p></div>
+  return <section className="org-enrol"><div className="org-intro"><a href="https://www.falowen.app/partnerships">Organisation Partnerships</a><h1>Add your organisation’s students</h1><p>Fill one row for each student. Falowen reviews your list, deducts your agreed partner share from the invoice and sends one payment link. Students are enrolled after payment is verified.</p></div>
     {reference ? <div role="status"><h2>Submission received</h2><p>Your reference is <strong>{reference}</strong>. Falowen will contact your organisation after review. Students do not have accounts yet.</p><button onClick={() => { setReference(""); setRows([emptyRow()]); setRequestId(crypto.randomUUID()); setConsent(false); }}>Add another group of students</button></div> : <form onSubmit={event => { event.preventDefault(); run(async () => {
       const students = rows.filter(row => Object.values(row).some(value => value.trim()));
-      const data = await request("organisation-enrolments", { organisation, students, consent, website, requestId });
+      const data = await request("organisation-enrolments", { organisation, students, consent, website, requestId, ...(partnerContext?.agreementReference ? { agreementReference: partnerContext.agreementReference } : {}) });
       setReference(data.reference);
     }); }}>
-      <fieldset disabled={busy}><legend>Organisation contact</legend><div className="org-contact">{[["name", "Organisation name"], ["contactName", "Contact person"], ["email", "Contact email"], ["phone", "Contact phone"]].map(([key, label]) => <label key={key}>{label}<input required maxLength={254} type={key === "email" ? "email" : key === "phone" ? "tel" : "text"} value={organisation[key]} onChange={e => setOrganisation({ ...organisation, [key]: e.target.value })}/></label>)}</div>
+      <fieldset disabled={busy}><legend>Organisation contact</legend>{partnerContext?.agreementReference && <p>Signed agreement: {partnerContext.agreementReference}</p>}<div className="org-contact">{[["name", "Organisation name"], ["contactName", "Contact person"], ["email", "Contact email"], ["phone", "Contact phone"]].map(([key, label]) => <label key={key}>{label}<input required maxLength={254} type={key === "email" ? "email" : key === "phone" ? "tel" : "text"} value={organisation[key]} onChange={e => setOrganisation({ ...organisation, [key]: e.target.value })}/></label>)}</div>
       <label className="org-trap" aria-hidden="true">Website<input tabIndex={-1} autoComplete="off" value={website} onChange={e => setWebsite(e.target.value)}/></label>
       <h2>Student details</h2><p>Paste rows from Excel or Google Sheets into a cell, or type directly. Columns: name, email, phone, level, location, emergency number. Use A1, A2, B1, B2, C1 or C2. Maximum 50 students.</p>
       <div className="org-scroll"><table><thead><tr><th>#</th>{columns.map(([key, label]) => <th key={key}>{label}{["name", "email", "phone", "level"].includes(key) ? " *" : ""}</th>)}<th>Remove</th></tr></thead>

@@ -1,56 +1,23 @@
 import SignedPartnershipForm from "../components/SignedPartnershipForm.jsx";
-import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { organisationEnrolmentRequest as request } from "../utils/organisationEnrolmentRequest.js";
 import "./OrganisationEnrolmentPage.css";
 import "./PartnershipPage.css";
-
-const signup = "https://www.falowen.app/signup?program=german";
-
 export default function PartnershipPage() {
   const [params] = useSearchParams();
-  const invited = params.has("ref");
-  const [institutional, setInstitutional] = useState(false);
-  const [done, setDone] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  async function submit(event) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    setError("");
-    setBusy(true);
-    try {
-      await request(invited ? "referrals/claim" : "referrals/apply", {
-        ...Object.fromEntries(form), consent: form.has("consent"), code: params.get("ref"),
-      });
-      setDone(true);
-    } catch (e) { setError(e.message); } finally { setBusy(false); }
-  }
+  if (params.has("ref")) return <section className="org-enrol partnerships"><h1>Join Falowen</h1><p>Clients who pay for themselves use normal student signup and pay the full advertised fee. No referral commission applies.</p><a href="https://www.falowen.app/signup?program=german">Continue to normal student signup →</a></section>;
   return <section className="org-enrol partnerships">
-    <h1>{invited ? "Your Falowen course invitation" : "Partnership & Referral Programme"}</h1>
-    {!invited && <section><h2>Institutional partnerships</h2>
-      <p>Schools, employers and sponsoring organisations can enrol a group under an agreement with Falowen. Our team reviews the group and confirms who will pay before inviting students.</p>
-      <Link to="/organisation-enrolment">Open the organisation enrolment form →</Link>
-      <p><button onClick={() => setInstitutional(value => !value)}>{institutional ? "Hide institutional agreement" : "Read and sign institutional terms"}</button></p>
-      {institutional && <SignedPartnershipForm kind="institutional" />}
-    </section>}
-    <section><h2>{invited ? "Register your referral" : "Referral partnerships"}</h2>
-      <p>{invited ? "Use the same email for this invitation and your Falowen course account so we can match your enrolment." : "Individuals and organisations can apply to introduce new learners. Falowen reviews your application and, if approved, sends you a unique link to share."}</p>
-      <p><strong>Standard referral terms.</strong> Subject to Falowen approval, an approved partner earns 10% of a referred learner’s first completed, non-refunded course payment. The amount is based on tuition received, excluding processing fees. Later instalments, renewals, institutional enrolments and self-referrals are excluded. A refund cancels the commission.</p>
-      {!invited ? <SignedPartnershipForm kind="referral" /> : done ? <div role="status"><strong>{invited ? "Invitation received." : "Application received."}</strong>
-        <p>{invited ? <a href={signup}>Continue to Falowen course signup →</a> : "Falowen will contact you by email after review."}</p></div> :
-        <form onSubmit={submit}><fieldset disabled={busy}>
-          <div className="org-contact">
-            {!invited && <label>Your name or organisation<input name="name" maxLength={150} required /></label>}
-            <label>{invited ? "Learner email" : "Contact email"}<input name="email" type="email" autoComplete="email" maxLength={254} required /></label>
-          </div>
-          <label className="org-trap" aria-hidden="true">Website<input name="website" tabIndex={-1} autoComplete="off" /></label>
-          <label className="org-consent"><input name="consent" type="checkbox" required />
-            {invited ? "I agree that Falowen may use my email to match my enrolment and check this referral." : "I agree to the standard referral terms and Falowen’s approval process."}</label>
-          {error && <p role="alert">{error}</p>}
-          <button type="submit">{busy ? "Submitting…" : invited ? "Register referral" : "Apply for a referral partnership"}</button>
-        </fieldset></form>}
+    <h1>Falowen Organisation Partnerships</h1>
+    <p>For education consultants, travel agencies and organisations arranging German language training for their clients.</p>
+    <ol className="partner-steps"><li>Sign the organisation agreement</li><li>Add your students</li><li>Falowen reviews the list and deducts your agreed share from the invoice</li><li>Pay the net total; Falowen enrols the students</li></ol>
+    <section><h2>Register your organisation</h2>
+      <p>Complete one organisation application, consent to the agreement and sign electronically. Download your signed PDF receipt immediately. Falowen reviews your organisation and confirms the payment arrangement.</p>
+      <p>If your organisation pays for a group, submit the clients together after applying. Falowen will approve the list and issue one payment link showing each student's fee, your agreed share and the net amount to pay. After verified payment, Falowen enrols the approved students.</p>
+      <SignedPartnershipForm kind="institutional" />
     </section>
-    {invited && <p><a href={signup}>Continue to course signup without a referral</a></p>}
+    <section><h2>Clients paying for themselves</h2>
+      <p>They use normal student signup and pay Falowen the full advertised tuition fee. There is no referral commission or partner payout for these payments.</p>
+      <a href="https://www.falowen.app/signup?program=german">Normal student signup →</a>
+    </section>
+    <p>Already submitted your organisation application? <Link to="/organisation-enrolment">Submit your organisation-paid students →</Link></p>
   </section>;
 }

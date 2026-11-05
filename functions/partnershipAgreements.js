@@ -2,15 +2,18 @@
 const crypto = require("node:crypto");
 const { owner } = require("./organisationEnrolment");
 const VERSION = "partnership-2026-11-05-v2";
+const ORGANISATION_VERSION = "organisation-partnership-2026-11-05-v3";
 const hash = text => crypto.createHash("sha256").update(text).digest("hex");
 const fail = (status, message) => { throw Object.assign(new Error(message), { status }); };
 const TERMS = {
   referral: ["Subject to Falowen approval, an approved partner earns 10% of a referred learner’s first completed, non-refunded course payment. The amount is based on tuition received, excluding processing fees. Later instalments, renewals, institutional enrolments and self-referrals are excluded. A refund cancels the commission."],
   institutional: ["Schools, employers and sponsoring organisations can enrol a group under an agreement with Falowen. Our team reviews the group and confirms who will pay before inviting students."],
 };
+TERMS.institutional.push("The organisation signs this agreement, submits its student list for Falowen review and pays the resulting group invoice. The agreed partner share is deducted from the payment link, so the organisation retains that share and pays Falowen the net amount. No separate commission payout or Paystack split is required. Falowen enrols the approved students after payment is verified. Clients paying for themselves use normal student signup and pay the full advertised fee; those payments earn no commission.");
 function validateApplication(body = {}) {
   const kind = body.kind;
-  if (!TERMS[kind] || body.termsVersion !== VERSION || body.consent !== true || body.signatureConsent !== true || body.website) fail(400, "Read the current agreement and accept electronic signing.");
+  if (kind !== "institutional") fail(410, "This page now accepts organisation partnerships only. Clients paying for themselves should use normal student signup; no referral commission applies.");
+  if (body.termsVersion !== ORGANISATION_VERSION || body.consent !== true || body.signatureConsent !== true || body.website) fail(400, "Read the current agreement and accept electronic signing.");
   const text = (key, max, required = true) => {
     const value = String(body[key] || "").trim();
     if ((required && !value) || value.length > max || /[\x00-\x1f]/.test(value)) fail(400, `Check ${key}.`);
@@ -20,15 +23,10 @@ function validateApplication(body = {}) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail(400, "Enter a valid contact email.");
   if (!/^[a-f0-9]{64}$/.test(body.receiptToken || "")) fail(400, "Refresh the form and retry.");
   const publicData = { kind, name: text("name", 150), email, phone: text("phone", 40), address: text("address", 300),
-    signerName: text("signerName", 150), signerRole: text("signerRole", 100), terms: VERSION,
-    billingResponsibility: kind === "institutional" ? text("billingResponsibility", 30) : "learner" };
-  if (kind === "institutional" && !["organisation", "learner"].includes(publicData.billingResponsibility)) fail(400, "Choose who will pay tuition.");
-  let bank = null;
-  if (kind === "referral") {
-    const type = text("payoutType", 20), bankCode = text("bankCode", 20), accountNumber = text("accountNumber", 30), accountName = text("accountName", 150);
-    if (!["ghipss", "mobile_money"].includes(type) || !/^[a-zA-Z0-9_-]+$/.test(bankCode) || !/^\d{8,20}$/.test(accountNumber) || body.payoutConsent !== true) fail(400, "Enter Ghana bank or mobile money details and authorise commission payments.");
-    bank = { type, bank_code: bankCode, account_number: accountNumber, name: accountName, currency: "GHS" };
-  }
+    signerName: text("signerName", 150), signerRole: text("signerRole", 100), terms: ORGANISATION_VERSION,
+    billingResponsibility: "organisation" };
+  if (body.billingResponsibility && body.billingResponsibility !== "organisation") fail(400, "The organisation pays through this programme. Clients paying themselves use normal signup.");
+  const bank = null;
   return { publicData, bank, tokenHash: hash(body.receiptToken) };
 }
 function encryptBank(bank, secret) {
@@ -66,7 +64,7 @@ async function buildAgreementPdf(record = {}, { sample = false, signature } = {}
   const addPage = () => { page = doc.addPage([595, 842]); y = 785;
     page.drawRectangle({ x: 0, y: 822, width: 595, height: 20, color: rgb(0.08, 0.23, 0.29) });
     page.drawText("FALOWEN / PARTNERSHIPS", { x: 48, y: y, size: 10, font: bold, color: rgb(0.08, 0.23, 0.29) }); y -= 30;
-    page.drawText(`${VERSION}  |  Page ${doc.getPageCount()}`, { x: 48, y: 28, size: 8, font });
+    page.drawText(`${record.terms || ORGANISATION_VERSION}  |  Page ${doc.getPageCount()}`, { x: 48, y: 28, size: 8, font });
   };
   const write = (value, { heading = false } = {}) => {
     const size = heading ? 12 : 10, face = heading ? bold : font;
@@ -83,9 +81,9 @@ async function buildAgreementPdf(record = {}, { sample = false, signature } = {}
     }
   };
   addPage();
-  write(`${record.kind === "institutional" ? "Institutional Partnership" : "Referral Partnership"} Agreement`, { heading: true });
+  write(`${record.kind === "institutional" ? "Organisation Partnership" : "Referral Partnership"} Agreement`, { heading: true });
   write(sample ? "SAMPLE - unsigned; for review only" : record.status === "approved" ? "Signed agreement receipt - partner approved" : "Signed agreement receipt - partnership approval pending");
-  write(`Reference: ${record.id || "SAMPLE"}\nTerms version: ${VERSION}`);
+  write(`Reference: ${record.id || "SAMPLE"}\nTerms version: ${record.terms || ORGANISATION_VERSION}`);
   write(`Partner: ${record.name || "To be completed"}\nContact email: ${record.email || "To be completed"}\nPhone: ${record.phone || "To be completed"}\nAddress: ${record.address || "To be completed"}`);
   if (record.kind === "institutional") write(`Tuition payer: ${record.billingResponsibility || "To be confirmed"}`);
   if (record.payoutSummary) write(`Payout destination: ${record.payoutSummary.type}; account ending ${record.payoutSummary.last4}. Full banking details are held privately.`);
@@ -110,6 +108,11 @@ function registerAgreementRoutes(app, { db, admin, getSecret = () => process.env
   const partners = db.collection("referralApplications"), privateData = db.collection("partnershipPrivate");
   const handle = action => async (req, res) => { res.set("Cache-Control", "no-store"); try { await action(req, res); }
     catch (e) { res.status(e.status || 500).json({ ok: false, error: e.status ? e.message : "Agreement service unavailable. Your entries are unchanged; retry shortly." }); } };
+  app.get("/admin/referrals/signature", handle(async (req, res) => {
+    await owner(req, admin);
+    const stored = await db.collection("partnershipSettings").doc("directorSignature").get();
+    res.json({ ok: true, installed: stored.exists, driveConfigured: Boolean(process.env.PARTNERSHIP_SIGNATURE_DRIVE_FILE_ID) });
+  }));
   app.post("/admin/referrals/signature", handle(async (req, res) => {
     const actor = await owner(req, admin), value = req.body?.png;
     if (typeof value !== "string" || value.length > 94000 || !/^[a-zA-Z0-9+/=]+$/.test(value)) fail(400, "Upload a PNG under 70 KB.");
@@ -120,17 +123,17 @@ function registerAgreementRoutes(app, { db, admin, getSecret = () => process.env
     res.json({ ok: true });
   }));
   app.get("/referrals/agreement-terms", handle(async (req, res) => {
-    const kind = req.query.kind === "institutional" ? "institutional" : "referral";
-    res.json({ ok: true, version: VERSION, kind, terms: TERMS[kind] });
+    const kind = "institutional";
+    res.json({ ok: true, version: ORGANISATION_VERSION, kind, terms: TERMS[kind] });
   }));
   app.get("/referrals/agreement-sample", handle(async (req, res) => {
-    const kind = req.query.kind === "institutional" ? "institutional" : "referral";
+    const kind = "institutional";
     res.set("Content-Type", "application/pdf"); res.set("Content-Disposition", 'attachment; filename="Falowen-agreement-sample.pdf"');
     res.send(await pdf({ kind }, { sample: true }));
   }));
   app.post("/referrals/apply-signed", handle(async (req, res) => {
     const { publicData, bank, tokenHash } = validateApplication(req.body);
-    const id = publicData.kind === "referral" ? hash(publicData.email) : hash("institutional:" + publicData.email);
+    const id = hash("organisation-v3:" + publicData.email);
     const ref = partners.doc(id), secretRef = privateData.doc(id);
     const signedAt = new Date().toISOString();
     const record = { ...publicData, id, status: "pending", signedAt, termsSnapshot: TERMS[publicData.kind], termsHash: hash(JSON.stringify(TERMS[publicData.kind])),
@@ -153,7 +156,7 @@ function registerAgreementRoutes(app, { db, admin, getSecret = () => process.env
       else tx.create(ref, { ...record, createdAt: now() });
       tx.create(secretRef, { tokenHash, encryptedBank, pendingPdf: pendingPdf.toString("base64"), signatureHash: hash(signature), createdAt: now() });
     });
-    res.json({ ok: true, reference: id, termsVersion: VERSION });
+    res.json({ ok: true, reference: id, termsVersion: ORGANISATION_VERSION });
   }));
   app.post("/referrals/agreement-copy", handle(async (req, res) => {
     const { reference, receiptToken } = req.body || {};
@@ -169,4 +172,4 @@ function registerAgreementRoutes(app, { db, admin, getSecret = () => process.env
     res.set("Content-Type", "application/pdf"); res.send(Buffer.from(stored.data().pendingPdf, "base64"));
   }));
 }
-module.exports = { VERSION, TERMS, hash, validateApplication, encryptBank, decryptBank, buildAgreementPdf, registerAgreementRoutes };
+module.exports = { VERSION, ORGANISATION_VERSION, TERMS, hash, validateApplication, encryptBank, decryptBank, buildAgreementPdf, registerAgreementRoutes };

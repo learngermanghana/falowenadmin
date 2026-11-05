@@ -97,30 +97,10 @@ function registerReferralRoutes(app, { db, admin, getSecret = () => process.env.
     tx.set(ref, { count: count + 1, expiresAt: new Date(Date.now() + 2 * 86400000) });
   }
   app.post("/referrals/apply", handle("public", async req => {
-    const { name, email: input, consent, website } = req.body || {};
-    const email = emailOf(input);
-    if (typeof name !== "string" || !name.trim() || name.length > 150 || consent !== true || website) fail(400, "Enter your name and accept the referral terms.");
-    const ref = partners.doc(hash(email));
-    await db.runTransaction(async tx => {
-      if ((await tx.get(ref)).exists) return;
-      await chargeQuota(tx, req, "apply");
-      tx.create(ref, { name: name.trim(), email, terms: TERMS, status: "pending", createdAt: now() });
-    });
+    fail(410, "The referral programme is closed to new applications. Organisations should use the organisation partnership form.");
   }));
   app.post("/referrals/claim", handle("public", async req => {
-    const { code, email: input, consent, website } = req.body || {};
-    const email = emailOf(input);
-    if (!/^[a-f0-9]{32}$/.test(code || "") || consent !== true || website) fail(400, "Check your invitation link and confirm your email.");
-    await db.runTransaction(async tx => {
-      const link = await tx.get(codes.doc(code));
-      if (!link.exists) fail(400, "This referral link is unavailable.");
-      const partnerId = link.data().partnerId;
-      if (partnerId === hash(email)) fail(400, "Use your own learner email. Self-referrals are excluded.");
-      const claim = claims.doc(hash(email));
-      if ((await tx.get(claim)).exists) return;
-      await chargeQuota(tx, req, "claim");
-      tx.create(claim, { email, partnerId, partnerName: link.data().name, partnerEmail: link.data().email, terms: TERMS, status: "pending", createdAt: now() });
-    });
+    fail(410, "Clients now use normal student signup and pay the full fee. No referral commission applies.");
   }));
   app.post("/admin/referrals/applications/:id", handle("owner", async (req, actor) => {
     const ref = partners.doc(idOf(req.params.id));
@@ -131,6 +111,7 @@ function registerReferralRoutes(app, { db, admin, getSecret = () => process.env.
       if (!snap.exists) fail(404, "Application not found.");
       if (snap.data().status === status) return;
       if (snap.data().status !== "pending") fail(409, "This application was already reviewed.");
+      if (status === "approved" && snap.data().kind !== "institutional") fail(409, "Ask this organisation to submit the current organisation partnership form. Legacy referral applications cannot be newly approved.");
       const code = status === "approved" && snap.data().kind !== "institutional" ? randomBytes(16).toString("hex") : null;
       if (code) tx.create(codes.doc(code), { partnerId: ref.id, name: snap.data().name, email: snap.data().email });
       tx.update(ref, { status, code, reviewedBy: actor.uid, reviewedAt: now() });

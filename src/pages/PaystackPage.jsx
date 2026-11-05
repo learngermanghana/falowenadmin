@@ -16,7 +16,7 @@ export default function PaystackPage() {
   const run = async action => { setBusy(true); setError(""); try { await action(); } catch (e) { setError(e.message); } finally { setBusy(false); } };
   const clear = () => { setResult(null); setRequestId(crypto.randomUUID()); };
   const select = batch => {
-    setBatchId(batch.id); setEmail(batch.organisation.email); setAgreement(""); setReason(""); setPayments([]); clear();
+    setBatchId(batch.id); setEmail(batch.organisation.email); setAgreement(batch.agreementReference || ""); setReason(""); setPayments([]); clear();
     setLines(batch.students.filter(row => row.status === "approved" && row.studentId).map(row => ({ studentId: row.studentId, name: row.name, selected: true, amount: "", discount: "0" })));
   };
   const load = async (next = "") => {
@@ -31,7 +31,7 @@ export default function PaystackPage() {
   const discount = selected.reduce((sum, line) => sum + Number(line.discount || 0), 0);
   const refresh = async () => { const data = await request(`payments/organisations/${encodeURIComponent(batchId)}`); setPayments(data.payments); };
   return <section className="org-enrol"><h1>Paystack payments</h1>
-    <p>Create a company payment link from approved organisation enrolments. Use the institutional agreement. Group sponsorship earns no referral commission.</p>
+    <p>Create a company payment link from approved organisation enrolments. Use the organisation agreement. The organisation keeps its agreed share through an invoice deduction; no separate payout is required.</p>
     <p><Link to="/organisation-submissions">Review organisation submissions</Link> · <Link to="/students">Individual student payments and account setup</Link></p>
     <button disabled={busy} onClick={() => run(() => load())}>Load organisations</button>
     {cursor && <button disabled={busy} onClick={() => run(() => load(cursor))}>Load older organisations</button>}
@@ -45,17 +45,17 @@ export default function PaystackPage() {
       </select></label>
       {batchId && <>
         <label>Company billing / receipt email <input type="email" required value={email} onChange={e => { clear(); setEmail(e.target.value); }} /></label>
-        <label>Institutional agreement reference <input required maxLength={500} value={agreement} onChange={e => { clear(); setAgreement(e.target.value); }} /></label>
-        <p>Configure each student’s tuition balance, class and contract in Students first. Enter the amount covered by this invoice before discount.</p>
-        <div className="org-scroll"><table><thead><tr><th>Include</th><th>Student</th><th>Amount (GHS)</th><th>Discount (GHS)</th><th>Tuition payable</th></tr></thead><tbody>
+        <label>Organisation agreement reference <input required maxLength={500} value={agreement} onChange={e => { clear(); setAgreement(e.target.value); }} /></label>
+        <p>Configure each student’s tuition balance, class and contract in Students first. Enter the amount covered by this invoice before deducting the partner share.</p>
+        <div className="org-scroll"><table><thead><tr><th>Include</th><th>Student</th><th>Amount (GHS)</th><th>Partner share (GHS)</th><th>Tuition payable</th></tr></thead><tbody>
           {lines.map((line, i) => <tr key={line.studentId}><td><input aria-label={`Include ${line.name}`} type="checkbox" checked={line.selected} onChange={e => update(i, "selected", e.target.checked)} /></td><td>{line.name}<br /><small>{line.studentId}</small></td>
             <td><input aria-label={`${line.name} amount`} required={line.selected} type="number" min="0.01" step="0.01" value={line.amount} onChange={e => update(i, "amount", e.target.value)} /></td>
             <td><input aria-label={`${line.name} discount`} type="number" min="0" step="0.01" value={line.discount} onChange={e => update(i, "discount", e.target.value)} /></td><td>{money(Number(line.amount) - Number(line.discount))}</td></tr>)}
         </tbody></table></div>
         {!lines.length && <p>No approved students loaded. Approve students in Organisation submissions first.</p>}
-        <label>Discount reason <input required={discount > 0} maxLength={500} value={reason} onChange={e => { clear(); setReason(e.target.value); }} /></label>
-        <p>Amount: {money(gross)} · Discount: {money(discount)} · Tuition payable: <strong>{money(gross - discount)}</strong></p>
-        <p>The checkout includes the existing processing-fee share. Only the tuition payment is recorded as money paid; the discount reduces the balance separately.</p>
+        <label>Partner share / adjustment reason <input required={discount > 0} maxLength={500} value={reason} onChange={e => { clear(); setReason(e.target.value); }} /></label>
+        <p>Amount: {money(gross)} · Partner share deduction: {money(discount)} · Tuition payable: <strong>{money(gross - discount)}</strong></p>
+        <p>The checkout includes the existing processing-fee share. Only the tuition payment is recorded as money paid; the agreed share reduces the student balance separately.</p>
         <button disabled={busy || !selected.length || Boolean(result)}>{busy ? "Working…" : "Generate group payment link"}</button>
       </>}
     </form>
@@ -64,7 +64,7 @@ export default function PaystackPage() {
       {payments.map(payment => <article key={payment.reference}><h3>{payment.reference}</h3><p>{payment.status} · {money(payment.checkoutAmount)} · {payment.email}</p>
         {["pending", "initializing"].includes(payment.status) && <button disabled={busy} onClick={() => run(async () => { await request(`payments/organisations/verify/${payment.reference}`, {}); await refresh(); })}>Verify with Paystack</button>}
         {payment.authorizationUrl && <a href={payment.authorizationUrl} target="_blank" rel="noreferrer">Payment link</a>}
-        <ul>{payment.lines?.map(line => <li key={line.studentId}>{line.studentName}: {money(line.tuitionCredit)} tuition · {money(line.discount)} discount</li>)}</ul>
+        <ul>{payment.lines?.map(line => <li key={line.studentId}>{line.studentName}: {money(line.tuitionCredit)} tuition · {money(line.discount)} partner share</li>)}</ul>
         {payment.status === "paid" && <><p>Company receipt: {payment.receiptStatus || "pending"}</p>{payment.receiptStatus !== "sent" && <button disabled={busy} onClick={() => run(async () => { await request(`payments/organisations/receipt/${payment.reference}`, {}); await refresh(); })}>Retry company receipt</button>}</>}
       </article>)}
     </>}
