@@ -421,6 +421,12 @@ async function reactivateTrialStudentAfterPayment({
   };
 }
 
+function isOrganisationFunded(student = {}) {
+  return lower(student.billingResponsibility || student.billing_responsibility) === "organisation"
+    || lower(student.enrolmentSource) === "organisation"
+    || /^FAL-ORG-/i.test(paymentReference(student));
+}
+
 function firstPaymentTransition(before = {}, after = {}) {
   const beforePaid = paymentAmount(before);
   const afterPaid = paymentAmount(after);
@@ -466,7 +472,7 @@ function createRegistrationLifecycleTriggers({
 
     const initialPaid = paymentAmount(student);
     let enrollment = null;
-    if (initialPaid > 0) {
+    if (initialPaid > 0 && !isOrganisationFunded(student)) {
       enrollment = await processLifecycleEvent({
         db,
         admin,
@@ -490,6 +496,9 @@ function createRegistrationLifecycleTriggers({
     const before = event?.data?.before?.data?.() || {};
     const after = event?.data?.after?.data?.() || {};
     const studentId = text(event?.params?.studentId || event?.data?.after?.id || event?.data?.before?.id);
+    // Institutional tuition is receipted to the company and the learner gets
+    // a separate invitation/confirmation after their approved class is saved.
+    if (isOrganisationFunded(after)) return { processed: false, reason: "organisation_billed_separately" };
     const transition = firstPaymentTransition(before, after);
     if (!transition.confirmed) {
       return { processed: false, reason: "not_first_payment" };
@@ -528,6 +537,7 @@ function createRegistrationLifecycleTriggers({
 module.exports = {
   createRegistrationLifecycleTriggers,
   firstPaymentTransition,
+  isOrganisationFunded,
   processLifecycleEvent,
   registrationRow,
   reactivateTrialStudentAfterPayment,
