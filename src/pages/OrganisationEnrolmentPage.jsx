@@ -1,4 +1,5 @@
 import { loadOrganisationClasses } from "../utils/organisationClasses.js";
+import OrganisationDirectory from "../components/OrganisationDirectory.jsx";
 import { loadOrganisationPartnerContext } from "../utils/organisationPartnerContext.js";
 import { organisationEnrolmentRequest } from "../utils/organisationEnrolmentRequest.js";
 import { useCallback, useEffect, useState } from "react";
@@ -51,7 +52,7 @@ export default function OrganisationEnrolmentPage({ review = false }) {
       setSubmissions(old => old.filter(item => item.id !== batch.id));
     });
   };
-  if (review) return <section className="org-enrol"><h1>Organisation submissions</h1>
+  if (review) return <section className="org-enrol"><h1>Organisation management</h1><OrganisationDirectory /><h2>Student submissions for review</h2>
     <p>Verify the organisation agreement and payment arrangement before approving. Approval creates a pending student; confirm their requested class and configure their contract in Students before inviting them. Requests do not automatically assign a class.</p>
     <p><a href="https://www.falowen.app/organisation-enrolment">Open public submission page</a> · <Link to="/students">Student directory and activation emails</Link></p>
     <button disabled={busy} onClick={() => run(() => load())}>Load / refresh submissions</button>
