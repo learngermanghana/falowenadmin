@@ -21,20 +21,17 @@ function money(value) {
 }
 
 function hasQualifyingPayment(student = {}) {
-  const paymentStatus = comparable(student.paymentStatus || student.payment_status);
-  if (["paid", "partial", "partially paid", "partially_paid"].includes(paymentStatus)) {
-    return true;
-  }
-
-  if (comparable(student.status) === "paid") return true;
-
+  const status = comparable(student.status).replace(/[-_]+/g, " ");
+  if (["inactive", "blocked", "suspended", "deleted", "archived",
+    "expired", "trial expired", "purged"].includes(status)) return false;
+  // A status label or signup amount alone is not proof of tuition received.
   return [
     student.paid,
     student.paidAmount,
     student.amountPaid,
     student.amount_paid,
-    // initialPaymentAmount is a proposed collection amount, not verified cash.
-  ].some((value) => money(value) > 0);
+    student.totalPaid,
+  ].some(value => money(value) > 0);
 }
 
 function paymentFingerprint(student = {}) {
