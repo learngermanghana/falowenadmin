@@ -110,6 +110,11 @@ function registerAgreementRoutes(app, { db, admin, getSecret = () => process.env
   const partners = db.collection("referralApplications"), privateData = db.collection("partnershipPrivate");
   const handle = action => async (req, res) => { res.set("Cache-Control", "no-store"); try { await action(req, res); }
     catch (e) { res.status(e.status || 500).json({ ok: false, error: e.status ? e.message : "Agreement service unavailable. Your entries are unchanged; retry shortly." }); } };
+  app.get("/admin/referrals/signature", handle(async (req, res) => {
+    await owner(req, admin);
+    const stored = await db.collection("partnershipSettings").doc("directorSignature").get();
+    res.json({ ok: true, installed: stored.exists, driveConfigured: Boolean(process.env.PARTNERSHIP_SIGNATURE_DRIVE_FILE_ID) });
+  }));
   app.post("/admin/referrals/signature", handle(async (req, res) => {
     const actor = await owner(req, admin), value = req.body?.png;
     if (typeof value !== "string" || value.length > 94000 || !/^[a-zA-Z0-9+/=]+$/.test(value)) fail(400, "Upload a PNG under 70 KB.");

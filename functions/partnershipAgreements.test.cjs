@@ -35,3 +35,14 @@ test('missing Falowen signature fails before accepting a signed application',asy
 test('PDF creation supports Unicode signing names and unsigned samples',async()=>{
  const bytes=await buildAgreementPdf({...body,id:'example',signedAt:'2026-11-05T00:00:00Z',termsSnapshot:TERMS.referral},{sample:true});assert.equal(bytes.subarray(0,5).toString(),'%PDF-');assert.ok(bytes.length>10000);
 });
+test('signature status requires owner access and never returns the private PNG',async()=>{
+ const f=fixture();let handler;
+ const app={...f.app,get:(path,fn)=>{if(path==='/admin/referrals/signature')handler=fn;}};
+ f.data.set('partnershipSettings/directorSignature',{png:'PRIVATE_IMAGE',hash:'PRIVATE_HASH'});
+ registerAgreementRoutes(app,f);
+ let code=200,result;
+ const res={set(){},status(n){code=n;return this;},json(value){result=value;}};
+ await handler({headers:{}},res);assert.equal(code,401);
+ code=200;await handler({headers:{authorization:'Bearer owner'}},res);
+ assert.equal(result.installed,true);assert.ok(!JSON.stringify(result).includes('PRIVATE'));
+});

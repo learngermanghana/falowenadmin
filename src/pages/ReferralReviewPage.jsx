@@ -1,3 +1,4 @@
+import SignatureUploadPanel from "../components/SignatureUploadPanel.jsx";
 import { useState } from "react";
 import { auth } from "../firebase.js";
 import { organisationEnrolmentRequest } from "../utils/organisationEnrolmentRequest.js";
@@ -87,17 +88,9 @@ function ReviewList({ kind }) {
   </section>;
 }
 export default function ReferralReviewPage() {
-  const [signatureStatus, setSignatureStatus] = useState("");
   return <section className="org-enrol partnerships"><h1>Partnership and referral review</h1>
     <p>Signed institutional and referral applications appear below. Signing creates a saved receipt; approval and payout verification remain separate.</p>
-    <label>Install / replace the authorised Falowen director signature (private PNG, max 70 KB)<input type="file" accept="image/png" onChange={async event => {
-      const file = event.target.files?.[0]; if (!file) return;
-      try {
-        if (file.size > 70000) throw new Error("Choose a PNG under 70 KB.");
-        const bytes = new Uint8Array(await file.arrayBuffer()); let binary = ""; for (const byte of bytes) binary += String.fromCharCode(byte);
-        await request("signature", { png: btoa(binary) }); setSignatureStatus("Signature saved privately. New receipts use it; existing PDFs are unchanged.");
-      } catch (e) { setSignatureStatus(e.message); }
-    }} /></label>{signatureStatus && <p role="status">{signatureStatus}</p>}
+    <SignatureUploadPanel request={request} />
     <a href="https://www.falowen.app/partnerships">Open public partnership programme</a>
     <ReviewList kind="applications" /><ReviewList kind="claims" />
   </section>;

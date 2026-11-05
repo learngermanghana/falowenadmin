@@ -84,13 +84,14 @@ test("learner invitation retains email on failure, retries, then offers Campus s
     assert.ok(document.querySelector('[role="status"] a[href="https://www.falowen.app/signup?program=german"]'));
   } finally { await unmount(); }
 });
-test("owner review opens without fetching either queue", async () => {
+test("owner review confirms the saved signature without fetching either queue", async () => {
   let calls = 0;
-  global.fetch = async () => { calls++; throw new Error("Unexpected request"); };
+  global.fetch = async path => { calls++; assert.equal(path, "/api/admin/referrals/signature"); return Response.json({ ok: true, installed: true }); };
   const unmount = await render(ReviewPage, "/referral-review");
   try {
     assert.match(document.body.textContent, /Partner applications/);
     assert.match(document.body.textContent, /Referrals and commissions/);
-    assert.equal(calls, 0);
+    assert.equal(calls, 1);
+    assert.match(document.body.textContent, /Signature is saved and ready/);
   } finally { await unmount(); }
 });

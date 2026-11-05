@@ -2,3 +2,8 @@
 .partnerships section { border-top: 1px solid #dce4f0; margin-top: 24px; padding-top: 12px; }
 .partnerships a { color: #184fa4; overflow-wrap: anywhere; }
 .partnerships .org-actions { flex-wrap: wrap; }
+
+.signature-notice { padding: 14px 16px; margin: 16px 0; border: 1px solid #bbc7d3; border-radius: 8px; font-weight: 600; }
+.signature-notice--success { background: #ecfdf3; border-color: #3a9163; color: #185335; }
+.signature-notice--error { background: #fff1f0; border-color: #ba4c43; color: #822b23; }
+.signature-notice--loading, .signature-notice--info { background: #eff6ff; color: #23476c; }
