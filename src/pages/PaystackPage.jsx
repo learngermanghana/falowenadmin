@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import ManualOrganisationPaymentForm from "../components/ManualOrganisationPaymentForm.jsx";
 import { Link, useSearchParams } from "react-router-dom";
 import { auth } from "../firebase.js";
 import { organisationEnrolmentRequest } from "../utils/organisationEnrolmentRequest.js";
@@ -7,6 +8,7 @@ const money = value => `GH₵${Number(value || 0).toFixed(2)}`;
 const request = (path, body) => organisationEnrolmentRequest(path, body, { staff: true, getToken: () => auth.currentUser?.getIdToken() });
 export default function PaystackPage() {
   const [params] = useSearchParams();
+  const [mode, setMode] = useState(() => params.get("mode") === "manual" ? "manual" : "paystack");
   const [batches, setBatches] = useState([]), [cursor, setCursor] = useState(null);
   const [batchId, setBatchId] = useState(params.get("batch") || ""), [lines, setLines] = useState([]);
   const [email, setEmail] = useState(""), [agreement, setAgreement] = useState(""), [reason, setReason] = useState("");
@@ -25,18 +27,23 @@ export default function PaystackPage() {
     setBatches(items); setCursor(data.nextCursor);
     const batch = items.find(item => item.id === batchId); if (batch && !lines.length) select(batch);
   };
+  useEffect(() => {
+    if (params.get("batch") && params.get("mode") === "manual") void load().catch(e => setError(e.message));
+    // Deep-link loading is intentionally one-time; the refresh button handles subsequent reads.
+  }, []);
   const update = (index, field, value) => { clear(); setLines(old => old.map((line, i) => i === index ? { ...line, [field]: value } : line)); };
   const selected = lines.filter(line => line.selected);
   const gross = selected.reduce((sum, line) => sum + Number(line.amount || 0), 0);
   const discount = selected.reduce((sum, line) => sum + Number(line.discount || 0), 0);
   const refresh = async () => { const data = await request(`payments/organisations/${encodeURIComponent(batchId)}`); setPayments(data.payments); };
-  return <section className="org-enrol"><h1>Paystack payments</h1>
-    <p>Create a company payment link from approved organisation enrolments. Use the organisation agreement. The organisation keeps its agreed share through an invoice deduction; no separate payout is required.</p>
+  return <section className="org-enrol"><h1>Organisation payments</h1>
+    <p>Generate Paystack checkout links for new agreements, or record money Falowen already received under a verified legacy full-tuition agreement.</p>
+    <div className="org-actions"><button type="button" aria-pressed={mode === "paystack"} onClick={() => setMode("paystack")}>Paystack group link</button><button type="button" aria-pressed={mode === "manual"} onClick={() => setMode("manual")}>Record manual payment</button></div>
     <p><Link to="/organisation-submissions">Review organisation submissions</Link> · <Link to="/students">Individual student payments and account setup</Link></p>
     <button disabled={busy} onClick={() => run(() => load())}>Load organisations</button>
     {cursor && <button disabled={busy} onClick={() => run(() => load(cursor))}>Load older organisations</button>}
     {error && <p role="alert">{error}</p>}
-    <form onSubmit={event => { event.preventDefault(); run(async () => {
+    {mode === "manual" ? <ManualOrganisationPaymentForm batch={batches.find(batch => batch.id === batchId)} onRecorded={refresh} /> : <form onSubmit={event => { event.preventDefault(); run(async () => {
       const data = await request("payments/organisation-link", { batchId, email, agreement, discountReason: reason, requestId, lines: selected.map(({ studentId, amount, discount }) => ({ studentId, amount, discount })) });
       setResult(data.payment); await refresh();
     }); }}>
@@ -63,10 +70,10 @@ export default function PaystackPage() {
         <p>The checkout includes the existing processing-fee share. Only the tuition payment is recorded as money paid; the agreed share reduces the student balance separately.</p>
         <button disabled={busy || !selected.length || Boolean(result)}>{busy ? "Working…" : "Generate group payment link"}</button>
       </>}
-    </form>
-    {result && <article role="status"><h2>Payment link ready</h2><p>Checkout total: {money(result.checkoutAmount)} · Receipt email: {result.email}</p><a href={result.authorizationUrl} target="_blank" rel="noreferrer">Open Paystack checkout</a><p><input aria-label="Payment link" readOnly value={result.authorizationUrl} /></p><button onClick={() => run(() => navigator.clipboard.writeText(result.authorizationUrl))}>Copy payment link</button></article>}
+    </form>}
+    {mode === "paystack" && result && <article role="status"><h2>Payment link ready</h2><p>Checkout total: {money(result.checkoutAmount)} · Receipt email: {result.email}</p><a href={result.authorizationUrl} target="_blank" rel="noreferrer">Open Paystack checkout</a><p><input aria-label="Payment link" readOnly value={result.authorizationUrl} /></p><button onClick={() => run(() => navigator.clipboard.writeText(result.authorizationUrl))}>Copy payment link</button></article>}
     {batchId && <><h2>Payment history</h2><button disabled={busy} onClick={() => run(refresh)}>Refresh payment status</button>
-      {payments.map(payment => <article key={payment.reference}><h3>{payment.reference}</h3><p>{payment.status} · {money(payment.checkoutAmount)} · {payment.email}</p>
+      {payments.map(payment => <article key={payment.reference}><h3>{payment.reference}</h3><p>{payment.status} · {money(payment.checkoutAmount)} · {payment.email} · {payment.provider || "Paystack"}</p>{payment.purpose === "organisation_manual" && <p>Verified {payment.method?.replaceAll("_", " ")} · External reference: {payment.transactionReference} · Legacy full tuition; no partner deduction</p>}
         {["pending", "initializing"].includes(payment.status) && <button disabled={busy} onClick={() => run(async () => { await request(`payments/organisations/verify/${payment.reference}`, {}); await refresh(); })}>Verify with Paystack</button>}
         {payment.authorizationUrl && <a href={payment.authorizationUrl} target="_blank" rel="noreferrer">Payment link</a>}
         <ul>{payment.lines?.map(line => <li key={line.studentId}>{line.studentName}: {money(line.tuitionCredit)} tuition · {money(line.discount)} partner share</li>)}</ul>
