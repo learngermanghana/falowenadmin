@@ -285,8 +285,8 @@ test("deployment patch listens for student payment and confirmed class updates",
 
   assert.match(patch, /exports\.autoSyncPaidStudentOrientation/);
   assert.match(patch, /onDocumentUpdated/);
-  assert.match(patch, /document: "students\\/\\{studentId\\}"/);
-  assert.doesNotMatch(patch, /document: "payments\\/\\{reference\\}"/);
+  assert.match(patch, /document: "students\/\{studentId\}"/);
+  assert.doesNotMatch(patch, /document: "payments\/\{reference\}"/);
   assert.doesNotMatch(patch, /payment_not_newly_paid/);
   assert.match(patch, /orientationAppsScriptUrlSecret/);
   assert.match(patch, /orientationSyncSecret/);
