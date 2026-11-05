@@ -7,6 +7,9 @@ import SocialVocabularyCreator from "../components/SocialVocabularyCreator.jsx";
 import SocialAdsDictionary from "../components/SocialAdsDictionary.jsx";
 import SocialGermanChallenges from "../components/SocialGermanChallenges.jsx";
 import SocialPhotoGallery from "../components/SocialPhotoGallery.jsx";
+import SocialMusicPicker, { EMPTY_SOCIAL_MUSIC } from "../components/SocialMusicPicker.jsx";
+import { addSocialMusic } from "../utils/socialMusicLibrary.js";
+import { chooseSocialVideoFormat, requireValidSocialVideo } from "../utils/socialMp4Export.js";
 import { QRCodeCanvas } from "qrcode.react";
 import {
   CAMPAIGN_FORMATS, campaignClassEligibility, accraToday,
@@ -504,6 +507,10 @@ export default function SocialMediaPage() {
   const [campaignSlideId, setCampaignSlideId] = useState("registration");
   const [includeQr, setIncludeQr] = useState(true);
   const [exportingPack, setExportingPack] = useState(false);
+  const [exportingVideo, setExportingVideo] = useState(false);
+  const [videoSeconds, setVideoSeconds] = useState(15);
+  const [videoFormat, setVideoFormat] = useState("auto");
+  const [musicSelection, setMusicSelection] = useState(EMPTY_SOCIAL_MUSIC);
   const [classes, setClasses] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState("");
   const [templateId, setTemplateId] = useState(TEMPLATES[0].id);
@@ -534,6 +541,9 @@ export default function SocialMediaPage() {
     [previewDraft, previewFormat, templateId, campaignMode, campaignSlideId, includeQr, qrValue, photoSrc, photoControls],
   );
   const exportReady = !photoReading && !rendering && renderedSignature === posterSignature;
+  const videoMime = typeof MediaRecorder !== "undefined" && typeof MediaRecorder.isTypeSupported === "function"
+    ? chooseSocialVideoFormat(mime => MediaRecorder.isTypeSupported(mime), videoFormat, { audioRequired: musicSelection.id !== "none" })
+    : null;
 
   useEffect(() => {
     (async () => {
@@ -663,6 +673,104 @@ export default function SocialMediaPage() {
     }
   };
 
+  const exportClassVideo = async () => {
+    if (exportingVideo || !exportReady || !canvasRef.current) {
+      pushToast({ type: "info", message: "Finish rendering the latest poster before exporting video." });
+      return;
+    }
+    if (!videoMime || typeof HTMLCanvasElement.prototype.captureStream !== "function") {
+      pushToast({ type: "error", message: "Video with these audio settings is unavailable. Choose Auto or WebM, or remove the music." });
+      return;
+    }
+    const seconds = Number(videoSeconds);
+    let stream, recorder, context, frame = 0, timer = 0;
+    setExportingVideo(true);
+    try {
+      // A campaign becomes a five-scene video; single-poster mode records just
+      // the poster shown in preview. All artwork stays on the user's device.
+      const posters = [];
+      if (campaignMode && campaignSlides.length) {
+        for (const slide of campaignSlides) {
+          const poster = document.createElement("canvas");
+          const ok = await renderPoster(poster, slide.data, template, CAMPAIGN_FORMATS[slide.format], photoSrc, photoControls);
+          if (!ok) throw new Error("Could not render the " + slide.label + " video scene.");
+          if (includeQr && qrValue) drawRegistrationQr(poster, qrCanvasRef.current);
+          posters.push(poster);
+        }
+      } else {
+        posters.push(canvasRef.current);
+      }
+      const videoCanvas = document.createElement("canvas");
+      videoCanvas.width = 720; videoCanvas.height = 1280;
+      const ctx = videoCanvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas video rendering is not supported.");
+      const drawVideoFrame = (elapsed) => {
+        const sceneLength = seconds / posters.length;
+        const index = Math.min(posters.length - 1, Math.floor(elapsed / sceneLength));
+        const poster = posters[index];
+        const scale = Math.min(videoCanvas.width / poster.width, videoCanvas.height / poster.height);
+        const width = poster.width * scale, height = poster.height * scale;
+        const movement = .006 * Math.sin(Math.PI * (elapsed % sceneLength) / sceneLength);
+        ctx.fillStyle = "#071a3a";
+        ctx.fillRect(0, 0, videoCanvas.width, videoCanvas.height);
+        ctx.drawImage(poster,
+          (videoCanvas.width - width * (1 + movement)) / 2,
+          (videoCanvas.height - height * (1 + movement)) / 2,
+          width * (1 + movement), height * (1 + movement));
+      };
+      drawVideoFrame(0);
+      const visuals = videoCanvas.captureStream(24);
+      if (!visuals.getVideoTracks().length) throw new Error("The browser could not capture the class video.");
+      stream = visuals;
+      let soundtrack = null;
+      if (musicSelection.id !== "none") {
+        const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextCtor) throw new Error("Your browser cannot include audio in video export.");
+        context = new AudioContextCtor();
+        await context.resume();
+        const audioOutput = context.createMediaStreamDestination();
+        soundtrack = await addSocialMusic(context, audioOutput, musicSelection.id, seconds, 0.22,
+          { selection: musicSelection, tracks: [musicSelection.track].filter(Boolean) });
+        await context.resume();
+        if (context.state !== "running") throw new Error("Audio playback is blocked. Keep the browser tab active.");
+        stream = new MediaStream([...visuals.getVideoTracks(), ...audioOutput.stream.getAudioTracks()]);
+      }
+      recorder = new MediaRecorder(stream, { mimeType: videoMime.mime, videoBitsPerSecond: 3800000 });
+      const chunks = [];
+      const result = new Promise((resolve, reject) => {
+        recorder.ondataavailable = event => { if (event.data?.size) chunks.push(event.data); };
+        recorder.onerror = event => reject(new Error(event.error?.message || "Video recording failed."));
+        recorder.onstop = () => chunks.length ? resolve(new Blob(chunks, { type: recorder.mimeType || videoMime.mime }))
+          : reject(new Error("No video frames were recorded."));
+      });
+      recorder.start(250);
+      soundtrack?.start();
+      const beginning = performance.now();
+      const paint = (now) => {
+        if (recorder.state !== "recording") return;
+        const elapsed = Math.min(seconds, (now - beginning) / 1000);
+        drawVideoFrame(elapsed);
+        if (elapsed < seconds) frame = requestAnimationFrame(paint);
+      };
+      frame = requestAnimationFrame(paint);
+      timer = window.setTimeout(() => { if (recorder.state !== "inactive") recorder.stop(); }, seconds * 1000 + 170);
+      const blob = await result;
+      await requireValidSocialVideo(blob, videoMime);
+      const stem = String(draft.className || "class-promo").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      downloadBrowserBlob(blob, (stem || "class-promo") + (campaignMode ? "-campaign-" : "-poster-") + seconds + "s." + videoMime.extension);
+      pushToast({ type: "success", message: "Upcoming Classes " + seconds + "-second video exported" + (musicSelection.id !== "none" ? " with your selected Falowen song loop." : " without music.") });
+    } catch (cause) {
+      pushToast({ type: "error", message: cause?.message || "Could not export class video." });
+    } finally {
+      clearTimeout(timer);
+      cancelAnimationFrame(frame);
+      if (recorder && recorder.state !== "inactive") { try { recorder.stop(); } catch { /* already stopped */ } }
+      stream?.getTracks().forEach(track => track.stop());
+      if (context) await context.close().catch(() => {});
+      setExportingVideo(false);
+    }
+  };
+
   const exportImage = () => {
     if (!exportReady) {
       pushToast({ type: "info", message: "Please wait for the latest poster preview to finish rendering." });
@@ -789,8 +897,31 @@ export default function SocialMediaPage() {
             ) : <p className="social-campaign-help">Use the existing single-poster workflow, with your choice of size and style.</p>}
           </section>
 
+          <section className="social-panel" style={{ display: "grid", gap: 10 }}>
+            <h3 style={{margin:0,fontSize:16}}>3. Add music &amp; export class video</h3>
+            <p className="social-campaign-help" style={{margin:0}}>Turn {campaignMode ? "all five campaign scenes" : "this poster"} into a vertical video with your Falowen music. Images and the existing ZIP export remain available.</p>
+            <SocialMusicPicker label="Falowen music for Upcoming Classes video" selection={musicSelection} onChange={setMusicSelection} disabled={exportingVideo} />
+            <div style={{display:"grid",gap:9,gridTemplateColumns:"repeat(2,minmax(0,1fr))"}}>
+              <label style={{fontSize:13}}>Video length
+                <select value={videoSeconds} disabled={exportingVideo} onChange={event=>setVideoSeconds(Number(event.target.value))} style={inputStyle}>
+                  <option value={12}>12 seconds</option><option value={15}>15 seconds</option><option value={30}>30 seconds</option>
+                </select>
+              </label>
+              <label style={{fontSize:13}}>Video format
+                <select value={videoFormat} disabled={exportingVideo} onChange={event=>setVideoFormat(event.target.value)} style={inputStyle}>
+                  <option value="auto">Auto · MP4 / WebM</option><option value="mp4">MP4 · H.264/AAC</option><option value="webm">WebM</option>
+                </select>
+              </label>
+            </div>
+            <button type="button" className="social-primary-button" disabled={!exportReady || exportingVideo || !videoMime} onClick={exportClassVideo}>
+              {exportingVideo ? "Recording your class video…" : "Export class video with selected music"}
+            </button>
+            {!videoMime && <small className="social-campaign-error">This browser cannot record that format with the selected audio. Choose Auto/WebM or no song.</small>}
+            <small className="social-campaign-help">Video is encoded in this browser (720 × 1280). Keep this tab active during recording. No AI/video service or R2 upload is used.</small>
+          </section>
+
           <details className="social-poster-details">
-            <summary>3. Poster design &amp; colors</summary>
+            <summary>4. Poster design &amp; colors</summary>
             <div style={{ display: "grid", gridTemplateColumns: isNarrow ? "1fr" : "repeat(2, minmax(0, 1fr))", gap: 8 }}>
               {TEMPLATES.map((item) => (
                 <button key={item.id} type="button" onClick={() => setTemplateId(item.id)} style={{ minHeight: 76, borderRadius: 12, border: templateId === item.id ? `2px solid ${item.accent}` : "1px solid #cbd5e1", background: item.background, color: item.text, padding: 10, fontWeight: 800, textAlign: "left" }}>
@@ -802,7 +933,7 @@ export default function SocialMediaPage() {
           </details>
 
           <details className="social-poster-details" open>
-            <summary>4. Size &amp; photo</summary>
+            <summary>5. Size &amp; photo</summary>
             <div style={{ display: "grid", gap: 10 }}>
               {campaignMode ? <p className="social-campaign-help">Campaign sizes are optimized automatically for each asset.</p> : FORMATS.map((item) => (
                 <label key={item.id} style={{ display: "flex", gap: 9, alignItems: "center", cursor: "pointer" }}>
@@ -840,7 +971,7 @@ export default function SocialMediaPage() {
           </details>
 
           <details className="social-poster-details">
-            <summary>5. Review / edit class details</summary>
+            <summary>6. Review / edit class details</summary>
             <div style={{ display: "grid", gap: 10 }}>
               <Field label="Small heading" value={draft.eyebrow} onChange={(value) => updateDraft("eyebrow", value)} />
               <Field label="Class name" value={draft.className} onChange={(value) => updateDraft("className", value)} />
