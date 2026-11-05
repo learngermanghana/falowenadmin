@@ -51,6 +51,7 @@ export default function MusicStudioPage() {
     catch { return 'Create a hip-hop song with an Afrobeats feel.'; }
   });
   const [directionOverride, setDirectionOverride] = useState(null);
+  const [advancedSavedPromptOverride, setAdvancedSavedPromptOverride] = useState("");
   useEffect(() => {
     try { localStorage.setItem('falowen-music-short-prompt', shortPrompt); } catch { /* Optional device-only draft. */ }
   }, [shortPrompt]);
@@ -67,6 +68,10 @@ export default function MusicStudioPage() {
   const [copyStatus, setCopyStatus] = useState('');
   const draft = courseMode === 'course' ? getReusableSongDraft(lesson?.assignmentKey) : null;
   const assignmentKey = lesson?.assignmentKey || '';
+  const isAdvancedSavedSong = courseMode === 'course' && ['B2','C1','C2'].includes(level) && !!draft;
+  const simpleSavedPrompt = isAdvancedSavedSong
+    ? (advancedSavedPromptOverride || draft.musicStyle)
+    : shortPrompt;
   // A previous saved short Day 7 draft must not mask the newly approved recording lyrics.
   // Preserve other saved teacher edits; the owner can permanently overwrite the stale draft.
   const obsoleteDay7Draft = assignmentKey === 'A1-3' &&
@@ -195,6 +200,7 @@ export default function MusicStudioPage() {
     // New dictionary topics must not accidentally inherit "rewrite from source"
     // from the previous song: prewritten lyrics default to exact playback.
     setLyricTreatment('exact');
+    setAdvancedSavedPromptOverride("");
     setCopyStatus('');
     setDirectionOverride(null);
   }, [assignmentKey, level, courseMode]);
@@ -270,7 +276,7 @@ export default function MusicStudioPage() {
       // Simple generation sends only the prompt plus explicitly selected lyrics.
       const prompt = simple
         ? buildFalowenShortMusicPrompt({
-            brief: shortPrompt, lyrics: usingLessonLyrics ? lyrics : '',
+            brief: usingLessonLyrics ? simpleSavedPrompt : shortPrompt, lyrics: usingLessonLyrics ? lyrics : '',
             mode: 'song', durationSeconds: 150, vocalMode: 'voice', lyricTreatment: 'exact',
           })
         : promptMode === 'short'
@@ -294,7 +300,7 @@ export default function MusicStudioPage() {
   const cents = mode === 'clip' ? 4 : 8;
   const capped = status && (status.dailyCents + cents > status.limits.dailyCents || status.monthlyCents + cents > status.limits.monthlyCents);
   const simpleCapped = status && (status.dailyCents + 8 > status.limits.dailyCents || status.monthlyCents + 8 > status.limits.monthlyCents);
-  const simpleReady = Boolean(status?.ready) && !simpleCapped && !busy && Boolean(shortPrompt.trim()) &&
+  const simpleReady = Boolean(status?.ready) && !simpleCapped && !busy && Boolean((composerTab === 'saved' ? simpleSavedPrompt : shortPrompt).trim()) &&
     (composerTab === 'prompt' || Boolean(lyrics.trim()));
   return <main className="music-studio music-studio-simple">
     <header className="music-simple-header">
@@ -345,8 +351,11 @@ export default function MusicStudioPage() {
           </div>}
           <label htmlFor="music-create-prompt">{composerTab === 'saved' ? 'Music style prompt' : 'Describe your song'}</label>
           <textarea id="music-create-prompt" rows={composerTab === 'saved' ? 3 : 6}
-            maxLength={1500} required disabled={busy} value={shortPrompt} onChange={e => setShortPrompt(e.target.value)}
+            maxLength={1500} required disabled={busy}
+            value={composerTab === 'saved' ? simpleSavedPrompt : shortPrompt}
+            onChange={e => (composerTab === 'saved' && isAdvancedSavedSong ? setAdvancedSavedPromptOverride(e.target.value) : setShortPrompt(e.target.value))}
             placeholder="A heartfelt Afro-soul song, clear German vocals, a memorable chorus and warm piano…" />
+          {composerTab === 'saved' && isAdvancedSavedSong && <p className="music-note">The curated {level} arrangement is selected for this song. Edit the music style above if you want another sound. It will reset to the next lesson's arrangement when you change songs.</p>}
           {composerTab === 'saved' && <div className="music-simple-saved-editor">
             <label htmlFor="music-create-lyrics">Lyrics</label>
             <textarea id="music-create-lyrics" rows={11} maxLength={5500} disabled={busy || loadingLyrics}
