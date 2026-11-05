@@ -72,17 +72,14 @@ function operationalOrientationMoney(value) {
 }
 
 function operationalHasQualifyingPayment(student = {}) {
-  const paymentStatus = String(student.paymentStatus || student.payment_status || "").trim().toLowerCase().replace(/[_-]+/g, " ");
+  // Only a recorded tuition amount qualifies, not a label or proposed signup amount.
   const status = String(student.status || "").trim().toLowerCase().replace(/[_-]+/g, " ");
-  if (["paid", "partial", "partially paid", "part paid"].includes(paymentStatus)) return true;
-  if (status === "paid") return true;
+  if (["inactive", "suspended", "blocked", "deleted", "archived",
+      "expired", "trial expired", "purged"].includes(status)) return false;
   return [
-    student.paid,
-    student.paidAmount,
-    student.amountPaid,
-    student.amount_paid,
-    // initialPaymentAmount is a proposed amount, not verified tuition.
-  ].some((value) => operationalOrientationMoney(value) > 0);
+    student.paid, student.paidAmount, student.amountPaid,
+    student.amount_paid, student.totalPaid,
+  ].some(value => operationalOrientationMoney(value) > 0);
 }
 
 const OPERATIONAL_TRIAL_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
