@@ -3,6 +3,16 @@ const crypto = require("node:crypto");
 const { postPaymentRow, resolveWebhookConfig } = require("./studentPaymentUpdateEmails");
 const plain = value => String(value ?? "").trim();
 
+function money(value) {
+  return Number(value || 0).toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function contractEndLabel(value) {
+  const d = value?.toDate?.() || (value ? new Date(value) : null);
+  return d instanceof Date && !Number.isNaN(d.getTime())
+    ? new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Accra" }).format(d)
+    : "";
+}
+
 function organisationStudentConfirmation(student = {}) {
   if (plain(student.billingResponsibility).toLowerCase() !== "organisation") return null;
   const amount = Number(student.paid ?? student.amountPaid ?? 0);
@@ -12,18 +22,31 @@ function organisationStudentConfirmation(student = {}) {
   const organisation = plain(student.organisationName);
   if (!email || !organisation || !className || !plain(student.lastPaymentReference)) return null;
   const level = plain(student.level);
+  const remaining = Number(student.balanceDue ?? student.balance ?? 0);
+  const partial = plain(student.paymentStatus).toLowerCase().includes("partial")
+    || (Number.isFinite(remaining) && remaining > 0 && amount > 0);
+  const accessEnd = contractEndLabel(student.contractEnd);
+  const tuitionStatement = partial
+    ? "Your organisation has paid GHS " + money(amount) + " toward your course tuition. GHS " + money(remaining) + " remains outstanding and payable under the original organisation agreement."
+    : "Your tuition was paid by " + organisation + ".";
+  const accessStatement = partial
+    ? "Your current payment provides one month of paid access from the recorded receipt date" + (accessEnd ? ", ending " + accessEnd : "") + ". Account activation or a class change does not automatically extend this term."
+    : "Each class lasts 10 weeks. Your Falowen access lasts six months from account activation, including the remaining time after your class finishes.";
+  const classChangeStatement = partial
+    ? "Any class change requires Falowen approval and an available place and does not extend your current paid access."
+    : "Any class change requires Falowen approval and an available place. A class change does not restart or extend your six-month access.";
   return {
     email,
     topic: "Falowen enrolment confirmed — tuition paid by " + organisation,
     announcement: [
       "Hello " + plain(student.name || student.fullName || "Student") + ",",
-      "Your tuition was paid by " + organisation + ".",
+      tuitionStatement,
       "Your class: " + className + (level ? " (" + level + ")" : "") + ".",
       "Group payment reference: " + plain(student.lastPaymentReference) + ".",
-      "Each class lasts 10 weeks. Your Falowen access lasts six months from account activation, including the remaining time after your class finishes.",
-      "Any class change requires Falowen approval and an available place. A class change does not restart or extend your six-month access.",
+      accessStatement,
+      classChangeStatement,
       "Use your secure account setup email to activate your login. You can find your class and account details at https://www.falowen.app/campus/account and https://www.falowen.app/campus/course.",
-      "The organisation is the tuition payer. You do not need to repay this organisation-funded tuition.",
+      "The organisation is the tuition payer. Do not make a duplicate personal payment; any remaining tuition balance must be settled under the organisation agreement.",
       "Falowen · Learn Language Education Academy",
     ].join("\n\n"),
     class: className, delivery_mode: "individual", email_type: "organisation_enrolment_confirmation",
