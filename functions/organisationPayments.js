@@ -155,6 +155,33 @@ async function sendGroupReceipt({ db, admin, reference, runtimeConfig, send = po
         "Please retain this reference and breakdown as your organisation payment receipt. Your students will receive separate enrolment confirmations when their class and account invitations are ready.",
         "Falowen · Learn Language Education Academy",
       ].join("\n\n"),
+      // The announcement webhook formats a purpose-built, email-client-safe receipt
+      // from structured and verified server-side payment data. The full agreement
+      // remains in Firestore, not in the public receipt layout.
+      subject: "Falowen tuition payment receipt — " + payment.organisationName,
+      receipt_payload_json: JSON.stringify({
+        version: 1,
+        reference,
+        organisationName: payment.organisationName,
+        billingEmail: payment.email,
+        paymentMethod: manual ? (MANUAL_METHOD_LABELS[payment.method] || "Verified offline payment") : "Paystack",
+        transferReference: manual ? payment.transactionReference : "",
+        receivedDate: manual
+          ? (payment.receivedDate || "")
+          : (payment.paidAt?.toDate?.()?.toISOString?.().slice(0, 10) || ""),
+        amountReceived: Number(payment.checkoutAmount),
+        tuitionAllocated: Number(payment.tuitionCredit),
+        organisationShare: Number(payment.discount),
+        processingCharges: manual ? 0 : processing,
+        isManual: manual,
+        students: payment.lines.map(line => ({
+          name: line.studentName || line.studentId,
+          courseTuition: manual ? Number(line.courseTuitionFee ?? line.grossAmount) : Number(line.grossAmount),
+          tuitionReceived: Number(line.tuitionCredit),
+          balanceRemaining: manual && Number.isFinite(Number(line.remainingBalance)) ? Number(line.remainingBalance) : null,
+          accessEndDate: manual && Number(line.remainingBalance) > 0 ? String(line.accessEndDate || "") : "",
+        })),
+      }),
       delivery_mode: "individual", allow_bcc_fallback: "FALSE", email_type: "organisation_payment_receipt",
       show_app_button: "FALSE", show_progress: "FALSE", show_review: "FALSE", attach_certificate: "FALSE",
       receipt_reference: reference, organisation_name: payment.organisationName,

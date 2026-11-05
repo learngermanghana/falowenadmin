@@ -335,3 +335,48 @@ test("receipt retry is safe when already sent and records non-sensitive failure 
   assert.deepEqual(delivery, { status: "sent", alreadySent: true });
   assert.equal(f.data.get("students/A").paid, initial);
 });
+
+test("verified manual organisation receipt has structured email data for the branded receipt", async () => {
+  const f = manualFixture();
+  const { reference } = await f.record(manualBody({ lines: [{ studentId: "A", amount: 2000, discount: 0 }] }));
+  let sent = 0;
+  await sendGroupReceipt({
+    ...f, admin, reference, runtimeConfig: {},
+    send: async (_config, row) => {
+      sent++;
+      const receipt = JSON.parse(row.receipt_payload_json);
+      assert.equal(row.email_type, "organisation_payment_receipt");
+      assert.match(row.subject, /^Falowen tuition payment receipt/);
+      assert.equal(receipt.reference, reference);
+      assert.equal(receipt.amountReceived, 2000);
+      assert.equal(receipt.tuitionAllocated, 2000);
+      assert.equal(receipt.students[0].courseTuition, 3000);
+      assert.equal(receipt.students[0].balanceRemaining, 1000);
+      assert.equal(receipt.students[0].accessEndDate, "2026-12-04T12:00:00.000Z");
+      assert.equal(receipt.isManual, true);
+      assert.equal(receipt.organisationShare, 0);
+    },
+  });
+  await sendGroupReceipt({
+    ...f, admin, reference, runtimeConfig: {},
+    send: async () => { throw Error("Already delivered receipt must never be resent"); },
+  });
+  assert.equal(sent, 1);
+  assert.equal(f.data.get("students/A").paid, 2000);
+  assert.equal(f.data.get("students/A").balanceDue, 1000);
+});
+test("Paystack group receipt preserves charge, processing fee and student allocation in structured details", async () => {
+  const f = fixture(); await f.apply();
+  await sendGroupReceipt({
+    ...f, admin, reference: f.payment.reference, runtimeConfig: {},
+    send: async (_config, row) => {
+      const receipt = JSON.parse(row.receipt_payload_json);
+      assert.equal(receipt.isManual, false);
+      assert.equal(receipt.amountReceived, 710);
+      assert.equal(receipt.tuitionAllocated, 700);
+      assert.equal(receipt.organisationShare, 100);
+      assert.equal(receipt.processingCharges, 10);
+      assert.equal(receipt.students.length, 2);
+    },
+  });
+});
