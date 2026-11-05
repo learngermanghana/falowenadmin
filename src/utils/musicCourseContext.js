@@ -16,7 +16,9 @@ function getMusicStoryScene(entry) {
   if (level === 'A1' && (String(entry.assignmentKey || '').toUpperCase() === 'A1-14.1' || /gesundheit|körperteile|health and body/.test(title))) {
     return 'A1 HEALTH STORY SEED: a learner feels unwell and says "Mein Kopf tut weh." A friend asks "Was ist los?" The learner asks "Kannst du mir helfen?" The friend helps them rest, and they finish with "Jetzt geht es mir besser." Work in correct everyday body-part words such as der Kopf, der Arm, das Bein and die Hand only when they naturally fit the scene. Keep the complaint believable: not every body part needs to hurt. Do not turn the lyrics into a glossary.';
   }
-  return 'Invent one believable everyday story directly related to the selected dictionary topic. Give it a beginning, a small practical problem or goal, a human response and a positive or thoughtful ending.';
+  return ['B2','C1','C2'].includes(level)
+    ? 'Build a vivid adult narrative or lyrical meditation directly connected to the specific lesson topic. Show conflicting motives or interpretations with concrete human details. Do not force an optimistic solution or predictable ending.'
+    : 'Invent one believable everyday story directly related to the selected dictionary topic. Give it a beginning, a small practical problem or goal, a human response and a positive or thoughtful ending.';
 }
 
 export function getMusicDays(level) {
@@ -48,7 +50,9 @@ export function musicLessonContext(entry, language = 'bilingual', focus = '', op
       ? 'INSTRUMENTAL-ONLY ADULT SONG: express the lesson situation with a strong melodic motif, moving chord progression, organic guitar/piano dynamics and a thoughtful emotional arc; do not produce any lyrics, dialogue, speech, chanting, choir or humming.'
       : makeNewStory ? [
       'STORYTELLING SONG — NOT A VOCABULARY LIST:',
-      'Create original, coherent, singable lyrics: [Verse 1] introduce a person and situation; [Chorus] repeat a useful German sentence that advances the story; [Verse 2] show a small problem and natural dialogue; [Chorus] return to the hook; [Outro] resolve the situation and finish the last sung phrase clearly.',
+      ['B2','C1','C2'].includes(String(entry.level || '').toUpperCase())
+        ? 'ADVANCED ARTISTIC SONG: Write a credible, compelling adult song rather than a textbook exercise. Establish a specific scene, tension and change of perspective; allow nuance, ambiguity and an unresolved or bittersweet ending where suitable. Use a striking image or refrain, varied syntax, and singable lines. Song sections may vary (verse, pre-chorus, refrain, bridge, outro); avoid identical song outlines across lessons. Do not insert the brand name or promotional language into lyrics, especially not the last line.'
+        : 'Create original, coherent, singable lyrics: [Verse 1] introduce a person and situation; [Chorus] repeat a useful German sentence that advances the story; [Verse 2] show a small problem and natural dialogue; [Chorus] return to the hook; [Outro] resolve the situation and finish the last sung phrase clearly.',
       'Include one or two short everyday dialogue turns; use the lesson words in context, not as disconnected definitions, flashcards, or repetitive dictionary translations. A chorus may repeat one meaningful line, but should not loop a vocabulary word endlessly; meaningful rhythm and emotional melody matter more than end-rhyme.',
       MUSIC_STORY_CEFR_GUIDANCE[String(entry.level || '').toUpperCase()] || MUSIC_STORY_CEFR_GUIDANCE.A1,
       getMusicStoryScene(entry),
