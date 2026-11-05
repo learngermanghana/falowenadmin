@@ -2,14 +2,23 @@
 const crypto = require("node:crypto");
 const { owner } = require("./organisationEnrolment");
 const VERSION = "partnership-2026-11-05-v2";
-const ORGANISATION_VERSION = "organisation-partnership-2026-11-05-v3";
+const ORGANISATION_VERSION = "organisation-partnership-2026-11-05-v4";
 const hash = text => crypto.createHash("sha256").update(text).digest("hex");
 const fail = (status, message) => { throw Object.assign(new Error(message), { status }); };
 const TERMS = {
   referral: ["Subject to Falowen approval, an approved partner earns 10% of a referred learner’s first completed, non-refunded course payment. The amount is based on tuition received, excluding processing fees. Later instalments, renewals, institutional enrolments and self-referrals are excluded. A refund cancels the commission."],
   institutional: ["Schools, employers and sponsoring organisations can enrol a group under an agreement with Falowen. Our team reviews the group and confirms who will pay before inviting students."],
 };
-TERMS.institutional.push("The organisation signs this agreement, submits its student list for Falowen review and pays the resulting group invoice. The agreed partner share is deducted from the payment link, so the organisation retains that share and pays Falowen the net amount. No separate commission payout or Paystack split is required. Falowen enrols the approved students after payment is verified. Clients paying for themselves use normal student signup and pay the full advertised fee; those payments earn no commission.");
+TERMS.institutional = [
+  "Purpose and approval — This programme is for organisations, education consultants and travel agencies arranging German language training for their clients. Falowen reviews the organisation and proposed students before confirming enrolment. Signing records the application; it does not itself approve students or grant course access.",
+  "Your 10% organisation share — The organisation retains 10% of each approved student's first tuition payment, excluding checkout processing fees. This share is deducted from the corresponding group invoice before the organisation pays Falowen. The share is earned only when the net payment is completed and verified; a signup or unpaid invoice earns no share. Later instalments and renewals do not earn an additional share. The student allocations and retained share are shown on the payment breakdown.",
+  "How payment works — After signing, submit your students through the organisation enrolment form. Falowen reviews and approves the list, confirms the tuition amounts and issues one group Paystack payment link. The organisation keeps its agreed 10% share and pays the remaining tuition. No bank details, separate commission transfer or Paystack split is required. Any checkout processing charge is displayed separately.",
+  "Example — If the approved first tuition payments total GHS 5,000, the organisation keeps GHS 500 and the tuition payable to Falowen is GHS 4,500, plus any displayed checkout processing charge.",
+  "Student enrolment — The organisation supplies accurate student details with permission to share them. Approval creates pending records for billing. After payment is verified, Falowen allocates the payment and partner-share deduction to each approved student, then completes the class, contract and account-invitation arrangements. A signed agreement or submitted student list is not proof of payment.",
+  "Refunds, cancellations and corrections — A refunded, reversed or cancelled tuition payment cancels the related organisation share. Falowen reviews and reconciles any retained share and student balances under the agreed payment terms. An incorrect or duplicate payment must be reported for review; it does not create an additional entitlement.",
+  "Organisation responsibilities — The authorised representative confirms they can sign for the organisation, submit the student details and manage the group payment. The organisation must provide accurate contact details and must not promise examination results, visas or commitments on Falowen's behalf.",
+  "Electronic consent and records — By entering their full name and accepting the signing consent, the representative signs electronically for the organisation. Falowen saves the accepted terms, version, signing time and receipt reference, and provides a downloadable PDF bearing the representative's signature and the authorised Falowen director signature. Keep that copy for your records.",
+];
 function validateApplication(body = {}) {
   const kind = body.kind;
   if (kind !== "institutional") fail(410, "This page now accepts organisation partnerships only. Clients paying for themselves should use normal student signup; no referral commission applies.");
@@ -23,7 +32,7 @@ function validateApplication(body = {}) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail(400, "Enter a valid contact email.");
   if (!/^[a-f0-9]{64}$/.test(body.receiptToken || "")) fail(400, "Refresh the form and retry.");
   const publicData = { kind, name: text("name", 150), email, phone: text("phone", 40), address: text("address", 300),
-    signerName: text("signerName", 150), signerRole: text("signerRole", 100), terms: ORGANISATION_VERSION,
+    signerName: text("signerName", 150), signerRole: text("signerRole", 100), terms: ORGANISATION_VERSION, partnerShareRate: 0.1, partnerShareScope: "first_tuition_payment", shareSettlement: "invoice_deduction",
     billingResponsibility: "organisation" };
   if (body.billingResponsibility && body.billingResponsibility !== "organisation") fail(400, "The organisation pays through this programme. Clients paying themselves use normal signup.");
   const bank = null;
@@ -124,7 +133,7 @@ function registerAgreementRoutes(app, { db, admin, getSecret = () => process.env
   }));
   app.get("/referrals/agreement-terms", handle(async (req, res) => {
     const kind = "institutional";
-    res.json({ ok: true, version: ORGANISATION_VERSION, kind, terms: TERMS[kind] });
+    res.json({ ok: true, version: ORGANISATION_VERSION, kind, terms: TERMS[kind], partnerShareRate: 0.1, shareSettlement: "invoice_deduction" });
   }));
   app.get("/referrals/agreement-sample", handle(async (req, res) => {
     const kind = "institutional";
@@ -133,7 +142,7 @@ function registerAgreementRoutes(app, { db, admin, getSecret = () => process.env
   }));
   app.post("/referrals/apply-signed", handle(async (req, res) => {
     const { publicData, bank, tokenHash } = validateApplication(req.body);
-    const id = hash("organisation-v3:" + publicData.email);
+    const id = hash("organisation-v4:" + publicData.email);
     const ref = partners.doc(id), secretRef = privateData.doc(id);
     const signedAt = new Date().toISOString();
     const record = { ...publicData, id, status: "pending", signedAt, termsSnapshot: TERMS[publicData.kind], termsHash: hash(JSON.stringify(TERMS[publicData.kind])),
