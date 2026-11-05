@@ -53,14 +53,35 @@ test("first paid increase confirms enrollment once", () => {
   );
 });
 
-test("manual first payment recorded only as a balance decrease confirms enrollment", () => {
+test("balance discounts or payment intentions do not confirm a first payment", () => {
+  // A reduced balance is not evidence that Paystack or the student paid.
   assert.deepEqual(
     firstPaymentTransition(
       { paid: 0, balanceDue: 2800 },
       { paid: 0, balanceDue: 2300 },
     ),
-    { confirmed: true, source: "balance_decrease", amount: 500 },
+    { confirmed: false, source: "", amount: 0 },
   );
+  assert.equal(
+    firstPaymentTransition(
+      { initialPaymentAmount: 0, balanceDue: 2800 },
+      { initialPaymentAmount: 500, balanceDue: 2300 },
+    ).confirmed,
+    false,
+  );
+  // A real first payment still qualifies, including an already paid account
+  // arriving as a new student document.
+  assert.equal(
+    firstPaymentTransition({ paid: 0, balanceDue: 2800 }, {
+      paid: 500, balanceDue: 2300, lastPaymentReference: "PAYSTACK-VERIFIED-REF",
+    }).confirmed,
+    true,
+  );
+  const row = registrationRow({
+    name: "Unpaid Applicant", email: "unpaid@example.test",
+    initialPaymentAmount: 500, balanceDue: 2300,
+  }, "unpaid-id");
+  assert.equal(row.paid, 0);
 });
 
 test("registration docs use the deployed web-app URL without extra runtime configuration", () => {
