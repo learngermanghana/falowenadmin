@@ -30,8 +30,13 @@ function normalizeStudent(student = {}) {
     id: normalizeText(student.id || student.studentCode || student.email || student.name),
     name: normalizeText(student.name),
     email: normalizeText(student.email),
-    className: normalizeText(student.className || student.class || student.level),
+    className: normalizeText(student.className || student.class),
+    level: normalizeText(student.level).toUpperCase(),
     studentCode: normalizeText(student.studentCode || student.studentcode),
+    paid: Number(student.paid ?? student.paidAmount ?? 0) || 0,
+    paymentStatus: normalizeText(student.paymentStatus),
+    orientationAutoSync: student.orientationAutoSync || null,
+    organisationClassAssignmentPending: Boolean(student.organisationClassAssignmentPending),
   };
 }
 
@@ -104,7 +109,8 @@ export default function OrientationPage() {
       name: selectedStudent.name,
       email: selectedStudent.email,
       studentCode: selectedStudent.studentCode,
-      level: LEVEL_LINKS[selectedClass?.levelId] ? selectedClass.levelId : "A1",
+      level: LEVEL_LINKS[selectedClass?.levelId] ? selectedClass.levelId
+        : LEVEL_LINKS[selectedStudent.level] ? selectedStudent.level : "A1",
       startDate: selectedClass?.startDate || "",
     }));
   }, [selectedStudent, selectedClass]);
@@ -140,6 +146,22 @@ export default function OrientationPage() {
       </select>
 
       {loading && <p>Loading students and live classes...</p>}
+      {selectedStudent && <div role="status" style={{ marginBottom: 16, padding: 12, borderRadius: 8, background: "#f7f9fb" }}>
+        <strong>Automatic Orientation status:</strong>{" "}
+        {selectedStudent.orientationAutoSync?.status || "No recent automatic attempt"}
+        <p style={{ margin: "8px 0" }}>
+          Tuition: {selectedStudent.paid > 0 ? "Recorded payment" : "No confirmed payment"}
+          {" · "}Class: {selectedStudent.className || "Not confirmed"}
+        </p>
+        {selectedStudent.organisationClassAssignmentPending || !selectedStudent.className
+          ? <p style={{ margin: 0 }}>Confirm the student's class in Students first. A requested class is not automatically an approved assignment.</p>
+          : null}
+        {selectedStudent.orientationAutoSync?.lastError
+          ? <p style={{ margin: "8px 0 0" }}>{selectedStudent.orientationAutoSync.lastError}</p>
+          : null}
+      </div>}
+
+
 
       <form onSubmit={onSubmit}>
         <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>

@@ -49,6 +49,9 @@ test("a first partial or full payment qualifies for automatic orientation sync",
   assert.equal(hasQualifyingPayment({ paymentStatus: "pending", paid: 0 }), false);
   assert.equal(hasQualifyingPayment({ paymentStatus: "partial", paid: 2000 }), true);
   assert.equal(hasQualifyingPayment({ paymentStatus: "Paid", paid: 3000 }), true);
+  assert.equal(hasQualifyingPayment({ paymentStatus: "pending", initialPaymentAmount: 3000, paid: 0 }), false);
+  assert.equal(hasQualifyingPayment({ paymentStatus: "Paid", paid: 0 }), false);
+  assert.equal(hasQualifyingPayment({ paymentStatus: "Partially Paid", paid: 2000, status: "Suspended" }), false);
 
   assert.equal(
     shouldAutoSyncAfterUpdate(
@@ -57,6 +60,53 @@ test("a first partial or full payment qualifies for automatic orientation sync",
     ),
     true,
   );
+});
+
+test("organisation approval needs real tuition and confirmed class before orientation sync", () => {
+  const approved = {
+    billingResponsibility: "organisation", name: "Example Learner", email: "org@example.test",
+    studentCode: "ExampleLearner429", level: "A1",
+    requestedClassName: "A1 Stuttgart", className: "",
+    paymentStatus: "pending", paid: 0, initialPaymentAmount: 3000, status: "pending",
+  };
+  assert.equal(shouldAutoSyncAfterUpdate({}, approved), false);
+  const paid = { ...approved, paymentStatus: "Partially Paid", paid: 2000, balanceDue: 1000, status: "Active" };
+  assert.equal(shouldAutoSyncAfterUpdate(approved, paid), true);
+  const assigned = { ...paid, className: "A1 Stuttgart", classId: "a1-stuttgart" };
+  assert.equal(shouldAutoSyncAfterUpdate(paid, assigned), true);
+  assert.equal(shouldAutoSyncAfterUpdate(assigned, { ...assigned,
+    orientationAutoSync: { status: "success" } }), false);
+});
+
+test("approval status updates already-paid student eligibility", () => {
+  const before = { status: "pending", paymentStatus: "Paid", paid: 3000,
+    className: "A2 Munich Klasse" };
+  assert.equal(shouldAutoSyncAfterUpdate(before, { ...before, status: "Active" }), true);
+});
+
+test("missing approved class remains waiting, with no upstream orientation send", async () => {
+  let student = { name: "Example Learner", email: "org@example.test",
+    studentCode: "ExampleLearner429", level: "A1", paymentStatus: "Partially Paid",
+    paid: 2000, requestedClassName: "A1 Stuttgart", className: "" };
+  const writes = [];
+  const ref = {
+    async get() { return snapshot(student, ref, "internal-org-id"); },
+    async set(value) { writes.push(value); student = { ...student, ...value }; },
+  };
+  const handler = createOrientationAutoSyncHandler({
+    db: classDb([{ id: "a1-stuttgart", name: "A1 Stuttgart",
+      startDate: "2026-11-11", levelId: "A1" }]),
+    appsScriptUrl: "https://example.test", syncSecret: "secret",
+    fetchImpl: async () => { throw new Error("Unapproved class must not sync"); },
+    logger: { log() {}, error() {} },
+  });
+  const result = await handler({ data: {
+    before: snapshot({ ...student, paid: 0, paymentStatus: "pending" }, ref),
+    after: snapshot(student, ref),
+  } });
+  assert.equal(result.reason, "confirmed_class_missing");
+  assert.equal(student.orientationAutoSync.status, "waiting_for_class");
+  assert.equal(writes.length, 1);
 });
 
 test("orientation marker-only writes do not recursively trigger another sync", () => {
@@ -229,7 +279,7 @@ test("operational orientation sync accepts active trials and removes them when e
   assert.match(workflow, /functions:falowenadmin:syncPendingOperationalSheets/);
 });
 
-test("deployment patch listens only to paid payment-document updates", () => {
+test("deployment patch listens for student payment and confirmed class updates", () => {
   const patch = read("scripts/patchAutomaticOrientationSync.mjs");
   const packageJson = read("package.json");
   const firebaseJson = read("firebase.json");
@@ -237,13 +287,17 @@ test("deployment patch listens only to paid payment-document updates", () => {
 
   assert.match(patch, /exports\.autoSyncPaidStudentOrientation/);
   assert.match(patch, /onDocumentUpdated/);
+  assert.match(patch, /document: "students\/\{studentId\}"/);
   assert.match(patch, /document: "payments\/\{reference\}"/);
-  assert.doesNotMatch(patch, /document: "students\/\{studentCode\}"/);
   assert.match(patch, /payment_not_newly_paid/);
+  assert.match(patch, /group_payment_synced_from_student_records/);
+  assert.match(patch, /exports\.autoSyncApprovedStudentOrientation/);
+  assert.match(patch, /studentIdentityFingerprint/);
   assert.match(patch, /orientationAppsScriptUrlSecret/);
   assert.match(patch, /orientationSyncSecret/);
   assert.match(packageJson, /patchAutomaticOrientationSync\.mjs/);
   assert.match(firebaseJson, /patchAutomaticOrientationSync\.mjs/);
   assert.match(workflow, /patchAutomaticOrientationSync\.mjs/);
   assert.match(workflow, /functions:falowenadmin:autoSyncPaidStudentOrientation/);
+  assert.match(workflow, /functions:falowenadmin:autoSyncApprovedStudentOrientation/);
 });

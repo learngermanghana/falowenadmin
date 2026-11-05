@@ -21,20 +21,17 @@ function money(value) {
 }
 
 function hasQualifyingPayment(student = {}) {
-  const paymentStatus = comparable(student.paymentStatus || student.payment_status);
-  if (["paid", "partial", "partially paid", "partially_paid"].includes(paymentStatus)) {
-    return true;
-  }
-
-  if (comparable(student.status) === "paid") return true;
-
+  const status = comparable(student.status).replace(/[-_]+/g, " ");
+  if (["inactive", "blocked", "suspended", "deleted", "archived",
+    "expired", "trial expired", "purged"].includes(status)) return false;
+  // A status label or signup amount alone is not proof of tuition received.
   return [
     student.paid,
     student.paidAmount,
     student.amountPaid,
     student.amount_paid,
-    student.initialPaymentAmount,
-  ].some((value) => money(value) > 0);
+    student.totalPaid,
+  ].some(value => money(value) > 0);
 }
 
 function paymentFingerprint(student = {}) {
@@ -42,7 +39,6 @@ function paymentFingerprint(student = {}) {
     paymentStatus: comparable(student.paymentStatus || student.payment_status),
     paid: money(student.paid),
     paidAmount: money(student.paidAmount),
-    initialPaymentAmount: money(student.initialPaymentAmount),
   });
 }
 
@@ -68,6 +64,8 @@ function studentIdentityFingerprint(student = {}) {
     email: comparable(student.email),
     name: comparable(student.name || student.fullName),
     level: normalizedLevel(student.level),
+    // Also respond when an owner confirms or reactivates an already-paid student.
+    status: comparable(student.status),
     classes: studentClassTokens(student).sort(),
   });
 }
@@ -213,7 +211,14 @@ function createOrientationAutoSyncHandler({
       const classes = await listClasses(db);
       const klass = findMatchingClass(current, classes);
       if (!klass) {
-        throw new Error(`No created class matches ${text(current.className || current.classId || "the student's class")}.`);
+        const reason = "Assign a confirmed class from the live class catalogue before Orientation sync.";
+        if (studentRef?.set) {
+          await studentRef.set({ orientationAutoSync: {
+            status: "waiting_for_class", syncKey, lastError: reason,
+            attemptedAt: now().toISOString(),
+          } }, { merge: true });
+        }
+        return { skipped: true, reason: "confirmed_class_missing" };
       }
 
       const target = buildOrientationTarget(current, klass);

@@ -22,12 +22,14 @@ content = content.replace(
   'const { ' + firestoreTriggers.join(", ") + ' } = require("firebase-functions/v2/firestore");',
 );
 
-const legacyHelperRequire = 'const { createOrientationAutoSyncHandler } = require("./orientationAutoSync");\n';
-const helperRequire = 'const { createOrientationAutoSyncHandler, hasQualifyingPayment } = require("./orientationAutoSync");\n';
+const helperRequire = 'const { createOrientationAutoSyncHandler, hasQualifyingPayment, studentIdentityFingerprint } = require("./orientationAutoSync");\n';
 const helperAnchor = 'const { defineSecret } = require("firebase-functions/params");\n';
-if (content.includes(legacyHelperRequire)) {
-  content = content.replace(legacyHelperRequire, helperRequire);
-} else if (!content.includes(helperRequire)) {
+// Idempotently replace either older helper import shape, including repeated
+// patch runs in the same build, without creating duplicate const bindings.
+const existingHelperImport = /^const \{[^}]*createOrientationAutoSyncHandler[^}]*\} = require\("\.\/orientationAutoSync"\);\n/m;
+if (existingHelperImport.test(content)) {
+  content = content.replace(existingHelperImport, helperRequire);
+} else {
   if (!content.includes(helperAnchor)) {
     throw new Error("Automatic orientation sync patch could not find the Firebase params import.");
   }
@@ -61,6 +63,11 @@ async function automaticPaidPaymentOrientationHandler(event) {
 
   if (afterStatus !== "paid" || beforeStatus === "paid") {
     return { skipped: true, reason: "payment_not_newly_paid" };
+  }
+  // The group parent invoice has no single studentId. Organisation student
+  // documents are processed by autoSyncApprovedStudentOrientation.
+  if (afterPayment.purpose === "organisation_group") {
+    return { skipped: true, reason: "group_payment_synced_from_student_records" };
   }
 
   const studentId = String(afterPayment.studentId || "").trim();
@@ -109,6 +116,34 @@ exports.autoSyncPaidStudentOrientation = onDocumentUpdated(
     timeoutSeconds: 60,
   },
   automaticPaidPaymentOrientationHandler
+);
+
+async function automaticApprovedStudentOrientationHandler(event) {
+  const before = event?.data?.before?.exists ? event.data.before.data() || {} : {};
+  const after = event?.data?.after?.exists ? event.data.after.data() || {} : {};
+  if (!event?.data?.after?.exists) return { skipped: true, reason: "student_deleted" };
+  const organisationFunded =
+    String(after.billingResponsibility || "").trim().toLowerCase() === "organisation" ||
+    String(after.enrolmentSource || "").trim().toLowerCase() === "organisation" ||
+    Boolean(after.organisationSubmissionId);
+  // Individual student receipts already have the original payment listener.
+  // Only their later class or approval changes require this fallback.
+  if (!organisationFunded &&
+      (!hasQualifyingPayment(before) ||
+       studentIdentityFingerprint(before) === studentIdentityFingerprint(after))) {
+    return { skipped: true, reason: "individual_payment_handled_by_existing_trigger" };
+  }
+  return automaticPaidStudentOrientationHandler(event);
+}
+
+exports.autoSyncApprovedStudentOrientation = onDocumentUpdated(
+  {
+    region: "europe-west1",
+    document: "students/{studentId}",
+    secrets: [orientationSyncSecret, orientationAppsScriptUrlSecret],
+    timeoutSeconds: 60,
+  },
+  automaticApprovedStudentOrientationHandler
 );
 ${endMarker}`;
 
