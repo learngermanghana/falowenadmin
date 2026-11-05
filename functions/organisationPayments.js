@@ -334,7 +334,7 @@ async function recordManualOrganisationPayment({ db, admin, actor, body = {} }) 
   return { reference, duplicate: result.duplicate };
 }
 
-function registerOrganisationPaymentRoutes(app, { db, admin, initializePaystackPayment, calculateStudentCheckoutAmount, runtimeConfig, reconcilePaymentReference }) {
+function registerOrganisationPaymentRoutes(app, { db, admin, initializePaystackPayment, calculateStudentCheckoutAmount, runtimeConfig, reconcilePaymentReference, sendReceipt = sendGroupReceipt }) {
   const handle = action => async (req, res) => {
     res.set("Cache-Control", "no-store");
     try { const actor = await owner(req, admin); res.json({ ok: true, ...await action(req, actor) }); }
@@ -356,7 +356,7 @@ function registerOrganisationPaymentRoutes(app, { db, admin, initializePaystackP
     // A failed email never reverses verified student credits. Owner can retry the
     // existing receipt endpoint; the payment ledger remains the source of truth.
     let receiptStatus = "sent";
-    try { await sendGroupReceipt({ db, admin, reference: result.reference, runtimeConfig }); }
+    try { await sendReceipt({ db, admin, reference: result.reference, runtimeConfig }); }
     catch (error) {
       receiptStatus = "failed";
       console.warn("organisation_manual_receipt_failed", { reference: result.reference, reason: String(error?.message || "delivery_error").slice(0, 120) });
@@ -416,13 +416,13 @@ function registerOrganisationPaymentRoutes(app, { db, admin, initializePaystackP
   app.post("/payments/organisations/verify/:reference", handle(async req => {
     if (!/^FAL-ORG-[a-f0-9-]{36}$/.test(req.params.reference)) fail(400, "Invalid reference.");
     const result = await reconcilePaymentReference(req.params.reference);
-    await sendGroupReceipt({ db, admin, reference: req.params.reference, runtimeConfig });
+    await sendReceipt({ db, admin, reference: req.params.reference, runtimeConfig });
     return { result };
   }));
   app.post("/payments/organisations/receipt/:reference", handle(async req => {
     if (!/^FAL-ORG-[a-f0-9-]{36}$/.test(req.params.reference) && !/^FAL-ORG-MAN-[a-f0-9]{48}$/.test(req.params.reference)) fail(400, "Invalid reference.");
     try {
-      const delivery = await sendGroupReceipt({ db, admin, reference: req.params.reference, runtimeConfig });
+      const delivery = await sendReceipt({ db, admin, reference: req.params.reference, runtimeConfig });
       return { receiptStatus: delivery?.status || "sent", alreadySent: Boolean(delivery?.alreadySent) };
     } catch (error) {
       if (error.status) throw error;
