@@ -81,6 +81,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm ci --prefix functions --ignore-scripts
+      - name: Verify Orientation trigger build patch
+        run: node --check scripts/patchAutomaticOrientationSync.mjs && node scripts/patchAutomaticOrientationSync.mjs && node --check functions/index.js
       - name: Verify approved class and Orientation auto-sync safeguards
         run: node --test tests/automatic-orientation-sync.test.js functions/organisationEnrolment.test.cjs
       - run: node --test functions/partnershipAgreements.test.cjs functions/referralPayouts.test.cjs functions/organisationPayments.test.cjs functions/organisationDirectory.test.cjs tests/referral-pages.test.js functions/referralProgramme.test.cjs tests/organisation-enrolment-request.test.js functions/organisationEnrolment.test.cjs functions/studentAccountActivation.test.cjs tests/student-emergency-contact.test.js
