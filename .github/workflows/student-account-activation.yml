@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "functions/studentAccountActivation.js"
+      - "functions/organisationConfirmations.js"
+      - "functions/organisationConfirmations.test.cjs"
       - "functions/studentAccountActivation.test.cjs"
       - "functions/index.js"
       - "functions/studentProfileUpdate.js"
@@ -31,7 +33,7 @@ jobs:
           node --check functions/studentAccountActivation.js
           node --check functions/index.js
       - name: Test account creation security and invitation states
-        run: node --test functions/studentAccountActivation.test.cjs
+        run: node --test functions/studentAccountActivation.test.cjs functions/organisationConfirmations.test.cjs
       - name: Verify Admin frontend build
         run: |
           npm ci
