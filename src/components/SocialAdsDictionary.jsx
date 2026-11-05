@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { SOCIAL_ADS_DICTIONARY } from "../data/socialAdsDictionary.js";
 import SocialPhotoGallery from "./SocialPhotoGallery.jsx";
+import SocialMusicPicker, { EMPTY_SOCIAL_MUSIC } from "./SocialMusicPicker.jsx";
+import { chooseSocialVideoFormat } from "../utils/socialMp4Export.js";
+import { SOCIAL_VIDEO_ASPECTS, SOCIAL_VIDEO_QUALITIES, socialVideoDimensions, recordSocialPosterVideo } from "../utils/socialVideoFormats.js";
 
 const SIZES = { portrait: [1080, 1350], square: [1080, 1080], story: [1080, 1920] };
 const FIELD = { width: "100%", boxSizing: "border-box", padding: 10, border: "1px solid #cbd5e1", borderRadius: 9 };
@@ -209,6 +212,13 @@ export default function SocialAdsDictionary() {
   const [design, setDesign] = useState(savedDesign);
   const [preset, setPreset] = useState("custom");
   const [saveMessage, setSaveMessage] = useState("");
+  const [videoAspect, setVideoAspect] = useState("tiktok");
+  const [videoQuality, setVideoQuality] = useState("standard");
+  const [videoSeconds, setVideoSeconds] = useState(15);
+  const [videoFileFormat, setVideoFileFormat] = useState("auto");
+  const [musicSelection, setMusicSelection] = useState(EMPTY_SOCIAL_MUSIC);
+  const [exportingVideo, setExportingVideo] = useState(false);
+  const [videoNotice, setVideoNotice] = useState("");
   const [status, setStatus] = useState(() => {
     try { return JSON.parse(localStorage.getItem("falowen-social-ads-status") || "{}"); }
     catch { return {}; }
@@ -219,6 +229,10 @@ export default function SocialAdsDictionary() {
   const canvas = useRef(null);
   const fileUrl = useRef("");
   const item = SOCIAL_ADS_DICTIONARY[selected];
+  const videoSize = socialVideoDimensions(videoAspect, videoQuality);
+  const videoMime = typeof MediaRecorder !== "undefined" && typeof MediaRecorder.isTypeSupported === "function"
+    ? chooseSocialVideoFormat(type => MediaRecorder.isTypeSupported(type), videoFileFormat, { audioRequired: musicSelection.id !== "none" })
+    : null;
   const caption = captionEdit || (item.type === "ad"
     ? headline + "\n\n" + subheading + "\n\n" + (benefits ? benefits + "\n\n" : "") + "Explore German learning at https://falowen.app\n\n#LearnGerman #DeutschLernen #Falowen #GermanLanguage"
     : headline + "\n\n" + subheading + "\n\nKeep learning with Falowen: https://falowen.app\n\n#GermanMotivation #LearnGerman #Falowen");
@@ -306,6 +320,25 @@ export default function SocialAdsDictionary() {
       setSaveMessage("Browser storage is unavailable. You can still export this poster.");
     }
   };
+  const exportVideo = async () => {
+    if (exportingVideo || !ready || !canvas.current || !videoMime) return;
+    setError(""); setVideoNotice(""); setExportingVideo(true);
+    try {
+      const { blob, extension } = await recordSocialPosterVideo({
+        posters: [canvas.current], aspect: videoAspect, quality: videoQuality,
+        seconds: videoSeconds, format: videoMime, musicSelection,
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "falowen-" + item.date + "-" + item.type + "-" + videoAspect + "-" + videoSeconds + "s." + extension;
+      document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      setVideoNotice(videoSeconds + "-second " + videoSize.label + " video exported" + (musicSelection.id !== "none" ? " with your chosen Falowen music loop." : " without music."));
+    } catch (cause) { setError(cause.message || "Could not export this video."); }
+    finally { setExportingVideo(false); }
+  };
+
   const exportImage = () => {
     if (!ready || !canvas.current) return;
     try {
@@ -345,7 +378,7 @@ export default function SocialAdsDictionary() {
             <select value={format} onChange={(e) => setFormat(e.target.value)} style={FIELD}>
               <option value="portrait">Instagram portrait · 1080 × 1350</option>
               <option value="square">Square feed · 1080 × 1080</option>
-              <option value="story">Story / status · 1080 × 1920</option>
+              <option value="story">TikTok / Story / Reels poster · 9:16 · 1080 × 1920</option>
             </select>
           </label>
         </div>
@@ -417,7 +450,41 @@ export default function SocialAdsDictionary() {
           <small>Design defaults are saved only in this browser; changing them does not alter published posts or the vocabulary/class editors.</small>
         </div>
         <div style={PANEL}>
-          <strong>4. Publishing</strong>
+          <strong>4. Music &amp; video export</strong>
+          <p style={{margin:0,fontSize:13,color:"#475569"}}>Create a TikTok, Instagram or YouTube video from this advert or motivation post. Select a published Cloudflare song and repeat just the part you want.</p>
+          <SocialMusicPicker label="Falowen song for ads and motivation videos" selection={musicSelection} onChange={setMusicSelection} disabled={exportingVideo} />
+          <label>Video aspect ratio / platform
+            <select value={videoAspect} disabled={exportingVideo} onChange={event=>setVideoAspect(event.target.value)} style={FIELD}>
+              {SOCIAL_VIDEO_ASPECTS.map(row=><option key={row.id} value={row.id}>{row.label}</option>)}
+            </select>
+          </label>
+          <label>Video resolution
+            <select value={videoQuality} disabled={exportingVideo} onChange={event=>setVideoQuality(event.target.value)} style={FIELD}>
+              {SOCIAL_VIDEO_QUALITIES.map(row=><option key={row.id} value={row.id}>{row.label}</option>)}
+            </select>
+          </label>
+          <small>{videoSize.width} × {videoSize.height}px · No stretching or cropped poster text</small>
+          <label>Video length
+            <select value={videoSeconds} disabled={exportingVideo} onChange={event=>setVideoSeconds(Number(event.target.value))} style={FIELD}>
+              <option value={12}>12 seconds</option><option value={15}>15 seconds</option><option value={30}>30 seconds</option>
+            </select>
+          </label>
+          <label>Video file format
+            <select value={videoFileFormat} disabled={exportingVideo} onChange={event=>setVideoFileFormat(event.target.value)} style={FIELD}>
+              <option value="auto">Auto · MP4 preferred, WebM fallback</option>
+              <option value="mp4">MP4 · H.264 + AAC where supported</option>
+              <option value="webm">WebM</option>
+            </select>
+          </label>
+          <button type="button" disabled={!ready || exportingVideo || !videoMime} onClick={exportVideo}>
+            {exportingVideo ? "Recording video…" : "Export " + videoAspect.toUpperCase() + " video with selected music"}
+          </button>
+          {!videoMime && <small role="alert" style={{color:"#b91c1c"}}>Selected format unavailable with this audio in your browser. Choose Auto or WebM.</small>}
+          {videoNotice && <small role="status" style={{color:"#166534"}}>{videoNotice}</small>}
+          <small>Video is recorded in your browser, without a paid video service. Keep this tab active until export ends.</small>
+        </div>
+        <div style={PANEL}>
+          <strong>5. Publishing</strong>
           <label>Publication status
             <select value={status[item.id] || "Draft"} onChange={(e) => mark(e.target.value)} style={FIELD}>
               <option>Draft</option><option>Ready</option><option>Published</option>

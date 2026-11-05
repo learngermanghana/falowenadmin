@@ -29,7 +29,7 @@ test("both video exporters validate container and use matching extension", () =>
   }
   const vocabulary = readFileSync(new URL("../src/components/SocialVocabularyVideoCreator.jsx",import.meta.url),"utf8");
   assert.equal([...vocabulary.matchAll(/await requireValidSocialVideo\(blob, mime\)/g)].length,2);
-  assert.equal([...vocabulary.matchAll(/videoFileStem\(word\) \+ "-" \+ duration \+ "s\." \+ mime\.extension/g)].length,2);
+  assert.equal([...vocabulary.matchAll(/videoFileStem\(word\) \+ "-" \+ videoAspect \+ "-" \+ duration \+ "s\." \+ mime\.extension/g)].length,2);
 });
 
 test("music exports never fall back to a video-only MP4 profile", () => {
