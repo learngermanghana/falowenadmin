@@ -42,15 +42,17 @@ async function render(Page, path) {
 test("one organisation application has signing but no bank or referral choices", async () => {
   const requests = [];
   global.fetch = async (path, opts) => {
-    if (path.includes("agreement-terms")) return Response.json({ ok: true, version: "org-v3", terms: ["Organisation agreement"] });
+    if (path.includes("agreement-terms")) return Response.json({ ok: true, version: "org-v3", partnerShareRate: 0.1, shareSettlement: "invoice_deduction", terms: ["Organisation agreement"] });
     if (path.endsWith("agreement-copy")) return new Response("PDF", { headers: { "Content-Type": "application/pdf" } });
     requests.push({ path, body: JSON.parse(opts.body) }); return Response.json({ ok: true, reference: "a".repeat(64) });
   };
   const unmount = await render(PublicPage, "/partnerships");
   try {
-    assert.match(document.body.textContent, /Organisation Partnerships/);
-    assert.doesNotMatch(document.body.textContent, /10%|Referral partnerships|Institutional partnerships/);
-    await act(() => [...document.querySelectorAll("button")].find(button => button.textContent === "Read agreement and register organisation").click());
+    assert.equal(document.querySelectorAll('[role="tab"]').length,3);
+    assert.match(document.body.textContent, /Grow your offering/);
+    assert.doesNotMatch(document.body.textContent, /Clients paying for themselves|Normal student signup|Already submitted your organisation/);
+    await act(() => document.getElementById("partner-tab-1").click());
+    await act(() => document.getElementById("partner-tab-2").click());
     const form = document.querySelector("form");
     assert.equal(document.querySelectorAll("form").length, 1);
     assert.equal(form.elements.accountNumber, undefined);
@@ -58,15 +60,27 @@ test("one organisation application has signing but no bank or referral choices",
     for (const key of ["consent", "signatureConsent"]) form.elements[key].checked = true;
     await act(() => form.dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true })));
     assert.equal(requests[0].body.kind, "institutional");assert.equal(requests[0].body.billingResponsibility, "organisation");assert.equal(requests[0].body.termsVersion,"org-v3");
-    assert.match(document.body.textContent, /Signed application saved/);
-    assert.ok(document.querySelector('a[href="https://www.falowen.app/signup?program=german"]'));
+    assert.match(document.body.textContent, /Your organisation is registered for review/);
+    assert.equal(document.querySelector('a[href*="signup"]'),null);
     assert.ok(document.querySelector('a[href="/organisation-enrolment"]'));
   } finally { await unmount(); }
 });
-test("old referral links direct clients to normal signup without claiming commission", async () => {
-  let calls=0;global.fetch=async()=>{calls++;throw new Error("No claim request expected");};
+test("query parameters cannot expose an individual signup or a second programme", async () => {
+  let calls=0;global.fetch=async()=>{calls++;throw new Error("No request expected before opening agreement");};
   const unmount=await render(PublicPage,"/partnerships?ref="+"a".repeat(32));
-  try {assert.equal(document.querySelector("form"),null);assert.match(document.body.textContent,/No referral commission/);assert.ok(document.querySelector('a[href="https://www.falowen.app/signup?program=german"]'));assert.equal(calls,0);} finally {await unmount();}
+  try {assert.equal(document.querySelector('a[href*="signup"]'),null);assert.equal(document.querySelectorAll('[role="tab"]').length,3);assert.equal(calls,0);} finally {await unmount();}
+});
+test("tabs preserve registration details and support keyboard navigation", async () => {
+  global.fetch=async()=>Response.json({ok:true,version:"org-v4",partnerShareRate:0.1,shareSettlement:"invoice_deduction",terms:["Your 10% organisation share — Deducted from the invoice."]});
+  const unmount=await render(PublicPage,"/partnerships");
+  try {
+    await act(()=>document.getElementById("partner-tab-2").click());
+    const input=document.querySelector('input[name="name"]');input.value="Agency draft";
+    await act(()=>document.getElementById("partner-tab-1").click());
+    await act(()=>document.getElementById("partner-tab-2").click());assert.equal(document.querySelector('input[name="name"]').value,"Agency draft");
+    await act(()=>document.getElementById("partner-tab-2").dispatchEvent(new window.KeyboardEvent("keydown",{key:"ArrowLeft",bubbles:true})));
+    assert.equal(document.activeElement.id,"partner-tab-1");assert.equal(document.getElementById("partner-tab-1").getAttribute("aria-selected"),"true");
+  }finally{await unmount();}
 });
 test("owner sees organisation applications and no commission queue", async () => {
   let calls=0;global.fetch=async path=>{calls++;assert.equal(path,"/api/admin/referrals/signature");return Response.json({ok:true,installed:true});};const unmount=await render(ReviewPage,"/referral-review");

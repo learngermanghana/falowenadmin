@@ -3,9 +3,9 @@ const assert=require('node:assert/strict');
 const {fixture}=require('./partnershipTestFixture.cjs');
 const {VERSION,ORGANISATION_VERSION,TERMS,validateApplication,encryptBank,decryptBank,registerAgreementRoutes,buildAgreementPdf,hash}=require('./partnershipAgreements');
 const body={kind:'institutional',billingResponsibility:'organisation',name:'Example partner',email:'partner@example.test',phone:'0200000000',address:'Accra',signerName:'Ama Ési',signerRole:'Director',termsVersion:ORGANISATION_VERSION,receiptToken:'a'.repeat(64),consent:true,signatureConsent:true,payoutConsent:true,payoutType:'ghipss',bankCode:'123',accountNumber:'0123456789',accountName:'Example partner'};
-test('preserves published terms without adding a different contract',()=>{
+test('organisation agreement explains the 10% invoice share and keeps legacy terms separate',()=>{
  assert.equal(TERMS.referral.length,1);assert.match(TERMS.referral[0],/10%/);assert.match(TERMS.referral[0],/A refund cancels the commission\.$/);
- assert.equal(TERMS.institutional[0],'Schools, employers and sponsoring organisations can enrol a group under an agreement with Falowen. Our team reviews the group and confirms who will pay before inviting students.');
+ assert.match(TERMS.institutional.join(' '),/10%/);assert.match(TERMS.institutional.join(' '),/first tuition payment/);assert.match(TERMS.institutional.join(' '),/deducted/);assert.ok(!TERMS.institutional.join(' ').includes('normal student signup'));
 });
 test('organisation consent, current terms, payer choice and typed signature are required',()=>{
  assert.equal(validateApplication(body).bank,null);
@@ -30,8 +30,8 @@ test('save creates an immediate signed immutable receipt; replay is safe and tok
 });
 test('missing Falowen signature fails before accepting a signed application',async()=>{
  const f=fixture();registerAgreementRoutes(f.app,{...f,getSecret:()=> 'secret',loadSignature:async()=>{throw Object.assign(new Error('Configure signature'),{status:503});},pdf:async()=>Buffer.from('PDF')});
- assert.equal((await f.call('/referrals/apply-signed',body)).status,503);assert.equal(f.data.has('referralApplications/'+hash('organisation-v3:'+body.email)),false);
+ assert.equal((await f.call('/referrals/apply-signed',body)).status,503);assert.equal(f.data.has('referralApplications/'+hash('organisation-v4:'+body.email)),false);
 });
 test('PDF creation supports Unicode signing names and unsigned samples',async()=>{
- const bytes=await buildAgreementPdf({...body,id:'example',signedAt:'2026-11-05T00:00:00Z',termsSnapshot:TERMS.referral},{sample:true});assert.equal(bytes.subarray(0,5).toString(),'%PDF-');assert.ok(bytes.length>10000);
+ const bytes=await buildAgreementPdf({...body,id:'example',signedAt:'2026-11-05T00:00:00Z',termsSnapshot:TERMS.institutional},{sample:true});assert.equal(bytes.subarray(0,5).toString(),'%PDF-');assert.ok(bytes.length>10000);
 });

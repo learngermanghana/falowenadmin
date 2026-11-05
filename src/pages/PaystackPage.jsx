@@ -47,6 +47,11 @@ export default function PaystackPage() {
         <label>Company billing / receipt email <input type="email" required value={email} onChange={e => { clear(); setEmail(e.target.value); }} /></label>
         <label>Organisation agreement reference <input required maxLength={500} value={agreement} onChange={e => { clear(); setAgreement(e.target.value); }} /></label>
         <p>Configure each student’s tuition balance, class and contract in Students first. Enter the amount covered by this invoice before deducting the partner share.</p>
+        <button type="button" disabled={busy || !selected.length} onClick={() => {
+          clear(); setReason("10% organisation share on approved first tuition payments");
+          setLines(old => old.map(line => line.selected ? { ...line, discount: (Math.round(Number(line.amount || 0) * 10) / 100).toFixed(2) } : line));
+        }}>Apply 10% organisation share</button>
+        <p>Apply the share to each student's first tuition payment only. Check previous payments before issuing another invoice; later instalments and renewals earn no additional share.</p>
         <div className="org-scroll"><table><thead><tr><th>Include</th><th>Student</th><th>Amount (GHS)</th><th>Partner share (GHS)</th><th>Tuition payable</th></tr></thead><tbody>
           {lines.map((line, i) => <tr key={line.studentId}><td><input aria-label={`Include ${line.name}`} type="checkbox" checked={line.selected} onChange={e => update(i, "selected", e.target.checked)} /></td><td>{line.name}<br /><small>{line.studentId}</small></td>
             <td><input aria-label={`${line.name} amount`} required={line.selected} type="number" min="0.01" step="0.01" value={line.amount} onChange={e => update(i, "amount", e.target.value)} /></td>
