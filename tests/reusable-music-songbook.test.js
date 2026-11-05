@@ -8,7 +8,7 @@ import {
 import { falowenMusicFileName, falowenMusicSlug } from '../src/utils/musicExportNames.js';
 
 test('reusable songbook has original lyric drafts for every A1, A2 and B1 dictionary lesson', () => {
-  assert.equal(countReusableSongDrafts(), 84);
+  assert.equal(countReusableSongDrafts(), 168);
   for (const level of ['A1', 'A2', 'B1']) {
     const lessons = getStudioCourseCatalog(level);
     const drafts = getReusableSongDrafts(level);
@@ -34,7 +34,10 @@ test('health, pharmacy and travel drafts have contextual stories, not disconnect
   assert.match(getReusableSongDraft('A1-14.1').lyrics, /Mia/);
   assert.match(getReusableSongDraft('A2-6.17').lyrics, /Apotheke/);
   assert.match(getReusableSongDraft('B1-9.26').lyrics, /Zug fällt/);
-  assert.equal(getReusableSongDraft('C1-1'), null);
+  assert.equal(getReusableSongDraft('C1-1'), null); // C1 uses canonical assignment keys with spaces.
+  assert.ok(getReusableSongDraft('C1 1'));
+  assert.ok(getReusableSongDraft('C2-1.1'));
+  assert.ok(getReusableSongDraft('B2-1.1'));
 });
 
 test('export names automatically combine level, course day and song title', () => {
