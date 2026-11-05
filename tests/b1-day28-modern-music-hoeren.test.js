@@ -21,7 +21,7 @@ test("B1 Day 28 uses published music on slide 2 and original Hören questions on
   assert.equal(stages[2].variant, "interactive-listening");
   assert.equal(stages[2].audioLevel, "B1");
   assert.equal(stages[2].audioDay, 28);
-  assert.equal(stages[2].audioKey, "", "Day 27's MP3 must not be used for Day 28");
+  assert.equal(stages[2].audioKey, "b1/day-27/umweltfreundlich-im-alltag.mp3", "Use the teacher-confirmed Hören recording despite its Day 27 folder");
   assert.equal(stages[2].listeningItems.length, 5);
   assert.deepEqual(stages[2].transcript, [], "no full transcript was provided");
   assert.equal(stages[2].musicVideo, undefined);
@@ -31,7 +31,7 @@ test("B1 Day 28 uses published music on slide 2 and original Hören questions on
 });
 
 test("B1 Day 28 preserves all five supplied questions, evidence, options and A B C B A key", () => {
-  assert.equal(B1_DAY28_AUDIO_KEY, "");
+  assert.equal(B1_DAY28_AUDIO_KEY, "b1/day-27/umweltfreundlich-im-alltag.mp3");
   assert.deepEqual(B1_DAY28_LISTENING_QUESTIONS.map(q => q.correctIndex), [0,1,2,1,0]);
   assert.deepEqual(B1_DAY28_LISTENING_QUESTIONS.map(q => q.prompt), [
     "Wie reagierten die Zuhörer auf den Vortrag?",
@@ -57,15 +57,15 @@ test("B1 Day 28 preserves all five supplied questions, evidence, options and A B
   assert.ok(B1_DAY28_LISTENING_QUESTIONS.every(q => q.answer && q.explanation));
 });
 
-test("B1 Day 28 R2 music player loads its published song but cannot replay Day 27 audio", () => {
+test("B1 Day 28 music remains independent while Hören uses the confirmed recording", () => {
   const music = readFileSync(new URL("../src/components/LinkedPublishedSongLessonStage.jsx", import.meta.url), "utf8");
   const audio = readFileSync(new URL("../src/components/InteractiveLessonOpening.jsx", import.meta.url), "utf8");
   assert.ok(music.includes("[24,25,26,27,28].includes(day)"));
   assert.ok(music.includes("28:'B1-10.28'"));
   assert.ok(audio.includes("!lesson.listening.audioKey && !lesson.listening.youtubeId"));
-  assert.ok(audio.includes("Der angegebene R2-Link gehört zu Tag 27."));
-  assert.ok(audio.includes("Die Originalfragen können besprochen werden"));
-  assert.ok(!B1_DAY28_LISTENING.audioKey);
+  assert.ok(audio.includes("isB1Day28Classroom"));
+  assert.ok(audio.includes("https://www.falowen.app/api/course-media/classroom/audio-url"));
+  assert.equal(B1_DAY28_LISTENING.audioKey, "b1/day-27/umweltfreundlich-im-alltag.mp3");
   assert.ok(!B1_DAY28_LISTENING.youtubeId);
   assert.ok(!B1_DAY28_LISTENING.transcript.length);
 });
@@ -75,6 +75,7 @@ test("B1 Day 28 teacher explanation keeps ungraded quiz separate from the blocke
   const notes = slide.teacherNotesEn.join(" ");
   assert.match(notes, /five original Klimafreundlich leben multiple-choice questions/);
   assert.match(notes, /b1\/day-27\/umweltfreundlich-im-alltag\.mp3/);
+  assert.match(notes, /staff-only signer/);
   assert.match(notes, /graded workbook Teil 4 are separate activities/);
   const workbook = slide.workbookConnection.parts.find(x => x.label === "Teil 4 · Hören");
   assert.match(workbook.detailEn, /BLOCKING MISMATCH/i);
