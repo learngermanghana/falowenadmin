@@ -123,6 +123,7 @@ test('all 56 A2/B1 presenters use the Day 18 layout and only published music les
     'B1-8.25':{day:25},
     'B1-9.26':{day:26},
     'B1-10.27':{day:27},
+    'B1-10.28':{day:28},
   };
   const slides=courses.flatMap(getSlidesByCourse);
   assert.equal(slides.length,56);
