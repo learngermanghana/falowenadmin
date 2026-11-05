@@ -2,7 +2,7 @@
 const crypto = require("node:crypto");
 const { owner } = require("./organisationEnrolment");
 const VERSION = "partnership-2026-11-05-v2";
-const ORGANISATION_VERSION = "organisation-partnership-2026-11-05-v5";
+const ORGANISATION_VERSION = "organisation-partnership-2026-11-05-v6";
 const hash = text => crypto.createHash("sha256").update(text).digest("hex");
 const fail = (status, message) => { throw Object.assign(new Error(message), { status }); };
 const TERMS = {
@@ -13,7 +13,6 @@ TERMS.institutional = [
   "Purpose and approval — This programme is for organisations, education consultants and travel agencies arranging German language training for their clients. Falowen reviews the organisation and proposed students before confirming enrolment. Signing records the application; it does not itself approve students or grant course access.",
   "Your 10% organisation share — The organisation retains 10% of each approved student's first tuition payment, excluding checkout processing fees. This share is deducted from the corresponding group invoice before the organisation pays Falowen. The share is earned only when the net payment is completed and verified; a signup or unpaid invoice earns no share. Later instalments and renewals do not earn an additional share. The student allocations and retained share are shown on the payment breakdown.",
   "How payment works — After signing, submit your students through the organisation enrolment form. Falowen reviews and approves the list, confirms the tuition amounts and issues one group Paystack payment link. The organisation keeps its agreed 10% share and pays the remaining tuition. No bank details, separate commission transfer or Paystack split is required. Any checkout processing charge is displayed separately.",
-  "Example — If the approved first tuition payments total GHS 5,000, the organisation keeps GHS 500 and the tuition payable to Falowen is GHS 4,500, plus any displayed checkout processing charge.",
   "Student enrolment — The organisation supplies accurate student details with permission to share them. Approval creates pending records for billing. After payment is verified, Falowen allocates the payment and partner-share deduction to each approved student, then completes the class, contract and account-invitation arrangements. A signed agreement or submitted student list is not proof of payment.",
   "Non-refundable tuition — Tuition payments are non-refundable. A student who cannot attend may request a class change during their existing six-month contract, subject to Falowen's approval and class availability; no refund is offered. An incorrect or duplicate payment must be reported to Falowen for review and does not create an additional organisation share.",
   "Class duration and Falowen access — Each class lasts 10 weeks. The organisation selects each student's German level and preferred available class/start date in the organisation enrolment form, subject to Falowen's confirmation. Each student receives six months of Falowen access from account activation. Completing the class earlier does not end access: students can continue using Falowen for the remainder of that six-month period. Class duration and platform access are different periods.",
