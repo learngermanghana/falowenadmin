@@ -44,7 +44,7 @@ export default function PaystackPage() {
   const clear = () => { setResult(null); setRequestId(crypto.randomUUID()); };
   const select = batch => {
     setBatchId(batch.id); setEmail(batch.organisation.email); setAgreement(batch.agreementReference || ""); setReason(""); setPayments([]); clear();
-    setLines(batch.students.filter(row => row.status === "approved" && row.studentId).map(row => ({ studentId: row.studentId, name: row.name, selected: true, amount: "", discount: "0" })));
+    setLines(batch.students.filter(row => row.status === "approved" && row.studentId).map(row => ({ studentId: row.studentId, studentCode: row.displayStudentCode || row.studentId, name: row.name, selected: true, amount: "", discount: "0" })));
   };
   const load = async (next = "") => {
     const data = await request(`admin/organisation-enrolments${next ? `?cursor=${encodeURIComponent(next)}` : ""}`);
@@ -85,7 +85,7 @@ export default function PaystackPage() {
         }}>Apply 10% organisation share</button>
         <p>Apply the share to each student's first tuition payment only. Check previous payments before issuing another invoice; later instalments and renewals earn no additional share.</p>
         <div className="org-scroll"><table><thead><tr><th>Include</th><th>Student</th><th>Amount (GHS)</th><th>Partner share (GHS)</th><th>Tuition payable</th></tr></thead><tbody>
-          {lines.map((line, i) => <tr key={line.studentId}><td><input aria-label={`Include ${line.name}`} type="checkbox" checked={line.selected} onChange={e => update(i, "selected", e.target.checked)} /></td><td>{line.name}<br /><small>{line.studentId}</small></td>
+          {lines.map((line, i) => <tr key={line.studentId}><td><input aria-label={`Include ${line.name}`} type="checkbox" checked={line.selected} onChange={e => update(i, "selected", e.target.checked)} /></td><td>{line.name}<br /><small>{line.studentCode}</small></td>
             <td><input aria-label={`${line.name} amount`} required={line.selected} type="number" min="0.01" step="0.01" value={line.amount} onChange={e => update(i, "amount", e.target.value)} /></td>
             <td><input aria-label={`${line.name} discount`} type="number" min="0" step="0.01" value={line.discount} onChange={e => update(i, "discount", e.target.value)} /></td><td>{money(Number(line.amount) - Number(line.discount))}</td></tr>)}
         </tbody></table></div>
