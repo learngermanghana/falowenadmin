@@ -21,7 +21,7 @@ test("B1 Day 28 uses published music on slide 2 and original Hören questions on
   assert.equal(stages[2].variant, "interactive-listening");
   assert.equal(stages[2].audioLevel, "B1");
   assert.equal(stages[2].audioDay, 28);
-  assert.equal(stages[2].audioKey, "b1/day-27/umweltfreundlich-im-alltag.mp3", "Use the teacher-confirmed Hören recording despite its Day 27 folder");
+  assert.equal(stages[2].audioKey, "b1/day-28/klimafreundlich-leben.mp3", "Use the Day 28 Hören recording, not Day 27");
   assert.equal(stages[2].listeningItems.length, 5);
   assert.deepEqual(stages[2].transcript, [], "no full transcript was provided");
   assert.equal(stages[2].musicVideo, undefined);
@@ -31,7 +31,7 @@ test("B1 Day 28 uses published music on slide 2 and original Hören questions on
 });
 
 test("B1 Day 28 preserves all five supplied questions, evidence, options and A B C B A key", () => {
-  assert.equal(B1_DAY28_AUDIO_KEY, "b1/day-27/umweltfreundlich-im-alltag.mp3");
+  assert.equal(B1_DAY28_AUDIO_KEY, "b1/day-28/klimafreundlich-leben.mp3");
   assert.deepEqual(B1_DAY28_LISTENING_QUESTIONS.map(q => q.correctIndex), [0,1,2,1,0]);
   assert.deepEqual(B1_DAY28_LISTENING_QUESTIONS.map(q => q.prompt), [
     "Wie reagierten die Zuhörer auf den Vortrag?",
@@ -65,7 +65,7 @@ test("B1 Day 28 music remains independent while Hören uses the confirmed record
   assert.ok(audio.includes("!lesson.listening.audioKey && !lesson.listening.youtubeId"));
   assert.ok(audio.includes("isB1Day28Classroom"));
   assert.ok(audio.includes("https://www.falowen.app/api/course-media/classroom/audio-url"));
-  assert.equal(B1_DAY28_LISTENING.audioKey, "b1/day-27/umweltfreundlich-im-alltag.mp3");
+  assert.equal(B1_DAY28_LISTENING.audioKey, "b1/day-28/klimafreundlich-leben.mp3");
   assert.ok(!B1_DAY28_LISTENING.youtubeId);
   assert.ok(!B1_DAY28_LISTENING.transcript.length);
 });
@@ -74,7 +74,7 @@ test("B1 Day 28 teacher explanation keeps ungraded quiz separate from the blocke
   const slide = getB1WorkbookAlignedSlideDay21To28("B1-10.28");
   const notes = slide.teacherNotesEn.join(" ");
   assert.match(notes, /five original Klimafreundlich leben multiple-choice questions/);
-  assert.match(notes, /b1\/day-27\/umweltfreundlich-im-alltag\.mp3/);
+  assert.match(notes, /b1\/day-28\/klimafreundlich-leben\.mp3/);
   assert.match(notes, /staff-only signer/);
   assert.match(notes, /graded workbook Teil 4 are separate activities/);
   const workbook = slide.workbookConnection.parts.find(x => x.label === "Teil 4 · Hören");
