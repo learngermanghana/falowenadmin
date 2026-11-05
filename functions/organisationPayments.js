@@ -86,7 +86,7 @@ async function sendGroupReceipt({ db, admin, reference, runtimeConfig, send = po
     const breakdown = payment.lines.map((line, index) =>
       [index + 1, line.studentName || line.studentId, "Gross " + format(line.grossAmount),
         "retained organisation share " + format(line.discount), "net tuition allocated " + format(line.tuitionCredit)].join(" | ")
-    ).join("\\n");
+    ).join("\n");
     const processing = Number(payment.processingShare ?? (payment.checkoutAmount - payment.tuitionCredit));
     const gross = Number(payment.tuitionCredit) + Number(payment.discount);
     await send(resolveWebhookConfig(runtimeConfig), {
@@ -110,7 +110,7 @@ async function sendGroupReceipt({ db, admin, reference, runtimeConfig, send = po
         "Each class lasts 10 weeks. Student access is six months from account activation. Any class change needs approval and availability and does not extend access.",
         "Please retain this reference and breakdown as your organisation payment receipt. Your students will receive separate enrolment confirmations when their class and account invitations are ready.",
         "Falowen · Learn Language Education Academy",
-      ].join("\\n\\n"),
+      ].join("\n\n"),
       delivery_mode: "individual", allow_bcc_fallback: "FALSE", email_type: "organisation_payment_receipt",
       show_app_button: "FALSE", show_progress: "FALSE", show_review: "FALSE", attach_certificate: "FALSE",
       receipt_reference: reference, organisation_name: payment.organisationName,
