@@ -63,11 +63,11 @@ export default function OrganisationDirectory() {
       {org.agreementReference && org.agreementSignedAt && <button type="button" onClick={() => downloadAgreement(org.agreementReference)}>Download signed agreement</button>}
       {org.submissions.length === 0 ? <p>Agreement registered. Awaiting a student list and payment request.</p> : org.submissions.map(batch => <section key={batch.id}>
         <p><strong>Submission:</strong> {batch.id} · {batch.studentCount} students · {batch.approvedCount} approved</p>
-        <Link to={"/paystack?batch=" + encodeURIComponent(batch.id)}>Manage payment link</Link>
+        <Link to={"/paystack?batch=" + encodeURIComponent(batch.id)}>Manage payment link</Link>{" · "}<Link to={"/paystack?batch=" + encodeURIComponent(batch.id) + "&mode=manual"}>Record manual payment</Link>
         {" · "}<button type="button" onClick={() => showPayments(batch.id)}>View payment allocations</button>
         {details[batch.id]?.error && <p role="alert">{details[batch.id].error}</p>}
         {details[batch.id]?.payments?.length === 0 && <p>No group payments have been created.</p>}
-        {details[batch.id]?.payments?.filter(p => p.purpose === "organisation_group").map(payment => <div key={payment.id || payment.reference}>
+        {details[batch.id]?.payments?.filter(p => ["organisation_group", "organisation_manual"].includes(p.purpose)).map(payment => <div key={payment.id || payment.reference}>
           <p><strong>{payment.reference}:</strong> {payment.status} · Gross tuition {money(Number(payment.tuitionCredit || 0) + Number(payment.discount || 0))} · Retained share {money(payment.discount)} · Net tuition {money(payment.tuitionCredit)} · Processing {money(payment.processingShare)} · Checkout {money(payment.checkoutAmount)} · Receipt {payment.receiptStatus || "not sent"}</p>
           <p>Billing: {payment.email}</p>
         </div>)}
