@@ -7,7 +7,7 @@ import { SOCIAL_MUSIC_TRACKS } from "../src/utils/socialMusicLibrary.js";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = file => fs.readFileSync(path.join(root,file),"utf8");
 test("Falowen soundtrack entries link to real public MP3 files", () => {
-  assert.deepEqual(SOCIAL_MUSIC_TRACKS.map(t=>t.id), ["none","gemeinsam","willkommen"]);
+  assert.deepEqual(SOCIAL_MUSIC_TRACKS.map(t=>t.id), ["none","gemeinsam"]);
   for (const track of SOCIAL_MUSIC_TRACKS.filter(t=>t.src)) {
     assert.ok(fs.existsSync(path.join(root,"public",decodeURIComponent(track.src.slice(1)))),track.label);
   }
