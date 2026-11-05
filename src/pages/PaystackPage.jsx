@@ -5,6 +5,31 @@ import { auth } from "../firebase.js";
 import { organisationEnrolmentRequest } from "../utils/organisationEnrolmentRequest.js";
 import "./OrganisationEnrolmentPage.css";
 const money = value => `GH₵${Number(value || 0).toFixed(2)}`;
+const manualCompanyConfirmation = payment => [
+  "To: " + (payment.email || ""),
+  "Subject: Falowen — Verified tuition payment confirmation — " + payment.reference,
+  "",
+  "Dear " + (payment.organisationName || "Organisation") + ",",
+  "",
+  "This confirms the manual tuition payment received by Falowen.",
+  "Payment reference: " + payment.reference,
+  "Your transfer / receipt reference: " + (payment.transactionReference || "See payment record"),
+  "Payment method: " + String(payment.method || "Manual").replaceAll("_", " "),
+  "Date received: " + (payment.receivedDate || "See payment record"),
+  "Amount received: " + money(payment.tuitionCredit),
+  "Organisation share deducted: GH₵0.00",
+  "",
+  ...(payment.lines || []).map(line =>
+    (line.studentName || line.studentId) + ": Course tuition " + money(line.courseTuitionFee ?? line.grossAmount) +
+    ", amount received " + money(line.tuitionCredit) +
+    ", outstanding " + money(line.remainingBalance ?? 0) +
+    (line.accessEndDate ? ", one-month access ends " + new Date(line.accessEndDate).toLocaleDateString("en-GB") : "")),
+  "",
+  "Any outstanding tuition remains payable under the original agreement.",
+  "This is a manual copy of Falowen's recorded payment confirmation; the automatic receipt delivery has not been confirmed.",
+  "",
+  "Falowen · Learn Language Education Academy",
+].join("\n");
 const request = (path, body) => organisationEnrolmentRequest(path, body, { staff: true, getToken: () => auth.currentUser?.getIdToken() });
 export default function PaystackPage() {
   const [params] = useSearchParams();
@@ -78,7 +103,19 @@ export default function PaystackPage() {
         {payment.authorizationUrl && <a href={payment.authorizationUrl} target="_blank" rel="noreferrer">Payment link</a>}
         <ul>{payment.lines?.map(line => <li key={line.studentId}>{line.studentName}: {money(line.tuitionCredit)} tuition · {money(line.discount)} partner share</li>)}</ul>
         {payment.purpose === "organisation_manual" && payment.lines?.map(line => <p key={line.studentId}>Tuition: {money(line.courseTuitionFee)} · Received: {money(line.tuitionCredit)} · Remaining: {money(line.remainingBalance)}{line.accessEndDate ? ` · One-month access until ${new Date(line.accessEndDate).toLocaleDateString("en-GB")}` : ""}</p>)}
-        {payment.status === "paid" && <><p>Company receipt: {payment.receiptStatus || "pending"}</p>{payment.receiptStatus !== "sent" && <button disabled={busy} onClick={() => run(async () => { await request(`payments/organisations/receipt/${payment.reference}`, {}); await refresh(); })}>Retry company receipt</button>}</>}
+        {payment.status === "paid" && <>
+          <p>Company receipt: {payment.receiptStatus || "pending"}{payment.receiptErrorCode ? " · " + payment.receiptErrorCode.replaceAll("_", " ") : ""}</p>
+          {payment.receiptStatus !== "sent" && <>
+            <button disabled={busy} onClick={() => run(async () => {
+              await request(`payments/organisations/receipt/${payment.reference}`, {}); await refresh();
+            })}>Retry company receipt</button>
+            {payment.purpose === "organisation_manual" && <button type="button" disabled={busy}
+              onClick={() => run(async () => {
+                await navigator.clipboard.writeText(manualCompanyConfirmation(payment));
+              })}>Copy company payment confirmation for manual email</button>}
+            <p>The recorded payment will not be credited again. If retry fails, the copied confirmation can be sent to the company's registered email manually. This is not proof the automatic receipt was emailed.</p>
+          </>}
+        </>}
       </article>)}
     </>}
   </section>;

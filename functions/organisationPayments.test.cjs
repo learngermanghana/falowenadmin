@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { validateLines, balanceOf, applyGroupPayment, sendGroupReceipt, recordManualOrganisationPayment, registerOrganisationPaymentRoutes } = require("./organisationPayments");
+const { validateLines, balanceOf, applyGroupPayment, sendGroupReceipt, receiptFailure, recordManualOrganisationPayment, registerOrganisationPaymentRoutes } = require("./organisationPayments");
 const admin = { firestore: { FieldValue: { serverTimestamp: () => "NOW" }, Timestamp: { fromDate: d => d.toISOString() } } };
 function fixture() {
   const data = new Map([
@@ -269,4 +269,69 @@ test("manual company receipt states actual full tuition without new 10% share, a
   assert.equal(sends, 1);
   assert.equal(f.data.get("payments/" + reference).receiptStatus, "sent");
   assert.equal(f.data.get("students/A").paid, 3000);
+});
+
+test("receipt errors distinguish configuration, provider HTTP and unreachable service without exposing private details", () => {
+  assert.deepEqual(
+    { code: receiptFailure(new Error("Payment-update email webhook is not configured")).code,
+      status: receiptFailure(new Error("Payment-update email webhook is not configured")).status },
+    { code: "email_webhook_not_configured", status: 503 },
+  );
+  assert.equal(receiptFailure(new Error("Payment email webhook returned HTTP 403")).code, "email_provider_http_403");
+  assert.equal(receiptFailure(new Error("fetch failed")).code, "email_provider_unreachable");
+  assert.equal(receiptFailure(new Error("Company receipt is being delivered; retry shortly.")).status, 409);
+  const unexpected = receiptFailure(new Error("PRIVATE_WEBHOOK_KEY=SECRET"));
+  assert.equal(unexpected.code, "email_delivery_failed");
+  assert.doesNotMatch(unexpected.message, /PRIVATE_WEBHOOK_KEY/);
+});
+test("retry route returns actionable 503 without modifying verified manual payment credits", async () => {
+  const f = manualFixture();
+  const { reference } = await f.record(manualBody({ lines: [{ studentId: "A", amount: 2000, discount: 0 }] }));
+  const routes = new Map();
+  const ownerAdmin = { ...admin, auth: () => ({ verifyIdToken: async () => ({
+    email: "moxflex@gmail.com", email_verified: true, uid: "owner",
+  }) }) };
+  const sendReceipt = async () => { throw new Error("Payment-update email webhook is not configured"); };
+  registerOrganisationPaymentRoutes({
+    get: (path, handler) => routes.set("GET " + path, handler),
+    post: (path, handler) => routes.set("POST " + path, handler),
+  }, { ...f, admin: ownerAdmin, runtimeConfig: {}, sendReceipt });
+  let status = 200, value;
+  const res = {
+    set() {},
+    status(code) { status = code; return this; },
+    json(result) { value = result; },
+  };
+  await routes.get("POST /payments/organisations/receipt/:reference")({
+    headers: { authorization: "Bearer valid" }, params: { reference },
+  }, res);
+  assert.equal(status, 503);
+  assert.equal(value.ok, false);
+  assert.equal(value.code, "email_webhook_not_configured");
+  assert.match(value.error, /not configured/i);
+  assert.equal(f.data.get("payments/" + reference).status, "paid");
+  assert.equal(f.data.get("students/A").paid, 2000);
+  assert.equal(f.data.get("students/A").balanceDue, 1000);
+});
+test("receipt retry is safe when already sent and records non-sensitive failure classification", async () => {
+  const f = manualFixture();
+  const { reference } = await f.record();
+  await assert.rejects(sendGroupReceipt({
+    ...f, admin, reference, runtimeConfig: {},
+    send: async () => { throw new Error("Payment email webhook returned HTTP 403"); },
+  }));
+  assert.equal(f.data.get("payments/" + reference).receiptErrorCode, "email_provider_http_403");
+  assert.equal(f.data.get("payments/" + reference).receiptStatus, "failed");
+  const initial = f.data.get("students/A").paid;
+  await sendGroupReceipt({
+    ...f, admin, reference, runtimeConfig: {},
+    send: async () => {},
+  });
+  assert.equal(f.data.get("payments/" + reference).receiptErrorCode, "");
+  const delivery = await sendGroupReceipt({
+    ...f, admin, reference, runtimeConfig: {},
+    send: async () => { throw new Error("Should never re-send an already sent receipt"); },
+  });
+  assert.deepEqual(delivery, { status: "sent", alreadySent: true });
+  assert.equal(f.data.get("students/A").paid, initial);
 });
