@@ -59,6 +59,7 @@ export default function SocialMusicPicker({ selection = EMPTY_SOCIAL_MUSIC, onCh
         style={{width:"100%",maxWidth:"100%"}}
         onLoadedMetadata={event=>setDuration(Number(event.currentTarget.duration)||0)}
         onTimeUpdate={event=>{const audio=event.currentTarget; if(audio.duration && audio.currentTime >= (end || audio.duration) - .06){audio.currentTime=start; if(!audio.paused)audio.play().catch(()=>{});}}}
+        onEnded={event=>{const audio=event.currentTarget; audio.currentTime=start; audio.play().catch(()=>{});}}
         onError={()=>setError("Cannot preview this song. Check that the published music API permits playback.")}/>
       <div style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:8}}>
         <label style={{display:"grid",gap:4,fontSize:12}}>Loop start (seconds)
