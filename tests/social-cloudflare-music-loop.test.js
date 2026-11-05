@@ -66,13 +66,15 @@ test("social video editors share Cloudflare picker and Upcoming Classes keeps PN
   const page = readFileSync(new URL("../src/pages/SocialMediaPage.jsx", import.meta.url), "utf8");
   const challenge = readFileSync(new URL("../src/components/SocialGermanChallenges.jsx", import.meta.url), "utf8");
   const vocab = readFileSync(new URL("../src/components/SocialVocabularyVideoCreator.jsx", import.meta.url), "utf8");
-  for (const source of [page, challenge, vocab]) {
-    assert.match(source, /SocialMusicPicker/);
-    assert.match(source, /selection: .*Selection/);
-  }
+  for (const source of [page, challenge, vocab]) assert.match(source, /SocialMusicPicker/);
+  for (const source of [challenge, vocab]) assert.match(source, /selection: .*Selection/);
+  // Class videos now pass the selection to the tested shared browser exporter.
+  assert.match(page, /musicSelection/);
+  assert.match(page, /recordSocialPosterVideo/);
   assert.match(page, /exportClassVideo/);
   assert.match(page, /createClassCampaign/);
   assert.match(page, /downloadCampaignPack/);
   assert.match(page, /Export PNG/);
-  assert.match(page, /requireValidSocialVideo/);
+  const videoEncoder = readFileSync(new URL("../src/utils/socialVideoFormats.js", import.meta.url), "utf8");
+  assert.match(videoEncoder, /requireValidSocialVideo/);
 });
