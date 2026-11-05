@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { validateLines, balanceOf, applyGroupPayment, sendGroupReceipt, registerOrganisationPaymentRoutes } = require("./organisationPayments");
+const { validateLines, balanceOf, applyGroupPayment, sendGroupReceipt, recordManualOrganisationPayment, registerOrganisationPaymentRoutes } = require("./organisationPayments");
 const admin = { firestore: { FieldValue: { serverTimestamp: () => "NOW" }, Timestamp: { fromDate: d => d.toISOString() } } };
 function fixture() {
   const data = new Map([
@@ -97,4 +97,122 @@ test("group link uses approved student records, company email and one reference 
   assert.equal((await call({ ...body, email: "changed@example.test" })).status, 409);
   assert.equal((await call({ ...body, requestId: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", lines: [{ studentId: "B", amount: 100 }] })).status, 409);
   assert.equal((await call({ ...body, requestId: "cccccccc-cccc-cccc-cccc-cccccccccccc", lines: [{ studentId: "A", amount: 1500 }] })).status, 409);
+});
+
+
+const manualBody = (overrides = {}) => ({
+  batchId: "batch", agreementType: "legacy_full_tuition", method: "bank_transfer",
+  transactionReference: "BANK-TRANSFER-001", receivedDate: "2026-11-04",
+  agreementNote: "Historical full tuition agreement before the new programme",
+  verificationNote: "Checked confirmed incoming transfer on the bank statement",
+  fundsVerified: true, lines: [{ studentId: "A", amount: 3000, discount: 0 }],
+  ...overrides,
+});
+function manualFixture() {
+  const f = fixture();
+  f.data.set("students/A", {
+    name: "A", email: "a@example.test", organisationSubmissionId: "batch",
+    billingResponsibility: "organisation", paid: 0, tuitionFee: 3000,
+    initialPaymentAmount: 3000, balanceDue: 3000, paymentStatus: "Pending",
+    status: "pending", accountActivationState: "not_prepared",
+  });
+  f.data.set("organisationEnrolments/batch", {
+    organisation: { name: "Company", email: "company@example.test" },
+    students: [{ studentId: "A", status: "approved" }],
+  });
+  const actor = { uid: "owner", email: "owner@example.test" };
+  const record = body => recordManualOrganisationPayment({ ...f, admin, actor, body: body || manualBody() });
+  return { ...f, actor, record };
+}
+test("verified legacy full tuition atomically credits student, keeps invitation pending and creates an idempotent manual ledger", async () => {
+  const f = manualFixture();
+  const first = await f.record();
+  assert.equal(first.duplicate, false);
+  assert.match(first.reference, /^FAL-ORG-MAN-[a-f0-9]{48}$/);
+  const student = f.data.get("students/A"), payment = f.data.get("payments/" + first.reference);
+  assert.equal(student.paid, 3000);
+  assert.equal(student.balanceDue, 0);
+  assert.equal(student.paymentStatus, "Paid");
+  assert.equal(student.status, "pending");
+  assert.equal(student.accountActivationState, "not_prepared");
+  assert.equal(student.lastPaymentProvider, "Bank transfer");
+  assert.equal(student.syncedToSheets, false);
+  assert.equal(payment.email, "company@example.test");
+  assert.equal(payment.tuitionCredit, 3000);
+  assert.equal(payment.discount, 0);
+  assert.equal(payment.processingShare, 0);
+  assert.equal(payment.referralEligible, false);
+  assert.equal(payment.purpose, "organisation_manual");
+  assert.equal(payment.fundsVerified, true);
+  assert.equal(payment.verifiedBy, "owner@example.test");
+  assert.equal(f.data.get("payments/" + first.reference + "-0").status, "paid");
+  assert.equal(f.data.get("payments/" + first.reference + "-0").referralEligible, false);
+  const retry = await f.record();
+  assert.equal(retry.duplicate, true);
+  assert.equal(f.data.get("students/A").paid, 3000);
+  await assert.rejects(f.record(manualBody({ receivedDate: "2026-11-03" })), /already been recorded/);
+  assert.equal(f.data.get("students/A").paid, 3000);
+});
+test("manual tuition rejects unverified transfers, discounting, incorrect balances and unapproved students without recording money", async () => {
+  const cases = [
+    { fundsVerified: false },
+    { transactionReference: "x" },
+    { agreementType: "current_10_percent" },
+    { receivedDate: "2030-02-10" },
+    { lines: [{ studentId: "A", amount: 3000, discount: 300 }] },
+    { lines: [{ studentId: "A", amount: 2999, discount: 0 }] },
+    { lines: [{ studentId: "B", amount: 500, discount: 0 }] },
+    { verificationNote: "" },
+    { agreementNote: "" },
+  ];
+  for (const change of cases) {
+    const f = manualFixture();
+    await assert.rejects(f.record(manualBody(change)));
+    assert.equal(f.data.get("students/A").paid, 0);
+    assert.equal([...f.data.keys()].filter(key => key.startsWith("payments/FAL-ORG-MAN-")).length, 0);
+  }
+  const f = manualFixture();
+  f.data.get("students/A").balanceDue = 0;
+  await assert.rejects(f.record(), /outstanding balance/);
+  assert.equal(f.data.get("students/A").paid, 0);
+  const g = manualFixture();
+  g.data.get("students/A").paymentStatus = "Paid";
+  await assert.rejects(g.record(), /unpaid balance/);
+  assert.equal(g.data.get("students/A").paid, 0);
+});
+test("the same manual external reference cannot be reused for a different company, amount or payment method", async () => {
+  const f = manualFixture();
+  const first = await f.record();
+  await assert.rejects(f.record(manualBody({ batchId: "another-batch" })), /already been recorded/);
+  await assert.rejects(f.record(manualBody({ lines: [{ studentId: "A", amount: 2999, discount: 0 }] })), /already been recorded/);
+  assert.equal(f.data.get("students/A").paid, 3000);
+  // Case changes to the same bank reference resolve to the same payment record.
+  const retry = await f.record(manualBody({ transactionReference: "bank-transfer-001" }));
+  assert.equal(retry.reference, first.reference);
+  assert.equal(retry.duplicate, true);
+});
+test("manual company receipt states actual full tuition without new 10% share, and retries do not send twice", async () => {
+  const f = manualFixture();
+  const { reference } = await f.record();
+  const opts = { ...f, admin, reference, runtimeConfig: {},
+    send: async () => { throw new Error("mail delivery offline"); } };
+  await assert.rejects(sendGroupReceipt(opts), /mail delivery offline/);
+  assert.equal(f.data.get("payments/" + reference).receiptStatus, "failed");
+  let sends = 0;
+  opts.send = async (_config, row) => {
+    sends++;
+    assert.equal(row.email, "company@example.test");
+    assert.equal(row.email_type, "organisation_payment_receipt");
+    assert.match(row.announcement, /Original full-tuition arrangement/);
+    assert.match(row.announcement, /Partner deduction from Falowen tuition: GHS 0\.00/);
+    assert.match(row.announcement, /Net tuition paid to Falowen: GHS 3000\.00/);
+    assert.match(row.announcement, /BANK-TRANSFER-001/);
+    assert.doesNotMatch(row.announcement, /Retained 10% organisation share/);
+    assert.equal(row.net_tuition, 3000);
+    assert.equal(row.organisation_share, 0);
+  };
+  await sendGroupReceipt(opts); await sendGroupReceipt(opts);
+  assert.equal(sends, 1);
+  assert.equal(f.data.get("payments/" + reference).receiptStatus, "sent");
+  assert.equal(f.data.get("students/A").paid, 3000);
 });
