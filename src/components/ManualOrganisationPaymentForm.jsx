@@ -36,7 +36,7 @@ export default function ManualOrganisationPaymentForm({ batch, onRecorded }) {
   const total = lines.reduce((sum, line) => sum + Number(line.amount || 0), 0);
   const submit = async event => {
     event.preventDefault();
-    if (!window.confirm("Have you independently verified that Falowen already received this money? This will permanently credit the selected student accounts. No Paystack charge will be created.")) return;
+    if (!window.confirm("Have you independently verified that Falowen already received this money? This will credit only the verified amount. Any remaining tuition balance will stay due. A partial payment grants one calendar month of access from the actual receipt date. No Paystack charge will be created.")) return;
     setBusy(true); setError("");
     try {
       const data = await request("payments/organisations/manual", {
@@ -60,8 +60,8 @@ export default function ManualOrganisationPaymentForm({ batch, onRecorded }) {
 
   return <section aria-label="Record verified manual organisation payment">
     <h2>Record manual organisation payment</h2>
-    <p>For a previously agreed <strong>full-tuition arrangement</strong> where the organisation already transferred money directly. No new Paystack link, 10% partner deduction or second payment will be created.</p>
-    <p>Verify the transfer in Falowen's bank/MoMo account and configure each approved student's <strong>tuition fee and unpaid balance</strong> in Students before recording. Each amount must equal that student's outstanding balance.</p>
+    <p>For a previously agreed <strong>full-tuition arrangement</strong> where the organisation already transferred a full or partial amount directly. No new Paystack link, 10% partner deduction or second payment will be created.</p>
+    <p>Verify the transfer in Falowen's bank/MoMo account and configure each approved student's <strong>tuition fee and unpaid balance</strong> in Students before recording. The amount can be a <strong>partial payment</strong> up to that student's outstanding balance. For example: tuition GH₵3,000, received GH₵2,000, remaining GH₵1,000. Partial payment gives one month of access from the actual payment date, not the date you enter it.</p>
     <p><strong>Organisation:</strong> {batch.organisation?.name} · <strong>Company receipt email:</strong> {batch.organisation?.email}</p>
     {!batch.agreementReference && <p role="note">No signed agreement is linked to this submission. Verify the original agreement separately and describe it below; this form will not create or backdate an agreement.</p>}
     <form onSubmit={submit}>
@@ -82,17 +82,17 @@ export default function ManualOrganisationPaymentForm({ batch, onRecorded }) {
           <input required type="date" max={new Date().toISOString().slice(0, 10)} value={receivedDate}
             onChange={event => setReceivedDate(event.target.value)} />
         </label>
-        <label>Original full-tuition agreement
+        <label>Original tuition agreement (full agreed fee and payment terms)
           <textarea required minLength={12} maxLength={500} value={agreementNote}
             onChange={event => setAgreementNote(event.target.value)}
-            placeholder="Describe the existing agreement and why no new 10% deduction applies" />
+            placeholder="Example: Full tuition GH₵3,000, GH₵2,000 received as a partial payment, GH₵1,000 due; separate agency service fees" />
         </label>
         <label>How receipt of funds was verified
           <textarea required minLength={12} maxLength={500} value={verificationNote}
             onChange={event => setVerificationNote(event.target.value)}
             placeholder="State which financial record was checked (do not include account numbers or secrets)" />
         </label>
-        <div className="org-scroll"><table><thead><tr><th>Include</th><th>Approved student</th><th>Full outstanding tuition (GHS)</th></tr></thead><tbody>
+        <div className="org-scroll"><table><thead><tr><th>Include</th><th>Approved student</th><th>Amount received (GHS)</th></tr></thead><tbody>
           {approved.map(row => <tr key={row.studentId}>
             <td><input aria-label={"Include " + row.name} type="checkbox" checked={Boolean(selected[row.studentId])}
               onChange={event => setSelected(old => ({ ...old, [row.studentId]: event.target.checked }))} /></td>
@@ -103,7 +103,7 @@ export default function ManualOrganisationPaymentForm({ batch, onRecorded }) {
           </tr>)}
         </tbody></table></div>
         {!approved.length && <p>Approve the student in Organisation submissions first.</p>}
-        <p><strong>Full tuition received:</strong> {money(total)} · <strong>Partner deduction:</strong> GH₵0.00 · <strong>Paystack charge:</strong> GH₵0.00</p>
+        <p><strong>Amount received:</strong> {money(total)} · <strong>Partner deduction:</strong> GH₵0.00 · <strong>Paystack charge:</strong> GH₵0.00</p>
         <label><input type="checkbox" checked={fundsVerified} required onChange={event => setFundsVerified(event.target.checked)} />
           I have independently confirmed that Falowen received the funds and that they have not already been credited to these students.
         </label>
