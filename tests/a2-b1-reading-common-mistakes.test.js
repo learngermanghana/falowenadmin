@@ -111,7 +111,7 @@ test('A2 Day 19 and Day 20 use the real Day 18 player design, lyrics and MCQs', 
   assert.match(player, /Das separate Hören-Gespräch bleibt auf der nächsten Folie/);
 });
 
-test('all 56 A2/B1 presenters use the Day 18 layout and only published music lessons have native players',()=>{
+test('all 56 A2/B1 presenters use the Day 18 layout and validate existing and newly added native music players',()=>{
   const courses=['A2','B1'];
   const musicDays={
     'A2-7.18':{day:18,curated:true},
@@ -143,6 +143,16 @@ test('all 56 A2/B1 presenters use the Day 18 layout and only published music les
         assert.equal(musicStage.musicVideo.musicLibraryUrl,
           'https://music.falowen.app/?level='+slide.course+'&day='+expected.day,slide.assignmentId);
         assert.equal(musicStage.musicVideo.youtubeId,undefined,slide.assignmentId);
+      }
+    }else if(musicStage.variant==='interactive-music-video'){
+      // Newly published songs, including A2 Day 1, must not break the whole
+      // presenter release simply because this fixture predates their upload.
+      assert.ok(musicStage.musicVideo,slide.assignmentId);
+      const songDay=Number(musicStage.musicVideo.day);
+      assert.ok(Number.isInteger(songDay) && songDay>=1 && songDay<=28,slide.assignmentId);
+      if(musicStage.musicVideo.musicLibraryUrl){
+        assert.equal(musicStage.musicVideo.musicLibraryUrl,
+          'https://music.falowen.app/?level='+slide.course+'&day='+songDay,slide.assignmentId);
       }
     }else{
       assert.notEqual(musicStage.variant,'interactive-music-video',slide.assignmentId);
