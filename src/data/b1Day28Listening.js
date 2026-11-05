@@ -1,9 +1,9 @@
 // B1 Day 28 teacher-provided five-question classroom Hören, "Klimafreundlich leben".
-// Teacher confirmed that this classroom Day 28 Hören uses an MP3 stored in
-// the R2 Day 27 folder. Keep the exact key and the Day 28 lesson identity.
+// The teacher corrected the upload location: use the exact private
+// B1 Day 28 recording. Keep the Day 27 recording independent.
 
 // This is independent of graded workbook Teil 4 and does not alter its answer key.
-export const B1_DAY28_AUDIO_KEY = "b1/day-27/umweltfreundlich-im-alltag.mp3";
+export const B1_DAY28_AUDIO_KEY = "b1/day-28/klimafreundlich-leben.mp3";
 
 export const B1_DAY28_LISTENING_QUESTIONS = Object.freeze([
   {
@@ -72,6 +72,6 @@ export const B1_DAY28_LISTENING = Object.freeze({
   transcript: Object.freeze([]),
   questions: B1_DAY28_LISTENING_QUESTIONS,
   suggestedMinutes: 8,
-  playbackNote: "Lies die fünf Fragen vor dem Hören. Die Lehrkraft hat diese Aufnahme für Tag 28 bestätigt; sie liegt in R2 unter day-27. Wähle A, B oder C.",
+  playbackNote: "Lies die fünf Fragen vor dem Hören. Spiele die Aufnahme Klimafreundlich leben für B1 Tag 28 ab und wähle A, B oder C.",
   previewWords: Object.freeze(["der ökologische Fußabdruck", "Fleischkonsum", "öffentliche Verkehrsmittel", "im Winter", "Standby-Modus"]),
 });
