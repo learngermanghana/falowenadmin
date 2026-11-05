@@ -33,6 +33,21 @@ async function owner(req, admin) {
   if (!actor.email_verified || email(actor.email) !== "moxflex@gmail.com") fail(403, "Owner access required.");
   return actor;
 }
+function organisationStudentCode(name, identity, attempt = 0) {
+  const safeName = clean(name).replace(/[^a-zA-Z0-9]/g, "").slice(0, 48) || "Student";
+  const digits = 100 + (parseInt(hash("student-code:" + email(identity) + ":" + attempt).slice(0, 8), 16) % 900);
+  return safeName + digits;
+}
+
+async function uniqueOrganisationCode({ tx, db, name, identity, studentId }) {
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    const candidate = organisationStudentCode(name, identity, attempt);
+    const matches = await tx.get(db.collection("students").where("studentCode", "==", candidate).limit(1));
+    if (matches.empty || matches.docs?.[0]?.id === studentId) return candidate;
+  }
+  fail(409, "Could not safely allocate a unique student code; review this student's existing account.");
+}
+
 async function reviewRow({ db, admin, batchId, index, decision, actor }) {
   if (!/^[a-zA-Z0-9_-]{1,100}$/.test(batchId) || !Number.isInteger(index) || index < 0 || !["approve", "reject"].includes(decision)) fail(400, "Invalid review request.");
   const ref = db.collection("organisationEnrolments").doc(batchId);
@@ -45,17 +60,19 @@ async function reviewRow({ db, admin, batchId, index, decision, actor }) {
     if (row.status !== "pending") return { ok: true, studentId: row.studentId || null, status: row.status };
     const now = admin.firestore.FieldValue.serverTimestamp();
     let studentId = null;
+    let publicCode = "";
     if (decision === "approve") {
       studentId = `ORG-${hash(row.email).slice(0, 24)}`;
       const studentRef = db.collection("students").doc(studentId);
       const existing = await tx.get(db.collection("students").where("email", "==", row.email).limit(1));
       const canonical = await tx.get(studentRef);
       if (!existing.empty || canonical.exists) fail(409, "A student already uses this email. Review the existing student in the directory; no duplicate was created.");
+      publicCode = await uniqueOrganisationCode({ tx, db, name: row.name, identity: row.email, studentId });
       tx.create(studentRef, {
         name: row.name, fullName: row.name, email: row.email, phone: row.phone,
         requestedClassId: row.requestedClassId || "", requestedClassName: row.requestedClassName || "", requestedClassStartDate: row.requestedClassStartDate || "",
         level: row.level, location: row.location, emergencyContactPhone: row.emergencyContactPhone,
-        role: "student", studentCode: studentId, studentcode: studentId, program: "german",
+        role: "student", studentCode: publicCode, studentcode: publicCode, program: "german",
         organisationName: batch.organisation.name, organisationContactEmail: batch.organisation.email,
         organisationSubmissionId: batchId, organisationId: organisationId(batch.organisation.email), enrolmentSource: "organisation", billingResponsibility: "organisation",
         status: "pending", paymentStatus: "pending", className: "", contractStart: "", contractEnd: "",
@@ -63,11 +80,56 @@ async function reviewRow({ db, admin, batchId, index, decision, actor }) {
         createdAt: now, updated_at: now,
       });
     }
-    rows[index] = { ...row, status: decision === "approve" ? "approved" : "rejected", studentId, reviewedBy: actor.email, reviewedAt: new Date().toISOString() };
+    rows[index] = { ...row, status: decision === "approve" ? "approved" : "rejected", studentId, ...(decision === "approve" ? { displayStudentCode: publicCode } : {}), reviewedBy: actor.email, reviewedAt: new Date().toISOString() };
     tx.update(ref, { students: rows, updatedAt: now });
     return { ok: true, studentId, status: rows[index].status };
   });
 }
+async function repairOrganisationStudentCode({ db, admin, batchId, index, actor }) {
+  if (!/^[a-zA-Z0-9_-]{1,100}$/.test(batchId) || !Number.isInteger(index) || index < 0) {
+    fail(400, "Invalid organisation student reference.");
+  }
+  return db.runTransaction(async tx => {
+    const batchRef = db.collection("organisationEnrolments").doc(batchId);
+    const batchSnap = await tx.get(batchRef);
+    if (!batchSnap.exists || batchSnap.data().deleted) fail(404, "Organisation submission not found.");
+    const rows = [...(batchSnap.data().students || [])];
+    const row = rows[index];
+    if (!row || row.status !== "approved" || !/^ORG-[a-f0-9]{24}$/.test(String(row.studentId || ""))) {
+      fail(409, "Only previously approved organisation student records can be repaired.");
+    }
+    const studentRef = db.collection("students").doc(row.studentId);
+    const snap = await tx.get(studentRef);
+    if (!snap.exists || snap.data().organisationSubmissionId !== batchId ||
+        email(snap.data().email) !== email(row.email)) {
+      fail(409, "Student identity does not match the approved organisation submission.");
+    }
+    const student = snap.data();
+    const currentCode = clean(student.studentCode || student.studentcode || row.studentId);
+    if (currentCode !== row.studentId) {
+      if (!row.displayStudentCode || row.displayStudentCode !== currentCode) {
+        rows[index] = { ...row, displayStudentCode: currentCode };
+        tx.update(batchRef, { students: rows, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+      }
+      return { ok: true, studentId: row.studentId, studentCode: currentCode, repaired: false };
+    }
+    const studentCode = await uniqueOrganisationCode({
+      tx, db, name: student.name || row.name, identity: student.email, studentId: row.studentId,
+    });
+    const now = admin.firestore.FieldValue.serverTimestamp();
+    // Do NOT change the Firestore document ID, UID, balances, or payment allocation references.
+    tx.update(studentRef, { studentCode, studentcode: studentCode, syncedToSheets: false, updated_at: now });
+    rows[index] = { ...row, displayStudentCode: studentCode };
+    tx.update(batchRef, { students: rows, updatedAt: now });
+    tx.create(db.collection("auditLogs").doc(), {
+      type: "organisation.student_code_repaired", studentId: row.studentId,
+      previousCode: currentCode, newCode: studentCode,
+      actor: actor.email || actor.uid || "", createdAt: now,
+    });
+    return { ok: true, studentId: row.studentId, studentCode, repaired: true };
+  });
+}
+
 async function deleteSubmission({ db, admin, batchId, actor }) {
   if (!/^[a-zA-Z0-9_-]{1,100}$/.test(batchId)) fail(400, "Invalid submission reference.");
   const ref = db.collection("organisationEnrolments").doc(batchId);
@@ -129,5 +191,6 @@ function registerOrganisationEnrolmentRoutes(app, { db, admin }) {
   }));
   app.post("/admin/organisation-enrolments/:batchId/delete", handle(async req => deleteSubmission({ db, admin, actor: await owner(req, admin), batchId: req.params.batchId })));
   app.post("/admin/organisation-enrolments/:batchId/review", handle(async req => reviewRow({ db, admin, actor: await owner(req, admin), batchId: req.params.batchId, index: req.body.index, decision: req.body.decision })));
+  app.post("/admin/organisation-enrolments/:batchId/repair-student-code", handle(async req => repairOrganisationStudentCode({ db, admin, actor: await owner(req, admin), batchId: req.params.batchId, index: req.body?.index })));
 }
-module.exports = { deleteSubmission, validateSubmission, owner, reviewRow, registerOrganisationEnrolmentRoutes };
+module.exports = { deleteSubmission, validateSubmission, owner, organisationStudentCode, repairOrganisationStudentCode, reviewRow, registerOrganisationEnrolmentRoutes };
