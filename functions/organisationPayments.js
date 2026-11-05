@@ -22,7 +22,8 @@ function validateLines(lines) {
   });
 }
 function paidOf(student) {
-  for (const key of ["paid", "amountPaid", "paidAmount", "amount_paid", "totalPaid", "initialPaymentAmount"]) {
+  // initialPaymentAmount is a planned collection, not money received.
+  for (const key of ["paid", "amountPaid", "paidAmount", "amount_paid", "totalPaid"]) {
     if (student[key] !== undefined && student[key] !== null && student[key] !== "") return minor(student[key]);
   }
   return 0;
@@ -41,17 +42,47 @@ async function applyGroupPayment({ transaction: tx, paymentRef, payment, eventDa
   const lines = validateLines(payment.lines.map(line => ({ ...line, amount: line.grossAmount })));
   const snapshots = await Promise.all(lines.map(line => tx.get(db.collection("students").doc(line.studentId))));
   const now = admin.firestore.FieldValue.serverTimestamp();
-  const paidAt = eventData.paid_at ? admin.firestore.Timestamp.fromDate(new Date(eventData.paid_at)) : now;
+  const paidDate = eventData.paid_at && !Number.isNaN(Date.parse(eventData.paid_at))
+    ? new Date(eventData.paid_at) : new Date();
+  const paidAt = eventData.paid_at ? admin.firestore.Timestamp.fromDate(paidDate) : now;
   snapshots.forEach((snap, i) => {
     const line = lines[i];
     if (!snap.exists || snap.data().organisationSubmissionId !== payment.organisationSubmissionId) throw new Error("Group student no longer matches the organisation.");
     const student = snap.data(), balance = balanceOf(student);
     // Keep actual cash separate from the agreed tuition reduction.
     const nextBalance = Math.max(0, balance - minor(line.tuitionCredit) - minor(line.discount)) / 100;
+    const partial = nextBalance > 0;
+    const firstPayment = paidOf(student) === 0;
+    // Only a verified, signed Paystack charge can confirm an approved student.
+    // The student's Firebase account setup / invitation remains separate, and
+    // an unapproved requested class must not be silently assigned.
+    const termPatch = partial && !student.contractEnd ? {
+      contractStart: paidDate.toISOString(),
+      contractEnd: oneCalendarMonthFrom(paidDate),
+      contractTermMonths: "1",
+    } : (!student.contractEnd && !partial ? {
+      // Full-paid access is six months from actual account activation.
+      // Do not start a six-month clock merely because the company paid.
+      contractTermMonths: "6",
+    } : {});
+    line.studentName = payment.lines[i].studentName || student.name || line.studentId;
+    line.remainingBalance = nextBalance;
+    line.courseTuitionFee = Number(student.tuitionFee || 0);
+    if (partial && !student.contractEnd) line.accessEndDate = termPatch.contractEnd;
+    const effectiveEnd = termPatch.contractEnd || student.contractEnd;
+    const active = !partial || !effectiveEnd || Number.isNaN(Date.parse(String(effectiveEnd)))
+      || Date.parse(String(effectiveEnd)) > Date.now();
     tx.set(snap.ref, {
       paid: (paidOf(student) + minor(line.tuitionCredit)) / 100,
       tuitionDiscount: (minor(student.tuitionDiscount ?? 0) + minor(line.discount)) / 100,
-      balanceDue: nextBalance, balance: nextBalance, paymentStatus: nextBalance === 0 ? "Paid" : "Partially Paid",
+      balanceDue: nextBalance, balance: nextBalance,
+      paymentStatus: partial ? "Partially Paid" : "Paid",
+      status: active ? "Active" : "Expired",
+      ...(firstPayment ? { trialStatus: "converted", trialConvertedAt: paidAt } : {}),
+      ...termPatch,
+      paidLevel: student.level || student.paidLevel || "",
+      organisationClassAssignmentPending: !String(student.className || "").trim(),
+      organisationPaymentConfirmedAt: paidAt,
       organisationPaymentReference: payment.reference,
       organisationPaymentGross: line.grossAmount, organisationRetainedShare: line.discount,
       organisationNetTuition: line.tuitionCredit, billingResponsibility: "organisation",
@@ -67,7 +98,9 @@ async function applyGroupPayment({ transaction: tx, paymentRef, payment, eventDa
     });
   });
   tx.update(paymentRef, { status: "paid", paidAt, updatedAt: now, receiptStatus: "pending", paystackTransactionId: eventData.id || null,
-    verifiedCurrency: "GHS", verifiedAmountSubunit: Number(eventData.amount) });
+    // Persist the actual per-student allocation so the same company receipt
+    // displays an accurate remainder and first-month access end date.
+    lines, verifiedCurrency: "GHS", verifiedAmountSubunit: Number(eventData.amount) });
   return { group: true, duplicate: false, reference: payment.reference };
 }
 // The upstream announcement service may return a private error message.
