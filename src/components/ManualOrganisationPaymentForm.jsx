@@ -96,7 +96,7 @@ export default function ManualOrganisationPaymentForm({ batch, onRecorded }) {
           {approved.map(row => <tr key={row.studentId}>
             <td><input aria-label={"Include " + row.name} type="checkbox" checked={Boolean(selected[row.studentId])}
               onChange={event => setSelected(old => ({ ...old, [row.studentId]: event.target.checked }))} /></td>
-            <td>{row.name}<br/><small>{row.studentId}</small></td>
+            <td>{row.name}<br/><small>{row.displayStudentCode || row.studentId}</small></td>
             <td><input aria-label={row.name + " manual tuition"} type="number" min="0.01" step="0.01"
               required={Boolean(selected[row.studentId])} disabled={!selected[row.studentId]}
               value={amounts[row.studentId] || ""} onChange={event => setAmounts(old => ({ ...old, [row.studentId]: event.target.value }))} /></td>
