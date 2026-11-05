@@ -81,7 +81,7 @@ function operationalHasQualifyingPayment(student = {}) {
     student.paidAmount,
     student.amountPaid,
     student.amount_paid,
-    student.initialPaymentAmount,
+    // initialPaymentAmount is a proposed amount, not verified tuition.
   ].some((value) => operationalOrientationMoney(value) > 0);
 }
 
