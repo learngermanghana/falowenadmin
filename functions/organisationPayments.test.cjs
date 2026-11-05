@@ -160,7 +160,7 @@ test("manual tuition rejects unverified transfers, discounting, incorrect balanc
     { agreementType: "current_10_percent" },
     { receivedDate: "2030-02-10" },
     { lines: [{ studentId: "A", amount: 3000, discount: 300 }] },
-    { lines: [{ studentId: "A", amount: 2999, discount: 0 }] },
+    { lines: [{ studentId: "A", amount: 3001, discount: 0 }] },
     { lines: [{ studentId: "B", amount: 500, discount: 0 }] },
     { verificationNote: "" },
     { agreementNote: "" },
