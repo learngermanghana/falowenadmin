@@ -25,7 +25,7 @@ export default function StudentHubPage() {
         </div>
       </section>
 
-      <p><Link to="/organisation-submissions">Review organisation submissions</Link> · <Link to="/organisation-enrolment">Public organisation enrolment form</Link> · <Link to="/referral-review">Referral applications and commissions</Link></p>
+      <p><Link to="/organisation-submissions">Review organisation submissions</Link> · <a href="https://www.falowen.app/organisation-enrolment">Public organisation enrolment form</a> · <Link to="/referral-review">Referral applications and commissions</Link></p>
       <StudentDirectoryPage />
     </div>
   );

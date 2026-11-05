@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { auth } from "../firebase.js";
 import { organisationEnrolmentRequest } from "../utils/organisationEnrolmentRequest.js";
 import "./OrganisationEnrolmentPage.css";
@@ -44,7 +43,7 @@ function ReviewList({ kind }) {
       {apps && row.status === "pending" && <div className="org-actions">{["approved", "rejected"].map(status =>
         <button key={status} disabled={busy} onClick={() => run(() => decide(row, { status }))}>{status === "approved" ? "Approve partner" : "Reject application"}</button>)}</div>}
       {apps && row.code && <p>Send this invitation to the approved contact<br />
-        <a href={"/partnerships?ref=" + row.code}>{window.location.origin}/partnerships?ref={row.code}</a></p>}
+        <a href={"https://www.falowen.app/partnerships?ref=" + row.code}>https://www.falowen.app/partnerships?ref={row.code}</a></p>}
       {!apps && row.reference && <p>{row.reference} · {money(row.tuitionMinor)} tuition · {money(row.commissionMinor)} commission {row.status === "reversed" ? "(cancelled)" : ""}</p>}
       {!apps && row.status === "pending" && <button disabled={busy} onClick={() => run(async () => {
         const { payment } = await request(kind + "/" + row.id, { action: "inspect" });
@@ -75,7 +74,7 @@ function ReviewList({ kind }) {
 }
 export default function ReferralReviewPage() {
   return <section className="org-enrol partnerships"><h1>Referral review</h1>
-    <Link to="/partnerships">Open public partnership programme</Link>
+    <a href="https://www.falowen.app/partnerships">Open public partnership programme</a>
     <ReviewList kind="applications" /><ReviewList kind="claims" />
   </section>;
 }

@@ -1,6 +1,6 @@
 # Organisation enrolment
 
-Public route: `/organisation-enrolment`. No organisation login or CSV upload. The organisation enters contact details once, types student rows or pastes tab-separated cells, and submits up to 50 students. Blank rows are ignored; name, student email, phone and level are required. No prior submission or student data is readable publicly. The same public URL can be reused for future groups.
+Public route: `https://www.falowen.app/organisation-enrolment`. No organisation login or CSV upload. The organisation enters contact details once, types student rows or pastes tab-separated cells, and submits up to 50 students. Blank rows are ignored; name, student email, phone and level are required. No prior submission or student data is readable publicly. The same public URL can be reused for future groups.
 
 Owner review route: `/organisation-submissions`, linked from Students. Load recent batches, page through older ones, and approve/reject each student. Verify the organisation, permission, agreement and payment arrangement before approval. Organisation identity is self-reported. A verified owner ID token is required server-side for reads and review, matching existing account activation permissions.
 
@@ -26,7 +26,7 @@ The owner can choose **Delete submission** and confirm. This removes the submitt
 
 ## Partnership and referral programme
 
-The public `/partnerships` page links institutions to the existing group form. Referral applicants use a separate form, accept the versioned terms and enter the owner queue at `/referral-review` (Students → Referral applications and commissions). Verify the contact before approval, then send the approved link to the contact manually. Repeated applications and approvals preserve the original record and invitation.
+The public `https://www.falowen.app/partnerships` page links institutions to the existing group form. Referral applicants use a separate form, accept the versioned terms and enter the owner queue at `/referral-review` (Students → Referral applications and commissions). Verify the contact before approval, then send the approved link to the contact manually. Repeated applications and approvals preserve the original record and invitation.
 
 Learners open the partner link, consent to matching their email, then continue to the regular Campus signup with that email. The first invitation registered for an email retains attribution. An invitation creates neither a student account nor a payment. Check attribution with the learner before approving a commission.
 

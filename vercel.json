@@ -36,6 +36,10 @@
       ]
     }
   ],
+  "redirects": [
+    { "source": "/organisation-enrolment", "destination": "https://www.falowen.app/organisation-enrolment", "permanent": false },
+    { "source": "/partnerships", "destination": "https://www.falowen.app/partnerships", "permanent": false }
+  ],
   "rewrites": [
     {
       "source": "/api/attendance-music-library",
