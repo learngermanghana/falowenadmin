@@ -37,7 +37,7 @@ export const MUSIC_SONG_DRAFTS_B2_PART1 = defineAdvancedSongDrafts([
   {
     "key": "B2-2.5",
     "title": "Die Frage bleibt",
-    "genre": "Jazz-Free Soul",
+    "genre": "Harmonic Soul",
     "tempo": 78,
     "arrangement": "Warm electric piano, upright-style bass, light finger snaps and subtle flute counterpoint; sophisticated but accessible melody.",
     "lyrics": "[Verse 1]\nIch fand im Buch die fertige Antwort,\ndoch sie erklärte mir noch nichts.\nMein Lehrer nahm den Stift und sagte:\n„Vielleicht beginnt es mit dem Widerspruch.“\n\n[Chorus]\nDie Frage bleibt, wenn Seiten enden,\nsie führt mich weiter als ein Zeugnis.\nIch lerne nicht, um recht zu behalten,\nich lerne, um genauer hinzusehen.\n\n[Verse 2]\nIm Abendkurs sitzt eine Ärztin\nneben einem Mann vom Bau.\nWir bringen völlig andre Wege mit,\nund stellen uns denselben Fragen.\nAls ich den alten Irrtum zugebe,\nwird das Gespräch erst richtig klar.\n\n[Outro]\nKein Abschluss nimmt mir die Neugier.\nSie begleitet mich nach Hause."
