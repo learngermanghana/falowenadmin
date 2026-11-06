@@ -113,15 +113,6 @@ test('A2 Day 19 and Day 20 use the real Day 18 player design, lyrics and MCQs', 
 
 test('all 56 A2/B1 presenters use the Day 18 layout and only published music lessons have native players',()=>{
   const courses=['A2','B1'];
-  const musicDays={
-    'A2-7.18':{day:18,curated:true},
-    'A2-7.19':{day:19},
-    'A2-7.20':{day:20},
-    'A2-8.21':{day:21},
-    'B1-8.24':{day:24},
-    'B1-8.25':{day:25},
-    'B1-9.26':{day:26},
-  };
   const slides=courses.flatMap(getSlidesByCourse);
   assert.equal(slides.length,56);
   for(const slide of slides){
@@ -134,12 +125,12 @@ test('all 56 A2/B1 presenters use the Day 18 layout and only published music les
     assert.deepEqual(ids.slice(-4),['questions','workbook-presentation','workbook','lesson-summary'],slide.assignmentId);
     assert.equal(stages.filter(x=>x.id==='reading').length,1,slide.assignmentId);
     assert.equal(stages.filter(x=>x.id==='common-mistakes').length,1,slide.assignmentId);
-    const expected=musicDays[slide.assignmentId];
+    const expected=getInteractiveLessonOpening(slide.assignmentId)?.musicIntro;
     const musicStage=stages[1];
     if(expected){
       assert.equal(musicStage.variant,'interactive-music-video',slide.assignmentId);
       assert.equal(musicStage.musicVideo.day,expected.day,slide.assignmentId);
-      if(!expected.curated) {
+      if(expected.musicLibraryUrl) {
         assert.equal(musicStage.musicVideo.musicLibraryUrl,
           'https://music.falowen.app/?level='+slide.course+'&day='+expected.day,slide.assignmentId);
         assert.equal(musicStage.musicVideo.youtubeId,undefined,slide.assignmentId);

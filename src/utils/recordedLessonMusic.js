@@ -21,7 +21,9 @@ export function selectRecordedLessonTrack(feed, {level='A2',day,assignmentKey} =
   const knownObjectKey = normalized === 'A2' && Number(day) === 1
     ? 'music/a2/day-01/Ein nettes Gespräch.mp3'
     : normalized === 'A2' && Number(day) === 21
-      ? 'music/a2/day-21/Endlich Wochenende.mp3' : '';
+      ? 'music/a2/day-21/Endlich Wochenende.mp3'
+      : normalized === 'A2' && Number(day) === 23
+        ? 'music/a2/day-23/Fahrrad zur Schule.mp3' : '';
   if (knownObjectKey) {
     const pinned = rows.filter(row => row.objectKey === knownObjectKey);
     if (pinned.length === 1) {
@@ -101,6 +103,7 @@ const SPEAKING = {
   'A1-14':{prompt:'Wohin möchtest du mit dem Zug fahren? Wo musst du umsteigen?',answer:'Ich möchte nach Berlin fahren. Ich muss in Hannover umsteigen.'},
   'A2-19':{prompt:'Was kaufst du lieber online und was im Geschäft? Warum?',
       answer:'Ich kaufe Kleidung lieber im Geschäft, weil ich sie dort anprobieren kann.'},
+  'A2-23':{prompt:'Wie kommst du zur Schule oder zur Arbeit? Was machst du bei Regen?',answer:'Ich fahre mit dem Fahrrad zur Schule. Wenn es regnet, nehme ich den Bus.'},
   'A2-20':{prompt:'Wie reklamierst du höflich ein Kleidungsstück, das nicht passt?',
       answer:'Entschuldigung, diese Jacke ist zu klein. Kann ich sie bitte umtauschen?'},
   'B1-24':{prompt:'Wie kannst du bewusst konsumieren? Begründe deinen Vorschlag.',

@@ -1,3 +1,4 @@
+import { A2_DAY23_CLASSROOM_LISTENING } from './a2Day23ClassroomListening.js';
 import { A2_DAY1_LISTENING } from './a2Day1Listening.js';
 import { A2_DAY19_LISTENING } from './a2Day19Listening.js';
 // Curated reusable 10-minute classroom warm-ups. The A2 Day 17 Hören is
@@ -434,6 +435,19 @@ ENTRIES["A2-7.20"].listening = A2_DAY20_LISTENING;
 // Day 21 matches the modern Day 19 classroom pattern: the already-uploaded
 // published music is discovered by level/day; separate authenticated R2
 // Hören uses Lisa and Tom, not the student's graded Claudia–Thomas recording.
+ENTRIES["A2-9.23"] = {
+  assignmentId: "A2-9.23", title: "Mein Schul- und Arbeitsweg", warmup: [],
+  musicIntro: {
+    mediaType: "music", level: "A2", day: 23, title: "Fahrrad zur Schule",
+    introQuestion: "Wie kommt die Person zur Schule? Was machst du bei Regen?",
+    musicLibraryUrl: "https://music.falowen.app/?level=A2&day=23",
+    studentPurpose: "Höre das veröffentlichte Lied. Nenne ein Verkehrsmittel und vergleiche deinen eigenen Weg.",
+    teacherPurpose: "Spiele die veröffentlichte Aufnahme Fahrrad zur Schule. Nutze nur Liedtext und Zeitmarken für genau diese Aufnahme. Danach folgt das separate Gespräch.",
+    nextStep: "Danach: Hören zum Schul- und Arbeitsweg · offene Fragen zur Gesprächsaufnahme.",
+  },
+  listening: A2_DAY23_CLASSROOM_LISTENING,
+};
+
 ENTRIES["A2-8.21"] = {
   assignmentId: "A2-8.21",
   title: "Ein Wochenende planen",
