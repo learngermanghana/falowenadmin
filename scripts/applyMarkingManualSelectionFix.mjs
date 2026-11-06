@@ -202,6 +202,16 @@ function patchDashboardPage() {
   const path = "src/pages/DashboardPage.jsx";
   let text = readFileSync(path, "utf8");
 
+  // The modern dashboard delegates incoming work to its dedicated review
+  // component. The legacy queue/hero JSX no longer exists, so do not attempt
+  // to rewrite it during release source sync.
+  if (text.includes("<DashboardReviewNotifications user={user} />") &&
+      text.includes("School operations dashboard") &&
+      !text.includes("const workQueue = incomingAssignments.length")) {
+    console.log("Dashboard review queue is handled by DashboardReviewNotifications.");
+    return;
+  }
+
   const oldAnalyticsQueue = `    const classBreakdown = groupTopClasses(students);
     const workQueue = incomingAssignments.length + pendingTutorReviewsCount + grammarIssueReports.length;
     return {

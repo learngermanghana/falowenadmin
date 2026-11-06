@@ -11,6 +11,7 @@ import './LessonSongStage.css';
 import LessonSongLyrics from './LessonSongLyrics.jsx';
 import SongTimingEditor from './SongTimingEditor.jsx';
 import useSongTiming from '../hooks/useSongTiming.js';
+import { resolveTeachingSongEnglishTranslation } from '../utils/musicEnglishDrafts.js';
 
 // This is a teacher-led, unscored song activity. The separately graded
 // coursebook/Goethe Hören and private A2 Day 18 bank telephone recording
@@ -54,7 +55,11 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
   const [follow, setFollow] = useState(true);
   const timedSong = song && recording ? {...song, id:recording.trackId, objectKey:recording.objectKey} : null;
   const [cues, saveCues, recordedLyrics, recordingMetadata] = useSongTiming(timedSong);
-  const displaySong = timedSong ? {...timedSong, lyrics:recordedLyrics, englishTranslation:recordingMetadata?.englishTranslation} : null;
+  const englishTranslation = timedSong ? resolveTeachingSongEnglishTranslation({
+    assignmentKey, objectKey:recording.objectKey, lyrics:recordedLyrics,
+    publishedEnglish:recordingMetadata?.englishTranslation,
+  }) : null;
+  const displaySong = timedSong ? {...timedSong, lyrics:recordedLyrics, englishTranslation} : null;
   const [view, setView] = useState('listen');
   const [questionIndex, setQuestionIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
