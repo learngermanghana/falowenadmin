@@ -11,7 +11,7 @@ export function sungMusicDraftLines(lyrics = '') {
 export function matchingMusicEnglishDraft(assignmentKey, lyrics) {
   if (!assignmentKey || !lyrics) return null;
   const row = musicEnglishDrafts.entries.find(item =>
-    item.assignmentKey === String(assignmentKey).trim());
+    String(item.assignmentKey).toUpperCase() === String(assignmentKey).trim().toUpperCase());
   if (!row || !Array.isArray(row.de) || !Array.isArray(row.en)) return null;
   const german = sungMusicDraftLines(lyrics);
   if (!german.length || german.length !== row.de.length || german.length !== row.en.length) return null;
@@ -20,17 +20,19 @@ export function matchingMusicEnglishDraft(assignmentKey, lyrics) {
   return { text: row.en.join('\n'), source: row.source, count: german.length };
 }
 
-// A1 Day 11's 44-line course translation can serve the teaching slide even when
-// its published R2 lyrics sidecar has German but no English. Never attach a draft
-// to a different transcript, and always prefer exact published translations.
+// The published R2 translation wins when every sung line matches. Otherwise
+// use the course's existing English draft only for its own exact German lyrics.
+// This supports A1 Day 11 (A1-7), A1 Day 17 (A1-11), and other course songs
+// without enabling stale translations after an audio/transcript replacement.
+// The shared slide labels this fallback as not verified against the recording.
 export function resolveTeachingSongEnglishTranslation({
   assignmentKey, objectKey, lyrics, publishedEnglish,
 } = {}) {
+  if (!objectKey || !assignmentKey) return null;
   if (publishedVideoEnglish({objectKey, englishTranslation:publishedEnglish}, objectKey, lyrics)) {
     return publishedEnglish;
   }
-  if (String(assignmentKey || '').trim().toUpperCase() !== 'A1-7') return null;
-  const draft = matchingMusicEnglishDraft('A1-7', lyrics);
+  const draft = matchingMusicEnglishDraft(String(assignmentKey).trim().toUpperCase(), lyrics);
   if (!draft) return null;
   const german = sungMusicDraftLines(lyrics);
   const english = draft.text.split('\n');
