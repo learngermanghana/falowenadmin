@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { buildLessonNarrationPlan, lessonNarrationSlideStarts, assembleLessonNarration } from "../src/utils/lessonSpeechSynthesis.js";
+import { buildLessonNarrationPlan, lessonNarrationSlideStarts, assembleLessonNarration, recoverLessonNarrationPrefix } from "../src/utils/lessonSpeechSynthesis.js";
 import { wavDurationSeconds } from "../src/utils/hoerenAudio.js";
 import { sceneVoiceKey } from "../src/utils/hoerenSpeechPlan.js";
 import {
@@ -127,4 +127,47 @@ test("lesson TTS is owner-only and reuses the Hören API rather than creating ne
   assert.match(tts, /saveVoice/);
   assert.match(tts, /pending.length > fresh.remaining.speech/);
   assert.doesNotMatch(tts, /fetch\(|cloudflare|\/api\/voice/);
+});
+
+
+test("cached partial narration can be downloaded after rate limit without new Google calls", async () => {
+  const plan = buildLessonNarrationPlan({
+    slides: [{ script: "Wenn es regnet. [PAUSE 2] Bleibe ich zu Hause." },
+      { script: "Falls es regnet, nehme ich einen Schirm." }],
+    source: "slides",
+  });
+  const firstClipKey = sceneVoiceKey(plan.engine, plan.scenes[0]);
+  let cacheLookups = 0;
+  const prefix = recoverLessonNarrationPrefix(plan, key => {
+    cacheLookups++;
+    return key === firstClipKey ? fakeOneSecondWav() : null;
+  });
+  assert.equal(prefix.complete, false);
+  assert.equal(prefix.scenes, 1);
+  assert.equal(prefix.total, 3);
+  assert.ok(cacheLookups >= 2);
+  assert.equal(prefix.audio.type, "audio/wav");
+  assert.equal(wavDurationSeconds(new Uint8Array(await prefix.audio.arrayBuffer())), 1.35);
+  assert.equal(recoverLessonNarrationPrefix(plan, () => null), null);
+});
+
+test("complete saved narration assembles locally with no Google calls", async () => {
+  const plan = buildLessonNarrationPlan({
+    slides: [{ script: "Wenn." }, { script: "Falls." }],
+    source: "slides",
+  });
+  const prefix = recoverLessonNarrationPrefix(plan, () => fakeOneSecondWav());
+  assert.equal(prefix.complete, true);
+  assert.equal(prefix.scenes, 2);
+  assert.ok(wavDurationSeconds(new Uint8Array(await prefix.audio.arrayBuffer())) > 2);
+});
+
+test("Google 429 stops new TTS calls until explicit user opt-in", () => {
+  const src = readFileSync(new URL("../src/components/LessonTextToSpeech.jsx", import.meta.url), "utf8");
+  assert.match(src, /error\?\.status === 429/);
+  assert.match(src, /setProviderBlocked\(true\)/);
+  assert.match(src, /!providerBlocked/);
+  assert.match(src, /setProviderBlocked\(false\)/);
+  assert.match(src, /partial-narration\.wav/);
+  assert.doesNotMatch(src, /setInterval\(|retryCount|retryDelay/);
 });
