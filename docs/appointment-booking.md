@@ -36,9 +36,20 @@ The current Vercel interface alone cannot enable recurring rules if your Google 
 2. Replace the complete contents of `Code.gs` with the latest [appointment-booking.gs](../apps-script/appointment-booking.gs) from this repository and save.
 3. Open **Deploy → Manage deployments** → select your existing Web app → **Edit (pencil)** → choose **New version** → **Deploy**. This updates the existing `/exec` deployment without changing the URL. Merely saving the script editor code does **not** update the deployed version.
 4. Select and run `installAppointmentReminderTrigger()` one time to install both scheduled triggers. Keep your existing `APPOINTMENT_SYNC_SECRET` Script Property unchanged.
-5. Open the Falowen admin planner, choose the weekdays and afternoon times you want, then click **Save recurring availability**. Nothing is published until you click Save. The `AppointmentRules` tab is created automatically; the existing `AppointmentSlots` sheet receives an additional `originRuleId` column automatically and its old bookings are kept. No manual Sheet column changes are needed.
+5. Open the Falowen admin planner, tick the exact day/time combinations you want, then click **Save weekly timetable**. Every subsequent save replaces the older schedule without needing to stop old rules first. The `AppointmentRules` tab is created automatically; the existing `AppointmentSlots` sheet receives an additional `originRuleId` column automatically and its old bookings are kept. No manual Sheet column changes are needed.
 
 ### Recurrence behavior
+
+### Weekly timetable overwrite (current interface)
+
+The admin page now shows one week-at-a-glance grid with individual weekday/time cells (for example, **Wednesday at 2 PM**). Unselecting a cell and clicking **Save weekly timetable** overwrites the previous recurring availability; no individual date editing is required.
+
+- The first save migrates any previously active repeating rules to a single weekly timetable.
+- Every save removes future **open** slots outside the chosen grid, including old manual/one-off slots. Exact matching open slots are retained without duplication, and missing future occurrences are generated for a rolling eight-week window.
+- **Confirmed bookings remain intact** even when their times are no longer offered for new bookings.
+- All times can be unchecked and saved to close booking availability entirely.
+- The latest saved grid loads when you revisit the page, rather than returning to default Monday–Friday selections.
+- To activate this in production, the spreadsheet-bound Apps Script must be **saved and deployed as a new Web app version** (see "Updating an existing deployed Apps Script" above). Publishing the React/API updates alone cannot change the existing script deployment.
 
 - Selected weekdays/times repeat weekly in Accra GMT. The script generates slots for the next **56 days** initially and adds newly needed dates daily using the Script trigger. It does not call Vercel repeatedly.
 - An existing overlapping slot (one-off, recurring, or booked) is never duplicated. A manually deleted recurring occurrence stays removed for that date.
