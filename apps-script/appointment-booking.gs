@@ -121,7 +121,7 @@ function appointmentList_(admin) {
   return {
     ok:true, timezone:APPT_TIME_ZONE,
     rules: appointmentRows_(appointmentSheet_('AppointmentRules',RULE_HEADERS),RULE_HEADERS).map(rule => ({
-      ruleId:rule.ruleId,weekdays:rule.weekdays.split(',').map(Number),times:rule.times.split(','),
+      ruleId:rule.ruleId,weekdays:rule.weekdays.split(',').filter(Boolean).map(Number),times:rule.times.split(','),
       durationMinutes:Number(rule.durationMinutes),topic:rule.topic,meetingUrl:rule.meetingUrl,
       weeklySlots:appointmentRulePairs_(rule),status:rule.status,createdAt:rule.createdAt
     })),
