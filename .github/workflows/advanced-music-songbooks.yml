@@ -3,6 +3,10 @@ name: Advanced Music Songbooks
 on:
   pull_request:
     paths:
+      - "src/data/b2CanonicalMusicCurriculum.js"
+      - "src/data/courseDictionary.js"
+      - "src/utils/supersededAdvancedMusic.js"
+      - "tests/current-advanced-music-curriculum.test.js"
       - "src/data/advancedMusicSongTools.js"
       - "src/data/musicSongDraftsB2Part*.js"
       - "src/data/musicSongDraftsC1Part*.js"
@@ -17,6 +21,10 @@ on:
   push:
     branches: [main]
     paths:
+      - "src/data/b2CanonicalMusicCurriculum.js"
+      - "src/data/courseDictionary.js"
+      - "src/utils/supersededAdvancedMusic.js"
+      - "tests/current-advanced-music-curriculum.test.js"
       - "src/data/advancedMusicSongTools.js"
       - "src/data/musicSongDraftsB2Part*.js"
       - "src/data/musicSongDraftsC1Part*.js"
@@ -39,7 +47,7 @@ jobs:
           node-version: "22"
       - name: Check all six reusable songbooks
         run: |
-          node --test tests/advanced-music-songbooks.test.js
+          node --test tests/advanced-music-songbooks.test.js tests/current-advanced-music-curriculum.test.js
       - name: Build Music Studio frontend
         run: |
           npm ci --ignore-scripts
