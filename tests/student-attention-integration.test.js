@@ -21,12 +21,13 @@ test("Students keeps Needs attention inside the existing student area", () => {
   assert.match(hub, /StudentDirectoryPage/);
 });
 
-test("Dashboard links its compact learning-attention summary into Students", () => {
+test("Dashboard keeps learning attention in the Students workspace without loading it on the homepage", () => {
   const dashboard = read("src/pages/DashboardPage.jsx");
+  const app = read("src/App.jsx");
 
-  assert.match(dashboard, /title="Learning attention"/);
-  assert.match(dashboard, /to="\/students\?view=attention"/);
-  assert.match(dashboard, /summarizeStudentAttention\(students\)/);
+  assert.doesNotMatch(dashboard, /summarizeStudentAttention\(students\)/);
+  assert.doesNotMatch(dashboard, /title="Learning attention"/);
+  assert.match(app, /to="\/students"[^>]*>Students<\/Link>/);
 });
 
 test("Student detail includes the read-only Learning status panel", () => {
@@ -47,6 +48,6 @@ test("attention UI reuses the loaded student records instead of adding a write s
   const utility = read("src/utils/studentAttention.js");
 
   assert.match(directory, /summarizeStudentAttention\(students\)/);
-  assert.match(dashboard, /summarizeStudentAttention\(students\)/);
+  assert.doesNotMatch(dashboard, /summarizeStudentAttention\(students\)/);
   assert.doesNotMatch(utility, /setDoc|updateDoc|addDoc|writeBatch|serverTimestamp/);
 });
