@@ -74,7 +74,7 @@ export function validateAppointmentAction(action, input) {
       const weekday = slot?.weekday;
       const time = clean(slot?.time,5);
       if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6 ||
-          !/^([01]\\d|2[0-3]):[0-5]\\d$/.test(time)) {
+          !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
         throw appointmentError('Choose a valid day and time.');
       }
       const key = weekday+'@'+time;
@@ -92,7 +92,7 @@ export function validateAppointmentAction(action, input) {
       }
     }
     const meetingUrl = clean(input.meetingUrl,400);
-    if (meetingUrl && !/^https:\\/\\/[^\\s]+$/i.test(meetingUrl)) {
+    if (meetingUrl && !/^https:\/\/[^\s]+$/i.test(meetingUrl)) {
       throw appointmentError('Meeting links must use HTTPS.');
     }
     return {action,weeklySlots,durationMinutes,topic:clean(input.topic,120)||'Falowen consultation',meetingUrl};
