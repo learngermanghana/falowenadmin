@@ -28,9 +28,9 @@
 7. Deploy Falowen admin. Open `/appointments`, add a slot at least 30 minutes in the future, and use `/book-appointment` in a private browser to book it. Verify **AppointmentSlots** contains a `booked` row and **AppointmentBookings** has exactly one `confirmed` row; refresh the public page and confirm the slot is gone. Verify confirmation email delivery. Only after the time trigger is installed will reminders be automatic.
 
 
-## Updating an existing deployed Apps Script (required for recurrence)
+## Updating an existing deployed Apps Script (recommended for atomic weekly overwrites)
 
-The current Vercel interface alone cannot enable recurring rules if your Google Sheet still runs the original version of `Code.gs`. Update the *existing* spreadsheet-bound Apps Script:
+The older original `Code.gs` cannot support recurring rules until upgraded. A recurrence-enabled legacy script can use the new weekly timetable through server-side compatibility, but updating its code enables the faster, atomic one-call save:
 
 1. Open **Falowen Appointments** Google Sheet → **Extensions → Apps Script**.
 2. Replace the complete contents of `Code.gs` with the latest [appointment-booking.gs](../apps-script/appointment-booking.gs) from this repository and save.
@@ -49,7 +49,7 @@ The admin page now shows one week-at-a-glance grid with individual weekday/time 
 - **Confirmed bookings remain intact** even when their times are no longer offered for new bookings.
 - All times can be unchecked and saved to close booking availability entirely.
 - The latest saved grid loads when you revisit the page, rather than returning to default Monday–Friday selections.
-- To activate this in production, the spreadsheet-bound Apps Script must be **saved and deployed as a new Web app version** (see "Updating an existing deployed Apps Script" above). Publishing the React/API updates alone cannot change the existing script deployment.
+- Existing recurring-enabled Apps Script deployments are supported automatically through a server-side compatibility path (grouping identical weekday patterns). For faster, atomic one-call overwrites, update the spreadsheet-bound Apps Script and deploy a new Web app version. The admin interface stays the same either way.
 
 - Selected weekdays/times repeat weekly in Accra GMT. The script generates slots for the next **56 days** initially and adds newly needed dates daily using the Script trigger. It does not call Vercel repeatedly.
 - An existing overlapping slot (one-off, recurring, or booked) is never duplicated. A manually deleted recurring occurrence stays removed for that date.
