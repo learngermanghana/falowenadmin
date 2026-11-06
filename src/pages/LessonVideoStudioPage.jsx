@@ -79,7 +79,7 @@ export default function LessonVideoStudioPage() {
     finally { setLoading(false); }
   }
   async function importImages(event) {
-    const files = event.target.files;
+    const files = [...(event.target.files || [])];
     event.target.value = "";
     if (!files?.length) return;
     setLoading(true); setError("");
