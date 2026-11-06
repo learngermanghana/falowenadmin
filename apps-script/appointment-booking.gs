@@ -8,7 +8,8 @@
  * Deploy as a Web app, Execute as: Me, Who has access: Anyone.
  * Put the /exec URL in the Vercel server secret APPOINTMENTS_SCRIPT_URL.
  * Run installAppointmentReminderTrigger() ONCE from the script editor to
- * authorize MailApp and install the 15-minute reminder trigger.
+ * authorize MailApp, install the 15-minute reminder trigger and daily
+ * recurring-slot replenishment trigger.
  *
  * IMPORTANT: Never place APPOINTMENT_SYNC_SECRET in client-side VITE_* vars.
  * All access is through /api/appointments with server-held credentials.
@@ -16,7 +17,9 @@
  * Appointments are fixed to Africa/Accra (UTC+00:00, no daylight savings).
  */
 const APPT_TIME_ZONE = 'Africa/Accra';
-const SLOT_HEADERS = ['slotId','date','time','durationMinutes','topic','meetingUrl','status','bookingId','createdAt'];
+const SLOT_HEADERS = ['slotId','date','time','durationMinutes','topic','meetingUrl','status','bookingId','createdAt','originRuleId'];
+const RULE_HEADERS = ['ruleId','weekdays','times','durationMinutes','topic','meetingUrl','status','createdAt'];
+const RECURRING_HORIZON_DAYS = 56;
 const BOOKING_HEADERS = ['bookingId','slotId','date','time','durationMinutes','topic','meetingUrl','name','email','phone','notes','status','createdAt','confirmationSentAt','reminder24SentAt','reminder1SentAt'];
 const ALLOWED_DURATIONS = [15, 30, 45, 60, 90, 120];
 
@@ -51,6 +54,12 @@ function appointmentSheet_(name, headers) {
     sheet.setFrozenRows(1);
   } else {
     const actual = sheet.getRange(1, 1, 1, headers.length).getDisplayValues()[0];
+    // Safe upgrade for existing AppointmentSlots sheets from the first version.
+    if (name === 'AppointmentSlots' && actual[9] === '' &&
+        SLOT_HEADERS.slice(0,9).every((key,i) => actual[i] === key)) {
+      sheet.getRange(1,10).setValue('originRuleId');
+      actual[9] = 'originRuleId';
+    }
     if (headers.some((header, i) => actual[i] !== header)) {
       appointmentError_('invalid_sheet', name + ' header mismatch. Do not reorder columns.');
     }
@@ -111,8 +120,12 @@ function appointmentList_(admin) {
   if (!admin) return { ok:true, timezone:APPT_TIME_ZONE, slots:filtered.map(appointmentSlotPublic_) };
   return {
     ok:true, timezone:APPT_TIME_ZONE,
+    rules: appointmentRows_(appointmentSheet_('AppointmentRules',RULE_HEADERS),RULE_HEADERS).map(rule => ({
+      ruleId:rule.ruleId,weekdays:rule.weekdays.split(',').map(Number),times:rule.times.split(','),
+      durationMinutes:Number(rule.durationMinutes),topic:rule.topic,status:rule.status,createdAt:rule.createdAt
+    })),
     slots:filtered.map(slot => ({
-      ...appointmentSlotPublic_(slot), status:slot.status,
+      ...appointmentSlotPublic_(slot), status:slot.status,originRuleId:slot.originRuleId,
       meetingUrl:slot.meetingUrl, booked:bookingById[slot.bookingId] ? {
         bookingId:slot.bookingId, name:bookingById[slot.bookingId].name,
         email:bookingById[slot.bookingId].email, phone:bookingById[slot.bookingId].phone,
@@ -150,10 +163,138 @@ function appointmentAddSlot_(payload) {
     });
     if (overlapping) appointmentError_('overlap','This time overlaps an existing slot.');
     const slotId = Utilities.getUuid();
-    appointmentAppend_(sheet,[slotId,date,time,duration,topic,meetingUrl,'open','',new Date().toISOString()]);
+    appointmentAppend_(sheet,[slotId,date,time,duration,topic,meetingUrl,'open','',new Date().toISOString(),'']);
     return {ok:true,slotId};
   });
 }
+
+/**
+ * One weekly rule lives in AppointmentRules and keeps a rolling 8-week window.
+ * Generated availability remains ordinary AppointmentSlots rows, so the
+ * existing atomic booking and reminder logic works without change.
+ */
+function appointmentRuleInput_(payload) {
+  const days = Array.isArray(payload.weekdays) ? [...new Set(payload.weekdays.map(Number))].sort() : [];
+  const times = Array.isArray(payload.times) ? [...new Set(payload.times.map(x => appointmentText_(x,5)))].sort() : [];
+  const duration = Number(payload.durationMinutes);
+  const topic = appointmentText_(payload.topic,120) || 'Falowen consultation';
+  const meetingUrl = appointmentText_(payload.meetingUrl,400);
+  if (!days.length || days.length > 7 || days.some(d => !Number.isInteger(d) || d < 0 || d > 6)) {
+    appointmentError_('invalid_days','Choose at least one weekday.');
+  }
+  if (!times.length || times.length > 6 || times.some(t => !/^([01]\d|2[0-3]):[0-5]\d$/.test(t))) {
+    appointmentError_('invalid_times','Choose valid recurring times.');
+  }
+  if (!ALLOWED_DURATIONS.includes(duration)) appointmentError_('invalid_duration','Choose an allowed duration.');
+  if (times.some((t,i) => i > 0 && (Number(t.slice(0,2))*60+Number(t.slice(3,5))) -
+      (Number(times[i-1].slice(0,2))*60+Number(times[i-1].slice(3,5))) < duration)) {
+    appointmentError_('overlap','Recurring times overlap. Shorten appointments or choose wider times.');
+  }
+  if (meetingUrl && !/^https:\/\/[^\s]+$/i.test(meetingUrl)) {
+    appointmentError_('invalid_link','Meeting links must use HTTPS.');
+  }
+  return {days,times,duration,topic,meetingUrl};
+}
+function appointmentGenerateRecurringSlots_() {
+  // Caller must hold the script lock. Never regenerate a manually removed occurrence.
+  const ruleSheet = appointmentSheet_('AppointmentRules',RULE_HEADERS);
+  const rules = appointmentRows_(ruleSheet,RULE_HEADERS).filter(r => r.status === 'active');
+  if (!rules.length) return 0;
+  const sheet = appointmentSheet_('AppointmentSlots',SLOT_HEADERS);
+  const existing = appointmentRows_(sheet,SLOT_HEADERS);
+  const newlyAdded = [];
+  const today = new Date();
+  const startDay = Date.UTC(today.getUTCFullYear(),today.getUTCMonth(),today.getUTCDate());
+  const now = Date.now();
+  const createdAt = new Date().toISOString();
+  rules.forEach(rule => {
+    const days = rule.weekdays.split(',').map(Number);
+    const times = rule.times.split(',');
+    const duration = Number(rule.durationMinutes);
+    if (!ALLOWED_DURATIONS.includes(duration)) return;
+    for (let day = 0; day <= RECURRING_HORIZON_DAYS; day++) {
+      const dateUtc = new Date(startDay + day*86400000);
+      if (!days.includes(dateUtc.getUTCDay())) continue;
+      const date = Utilities.formatDate(dateUtc,'Etc/GMT','yyyy-MM-dd');
+      times.forEach(time => {
+        const start = appointmentStart_(date,time).getTime();
+        if (start <= now + 30*60000) return;
+        const full = existing.concat(newlyAdded);
+        // A deleted occurrence is a one-day exception and must stay deleted.
+        const alreadyFromRule = full.some(slot =>
+          slot.originRuleId === rule.ruleId && slot.date === date && slot.time === time);
+        if (alreadyFromRule) return;
+        const overlaps = full.some(slot => {
+          if (slot.status === 'deleted') return false;
+          const otherStart = appointmentStart_(slot.date,slot.time).getTime();
+          return start < otherStart + Number(slot.durationMinutes)*60000 &&
+            start + duration*60000 > otherStart;
+        });
+        if (overlaps) return;
+        newlyAdded.push({
+          slotId:Utilities.getUuid(),date,time,durationMinutes:duration,
+          topic:rule.topic,meetingUrl:rule.meetingUrl,status:'open',
+          bookingId:'',createdAt,originRuleId:rule.ruleId
+        });
+      });
+    }
+  });
+  if (newlyAdded.length) {
+    const data = newlyAdded.map(slot => [
+      slot.slotId,slot.date,slot.time,slot.durationMinutes,slot.topic,
+      slot.meetingUrl,'open','',slot.createdAt,slot.originRuleId
+    ].map(value => {
+      const v = appointmentText_(value,1000);
+      return /^[=+\-@]/.test(v) ? "'" + v : v;
+    }));
+    const range = sheet.getRange(sheet.getLastRow()+1,1,data.length,SLOT_HEADERS.length);
+    range.setNumberFormat('@');
+    range.setValues(data);
+  }
+  return newlyAdded.length;
+}
+function appointmentAddRecurringRule_(payload) {
+  const config = appointmentRuleInput_(payload);
+  return appointmentWithLock_(() => {
+    const sheet = appointmentSheet_('AppointmentRules',RULE_HEADERS);
+    const active = appointmentRows_(sheet,RULE_HEADERS).filter(rule => rule.status === 'active');
+    if (active.length >= 10) appointmentError_('rule_limit','Stop an old recurring rule before adding more.');
+    const identical = active.some(rule => rule.weekdays === config.days.join(',') &&
+      rule.times === config.times.join(',') && Number(rule.durationMinutes) === config.duration);
+    if (identical) appointmentError_('duplicate_rule','That recurring schedule is already active.');
+    const ruleId = Utilities.getUuid();
+    appointmentAppend_(sheet,[
+      ruleId,config.days.join(','),config.times.join(','),config.duration,
+      config.topic,config.meetingUrl,'active',new Date().toISOString()
+    ]);
+    const generated = appointmentGenerateRecurringSlots_();
+    return {ok:true,ruleId,generated};
+  });
+}
+function appointmentStopRecurringRule_(payload) {
+  const ruleId = appointmentText_(payload.ruleId,100);
+  return appointmentWithLock_(() => {
+    const ruleSheet = appointmentSheet_('AppointmentRules',RULE_HEADERS);
+    const rule = appointmentRows_(ruleSheet,RULE_HEADERS).find(x => x.ruleId === ruleId);
+    if (!rule) appointmentError_('not_found','Recurring schedule not found.');
+    if (rule.status !== 'active') appointmentError_('invalid_rule','Recurring schedule is already stopped.');
+    ruleSheet.getRange(rule.rowNumber,7).setValue('stopped');
+    const slotSheet = appointmentSheet_('AppointmentSlots',SLOT_HEADERS);
+    const slots = appointmentRows_(slotSheet,SLOT_HEADERS);
+    let removed = 0;
+    // Cancel only open instances; confirmed appointments always remain booked.
+    slots.forEach(slot => {
+      if (slot.originRuleId !== ruleId || slot.status !== 'open') return;
+      slotSheet.getRange(slot.rowNumber,7).setValue('deleted');
+      removed++;
+    });
+    return {ok:true,removed};
+  });
+}
+function refreshAppointmentRecurringSlots() {
+  return appointmentWithLock_(() => ({generated:appointmentGenerateRecurringSlots_()}));
+}
+
 function appointmentDeleteSlot_(payload) {
   const slotId = appointmentText_(payload.slotId,100);
   return appointmentWithLock_(() => {
@@ -260,6 +401,8 @@ function doPost(e) {
     if (action === 'list') return appointmentJson_(appointmentList_(false));
     if (action === 'adminList') return appointmentJson_(appointmentList_(true));
     if (action === 'addSlot') return appointmentJson_(appointmentAddSlot_(payload));
+    if (action === 'addRecurringRule') return appointmentJson_(appointmentAddRecurringRule_(payload));
+    if (action === 'stopRecurringRule') return appointmentJson_(appointmentStopRecurringRule_(payload));
     if (action === 'deleteSlot') return appointmentJson_(appointmentDeleteSlot_(payload));
     if (action === 'book') return appointmentJson_(appointmentBook_(payload));
     return appointmentJson_({ok:false,code:'invalid_action',error:'Unknown appointment action.'});
@@ -294,8 +437,10 @@ function sendAppointmentReminders() {
 }
 function installAppointmentReminderTrigger() {
   ScriptApp.getProjectTriggers()
-    .filter(trigger => trigger.getHandlerFunction() === 'sendAppointmentReminders')
+    .filter(trigger => ['sendAppointmentReminders','refreshAppointmentRecurringSlots'].includes(trigger.getHandlerFunction()))
     .forEach(trigger => ScriptApp.deleteTrigger(trigger));
   ScriptApp.newTrigger('sendAppointmentReminders').timeBased().everyMinutes(15).create();
-  return 'Falowen appointment reminders installed (every 15 minutes).';
+  ScriptApp.newTrigger('refreshAppointmentRecurringSlots').timeBased().everyDays(1).atHour(5).create();
+  refreshAppointmentRecurringSlots();
+  return 'Falowen appointment reminders (15 min) and rolling recurring times (daily) installed.';
 }
