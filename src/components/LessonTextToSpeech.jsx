@@ -15,7 +15,7 @@ const VOICES = Object.freeze([
   { key: "C", label: "Charon · deep voice" },
 ]);
 
-export default function LessonTextToSpeech({ slides, fullScript, title, disabled = false, onGenerated }) {
+export default function LessonTextToSpeech({ slides, fullScript, title, disabled = false, onGenerated, onBusyChange }) {
   const [source, setSource] = useState("auto");
   const [engine, setEngine] = useState("lite");
   const [speaker, setSpeaker] = useState("A");
@@ -77,7 +77,7 @@ export default function LessonTextToSpeech({ slides, fullScript, title, disabled
   async function generate() {
     if (!canGenerate) return;
     const prepared = plan.value; // Keep a fixed copy of the teacher-approved text.
-    setBusy(true); setNotice(""); setServerError(""); setProgress("Checking the shared Hören Studio allowance…");
+    setBusy(true); onBusyChange?.(true); setNotice(""); setServerError(""); setProgress("Checking the shared Hören Studio allowance…");
     try {
       const fresh = await refreshQuota();
       if (!fresh.ready) throw new Error("Hören Studio TTS is not configured for this account.");
@@ -119,7 +119,7 @@ export default function LessonTextToSpeech({ slides, fullScript, title, disabled
       setServerError((error?.message || "Voice generation failed.") +
         " Successful voice scenes are cached; retry only after resolving the issue.");
     } finally {
-      setBusy(false); setProgress("");
+      setBusy(false); onBusyChange?.(false); setProgress("");
     }
   }
 
