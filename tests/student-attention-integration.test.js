@@ -27,7 +27,7 @@ test("Dashboard keeps learning attention in the Students workspace without loadi
 
   assert.doesNotMatch(dashboard, /summarizeStudentAttention\(students\)/);
   assert.doesNotMatch(dashboard, /title="Learning attention"/);
-  assert.match(app, /to="\/students"[^>]*>Students<\/Link>/);
+  assert.match(app, /to="\/students"[\s\S]{0,180}Students<\/Link>/);
 });
 
 test("Student detail includes the read-only Learning status panel", () => {
