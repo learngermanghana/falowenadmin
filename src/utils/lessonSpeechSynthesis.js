@@ -80,3 +80,31 @@ export function assembleLessonNarration(plan, speechClips) {
     repeats: 1, lineGap: VIDEO_SPEECH_GAP, soundscape: null,
   });
 }
+
+
+/**
+ * Assemble the contiguous saved portion of a recording after a provider error.
+ * Never send a Google request: scenes come exclusively from the existing
+ * Hören Studio on-device cache. The result is deliberately labelled PARTIAL.
+ */
+export function recoverLessonNarrationPrefix(plan, cached) {
+  if (!plan?.steps?.length || typeof cached !== "function") return null;
+  const steps = [], clips = [];
+  for (const step of plan.steps) {
+    if (step.type === "pause") {
+      if (clips.length) steps.push(step);
+      continue;
+    }
+    const audio = cached(sceneVoiceKey(plan.engine, step));
+    if (!audio) break;
+    steps.push(step); clips.push(audio);
+  }
+  while (steps.length && steps[steps.length - 1].type === "pause") steps.pop();
+  if (!clips.length) return null;
+  return {
+    scenes: clips.length,
+    total: plan.scenes.length,
+    complete: clips.length === plan.scenes.length,
+    audio: assembleLessonNarration({ ...plan, steps, scenes: steps.filter(step => step.type === "speech") }, clips),
+  };
+}

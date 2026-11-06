@@ -4,7 +4,7 @@ import { base64WavToBytes } from "../utils/hoerenAudio.js";
 import { getSavedVoice, saveVoice } from "../utils/hoerenVoiceCache.js";
 import { sceneVoiceKey } from "../utils/hoerenSpeechPlan.js";
 import {
-  buildLessonNarrationPlan, lessonNarrationSlideStarts, assembleLessonNarration,
+  buildLessonNarrationPlan, lessonNarrationSlideStarts, assembleLessonNarration, recoverLessonNarrationPrefix,
 } from "../utils/lessonSpeechSynthesis.js";
 import { downloadLessonBlob, safeLessonFilename } from "../utils/lessonVideoStudio.js";
 
@@ -72,7 +72,13 @@ export default function LessonTextToSpeech({ slides, fullScript, title, disabled
     [plan.value, cacheRevision]);
   const required = missingKeys.length;
   const remaining = status?.remaining?.speech ?? 0;
-  const canGenerate = !disabled && !busy && cacheReady && status?.ready && !!plan.value && required <= remaining;
+  const recoveredAudio = useMemo(
+    () => cacheReady ? recoverLessonNarrationPrefix(plan.value, key => cachedClips.current.get(key)) : null,
+    [plan.value, cacheReady, cacheRevision],
+  );
+  const [providerBlocked, setProviderBlocked] = useState(false);
+  const canGenerate = !disabled && !busy && cacheReady && status?.ready && !!plan.value &&
+    required <= remaining && !providerBlocked;
 
   async function generate() {
     if (!canGenerate) return;
@@ -116,8 +122,21 @@ export default function LessonTextToSpeech({ slides, fullScript, title, disabled
         (prepared.scenes.length - generated) + " reused voice scene(s)." +
         (prepared.source === "slides" ? " Slide changes aligned to the recording." : " Set slide changes with the marker tool."));
     } catch (error) {
-      setServerError((error?.message || "Voice generation failed.") +
-        " Successful voice scenes are cached; retry only after resolving the issue.");
+      if (error?.status === 429) {
+        // Google 429 and Falowen's 72-scenes/day safety cap are independent.
+        // Neither should cause an automatic retry.
+        setProviderBlocked(true);
+        const fromGoogle = /Google rate limit \(429\)/i.test(error?.message || "");
+        setServerError(fromGoogle
+          ? "Google declined another voice request (429). No automatic retries will run. " +
+            "Check the selected project's TTS rate limits and billing in Google AI Studio. " +
+            "Already completed scenes are safe on this browser. You can download the completed part below."
+          : (error?.message || "Falowen's shared daily speech allowance was reached.") +
+            " Existing voice scenes are still saved. Check your Falowen quota before attempting another generation.");
+      } else {
+        setServerError((error?.message || "Voice generation failed.") +
+          " Successful voice scenes are cached; retry only after resolving the issue.");
+      }
     } finally {
       setBusy(false); onBusyChange?.(false); setProgress("");
     }
@@ -160,8 +179,23 @@ export default function LessonTextToSpeech({ slides, fullScript, title, disabled
       downloadLessonBlob(generatedWav, safeLessonFilename(title) + "-narration.wav")}>
       Download generated WAV
     </button> : null}
+    {recoveredAudio && !recoveredAudio.complete ? <div className="lvs-tts-checkpoint">
+      <strong>{recoveredAudio.scenes} of {recoveredAudio.total} scenes safely recovered</strong>
+      <p className="lvs-help">This is an incomplete narration, not the final video audio. Keep the same browser to reuse the recorded scenes.</p>
+      <button type="button" onClick={() =>
+        downloadLessonBlob(recoveredAudio.audio, safeLessonFilename(title) + "-partial-narration.wav")}>
+        Download completed narration (partial WAV)
+      </button>
+    </div> : null}
+    {providerBlocked ? <div className="lvs-tts-checkpoint">
+      <p className="lvs-help"><strong>Further paid voice requests are paused.</strong> Check your Google TTS model quota, billing/spend cap and project first. Refreshing Falowen's quota does not reset Google's quota.</p>
+      <button type="button" disabled={disabled || busy} onClick={() => {
+        setProviderBlocked(false); setServerError("");
+        setNotice("Voice requests re-enabled. Only continue after confirming that Google's quota is available.");
+      }}>I've checked Google's quota · Allow another attempt</button>
+    </div> : null}
     <button type="button" className="lvs-tts-refresh" disabled={disabled || busy} onClick={() => refreshQuota().catch(() => {})}>
-      Refresh shared voice allowance
+      Refresh shared Falowen allowance
     </button>
     <p className="lvs-help">Uses the existing owner-only Hören Studio API, voice cache and daily budget.
       Google TTS may incur provider charges. Add [PAUSE 2] in the text for two seconds of silence.
