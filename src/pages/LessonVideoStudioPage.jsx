@@ -162,7 +162,7 @@ export default function LessonVideoStudioPage() {
     const p = point(event);
     if (!p) return;
     event.currentTarget.setPointerCapture(event.pointerId);
-    setDrag({ origin: p, end: p });
+    setDrag({ origin: p, end: p, startedAt: audioRef.current?.currentTime ?? time });
   }
   function pointerMove(event) {
     if (!drag) return;
@@ -176,7 +176,7 @@ export default function LessonVideoStudioPage() {
     const w = Math.abs(drag.origin.x - p.x), h = Math.abs(drag.origin.y - p.y);
     setDrag(null);
     if (w < 0.008 || h < 0.008) return;
-    const from = rounded(time);
+    const from = rounded(drag.startedAt);
     const to = rounded(Math.max(from + 0.2, Math.min(duration || from + 3, from + 3)));
     setHighlights(previous => [...previous, {
       id: uid(), slide: selected, x, y, w, h, start: from, end: to, label: "Highlight " + (previous.length + 1),
