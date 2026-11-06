@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { validateAppointmentAction } from "../api/appointments.js";
+import { validateAppointmentAction, groupWeeklySlots } from "../api/appointments.js";
 
 const slotId = "6b1f4e75-e741-4ac2-bfea-6a4e927e47e1";
 
@@ -88,4 +88,25 @@ test("weekly timetable rejects bad pairs and only overlapping times on the same 
   assert.throws(()=>validateAppointmentAction("saveWeeklySchedule",data([{weekday:3,time:"14:00"},{weekday:3,time:"14:30"}])),/overlap/);
   assert.doesNotThrow(()=>validateAppointmentAction("saveWeeklySchedule",data([{weekday:1,time:"14:00"},{weekday:3,time:"14:30"}])));
   assert.throws(()=>validateAppointmentAction("saveWeeklySchedule",{...data([]),meetingUrl:"http://bad.example"}),/HTTPS/);
+});
+
+test("legacy scheduling groups the same weekday patterns without losing one time",()=>{
+  const grouped=groupWeeklySlots([
+    {weekday:1,time:"14:00"},{weekday:1,time:"15:00"},
+    {weekday:2,time:"14:00"},{weekday:2,time:"15:00"},
+    {weekday:3,time:"15:00"},{weekday:3,time:"14:00"},
+    {weekday:4,time:"14:00"}
+  ]);
+  assert.deepEqual(grouped,[
+    {weekdays:[1,2,3],times:["14:00","15:00"]},
+    {weekdays:[4],times:["14:00"]}
+  ]);
+  const missingWednesdayTwo=groupWeeklySlots([
+    {weekday:1,time:"14:00"},{weekday:3,time:"15:00"},
+    {weekday:4,time:"14:00"}
+  ]);
+  assert.deepEqual(missingWednesdayTwo,[
+    {weekdays:[1,4],times:["14:00"]},
+    {weekdays:[3],times:["15:00"]}
+  ]);
 });
