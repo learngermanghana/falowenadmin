@@ -123,12 +123,16 @@ export default function LessonTextToSpeech({ slides, fullScript, title, disabled
         (prepared.source === "slides" ? " Slide changes aligned to the recording." : " Set slide changes with the marker tool."));
     } catch (error) {
       if (error?.status === 429) {
-        // Do not automatically retry 429s: RPM, RPD, billing and provider
-        // capacity may have different resolution paths.
+        // Google 429 and Falowen's 72-scenes/day safety cap are independent.
+        // Neither should cause an automatic retry.
         setProviderBlocked(true);
-        setServerError("Google declined another voice request (429). No automatic retries will run. " +
-          "Check the selected project's TTS rate limits and billing in Google AI Studio. " +
-          "Already completed scenes are safe on this browser. You can download the completed part below.");
+        const fromGoogle = /Google rate limit \(429\)/i.test(error?.message || "");
+        setServerError(fromGoogle
+          ? "Google declined another voice request (429). No automatic retries will run. " +
+            "Check the selected project's TTS rate limits and billing in Google AI Studio. " +
+            "Already completed scenes are safe on this browser. You can download the completed part below."
+          : (error?.message || "Falowen's shared daily speech allowance was reached.") +
+            " Existing voice scenes are still saved. Check your Falowen quota before attempting another generation.");
       } else {
         setServerError((error?.message || "Voice generation failed.") +
           " Successful voice scenes are cached; retry only after resolving the issue.");
