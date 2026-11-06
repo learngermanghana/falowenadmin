@@ -129,6 +129,59 @@ export function validateAppointmentAction(action, input) {
   }
   throw appointmentError('Unknown appointment action.');
 }
+/**
+ * Old Apps Script deployments understand cross-product recurring rules, not
+ * individual day/time pairs. Group identical day patterns into at most seven
+ * rules so the new one-button timetable works before a script redeployment.
+ */
+export function groupWeeklySlots(weeklySlots) {
+  const days=new Map();
+  for(const {weekday,time} of weeklySlots){
+    if(!days.has(weekday)) days.set(weekday,[]);
+    days.get(weekday).push(time);
+  }
+  const patterns=new Map();
+  for(const [weekday,times] of days){
+    const sorted=[...new Set(times)].sort();
+    const key=sorted.join(',');
+    if(!patterns.has(key)) patterns.set(key,{weekdays:[],times:sorted});
+    patterns.get(key).weekdays.push(weekday);
+  }
+  return [...patterns.values()].map(group=>({
+    weekdays:group.weekdays.sort((a,b)=>a-b),times:group.times
+  }));
+}
+async function saveWeeklySchedule(values){
+  try {
+    return await scriptRequest('saveWeeklySchedule',values);
+  } catch(error){
+    // Upgrade-safe fallback only for existing Apps Script versions.
+    if(error.code!=='invalid_action') throw error;
+  }
+  const before=await scriptRequest('adminList');
+  const previous=(before.rules||[]).filter(rule=>rule.status==='active');
+  let removed=0,generated=0;
+  for(const rule of previous){
+    const result=await scriptRequest('stopRecurringRule',{ruleId:rule.ruleId});
+    removed+=Number(result.removed)||0;
+  }
+  // Old manually created slots are also removed, keeping the saved weekly grid authoritative.
+  const activeAfter=await scriptRequest('adminList');
+  const adHoc=(activeAfter.slots||[]).filter(slot=>slot.status==='open'&&!slot.originRuleId);
+  for(const slot of adHoc){
+    await scriptRequest('deleteSlot',{slotId:slot.slotId});
+    removed++;
+  }
+  const groups=groupWeeklySlots(values.weeklySlots);
+  for(const group of groups){
+    const result=await scriptRequest('addRecurringRule',{
+      ...group,topic:values.topic,durationMinutes:values.durationMinutes,
+      meetingUrl:values.meetingUrl
+    });
+    generated+=Number(result.generated)||0;
+  }
+  return {ok:true,removed,generated,compatibleMode:true};
+}
 async function scriptRequest(action, values = {}) {
   const url = getEnv('APPOINTMENTS_SCRIPT_URL');
   const secret = getEnv('APPOINTMENTS_SCRIPT_SECRET');
@@ -187,7 +240,7 @@ export default async function appointmentHandler(req,res) {
         if (defaultMeeting && /^https:\/\/[^\s]+$/i.test(defaultMeeting)) payload.meetingUrl = defaultMeeting;
       }
     }
-    const result = await scriptRequest(action,payload);
+    const result = action === 'saveWeeklySchedule' ? await saveWeeklySchedule(payload) : await scriptRequest(action,payload);
     return res.status(200).json(result);
   } catch(error) {
     const status = Number(error?.statusCode) || 502;
