@@ -1,0 +1,68 @@
+.lvs-page{--lvs-ink:#10223c;--lvs-blue:#075ab9;--lvs-border:#dae4ef;--lvs-bg:#fff;color:var(--lvs-ink);width:100%;max-width:1580px;margin:0 auto;padding:1.5rem 1rem 3rem;line-height:1.5}
+.lvs-page *{box-sizing:border-box}
+.lvs-page button,.lvs-page .lvs-button{appearance:none;border:1px solid #c6d4e6;border-radius:10px;padding:.6rem .9rem;background:#fff;color:#17365b;font-weight:650;font-size:.91rem;text-align:center;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;white-space:normal}
+.lvs-page button:hover:not(:disabled),.lvs-page .lvs-button:hover{border-color:#3470bb;background:#eff7ff}
+.lvs-page button:disabled{opacity:.48;cursor:not-allowed}
+.lvs-page .lvs-primary{background:var(--lvs-blue);color:#fff;border-color:var(--lvs-blue)}
+.lvs-page .lvs-primary:hover:not(:disabled){background:#004a9d;color:#fff}
+.lvs-page .lvs-muted{background:#f5f8fc;color:#254467}
+.lvs-page h1,.lvs-page h2,.lvs-page h3{color:#0b2b56;margin:0;line-height:1.25}
+.lvs-page h1{font-size:clamp(1.7rem,3vw,2.3rem);margin:.1rem 0 .4rem}
+.lvs-page h2{font-size:1.12rem;margin:.25rem 0 .7rem}
+.lvs-page h3{font-size:.95rem;margin:.6rem 0}
+.lvs-page p{margin:.3rem 0 .75rem}
+.lvs-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1.25rem;padding:1.5rem;border-radius:18px;color:#dbeafe;background:linear-gradient(120deg,#092349,#0d4f93)}
+.lvs-header h1{color:#fff}
+.lvs-header p{color:#d9eaff}
+.lvs-kicker,.lvs-step{display:block;font-size:.73rem;letter-spacing:.12em;text-transform:uppercase;font-weight:850;color:#1485d7}
+.lvs-header .lvs-kicker{color:#9de4ff}
+.lvs-header-actions,.lvs-tools,.lvs-marker-actions{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+.lvs-header-actions button,.lvs-header-actions .lvs-button{background:rgba(255,255,255,.11);color:#fff;border-color:rgba(255,255,255,.4)}
+.lvs-header-actions button:hover,.lvs-header-actions .lvs-button:hover{color:#fff;background:rgba(255,255,255,.19)}
+.lvs-alert,.lvs-status{padding:.7rem 1rem;border-radius:9px;margin-top:1rem}
+.lvs-alert{background:#fff0ee;color:#8c231a;border:1px solid #f1b8b2}
+.lvs-status{background:#eef7ff;color:#23527d;border:1px solid #d5e8fc}
+.lvs-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin:1rem 0}
+.lvs-panel{background:#fff;border:1px solid var(--lvs-border);border-radius:15px;padding:1.1rem;min-width:0;box-shadow:0 2px 13px rgba(15,48,82,.035)}
+.lvs-steps .lvs-panel{display:flex;flex-direction:column;align-items:stretch;gap:.5rem}
+.lvs-steps .lvs-panel h2{margin:0 0 .3rem}
+.lvs-steps .lvs-panel .lvs-button,.lvs-steps .lvs-panel button{width:100%}
+.lvs-help{font-size:.82rem;color:#64748b;line-height:1.5}
+.lvs-titlefield{margin:.9rem 0 1rem;max-width:620px}
+.lvs-titlefield label,.lvs-script-label,.lvs-export-settings label,.lvs-number{display:flex;flex-direction:column;gap:.35rem;font-weight:650;font-size:.86rem}
+.lvs-page input:not([type=checkbox]):not([type=file]):not([type=range]),.lvs-page textarea,.lvs-page select{width:100%;border:1px solid #cbd8e8;border-radius:9px;background:#fff;color:#11294c;padding:.55rem .7rem;font:inherit}
+.lvs-page textarea{font-family:inherit;resize:vertical;min-width:0}
+.lvs-page input:focus-visible,.lvs-page textarea:focus-visible,.lvs-page select:focus-visible,.lvs-page button:focus-visible{outline:2px solid #1685d7;outline-offset:2px}
+.lvs-editor{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(310px,.75fr);gap:1rem;align-items:start}
+.lvs-panel-heading{display:flex;justify-content:space-between;align-items:center;gap:1rem}
+.lvs-panel-heading span{font-weight:750;color:#46617f;font-size:.82rem}
+.lvs-preview{background:#071932;border-radius:14px;overflow:hidden;min-height:220px;display:flex;align-items:center;justify-content:center}
+.lvs-image-wrap{position:relative;display:block;max-width:100%;max-height:75vh;line-height:0;user-select:none}
+.lvs-image-wrap img{display:block;max-width:100%;max-height:75vh;object-fit:contain}
+.lvs-hitarea{position:absolute;inset:0;z-index:3;touch-action:none;cursor:crosshair}
+.lvs-highlight{position:absolute;pointer-events:none;z-index:4;background:rgba(255,214,67,.25);border:3px solid #ffdf55;box-shadow:0 0 10px rgba(0,0,0,.18)}
+.lvs-drawing{border-style:dashed;background:rgba(255,214,67,.19)}
+.lvs-empty{padding:6rem 1.5rem;color:#b5c9e5;text-align:center}
+.lvs-audio{display:block;width:100%;margin:.7rem 0}
+.lvs-tools{margin:.6rem 0}
+.lvs-follow{display:inline-flex;flex-direction:row;gap:.4rem;align-items:center;font-size:.85rem;font-weight:650}
+.lvs-progress{display:flex;align-items:center;gap:1rem;margin:.8rem 0;font-variant-numeric:tabular-nums}
+.lvs-progress input{flex:1;accent-color:var(--lvs-blue);min-width:0}
+.lvs-thumbnails{display:flex;gap:.65rem;overflow-x:auto;padding:.4rem .1rem}
+.lvs-page .lvs-thumb{padding:.3rem;flex:0 0 118px;display:flex;flex-direction:column;gap:.25rem;background:#f6f9fd}
+.lvs-thumb img{width:100%;height:64px;object-fit:contain;border-radius:5px;background:#102747}
+.lvs-thumb span{font-size:.72rem;color:#325270;font-variant-numeric:tabular-nums}
+.lvs-page .lvs-current{border:2px solid #0c72c5;background:#e5f3ff}
+.lvs-side{display:flex;flex-direction:column;gap:1rem;min-width:0}
+.lvs-hmark{margin-top:1rem}
+.lvs-marker{border-radius:11px;padding:.8rem;border:1px solid #d6e2f1;background:#f7faff;margin:.65rem 0}
+.lvs-marker-grid{display:grid;grid-template-columns:1fr 1fr;gap:.55rem;margin:.6rem 0}
+.lvs-marker-actions button{font-size:.77rem;padding:.45rem .6rem}
+.lvs-script-label{margin:.6rem 0}
+.lvs-export{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,1fr);gap:1.5rem;align-items:center;margin:1rem 0}
+.lvs-export-settings{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.lvs-export-settings>button,.lvs-export-settings>.lvs-help{grid-column:1/-1;margin:0}
+.lvs-page .lvs-recording{background:#b52138;color:#fff;border-color:#b52138;animation:lvs-pulse 1.5s infinite}
+@keyframes lvs-pulse{50%{box-shadow:0 0 0 7px rgba(181,33,56,.10)}}
+@media(max-width:1050px){.lvs-editor{grid-template-columns:minmax(0,1fr)}.lvs-side{display:grid;grid-template-columns:1fr 1fr}.lvs-export{grid-template-columns:1fr}}
+@media(max-width:730px){.lvs-page{padding:1rem .4rem 2rem}.lvs-header{padding:1rem}.lvs-steps,.lvs-side{grid-template-columns:1fr}.lvs-panel{padding:.85rem}.lvs-preview{min-height:175px}.lvs-tools button{flex:1}.lvs-export-settings{grid-template-columns:1fr}.lvs-header-actions{width:100%}.lvs-header-actions>*{flex:1}}
