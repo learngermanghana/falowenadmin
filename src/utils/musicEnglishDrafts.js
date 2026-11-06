@@ -11,7 +11,7 @@ export function sungMusicDraftLines(lyrics = '') {
 export function matchingMusicEnglishDraft(assignmentKey, lyrics) {
   if (!assignmentKey || !lyrics) return null;
   const row = musicEnglishDrafts.entries.find(item =>
-    item.assignmentKey === String(assignmentKey).trim());
+    String(item.assignmentKey).toUpperCase() === String(assignmentKey).trim().toUpperCase());
   if (!row || !Array.isArray(row.de) || !Array.isArray(row.en)) return null;
   const german = sungMusicDraftLines(lyrics);
   if (!german.length || german.length !== row.de.length || german.length !== row.en.length) return null;
