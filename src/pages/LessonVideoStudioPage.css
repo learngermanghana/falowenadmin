@@ -85,3 +85,7 @@
 .lvs-tts-checkpoint strong{font-size:.85rem;color:#173b6c}
 .lvs-tts-checkpoint button{font-size:.83rem;white-space:normal}
 
+
+/* Dictionary-first workflow selector; the legacy import editor remains accessible. */
+.lvs-mode-switch{display:flex;gap:.55rem;flex-wrap:wrap;padding:.2rem 0 1rem}
+.lvs-mode-switch button{flex:0 1 auto}

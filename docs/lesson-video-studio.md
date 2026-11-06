@@ -1,5 +1,19 @@
 # Lesson Video Studio
 
+## New default: Dictionary to video (quarterly curriculum)
+
+The owner-only route now opens Dictionary Studio by default. The previous PowerPoint/image-import editor remains available under Legacy PowerPoint studio for compatibility with older projects.
+
+- Ten editable starter German topic dictionaries (A1–C1), each with introduction, objective, vocabulary, grammar, German/English examples, common mistakes, practice and recap.
+- A reusable Canvas template builds six scenes: introduction, vocabulary, grammar, examples, mistakes and practice.
+- Midnight, Classroom and Forest themes; 16:9 and 9:16 framing; scene-by-scene editable narration. These drafts come from teacher-authored content: no AI language-generation call is made.
+- The existing owner-scoped Hören TTS accepts scripts only when generation is explicitly requested. Its WAV output is attached to the video and scenes align to actual narration length. Existing caching, daily budget and 429 safeguards apply.
+- Existing browser-based MediaRecorder + Canvas exports MP4 where supported or genuine WebM without a paid server-side renderer. Video recording takes real time in an active tab.
+- Edits are saved in this browser's localStorage. Mark reviewed records the current quarter, and import/export provides a versioned JSON master backup. **There is not yet a centrally published multi-device content library or automatic quarterly update.**
+
+Follow-up before multi-editor rollout: owner-scoped cloud publishing, revision history and teacher approval. This implementation intentionally avoids new Firestore reads, background jobs or subscription rendering costs.
+
+---
 Owner-only Admin route: **/lesson-video-studio** (protected by the existing
 `VITE_HOEREN_STUDIO_OWNER_UID` / Admin-only route gate).
 

@@ -5,6 +5,7 @@ import {
   spreadLessonSlides, timeLabel,
 } from "../utils/lessonVideoStudio.js";
 import LessonTextToSpeech from "../components/LessonTextToSpeech.jsx";
+import LessonDictionaryVideoStudio from "./LessonDictionaryVideoStudio.jsx";
 import "./LessonVideoStudioPage.css";
 
 const MAX_AUDIO = 80 * 1024 * 1024;
@@ -26,7 +27,7 @@ function NumberInput({ label, value, onChange, min = 0, max, step = 0.1 }) {
       onChange={event => onChange(Number(event.target.value))} />
   </label>;
 }
-export default function LessonVideoStudioPage() {
+function LegacyLessonVideoStudioPage() {
   const [title, setTitle] = useState("German lesson video");
   const [slides, setSlides] = useState([]);
   const [selected, setSelected] = useState(0);
@@ -492,5 +493,20 @@ export default function LessonVideoStudioPage() {
         <p className="lvs-help">MP4 with AAC where supported; otherwise a genuine WebM file. No mislabeled exports and no paid video service.</p>
       </div>
     </section>
+  </div>;
+}
+
+export default function LessonVideoStudioPage() {
+  const [mode, setMode] = useState("dictionary");
+  return <div className="lvs-page">
+    <nav className="lvs-mode-switch" aria-label="Choose lesson video workflow">
+      <button type="button" className={mode === "dictionary" ? "lvs-primary" : ""} onClick={() => setMode("dictionary")}>
+        Dictionary Studio · recommended
+      </button>
+      <button type="button" className={mode === "manual" ? "lvs-primary" : ""} onClick={() => setMode("manual")}>
+        Legacy PowerPoint studio
+      </button>
+    </nav>
+    {mode === "dictionary" ? <LessonDictionaryVideoStudio /> : <LegacyLessonVideoStudioPage />}
   </div>;
 }
