@@ -40,6 +40,7 @@ const StudentHubPage = lazy(() => import("./pages/StudentHubPage.jsx"));
 const LeadsPage = lazy(() => import("./pages/LeadsPage.jsx"));
 const SocialMediaPage = lazy(() => import("./pages/SocialMediaPage.jsx"));
 const MusicStudioPage = lazy(() => import("./pages/MusicStudioPage.jsx"));
+const LessonVideoStudioPage = lazy(() => import("./pages/LessonVideoStudioPage.jsx"));
 const MusicAnalyticsPage = lazy(() => import("./pages/MusicAnalyticsPage.jsx"));
 const HoerenStudioPage = lazy(() => import("./pages/HoerenStudioPage.jsx"));
 const WritingSubmissionTrackerPage = lazy(() => import("./pages/WritingSubmissionTrackerPage"));
@@ -176,7 +177,7 @@ function TopBar() {
                 <Link to="/exam-file" onClick={() => setMenuOpen(false)}>Goethe Exam File</Link>
                 <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
                 <Link to="/social-media" onClick={() => setMenuOpen(false)}>Social Media</Link>
-                {String(import.meta.env.VITE_HOEREN_STUDIO_OWNER_UID || "").trim() === user.uid ? <><Link to="/ai-studio" onClick={() => setMenuOpen(false)}>AI Hören Studio</Link><Link to="/music-studio" onClick={() => setMenuOpen(false)}>Falowen Music Studio</Link><Link to="/music-analytics" onClick={() => setMenuOpen(false)}>Music Analytics</Link></> : null}
+                {String(import.meta.env.VITE_HOEREN_STUDIO_OWNER_UID || "").trim() === user.uid ? <><Link to="/ai-studio" onClick={() => setMenuOpen(false)}>AI Hören Studio</Link><Link to="/music-studio" onClick={() => setMenuOpen(false)}>Falowen Music Studio</Link><Link to="/lesson-video-studio" onClick={() => setMenuOpen(false)}>Lesson Video Studio</Link><Link to="/music-analytics" onClick={() => setMenuOpen(false)}>Music Analytics</Link></> : null}
                 <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
                 <Link to="/timed-attempts" onClick={() => setMenuOpen(false)}>Mock Monitoring & Timers</Link>
                 <Link to="/exam-tracking" onClick={() => setMenuOpen(false)}>Exam Tracking</Link>
@@ -235,11 +236,11 @@ function OwnerMusicAnalyticsRoute() {
   return <ProtectedRoute allowStaff={false}><MusicAnalyticsPage /></ProtectedRoute>;
 }
 
-function OwnerStudioRoute({ music = false }) {
+function OwnerStudioRoute({ music = false, lesson = false }) {
   const { user, loading, isStaff } = useAuth();
   const ownerUid = String(import.meta.env.VITE_HOEREN_STUDIO_OWNER_UID || "").trim();
   if (!loading && user && (isStaff || !ownerUid || user.uid !== ownerUid)) return <Navigate to="/" replace />;
-  return <ProtectedRoute allowStaff={false}>{music ? <MusicStudioPage /> : <HoerenStudioPage />}</ProtectedRoute>;
+  return <ProtectedRoute allowStaff={false}>{lesson ? <LessonVideoStudioPage /> : music ? <MusicStudioPage /> : <HoerenStudioPage />}</ProtectedRoute>;
 }
 
 function ExamReviewRoute() {
@@ -316,6 +317,7 @@ export default function App() {
           <Route path="/social-media" element={<ProtectedRoute allowStaff={false}><SocialMediaPage /></ProtectedRoute>} />
           <Route path="/ai-studio" element={<OwnerStudioRoute />} />
           <Route path="/music-studio" element={<OwnerStudioRoute music />} />
+          <Route path="/lesson-video-studio" element={<OwnerStudioRoute lesson />} />
           <Route path="/music-analytics" element={<OwnerMusicAnalyticsRoute />} />
           <Route path="/visitor-guide" element={<PublicVisitorGuideRedirect />} />
           <Route path="/visitor-guide/edit" element={<PublicVisitorGuideRedirect />} />

@@ -10,6 +10,7 @@ Reviewed: 2026-11-01.
 | AI marking | [Automatic marking](../automatic-course-marking.md) |
 | Structured student submissions | [Submission contract](../structured-submission-contract.md) |
 | Teacher Music Studio | [Music Studio](../music-studio.md) |
+| Lesson Video Studio | [Slide/narration video workflow](../lesson-video-studio.md) |
 | Music analytics and consent | [Music analytics](../music-analytics.md) |
 | Live classes | [Curriculum contract](../live-class-curriculum-contract.md) |
 | Event / webhook changes | [Integration event hub](../integration-event-hub.md) |
