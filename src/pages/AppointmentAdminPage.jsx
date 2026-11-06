@@ -3,7 +3,7 @@ import { auth } from "../firebase.js";
 import "./Appointments.css";
 
 const API = "/api/appointments";
-const PUBLIC_PATH = "/book-appointment";
+const PUBLIC_URL = "https://falowen.app/book-appointment";
 const INITIAL = { topic: "Falowen consultation", date: "", time: "", durationMinutes: "30", meetingUrl: "" };
 const WEEKDAYS = [{value:1,label:"Mon"},{value:2,label:"Tue"},{value:3,label:"Wed"},{value:4,label:"Thu"},{value:5,label:"Fri"},{value:6,label:"Sat"},{value:0,label:"Sun"}];
 const AFTERNOON_TIMES = ["13:00","14:00","15:00","16:00","17:00"];
@@ -36,7 +36,7 @@ export default function AppointmentAdminPage() {
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState("");
   const [notice,setNotice] = useState("");
-  const publicUrl = typeof window === "undefined" ? PUBLIC_PATH : new URL(PUBLIC_PATH,window.location.origin).href;
+  const publicUrl = PUBLIC_URL;
   const load = useCallback(async () => {
     setLoading(true); setError("");
     try {
@@ -215,7 +215,7 @@ export default function AppointmentAdminPage() {
           <input value={publicUrl} readOnly aria-label="Public appointment booking URL" onFocus={e=>e.target.select()} />
           <button type="button" onClick={copyLink}>Copy link</button>
         </div>
-        <a className="appt-text-link" href={PUBLIC_PATH} target="_blank" rel="noreferrer">Preview the public booking page</a>
+        <a className="appt-text-link" href={PUBLIC_URL} target="_blank" rel="noreferrer">Preview the public booking page</a>
         <div className="appt-info">
           <strong>How reminders work</strong>
           <p>Google Sheets stores each appointment. After you deploy the accompanying Apps Script and install its time trigger, visitors receive confirmation emails and reminders approximately 24 hours and 1 hour before their appointments.</p>

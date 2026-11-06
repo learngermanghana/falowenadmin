@@ -38,7 +38,8 @@
   ],
   "redirects": [
     { "source": "/organisation-enrolment", "destination": "https://www.falowen.app/organisation-enrolment", "permanent": false },
-    { "source": "/partnerships", "destination": "https://www.falowen.app/partnerships", "permanent": false }
+    { "source": "/partnerships", "destination": "https://www.falowen.app/partnerships", "permanent": false },
+    { "source": "/book-appointment", "destination": "https://falowen.app/book-appointment", "permanent": false }
   ],
   "rewrites": [
     {
