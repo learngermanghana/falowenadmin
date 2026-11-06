@@ -86,3 +86,28 @@ Optional future enhancements (not part of this version): AI script
 generation with explicit spending caps; per-sentence bilingual voice
 switching (English narration / German examples); subtitle alignment;
 upload completed videos to R2; offline fast transcoding for large decks.
+
+
+## Recovering from a Google 429 rate limit
+
+A 429 returned by Google's Gemini Interactions TTS endpoint is **not** the
+same as Falowen's 72-scenes/day owner safety budget. It may mean that the
+selected speech model has reached its own RPM/RPD/TPS allocation, a provider
+spending cap, or a provider-side capacity restriction. The app cannot bypass
+that. Check the Google AI Studio Rate Limits, Usage and Billing pages for
+the project that owns the API key. Do not repeatedly retry a blocked model.
+
+Successful voice clips are cached in browser IndexedDB as before. When a
+narration has been partially produced, the editor now offers **Download
+completed narration (partial WAV)**, created locally from the contiguous
+saved voice clips. It is intentionally labelled partial, not passed off as
+the full synchronized narration. The user can download it immediately, or
+later assemble the full track from saved voice clips when Google's quota
+has been resolved. No calls are made during partial WAV download.
+
+After a 429, this page **stops sending new speech requests** until the
+teacher clicks an explicit acknowledgement that Google's quota or billing
+has been checked. This state is scoped to the open page; it is not a
+provider-quota-reset mechanism. A refresh of Falowen's own allowance only
+updates Falowen's budget, not Google's quota. Existing MP3/WAV upload and
+microphone recording remain available without Gemini.
