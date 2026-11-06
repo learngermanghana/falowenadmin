@@ -1,7 +1,7 @@
 // Edited, authored advanced German song drafts. No model invocation or
 // generation at lookup time. Every lyric is a standalone original story.
 export function defineAdvancedSongDrafts(entries) {
-  return Object.freeze(entries.map(({ key, title, genre, tempo, arrangement, lyrics }) => {
+  return Object.freeze(entries.map(({ key, title, genre, tempo, arrangement, lyrics, curriculumTopic }) => {
     const assignmentKey = String(key || "").trim();
     const cleaned = String(lyrics || "").trim();
     if (!/^(B2-|C1 |C2-)/.test(assignmentKey) || !title || !genre || !arrangement
@@ -11,6 +11,7 @@ export function defineAdvancedSongDrafts(entries) {
     }
     return Object.freeze({
       assignmentKey,
+      ...(curriculumTopic ? {curriculumTopic} : {}),
       title,
       genre,
       musicStyle: genre + ", " + tempo + " BPM: " + arrangement

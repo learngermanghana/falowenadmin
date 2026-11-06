@@ -268,3 +268,21 @@ failures when an upstream cache retains a response allowed only for
 `music.falowen.app`. The rewrite still uses the learner public music catalog;
 track URLs and exact recording validation remain unchanged. There is no new
 function, background polling or automatic retry.
+
+### Current B2/C1 Course Book topics (6 November 2026)
+
+Music Studio uses the current 28 B2 Course Book topics through
+`src/data/b2CanonicalMusicCurriculum.js`, mirrored from learner
+`b2LessonContentAlignment.js` at `b1d1330`. Chapters follow the Course Book;
+historical assignment IDs remain stable. The 28 B2 song drafts have been
+rewritten for these topics. The old identity-led B2 dictionary is removed.
+C1's existing 28 topics and authored songs already follow `c1ContentRefresh.js`.
+
+The build patch validates the canonical B2 source instead of replacing a
+legacy dictionary at build time. Exact signatures of retired B2 cloud drafts
+prevent them from replacing the current editor defaults; custom teacher edits
+remain available. This does not delete cloud documents or change existing MP3s.
+New lyrics are authoring drafts and require new recordings before publication.
+
+To check all 56 topic/chapter mappings against a learner checkout, run
+`node scripts/checkAdvancedMusicCurriculum.mjs /path/to/falowenexamtrainer`.

@@ -1,3 +1,4 @@
+import { isRetiredAdvancedMusicDraft } from "../utils/supersededAdvancedMusic.js";
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { musicRequest, musicBlob, loadSavedMusicLyrics, overwriteSavedMusicLyrics } from '../services/musicStudioService';
 import { buildFalowenMusicPrompt, buildFalowenShortMusicPrompt, musicLyricLimit } from '../utils/musicGenerationPrompt.js';
@@ -10,7 +11,7 @@ import { getMusicTopicStyle, suggestLessonMusicDirection } from '../utils/musicT
 import { MUSIC_PRODUCTION_PROFILES, getMusicProductionProfile } from '../utils/musicProductionProfiles.js';
 import { getReusableSongDraft, getReusableSongDrafts } from '../data/reusableMusicSongbook.js';
 function isSupersededMusicLyrics(key, text) {
-  return (key === 'A2-4.10' && (text.includes('Wir besuchen heute eine neue Stadt.') || text.includes('Links ist ein Platz, rechts ein Café'))) ||
+  return isRetiredAdvancedMusicDraft(key, text) || (key === 'A2-4.10' && (text.includes('Wir besuchen heute eine neue Stadt.') || text.includes('Links ist ein Platz, rechts ein Café'))) ||
     (key === 'A2-3.8' && (text.includes('Im Restaurant ist heute viel los.') || text.includes('Wir haben einen Tisch am Fenster reserviert'))) ||
     (key === 'A1-0.2' && text.includes('Mein Name ist Lena, hallo!') && text.includes('Ich sage: L-E-N-A.')) ||
     (key === 'A1-1.1' && text.includes('Ich bin Ali, du bist Mia.') && text.includes('Ich lerne Deutsch am Morgen.')) ||

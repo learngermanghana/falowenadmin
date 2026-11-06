@@ -1,61 +1,68 @@
 import { defineAdvancedSongDrafts } from "./advancedMusicSongTools.js";
 
-// B2 days 1–7: relationships, identity, media and education.
+// Current B2 Course Book stories; historical assignment keys remain stable.
 export const MUSIC_SONG_DRAFTS_B2_PART1 = defineAdvancedSongDrafts([
   {
     "key": "B2-1.1",
-    "title": "Namen im Spiegel",
+    "title": "Die Tasche an der Tür",
     "genre": "Neo-Soul",
     "tempo": 86,
     "arrangement": "Rhodes voicings, understated Afro-soul bass, brushed rimshots and an expressive guitar response; intimate verses, open chorus.",
-    "lyrics": "[Verse 1]\nIm Ausweis steht mein voller Name,\ndoch keiner kennt die ganze Geschichte.\nIm Spiegel seh ich alte Spuren,\ndie man von außen selten sieht.\n\n[Chorus]\nIch bin mehr als ein einziges Wort,\nmehr als das Bild, das andere sehen.\nWas mich geprägt hat, bleibt ein Teil von mir,\ndoch wohin ich gehe, darf ich wählen.\n\n[Verse 2]\nZu Hause sprach ich anders als im Büro,\npasste den Ton den Räumen an.\nBis jemand fragte: „Wer bist du wirklich?“\nIch musste lachen und schwieg dann.\nVielleicht entsteht Identität dort,\nwo Widersprüche nebeneinander wohnen.\n\n[Chorus]\nIch bin mehr als ein einziges Wort,\nmehr als das Bild, das andere sehen.\n\n[Outro]\nHeute muss ich mich nicht festlegen.\nMein eigener Name klingt weit genug."
+    "lyrics": "[Verse 1]\nVor der Arbeit stand ich wieder beim Bäcker\nund kaufte mein Frühstück einzeln verpackt.\nZu Hause quoll der Eimer über,\nobwohl ich längst von weniger Müll gesprochen hatte.\n\n[Chorus]\nNicht jeder kleine Schritt verändert alles,\ndoch ohne einen bleibt der Weg so weit.\nIch nehme heute meine Tasche mit\nund mache aus dem Vorsatz Wirklichkeit.\n\n[Verse 2]\nDie Verkäuferin erkennt die alte Dose,\ndie gestern noch im Küchenschrank versteckt war.\nWir müssen beide über meinen Umweg lachen; nun spare ich Verpackung, indem ich sie vermeide.\n\n[Outro]\nDie Tasche wartet abends an der Türe.\nFür morgen ist der erste Schritt schon da.",
+    "curriculumTopic": "Umweltschutz im Alltag – Müll vermeiden"
   },
   {
     "key": "B2-1.2",
-    "title": "Zwischen den Zeilen",
+    "title": "Der zweite Kreis",
     "genre": "Alternative R&B",
     "tempo": 82,
     "arrangement": "Soft sub-bass, muted electric guitar, crisp syncopated percussion, tender layered chorus harmonies.",
-    "lyrics": "[Verse 1]\nDeine Nachricht blieb unbeantwortet,\nich las den Satz wohl hundertmal.\nAus einem Punkt am Ende wurde\nin meinem Kopf ein kaltes Signal.\n\n[Pre-Chorus]\nDabei warst du nur müde,\nund ich hatte Angst vor dem Gespräch.\n\n[Chorus]\nZwischen den Zeilen wohnt so viel,\nwas keiner von uns wirklich schrieb.\nSag mir, was du meinst,\nbevor die Stille für uns spricht.\n\n[Verse 2]\nAm Küchentisch legten wir die Handys weg,\nich hörte diesmal wirklich zu.\nDu sagtest: „Ich brauche Zeit für mich“,\nund nicht: „Ich halte nichts von dir.“\nSeitdem frage ich lieber einmal mehr,\nstatt jedes Schweigen auszulegen.\n\n[Outro]\nEin ehrlicher Satz kann Türen öffnen,\ndie tausend Nachrichten nicht finden."
+    "lyrics": "[Verse 1]\nIm Hof steht jemand vor den bunten Tonnen, mit einem Glas und einem Pappkarton.\nEr fragt mich,\nwas hier wirklich wiederkehrt,\nund was am Ende doch verbrannt wird.\n\n[Chorus]\nWas wir nicht brauchen, ist nicht immer wertlos.\nEin zweiter Kreis beginnt mit einer Wahl.\nWir sortieren nicht nur unsre Reste, wir geben alten Dingen neue Zeit.\n\n[Verse 2]\nWir lesen nach,\nbevor wir falsch entscheiden; beschichtetes Papier gehört nicht überall hinein.\nDie kaputte Lampe wird im Laden abgegeben,\nund eine Nachbarin repariert den alten Stuhl.\n\n[Outro]\nAm Abend sitzt er wieder an dem Fenster.\nDas Holz erzählt von einem zweiten Leben.",
+    "curriculumTopic": "Mülltrennung, Recycling und Kreislaufwirtschaft"
   },
   {
     "key": "B2-1.3",
-    "title": "Hinter der Tür",
+    "title": "Die krumme Karotte",
     "genre": "Indie-Electronic",
     "tempo": 92,
     "arrangement": "Pulsing analog synth, shimmering picked guitar, intimate dry lead vocal and lightly shifting 4/4 kick.",
-    "lyrics": "[Verse 1]\nAuf dem Bildschirm glänzt mein Sonntag,\nein perfekter Tisch im Abendlicht.\nNiemand sieht die ungewaschenen Tassen,\noder dass mein Lächeln manchmal bricht.\n\n[Chorus]\nNicht alles gehört ins Schaufenster,\nnicht jeder Schmerz braucht Applaus.\nIch darf im hellen Licht erscheinen\nund gehe trotzdem bei mir ein und aus.\n\n[Verse 2]\nEine Kollegin fragt nach Bildern,\nals gäbe es für alles ein Publikum.\nIch erzähle ihr von meinem Garten,\ndoch lass das schwere Gespräch bewusst stumm.\nManchmal schützt eine geschlossene Tür\ndas, was im Innern wachsen muss.\n\n[Chorus]\nNicht alles gehört ins Schaufenster,\nnicht jeder Schmerz braucht Applaus.\n\n[Outro]\nIch teile, was ich teilen möchte.\nDen Rest bewahr ich bei mir auf."
+    "lyrics": "[Verse 1]\nIm Supermarkt greift sie nach schönen Äpfeln,\ndie krummen lässt sie meistens liegen.\nDoch zu Hause welkt das volle Gemüsefach,\nwährend sie von besserem Einkaufen spricht.\n\n[Chorus]\nJe genauer wir den Hunger planen, desto weniger bleibt später unberührt.\nNicht alles muss vollkommen aussehen, damit es uns am Abend wirklich nährt.\n\n[Verse 2]\nAm Samstag kocht sie mit den Nachbarn Suppe, aus allem,\nwas noch rechtzeitig zu retten war.\nSie teilen kleine Portionen für den Montag,\nstatt wieder einen großen Rest zu lassen.\n\n[Outro]\nDie krumme Karotte liegt nicht mehr im Abfall.\nSie schmeckt nach einem unverhofften Fest.",
+    "curriculumTopic": "Lebensmittelverschwendung und nachhaltiger Konsum"
   },
   {
     "key": "B2-1.4",
-    "title": "Der andere Vertrag",
+    "title": "Ein Glas für morgen",
     "genre": "Afro-Pop",
     "tempo": 101,
     "arrangement": "Palm-wine-inspired high guitar riffs, buoyant bass, lively shaker, low congas and a hopeful melodic chorus.",
-    "lyrics": "[Verse 1]\nDer neue Vertrag liegt auf dem Tisch,\nmehr Geld und ein berühmter Name.\nDoch meine Tochter fragt beim Frühstück:\n„Bist du dann abends wieder da?“\n\n[Chorus]\nNicht jede Leiter führt nach oben,\nwenn unten das Leben auf mich wartet.\nIch will vorankommen, ohne zu verlieren,\nwas mir bisher den Rücken stärkte.\n\n[Verse 2]\nMein Chef verspricht mir große Projekte,\ndie Entscheidung müsse heute fallen.\nIch bitte um zwei Tage Bedenkzeit,\nstatt mich von der Zahl blenden zu lassen.\nAm Ende handel ich flexible Stunden aus,\nund nehme die Verantwortung an.\n\n[Chorus]\nNicht jede Leiter führt nach oben,\nwenn unten das Leben auf mich wartet.\n\n[Outro]\nIch unterschreibe mit ruhiger Hand.\nErfolg braucht manchmal eigene Regeln."
+    "lyrics": "[Verse 1]\nAn der Kasse zählt er leere Flaschen,\ndie Tasche drückt ihm schwer auf seinen Arm.\nDie Einwegdose wäre leichter zu bestellen,\ndoch morgen bliebe wieder neuer Abfall da.\n\n[Chorus]\nIch kaufe mehr als nur den kurzen Augenblick,\nwenn eine Hülle länger bei mir bleibt.\nZwischen bequem und wirklich nötig liegt eine Frage, die mich weiterträgt.\n\n[Verse 2]\nIm Laden fragt er nach der Mehrwegschale, vergleicht die Kosten und den langen Lieferweg.\nNicht jede Lösung passt zu jedem Einkauf; er wählt bewusst,\nstatt blind dem grünen Schild zu glauben.\n\n[Outro]\nDas Glas steht sauber neben seinem Teller.\nBeim nächsten Einkauf nimmt er es zurück.",
+    "curriculumTopic": "Plastik, Verpackungen und bewusster Einkauf"
   },
   {
     "key": "B2-2.5",
-    "title": "Die Frage bleibt",
+    "title": "Zwei Wege durch die Stadt",
     "genre": "Harmonic Soul",
     "tempo": 78,
     "arrangement": "Warm electric piano, upright-style bass, light finger snaps and subtle flute counterpoint; sophisticated but accessible melody.",
-    "lyrics": "[Verse 1]\nIch fand im Buch die fertige Antwort,\ndoch sie erklärte mir noch nichts.\nMein Lehrer nahm den Stift und sagte:\n„Vielleicht beginnt es mit dem Widerspruch.“\n\n[Chorus]\nDie Frage bleibt, wenn Seiten enden,\nsie führt mich weiter als ein Zeugnis.\nIch lerne nicht, um recht zu behalten,\nich lerne, um genauer hinzusehen.\n\n[Verse 2]\nIm Abendkurs sitzt eine Ärztin\nneben einem Mann vom Bau.\nWir bringen völlig andre Wege mit,\nund stellen uns denselben Fragen.\nAls ich den alten Irrtum zugebe,\nwird das Gespräch erst richtig klar.\n\n[Outro]\nKein Abschluss nimmt mir die Neugier.\nSie begleitet mich nach Hause."
+    "lyrics": "[Verse 1]\nWir stehen morgens vor derselben Haustür, du mit dem Schlüssel, ich mit meinem Rad.\nDein Weg zur Arbeit führt weit aus der Stadt,\nwährend mein Büro gleich hinterm Bahnhof liegt.\n\n[Chorus]\nNicht jeder Weg beginnt am selben Orte, nicht jeder Vorschlag trägt uns beide weit.\nWir brauchen eine Stadt mit mehr Verbindungen,\ndamit die gute Wahl auch möglich bleibt.\n\n[Verse 2]\nDu würdest gern die frühe Bahn benutzen,\nsofern der Anschluss nicht so lange dauert.\nWir schreiben an die Stadt und fragen nach; je dichter Busse fahren, desto leichter fällt der Wechsel.\n\n[Outro]\nAm Freitag fahren wir gemeinsam in die Innenstadt.\nDein Autoschlüssel bleibt zum ersten Mal zu Haus.",
+    "curriculumTopic": "Nachhaltige Mobilität und öffentlicher Verkehr"
   },
   {
     "key": "B2-2.6",
-    "title": "Ein Tisch für viele Stimmen",
+    "title": "Das Licht im Treppenhaus",
     "genre": "Afro-Soul",
     "tempo": 88,
     "arrangement": "Highlife-tinged clean guitar, subtle horn pads, round bass and gentle cross-rhythm claps.",
-    "lyrics": "[Verse 1]\nZum Fest bringt jemand Reis mit Kräutern,\nein anderer Brot aus seiner Heimat.\nAm Tisch erzählen alle gleichzeitig,\nund keiner hält das Wort für sich.\n\n[Chorus]\nEine Stadt hat viele Stimmen,\nkeine klingt allein wie sie.\nWo wir Geschichten miteinander teilen,\nwächst ein Platz für Fantasie.\n\n[Verse 2]\nDie Nachbarin erzählt vom Umzug,\nals ihre Straße anders hieß.\nEin junger Musiker mischt alte Lieder\nmit einem Rhythmus von heute.\nWir streiten über das, was bleibt,\nund lachen, weil das Neue dazugehört.\n\n[Chorus]\nEine Stadt hat viele Stimmen,\nkeine klingt allein wie sie.\n\n[Outro]\nAls die Lichter langsam ausgehen,\nnehm ich fremde Worte mit nach Haus."
+    "lyrics": "[Verse 1]\nIm Treppenhaus brennt nachts noch jede Lampe,\nund oben wird bei offenem Fenster geheizt.\nBei uns im Haus wird viel von Zukunft gesprochen,\ndoch niemand kennt den letzten Jahresverbrauch.\n\n[Chorus]\nDie Wärme soll in unseren Zimmern bleiben,\ndie Rechnung darf uns nicht die Hoffnung nehmen.\nWas wir gemeinsam heute anders machen, kann morgen neue Möglichkeiten geben.\n\n[Verse 2]\nWir lesen Zähler ab und dichten alte Fenster,\nbevor wir über neue Anlagen streiten.\nDie Sonne könnte unser Dach mit Strom versorgen,\nsofern die Kosten fair verteilt werden.\n\n[Outro]\nDer Hausflur wird erst hell, wenn jemand kommt.\nDas kleine Licht begleitet unsere Schritte.",
+    "curriculumTopic": "Energie sparen und erneuerbare Energien"
   },
   {
     "key": "B2-2.7",
-    "title": "Der blaue Punkt",
+    "title": "Schatten für die Straße",
     "genre": "Lo-fi Hip-Hop",
     "tempo": 84,
     "arrangement": "Dusty keys, subdued boom-bap drums, smooth bass and a minimal synth arpeggio.",
-    "lyrics": "[Verse 1]\nEin blauer Punkt zeigt mir die Richtung,\ndoch nicht, wohin ich wirklich will.\nDer Bildschirm kennt mein altes Suchen,\nund bietet mir das Gleiche an.\n\n[Chorus]\nIch scroll nicht bis zum Rand der Welt,\nnur weil der nächste Clip schon wartet.\nWas ich erfahre, prüfe ich selbst,\nbevor mein Urteil schneller startet.\n\n[Verse 2]\nEin Bild erreicht uns ohne Quelle,\ndie Nachricht klingt nach großer Gefahr.\nIch suche nach dem ganzen Bericht,\nund plötzlich sieht die Sache anders aus.\nDie Wahrheit hat nicht immer Schlagzeilen,\nmanchmal braucht sie einen zweiten Blick.\n\n[Chorus]\nIch scroll nicht bis zum Rand der Welt,\nnur weil der nächste Clip schon wartet.\n\n[Outro]\nIch leg das Telefon zur Seite.\nDraußen ist der Himmel noch ganz da."
+    "lyrics": "[Verse 1]\nDer Sommer steht in unseren engen Straßen, am Nachmittag ist jede Mauer heiß.\nDie Nachbarin trägt Wasser zu den Bäumen,\ndoch ihre kleine Kanne reicht nicht weit.\n\n[Chorus]\nEine Stadt braucht mehr als neue Wände, sie braucht auch Orte, an denen Leben atmet.\nWo Schatten wächst und Regen bleiben darf, wird aus dem Plan ein Stück bewohnte Zukunft.\n\n[Verse 2]\nIm Stadtteiltreffen zeigen wir die Plätze,\nauf denen längst kein einziger Baum mehr steht.\nMan könnte Dächer begrünen und Wasser sammeln, wodurch die Hitze weniger gefährlich wäre.\n\n[Outro]\nSie stellt die Kanne leise neben ihre Türe.\nIm Herbst soll hier der erste Ahorn stehen.",
+    "curriculumTopic": "Klimafreundliches Wohnen und grüne Städte"
   }
 ]);
