@@ -65,6 +65,38 @@ export function validateAppointmentAction(action, input) {
     return {action,date,time,durationMinutes,topic,meetingUrl};
   }
 
+  if (action === 'saveWeeklySchedule') {
+    const raw = input.weeklySlots;
+    if (!Array.isArray(raw) || raw.length > 42) throw appointmentError('Choose up to 42 weekly times.');
+    const weeklySlots = [];
+    const seen = new Set();
+    for (const slot of raw) {
+      const weekday = slot?.weekday;
+      const time = clean(slot?.time,5);
+      if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6 ||
+          !/^([01]\\d|2[0-3]):[0-5]\\d$/.test(time)) {
+        throw appointmentError('Choose a valid day and time.');
+      }
+      const key = weekday+'@'+time;
+      if (!seen.has(key)) {seen.add(key);weeklySlots.push({weekday,time});}
+    }
+    const durationMinutes = Number(input.durationMinutes);
+    if (!DURATIONS.has(durationMinutes)) throw appointmentError('Choose a valid duration.');
+    weeklySlots.sort((a,b)=>a.weekday-b.weekday || a.time.localeCompare(b.time));
+    for (let i=1;i<weeklySlots.length;i++) {
+      const previous=weeklySlots[i-1], current=weeklySlots[i];
+      if (previous.weekday === current.weekday &&
+          (Number(current.time.slice(0,2))*60+Number(current.time.slice(3))) -
+          (Number(previous.time.slice(0,2))*60+Number(previous.time.slice(3))) < durationMinutes) {
+        throw appointmentError('Times on the same day overlap. Adjust the duration or selection.');
+      }
+    }
+    const meetingUrl = clean(input.meetingUrl,400);
+    if (meetingUrl && !/^https:\\/\\/[^\\s]+$/i.test(meetingUrl)) {
+      throw appointmentError('Meeting links must use HTTPS.');
+    }
+    return {action,weeklySlots,durationMinutes,topic:clean(input.topic,120)||'Falowen consultation',meetingUrl};
+  }
   if (action === 'addRecurringRule') {
     const weekdays = Array.isArray(input.weekdays) ? [...new Set(input.weekdays.map(Number))] : [];
     const times = Array.isArray(input.times) ? [...new Set(input.times.map(x => clean(x,5)))].sort() : [];
@@ -149,7 +181,7 @@ export default async function appointmentHandler(req,res) {
     const action = clean(body.action,30);
     if (action !== 'book') await assertAdmin(req);
     const payload = validateAppointmentAction(action,body);
-    if (action === 'addSlot' || action === 'addRecurringRule') {
+    if (action === 'addSlot' || action === 'addRecurringRule' || action === 'saveWeeklySchedule') {
       if (!payload.meetingUrl) {
         const defaultMeeting = getEnv('APPOINTMENTS_DEFAULT_MEETING_URL');
         if (defaultMeeting && /^https:\/\/[^\s]+$/i.test(defaultMeeting)) payload.meetingUrl = defaultMeeting;
