@@ -66,3 +66,16 @@
 @keyframes lvs-pulse{50%{box-shadow:0 0 0 7px rgba(181,33,56,.10)}}
 @media(max-width:1050px){.lvs-editor{grid-template-columns:minmax(0,1fr)}.lvs-side{display:grid;grid-template-columns:1fr 1fr}.lvs-export{grid-template-columns:1fr}}
 @media(max-width:730px){.lvs-page{padding:1rem .4rem 2rem}.lvs-header{padding:1rem}.lvs-steps,.lvs-side{grid-template-columns:1fr}.lvs-panel{padding:.85rem}.lvs-preview{min-height:175px}.lvs-tools button{flex:1}.lvs-export-settings{grid-template-columns:1fr}.lvs-header-actions{width:100%}.lvs-header-actions>*{flex:1}}
+
+
+/* Hören Studio voice conversion panel: no background polling or new media API. */
+.lvs-tts{display:flex;flex-direction:column;gap:.65rem;border:1px solid #b7d7f4;background:#f4faff;border-radius:12px;padding:.85rem}
+.lvs-tts h3{margin:0;color:#0b4784;font-size:1.04rem}
+.lvs-tts-settings{display:flex;flex-direction:column;gap:.6rem}
+.lvs-tts-settings label{font-weight:650;font-size:.83rem;color:#254467}
+.lvs-tts-settings select{margin-top:.25rem;width:100%;max-width:100%;min-width:0}
+.lvs-tts .lvs-help{margin:0;color:#53657b}
+.lvs-tts-progress{font-size:.82rem;border-left:3px solid #246bc4;padding:.4rem .5rem;color:#214b73}
+.lvs-tts-error{font-size:.83rem;padding:.55rem;border-radius:7px;background:#fff0ec;color:#9a2f1a}
+.lvs-tts button.lvs-tts-refresh{font-size:.8rem;padding:.45rem .6rem}
+.lvs-divider{height:1px;background:#d7e3f1;margin:.15rem 0}
