@@ -64,6 +64,32 @@ export function validateAppointmentAction(action, input) {
     if (meetingUrl && !/^https:\/\/[^\s]+$/i.test(meetingUrl)) throw appointmentError('Meeting links must use HTTPS.');
     return {action,date,time,durationMinutes,topic,meetingUrl};
   }
+
+  if (action === 'addRecurringRule') {
+    const weekdays = Array.isArray(input.weekdays) ? [...new Set(input.weekdays.map(Number))] : [];
+    const times = Array.isArray(input.times) ? [...new Set(input.times.map(x => clean(x,5)))].sort() : [];
+    const durationMinutes = Number(input.durationMinutes);
+    const topic = clean(input.topic,120) || 'Falowen consultation';
+    const meetingUrl = clean(input.meetingUrl,400);
+    if (!weekdays.length || weekdays.length > 7 || weekdays.some(n => !Number.isInteger(n) || n < 0 || n > 6)) {
+      throw appointmentError('Choose at least one weekday.');
+    }
+    if (!times.length || times.length > 6 || times.some(t => !/^([01]\\d|2[0-3]):[0-5]\\d$/.test(t))) {
+      throw appointmentError('Choose up to six valid appointment times.');
+    }
+    if (!DURATIONS.has(durationMinutes)) throw appointmentError('Choose a valid duration.');
+    if (times.some((time,i) => i > 0 && (Number(time.slice(0,2))*60+Number(time.slice(3,5))) -
+      (Number(times[i-1].slice(0,2))*60+Number(times[i-1].slice(3,5))) < durationMinutes)) {
+      throw appointmentError('Selected recurring times overlap. Reduce the duration or choose wider spacing.');
+    }
+    if (meetingUrl && !/^https:\/\/[^\\s]+$/i.test(meetingUrl)) throw appointmentError('Meeting links must use HTTPS.');
+    return {action,weekdays,times,durationMinutes,topic,meetingUrl};
+  }
+  if (action === 'stopRecurringRule') {
+    const ruleId = clean(input.ruleId,100);
+    if (!/^[0-9a-f-]{30,40}$/i.test(ruleId)) throw appointmentError('Invalid recurring schedule.');
+    return {action,ruleId};
+  }
   if (action === 'deleteSlot') {
     const slotId = clean(input.slotId,100);
     if (!/^[0-9a-f-]{30,40}$/i.test(slotId)) throw appointmentError('Invalid slot.');
@@ -123,6 +149,12 @@ export default async function appointmentHandler(req,res) {
     const action = clean(body.action,30);
     if (action !== 'book') await assertAdmin(req);
     const payload = validateAppointmentAction(action,body);
+    if (action === 'addSlot' || action === 'addRecurringRule') {
+      if (!payload.meetingUrl) {
+        const defaultMeeting = getEnv('APPOINTMENTS_DEFAULT_MEETING_URL');
+        if (defaultMeeting && /^https:\/\/[^\\s]+$/i.test(defaultMeeting)) payload.meetingUrl = defaultMeeting;
+      }
+    }
     const result = await scriptRequest(action,payload);
     return res.status(200).json(result);
   } catch(error) {
