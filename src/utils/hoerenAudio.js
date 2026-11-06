@@ -103,6 +103,11 @@ function readClip(wavBytes) {
   return sound;
 }
 
+// Used by Lesson Video Studio to place slide changes at exact audio boundaries.
+export function wavDurationSeconds(bytes) {
+  return readClip(bytes).length / (24_000 * 2);
+}
+
 function writeWav(samples) {
   const output = new Uint8Array(44 + samples.length);
   const d = new DataView(output.buffer);
