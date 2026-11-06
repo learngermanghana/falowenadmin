@@ -1,0 +1,35 @@
+name: Lesson Video Studio checks
+
+on:
+  pull_request:
+    paths:
+      - "src/pages/LessonVideoStudioPage.jsx"
+      - "src/pages/LessonVideoStudioPage.css"
+      - "src/utils/lessonVideoStudio.js"
+      - "src/App.jsx"
+      - "tests/lesson-video-studio.test.js"
+      - ".github/workflows/lesson-video-studio.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/pages/LessonVideoStudioPage.jsx"
+      - "src/pages/LessonVideoStudioPage.css"
+      - "src/utils/lessonVideoStudio.js"
+      - "src/App.jsx"
+      - "tests/lesson-video-studio.test.js"
+
+jobs:
+  video-studio:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Check narration and highlight behavior
+        run: node --test tests/lesson-video-studio.test.js
+      - name: Compile Admin UI
+        run: npx vite build
