@@ -2,6 +2,7 @@ import { Buffer } from "node:buffer";
 import socialMetricsHandler from "./social-metrics.js";
 import studentResultsSheetUpsertHandler from "./student-results-sheet-upsert.js";
 import integrationHubHandler from "./integration-hub.js";
+import appointmentHandler from "./appointments.js";
 import { autoMarkSubmission } from "../src/utils/autoMarking.js";
 
 const OBJECTIVE_WEIGHT = 0.5;
@@ -1292,6 +1293,8 @@ export default async function handler(req, res) {
   if (path === "deployment-status") return deploymentStatusHandler(req, res);
 
   if (path === "social-metrics") return socialMetricsHandler(req, res);
+
+  if (path === "appointments") return appointmentHandler(req, res);
 
   if (path === "student-results/sheet-upsert") return studentResultsSheetUpsertHandler(req, res);
 
