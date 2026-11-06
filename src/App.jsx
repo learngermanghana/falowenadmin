@@ -8,6 +8,8 @@ import "./App.css";
 import "./LiveClassesMobile.css";
 
 const PaystackPage = lazy(() => import("./pages/PaystackPage.jsx"));
+const AppointmentAdminPage = lazy(() => import("./pages/AppointmentAdminPage.jsx"));
+const AppointmentBookingPage = lazy(() => import("./pages/AppointmentBookingPage.jsx"));
 const PartnershipPage = lazy(() => import("./pages/PartnershipPage.jsx"));
 const ReferralReviewPage = lazy(() => import("./pages/ReferralReviewPage.jsx"));
 const OrganisationEnrolmentPage = lazy(() => import("./pages/OrganisationEnrolmentPage.jsx"));
@@ -185,6 +187,7 @@ function TopBar() {
                 <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
                 <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Slides</Link>
                 <Link to="/holiday-calendar" onClick={() => setMenuOpen(false)}>Holidays</Link>
+                <Link to="/appointments" onClick={() => setMenuOpen(false)}>Appointments</Link>
               </>
             )}
           </div>
@@ -273,6 +276,8 @@ export default function App() {
           <Routes>
           <Route path="/partnerships" element={<PartnershipPage />} />
           <Route path="/paystack" element={<ProtectedRoute allowStaff={false}><PaystackPage /></ProtectedRoute>} />
+          <Route path="/appointments" element={<ProtectedRoute allowStaff={false}><AppointmentAdminPage /></ProtectedRoute>} />
+          <Route path="/book-appointment" element={<AppointmentBookingPage />} />
           <Route path="/referral-review" element={<ProtectedRoute allowStaff={false}><ReferralReviewPage /></ProtectedRoute>} />
           <Route path="/organisation-enrolment" element={<OrganisationEnrolmentPage />} />
           <Route path="/organisation-submissions" element={<ProtectedRoute allowStaff={false}><OrganisationEnrolmentPage review /></ProtectedRoute>} />
