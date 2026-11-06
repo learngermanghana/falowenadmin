@@ -258,14 +258,15 @@ export const a2WorkbookAlignedSlidesDays21To24 = [
     ],
     teacherNotesEn: [
       "Use the real Day 23 grammar page: transport normally uses mit + Dativ; destinations use zu + Dativ and nach for cities/countries without an article; zu Fuß is a fixed expression.",
+      "Start with the published Fahrrad zur Schule song, then use the separate private Day 23 conversation for open listening notes. No verified conversation transcript or fixed answer key has been supplied; compare answers with the recording instead of presenting invented dialogue facts.",
       "Make the article change visible: die Bahn → mit der Bahn; der Bus → mit dem Bus.",
       "Follow the workbook speaking scope beyond commuting: transport types, car types/brands, car parts, traffic safety and everyday travel, while keeping the core personal prompt about the school/work route.",
       "Keep the workbook assessment focused on the Markus commute reading: scan for how he reaches the station, S-Bahn duration, why he avoids cycling in winter, Jan's parking problem and the 65-euro monthly ticket.",
     ],
     interactionFlow: [
-      { phase: "Commute map", detailEn: "6 min: each student states origin, destination, transport and duration." },
+      { phase: "Recorded opening", detailEn: "10 min: published song, then the separate private school/work-route conversation with open listening questions." },
       { phase: "Preposition sort", detailEn: "9 min: sort examples into mit + Dativ, zu/zur/zum, nach and the fixed phrase zu Fuß." },
-      { phase: "Transport mini-presentation", detailEn: "10 min: route → reason → advantage/disadvantage → conclusion." },
+      { phase: "Route scenario", detailEn: "8 min: choose a route, explain transport/duration, justify the choice and confirm an arrival plan. Reveal models only after oral answers." },
       { phase: "Reading bridge", detailEn: "10 min: preview Markus' commute blog and practise scanning for transport, duration, reason, problem and price." },
     ],
     wrapUpTaskDe: "Erkläre deinen Schul- oder Arbeitsweg in 5 Sätzen. Benutze mit + Dativ, eine Zielangabe mit zur/zum oder nach und einen Grund mit weil.",

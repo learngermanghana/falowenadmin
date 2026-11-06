@@ -102,3 +102,13 @@ live reminder emails, attendance confirmations and automatic check-in opening.
 The attendance page links to the learner task instead of present/absent controls.
 Existing session metadata is identified by assignment IDs even before repair.
 No new background requests or assessment scoring changes are introduced.
+
+## A2 Day 23 classroom media and scenarios — 6 November 2026
+
+`A2-9.23` / `a2-day-23-schul-arbeitsweg` retains its canonical grammar, Markus reading, workbook submission identity and 11-stage presenter order. Its opening now uses the native published-song player for the exact `music/a2/day-23/Fahrrad zur Schule.mp3` recording, followed by a separate interactive Hören stage for the teacher-supplied `a2/day-23/wie-kommst-du-zur-schule-oder-zur-arbeit.mp3` conversation. The learner repository's existing staff-only classroom signer must allow this exact day/key pair before playback works. No public private-audio URL, bucket credential, generated media or student grading change is introduced.
+
+The conversation transcript and fixed answer key were not supplied. Five open listening/transfer prompts use teacher discussion hints rather than invented dialogue facts or MCQ keys; the renderer labels those reveals as discussion hints. The existing published music library supplies the exact song recording/lyrics/timings if available. Draft lyrics or guessed cues must never substitute for a missing recording-specific pack.
+
+The focused-practice slot becomes three teacher-led route scenarios (late bus, rain on the work route, connection to Berlin), each with three progressive prompts and hidden optional models using mit + Dativ, zur/zum, nach and zu Fuß. No additional practice stage, student login, grade or submission is created. The uploaded conversation is ungraded classroom material; it does not add a workbook Hören assessment.
+
+Teaching CI failures on 6 November came from stale expectations: one opening test omitted the already-enabled A2 Day 1 song, an audio-route assertion omitted Day 1, and the wrap-up challenge list omitted Day 1. Tests now derive opening/challenge expectations from the authored registries where appropriate, while retaining exact-key, stage-order, published-track and staff-access regression checks. The Day 23 permalink is included in the teaching workflow.

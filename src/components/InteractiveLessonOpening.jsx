@@ -12,7 +12,7 @@ const AUDIO_API = (import.meta.env.VITE_FALOWEN_COURSE_MEDIA_API_URL
 
 function RevealPanel({ activity }) {
   return <div className="pharm-reveal" role="status">
-    <span className="pharm-eyebrow">MUSTERLÖSUNG</span>
+    <span className="pharm-eyebrow">{activity.openResponse ? "BESPRECHUNGSHINWEIS" : "MUSTERLÖSUNG"}</span>
     <p className="pharm-answer">{activity.answer}</p>
     {activity.explanation && <small>{activity.explanation}</small>}
   </div>;
@@ -76,7 +76,7 @@ export default function InteractiveLessonOpening({ stage, slide }) {
       if (isB1Classroom) params.set("level", "B1");
       const audioEndpoint = isB1Classroom
         ? "https://www.falowen.app/api/course-media/classroom/audio-url"
-        : lesson.listening.level === "A2" && [1, 18, 19, 20, 21].includes(lesson.listening.day)
+        : lesson.listening.level === "A2" && [1, 18, 19, 20, 21, 23].includes(lesson.listening.day)
           ? "https://www.falowen.app/api/course-media/a2/classroom-audio-url"
           : `${AUDIO_API}/course-media/${lesson.listening.level.toLowerCase()}/audio-url`;
       const response = await fetch(`${audioEndpoint}?${params}`, {
@@ -152,7 +152,7 @@ export default function InteractiveLessonOpening({ stage, slide }) {
       {Array.isArray(activity.lines) && <div className="pharm-lines">{activity.lines.map((line,index)=><p key={index}>{line}</p>)}</div>}
       {showAnswer && <RevealPanel activity={activity}/>}
       <div className="pharm-actions">
-        <button type="button" className="pharm-btn pharm-btn-primary" onClick={() => setShowAnswer(!showAnswer)}>{showAnswer ? "Lösung verbergen" : "✓ Musterlösung zeigen"}</button>
+        <button type="button" className="pharm-btn pharm-btn-primary" onClick={() => setShowAnswer(!showAnswer)}>{showAnswer ? "Hinweis verbergen" : activity.openResponse ? "Besprechungshinweis zeigen" : "✓ Musterlösung zeigen"}</button>
         <button type="button" className="pharm-btn pharm-btn-soft" onClick={() => setShowHint(!showHint)}>{showHint ? "Hinweis verbergen" : "💡 Lehrerhinweis"}</button>
       </div>
       {showHint && <p className="pharm-hint"><b>Lehrer:</b> {listening ? activity.hint : activity.teacherHint}</p>}

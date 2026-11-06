@@ -1,5 +1,39 @@
 // A2 teacher-led oral missions. Each replaces exactly one existing focused-practice page.
 const definitions = [
+  {
+    assignmentId: "A2-9.23", title: "Pünktlich ankommen", eyebrow: "Schul- und Arbeitswege planen",
+    grammar: "mit + Dativ · zur / zum · nach · zu Fuß · weil",
+    goal: "Choose a realistic route, explain the transport and duration, then react to a change using simple A2 German.",
+    scenarios: [
+      {
+        id: "day23-bus", label: "Der Bus kommt zu spät", icon: "🚌",
+        context: "Dein Deutschkurs beginnt um 8 Uhr. Es ist 7:20 Uhr. Der nächste Bus kommt erst um 7:50 Uhr und braucht 25 Minuten. Zu Fuß brauchst du 30 Minuten.",
+        steps: [
+          {actionDe:"Weg wählen",questionDe:"Wie kommst du heute zum Deutschkurs, damit du pünktlich ankommst?",modelDe:"Ich gehe heute zu Fuß zum Deutschkurs. Der Weg dauert 30 Minuten."},
+          {actionDe:"Entscheidung begründen",questionDe:"Warum nimmst du heute nicht den Bus? Begründe mit weil.",modelDe:"Ich nehme den Bus nicht, weil ich dann zu spät zum Deutschkurs komme."},
+          {actionDe:"Plan bestätigen",questionDe:"Wann kommst du an und was sagst du deiner Lernpartnerin?",modelDe:"Ich komme um 7:50 Uhr an. Wir können uns vor dem Kursraum treffen."},
+        ],
+      },
+      {
+        id: "day23-rain", label: "Regen auf dem Arbeitsweg", icon: "🌧️",
+        context: "Du fährst normalerweise 25 Minuten mit dem Fahrrad zur Arbeit. Heute regnet es stark. Mit der Bahn dauert der Weg 35 Minuten. Du musst um 8 Uhr dort sein und kannst um 7:15 Uhr losfahren.",
+        steps: [
+          {actionDe:"Alternative nennen",questionDe:"Mit welchem Verkehrsmittel fährst du heute zur Arbeit und wie lange dauert es?",modelDe:"Heute fahre ich mit der Bahn zur Arbeit. Der Weg dauert 35 Minuten."},
+          {actionDe:"Grund erklären",questionDe:"Warum lässt du das Fahrrad heute zu Hause? Benutze weil.",modelDe:"Ich lasse das Fahrrad zu Hause, weil es stark regnet."},
+          {actionDe:"Zeit prüfen",questionDe:"Wann fährst du los und wann kommst du bei der Arbeit an?",modelDe:"Ich fahre um 7:15 Uhr los und komme um 7:50 Uhr an. Ich bin pünktlich."},
+        ],
+      },
+      {
+        id: "day23-connection", label: "Zusammen nach Berlin", icon: "🚆",
+        context: "Am Samstag fährst du mit einem Freund nach Berlin. Euer Zug fährt um 9 Uhr. Mit dem Bus braucht ihr 20 Minuten zum Bahnhof. Ihr wollt schon um 8:40 Uhr am Bahnhof sein.",
+        steps: [
+          {actionDe:"Route beschreiben",questionDe:"Wie kommt ihr zuerst zum Bahnhof und danach nach Berlin?",modelDe:"Wir fahren mit dem Bus zum Bahnhof. Danach fahren wir mit dem Zug nach Berlin."},
+          {actionDe:"Treffzeit planen",questionDe:"Wann müsst ihr spätestens mit dem Bus losfahren, damit ihr um 8:40 Uhr am Bahnhof seid?",modelDe:"Wir müssen spätestens um 8:20 Uhr mit dem Bus losfahren."},
+          {actionDe:"Partner einbeziehen",questionDe:"Wie fragst du deinen Freund nach seinem Weg und bestätigst euren Treffpunkt?",modelDe:"Wie kommst du zur Bushaltestelle? Wir treffen uns dort um 8:15 Uhr."},
+        ],
+      },
+    ],
+  },
 {
   "assignmentId": "A2-1.1",
   "title": "Small Talk Challenge",

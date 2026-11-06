@@ -69,7 +69,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Verify reusable A2/B1 classroom openings and Hören preview
-        run: node --test tests/a2-day17-pharmacy-activities.test.js tests/a2-b1-reading-common-mistakes.test.js tests/a2-day19-listening.test.js tests/a2-day21-modern-music-hoeren-presenter.test.js
+        run: node --test tests/a2-day17-pharmacy-activities.test.js tests/a2-b1-reading-common-mistakes.test.js tests/a2-day19-listening.test.js tests/a2-day21-modern-music-hoeren-presenter.test.js tests/a2-day23-modern-presenter.test.js
       - name: Verify image assets and non-displacing presenter layout
         run: node --test tests/presenter-slide-photos.test.js
       - name: Apply B2/C1 speaking-model patch
@@ -82,7 +82,7 @@ jobs:
         run: node --test tests/b1-day18-teacher-career-challenge.test.js tests/b1-presenter-v2-all-days.test.js tests/b1-six-teacher-challenges.test.js tests/a2-b1-reflective-wrapup.test.js
       - name: Verify A2/B1 reading evidence labels and teacher answers
         run: node --test tests/presenter-reading-and-clarification.test.js tests/a2-b1-curated-knowledge-answers.test.js tests/presenter-vocabulary-cloze-a2-c2.test.js
-      - name: Verify twelve A2 scenario challenge replacements
+      - name: Verify A2 scenario challenge replacements
         run: node --test tests/a2-twelve-teacher-challenges.test.js
       - name: Verify A2 warm-up followups and Wortschatz questions
         run: node --test tests/a2-curated-warmup-and-vocabulary.test.js tests/a2-b1-warmup-support.test.js
