@@ -92,3 +92,19 @@
   .appt-recurring-actions { align-items:stretch; flex-direction:column; }
   .appt-recurring-actions .appt-primary { width:100%; }
 }
+
+/* One weekly timetable: each cell controls exactly one weekday/start-time pair. */
+.appt-weekly-scroll { width:100%; overflow-x:auto; padding-bottom:4px; }
+.appt-weekly-table { width:100%; border-collapse:separate; border-spacing:5px; min-width:610px; }
+.appt-weekly-table th { font-size:13px; font-weight:750; color:#334658; }
+.appt-weekly-table tbody th { text-align:left; white-space:nowrap; padding-right:7px; }
+.appt-weekly-table td { padding:0; text-align:center; }
+.appt-day-toggle { border:0; background:transparent; border-radius:8px; padding:8px 4px; font:inherit; font-weight:750; cursor:pointer; color:#245747; width:100%; }
+.appt-day-toggle:hover:not(:disabled) { background:#e9f4ef; }
+.appt-grid-cell { width:100%; min-height:42px; border:1px solid #d8e1e9; background:#f6f8fa; border-radius:9px; color:#9ba8b4; font-size:20px; font-weight:800; cursor:pointer; }
+.appt-grid-cell.selected { background:#176b59; border-color:#176b59; color:white; }
+.appt-grid-cell:hover:not(:disabled) { border-color:#176b59; }
+.appt-grid-cell:focus-visible,.appt-day-toggle:focus-visible { outline:2px solid #176b59; outline-offset:2px; }
+.appt-optional-settings { border-top:1px solid var(--appt-line); padding-top:12px; }
+.appt-optional-settings summary { cursor:pointer; font-size:13px; font-weight:700; color:#40576b; }
+.appt-optional-settings label { margin-top:12px; }
