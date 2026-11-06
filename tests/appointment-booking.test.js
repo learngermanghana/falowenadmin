@@ -29,3 +29,32 @@ test("invalid, unknown and delete actions are not accepted", () => {
   assert.throws(()=>validateAppointmentAction("deleteSlot",{slotId:"foo"}),/Invalid slot/);
   assert.throws(()=>validateAppointmentAction("broadcast",{}),/Unknown appointment action/);
 });
+
+
+test("weekly recurring rules accept selected weekdays and nonoverlapping afternoon times", () => {
+  const payload = validateAppointmentAction("addRecurringRule", {
+    weekdays:[1,2,3,4,5,5],times:["16:00","14:00","15:00","15:00"],
+    durationMinutes:30,topic:"Falowen consultation",meetingUrl:""
+  });
+  assert.deepEqual(payload.weekdays,[1,2,3,4,5]);
+  assert.deepEqual(payload.times,["14:00","15:00","16:00"]);
+  assert.equal(payload.durationMinutes,30);
+  assert.throws(()=>validateAppointmentAction("addRecurringRule",{
+    weekdays:[],times:["14:00"],durationMinutes:30
+  }),/weekday/);
+  assert.throws(()=>validateAppointmentAction("addRecurringRule",{
+    weekdays:[1],times:["14:00","14:30"],durationMinutes:60
+  }),/overlap/);
+  assert.throws(()=>validateAppointmentAction("addRecurringRule",{
+    weekdays:[1],times:["14:00"],durationMinutes:30,meetingUrl:"http://zoom.us/j/123"
+  }),/HTTPS/);
+  assert.throws(()=>validateAppointmentAction("addRecurringRule",{
+    weekdays:[8],times:["14:00"],durationMinutes:30
+  }),/weekday/);
+});
+test("stopping recurring slots requires a UUID and does not permit arbitrary actions", () => {
+  assert.deepEqual(validateAppointmentAction("stopRecurringRule",{ruleId:slotId}),{
+    action:"stopRecurringRule",ruleId:slotId
+  });
+  assert.throws(()=>validateAppointmentAction("stopRecurringRule",{ruleId:"bad"}),/Invalid recurring schedule/);
+});
