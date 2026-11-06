@@ -5,18 +5,26 @@ on:
     paths:
       - "src/pages/LessonVideoStudioPage.jsx"
       - "src/pages/LessonVideoStudioPage.css"
+      - "src/pages/LessonDictionaryVideoStudio.jsx"
+      - "src/pages/LessonDictionaryVideoStudio.css"
+      - "src/utils/lessonDictionaryStudio.js"
       - "src/utils/lessonVideoStudio.js"
       - "src/App.jsx"
       - "tests/lesson-video-studio.test.js"
+      - "tests/lesson-dictionary-studio.test.js"
       - ".github/workflows/lesson-video-studio.yml"
   push:
     branches: [main]
     paths:
       - "src/pages/LessonVideoStudioPage.jsx"
       - "src/pages/LessonVideoStudioPage.css"
+      - "src/pages/LessonDictionaryVideoStudio.jsx"
+      - "src/pages/LessonDictionaryVideoStudio.css"
+      - "src/utils/lessonDictionaryStudio.js"
       - "src/utils/lessonVideoStudio.js"
       - "src/App.jsx"
       - "tests/lesson-video-studio.test.js"
+      - "tests/lesson-dictionary-studio.test.js"
 
 jobs:
   video-studio:
