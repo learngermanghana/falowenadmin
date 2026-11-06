@@ -74,7 +74,7 @@ export function validateAppointmentAction(action, input) {
     if (!weekdays.length || weekdays.length > 7 || weekdays.some(n => !Number.isInteger(n) || n < 0 || n > 6)) {
       throw appointmentError('Choose at least one weekday.');
     }
-    if (!times.length || times.length > 6 || times.some(t => !/^([01]\\d|2[0-3]):[0-5]\\d$/.test(t))) {
+    if (!times.length || times.length > 6 || times.some(t => !/^([01]\d|2[0-3]):[0-5]\d$/.test(t))) {
       throw appointmentError('Choose up to six valid appointment times.');
     }
     if (!DURATIONS.has(durationMinutes)) throw appointmentError('Choose a valid duration.');
@@ -82,7 +82,7 @@ export function validateAppointmentAction(action, input) {
       (Number(times[i-1].slice(0,2))*60+Number(times[i-1].slice(3,5))) < durationMinutes)) {
       throw appointmentError('Selected recurring times overlap. Reduce the duration or choose wider spacing.');
     }
-    if (meetingUrl && !/^https:\/\/[^\\s]+$/i.test(meetingUrl)) throw appointmentError('Meeting links must use HTTPS.');
+    if (meetingUrl && !/^https:\/\/[^\s]+$/i.test(meetingUrl)) throw appointmentError('Meeting links must use HTTPS.');
     return {action,weekdays,times,durationMinutes,topic,meetingUrl};
   }
   if (action === 'stopRecurringRule') {
@@ -152,7 +152,7 @@ export default async function appointmentHandler(req,res) {
     if (action === 'addSlot' || action === 'addRecurringRule') {
       if (!payload.meetingUrl) {
         const defaultMeeting = getEnv('APPOINTMENTS_DEFAULT_MEETING_URL');
-        if (defaultMeeting && /^https:\/\/[^\\s]+$/i.test(defaultMeeting)) payload.meetingUrl = defaultMeeting;
+        if (defaultMeeting && /^https:\/\/[^\s]+$/i.test(defaultMeeting)) payload.meetingUrl = defaultMeeting;
       }
     }
     const result = await scriptRequest(action,payload);
