@@ -11,6 +11,7 @@ on:
       - "src/utils/lessonVideoStudio.js"
       - "src/App.jsx"
       - "tests/lesson-video-studio.test.js"
+      - "tests/admin-unused-navigation.test.js"
       - "tests/lesson-dictionary-studio.test.js"
       - ".github/workflows/lesson-video-studio.yml"
   push:
@@ -24,6 +25,7 @@ on:
       - "src/utils/lessonVideoStudio.js"
       - "src/App.jsx"
       - "tests/lesson-video-studio.test.js"
+      - "tests/admin-unused-navigation.test.js"
       - "tests/lesson-dictionary-studio.test.js"
 
 jobs:
@@ -38,6 +40,6 @@ jobs:
       - name: Install
         run: npm ci
       - name: Check narration and highlight behavior
-        run: node --test tests/lesson-video-studio.test.js tests/lesson-dictionary-studio.test.js
+        run: node --test tests/lesson-video-studio.test.js tests/lesson-dictionary-studio.test.js tests/admin-unused-navigation.test.js
       - name: Compile Admin UI
         run: npx vite build

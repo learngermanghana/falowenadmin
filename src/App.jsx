@@ -177,14 +177,13 @@ function TopBar() {
                 <Link to="/exam-file" onClick={() => setMenuOpen(false)}>Goethe Exam File</Link>
                 <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
                 <Link to="/social-media" onClick={() => setMenuOpen(false)}>Social Media</Link>
-                {String(import.meta.env.VITE_HOEREN_STUDIO_OWNER_UID || "").trim() === user.uid ? <><Link to="/ai-studio" onClick={() => setMenuOpen(false)}>AI Hören Studio</Link><Link to="/music-studio" onClick={() => setMenuOpen(false)}>Falowen Music Studio</Link><Link to="/lesson-video-studio" onClick={() => setMenuOpen(false)}>Lesson Video Studio</Link><Link to="/music-analytics" onClick={() => setMenuOpen(false)}>Music Analytics</Link></> : null}
+                {String(import.meta.env.VITE_HOEREN_STUDIO_OWNER_UID || "").trim() === user.uid ? <><Link to="/ai-studio" onClick={() => setMenuOpen(false)}>AI Hören Studio</Link><Link to="/music-studio" onClick={() => setMenuOpen(false)}>Falowen Music Studio</Link><Link to="/music-analytics" onClick={() => setMenuOpen(false)}>Music Analytics</Link></> : null}
                 <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
                 <Link to="/timed-attempts" onClick={() => setMenuOpen(false)}>Mock Monitoring & Timers</Link>
                 <Link to="/exam-tracking" onClick={() => setMenuOpen(false)}>Exam Tracking</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
                 <Link to="/marking" onClick={() => setMenuOpen(false)}>Marking</Link>
                 <Link to="/student-results" onClick={() => setMenuOpen(false)}>Results</Link>
-                <Link to="/examTutorReviewQueue" onClick={() => setMenuOpen(false)}>Exam Review</Link>
                 <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
                 <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Slides</Link>
                 <Link to="/holiday-calendar" onClick={() => setMenuOpen(false)}>Holidays</Link>
