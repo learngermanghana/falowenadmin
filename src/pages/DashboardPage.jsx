@@ -328,13 +328,6 @@ export default function DashboardPage() {
           label="Open Marking"
           tone="indigo"
         />
-        <ActionCard
-          title="Exam review"
-          body="Review exam warm-up and exam-prep writing sent separately from normal class submissions."
-          to="/examTutorReviewQueue"
-          label="Open Exam Review"
-          tone="blue"
-        />
         <ActionCard title="Grammar workspace" body="Load grammar issue reports only when you open the workspace." to="/grammar-issues" label="Open Grammar Issues" tone="violet" />
       </section>
 
