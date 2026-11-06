@@ -65,6 +65,38 @@ export function validateAppointmentAction(action, input) {
     return {action,date,time,durationMinutes,topic,meetingUrl};
   }
 
+  if (action === 'saveWeeklySchedule') {
+    const raw = input.weeklySlots;
+    if (!Array.isArray(raw) || raw.length > 42) throw appointmentError('Choose up to 42 weekly times.');
+    const weeklySlots = [];
+    const seen = new Set();
+    for (const slot of raw) {
+      const weekday = slot?.weekday;
+      const time = clean(slot?.time,5);
+      if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6 ||
+          !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
+        throw appointmentError('Choose a valid day and time.');
+      }
+      const key = weekday+'@'+time;
+      if (!seen.has(key)) {seen.add(key);weeklySlots.push({weekday,time});}
+    }
+    const durationMinutes = Number(input.durationMinutes);
+    if (!DURATIONS.has(durationMinutes)) throw appointmentError('Choose a valid duration.');
+    weeklySlots.sort((a,b)=>a.weekday-b.weekday || a.time.localeCompare(b.time));
+    for (let i=1;i<weeklySlots.length;i++) {
+      const previous=weeklySlots[i-1], current=weeklySlots[i];
+      if (previous.weekday === current.weekday &&
+          (Number(current.time.slice(0,2))*60+Number(current.time.slice(3))) -
+          (Number(previous.time.slice(0,2))*60+Number(previous.time.slice(3))) < durationMinutes) {
+        throw appointmentError('Times on the same day overlap. Adjust the duration or selection.');
+      }
+    }
+    const meetingUrl = clean(input.meetingUrl,400);
+    if (meetingUrl && !/^https:\/\/[^\s]+$/i.test(meetingUrl)) {
+      throw appointmentError('Meeting links must use HTTPS.');
+    }
+    return {action,weeklySlots,durationMinutes,topic:clean(input.topic,120)||'Falowen consultation',meetingUrl};
+  }
   if (action === 'addRecurringRule') {
     const weekdays = Array.isArray(input.weekdays) ? [...new Set(input.weekdays.map(Number))] : [];
     const times = Array.isArray(input.times) ? [...new Set(input.times.map(x => clean(x,5)))].sort() : [];
@@ -96,6 +128,59 @@ export function validateAppointmentAction(action, input) {
     return {action,slotId};
   }
   throw appointmentError('Unknown appointment action.');
+}
+/**
+ * Old Apps Script deployments understand cross-product recurring rules, not
+ * individual day/time pairs. Group identical day patterns into at most seven
+ * rules so the new one-button timetable works before a script redeployment.
+ */
+export function groupWeeklySlots(weeklySlots) {
+  const days=new Map();
+  for(const {weekday,time} of weeklySlots){
+    if(!days.has(weekday)) days.set(weekday,[]);
+    days.get(weekday).push(time);
+  }
+  const patterns=new Map();
+  for(const [weekday,times] of days){
+    const sorted=[...new Set(times)].sort();
+    const key=sorted.join(',');
+    if(!patterns.has(key)) patterns.set(key,{weekdays:[],times:sorted});
+    patterns.get(key).weekdays.push(weekday);
+  }
+  return [...patterns.values()].map(group=>({
+    weekdays:group.weekdays.sort((a,b)=>a-b),times:group.times
+  }));
+}
+async function saveWeeklySchedule(values){
+  try {
+    return await scriptRequest('saveWeeklySchedule',values);
+  } catch(error){
+    // Upgrade-safe fallback only for existing Apps Script versions.
+    if(error.code!=='invalid_action') throw error;
+  }
+  const before=await scriptRequest('adminList');
+  const previous=(before.rules||[]).filter(rule=>rule.status==='active');
+  let removed=0,generated=0;
+  for(const rule of previous){
+    const result=await scriptRequest('stopRecurringRule',{ruleId:rule.ruleId});
+    removed+=Number(result.removed)||0;
+  }
+  // Old manually created slots are also removed, keeping the saved weekly grid authoritative.
+  const activeAfter=await scriptRequest('adminList');
+  const adHoc=(activeAfter.slots||[]).filter(slot=>slot.status==='open'&&!slot.originRuleId);
+  for(const slot of adHoc){
+    await scriptRequest('deleteSlot',{slotId:slot.slotId});
+    removed++;
+  }
+  const groups=groupWeeklySlots(values.weeklySlots);
+  for(const group of groups){
+    const result=await scriptRequest('addRecurringRule',{
+      ...group,topic:values.topic,durationMinutes:values.durationMinutes,
+      meetingUrl:values.meetingUrl
+    });
+    generated+=Number(result.generated)||0;
+  }
+  return {ok:true,removed,generated,compatibleMode:true};
 }
 async function scriptRequest(action, values = {}) {
   const url = getEnv('APPOINTMENTS_SCRIPT_URL');
@@ -149,13 +234,13 @@ export default async function appointmentHandler(req,res) {
     const action = clean(body.action,30);
     if (action !== 'book') await assertAdmin(req);
     const payload = validateAppointmentAction(action,body);
-    if (action === 'addSlot' || action === 'addRecurringRule') {
+    if (action === 'addSlot' || action === 'addRecurringRule' || action === 'saveWeeklySchedule') {
       if (!payload.meetingUrl) {
         const defaultMeeting = getEnv('APPOINTMENTS_DEFAULT_MEETING_URL');
         if (defaultMeeting && /^https:\/\/[^\s]+$/i.test(defaultMeeting)) payload.meetingUrl = defaultMeeting;
       }
     }
-    const result = await scriptRequest(action,payload);
+    const result = action === 'saveWeeklySchedule' ? await saveWeeklySchedule(payload) : await scriptRequest(action,payload);
     return res.status(200).json(result);
   } catch(error) {
     const status = Number(error?.statusCode) || 502;

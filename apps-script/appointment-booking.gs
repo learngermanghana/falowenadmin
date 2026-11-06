@@ -114,15 +114,16 @@ function appointmentList_(admin) {
   const now = Date.now();
   const items = slots.filter(slot => {
     const start = appointmentStart_(slot.date, slot.time).getTime();
-    return admin ? start >= now - 24 * 3600000 : (slot.status === 'open' && start > now + 15 * 60000);
+    return admin ? (slot.status !== 'deleted' && start >= now - 24 * 3600000) : (slot.status === 'open' && start > now + 15 * 60000);
   }).sort((a,b) => appointmentStart_(a.date,a.time) - appointmentStart_(b.date,b.time));
   const filtered = items.slice(0, 300);
   if (!admin) return { ok:true, timezone:APPT_TIME_ZONE, slots:filtered.map(appointmentSlotPublic_) };
   return {
     ok:true, timezone:APPT_TIME_ZONE,
     rules: appointmentRows_(appointmentSheet_('AppointmentRules',RULE_HEADERS),RULE_HEADERS).map(rule => ({
-      ruleId:rule.ruleId,weekdays:rule.weekdays.split(',').map(Number),times:rule.times.split(','),
-      durationMinutes:Number(rule.durationMinutes),topic:rule.topic,status:rule.status,createdAt:rule.createdAt
+      ruleId:rule.ruleId,weekdays:rule.weekdays.split(',').filter(Boolean).map(Number),times:rule.times.split(','),
+      durationMinutes:Number(rule.durationMinutes),topic:rule.topic,meetingUrl:rule.meetingUrl,
+      weeklySlots:appointmentRulePairs_(rule),status:rule.status,createdAt:rule.createdAt
     })),
     slots:filtered.map(slot => ({
       ...appointmentSlotPublic_(slot), status:slot.status,originRuleId:slot.originRuleId,
@@ -195,6 +196,54 @@ function appointmentRuleInput_(payload) {
   }
   return {days,times,duration,topic,meetingUrl};
 }
+
+/** New rules store exact day/time pairs in the existing times column; old
+ * cross-product rules are read unchanged until the next overwrite save. */
+function appointmentRulePairs_(rule) {
+  const times=String(rule.times || '');
+  if (times.indexOf('weekly:') === 0) {
+    return times.slice(7).split(',').filter(Boolean).map(value => {
+      const pieces=value.split('@');
+      return {weekday:Number(pieces[0]),time:pieces[1]};
+    }).filter(pair => Number.isInteger(pair.weekday) && pair.weekday>=0 && pair.weekday<=6 &&
+      /^([01]\d|2[0-3]):[0-5]\d$/.test(pair.time || ''));
+  }
+  const weekdays=String(rule.weekdays || '').split(',').filter(Boolean).map(Number);
+  return weekdays.flatMap(weekday => times.split(',').filter(Boolean).map(time => ({weekday,time})));
+}
+function appointmentWeeklyInput_(payload) {
+  const raw=payload.weeklySlots;
+  if (!Array.isArray(raw) || raw.length>42) appointmentError_('invalid_times','Choose up to 42 weekly times.');
+  const pairs=[],seen={};
+  raw.forEach(slot => {
+    const weekday=slot && slot.weekday;
+    const time=appointmentText_(slot && slot.time,5);
+    if (!Number.isInteger(weekday) || weekday<0 || weekday>6 ||
+        !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
+      appointmentError_('invalid_times','Choose a valid weekday and time.');
+    }
+    const key=weekday+'@'+time;
+    if (!seen[key]) {seen[key]=true;pairs.push({weekday,time});}
+  });
+  pairs.sort((a,b)=>a.weekday-b.weekday || a.time.localeCompare(b.time));
+  const duration=Number(payload.durationMinutes);
+  if (!ALLOWED_DURATIONS.includes(duration)) appointmentError_('invalid_duration','Choose an allowed duration.');
+  for(let i=1;i<pairs.length;i++){
+    const a=pairs[i-1],b=pairs[i];
+    const startA=Number(a.time.slice(0,2))*60+Number(a.time.slice(3));
+    const startB=Number(b.time.slice(0,2))*60+Number(b.time.slice(3));
+    if(a.weekday===b.weekday && startB-startA<duration) {
+      appointmentError_('overlap','Times on the same day overlap. Adjust the duration or selection.');
+    }
+  }
+  const topic=appointmentText_(payload.topic,120)||'Falowen consultation';
+  const meetingUrl=appointmentText_(payload.meetingUrl,400);
+  if(meetingUrl && !/^https:\/\/[^\s]+$/i.test(meetingUrl)){
+    appointmentError_('invalid_link','Meeting links must use HTTPS.');
+  }
+  return {pairs,duration,topic,meetingUrl};
+}
+
 function appointmentGenerateRecurringSlots_() {
   // Caller must hold the script lock. Never regenerate a manually removed occurrence.
   const ruleSheet = appointmentSheet_('AppointmentRules',RULE_HEADERS);
@@ -208,15 +257,15 @@ function appointmentGenerateRecurringSlots_() {
   const now = Date.now();
   const createdAt = new Date().toISOString();
   rules.forEach(rule => {
-    const days = rule.weekdays.split(',').map(Number);
-    const times = rule.times.split(',');
+    const pairs = appointmentRulePairs_(rule);
     const duration = Number(rule.durationMinutes);
     if (!ALLOWED_DURATIONS.includes(duration)) return;
     for (let day = 0; day <= RECURRING_HORIZON_DAYS; day++) {
       const dateUtc = new Date(startDay + day*86400000);
-      if (!days.includes(dateUtc.getUTCDay())) continue;
+      const dayPairs=pairs.filter(pair=>pair.weekday===dateUtc.getUTCDay());
+      if (!dayPairs.length) continue;
       const date = Utilities.formatDate(dateUtc,'Etc/GMT','yyyy-MM-dd');
-      times.forEach(time => {
+      dayPairs.forEach(({time}) => {
         const start = appointmentStart_(date,time).getTime();
         if (start <= now + 30*60000) return;
         const full = existing.concat(newlyAdded);
@@ -271,6 +320,68 @@ function appointmentAddRecurringRule_(payload) {
     return {ok:true,ruleId,generated};
   });
 }
+/**
+ * Save replaces the repeating timetable and all future unbooked availability.
+ * Booked appointments are never touched. Matching slots keep their IDs so
+ * repeated saves avoid duplicating the eight-week window.
+ */
+function appointmentSaveWeeklySchedule_(payload) {
+  const config=appointmentWeeklyInput_(payload);
+  return appointmentWithLock_(() => {
+    const ruleSheet=appointmentSheet_('AppointmentRules',RULE_HEADERS);
+    const active=appointmentRows_(ruleSheet,RULE_HEADERS).filter(rule=>rule.status==='active');
+    const current=active.length ? active[active.length-1] : null;
+    const ruleId=Utilities.getUuid();
+    const weekdays=[...new Set(config.pairs.map(pair=>pair.weekday))].sort((a,b)=>a-b).join(',');
+    const encodedTimes='weekly:'+config.pairs.map(pair=>pair.weekday+'@'+pair.time).join(',');
+    const record=[ruleId,weekdays,encodedTimes,config.duration,config.topic,
+      config.meetingUrl,'active',new Date().toISOString()];
+    // Migrate any previous (potentially overlapping) active rules to one rule.
+    active.forEach(rule=>{
+      if(current && rule.rowNumber===current.rowNumber) return;
+      ruleSheet.getRange(rule.rowNumber,7).setValue('stopped');
+    });
+    if(current){
+      ruleSheet.getRange(current.rowNumber,1,1,RULE_HEADERS.length).setNumberFormat('@').setValues([record]);
+    } else {
+      appointmentAppend_(ruleSheet,record);
+    }
+
+    const sheet=appointmentSheet_('AppointmentSlots',SLOT_HEADERS);
+    const slots=appointmentRows_(sheet,SLOT_HEADERS);
+    const allowed=new Set(config.pairs.map(pair=>pair.weekday+'@'+pair.time));
+    const now=Date.now();
+    let removed=0,kept=0,changed=false;
+    const rows=slots.map(slot=>{
+      const start=appointmentStart_(slot.date,slot.time).getTime();
+      if(slot.status==='open' && start>now){
+        const weekday=new Date(slot.date+'T12:00:00Z').getUTCDay();
+        const matches=allowed.has(weekday+'@'+slot.time) &&
+          Number(slot.durationMinutes)===config.duration && start>now+30*60000;
+        if(matches){
+          slot.originRuleId=ruleId;
+          slot.topic=config.topic;
+          slot.meetingUrl=config.meetingUrl;
+          kept++;
+        } else {
+          slot.status='deleted';
+          removed++;
+        }
+        changed=true;
+      }
+      return SLOT_HEADERS.map(key=>{
+        const value=appointmentText_(slot[key],1000);
+        return /^[=+\-@]/.test(value) ? "'"+value : value;
+      });
+    });
+    if(changed){
+      sheet.getRange(2,1,rows.length,SLOT_HEADERS.length).setNumberFormat('@').setValues(rows);
+    }
+    const generated=appointmentGenerateRecurringSlots_();
+    return {ok:true,ruleId,removed,kept,generated};
+  });
+}
+
 function appointmentStopRecurringRule_(payload) {
   const ruleId = appointmentText_(payload.ruleId,100);
   return appointmentWithLock_(() => {
@@ -402,6 +513,7 @@ function doPost(e) {
     if (action === 'adminList') return appointmentJson_(appointmentList_(true));
     if (action === 'addSlot') return appointmentJson_(appointmentAddSlot_(payload));
     if (action === 'addRecurringRule') return appointmentJson_(appointmentAddRecurringRule_(payload));
+    if (action === 'saveWeeklySchedule') return appointmentJson_(appointmentSaveWeeklySchedule_(payload));
     if (action === 'stopRecurringRule') return appointmentJson_(appointmentStopRecurringRule_(payload));
     if (action === 'deleteSlot') return appointmentJson_(appointmentDeleteSlot_(payload));
     if (action === 'book') return appointmentJson_(appointmentBook_(payload));

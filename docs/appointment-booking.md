@@ -28,17 +28,28 @@
 7. Deploy Falowen admin. Open `/appointments`, add a slot at least 30 minutes in the future, and use `/book-appointment` in a private browser to book it. Verify **AppointmentSlots** contains a `booked` row and **AppointmentBookings** has exactly one `confirmed` row; refresh the public page and confirm the slot is gone. Verify confirmation email delivery. Only after the time trigger is installed will reminders be automatic.
 
 
-## Updating an existing deployed Apps Script (required for recurrence)
+## Updating an existing deployed Apps Script (recommended for atomic weekly overwrites)
 
-The current Vercel interface alone cannot enable recurring rules if your Google Sheet still runs the original version of `Code.gs`. Update the *existing* spreadsheet-bound Apps Script:
+The older original `Code.gs` cannot support recurring rules until upgraded. A recurrence-enabled legacy script can use the new weekly timetable through server-side compatibility, but updating its code enables the faster, atomic one-call save:
 
 1. Open **Falowen Appointments** Google Sheet → **Extensions → Apps Script**.
 2. Replace the complete contents of `Code.gs` with the latest [appointment-booking.gs](../apps-script/appointment-booking.gs) from this repository and save.
 3. Open **Deploy → Manage deployments** → select your existing Web app → **Edit (pencil)** → choose **New version** → **Deploy**. This updates the existing `/exec` deployment without changing the URL. Merely saving the script editor code does **not** update the deployed version.
 4. Select and run `installAppointmentReminderTrigger()` one time to install both scheduled triggers. Keep your existing `APPOINTMENT_SYNC_SECRET` Script Property unchanged.
-5. Open the Falowen admin planner, choose the weekdays and afternoon times you want, then click **Save recurring availability**. Nothing is published until you click Save. The `AppointmentRules` tab is created automatically; the existing `AppointmentSlots` sheet receives an additional `originRuleId` column automatically and its old bookings are kept. No manual Sheet column changes are needed.
+5. Open the Falowen admin planner, tick the exact day/time combinations you want, then click **Save weekly timetable**. Every subsequent save replaces the older schedule without needing to stop old rules first. The `AppointmentRules` tab is created automatically; the existing `AppointmentSlots` sheet receives an additional `originRuleId` column automatically and its old bookings are kept. No manual Sheet column changes are needed.
 
 ### Recurrence behavior
+
+### Weekly timetable overwrite (current interface)
+
+The admin page now shows one week-at-a-glance grid with individual weekday/time cells (for example, **Wednesday at 2 PM**). Unselecting a cell and clicking **Save weekly timetable** overwrites the previous recurring availability; no individual date editing is required.
+
+- The first save migrates any previously active repeating rules to a single weekly timetable.
+- Every save removes future **open** slots outside the chosen grid, including old manual/one-off slots. Exact matching open slots are retained without duplication, and missing future occurrences are generated for a rolling eight-week window.
+- **Confirmed bookings remain intact** even when their times are no longer offered for new bookings.
+- All times can be unchecked and saved to close booking availability entirely.
+- The latest saved grid loads when you revisit the page, rather than returning to default Monday–Friday selections.
+- Existing recurring-enabled Apps Script deployments are supported automatically through a server-side compatibility path (grouping identical weekday patterns). For faster, atomic one-call overwrites, update the spreadsheet-bound Apps Script and deploy a new Web app version. The admin interface stays the same either way.
 
 - Selected weekdays/times repeat weekly in Accra GMT. The script generates slots for the next **56 days** initially and adds newly needed dates daily using the Script trigger. It does not call Vercel repeatedly.
 - An existing overlapping slot (one-off, recurring, or booked) is never duplicated. A manually deleted recurring occurrence stays removed for that date.
