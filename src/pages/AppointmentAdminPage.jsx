@@ -36,8 +36,10 @@ function savedSchedule(rules) {
   const latest=active[active.length-1];
   const deduped=new Map();
   active.forEach(rule=>{
-    // The new API returns exact pairs; older rules are converted by the server.
-    (rule.weeklySlots||[]).forEach(slot=>{
+    // Older Apps Script deployments return weekday/time cross-products.
+    const pairs=Array.isArray(rule.weeklySlots) ? rule.weeklySlots :
+      (rule.weekdays||[]).flatMap(weekday=>(rule.times||[]).map(time=>({weekday,time})));
+    pairs.forEach(slot=>{
       if(Number.isInteger(slot.weekday)&&typeof slot.time==="string") {
         deduped.set(weeklyKey(slot.weekday,slot.time),{weekday:slot.weekday,time:slot.time});
       }
