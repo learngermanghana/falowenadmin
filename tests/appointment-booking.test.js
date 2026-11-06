@@ -58,3 +58,34 @@ test("stopping recurring slots requires a UUID and does not permit arbitrary act
   });
   assert.throws(()=>validateAppointmentAction("stopRecurringRule",{ruleId:"bad"}),/Invalid recurring schedule/);
 });
+
+test("saving a weekly timetable keeps exact day/time pairs and can clear all", () => {
+  const payload = validateAppointmentAction("saveWeeklySchedule",{
+    weeklySlots:[
+      {weekday:3,time:"14:00"},
+      {weekday:1,time:"14:00"},
+      {weekday:1,time:"15:00"},
+      {weekday:3,time:"14:00"}
+    ],durationMinutes:30,topic:"Falowen consultation"
+  });
+  assert.deepEqual(payload.weeklySlots,[
+    {weekday:1,time:"14:00"},{weekday:1,time:"15:00"},{weekday:3,time:"14:00"}
+  ]);
+  assert.deepEqual(validateAppointmentAction("saveWeeklySchedule",{
+    weeklySlots:[],durationMinutes:30
+  }).weeklySlots,[]);
+  // Removing Wednesday 2 PM must not remove Monday 2 PM or Wednesday 3 PM.
+  const withoutWednesdayTwo=validateAppointmentAction("saveWeeklySchedule",{
+    weeklySlots:[{weekday:1,time:"14:00"},{weekday:3,time:"15:00"}],durationMinutes:30
+  });
+  assert.equal(withoutWednesdayTwo.weeklySlots.some(x=>x.weekday===3&&x.time==="14:00"),false);
+  assert.equal(withoutWednesdayTwo.weeklySlots.length,2);
+});
+test("weekly timetable rejects bad pairs and only overlapping times on the same day", () => {
+  const data=weeklySlots=>({weeklySlots,durationMinutes:60});
+  assert.throws(()=>validateAppointmentAction("saveWeeklySchedule",data([{weekday:8,time:"14:00"}])),/valid day and time/);
+  assert.throws(()=>validateAppointmentAction("saveWeeklySchedule",data([{weekday:3,time:"29:00"}])),/valid day and time/);
+  assert.throws(()=>validateAppointmentAction("saveWeeklySchedule",data([{weekday:3,time:"14:00"},{weekday:3,time:"14:30"}])),/overlap/);
+  assert.doesNotThrow(()=>validateAppointmentAction("saveWeeklySchedule",data([{weekday:1,time:"14:00"},{weekday:3,time:"14:30"}])));
+  assert.throws(()=>validateAppointmentAction("saveWeeklySchedule",{...data([]),meetingUrl:"http://bad.example"}),/HTTPS/);
+});
