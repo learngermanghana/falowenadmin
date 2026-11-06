@@ -1,4 +1,4 @@
-import musicEnglishDrafts from '../data/musicEnglishDrafts.json';
+import musicEnglishDrafts from '../data/musicEnglishDrafts.json' with { type: 'json' };
 import { publishedVideoEnglish } from './musicLyricsVideo.js';
 
 // English is available only for the exact current German songbook lyric lines.
