@@ -73,7 +73,7 @@ function confirmReceipt(proof, claim, student, payment) {
     fail(409, "Paystack could not confirm an eligible, non-refunded first tuition payment.");
   }
 }
-function registerReferralRoutes(app, { db, admin, getSecret = () => process.env.PAYSTACK_SECRET, verify = verifyReceipt }) {
+function registerReferralRoutes(app, { db, admin, getSecret = () => process.env.PAYSTACK_SECRET, verify = verifyReceipt, runtimeConfig = {}, sendNotification = require("./organisationNotifications").notify }) {
   const now = () => admin.firestore.FieldValue.serverTimestamp();
   const partners = db.collection("referralApplications");
   const codes = db.collection("referralLinks");
@@ -116,6 +116,11 @@ function registerReferralRoutes(app, { db, admin, getSecret = () => process.env.
       if (code) tx.create(codes.doc(code), { partnerId: ref.id, name: snap.data().name, email: snap.data().email });
       tx.update(ref, { status, code, reviewedBy: actor.uid, reviewedAt: now() });
     });
+    if (status === "approved") return { welcomeEmail: await sendNotification({ db, admin, ref, kind: "welcome", runtimeConfig }) };
+  }));
+  app.post("/admin/referrals/applications/:id/welcome-email", handle("owner", async req => {
+    const ref = partners.doc(idOf(req.params.id));
+    return { welcomeEmail: await sendNotification({ db, admin, ref, kind: "welcome", runtimeConfig }) };
   }));
   for (const [kind, collection] of [["applications", partners], ["claims", claims]]) {
     app.get("/admin/referrals/" + kind, handle("owner", async req => {

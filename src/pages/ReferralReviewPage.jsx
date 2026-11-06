@@ -50,6 +50,13 @@ function ReviewList({ kind }) {
       {apps && row.signedAt && <><p>{row.kind === "institutional" ? "Organisation partnership" : "Legacy referral application"} · Signed by {row.signerName} · {row.signedAt}</p><button disabled={busy} onClick={() => run(() => downloadAgreement(row.id))}>Download signed agreement</button></>}
       {apps && row.status === "pending" && row.kind === "institutional" && <div className="org-actions">{["approved", "rejected"].map(status =>
         <button key={status} disabled={busy} onClick={() => run(() => decide(row, { status }))}>{status === "approved" ? "Approve partner" : "Reject application"}</button>)}</div>}
+      {apps && row.kind === "institutional" && row.status === "approved" && <div>
+        <p>Welcome email: {row.welcomeEmail?.status || "not sent"}</p>
+        {row.welcomeEmail?.status !== "sent" && <button disabled={busy} onClick={() => run(async () => {
+          const result = await request(`applications/${row.id}/welcome-email`, {});
+          await load(); setNotice(result.welcomeEmail?.status === "failed" ? "Email failed. Check the announcement webhook and retry." : "Welcome email checked.");
+        })}>Send / retry welcome email</button>}
+      </div>}
       {!apps && <><p>Automatic payout: {row.payoutState || "awaiting eligible payment"}{row.recoveryRequired ? " · Refund recovery requires review" : ""}</p><button disabled={busy} onClick={() => run(async () => { const data = await request("process/" + row.id, {}); await load(); setNotice(data.result?.skipped || data.result?.state || "Checked."); })}>Process / recheck automatic commission</button></>}
       {!apps && row.reference && <p>{row.reference} · {money(row.tuitionMinor)} tuition · {money(row.commissionMinor)} commission {row.status === "reversed" ? "(cancelled)" : ""}</p>}
       {!apps && row.status === "pending" && <button disabled={busy} onClick={() => run(async () => {
