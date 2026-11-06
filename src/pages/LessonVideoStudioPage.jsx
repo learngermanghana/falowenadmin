@@ -4,10 +4,11 @@ import {
   importLessonPowerPoint, prepareLessonScript, recordLessonVideo, safeLessonFilename,
   spreadLessonSlides, timeLabel,
 } from "../utils/lessonVideoStudio.js";
+import LessonTextToSpeech from "../components/LessonTextToSpeech.jsx";
 import "./LessonVideoStudioPage.css";
 
 const MAX_AUDIO = 80 * 1024 * 1024;
-const initialMessage = "Import slides, attach a recording, then mark slide changes and highlight areas while listening.";
+const initialMessage = "Import slides, write narration, generate or attach audio, then mark highlights while listening.";
 const uid = () => typeof crypto !== "undefined" && crypto.randomUUID
   ? crypto.randomUUID() : String(Date.now()) + "-" + Math.random().toString(16).slice(2);
 function asDataUrl(file) {
@@ -41,6 +42,7 @@ export default function LessonVideoStudioPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [ttsBusy, setTtsBusy] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const [aspect, setAspect] = useState("landscape");
   const [quality, setQuality] = useState("standard");
@@ -243,6 +245,20 @@ export default function LessonVideoStudioPage() {
     } catch (exception) { failure(exception); }
     finally { setLoading(false); }
   }
+  async function acceptGeneratedNarration({ wav, timing, source }) {
+    if (!(wav instanceof Blob) || !wav.size || wav.size > MAX_AUDIO)
+      throw new Error("The generated WAV is too large to attach. Create a shorter recording.");
+    await attachAudio(new File([wav], safeLessonFilename(title) + "-narration.wav", { type: "audio/wav" }));
+    setSlides(previous => source === "slides"
+      ? previous.map((slide, index) => ({ ...slide, start: timing.starts.get(index) ?? 0 }))
+      : previous.map(slide => ({ ...slide, start: 0 })));
+    setHighlights([]);
+    setFollow(true);
+    setSelected(0);
+    success(source === "slides"
+      ? "Generated narration attached. Slide start times are aligned with its actual audio. Draw new highlight markers while listening."
+      : "Generated narration attached. Slide times are ready for manual marking.");
+  }
   function speakPreview() {
     if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) {
       setError("Your browser does not support voice preview.");
@@ -292,9 +308,9 @@ export default function LessonVideoStudioPage() {
       </div>
       <div className="lvs-header-actions">
         <label className="lvs-button lvs-muted">Open saved project
-          <input type="file" accept=".json,application/json" hidden onChange={loadProject} disabled={loading || exporting} />
+          <input type="file" accept=".json,application/json" hidden onChange={loadProject} disabled={loading || exporting || ttsBusy} />
         </label>
-        <button type="button" onClick={saveProject} disabled={loading || exporting || !slides.length}>Save editable project</button>
+        <button type="button" onClick={saveProject} disabled={loading || exporting || ttsBusy || !slides.length}>Save editable project</button>
       </div>
     </header>
 
@@ -305,33 +321,38 @@ export default function LessonVideoStudioPage() {
       <div className="lvs-panel">
         <span className="lvs-step">01 · Slides</span><h2>Import presentation</h2>
         <label className="lvs-button lvs-primary">Choose PowerPoint (.pptx)
-          <input type="file" accept=".pptx" hidden onChange={importPresentation} disabled={loading || exporting} />
+          <input type="file" accept=".pptx" hidden onChange={importPresentation} disabled={loading || exporting || ttsBusy} />
         </label>
         <label className="lvs-button lvs-muted">Or import PNG/JPG slides
-          <input type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={importImages} disabled={loading || exporting} />
+          <input type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={importImages} disabled={loading || exporting || ttsBusy} />
         </label>
         <p className="lvs-help">Image-only slides preserve their appearance. For complex charts or animations, export slide PNGs from PowerPoint first.</p>
         <strong>{slides.length} slides ready</strong>
       </div>
       <div className="lvs-panel">
         <span className="lvs-step">02 · Script</span><h2>Prepare teaching narration</h2>
-        <button type="button" onClick={scriptOutline} disabled={!slides.length || exporting}>Create free script outline</button>
+        <button type="button" onClick={scriptOutline} disabled={!slides.length || exporting || ttsBusy}>Create free script outline</button>
         <label className="lvs-button lvs-muted">Import your script (.txt)
-          <input type="file" accept=".txt,text/plain" hidden onChange={loadTranscript} />
+          <input type="file" accept=".txt,text/plain" hidden onChange={loadTranscript} disabled={ttsBusy} />
         </label>
         <button type="button" onClick={downloadScript} disabled={!slides.length && !fullScript}>Download script</button>
         <p className="lvs-help">Edit the script below. PowerPoint image slides require manual narration text; no AI credit is used.</p>
       </div>
       <div className="lvs-panel">
-        <span className="lvs-step">03 · Voice</span><h2>Attach real narration</h2>
+        <span className="lvs-step">03 · Voice</span><h2>Generate or attach audio</h2>
+        <LessonTextToSpeech slides={slides} fullScript={fullScript} title={title}
+          disabled={loading || exporting || recording} onBusyChange={setTtsBusy}
+          onGenerated={acceptGeneratedNarration} />
+        <div className="lvs-divider" />
+        <strong>Or use an existing recording</strong>
         <label className="lvs-button lvs-primary">Upload MP3, WAV or M4A
           <input type="file" accept="audio/*,.mp3,.wav,.m4a,.webm" hidden
-            onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; attachAudio(file); }} disabled={loading || exporting} />
+            onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; attachAudio(file); }} disabled={loading || exporting || ttsBusy} />
         </label>
-        <button type="button" onClick={recordMicrophone} disabled={exporting} className={recording ? "lvs-recording" : ""}>
+        <button type="button" onClick={recordMicrophone} disabled={exporting || ttsBusy} className={recording ? "lvs-recording" : ""}>
           {recording ? "■ Stop recording" : "● Record my own voice"}
         </button>
-        <p className="lvs-help">{audioName || "Your narration is recorded or uploaded locally. No third-party voice subscription is required."}</p>
+        <p className="lvs-help">{audioName || "Record or upload your own narration locally without making a Google TTS request."}</p>
       </div>
     </section>
 
@@ -380,9 +401,9 @@ export default function LessonVideoStudioPage() {
           <button type="button" onClick={() => audioRef.current?.paused ? audioRef.current?.play().catch(failure) : audioRef.current?.pause()} disabled={!audioData}>
             {playing ? "Pause" : "Play narration"}
           </button>
-          <button type="button" onClick={() => markSlide(selected, time)} disabled={!slides.length || !audioData}>Mark slide here</button>
+          <button type="button" onClick={() => markSlide(selected, time)} disabled={!slides.length || !audioData || ttsBusy}>Mark slide here</button>
           <button type="button" onClick={() => setSlides(previous => spreadLessonSlides(previous, duration))}
-            disabled={!slides.length || !duration}>Space slide times evenly</button>
+            disabled={!slides.length || !duration || ttsBusy}>Space slide times evenly</button>
           <label className="lvs-follow"><input type="checkbox" checked={follow} onChange={event => setFollow(event.target.checked)} />
             Follow narration
           </label>
@@ -435,14 +456,14 @@ export default function LessonVideoStudioPage() {
           <h2>Script editor</h2>
           <label className="lvs-script-label">Narration for selected slide
             <textarea rows={7} placeholder="Write what the teacher should explain on this slide…"
-              value={current?.script || ""} disabled={!current}
+              value={current?.script || ""} disabled={!current || ttsBusy}
               onChange={event => updateSlide(selected, { script: event.target.value })} />
           </label>
           <button type="button" onClick={speakPreview} disabled={!current?.script && !fullScript}>Preview browser voice</button>
           <p className="lvs-help">Voice preview is optional; export uses your actual attached audio, not the browser's synthesized voice.</p>
           <label className="lvs-script-label">Full narration transcript
             <textarea rows={7} placeholder="Paste your full lesson transcript here, including German example sentences…"
-              value={fullScript} onChange={event => setFullScript(event.target.value)} />
+              value={fullScript} disabled={ttsBusy} onChange={event => setFullScript(event.target.value)} />
           </label>
         </div>
       </aside>
@@ -465,7 +486,7 @@ export default function LessonVideoStudioPage() {
           </select>
         </label>
         <button type="button" className="lvs-primary" onClick={exportVideo}
-          disabled={exporting || loading || !slides.length || !audioData}>
+          disabled={exporting || loading || ttsBusy || !slides.length || !audioData}>
           {exporting ? "Recording video… " + Math.round(exportProgress * 100) + "%" : "Export video with narration"}
         </button>
         <p className="lvs-help">MP4 with AAC where supported; otherwise a genuine WebM file. No mislabeled exports and no paid video service.</p>
