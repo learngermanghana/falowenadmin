@@ -394,7 +394,7 @@ async function recordManualOrganisationPayment({ db, admin, actor, body = {} }) 
   return { reference, duplicate: result.duplicate };
 }
 
-function registerOrganisationPaymentRoutes(app, { db, admin, initializePaystackPayment, calculateStudentCheckoutAmount, runtimeConfig, reconcilePaymentReference, sendReceipt = sendGroupReceipt }) {
+function registerOrganisationPaymentRoutes(app, { db, admin, initializePaystackPayment, calculateStudentCheckoutAmount, runtimeConfig, reconcilePaymentReference, sendReceipt = sendGroupReceipt, sendNotification = require("./organisationNotifications").notify }) {
   const handle = action => async (req, res) => {
     res.set("Cache-Control", "no-store");
     try { const actor = await owner(req, admin); res.json({ ok: true, ...await action(req, actor) }); }
@@ -466,12 +466,20 @@ function registerOrganisationPaymentRoutes(app, { db, admin, initializePaystackP
         discountReason: String(req.body.discountReason || "").trim().slice(0, 500), createdAt: admin.firestore.FieldValue.serverTimestamp() });
     });
     const payment = (await ref.get()).data();
-    if (payment.authorizationUrl) return { payment };
+    if (payment.authorizationUrl) {
+      await sendNotification({ db, admin, ref, kind: "payment_link", runtimeConfig });
+      return { payment: (await ref.get()).data() };
+    }
     // Reuse the persisted reference on retry; never initialize a second charge intent.
     const checkout = await initializePaystackPayment({ email: payment.email, checkoutAmount: payment.checkoutAmount, reference,
       metadata: { source: "falowen_organisation", purpose: "organisation_group", organisationSubmissionId: batchId, referralEligible: false } });
     await ref.update({ status: "pending", authorizationUrl: checkout.authorization_url });
-    return { payment: { ...payment, status: "pending", authorizationUrl: checkout.authorization_url } };
+    await sendNotification({ db, admin, ref, kind: "payment_link", runtimeConfig });
+    return { payment: (await ref.get()).data() };
+  }));
+  app.post("/payments/organisations/payment-link-email/:reference", handle(async req => {
+    if (!/^FAL-ORG-[a-f0-9-]{36}$/.test(req.params.reference)) fail(400, "Invalid reference.");
+    return { paymentLinkEmail: await sendNotification({ db, admin, ref: db.collection("payments").doc(req.params.reference), kind: "payment_link", runtimeConfig }) };
   }));
   app.post("/payments/organisations/verify/:reference", handle(async req => {
     if (!/^FAL-ORG-[a-f0-9-]{36}$/.test(req.params.reference)) fail(400, "Invalid reference.");

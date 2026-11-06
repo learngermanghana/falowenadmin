@@ -100,6 +100,11 @@ export default function PaystackPage() {
     {batchId && <><h2>Payment history</h2><button disabled={busy} onClick={() => run(refresh)}>Refresh payment status</button>
       {payments.map(payment => <article key={payment.reference}><h3>{payment.reference}</h3><p>{payment.status} · {money(payment.checkoutAmount)} · {payment.email} · {payment.provider || "Paystack"}</p>{payment.purpose === "organisation_manual" && <p>Verified {payment.method?.replaceAll("_", " ")} · External reference: {payment.transactionReference} · Legacy full-tuition terms; no partner deduction</p>}
         {["pending", "initializing"].includes(payment.status) && <button disabled={busy} onClick={() => run(async () => { await request(`payments/organisations/verify/${payment.reference}`, {}); await refresh(); })}>Verify with Paystack</button>}
+        {payment.authorizationUrl && <div><p>Payment link email: {payment.paymentLinkEmail?.status || "not sent"}</p>
+          {payment.status === "pending" && payment.paymentLinkEmail?.status !== "sent" && <button disabled={busy} onClick={() => run(async () => {
+            const data = await request(`payments/organisations/payment-link-email/${payment.reference}`, {}); await refresh();
+            if (data.paymentLinkEmail?.status === "failed") throw new Error("Email failed. Check the announcement webhook and retry.");
+          })}>Send / retry payment link email</button>}</div>}
         {payment.authorizationUrl && <a href={payment.authorizationUrl} target="_blank" rel="noreferrer">Payment link</a>}
         <ul>{payment.lines?.map(line => <li key={line.studentId}>{line.studentName}: {money(line.tuitionCredit)} tuition · {money(line.discount)} partner share</li>)}</ul>
         {payment.purpose === "organisation_manual" && payment.lines?.map(line => <p key={line.studentId}>Tuition: {money(line.courseTuitionFee)} · Received: {money(line.tuitionCredit)} · Remaining: {money(line.remainingBalance)}{line.accessEndDate ? ` · One-month access until ${new Date(line.accessEndDate).toLocaleDateString("en-GB")}` : ""}</p>)}
