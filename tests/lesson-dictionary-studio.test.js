@@ -55,6 +55,6 @@ test("dictionary editor has a stable empty script override and audio readiness f
   assert.match(tts, /Generate audio unavailable:/);
   assert.match(tts, /Checking the saved voice clips/);
   assert.match(tts, /Hören Studio speech service is not configured/);
-  assert.match(tts, /remaining in today's shared 72-request/);
+  assert.match(tts, /remain in today's shared 72-request Hören Studio allowance/);
   assert.match(tts, /Cannot check the Hören Studio service/);
 });
