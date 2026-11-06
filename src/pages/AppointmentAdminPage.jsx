@@ -5,6 +5,10 @@ import "./Appointments.css";
 const API = "/api/appointments";
 const PUBLIC_PATH = "/book-appointment";
 const INITIAL = { topic: "Falowen consultation", date: "", time: "", durationMinutes: "30", meetingUrl: "" };
+const WEEKDAYS = [{value:1,label:"Mon"},{value:2,label:"Tue"},{value:3,label:"Wed"},{value:4,label:"Thu"},{value:5,label:"Fri"},{value:6,label:"Sat"},{value:0,label:"Sun"}];
+const AFTERNOON_TIMES = ["13:00","14:00","15:00","16:00","17:00"];
+const RECURRING_INITIAL = { weekdays:[1,2,3,4,5],times:["14:00","15:00","16:00"],topic:"Falowen consultation",durationMinutes:"30",meetingUrl:"" };
+function timeLabel(time) { return new Date("2020-01-01T"+time+":00Z").toLocaleTimeString("en-GB",{hour:"numeric",minute:"2-digit",hour12:true,timeZone:"UTC"}); }
 
 async function request(url, options = {}) {
   const token = await auth.currentUser?.getIdToken();
@@ -26,6 +30,8 @@ function statusClass(status) { return status === "booked" ? "appt-badge is-booke
 export default function AppointmentAdminPage() {
   const [form,setForm] = useState(INITIAL);
   const [slots,setSlots] = useState([]);
+  const [rules,setRules] = useState([]);
+  const [recurring,setRecurring] = useState(RECURRING_INITIAL);
   const [loading,setLoading] = useState(true);
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState("");
@@ -36,6 +42,7 @@ export default function AppointmentAdminPage() {
     try {
       const data = await request(API+"?view=admin");
       setSlots(data.slots || []);
+      setRules(data.rules || []);
     } catch(e) { setError(e.message); }
     finally { setLoading(false); }
   }, []);
@@ -63,6 +70,43 @@ export default function AppointmentAdminPage() {
     } catch(e) {setError(e.message);}
     finally {setBusy(false);}
   };
+
+  const toggleDay = day => setRecurring(current => ({
+    ...current,weekdays:current.weekdays.includes(day)
+      ? current.weekdays.filter(x=>x!==day)
+      : [...current.weekdays,day].sort((a,b)=>a-b)
+  }));
+  const toggleTime = time => setRecurring(current => ({
+    ...current,times:current.times.includes(time)
+      ? current.times.filter(x=>x!==time)
+      : [...current.times,time].sort()
+  }));
+  const saveRecurring = async event => {
+    event.preventDefault();setBusy(true);setNotice("");setError("");
+    try {
+      if (!recurring.weekdays.length || !recurring.times.length) throw new Error("Choose weekdays and at least one afternoon time.");
+      const result = await request(API,{method:"POST",body:JSON.stringify({
+        ...recurring,action:"addRecurringRule",durationMinutes:Number(recurring.durationMinutes)
+      })});
+      setNotice("Weekly availability saved. "+result.generated+" upcoming slots prepared; more will be added automatically.");
+      await load();
+    } catch(e) {
+      setError(e.message === "Unknown appointment action."
+        ? "Update the Google Apps Script Code.gs and redeploy its Web app to enable recurring appointments."
+        : e.message);
+    } finally {setBusy(false);}
+  };
+  const stopRecurring = async rule => {
+    if (!window.confirm("Stop this weekly schedule? Available future slots from it will be removed, but bookings stay confirmed.")) return;
+    setBusy(true);setNotice("");setError("");
+    try {
+      const result = await request(API,{method:"POST",body:JSON.stringify({action:"stopRecurringRule",ruleId:rule.ruleId})});
+      setNotice("Recurring schedule stopped. "+result.removed+" unbooked slots removed; existing bookings preserved.");
+      await load();
+    } catch(e) {setError(e.message);}
+    finally {setBusy(false);}
+  };
+
   const copyLink = async () => {
     try {await navigator.clipboard.writeText(publicUrl);setNotice("Public booking link copied.");setError("");}
     catch {setError("Unable to copy automatically. Select and copy the link below.");}
@@ -79,10 +123,77 @@ export default function AppointmentAdminPage() {
     {notice && <div className="appt-message success" role="status">{notice}</div>}
     {error && <div className="appt-message error" role="alert">{error}</div>}
 
+
+    <section className="appt-panel appt-recurring">
+      <div className="appt-panel-row">
+        <div>
+          <span className="appt-eyebrow">FAST WEEKLY SETUP</span>
+          <h2>Recurring afternoon availability</h2>
+          <p className="appt-muted">Choose your usual weekdays and afternoon times once. Falowen keeps the next eight weeks open automatically, without publishing slots one at a time.</p>
+        </div>
+        <span className="appt-badge">Accra / GMT</span>
+      </div>
+      <form onSubmit={saveRecurring} className="appt-form">
+        <div className="appt-recurring-grid">
+          <fieldset className="appt-choice-group">
+            <legend>Which days are you free?</legend>
+            <div className="appt-choice-row">{WEEKDAYS.map(day=>
+              <button key={day.value} type="button" className={"appt-choice"+(recurring.weekdays.includes(day.value)?" selected":"")}
+                aria-pressed={recurring.weekdays.includes(day.value)} onClick={()=>toggleDay(day.value)} disabled={busy}>{day.label}</button>
+            )}</div>
+          </fieldset>
+          <fieldset className="appt-choice-group">
+            <legend>Pick your usual afternoon start times</legend>
+            <div className="appt-choice-row">{AFTERNOON_TIMES.map(time=>
+              <button key={time} type="button" className={"appt-choice"+(recurring.times.includes(time)?" selected":"")}
+                aria-pressed={recurring.times.includes(time)} onClick={()=>toggleTime(time)} disabled={busy}>{timeLabel(time)}</button>
+            )}</div>
+          </fieldset>
+        </div>
+        <div className="appt-recurring-grid">
+          <label>Appointment subject
+            <input maxLength={120} required value={recurring.topic}
+              onChange={e=>setRecurring({...recurring,topic:e.target.value})}/>
+          </label>
+          <label>Duration per appointment
+            <select value={recurring.durationMinutes} onChange={e=>setRecurring({...recurring,durationMinutes:e.target.value})}>
+              {[15,30,45,60,90,120].map(n=><option key={n} value={n}>{n} minutes</option>)}
+            </select>
+          </label>
+        </div>
+        <label>Meeting link override <span className="appt-optional">(optional — your saved Zoom room is used automatically)</span>
+          <input type="url" placeholder="Leave blank to use your default Zoom room" value={recurring.meetingUrl}
+            maxLength={400} onChange={e=>setRecurring({...recurring,meetingUrl:e.target.value})}/>
+        </label>
+        <div className="appt-recurring-actions">
+          <p className="appt-muted">
+            <strong>{recurring.weekdays.length*recurring.times.length}</strong> possible slots per week.
+            Public visitors see only open times. Booked slots cannot be offered twice.
+          </p>
+          <button className="appt-primary" disabled={busy||loading||!recurring.weekdays.length||!recurring.times.length}>
+            {busy?"Saving…":"Save recurring availability"}
+          </button>
+        </div>
+      </form>
+      {rules.length>0&&<div className="appt-rules">
+        <h3>Saved weekly schedules</h3>
+        {rules.map(rule=><div key={rule.ruleId} className="appt-rule-row">
+          <div>
+            <strong>{rule.topic}</strong>
+            <p className="appt-muted">{(rule.weekdays||[]).map(day=>WEEKDAYS.find(x=>x.value===day)?.label).filter(Boolean).join(", ")}
+              {" · "}{(rule.times||[]).map(timeLabel).join(", ")}{" · "}{rule.durationMinutes} min</p>
+          </div>
+          {rule.status==="active"
+            ? <button type="button" className="appt-danger" disabled={busy} onClick={()=>stopRecurring(rule)}>Stop repeating</button>
+            : <span className="appt-badge is-booked">Stopped</span>}
+        </div>)}
+      </div>}
+    </section>
+
     <div className="appt-columns">
       <section className="appt-panel">
         <h2>Add available time</h2>
-        <p className="appt-muted">Publish individual time slots. Booked slots cannot be removed, so an existing appointment is protected.</p>
+        <p className="appt-muted">For a one-off exception, add one specific date below. Otherwise, use the weekly schedule above.</p>
         <form onSubmit={save} className="appt-form">
           <label>Appointment subject <input required maxLength={120} value={form.topic} onChange={e=>setForm({...form,topic:e.target.value})} placeholder="Falowen consultation" /></label>
           <div className="appt-two">
@@ -92,8 +203,8 @@ export default function AppointmentAdminPage() {
           <label>Duration <select value={form.durationMinutes} onChange={e=>setForm({...form,durationMinutes:e.target.value})}>
             {[15,30,45,60,90,120].map(n=><option key={n} value={n}>{n} minutes</option>)}
           </select></label>
-          <label>Meeting link <span className="appt-optional">(optional, shared only after booking)</span>
-            <input type="url" placeholder="https://meet.google.com/..." value={form.meetingUrl} maxLength={400} onChange={e=>setForm({...form,meetingUrl:e.target.value})} /></label>
+          <label>Meeting link override <span className="appt-optional">(optional — your default Zoom room is used automatically)</span>
+            <input type="url" placeholder="Leave blank to use your default Zoom room" value={form.meetingUrl} maxLength={400} onChange={e=>setForm({...form,meetingUrl:e.target.value})} /></label>
           <button className="appt-primary" disabled={busy || loading}>{busy?"Saving…":"Add available time"}</button>
         </form>
       </section>
