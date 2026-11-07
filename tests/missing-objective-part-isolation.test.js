@@ -11,7 +11,7 @@ const writing = "Heutzutage ist nachhaltiger Konsum wichtig. Wir sollten weniger
 for (const separator of ["\n", "  "]) {
   for (const [presentPart, absentPart, answers, count] of [
     ["teil3", "teil4", reading, 7],
-    ["teil4", "teil3", "1. Falsch 2. Richtig 3. Richtig 4. Falsch 5. Richtig", 5],
+    ["teil4", "teil3", "1. A 2. B 3. A 4. C 5. A", 5],
   ]) {
     test(`missing ${absentPart} stays blank with ${JSON.stringify(separator)} separators`, () => {
       const text = `TEIL 2 ${writing}${separator}${presentPart.toUpperCase().replace("TEIL", "TEIL ")}${separator}${answers}`;
