@@ -1,5 +1,5 @@
 // A1 activity timing is separate from the shared class session timer.
-export const A1_ACTIVITY_TIMER_PRESETS = Object.freeze([7, 5, 3, 2, 1]);
+export const A1_ACTIVITY_TIMER_PRESETS = Object.freeze([7, 5, 3, 2, 1, 0.5]);
 export const DEFAULT_A1_ACTIVITY_MINUTES = 5;
 
 // Use wall-clock deadlines instead of decrementing an interval counter: a browser
