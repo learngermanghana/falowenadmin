@@ -68,11 +68,11 @@ test('B1 Day 24 marks all 12 updated objectives and uses Laura four-point writin
   assert.match(writing.taskSituationDe, /Laura|neue Kleidung und Plastikprodukte/);
   assert.equal(writing.taskPointsDe.length, 4);
   assert.doesNotMatch(writing.taskSituationDe, /Pauls Meinung/);
-  const text = 'TEIL 3\n1. A\n2. B\n3. B\n4. A\n5. B\n6. C\n7. B\nTEIL 4\n1. Falsch\n2. Richtig\n3. Richtig\n4. Falsch\n5. Richtig';
+  const text = 'TEIL 3\n1. A\n2. B\n3. B\n4. A\n5. B\n6. C\n7. B\nTEIL 4\n1. A\n2. B\n3. A\n4. C\n5. A';
   const result = computeObjectiveScore(reference, text);
   assert.equal(result.totalCount, 12);
   assert.equal(result.correctCount, 12);
-  const wrong = computeObjectiveScore(reference, text.replace('6. C', '6. A').replace('1. Falsch', '1. Richtig'));
+  const wrong = computeObjectiveScore(reference, text.replace('6. C', '6. A').replace('1. A', '1. B'));
   assert.equal(wrong.correctCount, 10);
 });
 

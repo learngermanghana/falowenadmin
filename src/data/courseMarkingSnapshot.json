@@ -1,6 +1,6 @@
 {
   "repository": "learngermanghana/falowenexamtrainer",
-  "revision": "775c9326f31df0671b33a8ee75ecf768cfbb9d46",
+  "revision": "608ce77562ba3523cf41685b3543a1c32ae76675",
   "answerKeys": {
     "A1 Greetings and Asking About Well-being 0.1": {
       "answers": {
@@ -1887,11 +1887,11 @@
           "Answer7": "B) Kritische Konsumenten und gesetzliche Vorschriften."
         },
         "teil4": {
-          "Answer1": "B) Falsch",
-          "Answer2": "A) Richtig",
-          "Answer3": "A) Richtig",
-          "Answer4": "B) Falsch",
-          "Answer5": "A) Richtig"
+          "Answer1": "A) Vom Wochenmarkt und aus dem Unverpackt-Laden",
+          "Answer2": "B) Ihren Plastikmüll",
+          "Answer3": "A) Zu viel gekauft und die Hälfte weggeworfen",
+          "Answer4": "C) Sie plant ihre Mahlzeiten genau",
+          "Answer5": "A) Es ist viel frischer"
         }
       },
       "answer_url": "https://docs.google.com/spreadsheets/d/1WdDtfi_8MfBJpXrZUj_ypsDqyyAp3DuMhIiB_FNjGnc/gviz/tq?tqx=out:html&sheet=Key",
