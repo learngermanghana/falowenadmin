@@ -51,6 +51,14 @@ function applyAuthoritativeWritingOverride(task = {}) {
     && /Vorteile\s+von\s+Sport/i.test(task.taskSituationDe || "")
     && /Rolle\s+von\s+Ern[aä]hrung/i.test(task.taskSituationDe || "")
     && /pers[oö]nlich\s+im\s+Alltag/i.test(task.taskSituationDe || "");
+  // The three exact learner-published complaint requirements must match before
+  // applying the historical Day 25 deterministic evidence rules.
+  const currentB1ComplaintPrompt = publishedB1 && assignmentKey === "B1-8.25"
+    && task.taskPointsDe?.length === 3
+    && /ElectroWorld/i.test(task.taskSituationDe || "")
+    && /^Grund des Schreibens: Geben Sie Ihren Kauf an \(Datum, Produkt und Bestellnummer\)\.$/i.test(clean(task.taskPointsDe[0]))
+    && /^Problem beschreiben: Was ist besch[aä]digt oder funktioniert nicht\?$/i.test(clean(task.taskPointsDe[1]))
+    && /^L[oö]sung \/ Forderung: Bitten Sie um Umtausch, Reparatur oder R[uü]ckerstattung des Geldes\.$/i.test(clean(task.taskPointsDe[2]));
   const next = publishedA1 ? {
     ...a1Spec, ...task, level: 'A1', taskPoints: [...task.taskPointsDe],
     rubricVersion: task.taskVersion,
@@ -88,6 +96,7 @@ function applyAuthoritativeWritingOverride(task = {}) {
       ],
       semanticEvidenceRuleSet: "B1-3.8-published",
     } : {}),
+    ...(currentB1ComplaintPrompt ? { semanticEvidenceRuleSet: "B1-8.25-published" } : {}),
     gradingInstruction: [
       "Grade the " + next.level + " writing against this exact assignment task, not merely against the general topic: " + next.taskText,
       "Check every required communicative point separately. Return taskCompletion, missingTaskPoints, and evidence for every task point.",
@@ -1136,7 +1145,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     : task.level === "A2"
       ? evaluateWritingTaskEvidence(task, source)
       : task.level === "B1" && (task.rubricVersion === B1_WRITING_RUBRIC_VERSION
-        || task.semanticEvidenceRuleSet === "B1-3.8-published")
+        || ["B1-3.8-published", "B1-8.25-published"].includes(task.semanticEvidenceRuleSet))
         ? evaluateB1WritingTaskEvidence(task, source)
         : [];
   const canonicalSemanticMissing = taskPointEvidence.length
@@ -1173,9 +1182,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
   const legacyEssayMismatch = /email|letter|message|invitation/.test(task.textType) && emailBodyLooksLikeOpinionEssay(source);
   const genreMismatch = classifierMismatch || legacyEssayMismatch;
   const wrongRegister = registerMismatch(task, source);
-  const partialTaskPoints = currentA1123
-    ? taskPointEvidence.filter((point) => point.status === "partial")
-    : [];
+  const partialTaskPoints = taskPointEvidence.filter((point) => point.status === "partial");
   const hasGuardIssue = missingTaskPoints.length > 0 || partialTaskPoints.length > 0 || genreMismatch || wrongRegister;
   const baseReviewReasons = pruneResolvedWritingReviewReasons(result.reviewReasons, {
     missingTaskPoints,
@@ -1307,12 +1314,12 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
 
   let cap = guardCapForMissing(missingTaskPoints.length, total);
   // A partially met compound point earns credit, but never full content credit.
-  if (currentA1123 && partialTaskPoints.length) cap = Math.min(cap, 90);
+  if (partialTaskPoints.length) cap = Math.min(cap, 90);
   if (genreMismatch) cap = Math.min(cap, 65);
   if (wrongRegister) cap = Math.min(cap, missingTaskPoints.length ? 60 : 70);
   const guardedWritingScore = Math.min(effectiveWritingScore, cap);
 
-  const completed = Math.max(0, total - missingTaskPoints.length);
+  const completed = Math.max(0, total - missingTaskPoints.length - partialTaskPoints.length);
   const weightedOutcome = recomputeOutcome(result, task, guardedWritingScore);
   const contradictions = markingContradictions({ result, task, currentWritingScore: guardedWritingScore, completed, total, missingTaskPoints, wrongRegister });
   const dimensions = writingDimensions({ result, completed, total, wrongRegister, genreMismatch });
