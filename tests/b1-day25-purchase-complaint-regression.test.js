@@ -61,6 +61,62 @@ test("a real order number completes the compound purchase point", () => {
   assert.equal(evaluateB1WritingTaskEvidence(task, noReplacement)[2].status, "missing");
 });
 
+test("B1 Day 25 preserves polite würde gern refund and replacement requests", () => {
+  const canonical = getB1WritingTaskSpec("B1-8.25");
+  const published = resolveQuestionAwareWritingTask(publishedOptions());
+  const variants = [
+    "Ich würde gern eine Rückerstattung erhalten.",
+    "Ich würde gerne eine Rückerstattung erhalten.",
+    "Ich würde gern ein neues Gerät erhalten.",
+    "Ich würde gerne ein neues Handy bekommen.",
+    "Ich hätte gern eine Rückerstattung.",
+    "Ich möchte ein neues Gerät erhalten.",
+  ];
+  for (const task of [canonical, published]) {
+    for (const sentence of variants) {
+      const result = evaluateB1WritingTaskEvidence(task, sentence);
+      assert.equal(result[2].status, "met", sentence);
+      assert.match(result[2].evidence, /(?:Rückerstattung|neues (?:Gerät|Handy))/i, sentence);
+    }
+    for (const unrelated of [
+      "Ich würde gern ein neues Handy kaufen.",
+      "Ich würde gern wissen, wann Sie geöffnet haben.",
+    ]) {
+      assert.equal(evaluateB1WritingTaskEvidence(task, unrelated)[2].status, "missing", unrelated);
+    }
+  }
+});
+
+test("würde gern refund does not trigger a false missing-point cap or forced tutor review", () => {
+  const text = `TEIL 2
+Sehr geehrte Damen und Herren,
+Am 2. November habe ich ein Handy gekauft. Meine Bestellnummer ist AB-12345.
+Das Display ist kaputt. Ich würde gern eine Rückerstattung erhalten.
+Mit freundlichen Grüßen
+Ruth`;
+  const result = applyQuestionAwareWritingGuard({
+    assignmentKey: "B1-8.25",
+    level: "B1",
+    score: 92,
+    finalScore: 92,
+    objectiveScore: 100,
+    writingScore: 86,
+    writingScorePercent: 86,
+    taskCompletion: { completed: 3, total: 3, missing: [] },
+    missingTaskPoints: [],
+    feedback: "The purchase, problem and refund request are clear.",
+    confidence: 0.95,
+    status: "marked",
+    shouldSendAutomatically: true,
+  }, publishedOptions(text), text);
+  assert.deepEqual(result.taskPointEvidence.map((point) => point.status), ["met", "met", "met"]);
+  assert.deepEqual(result.missingTaskPoints, []);
+  assert.equal(result.writingScore, 86);
+  assert.equal(result.status, "marked");
+  assert.equal(result.reviewReasons?.some((reason) => reason.code === "missing_task_points"), false);
+  assert.doesNotMatch(result.feedback, /Still missing:|Required writing points are missing/i);
+});
+
 test("the question-aware marking guard corrects the stale missing-point claim but retains examiner review", () => {
   const result = applyQuestionAwareWritingGuard({
     level: "B1",
