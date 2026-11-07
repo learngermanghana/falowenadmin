@@ -827,19 +827,20 @@ function joinStudentFeedback(parts = []) {
 function buildCanonicalStudentTaskFeedback(taskPointEvidence = [], missingTaskPoints = [], total = 0) {
   const evidence = Array.isArray(taskPointEvidence) ? taskPointEvidence : [];
   const missing = [...new Set((Array.isArray(missingTaskPoints) ? missingTaskPoints : []).map(clean).filter(Boolean))];
-  const met = evidence
-    .filter((item) => clean(item?.status).toLowerCase() === "met")
-    .map((item) => clean(item?.label))
-    .filter(Boolean);
-
-  if (!missing.length) {
+  const met = evidence.filter((item) => clean(item?.status).toLowerCase() === "met").map((item) => clean(item?.label)).filter(Boolean);
+  const partial = evidence.filter((item) => clean(item?.status).toLowerCase() === "partial");
+  if (!missing.length && !partial.length) {
     const completedTotal = Number.isFinite(total) && total > 0 ? total : met.length;
     return completedTotal > 0 ? `You covered all ${completedTotal} required points.` : "";
   }
-
+  const partialExplanation = partial.map((item) => {
+    const details = (Array.isArray(item.missingDetails) ? item.missingDetails : []).map(clean).filter(Boolean);
+    return `${clean(item.label)}${details.length ? ` (still add: ${details.join(", ")})` : ""}`;
+  });
   return joinStudentFeedback([
     met.length ? `You covered: ${met.join("; ")}.` : "",
-    `Still missing: ${missing.join("; ")}.`,
+    partialExplanation.length ? `Partly covered: ${partialExplanation.join("; ")}.` : "",
+    missing.length ? `Still missing: ${missing.join("; ")}.` : "",
   ]);
 }
 
@@ -858,14 +859,20 @@ function buildCanonicalStudentFormatFeedback(task = {}, { genreMismatch = false,
   ]);
 }
 
-function buildCanonicalStudentImprovement(missingTaskPoints = [], task = {}) {
+function buildCanonicalStudentImprovement(missingTaskPoints = [], task = {}, evidence = []) {
   const missing = [...new Set((Array.isArray(missingTaskPoints) ? missingTaskPoints : []).map(clean).filter(Boolean))];
   if (task.assignmentKey === "A2-7.18" && missing.some((label) => /blocked card can be unblocked/i.test(label))) {
     return "Next step: keep your valid question about why the card is blocked and add a separate request, for example: „Könnten Sie meine Bankkarte bitte entsperren?“";
   }
-  return missing.length ? `Next step: add ${missing.join("; ")}.` : "";
+  const partialDetails = task.level === "B1" ? (Array.isArray(evidence) ? evidence : [])
+    .filter((point) => point.status === "partial")
+    .flatMap((point) => (Array.isArray(point.missingDetails) ? point.missingDetails : []))
+    .map(clean).filter(Boolean) : [];
+  return joinStudentFeedback([
+    missing.length ? `Next step: add ${missing.join("; ")}.` : "",
+    partialDetails.length ? `Next step: add the missing details: ${[...new Set(partialDetails)].join(", ")}.` : "",
+  ]);
 }
-
 
 export function enforceA2B1WritingConsistency(result = {}, {
   task = {},
@@ -932,7 +939,7 @@ export function enforceA2B1WritingConsistency(result = {}, {
   ]);
   const improvementSummary = joinStudentFeedback([
     languageImprovement,
-    buildCanonicalStudentImprovement(canonicalMissing, task),
+    buildCanonicalStudentImprovement(canonicalMissing, task, evidence),
     canonicalFormatFeedback,
   ]);
 
@@ -1214,7 +1221,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
   ]);
   const studentImprovementSummary = joinStudentFeedback([
     studentLanguageImprovement,
-    buildCanonicalStudentImprovement(missingTaskPoints, task),
+    buildCanonicalStudentImprovement(missingTaskPoints, task, taskPointEvidence),
     canonicalFormatFeedback,
   ]);
   const finalizeWritingResult = (nextResult) => enforceA2B1WritingConsistency({
