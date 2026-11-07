@@ -1,3 +1,5 @@
+import { extractNamedChoiceAnswer } from "./namedChoiceAnswer.js";
+
 function normalizedLabel(value = "") {
   return String(value || "")
     .toLocaleLowerCase("de")
@@ -158,9 +160,17 @@ function normalizeCompactObjectiveSeparators(text = "") {
 // A copied report may flatten all newlines. Only split explicit objective
 // headings followed by a numbered answer, never an ordinary mention of Teil 3.
 function normalizeInlineObjectiveHeadings(text = "") {
-  return String(text || "").replace(
+  const normalized = String(text || "").replace(
     /[ \t]+((?:teil|tiel|part)[ \t]*[1-4](?:[ \t]*[.:;|·•–-]?[ \t]*(?:lesen|reading|h[oö]ren|hoeren|listening))?[ \t]*[:;]?[ \t]*)(?=1\s*[).:]\s*(?:[A-Z](?:[).:]|\s|$)|richtig\b|falsch\b|wahr\b))/gi,
     "\n$1",
+  );
+  return normalized.replace(
+    /[ \t]+((?:teil|tiel|part)[ \t]*[1-4](?:[ \t]*[.:;|·•–-]?[ \t]*(?:lesen|reading|h[oö]ren|hoeren|listening))?[ \t]*[:;]?[ \t]*)(?=1\s*[).:]\s*)/gi,
+    (match, heading, offset) => {
+      const firstAnswer = normalized.slice(offset + match.length)
+        .match(/^1\s*[).:]\s*(.*?)(?=\s+\d{1,3}\s*[).:]\s*|\n|$)/)?.[1];
+      return extractNamedChoiceAnswer(firstAnswer) ? `\n${heading}` : match;
+    },
   );
 }
 

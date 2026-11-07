@@ -1,3 +1,4 @@
+import { extractNamedChoiceAnswer } from "../src/utils/namedChoiceAnswer.js";
 import { Buffer } from "node:buffer";
 import socialMetricsHandler from "./social-metrics.js";
 import studentResultsSheetUpsertHandler from "./student-results-sheet-upsert.js";
@@ -537,7 +538,8 @@ function valueMatches(expectedEntry = {}, studentRaw = "") {
 
   const expectedLetter = String(expectedEntry.correctLetter || "").toUpperCase();
   const expectedText = expectedEntry.correctText || extractOptionText(expectedEntry.rawCorrectAnswer || expectedEntry.raw || "");
-  const studentLetter = extractOptionLetter(student);
+  const studentLetter = extractOptionLetter(student)
+    || (expectedLetter ? extractNamedChoiceAnswer(student) : "");
   const studentText = extractOptionText(student) || student;
   const booleanAnswer = normalizeBooleanAnswer(student);
 

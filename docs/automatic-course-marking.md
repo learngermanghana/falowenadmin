@@ -31,3 +31,7 @@ The inbox defaults to unpublished work and provides Failed results, Marking issu
 The inbox uses the existing single-field date index, filters each bounded page by source and advances its raw cursor even for pages containing other sources. No new composite index is required. Deploy the Admin marking worker for the publication-policy and null-writing validation fixes. Previously held jobs are not automatically replayed or approved; review their original evidence individually.
 
 Missing legacy display names are resolved on each loaded page from the exact submission and registered student. Only unnamed rows are enriched, reads are bounded by page size and no polling is added. New results preserve registered studentName and first/last name aliases as well as name/fullName.
+
+## Named matching answers
+
+For known choice questions, the shared comparison accepts a capitalized person name followed by a single option letter (for example, `Jonas a` or `Herr und Frau Weber X`). It tolerates pasted tabs and invisible formatting characters while retaining the submitted text in review details. This fallback does not alter reference-key parsing or free-text marking. Ambiguous suffixes and prose do not qualify. Flattened reports with explicit Teil headings also recognise numbered named choices. Genuine letter mismatches still count as wrong. Existing held or published results are not regraded automatically; a tutor must rerun marking and review before saving.
