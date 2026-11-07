@@ -1,3 +1,4 @@
+import { extractNamedChoiceAnswer } from "./namedChoiceAnswer.js";
 import answersDictionary from "../data/answers_dictionary.json" with { type: "json" };
 import { parseSubmissionSections } from "./submissionSections.js";
 
@@ -1171,7 +1172,8 @@ function isCorrectAnswer(item, student, assignmentId = "") {
     return a1Day4FormValueMatches(item.expectedRaw || item.expectedDisplay || item.expected, student);
   }
   const expectedLetter = item.type === "choice" ? String(item.expected || "").toUpperCase() : extractOptionLetter(item.expectedRaw) || extractOptionLetter(item.expected);
-  const studentLetter = extractOptionLetter(student);
+  const studentLetter = extractOptionLetter(student)
+    || (item.type === "choice" ? extractNamedChoiceAnswer(student) : "");
   if (expectedLetter && studentLetter) return expectedLetter === studentLetter;
   if (expectedLetter && normalizeAnswer(student) === normalizeAnswer(expectedLetter)) return true;
   if (item.type === "choice" && item.expectedText) return textMatches(item.expectedText, student);

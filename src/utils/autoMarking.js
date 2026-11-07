@@ -1,3 +1,4 @@
+import { extractNamedChoiceAnswer } from "./namedChoiceAnswer.js";
 import { parseSubmissionSections } from "./submissionSections.js";
 import { allowsConnectorAssessment } from "./a1ConnectorPolicy.js";
 import { stripMarkingEmojis } from "./markingFeedbackText.js";
@@ -606,7 +607,8 @@ function valuesMatch(expectedRaw, studentRaw) {
   if (meta.isVocabulary) return { status: "wrong" };
 
   const expectedLetter = meta.correctLetter || extractOptionLetter(meta.raw);
-  const studentLetter = extractOptionLetter(studentRaw);
+  const studentLetter = extractOptionLetter(studentRaw)
+    || (expectedLetter ? extractNamedChoiceAnswer(studentRaw) : "");
   const studentText = extractOptionText(studentRaw);
   const expectedText = meta.correctText || extractOptionText(meta.raw);
 
