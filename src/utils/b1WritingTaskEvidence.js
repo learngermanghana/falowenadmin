@@ -254,7 +254,7 @@ const RULES = {
     b1ComplaintPurchase,
     makeRule(/\b(?:besch[aä]digt|kaputt|defekt|funktioniert\s+nicht|geht\s+nicht|zerbrochen|fehlerhaft|l[aä]sst\s+sich\s+nicht)\b/i,
       "Describe what is damaged or does not work."),
-    makeRule(/\b(?:(?:(?:ich\s+)?(?:m[oö]chte|h[aä]tte\s+gern)|bitte|k[oö]nnten\s+sie)[^.!?]{0,110}(?:ersatz|umtausch|austausch|umtauschen|reparieren|reparatur|r[uü]ckerstattung|erstatten|erstattung|geld\s+zur[uü]ck)|(?:ersatz|umtausch|reparatur|r[uü]ckerstattung)[^.!?]{0,80}bitte|(?:ich\s+m[oö]chte|ich\s+h[aä]tte\s+gern|k[oö]nnten\s+sie)[^.!?]{0,90}\b(?:ein\s+neues|eine\s+neue|einen\s+neuen)\s+(?:ger[aä]t|handy|smartphone|telefon|tablet|kaffeemaschine)\s+(?:erhalten|bekommen|haben|zugeschickt\s+bekommen))\b/i,
+    makeRule(/\b(?:(?:(?:ich\s+)?(?:m[oö]chte|h[aä]tte\s+gern|w[uü]rde\s+gern(?:e)?)|bitte|k[oö]nnten\s+sie)[^.!?]{0,110}(?:ersatz|umtausch|austausch|umtauschen|reparieren|reparatur|r[uü]ckerstattung|erstatten|erstattung|geld\s+zur[uü]ck)|(?:ersatz|umtausch|reparatur|r[uü]ckerstattung)[^.!?]{0,80}bitte|(?:ich\s+m[oö]chte|ich\s+h[aä]tte\s+gern|ich\s+w[uü]rde\s+gern(?:e)?|k[oö]nnten\s+sie)[^.!?]{0,90}\b(?:ein\s+neues|eine\s+neue|einen\s+neuen)\s+(?:ger[aä]t|handy|smartphone|telefon|tablet|kaffeemaschine)\s+(?:erhalten|bekommen|haben|zugeschickt\s+bekommen))\b/i,
       "Ask politely for a concrete remedy such as exchange, repair, replacement or refund."),
   ],
   "B1-9.26": [
