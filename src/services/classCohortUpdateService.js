@@ -168,7 +168,7 @@ export async function updateClassCohort(classId, payload) {
     ...normalizedPayload,
     excludedDates: closureDates,
   });
-  const endDate = exactOrCalculatedEndDate(normalizedPayload, calculatedEndDate);
+  let endDate = exactOrCalculatedEndDate(normalizedPayload, calculatedEndDate);
   const preparedPayload = { ...normalizedPayload, endDate };
   const repairingDuplicateTimetable = duplicateScheduleWeekdays(current.scheduleRules || []).length > 0;
   const baseResult = normalizedPayload.historicalMode === true
@@ -176,6 +176,7 @@ export async function updateClassCohort(classId, payload) {
     : repairingDuplicateTimetable
       ? await repairDuplicateTimetableClass(classId, current, preparedPayload)
       : await base.updateClassCohort(classId, preparedPayload);
+  endDate = laterDate(endDate, baseResult.endDate);
   const groupedResult = normalizedPayload.historicalMode === true
     ? {}
     : await applyGroupedCurriculumToClass(classId);
