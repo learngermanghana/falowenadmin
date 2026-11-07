@@ -891,10 +891,13 @@ export function enforceA2B1WritingConsistency(result = {}, {
     Array.isArray(task.taskPoints) ? task.taskPoints.length : 0,
     evidence.length,
   );
-  const completed = Math.max(0, total - canonicalMissing.length);
-  const hasConsistencyIssue = canonicalMissing.length > 0 || genreMismatch || wrongRegister;
+  const partial = evidence.filter((item) => clean(item?.status).toLowerCase() === "partial");
+  const partialLabels = partial.map((item) => clean(item.label));
+  const completed = Math.max(0, total - canonicalMissing.length - partial.length);
+  const hasConsistencyIssue = canonicalMissing.length > 0 || partial.length > 0 || genreMismatch || wrongRegister;
 
   let cap = guardCapForMissing(canonicalMissing.length, total);
+  if (partial.length) cap = Math.min(cap, 90);
   if (genreMismatch) cap = Math.min(cap, 65);
   if (wrongRegister) cap = Math.min(cap, canonicalMissing.length ? 60 : 70);
 
@@ -957,6 +960,12 @@ export function enforceA2B1WritingConsistency(result = {}, {
       message: `Required writing points are missing: ${canonicalMissing.join("; ")}.`,
       source: "question_aware_writing",
     }] : []),
+    ...(partial.length ? [{
+      code: "partial_task_points",
+      message: "Required writing points are partly fulfilled: " + partial.map((point) =>
+        clean(point.label) + " (missing: " + (point.missingDetails || []).join(", ") + ")").join("; ") + ".",
+      source: "question_aware_writing",
+    }] : []),
     ...(genreMismatch ? [{
       code: "writing_text_type_mismatch",
       message: `Detected ${detectedTextType.detectedType || "another text type"} instead of the required ${task.textType}.`,
@@ -971,8 +980,9 @@ export function enforceA2B1WritingConsistency(result = {}, {
 
   let next = {
     ...result,
-    taskCompletion: { completed, total, missing: canonicalMissing },
+    taskCompletion: { completed, total, missing: canonicalMissing, ...(partial.length ? { partial: partialLabels } : {}) },
     missingTaskPoints: canonicalMissing,
+    partialTaskPoints: partial.map((point) => ({ label: clean(point.label), missingDetails: point.missingDetails || [] })),
     taskPointEvidence: evidence,
     feedback,
     improvementSummary,
@@ -1027,6 +1037,7 @@ export function enforceA2B1WritingConsistency(result = {}, {
         completed,
         total,
         missingTaskPoints: canonicalMissing,
+        partialTaskPoints: partialLabels,
         scoreCap: hasConsistencyIssue ? cap : null,
         repairs: [...new Set(repairs)],
       },
@@ -1354,6 +1365,12 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     ...(!verifiedA1Omission && missingTaskPoints.length ? [{
       code: "missing_task_points",
       message: `Required writing points are missing: ${missingTaskPoints.join("; ")}.`,
+      source: "question_aware_writing",
+    }] : []),
+    ...(task.level === "B1" && partialTaskPoints.length ? [{
+      code: "partial_task_points",
+      message: "Required writing points are partly fulfilled: " + partialTaskPoints.map((point) =>
+        clean(point.label) + " (missing: " + (point.missingDetails || []).join(", ") + ")").join("; ") + ".",
       source: "question_aware_writing",
     }] : []),
     ...(genreMismatch ? [{
