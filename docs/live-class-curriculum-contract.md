@@ -112,3 +112,13 @@ The conversation transcript and fixed answer key were not supplied. Five open li
 The focused-practice slot becomes three teacher-led route scenarios (late bus, rain on the work route, connection to Berlin), each with three progressive prompts and hidden optional models using mit + Dativ, zur/zum, nach and zu Fuß. No additional practice stage, student login, grade or submission is created. The uploaded conversation is ungraded classroom material; it does not add a workbook Hören assessment.
 
 Teaching CI failures on 6 November came from stale expectations: one opening test omitted the already-enabled A2 Day 1 song, an audio-route assertion omitted Day 1, and the wrap-up challenge list omitted Day 1. Tests now derive opening/challenge expectations from the authored registries where appropriate, while retaining exact-key, stage-order, published-track and staff-access regression checks. The Day 23 permalink is included in the teaching workflow.
+
+## Weekly timetable edits — 7 November 2026
+
+Saving class settings counts saved protected history before generating future
+slots. A1–C1 use the complete grouped dictionary count, rather than counting
+hypothetical past meetings on the newly selected weekdays. Remaining lessons
+continue beyond the previous graduation date when necessary. Past, completed,
+live, cancelled and manually rescheduled records remain protected. Saving an
+already shortened class regenerates its missing future slots. No learner API
+or assignment identity format changes are required.

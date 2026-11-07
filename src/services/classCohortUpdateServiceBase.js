@@ -11,10 +11,10 @@ import {
 import { db } from "../firebase.js";
 import {
   buildClassUrl,
-  generateSessionOccurrences,
   normalizeScheduleRules,
 } from "../utils/liveClassScheduling.js";
-import { courseDictionary, getUnifiedTopicLabel } from "../data/courseDictionary.js";
+import { getCourseSessionGroups } from "../data/courseSessionGroups.js";
+import { preserveClassSession, remainingClassOccurrences } from "../utils/liveClassRemainingSchedule.js";
 
 const TUITION = { A1: 3000, A2: 3000, B1: 3000, B2: 3000, C1: 3000 };
 const DAY = { sun: "Sun", mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat" };
@@ -60,13 +60,13 @@ function normalizeIds(session = {}) {
 }
 
 function curriculumFor(levelId, index, existing = {}, force = false) {
-  const entry = Object.values(courseDictionary[String(levelId || "").toUpperCase()] || {})[index];
+  const entry = getCourseSessionGroups(levelId)[index];
   const currentIds = normalizeIds(existing);
-  const automaticIds = entry?.assignment_id ? [String(entry.assignment_id).trim().toUpperCase()] : [];
+  const automaticIds = entry?.assignmentIds || [];
   const assignmentIds = force || !currentIds.length ? automaticIds : currentIds;
   const existingTopic = String(existing.topic || "").trim();
   const automaticTopic = automaticIds.length
-    ? getUnifiedTopicLabel(automaticIds[0], entry?.de || entry?.en || "")
+    ? entry.topic
     : "";
   const topic = force || !existingTopic ? automaticTopic : existingTopic;
 
@@ -108,8 +108,11 @@ function attendanceMetadata(klass, session) {
 }
 
 function protectedSession(session, nowMs) {
-  const status = String(session.status || "scheduled").toLowerCase();
-  return ["completed", "cancelled", "live"].includes(status) || toMillis(session.startsAt) < nowMs;
+  return preserveClassSession(session, nowMs);
+}
+
+function protectedIdsForCount(sessions, nowMs) {
+  return sessions.filter((session) => protectedSession(session, nowMs)).length;
 }
 
 export async function updateClassCohort(classId, payload) {
@@ -171,7 +174,10 @@ export async function updateClassCohort(classId, payload) {
     classUrl: buildClassUrl(current),
   };
 
-  const occurrences = generateSessionOccurrences(next);
+  const occurrences = remainingClassOccurrences(next, sessions, nowMs);
+  const preservedCount = protectedIdsForCount(sessions, nowMs);
+  const lastDate = occurrences.at(-1)?.startsAt?.slice(0, 10) || "";
+  if (lastDate > next.endDate) next.endDate = lastDate;
   const desiredFuture = occurrences.filter((occurrence) => toMillis(occurrence.startsAt) >= nowMs);
   const desiredIds = new Set(desiredFuture.map((occurrence) => occurrence.id));
   const existingById = new Map(sessions.map((session) => [session.id, session]));
@@ -193,7 +199,7 @@ export async function updateClassCohort(classId, payload) {
   occurrences.forEach((occurrence, index) => {
     if (toMillis(occurrence.startsAt) < nowMs || protectedIds.has(occurrence.id)) return;
     const existing = existingById.get(occurrence.id) || null;
-    const curriculum = curriculumFor(levelId, index, existing || {}, levelChanged || !existing);
+    const curriculum = curriculumFor(levelId, preservedCount + index, existing || {}, levelChanged || !existing);
     if (curriculum.assignmentIds.length) mapped += 1;
     const session = {
       ...(existing || {}),
@@ -238,7 +244,7 @@ export async function updateClassCohort(classId, payload) {
     classUrl: next.classUrl,
     generationStatus: "complete",
     generationError: "",
-    generatedSessionCount: occurrences.length,
+    generatedSessionCount: preservedCount + occurrences.length,
     curriculumMappedSessionCount: mapped,
     publicDataVersion: 1,
     timetableChangedAfterStart: hasStarted && timetableChanged,
@@ -254,7 +260,8 @@ export async function updateClassCohort(classId, payload) {
     refreshed,
     mapped,
     preserved: protectedIds.size,
-    total: occurrences.length,
+    total: preservedCount + occurrences.length,
+    endDate: next.endDate,
   };
 }
 
