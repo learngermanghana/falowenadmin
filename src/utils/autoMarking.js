@@ -1201,8 +1201,12 @@ function getReferenceObjectivePartIds(referenceEntry = {}) {
 
 function selectSubmissionTextForPart(submissionText = "", partId = "main") {
   if (partId === "main" || partId === "unknown") return submissionText;
-  const matchingParts = splitSubmissionIntoParts(submissionText).filter((part) => part.partId === partId);
-  if (!matchingParts.length) return submissionText;
+  const parts = splitSubmissionIntoParts(submissionText);
+  const matchingParts = parts.filter((part) => part.partId === partId);
+  if (!matchingParts.length) {
+    // An explicitly labelled part cannot supply answers to another part.
+    return parts.some((part) => !["main", "unknown"].includes(part.partId)) ? "" : submissionText;
+  }
   return matchingParts.map((part) => part.text).filter(Boolean).join("\n");
 }
 

@@ -1,3 +1,4 @@
+import { parseSubmissionSections } from "../src/utils/submissionSections.js";
 import { extractNamedChoiceAnswer } from "../src/utils/namedChoiceAnswer.js";
 import { Buffer } from "node:buffer";
 import socialMetricsHandler from "./social-metrics.js";
@@ -384,6 +385,12 @@ function splitSubmissionIntoParts(submissionText = "") {
   const text = String(submissionText || "").trim();
   if (!text) return [{ partId: "main", title: "Main", text: "", confidence: 0 }];
 
+  // Preserve compact same-line parts with the shared submission parser.
+  if (/^\s*(?:teil|tiel|part)\s*[1-4]\b/i.test(text)
+      && /\b(?:teil|tiel|part)\s*[1-4](?:\s+(?:\d+\s*[).:]|hallo\b|liebe\w*\b|sehr\s+geehrt)|\s*·\s*(?:lesen|h[oö]ren|hoeren)\b)/i.test(text)) {
+    return parseSubmissionSections(text);
+  }
+
   const markerRegex = /(?:^|\n)\s*((?:teil|part)\s*(?:[1-4]|eins|zwei|drei|vier|one|two|three|four)\b[^\n]*|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\b[^\n]*)\s*:?\s*(?=\n|$)/gi;
   const markers = [];
   let match;
@@ -413,6 +420,9 @@ function splitObjectiveAnswerTokens(text = "") {
   return String(text || "")
     .split(/\r?\n/)
     .flatMap((line) => line.split(/[,;]+/))
+    .flatMap((line) => /^(?:\d{1,3}\s*[).:]\s*[A-HX]\s*){2,}$/i.test(line.trim())
+      ? line.match(/\d{1,3}\s*[).:]\s*[A-HX]/gi)
+      : [line])
     .map((line) => line.trim())
     .filter(Boolean);
 }
@@ -693,6 +703,7 @@ function normalizeReferenceEntry(referenceEntry = {}) {
 function objectiveMarkerForRouter(referenceEntry = {}, submissionText = "") {
   const normalizedReference = normalizeReferenceEntry(referenceEntry);
   const sections = splitSubmissionIntoParts(submissionText);
+  const hasExplicitParts = sections.some((section) => !["main", "unknown"].includes(section.partId));
   const markedParts = [];
 
   for (const [partId, part] of Object.entries(normalizedReference.parts || {})) {
@@ -708,7 +719,7 @@ function objectiveMarkerForRouter(referenceEntry = {}, submissionText = "") {
         .filter((section) => section.partId === partId)
         .map((section) => section.text)
         .join("\n");
-      const parsed = parseStudentPartAnswers(matchingText || submissionText);
+      const parsed = parseStudentPartAnswers(matchingText || (hasExplicitParts ? "" : submissionText));
       const answers = entries.map((entry, index) => {
         const question = Number.parseInt(entry.questionNumber, 10) || index + 1;
         return parsed.map.get(question) || "";
