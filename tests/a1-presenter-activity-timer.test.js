@@ -11,7 +11,7 @@ import {
 const a1Presenter = () => fs.readFileSync(new URL("../src/components/A1GrammarPresenter.jsx", import.meta.url), "utf8");
 
 test("A1 activity timer starts at five minutes and offers the A2/B1 classroom presets", () => {
-  assert.deepEqual(A1_ACTIVITY_TIMER_PRESETS, [7, 5, 3, 2, 1]);
+  assert.deepEqual(A1_ACTIVITY_TIMER_PRESETS, [7, 5, 3, 2, 1, 0.5]);
   assert.equal(DEFAULT_A1_ACTIVITY_MINUTES, 5);
   assert.equal(Object.isFrozen(A1_ACTIVITY_TIMER_PRESETS), true);
 });
@@ -125,4 +125,16 @@ test("A1 fullscreen keeps mobile picker, activity countdown and class timer in n
   assert.match(layout, /overflow-y: auto/);
   assert.match(layout, /\.presenter-stage\.is-focus-mode\.presenter-a1-stacked-controls > \.presenter-content/);
   assert.doesNotMatch(layout, /\.presenter-stage\.is-focus-mode\s*>\s*\.presenter-focus-stage-timer/);
+});
+
+ test("30-second preset expires at 30 seconds and labels seconds in both presenters", () => {
+  const duration = Math.min(...A1_ACTIVITY_TIMER_PRESETS) * 60;
+  assert.equal(duration, 30);
+  const deadline = a1ActivityDeadline(duration, 100000);
+  assert.equal(a1ActivitySecondsLeft(deadline, 129000), 1);
+  assert.equal(a1ActivitySecondsLeft(deadline, 130000), 0);
+  for (const file of ["A1GrammarPresenter.jsx", "TeachingSlidePresenter.jsx"]) {
+    const source = fs.readFileSync(new URL(`../src/components/${file}`, import.meta.url), "utf8");
+    assert.ok(source.includes('`${minutes * 60}s`'));
+  }
 });

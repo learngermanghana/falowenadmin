@@ -627,7 +627,7 @@ export default function A1GrammarPresenter({
               {A1_ACTIVITY_TIMER_PRESETS.map((minutes) => (
                 <button key={minutes} type="button" className={activityTimerMinutes === minutes ? "is-active" : ""}
                   aria-pressed={activityTimerMinutes === minutes} onClick={() => setActivityMinutes(minutes)}>
-                  {minutes}m
+                  {minutes < 1 ? `${minutes * 60}s` : `${minutes}m`}
                 </button>
               ))}
               <button type="button" onClick={toggleActivityTimer} disabled={activityRemainingSeconds <= 0}>
@@ -674,7 +674,7 @@ export default function A1GrammarPresenter({
                 {A1_ACTIVITY_TIMER_PRESETS.map((minutes) => (
                   <button key={minutes} type="button" className={activityTimerMinutes === minutes ? "is-active" : ""}
                     aria-pressed={activityTimerMinutes === minutes} onClick={() => setActivityMinutes(minutes)}>
-                    {minutes}m
+                    {minutes < 1 ? `${minutes * 60}s` : `${minutes}m`}
                   </button>
                 ))}
               </div>

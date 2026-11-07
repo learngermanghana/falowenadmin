@@ -28,7 +28,7 @@ import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import "./TeachingSlidePresenter.css";
 
 const FALOWEN_BASE_URL = "https://www.falowen.app";
-const A2_B1_ACTIVITY_TIMER_PRESETS = [7, 5, 3, 2, 1];
+const A2_B1_ACTIVITY_TIMER_PRESETS = [7, 5, 3, 2, 1, 0.5];
 const DEFAULT_ACTIVITY_TIMER_MINUTES = 5;
 
 function formatTimer(totalSeconds = 0) {
@@ -712,8 +712,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
   const timerExpired = showPresenterTimer && timerRemaining === 0 && !timerRunning;
   const timerPresets = a2B1ActivityTimer
     ? (stage?.variant === "interactive-warmup" || stage?.variant === "interactive-listening"
-      ? [...new Set([stage?.suggestedMinutes, 10, 7, 6, 5, 3, 2, 1].filter(Boolean))] : A2_B1_ACTIVITY_TIMER_PRESETS)
-    : [...new Set([stage.suggestedMinutes, 2, 3, 5, 10].filter(Boolean))];
+      ? [...new Set([stage?.suggestedMinutes, 10, 7, 6, 5, 3, 2, 1, 0.5].filter(Boolean))] : A2_B1_ACTIVITY_TIMER_PRESETS)
+    : [...new Set([stage.suggestedMinutes, 0.5, 1, 2, 3, 5, 10].filter(Boolean))];
   const warmupTimerTotalSeconds = Math.max(1, activityTimerMinutes * 60);
   const warmupTimerRatio = timerRemaining / warmupTimerTotalSeconds;
   const warmupCoachingPrompts = [
@@ -754,7 +754,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                   aria-pressed={activityTimerMinutes === minutes}
                   onClick={() => setTimerMinutes(minutes, "activity")}
                 >
-                  {minutes}m
+                  {minutes < 1 ? `${minutes * 60}s` : `${minutes}m`}
                 </button>
               )) : null}
               <button type="button" onClick={togglePresenterTimer} disabled={timerRemaining <= 0}>
@@ -814,7 +814,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                       aria-pressed={a2B1ActivityTimer ? activityTimerMinutes === minutes : undefined}
                       onClick={() => setTimerMinutes(minutes, a2B1ActivityTimer ? "activity" : "stage")}
                     >
-                      {minutes}m
+                      {minutes < 1 ? `${minutes * 60}s` : `${minutes}m`}
                     </button>
                   ))}
                 </div>
