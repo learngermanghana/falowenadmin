@@ -7,6 +7,7 @@ on:
       - 'src/utils/b1WritingTaskEvidence.js'
       - 'src/utils/questionAwareWritingMarking.js'
       - 'tests/b1-semantic-writing-marking.test.js'
+      - 'tests/b1-day25-purchase-complaint-regression.test.js'
       - 'tests/b1-day26-vienna-marking-contract.test.js'
       - 'tests/b1-day26-updated-answer-key.test.js'
       - 'tests/question-aware-writing-marking.test.js'
@@ -24,6 +25,7 @@ on:
       - 'src/utils/b1WritingTaskEvidence.js'
       - 'src/utils/questionAwareWritingMarking.js'
       - 'tests/b1-semantic-writing-marking.test.js'
+      - 'tests/b1-day25-purchase-complaint-regression.test.js'
       - 'tests/b1-day26-vienna-marking-contract.test.js'
       - 'tests/b1-day26-updated-answer-key.test.js'
       - 'tests/question-aware-writing-marking.test.js'
@@ -56,8 +58,9 @@ jobs:
           node --check src/utils/b1WritingTaskEvidence.js
           node --check src/utils/questionAwareWritingMarking.js
           node --check tests/b1-semantic-writing-marking.test.js
+          node --check tests/b1-day25-purchase-complaint-regression.test.js
       - name: Run semantic B1 regressions
-        run: node --test tests/b1-semantic-writing-marking.test.js tests/question-aware-writing-marking.test.js
+        run: node --test tests/b1-semantic-writing-marking.test.js tests/b1-day25-purchase-complaint-regression.test.js tests/question-aware-writing-marking.test.js
       - name: Verify both B1 Day 26 tests against the same formal Vienna contract
         run: node --test tests/b1-day26-vienna-marking-contract.test.js tests/b1-day26-updated-answer-key.test.js
       - name: Build production bundle

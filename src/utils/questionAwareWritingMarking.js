@@ -51,6 +51,14 @@ function applyAuthoritativeWritingOverride(task = {}) {
     && /Vorteile\s+von\s+Sport/i.test(task.taskSituationDe || "")
     && /Rolle\s+von\s+Ern[aä]hrung/i.test(task.taskSituationDe || "")
     && /pers[oö]nlich\s+im\s+Alltag/i.test(task.taskSituationDe || "");
+  // The three exact learner-published complaint requirements must match before
+  // applying the historical Day 25 deterministic evidence rules.
+  const currentB1ComplaintPrompt = publishedB1 && assignmentKey === "B1-8.25"
+    && task.taskPointsDe?.length === 3
+    && /ElectroWorld/i.test(task.taskSituationDe || "")
+    && /^Grund des Schreibens: Geben Sie Ihren Kauf an \(Datum, Produkt und Bestellnummer\)\.$/i.test(clean(task.taskPointsDe[0]))
+    && /^Problem beschreiben: Was ist besch[aä]digt oder funktioniert nicht\?$/i.test(clean(task.taskPointsDe[1]))
+    && /^L[oö]sung \/ Forderung: Bitten Sie um Umtausch, Reparatur oder R[uü]ckerstattung des Geldes\.$/i.test(clean(task.taskPointsDe[2]));
   const next = publishedA1 ? {
     ...a1Spec, ...task, level: 'A1', taskPoints: [...task.taskPointsDe],
     rubricVersion: task.taskVersion,
@@ -88,6 +96,7 @@ function applyAuthoritativeWritingOverride(task = {}) {
       ],
       semanticEvidenceRuleSet: "B1-3.8-published",
     } : {}),
+    ...(currentB1ComplaintPrompt ? { semanticEvidenceRuleSet: "B1-8.25-published" } : {}),
     gradingInstruction: [
       "Grade the " + next.level + " writing against this exact assignment task, not merely against the general topic: " + next.taskText,
       "Check every required communicative point separately. Return taskCompletion, missingTaskPoints, and evidence for every task point.",
@@ -818,19 +827,20 @@ function joinStudentFeedback(parts = []) {
 function buildCanonicalStudentTaskFeedback(taskPointEvidence = [], missingTaskPoints = [], total = 0) {
   const evidence = Array.isArray(taskPointEvidence) ? taskPointEvidence : [];
   const missing = [...new Set((Array.isArray(missingTaskPoints) ? missingTaskPoints : []).map(clean).filter(Boolean))];
-  const met = evidence
-    .filter((item) => clean(item?.status).toLowerCase() === "met")
-    .map((item) => clean(item?.label))
-    .filter(Boolean);
-
-  if (!missing.length) {
+  const met = evidence.filter((item) => clean(item?.status).toLowerCase() === "met").map((item) => clean(item?.label)).filter(Boolean);
+  const partial = evidence.filter((item) => clean(item?.status).toLowerCase() === "partial");
+  if (!missing.length && !partial.length) {
     const completedTotal = Number.isFinite(total) && total > 0 ? total : met.length;
     return completedTotal > 0 ? `You covered all ${completedTotal} required points.` : "";
   }
-
+  const partialExplanation = partial.map((item) => {
+    const details = (Array.isArray(item.missingDetails) ? item.missingDetails : []).map(clean).filter(Boolean);
+    return `${clean(item.label)}${details.length ? ` (still add: ${details.join(", ")})` : ""}`;
+  });
   return joinStudentFeedback([
     met.length ? `You covered: ${met.join("; ")}.` : "",
-    `Still missing: ${missing.join("; ")}.`,
+    partialExplanation.length ? `Partly covered: ${partialExplanation.join("; ")}.` : "",
+    missing.length ? `Still missing: ${missing.join("; ")}.` : "",
   ]);
 }
 
@@ -849,14 +859,20 @@ function buildCanonicalStudentFormatFeedback(task = {}, { genreMismatch = false,
   ]);
 }
 
-function buildCanonicalStudentImprovement(missingTaskPoints = [], task = {}) {
+function buildCanonicalStudentImprovement(missingTaskPoints = [], task = {}, evidence = []) {
   const missing = [...new Set((Array.isArray(missingTaskPoints) ? missingTaskPoints : []).map(clean).filter(Boolean))];
   if (task.assignmentKey === "A2-7.18" && missing.some((label) => /blocked card can be unblocked/i.test(label))) {
     return "Next step: keep your valid question about why the card is blocked and add a separate request, for example: „Könnten Sie meine Bankkarte bitte entsperren?“";
   }
-  return missing.length ? `Next step: add ${missing.join("; ")}.` : "";
+  const partialDetails = task.level === "B1" ? (Array.isArray(evidence) ? evidence : [])
+    .filter((point) => point.status === "partial")
+    .flatMap((point) => (Array.isArray(point.missingDetails) ? point.missingDetails : []))
+    .map(clean).filter(Boolean) : [];
+  return joinStudentFeedback([
+    missing.length ? `Next step: add ${missing.join("; ")}.` : "",
+    partialDetails.length ? `Next step: add the missing details: ${[...new Set(partialDetails)].join(", ")}.` : "",
+  ]);
 }
-
 
 export function enforceA2B1WritingConsistency(result = {}, {
   task = {},
@@ -875,10 +891,13 @@ export function enforceA2B1WritingConsistency(result = {}, {
     Array.isArray(task.taskPoints) ? task.taskPoints.length : 0,
     evidence.length,
   );
-  const completed = Math.max(0, total - canonicalMissing.length);
-  const hasConsistencyIssue = canonicalMissing.length > 0 || genreMismatch || wrongRegister;
+  const partial = evidence.filter((item) => clean(item?.status).toLowerCase() === "partial");
+  const partialLabels = partial.map((item) => clean(item.label));
+  const completed = Math.max(0, total - canonicalMissing.length - partial.length);
+  const hasConsistencyIssue = canonicalMissing.length > 0 || partial.length > 0 || genreMismatch || wrongRegister;
 
   let cap = guardCapForMissing(canonicalMissing.length, total);
+  if (partial.length) cap = Math.min(cap, 90);
   if (genreMismatch) cap = Math.min(cap, 65);
   if (wrongRegister) cap = Math.min(cap, canonicalMissing.length ? 60 : 70);
 
@@ -923,7 +942,7 @@ export function enforceA2B1WritingConsistency(result = {}, {
   ]);
   const improvementSummary = joinStudentFeedback([
     languageImprovement,
-    buildCanonicalStudentImprovement(canonicalMissing, task),
+    buildCanonicalStudentImprovement(canonicalMissing, task, evidence),
     canonicalFormatFeedback,
   ]);
 
@@ -941,6 +960,12 @@ export function enforceA2B1WritingConsistency(result = {}, {
       message: `Required writing points are missing: ${canonicalMissing.join("; ")}.`,
       source: "question_aware_writing",
     }] : []),
+    ...(partial.length ? [{
+      code: "partial_task_points",
+      message: "Required writing points are partly fulfilled: " + partial.map((point) =>
+        clean(point.label) + " (missing: " + (point.missingDetails || []).join(", ") + ")").join("; ") + ".",
+      source: "question_aware_writing",
+    }] : []),
     ...(genreMismatch ? [{
       code: "writing_text_type_mismatch",
       message: `Detected ${detectedTextType.detectedType || "another text type"} instead of the required ${task.textType}.`,
@@ -955,8 +980,9 @@ export function enforceA2B1WritingConsistency(result = {}, {
 
   let next = {
     ...result,
-    taskCompletion: { completed, total, missing: canonicalMissing },
+    taskCompletion: { completed, total, missing: canonicalMissing, ...(partial.length ? { partial: partialLabels } : {}) },
     missingTaskPoints: canonicalMissing,
+    partialTaskPoints: partial.map((point) => ({ label: clean(point.label), missingDetails: point.missingDetails || [] })),
     taskPointEvidence: evidence,
     feedback,
     improvementSummary,
@@ -1011,6 +1037,7 @@ export function enforceA2B1WritingConsistency(result = {}, {
         completed,
         total,
         missingTaskPoints: canonicalMissing,
+        partialTaskPoints: partialLabels,
         scoreCap: hasConsistencyIssue ? cap : null,
         repairs: [...new Set(repairs)],
       },
@@ -1136,7 +1163,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     : task.level === "A2"
       ? evaluateWritingTaskEvidence(task, source)
       : task.level === "B1" && (task.rubricVersion === B1_WRITING_RUBRIC_VERSION
-        || task.semanticEvidenceRuleSet === "B1-3.8-published")
+        || ["B1-3.8-published", "B1-8.25-published"].includes(task.semanticEvidenceRuleSet))
         ? evaluateB1WritingTaskEvidence(task, source)
         : [];
   const canonicalSemanticMissing = taskPointEvidence.length
@@ -1173,9 +1200,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
   const legacyEssayMismatch = /email|letter|message|invitation/.test(task.textType) && emailBodyLooksLikeOpinionEssay(source);
   const genreMismatch = classifierMismatch || legacyEssayMismatch;
   const wrongRegister = registerMismatch(task, source);
-  const partialTaskPoints = currentA1123
-    ? taskPointEvidence.filter((point) => point.status === "partial")
-    : [];
+  const partialTaskPoints = taskPointEvidence.filter((point) => point.status === "partial");
   const hasGuardIssue = missingTaskPoints.length > 0 || partialTaskPoints.length > 0 || genreMismatch || wrongRegister;
   const baseReviewReasons = pruneResolvedWritingReviewReasons(result.reviewReasons, {
     missingTaskPoints,
@@ -1207,7 +1232,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
   ]);
   const studentImprovementSummary = joinStudentFeedback([
     studentLanguageImprovement,
-    buildCanonicalStudentImprovement(missingTaskPoints, task),
+    buildCanonicalStudentImprovement(missingTaskPoints, task, taskPointEvidence),
     canonicalFormatFeedback,
   ]);
   const finalizeWritingResult = (nextResult) => enforceA2B1WritingConsistency({
@@ -1307,12 +1332,12 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
 
   let cap = guardCapForMissing(missingTaskPoints.length, total);
   // A partially met compound point earns credit, but never full content credit.
-  if (currentA1123 && partialTaskPoints.length) cap = Math.min(cap, 90);
+  if (partialTaskPoints.length) cap = Math.min(cap, 90);
   if (genreMismatch) cap = Math.min(cap, 65);
   if (wrongRegister) cap = Math.min(cap, missingTaskPoints.length ? 60 : 70);
   const guardedWritingScore = Math.min(effectiveWritingScore, cap);
 
-  const completed = Math.max(0, total - missingTaskPoints.length);
+  const completed = Math.max(0, total - missingTaskPoints.length - partialTaskPoints.length);
   const weightedOutcome = recomputeOutcome(result, task, guardedWritingScore);
   const contradictions = markingContradictions({ result, task, currentWritingScore: guardedWritingScore, completed, total, missingTaskPoints, wrongRegister });
   const dimensions = writingDimensions({ result, completed, total, wrongRegister, genreMismatch });
@@ -1340,6 +1365,12 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     ...(!verifiedA1Omission && missingTaskPoints.length ? [{
       code: "missing_task_points",
       message: `Required writing points are missing: ${missingTaskPoints.join("; ")}.`,
+      source: "question_aware_writing",
+    }] : []),
+    ...(task.level === "B1" && partialTaskPoints.length ? [{
+      code: "partial_task_points",
+      message: "Required writing points are partly fulfilled: " + partialTaskPoints.map((point) =>
+        clean(point.label) + " (missing: " + (point.missingDetails || []).join(", ") + ")").join("; ") + ".",
       source: "question_aware_writing",
     }] : []),
     ...(genreMismatch ? [{

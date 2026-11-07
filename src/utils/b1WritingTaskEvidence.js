@@ -28,6 +28,42 @@ function makeCountRule(patterns, minimum, reason = "") {
   };
 }
 
+// Compound requirements need per-detail evidence: mentioning a product and a
+// purchase date deserves partial credit even when the order number is absent.
+const B1_COMPLAINT_PURCHASE_DETAILS = [
+  {
+    label: "purchase date",
+    pattern: /\b(?:am\s+(?:montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag|\d{1,2}\.\s*(?:[a-zäöü]+|\d{1,2}\.?(?:\d{2,4})?))|vor\s+(?:\d+|einem?|zwei|drei|vier|f[uü]nf|einigen)\s+tagen?)\b/i,
+  },
+  {
+    label: "product",
+    pattern: /\b(?:tablet|handy|smartphone|kaffeemaschine|kopfhörer|ger[aä]t|laptop|telefon)\b/i,
+  },
+  {
+    label: "order number",
+    // The word "Bestellnummer" alone is not the requested order number.
+    pattern: /\b(?:bestellnummer|bestellung\s*(?:nr\.?|nummer)|auftragsnummer|bestell-?nr\.?)\s*(?:(?:ist|lautet)\s+|[:#]\s*)?(?:[a-z]{0,6}[-/]?)?\d[a-z0-9/-]{2,}\b/i,
+  },
+];
+
+const b1ComplaintPurchase = {
+  evaluate: (source) => {
+    const found = B1_COMPLAINT_PURCHASE_DETAILS.filter(({ pattern }) => pattern.test(source));
+    const missingDetails = B1_COMPLAINT_PURCHASE_DETAILS
+      .filter(({ pattern }) => !pattern.test(source))
+      .map(({ label }) => label);
+    const evidence = [...new Set(found.map(({ pattern }) => sentenceFor(source, pattern)).filter(Boolean))].join(" | ");
+    return {
+      status: found.length === B1_COMPLAINT_PURCHASE_DETAILS.length ? "met" : found.length ? "partial" : "missing",
+      evidence,
+      missingDetails,
+      reason: missingDetails.length
+        ? (found.length ? "The purchase is identified, but these details still need to be added: " : "No purchase identification was found; add ") + missingDetails.join(", ") + "."
+        : "The purchase date, product and actual order number are given.",
+    };
+  },
+};
+
 const opinionPosition = makeRule(/\b(?:ich\s+(?:denke|finde|glaube|meine)|ich\s+stimme\s+(?:\w+|der\s+(?:meinung|aussage|ansicht))\s+zu|ich\s+bin\s+(?:davon\s+)?[uü]berzeugt|meiner\s+meinung\s+nach|f[uü]r\s+mich|ich\s+bin\s+der\s+meinung|meine\s+meinung\s+ist|ich\s+halte)\b/i);
 const conclusion = makeRule(/\b(?:zusammenfassend|abschlie[ßs]end|deshalb\s+denke\s+ich|daher\s+denke\s+ich|insgesamt|zum\s+schluss|meiner\s+meinung\s+nach)\b/i);
 const example = makeRule(/\b(?:zum\s+beispiel|beispielsweise|in\s+meinem\s+fall|bei\s+mir|ich\s+habe|ich\s+kenne|in\s+meinem\s+land|in\s+ghana)\b/i);
@@ -215,15 +251,11 @@ const RULES = {
     conclusion,
   ],
   "B1-8.25": [
-    makeCountRule([
-      /\b(?:am\s+\d{1,2}[.]|am\s+\d{1,2}\.\s*\w+|vor\s+\w+\s+tagen?)\b/i,
-      /\b(?:tablet|handy|smartphone|kaffeemaschine|kopfhörer|ger[aä]t|laptop|telefon)\b/i,
-      /\b(?:bestellnummer|bestellung\s*(?:nr\.?|nummer)|auftragsnummer|bestell-?nr\.?)\b/i,
-    ], 3, "Provide purchase date, product and order number."),
+    b1ComplaintPurchase,
     makeRule(/\b(?:besch[aä]digt|kaputt|defekt|funktioniert\s+nicht|geht\s+nicht|zerbrochen|fehlerhaft|l[aä]sst\s+sich\s+nicht)\b/i,
       "Describe what is damaged or does not work."),
-    makeRule(/\b(?:(?:bitte|bitt(?:e|en)|m[oö]chte|w[uü]rde\s+gern|k[oö]nnten\s+sie)[^.!?]{0,110}(?:ersatz|umtausch|austausch|reparatur|r[uü]ckerstattung|erstattung|geld\s+zur[uü]ck)|(?:ersatz|umtausch|reparatur|r[uü]ckerstattung)[^.!?]{0,80}bitte)\b/i,
-      "Ask politely for a concrete remedy such as exchange, repair or refund."),
+    makeRule(/\b(?:(?:(?:ich\s+)?(?:m[oö]chte|h[aä]tte\s+gern|w[uü]rde\s+gern(?:e)?)|bitte|k[oö]nnten\s+sie)[^.!?]{0,110}(?:ersatz|umtausch|austausch|umtauschen|reparieren|reparatur|r[uü]ckerstattung|erstatten|erstattung|geld\s+zur[uü]ck)|(?:ersatz|umtausch|reparatur|r[uü]ckerstattung)[^.!?]{0,80}bitte|(?:ich\s+m[oö]chte|ich\s+h[aä]tte\s+gern|ich\s+w[uü]rde\s+gern(?:e)?|k[oö]nnten\s+sie)[^.!?]{0,90}\b(?:ein\s+neues|eine\s+neue|einen\s+neuen)\s+(?:ger[aä]t|handy|smartphone|telefon|tablet|kaffeemaschine)\s+(?:erhalten|bekommen|haben|zugeschickt\s+bekommen))\b/i,
+      "Ask politely for a concrete remedy such as exchange, repair, replacement or refund."),
   ],
   "B1-9.26": [
     makeCountRule([
@@ -270,15 +302,18 @@ export function evaluateB1WritingTaskEvidence(task = {}, source = "") {
         reason: "No deterministic B1 evidence rule is configured for this task point.",
       };
     }
-    const met = Boolean(rule.test(String(source || "")));
+    const text = String(source || "");
+    const compound = typeof rule.evaluate === "function" ? rule.evaluate(text) : null;
+    const met = compound ? compound.status === "met" : Boolean(rule.test(text));
     return {
       index,
       label: clean(label),
-      status: met ? "met" : "missing",
-      evidence: met ? clean(rule.evidence(String(source || ""))) : "",
-      reason: met
+      status: compound?.status || (met ? "met" : "missing"),
+      evidence: compound ? clean(compound.evidence) : met ? clean(rule.evidence(text)) : "",
+      ...(compound?.missingDetails?.length ? { missingDetails: compound.missingDetails } : {}),
+      reason: compound?.reason || (met
         ? "The submission contains task-relevant evidence for this communicative point."
-        : (rule.reason || "No task-relevant evidence for this required B1 point was found in Teil 2."),
+        : (rule.reason || "No task-relevant evidence for this required B1 point was found in Teil 2.")),
     };
   });
 }
