@@ -1253,7 +1253,7 @@ export const PRESENTER_READING_PHRASES = Object.freeze({
 export function getPresenterReadingPhraseTranslations(assignmentId = "") {
   const key = String(assignmentId || "").trim().toUpperCase();
   if (!PRESENTER_READING_PHRASES[key]) {
-    const level = key.match(/^(B2|C1|C2)(?=[\\s-]|$)/)?.[1];
+    const level = key.match(/^(B2|C1|C2)(?=[\s-]|$)/)?.[1];
     return level ? getAdvancedReadingPhraseTranslations(level) : [];
   }
   const phrases = PRESENTER_READING_PHRASES[key];
