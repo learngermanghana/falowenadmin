@@ -1,5 +1,5 @@
-// Course-wide A1 slide-quality gate. This checks *all* twenty-four class
-// days and all twenty-seven published lesson blocks, not only the newest pack.
+// Course-wide A1 slide-quality gate. This checks *all* twenty-three currently scheduled class
+// days and all active published lesson blocks, not only the newest pack.
 // It reads teaching metadata; never alters submissions, progress or scores.
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { getCourseSessionGroups } from "../src/data/courseSessionGroups.js";
@@ -33,18 +33,25 @@ const getCurated = (lookups, id) => lookups.map(get => get(id)).find(Boolean) ||
 const text = v => String(v || "").trim();
 const normalized = v => text(v).toLocaleLowerCase("de-DE");
 const slides = getSlidesByCourse("A1");
-const lessons = slides.filter(s => text(s.assignmentId).toUpperCase() !== "A1-TUTORIAL");
 const groups = getCourseSessionGroups("A1");
+const scheduledIds = new Set(groups.flatMap(group => group.assignmentIds.map(id => text(id).toUpperCase())));
+// Archived A1 teaching slides remain directly accessible for historical
+// records, but they are not additional published meetings. Audit exactly
+// the lessons in the official course schedule, not legacy aliases.
+const lessons = slides.filter(s => {
+  const id = text(s.assignmentId).toUpperCase();
+  return id !== "A1-TUTORIAL" && scheduledIds.has(id);
+});
 const error = [];
 let teacherAnswers = 0;
 let readyReviews = 0;
 
-if (lessons.length !== 27) error.push("Expected exactly 27 A1 published teaching blocks, found " + lessons.length);
-if (groups.length !== 25) error.push("Expected Day 0 orientation + 24 class days, found " + groups.length);
+if (lessons.length !== 24) error.push("Expected 24 active A1 teaching blocks across 23 days (Day 16 has two), found " + lessons.length);
+if (groups.length !== 24) error.push("Expected Day 0 orientation + 23 scheduled class days, found " + groups.length);
 const ids = lessons.map(s => text(s.assignmentId).toUpperCase());
 if (new Set(ids).size !== ids.length) error.push("Duplicate A1 assignment identifiers");
 
-for (const day of Array.from({ length: 24 }, (_, i) => i + 1)) {
+for (const day of Array.from({ length: 23 }, (_, i) => i + 1)) {
   const matching = lessons.filter(s => Number(s.dayNumber) === day);
   if (!matching.length) error.push("No presentation for A1 class Day " + day);
   if (day === 16 && matching.length !== 2) error.push("Day 16 must have distinct A1-9 and A1-10");
@@ -101,7 +108,9 @@ for (const slide of lessons) {
         error.push(id+": interactive weil lesson must never link to the separate final mock");
       }
       if (slide.workbookConnection?.parts?.length !== 9) error.push(id+": original nine interactive steps lost");
-    } else if (id === "A1-14.2") {
+    } else if (id === "A1-14.2" || id === "A1-0.2_1.1") {
+      // Day 23 and the grouped Day 2 have no verified external workbook
+      // route; keep the classroom practice rather than inventing a link.
       if (learning?.activityUrl) error.push(id+": no verified external workbook link; do not fabricate one");
     } else if (expectedRoute && learning?.activityUrl !== expectedRoute) {
       error.push(id+": learner link differs from verified registry route");
@@ -119,12 +128,12 @@ for (const slide of lessons) {
   }
 }
 
-console.log("A1 course-wide quality audit: " + lessons.length + " lesson blocks over 24 teaching days.");
+console.log("A1 course-wide quality audit: " + lessons.length + " active lesson blocks over 23 scheduled teaching days.");
 console.log("  Regular comprehension lessons: " + (lessons.length - 1) + " · Total question/answer/explanation checks: " + teacherAnswers);
 console.log("  Two teacher-reveal review cards: " + readyReviews + " lesson blocks.");
 console.log("  Goethe A1-5.9: dedicated 60-minute speaking mock protected.");
-console.log("  Known route gaps: A1-14.2 has no verified learner page; A1-5.10 uses its existing conjunctions grammar page.");
+console.log("  Known route gaps: A1-0.2_1.1 and A1-14.2 have no verified standalone learner page; A1-5.10 uses the existing conjunctions grammar page.");
 if (error.length) {
   error.forEach(message => console.error("ERROR " + message));
   process.exitCode = 1;
-} else console.log("PASS All 24 A1 days meet the curriculum, teacher-answer and routing checks.");
+} else console.log("PASS All 23 scheduled A1 teaching days meet the curriculum, teacher-answer and routing checks.");

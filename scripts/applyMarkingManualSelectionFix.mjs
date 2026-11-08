@@ -205,10 +205,14 @@ function patchDashboardPage() {
   // The modern dashboard delegates incoming work to its dedicated review
   // component. The legacy queue/hero JSX no longer exists, so do not attempt
   // to rewrite it during release source sync.
-  if (text.includes("<DashboardReviewNotifications user={user} />") &&
-      text.includes("School operations dashboard") &&
-      !text.includes("const workQueue = incomingAssignments.length")) {
-    console.log("Dashboard review queue is handled by DashboardReviewNotifications.");
+  // Recent dashboards are a student/operations overview and intentionally
+  // have no legacy work-queue analytics or hero card to patch. Previous
+  // revisions required a DashboardReviewNotifications child, which the newer
+  // overview no longer renders; do not crash the production source sync.
+  if (text.includes("School operations dashboard") &&
+      !text.includes("const workQueue = incomingAssignments.length") &&
+      !text.includes("const incomingQueue = incomingAssignments.length")) {
+    console.log("Modern dashboard has no legacy queue block; skipping outdated rewrite.");
     return;
   }
 

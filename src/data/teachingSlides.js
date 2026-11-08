@@ -307,11 +307,81 @@ function normalizeA1SlideDay(slide, fallbackIndex = 0) {
   };
 }
 
+// The published Day 2 combines material previously split between A1-0.2
+// (alphabet) and A1-1.1 (pronouns and regular verb endings). It must not fall
+// through to the generic template or inherit links for retired assignments.
+const combinedA1Day2TeachingSlide = {
+  id: "a1-0-2-1-1",
+  course: "A1",
+  day: "Day 2",
+  dayNumber: 2,
+  assignmentId: "A1-0.2_1.1",
+  title: "A1 Day 2 · Alphabet, Personalpronomen und erste Verben",
+  topic: "0.2 Alphabet, Personalpronomen und erste Verben",
+  objective: "Students spell German words clearly, recognise umlauts and ß, and select correct present-tense verb endings for ich, du, er, wir, ihr and Sie.",
+  estimatedDuration: "45–60 minutes",
+  warmupQuestionsDe: [
+    "Welche drei Umlautbuchstaben kennst du?",
+    "Wie heißt das Zeichen ß?",
+    "Wie buchstabierst du das Wort Haus?",
+    "Wie sagt man lernen mit ich und du?",
+  ],
+  keyPhrasesDe: [
+    "A, B, C … Ä, Ö, Ü und ß",
+    "Ich lerne Deutsch.",
+    "Du lernst Deutsch.",
+    "Er lernt Deutsch.",
+    "Wir lernen Deutsch.",
+    "Ihr lernt Deutsch.",
+    "Sie lernen Deutsch.",
+  ],
+  studentQuestionsDe: [
+    "Wie viele Buchstaben hat das deutsche Standardalphabet?",
+    "Buchstabiere bitte das Wort Bus.",
+    "Welche Endung hat lernen bei ich?",
+    "Wie heißt lernen bei du und er?",
+    "Was ist richtig: wir lernt oder wir lernen?",
+  ],
+  teacherNotesEn: [
+    "Distinguish the 26 standard letters from the additional characters Ä, Ö, Ü and ß; model clear letter names before spelling.",
+    "Write the complete pronoun-and-ending pattern on the board: ich -e, du -st, er/sie/es -t, wir -en, ihr -t, sie/Sie -en.",
+    "Correct only the specific subject–verb mismatch: wir lernt becomes wir lernen and ihr lernen becomes ihr lernt.",
+    "Connect alphabet practice to short written words before introducing simple spoken subject–verb sentences.",
+  ],
+  interactionFlow: [
+    { phase: "Alphabet and spelling", detailEn: "8 min: identify umlauts, Eszett and spell short words letter by letter." },
+    { phase: "Pronouns and endings", detailEn: "10 min: match subject pronouns with -e, -st, -t and -en." },
+    { phase: "Controlled sentence practice", detailEn: "12 min: complete and correct ich/du/er/wir/ihr/Sie sentences with lernen." },
+    { phase: "Individual understanding checks", detailEn: "10 min: use the ten distinct lesson-specific alphabet and verb questions." },
+  ],
+  wrapUpTaskDe: "Buchstabiere Bus und ergänze: ich lerne, du lernst, wir lernen.",
+  teacherSupport: {
+    lessonOverviewEn: "Day 2 combines the first German spelling system with recognising subject pronouns and conjugating the regular verb lernen.",
+    grammarFocusEn: [
+      "Identify Ä, Ö, Ü as umlauts and ß as Eszett, distinct from the 26 standard alphabet letters.",
+      "Match ich → -e, du → -st, er/sie/es → -t, wir → -en, ihr → -t, sie/Sie → -en.",
+      "Choose verb endings from the subject; do not leave the infinitive after ich or du.",
+    ],
+    modelExamplesDe: [
+      "Haus: H-A-U-S.",
+      "Ich lerne Deutsch. Du lernst Deutsch. Er lernt Deutsch.",
+      "Wir lernen Deutsch. Ihr lernt Deutsch. Sie lernen Deutsch.",
+    ],
+    commonMistakesEn: [
+      "Confusing ß (Eszett) with B or grouping it with the three umlaut letters.",
+      "Saying wir lernt rather than wir lernen.",
+      "Saying ihr lernen rather than ihr lernt.",
+      "Treating formal Sie as singular sie when choosing the verb ending.",
+    ],
+  },
+};
+
 const upgradedA1WorkbookAlignedSlidesDays1To5 = a1WorkbookAlignedSlidesDays1To5.map(enhanceA1Day2PronounSlide);
 
 const curatedSlidesByAssignment = Object.fromEntries(
   [
     ...curatedSlides,
+    combinedA1Day2TeachingSlide,
     ...upgradedA1WorkbookAlignedSlidesDays1To5,
     ...a1WorkbookAlignedSlidesDays6To10,
     ...a1LaterTeachingSlides,

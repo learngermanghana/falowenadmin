@@ -1,6 +1,7 @@
 import B1WorkbookPresentation from "./B1WorkbookPresentation.jsx";
 import A2WorkbookPresentation from "./A2WorkbookPresentation.jsx";
 import PresenterReadingTranslation from "./PresenterReadingTranslation.jsx";
+import InlineReadingTranslations from "./InlineReadingTranslations.jsx";
 import useReadingTranslation from "../hooks/useReadingTranslation.js";
 import LessonSongStage from "./LessonSongStage.jsx";
 import PresenterControls, { PresenterActions, PresenterStageJump, usePresenterKeyboard } from "./PresenterControls.jsx";
@@ -217,6 +218,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
     activeReadingAssignment?.chunk?.text || ""
   ]));
   const translatableReading=["A2","B1"].includes(String(slide.course||"").toUpperCase()) && stage?.variant==="lesson-reading";
+  const presenterReadingDay = Number(slide.dayNumber || String(slide.day || "").match(/\d+$/)?.[0] || String(slide.assignmentId || "").match(/\.(\d+)$/)?.[1] || 0);
   const isLessonMusicStage = stage?.type === "lesson-music";
   const isMusicVideoStage = stage?.variant === "interactive-music-video" || isLessonMusicStage;
   // The Day 25 oral challenge has a taller sequence of cards than a normal
@@ -1305,7 +1307,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                               onClick={() => selectKnowledgeSentence(number)}
                             >
                               {number}.
-                            </button>{" "}{text}
+                            </button>{" "}{translatableReading ? <InlineReadingTranslations text={text} level={presenterLevel} day={presenterReadingDay} assignmentId={slide.assignmentId} /> : text}
                       </span>
                         ))}
                       </p>
@@ -1330,7 +1332,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                           onClick={() => selectKnowledgeSentence(number)}
                         >
                           {number}.
-                        </button>{" "}{text}
+                        </button>{" "}{translatableReading ? <InlineReadingTranslations text={text} level={presenterLevel} day={presenterReadingDay} assignmentId={slide.assignmentId} /> : text}
                       </span>
                     ))}
                   </p>

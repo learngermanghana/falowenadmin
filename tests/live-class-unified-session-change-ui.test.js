@@ -16,7 +16,8 @@ test("Live Classes exposes one Change session workflow for move and cancel", asy
   assert.match(text, /Change session/);
   assert.match(text, /Move to another date or time/);
   assert.match(text, /Cancel without a new date/);
-  assert.match(text, /Move this and all following sessions/);
+  assert.match(text, /<option value="following">Recalculate from this lesson onward<\/option>/);
+  assert.match(text, /Move only this session/);
   assert.match(text, /cancelSession\(/);
   assert.match(text, /rescheduleSession\(/);
 });

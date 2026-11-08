@@ -4,6 +4,7 @@ on:
     paths:
       - 'src/components/TeachingSlidePresenter.*'
       - 'src/components/PresenterReadingTranslation.jsx'
+      - 'src/components/InlineReadingTranslations.jsx'
       - 'src/components/A2WorkbookPresentation.*'
       - 'src/components/B1WorkbookPresentation.*'
       - 'src/data/b1WorkbookPresentations.js'
@@ -17,13 +18,16 @@ on:
       - 'src/utils/presenterSentenceNumbering.js'
       - 'src/utils/teachingPresenter.js'
       - 'src/data/presenterReading*.js'
+      - 'src/data/readingPhraseTranslations.js'
       - 'tests/presenter-reading-translation*.js'
+      - 'tests/presenter-reading-phrase-coverage.test.js'
       - '.github/workflows/reading-translations.yml'
   push:
     branches: [main]
     paths:
       - 'src/components/TeachingSlidePresenter.*'
       - 'src/components/PresenterReadingTranslation.jsx'
+      - 'src/components/InlineReadingTranslations.jsx'
       - 'src/components/A2WorkbookPresentation.*'
       - 'src/components/B1WorkbookPresentation.*'
       - 'src/data/b1WorkbookPresentations.js'
@@ -37,7 +41,9 @@ on:
       - 'src/utils/presenterSentenceNumbering.js'
       - 'src/utils/teachingPresenter.js'
       - 'src/data/presenterReading*.js'
+      - 'src/data/readingPhraseTranslations.js'
       - 'tests/presenter-reading-translation*.js'
+      - 'tests/presenter-reading-phrase-coverage.test.js'
 jobs:
   reading-translations:
     runs-on: ubuntu-latest
@@ -50,4 +56,4 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --ignore-scripts
-      - run: node --test tests/b1-workbook-presentations.test.js tests/a2-workbook-presentations.test.js tests/presenter-reading-translations.test.js tests/presenter-reading-translation-ui.test.js tests/presenter-sentence-numbering.test.js tests/a2-b1-reading-common-mistakes.test.js
+      - run: node --test tests/b1-workbook-presentations.test.js tests/a2-workbook-presentations.test.js tests/presenter-reading-translations.test.js tests/presenter-reading-translation-ui.test.js tests/presenter-sentence-numbering.test.js tests/presenter-reading-phrase-coverage.test.js tests/a2-b1-reading-common-mistakes.test.js
