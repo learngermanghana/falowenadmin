@@ -65,7 +65,7 @@ function AnchorRestoreControls({
   anchorOptions,
   busy,
   followingRestorePreview,
-  onAnchorChange,
+  onAnchorChange, anchorDate, nextDate, setAnchorDate, setNextDate,
   onRestore,
 }) {
   return (
@@ -82,6 +82,10 @@ function AnchorRestoreControls({
         </select>
       </label>
 
+      {anchorSessionId && <>
+        <label>Actual lesson date <input type="date" value={anchorDate} disabled={busy} onChange={event => setAnchorDate(event.target.value)} /></label>
+        <label>Next lesson date <input type="date" value={nextDate} disabled={busy} onChange={event => setNextDate(event.target.value)} /></label>
+      </>}
       {followingRestorePreview.error ? (
         <div role="alert" style={{ padding: 10, borderRadius: 8, background: "#fee2e2", border: "1px solid #fca5a5", color: "#991b1b" }}>{followingRestorePreview.error}</div>
       ) : null}
@@ -89,23 +93,24 @@ function AnchorRestoreControls({
       {followingRestorePreview.plan ? (
         <div style={{ display: "grid", gap: 7, padding: 12, borderRadius: 9, background: "#fff", border: "1px solid #86efac", color: "#1f2937" }}>
           <strong>Bulk restoration preview</strong>
-          <div>Anchor remains: <strong>{formatDateTime(followingRestorePreview.plan.anchorStartsAt)}</strong></div>
+          <div>Selected lesson date: <strong>{formatDateTime(followingRestorePreview.plan.anchorStartsAt)}</strong></div>
           <div>Rebuild begins no earlier than: <strong>{formatDateTime(followingRestorePreview.plan.notBeforeStartsAt)}</strong></div>
           <div>Existing sessions to move: <strong>{followingRestorePreview.plan.movedCount}</strong> · Missing sessions to create: <strong>{followingRestorePreview.plan.createdCount}</strong> · Stale future records to supersede: <strong>{followingRestorePreview.plan.staleFutureRecords?.length || 0}</strong></div>
+          {followingRestorePreview.plan.overrideRows?.length > 0 && followingRestorePreview.plan.followingItems[0] && <div>Next lesson: {followingRestorePreview.plan.followingItems[0].group.topic} — {formatDateTime(followingRestorePreview.plan.followingItems[0].targetStartsAt)}</div>}
           {followingRestorePreview.plan.restorableItems.slice(0, 10).map((item) => (
             <div key={item.lessonNumber} style={{ overflowWrap: "anywhere" }}>
               {item.group.topic}: {item.session ? formatDateTime(item.session.startsAt) : "Missing"} → <strong>{formatDateTime(item.targetStartsAt)}</strong>
             </div>
           ))}
           {followingRestorePreview.plan.restorableItems.length > 10 ? <small>Plus {followingRestorePreview.plan.restorableItems.length - 10} more correction(s).</small> : null}
-          {!followingRestorePreview.plan.restorableItems.length && !(followingRestorePreview.plan.staleFutureRecords?.length || 0) ? <div>The future timetable already matches the selected anchor. Saving the anchor will still stop earlier historical gaps from blocking future rescheduling.</div> : null}
+          {!followingRestorePreview.plan.overrideRows?.length && !followingRestorePreview.plan.restorableItems.length && !(followingRestorePreview.plan.staleFutureRecords?.length || 0) ? <div>The future timetable already matches the selected anchor. Saving the anchor will still stop earlier historical gaps from blocking future rescheduling.</div> : null}
         </div>
       ) : null}
 
       <button type="button" onClick={onRestore} disabled={busy || !followingRestorePreview.plan}>
         {busy
           ? "Rebuilding timetable…"
-          : (followingRestorePreview.plan?.restorableItems.length || followingRestorePreview.plan?.staleFutureRecords?.length)
+          : (anchorDate || nextDate || followingRestorePreview.plan?.restorableItems.length || followingRestorePreview.plan?.staleFutureRecords?.length)
             ? "Rebuild all sessions after this anchor"
             : "Save this session as the repair anchor"}
       </button>
@@ -123,6 +128,8 @@ export default function LiveClassLessonDateRepair() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [anchorSessionId, setAnchorSessionId] = useState("");
+  const [anchorDate, setAnchorDate] = useState("");
+  const [nextDate, setNextDate] = useState("");
   const [anchorNotBeforeStartsAt, setAnchorNotBeforeStartsAt] = useState("");
   const recoveryStarted = useRef(false);
 
@@ -257,7 +264,7 @@ export default function LiveClassLessonDateRepair() {
           classId,
           klass: dashboard.klass,
           sessions: scopedSessions,
-          anchorSessionId,
+          anchorSessionId, anchorDate, nextDate,
           excludedDates: dashboard.klass?.holidayDatesExcluded || [],
           notBeforeStartsAt: anchorNotBeforeStartsAt,
         }),
@@ -266,7 +273,7 @@ export default function LiveClassLessonDateRepair() {
     } catch (error) {
       return { plan: null, error: error?.message || "Could not prepare the following-session restoration." };
     }
-  }, [anchorNotBeforeStartsAt, anchorSessionId, classId, dashboard, scopedSessions]);
+  }, [anchorDate, nextDate, anchorNotBeforeStartsAt, anchorSessionId, classId, dashboard, scopedSessions]);
 
   async function refresh() {
     if (!classId) return null;
@@ -315,8 +322,8 @@ export default function LiveClassLessonDateRepair() {
     if (!restorePlan || !anchorSessionId || busy) return;
     const staleFutureCount = Number(restorePlan.staleFutureRecords?.length || 0);
     const hasTimetableMoves = restorePlan.restorableItems.length > 0;
-    const hasRepairWork = hasTimetableMoves || staleFutureCount > 0;
-    const confirmed = window.confirm(
+    const hasRepairWork = hasTimetableMoves || staleFutureCount > 0 || Boolean(restorePlan.overrideRows?.length);
+    const confirmed = Boolean(restorePlan.overrideRows?.length) || window.confirm(
       hasRepairWork
         ? `Keep ${restorePlan.anchorSession.topic || "the selected session"} at ${formatDateTime(restorePlan.anchorStartsAt)} and rebuild every later lesson from the next available timetable slot?\n\n`
           + `${restorePlan.movedCount} existing session(s) will move.\n`
@@ -336,7 +343,7 @@ export default function LiveClassLessonDateRepair() {
         classId,
         klass: dashboard.klass,
         sessions: scopedSessions,
-        anchorSessionId,
+        anchorSessionId, anchorDate, nextDate,
         notBeforeStartsAt: restorePlan.notBeforeStartsAt,
         adminId: user?.uid || user?.email || "admin",
       });
@@ -361,6 +368,8 @@ export default function LiveClassLessonDateRepair() {
   }
 
   function selectAnchor(nextAnchorSessionId) {
+    setAnchorDate("");
+    setNextDate("");
     setAnchorSessionId(nextAnchorSessionId);
     setAnchorNotBeforeStartsAt(nextAnchorSessionId ? new Date().toISOString() : "");
   }
@@ -411,6 +420,7 @@ export default function LiveClassLessonDateRepair() {
             anchorOptions={anchorOptions}
             busy={busy}
             followingRestorePreview={followingRestorePreview}
+            anchorDate={anchorDate} nextDate={nextDate} setAnchorDate={setAnchorDate} setNextDate={setNextDate}
             onAnchorChange={selectAnchor}
             onRestore={restoreFollowingPattern}
           />

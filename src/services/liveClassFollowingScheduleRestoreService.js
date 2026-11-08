@@ -316,6 +316,7 @@ export async function restoreFollowingSessionsToWeeklyPattern({
   klass = {},
   sessions = [],
   anchorSessionId = "",
+  anchorDate = "", nextDate = "",
   notBeforeStartsAt = "",
   adminId = "admin",
 } = {}) {
@@ -340,14 +341,14 @@ export async function restoreFollowingSessionsToWeeklyPattern({
     classId: resolvedClassId,
     klass,
     sessions: scopedRepairSessions,
-    anchorSessionId,
+    anchorSessionId, anchorDate, nextDate,
     excludedDates,
     notBeforeStartsAt,
   });
   const planStartDate = normalize(plan.startDate || klass.startDate);
   const relevantClosures = excludedDates.filter((date) => date >= planStartDate && date <= plan.endDate);
 
-  if (!plan.restorableItems.length && !plan.staleFutureRecords.length) {
+  if (!plan.restorableItems.length && !plan.staleFutureRecords.length && !plan.overrideRows?.length) {
     // Selecting the last correct/live session is itself a state change. Persist
     // the anchor even when all future canonical records already use the requested
     // slots, otherwise normal rescheduling keeps validating the imperfect history
@@ -429,6 +430,13 @@ export async function restoreFollowingSessionsToWeeklyPattern({
       .map((item) => [item.targetStartsAt, normalize(item.session.id)]),
   );
   const batch = writeBatch(db);
+  for (const { id, patch } of plan.overrideRows || []) {
+    batch.update(doc(db, "classSessions", id), { ...patch, updatedAt: serverTimestamp() });
+    batch.set(doc(db, "attendance", resolvedClassId, "sessions", id), {
+      ...patch, classId: resolvedClassId, classSessionId: id, date: localDateTimeParts(patch.startsAt, plan.timezone).date,
+      title: patch.topic, updatedAt: serverTimestamp(),
+    }, { merge: true });
+  }
   let moved = 0;
   let created = 0;
   let completionFlagsReset = 0;
