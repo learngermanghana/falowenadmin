@@ -25,9 +25,13 @@ test("legacy Thursday lesson can move to Friday while Saturday stays in place", 
   assert.equal(sessions.find((session) => session.id === "saturday").startsAt, rows[1].startsAt);
 });
 
-test("legacy neighbours still enforce curriculum order", async () => {
+test("independent legacy moves preserve other lessons without changing their dates", async () => {
   const sessions = await loadMutationClassSessions(klass.id, klass, queryRows);
-  assert.throws(() => move(sessions, "2026-09-13"), { code: "live-class/curriculum-order" });
+  const plan = move(sessions, "2026-09-13");
+  assert.equal(plan.affectedCount, 1);
+  assert.equal(plan.changes[0].session.id, "thursday");
+  assert.equal(plan.changes[0].startsAt, "2026-09-13T19:00:00.000Z");
+  assert.equal(sessions.find((session) => session.id === "saturday").startsAt, rows[1].startsAt);
 });
 
 test("records found through multiple identity fields are only included once", async () => {
