@@ -85,7 +85,7 @@ test("restores each following lesson to the next valid weekly slot instead of ap
   assert.equal(targetByDay.get(24), "2026-08-08T08:00:00.000Z");
 
   const movedDays = plan.restorableItems.map((item) => Number(item.group.day));
-  assert.deepEqual(movedDays, [16, 18, 19, 21, 22]);
+  assert.deepEqual(movedDays, [16, 18, 19, 21, 22, 24]);
 });
 
 test("accepts the selected last live session as the anchor even when it was held outside the saved weekly slot", () => {
