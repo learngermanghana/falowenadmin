@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import OperationsCommunicationPanel from "../components/OperationsCommunicationPanel";
 import LiveClassStudentsPanel from "../components/LiveClassStudentsPanel.jsx";
+import { reopenSession } from "../services/liveClassReopenService.js";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext.jsx";
 import CreateClassCard from "../components/CreateClassCard.jsx";
@@ -385,6 +386,12 @@ export default function LiveClassesPageV2() {
         if (topic === null) return;
         await updateSession(session.id, { topic: topic.trim() });
       }
+      if (action === "reopen") {
+        const reason = window.prompt("Why should this completed session be reopened? Attendance records will be kept.");
+        if (reason === null) return;
+        await reopenSession(session.id, { reason, adminId: user?.uid || user?.email || "admin" });
+        setMessage("Session reopened. Use Change session to choose its correct date, or Complete after teaching it.");
+      }
       if (action === "complete") {
         if (!window.confirm("Mark this session completed?")) return;
         await markSessionCompleted(session.id, user?.uid || user?.email || "admin");
@@ -514,7 +521,10 @@ export default function LiveClassesPageV2() {
                     <Link to={`/attendance/session/${dashboard.klass.id || selectedClassId}?session=${encodeURIComponent(session.id)}`}>Attendance</Link>
                     <button type="button" disabled={busy || contentLocked} onClick={() => handleSessionAction(session, "topic")}>Topic</button>
                     <button type="button" disabled={busy || changeLocked} onClick={() => openSessionChange(session)}>{sessionChange?.sessionId === session.id ? "Changing…" : status === "cancelled" ? "Move / reactivate" : "Change session"}</button>
-                    <button type="button" disabled={busy || contentLocked} onClick={() => handleSessionAction(session, "complete")}>Complete</button>
+                    {status === "completed"
+                      ? <button type="button" disabled={busy} onClick={() => handleSessionAction(session, "reopen")}>Reopen session</button>
+                      : <button type="button" disabled={busy || contentLocked} onClick={() => handleSessionAction(session, "complete")}>Complete</button>}
+
                   </div></td>
                 </tr>,
                 sessionChange?.sessionId === session.id ? (

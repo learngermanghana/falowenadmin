@@ -432,6 +432,7 @@ export async function rescheduleSession(sessionId, payload = {}) {
         startsAt: change.startsAt,
         endsAt: change.endsAt,
         status: nextStatus,
+        ...(change.session.completionSource === "admin-reopened" ? { autoCompletionSuppressed: false } : {}),
         rescheduleReason: reason,
         rescheduleMode: reschedulePlan.mode,
         rescheduledBy: adminId,

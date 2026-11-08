@@ -183,3 +183,7 @@ Day 21 session. The next Day 20 follows the saved weekly pattern and closures.
 ## Flexible remaining-session recalculation
 
 In Live Classes → Sessions → Change session, choose “Recalculate from this lesson onward”, select the weekly days/times for subsequent lessons, then choose the exact first date/time. The selected anchor is accepted outside the former timetable; remaining sessions follow the selected weekly rules. The rules and explicit anchor persist in the existing atomic schedule transaction with attendance dates, calendar version and audit history. Earlier session records and assignment arrays remain unchanged. Completed/live records and actual overlaps remain protected. The full dictionary can be opened for inspection even when a session is locked for editing.
+
+## Correcting a completed session
+
+Live Classes provides **Reopen session** for completed sessions. A reason is required. Reopening atomically changes the class session and attendance session metadata to scheduled, retains attendance entries and curriculum, clears active completion fields, and records previous completion evidence in the audit log. Automatic completion and reminders remain suppressed while the admin corrects the date; rescheduling restores normal automatic completion. The admin can also explicitly mark the lesson completed again. No student email is sent by reopening.
