@@ -1307,7 +1307,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                               onClick={() => selectKnowledgeSentence(number)}
                             >
                               {number}.
-                            </button>{" "}{translatableReading ? <InlineReadingTranslations text={text} level={presenterLevel} day={presenterReadingDay} /> : text}
+                            </button>{" "}{translatableReading ? <InlineReadingTranslations text={text} level={presenterLevel} day={presenterReadingDay} assignmentId={slide.assignmentId} /> : text}
                       </span>
                         ))}
                       </p>
@@ -1332,7 +1332,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                           onClick={() => selectKnowledgeSentence(number)}
                         >
                           {number}.
-                        </button>{" "}{translatableReading ? <InlineReadingTranslations text={text} level={presenterLevel} day={presenterReadingDay} /> : text}
+                        </button>{" "}{translatableReading ? <InlineReadingTranslations text={text} level={presenterLevel} day={presenterReadingDay} assignmentId={slide.assignmentId} /> : text}
                       </span>
                     ))}
                   </p>
