@@ -143,7 +143,8 @@ This changes Admin scheduling only, with no learner payload or grading change.
 
 ### B1 Day 27 classroom opening (2026-11-08)
 
-`B1-10.27` uses the V2 presenter with published Day-27 music discovered by level/day,
+`B1-10.27` uses the V2 presenter with the teacher-confirmed song “Vor unserer Tür”,
+pinned to `music/b1/day-27/Vor unserer Tür.mp3` in the published music feed,
 followed by the separate Lisa conversation at `b1/day-27/umweltfreundlich-im-alltag.mp3`.
 Six ungraded classroom questions cover reusable bags, loose produce, the local
 Bioladen, shorter transport routes, switching lights off and brief ventilation.

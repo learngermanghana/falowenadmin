@@ -509,7 +509,7 @@ ENTRIES["B1-10.27"] = {
   assignmentId: "B1-10.27", title: "Umweltfreundlich im Alltag", warmup: [],
   listening: B1_DAY27_LISTENING,
   musicIntro: {
-    mediaType: "music", level: "B1", day: 27, title: "Umweltfreundlich im Alltag",
+    mediaType: "music", level: "B1", day: 27, title: "Vor unserer Tür",
     musicLibraryUrl: "https://music.falowen.app/?level=B1&day=27",
     introQuestion: "Welche umweltfreundliche Gewohnheit möchtest du ausprobieren?",
     studentPurpose: "Höre das veröffentlichte Lied für B1 Tag 27 und nenne eine Idee für deinen Alltag.",
