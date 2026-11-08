@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
+import { getCourseTaskDay } from "../src/data/courseSessionGroups.js";
 import { a1WorkbookAlignedSlidesDays1To5 } from "../src/data/a1WorkbookAlignedSlidesDays1To5.js";
 import { a1WorkbookAlignedSlidesDays6To10 } from "../src/data/a1WorkbookAlignedSlidesDays6To10.js";
 import { a1LaterTeachingSlides } from "../src/data/a1LaterTeachingSlides.js";
@@ -129,15 +130,16 @@ test("A1-11 has a dedicated directions-first imperative slide on canonical Day 1
   assert.doesNotMatch(content, /Öffnet eure Bücher/i);
   assert.doesNotMatch(content, /Komm bitte herein/i);
 });
-test("A1-5.10 has a dedicated conjunctions slide on canonical Day 24", () => {
+test("A1-5.10 conjunctions slide follows the currently published A1 timetable", () => {
   const slides = getSlidesByCourse("A1");
   const slide = slides.find((entry) => entry.assignmentId === "A1-5.10");
   assert.ok(slide, "A1-5.10 slide missing");
   assert.equal(slide.id, "a1-5-10");
-  assert.equal(slide.dayNumber, 24);
-  assert.equal(slide.day, "Day 24");
-  assert.match(slide.title, /^A1 Day 24 · Weil & nützliche A1-Redemittel$/);
-  assert.equal(slides.find((entry) => entry.dayNumber === 24)?.assignmentId, "A1-5.10");
+  assert.equal(getCourseTaskDay("A1", "A1-5.10"), 23);
+  assert.equal(slide.dayNumber, getCourseTaskDay("A1", "A1-5.10"));
+  assert.equal(slide.day, "Day 23");
+  assert.match(slide.title, /^A1 Day 23 · Weil & nützliche A1-Redemittel$/);
+  assert.equal(slides.find((entry) => entry.dayNumber === 23)?.assignmentId, "A1-5.10");
   assert.equal(slide.workbookConnection?.grammarUrl, "/campus/course/conjunctions-5-10");
   assert.equal(slide.workbookConnection?.workbookUrl, "");
 
