@@ -62,3 +62,28 @@ The student Campus page discloses practice logging above the music player. Revie
 5. Enable the Firestore TTL policy described above separately. This cannot be enabled by checking in a document field alone.
 
 Test files: \`tests/student-music-practice.test.js\` (Admin), \`web/src/components/musicPracticeTracking.test.mjs\` (learner). The existing GA4 dashboard is unchanged.
+
+### Workbook music practice — 8 November 2026
+
+Authenticated workbook song players reuse the existing `/music-practice/record`
+endpoint with `source: workbook`. The API accepts only the `campus` and
+`workbook` source values; older Campus clients without a source remain
+`campus`. Workbook listens use distinct document IDs from Campus listens
+for the same student, UTC day and track, preserving existing Campus data.
+This adds **no per-second writes, new queries, external analytics service,
+transcription, AI calls, or automatic refresh**. Listening events are bounded to
+one start, one optional meaningful pause summary, and one completion per song
+session. The Admin Recent song practice table distinguishes Workbook from
+Campus Music; existing owner-only authentication, 300-document query cap and
+manual Refresh practice button are unchanged.
+
+Only playback inside a signed-in workbook counts. Opening the workbook or
+music tab without starting audio is not practice. Finishing after seeking to
+the end is not a full listen unless enough audio was actually heard.
+Private Hören and public `music.falowen.app` visits are not identifiable
+student listening records. Do not use practice metrics as exam marks.
+
+Deploy this Admin Firebase API change **before** the learner workbook change.
+Confirm a signed-in test student plays, pauses and completes a workbook song,
+then explicitly refresh Admin > Music Analytics > Student Practice. Verify
+the source reads Workbook and check that Campus Music still reads Campus Music.
