@@ -28,3 +28,13 @@ test('Day 27 uses the configured staff-only exact-key gateway', () => {
   assert.ok(source.includes(B1_DAY27_AUDIO_KEY));
   assert.ok(source.includes('|| isB1Day27Classroom'));
 });
+
+test('Day 27 presents three scenario role-plays before speaking questions, like Day 26', () => {
+ const slide = getSlidesByCourse('B1').find(s => s.assignmentId === 'B1-10.27');
+ const stages = buildTeachingPresenterStages(slide);
+ const scenario = stages.findIndex(s => s.id === 'scenario-challenge');
+ const speaking = stages.findIndex(s => s.id === 'questions');
+ assert.ok(scenario >= 0 && speaking > scenario);
+ assert.equal(stages[scenario].items.length, 3);
+ assert.ok(stages[scenario].items.every(s => s.steps.length === 3));
+});

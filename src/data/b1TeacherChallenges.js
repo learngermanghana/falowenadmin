@@ -468,7 +468,31 @@ const definitions = [
         ]
       }
     ]
-  }
+  },
+  {
+    "assignmentId": "B1-10.27",
+    "title": "Umweltfreundlich im Alltag · Szenario-Challenge",
+    "eyebrow": "Alltag umweltfreundlicher gestalten",
+    "grammar": "indem … / wenn … / könnte …",
+    "goal": "Discuss realistic environmental actions, give reasons and suggest workable solutions.",
+    "scenarios": [
+      { "id": "scenario-1", "label": "Einkaufen ohne viel Verpackung", "icon": "🛍️", "context": "Ihr plant den Einkauf für eine Woche. Im Supermarkt sind viele Produkte in Plastik verpackt. Ein Markt mit regionalem Obst und Gemüse ist in der Nähe, aber etwas teurer.", "steps": [
+        { "actionDe": "Eine Maßnahme vorschlagen", "questionDe": "Wie könnt ihr beim Einkauf Plastik vermeiden? Nutze indem.", "modelDe": "Wir könnten loses Obst und Gemüse kaufen, indem wir einen Stoffbeutel mitnehmen." },
+        { "actionDe": "Kosten abwägen", "questionDe": "Was könnt ihr tun, wenn regionale Lebensmittel mehr kosten?", "modelDe": "Wenn regionale Produkte zu teuer sind, könnten wir saisonale Lebensmittel aus der Region kaufen." },
+        { "actionDe": "Gemeinsame Entscheidung treffen", "questionDe": "Einigt euch auf zwei realistische Änderungen für euren nächsten Einkauf.", "modelDe": "Wir nehmen Stofftaschen mit und kaufen Obst möglichst unverpackt." }
+      ]},
+      { "id": "scenario-2", "label": "Energie in der Wohngemeinschaft", "icon": "💡", "context": "In eurer Wohngemeinschaft bleiben oft Lichter an und die Fenster sind im Winter lange gekippt. Alle möchten Energie sparen, aber niemand soll ständig kontrolliert werden.", "steps": [
+        { "actionDe": "Gewohnheit ändern", "questionDe": "Wie könnt ihr Strom sparen, wenn ihr einen Raum verlasst?", "modelDe": "Wenn wir einen Raum verlassen, schalten wir das Licht aus." },
+        { "actionDe": "Richtig lüften", "questionDe": "Wie könnt ihr lüften, ohne das Fenster lange gekippt zu lassen?", "modelDe": "Wir könnten kurz und intensiv lüften, statt das Fenster lange gekippt zu lassen." },
+        { "actionDe": "Faire Regel vereinbaren", "questionDe": "Vereinbart eine einfache Regel, an die sich alle erinnern können.", "modelDe": "Wir könnten eine kleine Erinnerung an die Tür hängen und gemeinsam auf das Licht achten." }
+      ]},
+      { "id": "scenario-3", "label": "Kurze Wege im Alltag", "icon": "🚲", "context": "Zwei Personen fahren für kurze Wege oft mit dem Auto. Eine Person wohnt nahe an der Arbeit, die andere braucht wegen der Entfernung und des Wetters manchmal ein Fahrzeug.", "steps": [
+        { "actionDe": "Passende Alternative finden", "questionDe": "Welche Verkehrsmittel passen zu kurzen und längeren Wegen? Begründe mit wenn.", "modelDe": "Wenn der Weg kurz und sicher ist, könnte ich zu Fuß gehen oder mit dem Rad fahren." },
+        { "actionDe": "Hindernis berücksichtigen", "questionDe": "Was kann die zweite Person tun, wenn Radfahren bei schlechtem Wetter nicht möglich ist?", "modelDe": "Wenn es stark regnet, könnte sie den Bus nehmen oder eine Fahrgemeinschaft bilden." },
+        { "actionDe": "Realistischen Plan festlegen", "questionDe": "Einigt euch auf eine umsetzbare Veränderung für die nächste Woche.", "modelDe": "Wir könnten kurze Wege zu Fuß erledigen und längere Fahrten besser zusammen planen." }
+      ]}
+    ]
+  },
 ];
 export const B1_TEACHER_CHALLENGES = Object.freeze(Object.fromEntries(
   definitions.map((activity) => [activity.assignmentId, Object.freeze({
