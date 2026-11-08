@@ -11,7 +11,7 @@ export default function LinkedPublishedSongLessonStage({ music }) {
   const day = Number(music?.day);
   const level = String(music?.level || '').toUpperCase();
   const supported = (level === 'A2' && [1,19,20,21,23].includes(day))
-    || (level === 'B1' && [24,25,26].includes(day));
+    || (level === 'B1' && [24,25,26,27].includes(day));
   const [loaded, setLoaded] = useState({loading:true,track:null,pack:null,reference:null,error:''});
   const [view,setView] = useState('listen');
   const [time,setTime] = useState(0);
@@ -22,7 +22,7 @@ export default function LinkedPublishedSongLessonStage({ music }) {
   const [audioError,setAudioError] = useState('');
   const audio = useRef(null);
   const assignmentKey = level === 'B1'
-    ? ({24:'B1-8.24',25:'B1-8.25',26:'B1-9.26'}[day] || '')
+    ? ({24:'B1-8.24',25:'B1-8.25',26:'B1-9.26',27:'B1-10.27'}[day] || '')
     : day === 23 ? 'A2-9.23' : day === 1 ? 'A2-1.1' : day === 21 ? 'A2-8.21' : 'A2-7.'+day;
 
   useEffect(()=>{

@@ -23,7 +23,9 @@ export function selectRecordedLessonTrack(feed, {level='A2',day,assignmentKey} =
     : normalized === 'A2' && Number(day) === 21
       ? 'music/a2/day-21/Endlich Wochenende.mp3'
       : normalized === 'A2' && Number(day) === 23
-        ? 'music/a2/day-23/Fahrrad zur Schule.mp3' : '';
+        ? 'music/a2/day-23/Fahrrad zur Schule.mp3'
+        : normalized === 'B1' && Number(day) === 27
+          ? 'music/b1/day-27/Vor unserer Tür.mp3' : '';
   if (knownObjectKey) {
     const pinned = rows.filter(row => row.objectKey === knownObjectKey);
     if (pinned.length === 1) {
@@ -32,6 +34,7 @@ export function selectRecordedLessonTrack(feed, {level='A2',day,assignmentKey} =
       if (approved) return approved;
     }
   }
+  if (normalized === 'B1' && Number(day) === 27) return null;
   const matches=rows.filter(row=>titles.includes(String(row.title||'').trim().toLocaleLowerCase('de')));
   if(matches.length===1) {
     const track=waitingRoomDiscoveredMusicTrack({tracks:matches},{level:normalized,day,assignmentKey:''});
