@@ -1,3 +1,4 @@
+import { getAdvancedReadingPhraseTranslations } from "./advancedReadingGlossary.js";
 // Curated phrase translations from src/data/presenterReadingLessons.js, keyed by
 // the *actual* teaching-slide assignment ID, not the student's workbook day.
 // Every phrase is verified against the corresponding presenter passage in tests.
@@ -1251,6 +1252,10 @@ export const PRESENTER_READING_PHRASES = Object.freeze({
 
 export function getPresenterReadingPhraseTranslations(assignmentId = "") {
   const key = String(assignmentId || "").trim().toUpperCase();
-  const phrases = PRESENTER_READING_PHRASES[key] || [];
+  if (!PRESENTER_READING_PHRASES[key]) {
+    const level = key.match(/^(B2|C1|C2)(?=[\\s-]|$)/)?.[1];
+    return level ? getAdvancedReadingPhraseTranslations(level) : [];
+  }
+  const phrases = PRESENTER_READING_PHRASES[key];
   return phrases.map(([de, en]) => ({ de, en }));
 }
