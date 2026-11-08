@@ -37,7 +37,7 @@ test("Wissensimpuls renders as one continuous paragraph, not a numbered list", (
   assert.match(presenter, /<p className="presenter-knowledge-numbered-text"/);
   assert.match(presenter, /className="presenter-knowledge-inline-number"/);
   assert.ok(presenter.includes('aria-label={`Highlight sentence ${number}`}'));
-  assert.match(presenter, /\{number\}\.\s*<\/button>\{\" \"\}\{translatableReading \? <InlineReadingTranslations text=\{text\} level=\{presenterLevel\} day=\{presenterReadingDay\} \/> : text\}/);
+  assert.match(presenter, /\{number\}\.\s*<\/button>\{\" \"\}\{translatableReading \? <InlineReadingTranslations text=\{text\} level=\{presenterLevel\} day=\{presenterReadingDay\} assignmentId=\{slide\.assignmentId\} \/> : text\}/);
   assert.doesNotMatch(presenter, /<ol className="presenter-knowledge-sentences"/);
   assert.doesNotMatch(presenter, /presenter-knowledge-sentence-number/);
 });
