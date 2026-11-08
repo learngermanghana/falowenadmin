@@ -13,7 +13,7 @@ import {
 } from "../src/utils/teachingPresenter.js";
 
 const REQUIRED_STAGES = [
-  "intro", "warmup", "foundation", "phrases", "grammar",
+  "intro", "warmup", "foundation", "phrases", "reading", "grammar",
   "focus", "questions", "writing", "workbook", "lesson-summary",
 ];
 
