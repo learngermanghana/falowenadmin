@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-import { teachingSlides } from "../src/data/teachingSlides.js";
+import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { buildTeacherSlideSupport } from "../src/data/teacherSlideSupport.js";
 import { getA1GrammarChecks } from "../src/data/a1GrammarChecks.js";
 import { getA1PresenterUnderstandingChecks } from "../src/data/a1PresenterUnderstandingChecks.js";
@@ -22,6 +22,7 @@ const GENERIC_PHRASES = [
 const TOPIC_SIGNALS = {
   "A1-0.1": ["guten morgen", "ihnen", "tschüss"],
   "A1-0.2": ["buchstab", "eszett", "umlaut"],
+  "A1-0.2_1.1": ["buchstab", "pronomen", "lernen"],
   "A1-1.1": ["verbendung", "pronomen", "lernen"],
   "A1-1.1-PRACTICE": ["w-frag", "wer", "woher"],
   "A1-1.2": ["verb", "-st", "-t"],
@@ -54,9 +55,10 @@ const text = (value) => String(value || "").replace(/\s+/g, " ").trim();
 const lower = (value) => text(value).toLocaleLowerCase("de-DE");
 const list = (value) => Array.isArray(value) ? value : [];
 
-const a1Slides = teachingSlides.filter((slide) =>
-  String(slide.course || "").toUpperCase() === "A1"
-  && String(slide.assignmentId || "").toUpperCase() !== "A1-TUTORIAL"
+// Use the same public lesson resolver as the presenter and the A1 diagnostics.
+// It excludes the archived A1-12.2 reference, which must not count as a live lesson.
+const a1Slides = getSlidesByCourse("A1").filter((slide) =>
+  String(slide.assignmentId || "").toUpperCase() !== "A1-TUTORIAL"
 );
 
 test("all 28 A1 lessons are topic-specific and class challenges do not reuse recall", () => {
