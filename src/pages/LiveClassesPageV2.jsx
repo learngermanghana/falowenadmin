@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import OperationsCommunicationPanel from "../components/OperationsCommunicationPanel";
 import LiveClassStudentsPanel from "../components/LiveClassStudentsPanel.jsx";
 import { reopenSession } from "../services/liveClassReopenService.js";
 import { useAuth } from "../context/AuthContext";
@@ -547,12 +546,10 @@ export default function LiveClassesPageV2() {
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}><Link to="/attendance">Attendance overview</Link><Link to="/class-schedule-setup">Class schedule page</Link></div>
       </div>
 
-      <OperationsCommunicationPanel context="live-classes" />
-
       {message ? <div style={{ marginBottom: 14, padding: 12, borderRadius: 8, background: messageIsSuccess ? "#f0fdf4" : "#eff6ff", border: messageIsSuccess ? "1px solid #bbf7d0" : "1px solid #bfdbfe" }}>{message}</div> : null}
 
       <article className="card" style={{ display: "grid", gap: 12 }}>
-        <label><strong>Manage class</strong>{" "}<select value={selectedClassId} onChange={(event) => { setSelectedClassId(event.target.value); setActiveTab("overview"); setMessage(""); setSessionChange(null); }}>
+        <label><select aria-label="Select class" value={selectedClassId} onChange={(event) => { setSelectedClassId(event.target.value); setActiveTab("overview"); setMessage(""); setSessionChange(null); }}>
           <option value="">Select a class</option>
           {classes.map((klass) => <option key={klass.id} value={klass.id}>{klass.name || klass.className || klass.id}</option>)}
         </select></label>
