@@ -30,7 +30,7 @@ const A1_DAY_BY_ASSIGNMENT_ID = Object.freeze({
   "A1-13": 21,
   "A1-14.1": 22,
   "A1-14.2": 23,
-  "A1-5.10": 24,
+  "A1-5.10": 23,
 });
 
 const ORIENTATION_ENTRY_BY_LEVEL = Object.freeze({
