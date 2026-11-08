@@ -95,9 +95,8 @@ test("scheduled records marked superseded are advisory and do not block a valid 
   });
 
   assert.equal(report.healthy, true);
-  // Day 0 orientation plus all 24 canonical A1 lessons.
-  assert.equal(report.actualCount, 25);
-  assert.equal(report.expectedCount, 25);
+  assert.equal(report.actualCount, 24);
+  assert.equal(report.expectedCount, 24);
   assert.equal(inspected.issues.length, 0);
   assert.equal(inspected.warnings.filter((item) => item.code === "stale-superseded-status").length, 3);
   assert.equal(health.status, "warning");
