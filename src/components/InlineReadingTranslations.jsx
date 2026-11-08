@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { getReadingPhraseTranslations, segmentReadingPhrases } from "../data/readingPhraseTranslations";
+import "./InlineReadingTranslations.css";
 
 /**
  * Only mounted in course-workbook Lesen text, never in a timed Goethe/mock exam.
@@ -23,6 +24,7 @@ export default function InlineReadingTranslations({ text = "", level = "", day =
           <span key={index} style={{ display: "inline", position: "relative" }}>
             <button
               type="button"
+              className="reading-glossary-trigger"
               data-reading-glossary-phrase={segment.de}
               aria-label={`Show English meaning of ${segment.de}`}
               aria-expanded={open}
@@ -34,7 +36,12 @@ export default function InlineReadingTranslations({ text = "", level = "", day =
                 }
               }}
               style={{
-                all: "unset",
+                background: "transparent",
+                border: 0,
+                padding: 0,
+                margin: 0,
+                font: "inherit",
+                verticalAlign: "baseline",
                 display: "inline",
                 cursor: "pointer",
                 color: "#075985",
