@@ -124,6 +124,8 @@ export function compareExaminerResults(primary = {}, secondary = {}, options = {
     writingDeltaThreshold: writingThreshold,
     agreement,
     requiresTutorReview,
+    hardSecondaryReviewSignal,
+    lowConfidenceSecondaryReview,
     secondaryConfidence,
     secondaryStatus: secondary.status || "unknown",
     secondaryFeedback: String(secondary.feedback || "").trim(),
