@@ -1,17 +1,25 @@
 import React, { useMemo, useState } from "react";
 import { getReadingPhraseTranslations, segmentReadingPhrases } from "../data/readingPhraseTranslations";
+import { getPresenterReadingPhraseTranslations } from "../data/presenterReadingPhraseTranslations.js";
 import "./InlineReadingTranslations.css";
 
 /**
- * Only mounted in course-workbook Lesen text, never in a timed Goethe/mock exam.
- * No network calls and no answer or hint data is read by this component.
+ * Readings in teaching slides are different from student workbook texts.
+ * When an assignment ID is given, use its verified presenter-only vocabulary.
+ * This component never translates answers or makes external requests.
  */
-export default function InlineReadingTranslations({ text = "", level = "", day = 0 }) {
-  const scope = String(level).toUpperCase() + ":" + String(day) + ":" + String(text);
+export default function InlineReadingTranslations({ text = "", level = "", day = 0, assignmentId = "" }) {
+  const scope = String(level).toUpperCase() + ":" + String(day) + ":" + String(assignmentId) + ":" + String(text);
   const [selection, setSelection] = useState({ scope: "", index: -1 });
+  const entries = useMemo(
+    () => assignmentId
+      ? getPresenterReadingPhraseTranslations(assignmentId)
+      : getReadingPhraseTranslations(level, day),
+    [level, day, assignmentId],
+  );
   const segments = useMemo(
-    () => segmentReadingPhrases(text, getReadingPhraseTranslations(level, day)),
-    [text, level, day],
+    () => segmentReadingPhrases(text, entries),
+    [text, entries],
   );
   const activeIndex = selection.scope === scope ? selection.index : -1;
 
