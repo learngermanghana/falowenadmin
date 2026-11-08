@@ -30,7 +30,14 @@ let lessonOrderSource = await readFile(lessonOrderTarget, "utf8");
 const strictStoredAnchor = `    // A persisted anchor is only a progress marker. It must never redefine the\n    // timetable derived from the class's authoritative start date.\n    const officialSlot = startDateSlots[storedSessionNumber - 1];\n    if (officialSlot?.startsAt === storedStartsAt.toISOString()) {\n      return {\n        sessionNumber: storedSessionNumber,\n        startsAt: storedStartsAt.toISOString(),\n        source: "stored-class-anchor",\n      };\n    }`;
 const restoreStoredAnchor = `    // Normal persisted anchors stay strict. An explicit admin following-restore anchor is\n    // authoritative because it represents the actual last live/correct session selected in UI.\n    const officialSlot = startDateSlots[storedSessionNumber - 1];\n    const isAdminFollowingRestore = normalize(klass.scheduleAnchorSource) === "admin-selected-following-restore";\n    if (isAdminFollowingRestore || officialSlot?.startsAt === storedStartsAt.toISOString()) {\n      return {\n        sessionNumber: storedSessionNumber,\n        startsAt: storedStartsAt.toISOString(),\n        source: isAdminFollowingRestore ? "admin-selected-following-restore" : "stored-class-anchor",\n      };\n    }`;
 
-if (!lessonOrderSource.includes(restoreStoredAnchor)) {
+// Current scheduling code already honours the admin-selected restore anchor,
+// and additionally preserves scheduleAnchorNextStartsAt for the continuation.
+// Recognise that newer form rather than treating an identical capability as drift.
+const modernAdminAnchorSupported =
+  lessonOrderSource.includes('const isAdminFollowingRestore = normalize(klass.scheduleAnchorSource) === "admin-selected-following-restore"') &&
+  lessonOrderSource.includes('if (isAdminFollowingRestore || officialSlot?.startsAt === storedStartsAt.toISOString())') &&
+  lessonOrderSource.includes('nextStartsAt: isAdminFollowingRestore ? klass.scheduleAnchorNextStartsAt : ""');
+if (!modernAdminAnchorSupported && !lessonOrderSource.includes(restoreStoredAnchor)) {
   if (!lessonOrderSource.includes(strictStoredAnchor)) {
     throw new Error("Stored schedule anchor logic changed; update patchFollowingRestoreAnchorCollisions.mjs");
   }
