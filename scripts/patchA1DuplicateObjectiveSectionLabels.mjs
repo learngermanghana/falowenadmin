@@ -93,13 +93,20 @@ function selectSubmissionTextForPart(submissionText = "", partId = "main", expec
   return matchingParts.map((part) => part.text).filter(Boolean).join("\\n");
 }`;
 
-source = replaceOnce(source, oldSelector, repairedSelector, "duplicate section label recovery");
-source = replaceOnce(
-  source,
-  `    const textForPart = selectSubmissionTextForPart(submissionText, currentPartId);`,
-  `    const textForPart = selectSubmissionTextForPart(submissionText, currentPartId, partIds);`,
-  "expected part sequence input",
-);
+// The current objective marker already isolates explicitly labelled sections:
+// a missing Teil must not inherit answers from a different Teil. Do not
+// overwrite this newer safeguard with the legacy duplicate-label heuristic.
+if (source.includes("An explicitly labelled part cannot supply answers to another part.")) {
+  console.log("Modern objective part isolation detected; skip obsolete label-recovery rewrite.");
+} else {
+  source = replaceOnce(source, oldSelector, repairedSelector, "duplicate section label recovery");
+  source = replaceOnce(
+    source,
+    `    const textForPart = selectSubmissionTextForPart(submissionText, currentPartId);`,
+    `    const textForPart = selectSubmissionTextForPart(submissionText, currentPartId, partIds);`,
+    "expected part sequence input",
+  );
+}
 
 fs.writeFileSync(target, source);
 console.log("Applied A1 objective Teil 2 and duplicate-section label recovery.");
