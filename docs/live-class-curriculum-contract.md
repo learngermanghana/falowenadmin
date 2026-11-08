@@ -140,3 +140,14 @@ existing deterministic session IDs; an existing target row is never overwritten.
 The derived class end date extends to the last appended lesson. Subsequent
 loads see Day 28 and add nothing. Repair errors appear on the Live Classes page.
 This changes Admin scheduling only, with no learner payload or grading change.
+
+### B1 Day 27 classroom opening (2026-11-08)
+
+`B1-10.27` uses the V2 presenter with published Day-27 music discovered by level/day,
+followed by the separate Lisa conversation at `b1/day-27/umweltfreundlich-im-alltag.mp3`.
+Six ungraded classroom questions cover reusable bags, loose produce, the local
+Bioladen, shorter transport routes, switching lights off and brief ventilation.
+The supplied 128-second recording repeats the conversation twice. Audio is signed
+on demand by the learner platform's existing staff-only classroom gateway using
+an exact level/day/key match. Deploy the learner allowlist before the Admin entry.
+This activity does not replace or change the workbook Teil 4 answer key or scores.

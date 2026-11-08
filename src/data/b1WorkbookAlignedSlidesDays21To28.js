@@ -657,14 +657,14 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       "Day 27 has no day-specific deep grammar page; use the workbook Grammar tab's general B1 argument training and the lesson's own indem/dass/wenn/könnte frames.",
       "Teil 3 is a coherent seven-question environment text on recycling, energy, transport and consumption.",
       "Critical operational mismatch: the workbook copy calls Hören self-check and the old video is removed from the rendered page, but the current marking contract expects teil4 and contains five reference answers.",
-      "Do not invent audio or fabricated answers. Tell teachers that Teil 4 is currently blocked by a source mismatch: it is score-required by the contract but has no live medium in the workbook. This must be resolved before assigning/scoring the listening part.",
+      "The classroom now has the teacher-supplied Lisa conversation and six ungraded questions after the published Day-27 music. This separate classroom activity does not resolve or replace the workbook Teil 4 grading contract.",
     ],
     interactionFlow: [
       { phase: "Method language", detailEn: "8 min: build environmental actions with indem man …" },
       { phase: "Reason and condition", detailEn: "9 min: add dass/when clauses and practical reasons." },
       { phase: "Everyday plan", detailEn: "12 min: groups plan realistic changes for home, shopping, mobility and school/work." },
       { phase: "Opinion rehearsal", detailEn: "9 min: respond to Ahmed with examples, difficulty and conclusion." },
-      { phase: "Contract warning", detailEn: "6 min: flag the unresolved Teil 4 scoring/media contradiction before assigning the workbook." },
+      { phase: "Classroom listening", detailEn: "8 min: answer six questions on Lisa’s reusable bags, unpackaged produce, regional food, transport, lights and ventilation. The recording repeats twice; classroom practice is ungraded." },
     ],
     wrapUpTaskDe: "Nenne drei umweltfreundliche Maßnahmen. Nutze indem man, einen dass-Satz und eine realistische Schwierigkeit.",
     workbookConnection: workbookConnection(27, [
@@ -678,7 +678,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       subtitle: "Day 27 has an unresolved Teil 4 source mismatch: grading expects five Hören answers, while the rendered workbook has no live listening medium. Do not invent a task.",
     }),
     teacherSupport: {
-      lessonOverviewEn: "Day 27 has coherent environmental production and reading content, but its listening assessment cannot currently be delivered honestly because the grading contract and rendered workbook disagree.",
+      lessonOverviewEn: "Day 27 opens with published music, then the teacher-supplied Lisa conversation with six ungraded listening questions. The separate workbook listening assessment still requires its own source/contract review.",
       grammarFocusEn: [
         "indem + subordinate clause explains how an environmental action is carried out.",
         "dass clauses state opinions or difficulties with verb-final order.",
