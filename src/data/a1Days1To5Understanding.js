@@ -114,6 +114,11 @@ export const A1_DAYS1_TO5_UNDERSTANDING = Object.freeze({
 // Two separate, unscored warm-up questions per block. They are not copied from
 // the 10 independent class-check prompts (no advance answer reveal).
 export const A1_DAYS1_TO5_QUICK_CHECKS = Object.freeze({
+  // The grouped Day 2 has its own prompt pair; the seven legacy banks remain unchanged.
+  "A1-0.2_1.1": [
+    check("Welche Buchstaben sind Umlautbuchstaben?", "Ä, Ö und Ü.", "These are the three umlauts; ß is Eszett."),
+    check("Was ist richtig: ich lerne oder ich lernen?", "ich lerne.", "The regular ich form takes -e."),
+  ],
   "A1-0.1": [
     check("Was sagst du, wenn deine Freundin morgens kommt?", "Guten Morgen!", "Use the morning greeting without requiring a long dialogue."),
     check("Ist „Tschüss“ ein formelles Wort?", "Nein, „Tschüss“ ist informell.", "Formal farewells normally use Auf Wiedersehen."),
@@ -147,6 +152,10 @@ export const A1_DAYS1_TO5_QUICK_CHECKS = Object.freeze({
 // Controlled application tasks use the lesson's grammar. They are not
 // mini-dialogues, speeches or automatic proficiency assessments.
 export const A1_DAYS1_TO5_APPLICATION_CHECKS = Object.freeze({
+  "A1-0.2_1.1": [
+    check("Buchstabiere „Weg“ langsam.", "W-E-G.", "Name the three letters in order with clear German sounds."),
+    check("Wähle die richtige Form: „Sie lernen Deutsch“ oder „Sie lernt Deutsch“, wenn du höflich sprichst.", "Sie lernen Deutsch.", "Formal Sie takes -en; contrast with singular sie lernt."),
+  ],
   "A1-0.1": [
     check("Wähle die höfliche Frage: „Wie geht es dir?“ oder „Wie geht es Ihnen?“", "Wie geht es Ihnen?", "A formal conversation requires Ihnen."),
     check("Korrigiere: „Gute Nacht!“, wenn du jemanden am Abend begrüßt.", "Guten Abend!", "Gute Nacht is for ending the day."),
