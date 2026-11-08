@@ -20,6 +20,23 @@ export const A1_DAYS1_TO5_UNDERSTANDING = Object.freeze({
     check("Exit-Check: Begrüße eine Lehrerin am Morgen, frage höflich nach ihrem Befinden und verabschiede dich.", "Guten Morgen! Wie geht es Ihnen? Auf Wiedersehen!", "Check the morning greeting, formal Ihnen and suitable goodbye; equivalent polite A1 answers are valid."),
   ],
 
+  // Canonical Day 2 combines alphabet, pronouns and first regular verbs.
+  // Keep ten independently answerable questions for a full class, plus a new
+  // exit question; the retired A1-0.2 and A1-1.1 blocks remain available.
+  "A1-0.2_1.1": [
+    check("Wie viele Buchstaben hat das deutsche Standardalphabet?", "26 Buchstaben.", "The standard alphabet has 26 letters; additional German characters are taught separately."),
+    check("Welche drei Umlautbuchstaben gibt es?", "Ä, Ö und Ü.", "Distinguish the three umlauts from ß (Eszett)."),
+    check("Wie heißt der Buchstabe ß?", "Eszett oder scharfes S.", "ß is not the letter B."),
+    check("Buchstabiere „Haus“ auf Deutsch.", "H-A-U-S.", "Ask learners to pronounce each letter name clearly."),
+    check("Nenne die Personalpronomen für ich, du, wir und ihr.", "ich, du, wir, ihr.", "Identify first- and second-person subjects in singular and plural."),
+    check("Welche Endung bekommt lernen bei ich?", "-e: ich lerne.", "The first-person singular of regular verbs takes -e."),
+    check("Welche Endung bekommt lernen bei du?", "-st: du lernst.", "Use du + -st, not the infinitive lernen."),
+    check("Ergänze: Er ___ Deutsch. (lernen)", "Er lernt Deutsch.", "The third-person singular er takes -t."),
+    check("Korrigiere: „Wir lernt Deutsch.“", "Wir lernen Deutsch.", "wir takes the plural ending -en."),
+    check("Korrigiere: „Ihr lernen Deutsch.“", "Ihr lernt Deutsch.", "ihr takes -t, not -en."),
+    check("Exit-Check: Buchstabiere „Bus“ und ergänze: ich ___, du ___, wir ___ (lernen).", "B-U-S; ich lerne, du lernst, wir lernen.", "Check both correct letter names and subject-verb agreement without repeating the class questions."),
+  ],
+
   // Day 2, first block · German alphabet and letters heard in the workbook.
   "A1-0.2": [
     check("Wie viele Buchstaben hat das deutsche Standardalphabet?", "26 Buchstaben.", "German also uses Ä, Ö, Ü and ß, but these are not four extra standard alphabet letters."),
