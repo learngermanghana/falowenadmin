@@ -2,6 +2,7 @@ import { B1_WORKBOOK_PRESENTATIONS } from '../data/b1WorkbookPresentations.js';
 import { A2_WORKBOOK_PRESENTATIONS } from '../data/a2WorkbookPresentations.js';
 import { getA2B1CommonMistakes } from '../data/a2B1CommonMistakes.js';
 import { getPresenterReadingLesson } from '../data/presenterReadingLessons.js';
+import { getAdvancedPresenterReadingLesson } from '../data/advancedPresenterReadingLessons.js';
 import { getLessonMusic } from "../data/lessonMusic.js";
 import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
 import { B1_DAY18_CAREER_CHALLENGES } from "../data/b1Day18CareerChallenge.js";
@@ -2160,7 +2161,23 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
     return stage;
   }) : stages;
   const classroomStages = presenterV2 && ['A2', 'B1'].includes(level)
-    ? standardizeA2B1Stages(prepared, slide) : prepared;
+    ? standardizeA2B1Stages(prepared, slide)
+    : presenterV2 && ['B2', 'C1', 'C2'].includes(level)
+      ? prepared.flatMap((stage) => {
+          if (stage.id !== 'phrases') return [stage];
+          const reading = getAdvancedPresenterReadingLesson(slide);
+          return [stage, {
+            id: 'reading', type: 'knowledge', variant: 'lesson-reading', kicker: 'Lesen',
+            title: reading.title, textDe: reading.textDe, instruction: reading.readingPurpose,
+            items: reading.checks, answerItems: reading.answers, evidence: reading.evidence,
+            suggestedMinutes: level === 'C2' ? 12 : level === 'C1' ? 10 : 8,
+            teacherPurpose: {
+              student: 'Lesen, Positionen unterscheiden und Antworten anhand des Textes belegen.',
+              teacher: 'Erst über den Text sprechen lassen; Musterantworten und Belege erst danach zeigen. Unbewertete Unterrichtspraxis.',
+            },
+          }];
+        })
+      : prepared;
   if (presenterV2 && level === "A2") {
     const presentation = A2_WORKBOOK_PRESENTATIONS[Number(normalizedAssignmentId(slide).split(".").at(-1))];
     if (!presentation) throw new Error(`Missing A2 workbook presentation: ${slide.id}`);

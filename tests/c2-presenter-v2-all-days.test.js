@@ -45,6 +45,7 @@ const SPINE = [
   "warmup",
   "foundation",
   "phrases",
+  "reading",
   "grammar",
   "analysis",
   "writing",

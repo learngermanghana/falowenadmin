@@ -1,3 +1,4 @@
+import { getAdvancedReadingPhraseTranslations } from "./advancedReadingGlossary.js";
 // Curated words for A2/B1 STUDENT-WORKBOOK Lesen passages only.
 // The teaching presenter has different text: use presenterReadingPhraseTranslations.js
 // with the exact assignment ID instead of reusing this day-based vocabulary.
@@ -73,6 +74,7 @@ const COMMON = {
 /** Saved meanings, intentionally separate from the source question/answer data. */
 export function getReadingPhraseTranslations(level, day) {
   const key = String(level || "").trim().toUpperCase();
+  if (["B2", "C1", "C2"].includes(key)) return getAdvancedReadingPhraseTranslations(key);
   if (!["A2", "B1"].includes(key)) return [];
   const entries = [...(BY_DAY[key]?.[Number(day)] || []), ...COMMON[key]];
   const seen = new Set();

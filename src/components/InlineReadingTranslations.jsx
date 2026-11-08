@@ -18,7 +18,7 @@ export default function InlineReadingTranslations({ text = "", level = "", day =
     [level, day, assignmentId],
   );
   const segments = useMemo(
-    () => segmentReadingPhrases(text, entries),
+    () => segmentReadingPhrases(text, entries, ["B2", "C1", "C2"].includes(String(level).toUpperCase()) ? 1 : 9),
     [text, entries],
   );
   const activeIndex = selection.scope === scope ? selection.index : -1;
