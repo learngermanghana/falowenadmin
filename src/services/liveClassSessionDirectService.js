@@ -9,6 +9,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../firebase.js";
+import { attendanceFingerprint, captureFields } from "../utils/liveClassUndo.js";
 import { normalizeScheduleRules, zonedLocalToUtcIso } from "../utils/liveClassScheduling.js";
 import { assertTimetableIntegrity } from "../utils/liveClassTimetableIntegrity.js";
 import {
@@ -220,6 +221,7 @@ async function commitSessionChangesAtomically({
       updatedAt: serverTimestamp(),
     };
 
+    const undoChanges = [];
     preparedChanges.forEach((change, index) => {
       const attendanceSnap = latestAttendanceSnaps[index];
       const existingAttendance = attendanceSnap?.exists() ? attendanceSnap.data() || {} : {};
@@ -228,7 +230,7 @@ async function commitSessionChangesAtomically({
         : {};
 
       transaction.update(change.sessionRef, change.patch);
-      transaction.set(change.attendanceRef, {
+      const attendancePatch = {
         classId,
         classSessionId: change.sessionId,
         startsAt: change.patch.startsAt || "",
@@ -239,8 +241,14 @@ async function commitSessionChangesAtomically({
         reminderScheduleVersion: scheduleVersion,
         ...autoOpenWindowPatch,
         updatedAt: serverTimestamp(),
-      }, { merge: true });
+      };
+      transaction.set(change.attendanceRef, attendancePatch, { merge: true });
+      undoChanges.push({ id: change.sessionId, attendanceFingerprint: attendanceFingerprint(existingAttendance), sequence: Number(change.patch.sequence || change.expectedSequence),
+        session: captureFields(latestSessionSnaps[index].data(), Object.keys(change.patch)),
+        attendance: captureFields(existingAttendance, Object.keys(attendancePatch)) });
     });
+    changeMetadata.lastScheduleUndo = { version: scheduleVersion, auditLogId: auditRef.id, changes: undoChanges,
+      klass: captureFields(latestClass, Object.keys(changeMetadata)) };
 
     transaction.set(classRef, changeMetadata, { merge: true });
     transaction.set(calendarRef, {
@@ -420,7 +428,7 @@ export async function rescheduleSession(sessionId, payload = {}) {
     return {
       session: change.session,
       patch: {
-        ...(reschedulePlan.mode === "single" ? {
+        ...((reschedulePlan.mode === "single" || (primary && payload.manualScheduleOverride)) ? {
           manualDateOverride: true,
           manualDateOverrideBy: adminId,
           manualDateOverrideAt: serverTimestamp(),

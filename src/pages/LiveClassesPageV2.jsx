@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import LiveClassNextLesson from "../components/LiveClassNextLesson.jsx";
+import LiveClassChangePreview from "../components/LiveClassChangePreview.jsx";
+import { orderedWorkspaceSessions, scheduleChangePreview, completionLabel } from "../utils/liveClassWorkspace.js";
+import { undoLastScheduleChange } from "../services/liveClassUndoService.js";
+import "./LiveClassWorkspace.css";
 import LiveClassStudentsPanel from "../components/LiveClassStudentsPanel.jsx";
 import { reopenSession } from "../services/liveClassReopenService.js";
 import { useAuth } from "../context/AuthContext";
@@ -169,11 +174,16 @@ function scheduleRuleLabel(rule = {}) {
 
 export default function LiveClassesPageV2() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const toast = useToast();
   const [classes, setClasses] = useState([]);
-  const [selectedClassId, setSelectedClassId] = useState("");
+  const [selectedClassId, setSelectedClassId] = useState(() => searchParams.get("classId") || "");
+  const [classSearch, setClassSearch] = useState("");
+  const [classFilter, setClassFilter] = useState("active");
+  const [sessionFilter, setSessionFilter] = useState("remaining");
+  const [sessionSort, setSessionSort] = useState("lesson");
   const [dashboard, setDashboard] = useState(null);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(() => searchParams.get("tab") || "overview");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -245,7 +255,29 @@ export default function LiveClassesPageV2() {
     [dashboard],
   );
   const nextCountdown = dashboard?.nextSession ? calculateCountdown(dashboard.nextSession.startsAt) : null;
-  const messageIsSuccess = /successfully|updated automatically|assigned|created|saved|checked|cancelled|rescheduled|moved|shifted/i.test(message);
+  const messageIsSuccess = /successfully|updated automatically|assigned|created|saved|checked|cancelled|rescheduled|moved|shifted|undone|reopened/i.test(message);
+
+  const visibleClasses = classes.filter(klass => {
+    const status = String(klass.status || "active").toLowerCase();
+    const matchesStatus = klass.id === selectedClassId || classFilter === "all" || (classFilter === "active" ? !["graduated", "archived", "cancelled", "draft"].includes(status) : classFilter === "completed" ? ["graduated", "archived"].includes(status) : status === "upcoming");
+    return matchesStatus && (klass.id === selectedClassId || `${klass.name || klass.className || ""} ${klass.levelId || klass.level || ""}`.toLowerCase().includes(classSearch.toLowerCase()));
+  });
+  const changePreview = useMemo(() => {
+    if (!sessionChange || !dashboard) return { plan: null, error: "" };
+    try { return { plan: scheduleChangePreview({ klass: dashboard.klass, sessions: dashboard.sessions, change: sessionChange }), error: "" }; }
+    catch (error) { return { plan: null, error: error.message }; }
+  }, [sessionChange, dashboard]);
+
+  async function undoSchedule() {
+    if (!window.confirm("Undo the last schedule change? Dates and calendar will be restored. Any notices already sent remain sent.")) return;
+    setBusy(true); setMessage("");
+    try {
+      await undoLastScheduleChange(selectedClassId, user?.uid || "admin");
+      await refreshDashboard(selectedClassId);
+      setMessage("Last schedule change undone. Review Communication if students need an updated notice.");
+    } catch (error) { setMessage(error.message || "Could not undo this change."); }
+    finally { setBusy(false); }
+  }
 
   async function handleCreated(classId) {
     await refreshClasses(classId);
@@ -313,7 +345,7 @@ export default function LiveClassesPageV2() {
 
   async function handleSessionChangeSubmit(event) {
     event.preventDefault();
-    if (!sessionChange?.sessionId) return;
+    if (!sessionChange?.sessionId || changePreview.error) return;
     setBusy(true);
     setMessage("");
 
@@ -389,6 +421,7 @@ export default function LiveClassesPageV2() {
         const reason = window.prompt("Why should this completed session be reopened? Attendance records will be kept.");
         if (reason === null) return;
         await reopenSession(session.id, { reason, adminId: user?.uid || user?.email || "admin" });
+        setSessionFilter("remaining");
         setMessage("Session reopened. Use Change session to choose its correct date, or Complete after teaching it.");
       }
       if (action === "complete") {
@@ -476,8 +509,9 @@ export default function LiveClassesPageV2() {
           <textarea rows={3} value={sessionChange.reason} onChange={(event) => setSessionChange((current) => ({ ...current, reason: event.target.value }))} placeholder="Write the message students should receive" required />
         </label>
 
+        <LiveClassChangePreview preview={changePreview} />
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button type="submit" disabled={busy}>{busy ? "Saving…" : cancelling ? "Cancel session and notify students" : shiftingFollowing ? "Recalculate remaining lessons" : alreadyCancelled ? "Move and reactivate session" : "Move only this session"}</button>
+          <button type="submit" disabled={busy || Boolean(changePreview.error)}>{busy ? "Saving…" : cancelling ? "Cancel session and notify students" : shiftingFollowing ? "Recalculate remaining lessons" : alreadyCancelled ? "Move and reactivate session" : "Move only this session"}</button>
           <button type="button" disabled={busy} onClick={() => setSessionChange(null)}>Close</button>
         </div>
       </form>
@@ -485,9 +519,9 @@ export default function LiveClassesPageV2() {
   }
 
   function renderSessions() {
-    const sessions = dashboard?.sessions || [];
+    const sessions = orderedWorkspaceSessions(dashboard?.sessions || [], levelId, sessionFilter, sessionSort);
     if (!sessions.length) {
-      return <p>No sessions were found for this class record. Open Class & settings and save the timetable to generate them.</p>;
+      return <p>No lessons match this filter. Choose All lessons to see the full course.</p>;
     }
 
     return (
@@ -503,7 +537,7 @@ export default function LiveClassesPageV2() {
                 <tr key={session.id} style={{ borderTop: "1px solid #e5e7eb", verticalAlign: "top" }}>
                   <td data-label="Ghana date and time" style={{ padding: 8 }}>{formatDateTime(session.startsAt)}<br /><small>to {formatDateTime(session.endsAt)}</small></td>
                   <td data-label="Status" style={{ padding: 8 }}>
-                    <span style={{ ...statusStyle(status), padding: "4px 8px", borderRadius: 999, fontWeight: 700 }}>{status}</span>
+                    <span style={{ ...statusStyle(status), padding: "4px 8px", borderRadius: 999, fontWeight: 700 }}>{completionLabel(session)}</span>
                     {status === "cancelled" && session.cancellationReason ? <small style={{ display: "block", marginTop: 6, color: "#991b1b" }}>{session.cancellationReason}</small> : null}
                     {status === "scheduled" && session.rescheduleReason ? <small style={{ display: "block", marginTop: 6, color: "#475569" }}>Moved: {session.rescheduleReason}</small> : null}
                   </td>
@@ -518,11 +552,14 @@ export default function LiveClassesPageV2() {
                   </td>
                   <td data-label="Actions" style={{ padding: 8 }}><div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <Link to={`/attendance/session/${dashboard.klass.id || selectedClassId}?session=${encodeURIComponent(session.id)}`}>Attendance</Link>
-                    <button type="button" disabled={busy || contentLocked} onClick={() => handleSessionAction(session, "topic")}>Topic</button>
+
                     <button type="button" disabled={busy || changeLocked} onClick={() => openSessionChange(session)}>{sessionChange?.sessionId === session.id ? "Changing…" : status === "cancelled" ? "Move / reactivate" : "Change session"}</button>
-                    {status === "completed"
-                      ? <button type="button" disabled={busy} onClick={() => handleSessionAction(session, "reopen")}>Reopen session</button>
-                      : <button type="button" disabled={busy || contentLocked} onClick={() => handleSessionAction(session, "complete")}>Complete</button>}
+                    <details className="live-workspace-menu"><summary>More actions</summary>
+                      <button type="button" disabled={busy || contentLocked} onClick={() => handleSessionAction(session, "topic")}>Edit topic</button>
+                      {status === "completed"
+                        ? <button type="button" disabled={busy} onClick={() => handleSessionAction(session, "reopen")}>Reopen session</button>
+                        : <button type="button" disabled={busy || contentLocked} onClick={() => handleSessionAction(session, "complete")}>Mark completed</button>}
+                    </details>
 
                   </div></td>
                 </tr>,
@@ -549,9 +586,13 @@ export default function LiveClassesPageV2() {
       {message ? <div style={{ marginBottom: 14, padding: 12, borderRadius: 8, background: messageIsSuccess ? "#f0fdf4" : "#eff6ff", border: messageIsSuccess ? "1px solid #bbf7d0" : "1px solid #bfdbfe" }}>{message}</div> : null}
 
       <article className="card" style={{ display: "grid", gap: 12 }}>
+        <div className="live-workspace-toolbar">
+          <label>Find class<input type="search" value={classSearch} onChange={event => setClassSearch(event.target.value)} placeholder="Name or level" /></label>
+          <label>Show classes<select value={classFilter} onChange={event => setClassFilter(event.target.value)}><option value="active">Active / upcoming</option><option value="upcoming">Upcoming</option><option value="completed">Completed</option><option value="all">All classes</option></select></label>
+        </div>
         <label><select aria-label="Select class" value={selectedClassId} onChange={(event) => { setSelectedClassId(event.target.value); setActiveTab("overview"); setMessage(""); setSessionChange(null); }}>
           <option value="">Select a class</option>
-          {classes.map((klass) => <option key={klass.id} value={klass.id}>{klass.name || klass.className || klass.id}</option>)}
+          {visibleClasses.map((klass) => <option key={klass.id} value={klass.id}>{klass.name || klass.className || klass.id}</option>)}
         </select></label>
         <nav style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {tabs.map((tab) => {
@@ -560,6 +601,11 @@ export default function LiveClassesPageV2() {
           })}
         </nav>
       </article>
+
+      {!loading && dashboard ? <>
+        <LiveClassNextLesson dashboard={dashboard} busy={busy} onComplete={session => handleSessionAction(session, "complete")} />
+        {dashboard.klass.lastScheduleUndo?.version === dashboard.klass.sessionScheduleVersion && dashboard.klass.lastScheduleUndo?.changes?.length ? <article className="card"><div className="live-workspace-actions"><span>Last date change can be reversed.</span><button type="button" disabled={busy} onClick={undoSchedule}>Undo last schedule change</button></div></article> : null}
+      </> : null}
 
       {loading ? <article className="card"><p>Loading selected class…</p></article> : null}
       {activeTab === "create" ? <CreateClassCard classes={classes} onCreated={handleCreated} onDuplicate={handleDuplicate} /> : null}
@@ -582,7 +628,10 @@ export default function LiveClassesPageV2() {
         <p><Link to="/class-schedule-setup">Open Class Schedule Setup</Link> to review the base weekly schedule. Individual moved or cancelled lessons remain controlled by the shared session record here.</p>
       </article> : null}
 
-      {!loading && dashboard && activeTab === "sessions" ? <article className="card"><h2>Generated sessions</h2><p>Use <strong>Change session</strong> to move one lesson safely, shift it together with all following lessons, or cancel it without a replacement date. The system blocks overlaps and curriculum-order errors before saving.</p><p>Click a session dictionary control to open the complete {levelId} dictionary, search all {dictionaryEntries.length} items and select one or several assignments.</p>{renderSessions()}</article> : null}
+      {!loading && dashboard && activeTab === "sessions" ? <article className="card"><h2>Lessons</h2><div className="live-workspace-toolbar">
+        <label>Show lessons<select value={sessionFilter} onChange={event => setSessionFilter(event.target.value)}><option value="remaining">Remaining</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="all">All lessons</option></select></label>
+        <label>Order<select value={sessionSort} onChange={event => setSessionSort(event.target.value)}><option value="lesson">Lesson day</option><option value="date">Date</option></select></label>
+      </div><p>Use <strong>Change session</strong> to choose a date, recalculate remaining lessons or cancel. Review the affected dates before saving.</p><p>The dictionary contains all {dictionaryEntries.length} {levelId} items. Completed lessons can be corrected through More actions → Reopen session.</p>{renderSessions()}</article> : null}
 
       {!loading && dashboard && activeTab === "students" ? (
         <LiveClassStudentsPanel
