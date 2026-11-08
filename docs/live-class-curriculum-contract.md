@@ -179,3 +179,7 @@ future sessions. Historical collisions before the anchor do not block this
 continuation. A Bonn-shaped regression covers older Days 20–28, duplicate past
 Day 27/28 timestamps, the 8 November Day 19 anchor, and the existing 14 November
 Day 21 session. The next Day 20 follows the saved weekly pattern and closures.
+
+## Flexible remaining-session recalculation
+
+In Live Classes → Sessions → Change session, choose “Recalculate from this lesson onward”, select the weekly days/times for subsequent lessons, then choose the exact first date/time. The selected anchor is accepted outside the former timetable; remaining sessions follow the selected weekly rules. The rules and explicit anchor persist in the existing atomic schedule transaction with attendance dates, calendar version and audit history. Earlier session records and assignment arrays remain unchanged. Completed/live records and actual overlaps remain protected. The full dictionary can be opened for inspection even when a session is locked for editing.

@@ -301,6 +301,7 @@ export default function LiveClassesPageV2() {
       className: dashboard?.klass?.name || session.className || "",
       action: "reschedule",
       moveMode: "single",
+      scheduleRules: dashboard?.klass?.scheduleRules || [],
       startsAt: toDateTimeLocal(session.startsAt),
       reason: status === "cancelled"
         ? (session.cancellationReason || "This cancelled session has been moved to a new date and reactivated.")
@@ -348,6 +349,7 @@ export default function LiveClassesPageV2() {
         localTime: parts.localTime,
         startsAt: sessionChange.startsAt,
         moveMode: sessionChange.moveMode,
+        ...(sessionChange.moveMode === "following" ? { scheduleRules: sessionChange.scheduleRules } : {}),
         reason,
         adminId,
         classId,
@@ -360,7 +362,7 @@ export default function LiveClassesPageV2() {
         : "";
       const movedCount = Number(rescheduleResult?.movedSessions || 1);
       const successMessage = rescheduleResult?.moveMode === "following"
-        ? `${movedCount} sessions shifted. The selected lesson now starts ${formatDateTime(rescheduleResult?.startsAt || sessionChange.startsAt)}, and every following lesson kept its curriculum order. Attendance, class dates, reminders and calendar feed were updated atomically.${emailNote}`
+        ? `${movedCount} sessions shifted. The selected lesson now starts ${formatDateTime(rescheduleResult?.startsAt || sessionChange.startsAt)}, and following lessons were recalculated using the selected weekly days. Attendance, class dates, reminders and calendar feed were updated atomically.${emailNote}`
         : `Session moved to ${formatDateTime(rescheduleResult?.startsAt || sessionChange.startsAt)}. Only this lesson moved. Its day and content were preserved; Attendance, class dates, reminders and calendar feed were updated.${emailNote}`;
       setSessionChange(null);
       await refreshDashboard(selectedClassId);
@@ -422,15 +424,27 @@ export default function LiveClassesPageV2() {
               <strong>Which lessons should move?</strong>
               <select value={sessionChange.moveMode || "single"} onChange={(event) => setSessionChange((current) => ({ ...current, moveMode: event.target.value }))}>
                 <option value="single">Move only this session</option>
-                <option value="following">Move this and all following sessions</option>
+                <option value="following">Recalculate from this lesson onward</option>
               </select>
             </label>
 
             <div style={{ padding: 10, borderRadius: 8, background: shiftingFollowing ? "#fff7ed" : "#fff", border: shiftingFollowing ? "1px solid #fdba74" : "1px solid #bfdbfe", color: shiftingFollowing ? "#9a3412" : "#334155" }}>
               {shiftingFollowing
-                ? "The selected lesson and every later curriculum lesson will shift by the same amount. Cancelled future lessons stay cancelled. The operation stops if a completed/live lesson would be moved or any new time would overlap another lesson."
+                ? "The selected lesson uses exactly the date and time you choose. Remaining lessons recalculate using the weekly days below. Earlier lessons stay unchanged. Completed and live lessons remain protected."
                 : "Move this lesson to any preferred date and time, even before or after other lesson days. Its day and content stay the same, and other lessons stay on their dates. The time must not overlap another scheduled lesson."}
             </div>
+
+            {shiftingFollowing ? <fieldset disabled={busy}>
+              <legend>Weekly days after this lesson</legend>
+              <p>The first lesson uses your chosen date below, even outside these days.</p>
+              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(day => {
+                const rule = sessionChange.scheduleRules.find(item => String(item.day).slice(0, 3).toLowerCase() === day.toLowerCase());
+                return <div key={day} style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+                  <label><input type="checkbox" checked={Boolean(rule)} onChange={event => setSessionChange(current => ({ ...current, scheduleRules: event.target.checked ? [...current.scheduleRules, { day, startTime: current.startsAt.split("T")[1]?.slice(0, 5) || "09:00", durationMinutes: current.durationMinutes }] : current.scheduleRules.filter(item => String(item.day).slice(0, 3).toLowerCase() !== day.toLowerCase()) }))} /> {day}</label>
+                  {rule ? <input aria-label={`${day} start time`} type="time" required value={rule.startTime} onChange={event => setSessionChange(current => ({ ...current, scheduleRules: current.scheduleRules.map(item => item === rule ? { ...item, startTime: event.target.value } : item) }))} /> : null}
+                </div>;
+              })}
+            </fieldset> : null}
 
             <label style={{ display: "grid", gap: 6 }}>
               <strong>{shiftingFollowing ? "New date and time for this lesson (Ghana)" : "New Ghana date and time"}</strong>
@@ -457,7 +471,7 @@ export default function LiveClassesPageV2() {
         </label>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button type="submit" disabled={busy}>{busy ? "Saving…" : cancelling ? "Cancel session and notify students" : shiftingFollowing ? "Shift this and following sessions" : alreadyCancelled ? "Move and reactivate session" : "Move only this session"}</button>
+          <button type="submit" disabled={busy}>{busy ? "Saving…" : cancelling ? "Cancel session and notify students" : shiftingFollowing ? "Recalculate remaining lessons" : alreadyCancelled ? "Move and reactivate session" : "Move only this session"}</button>
           <button type="button" disabled={busy} onClick={() => setSessionChange(null)}>Close</button>
         </div>
       </form>
