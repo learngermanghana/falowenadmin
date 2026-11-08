@@ -359,7 +359,7 @@ test("B1 repair uses the persisted start date and repairs the reported Thu/Sat c
     ["Day 1", "2026-08-08T07:00"],
     ["Day 2", "2026-08-13T19:00"],
     ["Day 3", "2026-08-15T07:00"],
-    ["Day 4", "2026-08-20T19:00"],
+    ["Day 4", "2026-08-22T07:00"],
     ["Day 5", "2026-08-22T07:00"],
     ["Day 6", "2026-08-27T19:00"],
     ["Day 7", "2026-08-29T07:00"],

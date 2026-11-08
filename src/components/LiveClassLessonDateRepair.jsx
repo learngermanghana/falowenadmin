@@ -71,7 +71,7 @@ function AnchorRestoreControls({
   return (
     <div style={{ display: "grid", gap: 10, padding: 12, borderRadius: 10, background: "#ecfdf5", border: "1px solid #86efac", color: "#166534" }}>
       <strong>Rebuild lesson dates</strong>
-      <div>Choose the next lesson and its date to preview the remaining course using the saved weekly meeting days.</div>
+      <div>Choose the next untaught lesson and its date. Earlier lessons and lessons already taught keep their dates, status and attendance. Only remaining lessons use the saved weekly meeting days.</div>
       <label>Build from next lesson
         <select value={nextLessonNumber} onChange={event => onNextLessonChange(Number(event.target.value))} disabled={busy}>
           <option value={0}>Choose a lesson from the full course</option>

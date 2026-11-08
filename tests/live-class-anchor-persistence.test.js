@@ -73,5 +73,5 @@ test("service reload keeps the preview session canonical so the visible record r
   assert.equal(restoredIds.has(visiblePreviewRecord.id), true);
 
   const staleIds = new Set(plan.staleFutureRecords.map((item) => item.sessionId));
-  assert.equal(staleIds.has(hiddenAttendedDuplicate.id), true);
+  assert.equal(staleIds.has(hiddenAttendedDuplicate.id), false);
 });

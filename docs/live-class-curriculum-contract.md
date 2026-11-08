@@ -187,3 +187,7 @@ In Live Classes → Sessions → Change session, choose “Recalculate from this
 ## Correcting a completed session
 
 Live Classes provides **Reopen session** for completed sessions. A reason is required. Reopening atomically changes the class session and attendance session metadata to scheduled, retains attendance entries and curriculum, clears active completion fields, and records previous completion evidence in the audit log. Automatic completion and reminders remain suppressed while the admin corrects the date; rescheduling restores normal automatic completion. The admin can also explicitly mark the lesson completed again. No student email is sent by reopening.
+
+## Timetable changes preserve taught history
+
+Official timetable repair keeps completed/live sessions and sessions with recorded attendance at their stored dates. A selected continuation boundary also preserves every earlier lesson. Those records are omitted from repair writes and duplicate cleanup, including their attendance documents. Selecting a next lesson binds that lesson by curriculum identity, never by a date occupied by a different lesson. Reopen a completed lesson explicitly before changing its date. Following repair never resets completion status. Preview dates use the same preservation rules as saving.
