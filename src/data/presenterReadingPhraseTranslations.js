@@ -436,7 +436,8 @@ export const PRESENTER_READING_PHRASES = Object.freeze({
     ],
     [
       "Etiketts",
-      "label / tag",
+      "label / tag"
+    ],
     [
       "richtige Größe",
       "correct size"
@@ -483,7 +484,8 @@ export const PRESENTER_READING_PHRASES = Object.freeze({
     ],
     [
       "Erholung",
-      "rest / recovery",
+      "rest / recovery"
+    ],
     [
       "montags und mittwochs",
       "on Mondays and Wednesdays"
@@ -1054,7 +1056,8 @@ export const PRESENTER_READING_PHRASES = Object.freeze({
     ],
     [
       "erwünscht",
-      "desirable / preferred",
+      "desirable / preferred"
+    ],
     [
       "erfüllt",
       "meets / fulfils"
