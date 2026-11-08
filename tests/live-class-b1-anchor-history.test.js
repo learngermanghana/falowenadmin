@@ -49,3 +49,19 @@ test('Bonn continuation creates fresh Days 20–28 without moving earlier later-
   assert.equal(repeated.movedCount, 0);
   assert.equal(repeated.staleFutureRecords.length, 0);
 });
+
+test('teacher overrides the real Day 27 date and rebuilds Day 28 on the chosen Saturday', () => {
+  const rows = [
+    session(19, '2026-11-08T07:00:00Z', 'completed', 'actual'),
+    session(21, '2026-11-14T07:00:00Z', 'scheduled', 'saturday'),
+    session(28, '2026-11-15T07:00:00Z', 'scheduled', 'old-end'),
+    session(27, '2026-12-05T07:00:00Z', 'scheduled', 'wrong-date'),
+  ];
+  const plan = buildFollowingScheduleRestorePlan({ classId: 'bonn', klass, sessions: rows,
+    anchorSessionId: 'wrong-date', anchorDate: '2026-11-08', nextDate: '2026-11-14' });
+  assert.equal(plan.anchorSession.id, 'actual');
+  assert.deepEqual(plan.overrideRows.map(row => [row.id, row.patch.curriculumDay]), [['actual', 27], ['saturday', 28]]);
+  assert.equal(plan.endDate, '2026-11-14');
+  assert.deepEqual(plan.followingItems.map(item => item.group.day), [28]);
+  assert.deepEqual(plan.staleFutureRecords.map(row => row.sessionId).sort(), ['old-end','wrong-date']);
+});

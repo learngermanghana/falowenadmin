@@ -119,6 +119,9 @@ export function buildFollowingScheduleRestorePlan({
   anchorSessionId = "",
   excludedDates = [],
   notBeforeStartsAt = "",
+  anchorDate = "",
+  nextDate = "",
+  firstSlot = "",
 } = {}) {
   const resolvedClassId = normalize(classId || klass.id);
   if (!resolvedClassId) throw new Error("Class ID is required.");
@@ -144,6 +147,51 @@ export function buildFollowingScheduleRestorePlan({
   const anchorLessonNumber = resolveOfficialSessionNumber(anchorSession, groups, levelId);
   if (!anchorLessonNumber) throw new Error("The selected session cannot be matched to the official curriculum order.");
 
+  if (anchorDate || nextDate) {
+    const timezone = normalize(klass.timezone) || "Africa/Accra";
+    const original = localParts(anchorSession.startsAt, timezone);
+    if (!original) throw new Error("Select a dated lesson.");
+    const start = zonedLocalToUtcIso(anchorDate || original.dateIso, original.time, timezone);
+    const projected = new Map(scopedSessions.map(row => [row.id, row]));
+    const overrideRows = [];
+    const displaced = [];
+    function bindSlot(group, time, source) {
+      const atTime = [...projected.values()].filter(row => row.superseded !== true
+        && !["superseded", "cancelled"].includes(statusOf(row))
+        && toDate(row.startsAt)?.getTime() === Date.parse(time));
+      if (atTime.length > 1) throw new Error("Multiple active meetings already occupy the override time.");
+      const row = atTime[0] || source;
+      if (!row) return null; // The normal planner creates an absent following session.
+      const duration = Math.max(60000, (toDate(row.endsAt) - toDate(row.startsAt)) || 90 * 60000);
+      const patch = { startsAt: time, endsAt: new Date(Date.parse(time) + duration).toISOString(),
+        topic: group.topic, curriculumDay: group.day, curriculumIndex: group.index + 1,
+        assignmentIds: group.assignmentIds, chapterIds: group.assignmentIds, curriculumIds: group.assignmentIds,
+        assignment_id: group.assignmentIds[0], curriculumTaskCount: group.assignmentIds.length };
+      projected.set(row.id, { ...row, ...patch, repairPreferredRecord: true });
+      overrideRows.push({ id: row.id, patch });
+      return row.id;
+    }
+    const effectiveId = bindSlot(groups[anchorLessonNumber - 1], start, anchorSession);
+    if (effectiveId !== anchorSession.id && statusOf(anchorSession) === "scheduled"
+      && toDate(anchorSession.startsAt) > new Date(start)) {
+      projected.delete(anchorSession.id);
+      displaced.push({ sessionId: anchorSession.id, session: anchorSession, lessonNumber: anchorLessonNumber });
+    }
+    let nextTime = "";
+    if (nextDate && groups[anchorLessonNumber]) {
+      nextTime = zonedLocalToUtcIso(nextDate, original.time, timezone);
+      if (Date.parse(nextTime) <= Date.parse(start)) throw new Error("The next lesson must follow the selected lesson.");
+      const nextId = bindSlot(groups[anchorLessonNumber], nextTime);
+      if (nextId) for (const row of projected.values()) {
+        if (row.id !== nextId && resolveOfficialSessionNumber(row, groups, levelId) === anchorLessonNumber + 1) {
+          projected.set(row.id, { ...row, repairPreferredRecord: false });
+        }
+      }
+    }
+    const plan = buildFollowingScheduleRestorePlan({ classId, klass, sessions: [...projected.values()],
+      anchorSessionId: effectiveId, excludedDates, notBeforeStartsAt, firstSlot: nextTime });
+    return { ...plan, overrideRows, staleFutureRecords: [...plan.staleFutureRecords, ...displaced] };
+  }
   const anchorStartsAt = toDate(anchorSession.startsAt);
   if (!anchorStartsAt) throw new Error("The selected anchor session has an invalid date.");
   const normalizedNotBefore = toDate(notBeforeStartsAt)?.toISOString() || anchorStartsAt.toISOString();
@@ -201,13 +249,17 @@ export function buildFollowingScheduleRestorePlan({
   });
   const baseFollowingItems = officialPlan.items.filter((item) => item.lessonNumber > anchorLessonNumber);
   const followingSlots = buildFollowingSlotsFromAnchor({
-    anchorStartsAt,
-    notBeforeStartsAt: normalizedNotBefore,
+    anchorStartsAt: firstSlot || anchorStartsAt,
+    notBeforeStartsAt: firstSlot || normalizedNotBefore,
     rules,
     timezone,
     excludedDates,
-    count: baseFollowingItems.length,
+    count: baseFollowingItems.length - (firstSlot ? 1 : 0),
   });
+  if (firstSlot) {
+    const durationMinutes = Math.max(1, (toDate(anchorSession.endsAt) - anchorStartsAt) / 60000 || 90);
+    followingSlots.unshift({ startsAt: firstSlot, durationMinutes, endsAt: new Date(Date.parse(firstSlot) + durationMinutes * 60000).toISOString() });
+  }
   const followingItems = baseFollowingItems.map((item, index) => {
     const slot = followingSlots[index];
     const currentStartsAt = toDate(item.session?.startsAt)?.toISOString() || "";
