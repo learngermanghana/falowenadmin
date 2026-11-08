@@ -210,6 +210,7 @@ function anchorClassPatch({ plan, adminId, relevantClosures, scheduleVersion, af
     scheduleAnchorSessionNumber: plan.anchorLessonNumber,
     scheduleAnchorDay: plan.levelId === "A1" ? plan.anchorLessonNumber - 1 : null,
     scheduleAnchorStartsAt: plan.anchorStartsAt,
+    scheduleAnchorNextStartsAt: plan.anchoredClass.scheduleAnchorNextStartsAt || "",
     scheduleAnchorNotBeforeStartsAt: plan.notBeforeStartsAt || plan.anchorStartsAt,
     scheduleAnchorSource: "admin-selected-following-restore",
     scheduleAnchorMode: "rebuild-from-selected-session",
@@ -316,7 +317,7 @@ export async function restoreFollowingSessionsToWeeklyPattern({
   klass = {},
   sessions = [],
   anchorSessionId = "",
-  anchorDate = "", nextDate = "",
+  anchorDate = "", nextDate = "", nextLessonNumber = 0,
   notBeforeStartsAt = "",
   adminId = "admin",
 } = {}) {
@@ -341,7 +342,7 @@ export async function restoreFollowingSessionsToWeeklyPattern({
     classId: resolvedClassId,
     klass,
     sessions: scopedRepairSessions,
-    anchorSessionId, anchorDate, nextDate,
+    anchorSessionId, anchorDate, nextDate, nextLessonNumber,
     excludedDates,
     notBeforeStartsAt,
   });
@@ -387,6 +388,7 @@ export async function restoreFollowingSessionsToWeeklyPattern({
       scheduleAnchorSessionNumber: plan.anchorLessonNumber,
       scheduleAnchorDay: plan.levelId === "A1" ? plan.anchorLessonNumber - 1 : null,
       scheduleAnchorStartsAt: plan.anchorStartsAt,
+    scheduleAnchorNextStartsAt: plan.anchoredClass.scheduleAnchorNextStartsAt || "",
       scheduleAnchorNotBeforeStartsAt: plan.notBeforeStartsAt,
       scheduleAnchorSource: "admin-selected-following-restore",
       scheduleAnchorMode: "rebuild-from-selected-session",
@@ -430,10 +432,11 @@ export async function restoreFollowingSessionsToWeeklyPattern({
       .map((item) => [item.targetStartsAt, normalize(item.session.id)]),
   );
   const batch = writeBatch(db);
-  for (const { id, patch } of plan.overrideRows || []) {
-    batch.update(doc(db, "classSessions", id), { ...patch, updatedAt: serverTimestamp() });
+  for (const { id, patch, create } of plan.overrideRows || []) {
+    if (create) batch.set(doc(db, "classSessions", id), { id, classId: resolvedClassId, classRecordId: resolvedClassId, status: "scheduled", ...patch, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    else batch.update(doc(db, "classSessions", id), { ...patch, updatedAt: serverTimestamp() });
     batch.set(doc(db, "attendance", resolvedClassId, "sessions", id), {
-      ...patch, classId: resolvedClassId, classSessionId: id, date: localDateTimeParts(patch.startsAt, plan.timezone).date,
+      ...patch, ...(create ? { students: {}, sessionStatus: "scheduled", createdAt: serverTimestamp() } : {}), classId: resolvedClassId, classSessionId: id, date: localDateTimeParts(patch.startsAt, plan.timezone).date,
       title: patch.topic, updatedAt: serverTimestamp(),
     }, { merge: true });
   }

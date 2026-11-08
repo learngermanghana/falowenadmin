@@ -122,6 +122,7 @@ export function buildFollowingScheduleRestorePlan({
   anchorDate = "",
   nextDate = "",
   firstSlot = "",
+  nextLessonNumber = 0,
 } = {}) {
   const resolvedClassId = normalize(classId || klass.id);
   if (!resolvedClassId) throw new Error("Class ID is required.");
@@ -138,6 +139,32 @@ export function buildFollowingScheduleRestorePlan({
   const groups = getCourseSessionGroups(levelId);
   if (!groups.length) throw new Error("This class level has no official lesson order.");
 
+  if (nextLessonNumber) {
+    const group = groups[Number(nextLessonNumber) - 1];
+    if (!group || !nextDate) throw new Error("Choose the next lesson and its date.");
+    const rules = normalizeScheduleRules(klass.scheduleRules || []);
+    const weekday = new Date(nextDate + "T12:00:00Z").getUTCDay();
+    const rule = rules.find(item => WEEKDAY_INDEX[item.day] === weekday) || rules[0];
+    if (!rule) throw new Error("Save the weekly meeting days first.");
+    const time = zonedLocalToUtcIso(nextDate, rule.startTime, klass.timezone || "Africa/Accra");
+    const active = scopedSessions.filter(row => row.superseded !== true && !["cancelled", "superseded"].includes(statusOf(row)));
+    const atTime = active.filter(row => toDate(row.startsAt)?.getTime() === Date.parse(time));
+    if (atTime.length > 1) throw new Error("Multiple meetings occupy the selected time.");
+    const sameLesson = row => resolveOfficialSessionNumber(row, groups, levelId) === Number(nextLessonNumber);
+    const existing = atTime[0] || active.find(row => sameLesson(row) && statusOf(row) === "scheduled" && toDate(row.startsAt) >= new Date(time));
+    let id = existing?.id || resolvedClassId + "_" + nextDate + "_" + rule.startTime.replace(":", "");
+    if (!existing) while (sessions.some(row => row.id === id)) id += "_next";
+    const patch = { startsAt: time, endsAt: new Date(Date.parse(time) + rule.durationMinutes * 60000).toISOString(),
+      topic: group.topic, assignmentIds: group.assignmentIds, chapterIds: group.assignmentIds, curriculumIds: group.assignmentIds,
+      assignment_id: group.assignmentIds[0], curriculumIndex: group.index + 1, curriculumDay: group.day, curriculumTaskCount: group.assignmentIds.length };
+    const row = { ...existing, classId: resolvedClassId, status: existing?.status || "scheduled", id, ...patch };
+    const duplicates = active.filter(other => other.id !== id && sameLesson(other) && statusOf(other) === "scheduled" && toDate(other.startsAt) >= new Date(time));
+    const ignored = new Set([id, ...duplicates.map(other => other.id)]);
+    const plan = buildFollowingScheduleRestorePlan({ classId, klass, sessions: [...scopedSessions.filter(other => !ignored.has(other.id)), row],
+      anchorSessionId: id, excludedDates, notBeforeStartsAt: time });
+    return { ...plan, overrideRows: [{ id, patch, create: !existing }],
+      staleFutureRecords: [...plan.staleFutureRecords, ...duplicates.map(session => ({ session, sessionId: session.id, lessonNumber: group.index + 1 }))] };
+  }
   const anchorSession = scopedSessions.find((session) => normalize(session.id) === normalize(anchorSessionId));
   if (!anchorSession) throw new Error("Select the last live or correct session that should remain unchanged.");
   if (["cancelled", "superseded"].includes(statusOf(anchorSession)) || anchorSession.superseded === true) {
@@ -199,11 +226,16 @@ export function buildFollowingScheduleRestorePlan({
   const rules = normalizeScheduleRules(klass.scheduleRules || []);
   if (!rules.length) throw new Error("The class timetable has no weekly teaching days.");
 
+  const sameSavedAnchor = Number(klass.scheduleAnchorSessionNumber) === anchorLessonNumber
+    && toDate(klass.scheduleAnchorStartsAt)?.getTime() === anchorStartsAt.getTime();
+  const savedNext = sameSavedAnchor ? toDate(klass.scheduleAnchorNextStartsAt) : null;
+  const continuationStart = firstSlot || (savedNext && savedNext > anchorStartsAt ? savedNext.toISOString() : "");
   const anchoredClass = {
     ...klass,
     scheduleAnchorSessionNumber: anchorLessonNumber,
     scheduleAnchorDay: levelId === "A1" ? anchorLessonNumber - 1 : null,
     scheduleAnchorStartsAt: anchorStartsAt.toISOString(),
+    scheduleAnchorNextStartsAt: continuationStart,
     scheduleAnchorNotBeforeStartsAt: normalizedNotBefore,
     scheduleAnchorSource: "admin-selected-following-restore",
     scheduleAnchorMode: "rebuild-from-selected-session",
@@ -249,16 +281,16 @@ export function buildFollowingScheduleRestorePlan({
   });
   const baseFollowingItems = officialPlan.items.filter((item) => item.lessonNumber > anchorLessonNumber);
   const followingSlots = buildFollowingSlotsFromAnchor({
-    anchorStartsAt: firstSlot || anchorStartsAt,
-    notBeforeStartsAt: firstSlot || normalizedNotBefore,
+    anchorStartsAt: continuationStart || anchorStartsAt,
+    notBeforeStartsAt: continuationStart || normalizedNotBefore,
     rules,
     timezone,
     excludedDates,
-    count: baseFollowingItems.length - (firstSlot ? 1 : 0),
+    count: baseFollowingItems.length - (continuationStart ? 1 : 0),
   });
-  if (firstSlot) {
+  if (continuationStart) {
     const durationMinutes = Math.max(1, (toDate(anchorSession.endsAt) - anchorStartsAt) / 60000 || 90);
-    followingSlots.unshift({ startsAt: firstSlot, durationMinutes, endsAt: new Date(Date.parse(firstSlot) + durationMinutes * 60000).toISOString() });
+    followingSlots.unshift({ startsAt: continuationStart, durationMinutes, endsAt: new Date(Date.parse(continuationStart) + durationMinutes * 60000).toISOString() });
   }
   const followingItems = baseFollowingItems.map((item, index) => {
     const slot = followingSlots[index];
