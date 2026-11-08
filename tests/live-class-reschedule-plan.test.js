@@ -277,24 +277,16 @@ test("following mode repairs a legacy move that placed Day 20 on Day 21", () => 
   );
 });
 
-test("following mode refuses to move completed or live lessons", () => {
+test("following mode leaves completed lessons unchanged and refuses a completed anchor", () => {
   const sessions = [
     session(0, "2026-06-19T18:00:00.000Z"),
     session(1, "2026-06-20T08:00:00.000Z"),
     session(2, "2026-06-25T18:00:00.000Z", "completed"),
   ];
-
-  assert.throws(
-    () => buildSessionReschedulePlan({
-      klass,
-      sessions,
-      sessionId: "day-1",
-      targetStartsAt: "2026-06-21T08:00:00.000Z",
-      targetEndsAt: "2026-06-21T09:00:00.000Z",
-      mode: "following",
-    }),
-    (error) => error?.code === "live-class/locked-following-session" && /completed/.test(error.message),
-  );
+  const input = { klass, sessions, sessionId: "day-1", targetStartsAt: "2026-06-21T08:00:00.000Z", targetEndsAt: "2026-06-21T09:00:00.000Z", mode: "following" };
+  const plan = buildSessionReschedulePlan(input);
+  assert.deepEqual(plan.changes.map(change => change.session.id), ["day-1"]);
+  assert.throws(() => buildSessionReschedulePlan({ ...input, sessionId: "day-2" }), error => error.code === "live-class/locked-following-session");
 });
 
 test("A1 Berlin following move keeps the selected 15 Sept lesson on 16 Sept and advances later sessions", () => {

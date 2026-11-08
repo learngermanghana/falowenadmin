@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { listClassCohorts } from "../services/liveClassService.js";
+import { listClassCohorts, markSessionCompleted } from "../services/liveClassService.js";
 import { getCompatibleClassDashboard } from "../services/liveClassCompatibilityService.js";
 import { listStudentsByClass } from "../services/studentsService.js";
 import { loadSubmissions } from "../services/markingService.js";
@@ -21,6 +21,8 @@ import {
   writingFocusForSlide,
 } from "../utils/teacherLessonDashboard.js";
 import "./TeacherLessonDashboardPage.css";
+import { useAuth } from "../context/AuthContext.jsx";
+import { completionLabel } from "../utils/liveClassWorkspace.js";
 
 function normalize(value) {
   return String(value ?? "").trim();
@@ -89,6 +91,8 @@ function quickLinkClass(enabled) {
 }
 
 export default function TeacherLessonDashboardPage() {
+  const { user } = useAuth();
+  const [completing, setCompleting] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedClassId = normalize(searchParams.get("classId"));
 
@@ -239,6 +243,16 @@ export default function TeacherLessonDashboardPage() {
   const speakingQuestionLevels = curatedSpeakingDifficulty?.labels || SPEAKING_DIFFICULTY_LEVELS;
   const warmupQuestions = Array.isArray(slide?.warmupQuestionsDe) ? slide.warmupQuestionsDe : [];
 
+  async function completeLesson() {
+    if (!session || !window.confirm(`Mark ${session.topic || "this lesson"} as taught?`)) return;
+    setCompleting(true); setError("");
+    try {
+      await markSessionCompleted(session.id, user?.uid || "admin");
+      setDashboard(await getCompatibleClassDashboard(selectedClassId));
+    } catch (error) { setError(error.message || "Could not complete the lesson."); }
+    finally { setCompleting(false); }
+  }
+
   const preparePresenterStart = () => {
     if (!slide || !selectedClassId) return;
     const classRecordId = normalize(selectedClass?.id || selectedClassId);
@@ -297,7 +311,7 @@ export default function TeacherLessonDashboardPage() {
             <div className="teacher-command-lesson">
               <div className="teacher-command-badges">
                 <span>{course} Day {day}</span>
-                <span>{session?.status || "scheduled"}</span>
+                <span>{completionLabel(session || {})}</span>
                 {parity ? <span className={parity.status === "aligned" ? "is-aligned" : "is-warning"}>{parity.statusLabel}</span> : null}
               </div>
               <h2>{slide.title}</h2>
@@ -314,10 +328,11 @@ export default function TeacherLessonDashboardPage() {
               <Link className={quickLinkClass(Boolean(slideUrl))} to={slideUrl || "#"}>Open slides</Link>
               <Link className={quickLinkClass(Boolean(startClassUrl))} to={startClassUrl || "#"} onClick={preparePresenterStart}>Start class</Link>
               <a className="teacher-command-link" href={studentUrl} target="_blank" rel="noreferrer">Open student lesson</a>
-              <Link className="teacher-command-link secondary" to={`/attendance/session/${encodeURIComponent(selectedClassId)}`}>Attendance</Link>
+              <Link className="teacher-command-link secondary" to={`/attendance/session/${encodeURIComponent(selectedClassId)}?session=${encodeURIComponent(session?.id || "")}`}>Attendance / QR check-in</Link>
               <Link className="teacher-command-link secondary" to={`/attendance?tab=tracker&classId=${encodeURIComponent(selectedClassId)}`}>Email health</Link>
               <Link className="teacher-command-link secondary" to={`/class-participation?classId=${encodeURIComponent(selectedClassId)}`}>Participation</Link>
-              <Link className="teacher-command-link secondary" to="/live-classes">Live Classes</Link>
+              <Link className="teacher-command-link secondary" to={`/live-classes?classId=${encodeURIComponent(selectedClassId)}&tab=sessions`}>Schedule / correct status</Link>
+              <button type="button" className="teacher-command-link secondary" disabled={completing || !session || ["completed", "cancelled"].includes(session.status)} onClick={completeLesson}>{completing ? "Saving…" : "Mark lesson completed"}</button>
             </div>
           </section>
 

@@ -192,7 +192,8 @@ export default function ClassEditorCard({ klass, onSaved }) {
     {endDateWarning ? <div role="alert" style={{ padding: 10, borderRadius: 8, background: "#fffbeb", color: "#92400e", border: "1px solid #fcd34d" }}>{endDateWarning}</div> : null}
     {message ? <div style={{ padding: 10, borderRadius: 8, background: messageIsSuccess ? "#f0fdf4" : "#fef2f2" }}>{message}</div> : null}
     <button type="submit" disabled={busy}>{busy ? "Saving…" : "Save class changes"}</button>
-    <button type="button" disabled={busy} onClick={rebuildSessions}>{busy ? "Saving and rebuilding…" : "Save and rebuild sessions from start date and timetable"}</button>
+    <details><summary>Advanced schedule rebuild</summary><p>For a timetable change during a course, use Sessions → Change session to select the next lesson and recalculate only remaining lessons.</p>
+    <button type="button" disabled={busy} onClick={rebuildSessions}>{busy ? "Saving and rebuilding…" : "Save and rebuild sessions from start date and timetable"}</button></details>
     <div style={{ marginTop: 10, paddingTop: 14, borderTop: "1px solid #fecaca" }}>
       <strong style={{ color: "#991b1b" }}>Danger zone</strong>
       <p style={{ margin: "6px 0 10px", fontSize: 13 }}>Deletion is allowed only after the class end date, when no unfinished sessions or open student contracts remain.</p>

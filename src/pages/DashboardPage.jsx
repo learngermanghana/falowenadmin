@@ -1,5 +1,4 @@
-import DashboardReviewNotifications from "../components/DashboardReviewNotifications.jsx";
-import DashboardPartnershipRequests from "../components/DashboardPartnershipRequests.jsx";
+import AdminActionInbox from "../components/AdminActionInbox.jsx";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { loadWhatsappReminderDashboard } from "../services/whatsappRemindersService";
@@ -321,6 +320,7 @@ export default function DashboardPage() {
       </section>
 
       <section className="quick-actions-grid">
+        <ActionCard title="Today’s teaching" body="Choose your class, open its next lesson, launch slides and QR attendance, then mark it completed." to="/lesson-dashboard" label="Open teaching dashboard" tone="indigo" />
         <ActionCard
           title="Marking workspace"
           body="Load assignments when you open Marking. Review work, AI audits and answer keys there."
@@ -331,11 +331,9 @@ export default function DashboardPage() {
         <ActionCard title="Grammar workspace" body="Load grammar issue reports only when you open the workspace." to="/grammar-issues" label="Open Grammar Issues" tone="violet" />
       </section>
 
-      <DashboardReviewNotifications user={user} />
+      <AdminActionInbox user={user} classes={liveClasses} />
 
-      <section className="analytics-grid two-one">
-        <DashboardPartnershipRequests user={user} />
-
+      <section className="analytics-grid">
         <article className="analytics-panel focus-panel">
           <p className="analytics-eyebrow">Payment focus</p>
           <h2>Largest balances</h2>

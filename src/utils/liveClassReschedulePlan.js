@@ -307,7 +307,12 @@ export function buildSessionReschedulePlan({
     target,
   });
 
-  const affected = normalizedMode === "following" ? ordered.slice(selectedIndex) : [selected];
+  if (["completed", "live"].includes(statusOf(selected.session))) {
+    throw codedError("live-class/locked-following-session", `${sessionLabel(selected.session)} is ${statusOf(selected.session)}. Reopen a completed lesson before changing its date.`);
+  }
+  const affected = normalizedMode === "following"
+    ? ordered.slice(selectedIndex).filter(({ session }) => !["completed", "live"].includes(statusOf(session)))
+    : [selected];
   const locked = affected.find(({ session }) => ["completed", "live"].includes(statusOf(session)));
   if (locked) {
     throw codedError(

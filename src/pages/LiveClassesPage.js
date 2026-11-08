@@ -9,6 +9,7 @@ const TAB_CLASSES = "classes";
 
 function initialTab() {
   if (typeof window === "undefined") return TAB_CLASSES;
+  if (new URLSearchParams(window.location.search).has("classId")) return TAB_CLASSES;
   const stored = window.localStorage.getItem(TAB_STORAGE_KEY);
   return stored === TAB_REPAIR ? TAB_REPAIR : TAB_CLASSES;
 }
@@ -72,7 +73,7 @@ export default function LiveClassesPage() {
             onClick: () => selectTab(TAB_REPAIR),
             style: tabButtonStyle(activeTab === TAB_REPAIR),
           },
-          "Official class timetable repair",
+          "Advanced timetable recovery",
         ),
         React.createElement(
           "button",
@@ -93,7 +94,7 @@ export default function LiveClassesPage() {
         { style: { color: "#64748b" } },
         activeTab === TAB_REPAIR
           ? "Inspect and restore lesson dates from the saved weekly timetable."
-          : "Manage classes, sessions, students, attendance links and related class operations.",
+          : "Choose a class to teach or update its remaining lessons.",
       ),
     ),
     activeTab === TAB_REPAIR

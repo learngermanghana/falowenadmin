@@ -459,6 +459,7 @@ export async function updateSession(sessionId, patch) {
       assignmentIds,
       chapterIds: assignmentIds,
       curriculumIds: assignmentIds,
+      sequence: Number(session.sequence || 0) + 1,
       updatedAt: serverTimestamp(),
     };
     transaction.update(sessionRef, nextPatch);
@@ -657,13 +658,16 @@ export async function markSessionCompleted(sessionId, adminId = "admin") {
     const klass = await loadClassRecord(session.classId, transaction);
     const patch = {
       status: "completed",
+      completionSource: "manual",
+      autoCompletionSuppressed: false,
+      sequence: Number(session.sequence || 0) + 1,
       completedBy: adminId,
       completedAt: serverTimestamp(),
       remindersSuppressed: true,
       updatedAt: serverTimestamp(),
     };
     transaction.update(sessionRef, patch);
-    transaction.set(attendanceSessionRef(session.classId, sessionId), attendanceMetadata(klass, session, patch), { merge: true });
+    transaction.set(attendanceSessionRef(session.classId, sessionId), { ...attendanceMetadata(klass, session, patch), ...patch, sessionStatus: "completed" }, { merge: true });
   });
 }
 

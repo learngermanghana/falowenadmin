@@ -191,3 +191,11 @@ Live Classes provides **Reopen session** for completed sessions. A reason is req
 ## Timetable changes preserve taught history
 
 Official timetable repair keeps completed/live sessions and sessions with recorded attendance at their stored dates. A selected continuation boundary also preserves every earlier lesson. Those records are omitted from repair writes and duplicate cleanup, including their attendance documents. Selecting a next lesson binds that lesson by curriculum identity, never by a date occupied by a different lesson. Reopen a completed lesson explicitly before changing its date. Following repair never resets completion status. Preview dates use the same preservation rules as saving.
+
+## Daily teaching workspace
+
+Live Classes defaults to remaining lessons in curriculum-day order; staff can show all, completed or cancelled lessons and switch to date order. Class search supports active/upcoming/completed views. The next-class card opens the existing teacher dashboard and exact attendance/QR session. Teacher completion writes manual completion source and increments the session revision; automatic completion remains visibly distinct. Topic and completion corrections are under More actions. Historical recovery and full rebuild controls are advanced tools; Change session is the normal timetable editor.
+
+Before saving, the date-change form previews affected lessons and class end date using the same reschedule planner as saving. Future recalculation skips completed/live lessons. Date changes and cancellations capture one undo snapshot in the class record in the same transaction. Undo restores only fields touched by that change in session/attendance/class metadata, increments schedule/reminder revisions, updates the calendar and audits the action. Attendance entries and curriculum are preserved. Undo refuses a stale class revision, missing or changed lesson, a lesson that has since become completed/live, or changed attendance content. It does not recall sent communication. Only actions saved after this feature have an undo snapshot.
+
+The homepage links directly to today's teaching dashboard and groups existing review/partnership alerts with failed class-email statuses from the already-loaded class snapshot. It adds no polling or extra inbox data reads. Delivery links open the chosen class Communication tab.
