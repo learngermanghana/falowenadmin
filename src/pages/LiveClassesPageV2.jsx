@@ -226,7 +226,8 @@ export default function LiveClassesPageV2() {
       .then((next) => {
         if (!active) return;
         setDashboard(next);
-        setMessage(next.curriculumSync?.error || "");
+        setMessage(next.sessionRepair?.error || next.curriculumRepair?.error || next.curriculumSync?.error
+          || (next.sessionRepair?.created ? `${next.sessionRepair.created} missing dictionary lessons restored after the last saved session.` : ""));
       })
       .catch((error) => {
         if (!active) return;

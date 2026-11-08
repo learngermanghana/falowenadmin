@@ -122,3 +122,21 @@ continue beyond the previous graduation date when necessary. Past, completed,
 live, cancelled and manually rescheduled records remain protected. Saving an
 already shortened class regenerates its missing future slots. No learner API
 or assignment identity format changes are required.
+
+## B1 repeated meetings and missing final lessons — 8 November 2026
+
+A B1 timetable may contain more than 29 rows while its mapped curriculum stops
+at Day 19, because repeated meetings do not consume new dictionary lessons.
+Dashboard repair now checks the last explicit assignment mapping before using
+row count. For an active B1 class with a mapped lesson and a missing curriculum
+tail, it appends the remaining groups after both today and the last saved
+meeting, following the saved weekly rules and school closure calendar. Existing
+sessions, their mappings, dates, completion state and student attendance remain
+untouched. Historical and graduated classes are excluded. B1 duplicate-index
+repair no longer positionally relabels repeat meetings on dashboard load.
+
+New rows and attendance metadata are written in one transaction using the
+existing deterministic session IDs; an existing target row is never overwritten.
+The derived class end date extends to the last appended lesson. Subsequent
+loads see Day 28 and add nothing. Repair errors appear on the Live Classes page.
+This changes Admin scheduling only, with no learner payload or grading change.
