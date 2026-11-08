@@ -166,22 +166,25 @@ test("Day 13 can reuse Day 11's exact time after Day 11 and Day 12 are completed
   assert.equal(plan.changes[0].startsAt, "2026-07-16T18:00:00.000Z");
 });
 
-test("completed history still counts toward all 24 lessons without causing an active duplicate", () => {
-  const sessions = A1_MUNICH_DATES.map((startsAt, day) => session(
+test("completed history counts toward orientation plus 24 class days without an active duplicate", () => {
+  // The published curriculum includes a Day 0 orientation and Day 1–24;
+  // the historical Munich fixture stopped at Day 23.
+  const fullCohortDates = [...A1_MUNICH_DATES, "2026-08-14T18:00:00.000Z"];
+  const sessions = fullCohortDates.map((startsAt, day) => session(
     day,
     day === 13 ? "2026-07-16T18:00:00.000Z" : startsAt,
     day <= 12 ? "completed" : "scheduled",
   ));
 
   const report = inspectTimetableIntegrity({
-    klass,
+    klass: { ...klass, endDate: "2026-08-15" },
     sessions,
     requireCurriculum: true,
     enforceEndDate: true,
   });
 
-  assert.equal(report.actualCount, 24);
-  assert.equal(report.expectedCount, 24);
+  assert.equal(report.actualCount, 25);
+  assert.equal(report.expectedCount, 25);
   assert.equal(report.healthy, true, JSON.stringify(report.issues, null, 2));
   assert.equal(report.issues.some((issue) => ["duplicate-time", "overlap", "curriculum-order"].includes(issue.code)), false);
 });
