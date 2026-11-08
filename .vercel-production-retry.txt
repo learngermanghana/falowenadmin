@@ -1,0 +1,2 @@
+Production deployment requested for the current A1 live-class and attendance curriculum.
+Source commit: 7bfb9c825b4c0775f38ad4d3821469bfa9a64278
