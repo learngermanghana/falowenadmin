@@ -140,3 +140,15 @@ existing deterministic session IDs; an existing target row is never overwritten.
 The derived class end date extends to the last appended lesson. Subsequent
 loads see Day 28 and add nothing. Repair errors appear on the Live Classes page.
 This changes Admin scheduling only, with no learner payload or grading change.
+
+The tail check runs in `liveClassCompatibilityServiceBase` immediately after
+loading the stored compatible sessions and resolving the level, before display
+enrichment, duplicate suppression, or persisted day-number repair. Successful
+repair reloads the stored rows before building the dashboard. Explicit B1
+assignment sets remain authoritative in enrichment, including repeated meetings;
+the day-number repair does not write derived display metadata over those rows.
+The outer dashboard preserves the raw repair result and does not fall back to a
+positional rebuild when it fails. The dashboard integration regression executes
+both service layers, the real enrichment helper and tail transaction against
+in-memory Firestore operations, checking new Days 20–28, retained Day 19,
+untouched original documents, zero writes on reload and failure handling.

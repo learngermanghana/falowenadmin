@@ -260,8 +260,27 @@ function enrichCompleteSessionSet(ordered = [], groups = []) {
   });
 }
 
-export function enrichSessionsWithStableCurriculum(_ = {}, sessions = [], groups = []) {
+export function enrichSessionsWithStableCurriculum(klass = {}, sessions = [], groups = []) {
   const ordered = [...sessions].sort((left, right) => sessionTime(left) - sessionTime(right));
+
+  if (normalize(klass.levelId).toUpperCase() === "B1") {
+    const storedGroups = new Map(ordered.map((session) => [session.id,
+      groups.find((group) => sameAssignmentSet(assignmentIdsForSession(session), group.assignmentIds)),
+    ]));
+    if ([...storedGroups.values()].some(Boolean)) {
+      const fallback = new Map(enrichSessionsWithStableCurriculum({}, ordered, groups)
+        .map((session) => [session.id, session]));
+      // Repeat meetings remain visible and keep their explicit assignments.
+      // In particular, do not turn completed meetings into orientation or hide
+      // the next scheduled lesson behind a repeated curriculum index.
+      return ordered.map((session, index) => {
+        const group = storedGroups.get(session.id);
+        return group
+          ? { ...applyCurriculumGroup(session, group, index), curriculumIndex: group.index + 1 }
+          : fallback.get(session.id) || session;
+      });
+    }
+  }
 
   if (ordered.length <= groups.length) {
     return enrichCompleteSessionSet(ordered, groups);

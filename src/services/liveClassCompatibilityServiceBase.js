@@ -22,6 +22,9 @@ import {
 } from "../utils/liveClassSessionDedupe.js";
 import { syncClassCurriculum as syncBaseClassCurriculum } from "./liveClassService.js";
 
+import { missingB1CurriculumTail } from "../utils/liveClassCurriculumTail.js";
+import { restoreB1CurriculumTail } from "./liveClassCurriculumTailService.js";
+
 function normalize(value) {
   return String(value || "").trim();
 }
@@ -191,6 +194,11 @@ async function repairOneBasedCurriculumDays(classId, klass, storedSessions = [],
   const storedById = new Map(storedSessions.map((session) => [session.id, session]));
   const repairs = enrichedSessions.filter((session) => {
     const stored = storedById.get(session.id);
+    // Explicit B1 assignments are teaching history, including repeated days.
+    // Do not persist derived display indexes or metadata over these records.
+    const ids = currentAssignmentIds(stored || {});
+    if (levelId === "B1" && ids.length && ids.every((id) =>
+      id === "B1-ORIENTATION" || courseDictionary.B1[id])) return false;
     return stored && buildDisplayedCurriculumPatch(stored, session);
   });
   if (!repairs.length) return 0;
@@ -247,7 +255,7 @@ function attendanceMetadata(klass, session, patch) {
 
 export async function getCompatibleClassDashboard(classId) {
   const klass = await loadClassRecord(classId);
-  const rawSessions = await loadCompatibleSessions(classId, klass);
+  let rawSessions = await loadCompatibleSessions(classId, klass);
   const inferredLevel = resolveLevel(klass) || resolveLevelFromSessions(rawSessions);
   persistResolvedLevel(classId, klass, inferredLevel);
   const normalizedClass = {
@@ -255,6 +263,17 @@ export async function getCompatibleClassDashboard(classId) {
     levelId: inferredLevel || normalize(klass.levelId),
     resolvedLevelId: inferredLevel || normalize(klass.levelId),
   };
+  // Repair against stored records before enrichment can change assignment IDs
+  // or suppress a scheduled row, and before day-number repair persists changes.
+  let sessionRepair = null;
+  if (missingB1CurriculumTail(normalizedClass, rawSessions).length) {
+    try {
+      sessionRepair = await restoreB1CurriculumTail(classId, { klass: normalizedClass, sessions: rawSessions });
+      if (sessionRepair.repaired) rawSessions = await loadCompatibleSessions(classId, normalizedClass);
+    } catch (error) {
+      sessionRepair = { repaired: false, error: error?.message || "Missing B1 lessons could not be repaired" };
+    }
+  }
   const groups = getCourseSessionGroups(normalizedClass.levelId);
   const sessions = enrichSessions(normalizedClass, rawSessions);
   let repairedDayNumbers = 0;
@@ -274,6 +293,7 @@ export async function getCompatibleClassDashboard(classId) {
   return {
     klass: normalizedClass,
     sessions,
+    sessionRepair,
     curriculumSync: {
       updated: 0,
       mapped: Math.min(sessions.length, groups.length),
