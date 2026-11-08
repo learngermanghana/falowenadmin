@@ -1,3 +1,4 @@
+import { B1_DAY27_LISTENING } from './b1Day27Listening.js';
 import { A2_DAY23_CLASSROOM_LISTENING } from './a2Day23ClassroomListening.js';
 import { A2_DAY1_LISTENING } from './a2Day1Listening.js';
 import { A2_DAY19_LISTENING } from './a2Day19Listening.js';
@@ -500,6 +501,20 @@ ENTRIES["B1-9.26"] = {
     introQuestion:'Was kannst du tun, wenn dein Zug ausfällt?',
     musicLibraryUrl:'https://music.falowen.app/?level=B1&day=26',
     nextStep:'Danach folgt das separate Hören-Gespräch über ein überbuchtes Hotel.',
+  },
+};
+
+// Day 27 uses the same published-music / separate conversation flow as Day 26.
+ENTRIES["B1-10.27"] = {
+  assignmentId: "B1-10.27", title: "Umweltfreundlich im Alltag", warmup: [],
+  listening: B1_DAY27_LISTENING,
+  musicIntro: {
+    mediaType: "music", level: "B1", day: 27, title: "Vor unserer Tür",
+    musicLibraryUrl: "https://music.falowen.app/?level=B1&day=27",
+    introQuestion: "Welche umweltfreundliche Gewohnheit möchtest du ausprobieren?",
+    studentPurpose: "Höre das veröffentlichte Lied für B1 Tag 27 und nenne eine Idee für deinen Alltag.",
+    teacherPurpose: "Spiele die veröffentlichte Day-27-Musik aus der Musikbibliothek. Danach folgt die separate Gesprächsaufnahme mit sechs Hörfragen. Unbewertete Unterrichtsübung.",
+    nextStep: "Danach: Lisas Tipps beim Einkaufen und Energiesparen. Das Gespräch ist zweimal aufgenommen.",
   },
 };
 

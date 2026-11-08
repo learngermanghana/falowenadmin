@@ -152,3 +152,15 @@ positional rebuild when it fails. The dashboard integration regression executes
 both service layers, the real enrichment helper and tail transaction against
 in-memory Firestore operations, checking new Days 20–28, retained Day 19,
 untouched original documents, zero writes on reload and failure handling.
+
+### B1 Day 27 classroom opening (2026-11-08)
+
+`B1-10.27` uses the V2 presenter with the teacher-confirmed song “Vor unserer Tür”,
+pinned to `music/b1/day-27/Vor unserer Tür.mp3` in the published music feed,
+followed by the separate Lisa conversation at `b1/day-27/umweltfreundlich-im-alltag.mp3`.
+Six ungraded classroom questions cover reusable bags, loose produce, the local
+Bioladen, shorter transport routes, switching lights off and brief ventilation.
+The supplied 128-second recording repeats the conversation twice. Audio is signed
+on demand by the learner platform's existing staff-only classroom gateway using
+an exact level/day/key match. Deploy the learner allowlist before the Admin entry.
+This activity does not replace or change the workbook Teil 4 answer key or scores.

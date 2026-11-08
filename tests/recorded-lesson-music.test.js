@@ -64,3 +64,13 @@ test('B1 published song selection is specific to level/day, never another Hören
   assert.equal(questions[2].type,'speaking');
   assert.match(questions[2].prompt,/konsumieren|bewusst/i);
 });
+
+test('B1 Day 27 selects only the teacher-confirmed Vor unserer Tür recording',()=>{
+ const row={id:'r2-b1-day-27-vor-unserer-tur',title:'Vor unserer Tür',level:'B1',day:27,
+  objectKey:'music/b1/day-27/Vor unserer Tür.mp3',
+  audioUrl:'https://www.falowen.app/api/music?track=r2-b1-day-27-vor-unserer-tur',
+  autoDiscovered:true,coursebook:true};
+ const other={...row,id:'r2-b1-day-27-other',title:'Other',objectKey:'music/b1/day-27/other.mp3'};
+ assert.equal(selectRecordedLessonTrack({tracks:[other,row]},{level:'B1',day:27,assignmentKey:'B1-10.27'}).objectKey,row.objectKey);
+ assert.equal(selectRecordedLessonTrack({tracks:[other]},{level:'B1',day:27,assignmentKey:'B1-10.27'}),null);
+});
