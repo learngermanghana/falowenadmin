@@ -1,4 +1,4 @@
-// Course-wide A1 slide-quality gate. This checks *all* twenty-four class
+// Course-wide A1 slide-quality gate. This checks *all* twenty-three currently scheduled class
 // days and all active published lesson blocks, not only the newest pack.
 // It reads teaching metadata; never alters submissions, progress or scores.
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
@@ -46,12 +46,12 @@ const error = [];
 let teacherAnswers = 0;
 let readyReviews = 0;
 
-if (lessons.length !== 25) error.push("Expected 25 active A1 teaching blocks across 24 days (Day 16 has two), found " + lessons.length);
-if (groups.length !== 25) error.push("Expected Day 0 orientation + 24 class days, found " + groups.length);
+if (lessons.length !== 24) error.push("Expected 24 active A1 teaching blocks across 23 days (Day 16 has two), found " + lessons.length);
+if (groups.length !== 24) error.push("Expected Day 0 orientation + 23 scheduled class days, found " + groups.length);
 const ids = lessons.map(s => text(s.assignmentId).toUpperCase());
 if (new Set(ids).size !== ids.length) error.push("Duplicate A1 assignment identifiers");
 
-for (const day of Array.from({ length: 24 }, (_, i) => i + 1)) {
+for (const day of Array.from({ length: 23 }, (_, i) => i + 1)) {
   const matching = lessons.filter(s => Number(s.dayNumber) === day);
   if (!matching.length) error.push("No presentation for A1 class Day " + day);
   if (day === 16 && matching.length !== 2) error.push("Day 16 must have distinct A1-9 and A1-10");
@@ -128,7 +128,7 @@ for (const slide of lessons) {
   }
 }
 
-console.log("A1 course-wide quality audit: " + lessons.length + " lesson blocks over 24 teaching days.");
+console.log("A1 course-wide quality audit: " + lessons.length + " active lesson blocks over 23 scheduled teaching days.");
 console.log("  Regular comprehension lessons: " + (lessons.length - 1) + " · Total question/answer/explanation checks: " + teacherAnswers);
 console.log("  Two teacher-reveal review cards: " + readyReviews + " lesson blocks.");
 console.log("  Goethe A1-5.9: dedicated 60-minute speaking mock protected.");
@@ -136,4 +136,4 @@ console.log("  Known route gaps: A1-0.2_1.1 and A1-14.2 have no verified standal
 if (error.length) {
   error.forEach(message => console.error("ERROR " + message));
   process.exitCode = 1;
-} else console.log("PASS All 24 A1 days meet the curriculum, teacher-answer and routing checks.");
+} else console.log("PASS All 23 scheduled A1 teaching days meet the curriculum, teacher-answer and routing checks.");
