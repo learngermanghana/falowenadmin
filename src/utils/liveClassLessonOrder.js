@@ -196,6 +196,7 @@ function resolveScheduleAnchor(
       return {
         sessionNumber: storedSessionNumber,
         startsAt: storedStartsAt.toISOString(),
+        nextStartsAt: isAdminFollowingRestore ? klass.scheduleAnchorNextStartsAt : "",
         source: isAdminFollowingRestore ? "admin-selected-following-restore" : "stored-class-anchor",
       };
     }
@@ -272,9 +273,16 @@ function buildOfficialSlotsAroundAnchor({
   const following = [];
   cursorDate = anchorParts.date;
   const followingCount = expectedLessons - anchorSessionNumber;
+  const next = toDate(anchor.nextStartsAt);
+  let followingFloor = anchorMoment;
+  if (followingCount && next && next > anchorDate) {
+    followingFloor = next.getTime();
+    cursorDate = localDateTimeParts(next, timezone).date;
+    following.push({ startsAt: next.toISOString(), durationMinutes, endsAt: new Date(followingFloor + durationMinutes * 60000).toISOString() });
+  }
   for (let guard = 0; following.length < followingCount && guard < 1095; guard += 1) {
     const slots = ruleSlotsForDate({ dateIso: cursorDate, rules, timezone, excluded })
-      .filter((slot) => new Date(slot.startsAt).getTime() > anchorMoment);
+      .filter((slot) => new Date(slot.startsAt).getTime() > followingFloor);
     for (const slot of slots) {
       if (following.length >= followingCount) break;
       following.push(slot);
@@ -474,7 +482,7 @@ export function buildOfficialLessonSchedulePlan({
   const slots = anchor
     ? buildOfficialSlotsAroundAnchor({
       anchor,
-      anchorSession: null,
+      anchorSession: sessions.find(row => toDate(row.startsAt)?.toISOString() === anchor.startsAt && resolveOfficialSessionNumber(row, groups, levelId) === anchor.sessionNumber),
       rules,
       timezone,
       excluded,
@@ -486,6 +494,7 @@ export function buildOfficialLessonSchedulePlan({
   sessions.filter(activeSession).forEach((session) => {
     const sessionNumber = resolveOfficialSessionNumber(session, groups, levelId);
     if (!sessionNumber) return;
+    if (levelId === "B1" && anchor && sessionNumber >= anchor.sessionNumber && toDate(session.startsAt) < toDate(anchor.startsAt)) return;
     if (!candidatesByNumber.has(sessionNumber)) candidatesByNumber.set(sessionNumber, []);
     candidatesByNumber.get(sessionNumber).push(session);
   });

@@ -80,8 +80,9 @@ function selectedAnchorBoundary(klass = {}, expectedCount = 0) {
 function beforeSelectedAnchor(session = {}, groups = [], levelId = "", anchor = null) {
   if (!anchor) return false;
   const number = resolveOfficialSessionNumber(session, groups, levelId);
-  if (number) return number < anchor.sessionNumber;
   const startsAt = toDate(session.startsAt);
+  if (levelId === "B1" && startsAt && anchor.startsAt && startsAt < anchor.startsAt) return true;
+  if (number) return number < anchor.sessionNumber;
   return Boolean(anchor.startsAt && startsAt && startsAt.getTime() < anchor.startsAt.getTime());
 }
 
@@ -243,7 +244,7 @@ export function inspectTimetableIntegrity({
 
     byNumber.forEach((records, number) => {
       if (records.length > 1) {
-        const historical = Boolean(anchor && number < anchor.sessionNumber);
+        const historical = Boolean(anchor && records.filter(row => !beforeSelectedAnchor(row, groups, levelId, anchor)).length <= 1);
         pushIssue(
           historical ? warnings : issues,
           historical ? "historical-duplicate-curriculum-position" : "duplicate-curriculum-position",
@@ -254,7 +255,8 @@ export function inspectTimetableIntegrity({
     });
 
     for (let number = 1; number <= expectedCount; number += 1) {
-      if (!byNumber.has(number)) {
+      if (!byNumber.has(number) || (levelId === "B1" && anchor && number >= anchor.sessionNumber
+        && byNumber.get(number).every(row => beforeSelectedAnchor(row, groups, levelId, anchor)))) {
         const historical = Boolean(anchor && number < anchor.sessionNumber);
         pushIssue(
           historical ? warnings : issues,
@@ -270,7 +272,7 @@ export function inspectTimetableIntegrity({
     // slot; the reschedule planner separately enforces unfinished predecessors.
     const unfinishedNumbered = numbered.filter((item) => !["completed", "cancelled"].includes(statusOf(item.session)));
     const orderedForValidation = anchor
-      ? unfinishedNumbered.filter((item) => item.number >= anchor.sessionNumber)
+      ? unfinishedNumbered.filter((item) => !beforeSelectedAnchor(item.session, groups, levelId, anchor))
       : unfinishedNumbered;
     orderedForValidation.sort((left, right) => left.number - right.number);
     for (let index = 1; index < orderedForValidation.length; index += 1) {

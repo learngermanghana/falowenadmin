@@ -158,7 +158,7 @@ test("saving an anchor persists the repair boundary even when no timetable move 
     "utf8",
   );
   const noOpBranch = serviceSource.slice(
-    serviceSource.indexOf("if (!plan.restorableItems.length && !plan.staleFutureRecords.length)"),
+    serviceSource.indexOf("if (!plan.restorableItems.length && !plan.staleFutureRecords.length && !plan.overrideRows?.length)"),
     serviceSource.indexOf("const className = normalize(klass.name || klass.className)"),
   );
   assert.match(noOpBranch, /anchorClassPatch/);
