@@ -146,7 +146,7 @@ export function resolveManualRescheduleDateTime({
     throw codedError("live-class/invalid-time", "Choose a valid new Ghana date and time.");
   }
 
-  const manualScheduleOverride = payload.manualScheduleOverride === true || payload.moveMode === "single";
+  const manualScheduleOverride = payload.manualScheduleOverride === true || ["single", "following"].includes(payload.moveMode);
   const adjusted = manualScheduleOverride
     ? { selected: selectedInput, scheduleRuleApplied: false }
     : applyWeekdayRuleToDateOnlyChange(selectedInput, current, scheduleRules);
@@ -154,7 +154,7 @@ export function resolveManualRescheduleDateTime({
 
   assertSelectedSlotAllowed(selected, scheduleRules, manualScheduleOverride);
 
-  if (current && selected === current) {
+  if (current && selected === current && payload.moveMode !== "following") {
     throw codedError(
       "live-class/no-reschedule-change",
       "The selected lesson is still on the same date and time. Choose the new date in the picker before saving.",

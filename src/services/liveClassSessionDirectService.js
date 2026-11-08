@@ -9,7 +9,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../firebase.js";
-import { zonedLocalToUtcIso } from "../utils/liveClassScheduling.js";
+import { normalizeScheduleRules, zonedLocalToUtcIso } from "../utils/liveClassScheduling.js";
 import { assertTimetableIntegrity } from "../utils/liveClassTimetableIntegrity.js";
 import {
   buildClassScheduleHealth,
@@ -395,8 +395,15 @@ export async function rescheduleSession(sessionId, payload = {}) {
   const times = resolveMoveTimes(payload, session);
   const klass = await loadClassRecord(classId);
   const classSessions = await loadClassSessions(classId, klass);
+  const following = payload.moveMode === "following";
+  const scheduleRules = following && Array.isArray(payload.scheduleRules)
+    ? normalizeScheduleRules(payload.scheduleRules) : klass.scheduleRules;
+  if (following && !normalizeScheduleRules(scheduleRules || []).length) {
+    throw new Error("Select at least one weekly day for the remaining lessons.");
+  }
+  const planningClass = { ...klass, scheduleRules };
   const reschedulePlan = buildSessionReschedulePlan({
-    klass,
+    klass: planningClass,
     sessions: classSessions,
     sessionId: session.id,
     targetStartsAt: times.startsAt,
@@ -447,9 +454,17 @@ export async function rescheduleSession(sessionId, payload = {}) {
     proposedSessions.push({ ...session, ...primaryPatch });
   }
 
+  const anchoredClass = following ? {
+    ...planningClass,
+    scheduleAnchorSessionNumber: reschedulePlan.selectedSessionNumber,
+    scheduleAnchorStartsAt: times.startsAt,
+    scheduleAnchorNextStartsAt: "",
+    scheduleAnchorSource: "admin-selected-following-restore",
+    scheduleAnchorMode: "rebuild-from-selected-session",
+  } : klass;
   if (reschedulePlan.mode === "following") {
     assertTimetableIntegrity({
-      klass,
+      klass: anchoredClass,
       sessions: proposedSessions,
       requireCurriculum: true,
       enforceEndDate: false,
@@ -457,14 +472,14 @@ export async function rescheduleSession(sessionId, payload = {}) {
   }
 
   const preliminaryHealth = buildClassScheduleHealth({
-    klass,
+    klass: anchoredClass,
     sessions: proposedSessions,
     requireCurriculum: true,
     enforceEndDate: false,
   });
   const proposedEndDate = preliminaryHealth.derivedEndDate || normalize(klass.endDate);
   const health = buildClassScheduleHealth({
-    klass: { ...klass, endDate: proposedEndDate },
+    klass: { ...anchoredClass, endDate: proposedEndDate },
     sessions: proposedSessions,
     requireCurriculum: true,
     enforceEndDate: true,
@@ -476,6 +491,14 @@ export async function rescheduleSession(sessionId, payload = {}) {
       adminId,
     })
     : oneOffSessionClassPatch({ endDate: proposedEndDate });
+  if (following) Object.assign(classPatch, {
+    scheduleRules,
+    scheduleAnchorSessionNumber: anchoredClass.scheduleAnchorSessionNumber,
+    scheduleAnchorStartsAt: times.startsAt,
+    scheduleAnchorNextStartsAt: "",
+    scheduleAnchorSource: anchoredClass.scheduleAnchorSource,
+    scheduleAnchorMode: anchoredClass.scheduleAnchorMode,
+  });
   const atomic = await commitSessionChangesAtomically({
     classId,
     sessionChanges,

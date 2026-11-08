@@ -59,7 +59,7 @@ export default function SessionDictionaryPicker({
     <div style={{ position: "relative", minWidth: 310 }}>
       <button
         type="button"
-        disabled={disabled || !entries.length}
+        disabled={!entries.length}
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
         style={{
