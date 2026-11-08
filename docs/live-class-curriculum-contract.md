@@ -164,3 +164,18 @@ The supplied 128-second recording repeats the conversation twice. Audio is signe
 on demand by the learner platform's existing staff-only classroom gateway using
 an exact level/day/key match. Deploy the learner allowlist before the Admin entry.
 This activity does not replace or change the workbook Teil 4 answer key or scores.
+
+## B1 continuation after a selected progress anchor — 8 November 2026
+
+If historical rows already contain Days 20–28 but the real current lesson is
+Day 19, automatic tail detection cannot infer which progression is intended.
+Use Official class timetable repair and select the actual dated Day 19 session
+as the anchor. The B1 anchor picker includes every compatible dated session,
+including repeated days, rather than only one preferred record per lesson.
+B1 continuation excludes earlier dated higher-day records from the future
+planner and supersession candidates. It creates fresh future meetings for those
+lessons, preserves all earlier dated records and attendance, and reuses matching
+future sessions. Historical collisions before the anchor do not block this
+continuation. A Bonn-shaped regression covers older Days 20–28, duplicate past
+Day 27/28 timestamps, the 8 November Day 19 anchor, and the existing 14 November
+Day 21 session. The next Day 20 follows the saved weekly pattern and closures.
