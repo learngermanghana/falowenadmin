@@ -177,7 +177,7 @@ test("completed history counts toward orientation plus 24 class days without an 
   ));
 
   const report = inspectTimetableIntegrity({
-    klass: { ...klass, endDate: "2026-08-15" },
+    klass: { ...klass, endDate: "2026-08-14" },
     sessions,
     requireCurriculum: true,
     enforceEndDate: true,
