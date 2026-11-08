@@ -5,7 +5,7 @@ import { ADVANCED_READING_SOURCES } from "./advancedPresenterReadingSources.js";
 // canonical lesson examples, collocations and opposing C2 perspectives.
 // No AI generation, answer API, network request or assessed student state.
 function firstSentence(text = "") {
-  return String(text || "").trim().split(/(?<=[.!?])\\s+/u)[0] || "";
+  return String(text || "").trim().split(/(?<=[.!?])\s+/u)[0] || "";
 }
 
 function c1Checks(paragraphs) {
@@ -22,7 +22,7 @@ function c1Checks(paragraphs) {
     },
     {
       question: "Welchen Gedanken hält der Schluss fest?",
-      answer: String(paragraphs.at(-1) || "").trim().split(/(?<=[.!?])\\s+/u).at(-1),
+      answer: String(paragraphs.at(-1) || "").trim().split(/(?<=[.!?])\s+/u).at(-1),
       evidence: "Letzter Absatz · letzter Satz",
     },
   ];
