@@ -276,6 +276,7 @@ async function releaseHealthyScheduleReminderSuppression({
   const nowMs = Date.now();
   sessions.forEach((session) => {
     const sessionId = normalize(session.id);
+    if (plan.items.some(item => item.session?.id === sessionId && item.preserveHistory)) return;
     if (!sessionId || !shouldReleaseScheduleHealthReminderSuppression(session, nowMs)) return;
     const patch = {
       ...releasePatch,
@@ -485,7 +486,7 @@ export async function restoreFollowingSessionsToWeeklyPattern({
     const session = candidate.session || {};
     const sessionId = normalize(candidate.sessionId || session.id);
     if (!sessionId || assignedIds.has(sessionId) || supersededIds.has(sessionId)) return;
-    if (["cancelled", "superseded"].includes(statusOf(session)) || session.superseded === true) return;
+    if (["completed", "live", "cancelled", "superseded"].includes(statusOf(session)) || session.superseded === true) return;
 
     const currentStartsAt = new Date(session.startsAt || 0);
     const currentStartsAtIso = Number.isNaN(currentStartsAt.getTime()) ? "" : currentStartsAt.toISOString();

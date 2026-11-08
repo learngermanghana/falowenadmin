@@ -239,6 +239,7 @@ export async function repairClassToOfficialLessonSchedule({
   let orphansSuperseded = 0;
 
   plan.items.forEach((item) => {
+    if (item.preserveHistory) return;
     let sessionId = normalize(item.session?.id);
     if (!sessionId) {
       const preferredId = generatedSessionId(resolvedClassId, item.targetStartsAt, plan.timezone);
@@ -285,10 +286,11 @@ export async function repairClassToOfficialLessonSchedule({
     matchedCanonicalStart,
     kind,
   }) => {
+    if (lessonNumber && plan.scheduleAnchor && lessonNumber < plan.scheduleAnchor.sessionNumber) return;
     const sessionId = normalize(session?.id);
     if (!sessionId || assignedIds.has(sessionId) || supersededIds.has(sessionId)) return;
     const status = normalize(session.status || "scheduled").toLowerCase();
-    if (["cancelled", "superseded"].includes(status)) return;
+    if (["completed", "live", "cancelled", "superseded"].includes(status)) return;
 
     supersededIds.add(sessionId);
     const isOrphan = kind === "orphan";

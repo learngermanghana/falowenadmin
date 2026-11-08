@@ -2,6 +2,7 @@ import { getCourseSessionGroups } from "../data/courseSessionGroups.js";
 import {
   buildOfficialLessonSchedulePlan,
   countSessionTimeCollisions,
+  isTaughtSession,
   resolveOfficialSessionNumber,
 } from "./liveClassLessonOrder.js";
 import { normalizeScheduleRules, zonedLocalToUtcIso } from "./liveClassScheduling.js";
@@ -148,17 +149,17 @@ export function buildFollowingScheduleRestorePlan({
     if (!rule) throw new Error("Save the weekly meeting days first.");
     const time = zonedLocalToUtcIso(nextDate, rule.startTime, klass.timezone || "Africa/Accra");
     const active = scopedSessions.filter(row => row.superseded !== true && !["cancelled", "superseded"].includes(statusOf(row)));
-    const atTime = active.filter(row => toDate(row.startsAt)?.getTime() === Date.parse(time));
-    if (atTime.length > 1) throw new Error("Multiple meetings occupy the selected time.");
     const sameLesson = row => resolveOfficialSessionNumber(row, groups, levelId) === Number(nextLessonNumber);
-    const existing = atTime[0] || active.find(row => sameLesson(row) && statusOf(row) === "scheduled" && toDate(row.startsAt) >= new Date(time));
+    const candidates = active.filter(sameLesson);
+    if (candidates.some(isTaughtSession)) throw new Error("This lesson has already been taught. Reopen it explicitly before changing its date.");
+    const existing = candidates.find(row => row.repairPreferredRecord === true) || candidates[0];
     let id = existing?.id || resolvedClassId + "_" + nextDate + "_" + rule.startTime.replace(":", "");
     if (!existing) while (sessions.some(row => row.id === id)) id += "_next";
     const patch = { startsAt: time, endsAt: new Date(Date.parse(time) + rule.durationMinutes * 60000).toISOString(),
       topic: group.topic, assignmentIds: group.assignmentIds, chapterIds: group.assignmentIds, curriculumIds: group.assignmentIds,
       assignment_id: group.assignmentIds[0], curriculumIndex: group.index + 1, curriculumDay: group.day, curriculumTaskCount: group.assignmentIds.length };
     const row = { ...existing, classId: resolvedClassId, status: existing?.status || "scheduled", id, ...patch };
-    const duplicates = active.filter(other => other.id !== id && sameLesson(other) && statusOf(other) === "scheduled" && toDate(other.startsAt) >= new Date(time));
+    const duplicates = active.filter(other => other.id !== id && sameLesson(other) && !isTaughtSession(other) && statusOf(other) === "scheduled");
     const ignored = new Set([id, ...duplicates.map(other => other.id)]);
     const plan = buildFollowingScheduleRestorePlan({ classId, klass, sessions: [...scopedSessions.filter(other => !ignored.has(other.id)), row],
       anchorSessionId: id, excludedDates, notBeforeStartsAt: time });
@@ -183,11 +184,11 @@ export function buildFollowingScheduleRestorePlan({
     const overrideRows = [];
     const displaced = [];
     function bindSlot(group, time, source) {
-      const atTime = [...projected.values()].filter(row => row.superseded !== true
-        && !["superseded", "cancelled"].includes(statusOf(row))
-        && toDate(row.startsAt)?.getTime() === Date.parse(time));
-      if (atTime.length > 1) throw new Error("Multiple active meetings already occupy the override time.");
-      const row = atTime[0] || source;
+      const row = source || [...projected.values()].find(candidate => resolveOfficialSessionNumber(candidate, groups, levelId) === group.index + 1 && !["cancelled", "superseded"].includes(statusOf(candidate)) && candidate.superseded !== true && !isTaughtSession(candidate));
+      if (row && isTaughtSession(row)) {
+        if (toDate(row.startsAt)?.getTime() !== Date.parse(time)) throw new Error("This lesson has already been taught. Reopen it explicitly before changing its date.");
+        return row.id;
+      }
       if (!row) return null; // The normal planner creates an absent following session.
       const duration = Math.max(60000, (toDate(row.endsAt) - toDate(row.startsAt)) || 90 * 60000);
       const patch = { startsAt: time, endsAt: new Date(Date.parse(time) + duration).toISOString(),
@@ -254,7 +255,7 @@ export function buildFollowingScheduleRestorePlan({
   const continuationSessions = scopedSessions.filter((session) => {
     const date = toDate(session.startsAt);
     const lesson = resolveOfficialSessionNumber(session, groups, levelId);
-    return !(levelId === "B1" && date && date < anchorStartsAt && lesson > anchorLessonNumber);
+    return isTaughtSession(session) || !(levelId === "B1" && date && date < anchorStartsAt && lesson > anchorLessonNumber);
   });
   const previewLessonNumbers = new Set(
     continuationSessions
@@ -279,7 +280,7 @@ export function buildFollowingScheduleRestorePlan({
     sessions: plannerSessions,
     excludedDates,
   });
-  const baseFollowingItems = officialPlan.items.filter((item) => item.lessonNumber > anchorLessonNumber);
+  const baseFollowingItems = officialPlan.items.filter((item) => item.lessonNumber > anchorLessonNumber && !isTaughtSession(item.session));
   const followingSlots = buildFollowingSlotsFromAnchor({
     anchorStartsAt: continuationStart || anchorStartsAt,
     notBeforeStartsAt: continuationStart || normalizedNotBefore,
@@ -305,7 +306,11 @@ export function buildFollowingScheduleRestorePlan({
     };
   });
   const followingByLesson = new Map(followingItems.map((item) => [item.lessonNumber, item]));
-  const rebuiltItems = officialPlan.items.map((item) => followingByLesson.get(item.lessonNumber) || item);
+  const rebuiltItems = officialPlan.items.map((item) => {
+    if (followingByLesson.has(item.lessonNumber)) return followingByLesson.get(item.lessonNumber);
+    if (!item.session) return { ...item, changed: false };
+    return { ...item, preserveHistory: true, targetStartsAt: toDate(item.session.startsAt)?.toISOString() || "", targetEndsAt: toDate(item.session.endsAt)?.toISOString() || "", changed: false };
+  });
   const finalTarget = rebuiltItems.at(-1)?.targetStartsAt || anchorStartsAt.toISOString();
   const endDate = localParts(finalTarget, timezone)?.dateIso || officialPlan.endDate;
 
@@ -314,9 +319,7 @@ export function buildFollowingScheduleRestorePlan({
     const status = statusOf(item.session || {});
     if (["cancelled", "superseded"].includes(status) || item.session?.superseded === true) return false;
 
-    // Completion/live flags after the chosen anchor are deliberately ignored.
-    // The selected anchor is the administrator's declaration of real progress.
-    return item.changed || (item.session && ["completed", "live"].includes(status));
+    return !isTaughtSession(item.session) && item.changed;
   });
 
   const patchesById = new Map(
@@ -360,9 +363,10 @@ export function buildFollowingScheduleRestorePlan({
       if (!sessionId || sessionId === normalizedAnchorSessionId || canonicalIds.has(sessionId)) return false;
       if (sessionOwnership(session, resolvedClassId) !== "match") return false;
       const status = statusOf(session);
-      if (["cancelled", "superseded"].includes(status) || session.superseded === true) return false;
+      if (isTaughtSession(session) || ["cancelled", "superseded"].includes(status) || session.superseded === true) return false;
 
       const lessonNumber = resolveOfficialSessionNumber(session, groups, levelId);
+      if (lessonNumber && lessonNumber <= anchorLessonNumber) return false;
       const startsAt = toDate(session.startsAt);
       const startsAtIso = startsAt?.toISOString() || "";
       if (levelId === "B1" && startsAt && startsAt < anchorStartsAt) return false;
@@ -395,6 +399,7 @@ export function buildFollowingScheduleRestorePlan({
       : session
   ));
   const anchorAndFollowingSessions = collisionSafeSessions.filter((session) => {
+    if (isTaughtSession(session)) return false;
     const date = toDate(session.startsAt);
     if (levelId === "B1" && date && date < anchorStartsAt) return false;
     const lessonNumber = resolveOfficialSessionNumber(session, groups, levelId);

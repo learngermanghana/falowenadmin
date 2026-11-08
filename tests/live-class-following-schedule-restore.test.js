@@ -103,7 +103,7 @@ test("accepts the selected last live session as the anchor even when it was held
   assert.ok(plan.followingItems.length > 0);
 });
 
-test("rebuilds later completed or live sessions instead of letting their status block the anchor restore", () => {
+test("preserves completed and live sessions even when they follow the selected anchor", () => {
   const sessions = damagedSessions();
   const liveIndex = sessions.findIndex((session) => session.id === "day-17");
   const completedIndex = sessions.findIndex((session) => session.id === "day-18");
@@ -118,11 +118,11 @@ test("rebuilds later completed or live sessions instead of letting their status 
   });
 
   const restoredIds = new Set(plan.restorableItems.map((item) => item.session?.id));
-  assert.equal(restoredIds.has("day-17"), true);
-  assert.equal(restoredIds.has("day-18"), true);
+  assert.equal(restoredIds.has("day-17"), false);
+  assert.equal(restoredIds.has("day-18"), false);
 });
 
-test("plans colliding future duplicate and protected orphan records for atomic supersession", () => {
+test("supersedes future duplicates while preserving taught orphan records", () => {
   const sessions = damagedSessions();
   const duplicate = {
     ...sessionForDay(16, "2026-07-23T18:00:00.000Z"),
@@ -152,7 +152,7 @@ test("plans colliding future duplicate and protected orphan records for atomic s
 
   const staleIds = new Set(plan.staleFutureRecords.map((item) => item.sessionId));
   assert.equal(staleIds.has("duplicate-day-16"), true);
-  assert.equal(staleIds.has("protected-orphan"), true);
+  assert.equal(staleIds.has("protected-orphan"), false);
   assert.equal(plan.unresolvedCollisions, 0);
 });
 

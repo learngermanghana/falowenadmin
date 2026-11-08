@@ -40,6 +40,14 @@ function assignmentIdsForSession(session = {}) {
   return [...new Set(values.map((value) => normalize(value).toUpperCase()).filter(Boolean))];
 }
 
+export function isTaughtSession(session = {}) {
+  if (!session) return false;
+  const status = normalize(session.status || "scheduled").toLowerCase();
+  return ["completed", "live"].includes(status)
+    || Number(session.attendanceCount || session.attendeeCount || 0) > 0
+    || Boolean(session.students && Object.keys(session.students).length);
+}
+
 function protectedOrphanSession(session = {}) {
   const status = normalize(session.status || "scheduled").toLowerCase();
   if (["completed", "live", "cancelled"].includes(status)) return true;
@@ -429,7 +437,7 @@ export function buildLessonDateRepairPlan(sessions = []) {
   const slots = [...eligible].sort((left, right) => left.startsAtDate.getTime() - right.startsAtDate.getTime());
 
   return lessons.map((lesson, index) => {
-    const slot = slots[index];
+    const slot = isTaughtSession(lesson.session) ? lesson : slots[index];
     const fallbackDuration = Math.max(
       1,
       Math.round(((lesson.endsAtDate?.getTime() || lesson.startsAtDate.getTime() + 7200000) - lesson.startsAtDate.getTime()) / 60000),
@@ -494,7 +502,7 @@ export function buildOfficialLessonSchedulePlan({
   sessions.filter(activeSession).forEach((session) => {
     const sessionNumber = resolveOfficialSessionNumber(session, groups, levelId);
     if (!sessionNumber) return;
-    if (levelId === "B1" && anchor && sessionNumber >= anchor.sessionNumber && toDate(session.startsAt) < toDate(anchor.startsAt)) return;
+    if (levelId === "B1" && anchor && !isTaughtSession(session) && sessionNumber >= anchor.sessionNumber && toDate(session.startsAt) < toDate(anchor.startsAt)) return;
     if (!candidatesByNumber.has(sessionNumber)) candidatesByNumber.set(sessionNumber, []);
     candidatesByNumber.get(sessionNumber).push(session);
   });
@@ -524,11 +532,16 @@ export function buildOfficialLessonSchedulePlan({
   const items = groups.map((group, index) => {
     const lessonNumber = index + 1;
     const session = sessionsByNumber.get(lessonNumber) || null;
-    const slot = slots[index];
+    const preserveHistory = Boolean(session && (isTaughtSession(session)
+      || (anchor && lessonNumber < anchor.sessionNumber)));
+    const slot = preserveHistory
+      ? { startsAt: toDate(session.startsAt)?.toISOString() || "", endsAt: toDate(session.endsAt)?.toISOString() || "", durationMinutes: sessionDurationMinutes(session) }
+      : slots[index];
     const currentStartsAt = toDate(session?.startsAt)?.toISOString() || "";
     const currentEndsAt = toDate(session?.endsAt)?.toISOString() || "";
     return {
       lessonNumber,
+      preserveHistory,
       group,
       session,
       targetStartsAt: slot.startsAt,
