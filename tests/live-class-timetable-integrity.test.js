@@ -55,7 +55,7 @@ function buildA1Sessions(klass = buildA1Class()) {
   }));
 }
 
-test("new A1 schedules use exactly 25 grouped attendance sessions", () => {
+test("new A1 schedules use exactly 24 grouped attendance sessions", () => {
   const klass = buildA1Class();
   const occurrences = generateSessionOccurrences({
     classId: klass.id,
@@ -69,12 +69,12 @@ test("new A1 schedules use exactly 25 grouped attendance sessions", () => {
     enforceEndDate: true,
   });
 
-  assert.equal(klass.endDate, "2026-08-14");
-  assert.equal(occurrences.length, 25);
+  assert.equal(klass.endDate, "2026-08-13");
+  assert.equal(occurrences.length, 24);
   assert.equal(report.healthy, true);
-  assert.equal(report.expectedCount, 25);
-  assert.equal(report.actualCount, 25);
-  assert.equal(report.derivedEndDate, "2026-08-14");
+  assert.equal(report.expectedCount, 24);
+  assert.equal(report.actualCount, 24);
+  assert.equal(report.derivedEndDate, "2026-08-13");
 });
 
 test("a complete curriculum-mapped A1 timetable is healthy", () => {
@@ -196,7 +196,7 @@ test("cancelled records still count, while superseded aliases are ignored", () =
   });
 
   assert.equal(report.healthy, true);
-  assert.equal(report.actualCount, 25);
+  assert.equal(report.actualCount, 24);
 });
 
 test("integrity errors include the repair instruction and stable error code", () => {

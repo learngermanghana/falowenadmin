@@ -3,6 +3,8 @@ import { WEEKDAY_OPTIONS, courseLevels } from "../data/courseTemplates.js";
 import { buildAssignmentId } from "./assignmentId.js";
 import { getUnifiedTopicLabel } from "../data/courseDictionary.js";
 
+import { getCourseSessionGroups } from "../data/courseSessionGroups.js";
+
 const DEFAULT_WEEKDAYS = ["Monday", "Tuesday", "Wednesday"];
 
 function normalizeWeekdays(weekdays) {
@@ -54,13 +56,14 @@ export function generateCourseSchedule({
         const isHoliday = holidays.has(cursorIso);
 
         if (isPreferredDay && !isHoliday) {
-          const assignmentId = buildAssignmentId(level, topic, dayIndex);
+          const group = level === "A1" ? getCourseSessionGroups(level).find((item) => item.day === dayIndex) : null;
+          const assignmentId = group?.assignmentIds[0] || buildAssignmentId(level, topic, dayIndex);
           rows.push({
             week: weekLabel,
             day: `Day ${dayIndex}`,
             date: cursor.format("dddd, DD MMMM YYYY"),
             dateIso: cursorIso,
-            topic: getUnifiedTopicLabel(assignmentId, topic),
+            topic: group?.topic || getUnifiedTopicLabel(assignmentId, topic),
             assignmentId,
           });
           dayIndex += 1;

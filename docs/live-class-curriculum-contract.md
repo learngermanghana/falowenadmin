@@ -13,6 +13,23 @@ All three ID arrays contain the same canonical assignment IDs. New sessions are 
 
 Student-facing Falowen clients should read `assignmentIds` first, then fall back to `chapterIds`, `curriculumIds`, and legacy `assignment_id`.
 
+## Current A1 timetable — 8 November 2026
+
+Live Classes, Attendance and the schedule generator share `courseSessionGroups`.
+The active sequence matches learner commit `5825f1c` (`web/src/data/courseSchedule.js`
+and `a1CanonicalLessonCatalog.js`): Day 0 orientation plus Days 1–23.
+Day 2 uses `A1-0.2_1.1`; Day 3 uses only `A1-1.2`; Day 23 is
+`A1-5.10` (Final Mock). Retired split Day 2 chapters, Day 3 self-practice and
+`A1-14.2` remain available as historical dictionary references, outside the active selector.
+Attendance and Live Classes link the unified workbook and final mock directly;
+the final mock must not open the historical conjunctions presentation.
+The final mock's assessment and marking contract is unchanged.
+
+This is an Admin mapping update, not a bulk database migration: existing dates,
+attendance records and completed records are not deleted or rewritten. New schedule
+calculations include 24 slots with orientation (23 without it). Teachers retain
+control of timetable repair for existing classes.
+
 ## A1 presenter music — 2 November 2026
 
 All 27 teaching blocks across A1 Days 1–24 use `A1GrammarPresenter` and include

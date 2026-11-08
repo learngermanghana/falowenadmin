@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { learnerLessonLinksForAttendanceSession } from "../utils/teacherLessonDashboard.js";
 import { getTeachingSlideByAssignmentId } from "../data/teachingSlides.js";
 import {
   canonicalDictionarySelection,
@@ -37,7 +38,7 @@ export default function SessionDictionaryPicker({
   const presentationSlides = useMemo(
     () => selectedIds
       .map((assignmentId) => ({ assignmentId, slide: getTeachingSlideByAssignmentId(assignmentId) }))
-      .filter((entry) => entry.slide),
+      .filter((entry) => entry.slide && entry.assignmentId.toUpperCase() !== "A1-5.10"),
     [selectedIds],
   );
   const filteredEntries = useMemo(() => {
@@ -113,6 +114,10 @@ export default function SessionDictionaryPicker({
           ))}
         </div>
       ) : null}
+
+      {selectedIds.filter((id) => ["A1-0.2_1.1", "A1-5.10"].includes(id)).flatMap((id) =>
+        learnerLessonLinksForAttendanceSession({ session: { assignmentIds: [id] } })
+      ).map((link) => <a key={link.assignmentId} href={link.url} target="_blank" rel="noreferrer" style={{ display: "block", marginTop: 8 }}>{link.label}</a>)}
 
       {open ? (
         <div style={{ marginTop: 8, border: "1px solid #bfdbfe", borderRadius: 10, background: "#fff", padding: 10, boxShadow: "0 12px 30px rgba(15, 23, 42, 0.12)" }}>

@@ -12,13 +12,13 @@ test("generateCourseSchedule assigns dates in curriculum order and skips holiday
     holidayDates: ["2026-02-10"],
   });
 
-  assert.equal(rows.length, 24);
+  assert.equal(rows.length, 23);
   assert.equal(rows[0].dateIso, "2026-02-09");
   assert.equal(rows[1].dateIso, "2026-02-16");
   assert.equal(rows[0].day, "Day 1");
   assert.equal(rows[1].day, "Day 2");
   assert.equal(rows[0].assignmentId, "A1-0.1");
-  assert.equal(rows[1].assignmentId, "A1-0.2");
+  assert.equal(rows[1].assignmentId, "A1-0.2_1.1");
 });
 
 test("generateCourseSchedule advanced mode falls back to default weekdays when a week has no selected days", () => {

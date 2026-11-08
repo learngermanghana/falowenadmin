@@ -71,7 +71,6 @@ test("object-shaped weekly rules place lessons on Thursday Friday and Saturday",
     session(21, "2026-08-01T22:00:00.000Z"),
     session(22, "2026-08-12T04:00:00.000Z"),
     session(23, "2026-08-13T04:00:00.000Z"),
-    session(24, "2026-08-14T18:00:00.000Z"),
   ];
 
   const plan = buildSessionReschedulePlan({
@@ -89,7 +88,6 @@ test("object-shaped weekly rules place lessons on Thursday Friday and Saturday",
       ["day-21", "2026-08-06T18:00:00.000Z"],
       ["day-22", "2026-08-07T18:00:00.000Z"],
       ["day-23", "2026-08-08T08:00:00.000Z"],
-      ["day-24", "2026-08-13T18:00:00.000Z"],
     ],
   );
 });

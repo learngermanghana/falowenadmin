@@ -28,7 +28,7 @@ const klass = {
   id: "a1-test",
   levelId: "A1",
   startDate: "2026-06-19",
-  endDate: "2026-08-14",
+  endDate: "2026-08-13",
   timezone: "Africa/Accra",
 };
 
@@ -57,7 +57,6 @@ const A1_MUNICH_DATES = [
   "2026-08-07T18:00:00.000Z",
   "2026-08-08T08:00:00.000Z",
   "2026-08-13T18:00:00.000Z",
-  "2026-08-14T18:00:00.000Z",
 ];
 
 test("interval overlap detects partial collisions, not only equal start times", () => {
@@ -167,7 +166,7 @@ test("Day 13 can reuse Day 11's exact time after Day 11 and Day 12 are completed
   assert.equal(plan.changes[0].startsAt, "2026-07-16T18:00:00.000Z");
 });
 
-test("completed history still counts toward all 25 lessons without causing an active duplicate", () => {
+test("completed history still counts toward all 24 lessons without causing an active duplicate", () => {
   const sessions = A1_MUNICH_DATES.map((startsAt, day) => session(
     day,
     day === 13 ? "2026-07-16T18:00:00.000Z" : startsAt,
@@ -181,8 +180,8 @@ test("completed history still counts toward all 25 lessons without causing an ac
     enforceEndDate: true,
   });
 
-  assert.equal(report.actualCount, 25);
-  assert.equal(report.expectedCount, 25);
+  assert.equal(report.actualCount, 24);
+  assert.equal(report.expectedCount, 24);
   assert.equal(report.healthy, true, JSON.stringify(report.issues, null, 2));
   assert.equal(report.issues.some((issue) => ["duplicate-time", "overlap", "curriculum-order"].includes(issue.code)), false);
 });

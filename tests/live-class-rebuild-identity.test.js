@@ -25,7 +25,7 @@ test("canonical rebuild identity overrides legacy class identifiers from saved d
   assert.equal(payload.classRecordId, "firestore-class-id");
 
   const occurrences = generateSessionOccurrences(payload);
-  assert.equal(occurrences.length, 25);
+  assert.equal(occurrences.length, 24);
   assert.ok(occurrences.every((session) => session.classId === "firestore-class-id"));
   assert.ok(occurrences.every((session) => session.id.startsWith("firestore-class-id_")));
 });

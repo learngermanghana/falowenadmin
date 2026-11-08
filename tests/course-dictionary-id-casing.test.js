@@ -18,11 +18,11 @@ test("dictionary lookup resolves stored uppercase IDs to canonical A1 entries", 
 test("session groups keep dictionary casing used by selector option values", () => {
   const groups = getCourseSessionGroups("A1");
   assert.deepEqual(groups[0].assignmentIds, ["A1-Tutorial"]);
-  assert.deepEqual(groups[3].assignmentIds, ["A1-1.1-practice", "A1-1.2"]);
+  assert.deepEqual(groups[3].assignmentIds, ["A1-1.2"]);
 });
 
 test("group lookup remains case insensitive after preserving canonical casing", () => {
-  const group = findCourseSessionGroup("A1", ["A1-1.1-PRACTICE"]);
+  const group = findCourseSessionGroup("a1", ["a1-1.2"]);
   assert.equal(group?.day, 3);
-  assert.deepEqual(group?.assignmentIds, ["A1-1.1-practice", "A1-1.2"]);
+  assert.deepEqual(group?.assignmentIds, ["A1-1.2"]);
 });

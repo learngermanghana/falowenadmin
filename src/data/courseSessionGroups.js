@@ -3,6 +3,7 @@ import { compareCourseDictionaryEntries, courseDictionary } from "./courseDictio
 const A1_DAY_BY_ASSIGNMENT_ID = Object.freeze({
   "A1-TUTORIAL": 0,
   "A1-0.1": 1,
+  "A1-0.2_1.1": 2,
   "A1-0.2": 2,
   "A1-1.1": 2,
   "A1-1.1-PRACTICE": 3,
@@ -29,7 +30,7 @@ const A1_DAY_BY_ASSIGNMENT_ID = Object.freeze({
   "A1-13": 21,
   "A1-14.1": 22,
   "A1-14.2": 23,
-  "A1-5.10": 24,
+  "A1-5.10": 23,
 });
 
 const ORIENTATION_ENTRY_BY_LEVEL = Object.freeze({

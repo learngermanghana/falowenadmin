@@ -45,7 +45,6 @@ function damagedSessions() {
     sessionForDay(21, "2026-08-01T18:00:00.000Z"),
     sessionForDay(22, "2026-08-02T08:00:00.000Z"),
     sessionForDay(23, "2026-08-07T18:00:00.000Z"),
-    sessionForDay(24, "2026-08-08T18:00:00.000Z"),
   ];
 }
 
@@ -69,7 +68,7 @@ test("restores each following lesson to the next valid weekly slot instead of ap
 
   assert.equal(plan.anchorLessonNumber, 16);
   assert.equal(plan.anchorStartsAt, "2026-07-18T08:00:00.000Z");
-  assert.equal(plan.movedCount, 6);
+  assert.equal(plan.movedCount, 5);
   assert.equal(plan.createdCount, 0);
 
   const targetByDay = new Map(plan.followingItems.map((item) => [Number(item.group.day), item.targetStartsAt]));
@@ -81,10 +80,9 @@ test("restores each following lesson to the next valid weekly slot instead of ap
   assert.equal(targetByDay.get(21), "2026-08-01T08:00:00.000Z");
   assert.equal(targetByDay.get(22), "2026-08-06T18:00:00.000Z");
   assert.equal(targetByDay.get(23), "2026-08-07T18:00:00.000Z");
-  assert.equal(targetByDay.get(24), "2026-08-08T08:00:00.000Z");
 
   const movedDays = plan.restorableItems.map((item) => Number(item.group.day));
-  assert.deepEqual(movedDays, [16, 18, 19, 21, 22, 24]);
+  assert.deepEqual(movedDays, [16, 18, 19, 21, 22]);
 });
 
 test("accepts the selected last live session as the anchor even when it was held outside the saved weekly slot", () => {

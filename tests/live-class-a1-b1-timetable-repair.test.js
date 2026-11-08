@@ -105,7 +105,7 @@ test("A1 day identity overrides assignment suffixes and stale indexes", () => {
   assert.equal(sessionLessonNumber(session), 19);
 });
 
-test("A1 table sorting follows Day 0 to Day 24 instead of assignment suffixes", () => {
+test("A1 table sorting follows Day 0 to Day 23 instead of assignment suffixes", () => {
   const sessions = [
     { id: "day-18", topic: "Day 18: Example", assignmentIds: ["A1-12.1"], curriculumDay: 18 },
     { id: "day-2", topic: "Day 2: Example", assignmentIds: ["A1-0.2"], curriculumDay: 2 },
@@ -119,7 +119,7 @@ test("A1 table sorting follows Day 0 to Day 24 instead of assignment suffixes", 
   );
 });
 
-test("A1 repairs the reported mixed dates into the official Day 0 to Day 24 sequence", () => {
+test("A1 repairs the reported mixed dates into the official Day 0 to Day 23 sequence", () => {
   const plan = buildOfficialLessonSchedulePlan({
     classId: "a1-reported-class",
     klass: {
@@ -136,10 +136,10 @@ test("A1 repairs the reported mixed dates into the official Day 0 to Day 24 sequ
 
   const targetForDay = (day) => plan.items.find((item) => Number(item.group.day) === day)?.targetStartsAt;
 
-  assert.equal(plan.expectedLessons, 25);
-  assert.equal(plan.currentSessions, 25);
+  assert.equal(plan.expectedLessons, 24);
+  assert.equal(plan.currentSessions, 24);
   assert.equal(plan.missingLessons, 0);
-  assert.equal(plan.endDate, "2026-08-22");
+  assert.equal(plan.endDate, "2026-08-21");
   assert.equal(targetForDay(0), "2026-06-27T08:00:00.000Z");
   assert.equal(targetForDay(1), "2026-07-02T18:00:00.000Z");
   assert.equal(targetForDay(4), "2026-07-09T18:00:00.000Z");
@@ -149,7 +149,7 @@ test("A1 repairs the reported mixed dates into the official Day 0 to Day 24 sequ
   assert.equal(targetForDay(10), "2026-07-23T18:00:00.000Z");
   assert.equal(targetForDay(13), "2026-07-30T18:00:00.000Z");
   assert.equal(targetForDay(18), "2026-08-08T08:00:00.000Z");
-  assert.equal(targetForDay(24), "2026-08-22T08:00:00.000Z");
+  assert.equal(targetForDay(23), "2026-08-21T18:00:00.000Z");
 });
 
 test("A1 Munich anchors Day 13 without moving earlier history", () => {
@@ -175,7 +175,7 @@ test("A1 Munich anchors Day 13 without moving earlier history", () => {
   assert.equal(plan.scheduleAnchor?.startsAt, "2026-07-18T08:00:00.000Z");
   assert.equal(plan.scheduleAnchor?.source, "a1-munich-day-13-progress-correction");
   assert.equal(plan.startDate, "2026-06-19");
-  assert.equal(plan.endDate, "2026-08-14");
+  assert.equal(plan.endDate, "2026-08-13");
   assert.equal(plan.missingLessons, 0);
   for (const day of [0, 10, 12]) {
     const original = a1CorruptedSessions().find(row => Number(row.curriculumDay) === day);
@@ -183,10 +183,10 @@ test("A1 Munich anchors Day 13 without moving earlier history", () => {
   }
   assert.equal(targetForDay(13), "2026-07-18T08:00:00.000Z");
   assert.equal(targetForDay(14), "2026-07-23T18:00:00.000Z");
-  assert.equal(targetForDay(24), "2026-08-14T18:00:00.000Z");
+  assert.equal(targetForDay(23), "2026-08-13T18:00:00.000Z");
 });
 
-test("A1 repairs to 25 grouped attendance sessions", () => {
+test("A1 repairs to 24 grouped attendance sessions", () => {
   const plan = buildOfficialLessonSchedulePlan({
     classId: "a1-class",
     klass: {
@@ -202,14 +202,14 @@ test("A1 repairs to 25 grouped attendance sessions", () => {
   });
 
   assert.equal(plan.levelId, "A1");
-  assert.equal(plan.expectedLessons, 25);
+  assert.equal(plan.expectedLessons, 24);
   assert.equal(plan.currentSessions, 22);
-  assert.equal(plan.missingLessons, 3);
+  assert.equal(plan.missingLessons, 2);
   assert.equal(plan.countLabel, "attendance sessions");
   assert.equal(plan.itemLabel, "Day");
-  assert.equal(plan.endDate, "2026-07-27");
-  assert.equal(plan.items.at(-1).lessonNumber, 25);
-  assert.equal(plan.items.at(-1).targetStartsAt, "2026-07-27T19:00:00.000Z");
+  assert.equal(plan.endDate, "2026-07-22");
+  assert.equal(plan.items.at(-1).lessonNumber, 24);
+  assert.equal(plan.items.at(-1).targetStartsAt, "2026-07-22T19:00:00.000Z");
 });
 
 test("B1 repairs Day 0 orientation plus all 28 lessons", () => {

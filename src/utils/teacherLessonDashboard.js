@@ -43,6 +43,8 @@ export function selectTeacherLessonSession(dashboard = {}, now = new Date()) {
 export function resolveTeacherLessonSlide({ dashboard = {}, session = null } = {}) {
   const targetSession = session || selectTeacherLessonSession(dashboard);
   if (!targetSession) return null;
+  // The final mock is an assessment, not the archived conjunctions lecture.
+  if (assignmentIdsForSession(targetSession).includes("A1-5.10".toUpperCase())) return null;
 
   for (const assignmentId of assignmentIdsForSession(targetSession)) {
     const slide = getTeachingSlideByAssignmentId(assignmentId);
@@ -120,6 +122,14 @@ export function learnerLessonUrl(slide = null) {
  */
 export function learnerLessonLinksForAttendanceSession({ session = null, dashboard = {} } = {}) {
   if (!session) return [];
+  // Current learner destinations take precedence over historical presenter links.
+  const currentRoutes = {
+    "A1-0.2_1.1": ["/campus/course/a1-day-2-foundations-workbook", "Open Day 2 workbook"],
+    "A1-5.10": ["/campus/course/a1-final-mock-exam", "Open A1 Final Mock Exam"],
+  };
+  const current = assignmentIdsForSession(session).filter((id) => currentRoutes[id]);
+  if (current.length) return current.map((assignmentId) => ({ assignmentId,
+    url: `${FALOWEN_COURSE_BASE}${currentRoutes[assignmentId][0]}`, label: currentRoutes[assignmentId][1] }));
   const slides = assignmentIdsForSession(session)
     .map((assignmentId) => getTeachingSlideByAssignmentId(assignmentId))
     .filter(Boolean);

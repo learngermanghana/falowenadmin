@@ -5,10 +5,8 @@ export const courseDictionary = {
   A1: {
     "A1-Tutorial": { assignment_id: "A1-Tutorial", chapter: "0", de: "Einführung und Orientierung", en: "Orientation and Tutorial" },
     "A1-0.1": { assignment_id: "A1-0.1", chapter: "0.1", de: "Begrüßungen und Wohlbefinden", en: "Greetings and Asking About Well-being" },
-    "A1-0.2": { assignment_id: "A1-0.2", chapter: "0.2", de: "Alphabet", en: "German Alphabet" },
-    "A1-1.1": { assignment_id: "A1-1.1", chapter: "1.1", de: "Personalpronomen und grundlegende Verbkonjugation", en: "Personal Pronouns and Verb Conjugation" },
-    "A1-1.1-practice": { assignment_id: "A1-1.1-practice", chapter: "1.1", de: "Persönliche Informationen, Artikel, Adjektive und W-Fragen", en: "Personal Information, Articles, Adjectives and W-Questions" },
-    "A1-1.2": { assignment_id: "A1-1.2", chapter: "1.2", de: "Verbkonjugation im Präsens üben", en: "Present-Tense Verb Conjugation Practice" },
+    "A1-0.2_1.1": { assignment_id: "A1-0.2_1.1", chapter: "0.2", de: "Alphabet, Personalpronomen und erste Verben", en: "German Alphabet, Personal Pronouns and First Verbs" },
+    "A1-1.2": { assignment_id: "A1-1.2", chapter: "1.2", de: "Verbkonjugation im Präsens üben", en: "Present-Tense Verb Conjugation and First W-Questions" },
     "A1-2": { assignment_id: "A1-2", chapter: "2", de: "Zahlen, Telefonnummern und Adressen", en: "Numbers, Phone Numbers and Addresses" },
     "A1-1.3": { assignment_id: "A1-1.3", chapter: "1.3", de: "Sich vorstellen und Artikel üben", en: "Self-Introduction Practice with Articles" },
     "A1-2.3": { assignment_id: "A1-2.3", chapter: "2.3", de: "Familie und Hobbys", en: "Family and Hobbies" },
@@ -29,8 +27,7 @@ export const courseDictionary = {
     "A1-12.3": { assignment_id: "A1-12.3", chapter: "12.3", de: "Einführung ins Briefeschreiben", en: "Introduction to Letter Writing" },
     "A1-13": { assignment_id: "A1-13", chapter: "13", de: "Wetter", en: "Weather" },
     "A1-14.1": { assignment_id: "A1-14.1", chapter: "14.1", de: "Gesundheit und Körperteile", en: "Health and Body Parts" },
-    "A1-14.2": { assignment_id: "A1-14.2", chapter: "14.2", de: "Dativ und Akkusativ Verben", en: "Dative and Accusative Verbs" },
-    "A1-5.10": { assignment_id: "A1-5.10", chapter: "5.10", de: "Gründe mit weil und nützliche Redemittel", en: "Reasons with weil and Useful A1 Phrases" },
+    "A1-5.10": { assignment_id: "A1-5.10", chapter: "5.10", de: "A1 Abschluss-Modellprüfung", en: "A1 Final Mock Exam" },
   },
   A2: {
     "A2-1.1": { assignment_id: "A2-1.1", chapter: "1.1", de: "Small Talk", en: "Small Talk" },
@@ -141,7 +138,7 @@ export function getCourseDictionaryEntry(assignmentId) {
   const normalizedId = String(assignmentId || "").trim().toUpperCase();
   const level = normalizedId.match(/^(A1|A2|B1|B2|C1|C2)(?=[\s-]|$)/i)?.[1]?.toUpperCase();
   if (!level || !courseDictionary[level]) return null;
-  return Object.values(courseDictionary[level]).find((entry) =>
+  return Object.values({ ...retiredCourseDictionary[level], ...courseDictionary[level] }).find((entry) =>
     String(entry.assignment_id || "").trim().toUpperCase() === normalizedId,
   ) || null;
 }
@@ -156,5 +153,11 @@ export function getUnifiedTopicLabel(assignmentId, fallbackTopic = "") {
 
 // Historical teaching lookups may read this archive; schedulers use courseDictionary.
 export const retiredCourseDictionary = {
-  A1: { "A1-12.2": { assignment_id: "A1-12.2", chapter: "12.2", de: "Berufe und Präpositionen", en: "Professions and Prepositions" } },
+  A1: {
+    "A1-0.2": { assignment_id: "A1-0.2", chapter: "0.2", de: "Alphabet", en: "German Alphabet" },
+    "A1-1.1": { assignment_id: "A1-1.1", chapter: "1.1", de: "Personalpronomen und grundlegende Verbkonjugation", en: "Personal Pronouns and Verb Conjugation" },
+    "A1-1.1-practice": { assignment_id: "A1-1.1-practice", chapter: "1.1", de: "Persönliche Informationen, Artikel, Adjektive und W-Fragen", en: "Personal Information, Articles, Adjectives and W-Questions" },
+    "A1-14.2": { assignment_id: "A1-14.2", chapter: "14.2", de: "Dativ und Akkusativ Verben", en: "Dative and Accusative Verbs" },
+    "A1-12.2": { assignment_id: "A1-12.2", chapter: "12.2", de: "Berufe und Präpositionen", en: "Professions and Prepositions" },
+  },
 };

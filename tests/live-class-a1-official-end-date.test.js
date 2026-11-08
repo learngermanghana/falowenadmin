@@ -12,8 +12,8 @@ const scheduleRules = [
   { day: "sat", startTime: "08:00", durationMinutes: 60 },
 ];
 
-test("A1 official end-date calculation uses 25 grouped attendance sessions", () => {
-  assert.equal(getCourseDictionarySessionCount("A1"), 25);
+test("A1 official end-date calculation uses 24 grouped attendance sessions", () => {
+  assert.equal(getCourseDictionarySessionCount("A1"), 24);
 
   const endDate = calculateClassEndDate({
     levelId: "A1",
@@ -22,10 +22,10 @@ test("A1 official end-date calculation uses 25 grouped attendance sessions", () 
     excludedDates: [],
   });
 
-  assert.equal(endDate, "2026-08-14");
+  assert.equal(endDate, "2026-08-13");
 });
 
-test("A1 generation stops after the same 25 sessions used by end-date calculation", () => {
+test("A1 generation stops after the same 24 sessions used by end-date calculation", () => {
   const endDate = calculateClassEndDate({
     levelId: "A1",
     startDate: "2026-06-19",
@@ -42,9 +42,9 @@ test("A1 generation stops after the same 25 sessions used by end-date calculatio
     excludedDates: [],
   });
 
-  assert.equal(sessions.length, 25);
+  assert.equal(sessions.length, 24);
   assert.equal(sessions[0].startsAt, "2026-06-19T18:00:00.000Z");
-  assert.equal(sessions.at(-1).startsAt, "2026-08-14T18:00:00.000Z");
+  assert.equal(sessions.at(-1).startsAt, "2026-08-13T18:00:00.000Z");
 });
 
 test("an excluded A1 teaching day extends the official end date by one session slot", () => {
@@ -55,5 +55,5 @@ test("an excluded A1 teaching day extends the official end date by one session s
     excludedDates: ["2026-07-18"],
   });
 
-  assert.equal(endDate, "2026-08-15");
+  assert.equal(endDate, "2026-08-14");
 });
