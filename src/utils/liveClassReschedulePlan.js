@@ -297,9 +297,9 @@ export function buildSessionReschedulePlan({
     target,
     mode: normalizedMode,
   });
-  if (normalizedMode === "following") {
-    assertCurriculumBoundary({ ordered, selectedIndex, targetStart: target.start, mode: normalizedMode });
-  }
+  // Both single and following moves must preserve lesson order. A single
+  // session must not move past its next scheduled lesson without shifting it.
+  assertCurriculumBoundary({ ordered, selectedIndex, targetStart: target.start, mode: normalizedMode });
 
   const releasedCompletedSessions = completedPredecessorSlotsToRelease({
     ordered,
