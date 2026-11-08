@@ -1,5 +1,6 @@
 // The existing reading-translations workflow also runs B2–C2 end-to-end lesson coverage.
 import "./advanced-presenter-reading-coverage.test.js";
+import "./a1-presenter-reading-coverage.test.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
