@@ -37,8 +37,8 @@ test("A2-3.7 recognises Victoria's rental question but not an unasked viewing or
 test("A2-3.7 accepts natural formal direct and indirect enquiries without requiring keywords alone", () => {
   for (const source of [
     "Haben Sie noch eine Wohnung frei? Ich möchte wissen, wie viel die Miete kostet. Wann kann ich die Wohnung besichtigen?",
-    "Ich möchte wissen, ob eine Wohnung verfügbar ist. Welche Nebenkosten gibt es? Ich möchte einen Besichtigungstermin vereinbaren.",
-    "Gibt es eine Wohnung in Fulda? Wie hoch ist die Kaution? Ist eine Besichtigung möglich?",
+    "Ich möchte wissen, ob eine Wohnung verfügbar ist. Ich brauche zwei Zimmer. Welche Nebenkosten gibt es? Ich möchte einen Besichtigungstermin vereinbaren.",
+    "Gibt es eine Wohnung in Fulda? Ich brauche zwei Zimmer. Wie hoch ist die Kaution? Ist eine Besichtigung möglich?",
   ]) {
     assert.deepEqual(evaluateWritingTaskEvidence(task, source).map((item) => item.status), ["met", "met", "met"], source);
   }
