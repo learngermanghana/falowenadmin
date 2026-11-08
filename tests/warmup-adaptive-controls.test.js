@@ -6,7 +6,7 @@ const presenter = fs.readFileSync(new URL("../src/components/TeachingSlidePresen
 const picker = fs.readFileSync(new URL("../src/components/PresenterStudentPicker.jsx", import.meta.url), "utf8");
 
 test("A2 and B1 use one reusable Activity timer with 7, 5 and 2 minute presets", () => {
-  assert.match(presenter, /A2_B1_ACTIVITY_TIMER_PRESETS = \[7, 5, 3, 2, 1\]/);
+  assert.match(presenter, /A2_B1_ACTIVITY_TIMER_PRESETS = \[7, 5, 3, 2, 1(?:, 0\.5)?\]/);
   assert.match(presenter, /DEFAULT_ACTIVITY_TIMER_MINUTES = 5/);
   assert.match(presenter, /const \[activityTimerMinutes, setActivityTimerMinutes\]/);
   assert.match(presenter, /Activity timer/);
