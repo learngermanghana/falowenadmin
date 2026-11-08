@@ -372,10 +372,68 @@ function ruleForPoint(label = "", assignmentKey = "") {
   return null;
 }
 
+
+function a2ApartmentEvidence(assignmentKey = "", label = "", source = "", index = 0) {
+  if (String(assignmentKey).trim().toUpperCase() !== "A2-3.7") return null;
+  const point = clean(label).toLowerCase();
+  const lines = sentences(source);
+  const enquiry = (sentence) => /\?/.test(sentence)
+    || /\b(?:ich\s+m[oö]chte\s+(?:wissen|fragen|erfahren)|ich\s+w[uü]rde\s+gern\s+wissen|k[oö]nnen\s+sie\s+mir\s+(?:sagen|mitteilen)|bitte\s+teilen\s+sie\s+mir\s+mit)\b/i.test(sentence);
+  if (/ask whether an apartment is available/.test(point)) {
+    const evidence = lines.find((sentence) => {
+      if (!/\b(?:wohnung(?:en)?|apartment(?:s)?|zimmer)\b/i.test(sentence)) return false;
+      const available = /\b(?:frei|verf[uü]gbar|zu\s+(?:haben|mieten|vermieten)|noch\s+da)\b/i.test(sentence);
+      const question = /\b(?:haben\s+sie|gibt\s+es|vermieten\s+sie)\b/i.test(sentence) && /\?/.test(sentence);
+      const indirect = /\bob\b/i.test(sentence) && available && enquiry(sentence);
+      return question || (available && enquiry(sentence)) || indirect;
+    });
+    return {
+      index,
+      label,
+      status: evidence ? "met" : "missing",
+      evidence: evidence || "",
+      reason: evidence
+        ? "The student asks whether an apartment is available."
+        : "Describing the apartment being sought is not the same as asking the landlord whether one is available.",
+    };
+  }
+  if (/rental conditions and a viewing/.test(point)) {
+    const rental = lines.find((sentence) => enquiry(sentence)
+      && /\b(?:miete|mietpreis|mietkosten|mietbedingungen|kaution|nebenkosten|mietvertrag|mietdauer|einzugstermin)\b|\bwie\s+viel\b[^.!?]{0,120}\b(?:kostet|kosten|zahlen|bezahlen)\b/i.test(sentence));
+    const viewing = lines.find((sentence) => {
+      const viewingWord = /\b(?:besichtigen|besichtigung(?:stermin)?|anschauen|ansehen)\b/i.test(sentence);
+      const explicitRequest = /\b(?:m[oö]chte|w[uü]rde\s+gern|vereinbaren|bitte|fragen|termin)\b/i.test(sentence);
+      const seeApartment = /\b(?:wohnung|apartment|zimmer)\b[^.!?]{0,100}\bsehen\b/i.test(sentence);
+      return (viewingWord && (enquiry(sentence) || explicitRequest))
+        || (seeApartment && enquiry(sentence));
+    });
+    const missingDetails = [
+      ...(!rental ? ["Ask about rent, deposit or other rental terms"] : []),
+      ...(!viewing ? ["Ask for a viewing appointment"] : []),
+    ];
+    const status = !missingDetails.length ? "met" : rental || viewing ? "partial" : "missing";
+    return {
+      index,
+      label,
+      status,
+      evidence: [...new Set([rental, viewing].filter(Boolean))].join(" | "),
+      ...(status === "partial" ? { missingDetails } : {}),
+      reason: status === "met"
+        ? "The student asks about rental conditions and arranging a viewing."
+        : status === "partial"
+          ? "The student addresses one component, but still needs to: " + missingDetails.join("; ") + "."
+          : "No request about rental terms or a viewing appointment was found.",
+    };
+  }
+  return null;
+}
+
 export function evaluateWritingTaskEvidence(task = {}, source = "") {
   const text = String(source || "");
   return (Array.isArray(task.taskPoints) ? task.taskPoints : []).map((rawPoint, index) => {
     const label = clean(typeof rawPoint === "string" ? rawPoint : rawPoint?.label);
+    const apartmentEvidence = a2ApartmentEvidence(task.assignmentKey, label, text, index);
+    if (apartmentEvidence) return apartmentEvidence;
     const pattern = ruleForPoint(label, task.assignmentKey);
     if (!pattern) {
       return {
@@ -411,5 +469,6 @@ export function taskEvidenceSummary(evidence = []) {
   const met = items.filter((item) => item.status === "met").length;
   const missing = items.filter((item) => item.status === "missing").length;
   const review = items.filter((item) => item.status === "review").length;
-  return { met, missing, review, total: items.length };
+  const partial = items.filter((item) => item.status === "partial").length;
+  return { met, missing, review, partial, total: items.length };
 }

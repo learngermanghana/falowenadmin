@@ -350,9 +350,13 @@ function mergeSecondExaminer(primary = {}, secondary = null, error = null) {
     ? 0.5
     : Math.max(0.35, Math.min(1, 1 - (comparison.scoreDelta / 50)));
   const confidence = Math.min(primaryConfidence(primary), primaryConfidence(secondary), agreementConfidence);
+  const scoreDisagreement = (comparison.scoreDelta ?? 0) > comparison.scoreDeltaThreshold
+    || (comparison.writingScoreDelta ?? 0) > comparison.writingDeltaThreshold;
   const secondExaminer = {
     ...comparison,
-    status: comparison.requiresTutorReview ? "disagreed" : "agreed",
+    status: comparison.requiresTutorReview
+      ? scoreDisagreement ? "disagreed" : "review_flagged"
+      : "agreed",
   };
 
   const merged = {
@@ -367,7 +371,11 @@ function mergeSecondExaminer(primary = {}, secondary = null, error = null) {
   return comparison.requiresTutorReview
     ? withReviewReason(merged, {
       code: "second_examiner_disagreement",
-      message: `Independent examiners require tutor review (score delta: ${comparison.scoreDelta ?? "unknown"}, writing delta: ${comparison.writingScoreDelta ?? "unknown"}).`,
+      message: scoreDisagreement
+        ? `Independent examiners disagree beyond score thresholds (score delta: ${comparison.scoreDelta ?? "unknown"}, writing delta: ${comparison.writingScoreDelta ?? "unknown"}); tutor review required.`
+        : comparison.hardSecondaryReviewSignal
+          ? `The second examiner flagged missing or uncertain writing evidence for tutor review (score delta: ${comparison.scoreDelta ?? "unknown"}, writing delta: ${comparison.writingScoreDelta ?? "unknown"}; both within disagreement thresholds).`
+          : "The second examiner needs tutor review because of incomplete scores or low confidence.",
       source: "second_examiner",
     })
     : merged;

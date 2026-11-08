@@ -687,8 +687,10 @@ function pruneResolvedWritingReviewReasons(existing = [], {
     // missing-point warning and a contradiction with the examiner's full-credit
     // assessment. Do not retain those derived warnings after re-evaluation
     // confirms all communicative points; preserve independent examiner disputes.
-    if (!missingTaskPoints.length && [
-      "missing_task_points", "task_completion_conflict", "writing_score_task_conflict",
+    // Canonical task evidence is authoritative. Drop stale AI-derived task
+    // warnings and rebuild only the genuinely missing or partial points below.
+    if ([
+      "missing_task_points", "partial_task_points", "task_completion_conflict", "writing_score_task_conflict",
     ].includes(code)) return false;
     if (!genreMismatch && code === "writing_text_type_mismatch") return false;
     if (!wrongRegister && code === "writing_register_mismatch") return false;
@@ -864,10 +866,10 @@ function buildCanonicalStudentImprovement(missingTaskPoints = [], task = {}, evi
   if (task.assignmentKey === "A2-7.18" && missing.some((label) => /blocked card can be unblocked/i.test(label))) {
     return "Next step: keep your valid question about why the card is blocked and add a separate request, for example: „Könnten Sie meine Bankkarte bitte entsperren?“";
   }
-  const partialDetails = task.level === "B1" ? (Array.isArray(evidence) ? evidence : [])
+  const partialDetails = (Array.isArray(evidence) ? evidence : [])
     .filter((point) => point.status === "partial")
     .flatMap((point) => (Array.isArray(point.missingDetails) ? point.missingDetails : []))
-    .map(clean).filter(Boolean) : [];
+    .map(clean).filter(Boolean);
   return joinStudentFeedback([
     missing.length ? `Next step: add ${missing.join("; ")}.` : "",
     partialDetails.length ? `Next step: add the missing details: ${[...new Set(partialDetails)].join(", ")}.` : "",
