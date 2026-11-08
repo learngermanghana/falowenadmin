@@ -70,9 +70,14 @@ test('student practice accepts only bounded canonical music events', () => {
   assert.equal(normalizedEvent({ kind: 'start', trackId: '../../other' }), null);
   assert.equal(normalizedEvent({ kind: 'start', trackId: 'A2_day12', seconds: 601 }), null);
   assert.equal(normalizedEvent({ kind: 'replay', trackId: 'A2_day12' }), null);
+  assert.equal(normalizedEvent({ kind: 'start', trackId: 'A2_day12', source: 'unknown' }), null);
+  assert.equal(normalizedEvent({ kind: 'start', trackId: 'A2_day12' }).source, 'campus');
+  assert.equal(normalizedEvent({ kind: 'start', trackId: 'A2_day12', source: 'workbook' }).source, 'workbook');
   assert.deepEqual(normalizedEvent({ kind: 'complete', trackId: 'A2_day12', seconds: 95.8, level: 'A2', day: 12 }).seconds, 95);
   assert.equal(practiceDocumentId('uid', 'id', '20261102'), practiceDocumentId('uid', 'id', '20261102'));
   assert.notEqual(practiceDocumentId('uid', 'id', '20261102'), practiceDocumentId('uid2', 'id', '20261102'));
+  assert.equal(practiceDocumentId('uid', 'id', '20261102', 'campus'), practiceDocumentId('uid', 'id', '20261102'));
+  assert.notEqual(practiceDocumentId('uid', 'id', '20261102', 'workbook'), practiceDocumentId('uid', 'id', '20261102'));
 });
 
 test('record route requires verified Firebase account, never trusts client identity', async () => {
@@ -101,6 +106,11 @@ test('record route requires verified Firebase account, never trusts client ident
   assert.equal(writes[1].id, writes[0].id);
   assert.equal(writes[1].data.completions.increment, 1);
   assert.equal(writes[1].data.seconds.increment, 52);
+  const workbook = response();
+  await record(request('student', { ...event, source: 'workbook' }), workbook);
+  assert.equal(workbook.code, 200);
+  assert.equal(writes[2].data.source, 'workbook');
+  assert.notEqual(writes[2].id, writes[0].id);
 });
 
 test('owner report refuses public and nonowner reads; bounds Firestore query', async () => {
@@ -115,7 +125,7 @@ test('owner report refuses public and nonowner reads; bounds Firestore query', a
   assert.equal(readCount(), 0);
   setRows([{
     uid: 'student', name: 'Student Example', email: 'student@example.com',
-    trackId: 'a2_12', title: 'Career song', level: 'A2', day: 12,
+    trackId: 'a2_12', title: 'Career song', source: 'workbook', level: 'A2', day: 12,
     plays: 2, completions: 1, seconds: 234,
     lastActiveAt: new Date('2026-11-02T12:50:00Z'),
   }]);
@@ -125,6 +135,7 @@ test('owner report refuses public and nonowner reads; bounds Firestore query', a
   assert.equal(owner.body.activeStudents, 1);
   assert.equal(owner.body.students[0].songs, 1);
   assert.equal(owner.body.recent[0].completions, 1);
+  assert.equal(owner.body.recent[0].source, 'workbook');
   assert.equal(readCount(), 1);
 });
 

@@ -31,7 +31,7 @@ export default function StudentMusicPracticePanel() {
       <div className="music-analytics-practice-header">
         <div>
           <h2>Student Music Practice</h2>
-          <p>Signed-in Campus students only. Public music visitors remain anonymous. This is listening activity, not exam marking.</p>
+          <p>Signed-in Campus and workbook students only. Public music visitors remain anonymous. This is listening activity, not exam marking.</p>
         </div>
         <button type="button" disabled={state.loading} onClick={() => setRefresh(value => value + 1)}>Refresh practice</button>
       </div>
@@ -54,7 +54,7 @@ export default function StudentMusicPracticePanel() {
           <article className="music-analytics-panel">
             <h2>Students using music</h2>
             {!students.length ? (
-              <p className="music-analytics-empty">No authenticated music practice has been recorded for this period. Students must open Music inside their Falowen Campus account and start a song.</p>
+              <p className="music-analytics-empty">No authenticated music practice has been recorded for this period. Students must play a song in Campus Music or their workbook while signed in.</p>
             ) : (
               <div className="music-analytics-table-wrap">
                 <table>
@@ -76,11 +76,12 @@ export default function StudentMusicPracticePanel() {
             {!events.length ? <p className="music-analytics-empty">No songs recorded yet.</p> : (
               <div className="music-analytics-table-wrap">
                 <table>
-                  <thead><tr><th>Student</th><th>Song</th><th>Level / day</th><th>Starts</th><th>Full listens</th><th>Listening</th></tr></thead>
+                  <thead><tr><th>Student</th><th>Song</th><th>Source</th><th>Level / day</th><th>Starts</th><th>Full listens</th><th>Listening</th></tr></thead>
                   <tbody>{events.map((item, index) => (
                     <tr key={item.uid + '-' + item.trackId + '-' + index}>
                       <td>{item.name}<small>{item.email}</small></td>
                       <td>{item.title}</td>
+                      <td>{item.source === 'workbook' ? 'Workbook' : 'Campus Music'}</td>
                       <td>{item.level}{item.day ? ' · Day ' + item.day : ''}</td>
                       <td>{number(item.plays)}</td>
                       <td>{number(item.completions)}</td>
@@ -93,9 +94,9 @@ export default function StudentMusicPracticePanel() {
           </article>
           {report.limited && <p className="music-analytics-notice">Only the latest 300 practice summaries are shown to control database reads. Narrow the date range for more detail.</p>}
           <p className="music-analytics-footnote">
-            Data is collected only from authenticated, embedded Campus music sessions starting after this feature is deployed.
+            Data is collected only from authenticated Campus Music and workbook song sessions starting after the corresponding feature is deployed.
             Counts reflect playback events and are not proof of attentive study. Records are updated on song starts,
-            pauses and completions, not every second. This report loads only when opened or refreshed.
+            selected pauses and completions, not every second. This report loads only when opened or refreshed.
           </p>
         </>
       )}

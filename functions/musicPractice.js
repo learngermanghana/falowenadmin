@@ -34,7 +34,9 @@ function normalizedEvent(input) {
   const body = input && typeof input === 'object' && !Array.isArray(input) ? input : {};
   const trackId = String(body.trackId || '').trim();
   const kind = String(body.kind || '');
-  if (!TRACK_ID_RE.test(trackId) || !['start', 'progress', 'complete'].includes(kind)) return null;
+  const source = String(body.source || 'campus');
+  if (!TRACK_ID_RE.test(trackId) || !['start', 'progress', 'complete'].includes(kind)
+    || !['campus', 'workbook'].includes(source)) return null;
   const level = String(body.level || 'ALL').toUpperCase();
   const day = Number(body.day);
   const rawSeconds = Number(body.seconds ?? 0);
@@ -42,6 +44,7 @@ function normalizedEvent(input) {
   return {
     trackId,
     kind,
+    source,
     seconds: Math.floor(rawSeconds),
     title: String(body.title || trackId).replace(/[\u0000-\u001f]/g, '').slice(0, 150),
     level: LEVELS.has(level) ? level : 'ALL',
@@ -49,8 +52,9 @@ function normalizedEvent(input) {
   };
 }
 
-function practiceDocumentId(uid, trackId, date) {
-  const stable = crypto.createHash('sha256').update(uid + ':' + trackId).digest('hex').slice(0, 32);
+function practiceDocumentId(uid, trackId, date, source = 'campus') {
+  // Preserve legacy Campus IDs; separate workbook activity without extra queries.
+  const stable = crypto.createHash('sha256').update(uid + ':' + trackId + (source === 'workbook' ? ':workbook' : '')).digest('hex').slice(0, 32);
   return date + '_' + stable;
 }
 
@@ -108,6 +112,7 @@ function aggregatePractice(rows) {
     recent: rows.slice(0, 100).map(row => ({
       uid: row.uid, name: row.name || 'Student', email: row.email || '',
       trackId: row.trackId, title: row.title || row.trackId,
+      source: row.source === 'workbook' ? 'workbook' : 'campus',
       level: row.level || 'ALL', day: row.day || null,
       plays: row.plays || 0, completions: row.completions || 0,
       seconds: row.seconds || 0, lastActiveAt: serializeDate(row.lastActiveAt),
@@ -138,7 +143,7 @@ function registerMusicPracticeRoutes({ app, db, verifyToken, fieldValue, runtime
       return res.status(429).json({ ok: false, error: 'Too many practice updates. Continue listening and try later.' });
     }
     const key = dateKey(date);
-    const id = practiceDocumentId(user.uid, event.trackId, key);
+    const id = practiceDocumentId(user.uid, event.trackId, key, event.source);
     const ref = db.collection('studentMusicPractice').doc(id);
     try {
       await ref.set({
@@ -146,6 +151,7 @@ function registerMusicPracticeRoutes({ app, db, verifyToken, fieldValue, runtime
         name: String(user.name || user.email?.split('@')[0] || 'Student').slice(0, 100),
         email: String(user.email || '').slice(0, 160),
         trackId: event.trackId, title: event.title, level: event.level, day: event.day,
+        source: event.source,
         date: key,
         // Configure Firestore TTL on expireAt for automatic 90-day retention.
         expireAt: new Date(date.getTime() + 90 * 86400000),
