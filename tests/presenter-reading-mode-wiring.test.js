@@ -9,7 +9,7 @@ const pickerCss = fs.readFileSync(new URL("../src/components/PresenterStudentPic
 
 test("A2 and B1 knowledge slides expose an intelligent reading mode with the shared Activity timer", () => {
   assert.match(presenter, /const readingEligible = .*?\["A2", "B1"\]\.includes/);
-  assert.match(presenter, /\["B2", "C1", "C2"\]\.includes\(presenterLevel\) && stage\?\.variant === "lesson-reading"/);
+  assert.match(presenter, /\["A1", "B2", "C1", "C2"\]\.includes\(presenterLevel\) && stage\?\.variant === "lesson-reading"/);
   assert.match(presenter, /function startReadingMode\(\)/);
   assert.match(presenter, /function shareReadingNow\(\)/);
   assert.match(presenter, /Use the Activity timer for silent reading, then share the text when you are ready/);

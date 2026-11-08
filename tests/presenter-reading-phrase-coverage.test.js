@@ -1,5 +1,6 @@
 // The existing reading-translations workflow also runs B2–C2 end-to-end lesson coverage.
 import "./advanced-presenter-reading-coverage.test.js";
+import "./a1-presenter-reading-coverage.test.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -59,5 +60,5 @@ test("teaching slide passes assignment ID to both read-aloud and full-text gloss
   const binding = /<InlineReadingTranslations text=\{text\} level=\{presenterLevel\} day=\{presenterReadingDay\} assignmentId=\{slide\.assignmentId\} \/>/g;
   assert.equal([...presenter.matchAll(binding)].length, 2);
   assert.match(component, /assignmentId\s*\?\s*getPresenterReadingPhraseTranslations\(assignmentId\)/);
-  assert.match(component, /segmentReadingPhrases\(text, entries, \["B2", "C1", "C2"\]/);
+  assert.match(component, /segmentReadingPhrases\(text, entries, \["A1", "B2", "C1", "C2"\]/);
 });

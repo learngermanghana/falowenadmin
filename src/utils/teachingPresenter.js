@@ -3,6 +3,7 @@ import { A2_WORKBOOK_PRESENTATIONS } from '../data/a2WorkbookPresentations.js';
 import { getA2B1CommonMistakes } from '../data/a2B1CommonMistakes.js';
 import { getPresenterReadingLesson } from '../data/presenterReadingLessons.js';
 import { getAdvancedPresenterReadingLesson } from '../data/advancedPresenterReadingLessons.js';
+import { getA1PresenterReadingLesson } from '../data/a1PresenterReadingLessons.js';
 import { getLessonMusic } from "../data/lessonMusic.js";
 import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
 import { B1_DAY18_CAREER_CHALLENGES } from "../data/b1Day18CareerChallenge.js";
@@ -2160,7 +2161,23 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
     };
     return stage;
   }) : stages;
-  const classroomStages = presenterV2 && ['A2', 'B1'].includes(level)
+  const classroomStages = presenterV2 && level === 'A1'
+    ? prepared.flatMap((stage) => {
+        if (stage.id !== 'phrases') return [stage];
+        const reading = getA1PresenterReadingLesson(normalizedAssignmentId(slide));
+        if (!reading) return [stage]; // Orientation and archived lessons are unchanged.
+        return [stage, {
+          id: 'reading', type: 'knowledge', variant: 'lesson-reading', kicker: 'Lesen',
+          title: reading.title, textDe: reading.textDe, instruction: reading.readingPurpose,
+          items: reading.checks, answerItems: reading.answers, evidence: reading.evidence,
+          suggestedMinutes: 6,
+          teacherPurpose: {
+            student: 'Lies den kurzen Text. Antworte in einfachen deutschen Sätzen.',
+            teacher: 'Kurz vorlesen lassen, drei Fragen stellen und Belege erst nach dem Versuch einblenden. Unbewertete A1-Übung.',
+          },
+        }];
+      })
+    : presenterV2 && ['A2', 'B1'].includes(level)
     ? standardizeA2B1Stages(prepared, slide)
     : presenterV2 && ['B2', 'C1', 'C2'].includes(level)
       ? prepared.flatMap((stage) => {

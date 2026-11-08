@@ -217,7 +217,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
     stage?.id,stage?.textDe,stage?.intro,stage?.example,stage?.tension,stage?.question,
     activeReadingAssignment?.chunk?.text || ""
   ]));
-  const translatableReading=["A2","B1","B2","C1","C2"].includes(String(slide.course||"").toUpperCase()) && stage?.variant==="lesson-reading";
+  const translatableReading=["A1","A2","B1","B2","C1","C2"].includes(String(slide.course||"").toUpperCase()) && stage?.variant==="lesson-reading";
   const presenterReadingDay = Number(slide.dayNumber || String(slide.day || "").match(/\d+$/)?.[0] || String(slide.assignmentId || "").match(/\.(\d+)$/)?.[1] || 0);
   const isLessonMusicStage = stage?.type === "lesson-music";
   const isMusicVideoStage = stage?.variant === "interactive-music-video" || isLessonMusicStage;
@@ -235,7 +235,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
     if (interactiveOpening && contentRef.current) contentRef.current.scrollTop = 0;
   }, [interactiveOpening, slide?.assignmentId, stage?.id]);
   const presenterLevel = String(slide.course || "").trim().toUpperCase();
-  const readingEligible = (["A2", "B1"].includes(presenterLevel) || (["B2", "C1", "C2"].includes(presenterLevel) && stage?.variant === "lesson-reading"))
+  const readingEligible = (["A2", "B1"].includes(presenterLevel) || (["A1", "B2", "C1", "C2"].includes(presenterLevel) && stage?.variant === "lesson-reading"))
     && stage?.type === "knowledge"
     && stage?.variant !== "interactive-listening" && stage?.variant !== "interactive-music" && !isMusicReadingStage && stage?.type !== "lesson-song"
     && Boolean(String(stage?.textDe || "").trim());
@@ -1338,7 +1338,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                   </p>
                 </article>
               )}
-              {translatableReading && <PresenterReadingTranslation translation={readingTranslation}/>}
+              {translatableReading && presenterLevel !== "A1" && <PresenterReadingTranslation translation={readingTranslation}/>}
               {!knowledgeChecksVisible ? (
                 <button
                   type="button"
