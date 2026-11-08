@@ -44,7 +44,7 @@ const TOPICS = [
 ];
 
 const REQUIRED_STAGES = [
-  "intro", "warmup", "foundation", "phrases", "grammar",
+  "intro", "warmup", "foundation", "phrases", "reading", "grammar",
   "focus", "questions", "workbook", "lesson-summary",
 ];
 
