@@ -263,9 +263,23 @@ const routerParserAfter = `function parseStudentPartAnswers(text = "", { expecte
 const routerCallBefore = `      const parsed = parseStudentPartAnswers(matchingText || submissionText);`;
 const routerCallAfter = `      const parsed = parseStudentPartAnswers(matchingText || submissionText, { expectedQuestionCount: entries.length });`;
 
+// Preserve the newer safeguard: explicit Teil labels may never use answers
+// borrowed from another section. The parser's expected-count improvement must
+// retain that protected fallback instead of restoring the legacy API call.
+const protectedRouterCallBefore =
+  `      const parsed = parseStudentPartAnswers(matchingText || (hasExplicitParts ? "" : submissionText));`;
+const protectedRouterCallAfter =
+  `      const parsed = parseStudentPartAnswers(matchingText || (hasExplicitParts ? "" : submissionText), { expectedQuestionCount: entries.length });`;
+const currentRouterSource = await readFile(routerTarget, "utf8");
+const preserveExplicitParts = currentRouterSource.includes(protectedRouterCallBefore)
+  || currentRouterSource.includes(protectedRouterCallAfter);
 await patchFile(routerTarget, [
   { before: routerParserBefore, after: routerParserAfter, label: "API objective part parser" },
-  { before: routerCallBefore, after: routerCallAfter, label: "API objective part parser call" },
+  {
+    before: preserveExplicitParts ? protectedRouterCallBefore : routerCallBefore,
+    after: preserveExplicitParts ? protectedRouterCallAfter : routerCallAfter,
+    label: "API objective part parser call",
+  },
 ]);
 
 console.log("Trailing duplicate objective question numbers now recover the final missing question without overwriting the previous answer.");

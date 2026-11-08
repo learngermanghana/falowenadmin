@@ -50,6 +50,21 @@ function directUnderstandingPrompt(questionDe, lessonLabel) {
 }
 
 const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
+  // Canonical grouped Day 2: merged alphabet and first verb lesson.
+  "A1-0.2_1.1": [
+    check("Wie viele Buchstaben hat das deutsche Standardalphabet?", "26 Buchstaben.", "The standard alphabet has 26 letters; additional German characters are taught separately."),
+    check("Welche drei Umlautbuchstaben gibt es?", "Ä, Ö und Ü.", "Distinguish the three umlauts from ß (Eszett)."),
+    check("Wie heißt der Buchstabe ß?", "Eszett oder scharfes S.", "ß is not the letter B."),
+    check("Buchstabiere „Haus“ auf Deutsch.", "H-A-U-S.", "Ask learners to pronounce each letter name clearly."),
+    check("Nenne die Personalpronomen für ich, du, wir und ihr.", "ich, du, wir, ihr.", "Identify first- and second-person subjects in singular and plural."),
+    check("Welche Endung bekommt lernen bei ich?", "-e: ich lerne.", "The first-person singular of regular verbs takes -e."),
+    check("Welche Endung bekommt lernen bei du?", "-st: du lernst.", "Use du + -st, not the infinitive lernen."),
+    check("Ergänze: Er ___ Deutsch. (lernen)", "Er lernt Deutsch.", "The third-person singular er takes -t."),
+    check("Korrigiere: „Wir lernt Deutsch.“", "Wir lernen Deutsch.", "wir takes the plural ending -en."),
+    check("Korrigiere: „Ihr lernen Deutsch.“", "Ihr lernt Deutsch.", "ihr takes -t, not -en."),
+    check("Exit-Check: Buchstabiere „Bus“ und ergänze: ich ___, du ___, wir ___ (lernen).", "B-U-S; ich lerne, du lernst, wir lernen.", "Check both correct letter names and subject-verb agreement without repeating the class questions."),
+  ],
+
   "A1-0.2": [
     check("Wie viele Buchstaben hat das deutsche Standardalphabet?", "26 Buchstaben."),
     check("Welche vier zusätzlichen Zeichen benutzt man im Deutschen?", "Ä, Ö, Ü und ß."),

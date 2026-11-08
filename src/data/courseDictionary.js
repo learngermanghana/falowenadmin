@@ -154,10 +154,10 @@ export function getUnifiedTopicLabel(assignmentId, fallbackTopic = "") {
 // Historical teaching lookups may read this archive; schedulers use courseDictionary.
 export const retiredCourseDictionary = {
   A1: {
+    "A1-14.2": { assignment_id: "A1-14.2", chapter: "14.2", de: "Dativ und Akkusativ Verben", en: "Dative and Accusative Verbs" },
     "A1-0.2": { assignment_id: "A1-0.2", chapter: "0.2", de: "Alphabet", en: "German Alphabet" },
     "A1-1.1": { assignment_id: "A1-1.1", chapter: "1.1", de: "Personalpronomen und grundlegende Verbkonjugation", en: "Personal Pronouns and Verb Conjugation" },
     "A1-1.1-practice": { assignment_id: "A1-1.1-practice", chapter: "1.1", de: "Persönliche Informationen, Artikel, Adjektive und W-Fragen", en: "Personal Information, Articles, Adjectives and W-Questions" },
-    "A1-14.2": { assignment_id: "A1-14.2", chapter: "14.2", de: "Dativ und Akkusativ Verben", en: "Dative and Accusative Verbs" },
     "A1-12.2": { assignment_id: "A1-12.2", chapter: "12.2", de: "Berufe und Präpositionen", en: "Professions and Prepositions" },
   },
 };

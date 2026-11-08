@@ -297,6 +297,9 @@ export function buildSessionReschedulePlan({
     target,
     mode: normalizedMode,
   });
+  // A single session may be moved independently to a different day without
+  // rewriting adjacent teaching records. Following moves retain the stricter
+  // curriculum boundary check.
   if (normalizedMode === "following") {
     assertCurriculumBoundary({ ordered, selectedIndex, targetStart: target.start, mode: normalizedMode });
   }

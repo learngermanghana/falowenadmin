@@ -17,7 +17,9 @@ import {
 
 const slides = getSlidesByCourse("A1");
 const byId = id => slides.find(s => String(s.assignmentId || "").toUpperCase() === id);
-const days = { "A1-13":21, "A1-14.1":22, "A1-14.2":23, "A1-5.10":24 };
+// The legacy A1-14.2 teaching slide remains available for historical use.
+// The active timetable places the final conjunctions lesson on Day 23.
+const days = { "A1-13":21, "A1-14.1":22, "A1-14.2":23, "A1-5.10":23 };
 
 test("A1 Days 21–24 use 60 checks across existing and added authored question banks", () => {
   assert.deepEqual([...A1_DAYS21_TO24_ASSIGNMENTS].sort(), Object.keys(days).sort());
@@ -91,7 +93,7 @@ test("Day 23 distinguishes seeing accusative and helping/thanking dative without
   assert.ok(slide.interactionFlow.every(x=>!/interview|role.?play/i.test(x.phase)));
 });
 
-test("Day 24 preserves the nine-step weil course and never directs to the unrelated final mock", () => {
+test("Final A1 conjunctions lesson preserves the nine-step weil course and no mock link", () => {
   const slide=byId("A1-5.10");
   assert.equal(slide.workbookConnection.grammarUrl,"/campus/course/conjunctions-5-10");
   assert.equal(slide.workbookConnection.workbookUrl,"");

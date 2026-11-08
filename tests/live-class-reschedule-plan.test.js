@@ -166,7 +166,7 @@ test("Day 13 can reuse Day 11's exact time after Day 11 and Day 12 are completed
   assert.equal(plan.changes[0].startsAt, "2026-07-16T18:00:00.000Z");
 });
 
-test("completed history still counts toward all 24 lessons without causing an active duplicate", () => {
+test("completed history still counts toward all current A1 class sessions without an active duplicate", () => {
   const sessions = A1_MUNICH_DATES.map((startsAt, day) => session(
     day,
     day === 13 ? "2026-07-16T18:00:00.000Z" : startsAt,
