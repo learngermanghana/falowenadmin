@@ -1,0 +1,15 @@
+/* Keep vocabulary links looking like text while making keyboard focus obvious. */
+.reading-glossary-trigger:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
+  background-color: #e0f2fe !important;
+  border-radius: 3px;
+}
+
+@media (forced-colors: active) {
+  .reading-glossary-trigger:focus-visible {
+    outline-color: Highlight;
+    background-color: Highlight !important;
+    color: HighlightText !important;
+  }
+}
