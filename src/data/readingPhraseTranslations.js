@@ -1,5 +1,7 @@
-// Human-reviewed German → English support for A2/B1 lesson reading passages.
-// Keep the wording short and contextual; never translate assessment answers or use an API.
+// Curated words for A2/B1 STUDENT-WORKBOOK Lesen passages only.
+// The teaching presenter has different text: use presenterReadingPhraseTranslations.js
+// with the exact assignment ID instead of reusing this day-based vocabulary.
+// No translation API or answer-key lookup is used.
 const BY_DAY = {
   A2: {
     1: [["Mittagspause", "lunch break"], ["Kantine", "canteen / cafeteria"], ["Feierabend", "end of the working day"], ["eingeladen", "invited"], ["kennenlernen", "to get to know"]],
