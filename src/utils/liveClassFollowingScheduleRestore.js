@@ -168,19 +168,27 @@ export function buildFollowingScheduleRestorePlan({
   // correct target dates but the click mutated a different hidden document. If a
   // lesson has a preview record, keep that exact record canonical for this rebuild;
   // hidden records remain in scopedSessions so they can still be superseded below.
+  // In B1, an old timetable may already label past meetings with later days.
+  // Continue from the chosen real-progress anchor by creating fresh future
+  // meetings, rather than moving those historical documents and attendance.
+  const continuationSessions = scopedSessions.filter((session) => {
+    const date = toDate(session.startsAt);
+    const lesson = resolveOfficialSessionNumber(session, groups, levelId);
+    return !(levelId === "B1" && date && date < anchorStartsAt && lesson > anchorLessonNumber);
+  });
   const previewLessonNumbers = new Set(
-    scopedSessions
+    continuationSessions
       .filter((session) => session.repairPreferredRecord === true)
       .map((session) => resolveOfficialSessionNumber(session, groups, levelId))
       .filter(Boolean),
   );
   const plannerSessions = previewLessonNumbers.size
-    ? scopedSessions.filter((session) => {
+    ? continuationSessions.filter((session) => {
       const lessonNumber = resolveOfficialSessionNumber(session, groups, levelId);
       if (!lessonNumber || !previewLessonNumbers.has(lessonNumber)) return true;
       return session.repairPreferredRecord === true;
     })
-    : scopedSessions;
+    : continuationSessions;
 
   // Use the normal planner only for curriculum/session identity. The dates after
   // the selected anchor are rebuilt independently from that actual session, so
@@ -273,6 +281,7 @@ export function buildFollowingScheduleRestorePlan({
       const lessonNumber = resolveOfficialSessionNumber(session, groups, levelId);
       const startsAt = toDate(session.startsAt);
       const startsAtIso = startsAt?.toISOString() || "";
+      if (levelId === "B1" && startsAt && startsAt < anchorStartsAt) return false;
       const collidesWithAnchorOrTarget = startsAtIso === anchorStartsAtIso
         || targetLessonByStartsAt.has(startsAtIso);
       const isFollowingDuplicate = Number.isFinite(lessonNumber) && lessonNumber > anchorLessonNumber;
@@ -302,6 +311,8 @@ export function buildFollowingScheduleRestorePlan({
       : session
   ));
   const anchorAndFollowingSessions = collisionSafeSessions.filter((session) => {
+    const date = toDate(session.startsAt);
+    if (levelId === "B1" && date && date < anchorStartsAt) return false;
     const lessonNumber = resolveOfficialSessionNumber(session, groups, levelId);
     if (lessonNumber) return lessonNumber >= anchorLessonNumber;
     const startsAt = toDate(session.startsAt);

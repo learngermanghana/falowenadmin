@@ -9,7 +9,8 @@ import {
   recoverLegacyRescheduleCollision,
 } from "../services/liveClassService.js";
 import { buildFollowingScheduleRestorePlan } from "../utils/liveClassFollowingScheduleRestore.js";
-import { buildOfficialLessonSchedulePlan } from "../utils/liveClassLessonOrder.js";
+import { getCourseSessionGroups } from "../data/courseSessionGroups.js";
+import { resolveOfficialSessionNumber, buildOfficialLessonSchedulePlan } from "../utils/liveClassLessonOrder.js";
 import { partitionRepairPlanItems } from "../utils/liveClassRepairManualOverrides.js";
 
 function formatDateTime(value) {
@@ -235,10 +236,18 @@ export default function LiveClassLessonDateRepair() {
     )
   );
 
-  const anchorOptions = useMemo(() => (plan?.items || []).filter((item) => {
-    if (!item.session?.id) return false;
-    return !["cancelled", "superseded"].includes(statusOf(item.session)) && item.session.superseded !== true;
-  }), [plan]);
+  const anchorOptions = useMemo(() => {
+    // Repeated B1 lessons must each be selectable by their actual date; the
+    // official planner retains only one preferred document for each day.
+    const groups = getCourseSessionGroups(plan?.levelId);
+    const items = plan?.levelId === "B1"
+      ? scopedSessions.map((session) => ({ session,
+        group: groups[resolveOfficialSessionNumber(session, groups, "B1") - 1],
+      }))
+      : plan?.items || [];
+    return items.filter((item) => item.group && item.session?.id
+      && !["cancelled", "superseded"].includes(statusOf(item.session)) && item.session.superseded !== true);
+  }, [plan, scopedSessions]);
 
   const followingRestorePreview = useMemo(() => {
     if (!dashboard || !classId || !anchorSessionId) return { plan: null, error: "" };
