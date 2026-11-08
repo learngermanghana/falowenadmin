@@ -7,9 +7,6 @@ import { rebuildClassSessionsFromSchedule, listClassSessions, syncClassCurriculu
 import { applyGroupedCurriculumToClass } from "./groupedCurriculumService.js";
 import * as base from "./liveClassCompatibilityServiceBase.js";
 
-import { missingB1CurriculumTail } from "../utils/liveClassCurriculumTail.js";
-import { restoreB1CurriculumTail } from "./liveClassCurriculumTailService.js";
-
 export * from "./liveClassCompatibilityServiceBase.js";
 
 function normalize(value) {
@@ -57,14 +54,10 @@ export function hasObviousCurriculumDuplicates(dashboard = {}) {
 }
 
 async function repairMissingSessions(classId, dashboard) {
+  if (dashboard.sessionRepair) return dashboard.sessionRepair;
   const levelId = classLevel(dashboard?.klass || {});
   const expected = getCourseSessionGroups(levelId).length;
   const current = dashboard?.sessions?.length || 0;
-
-  if (missingB1CurriculumTail({ ...dashboard.klass, levelId }, dashboard.sessions).length) {
-    const result = await restoreB1CurriculumTail(classId, dashboard);
-    return { ...result, expected, before: current };
-  }
 
   if (!expected || current >= expected || !canRepairSchedule(dashboard?.klass || {})) {
     return { repaired: false, expected, before: current, after: current };
