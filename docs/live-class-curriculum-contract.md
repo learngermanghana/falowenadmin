@@ -216,3 +216,23 @@ Live Classes defaults to remaining lessons in curriculum-day order; staff can sh
 Before saving, the date-change form previews affected lessons and class end date using the same reschedule planner as saving. Future recalculation skips completed/live lessons. Date changes and cancellations capture one undo snapshot in the class record in the same transaction. Undo restores only fields touched by that change in session/attendance/class metadata, increments schedule/reminder revisions, updates the calendar and audits the action. Attendance entries and curriculum are preserved. Undo refuses a stale class revision, missing or changed lesson, a lesson that has since become completed/live, or changed attendance content. It does not recall sent communication. Only actions saved after this feature have an undo snapshot.
 
 The homepage links directly to today's teaching dashboard and groups existing review/partnership alerts with failed class-email statuses from the already-loaded class snapshot. It adds no polling or extra inbox data reads. Delivery links open the chosen class Communication tab.
+
+## Scheduled-job read costs — 9 November 2026
+
+The checked-in reminder and auto-completion workers now include the bounded
+queries previously applied by `scripts/patchCloudCostOptimizations.mjs` at deploy
+time. That idempotent patch remains a compatibility guard.
+
+Reminder ticks query only the next four hours plus grace time, resolve the
+associated classes and query rosters only for classes with due reminders. A
+legacy roster fallback can still read the student directory when no canonical
+roster match is found, but only for an actual due reminder. Auto-completion
+queries only the configured recent lookback (14 days by default), then applies
+the existing status, suppression and due-time checks. ISO strings and Firestore
+timestamps remain supported. Both use existing single-field indexes.
+
+Attendance confirmation is already event-queued during predeploy. Keep its
+30-minute due-queue dispatcher: a daily dispatcher would delay configured sends
+and failure retries. No new job, schedule, index or email policy is introduced.
+Regression checks: `node --test tests/scheduled-job-read-cost.test.cjs
+tests/class-session-reminder-runtime-config.test.js tests/auto-complete-class-sessions.test.js`.

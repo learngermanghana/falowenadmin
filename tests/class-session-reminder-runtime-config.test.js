@@ -56,6 +56,20 @@ function createFirestore(seed = {}) {
         doc(id) {
           return collectionDocRef(name, id);
         },
+        where(field, op, value) {
+          const filters = [[field, op, value]];
+          const query = {
+            where(f, o, v) { filters.push([f, o, v]); return query; },
+            async get() {
+              return { docs: [...collectionMap(name)].filter(([, row]) => filters.every(([f, o, v]) => {
+                const actual = row[f];
+                if (actual == null || typeof actual !== typeof v) return false;
+                return o === "==" ? actual === v : o === ">=" ? actual >= v : actual <= v;
+              })).map(([id, row]) => ({ id, data: () => row })) };
+            },
+          };
+          return query;
+        },
         async get() {
           return {
             docs: [...collectionMap(name)].map(([id, value]) => ({ id, data: () => value })),

@@ -153,6 +153,37 @@ async function completeOneSession({ admin, db, sessionId, now, delayMinutes }) {
   return result;
 }
 
+async function loadRecentCompletionCandidates({ db, now = new Date(), lookbackDays = DEFAULT_LOOKBACK_DAYS } = {}) {
+  const nowDate = asDate(now) || new Date();
+  const oldestAllowed = new Date(nowDate.getTime() - Math.max(1, Number(lookbackDays) || DEFAULT_LOOKBACK_DAYS) * 86400000);
+  const candidates = new Map();
+  const ranges = [
+    [oldestAllowed, nowDate],
+    [oldestAllowed.toISOString(), nowDate.toISOString()],
+  ];
+
+  for (const field of ["startsAt", "startAt", "startDateTime"]) {
+    for (const [lower, upper] of ranges) {
+      try {
+        const snapshot = await db.collection("classSessions")
+          .where(field, ">=", lower)
+          .where(field, "<=", upper)
+          .get();
+        for (const docSnap of snapshot.docs || []) {
+          candidates.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
+        }
+      } catch (error) {
+        console.warn("auto_complete_candidate_query_failed", {
+          field,
+          valueType: typeof lower === "string" ? "iso_string" : "timestamp",
+          message: error?.message || String(error),
+        });
+      }
+    }
+  }
+  return [...candidates.values()];
+}
+
 async function runAutoCompleteClassSessionsJob({
   admin,
   db,
@@ -160,8 +191,7 @@ async function runAutoCompleteClassSessionsJob({
   delayMinutes = Number(process.env.CLASS_AUTO_COMPLETE_DELAY_MINUTES || DEFAULT_DELAY_MINUTES),
   lookbackDays = Number(process.env.CLASS_AUTO_COMPLETE_LOOKBACK_DAYS || DEFAULT_LOOKBACK_DAYS),
 } = {}) {
-  const snapshot = await db.collection("classSessions").get();
-  const sessions = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+  const sessions = await loadRecentCompletionCandidates({ db, now, lookbackDays });
   const due = findDueAutoCompletions({ sessions, now, delayMinutes, lookbackDays });
   const results = [];
 
@@ -182,7 +212,11 @@ async function runAutoCompleteClassSessionsJob({
   }
 
   const completed = results.filter((result) => result.completed).length;
-  console.log("auto_complete_class_sessions_job_complete", { due: due.length, completed });
+  console.log("auto_complete_class_sessions_job_complete", {
+    candidateSessions: sessions.length,
+    due: due.length,
+    completed,
+  });
   return { due: due.length, completed, results };
 }
 
