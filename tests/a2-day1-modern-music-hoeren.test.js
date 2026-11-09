@@ -38,7 +38,7 @@ test('Day 1 chooses the observed published song and keeps other days out',()=>{
  const expected=make('music/a2/day-01/Ein nettes Gespräch.mp3','b64_RWluIG5ldHRlcyBHZXNwcsOkY2gubXAz');
  assert.equal(selectRecordedLessonTrack({tracks:[make('music/a2/day-01/other.mp3','other'),expected]},{level:'A2',day:1,assignmentKey:'A2-1.1'}).objectKey,expected.objectKey);
  const component=readFileSync(new URL('../src/components/LinkedPublishedSongLessonStage.jsx',import.meta.url),'utf8');
- assert.ok(component.includes('[1,19,20,21].includes(day)'));
+ assert.ok(component.includes('[1,2,19,20,21,23].includes(day)'));
  assert.ok(component.includes("day === 1 ? 'A2-1.1'"));
  const opening=readFileSync(new URL('../src/components/InteractiveLessonOpening.jsx',import.meta.url),'utf8');
  assert.ok(opening.includes('[1, 18, 19, 20, 21].includes(lesson.listening.day)'));

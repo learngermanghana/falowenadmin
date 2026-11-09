@@ -166,6 +166,7 @@ export const a2WorkbookAlignedSlides = [
       "Contrast predicative adjectives after sein (Sie ist freundlich) with adjectives before nouns (eine freundliche Chefin).",
       "Use one real-person model before pair work so students produce connected descriptions instead of adjective lists.",
       "Bridge to the workbook writing task about a boss: appearance, character/behaviour, opinion and a question to Felix.",
+      "Classroom-only sequence: published Day 2 music → separate Tom-and-Sarah Hören (five teacher-provided questions) → grammar and a three-situation role-play before the speaking prompts. Keep the separate graded workbook Hören unchanged.",
     ],
     interactionFlow: [
       { phase: "Grammar sort", detailEn: "8 min: identify noun gender and whether each noun is subject (Nominativ) or object (Akkusativ), then choose ein/eine/einen/keine + ending." },

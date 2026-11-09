@@ -1,0 +1,59 @@
+{
+  "mode": "course",
+  "level": "A2",
+  "examPart": "",
+  "title": "Personen beschreiben",
+  "kind": "multiple-choice",
+  "questions": [
+    {
+      "question": "Wie sieht Toms Haar aus?",
+      "evidence": "Er ist ziemlich groß und hat kurze, blonde Haare.",
+      "options": [
+        "Er hat kurze, blonde Haare.",
+        "Er hat lange, dunkle Haare.",
+        "Er hat gar keine Haare."
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "Was trägt Tom heute?",
+      "evidence": "Nein, aber er hat blaue Augen und trägt heute einen grünen Pullover.",
+      "options": [
+        "Eine rote Jacke",
+        "Einen grünen Pullover",
+        "Eine Brille"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "question": "Wie ist Tom von der Persönlichkeit her?",
+      "evidence": "Ja, sehr nett, aber er ist auch ein bisschen schüchtern.",
+      "options": [
+        "Laut und unfreundlich",
+        "Sehr frech",
+        "Ein bisschen schüchtern"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "question": "Wer ist Sarah?",
+      "evidence": "Ah, das ist unsere Kollegin Sarah.",
+      "options": [
+        "Eine Kollegin",
+        "Eine Schwester",
+        "Eine Lehrerin"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "Was trägt Sarah?",
+      "evidence": "Sie ist kleiner als Tom und trägt eine rote Jacke.",
+      "options": [
+        "Einen grünen Pullover",
+        "Eine rote Jacke",
+        "Eine blaue Hose"
+      ],
+      "correctIndex": 1
+    }
+  ]
+}

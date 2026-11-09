@@ -113,6 +113,42 @@ const definitions = [
   ]
 },
   {
+    assignmentId: "A2-1.2",
+    title: "Personen vorstellen · 3 Rollenspiele",
+    eyebrow: "Aussehen · Kleidung · Charakter",
+    grammar: "ein/eine/einen + Adjektiv · Nominativ/Akkusativ · weil",
+    goal: "Describe people in connected A2 sentences, use adjective endings correctly and justify an opinion.",
+    scenarios: [
+      {
+        id: "day2-new-colleague", label: "Die neue Kollegin", icon: "👩‍💼",
+        context: "Eine neue Kollegin heißt Sarah. Sie ist klein, hat braune Haare und trägt heute eine rote Jacke. Ein Besucher sucht sie im Büro.",
+        steps: [
+          {actionDe:"Person vorstellen",questionDe:"Wer ist Sarah und wo arbeitet sie?",modelDe:"Sarah ist unsere neue Kollegin. Sie arbeitet mit uns im Büro."},
+          {actionDe:"Aussehen und Kleidung",questionDe:"Wie sieht Sarah aus, und was trägt sie heute?",modelDe:"Sie ist klein und hat braune Haare. Heute trägt sie eine rote Jacke."},
+          {actionDe:"Beschreibung erweitern",questionDe:"Stelle Sarah mit eine + Adjektiv + Nomen vor.",modelDe:"Sarah ist eine freundliche Kollegin. Ich zeige dem Besucher, wo sie sitzt."},
+        ],
+      },
+      {
+        id: "day2-friend", label: "Ein guter Freund", icon: "🤝",
+        context: "Du möchtest deiner neuen Deutschkursgruppe deinen Freund Tom vorstellen. Tom ist groß, hat kurze blonde Haare und trägt einen grünen Pullover. Er ist nett, aber etwas schüchtern.",
+        steps: [
+          {actionDe:"Beziehung und Aussehen",questionDe:"Wer ist Tom und wie sieht er aus?",modelDe:"Das ist mein Freund Tom. Er ist groß und hat kurze blonde Haare."},
+          {actionDe:"Kleidung beschreiben",questionDe:"Was trägt Tom? Benutze einen + Adjektiv + Nomen.",modelDe:"Er trägt einen grünen Pullover."},
+          {actionDe:"Charakter begründen",questionDe:"Wie ist Tom und warum magst du ihn?",modelDe:"Er ist nett, aber ein bisschen schüchtern. Ich mag ihn, weil er gut zuhört."},
+        ],
+      },
+      {
+        id: "day2-boss", label: "Meine Chefin vorstellen", icon: "🏢",
+        context: "Dein Freund fragt nach deiner neuen Chefin. Sie trägt eine blaue Bluse, ist geduldig und erklärt Aufgaben ruhig. Du möchtest sie später in einem Brief beschreiben.",
+        steps: [
+          {actionDe:"Person und Kleidung",questionDe:"Wer ist die Person und welche Kleidung trägt sie?",modelDe:"Das ist meine neue Chefin. Sie trägt eine blaue Bluse."},
+          {actionDe:"Charakter mit Adjektiv",questionDe:"Wie beschreibst du ihren Charakter mit eine + Adjektiv + Nomen?",modelDe:"Sie ist eine geduldige und freundliche Person."},
+          {actionDe:"Meinung mit weil",questionDe:"Was gefällt dir an der Chefin? Begründe mit weil.",modelDe:"Ich finde sie sympathisch, weil sie Aufgaben ruhig erklärt."},
+        ],
+      },
+    ],
+  },
+  {
     "assignmentId": "A2-2.4",
     "title": "Meeting Planner",
     "eyebrow": "Treffen vereinbaren",

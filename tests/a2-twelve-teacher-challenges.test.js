@@ -5,7 +5,7 @@ import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js"
 import { A2_TEACHER_CHALLENGES, getA2TeacherChallenge } from "../src/data/a2TeacherChallenges.js";
 
 const days = new Map([
- ["A2-1.1", "Small Talk Challenge"], ["A2-9.23", "Pünktlich ankommen"],
+ ["A2-1.1", "Small Talk Challenge"], ["A2-1.2", "Personen vorstellen · 3 Rollenspiele"], ["A2-9.23", "Pünktlich ankommen"],
  ["A2-2.4", "Meeting Planner"], ["A2-3.8","Restaurant Challenge"],
  ["A2-6.17","Pharmacy Challenge"], ["A2-7.18","Banking Emergency"],
  ["A2-7.20","Customer Service"], ["A2-9.24","Holiday Planner"],
@@ -14,8 +14,8 @@ const days = new Map([
  ["A2-10.27","Message Challenge"], ["A2-10.28","Future Mission"],
 ]);
 
-test("All 14 A2 missions contain three distinct realistic scenarios and nine topic-specific modelled questions", () => {
- assert.equal(Object.keys(A2_TEACHER_CHALLENGES).length,14);
+test("All 15 A2 missions contain three distinct realistic scenarios and nine topic-specific modelled questions", () => {
+ assert.equal(Object.keys(A2_TEACHER_CHALLENGES).length,15);
  for (const [id,title] of days) {
   const mission=getA2TeacherChallenge(id);
   assert.equal(mission.title,title);
