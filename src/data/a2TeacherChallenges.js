@@ -125,7 +125,7 @@ const definitions = [
         steps: [
           {actionDe:"Person vorstellen",questionDe:"Wer ist Sarah und wo arbeitet sie?",modelDe:"Sarah ist unsere neue Kollegin. Sie arbeitet mit uns im Büro."},
           {actionDe:"Aussehen und Kleidung",questionDe:"Wie sieht Sarah aus, und was trägt sie heute?",modelDe:"Sie ist klein und hat braune Haare. Heute trägt sie eine rote Jacke."},
-          {actionDe:"Beschreibung erweitern",questionDe:"Stelle Sarah mit eine + Adjektiv + Nomen vor.",modelDe:"Sarah ist eine freundliche Kollegin. Ich zeige dem Besucher, wo sie sitzt."},
+          {actionDe:"Beschreibung erweitern",questionDe:"Wie stellst du Sarah als eine freundliche Kollegin vor?",modelDe:"Sarah ist eine freundliche Kollegin. Ich zeige dem Besucher, wo sie sitzt."},
         ],
       },
       {
