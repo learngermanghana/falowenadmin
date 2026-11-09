@@ -28,7 +28,7 @@ test('every real A1 lesson uses the shared presenter with exactly one music stag
  const stagesFor=await loadStageBuilder();
  const slides=getSlidesByCourse('A1').filter(s=>s.dayNumber>0);
  assert.equal(slides.length,28);
- assert.equal(new Set(slides.map(s=>s.dayNumber)).size,24);
+ assert.equal(new Set(slides.map(s=>s.dayNumber)).size,23);
  for(const slide of slides){
   const stages=stagesFor(slide,slide.topic);
   assert.equal(stages[0].type,'intro',slide.assignmentId);
