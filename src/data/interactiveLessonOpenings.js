@@ -1,6 +1,7 @@
 import { B1_DAY27_LISTENING } from './b1Day27Listening.js';
 import { A2_DAY23_CLASSROOM_LISTENING } from './a2Day23ClassroomListening.js';
 import { A2_DAY1_LISTENING } from './a2Day1Listening.js';
+import { A2_DAY2_LISTENING } from './a2Day2Listening.js';
 import { A2_DAY19_LISTENING } from './a2Day19Listening.js';
 // Curated reusable 10-minute classroom warm-ups. The A2 Day 17 Hören is
 // the only verified recording; never invent audio or override scored workbook work.
@@ -14,6 +15,19 @@ import { A2_DAY20_LISTENING } from "./a2Day20Listening.js";
 import { A2_DAY21_CLASSROOM_LISTENING } from "./a2Day21ClassroomListening.js";
 
 const ENTRIES = {
+  'A2-1.2': {
+    assignmentId: 'A2-1.2', title: 'Personen beschreiben', warmup: [],
+    musicIntro: {
+      mediaType: 'music', level: 'A2', day: 2,
+      title: 'Personen beschreiben · Lernlied',
+      introQuestion: 'Wie beschreibt das Lied eine Person? Nenne zwei Adjektive.',
+      musicLibraryUrl: 'https://music.falowen.app/?level=A2&day=2',
+      studentPurpose: 'Höre das bereits veröffentlichte Lied für A2 Tag 2 und nenne zwei passende Beschreibungen.',
+      teacherPurpose: 'Das veröffentlichte Day-2-Lied aus der bestehenden Musikbibliothek abspielen, keine neue Aufnahme anlegen. Anschließend das separate Gespräch über Tom und Sarah hören.',
+      nextStep: 'Danach: Hören · Tom und Sarah · fünf Fragen zu Aussehen, Kleidung und Charakter.',
+    },
+    listening: A2_DAY2_LISTENING,
+  },
   'A2-1.1': {
     assignmentId:'A2-1.1', title:'Small Talk', warmup:[],
     musicIntro:{
