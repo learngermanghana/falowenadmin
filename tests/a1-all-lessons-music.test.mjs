@@ -24,7 +24,7 @@ async function loadStageBuilder(){
  return module.exports.stageList;
 }
 
-test('every real A1 lesson uses the shared presenter with exactly one music stage, including Day 5 and readiness',async()=>{
+test('A1 presenter uses one music stage for each lesson with complete authored song activity',async()=>{
  const stagesFor=await loadStageBuilder();
  const slides=getSlidesByCourse('A1').filter(s=>s.dayNumber>0);
  assert.equal(slides.length,28);
@@ -32,7 +32,11 @@ test('every real A1 lesson uses the shared presenter with exactly one music stag
  for(const slide of slides){
   const stages=stagesFor(slide,slide.topic);
   assert.equal(stages[0].type,'intro',slide.assignmentId);
-  assert.equal(stages.filter(s=>s.type==='published-music').length,1,slide.assignmentId);
+  // Do not create empty music slides for A1 lessons with no complete
+  // authored lyrics and question pack. Day 22 owns a separate music finale.
+  const music=getA1PresenterMusicStage(slide.assignmentId,slide.dayNumber);
+  const expected=music || slide.assignmentId==='A1-14.1' ? 1 : 0;
+  assert.equal(stages.filter(s=>s.type==='published-music').length,expected,slide.assignmentId);
   const recording=getA1PresenterRecording(slide.assignmentId,slide.dayNumber);
   assert.equal(recording.level,'A1');
   if(recording.status==='discovery'){
