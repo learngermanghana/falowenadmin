@@ -1479,7 +1479,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
     id: "questions",
     type: "question-reveal",
     kicker: "Sprechen",
-    title: advanced ? "Sprechtraining" : "Speaking questions",
+    title: slide.studentQuestionTitle || (advanced ? "Sprechtraining" : "Speaking questions"),
     items: Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : [],
     supportItems: [...new Set([
       ...(Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : []),
