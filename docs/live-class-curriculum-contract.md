@@ -62,9 +62,9 @@ teacher-approved recording text just because their cues are complete.
 
 Days 1–28 of both levels have grammar slides after the opening activities and
 before Common Mistakes and reading. Most use one slide with the day's rules,
-examples and an ungraded oral check. A2 Day 2 uses four slides for choosing
-the ending, nominative forms, accusative forms and guided practice. The later
-grammar check uses the lesson topic for practice.
+examples and an ungraded oral check. A2 Day 2 uses four slides for adjective
+endings. Days 4, 6, 7, 10 and 16 use two slides, and Days 9 and 23 use three.
+The later grammar check uses the lesson topic for practice.
 
 All A2 days have a music stage. Existing song introductions keep their
 recordings. Other days use the same player after the warm-up and resolve the

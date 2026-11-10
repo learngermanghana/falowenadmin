@@ -7,10 +7,10 @@ import {getA2TeacherChallenge} from '../src/data/a2TeacherChallenges.js';
 import {selectRecordedLessonTrack} from '../src/utils/recordedLessonMusic.js';
 const slide=getTeachingSlideById('a2-day-23-schul-arbeitsweg');
 const stages=buildTeachingPresenterStages(slide,slide.topic);
-test('exact Day 23 permalink resolves music, separate private Hören, reading and scenario with 12 stages',()=>{
+test('exact Day 23 permalink resolves music, separate private Hören, three grammar slides and scenario',()=>{
  assert.equal(slide.assignmentId,'A2-9.23');assert.equal(slide.dayNumber,23);
- assert.deepEqual(stages.slice(0, 7).map(s=>s.id),['intro','warmup','knowledge','workbook-grammar', 'common-mistakes','reading','grammar-check']);
- assert.equal(stages.length,12);assert.equal(new Set(stages.map(s=>s.id)).size,12);
+ assert.deepEqual(stages.slice(0, 9).map(s=>s.id),['intro','warmup','knowledge','workbook-grammar','workbook-grammar-2','workbook-grammar-3','common-mistakes','reading','grammar-check']);
+ assert.equal(stages.length,14);assert.equal(new Set(stages.map(s=>s.id)).size,14);
  assert.equal(stages[1].variant,'interactive-music-video');assert.equal(stages[1].musicVideo.title,'Fahrrad zur Schule');
  assert.equal(stages[2].variant,'interactive-listening');assert.equal(stages[2].audioKey,'a2/day-23/wie-kommst-du-zur-schule-oder-zur-arbeit.mp3');
  assert.equal(stages[2].listeningItems.length,5);assert.equal(stages[2].transcript,undefined);

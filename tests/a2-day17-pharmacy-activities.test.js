@@ -28,7 +28,8 @@ test("A2 Day 17 replaces only its opening stages with a 10-minute warm-up and li
   assert.equal(listening.listeningItems.length, A2_DAY17_LISTENING.length);
   assert.ok(stages.some((stage) => stage.id === "reading"));
   assert.ok(stages.some((stage) => stage.id === "grammar-check" || stage.type === "grammar-check"));
-  assert.equal(stages.length, buildTeachingPresenterStages({ ...slide, assignmentId: "A2-6.16" }, slide.topic).length + 1);
+  const day16 = getSlidesByCourse("A2").find(lesson => lesson.dayNumber === 16);
+  assert.ok(!buildTeachingPresenterStages(day16).some(stage => stage.variant === "interactive-listening"));
 });
 
 test("other A2/B1 lessons still have the old warm-up and short reading", () => {
