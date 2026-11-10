@@ -149,6 +149,42 @@ const definitions = [
     ],
   },
   {
+    assignmentId: "A2-1.3",
+    title: "Vergleichen · 3 Alltagssituationen",
+    eyebrow: "Gleichheit · Komparativ · Superlativ",
+    grammar: "genauso ... wie · Komparativ + als · am ...-sten · weil",
+    goal: "Compare real alternatives and explain a preference using complete A2 sentences.",
+    scenarios: [
+      {
+        id: "day3-phones", label: "Zwei Smartphones", icon: "📱",
+        context: "Das Nexus kostet 350 Euro. Das Galaxy kostet 500 Euro und macht bessere Fotos. Du fotografierst gern.",
+        steps: [
+          {actionDe:"Preise vergleichen",questionDe:"Welches Handy ist billiger? Verwende als.",modelDe:"Das Nexus ist billiger als das Galaxy."},
+          {actionDe:"Eigenschaften vergleichen",questionDe:"Welches Handy macht bessere Fotos?",modelDe:"Das Galaxy macht bessere Fotos als das Nexus."},
+          {actionDe:"Entscheidung begründen",questionDe:"Welches Handy würdest du wählen? Begründe mit weil.",modelDe:"Ich würde das Galaxy wählen, weil mir gute Fotos wichtiger sind."},
+        ],
+      },
+      {
+        id: "day3-family", label: "Zwei Familienmitglieder", icon: "👨‍👩‍👧",
+        context: "Deine Mutter und dein Vater sind beide freundlich. Deine Mutter ist 42 Jahre alt; dein Vater ist 47 Jahre alt. Beide fahren gern Fahrrad.",
+        steps: [
+          {actionDe:"Gemeinsamkeit nennen",questionDe:"Was ist bei beiden Personen gleich? Benutze genauso ... wie.",modelDe:"Meine Mutter ist genauso freundlich wie mein Vater."},
+          {actionDe:"Unterschied nennen",questionDe:"Wer ist älter? Benutze als.",modelDe:"Mein Vater ist älter als meine Mutter."},
+          {actionDe:"Gemeinsamkeit erklären",questionDe:"Was machen beide gern?",modelDe:"Beide fahren gern Fahrrad."},
+        ],
+      },
+      {
+        id: "day3-transport", label: "Der Weg zum Deutschkurs", icon: "🚌",
+        context: "Der Bus braucht 30 Minuten und kostet 3 Euro. Das Taxi braucht 15 Minuten und kostet 12 Euro. Zu Fuß brauchst du 50 Minuten und zahlst nichts.",
+        steps: [
+          {actionDe:"Zeit vergleichen",questionDe:"Welches Verkehrsmittel ist schneller als der Bus?",modelDe:"Das Taxi ist schneller als der Bus."},
+          {actionDe:"Superlativ verwenden",questionDe:"Welche Möglichkeit ist am günstigsten?",modelDe:"Zu Fuß gehen ist am günstigsten."},
+          {actionDe:"Entscheidung begründen",questionDe:"Wie kommst du heute zum Kurs und warum?",modelDe:"Ich nehme den Bus, weil er viel günstiger als das Taxi ist."},
+        ],
+      },
+    ],
+  },
+  {
     "assignmentId": "A2-2.4",
     "title": "Meeting Planner",
     "eyebrow": "Treffen vereinbaren",
