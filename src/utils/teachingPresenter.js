@@ -2204,10 +2204,16 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
       });
     }
   }
+  // Keep the existing speaking task from the workbook immediately before
+  // the clarification checkpoint, in the normal classroom sequence.
+  const insertWorkbookPresentation = (stage) => {
+    const clarificationIndex = filtered.findIndex((item) => item.id === "workbook");
+    filtered.splice(clarificationIndex < 0 ? filtered.length : clarificationIndex, 0, stage);
+  };
   if (presenterV2 && level === "A2") {
     const presentation = A2_WORKBOOK_PRESENTATIONS[day];
     if (!presentation) throw new Error(`Missing A2 workbook presentation: ${slide.id}`);
-    filtered.push({
+    insertWorkbookPresentation({
       id: "workbook-presentation", type: "workbook-presentation",
       kicker: "Workbook · Sprechen", title: presentation.mode === "speaking-mock" ? "Sprechprüfung üben · Von sich erzählen" : "Präsentation · Von sich erzählen",
       presentation, items: presentation.branches || presentation.choices, suggestedMinutes: 5,
@@ -2217,7 +2223,7 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
   if (presenterV2 && level === "B1") {
     const presentation = B1_WORKBOOK_PRESENTATIONS[day];
     if (!presentation) throw new Error(`Missing B1 workbook presentation: ${slide.id}`);
-    filtered.push({
+    insertWorkbookPresentation({
       id: "workbook-presentation", type: "b1-workbook-presentation",
       kicker: "Workbook · B1 Sprechen", title: presentation.roleplay ? "Sprechen · Rollenspiel" : "Presentation · B1 Sprechen",
       presentation, items: presentation.structure, suggestedMinutes: 6,
