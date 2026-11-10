@@ -20,7 +20,7 @@ const ASSIGNMENT_IDS = [
 
 const REQUIRED_STAGES = [
   "intro", "warmup", "common-mistakes", "reading", "grammar-check",
-  "questions", "workbook", "lesson-summary",
+  "questions", "workbook-presentation", "workbook", "lesson-summary",
 ];
 
 test("A2 Teaching Slides expose the complete 28-day workbook-aligned course", () => {
