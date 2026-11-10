@@ -174,7 +174,7 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
           submission: { ...submission, id: snap.id, path: snap.ref.path, text },
           submissionText: text, referenceEntry, serverSpeakingAssessment,
         }));
-      const result = holdIncompleteObjectiveResult(markedResult, referenceEntry);
+      const result = emptySubmission ? markedResult : holdIncompleteObjectiveResult(markedResult, referenceEntry);
       const speakingReviewRequired = !emptySubmission && speakingRequired && !serverSpeakingAssessment;
       const release = !speakingReviewRequired && releasable(result);
       const timestamp = new Date(now()).toISOString();
