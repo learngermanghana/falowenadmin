@@ -33,7 +33,8 @@ test('empty submission is an automatic failed result that can be returned to the
   assert.equal(releasable(result), true);
   assert.equal(releasable({ ...result, score: 10, finalScore: 10 }), false);
 });
-\ntest('blank required objective section is held for tutor review and has no releasable score', () => {
+
+test('blank required objective section is held for tutor review and has no releasable score', () => {
   const referenceEntry = {
     referenceAnswerParts: ['teil3', 'teil4'],
     partGrading: { teil3: { gradingMode: 'answer_key' }, teil4: { gradingMode: 'answer_key' } },
@@ -67,7 +68,8 @@ test('complete objective sections keep their AI result unchanged', () => {
   assert.equal(result, original);
   assert.equal(releasable(result), true);
 });
-\ntest('job identity is stable across repeated deliveries and distinct across paths', () => {
+
+test('job identity is stable across repeated deliveries and distinct across paths', () => {
   assert.equal(idForPath('submissions/a'),idForPath('submissions/a'));
   assert.notEqual(idForPath('submissions/A1/posts/a'),idForPath('submissions/A2/posts/a'));
 });
@@ -125,6 +127,35 @@ function memoryDb(initial) {
   return {db,rows,snapshot};
 }
 const { createCourseMarkingWorker } = require('./automaticCourseMarking');
+test('empty submissions are failed and returned to the student without AI or an answer key', async () => {
+  const store = memoryDb({
+    'markingJobs/j': { automatic: true, submissionPath: 'submissions/empty', level: 'A1', assignmentKey: 'A1-17', status: 'pending' },
+    'submissions/empty': { status: 'submitted', studentId: 'uid', submissionText: '' },
+    'students/uid': { studentCode: 'ST1', email: 'student@example.test' },
+  });
+  let referenceCalls = 0;
+  let markingCalls = 0;
+  await createCourseMarkingWorker({
+    db: store.db,
+    loadReference: async () => { referenceCalls++; return null; },
+    mark: async () => { markingCalls++; throw new Error('AI must not mark empty work'); },
+  })({ data: store.snapshot('markingJobs/j') });
+
+  const result = store.rows.get('markingResults/empty');
+  const savedSubmission = store.rows.get('submissions/empty');
+  assert.equal(referenceCalls, 0);
+  assert.equal(markingCalls, 0);
+  assert.equal(result.status, 'marked');
+  assert.equal(result.publicationStatus, 'published');
+  assert.equal(result.finalScore, 0);
+  assert.equal(result.result.emptySubmission, true);
+  assert.match(result.feedback, /submission was empty/i);
+  assert.equal(savedSubmission.finalScore, 0);
+  assert.equal(savedSubmission.feedbackSentToStudent, true);
+  assert.equal(store.rows.get('scores/ST1__A1-17').score, 0);
+  assert.equal(store.rows.get('studentNotifications/' + idForPath('submissions/empty')).status, 'needs_improvement');
+  assert.equal(store.rows.get('markingJobs/j').status, 'marked');
+});
 for (const existing of [false,true]) test(`marking publishes once and preserves tutor score (existing=${existing})`, async()=>{
   const job={automatic:true,submissionPath:'submissions/s1',level:'A1',assignmentKey:'A1-1.1',status:'pending'};
   const store=memoryDb({'markingJobs/j1':job,'submissions/s1':{status:'submitted',studentId:'uid',studentCode:'spoof',submissionText:'Meine Antwort'},
