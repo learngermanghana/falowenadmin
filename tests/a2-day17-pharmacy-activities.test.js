@@ -194,9 +194,7 @@ test("A2 Day 18 Hören maps uploaded Bank Richtig/Falsch items without changing 
   assert.equal(knowledge.listeningItems.length, 5);
   assert.equal(isInteractiveOpeningStage("A2-7.18", "knowledge"), true);
   assert.ok(stages.find(s => s.id === "reading"), "Existing reading is restored");
-  assert.equal(stages.length, buildTeachingPresenterStages({
-    ...slide, assignmentId: "A2-6.16",
-  }, slide.topic).length + 1, "Only the selected day has the extra listening page");
+  assert.ok(!buildTeachingPresenterStages({ ...slide, assignmentId: "A2-6.16" }, slide.topic).some(s => s.id === "knowledge"));
 });
 
 
@@ -239,7 +237,7 @@ test("A2 Day 20 Reklamation preserves the uploaded Richtig/Falsch answers and wo
   assert.equal(knowledge.suggestedMinutes,6);
   assert.equal(knowledge.listeningItems.length,5);
   assert.ok(stages.find(s=>s.id==="reading"),"Restore original Lesen");
-  assert.equal(stages.length,buildTeachingPresenterStages({...slide,assignmentId:"A2-6.16"},slide.topic).length + 1);
+  assert.ok(!buildTeachingPresenterStages({ ...slide, assignmentId: "A2-6.16" }, slide.topic).some(s => s.id === "knowledge"));
   assert.equal(isInteractiveOpeningStage("A2-7.20","knowledge"),true);
 });
 

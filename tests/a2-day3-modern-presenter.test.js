@@ -14,8 +14,8 @@ const stages = buildTeachingPresenterStages(slide, slide.topic);
 test('A2 Day 3 permalink resolves workbook-aligned modern presenter with separate Hören',()=>{
   assert.equal(slide.assignmentId, 'A2-1.3');
   assert.equal(getTeachingSlideByAssignmentId('A2-1.3')?.id, slide.id);
-  assert.deepEqual(stages.slice(0,7).map(s=>s.id),[
-    'intro','warmup','knowledge','workbook-grammar','common-mistakes','reading','grammar-check'
+  assert.deepEqual(stages.slice(0,8).map(s=>s.id),[
+    'intro','warmup','lesson-music-intro','knowledge','workbook-grammar','common-mistakes','reading','grammar-check'
   ]);
   const grammar=stages.find(s=>s.id==='workbook-grammar');
   assert.match(grammar.title,/Vergleiche mit wie und als/);
@@ -27,10 +27,10 @@ test('A2 Day 3 permalink resolves workbook-aligned modern presenter with separat
   assert.equal(stages.filter(s=>s.id==='workbook-grammar').length,1);
   assert.equal(stages[1].variant, 'interactive-warmup');
   assert.equal(stages[1].challengeItems.length,4);
-  assert.equal(stages[2].variant,'interactive-listening');
-  assert.equal(stages[2].audioKey,A2_DAY3_AUDIO_KEY);
-  assert.equal(stages[2].listeningItems.length,5);
-  assert.equal(stages[2].transcript.length,0);
+  assert.equal(stages[3].variant,'interactive-listening');
+  assert.equal(stages[3].audioKey,A2_DAY3_AUDIO_KEY);
+  assert.equal(stages[3].listeningItems.length,5);
+  assert.equal(stages[3].transcript.length,0);
   assert.equal(isInteractiveOpeningStage('A2-1.3','knowledge'),true);
   assert.equal(getInteractiveLessonOpening('A2-1.3')?.listening,A2_DAY3_LISTENING);
   assert.equal(getInteractiveLessonOpening('A2-1.3')?.musicIntro,undefined,'do not invent an unverified song');
@@ -53,7 +53,8 @@ test('exact teacher-supplied five MCQs and evidence are preserved',()=>{
     assert.equal(q.answer,q.options[q.correctIndex]);
   });
   assert.equal(A2_DAY3_AUDIO_KEY,'a2/day-03/dinge-und-personen-vergleichen.mp3');
-  assert.match(slide.workbookConnection.parts[3].detailEn,/Julia and Tobias/,'graded workbook Hören stays separate');
+  const workbookListening = slide.workbookConnection.parts.find(part => part.label === 'Teil 4 · Hören');
+  assert.match(workbookListening.detailEn,/Julia and Tobias/,'graded workbook Hören stays separate');
 });
 
 test('Day 3 role-play has three interactive scenarios with graduated, revealable models',()=>{

@@ -7,10 +7,6 @@ const A2 = {
     ["denn · Grund", "Nach denn bleibt die normale Hauptsatzstellung.", "Ich lerne Deutsch, denn ich arbeite in Berlin."],
     ["deshalb · Folge", "Beginnt der Hauptsatz mit deshalb, folgt direkt das konjugierte Verb.", "Ich arbeite in Berlin. Deshalb lerne ich Deutsch."],
   ], ["Verbinde mit weil: Ich bin müde. Ich habe wenig geschlafen.", "Ich bin müde, weil ich wenig geschlafen habe."]],
-  2: ["Adjektivendungen mit ein und eine", [
-    ["Nominativ", "Für das Subjekt: ein netter Mann, eine nette Frau, ein nettes Kind.", "Ein freundlicher Mann arbeitet hier."],
-    ["Akkusativ", "Beim direkten Objekt wird die männliche Form zu einen + -en. Die weibliche und die neutrale Form bleiben gleich.", "Ich sehe einen freundlichen Mann und eine nette Frau."],
-  ], ["Ergänze: Ich sehe ___ (ein / sportlich / Mann).", "Ich sehe einen sportlichen Mann."]],
   3: ["Vergleiche mit wie und als", [
     ["Gleichheit", "genauso + Grundform des Adjektivs + wie", "Mia ist genauso groß wie Lea."],
     ["Unterschied", "Komparativ + als. Der Komparativ endet oft auf -er.", "Mia ist größer als Tom."],
@@ -259,3 +255,31 @@ const B1 = {
 };
 
 export const A2_B1_WORKBOOK_GRAMMAR = { A2, B1 };
+
+// Day 2 follows the workbook's sequence. Each group fits one teaching slide.
+export const A2_DAY_2_ADJECTIVE_GRAMMAR = [
+  ["Adjektivendungen 1 · So findest du die Endung", [
+    ["1 · Schau auf das Nomen", "Lerne das Nomen mit seinem Artikel: der Mann, die Frau, das Kind, die Personen.", "der Mann + freundlich → ein freundlicher Mann"],
+    ["2 · Bestimme den Kasus", "Das Subjekt steht im Nominativ. Das direkte Objekt nach sehen steht im Akkusativ.", "Ein freundlicher Mann winkt. Ich sehe einen freundlichen Mann."],
+    ["3 · Setze die Endung ein", "Bei ein + maskulin im Nominativ zeigt -er den Unterschied zu ein + neutral mit -es. Bei einen steht das Adjektiv auf -en.", "ein netter Mann · ein nettes Kind · einen netten Mann"],
+  ], []],
+  ["Adjektivendungen 2 · Nominativ", [
+    ["Maskulin · ein + -er", "der Mann → ein freundlicher Mann", "Ein freundlicher Mann hilft mir."],
+    ["Feminin · eine + -e", "die Frau → eine sportliche Frau", "Eine sportliche Frau läuft im Park."],
+    ["Neutral · ein + -es", "das Kind → ein kleines Kind", "Ein kleines Kind spielt im Garten."],
+    ["Plural · keine + -en", "die Personen → keine unbekannten Personen", "Keine unbekannten Personen sind hier."],
+  ], []],
+  ["Adjektivendungen 3 · Akkusativ", [
+    ["Maskulin · einen + -en", "den Mann → einen freundlichen Mann. Hier ändern sich Artikel und Endung.", "Ich sehe einen freundlichen Mann."],
+    ["Feminin · eine + -e", "die Frau → eine sportliche Frau", "Ich sehe eine sportliche Frau."],
+    ["Neutral · ein + -es", "das Kind → ein kleines Kind", "Ich sehe ein kleines Kind."],
+    ["Plural · keine + -en", "die Personen → keine unbekannten Personen", "Ich sehe keine unbekannten Personen."],
+  ], []],
+  ["Adjektivendungen 4 · Gemeinsam üben", [
+    ["Merksatz", "In dieser Übersicht ändern sich beim Wechsel vom Nominativ zum Akkusativ nur die maskuline Form von ein und die Adjektivendung.", "Ein sportlicher Mann kommt. Ich sehe einen sportlichen Mann."],
+  ], [
+    ["Ergänze: ___ (ein / freundlich / Mann) wohnt hier.", "Ein freundlicher Mann wohnt hier."],
+    ["Ergänze: Ich sehe ___ (ein / sportlich / Mann) im Park.", "Ich sehe einen sportlichen Mann im Park."],
+    ["Ergänze: Sie trifft ___ (eine / nett / Frau) und sieht ___ (ein / klein / Kind).", "Sie trifft eine nette Frau und sieht ein kleines Kind."],
+  ]],
+];
