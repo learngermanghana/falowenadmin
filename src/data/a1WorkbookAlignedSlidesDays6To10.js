@@ -5,6 +5,23 @@ const connection = ({ grammarUrl = null, workbookUrl, parts, subtitle }) => ({
   parts,
 });
 
+const a1Day9CaseQuestions = [
+  { questionDe: "„Der Lehrer“ in „Der Lehrer ist glücklich.“ – Nominativ, Akkusativ oder Dativ?", modelAnswerDe: "Nominativ: Der Lehrer ist das Subjekt. Sein beschreibt es mit glücklich." },
+  { questionDe: "„ein Auto“ in „Das ist ein Auto.“ – Welcher Fall?", modelAnswerDe: "Nominativ: Nach sein benennt ein Auto das Subjekt. Es ist kein Akkusativobjekt." },
+  { questionDe: "„Arzt“ in „Er wird Arzt.“ – Welcher Fall?", modelAnswerDe: "Nominativ: Nach werden beschreibt Arzt, was er wird. Das ist kein Akkusativobjekt." },
+  { questionDe: "„den Lehrer“ in „Der Student sieht den Lehrer.“ – Welcher Fall?", modelAnswerDe: "Akkusativ: den Lehrer ist das direkte Objekt von sehen." },
+  { questionDe: "„eine Lehrerin“ in „Der Student sieht eine Lehrerin.“ – Welcher Fall?", modelAnswerDe: "Akkusativ: eine Lehrerin ist das direkte Objekt von sehen; die feminine Form bleibt eine." },
+  { questionDe: "„mit dem Lehrer“ in „Ich spreche mit dem Lehrer.“ – Akkusativ oder Dativ?", modelAnswerDe: "Dativ: mit verlangt immer den Dativ; der Lehrer wird dem Lehrer." },
+  { questionDe: "„mit der Lehrerin“ in „Ich spreche mit der Lehrerin.“ – Akkusativ oder Dativ?", modelAnswerDe: "Dativ: mit verlangt den Dativ; die Lehrerin wird der Lehrerin." },
+  { questionDe: "Maskulinum: Welcher bestimmte Artikel steht im Nominativ und im Akkusativ?", modelAnswerDe: "Nominativ: der. Akkusativ: den. Beispiel: der Lehrer → den Lehrer." },
+  { questionDe: "Maskulinum: Welcher unbestimmte Artikel steht im Nominativ und im Akkusativ?", modelAnswerDe: "Nominativ: ein. Akkusativ: einen. Beispiel: ein Lehrer → einen Lehrer." },
+  { questionDe: "Femininum: Welche bestimmten und unbestimmten Artikel stehen im Nominativ und im Akkusativ?", modelAnswerDe: "Nominativ und Akkusativ: die / eine. Beispiel: die Lehrerin / eine Lehrerin." },
+  { questionDe: "Neutrum: Welche bestimmten und unbestimmten Artikel stehen im Nominativ und im Akkusativ?", modelAnswerDe: "Nominativ und Akkusativ: das / ein. Beispiel: das Kind / ein Kind." },
+  { questionDe: "Plural: Wie lauten der bestimmte Artikel und die Verneinung in Nominativ und Akkusativ?", modelAnswerDe: "Nominativ und Akkusativ: die Kinder / keine Kinder. Keine bedeutet hier „no“." },
+];
+
+
+
 export const a1WorkbookAlignedSlidesDays6To10 = [
   {
     id: "a1-day-6-family-hobbies",
@@ -259,22 +276,7 @@ export const a1WorkbookAlignedSlidesDays6To10 = [
       ],
     },
   },
-const a1Day9CaseQuestions = [
-  { questionDe: "„Der Lehrer“ in „Der Lehrer ist glücklich.“ – Nominativ, Akkusativ oder Dativ?", modelAnswerDe: "Nominativ: Der Lehrer ist das Subjekt. Sein beschreibt es mit glücklich." },
-  { questionDe: "„ein Auto“ in „Das ist ein Auto.“ – Welcher Fall?", modelAnswerDe: "Nominativ: Nach sein benennt ein Auto das Subjekt. Es ist kein Akkusativobjekt." },
-  { questionDe: "„Arzt“ in „Er wird Arzt.“ – Welcher Fall?", modelAnswerDe: "Nominativ: Nach werden beschreibt Arzt, was er wird. Das ist kein Akkusativobjekt." },
-  { questionDe: "„den Lehrer“ in „Der Student sieht den Lehrer.“ – Welcher Fall?", modelAnswerDe: "Akkusativ: den Lehrer ist das direkte Objekt von sehen." },
-  { questionDe: "„eine Lehrerin“ in „Der Student sieht eine Lehrerin.“ – Welcher Fall?", modelAnswerDe: "Akkusativ: eine Lehrerin ist das direkte Objekt von sehen; die feminine Form bleibt eine." },
-  { questionDe: "„mit dem Lehrer“ in „Ich spreche mit dem Lehrer.“ – Akkusativ oder Dativ?", modelAnswerDe: "Dativ: mit verlangt immer den Dativ; der Lehrer wird dem Lehrer." },
-  { questionDe: "„mit der Lehrerin“ in „Ich spreche mit der Lehrerin.“ – Akkusativ oder Dativ?", modelAnswerDe: "Dativ: mit verlangt den Dativ; die Lehrerin wird der Lehrerin." },
-  { questionDe: "Maskulinum: Welcher bestimmte Artikel steht im Nominativ und im Akkusativ?", modelAnswerDe: "Nominativ: der. Akkusativ: den. Beispiel: der Lehrer → den Lehrer." },
-  { questionDe: "Maskulinum: Welcher unbestimmte Artikel steht im Nominativ und im Akkusativ?", modelAnswerDe: "Nominativ: ein. Akkusativ: einen. Beispiel: ein Lehrer → einen Lehrer." },
-  { questionDe: "Femininum: Welche bestimmten und unbestimmten Artikel stehen im Nominativ und im Akkusativ?", modelAnswerDe: "Nominativ und Akkusativ: die / eine. Beispiel: die Lehrerin / eine Lehrerin." },
-  { questionDe: "Neutrum: Welche bestimmten und unbestimmten Artikel stehen im Nominativ und im Akkusativ?", modelAnswerDe: "Nominativ und Akkusativ: das / ein. Beispiel: das Kind / ein Kind." },
-  { questionDe: "Plural: Wie lauten der bestimmte Artikel und die Verneinung in Nominativ und Akkusativ?", modelAnswerDe: "Nominativ und Akkusativ: die Kinder / keine Kinder. Keine bedeutet hier „no“." },
-];
-
-  {
+{
     id: "a1-day-9-german-cases",
     course: "A1",
     day: "Day 9",
