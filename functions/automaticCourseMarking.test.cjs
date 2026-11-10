@@ -33,7 +33,8 @@ test('empty submission is an automatic failed result that can be returned to the
   assert.equal(releasable(result), true);
   assert.equal(releasable({ ...result, score: 10, finalScore: 10 }), false);
 });
-\ntest('blank required objective section is held for tutor review and has no releasable score', () => {
+
+test('blank required objective section is held for tutor review and has no releasable score', () => {
   const referenceEntry = {
     referenceAnswerParts: ['teil3', 'teil4'],
     partGrading: { teil3: { gradingMode: 'answer_key' }, teil4: { gradingMode: 'answer_key' } },
@@ -67,7 +68,8 @@ test('complete objective sections keep their AI result unchanged', () => {
   assert.equal(result, original);
   assert.equal(releasable(result), true);
 });
-\ntest('job identity is stable across repeated deliveries and distinct across paths', () => {
+
+test('job identity is stable across repeated deliveries and distinct across paths', () => {
   assert.equal(idForPath('submissions/a'),idForPath('submissions/a'));
   assert.notEqual(idForPath('submissions/A1/posts/a'),idForPath('submissions/A2/posts/a'));
 });
