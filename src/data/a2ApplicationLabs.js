@@ -104,7 +104,7 @@ const LABS = {
       {
         "label": "Aussehen und Charakter",
         "prompt": "Beschreibe Milas Pullover und ihren Charakter in einem Satz.",
-        "hint": "Nominativ · ein grüner Pullover",
+        "hint": "Akkusativ · einen grünen Pullover",
         "answer": "Mila trägt einen grünen Pullover und ist offen.",
         "criterion": "einen grünen Pullover im Akkusativ"
       }
@@ -749,7 +749,7 @@ const LABS = {
         "label": "Anderes Subjekt",
         "prompt": "Leas Kollegin hilft ihr. Formuliere das Ziel mit damit.",
         "hint": "damit · Verb am Ende",
-        "answer": "Die Kollegin hilft Lea, damit sie die Prüfung besteht.",
+        "answer": "Die Kollegin hilft Lea, damit Lea die Prüfung besteht.",
         "criterion": "damit-Satz mit eigenem Subjekt"
       }
     ]
