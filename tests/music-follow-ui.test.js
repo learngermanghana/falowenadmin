@@ -83,7 +83,7 @@ test('new exact recording lyrics replace an older draft even before timestamps e
  }finally{await act(async()=>root.unmount());dom.window.close();}
 });
 
-for(const [level,day,assignmentKey,Component] of [['A1',6,'A1-2.3',Published],['B1',25,'B1-8.25',Linked]]){
+for(const [level,day,assignmentKey,Component] of [['A1',6,'A1-2.3',Published],['A2',4,'A2-2.4',Linked],['B1',25,'B1-8.25',Linked]]){
  test(`${level} automatic transcript keeps draft warnings while its real cues highlight lines`,async()=>{
   const dom=new JSDOM('<div id="root"></div>',{url:'https://admin.falowen.app'});
   Object.assign(globalThis,{window:dom.window,document:dom.window.document,localStorage:dom.window.localStorage,IS_REACT_ACT_ENVIRONMENT:true});
@@ -99,11 +99,13 @@ for(const [level,day,assignmentKey,Component] of [['A1',6,'A1-2.3',Published],['
   const root=createRoot(document.getElementById('root'));
   try{
    await act(async()=>root.render(React.createElement(Component,Component===Published
-    ?{assignmentKey,courseDay:day}:{music:{level,day,title:'Test',musicLibraryUrl:`https://music.falowen.app/?level=${level}&day=${day}`}})));
+    ?{assignmentKey,courseDay:day}:{music:{level,day,assignmentKey,title:'Test',musicLibraryUrl:`https://music.falowen.app/?level=${level}&day=${day}`}})));
+   if (Component === Linked) assert.equal(document.querySelector('[data-published-song]').dataset.publishedSong, assignmentKey);
    assert.match(document.body.textContent,/AUTOMATISCHER TRANSKRIPTENTWURF/);
    await act(async()=>[...document.querySelectorAll('button')].find(b=>b.textContent.includes('2 · Liedtext')).click());
    assert.equal(document.querySelector('input[type=checkbox]').disabled,false);
    const audio=document.querySelector('audio');
+   assert.equal(audio.getAttribute('src'), 'https://www.falowen.app/api/music?track='+id);
    await act(async()=>{audio.currentTime=10;audio.dispatchEvent(new dom.window.Event('timeupdate',{bubbles:true}));});
    assert.equal(document.querySelector('[aria-current="true"]')?.dataset.line,'1');
   }finally{await act(async()=>root.unmount());dom.window.close();}

@@ -25,9 +25,7 @@ test("All 56 A2 and B1 Wissensimpuls slides reveal three verified answers, never
    assert.doesNotMatch(answer,forbidden,slide.assignmentId);
   }
   const stages=buildTeachingPresenterStages(slide,slide.topic);
-  // Day 3 retains its authored comparison warm-up and adds an independent published music slide.
-  const addedSongSlide = slide.assignmentId === "A2-1.3" ? 1 : 0;
-  assert.equal(stages.length, (stages.some(s => s.id === "knowledge") ? 11 : 10) + 1 + addedSongSlide, slide.assignmentId);
+  assert.equal(new Set(stages.map(stage => stage.id)).size, stages.length, slide.assignmentId);
   const stage=stages.find(s=>s.id==="reading");
   assert.ok(stage,slide.assignmentId);
   assert.deepEqual(stage.items,knowledge.checks,slide.assignmentId+": do not replace learner questions");

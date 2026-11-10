@@ -60,10 +60,19 @@ teacher-approved recording text just because their cues are complete.
 
 ## A2 and B1 workbook grammar in Presenter
 
-Days 1–28 of both levels have a grammar slide after the opening activities and
-before Common Mistakes and reading. It includes the day's rules, examples and
-an ungraded oral check with a revealable model answer. The later grammar check
-uses the lesson topic for practice.
+Days 1–28 of both levels have grammar slides after the opening activities and
+before Common Mistakes and reading. Most use one slide with the day's rules,
+examples and an ungraded oral check. A2 Day 2 uses four slides for choosing
+the ending, nominative forms, accusative forms and guided practice. The later
+grammar check uses the lesson topic for practice.
+
+All A2 days have a music stage. Existing song introductions keep their
+recordings. Other days use the same player after the warm-up and resolve the
+public music catalog by level and curriculum day. A separate classroom Hören
+stage appears when the lesson has an authored recording and questions in
+`src/data/interactiveLessonOpenings.js`. New private recordings must also be
+approved by the appropriate learner audio signer. A day can use the music
+and grammar layout while its classroom recording is being prepared.
 
 The learner workbook Grammar tab is the source for the classroom summaries in
 `src/data/a2B1WorkbookGrammar.js`. The file records the learner revision and

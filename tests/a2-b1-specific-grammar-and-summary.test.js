@@ -8,16 +8,19 @@ for (const level of ["A2", "B1"]) {
     const titles = new Set();
     for (const slide of getSlidesByCourse(level)) {
       const stages = buildTeachingPresenterStages(slide, slide.topic);
-      const index = stages.findIndex(stage => stage.id === "workbook-grammar");
-      assert.equal(index, stages.some(stage => stage.id === "knowledge") ? 3 : 2, slide.assignmentId);
-      assert.equal(stages[index + 1].id, "common-mistakes", slide.assignmentId);
-      const grammar = stages[index];
-      titles.add(grammar.title);
-      const rules = grammar.items.slice(0, -1);
-      const check = grammar.items.at(-1);
-      assert.ok(rules.length >= 2 && rules.every(item => item.label && item.prompt && item.example), slide.assignmentId);
-      assert.ok(check.prompt && check.answer && !check.example, slide.assignmentId);
-      assert.equal(stages.filter(stage => stage.id === "workbook-grammar").length, 1, slide.assignmentId);
+      const grammar = stages.filter(stage => stage.type === "workbook-grammar");
+      const day2 = slide.assignmentId === "A2-1.2";
+      assert.equal(grammar.length, day2 ? 4 : 1, slide.assignmentId);
+      const first = stages.indexOf(grammar[0]);
+      assert.deepEqual(stages.slice(first, first + grammar.length), grammar);
+      assert.equal(stages[first + grammar.length].id, "common-mistakes", slide.assignmentId);
+      titles.add(grammar[0].title);
+      const items = grammar.flatMap(stage => stage.items);
+      const rules = items.filter(item => item.example);
+      const checks = items.filter(item => item.answer);
+      assert.ok(rules.length >= 2 && rules.every(item => item.label && item.prompt), slide.assignmentId);
+      assert.equal(checks.length, day2 ? 3 : 1, slide.assignmentId);
+      assert.ok(checks.every(item => item.prompt && !item.example), slide.assignmentId);
     }
     assert.equal(titles.size, 28);
   });
@@ -29,7 +32,7 @@ for (const level of ["A2", "B1"]) {
       const stages = buildTeachingPresenterStages(slide, slide.topic);
       const summary = stages.at(-1);
       assert.equal(summary.id, "lesson-summary", slide.assignmentId);
-      assert.equal(stages.length, (stages.some(s => s.id === "knowledge") ? 11 : 10) + 1, slide.assignmentId);
+      assert.equal(new Set(stages.map(stage => stage.id)).size, stages.length, slide.assignmentId);
       const expressions = summary.items.find(item => item.label === "Redemittel");
       const spoken = summary.items.find(item => item.label === "Sprechprobe");
       const check = summary.items.find(item => item.label === "Selbstcheck");
@@ -65,6 +68,23 @@ for (const level of ["A2", "B1"]) {
     }
   });
 }
+
+test("all 28 A2 decks open with exactly one music player and only authored Hören", () => {
+  const listeningDays = [1, 2, 3, 17, 18, 19, 20, 21, 23];
+  for (const slide of getSlidesByCourse("A2")) {
+    const stages = buildTeachingPresenterStages(slide);
+    const music = stages.filter(stage => stage.variant === "interactive-music-video");
+    const listening = stages.find(stage => stage.variant === "interactive-listening");
+    assert.equal(music.length, 1, slide.assignmentId);
+    assert.equal(music[0].musicVideo.day, slide.dayNumber, slide.assignmentId);
+    assert.equal(Boolean(listening), listeningDays.includes(slide.dayNumber), slide.assignmentId);
+    if (listening) {
+      assert.ok(listening.audioKey && listening.listeningItems.length, slide.assignmentId);
+      assert.ok(stages.indexOf(music[0]) < stages.indexOf(listening), slide.assignmentId);
+    }
+    assert.ok(stages.indexOf(music[0]) < stages.findIndex(stage => stage.id === "workbook-grammar"), slide.assignmentId);
+  }
+});
 
 test("A2 Day 10 summary checks city-exploring language and a real student task", () => {
  const slide = getSlidesByCourse("A2").find(row => row.assignmentId === "A2-4.10");

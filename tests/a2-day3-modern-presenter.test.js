@@ -57,7 +57,8 @@ test('exact teacher-supplied five MCQs and evidence are preserved',()=>{
     assert.equal(q.answer,q.options[q.correctIndex]);
   });
   assert.equal(A2_DAY3_AUDIO_KEY,'a2/day-03/dinge-und-personen-vergleichen.mp3');
-  assert.match(slide.workbookConnection.parts[3].detailEn,/Julia and Tobias/,'graded workbook Hören stays separate');
+  const workbookListening = slide.workbookConnection.parts.find(part => part.label === "Teil 4 · Hören");
+  assert.match(workbookListening.detailEn,/Julia and Tobias/,'graded workbook Hören stays separate');
 });
 
 test('Day 3 role-play has three interactive scenarios with graduated, revealable models',()=>{
@@ -80,8 +81,7 @@ test('Day 3 music uses the exact uploaded R2 song and the same inline player as 
   assert.equal(selectRecordedLessonTrack({tracks:[exact,another]},{level:'A2',day:3,assignmentKey:'A2-1.3'})?.objectKey,exact.objectKey);
   assert.equal(selectRecordedLessonTrack({tracks:[another]},{level:'A2',day:3,assignmentKey:'A2-1.3'}),null,'never substitute another Day-3 song');
   const player=readFileSync(new URL('../src/components/LinkedPublishedSongLessonStage.jsx',import.meta.url),'utf8');
-  assert.ok(player.includes('[1,2,3,19,20,21,23].includes(day)'));
-  assert.ok(player.includes("day === 3 ? 'A2-1.3'"));
+  assert.ok(player.includes('Number.isInteger(day) && day >= 1 && day <= 28'));
   assert.equal(stages.filter(s=>s.variant==='interactive-music-video').length,1);
 });
 

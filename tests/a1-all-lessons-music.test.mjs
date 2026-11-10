@@ -38,6 +38,10 @@ test('A1 presenter uses one music stage for each lesson with complete authored s
   const expected=music || slide.assignmentId==='A1-14.1' ? 1 : 0;
   assert.equal(stages.filter(s=>s.type==='published-music').length,expected,slide.assignmentId);
   const recording=getA1PresenterRecording(slide.assignmentId,slide.dayNumber);
+  if (!recording) {
+   assert.equal(expected,0,slide.assignmentId);
+   continue;
+  }
   assert.equal(recording.level,'A1');
   if(recording.status==='discovery'){
    assert.equal(recording.day,slide.dayNumber);
