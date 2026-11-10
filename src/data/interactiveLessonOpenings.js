@@ -31,8 +31,18 @@ const ENTRIES = {
   },
   'A2-1.3': {
     assignmentId: 'A2-1.3', title: 'Dinge und Personen vergleichen',
-    // Use the same interactive V2 classroom shell as Day 2, but do not
-    // manufacture a Day 3 music recording that has not been identified.
+    // The uploaded Day-3 music is separate from the ungraded smartphone
+    // Hören. Keep the four-step comparison warm-up and give music its own
+    // teacher-led slide using the same R2 player as Days 1 and 2.
+    musicIntro: {
+      mediaType: 'music', level: 'A2', day: 3,
+      title: 'Zwei Städte',
+      introQuestion: 'Welche zwei Städte werden im Lied verglichen? Was ist in einer Stadt besser?',
+      musicLibraryUrl: 'https://music.falowen.app/?level=A2&day=3',
+      studentPurpose: 'Höre das Lied „Zwei Städte“ und formuliere einen Vergleich mit als oder wie.',
+      teacherPurpose: 'Spiele die veröffentlichte Musikaufnahme „Zwei Städte“ und besprich einen Vergleich. Danach folgt das eigenständige Hören über Jonas und zwei Smartphones.',
+      nextStep: 'Danach: Hören · Jonas vergleicht zwei Smartphones · fünf Fragen.',
+    },
     warmup: [
       {
         label: 'Gleich oder anders?', minutes: 2,
@@ -584,7 +594,7 @@ export function getInteractiveLessonOpening(assignmentId = "") {
 }
 export function isInteractiveOpeningStage(assignmentId = "", stageId = "") {
   const lesson = getInteractiveLessonOpening(assignmentId);
-  if (lesson?.musicIntro && stageId === "warmup") return false; // YouTube introduction replaces the warm-up only
+  if (lesson?.musicIntro && stageId === "warmup" && !lesson.warmup?.length) return false; // Days 1/2 replace warm-up; Day 3 keeps its four challenges
   if (lesson?.listening?.mediaType === "music") return false; // Independent YouTube Musik / Lesen stages
   return Boolean(lesson && ((stageId === "warmup" && lesson.warmup?.length > 0) || (stageId === "knowledge" && lesson.listening)));
 }
