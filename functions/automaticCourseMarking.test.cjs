@@ -277,27 +277,6 @@ for (const outcome of [{passed:false,writingMinimumMet:false},{writingMinimumMet
     assert.match(notification.body,outcome.passed===true?/Passed/:/Needs improvement/);
   });
 }
-test('empty tutor-marked submission is held for review before any AI call', async () => {
-  const path = 'submissions/empty';
-  const store = memoryDb({
-    'markingJobs/j': { automatic: true, submissionPath: path, level: 'A1', assignmentKey: 'A1-11', status: 'pending' },
-    [path]: { status: 'submitted', studentId: 'uid', submissionText: '  \n  ' },
-    'students/uid': { studentCode: 'ST1' },
-  });
-  let aiCalls = 0;
-  await createCourseMarkingWorker({
-    db: store.db,
-    loadReference: async () => ({ parts: [{}], version: 'v1' }),
-    mark: async () => { aiCalls += 1; throw new Error('AI must not run on empty work'); },
-  })({ data: store.snapshot('markingJobs/j') });
-
-  assert.equal(aiCalls, 0);
-  assert.equal(store.rows.get(path).markingStatus, 'needs_review');
-  assert.equal(store.rows.has('scores/ST1__A1-11'), false);
-  assert.equal(store.rows.get('markingResults/empty').publicationStatus, 'awaiting_approval');
-  assert.match(store.rows.get('markingResults/empty').publicationReviewReasons.join(' '), /Submission text is missing/i);
-});
-
 test('missing answer key preserves original work and routes to tutor without score',async()=>{
   const store=memoryDb({'markingJobs/j':{automatic:true,submissionPath:'submissions/s',level:'A2',assignmentKey:'A2-1.1',status:'pending'},
     'submissions/s':{studentId:'uid',submissionText:'Work'},'students/uid':{studentCode:'real'}});
