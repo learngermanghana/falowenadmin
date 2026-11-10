@@ -2,6 +2,7 @@ import { B1_DAY27_LISTENING } from './b1Day27Listening.js';
 import { A2_DAY23_CLASSROOM_LISTENING } from './a2Day23ClassroomListening.js';
 import { A2_DAY1_LISTENING } from './a2Day1Listening.js';
 import { A2_DAY2_LISTENING } from './a2Day2Listening.js';
+import { A2_DAY3_LISTENING } from './a2Day3Listening.js';
 import { A2_DAY19_LISTENING } from './a2Day19Listening.js';
 // Curated reusable 10-minute classroom warm-ups. The A2 Day 17 Hören is
 // the only verified recording; never invent audio or override scored workbook work.
@@ -27,6 +28,46 @@ const ENTRIES = {
       nextStep: 'Danach: Hören · Tom und Sarah · fünf Fragen zu Aussehen, Kleidung und Charakter.',
     },
     listening: A2_DAY2_LISTENING,
+  },
+  'A2-1.3': {
+    assignmentId: 'A2-1.3', title: 'Dinge und Personen vergleichen',
+    // Use the same interactive V2 classroom shell as Day 2, but do not
+    // manufacture a Day 3 music recording that has not been identified.
+    warmup: [
+      {
+        label: 'Gleich oder anders?', minutes: 2,
+        context: 'Zwei Handys kosten jeweils 300 Euro.',
+        prompt: 'Wie vergleichst du den Preis?',
+        options: ['Das erste Handy ist teurer als das zweite.', 'Beide Handys sind genauso teuer.', 'Das erste ist am teuersten.'],
+        correctIndex: 1, answer: 'Beide Handys sind genauso teuer.',
+        teacherHint: 'Die Lernenden erklären den Unterschied zwischen wie und als.',
+      },
+      {
+        label: 'Komparativ finden', minutes: 2,
+        context: 'Das Galaxy kostet 500 Euro. Das Nexus kostet 350 Euro.',
+        prompt: 'Bilde einen passenden Vergleich mit billiger als.',
+        lines: ['Nexus · Galaxy · billiger als'],
+        answer: 'Das Nexus ist billiger als das Galaxy.',
+        teacherHint: 'Komparativ + als; beide Vergleichsobjekte nennen.',
+      },
+      {
+        label: 'Höchster Grad', minutes: 2,
+        context: 'Du vergleichst drei Mobiltelefone.',
+        prompt: 'Bilde einen Satz mit am besten oder am günstigsten.',
+        lines: ['gut → besser → am besten', 'günstig → günstiger → am günstigsten'],
+        answer: 'Von diesen drei Handys ist das Nexus am günstigsten.',
+        teacherHint: 'Bei drei Alternativen den Superlativ verwenden.',
+      },
+      {
+        label: 'Entscheidung begründen', minutes: 4,
+        context: 'Ein Handy macht bessere Fotos, ein anderes kostet weniger.',
+        prompt: 'Welches Handy würdest du kaufen? Begründe mit weil.',
+        lines: ['Mir sind ... wichtiger.', 'Ich kaufe ..., weil ...'],
+        answer: 'Ich würde das Handy mit der besseren Kamera kaufen, weil mir gute Fotos wichtiger sind.',
+        teacherHint: 'Zuerst Partneraustausch, dann zwei begründete Entscheidungen hören.',
+      },
+    ],
+    listening: A2_DAY3_LISTENING,
   },
   'A2-1.1': {
     assignmentId:'A2-1.1', title:'Small Talk', warmup:[],
