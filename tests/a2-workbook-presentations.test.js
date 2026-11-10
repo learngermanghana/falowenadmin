@@ -13,7 +13,7 @@ test('every A2 lesson exposes one named correction slide and its existing workbo
   assert.equal(presentations.length,1,slide.assignmentId);
   const stage=presentations[0],task=A2_WORKBOOK_PRESENTATIONS[slide.dayNumber];
   assert.deepEqual(stage.presentation,task);
-  assert.equal(stages.indexOf(stage)+1,stages.findIndex(s=>s.id==='workbook'));
+  assert.equal(stages.at(-1),stage,slide.assignmentId);
   const mistakes=stages.filter(s=>s.type==='common-mistakes');
   assert.equal(mistakes.length,1);
   assert.match(mistakes[0].title,/Common mistakes/);

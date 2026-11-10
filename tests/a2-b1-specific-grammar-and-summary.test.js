@@ -32,7 +32,7 @@ for (const level of ["A2", "B1"]) {
     assert.equal(slides.length, 28);
     for (const slide of slides) {
       const stages = buildTeachingPresenterStages(slide, slide.topic);
-      const summary = stages.at(-1);
+      const summary = stages.find(stage => stage.id === "lesson-summary");
       assert.equal(summary.id, "lesson-summary", slide.assignmentId);
       assert.equal(new Set(stages.map(stage => stage.id)).size, stages.length, slide.assignmentId);
       const expressions = summary.items.find(item => item.label === "Redemittel");
@@ -46,7 +46,7 @@ for (const level of ["A2", "B1"]) {
       assert.ok(spoken.detail.includes(slide.studentQuestionsDe.at(-1)), slide.assignmentId);
       assert.equal(check.detail, slide.wrapUpTaskDe, slide.assignmentId);
       assert.doesNotMatch([expressions.detail, spoken.detail].join(" "), /You can talk about|You can use today.s target grammar accurately/i, slide.assignmentId);
-      assert.deepEqual(stages.slice(-4).map(s => s.id), ["questions", "workbook-presentation", "workbook", "lesson-summary"], slide.assignmentId);
+      assert.deepEqual(stages.slice(-4).map(s => s.id), (slide.course === "A2" ? ["questions", "workbook", "lesson-summary", "workbook-presentation"] : ["questions", "workbook-presentation", "workbook", "lesson-summary"]), slide.assignmentId);
     }
   });
 
@@ -71,26 +71,31 @@ for (const level of ["A2", "B1"]) {
   });
 }
 
-test("all 28 A2 decks open with exactly one music player and only authored Hören", () => {
+test("all 28 A2 decks use the Day 1 opening and finish with the workbook presentation", () => {
   const listeningDays = [1, 2, 3, 17, 18, 19, 20, 21, 23];
   for (const slide of getSlidesByCourse("A2")) {
     const stages = buildTeachingPresenterStages(slide);
     const music = stages.filter(stage => stage.variant === "interactive-music-video");
     const listening = stages.find(stage => stage.variant === "interactive-listening");
     assert.equal(music.length, 1, slide.assignmentId);
+    assert.equal(stages[0].id, "intro", slide.assignmentId);
+    assert.equal(stages[1], music[0], slide.assignmentId);
     assert.equal(music[0].musicVideo.day, slide.dayNumber, slide.assignmentId);
+    assert.ok(stages.every(stage => stage.variant !== "interactive-warmup" && stage.title !== "Warm-up"), slide.assignmentId);
     assert.equal(Boolean(listening), listeningDays.includes(slide.dayNumber), slide.assignmentId);
     if (listening) {
       assert.ok(listening.audioKey && listening.listeningItems.length, slide.assignmentId);
-      assert.ok(stages.indexOf(music[0]) < stages.indexOf(listening), slide.assignmentId);
+      assert.equal(stages[2], listening, slide.assignmentId);
     }
-    assert.ok(stages.indexOf(music[0]) < stages.findIndex(stage => stage.id === "workbook-grammar"), slide.assignmentId);
+    assert.equal(stages[listening ? 3 : 2].id, "workbook-grammar", slide.assignmentId);
+    assert.equal(stages.filter(stage => stage.id === "workbook-presentation").length, 1, slide.assignmentId);
+    assert.equal(stages.at(-1).id, "workbook-presentation", slide.assignmentId);
   }
 });
 
 test("A2 Day 10 summary checks city-exploring language and a real student task", () => {
  const slide = getSlidesByCourse("A2").find(row => row.assignmentId === "A2-4.10");
- const summary = buildTeachingPresenterStages(slide, slide.topic).at(-1);
+ const summary = buildTeachingPresenterStages(slide, slide.topic).find(stage => stage.id === "lesson-summary");
  assert.match(summary.items.find(x=>x.label==="Redemittel").detail,/entdecken/);
  assert.match(summary.items.find(x=>x.label==="Sprechprobe").detail,/Entdeckungstag/);
 });

@@ -9,17 +9,16 @@ import { B1_DAY25_AUDIO_KEY, B1_DAY25_LISTENING, B1_DAY25_LISTENING_QUESTIONS, B
 import { A2_DAY18_BANK_AUDIO_KEY, A2_DAY18_BANK_LISTENING, A2_DAY18_BANK_QUESTIONS, A2_DAY18_BANK_TRANSCRIPT } from "../src/data/a2Day18BankListening.js";
 import { A2_DAY20_AUDIO_KEY, A2_DAY20_LISTENING, A2_DAY20_LISTENING_QUESTIONS, A2_DAY20_TRANSCRIPT } from "../src/data/a2Day20Listening.js";
 
-test("A2 Day 17 replaces only its opening stages with a 10-minute warm-up and listening", () => {
+test("A2 Day 17 opens with music and retains its pharmacy listening", () => {
   const slide = getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-6.17");
   assert.ok(slide);
   const stages = buildTeachingPresenterStages(slide, slide.topic);
   const warm = stages.find((stage) => stage.id === "warmup");
   const listening = stages.find((stage) => stage.id === "knowledge");
   assert.equal(warm.type, "list");
-  assert.equal(warm.variant, "interactive-warmup");
-  assert.equal(warm.suggestedMinutes, 10);
-  assert.equal(warm.challengeItems.length, 4);
-  assert.equal(warm.challengeItems.reduce((total, row) => total + row.minutes, 0), 10);
+  assert.equal(warm.variant, "interactive-music-video");
+  assert.equal(stages[1], warm);
+  assert.equal(warm.musicVideo.day, 17);
   assert.equal(listening.type, "knowledge");
   assert.equal(listening.variant, "interactive-listening");
   assert.equal(listening.suggestedMinutes, 6);
@@ -32,7 +31,7 @@ test("A2 Day 17 replaces only its opening stages with a 10-minute warm-up and li
   assert.ok(!buildTeachingPresenterStages(day16).some(stage => stage.variant === "interactive-listening"));
 });
 
-test("other A2/B1 lessons still have the old warm-up and short reading", () => {
+test("other A2/B1 lessons keep their opening slot and short reading", () => {
   for (const level of ["A2","B1"]) {
     for (const slide of getSlidesByCourse(level)) {
       if (slide.assignmentId === "A2-6.17") continue;
@@ -57,7 +56,7 @@ test("pharmacy questions are key-backed and transcript contains uploaded facts",
 });
 
 
-test("chosen chapters reuse four authored 10-minute warm-up steps without invented recordings", () => {
+test("authored warm-up material stays available while A2 opens with music", () => {
   const chosen = ["A2-1.3","A2-3.8","A2-6.17","A2-7.18","A2-7.20","B1-2.5","B1-7.22","B1-8.25"];
   // Listening-only music chapters may also use the shared registry, without
   // replacing their existing warm-up. Check the authored warm-up set only.
@@ -76,36 +75,30 @@ test("chosen chapters reuse four authored 10-minute warm-up steps without invent
       assert.ok((item.options?.length || 0) + (item.lines?.length || 0) > 0,id);
     }
     const stages = buildTeachingPresenterStages(slide,slide.topic);
-    // Days B1-25 and A2-18 keep their authored four warm-ups as source material,
-    // but their visual warm-up slot is the unscored music lesson.
-    if (id === "B1-8.25" || id === "A2-7.18" || id === "A2-7.20") {
-      assert.equal(stages.find(s => s.id === "warmup").variant, "interactive-music-video", id);
+    const opening = stages[1];
+    if (slide.course === "A2" || id === "B1-8.25") {
+      assert.equal(opening.variant, "interactive-music-video", id);
+      assert.equal(opening.musicVideo.day, slide.dayNumber, id);
+      assert.equal(opening.musicVideo.youtubeId, undefined, id);
       if (id === "A2-7.18") {
-        assert.equal(stages.find(s => s.id === "warmup").musicVideo.youtubeId, undefined);
-        assert.ok(stages.find(s => s.id === "warmup").musicVideo.audioUrl.includes("/api/music"));
-      } else if (id === "A2-7.20") {
-        assert.equal(stages.find(s => s.id === "warmup").musicVideo.musicLibraryUrl,
-          "https://music.falowen.app/?level=A2&day=20");
-        assert.equal(stages.find(s => s.id === "warmup").musicVideo.audioUrl, undefined);
+        assert.ok(opening.musicVideo.audioUrl.includes("/api/music"));
       } else {
-        assert.equal(stages.find(s => s.id === "warmup").musicVideo.youtubeId, undefined);
-        assert.equal(stages.find(s => s.id === "warmup").musicVideo.musicLibraryUrl,
-          "https://music.falowen.app/?level=B1&day=25");
+        assert.equal(opening.musicVideo.musicLibraryUrl, `https://music.falowen.app/?level=${slide.course}&day=${slide.dayNumber}`);
       }
     } else {
-      assert.equal(stages.find(s => s.id === "warmup").variant, "interactive-warmup", id);
+      assert.equal(opening.variant, "interactive-warmup", id);
     }
     assert.equal(stages.find(s=>s.id==="warmup").type,"list",id);
     assert.equal(stages.find(s=>s.id==="reading").type,"knowledge",id);
     assert.equal(Boolean(entry.listening),["A2-1.3","A2-6.17","A2-7.18","A2-7.20","B1-8.25"].includes(id),id);
     assert.equal(stages.find(s=>s.id==="knowledge")?.variant==="interactive-listening",["A2-1.3","A2-6.17","A2-7.18","A2-7.20","B1-8.25"].includes(id),id);
-    assert.equal(isInteractiveOpeningStage(id,"warmup"),!["B1-8.25","A2-7.18","A2-7.20"].includes(id),id);
+    assert.equal(isInteractiveOpeningStage(id,"warmup"),slide.course === "B1" && id !== "B1-8.25",id);
     assert.equal(isInteractiveOpeningStage(id,"knowledge"),["A2-1.3","A2-6.17","A2-7.18","A2-7.20","B1-8.25"].includes(id),id);
     assert.equal(isInteractiveOpeningStage(id,"phrases"),false,id);
   }
 });
 
-test("only the chosen chapters change: other A2/B1 days keep classic opening and knowledge", () => {
+test("unconfigured A2/B1 days never add a classroom listening exercise", () => {
   for (const level of ["A2","B1"]) for(const slide of getSlidesByCourse(level)) {
     if(getInteractiveLessonOpening(slide.assignmentId)) continue;
     const stages=buildTeachingPresenterStages(slide,slide.topic);
