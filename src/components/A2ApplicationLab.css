@@ -1,0 +1,41 @@
+.a2-application-lab{display:grid;gap:clamp(.7rem,1.6vw,1.15rem);align-content:start;max-width:1120px;width:100%;margin-inline:auto;color:#13233b}
+.a2-application-lab__heading{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.65rem}
+.a2-application-lab__heading>div{min-width:0;max-width:810px}
+.a2-application-lab__heading h1{font-size:clamp(1.5rem,3vw,2.25rem);line-height:1.1;margin:.25rem 0 .35rem}
+.a2-application-lab__heading p{margin:0;color:#475569;font-size:clamp(.93rem,1.35vw,1.05rem)}
+.a2-application-lab__eyebrow{font-size:.74rem;letter-spacing:.08em;font-weight:850;color:#2563eb}
+.a2-application-lab__duration{border:1px solid #dbeafe;color:#1d4ed8;border-radius:999px;padding:.42rem .73rem;font-size:.71rem;font-weight:800;white-space:nowrap}
+.a2-application-lab__facts{overflow-x:auto;max-width:100%;border:1px solid #dbe3ee;background:white;border-radius:14px}
+.a2-application-lab__facts:focus-visible{outline:3px solid #60a5fa;outline-offset:2px}
+.a2-application-lab__facts table{width:100%;border-collapse:collapse;text-align:left;font-size:clamp(.79rem,1.2vw,.98rem)}
+.a2-application-lab__facts thead{background:#eef4fb}
+.a2-application-lab__facts th,.a2-application-lab__facts td{padding:.72rem clamp(.6rem,1.5vw,.95rem);border-bottom:1px solid #e7edf4;min-width:88px;white-space:normal}
+.a2-application-lab__facts tbody tr:last-child th,.a2-application-lab__facts tbody tr:last-child td{border-bottom:0}
+.a2-application-lab__facts th{font-weight:760;color:#132d4b}
+.a2-application-lab__facts tbody tr:nth-child(even){background:#f8fafc}
+.a2-application-lab__question{display:grid;gap:.55rem;background:#f7f9fd;border:1px solid #dfe7f2;padding:clamp(.9rem,2.1vw,1.4rem);border-radius:18px;min-width:0}
+.a2-application-lab__meta{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.4rem;color:#48627c;font-size:.72rem}
+.a2-application-lab__meta strong{letter-spacing:.075em}
+.a2-application-lab__meta span{font-weight:720;color:#1d4ed8}
+.a2-application-lab__progress{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.4rem;margin:.1rem 0 .2rem}
+.a2-application-lab__progress button{appearance:none;border:0;border-radius:999px;background:#d9e2ee;min-height:5px;cursor:pointer;padding:0}
+.a2-application-lab__progress button.is-active{background:#1d4ed8}
+.a2-application-lab__progress button.is-done{background:#86b3e8}
+.a2-application-lab__progress button:focus-visible{outline:3px solid #60a5fa;outline-offset:4px}
+.a2-application-lab__question h2{font-size:clamp(1.1rem,2vw,1.4rem);margin:.15rem 0 0}
+.a2-application-lab__prompt{font-size:clamp(1.05rem,1.75vw,1.3rem);line-height:1.5;margin:.05rem 0 .4rem;font-weight:630}
+.a2-application-lab__model{background:#fff;border-left:4px solid #2563eb;padding:.8rem 1rem;border-radius:8px;display:grid;gap:.3rem}
+.a2-application-lab__model>strong{font-size:.76rem;color:#1d4ed8;letter-spacing:.04em;text-transform:uppercase}
+.a2-application-lab__model p{margin:0;line-height:1.4;font-size:1rem}
+.a2-application-lab__model small{color:#475569;font-size:.79rem}
+.a2-application-lab__rating{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:.3rem}
+.a2-application-lab__rating button{background:white;border:1px solid #cbd5e1;border-radius:9px;padding:.45rem .7rem;color:#1e293b;font-size:.82rem;cursor:pointer}
+.a2-application-lab__rating button.is-selected{background:#e0ecff;border-color:#2563eb;color:#1e40af;font-weight:800}
+.a2-application-lab__actions{display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap;margin-top:.3rem}
+.a2-application-lab__actions button{border:1px solid #bfd1e6;background:white;color:#1e40af;padding:.55rem .85rem;border-radius:9px;font-size:.9rem;font-weight:730;cursor:pointer}
+.a2-application-lab__actions button:focus-visible,.a2-application-lab__rating button:focus-visible{outline:3px solid #60a5fa;outline-offset:2px}
+.a2-application-lab__actions button:disabled{opacity:.4;cursor:not-allowed}
+.a2-application-lab__actions .a2-application-lab__reveal{background:#1d4ed8;color:white;border-color:#1d4ed8}
+.a2-application-lab__nav{display:flex;gap:.4rem}
+.a2-application-lab__footer{font-size:.76rem;color:#60738a;margin:0;line-height:1.4}
+@media (max-width:640px){.a2-application-lab__heading h1{font-size:1.55rem}.a2-application-lab__duration{font-size:.64rem}.a2-application-lab__facts th,.a2-application-lab__facts td{padding:.56rem .5rem;min-width:96px;font-size:.78rem}.a2-application-lab__question{border-radius:14px;padding:.75rem}.a2-application-lab__actions{align-items:stretch}.a2-application-lab__nav{margin-left:auto}}

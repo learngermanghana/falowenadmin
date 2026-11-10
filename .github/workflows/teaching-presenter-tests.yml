@@ -90,6 +90,8 @@ jobs:
         run: node --test tests/b1-curated-warmup-and-vocabulary.test.js tests/a2-b1-warmup-support.test.js
       - name: Verify A2/B1 contextual grammar answers and lesson summaries
         run: node --test tests/a2-b1-specific-grammar-and-summary.test.js tests/presenter-grammar-diagnostic-and-teacher-purpose.test.js
+      - name: Verify all 28 A2 topic application labs and keep B1 unchanged
+        run: node --test tests/a2-application-labs-28-days.test.js
       - name: Verify A2 and B1 curated Wissensimpuls answer bank
         run: node --test tests/a2-b1-curated-knowledge-answers.test.js tests/a2-twelve-teacher-challenges.test.js tests/b1-six-teacher-challenges.test.js
       - name: Verify A2/B1 speaking hints and teacher feedback

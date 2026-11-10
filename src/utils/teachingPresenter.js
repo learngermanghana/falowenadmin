@@ -16,6 +16,7 @@ import { getB1WarmupFollowUp } from "../data/b1WarmupFollowUps.js";
 import { getB1VocabularyQuestion } from "../data/b1VocabularyQuestions.js";
 import { getA2B1KnowledgeAnswers } from "../data/a2B1KnowledgeAnswers.js";
 import { getA2FocusedPractice, getA2PresenterKnowledge } from "../data/a2PresenterKnowledge.js";
+import { getA2ApplicationLab } from "../data/a2ApplicationLabs.js";
 import { getInteractiveLessonOpening } from "../data/interactiveLessonOpenings.js";
 import { getB1FocusedPractice, getB1PresenterKnowledge } from "../data/b1PresenterKnowledge.js";
 import { getPresenterTopicFoundation } from "../data/presenterTopicFoundations.js";
@@ -1154,6 +1155,28 @@ function buildKnowledgeAnswerItems(knowledge = {}, assignmentId = "") {
 }
 
 function buildA2B1GrammarCheckStage(slide = {}, support = {}, level = "") {
+  // The original grammar explanation and targeted errors remain separate.
+  // A2 now uses one concrete, three-step oral application lab instead of
+  // repeating the later speaking questions on this slide.
+  if (level === "A2") {
+    const lab = getA2ApplicationLab(slide.assignmentId);
+    if (!lab) throw new Error(`Missing A2 application lab for ${slide.assignmentId}`);
+    return {
+      id: "grammar-check", type: "grammar-check", variant: "a2-application-lab",
+      kicker: "Grammatik · Anwenden", title: lab.title, lab,
+      instruction: "Die Grammatik wurde bereits erklärt. " + lab.context,
+      items: lab.tasks.map(task => ({
+        id: task.id, label: task.label, prompt: task.prompt,
+        answerLabel: "Musterantwort", answer: task.answer,
+        note: task.criterion,
+      })),
+      suggestedMinutes: 6,
+      teacherPurpose: {
+        student: "Lies die Fakten. Antworte in ganzen Sätzen und wende die Zielgrammatik an.",
+        teacher: "Nicht neu unterrichten. Erst die Tabelle zeigen und Antwort hören; dann Musterantwort aufdecken und Sicher oder Noch üben markieren. Unbewertete Unterrichtsübung.",
+      },
+    };
+  }
   const curatedItems = Array.isArray(slide.grammarCheckItems)
     ? slide.grammarCheckItems.filter((item) => item?.prompt && item?.answer).slice(0, 3)
     : [];

@@ -22,6 +22,7 @@ import B1HousingChoicePractice from "./B1HousingChoicePractice.jsx";
 import B1SustainabilityDecisions from "./B1SustainabilityDecisions.jsx";
 import A2SportMatchmaker from "./A2SportMatchmaker.jsx";
 import InteractiveLessonOpening from "./InteractiveLessonOpening.jsx";
+import A2ApplicationLab from "./A2ApplicationLab.jsx";
 import { MusicVideoStage, MusicReadingStage } from "./MusicTeachingStages.jsx";
 import { isInteractiveOpeningStage } from "../data/interactiveLessonOpenings.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
@@ -1078,6 +1079,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
             <B1WorkbookPresentation key={`${slide.id}:${stage.id}`} stage={stage}/>
           ) : stage.type === "workbook-presentation" ? (
             <A2WorkbookPresentation key={`${slide.id}:${stage.id}`} stage={stage}/>
+          ) : stage.variant === "a2-application-lab" ? (
+            <A2ApplicationLab key={`${slide.assignmentId}:${stage.id}`} lab={stage.lab} />
           ) : (stage.type === "grammar-check" || stage.type === "common-mistakes" || stage.type === "workbook-grammar") ? (
             <section key={`${slide.assignmentId}:${stage.id}`} className="presenter-grammar-check">
               <div className="presenter-grammar-check-heading">

@@ -57,6 +57,12 @@ for (const level of ["A2", "B1"]) {
       const sourceQuestions = slide.studentQuestionsDe || [];
       const models = slide.speakingModels || [];
       assert.equal(stage.items.length, 3, slide.assignmentId);
+      if (level === "A2") {
+        assert.equal(stage.variant,"a2-application-lab",slide.assignmentId);
+        assert.deepEqual(stage.items.map(item=>item.prompt),stage.lab.tasks.map(task=>task.prompt),slide.assignmentId);
+        assert.deepEqual(stage.items.map(item=>item.answer),stage.lab.tasks.map(task=>task.answer),slide.assignmentId);
+        continue;
+      }
       if (models.length !== sourceQuestions.length) continue;
       for (const item of stage.items) {
         const sourceIndex = sourceQuestions.indexOf(item.prompt);
