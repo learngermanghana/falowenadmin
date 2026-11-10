@@ -15,8 +15,8 @@ const stages = buildTeachingPresenterStages(slide, slide.topic);
 test('A2 Day 2 uses published music, then separate classroom Hören and later scenario before Sprechen', () => {
   assert.equal(slide.assignmentId, 'A2-1.2');
   assert.equal(getTeachingSlideByAssignmentId('A2-1.2')?.id, slide.id);
-  assert.deepEqual(stages.slice(0, 7).map(s=>s.id),
-    ['intro','warmup','knowledge','workbook-grammar', 'common-mistakes','reading','grammar-check']);
+  assert.deepEqual(stages.slice(0, 10).map(s=>s.id),
+    ['intro','warmup','knowledge','workbook-grammar', 'workbook-grammar-2', 'workbook-grammar-3', 'workbook-grammar-4', 'common-mistakes','reading','grammar-check']);
   assert.equal(stages[1].variant, 'interactive-music-video');
   assert.equal(stages[1].musicVideo.day, 2);
   assert.equal(stages[2].variant, 'interactive-listening');
@@ -66,7 +66,7 @@ test('Day 2 music chooses one actual library track instead of inventing a song o
     {level:'A2',day:2,assignmentKey:'A2-1.2'});
   assert.equal(chosen?.objectKey,song.objectKey);
   const player=readFileSync(new URL('../src/components/LinkedPublishedSongLessonStage.jsx',import.meta.url),'utf8');
-  assert.ok(player.includes('[1,2,19,20,21,23].includes(day)'));
+  assert.ok(player.includes('Number.isInteger(day) && day >= 1 && day <= 28'));
   assert.ok(player.includes("day === 2 ? 'A2-1.2'"));
   const listening=readFileSync(new URL('../src/components/InteractiveLessonOpening.jsx',import.meta.url),'utf8');
   assert.ok(listening.includes('[1, 2, 3, 18, 19, 20, 21, 23].includes(lesson.listening.day)'));

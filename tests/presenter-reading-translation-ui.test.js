@@ -36,6 +36,26 @@ for(const level of ['A2','B1'])test(level+' all 28 real reading slides reveal on
   await act(async()=>root.render(React.createElement(Presenter,{slide,onExit(){}})));
   const stages=buildTeachingPresenterStages(slide);const index=stages.findIndex(s=>s.variant==='lesson-reading');
   const jump=document.querySelector('.presenter-stage-jump select');assert.ok(jump,slide.assignmentId);
+  if (level === 'A2' && slide.dayNumber === 2) {
+   const first = stages.findIndex(stage => stage.type === 'workbook-grammar');
+   await act(async () => {
+    jump.value = String(first);
+    jump.dispatchEvent(new w.Event('change', { bubbles: true }));
+   });
+   const grammarPages = stages.filter(stage => stage.type === 'workbook-grammar');
+   for (const page of grammarPages) {
+    const board = document.querySelector('.presenter-content-workbook-grammar');
+    assert.equal(board.querySelector('h1').textContent, page.title);
+    assert.equal(board.querySelectorAll('blockquote').length, page.items.filter(item => item.example).length);
+    for (const solution of board.querySelectorAll('details')) {
+     assert.equal(solution.open, false);
+     await click(solution.querySelector('summary'));
+     assert.equal(solution.open, true);
+    }
+    await click(button('Next slide →'));
+   }
+   assert.ok(document.querySelector('.presenter-stage-common-mistakes'));
+  }
   if ((level === 'A2' && slide.dayNumber === 23) || (level === 'B1' && slide.dayNumber === 2)) {
    const grammarIndex = stages.findIndex(stage => stage.id === 'workbook-grammar');
    const grammar = stages[grammarIndex];

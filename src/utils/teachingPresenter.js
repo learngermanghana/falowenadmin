@@ -1,6 +1,6 @@
 import { B1_WORKBOOK_PRESENTATIONS } from '../data/b1WorkbookPresentations.js';
 import { A2_WORKBOOK_PRESENTATIONS } from '../data/a2WorkbookPresentations.js';
-import { A2_B1_WORKBOOK_GRAMMAR } from "../data/a2B1WorkbookGrammar.js";
+import { A2_B1_WORKBOOK_GRAMMAR, A2_DAY_2_ADJECTIVE_GRAMMAR } from "../data/a2B1WorkbookGrammar.js";
 import { getA2B1CommonMistakes } from '../data/a2B1CommonMistakes.js';
 import { getPresenterReadingLesson } from '../data/presenterReadingLessons.js';
 import { getAdvancedPresenterReadingLesson } from '../data/advancedPresenterReadingLessons.js';
@@ -2056,28 +2056,56 @@ function standardizeA2B1Stages(stages, slide) {
   const level = classroomLevel(slide);
   const day = Number(key.split(".").at(-1));
   const grammar = A2_B1_WORKBOOK_GRAMMAR[level]?.[day];
+  const grammarPages = key === "A2-1.2"
+    ? A2_DAY_2_ADJECTIVE_GRAMMAR
+    : grammar ? [[grammar[0], grammar[1], [grammar[2]]]] : [];
   const reading = getPresenterReadingLesson(key);
   const mistakes = getA2B1CommonMistakes(key);
-  if (!grammar || !reading || !mistakes.length) throw new Error(`Missing authored A2/B1 lesson content: ${key}`);
-  const [grammarTitle, grammarRules, [checkPrompt, checkAnswer]] = grammar;
+  if (!grammarPages.length || !reading || !mistakes.length) throw new Error(`Missing authored A2/B1 lesson content: ${key}`);
+  const addMusic = level === "A2" && !stages.some(stage => stage.variant === "interactive-music-video");
+  const grammarStages = grammarPages.map(([title, rules, checks], index) => ({
+    id: index === 0 ? "workbook-grammar" : `workbook-grammar-${index + 1}`,
+    type: "workbook-grammar",
+    kicker: "Grammatik · Workbook",
+    title,
+    items: [
+      ...rules.map(([label, prompt, example]) => ({ label, prompt, example })),
+      ...checks.map(([prompt, answer], checkIndex) => ({
+        label: checks.length > 1 ? `Kurzcheck ${checkIndex + 1}` : "Kurzcheck",
+        prompt,
+        answerLabel: "Musterantwort",
+        answer,
+      })),
+    ],
+    suggestedMinutes: grammarPages.length > 1 ? 3 : 5,
+    teacherPurpose: {
+      student: checks.length ? "Verstehe die Regel und wende sie im Kurzcheck an." : "Erkenne die Endungen in den Beispielen.",
+      teacher: checks.length
+        ? "Erkläre das Satzmuster an den Beispielen. Lass die Klasse den Kurzcheck mündlich lösen und decke die Musterantwort danach auf."
+        : "Vergleiche die Beispiele laut. Lass die Klasse Artikel, Kasus und Adjektivendung benennen.",
+    },
+  }));
   return stages.flatMap(stage => {
+    if (addMusic && stage.id === "warmup") return [stage, {
+      id: "lesson-music-intro",
+      type: "list",
+      variant: "interactive-music-video",
+      kicker: "Musik · Einstieg",
+      title: `Falowen Music · A2 Tag ${day}`,
+      musicVideo: {
+        mediaType: "music",
+        assignmentKey: key,
+        level,
+        day,
+        title: `Lernlied · ${cleanTopic(slide)}`,
+        musicLibraryUrl: `https://music.falowen.app/?level=A2&day=${day}`,
+      },
+      items: ["Höre das Lied zum heutigen Thema."],
+      suggestedMinutes: 0,
+    }];
     if (stage.id === 'knowledge' && !['interactive-listening', 'interactive-music', 'interactive-music-reading'].includes(stage.variant)) return [];
     if (stage.id !== 'phrases') return [stage];
-    return [{
-      id: "workbook-grammar",
-      type: "workbook-grammar",
-      kicker: "Grammatik · Workbook",
-      title: grammarTitle,
-      items: [
-        ...grammarRules.map(([label, prompt, example]) => ({ label, prompt, example })),
-        { label: "Kurzcheck", prompt: checkPrompt, answerLabel: "Musterantwort", answer: checkAnswer },
-      ],
-      suggestedMinutes: 5,
-      teacherPurpose: {
-        student: "Verstehe die Regel und wende sie im Kurzcheck an.",
-        teacher: "Erkläre das Satzmuster an den Beispielen. Lass die Klasse den Kurzcheck mündlich lösen und decke die Musterantwort danach auf.",
-      },
-    }, {
+    return [...grammarStages, {
       id: 'common-mistakes', type: 'common-mistakes', kicker: 'Häufige Fehler',
       title: 'Common mistakes · Häufige Fehler',
       instruction: 'Korrigiert die Sätze gemeinsam. Erst danach zeigt die Lehrkraft die Lösungen.',
