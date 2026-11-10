@@ -15,6 +15,8 @@ test('release requires a valid, confident result with no review flags', () => {
   assert.equal(releasable({...good,finalScore:60}),true);
   assert.equal(releasable({...good,passed:false}),false);
   assert.equal(releasable({...good,writingMinimumMet:false}),false);
+  assert.equal(releasable({...good,incompleteAssessment:true}),false);
+  assert.equal(releasable({...good,missingRequiredParts:['teil3']}),false);
   assert.equal(releasable({...good,writingScore:null,writingScorePercent:null,maxWritingScore:100}),true);
   for (const patch of [{finalScore:null},{finalScore:'oops'},{confidence:0.4},{status:'needs_review'},
     {consistencyWarnings:['missing part']},{reviewReasons:[{code:'disagreement'}]},
