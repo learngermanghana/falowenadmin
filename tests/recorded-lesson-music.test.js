@@ -20,13 +20,39 @@ test('exact matching recording text produces synchronized in-slide lyrics and tw
  assert.equal(verifiedRecordedLyrics({...pack,objectKey:'music/a2/day-19/different.mp3'},track),null);
  assert.equal(verifiedRecordedLyrics({...pack,cues:[...cues].reverse()},track),null);
 });
-test('a new recording with different lyrics receives only literal evidence-backed cloze MCQs',()=>{
+test('a new recording uses actual neighboring lines and distinct options from the same song',()=>{
  const newPack={lyrics:['Heute gehe ich in das Geschäft und suche eine Tasche.','Der Verkäufer möchte mir ein anderes Modell zeigen.',
  'Am Ende kaufe ich einen guten Koffer für meine Reise.','Morgen treffen wir uns an der Haltestelle.'].join('\n')};
  const questions=recordedSongQuestions(newPack,19);
  assert.equal(questions.length,3);
  assert.ok(questions.slice(0,2).every(q=>q.evidence.includes(q.answer)));
  assert.ok(questions.slice(0,2).every(q=>q.options[q.correctIndex]===q.answer));
+ assert.ok(questions.slice(0,2).every(q=>new Set(q.options).size===3 && q.options.every(line=>newPack.lyrics.split('\n').includes(line))));
+});
+
+test('Zwei Städte asks about the Berlin stay and travel to Hamburg only for the exact recording',()=>{
+ const lines=['Letzten Sommer war ich in Berlin,','ich blieb dort eine ganze Woche.',
+   'Danach fuhr ich mit dem Zug nach Hamburg,','Berlin ist größer und lebhafter,'];
+ const pack={objectKey:'music/a2/day-03/Zwei Städte.mp3',lyrics:lines.join('\n')};
+ const questions=recordedSongQuestions(pack,3);
+ assert.deepEqual(questions.slice(0,2).map(q=>q.options[q.correctIndex]),['Eine ganze Woche.','Mit dem Zug.']);
+ assert.match(questions[2].prompt,/Vergleiche die Städte/);
+ for (const other of [{...pack,objectKey:'music/a2/day-03/Andere Stadt.mp3'},{...pack,lyrics:lines.slice(0,2).join('\n')}]) {
+  const fallback=recordedSongQuestions(other,3);
+  assert.ok(fallback.every(q=>!q.id.startsWith('heard-')));
+  assert.doesNotMatch(fallback.at(-1).prompt,/Vergleiche die Städte/);
+ }
+});
+
+test('fallback skips ambiguous refrains and avoids inventing options for short lyrics',()=>{
+ const refrain='Wir sehen uns am nächsten Morgen.';
+ const lines=[refrain,'Wir fahren zusammen nach Berlin.',refrain.toUpperCase(),
+   'Ich bleibe heute lieber hier.','Dann gehen wir beide nach Hause.'];
+ const questions=recordedSongQuestions({lyrics:lines.join('\n')},4);
+ const checks=questions.filter(q=>q.type==='listening');
+ assert.ok(checks.length);
+ assert.ok(checks.every(q=>!q.prompt.toLowerCase().includes(refrain.toLowerCase())));
+ assert.deepEqual(recordedSongQuestions({lyrics:[refrain,refrain].join('\n')},4).map(q=>q.type),['speaking']);
 });
 test('Day 19 chooses the uploaded Die richtige Wahl when uniquely published',()=>{
  const row={id:'r2-a2-day-19-die-richtige-wahl',title:'Die richtige Wahl',level:'A2',day:19,

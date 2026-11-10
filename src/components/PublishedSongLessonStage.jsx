@@ -70,7 +70,9 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
   }, [assignmentKey]);
 
   if (!song || !bank || !recording) return null;
-  const questions = recordedLyrics !== song.lyrics ? recordedSongQuestions({lyrics:recordedLyrics},recording.day,recording.level) : bank.questions;
+  const questions = recordedLyrics !== song.lyrics
+    ? recordedSongQuestions({objectKey:recording.objectKey,lyrics:recordedLyrics},recording.day,recording.level)
+    : bank.questions;
   const synchronized=hasCompleteSongTiming(cues,recordedLyrics);
   const question = questions[questionIndex];
   const musicLink = recording.trackId

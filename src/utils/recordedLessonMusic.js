@@ -66,6 +66,16 @@ const LESSON_CHECKS = {
     {prompt:'Wo müssen Mia und Ben umsteigen?',options:['In Hannover.','In Berlin.','In Accra.'],correctIndex:0,answer:'In Hannover.',evidence:'Wir müssen in Hannover umsteigen,'},
     {prompt:'Wo möchten sie ankommen?',options:['In Hamburg.','In Berlin.','In München.'],correctIndex:1,answer:'In Berlin.',evidence:'wir möchten in Berlin ankommen.'},
   ],
+  'A2-3': [
+    {prompt:'Wie lange war die Person in Berlin?',
+      options:['Ein Wochenende.','Eine ganze Woche.','Zwei Wochen.'],
+      correctIndex:1,answer:'Eine ganze Woche.',
+      evidence:'ich blieb dort eine ganze Woche.'},
+    {prompt:'Wie ist die Person von Berlin nach Hamburg gefahren?',
+      options:['Mit dem Bus.','Mit der U-Bahn.','Mit dem Zug.'],
+      correctIndex:2,answer:'Mit dem Zug.',
+      evidence:'Danach fuhr ich mit dem Zug nach Hamburg,'},
+  ],
   'A2-19': [
     {prompt:'Warum gehen Mia und ihre Begleitung zuerst ins Geschäft?',
       options:['Weil Mia ihre Schuhgröße nicht genau kennt.','Weil alle Schuhe online ausverkauft sind.','Weil das Geschäft heute schließt.'],
@@ -109,6 +119,8 @@ const LESSON_CHECKS = {
 };
 const SPEAKING = {
   'A1-14':{prompt:'Wohin möchtest du mit dem Zug fahren? Wo musst du umsteigen?',answer:'Ich möchte nach Berlin fahren. Ich muss in Hannover umsteigen.'},
+  'A2-3':{prompt:'Welche Stadt ist im Lied lebhafter? Welche würdest du lieber besuchen? Vergleiche die Städte mit als.',
+      answer:'Berlin ist lebhafter als Hamburg. Ich würde lieber Hamburg besuchen, weil es dort ruhiger ist.'},
   'A2-19':{prompt:'Was kaufst du lieber online und was im Geschäft? Warum?',
       answer:'Ich kaufe Kleidung lieber im Geschäft, weil ich sie dort anprobieren kann.'},
   'A2-23':{prompt:'Wie kommst du zur Schule oder zur Arbeit? Was machst du bei Regen?',answer:'Ich fahre mit dem Fahrrad zur Schule. Wenn es regnet, nehme ich den Bus.'},
@@ -122,36 +134,61 @@ const SPEAKING = {
     answer:'Ich frage nach einer anderen Verbindung, informiere die betroffenen Personen und bleibe ruhig.'},
 };
 
-function makeLiteralWordQuestion(line, position) {
-  // Safe deterministic alternative for a new recording with different lyrics:
-  // each missing word and its evidence must occur in that exact recording.
-  const words = String(line).match(/[\p{L}]{4,}/gu) || [];
-  const word = words.find(w => !/^(diese|einen|einem|einer|dann|heute|jetzt|nicht|haben|werde|werden|machen|durch|bitte)$/i.test(w));
-  if (!word) return null;
-  const alternatives = ['Musik','Kino','Wetter','Schule','Sommer','Montag','Garten','Bahnhof']
-    .filter(w => w.toLocaleLowerCase('de') !== word.toLocaleLowerCase('de'))
-    .slice(0,2);
-  const placeholder = String(line).replace(word,'_____');
-  const options = position === 0 ? [word,...alternatives] : [alternatives[0],word,alternatives[1]];
-  return {type:'listening',prompt:'Welches Wort fehlt in dieser Liedzeile? „'+placeholder+'“',
-    options,correctIndex:position === 0 ? 0 : 1,
-    answer:word,evidence:line};
+function lyricComparisonKey(line) {
+  return line.toLocaleLowerCase('de').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+}
+
+function lyricSequenceQuestions(lines, day) {
+  const usable = line => line.length >= 15 && line.length <= 125 && lyricComparisonKey(line);
+  const rows = lines.map(line => ({ line, key: lyricComparisonKey(line) }));
+  const continuations = new Map();
+  const optionsByKey = new Map();
+  for (const [index, row] of rows.entries()) {
+    const next = rows[index + 1];
+    if (usable(row.line)) optionsByKey.set(row.key, row.line);
+    if (!continuations.has(row.key)) continuations.set(row.key, new Set());
+    continuations.get(row.key).add(next?.key);
+  }
+
+  const used = new Set();
+  const questions = [];
+  for (const [index, row] of rows.entries()) {
+    const next = rows[index + 1];
+    if (!next || !usable(row.line) || !usable(next.line) || row.key === next.key
+      || continuations.get(row.key).size !== 1 || used.has(row.key) || used.has(next.key)) continue;
+    const alternatives = [...optionsByKey]
+      .filter(([key]) => key !== row.key && key !== next.key)
+      .map(([, line]) => line)
+      .sort((a, b) => Math.abs(a.length - next.line.length) - Math.abs(b.length - next.line.length))
+      .slice(0, 2);
+    if (alternatives.length < 2) continue;
+    const correctIndex = ((Number(day) || 0) + questions.length) % 3;
+    alternatives.splice(correctIndex, 0, next.line);
+    questions.push({
+      type: 'listening', id: 'sequence-' + index,
+      prompt: 'Welche Zeile folgt direkt auf „' + row.line + '“?',
+      options: alternatives, correctIndex,
+      answer: next.line, evidence: row.line + ' / ' + next.line,
+    });
+    used.add(row.key);
+    used.add(next.key);
+    if (questions.length === 2) break;
+  }
+  return questions;
 }
 
 export function recordedSongQuestions(pack,day,level='A2') {
   const lines=lyricLines(pack?.lyrics);
   if(!lines.length)return [];
   const key=String(level).toUpperCase()+'-'+Number(day);
-  const checks=LESSON_CHECKS[key];
-  let questions = checks && checks.every(q=>lines.some(line=>line.trim()===q.evidence))
+  const checks=key === 'A2-3' && pack?.objectKey !== 'music/a2/day-03/Zwei Städte.mp3'
+    ? undefined : LESSON_CHECKS[key];
+  const reviewed = checks?.every(q=>lines.includes(q.evidence));
+  const questions = reviewed
     ? checks.map((q,i)=>({...q,type:'listening',id:'heard-'+i}))
-    : [];
-  if (!questions.length) {
-    const candidates = [...new Set(lines)].filter(line => line.length>=22 && line.length<=125);
-    const selected = [candidates[1] || candidates[0], candidates[Math.floor(candidates.length*0.65)] || candidates[2]]
-      .filter(Boolean);
-    questions = selected.map((line,i)=>makeLiteralWordQuestion(line,i)).filter(Boolean);
-  }
+    : lyricSequenceQuestions(lines, day);
+  const speaking = key === 'A2-3' && (!reviewed || !lines.includes('Berlin ist größer und lebhafter,'))
+    ? undefined : SPEAKING[key];
   return [...questions.slice(0,2), {type:'speaking',id:'transfer',
-    ...(SPEAKING[key] || {prompt:'Worum geht es in diesem Lied? Erzähle in deinen eigenen Worten.',answer:'Benutze einen Ausdruck aus dem Lied.'})}];
+    ...(speaking || {prompt:'Worum geht es in diesem Lied? Erzähle in deinen eigenen Worten.',answer:'Benutze einen Ausdruck aus dem Lied.'})}];
 }
