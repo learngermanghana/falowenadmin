@@ -57,7 +57,7 @@ test("pharmacy questions are key-backed and transcript contains uploaded facts",
 
 
 test("chosen chapters reuse four authored 10-minute warm-up steps without invented recordings", () => {
-  const chosen = ["A2-3.8","A2-6.17","A2-7.18","A2-7.20","B1-2.5","B1-7.22","B1-8.25"];
+  const chosen = ["A2-1.3","A2-3.8","A2-6.17","A2-7.18","A2-7.20","B1-2.5","B1-7.22","B1-8.25"];
   // Listening-only music chapters may also use the shared registry, without
   // replacing their existing warm-up. Check the authored warm-up set only.
   assert.deepEqual(
@@ -249,7 +249,7 @@ test("interactive Hören uses Cloud Run except approved staff-authenticated clas
   assert.match(component, /api-awc2au65xa-ew\.a\.run\.app/);
   assert.match(component, /VITE_FALOWEN_COURSE_MEDIA_API_URL/);
   assert.doesNotMatch(component, /VITE_FALOWEN_COURSE_API_URL/);
-  assert.match(component, /lesson\.listening\.level === "A2" && \[1, 2, 18, 19, 20, 21, 23\]\.includes\(lesson\.listening\.day\)/);
+  assert.match(component, /lesson\.listening\.level === "A2" && \[1, 2, 3, 18, 19, 20, 21, 23\]\.includes\(lesson\.listening\.day\)/);
   assert.match(component, /https:\/\/www\.falowen\.app\/api\/course-media\/a2\/classroom-audio-url/);
   assert.match(component, /Authorization: `Bearer \$\{await user\.getIdToken\(\)\}`/);
   assert.match(component, /lesson\.listening\.audioKey/);
