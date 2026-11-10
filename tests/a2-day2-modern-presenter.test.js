@@ -69,5 +69,5 @@ test('Day 2 music chooses one actual library track instead of inventing a song o
   assert.ok(player.includes('[1,2,19,20,21,23].includes(day)'));
   assert.ok(player.includes("day === 2 ? 'A2-1.2'"));
   const listening=readFileSync(new URL('../src/components/InteractiveLessonOpening.jsx',import.meta.url),'utf8');
-  assert.ok(listening.includes('[1, 2, 18, 19, 20, 21, 23].includes(lesson.listening.day)'));
+  assert.ok(listening.includes('[1, 2, 3, 18, 19, 20, 21, 23].includes(lesson.listening.day)'));
 });
