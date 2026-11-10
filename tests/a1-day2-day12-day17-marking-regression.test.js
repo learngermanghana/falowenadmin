@@ -80,3 +80,29 @@ test("Day 12 rejects obsolete speaking receipts and automatic worker no longer r
   const worker = readFileSync(new URL("../functions/automaticCourseMarking.js", import.meta.url), "utf8");
   assert.doesNotMatch(worker, /A1-2', 'A1-4', 'A1-8', 'A1-11/);
 });
+
+
+test("Day 17 identifies either wholly missing objective part and both parts in a blank attempt", () => {
+  const entry = canonicalCourseReference("A1-11");
+  const speaking = { assignmentKey: "A1-11", score: 8, maxScore: 10, feedback: "Polite request.", assessmentId: "example-receipt" };
+  const onlyLesen = "TEIL 3\\n1. Richtig\\n2. Falsch\\n3. Falsch\\n4. Richtig\\n5. Falsch";
+  const onlyHoeren = "TEIL 2\\n1. A\\n2. B\\n3. A\\n4. B\\n5. A";
+  const cases = [
+    { text: onlyLesen, missing: ["teil2"] },
+    { text: onlyHoeren, missing: ["teil3"] },
+    { text: "", missing: ["teil2", "teil3"] },
+  ];
+
+  for (const { text, missing } of cases) {
+    const result = markVerifiedSpeakingSubmission({
+      referenceEntry: entry,
+      submissionText: text,
+      serverSpeakingAssessment: speaking,
+    });
+    expect(result.status).toBe("needs_review");
+    expect(result.incompleteAssessment).toBe(true);
+    expect(result.finalScore).toBeNull();
+    expect(result.shouldSendAutomatically).toBe(false);
+    expect(result.missingRequiredParts).toEqual(missing);
+  }
+});
