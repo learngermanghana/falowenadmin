@@ -76,23 +76,19 @@ test("authored warm-up material stays available while A2 opens with music", () =
     }
     const stages = buildTeachingPresenterStages(slide,slide.topic);
     const opening = stages[1];
-    if (slide.course === "A2" || id === "B1-8.25") {
-      assert.equal(opening.variant, "interactive-music-video", id);
-      assert.equal(opening.musicVideo.day, slide.dayNumber, id);
-      assert.equal(opening.musicVideo.youtubeId, undefined, id);
-      if (id === "A2-7.18") {
-        assert.ok(opening.musicVideo.audioUrl.includes("/api/music"));
-      } else {
-        assert.equal(opening.musicVideo.musicLibraryUrl, `https://music.falowen.app/?level=${slide.course}&day=${slide.dayNumber}`);
-      }
+    assert.equal(opening.variant, "interactive-music-video", id);
+    assert.equal(opening.musicVideo.day, slide.dayNumber, id);
+    assert.equal(opening.musicVideo.youtubeId, undefined, id);
+    if (id === "A2-7.18") {
+      assert.ok(opening.musicVideo.audioUrl.includes("/api/music"));
     } else {
-      assert.equal(opening.variant, "interactive-warmup", id);
+      assert.equal(opening.musicVideo.musicLibraryUrl, `https://music.falowen.app/?level=${slide.course}&day=${slide.dayNumber}`);
     }
     assert.equal(stages.find(s=>s.id==="warmup").type,"list",id);
     assert.equal(stages.find(s=>s.id==="reading").type,"knowledge",id);
     assert.equal(Boolean(entry.listening),["A2-1.3","A2-6.17","A2-7.18","A2-7.20","B1-8.25"].includes(id),id);
     assert.equal(stages.find(s=>s.id==="knowledge")?.variant==="interactive-listening",["A2-1.3","A2-6.17","A2-7.18","A2-7.20","B1-8.25"].includes(id),id);
-    assert.equal(isInteractiveOpeningStage(id,"warmup"),slide.course === "B1" && id !== "B1-8.25",id);
+    assert.equal(isInteractiveOpeningStage(id,"warmup"),false,id);
     assert.equal(isInteractiveOpeningStage(id,"knowledge"),["A2-1.3","A2-6.17","A2-7.18","A2-7.20","B1-8.25"].includes(id),id);
     assert.equal(isInteractiveOpeningStage(id,"phrases"),false,id);
   }

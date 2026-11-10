@@ -13,7 +13,7 @@ test('all 28 B1 lessons have their own workbook task, outline and single visible
   assert.equal(rows.length,1,slide.assignmentId);
   assert.equal(rows[0].type,'b1-workbook-presentation');
   assert.deepEqual(rows[0].presentation,B1_WORKBOOK_PRESENTATIONS[slide.dayNumber]);
-  assert.equal(stages.indexOf(rows[0])+1,stages.findIndex(s=>s.id==='workbook'));
+  assert.equal(stages.at(-1),rows[0]);
   assert.ok(rows[0].presentation.structure.length>=5);
   assert.ok(rows[0].presentation.structure.every(s=>s.label));
   const mistakes=stages.filter(s=>s.type==='common-mistakes');assert.equal(mistakes.length,1);

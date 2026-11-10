@@ -84,8 +84,8 @@ test('new exact recording lyrics replace an older draft even before timestamps e
  }finally{await act(async()=>root.unmount());dom.window.close();}
 });
 
-for(const [level,day,assignmentKey,Component] of [['A1',6,'A1-2.3',Published],['A2',4,'A2-2.4',Linked],['B1',25,'B1-8.25',Linked]]){
- test(`${level} automatic transcript keeps draft warnings while its real cues highlight lines`,async()=>{
+for(const [level,day,assignmentKey,Component] of [['A1',6,'A1-2.3',Published],['A2',4,'A2-2.4',Linked],['B1',2,'B1-1.2',Linked],['B1',25,'B1-8.25',Linked]]){
+ test(`${level} Day ${day} automatic transcript keeps draft warnings while its real cues highlight lines`,async()=>{
   const dom=new JSDOM('<div id="root"></div>',{url:'https://admin.falowen.app'});
   Object.assign(globalThis,{window:dom.window,document:dom.window.document,localStorage:dom.window.localStorage,IS_REACT_ACT_ENVIRONMENT:true});
   dom.window.matchMedia=()=>({matches:true});dom.window.HTMLElement.prototype.scrollTo=function(){};

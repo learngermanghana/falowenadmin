@@ -1,6 +1,6 @@
 import { B1_WORKBOOK_PRESENTATIONS } from '../data/b1WorkbookPresentations.js';
 import { A2_WORKBOOK_PRESENTATIONS } from '../data/a2WorkbookPresentations.js';
-import { A2_B1_WORKBOOK_GRAMMAR, A2_WORKBOOK_GRAMMAR_PAGES } from "../data/a2B1WorkbookGrammar.js";
+import { A2_B1_WORKBOOK_GRAMMAR, A2_WORKBOOK_GRAMMAR_PAGES, B1_WORKBOOK_GRAMMAR_EXTENSIONS } from "../data/a2B1WorkbookGrammar.js";
 import { getA2B1CommonMistakes } from '../data/a2B1CommonMistakes.js';
 import { getPresenterReadingLesson } from '../data/presenterReadingLessons.js';
 import { getAdvancedPresenterReadingLesson } from '../data/advancedPresenterReadingLessons.js';
@@ -17,6 +17,7 @@ import { getB1VocabularyQuestion } from "../data/b1VocabularyQuestions.js";
 import { getA2B1KnowledgeAnswers } from "../data/a2B1KnowledgeAnswers.js";
 import { getA2FocusedPractice, getA2PresenterKnowledge } from "../data/a2PresenterKnowledge.js";
 import { getA2ApplicationLab } from "../data/a2ApplicationLabs.js";
+import { getB1ApplicationLab } from "../data/b1ApplicationLabs.js";
 import { getInteractiveLessonOpening } from "../data/interactiveLessonOpenings.js";
 import { getB1FocusedPractice, getB1PresenterKnowledge } from "../data/b1PresenterKnowledge.js";
 import { getPresenterTopicFoundation } from "../data/presenterTopicFoundations.js";
@@ -1154,114 +1155,23 @@ function buildKnowledgeAnswerItems(knowledge = {}, assignmentId = "") {
   });
 }
 
-function buildA2B1GrammarCheckStage(slide = {}, support = {}, level = "") {
-  // The original grammar explanation and targeted errors remain separate.
-  // A2 now uses one concrete, three-step oral application lab instead of
-  // repeating the later speaking questions on this slide.
-  if (level === "A2") {
-    const lab = getA2ApplicationLab(slide.assignmentId);
-    if (!lab) throw new Error(`Missing A2 application lab for ${slide.assignmentId}`);
-    return {
-      id: "grammar-check", type: "grammar-check", variant: "a2-application-lab",
-      kicker: "Grammatik · Anwenden", title: lab.title, lab,
-      instruction: "Die Grammatik wurde bereits erklärt. " + lab.context,
-      items: lab.tasks.map(task => ({
-        id: task.id, label: task.label, prompt: task.prompt,
-        answerLabel: "Musterantwort", answer: task.answer,
-        note: task.criterion,
-      })),
-      suggestedMinutes: 6,
-      teacherPurpose: {
-        student: "Lies die Fakten. Antworte in ganzen Sätzen und wende die Zielgrammatik an.",
-        teacher: "Nicht neu unterrichten. Erst die Tabelle zeigen und Antwort hören; dann Musterantwort aufdecken und Sicher oder Noch üben markieren. Unbewertete Unterrichtsübung.",
-      },
-    };
-  }
-  const curatedItems = Array.isArray(slide.grammarCheckItems)
-    ? slide.grammarCheckItems.filter((item) => item?.prompt && item?.answer).slice(0, 3)
-    : [];
-  if (curatedItems.length === 3) {
-    return {
-      id: "grammar-check",
-      type: "grammar-check",
-      kicker: "Grammatik-Check",
-      title: "Grammatik im Thema anwenden",
-      instruction: "Die Grammatik wurde bereits erklärt. Stelle die Fragen direkt im heutigen Thema. Der Schüler antwortet in 1–2 Sätzen; prüfe die Zielgrammatik in der Antwort, statt nach dem Regelnamen zu fragen.",
-      items: curatedItems.map((item, index) => ({
-        id: item.id || ["recognise-rule", "fix-error", "build-sentence"][index],
-        label: item.label || `${index + 1} · Im Thema anwenden`,
-        prompt: item.prompt,
-        example: item.example || "",
-        answerLabel: item.answerLabel || "Musterantwort",
-        answer: item.answer,
-        note: item.note || "",
-      })),
-      suggestedMinutes: level === "B1" ? 7 : 6,
-    };
-  }
-
-  const rules = Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn.filter(Boolean) : [];
-  const models = Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe.filter(Boolean) : [];
-  const questions = Array.isArray(slide.studentQuestionsDe)
-    ? slide.studentQuestionsDe.map((item) => String(item || "").trim()).filter(Boolean)
-    : [];
-  const questionModels = Array.isArray(slide.speakingModels) ? slide.speakingModels : [];
-
-  const preferredIndexes = questions.length <= 3
-    ? questions.map((_, index) => index)
-    : [0, Math.floor((questions.length - 1) / 2), questions.length - 1];
-  const selectedIndexes = [...new Set(preferredIndexes)].slice(0, 3);
-  while (selectedIndexes.length < Math.min(3, questions.length)) {
-    const nextIndex = selectedIndexes.length;
-    if (!selectedIndexes.includes(nextIndex)) selectedIndexes.push(nextIndex);
-    else break;
-  }
-
-  const fallbackPrompts = [
-    `Antworte in 1–2 Sätzen zum heutigen Thema „${cleanTopic(slide)}“.`,
-    "Führe die Situation mit einem passenden zweiten Gedanken weiter.",
-    "Formuliere eine eigene passende Antwort und benutze die Grammatik der Stunde.",
-  ];
-  const labels = [
-    "1 · Im Thema anwenden",
-    "2 · Situation weiterführen",
-    "3 · Selbstständig formulieren",
-  ];
-  const stableIds = ["recognise-rule", "fix-error", "build-sentence"];
-
-  const items = Array.from({ length: 3 }, (_, index) => {
-    const questionIndex = selectedIndexes[index];
-    const prompt = questionIndex != null ? questions[questionIndex] : fallbackPrompts[index];
-    const matchingModel = questionModels.find((item) => (
-      String(item?.questionDe || "").trim() === String(prompt || "").trim()
-    ));
-    // Lesson authors provide studentQuestionsDe and speakingModels in the same
-    // order, but occasionally paraphrase a question in speakingModels. Prefer
-    // that indexed answer over an unrelated sample grammar sentence.
-    const indexedModel = questionModels.length === questions.length
-      ? questionModels[questionIndex]?.modelAnswerDe
-      : "";
-    const modelAnswer = String(matchingModel?.modelAnswerDe || indexedModel || models[questionIndex] || models[index] || models[0] || "").trim();
-    const teacherFocus = String(rules[questionIndex] || rules[index] || rules[0] || "").trim();
-
-    return {
-      id: stableIds[index],
-      label: labels[index],
-      prompt,
-      answerLabel: "Musterantwort",
-      answer: modelAnswer || "Offene Antwort. Prüfe, ob die Zielgrammatik der Stunde korrekt im Kontext benutzt wird.",
-      note: teacherFocus ? `Teacher focus: ${teacherFocus}` : "Prüfe nur die Zielgrammatik der heutigen Stunde.",
-    };
-  });
-
+function buildA2B1GrammarCheckStage(slide, level) {
+  const day = Number(normalizedAssignmentId(slide).split(".").at(-1));
+  const lab = level === "A2" ? getA2ApplicationLab(slide.assignmentId) : getB1ApplicationLab(day);
+  if (!lab) throw new Error(`Missing ${level} application lab for ${slide.assignmentId}`);
   return {
-    id: "grammar-check",
-    type: "grammar-check",
-    kicker: "Grammatik-Check",
-    title: "Grammatik im Thema anwenden",
-    instruction: "Die Grammatik wurde bereits erklärt. Stelle die Fragen direkt im heutigen Thema. Der Schüler antwortet in 1–2 Sätzen; prüfe die Zielgrammatik in der Antwort, statt nach dem Regelnamen zu fragen.",
-    items,
+    id: "grammar-check", type: "grammar-check", variant: level === "A2" ? "a2-application-lab" : "b1-application-lab",
+    kicker: "Grammatik · Anwenden", title: lab.title, lab,
+    instruction: "Die Grammatik wurde bereits erklärt. " + lab.context,
+    items: lab.tasks.map(task => ({
+      id: task.id, label: task.label, prompt: task.prompt,
+      answerLabel: "Musterantwort", answer: task.answer, note: task.criterion,
+    })),
     suggestedMinutes: level === "B1" ? 7 : 6,
+    teacherPurpose: {
+      student: "Lies die Fakten. Antworte in ganzen Sätzen und wende die Zielgrammatik an.",
+      teacher: "Nicht neu unterrichten. Erst die Tabelle zeigen und Antwort hören; dann Musterantwort aufdecken und Sicher oder Noch üben markieren. Unbewertete Unterrichtsübung.",
+    },
   };
 }
 
@@ -1647,7 +1557,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         instruction: vocabularyStage ? vocabularyInstruction(level) : "",
         suggestedMinutes: vocabularyStage ? 5 : 0,
       },
-      buildA2B1GrammarCheckStage(slide, support, level),
+      buildA2B1GrammarCheckStage(slide, level),
       ...(() => {
         // Day 15 has its own interactive sport game. The V2 presenter returns
         // above the generic fallback, so its practice must be replaced HERE.
@@ -1750,7 +1660,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
           : "",
         suggestedMinutes: 5,
       },
-      buildA2B1GrammarCheckStage(slide, support, level),
+      buildA2B1GrammarCheckStage(slide, level),
       ...(() => {
         // Day 18 replaces "Berufsweg priorisieren" with the interactive career challenge.
         // Keep one practice slot only; never add a second career activity slide.
@@ -2080,7 +1990,11 @@ function standardizeA2B1Stages(stages, slide) {
   const day = Number(key.split(".").at(-1));
   const grammar = A2_B1_WORKBOOK_GRAMMAR[level]?.[day];
   const expandedGrammar = level === "A2" ? A2_WORKBOOK_GRAMMAR_PAGES[day] : undefined;
-  const grammarPages = expandedGrammar || (grammar ? [[grammar[0], grammar[1], [grammar[2]]]] : []);
+  const extension = level === "B1" ? B1_WORKBOOK_GRAMMAR_EXTENSIONS[day] : undefined;
+  const grammarPages = expandedGrammar || (grammar ? [
+    [grammar[0], grammar[1], extension ? [] : [grammar[2]]],
+    ...(extension ? [[extension[0], extension[1], [grammar[2]]]] : []),
+  ] : []);
   const reading = getPresenterReadingLesson(key);
   const mistakes = getA2B1CommonMistakes(key);
   if (!grammarPages.length || !reading || !mistakes.length) throw new Error(`Missing authored A2/B1 lesson content: ${key}`);
@@ -2140,7 +2054,7 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
   const authoredOpening = presenterV2 && ["A2", "B1"].includes(level)
     ? getInteractiveLessonOpening(assignmentId) : null;
   const day = Number(assignmentId.split(".").at(-1));
-  const lessonOpening = presenterV2 && level === "A2" && !authoredOpening?.musicIntro
+  const lessonOpening = presenterV2 && ["A2", "B1"].includes(level) && !authoredOpening?.musicIntro
     ? {
         ...authoredOpening,
         musicIntro: {
@@ -2149,7 +2063,7 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
           level,
           day,
           title: `Lernlied · ${cleanTopic(slide)}`,
-          musicLibraryUrl: `https://music.falowen.app/?level=A2&day=${day}`,
+          musicLibraryUrl: `https://music.falowen.app/?level=${level}&day=${day}`,
           studentPurpose: "Höre das Lied zum heutigen Thema.",
           teacherPurpose: "Spiele das veröffentlichte Lied zum Einstieg ab.",
         },
@@ -2263,17 +2177,6 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
           }];
         })
       : prepared;
-  if (presenterV2 && level === "B1") {
-    const presentation = B1_WORKBOOK_PRESENTATIONS[Number(normalizedAssignmentId(slide).split(".").at(-1))];
-    if (!presentation) throw new Error(`Missing B1 workbook presentation: ${slide.id}`);
-    const workbookIndex = classroomStages.findIndex(stage => stage.id === "workbook");
-    classroomStages.splice(workbookIndex < 0 ? classroomStages.length : workbookIndex, 0, {
-      id: "workbook-presentation", type: "b1-workbook-presentation",
-      kicker: "Workbook · B1 Sprechen", title: presentation.roleplay ? "Sprechen · Rollenspiel" : "Presentation · B1 Sprechen",
-      presentation, items: presentation.structure, suggestedMinutes: 6,
-      teacherPurpose: {student: "Bearbeite die vorhandene B1-Workbook-Aufgabe und begründe deine Aussagen.", teacher: "Aufgabe, Gliederung und Ideen getrennt zeigen. Keine neue Abgabe oder automatische Bewertung."},
-    });
-  }
   const filtered = classroomStages.filter((stage) => {
     // A dedicated music slide has a player instead of question/items data.
     if (stage.variant === 'interactive-music-video') return Boolean(stage.musicVideo);
@@ -2309,6 +2212,16 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
       kicker: "Workbook · Sprechen", title: presentation.mode === "speaking-mock" ? "Sprechprüfung üben · Von sich erzählen" : "Präsentation · Von sich erzählen",
       presentation, items: presentation.branches || presentation.choices, suggestedMinutes: 5,
       teacherPurpose: {student: "Beantworte die vorhandene Workbook-Aufgabe mündlich.", teacher: "Die Aufgabe direkt auf der Folie zeigen. Dies ist Unterrichtspraxis, keine neue Abgabe oder Bewertung."},
+    });
+  }
+  if (presenterV2 && level === "B1") {
+    const presentation = B1_WORKBOOK_PRESENTATIONS[day];
+    if (!presentation) throw new Error(`Missing B1 workbook presentation: ${slide.id}`);
+    filtered.push({
+      id: "workbook-presentation", type: "b1-workbook-presentation",
+      kicker: "Workbook · B1 Sprechen", title: presentation.roleplay ? "Sprechen · Rollenspiel" : "Presentation · B1 Sprechen",
+      presentation, items: presentation.structure, suggestedMinutes: 6,
+      teacherPurpose: {student: "Bearbeite die vorhandene B1-Workbook-Aufgabe und begründe deine Aussagen.", teacher: "Aufgabe, Gliederung und Ideen getrennt zeigen. Keine neue Abgabe oder automatische Bewertung."},
     });
   }
   const song = getLessonMusic(normalizedAssignmentId(slide));

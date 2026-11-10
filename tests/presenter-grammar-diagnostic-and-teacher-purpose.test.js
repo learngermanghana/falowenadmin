@@ -15,24 +15,10 @@ test("A2 and B1 use one compact grammar diagnostic instead of reteaching grammar
       assert.ok(grammar, `${slide.assignmentId} grammar diagnostic missing`);
       assert.equal(grammar.type, "grammar-check");
       assert.equal(grammar.items.length, 3, `${slide.assignmentId} should use three grammar checks`);
-      if (level === "A2") {
-        assert.equal(grammar.variant, "a2-application-lab");
-        assert.deepEqual(grammar.items.map(item=>item.label), grammar.lab.tasks.map(task=>task.label));
-      } else {
-        assert.deepEqual(grammar.items.map(item=>item.label.split(" · ")[0]), ["1", "2", "3"]);
-      }
-      assert.ok(grammar.items.every((item) => item.prompt && item.answer), `${slide.assignmentId} needs teacher answer keys`);
-      assert.doesNotMatch(grammar.instruction, /erkennen\s*→\s*korrigieren/i, `${slide.assignmentId} should not use the old rule-name diagnostic flow`);
-      const curatedPrompts = new Set((slide.grammarCheckItems || []).map((item) => String(item?.prompt || "").trim()).filter(Boolean));
-      const topicalQuestions = new Set((slide.studentQuestionsDe || []).map((item) => String(item || "").trim()).filter(Boolean));
-      const expectedPrompts = curatedPrompts.size >= 3 ? curatedPrompts : topicalQuestions;
-      if (level === "A2") {
-        assert.ok(grammar.items.every(item=>grammar.lab.tasks.some(task=>task.prompt===item.prompt)),
-          `${slide.assignmentId} application tasks must match the teaching scenario`);
-      } else if (expectedPrompts.size >= 3) {
-        assert.ok(grammar.items.every(item=>expectedPrompts.has(String(item.prompt || "").trim())),
-          `${slide.assignmentId} grammar checks should use lesson-specific context`);
-      }
+      assert.equal(grammar.variant, level.toLowerCase() + "-application-lab");
+      assert.deepEqual(grammar.items.map(item => item.label), grammar.lab.tasks.map(task => task.label));
+      assert.deepEqual(grammar.items.map(item => item.prompt), grammar.lab.tasks.map(task => task.prompt));
+      assert.ok(grammar.items.every(item => item.prompt && item.answer), slide.assignmentId);
       assert.ok(
         grammar.items.every((item) => !/Welche Grammatikregel aus der heutigen Stunde|Korrigiere die Form oder den Satz/i.test(item.prompt)),
         `${slide.assignmentId} still exposes a generic grammar-system prompt`,

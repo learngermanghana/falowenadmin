@@ -30,7 +30,7 @@ test("All 56 A2 and B1 Wissensimpuls slides reveal three verified answers, never
   assert.ok(stage,slide.assignmentId);
   assert.deepEqual(stage.items,knowledge.checks,slide.assignmentId+": do not replace learner questions");
   assert.deepEqual(stage.answerItems,answers,slide.assignmentId+": reveal only question-matched answers");
-  assert.deepEqual(stages.slice(-4).map(s=>s.id), (slide.course === "A2" ? ["questions", "workbook", "lesson-summary", "workbook-presentation"] : ["questions", "workbook-presentation", "workbook", "lesson-summary"]),slide.assignmentId);
+  assert.deepEqual(stages.slice(-4).map(s=>s.id), ["questions", "workbook", "lesson-summary", "workbook-presentation"],slide.assignmentId);
   assert.ok(stages.find(s=>s.id==="grammar-check"),slide.assignmentId);
   assert.ok(stages.find(s=>s.id==="reading"),slide.assignmentId);
  }

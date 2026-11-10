@@ -10,8 +10,7 @@ import './LessonSongStage.css';
 export default function LinkedPublishedSongLessonStage({ music }) {
   const day = Number(music?.day);
   const level = String(music?.level || '').toUpperCase();
-  const supported = (level === 'A2' && Number.isInteger(day) && day >= 1 && day <= 28)
-    || (level === 'B1' && [24,25,26,27].includes(day));
+  const supported = (['A2', 'B1'].includes(level) && Number.isInteger(day) && day >= 1 && day <= 28);
   const [loaded, setLoaded] = useState({loading:true,track:null,pack:null,reference:null,error:''});
   const [view,setView] = useState('listen');
   const [time,setTime] = useState(0);

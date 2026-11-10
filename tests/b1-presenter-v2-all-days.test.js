@@ -19,9 +19,9 @@ const REQUIRED_STAGES = [
   "grammar-check",
   "practice",
   "questions",
-  "workbook-presentation",
   "workbook",
   "lesson-summary",
+  "workbook-presentation",
 ];
 
 test("all 28 B1 lessons use the reading and correction Presenter spine", () => {
@@ -40,7 +40,7 @@ test("all 28 B1 lessons use the reading and correction Presenter spine", () => {
       : TEACHER_CHALLENGE_IDS.has(slide.assignmentId) ? "scenario-challenge" : "practice";
     const expectedStages = REQUIRED_STAGES.map((id) => id === "practice" ? replacement : id);
     if (stages.some(s => s.id === "knowledge")) expectedStages.splice(2, 0, "knowledge");
-    assert.deepEqual(stageIds, expectedStages, `${slide.assignmentId} should have one reading and one correction page without duplicated practice`);
+    assert.deepEqual(stageIds.filter(id => id !== "workbook-grammar-2"), expectedStages, `${slide.assignmentId} should have one reading and one correction page without duplicated practice`);
 
     const knowledge = stages.find((stage) => stage.id === "reading");
     assert.equal(knowledge.type, "knowledge");
