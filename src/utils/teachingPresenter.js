@@ -1164,7 +1164,7 @@ function buildA2B1GrammarCheckStage(slide = {}, support = {}, level = "") {
     return {
       id: "grammar-check", type: "grammar-check", variant: "a2-application-lab",
       kicker: "Grammatik · Anwenden", title: lab.title, lab,
-      instruction: lab.context,
+      instruction: "Die Grammatik wurde bereits erklärt. " + lab.context,
       items: lab.tasks.map(task => ({
         id: task.id, label: task.label, prompt: task.prompt,
         answerLabel: "Musterantwort", answer: task.answer,
@@ -1173,7 +1173,7 @@ function buildA2B1GrammarCheckStage(slide = {}, support = {}, level = "") {
       suggestedMinutes: 6,
       teacherPurpose: {
         student: "Lies die Fakten. Antworte in ganzen Sätzen und wende die Zielgrammatik an.",
-        teacher: "Erst die Tabelle zeigen und Antwort hören; dann Musterantwort aufdecken und Sicher oder Noch üben markieren. Unbewertete Unterrichtsübung.",
+        teacher: "Nicht neu unterrichten. Erst die Tabelle zeigen und Antwort hören; dann Musterantwort aufdecken und Sicher oder Noch üben markieren. Unbewertete Unterrichtsübung.",
       },
     };
   }
