@@ -96,10 +96,10 @@ test("chosen chapters reuse four authored 10-minute warm-up steps without invent
     }
     assert.equal(stages.find(s=>s.id==="warmup").type,"list",id);
     assert.equal(stages.find(s=>s.id==="reading").type,"knowledge",id);
-    assert.equal(Boolean(entry.listening),["A2-6.17","A2-7.18","A2-7.20","B1-8.25"].includes(id),id);
-    assert.equal(stages.find(s=>s.id==="knowledge")?.variant==="interactive-listening",["A2-6.17","A2-7.18","A2-7.20","B1-8.25"].includes(id),id);
+    assert.equal(Boolean(entry.listening),["A2-1.3","A2-6.17","A2-7.18","A2-7.20","B1-8.25"].includes(id),id);
+    assert.equal(stages.find(s=>s.id==="knowledge")?.variant==="interactive-listening",["A2-1.3","A2-6.17","A2-7.18","A2-7.20","B1-8.25"].includes(id),id);
     assert.equal(isInteractiveOpeningStage(id,"warmup"),!["B1-8.25","A2-7.18","A2-7.20"].includes(id),id);
-    assert.equal(isInteractiveOpeningStage(id,"knowledge"),["A2-6.17","A2-7.18","A2-7.20","B1-8.25"].includes(id),id);
+    assert.equal(isInteractiveOpeningStage(id,"knowledge"),["A2-1.3","A2-6.17","A2-7.18","A2-7.20","B1-8.25"].includes(id),id);
     assert.equal(isInteractiveOpeningStage(id,"phrases"),false,id);
   }
 });
