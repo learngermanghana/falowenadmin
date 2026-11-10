@@ -30,7 +30,9 @@ function eligible(submission, level, assignmentKey) {
 }
 function releasable(result = {}) {
   const score = result.finalScore ?? result.score;
-  return result.status === 'marked' && score !== null && score !== ''
+  return result.status === 'marked' && result.incompleteAssessment !== true
+    && !(Array.isArray(result.missingRequiredParts) && result.missingRequiredParts.length)
+    && score !== null && score !== ''
     && Number.isFinite(Number(score)) && Number(score) >= 60 && Number(score) <= 100
     && result.passed !== false && result.writingMinimumMet !== false
     && Number(result.confidence) >= 0.8
