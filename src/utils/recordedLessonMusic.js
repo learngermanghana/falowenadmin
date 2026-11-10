@@ -20,6 +20,8 @@ export function selectRecordedLessonTrack(feed, {level='A2',day,assignmentKey} =
   // the presenter without music or playing another song.
   const knownObjectKey = normalized === 'A2' && Number(day) === 1
     ? 'music/a2/day-01/Ein nettes Gespräch.mp3'
+    : normalized === 'A2' && Number(day) === 3
+      ? 'music/a2/day-03/Zwei Städte.mp3'
     : normalized === 'A2' && Number(day) === 21
       ? 'music/a2/day-21/Endlich Wochenende.mp3'
       : normalized === 'A2' && Number(day) === 23
