@@ -40,17 +40,17 @@ test("A2 selected days replace one practice page; all 28 retain grammar and work
   const ids=stages.map(x=>x.id);
   const core = stages.filter(s => s.id !== "knowledge");
   const coreIds = core.map(s => s.id);
-  assert.equal(core.length,10,slide.assignmentId);
-  assert.deepEqual(coreIds.slice(0,5),["intro","warmup","common-mistakes","reading","grammar-check"],slide.assignmentId);
+  assert.equal(core.length,11,slide.assignmentId);
+  assert.deepEqual(coreIds.slice(0,6),["intro","warmup","workbook-grammar","common-mistakes","reading","grammar-check"],slide.assignmentId);
   assert.deepEqual(ids.slice(-4),["questions","workbook-presentation","workbook","lesson-summary"],slide.assignmentId);
-  assert.equal(coreIds[5],days.has(slide.assignmentId)?"scenario-challenge":"practice",slide.assignmentId);
+  assert.equal(coreIds[6],days.has(slide.assignmentId)?"scenario-challenge":"practice",slide.assignmentId);
   assert.equal(ids.filter(id=>["practice","scenario-challenge"].includes(id)).length,1,slide.assignmentId);
-  assert.equal(core[8].type,"clarification",slide.assignmentId);
-  assert.equal(core[8].title,"Was ist noch unklar?",slide.assignmentId);
-  assert.ok(core[8].items.some(item=>item.label==="Grammatik"),slide.assignmentId);
+  assert.equal(core[9].type,"clarification",slide.assignmentId);
+  assert.equal(core[9].title,"Was ist noch unklar?",slide.assignmentId);
+  assert.ok(core[9].items.some(item=>item.label==="Grammatik"),slide.assignmentId);
   if(days.has(slide.assignmentId)) {
-   assert.equal(core[5].items,getA2TeacherChallenge(slide.assignmentId).scenarios);
-   assert.match(core[5].teacherPurpose.teacher,/No student login or submission/);
+   assert.equal(core[6].items,getA2TeacherChallenge(slide.assignmentId).scenarios);
+   assert.match(core[6].teacherPurpose.teacher,/No student login or submission/);
   }
  }
 });
