@@ -126,9 +126,10 @@ test('all 56 A2/B1 presenters use the Day 18 layout and only published music les
     assert.equal(stages.filter(x=>x.id==='reading').length,1,slide.assignmentId);
     assert.equal(stages.filter(x=>x.id==='common-mistakes').length,1,slide.assignmentId);
     const expected=getInteractiveLessonOpening(slide.assignmentId)?.musicIntro;
-    const musicStage=stages[1];
+    const musicStage=expected && slide.assignmentId==='A2-1.3' ? stages.find(s=>s.id==='music-intro') : stages[1];
     if(expected){
-      assert.equal(musicStage.variant,'interactive-music-video',slide.assignmentId);
+      assert.equal(musicStage?.variant,'interactive-music-video',slide.assignmentId);
+      if(slide.assignmentId==='A2-1.3') assert.equal(stages[1].variant,'interactive-warmup');
       assert.equal(musicStage.musicVideo.day,expected.day,slide.assignmentId);
       if(expected.musicLibraryUrl) {
         assert.equal(musicStage.musicVideo.musicLibraryUrl,
