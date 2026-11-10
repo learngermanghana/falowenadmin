@@ -2250,6 +2250,8 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
     });
   }
   const filtered = classroomStages.filter((stage) => {
+    // A dedicated music slide has a player instead of question/items data.
+    if (stage.variant === 'interactive-music-video') return Boolean(stage.musicVideo);
     if (stage.type === "intro") return Boolean(stage.title || stage.topic || stage.objective);
     if (stage.type === "task") return Boolean(stage.body);
     if (stage.type === "dialogue") return Array.isArray(stage.turns) && stage.turns.length > 0;
