@@ -14,9 +14,17 @@ const stages = buildTeachingPresenterStages(slide, slide.topic);
 test('A2 Day 3 permalink resolves workbook-aligned modern presenter with separate Hören',()=>{
   assert.equal(slide.assignmentId, 'A2-1.3');
   assert.equal(getTeachingSlideByAssignmentId('A2-1.3')?.id, slide.id);
-  assert.deepEqual(stages.slice(0,6).map(s=>s.id),[
-    'intro','warmup','knowledge','common-mistakes','reading','grammar-check'
+  assert.deepEqual(stages.slice(0,7).map(s=>s.id),[
+    'intro','warmup','knowledge','workbook-grammar','common-mistakes','reading','grammar-check'
   ]);
+  const grammar=stages.find(s=>s.id==='workbook-grammar');
+  assert.match(grammar.title,/Vergleiche mit wie und als/);
+  assert.equal(grammar.items.length,4);
+  assert.match(grammar.items[0].example,/genauso groß wie/);
+  assert.match(grammar.items[1].example,/größer als/);
+  assert.match(grammar.items[2].example,/am schnellsten/);
+  assert.match(grammar.items[3].answer,/größer als/);
+  assert.equal(stages.filter(s=>s.id==='workbook-grammar').length,1);
   assert.equal(stages[1].variant, 'interactive-warmup');
   assert.equal(stages[1].challengeItems.length,4);
   assert.equal(stages[2].variant,'interactive-listening');
