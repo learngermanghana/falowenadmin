@@ -12,7 +12,7 @@ export function missingVerifiedSpeakingObjectiveParts(referenceEntry = {}, objec
   return expected.filter(part => {
     const normalized = String(part).toLowerCase().replace(/\s+/g, "");
     const rows = details.filter(row => String(row.partId || "").toLowerCase() === normalized);
-    return rows.length && rows.every(row => !String(row.student ?? "").trim());
+    return !rows.length || rows.every(row => !String(row.student ?? "").trim());
   });
 }
 
