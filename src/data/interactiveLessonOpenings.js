@@ -594,7 +594,7 @@ export function getInteractiveLessonOpening(assignmentId = "") {
 }
 export function isInteractiveOpeningStage(assignmentId = "", stageId = "") {
   const lesson = getInteractiveLessonOpening(assignmentId);
-  if (lesson?.musicIntro && stageId === "warmup" && !lesson.warmup?.length) return false; // Days 1/2 replace warm-up; Day 3 keeps its four challenges
+  if (lesson?.musicIntro && stageId === "warmup" && lesson.assignmentId !== "A2-1.3") return false; // Day 3 alone retains its challenges alongside the music slide
   if (lesson?.listening?.mediaType === "music") return false; // Independent YouTube Musik / Lesen stages
   return Boolean(lesson && ((stageId === "warmup" && lesson.warmup?.length > 0) || (stageId === "knowledge" && lesson.listening)));
 }
