@@ -10,9 +10,9 @@ import { musicMomentUrl, musicTimestamp } from "../src/utils/musicTeaching.js";
 test("B1 Day 24 keeps the published music on slide 2 and switches slide 3 to the verified conversation Hören", () => {
   const slide=getSlidesByCourse("B1").find(row=>row.assignmentId==="B1-8.24");
   const stages=buildTeachingPresenterStages(slide,slide.topic);
-  assert.equal(stages.length,11);
-  assert.deepEqual(stages.slice(0,6).map(x=>x.id),
-    ["intro","warmup","knowledge","common-mistakes","reading","grammar-check"]);
+  assert.equal(stages.length,12);
+  assert.deepEqual(stages.slice(0, 7).map(x=>x.id),
+    ["intro","warmup","knowledge","workbook-grammar", "common-mistakes","reading","grammar-check"]);
   assert.equal(stages[1].variant,"interactive-music-video");
   assert.equal(stages[1].musicVideo.mediaType,"music");
   assert.equal(stages[1].musicVideo.youtubeId,undefined);
@@ -25,8 +25,8 @@ test("B1 Day 24 keeps the published music on slide 2 and switches slide 3 to the
   assert.ok(stages[2].transcript.length > 10);
   assert.equal(stages[2].musicReading,undefined);
   assert.equal(stages[2].musicVideo,undefined);
-  assert.equal(stages[3].items.length>=2,true);
-  assert.ok(stages[4].textDe);
+  assert.equal(stages[4].items.length>=2,true);
+  assert.ok(stages[5].textDe);
   assert.equal(isInteractiveOpeningStage("B1-8.24","warmup"),false);
   assert.equal(isInteractiveOpeningStage("B1-8.24","knowledge"),true);
 });
@@ -73,9 +73,9 @@ test("B1 Day 24 Argumentkarte is a four-case interactive decision activity on it
   const stages = buildTeachingPresenterStages(slide, slide.topic);
   const practice = stages.find((stage) => stage.id === "practice");
 
-  assert.equal(stages.length, 11, "keep correction, music intro, Hören and workbook presentation");
-  assert.equal(stages[6].id, "practice");
-  assert.equal(stages[7].id, "questions", "keep existing speaking tasks after practice");
+  assert.equal(stages.length, 12, "keep correction, music intro, Hören and workbook presentation");
+  assert.equal(stages[7].id, "practice");
+  assert.equal(stages[8].id, "questions", "keep existing speaking tasks after practice");
   assert.equal(practice.type, "flow");
   assert.equal(practice.suggestedMinutes, 7);
   assert.equal(practice.items.length, 1);

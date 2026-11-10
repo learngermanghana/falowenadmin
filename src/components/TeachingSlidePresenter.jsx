@@ -634,6 +634,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
           "knowledge",
           "vocabulary",
           "grammar-check",
+          "workbook-grammar",
           "b1-grammar",
           "b2-grammar",
           "c1-grammar",
@@ -1077,8 +1078,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
             <B1WorkbookPresentation key={`${slide.id}:${stage.id}`} stage={stage}/>
           ) : stage.type === "workbook-presentation" ? (
             <A2WorkbookPresentation key={`${slide.id}:${stage.id}`} stage={stage}/>
-          ) : (stage.type === "grammar-check" || stage.type === "common-mistakes") ? (
-            <section className="presenter-grammar-check">
+          ) : (stage.type === "grammar-check" || stage.type === "common-mistakes" || stage.type === "workbook-grammar") ? (
+            <section key={`${slide.assignmentId}:${stage.id}`} className="presenter-grammar-check">
               <div className="presenter-grammar-check-heading">
                 <span>{stage.kicker}</span>
                 <h1>{stage.title}</h1>
@@ -1092,7 +1093,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                     {item.example ? <blockquote>{item.example}</blockquote> : null}
                     {item.answer ? (
                       <details>
-                        <summary>{stage.type === "common-mistakes" ? "Lösung zeigen" : "Teacher answer anzeigen"}</summary>
+                        <summary>{stage.type === "grammar-check" ? "Teacher answer anzeigen" : "Lösung zeigen"}</summary>
                         <div className="presenter-grammar-check-answer">
                           <strong>{item.answerLabel || "Teacher key"}</strong>
                           <p>{item.answer}</p>

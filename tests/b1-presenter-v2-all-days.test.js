@@ -14,7 +14,7 @@ import {
 const REQUIRED_STAGES = [
   "intro",
   "warmup",
-  "common-mistakes",
+  "workbook-grammar", "common-mistakes",
   "reading",
   "grammar-check",
   "practice",

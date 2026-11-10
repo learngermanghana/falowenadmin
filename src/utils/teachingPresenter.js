@@ -1,5 +1,6 @@
 import { B1_WORKBOOK_PRESENTATIONS } from '../data/b1WorkbookPresentations.js';
 import { A2_WORKBOOK_PRESENTATIONS } from '../data/a2WorkbookPresentations.js';
+import { A2_B1_WORKBOOK_GRAMMAR } from "../data/a2B1WorkbookGrammar.js";
 import { getA2B1CommonMistakes } from '../data/a2B1CommonMistakes.js';
 import { getPresenterReadingLesson } from '../data/presenterReadingLessons.js';
 import { getAdvancedPresenterReadingLesson } from '../data/advancedPresenterReadingLessons.js';
@@ -2052,13 +2053,31 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
 // lessons retain a separate audio/lyric stage; ordinary days have one reading.
 function standardizeA2B1Stages(stages, slide) {
   const key = normalizedAssignmentId(slide);
+  const level = classroomLevel(slide);
+  const day = Number(key.split(".").at(-1));
+  const grammar = A2_B1_WORKBOOK_GRAMMAR[level]?.[day];
   const reading = getPresenterReadingLesson(key);
   const mistakes = getA2B1CommonMistakes(key);
-  if (!reading || !mistakes.length) throw new Error(`Missing authored A2/B1 lesson content: ${key}`);
+  if (!grammar || !reading || !mistakes.length) throw new Error(`Missing authored A2/B1 lesson content: ${key}`);
+  const [grammarTitle, grammarRules, [checkPrompt, checkAnswer]] = grammar;
   return stages.flatMap(stage => {
     if (stage.id === 'knowledge' && !['interactive-listening', 'interactive-music', 'interactive-music-reading'].includes(stage.variant)) return [];
     if (stage.id !== 'phrases') return [stage];
     return [{
+      id: "workbook-grammar",
+      type: "workbook-grammar",
+      kicker: "Grammatik · Workbook",
+      title: grammarTitle,
+      items: [
+        ...grammarRules.map(([label, prompt, example]) => ({ label, prompt, example })),
+        { label: "Kurzcheck", prompt: checkPrompt, answerLabel: "Musterantwort", answer: checkAnswer },
+      ],
+      suggestedMinutes: 5,
+      teacherPurpose: {
+        student: "Verstehe die Regel und wende sie im Kurzcheck an.",
+        teacher: "Erkläre das Satzmuster an den Beispielen. Lass die Klasse den Kurzcheck mündlich lösen und decke die Musterantwort danach auf.",
+      },
+    }, {
       id: 'common-mistakes', type: 'common-mistakes', kicker: 'Häufige Fehler',
       title: 'Common mistakes · Häufige Fehler',
       instruction: 'Korrigiert die Sätze gemeinsam. Erst danach zeigt die Lehrkraft die Lösungen.',
@@ -2071,7 +2090,7 @@ function standardizeA2B1Stages(stages, slide) {
       id: 'reading', type: 'knowledge', variant: 'lesson-reading', kicker: 'Lesen',
       title: reading.title, textDe: reading.textDe, instruction: reading.readingPurpose,
       items: reading.checks, answerItems: reading.answers, evidence: reading.evidence,
-      suggestedMinutes: classroomLevel(slide) === 'B1' ? 6 : 5,
+      suggestedMinutes: level === 'B1' ? 6 : 5,
       teacherPurpose: {
         student: 'Lies den Text und begründe deine Antworten mit einer Textstelle.',
         teacher: 'Den vorhandenen Lesetext nutzen. Erst Antworten sammeln, dann Musterantworten und Belege zeigen.',

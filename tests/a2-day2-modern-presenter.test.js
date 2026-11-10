@@ -15,8 +15,8 @@ const stages = buildTeachingPresenterStages(slide, slide.topic);
 test('A2 Day 2 uses published music, then separate classroom Hören and later scenario before Sprechen', () => {
   assert.equal(slide.assignmentId, 'A2-1.2');
   assert.equal(getTeachingSlideByAssignmentId('A2-1.2')?.id, slide.id);
-  assert.deepEqual(stages.slice(0,6).map(s=>s.id),
-    ['intro','warmup','knowledge','common-mistakes','reading','grammar-check']);
+  assert.deepEqual(stages.slice(0, 7).map(s=>s.id),
+    ['intro','warmup','knowledge','workbook-grammar', 'common-mistakes','reading','grammar-check']);
   assert.equal(stages[1].variant, 'interactive-music-video');
   assert.equal(stages[1].musicVideo.day, 2);
   assert.equal(stages[2].variant, 'interactive-listening');

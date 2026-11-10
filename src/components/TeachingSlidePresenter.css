@@ -2720,6 +2720,14 @@
   gap: 0.75rem;
 }
 
+.presenter-stage-workbook-grammar .presenter-grammar-check-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.presenter-stage-workbook-grammar .presenter-grammar-check-prompt {
+  font-weight: 500;
+}
+
 .presenter-grammar-check-card {
   display: grid;
   align-content: start;
@@ -2805,7 +2813,8 @@
     grid-template-columns: 1fr;
   }
 
-  .presenter-grammar-check-grid {
+  .presenter-grammar-check-grid,
+  .presenter-stage-workbook-grammar .presenter-grammar-check-grid {
     grid-template-columns: 1fr;
   }
 }

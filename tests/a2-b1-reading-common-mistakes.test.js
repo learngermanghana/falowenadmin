@@ -46,17 +46,17 @@ test('all 56 lessons have one existing reading and a distinct topic correction p
 test('bank music, conversation, mistakes and original Ama reading remain separate', () => {
   const slide = getSlidesByCourse('A2').find(s => s.assignmentId === 'A2-7.18');
   const stages = buildTeachingPresenterStages(slide, slide.topic);
-  assert.deepEqual(stages.slice(0, 6).map(s => s.id), ['intro', 'warmup', 'knowledge', 'common-mistakes', 'reading', 'grammar-check']);
+  assert.deepEqual(stages.slice(0, 7).map(s => s.id), ['intro', 'warmup', 'knowledge', 'workbook-grammar', 'common-mistakes', 'reading', 'grammar-check']);
   assert.equal(stages[1].musicVideo.trackId, 'a2-day-18-bank');
   assert.equal(stages[2].audioKey, 'a2/day-18/bank-telefonat.mp3');
-  assert.match(stages[4].textDe, /Ama.*Bankkarte/);
-  assert.equal(stages[4].listeningItems, undefined);
-  assert.equal(stages[3].items.length, 3);
+  assert.match(stages[5].textDe, /Ama.*Bankkarte/);
+  assert.equal(stages[5].listeningItems, undefined);
+  assert.equal(stages[4].items.length, 3);
 });
 
 test('correction page uses existing reveal controls without a writing form', () => {
   const source = readFileSync(new URL('../src/components/TeachingSlidePresenter.jsx', import.meta.url), 'utf8');
-  const branch = source.split('stage.type === "common-mistakes") ? (')[1].split('stage.type === "b2-grammar"')[0];
+  const branch = source.split('stage.type === "grammar-check" ||')[1].split('stage.type === "b2-grammar"')[0];
   assert.match(branch, /<details>/);
   assert.match(branch, /Lösung zeigen/);
   assert.match(branch, /item.answer/);
@@ -74,16 +74,16 @@ test('A2 days 18-20 retain music, separate Hören, Lesen, Common Mistakes and ap
     const slide = slides.find(row => row.assignmentId === assignmentId);
     assert.ok(slide, assignmentId);
     const stages = buildTeachingPresenterStages(slide, slide.topic);
-    assert.equal(stages.length, 11, assignmentId);
-    assert.deepEqual(stages.slice(0, 6).map(s => s.id),
-      ['intro', 'warmup', 'knowledge', 'common-mistakes', 'reading', 'grammar-check'], assignmentId);
+    assert.equal(stages.length, 12, assignmentId);
+    assert.deepEqual(stages.slice(0, 7).map(s => s.id),
+      ['intro', 'warmup', 'knowledge', 'workbook-grammar', 'common-mistakes', 'reading', 'grammar-check'], assignmentId);
     assert.equal(stages[1].variant, 'interactive-music-video', assignmentId);
     assert.equal(stages[1].musicVideo.mediaType, 'music', assignmentId);
     assert.equal(stages[2].variant, 'interactive-listening', assignmentId);
     assert.equal(stages[2].audioKey, audioKey, assignmentId);
     assert.equal(stages[2].listeningItems.length, 5, assignmentId);
-    assert.equal(stages[4].textDe, getPresenterReadingLesson(assignmentId).textDe);
-    assert.ok(stages[3].items.length >= 2, assignmentId);
+    assert.equal(stages[5].textDe, getPresenterReadingLesson(assignmentId).textDe);
+    assert.ok(stages[4].items.length >= 2, assignmentId);
   }
   assert.equal(getInteractiveLessonOpening('A2-7.19').musicIntro.audioUrl, undefined);
   assert.equal(getInteractiveLessonOpening('A2-7.20').musicIntro.youtubeId, undefined);
@@ -145,6 +145,6 @@ test('all 56 A2/B1 presenters use the Day 18 layout and only published music les
   const day26=buildTeachingPresenterStages(b1.find(s=>s.assignmentId==='B1-9.26'));
   assert.equal(day25.find(s=>s.id==='knowledge')?.audioKey,'b1/day-25/online-shopping-verbraucherservice.mp3');
   assert.equal(day26.find(s=>s.id==='knowledge')?.audioKey,'a2/day-26/reiseprobleme-und-losungen.mp3');
-  assert.equal(day25.length,11);
-  assert.equal(day26.length,11);
+  assert.equal(day25.length,12);
+  assert.equal(day26.length,12);
 });

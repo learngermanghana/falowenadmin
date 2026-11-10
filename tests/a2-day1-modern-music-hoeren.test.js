@@ -13,7 +13,7 @@ test('A2 Day 1 uses modern music then Hören without removing its grammar and re
  assert.equal(slide.assignmentId,'A2-1.1');assert.equal(isA2PresenterV2Slide(slide),true);
  assert.equal(getTeachingSlideByAssignmentId('A2-1.1').id,slide.id);
  const stages=buildTeachingPresenterStages(slide,slide.topic);
- assert.deepEqual(stages.slice(0,6).map(s=>s.id),['intro','warmup','knowledge','common-mistakes','reading','grammar-check']);
+ assert.deepEqual(stages.slice(0, 7).map(s=>s.id),['intro','warmup','knowledge','workbook-grammar', 'common-mistakes','reading','grammar-check']);
  assert.equal(stages[1].variant,'interactive-music-video');
  assert.equal(stages[1].musicVideo.title,'Ein nettes Gespräch');
  assert.equal(stages[2].variant,'interactive-listening');
