@@ -55,7 +55,7 @@ test('authored examples target the grammar already taught on the relevant day',(
   assert.match(text(1),/weil/); assert.match(text(1),/deshalb/);
   assert.match(text(2),/einen schwarzen Mantel/);
   assert.match(text(3),/genauso viele Zimmer wie/);
-  assert.match(text(4),/Wohin\\?/); assert.match(text(4),/Dativ/);
+  assert.match(text(4),/Wohin\?/); assert.match(text(4),/Dativ/);
   assert.match(text(6),/Akkusativ/);
   assert.match(text(7),/die einen Balkon hat/);
   assert.match(text(9),/ist mit dem Zug nach Berlin gefahren/);
