@@ -64,10 +64,10 @@ test("presenter navigation index is clamped to available stages", () => {
 });
 
 
-test("A2 Presenter finishes with a lesson summary instead of Course Book Bridge", () => {
+test("A2 Presenter keeps the lesson summary before the workbook presentation", () => {
   const slide = getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-2.5");
   const stages = buildTeachingPresenterStages(slide, slide.topic);
-  const summary = stages.at(-1);
+  const summary = stages.find(stage => stage.id === "lesson-summary");
 
   assert.equal(summary?.id, "lesson-summary");
   assert.equal(summary?.type, "summary");

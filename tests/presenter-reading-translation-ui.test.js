@@ -149,7 +149,8 @@ for(const level of ['A2','B1'])test(level+' all 28 real reading slides reveal on
     await act(async()=>{select.value='1';select.dispatchEvent(new w.Event('change',{bubbles:true}));});
     assert.equal(document.querySelector('.presenter-workbook-presentation h2').textContent,task.choices[1].prompt);
    }
-   await click(button('Next slide →'));
+   assert.ok(button('Finish lesson · report'));
+   await navigate('lesson-summary');
    assert.equal(document.querySelector('[aria-label="Workbook presentation"]'),null);
    await navigate('workbook-presentation');
    assert.ok(document.querySelector('[aria-label="Workbook presentation"]'));

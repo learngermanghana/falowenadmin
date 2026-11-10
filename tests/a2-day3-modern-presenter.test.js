@@ -15,8 +15,8 @@ const stages = buildTeachingPresenterStages(slide, slide.topic);
 test('A2 Day 3 permalink resolves workbook-aligned modern presenter with separate Hören',()=>{
   assert.equal(slide.assignmentId, 'A2-1.3');
   assert.equal(getTeachingSlideByAssignmentId('A2-1.3')?.id, slide.id);
-  assert.deepEqual(stages.slice(0,8).map(s=>s.id),[
-    'intro','warmup','music-intro','knowledge','workbook-grammar','common-mistakes','reading','grammar-check'
+  assert.deepEqual(stages.slice(0,7).map(s=>s.id),[
+    'intro','warmup','knowledge','workbook-grammar','common-mistakes','reading','grammar-check'
   ]);
   const grammar=stages.find(s=>s.id==='workbook-grammar');
   assert.match(grammar.title,/Vergleiche mit wie und als/);
@@ -26,15 +26,13 @@ test('A2 Day 3 permalink resolves workbook-aligned modern presenter with separat
   assert.match(grammar.items[2].example,/am schnellsten/);
   assert.match(grammar.items[3].answer,/größer als/);
   assert.equal(stages.filter(s=>s.id==='workbook-grammar').length,1);
-  assert.equal(stages[1].variant, 'interactive-warmup');
-  assert.equal(stages[1].challengeItems.length,4);
-  assert.equal(stages[2].variant,'interactive-music-video');
-  assert.equal(stages[2].musicVideo.title,'Zwei Städte');
-  assert.equal(stages[2].musicVideo.day,3);
-  assert.equal(stages[3].variant,'interactive-listening');
-  assert.equal(stages[3].audioKey,A2_DAY3_AUDIO_KEY);
-  assert.equal(stages[3].listeningItems.length,5);
-  assert.equal(stages[3].transcript.length,0);
+  assert.equal(stages[1].variant,'interactive-music-video');
+  assert.equal(stages[1].musicVideo.title,'Zwei Städte');
+  assert.equal(stages[1].musicVideo.day,3);
+  assert.equal(stages[2].variant,'interactive-listening');
+  assert.equal(stages[2].audioKey,A2_DAY3_AUDIO_KEY);
+  assert.equal(stages[2].listeningItems.length,5);
+  assert.equal(stages[2].transcript.length,0);
   assert.equal(isInteractiveOpeningStage('A2-1.3','knowledge'),true);
   assert.equal(getInteractiveLessonOpening('A2-1.3')?.listening,A2_DAY3_LISTENING);
   assert.equal(getInteractiveLessonOpening('A2-1.3')?.musicIntro?.title,'Zwei Städte');

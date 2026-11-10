@@ -64,7 +64,7 @@ test("Presenter intro exposes the learner lesson reference for every A2-C2 lesso
   }
 });
 
-test("Lesson summary is the final stage and keeps the Course Book next steps", () => {
+test("Lesson summary keeps the Course Book next steps", () => {
   for (const level of ["A2","B1","B2","C1","C2"]) {
     for (const slide of paritySlides(level)) {
       const items = buildCourseBookBridgeItems(slide);
@@ -77,7 +77,7 @@ test("Lesson summary is the final stage and keeps the Course Book next steps", (
       ]);
 
       const stages = buildTeachingPresenterStages(slide, slide.topic);
-      const summary = stages.at(-1);
+      const summary = stages.find(stage => stage.id === "lesson-summary");
       assert.equal(summary?.id, "lesson-summary", slide.assignmentId + " should finish with Lesson summary");
       assert.equal(summary?.type, "summary");
       if (level === "C2") {
@@ -93,7 +93,7 @@ test("Lesson summary is the final stage and keeps the Course Book next steps", (
 
 test("A2 Day 5 summary tells students what they can do after the lesson", () => {
   const slide = getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-2.5");
-  const summary = buildTeachingPresenterStages(slide, slide.topic).at(-1);
+  const summary = buildTeachingPresenterStages(slide, slide.topic).find(stage => stage.id === "lesson-summary");
 
   assert.equal(summary?.id, "lesson-summary");
   assert.match(summary?.items?.[0]?.detail || "", /^You can describe free time/i);

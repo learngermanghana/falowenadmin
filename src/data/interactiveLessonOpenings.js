@@ -31,9 +31,7 @@ const ENTRIES = {
   },
   'A2-1.3': {
     assignmentId: 'A2-1.3', title: 'Dinge und Personen vergleichen',
-    // The uploaded Day-3 music is separate from the ungraded smartphone
-    // Hören. Keep the four-step comparison warm-up and give music its own
-    // teacher-led slide using the same R2 player as Days 1 and 2.
+    // The published song opens the lesson. The smartphone Hören is separate.
     musicIntro: {
       mediaType: 'music', level: 'A2', day: 3,
       title: 'Zwei Städte',
@@ -594,7 +592,7 @@ export function getInteractiveLessonOpening(assignmentId = "") {
 }
 export function isInteractiveOpeningStage(assignmentId = "", stageId = "") {
   const lesson = getInteractiveLessonOpening(assignmentId);
-  if (lesson?.musicIntro && stageId === "warmup" && lesson.assignmentId !== "A2-1.3") return false; // Day 3 alone retains its challenges alongside the music slide
+  if (stageId === "warmup" && (lesson?.musicIntro || lesson?.assignmentId.startsWith("A2-"))) return false;
   if (lesson?.listening?.mediaType === "music") return false; // Independent YouTube Musik / Lesen stages
   return Boolean(lesson && ((stageId === "warmup" && lesson.warmup?.length > 0) || (stageId === "knowledge" && lesson.listening)));
 }

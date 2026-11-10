@@ -66,13 +66,15 @@ examples and an ungraded oral check. A2 Day 2 uses four slides for adjective
 endings. Days 4, 6, 7, 10 and 16 use two slides, and Days 9 and 23 use three.
 The later grammar check uses the lesson topic for practice.
 
-All A2 days have a music stage. Existing song introductions keep their
-recordings. Other days use the same player after the warm-up and resolve the
-public music catalog by level and curriculum day. A separate classroom Hören
+All A2 days open with the title and one music stage. Music occupies the
+opening activity slot. Existing song introductions keep their recordings.
+Other days use the same player and resolve the public music catalog by level
+and curriculum day. A separate classroom Hören
 stage appears when the lesson has an authored recording and questions in
 `src/data/interactiveLessonOpenings.js`. New private recordings must also be
 approved by the appropriate learner audio signer. A day can use the music
-and grammar layout while its classroom recording is being prepared.
+and grammar layout while its classroom recording is being prepared. The
+workbook speaking presentation is the final slide, after the lesson summary.
 
 The learner workbook Grammar tab is the source for the classroom summaries in
 `src/data/a2B1WorkbookGrammar.js`. The file records the learner revision and

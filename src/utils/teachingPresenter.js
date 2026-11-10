@@ -2061,7 +2061,6 @@ function standardizeA2B1Stages(stages, slide) {
   const reading = getPresenterReadingLesson(key);
   const mistakes = getA2B1CommonMistakes(key);
   if (!grammarPages.length || !reading || !mistakes.length) throw new Error(`Missing authored A2/B1 lesson content: ${key}`);
-  const addMusic = level === "A2" && !stages.some(stage => stage.variant === "interactive-music-video");
   const grammarStages = grammarPages.map(([title, rules, checks], index) => ({
     id: index === 0 ? "workbook-grammar" : `workbook-grammar-${index + 1}`,
     type: "workbook-grammar",
@@ -2085,23 +2084,6 @@ function standardizeA2B1Stages(stages, slide) {
     },
   }));
   return stages.flatMap(stage => {
-    if (addMusic && stage.id === "warmup") return [stage, {
-      id: "lesson-music-intro",
-      type: "list",
-      variant: "interactive-music-video",
-      kicker: "Musik · Einstieg",
-      title: `Falowen Music · A2 Tag ${day}`,
-      musicVideo: {
-        mediaType: "music",
-        assignmentKey: key,
-        level,
-        day,
-        title: `Lernlied · ${cleanTopic(slide)}`,
-        musicLibraryUrl: `https://music.falowen.app/?level=A2&day=${day}`,
-      },
-      items: ["Höre das Lied zum heutigen Thema."],
-      suggestedMinutes: 0,
-    }];
     if (stage.id === 'knowledge' && !['interactive-listening', 'interactive-music', 'interactive-music-reading'].includes(stage.variant)) return [];
     if (stage.id !== 'phrases') return [stage];
     return [...grammarStages, {
@@ -2131,8 +2113,25 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
   const presenterV2 = isTeachingPresenterV2Slide(slide);
   const level = classroomLevel(slide);
   const stages = presenterV2 ? buildPresenterV2Stages(slide, topicLabel) : buildClassicStages(slide, topicLabel);
-  const lessonOpening = presenterV2 && ["A2", "B1"].includes(level)
-    ? getInteractiveLessonOpening(normalizedAssignmentId(slide)) : null;
+  const assignmentId = normalizedAssignmentId(slide);
+  const authoredOpening = presenterV2 && ["A2", "B1"].includes(level)
+    ? getInteractiveLessonOpening(assignmentId) : null;
+  const day = Number(assignmentId.split(".").at(-1));
+  const lessonOpening = presenterV2 && level === "A2" && !authoredOpening?.musicIntro
+    ? {
+        ...authoredOpening,
+        musicIntro: {
+          mediaType: "music",
+          assignmentKey: assignmentId,
+          level,
+          day,
+          title: `Lernlied · ${cleanTopic(slide)}`,
+          musicLibraryUrl: `https://music.falowen.app/?level=A2&day=${day}`,
+          studentPurpose: "Höre das Lied zum heutigen Thema.",
+          teacherPurpose: "Spiele das veröffentlichte Lied zum Einstieg ab.",
+        },
+      }
+    : authoredOpening;
   // Keep the original teacher reading and warm-up checks in their canonical
   // stages for audits; only switch their in-class visual presentation.
   const prepared = lessonOpening ? stages.map((stage) => {
@@ -2163,7 +2162,7 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
         teacher: "Fünf B1-Verständnisfragen; erst Antworten sammeln, dann die Belegstelle mit Zeitangabe zeigen.",
       },
     };
-    if (lessonOpening.musicIntro && stage.id === "warmup" && normalizedAssignmentId(slide) !== 'A2-1.3') return {
+    if (lessonOpening.musicIntro && stage.id === "warmup") return {
       ...stage,
       variant: "interactive-music-video",
       kicker: "Musik · Einstieg",
@@ -2207,19 +2206,6 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
     };
     return stage;
   }) : stages;
-  // Day 3 has a ten-minute comparison warm-up already. Add its confirmed
-  // R2 song as a separate slide rather than silently discarding that activity.
-  const musicPrepared = normalizedAssignmentId(slide) === 'A2-1.3' && lessonOpening?.musicIntro
-    ? prepared.flatMap((stage) => stage.id === 'warmup' ? [stage, {
-        id: 'music-intro', type: 'music-intro', variant: 'interactive-music-video',
-        kicker: 'Musik · Einstieg', title: lessonOpening.musicIntro.title,
-        musicVideo: lessonOpening.musicIntro, suggestedMinutes: 4, timingMode: '',
-        teacherPurpose: {
-          student: lessonOpening.musicIntro.studentPurpose,
-          teacher: lessonOpening.musicIntro.teacherPurpose,
-        },
-      }] : [stage])
-    : prepared;
   const classroomStages = presenterV2 && level === 'A1'
     ? prepared.flatMap((stage) => {
         if (stage.id !== 'phrases') return [stage];
@@ -2237,7 +2223,7 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
         }];
       })
     : presenterV2 && ['A2', 'B1'].includes(level)
-    ? standardizeA2B1Stages(musicPrepared, slide)
+    ? standardizeA2B1Stages(prepared, slide)
     : presenterV2 && ['B2', 'C1', 'C2'].includes(level)
       ? prepared.flatMap((stage) => {
           if (stage.id !== 'phrases') return [stage];
@@ -2254,17 +2240,6 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
           }];
         })
       : prepared;
-  if (presenterV2 && level === "A2") {
-    const presentation = A2_WORKBOOK_PRESENTATIONS[Number(normalizedAssignmentId(slide).split(".").at(-1))];
-    if (!presentation) throw new Error(`Missing A2 workbook presentation: ${slide.id}`);
-    const workbookIndex = classroomStages.findIndex(stage => stage.id === "workbook");
-    classroomStages.splice(workbookIndex < 0 ? classroomStages.length : workbookIndex, 0, {
-      id: "workbook-presentation", type: "workbook-presentation",
-      kicker: "Workbook · Sprechen", title: presentation.mode === "speaking-mock" ? "Sprechprüfung üben · Von sich erzählen" : "Präsentation · Von sich erzählen",
-      presentation, items: presentation.branches || presentation.choices, suggestedMinutes: 5,
-      teacherPurpose: {student: "Beantworte die vorhandene Workbook-Aufgabe mündlich.", teacher: "Die Aufgabe direkt auf der Folie zeigen. Dies ist Unterrichtspraxis, keine neue Abgabe oder Bewertung."},
-    });
-  }
   if (presenterV2 && level === "B1") {
     const presentation = B1_WORKBOOK_PRESENTATIONS[Number(normalizedAssignmentId(slide).split(".").at(-1))];
     if (!presentation) throw new Error(`Missing B1 workbook presentation: ${slide.id}`);
@@ -2302,6 +2277,16 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
         studentReference,
       });
     }
+  }
+  if (presenterV2 && level === "A2") {
+    const presentation = A2_WORKBOOK_PRESENTATIONS[day];
+    if (!presentation) throw new Error(`Missing A2 workbook presentation: ${slide.id}`);
+    filtered.push({
+      id: "workbook-presentation", type: "workbook-presentation",
+      kicker: "Workbook · Sprechen", title: presentation.mode === "speaking-mock" ? "Sprechprüfung üben · Von sich erzählen" : "Präsentation · Von sich erzählen",
+      presentation, items: presentation.branches || presentation.choices, suggestedMinutes: 5,
+      teacherPurpose: {student: "Beantworte die vorhandene Workbook-Aufgabe mündlich.", teacher: "Die Aufgabe direkt auf der Folie zeigen. Dies ist Unterrichtspraxis, keine neue Abgabe oder Bewertung."},
+    });
   }
   const song = getLessonMusic(normalizedAssignmentId(slide));
   if (song) {
