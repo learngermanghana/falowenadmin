@@ -2136,7 +2136,7 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
         teacher: "Fünf B1-Verständnisfragen; erst Antworten sammeln, dann die Belegstelle mit Zeitangabe zeigen.",
       },
     };
-    if (lessonOpening.musicIntro && stage.id === "warmup") return {
+    if (lessonOpening.musicIntro && stage.id === "warmup" && normalizedAssignmentId(slide) !== 'A2-1.3') return {
       ...stage,
       variant: "interactive-music-video",
       kicker: "Musik · Einstieg",
@@ -2180,6 +2180,19 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
     };
     return stage;
   }) : stages;
+  // Day 3 has a ten-minute comparison warm-up already. Add its confirmed
+  // R2 song as a separate slide rather than silently discarding that activity.
+  const musicPrepared = normalizedAssignmentId(slide) === 'A2-1.3' && lessonOpening?.musicIntro
+    ? prepared.flatMap((stage) => stage.id === 'warmup' ? [stage, {
+        id: 'music-intro', type: 'music-intro', variant: 'interactive-music-video',
+        kicker: 'Musik · Einstieg', title: lessonOpening.musicIntro.title,
+        musicVideo: lessonOpening.musicIntro, suggestedMinutes: 4, timingMode: '',
+        teacherPurpose: {
+          student: lessonOpening.musicIntro.studentPurpose,
+          teacher: lessonOpening.musicIntro.teacherPurpose,
+        },
+      }] : [stage])
+    : prepared;
   const classroomStages = presenterV2 && level === 'A1'
     ? prepared.flatMap((stage) => {
         if (stage.id !== 'phrases') return [stage];
@@ -2197,7 +2210,7 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
         }];
       })
     : presenterV2 && ['A2', 'B1'].includes(level)
-    ? standardizeA2B1Stages(prepared, slide)
+    ? standardizeA2B1Stages(musicPrepared, slide)
     : presenterV2 && ['B2', 'C1', 'C2'].includes(level)
       ? prepared.flatMap((stage) => {
           if (stage.id !== 'phrases') return [stage];
