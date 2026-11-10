@@ -35,6 +35,9 @@ export function selectRecordedLessonTrack(feed, {level='A2',day,assignmentKey} =
         { tracks: pinned }, { level: normalized, day, assignmentKey: '' });
       if (approved) return approved;
     }
+    // The teacher supplied the exact uploaded Day-3 object. Never pick a
+    // different Day-3 MP3 just because it is the only catalog match.
+    if (normalized === 'A2' && Number(day) === 3) return null;
   }
   if (normalized === 'B1' && Number(day) === 27) return null;
   const matches=rows.filter(row=>titles.includes(String(row.title||'').trim().toLocaleLowerCase('de')));
