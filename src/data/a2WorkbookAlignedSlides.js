@@ -266,6 +266,7 @@ export const a2WorkbookAlignedSlides = [
       "Keep a visible three-column board: Positiv | Komparativ | Superlativ, including common irregular forms such as gut → besser → am besten and hoch → höher → am höchsten.",
       "Require students to name both sides of a comparison and then justify one preference with weil.",
       "Bridge to the workbook writing task by comparing two familiar people, especially the mother/father comparison pattern.",
+      "Classroom sequence: interactive comparison warm-up → separate five-question Hören about Jonas choosing a smartphone → grammar and reading → three scenario role-plays before speaking. The separate graded workbook Hören about Julia and Tobias remains unchanged.",
     ],
     interactionFlow: [
       { phase: "Three forms", detailEn: "8 min: build Positiv → Komparativ → Superlativ for high-frequency adjectives and decide when als or wie is required." },

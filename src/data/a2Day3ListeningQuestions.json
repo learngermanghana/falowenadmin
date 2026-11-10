@@ -1,0 +1,59 @@
+{
+  "mode": "course",
+  "level": "A2",
+  "examPart": "",
+  "title": "Dinge und Personen vergleichen",
+  "kind": "multiple-choice",
+  "questions": [
+    {
+      "question": "Was sucht Jonas?",
+      "evidence": "suchst du ein neues Smartphone?",
+      "options": [
+        "Ein neues Smartphone",
+        "Einen neuen Computer",
+        "Ein billiges Tablet"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "Welches Handy ist billiger?",
+      "evidence": "das Nexus ist billiger als das Galaxy",
+      "options": [
+        "Das Galaxy",
+        "Das Nexus",
+        "Beide kosten gleich viel"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "question": "Was ist Jonas besonders wichtig?",
+      "evidence": "Die Fotos sind mir wichtiger",
+      "options": [
+        "Der günstige Preis",
+        "Ein leichteres Gewicht",
+        "Gute Fotos"
+      ],
+      "correctIndex": 2
+    },
+    {
+      "question": "Wie lange hält der Akku vom Galaxy?",
+      "evidence": "Der Akku vom Galaxy hält zwei Tage",
+      "options": [
+        "Zwei Tage",
+        "Einen Tag",
+        "Drei Tage"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "Welches Handy kauft Jonas am Ende?",
+      "evidence": "Perfekt, dann kaufe ich das Galaxy",
+      "options": [
+        "Das Nexus",
+        "Das Galaxy",
+        "Keines von beiden"
+      ],
+      "correctIndex": 1
+    }
+  ]
+}
