@@ -28,6 +28,34 @@ function eligible(submission, level, assignmentKey) {
     && !submission.examTask && !submission.mockAttemptId && !submission.courseSpeakingAttemptId
     && !/mock|exam-speaking/i.test(String(submission.source || submission.type || ''));
 }
+function missingObjectiveSubmissionParts(referenceEntry = {}, result = {}) {
+  const expected = Array.isArray(referenceEntry.referenceAnswerParts) ? referenceEntry.referenceAnswerParts
+    : Array.isArray(referenceEntry.reference_answer_parts) ? referenceEntry.reference_answer_parts : [];
+  const writing = new Set((referenceEntry.writingParts || referenceEntry.writing_parts || []).map(value => String(value).toLowerCase()));
+  const excluded = new Set((referenceEntry.excludedParts || referenceEntry.excluded_parts || []).map(value => String(value).toLowerCase()));
+  const details = Object.values(result.objectiveDetails || {});
+  return expected.map(value => String(value).trim().toLowerCase()).filter(partId => {
+    if (!partId || writing.has(partId) || excluded.has(partId)) return false;
+    const grading = referenceEntry.partGrading?.[partId] || referenceEntry.partGrading?.[partId.replace(/^teil/i, 'Teil ')] || {};
+    if (grading.gradingMode && !['answer_key', 'objective', 'deterministic_objective'].includes(String(grading.gradingMode).toLowerCase())) return false;
+    const rows = details.filter(row => String(row?.partId || '').trim().toLowerCase() === partId);
+    return !rows.length || rows.every(row => !String(row.student ?? row.submitted ?? row.studentAnswer ?? '').trim());
+  });
+}
+function holdIncompleteObjectiveResult(result = {}, referenceEntry = {}) {
+  const missingRequiredParts = missingObjectiveSubmissionParts(referenceEntry, result);
+  if (!missingRequiredParts.length) return result;
+  return {
+    ...result, status: 'needs_review', score: null, finalScore: null, passed: false,
+    incompleteAssessment: true, missingRequiredParts, shouldSendAutomatically: false,
+    suggestedScore: result.finalScore ?? result.score ?? null,
+    reviewReasons: [...(result.reviewReasons || []), {
+      code: 'missing_required_objective_parts',
+      message: `Required objective section(s) have no submitted answers: ${missingRequiredParts.join(', ')}.`,
+    }],
+  };
+}
+
 function releasable(result = {}) {
   const score = result.finalScore ?? result.score;
   return result.status === 'marked' && result.incompleteAssessment !== true
@@ -129,10 +157,11 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         && (Boolean(referenceEntry.speakingParts?.length) || Object.values(referenceEntry.partGrading || {}).some(part => part.gradingMode === 'tutor_verified_speaking'));
       const serverSpeakingAssessment = speakingRequired
         ? await verifiedSpeakingAssessment(db, text, studentId, job.assignmentKey) : null;
-      const result = await withMarkingTransport(callAi, () => mark({
+      const markedResult = await withMarkingTransport(callAi, () => mark({
         submission: { ...submission, id: snap.id, path: snap.ref.path, text },
         submissionText: text, referenceEntry, serverSpeakingAssessment,
       }));
+      const result = holdIncompleteObjectiveResult(markedResult, referenceEntry);
       const speakingReviewRequired = speakingRequired && !serverSpeakingAssessment;
       const release = !speakingReviewRequired && releasable(result);
       const timestamp = new Date(now()).toISOString();
@@ -338,4 +367,4 @@ function createScoreSyncWorker({ db, config, post = fetch }) {
     }
   };
 }
-module.exports = { idForPath, eligible, releasable, replacesFailedAttempt, createCourseMarkingWorker, createScoreSyncWorker };
+module.exports = { idForPath, eligible, releasable, missingObjectiveSubmissionParts, holdIncompleteObjectiveResult, replacesFailedAttempt, createCourseMarkingWorker, createScoreSyncWorker };
