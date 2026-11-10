@@ -42,8 +42,19 @@ function missingObjectiveSubmissionParts(referenceEntry = {}, result = {}) {
     return !rows.length || rows.every(row => !String(row.student ?? row.submitted ?? row.studentAnswer ?? '').trim());
   });
 }
-function holdIncompleteObjectiveResult(result = {}, referenceEntry = {}) {
-  const missingRequiredParts = missingObjectiveSubmissionParts(referenceEntry, result);
+function holdIncompleteObjectiveResult(result = {}, referenceEntry = {}, submissionText = '') {
+  // The original Day 18 contract has three parts. The two tagged revisions
+  // removed Teil 2; require exactly the objective parts in the matching key.
+  let requiredReference = referenceEntry;
+  if ((referenceEntry.assignmentKey || referenceEntry.assignment_id) === 'A1-12.1') {
+    const tag = /A1-12\.1-(BAHNHOF-HOEREN-V3|READING-V2)/i.exec(submissionText);
+    if (tag) {
+      const revision = tag[1].toUpperCase() === 'READING-V2'
+        ? 'a1-12.1-bahn-auto-beruf-v2' : 'a1-12.1-bahnhof-hoeren-v3';
+      requiredReference = referenceEntry.workbookRevisions?.[revision] || referenceEntry;
+    }
+  }
+  const missingRequiredParts = missingObjectiveSubmissionParts(requiredReference, result);
   if (!missingRequiredParts.length) return result;
   return {
     ...result, status: 'needs_review', score: null, finalScore: null, passed: false,
@@ -179,7 +190,7 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
           submission: { ...submission, id: snap.id, path: snap.ref.path, text },
           submissionText: text, referenceEntry, serverSpeakingAssessment,
         }));
-      const result = emptySubmission ? markedResult : holdIncompleteObjectiveResult(markedResult, referenceEntry);
+      const result = emptySubmission ? markedResult : holdIncompleteObjectiveResult(markedResult, referenceEntry, text);
       const speakingReviewRequired = !emptySubmission && speakingRequired && !serverSpeakingAssessment;
       const release = !speakingReviewRequired && releasable(result);
       const timestamp = new Date(now()).toISOString();
