@@ -151,3 +151,25 @@ test("A1 Day 8 travel dialogue is a dedicated Admin slide, not part of the gramm
   assert.doesNotMatch(slide.teacherSupport.grammarFocusEn.join(" "), /war\/hatte|Präteritum|liegen/i);
   assert.match(slide.workbookConnection.subtitle, /three-part workbook/i);
 });
+
+test("A1-5 Day 9 case and article quiz uses revealable teacher answers with limited Dativ preview", () => {
+  const slide = getA1WorkbookAlignedSlideDay6To10("A1-5");
+  assert.equal(slide.studentQuestionsDe.length, 12);
+  assert.equal(slide.speakingModels.length, 12);
+  assert.equal(new Set(slide.studentQuestionsDe).size, 12);
+  assert.equal(slide.studentQuestionsDe.filter((q) => /Dativ/.test(q)).length >= 2, true);
+  assert.ok(slide.studentQuestionsDe.some((q) => /Maskulinum/.test(q) && /Nominativ/.test(q) && /Akkusativ/.test(q)));
+  assert.ok(slide.studentQuestionsDe.some((q) => /Femininum/.test(q)));
+  assert.ok(slide.studentQuestionsDe.some((q) => /Neutrum/.test(q)));
+  assert.ok(slide.studentQuestionsDe.some((q) => /Plural/.test(q)));
+  const stages = buildTeachingPresenterStages(slide);
+  const quiz = stages.find((stage) => stage.id === "questions");
+  assert.equal(quiz.type, "question-reveal");
+  assert.equal(quiz.title, "Fälle erkennen · Artikel-Quiz");
+  assert.equal(quiz.items.length, 12);
+  assert.deepEqual(quiz.questionModels.map(({ questionDe }) => questionDe), quiz.items);
+  assert.ok(quiz.questionModels.every((model) => model.modelAnswerDe.trim()));
+  assert.ok(quiz.questionModels.some((model) => /mit dem Lehrer/.test(model.questionDe) && /Dativ/.test(model.modelAnswerDe)));
+  assert.ok(quiz.questionModels.some((model) => /ein Auto/.test(model.questionDe) && /kein Akkusativobjekt/.test(model.modelAnswerDe)));
+  assert.equal(slide.workbookConnection.parts.some((entry) => /Dativ/.test(entry.label)), false);
+});
