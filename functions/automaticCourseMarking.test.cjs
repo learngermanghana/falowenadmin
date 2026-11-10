@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { eligible, releasable, idForPath, createScoreSyncWorker } = require('./automaticCourseMarking');
+const { eligible, releasable, idForPath, createScoreSyncWorker, holdIncompleteObjectiveResult } = require('./automaticCourseMarking');
 test('only course submissions at A1/A2/B1 are eligible', () => {
   for (const level of ['A1','A2','B1']) assert.equal(eligible({status:'submitted'},level,`${level}-12.1`), true);
   for (const s of [{status:'draft'}, {mockAttemptId:'mock'}, {type:'exam-speaking'}]) assert.equal(eligible(s,'A1','A1-12.1'),false);
@@ -22,7 +22,41 @@ test('release requires a valid, confident result with no review flags', () => {
     {consistencyWarnings:['missing part']},{reviewReasons:[{code:'disagreement'}]},
     {secondExaminer:{requiresTutorReview:true}}]) assert.equal(releasable({...good,...patch}),false);
 });
-test('job identity is stable across repeated deliveries and distinct across paths', () => {
+test('blank required objective section is held for tutor review and has no releasable score', () => {
+  const referenceEntry = {
+    referenceAnswerParts: ['teil3', 'teil4'],
+    partGrading: { teil3: { gradingMode: 'answer_key' }, teil4: { gradingMode: 'answer_key' } },
+  };
+  const result = holdIncompleteObjectiveResult({
+    status: 'marked', score: 92, finalScore: 92, passed: true, confidence: 0.99,
+    objectiveDetails: {
+      'teil3.1': { partId: 'teil3', student: 'A', correct: true },
+      'teil4.1': { partId: 'teil4', student: '', correct: false },
+    },
+  }, referenceEntry);
+  assert.equal(result.status, 'needs_review');
+  assert.equal(result.score, null);
+  assert.equal(result.finalScore, null);
+  assert.equal(result.suggestedScore, 92);
+  assert.deepEqual(result.missingRequiredParts, ['teil4']);
+  assert.equal(releasable(result), false);
+});
+test('complete objective sections keep their AI result unchanged', () => {
+  const original = {
+    status: 'marked', score: 85, finalScore: 85, passed: true, confidence: 0.95,
+    objectiveDetails: {
+      'teil3.1': { partId: 'teil3', student: 'A', correct: true },
+      'teil4.1': { partId: 'teil4', student: 'B', correct: true },
+    },
+  };
+  const result = holdIncompleteObjectiveResult(original, {
+    referenceAnswerParts: ['teil3', 'teil4'],
+    partGrading: { teil3: { gradingMode: 'answer_key' }, teil4: { gradingMode: 'answer_key' } },
+  });
+  assert.equal(result, original);
+  assert.equal(releasable(result), true);
+});
+\ntest('job identity is stable across repeated deliveries and distinct across paths', () => {
   assert.equal(idForPath('submissions/a'),idForPath('submissions/a'));
   assert.notEqual(idForPath('submissions/A1/posts/a'),idForPath('submissions/A2/posts/a'));
 });
