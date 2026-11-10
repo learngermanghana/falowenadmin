@@ -25,7 +25,8 @@ test("All 16 A2 missions contain three distinct realistic scenarios and nine top
    assert.ok(scenario.context.length > 75, id);
    assert.equal(scenario.steps.length,3);
    for (const step of scenario.steps) {
-    assert.ok(step.questionDe.includes("?") && step.questionDe.length>20, id);
+    // A speaking step may be a German question or an imperative task (e.g. "Stelle Sarah ... vor.").
+   assert.ok(step.questionDe.length > 20 && /[?.!]$/.test(step.questionDe.trim()), id);
     assert.ok(step.modelDe.length>=15 && /[.!?]$/.test(step.modelDe), id);
     questions.push(step.questionDe);
    }
