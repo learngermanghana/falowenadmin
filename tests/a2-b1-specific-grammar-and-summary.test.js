@@ -4,6 +4,24 @@ import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 
 for (const level of ["A2", "B1"]) {
+  test(`${level}: each workbook grammar slide teaches before corrections and reading`, () => {
+    const titles = new Set();
+    for (const slide of getSlidesByCourse(level)) {
+      const stages = buildTeachingPresenterStages(slide, slide.topic);
+      const index = stages.findIndex(stage => stage.id === "workbook-grammar");
+      assert.equal(index, stages.some(stage => stage.id === "knowledge") ? 3 : 2, slide.assignmentId);
+      assert.equal(stages[index + 1].id, "common-mistakes", slide.assignmentId);
+      const grammar = stages[index];
+      titles.add(grammar.title);
+      const rules = grammar.items.slice(0, -1);
+      const check = grammar.items.at(-1);
+      assert.ok(rules.length >= 2 && rules.every(item => item.label && item.prompt && item.example), slide.assignmentId);
+      assert.ok(check.prompt && check.answer && !check.example, slide.assignmentId);
+      assert.equal(stages.filter(stage => stage.id === "workbook-grammar").length, 1, slide.assignmentId);
+    }
+    assert.equal(titles.size, 28);
+  });
+
   test(`${level}: 28 lesson summaries use the taught expressions and a real speaking question`, () => {
     const slides = getSlidesByCourse(level);
     assert.equal(slides.length, 28);
@@ -11,7 +29,7 @@ for (const level of ["A2", "B1"]) {
       const stages = buildTeachingPresenterStages(slide, slide.topic);
       const summary = stages.at(-1);
       assert.equal(summary.id, "lesson-summary", slide.assignmentId);
-      assert.equal(stages.length, (stages.some(s => s.id === "knowledge") ? 10 : 9) + 1, slide.assignmentId);
+      assert.equal(stages.length, (stages.some(s => s.id === "knowledge") ? 11 : 10) + 1, slide.assignmentId);
       const expressions = summary.items.find(item => item.label === "Redemittel");
       const spoken = summary.items.find(item => item.label === "Sprechprobe");
       const check = summary.items.find(item => item.label === "Selbstcheck");

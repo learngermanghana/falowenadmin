@@ -12,7 +12,7 @@ test("Every B1 warm-up has a distinct, contextual follow-up paired with its exac
  assert.equal(Object.keys(B1_WARMUP_FOLLOWUPS).length,28);
  for(const slide of slides) {
   const stages=buildTeachingPresenterStages(slide,slide.topic);
-  assert.equal(stages.length, stages.some(s=>s.id==="knowledge") ? 11 : 10, slide.assignmentId);
+  assert.equal(stages.length, stages.some(s=>s.id==="knowledge") ? 12 : 11, slide.assignmentId);
   const warmup=stages.find(x=>x.id==="warmup");
   const paired=B1_WARMUP_FOLLOWUPS[slide.assignmentId];
   assert.deepEqual(paired.map(x=>x.questionDe),warmup.items,slide.assignmentId);

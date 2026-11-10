@@ -58,6 +58,19 @@ line highlighting and seeking, while automatic transcript drafts carry a
 visible teacher-review warning. Recognized words must never silently become
 teacher-approved recording text just because their cues are complete.
 
+## A2 and B1 workbook grammar in Presenter
+
+Days 1–28 of both levels have a grammar slide after the opening activities and
+before Common Mistakes and reading. It includes the day's rules, examples and
+an ungraded oral check with a revealable model answer. The later grammar check
+uses the lesson topic for practice.
+
+The learner workbook Grammar tab is the source for the classroom summaries in
+`src/data/a2B1WorkbookGrammar.js`. The file records the learner revision and
+registry used. When workbook grammar changes, update the matching level and
+curriculum day in the summaries. Presenting these slides requires no workbook
+request during class.
+
 ## A2 workbook presentation practice — 4 November 2026
 
 The learner source `web/src/data/a2PresentationCards.js` owns the classroom

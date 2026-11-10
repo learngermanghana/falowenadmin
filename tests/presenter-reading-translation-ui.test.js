@@ -36,6 +36,28 @@ for(const level of ['A2','B1'])test(level+' all 28 real reading slides reveal on
   await act(async()=>root.render(React.createElement(Presenter,{slide,onExit(){}})));
   const stages=buildTeachingPresenterStages(slide);const index=stages.findIndex(s=>s.variant==='lesson-reading');
   const jump=document.querySelector('.presenter-stage-jump select');assert.ok(jump,slide.assignmentId);
+  if ((level === 'A2' && slide.dayNumber === 23) || (level === 'B1' && slide.dayNumber === 2)) {
+   const grammarIndex = stages.findIndex(stage => stage.id === 'workbook-grammar');
+   const grammar = stages[grammarIndex];
+   const navigate = async target => {
+    await act(async () => {
+     jump.value = String(target);
+     jump.dispatchEvent(new w.Event('change', { bubbles: true }));
+    });
+   };
+   await navigate(grammarIndex);
+   const board = document.querySelector('.presenter-stage-workbook-grammar');
+   assert.equal(board.querySelector('h1').textContent, grammar.title);
+   assert.equal(board.querySelector('blockquote').textContent, grammar.items[0].example);
+   assert.equal(board.querySelector('details').open, false);
+   await click(board.querySelector('summary'));
+   assert.equal(board.querySelector('details').open, true);
+   assert.equal(board.querySelector('details p').textContent, grammar.items.at(-1).answer);
+   await click(button('Next slide →'));
+   assert.ok(document.querySelector('.presenter-stage-common-mistakes'));
+   await navigate(grammarIndex);
+   assert.equal(document.querySelector('.presenter-stage-workbook-grammar details').open, false);
+  }
   await act(async()=>{jump.value=String(index);jump.dispatchEvent(new w.Event('change',{bubbles:true}));});
   assert.ok(document.querySelector('.presenter-knowledge.has-saved-translations'),slide.assignmentId);
   assert.equal(document.querySelector('.presenter-translation-meaning'),null,'English is hidden on each new slide');

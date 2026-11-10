@@ -17,8 +17,8 @@ test("A2 Day 21 uses the Day 19-style music + Hören interactive teaching stages
   assert.equal(slide.id, "a2-day-21-wochenende-planen");
   assert.equal(isA2PresenterV2Slide(slide), true);
   const stages = buildTeachingPresenterStages(slide, slide.topic);
-  assert.deepEqual(stages.slice(0, 6).map(stage => stage.id), [
-    "intro", "warmup", "knowledge", "common-mistakes", "reading", "grammar-check",
+  assert.deepEqual(stages.slice(0, 7).map(stage => stage.id), [
+    "intro", "warmup", "knowledge", "workbook-grammar", "common-mistakes", "reading", "grammar-check",
   ]);
   assert.equal(stages[1].variant, "interactive-music-video");
   assert.equal(stages[1].musicVideo.musicLibraryUrl, "https://music.falowen.app/?level=A2&day=21");
@@ -29,7 +29,7 @@ test("A2 Day 21 uses the Day 19-style music + Hören interactive teaching stages
   assert.equal(stages[2].audioDay, 21);
   assert.equal(stages[2].listeningItems.length, 5);
   assert.equal(isInteractiveOpeningStage(ASSIGNMENT, "knowledge"), true);
-  assert.equal(stages.length, 11, "Do not duplicate or remove presenter stages");
+  assert.equal(stages.length, 12, "Do not duplicate or remove presenter stages");
   assert.equal(getInteractiveLessonOpening(ASSIGNMENT).listening, A2_DAY21_CLASSROOM_LISTENING);
 });
 

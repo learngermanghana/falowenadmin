@@ -45,10 +45,10 @@ test("Day 18 career challenge replaces prioritization rather than adding another
   assert.equal(career.type, "career-challenge");
   assert.equal(career.items, B1_DAY18_CAREER_CHALLENGES);
   assert.deepEqual(stages.map((stage) => stage.id), [
-    "intro", "warmup", "common-mistakes", "reading", "grammar-check",
+    "intro", "warmup", "workbook-grammar", "common-mistakes", "reading", "grammar-check",
     "career-challenge", "questions", "workbook-presentation", "workbook", "lesson-summary",
   ]);
-  assert.equal(stages.length, 10, "Day 18 keeps one practice slot and adds the workbook presentation");
+  assert.equal(stages.length, 11, "Day 18 keeps one practice slot and adds the workbook presentation");
   assert.equal(stages.filter((stage) => stage.id === "career-challenge").length, 1);
   assert.equal(stages.some((stage) => stage.id === "practice"), false);
   assert.equal(stages.some((stage) => stage.title === "Berufsweg priorisieren"), false);

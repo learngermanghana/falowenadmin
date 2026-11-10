@@ -9,7 +9,7 @@ import { B1_DAY25_AUDIO_KEY, B1_DAY25_LISTENING } from "../src/data/b1Day25Liste
 test("B1 Day 25 has direct lesson music with its independent R2 Hören and approved slide flow", () => {
   const slide=getSlidesByCourse("B1").find(row=>row.assignmentId==="B1-8.25");
   const stages=buildTeachingPresenterStages(slide,slide.topic);
-  assert.deepEqual(stages.map(x=>x.id),["intro","warmup","knowledge","common-mistakes","reading","grammar-check",
+  assert.deepEqual(stages.map(x=>x.id),["intro","warmup","knowledge","workbook-grammar", "common-mistakes","reading","grammar-check",
     "scenario-challenge","questions","workbook-presentation","workbook","lesson-summary"]);
   assert.equal(stages[1].variant,"interactive-music-video");
   assert.equal(stages[1].musicVideo.youtubeId,undefined);
