@@ -203,7 +203,7 @@ test('empty tutor-marked submission is held for review before any AI call', asyn
   const path = 'submissions/empty';
   const store = memoryDb({
     'markingJobs/j': { automatic: true, submissionPath: path, level: 'A1', assignmentKey: 'A1-11', status: 'pending' },
-    [path]: { status: 'submitted', studentId: 'uid', submissionText: '  \\n  ' },
+    [path]: { status: 'submitted', studentId: 'uid', submissionText: '  \n  ' },
     'students/uid': { studentCode: 'ST1' },
   });
   let aiCalls = 0;
