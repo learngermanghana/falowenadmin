@@ -157,14 +157,19 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
       if (!registeredCode || !studentId || (requestedUid && studentId !== requestedUid)) {
         throw new Error('Registered student identity unavailable; tutor review required');
       }
-      let referenceEntry = await loadReference(job.assignmentKey);
-      if (!referenceEntry?.parts) throw new Error('No registered answer key; tutor review required');
-      // New submissions may carry their immutable marking-key revision; never grade them against a changed key.
-      const versionProblem = referenceVersionProblem(submission, referenceEntry);
-      if (versionProblem) throw new Error(versionProblem);
-      referenceEntry = familyRecordingReference(referenceEntry, submission, job.assignmentKey);
       const text = String(submission.submissionText || submission.text || submission.answer || submission.workContent || '').trim();
       const emptySubmission = !text;
+      let referenceEntry;
+      if (emptySubmission) {
+        referenceEntry = { parts: [], referenceAnswerParts: [], title: assignmentTitle(submission.assignmentTitle, submission.title, job.assignmentKey) };
+      } else {
+        referenceEntry = await loadReference(job.assignmentKey);
+        if (!referenceEntry?.parts) throw new Error('No registered answer key; tutor review required');
+        // New submissions may carry their immutable marking-key revision; never grade them against a changed key.
+        const versionProblem = referenceVersionProblem(submission, referenceEntry);
+        if (versionProblem) throw new Error(versionProblem);
+        referenceEntry = familyRecordingReference(referenceEntry, submission, job.assignmentKey);
+      }
       const speakingRequired = A1_SPEAKING_REVIEW_ASSIGNMENTS.has(String(job.assignmentKey || "").toUpperCase())
         && (Boolean(referenceEntry.speakingParts?.length) || Object.values(referenceEntry.partGrading || {}).some(part => part.gradingMode === 'tutor_verified_speaking'));
       const serverSpeakingAssessment = speakingRequired
