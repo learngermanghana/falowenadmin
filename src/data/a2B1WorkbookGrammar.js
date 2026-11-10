@@ -6,74 +6,49 @@ const A2 = {
     ["weil · Grund", "Im Nebensatz mit weil steht das konjugierte Verb am Ende.", "Ich lerne Deutsch, weil ich in Berlin arbeite."],
     ["denn · Grund", "Nach denn bleibt die normale Hauptsatzstellung.", "Ich lerne Deutsch, denn ich arbeite in Berlin."],
     ["deshalb · Folge", "Beginnt der Hauptsatz mit deshalb, folgt direkt das konjugierte Verb.", "Ich arbeite in Berlin. Deshalb lerne ich Deutsch."],
-  ], ["Verbinde mit weil: Ich bin müde. Ich habe wenig geschlafen.", "Ich bin müde, weil ich wenig geschlafen habe."]],
+  ], ["Drücke dieselbe Idee mit weil, denn und deshalb aus: Ich bin müde. Ich habe wenig geschlafen.", "Ich bin müde, weil ich wenig geschlafen habe. / Ich bin müde, denn ich habe wenig geschlafen. / Ich habe wenig geschlafen. Deshalb bin ich müde."]],
   3: ["Vergleiche mit wie und als", [
     ["Gleichheit", "genauso + Grundform des Adjektivs + wie", "Mia ist genauso groß wie Lea."],
     ["Unterschied", "Komparativ + als. Der Komparativ endet oft auf -er.", "Mia ist größer als Tom."],
-    ["Höchste Stufe", "Verwende zum Beispiel am + Adjektiv mit -(e)sten. Merke: gut, besser, am besten.", "Lea läuft am schnellsten."],
+    ["Höchste Stufe", "Vergleiche die drei Formen: schnell → schneller → am schnellsten. Merke auch: gut → besser → am besten.", "Lea läuft am schnellsten."],
   ], ["Vergleiche mit größer: Tom ist 1,70 m groß. Lea ist 1,80 m groß.", "Lea ist größer als Tom."]],
-  4: ["Treffpunkt und Richtung · wo oder wohin?", [
-    ["Wo? · Ort", "Bei Wechselpräpositionen steht der Ort im Dativ. an dem → am, in dem → im.", "Wir treffen uns am Bahnhof."],
-    ["Wohin? · Ziel", "Bei Wechselpräpositionen steht das Ziel im Akkusativ. in das → ins.", "Wir gehen ins Kino."],
-  ], ["Ergänze: Wir sind ___ Kino. Danach gehen wir ___ Café.", "Wir sind im Kino. Danach gehen wir ins Café."]],
   5: ["Trennbare Verben in der Freizeit", [
     ["Hauptsatz", "Das konjugierte Verb steht an Position 2. Die Vorsilbe steht am Ende.", "Am Wochenende gehe ich gern aus."],
     ["Mit Modalverb", "Das Modalverb steht an Position 2. Der ganze Infinitiv steht am Ende.", "Ich möchte heute Abend ausgehen."],
   ], ["Bilde einen Satz mit anrufen: Heute / ich / meine Freundin.", "Heute rufe ich meine Freundin an."]],
-  6: ["Wechselpräpositionen bei Möbeln und Räumen", [
-    ["Wo? · Dativ", "Für einen festen Ort steht der Dativ nach Präpositionen wie auf, an und neben.", "Die Lampe steht neben dem Sofa."],
-    ["Wohin? · Akkusativ", "Für das Ziel der Bewegung steht der Akkusativ. Nutze zum Beispiel stellen, legen oder hängen.", "Ich stelle die Lampe neben das Sofa."],
-  ], ["Ergänze: Das Buch liegt auf ___ Tisch. Ich lege es auf ___ Tisch.", "Das Buch liegt auf dem Tisch. Ich lege es auf den Tisch."]],
-  7: ["Relativsätze · Nominativ und Akkusativ", [
-    ["Bezugswort und Kasus", "Genus und Zahl kommen vom Nomen. Der Kasus hängt von der Rolle des Pronomens im Relativsatz ab.", "Das ist der Balkon, der mir gefällt."],
-    ["Relativpronomen", "Nominativ: der, die, das, die. Akkusativ: den, die, das, die.", "Das ist der Balkon, den wir gesehen haben."],
-    ["Satzbau", "Setze ein Komma vor den Relativsatz. Das konjugierte Verb steht am Ende.", "Ich suche eine Wohnung, die einen Balkon hat."],
-  ], ["Verbinde: Das ist der Vermieter. Ich habe den Vermieter angerufen.", "Das ist der Vermieter, den ich angerufen habe."]],
   8: ["Höflich bestellen und bitten", [
-    ["Wunsch", "Mit ich möchte + Akkusativ bestellst du höflich. Einen zusätzlichen Infinitiv setzt du ans Ende.", "Ich möchte einen Tee bestellen."],
+    ["Wunsch", "Mit ich möchte bestellst du höflich. Die Bestellung steht im Akkusativ: einen Tee, eine Suppe, ein Wasser. Ein zusätzlicher Infinitiv steht am Ende.", "Ich möchte einen Tee bestellen."],
     ["Bitte", "Eine höfliche Ja-/Nein-Frage beginnt mit Könnten Sie. Der Infinitiv steht am Ende.", "Könnten Sie mir bitte die Rechnung bringen?"],
     ["Problem", "Beginne mit Entschuldigung und erkläre das Problem kurz.", "Entschuldigung, die Suppe ist leider kalt."],
   ], ["Bitte höflich um die Speisekarte. Beginne mit Könnten Sie …", "Könnten Sie mir bitte die Speisekarte bringen?"]],
-  9: ["Perfekt · Urlaub und Erlebnisse", [
-    ["Satzklammer", "Im Hauptsatz steht haben oder sein an Position 2. Das Partizip II steht am Ende.", "Wir haben im Hotel übernachtet."],
-    ["haben oder sein?", "Die meisten Verben bilden das Perfekt mit haben. Viele Verben der Ortsveränderung und bleiben verwenden sein.", "Wir sind nach Berlin gefahren."],
-    ["Partizip II", "Viele regelmäßige Formen haben ge- und -t. Verben auf -ieren haben kein ge-.", "Ich habe am Strand fotografiert."],
-  ], ["Setze ins Perfekt: Wir fahren nach Hamburg.", "Wir sind nach Hamburg gefahren."]],
-  10: ["Präteritum · Vergangenes erzählen", [
-    ["Regelmäßige Verben", "Das Präteritum regelmäßiger Verben bildet man mit dem Stamm und -te. Starke Verben ändern oft den Stamm.", "Ich besuchte ein Museum. Danach ging ich ins Café."],
-    ["sein und haben", "Die Formen war und hatte sind auch im Gespräch häufig.", "Das Wetter war gut. Wir hatten viel Zeit."],
-  ], ["Setze ins Präteritum: Die Stadt ist schön und wir haben Zeit.", "Die Stadt war schön und wir hatten Zeit."]],
   11: ["Verkehrsmittel vergleichen", [
     ["Komparativ", "Vergleiche zwei Verkehrsmittel mit Komparativ + als.", "Der Zug ist schneller als der Bus."],
     ["Superlativ", "Verwende am + -(e)sten für den höchsten Grad. Merke: viel, mehr, am meisten.", "Mit dem Fahrrad bin ich am günstigsten unterwegs."],
   ], ["Der Bus kostet weniger als das Taxi. Formuliere mit günstiger.", "Der Bus ist günstiger als das Taxi."]],
   12: ["Traumberuf · Modalverben, weil und dass", [
     ["Modalverben", "möchte und will drücken einen Wunsch aus, kann eine Fähigkeit. Der zweite Infinitiv steht am Ende.", "Ich möchte später als Ärztin arbeiten."],
-    ["weil und dass", "weil nennt einen Grund. dass leitet etwa nach ich glaube eine Aussage ein. In beiden Nebensätzen steht das Verb am Ende.", "Ich möchte Ärztin werden, weil ich gern Menschen helfe. Ich glaube, dass der Beruf gut zu mir passt."],
-  ], ["Verbinde: Ich möchte Koch werden. Ich koche gern. Verwende weil.", "Ich möchte Koch werden, weil ich gern koche."]],
+    ["weil und dass", "weil beantwortet Warum? Nach ich glaube oder ich denke leitet dass die Aussage ein. In beiden Nebensätzen steht das konjugierte Verb am Ende.", "Ich möchte Ärztin werden, weil ich gern Menschen helfe. Ich glaube, dass der Beruf gut zu mir passt."],
+  ], ["Nenne einen Grund mit weil und ergänze eine Meinung mit Ich glaube, dass …", "Ich möchte Koch werden, weil ich gern koche. Ich glaube, dass der Beruf zu mir passt."]],
   13: ["Modalverben im Präteritum", [
     ["Formen", "können → konnte, müssen → musste, wollen → wollte, dürfen → durfte, sollen → sollte.", "In meiner letzten Stelle musste ich früh anfangen."],
-    ["Satzklammer", "Das konjugierte Modalverb steht an Position 2, der Infinitiv am Ende.", "Im Praktikum konnte ich im Team arbeiten."],
+    ["Satzklammer", "Das konjugierte Modalverb steht an Position 2, der Infinitiv am Ende. Vergleiche ich konnte und wir konnten.", "Im Praktikum konnte ich Kunden beraten. Wir konnten im Team arbeiten."],
   ], ["Erzähle vom Praktikum im Präteritum: Ich muss Kunden beraten.", "Ich musste Kunden beraten."]],
   14: ["Ein Ziel ausdrücken · um … zu und damit", [
     ["Gleiches Subjekt", "Mit um … zu erklärst du den Zweck, wenn dieselbe Person beide Handlungen ausführt. Setze ein Komma vor um.", "Ich mache einen Kurs, um meine Chancen zu verbessern."],
-    ["Anderes Subjekt", "Mit damit kannst du ein eigenes Subjekt nennen. Das konjugierte Verb steht am Ende.", "Meine Kollegin hilft mir, damit ich die Prüfung bestehe."],
+    ["Anderes Subjekt", "Verwende damit, wenn du ein anderes Subjekt brauchst. Damit geht auch mit demselben Subjekt. Das konjugierte Verb steht am Ende.", "Meine Kollegin hilft mir, damit ich die Prüfung bestehe."],
+    ["Trennbares Verb", "Bei vorbereiten steht zu zwischen Vorsilbe und Stamm: vor + zu + bereiten.", "Ich übe, um mich auf das Gespräch vorzubereiten."],
   ], ["Verbinde mit um … zu: Ich lerne Deutsch. Ich möchte in Deutschland arbeiten.", "Ich lerne Deutsch, um in Deutschland zu arbeiten."]],
   15: ["seit + Dativ · Wie lange schon?", [
     ["seit · dauert bis heute", "Nach seit steht der Dativ. Für etwas, das noch andauert, verwenden wir das Präsens.", "Ich spiele seit einem Jahr Tennis."],
-    ["vor · Zeitpunkt in der Vergangenheit", "Mit vor sagst du, wann etwas passiert ist.", "Vor einem Jahr habe ich mit Tennis angefangen."],
+    ["vor · Zeitpunkt in der Vergangenheit", "Auch vor steht hier mit Dativ: vor einem Jahr, vor zwei Jahren. Es sagt, wann etwas passiert ist.", "Vor einem Jahr habe ich mit Tennis angefangen."],
   ], ["Ergänze: Ich spiele ___ zwei Jahren Fußball. Ich habe ___ zwei Jahren angefangen.", "Ich spiele seit zwei Jahren Fußball. Ich habe vor zwei Jahren angefangen."]],
-  16: ["Reflexive Verben · Wohlbefinden", [
-    ["Pronomen", "Bei sich entspannen: ich → mich, du → dich, er/sie → sich, wir → uns, ihr → euch, sie/Sie → sich.", "Nach der Arbeit entspanne ich mich."],
-    ["Mit Modalverb", "Das Reflexivpronomen bleibt im Satz. Der Infinitiv steht am Ende.", "Ich möchte mich heute ausruhen."],
-  ], ["Ergänze das Pronomen: Wir möchten ___ am Wochenende erholen.", "Wir möchten uns am Wochenende erholen."]],
   17: ["Modalverben in der Apotheke", [
-    ["können · Möglichkeit oder Bitte", "In der Ja-/Nein-Frage steht das Modalverb zuerst. Der Infinitiv steht am Ende.", "Können Sie mir etwas gegen Husten empfehlen?"],
+    ["können · Möglichkeit oder Bitte", "Im Hauptsatz steht das Modalverb an Position 2. In der Ja-/Nein-Frage steht es zuerst. Der Infinitiv steht am Ende.", "Ich kann den Sirup nehmen. Können Sie mir etwas gegen Husten empfehlen?"],
     ["müssen und sollen", "müssen zeigt eine Notwendigkeit. sollen gibt zum Beispiel eine Empfehlung oder Anweisung wieder.", "Ich muss das Medikament täglich nehmen. Sie sollen viel trinken."],
   ], ["Frage nach einer Empfehlung mit sollen: Wie oft / ich / das Medikament nehmen?", "Wie oft soll ich das Medikament nehmen?"]],
   18: ["Höfliche Fragen und Bitten am Telefon", [
     ["Wunsch", "Mit ich möchte, ich hätte gern oder ich würde gern formulierst du einen höflichen Wunsch.", "Ich würde gern einen Termin vereinbaren."],
-    ["Bitte und Frage", "Für eine Ja-/Nein-Frage steht Könnten Sie am Anfang. Bei einer W-Frage folgt das Verb auf das Fragewort.", "Könnten Sie mir bitte helfen? Wann kann ich vorbeikommen?"],
+    ["Bitte und Frage", "Für eine Ja-/Nein-Frage steht das konjugierte Verb zuerst. Bei einer W-Frage folgt es auf das Fragewort. Der Infinitiv steht am Ende.", "Könnten Sie mir bitte helfen? Wann kann ich vorbeikommen?"],
   ], ["Bitte höflich um einen Rückruf. Beginne mit Könnten Sie …", "Könnten Sie mich bitte zurückrufen?"]],
   19: ["Alternativen mit oder und Gründe mit denn", [
     ["oder · Auswahl", "oder verbindet Alternativen. Bei zwei Hauptsätzen bleibt die normale Wortstellung.", "Ich kaufe im Geschäft ein oder ich bestelle online."],
@@ -86,17 +61,12 @@ const A2 = {
   ], ["Bitte mit Könnten Sie um Hilfe und nenne den Grund mit weil.", "Könnten Sie mir bitte helfen? Ich reklamiere das Gerät, weil es nicht funktioniert."]],
   21: ["Wochenendpläne · wenn, falls und ob", [
     ["wenn und falls · Bedingung", "wenn nennt eine Bedingung. falls betont, dass etwas möglicherweise passiert. Das Verb steht am Ende des Nebensatzes.", "Falls es regnet, gehen wir ins Museum."],
-    ["ob · indirekte Ja-/Nein-Frage", "ob leitet eine indirekte Frage ein. Das konjugierte Verb steht am Ende.", "Sag mir bitte, ob du am Samstag Zeit hast."],
+    ["ob · indirekte Ja-/Nein-Frage", "Mit ob fragst du indirekt nach Ja oder Nein. Vergleiche denselben Wochenendplan als Bedingung und als Frage.", "Wenn du am Samstag Zeit hast, gehen wir ins Museum. Sag mir bitte, ob du am Samstag Zeit hast."],
   ], ["Formuliere mit ob: Hast du am Samstag Zeit? Ich möchte wissen, …", "Ich möchte wissen, ob du am Samstag Zeit hast."]],
   22: ["Die Woche planen · Präsens und Zeitangaben", [
     ["Zukunft im Präsens", "Eine klare Zeitangabe macht einen Plan im Präsens verständlich. Beginnt der Satz mit der Zeitangabe, folgt das konjugierte Verb.", "Am Montag arbeite ich bis 17 Uhr."],
     ["Pflicht und Möglichkeit", "Mit müssen oder können steht der zweite Infinitiv am Ende.", "Am Dienstag kann ich nach dem Kurs einkaufen."],
   ], ["Beginne mit Am Freitag: Ich muss bis 16 Uhr arbeiten.", "Am Freitag muss ich bis 16 Uhr arbeiten."]],
-  23: ["Schul- und Arbeitsweg · mit + Dativ und Zielangaben", [
-    ["Wie? · Verkehrsmittel", "mit + Dativ: mit dem Bus, mit der Bahn, mit dem Fahrrad. Bei nehmen steht das Verkehrsmittel im Akkusativ. Beim Gehen sagst du zu Fuß.", "Ich fahre mit dem Bus zur Arbeit. Ich nehme den Bus."],
-    ["Wohin? · Ziel", "zu + Dativ: zum Bahnhof, zur Schule. nach bei Städten und Ländern ohne Artikel. in + Akkusativ beim Hineingehen.", "Ich fahre nach Berlin. Ich gehe ins Büro."],
-    ["Satzstellung und Grund", "Nach einer Zeitangabe steht das Verb an Position 2. Im weil-Satz steht es am Ende.", "Jeden Morgen fahre ich mit dem Fahrrad zur Schule, weil es schnell ist."],
-  ], ["Ergänze: Jeden Morgen fahre ich mit ___ Bahn ___ Arbeit.", "Jeden Morgen fahre ich mit der Bahn zur Arbeit."]],
   24: ["Urlaubspläne · Bedingung, Grund und Zweck", [
     ["wenn und falls", "Beide leiten eine Bedingung ein. Das konjugierte Verb steht am Ende des Nebensatzes.", "Falls es regnet, besuchen wir ein Museum."],
     ["weil · Grund", "Nenne den Grund mit weil. Das konjugierte Verb steht am Ende.", "Wir buchen früh, weil die Zimmer günstig sind."],
@@ -256,30 +226,133 @@ const B1 = {
 
 export const A2_B1_WORKBOOK_GRAMMAR = { A2, B1 };
 
-// Day 2 follows the workbook's sequence. Each group fits one teaching slide.
-export const A2_DAY_2_ADJECTIVE_GRAMMAR = [
-  ["Adjektivendungen 1 · So findest du die Endung", [
-    ["1 · Schau auf das Nomen", "Lerne das Nomen mit seinem Artikel: der Mann, die Frau, das Kind, die Personen.", "der Mann + freundlich → ein freundlicher Mann"],
-    ["2 · Bestimme den Kasus", "Das Subjekt steht im Nominativ. Das direkte Objekt nach sehen steht im Akkusativ.", "Ein freundlicher Mann winkt. Ich sehe einen freundlichen Mann."],
-    ["3 · Setze die Endung ein", "Bei ein + maskulin im Nominativ zeigt -er den Unterschied zu ein + neutral mit -es. Bei einen steht das Adjektiv auf -en.", "ein netter Mann · ein nettes Kind · einen netten Mann"],
-  ], []],
-  ["Adjektivendungen 2 · Nominativ", [
-    ["Maskulin · ein + -er", "der Mann → ein freundlicher Mann", "Ein freundlicher Mann hilft mir."],
-    ["Feminin · eine + -e", "die Frau → eine sportliche Frau", "Eine sportliche Frau läuft im Park."],
-    ["Neutral · ein + -es", "das Kind → ein kleines Kind", "Ein kleines Kind spielt im Garten."],
-    ["Plural · keine + -en", "die Personen → keine unbekannten Personen", "Keine unbekannten Personen sind hier."],
-  ], []],
-  ["Adjektivendungen 3 · Akkusativ", [
-    ["Maskulin · einen + -en", "den Mann → einen freundlichen Mann. Hier ändern sich Artikel und Endung.", "Ich sehe einen freundlichen Mann."],
-    ["Feminin · eine + -e", "die Frau → eine sportliche Frau", "Ich sehe eine sportliche Frau."],
-    ["Neutral · ein + -es", "das Kind → ein kleines Kind", "Ich sehe ein kleines Kind."],
-    ["Plural · keine + -en", "die Personen → keine unbekannten Personen", "Ich sehe keine unbekannten Personen."],
-  ], []],
-  ["Adjektivendungen 4 · Gemeinsam üben", [
-    ["Merksatz", "In dieser Übersicht ändern sich beim Wechsel vom Nominativ zum Akkusativ nur die maskuline Form von ein und die Adjektivendung.", "Ein sportlicher Mann kommt. Ich sehe einen sportlichen Mann."],
-  ], [
-    ["Ergänze: ___ (ein / freundlich / Mann) wohnt hier.", "Ein freundlicher Mann wohnt hier."],
-    ["Ergänze: Ich sehe ___ (ein / sportlich / Mann) im Park.", "Ich sehe einen sportlichen Mann im Park."],
-    ["Ergänze: Sie trifft ___ (eine / nett / Frau) und sieht ___ (ein / klein / Kind).", "Sie trifft eine nette Frau und sieht ein kleines Kind."],
-  ]],
-];
+// Each group follows the workbook sequence and fits one teaching slide.
+export const A2_WORKBOOK_GRAMMAR_PAGES = {
+  2: [
+    ["Adjektivendungen 1 · So findest du die Endung", [
+      ["1 · Schau auf das Nomen", "Lerne das Nomen mit seinem Artikel: der Mann, die Frau, das Kind, die Personen.", "der Mann + freundlich → ein freundlicher Mann"],
+      ["2 · Bestimme den Kasus", "Das Subjekt steht im Nominativ. Das direkte Objekt nach sehen steht im Akkusativ.", "Ein freundlicher Mann winkt. Ich sehe einen freundlichen Mann."],
+      ["3 · Setze die Endung ein", "Bei ein + maskulin im Nominativ zeigt -er den Unterschied zu ein + neutral mit -es. Bei einen steht das Adjektiv auf -en.", "ein netter Mann · ein nettes Kind · einen netten Mann"],
+    ], []],
+    ["Adjektivendungen 2 · Nominativ", [
+      ["Maskulin · ein + -er", "der Mann → ein freundlicher Mann", "Ein freundlicher Mann hilft mir."],
+      ["Feminin · eine + -e", "die Frau → eine sportliche Frau", "Eine sportliche Frau läuft im Park."],
+      ["Neutral · ein + -es", "das Kind → ein kleines Kind", "Ein kleines Kind spielt im Garten."],
+      ["Plural · keine + -en", "die Personen → keine unbekannten Personen", "Keine unbekannten Personen sind hier."],
+    ], []],
+    ["Adjektivendungen 3 · Akkusativ", [
+      ["Maskulin · einen + -en", "den Mann → einen freundlichen Mann. Hier ändern sich Artikel und Endung.", "Ich sehe einen freundlichen Mann."],
+      ["Feminin · eine + -e", "die Frau → eine sportliche Frau", "Ich sehe eine sportliche Frau."],
+      ["Neutral · ein + -es", "das Kind → ein kleines Kind", "Ich sehe ein kleines Kind."],
+      ["Plural · keine + -en", "die Personen → keine unbekannten Personen", "Ich sehe keine unbekannten Personen."],
+    ], []],
+    ["Adjektivendungen 4 · Gemeinsam üben", [
+      ["Merksatz", "In dieser Übersicht ändern sich beim Wechsel vom Nominativ zum Akkusativ nur die maskuline Form von ein und die Adjektivendung.", "Ein sportlicher Mann kommt. Ich sehe einen sportlichen Mann."],
+    ], [
+      ["Ergänze: ___ (ein / freundlich / Mann) wohnt hier.", "Ein freundlicher Mann wohnt hier."],
+      ["Ergänze: Ich sehe ___ (ein / sportlich / Mann) im Park.", "Ich sehe einen sportlichen Mann im Park."],
+      ["Ergänze: Sie trifft ___ (eine / nett / Frau) und sieht ___ (ein / klein / Kind).", "Sie trifft eine nette Frau und sieht ein kleines Kind."],
+    ]],
+  ],
+  4: [
+    ["Treffpunkt · Wo oder wohin?", [
+      ["1 · Ort oder Ziel?", "Wo? fragt nach dem Ort. Wohin? fragt nach dem Ziel. Auch Bewegung kann an einem Ort stattfinden.", "Wir spazieren im Park. Morgen gehen wir wieder in den Park."],
+      ["2 · Artikel wählen", "der Park → in dem Park / in den Park. das Café → in dem Café / in das Café.", "Wir warten in dem Café. Danach gehen wir in den Park."],
+    ], []],
+    ["Treffpunkt · Kurzformen und Artikel", [
+      ["Ort · am und im", "an dem → am. in dem → im.", "Wir treffen uns am See. Wir warten im Café."],
+      ["Ziel · ans und ins", "an das → ans. in das → ins. Bei der See lautet die Zielform an den See.", "Wir fahren an den See. Morgen fahren wir ans Meer."],
+    ], [
+      ["Ergänze: Wir sind ___ See. Morgen fahren wir ___ Meer.", "Wir sind am See. Morgen fahren wir ans Meer."],
+    ]],
+  ],
+  6: [
+    ["Möbel und Räume · Position oder Ziel?", [
+      ["Wo? · Dativ", "Die Möbel befinden sich schon an einem Ort. Typische Verben sind stehen, liegen und hängen.", "Die Lampe steht neben dem Sofa. Das Bild hängt an der Wand."],
+      ["Wohin? · Akkusativ", "Die Möbel kommen an einen neuen Platz. Typische Verben sind stellen, legen und hängen.", "Ich stelle die Lampe neben das Sofa. Ich hänge das Bild an die Wand."],
+    ], []],
+    ["Möbel und Räume · Den Artikel auswählen", [
+      ["Maskulin und neutral", "Wo? auf dem Tisch / neben dem Sofa. Wohin? auf den Tisch / neben das Sofa.", "Das Buch liegt auf dem Tisch. Ich lege es auf den Tisch."],
+      ["Feminin und Plural", "Wo? an der Wand / zwischen den Stühlen. Wohin? an die Wand / zwischen die Stühle.", "Der Tisch steht zwischen den Stühlen. Ich stelle ihn zwischen die Stühle."],
+    ], [
+      ["Ergänze: Der Teppich liegt unter ___ Tisch. Ich lege ihn unter ___ Sofa.", "Der Teppich liegt unter dem Tisch. Ich lege ihn unter das Sofa."],
+    ]],
+  ],
+  7: [
+    ["Relativsätze · Das richtige Pronomen wählen", [
+      ["Bezugswort", "Das Nomen liefert Genus und Zahl. Die Rolle des Pronomens im Relativsatz bestimmt den Kasus.", "Der Balkon → der Balkon, der mir gefällt / der Balkon, den wir gesehen haben."],
+      ["Nominativ · Subjekt", "Wer oder was tut im Relativsatz etwas? Formen: der, die, das, die.", "Das ist der Balkon, der zur Wohnung gehört."],
+      ["Akkusativ · direktes Objekt", "Wen oder was sieht, sucht oder mietet jemand? Formen: den, die, das, die.", "Das ist der Balkon, den wir gesehen haben. Wir ist das Subjekt."],
+    ], []],
+    ["Relativsätze · Zwei Sätze verbinden", [
+      ["Wiederholung ersetzen", "Setze ein Komma. Ersetze das wiederholte Nomen durch das passende Relativpronomen.", "Ich suche eine Wohnung. Die Wohnung hat einen Balkon. → Ich suche eine Wohnung, die einen Balkon hat."],
+      ["Konjugiertes Verb ans Ende", "Im Perfekt steht das Hilfsverb am Ende des Relativsatzes.", "Das ist der Vermieter. Ich habe den Vermieter angerufen. → Das ist der Vermieter, den ich angerufen habe."],
+    ], [
+      ["Verbinde: Das ist der Nachbar. Der Nachbar wohnt im Erdgeschoss.", "Das ist der Nachbar, der im Erdgeschoss wohnt."],
+      ["Verbinde: Hier ist der Mietvertrag. Ich habe den Mietvertrag gelesen.", "Hier ist der Mietvertrag, den ich gelesen habe."],
+    ]],
+  ],
+  9: [
+    ["Perfekt · Die Satzklammer", [
+      ["Hauptsatz", "Das konjugierte Hilfsverb steht an Position 2. Das Partizip II steht am Ende.", "Gestern haben wir ein Museum besucht."],
+      ["Fragen", "Bei Ja-/Nein-Fragen steht das Hilfsverb zuerst. Bei W-Fragen folgt es dem Fragewort.", "Habt ihr ein Museum besucht? Was habt ihr besucht?"],
+    ], []],
+    ["Perfekt · Haben oder sein?", [
+      ["haben", "Die meisten Verben bilden das Perfekt mit haben, darunter besuchen, buchen und übernachten.", "Wir haben ein Zimmer gebucht und im Hotel übernachtet."],
+      ["sein", "Viele Verben der Ortsveränderung und Zustandsänderung bilden das Perfekt mit sein. Auch bleiben verwendet sein.", "Wir sind nach Berlin gefahren und dort drei Tage geblieben."],
+    ], [
+      ["Ergänze haben oder sein: Wir ___ die Altstadt besucht. Dann ___ wir zum Hotel gefahren.", "Wir haben die Altstadt besucht. Dann sind wir zum Hotel gefahren."],
+    ]],
+    ["Perfekt · Das Partizip II bilden", [
+      ["Regelmäßig und unregelmäßig", "Viele regelmäßige Formen haben ge- und -t. Viele starke Verben haben ge- und -en und ändern manchmal den Stamm.", "machen → gemacht · fahren → gefahren · finden → gefunden"],
+      ["Trennbare Verben", "Bei ankommen und einkaufen steht ge- nach der Vorsilbe.", "ankommen → angekommen · einkaufen → eingekauft"],
+      ["Ohne ge-", "Verben mit Vorsilben wie be- oder ver- und Verben auf -ieren bilden das Partizip ohne ge-.", "besuchen → besucht · reservieren → reserviert"],
+    ], [
+      ["Bilde das Perfekt: Wir kommen am Abend an.", "Wir sind am Abend angekommen."],
+    ]],
+  ],
+  10: [
+    ["Vergangenes erzählen · Perfekt und Präteritum", [
+      ["Gleicher Inhalt, zwei Formen", "Das Perfekt braucht Hilfsverb und Partizip II. Das Präteritum drückt die Vergangenheit mit einer konjugierten Form aus.", "Ich habe die Altstadt besucht. → Ich besuchte die Altstadt."],
+      ["Gebrauch", "Im Gespräch ist das Perfekt bei vielen Verben üblich. War und hatte sind auch beim Sprechen häufig. In schriftlichen Erzählungen steht oft das Präteritum.", "Wir haben ein Fest besucht. Das Wetter war schön und wir hatten viel Zeit."],
+    ], []],
+    ["Präteritum · Regelmäßige und unregelmäßige Formen", [
+      ["Regelmäßig", "Stamm + -te: ich besuchte, du besuchtest, wir besuchten.", "Am Samstag besuchten wir ein Museum."],
+      ["Unregelmäßig", "Starke Verben wechseln oft den Stamm. Lerne häufige Formen als Paare.", "gehen → ging · fahren → fuhr · sein → war · haben → hatte"],
+    ], [
+      ["Setze ins Präteritum: Das Wetter ist gut, wir haben Zeit und wir gehen ins Museum.", "Das Wetter war gut, wir hatten Zeit und wir gingen ins Museum."],
+    ]],
+  ],
+  16: [
+    ["Reflexive Verben · Das passende Pronomen", [
+      ["Das Pronomen gehört zum Subjekt", "Bei sich entspannen: ich → mich, du → dich, er/sie → sich, wir → uns, ihr → euch, sie/Sie → sich.", "Ich entspanne mich. Entspannst du dich? Wir entspannen uns."],
+      ["Häufige Verben", "Lerne sich ausruhen, sich erholen und sich entspannen zusammen mit dem Pronomen.", "Wir erholen uns am Wochenende."],
+    ], []],
+    ["Reflexive Verben · Die Position im Satz", [
+      ["Hauptsatz und trennbares Verb", "Nach einer Zeitangabe steht das Verb an Position 2. Bei ausruhen steht die Vorsilbe am Ende.", "Nach der Arbeit ruhe ich mich aus."],
+      ["Modalverb", "Der ganze Infinitiv steht am Ende. Das Reflexivpronomen bleibt im Mittelfeld.", "Ich möchte mich heute ausruhen."],
+      ["Perfekt", "Das Hilfsverb steht an Position 2. Das Reflexivpronomen bleibt vor dem Partizip II.", "Gestern habe ich mich gut ausgeruht."],
+    ], [
+      ["Setze ins Perfekt: Ich ruhe mich nach der Arbeit aus.", "Ich habe mich nach der Arbeit ausgeruht."],
+    ]],
+  ],
+  23: [
+    ["Schul- und Arbeitsweg · Wie kommst du dorthin?", [
+      ["mit + Dativ", "der Bus → mit dem Bus, die Bahn → mit der Bahn, das Fahrrad → mit dem Fahrrad.", "Ich fahre mit der Bahn zur Arbeit."],
+      ["fahren, gehen und nehmen", "Beim Gehen sagst du zu Fuß. Bei nehmen ist das Verkehrsmittel ein direktes Objekt im Akkusativ.", "Ich gehe zu Fuß. Ich fahre mit dem Bus. Ich nehme den Bus."],
+    ], [
+      ["Ergänze: Ich fahre mit ___ Fahrrad. Bei Regen nehme ich ___ Bus.", "Ich fahre mit dem Fahrrad. Bei Regen nehme ich den Bus."],
+    ]],
+    ["Schul- und Arbeitsweg · Wohin fährst du?", [
+      ["zu + Dativ", "zu dem → zum, zu der → zur. Beispiele: zum Bahnhof, zur Schule, zur Arbeit.", "Ich fahre mit dem Bus zum Bahnhof."],
+      ["nach", "Verwende nach bei Städten und Ländern ohne Artikel. Auch nach Hause ist eine feste Form.", "Ich fahre nach Berlin. Nach dem Kurs fahre ich nach Hause."],
+      ["in + Akkusativ", "Wenn du in einen Raum oder ein Gebäude hineingehst, steht in + Akkusativ. in das → ins.", "Ich gehe ins Büro."],
+    ], []],
+    ["Schul- und Arbeitsweg · Zeit, Dauer und Grund", [
+      ["Zeit zuerst", "Nach der Zeitangabe folgt das konjugierte Verb. Danach kommt das Subjekt.", "Jeden Morgen fahre ich mit dem Fahrrad zur Schule."],
+      ["Dauer und Grund", "Für die Dauer kannst du brauche verwenden. Im weil-Satz steht das konjugierte Verb am Ende.", "Ich brauche zwanzig Minuten. Ich fahre mit dem Fahrrad, weil es schnell ist."],
+    ], [
+      ["Bilde eine Antwort: jeden Morgen / Bahn / Arbeit / 20 Minuten / günstig.", "Jeden Morgen fahre ich mit der Bahn zur Arbeit. Ich brauche zwanzig Minuten. Ich nehme die Bahn, weil sie günstig ist."],
+    ]],
+  ],
+};

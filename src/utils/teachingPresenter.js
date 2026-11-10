@@ -1,6 +1,6 @@
 import { B1_WORKBOOK_PRESENTATIONS } from '../data/b1WorkbookPresentations.js';
 import { A2_WORKBOOK_PRESENTATIONS } from '../data/a2WorkbookPresentations.js';
-import { A2_B1_WORKBOOK_GRAMMAR, A2_DAY_2_ADJECTIVE_GRAMMAR } from "../data/a2B1WorkbookGrammar.js";
+import { A2_B1_WORKBOOK_GRAMMAR, A2_WORKBOOK_GRAMMAR_PAGES } from "../data/a2B1WorkbookGrammar.js";
 import { getA2B1CommonMistakes } from '../data/a2B1CommonMistakes.js';
 import { getPresenterReadingLesson } from '../data/presenterReadingLessons.js';
 import { getAdvancedPresenterReadingLesson } from '../data/advancedPresenterReadingLessons.js';
@@ -2056,9 +2056,8 @@ function standardizeA2B1Stages(stages, slide) {
   const level = classroomLevel(slide);
   const day = Number(key.split(".").at(-1));
   const grammar = A2_B1_WORKBOOK_GRAMMAR[level]?.[day];
-  const grammarPages = key === "A2-1.2"
-    ? A2_DAY_2_ADJECTIVE_GRAMMAR
-    : grammar ? [[grammar[0], grammar[1], [grammar[2]]]] : [];
+  const expandedGrammar = level === "A2" ? A2_WORKBOOK_GRAMMAR_PAGES[day] : undefined;
+  const grammarPages = expandedGrammar || (grammar ? [[grammar[0], grammar[1], [grammar[2]]]] : []);
   const reading = getPresenterReadingLesson(key);
   const mistakes = getA2B1CommonMistakes(key);
   if (!grammarPages.length || !reading || !mistakes.length) throw new Error(`Missing authored A2/B1 lesson content: ${key}`);
@@ -2079,10 +2078,10 @@ function standardizeA2B1Stages(stages, slide) {
     ],
     suggestedMinutes: grammarPages.length > 1 ? 3 : 5,
     teacherPurpose: {
-      student: checks.length ? "Verstehe die Regel und wende sie im Kurzcheck an." : "Erkenne die Endungen in den Beispielen.",
+      student: checks.length ? "Verstehe die Regel und wende sie im Kurzcheck an." : "Erkenne die Regel in den Beispielen.",
       teacher: checks.length
         ? "Erkläre das Satzmuster an den Beispielen. Lass die Klasse den Kurzcheck mündlich lösen und decke die Musterantwort danach auf."
-        : "Vergleiche die Beispiele laut. Lass die Klasse Artikel, Kasus und Adjektivendung benennen.",
+        : "Vergleiche die Beispiele laut. Lass die Klasse erklären, was sich in den Beispielen ändert.",
     },
   }));
   return stages.flatMap(stage => {

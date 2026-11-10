@@ -3,14 +3,15 @@ import assert from "node:assert/strict";
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 
+const A2_GRAMMAR_PAGE_COUNTS = { 2: 4, 4: 2, 6: 2, 7: 2, 9: 3, 10: 2, 16: 2, 23: 3 };
+
 for (const level of ["A2", "B1"]) {
   test(`${level}: each workbook grammar slide teaches before corrections and reading`, () => {
     const titles = new Set();
     for (const slide of getSlidesByCourse(level)) {
       const stages = buildTeachingPresenterStages(slide, slide.topic);
       const grammar = stages.filter(stage => stage.type === "workbook-grammar");
-      const day2 = slide.assignmentId === "A2-1.2";
-      assert.equal(grammar.length, day2 ? 4 : 1, slide.assignmentId);
+      assert.equal(grammar.length, (level === "A2" && A2_GRAMMAR_PAGE_COUNTS[slide.dayNumber]) || 1, slide.assignmentId);
       const first = stages.indexOf(grammar[0]);
       assert.deepEqual(stages.slice(first, first + grammar.length), grammar);
       assert.equal(stages[first + grammar.length].id, "common-mistakes", slide.assignmentId);
@@ -19,7 +20,8 @@ for (const level of ["A2", "B1"]) {
       const rules = items.filter(item => item.example);
       const checks = items.filter(item => item.answer);
       assert.ok(rules.length >= 2 && rules.every(item => item.label && item.prompt), slide.assignmentId);
-      assert.equal(checks.length, day2 ? 3 : 1, slide.assignmentId);
+      assert.ok(checks.length > 0, slide.assignmentId);
+      assert.ok(grammar.every(page => page.items.length >= 2 && page.items.length <= 4), slide.assignmentId);
       assert.ok(checks.every(item => item.prompt && !item.example), slide.assignmentId);
     }
     assert.equal(titles.size, 28);

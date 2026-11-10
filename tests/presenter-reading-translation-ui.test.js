@@ -36,7 +36,7 @@ for(const level of ['A2','B1'])test(level+' all 28 real reading slides reveal on
   await act(async()=>root.render(React.createElement(Presenter,{slide,onExit(){}})));
   const stages=buildTeachingPresenterStages(slide);const index=stages.findIndex(s=>s.variant==='lesson-reading');
   const jump=document.querySelector('.presenter-stage-jump select');assert.ok(jump,slide.assignmentId);
-  if (level === 'A2' && slide.dayNumber === 2) {
+  if (level === 'A2' && [2, 23].includes(slide.dayNumber)) {
    const first = stages.findIndex(stage => stage.type === 'workbook-grammar');
    await act(async () => {
     jump.value = String(first);
@@ -56,7 +56,7 @@ for(const level of ['A2','B1'])test(level+' all 28 real reading slides reveal on
    }
    assert.ok(document.querySelector('.presenter-stage-common-mistakes'));
   }
-  if ((level === 'A2' && slide.dayNumber === 23) || (level === 'B1' && slide.dayNumber === 2)) {
+  if (level === 'B1' && slide.dayNumber === 2) {
    const grammarIndex = stages.findIndex(stage => stage.id === 'workbook-grammar');
    const grammar = stages[grammarIndex];
    const navigate = async target => {
