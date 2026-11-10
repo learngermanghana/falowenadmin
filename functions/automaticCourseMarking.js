@@ -56,7 +56,19 @@ function holdIncompleteObjectiveResult(result = {}, referenceEntry = {}) {
   };
 }
 
+function emptySubmissionResult() {
+  return {
+    status: 'marked', score: 0, finalScore: 0, confidence: 1,
+    passed: false, writingMinimumMet: false, emptySubmission: true,
+    feedback: 'Your submission was empty, so this attempt was marked as failed. Please reopen the assignment, add your answers, and submit again.',
+  };
+}
 function releasable(result = {}) {
+  if (result.emptySubmission === true) {
+    return result.status === 'marked'
+      && Number(result.finalScore ?? result.score) === 0
+      && result.passed === false;
+  }
   const score = result.finalScore ?? result.score;
   return result.status === 'marked' && result.incompleteAssessment !== true
     && !(Array.isArray(result.missingRequiredParts) && result.missingRequiredParts.length)
@@ -152,17 +164,18 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
       if (versionProblem) throw new Error(versionProblem);
       referenceEntry = familyRecordingReference(referenceEntry, submission, job.assignmentKey);
       const text = String(submission.submissionText || submission.text || submission.answer || submission.workContent || '').trim();
-      if (!text) throw new Error('Submission text is missing; tutor review required');
+      const emptySubmission = !text;
       const speakingRequired = A1_SPEAKING_REVIEW_ASSIGNMENTS.has(String(job.assignmentKey || "").toUpperCase())
         && (Boolean(referenceEntry.speakingParts?.length) || Object.values(referenceEntry.partGrading || {}).some(part => part.gradingMode === 'tutor_verified_speaking'));
       const serverSpeakingAssessment = speakingRequired
         ? await verifiedSpeakingAssessment(db, text, studentId, job.assignmentKey) : null;
-      const markedResult = await withMarkingTransport(callAi, () => mark({
-        submission: { ...submission, id: snap.id, path: snap.ref.path, text },
-        submissionText: text, referenceEntry, serverSpeakingAssessment,
-      }));
+      const markedResult = emptySubmission ? emptySubmissionResult()
+        : await withMarkingTransport(callAi, () => mark({
+          submission: { ...submission, id: snap.id, path: snap.ref.path, text },
+          submissionText: text, referenceEntry, serverSpeakingAssessment,
+        }));
       const result = holdIncompleteObjectiveResult(markedResult, referenceEntry);
-      const speakingReviewRequired = speakingRequired && !serverSpeakingAssessment;
+      const speakingReviewRequired = !emptySubmission && speakingRequired && !serverSpeakingAssessment;
       const release = !speakingReviewRequired && releasable(result);
       const timestamp = new Date(now()).toISOString();
       const studentCode = registeredCode;
@@ -367,4 +380,4 @@ function createScoreSyncWorker({ db, config, post = fetch }) {
     }
   };
 }
-module.exports = { idForPath, eligible, releasable, missingObjectiveSubmissionParts, holdIncompleteObjectiveResult, replacesFailedAttempt, createCourseMarkingWorker, createScoreSyncWorker };
+module.exports = { idForPath, eligible, releasable, emptySubmissionResult, missingObjectiveSubmissionParts, holdIncompleteObjectiveResult, replacesFailedAttempt, createCourseMarkingWorker, createScoreSyncWorker };
