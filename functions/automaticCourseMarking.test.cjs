@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { eligible, releasable, idForPath, createScoreSyncWorker, holdIncompleteObjectiveResult } = require('./automaticCourseMarking');
+const { eligible, releasable, idForPath, createScoreSyncWorker, holdIncompleteObjectiveResult, emptySubmissionResult } = require('./automaticCourseMarking');
 test('only course submissions at A1/A2/B1 are eligible', () => {
   for (const level of ['A1','A2','B1']) assert.equal(eligible({status:'submitted'},level,`${level}-12.1`), true);
   for (const s of [{status:'draft'}, {mockAttemptId:'mock'}, {type:'exam-speaking'}]) assert.equal(eligible(s,'A1','A1-12.1'),false);
@@ -22,7 +22,18 @@ test('release requires a valid, confident result with no review flags', () => {
     {consistencyWarnings:['missing part']},{reviewReasons:[{code:'disagreement'}]},
     {secondExaminer:{requiresTutorReview:true}}]) assert.equal(releasable({...good,...patch}),false);
 });
-test('blank required objective section is held for tutor review and has no releasable score', () => {
+test('empty submission is an automatic failed result that can be returned to the student', () => {
+  const result = emptySubmissionResult();
+  assert.equal(result.status, 'marked');
+  assert.equal(result.score, 0);
+  assert.equal(result.finalScore, 0);
+  assert.equal(result.passed, false);
+  assert.equal(result.emptySubmission, true);
+  assert.match(result.feedback, /submission was empty/i);
+  assert.equal(releasable(result), true);
+  assert.equal(releasable({ ...result, score: 10, finalScore: 10 }), false);
+});
+\ntest('blank required objective section is held for tutor review and has no releasable score', () => {
   const referenceEntry = {
     referenceAnswerParts: ['teil3', 'teil4'],
     partGrading: { teil3: { gradingMode: 'answer_key' }, teil4: { gradingMode: 'answer_key' } },
