@@ -99,10 +99,10 @@ test("Day 17 identifies either wholly missing objective part and both parts in a
       submissionText: text,
       serverSpeakingAssessment: speaking,
     });
-    expect(result.status).toBe("needs_review");
-    expect(result.incompleteAssessment).toBe(true);
-    expect(result.finalScore).toBeNull();
-    expect(result.shouldSendAutomatically).toBe(false);
-    expect(result.missingRequiredParts).toEqual(missing);
+    assert.equal(result.status, "needs_review");
+    assert.equal(result.incompleteAssessment, true);
+    assert.equal(result.finalScore, null);
+    assert.equal(result.shouldSendAutomatically, false);
+    assert.deepEqual(result.missingRequiredParts, missing);
   }
 });
