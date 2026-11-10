@@ -592,7 +592,7 @@ export function getInteractiveLessonOpening(assignmentId = "") {
 }
 export function isInteractiveOpeningStage(assignmentId = "", stageId = "") {
   const lesson = getInteractiveLessonOpening(assignmentId);
-  if (stageId === "warmup" && (lesson?.musicIntro || lesson?.assignmentId.startsWith("A2-"))) return false;
+  if (stageId === "warmup" && (lesson?.musicIntro || /^(A2|B1)-/.test(lesson?.assignmentId || ""))) return false;
   if (lesson?.listening?.mediaType === "music") return false; // Independent YouTube Musik / Lesen stages
   return Boolean(lesson && ((stageId === "warmup" && lesson.warmup?.length > 0) || (stageId === "knowledge" && lesson.listening)));
 }

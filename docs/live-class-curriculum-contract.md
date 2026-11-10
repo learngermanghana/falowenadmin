@@ -64,9 +64,11 @@ Days 1–28 of both levels have grammar slides after the opening activities and
 before Common Mistakes and reading. Most use one slide with the day's rules,
 examples and an ungraded oral check. A2 Day 2 uses four slides for adjective
 endings. Days 4, 6, 7, 10 and 16 use two slides, and Days 9 and 23 use three.
-The later grammar check uses the lesson topic for practice.
+B1 Days 3, 4, 5, 7, 9, 15 and 26 use two slides. Each A2 and B1 grammar check
+uses a scenario table and three ungraded oral application tasks. The teacher
+can reveal the sample answer and mark each task locally during the lesson.
 
-All A2 days open with the title and one music stage. Music occupies the
+All A2 and B1 days open with the title and one music stage. Music occupies the
 opening activity slot. Existing song introductions keep their recordings.
 Other days use the same player and resolve the public music catalog by level
 and curriculum day. A separate classroom Hören

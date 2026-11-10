@@ -111,7 +111,7 @@ test('A2 Day 19 and Day 20 use the real Day 18 player design, lyrics and MCQs', 
   assert.match(player, /Das separate Hören-Gespräch bleibt auf der nächsten Folie/);
 });
 
-test('all 56 A2/B1 presenters use the Day 18 layout and only published music lessons have native players',()=>{
+test('all 56 A2/B1 presenters use the standard music and reading layout',()=>{
   const courses=['A2','B1'];
   const slides=courses.flatMap(getSlidesByCourse);
   assert.equal(slides.length,56);
@@ -122,7 +122,7 @@ test('all 56 A2/B1 presenters use the Day 18 layout and only published music les
     assert.equal(ids[1],'warmup',slide.assignmentId);
     assert.equal(ids.indexOf('reading'),ids.indexOf('common-mistakes')+1,slide.assignmentId);
     assert.equal(ids.indexOf('grammar-check'),ids.indexOf('reading')+1,slide.assignmentId);
-    assert.deepEqual(ids.slice(-4),(slide.course === "A2" ? ["questions", "workbook", "lesson-summary", "workbook-presentation"] : ["questions", "workbook-presentation", "workbook", "lesson-summary"]),slide.assignmentId);
+    assert.deepEqual(ids.slice(-4),["questions", "workbook", "lesson-summary", "workbook-presentation"],slide.assignmentId);
     assert.equal(stages.filter(x=>x.id==='reading').length,1,slide.assignmentId);
     assert.equal(stages.filter(x=>x.id==='common-mistakes').length,1,slide.assignmentId);
     const expected=getInteractiveLessonOpening(slide.assignmentId)?.musicIntro;
@@ -135,8 +135,8 @@ test('all 56 A2/B1 presenters use the Day 18 layout and only published music les
           'https://music.falowen.app/?level='+slide.course+'&day='+expected.day,slide.assignmentId);
         assert.equal(musicStage.musicVideo.youtubeId,undefined,slide.assignmentId);
       }
-    }else if(slide.course==='B1'){
-      assert.notEqual(musicStage.variant,'interactive-music-video',slide.assignmentId);
+    }else{
+      assert.equal(musicStage.variant,'interactive-music-video',slide.assignmentId);
     }
   }
   // Both days retain their separately supplied classroom conversations.
@@ -146,5 +146,5 @@ test('all 56 A2/B1 presenters use the Day 18 layout and only published music les
   assert.equal(day25.find(s=>s.id==='knowledge')?.audioKey,'b1/day-25/online-shopping-verbraucherservice.mp3');
   assert.equal(day26.find(s=>s.id==='knowledge')?.audioKey,'a2/day-26/reiseprobleme-und-losungen.mp3');
   assert.equal(day25.length,12);
-  assert.equal(day26.length,12);
+  assert.equal(day26.length,13);
 });

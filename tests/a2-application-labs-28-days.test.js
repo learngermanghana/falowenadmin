@@ -72,7 +72,7 @@ test('authored examples target the grammar already taught on the relevant day',(
   assert.match(text(28),/wird Geld sparen/);
 });
 
-test('interactive player is present, accessible and ungraded; B1 remains unchanged',()=>{
+test('interactive player is shared, accessible and ungraded',()=>{
   const renderer=readFileSync(new URL('../src/components/TeachingSlidePresenter.jsx',import.meta.url),'utf8');
   const component=readFileSync(new URL('../src/components/A2ApplicationLab.jsx',import.meta.url),'utf8');
   assert.match(renderer,/stage\.variant === "a2-application-lab"/);

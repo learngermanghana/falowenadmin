@@ -100,6 +100,20 @@ for(const level of ['A2','B1'])test(level+' all 28 real reading slides reveal on
   assert.equal(button('Select a sentence to translate').disabled,true);
   if(level==='B1'){
    const navigate=async id=>{await act(async()=>{jump.value=String(stages.findIndex(s=>s.id===id));jump.dispatchEvent(new w.Event('change',{bubbles:true}));});};
+   if (slide.dayNumber === 15) {
+    await navigate('grammar-check');
+    const lab = document.querySelector('[aria-label="B1 Tag 15: Abläufe im Homeoffice"]');
+    assert.ok(lab);
+    assert.equal(lab.querySelectorAll('tbody tr').length, 3);
+    assert.equal(lab.querySelector('.a2-application-lab__model'), null);
+    await click(button('Lösung zeigen'));
+    assert.match(lab.querySelector('.a2-application-lab__model').textContent, /Die Dateien werden täglich online geteilt/);
+    await click(button('✓ Sicher'));
+    assert.match(lab.querySelector('.a2-application-lab__footer').textContent, /1 von 3 überprüft · 1 sicher/);
+    await click(button('Weiter →'));
+    assert.equal(lab.querySelector('.a2-application-lab__model'), null);
+    assert.match(lab.querySelector('h2').textContent, /Modalpassiv/);
+   }
    await navigate('common-mistakes');
    assert.equal(document.querySelector('.presenter-grammar-check h1').textContent,'Common mistakes · Häufige Fehler');
    await navigate('workbook-presentation');
@@ -121,7 +135,9 @@ for(const level of ['A2','B1'])test(level+' all 28 real reading slides reveal on
    await click(tab('Gliederung'));
    await act(async()=>tab('Gliederung').dispatchEvent(new w.KeyboardEvent('keydown',{key:'Home',bubbles:true})));
    assert.equal(tab('Aufgabe').getAttribute('aria-selected'),'true','keyboard tab navigation selects task');
-   await click(button('Next slide →'));assert.equal(document.querySelector('[aria-label="B1 workbook presentation"]'),null);
+   assert.ok(button('Finish lesson · report'));
+   await navigate('lesson-summary');
+   assert.equal(document.querySelector('[aria-label="B1 workbook presentation"]'),null);
    await navigate('workbook-presentation');assert.equal(tab('Aufgabe').getAttribute('aria-selected'),'true','navigation resets the panel');
    const select=document.querySelector('.presenter-b1-presentation-choice select');if(select)assert.equal(select.value,'0');
   }

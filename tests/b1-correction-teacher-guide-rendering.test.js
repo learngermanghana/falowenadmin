@@ -15,13 +15,13 @@ test("B1 grammar renders one three-step diagnostic instead of reteaching the rul
   assert.match(css, /\.presenter-grammar-check-card/);
 });
 
-test("B1 Day 12 grammar still explains temporal narration in English support", () => {
+test("B1 Day 12 lab practices tense and event order", () => {
   const slide = getSlidesByCourse("B1").find((item) => item.assignmentId === "B1-4.12");
   const grammar = buildTeachingPresenterStages(slide, slide.topic).find((stage) => stage.id === "grammar-check");
   const support = grammar.items.map((item) => [item.answer, item.note].filter(Boolean).join(" ")).join(" ");
 
   assert.match(support, /Perfekt|Präteritum/i);
-  assert.match(support, /nachdem|als|temporal|sequence/i);
+  assert.match(support, /danach|obwohl/i);
   assert.equal(grammar.type, "grammar-check");
   assert.equal(grammar.items.length, 3);
 });

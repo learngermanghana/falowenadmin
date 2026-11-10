@@ -356,3 +356,39 @@ export const A2_WORKBOOK_GRAMMAR_PAGES = {
     ]],
   ],
 };
+
+// A second teaching page for B1 workbook topics that introduce several distinct forms.
+export const B1_WORKBOOK_GRAMMAR_EXTENSIONS = {
+  3: ["Adjektivendungen · Einen Satz Schritt für Schritt ändern", [
+    ["Subjekt → Objekt", "Bei einem maskulinen Nomen wird ein …-er im Akkusativ zu einen …-en.", "Ein erfahrener Partner hilft. → Sie findet einen erfahrenen Partner."],
+    ["Nach mit", "Mit verlangt den Dativ. Nach einem oder einer endet das Adjektiv auf -en.", "mit einem erfahrenen Partner · mit einer mutigen Gründerin · mit einem kreativen Team"],
+  ]],
+  4: ["Zweiteilige Konnektoren · Welche Verbindung passt?", [
+    ["Etwas ergänzen", "Verbinde zwei gleichartige Satzteile mit sowohl … als auch oder nicht nur … sondern auch.", "Die Wohnung hat nicht nur einen Balkon, sondern auch einen Keller."],
+    ["Auswählen oder verneinen", "Entweder … oder bietet eine Auswahl. Weder … noch verneint beide Möglichkeiten.", "Wir wählen entweder die Wohnung im Zentrum oder die am Stadtrand."],
+    ["Argumente abwägen", "Bei einerseits und andererseits am Satzanfang folgt jeweils das konjugierte Verb.", "Einerseits ist die Wohnung günstig. Andererseits liegt sie weit außerhalb."],
+  ]],
+  5: ["Indirekte Fragen · ob oder ein Fragewort?", [
+    ["Ja-/Nein-Frage → ob", "Übernimm den Inhalt der Frage. Setze das konjugierte Verb ans Ende.", "Ist der Termin frei? → Können Sie mir sagen, ob der Termin frei ist?"],
+    ["W-Frage → Fragewort behalten", "Wann, wo oder wie bleibt erhalten. Auch hier steht das konjugierte Verb am Ende.", "Wo treffen wir uns? → Könnten Sie mir sagen, wo wir uns treffen?"],
+  ]],
+  7: ["Genitiv · Artikel, Adjektiv und Nomen", [
+    ["Maskulinum und Neutrum", "Nach des steht das Adjektiv auf -en. Viele maskuline und neutrale Nomen erhalten -s oder -es.", "wegen des hohen Preises · trotz des guten Angebots"],
+    ["Femininum und Plural", "Nach der steht das Adjektiv ebenfalls auf -en. Das Nomen erhält hier keine zusätzliche Genitivendung.", "trotz der langen Wartezeit · wegen der frischen Zutaten"],
+    ["Vom Satz zur Wortgruppe", "Mit weil oder obwohl braucht man einen Nebensatz. Nach wegen oder trotz kann eine Genitivgruppe stehen.", "Obwohl die Wartezeit lang ist, bestelle ich. → Trotz der langen Wartezeit bestelle ich."],
+  ]],
+  9: ["Work-Life-Balance · Zweck, Mittel oder Kontrast?", [
+    ["Wozu? · um … zu oder damit", "Bei gleichem Subjekt ist um … zu möglich. Mit damit kann man ein eigenes Subjekt nennen.", "Ich mache Pause, um mich zu erholen. Ich plane die Übergabe, damit meine Kollegin übernehmen kann."],
+    ["Wie? · indem", "Der indem-Satz beschreibt, wie man etwas erreicht. Das konjugierte Verb steht am Ende.", "Ich vermeide Stress, indem ich die Arbeit rechtzeitig einteile."],
+    ["Alternative oder Gegensatz", "Statt … zu nennt eine Alternative. Obwohl verbindet einen unerwarteten Gegensatz mit dem Hauptsatz.", "Statt länger zu arbeiten, mache ich Feierabend. Obwohl viel zu tun ist, mache ich eine Pause."],
+  ]],
+  15: ["Homeoffice · Aktiv ins Passiv umformen", [
+    ["Objekt wird Subjekt", "Das Akkusativobjekt des Aktivsatzes wird im Passiv zum Subjekt. Das Verb werden richtet sich danach.", "Das Team teilt die Datei. → Die Datei wird geteilt. Die Dateien werden geteilt."],
+    ["Mit Modalverb", "Das Modalverb bleibt konjugiert. Am Ende stehen das Partizip und der Infinitiv werden.", "Das Team muss die Dateien teilen. → Die Dateien müssen geteilt werden."],
+  ]],
+  26: ["Reiseprobleme · Zwei Ereignisse auf einer Zeitleiste", [
+    ["Früher → Plusquamperfekt", "Der Zug fährt zuerst ab. Später sucht die Gruppe eine Alternative. Das frühere Ereignis steht mit war oder hatte und Partizip II.", "Der Zug war abgefahren. Danach suchten wir eine Alternative."],
+    ["nachdem · das frühere Ereignis", "Im nachdem-Satz steht das konjugierte Hilfsverb am Ende. Nach dem vorangestellten Nebensatz folgt das Verb des Hauptsatzes.", "Nachdem der Zug abgefahren war, suchten wir eine Alternative."],
+    ["bevor · das spätere Ereignis", "Der bevor-Satz nennt das spätere Ereignis. Die Reihenfolge bleibt auch bei umgestellten Sätzen gleich.", "Wir prüften die Tickets, bevor wir zum Bahnsteig gingen."],
+  ]],
+};

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import './A2ApplicationLab.css';
 
 /** Teacher-led, ungraded grammar transfer. Each course day owns its facts and answer key. */
-export default function A2ApplicationLab({ lab }) {
+export default function A2ApplicationLab({ lab, level = "A2" }) {
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [results, setResults] = useState([null, null, null]);
@@ -19,14 +19,14 @@ export default function A2ApplicationLab({ lab }) {
     position === index ? (result === value ? null : value) : result));
 
   return (
-    <section className="a2-application-lab" aria-label={`A2 Tag ${lab.day}: ${lab.title}`}>
+    <section className="a2-application-lab" aria-label={`${level} Tag ${lab.day}: ${lab.title}`}>
       <header className="a2-application-lab__heading">
         <div>
-          <span className="a2-application-lab__eyebrow">A2 · TAG {lab.day} · GRAMMATIK ANWENDEN</span>
+          <span className="a2-application-lab__eyebrow">{level} · TAG {lab.day} · GRAMMATIK ANWENDEN</span>
           <h1>{lab.title}</h1>
           <p>{lab.context}</p>
         </div>
-        <span className="a2-application-lab__duration">5–6 MIN · PAARARBEIT</span>
+        <span className="a2-application-lab__duration">{level === "B1" ? "6–7" : "5–6"} MIN · PAARARBEIT</span>
       </header>
 
       <div className="a2-application-lab__facts" role="region" aria-label="Informationen für die drei Aufgaben" tabIndex={0}>

@@ -39,11 +39,11 @@ test("All six B1 missions replace focused practice with no duplicate slide, pres
   for (const [assignmentId, title] of REQUIRED) {
     const slide = slides.find(x => x.assignmentId === assignmentId);
     assert.ok(slide, assignmentId);
-    const core = buildTeachingPresenterStages(slide, slide.topic).filter(s => s.id !== "knowledge");
+    const core = buildTeachingPresenterStages(slide, slide.topic).filter(s => s.id !== "knowledge" && s.id !== "workbook-grammar-2");
     const ids = core.map(s => s.id);
     assert.deepEqual(ids, [
       "intro", "warmup", "workbook-grammar", "common-mistakes", "reading", "grammar-check",
-      "scenario-challenge", "questions", "workbook-presentation", "workbook", "lesson-summary",
+      "scenario-challenge", "questions", "workbook", "lesson-summary", "workbook-presentation",
     ], assignmentId);
     assert.equal(ids.length, 11);
     const challenge = core[6];

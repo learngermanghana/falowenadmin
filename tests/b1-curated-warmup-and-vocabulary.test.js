@@ -6,14 +6,15 @@ import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js"
 import { B1_WARMUP_FOLLOWUPS, getB1WarmupFollowUp } from "../src/data/b1WarmupFollowUps.js";
 import { B1_VOCABULARY_QUESTIONS, getB1VocabularyQuestion } from "../src/data/b1VocabularyQuestions.js";
 
-test("Every B1 warm-up has a distinct, contextual follow-up paired with its exact source question", () => {
+test("B1 music openings preserve the underlying follow-up material", () => {
  const slides = getSlidesByCourse("B1");
  assert.equal(slides.length,28);
  assert.equal(Object.keys(B1_WARMUP_FOLLOWUPS).length,28);
  for(const slide of slides) {
   const stages=buildTeachingPresenterStages(slide,slide.topic);
-  assert.equal(stages.length, stages.some(s=>s.id==="knowledge") ? 12 : 11, slide.assignmentId);
+
   const warmup=stages.find(x=>x.id==="warmup");
+  assert.equal(warmup.variant,"interactive-music-video",slide.assignmentId);
   const paired=B1_WARMUP_FOLLOWUPS[slide.assignmentId];
   assert.deepEqual(paired.map(x=>x.questionDe),warmup.items,slide.assignmentId);
   const followups=[];
@@ -26,7 +27,7 @@ test("Every B1 warm-up has a distinct, contextual follow-up paired with its exac
    followups.push(followup);
   });
   assert.equal(new Set(followups).size,followups.length,slide.assignmentId);
-  assert.deepEqual(stages.slice(-4).map(x=>x.id),["questions","workbook-presentation","workbook","lesson-summary"],slide.assignmentId);
+  assert.deepEqual(stages.slice(-4).map(x=>x.id),["questions","workbook","lesson-summary","workbook-presentation"],slide.assignmentId);
  }
 });
 
