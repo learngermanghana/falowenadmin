@@ -19,9 +19,9 @@ const REQUIRED_STAGES = [
   "grammar-check",
   "practice",
   "questions",
+  "workbook-presentation",
   "workbook",
   "lesson-summary",
-  "workbook-presentation",
 ];
 
 test("all 28 B1 lessons use the reading and correction Presenter spine", () => {
