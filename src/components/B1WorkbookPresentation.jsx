@@ -1,4 +1,5 @@
 import {useId,useState} from 'react';
+import PresentationFollowUpQuestions from './PresentationFollowUpQuestions.jsx';
 import './B1WorkbookPresentation.css';
 
 export default function B1WorkbookPresentation({stage}) {
@@ -40,6 +41,7 @@ export default function B1WorkbookPresentation({stage}) {
     {Boolean(task.phrases?.length) && <details><summary>Nützliche Redemittel</summary><ul>{task.phrases.map((item,i)=><li key={i}>{item}</li>)}</ul></details>}
    </div>}
   </div>
+  <PresentationFollowUpQuestions level="B1" day={task.day}/>
   <small>Unterrichtsübung · keine Abgabe auf dieser Folie</small>
  </section>;
 }
