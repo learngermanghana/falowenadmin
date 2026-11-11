@@ -79,7 +79,7 @@ export default function InteractiveLessonOpening({ stage, slide }) {
       if (isB1Classroom) params.set("level", "B1");
       const audioEndpoint = isB1Classroom
         ? "https://www.falowen.app/api/course-media/classroom/audio-url"
-        : lesson.listening.level === "A2" && [1, 2, 3, 18, 19, 20, 21, 23].includes(lesson.listening.day)
+        : lesson.listening.level === "A2" && [1, 2, 3, 18, 19, 20, 21, 23, 24].includes(lesson.listening.day)
           ? "https://www.falowen.app/api/course-media/a2/classroom-audio-url"
           : `${AUDIO_API}/course-media/${lesson.listening.level.toLowerCase()}/audio-url`;
       const response = await fetch(`${audioEndpoint}?${params}`, {
