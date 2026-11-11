@@ -135,7 +135,7 @@ for(const level of ['A2','B1'])test(level+' all 28 real reading slides reveal on
    await click(tab('Gliederung'));
    await act(async()=>tab('Gliederung').dispatchEvent(new w.KeyboardEvent('keydown',{key:'Home',bubbles:true})));
    assert.equal(tab('Aufgabe').getAttribute('aria-selected'),'true','keyboard tab navigation selects task');
-   assert.ok(button('Finish lesson · report'));
+   assert.ok(button('Next slide →'));
    await navigate('lesson-summary');
    assert.equal(document.querySelector('[aria-label="B1 workbook presentation"]'),null);
    await navigate('workbook-presentation');assert.equal(tab('Aufgabe').getAttribute('aria-selected'),'true','navigation resets the panel');
@@ -165,7 +165,7 @@ for(const level of ['A2','B1'])test(level+' all 28 real reading slides reveal on
     await act(async()=>{select.value='1';select.dispatchEvent(new w.Event('change',{bubbles:true}));});
     assert.equal(document.querySelector('.presenter-workbook-presentation h2').textContent,task.choices[1].prompt);
    }
-   assert.ok(button('Finish lesson · report'));
+   assert.ok(button('Next slide →'));
    await navigate('lesson-summary');
    assert.equal(document.querySelector('[aria-label="Workbook presentation"]'),null);
    await navigate('workbook-presentation');
