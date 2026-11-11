@@ -71,6 +71,15 @@ test('bundled Firebase worker grades versioned A1-12.1 Bahnhof Hören, not the p
   const correct = await mark(answers);
   assert.equal(correct.objectiveTotal, 10);
   assert.equal(correct.objectiveCorrect, 10);
+  const { holdIncompleteObjectiveResult } = require('./automaticCourseMarking');
+  const contract = pipeline.canonicalCourseReference('A1-12.1');
+  assert.deepEqual(Array.from(contract.referenceAnswerParts), ['teil1', 'teil2', 'teil3']);
+  assert.equal(holdIncompleteObjectiveResult(correct, contract, answers).finalScore, 100);
+  const onlyReading = answers.split('TEIL 3')[0];
+  const incomplete = holdIncompleteObjectiveResult(await mark(onlyReading), contract, onlyReading);
+  assert.deepEqual(Array.from(incomplete.missingRequiredParts), ['teil3']);
+  assert.equal(incomplete.finalScore, null);
+  assert.deepEqual(Array.from(holdIncompleteObjectiveResult(correct, contract, '').missingRequiredParts), ['teil2']);
   assert.equal(correct.finalScore, 100);
 
   const incorrect = await mark(answers.replace('TEIL 3\n1. Richtig\n2. Falsch', 'TEIL 3\n1. Richtig\n2. Richtig'));
@@ -82,6 +91,7 @@ test('bundled Firebase worker grades versioned A1-12.1 Bahnhof Hören, not the p
     .replace('A1-12.1-BAHNHOF-HOEREN-V3', 'A1-12.1-READING-V2')
     .replace('TEIL 3\n1. Richtig\n2. Falsch\n3. Richtig\n4. Falsch\n5. Richtig',
       'TEIL 3\n1. Richtig\n2. Richtig\n3. Richtig\n4. Richtig\n5. Richtig'));
+  assert.equal(holdIncompleteObjectiveResult(legacy, contract, 'A1-12.1-READING-V2').finalScore, 100);
   assert.equal(legacy.objectiveCorrect, 10);
   assert.equal(legacy.objectiveTotal, 10);
 });
