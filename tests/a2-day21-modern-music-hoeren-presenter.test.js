@@ -109,6 +109,6 @@ test("Day 21 music player reuses the published-song layout and teacher audio use
   const audio=readFileSync("src/components/InteractiveLessonOpening.jsx","utf8");
   assert.match(player,/Number\.isInteger\(day\) && day >= 1 && day <= 28/);
   assert.match(player,/day === 21 \? 'A2-8\.21'/);
-  assert.match(audio,/\[1, 2, 3, 18, 19, 20, 21, 23\]\.includes\(lesson\.listening\.day\)/);
+  assert.match(audio,/\[1, 2, 3, 18, 19, 20, 21, 23, 24\]\.includes\(lesson\.listening\.day\)/);
   assert.match(audio,/course-media\/a2\/classroom-audio-url/);
 });
