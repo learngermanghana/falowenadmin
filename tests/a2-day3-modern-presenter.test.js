@@ -85,6 +85,6 @@ test('Day 3 music uses the exact uploaded R2 song and the same inline player as 
 
 test('private recording is requested from A2 classroom signer, not music library or public R2',()=>{
   const source=readFileSync(new URL('../src/components/InteractiveLessonOpening.jsx',import.meta.url),'utf8');
-  assert.ok(source.includes('[1, 2, 3, 18, 19, 20, 21, 23].includes(lesson.listening.day)'));
+  assert.ok(source.includes('[1, 2, 3, 4, 18, 19, 20, 21, 23, 24].includes(lesson.listening.day)'));
   assert.match(source,/https:\/\/www\.falowen\.app\/api\/course-media\/a2\/classroom-audio-url/);
 });

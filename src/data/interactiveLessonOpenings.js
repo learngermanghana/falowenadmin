@@ -1,6 +1,7 @@
 import { B1_DAY27_LISTENING } from './b1Day27Listening.js';
 import { A2_DAY23_CLASSROOM_LISTENING } from './a2Day23ClassroomListening.js';
 import { A2_DAY24_CLASSROOM_LISTENING } from './a2Day24ClassroomListening.js';
+import { A2_DAY4_CLASSROOM_LISTENING } from './a2Day4ClassroomListening.js';
 import { A2_DAY1_LISTENING } from './a2Day1Listening.js';
 import { A2_DAY2_LISTENING } from './a2Day2Listening.js';
 import { A2_DAY3_LISTENING } from './a2Day3Listening.js';
@@ -511,6 +512,15 @@ ENTRIES["A2-9.23"] = {
     nextStep: "Danach: Hören zum Schul- und Arbeitsweg · offene Fragen zur Gesprächsaufnahme.",
   },
   listening: A2_DAY23_CLASSROOM_LISTENING,
+};
+
+// Day 4: retain the published song on slide 2 and add the private
+// Mia/Lukas meeting-arrangement Hören as ungraded slide 3.
+ENTRIES["A2-2.4"] = {
+  assignmentId: "A2-2.4",
+  title: "Wo möchten wir uns treffen?",
+  warmup: [],
+  listening: A2_DAY4_CLASSROOM_LISTENING,
 };
 
 // The existing A2 Day 24 published music remains slide 2. This separate
