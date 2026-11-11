@@ -47,7 +47,7 @@ for (const level of ["A2", "B1"]) {
       assert.ok(spoken.detail.includes(slide.studentQuestionsDe.at(-1)), slide.assignmentId);
       assert.equal(check.detail, slide.wrapUpTaskDe, slide.assignmentId);
       assert.doesNotMatch([expressions.detail, spoken.detail].join(" "), /You can talk about|You can use today.s target grammar accurately/i, slide.assignmentId);
-      assert.deepEqual(stages.slice(-4).map(s => s.id), ["questions", "workbook", "lesson-summary", "workbook-presentation"], slide.assignmentId);
+      assert.deepEqual(stages.slice(-4).map(s => s.id), ["questions", "workbook-presentation", "workbook", "lesson-summary"], slide.assignmentId);
     }
   });
 
