@@ -1,5 +1,6 @@
 import { B1_DAY27_LISTENING } from './b1Day27Listening.js';
 import { A2_DAY23_CLASSROOM_LISTENING } from './a2Day23ClassroomListening.js';
+import { A2_DAY24_CLASSROOM_LISTENING } from './a2Day24ClassroomListening.js';
 import { A2_DAY1_LISTENING } from './a2Day1Listening.js';
 import { A2_DAY2_LISTENING } from './a2Day2Listening.js';
 import { A2_DAY3_LISTENING } from './a2Day3Listening.js';
@@ -510,6 +511,15 @@ ENTRIES["A2-9.23"] = {
     nextStep: "Danach: Hören zum Schul- und Arbeitsweg · offene Fragen zur Gesprächsaufnahme.",
   },
   listening: A2_DAY23_CLASSROOM_LISTENING,
+};
+
+// The existing A2 Day 24 published music remains slide 2. This separate
+// owner-uploaded Anna/Lukas dialogue is the ungraded classroom Hören slide 3.
+ENTRIES["A2-9.24"] = {
+  assignmentId: "A2-9.24",
+  title: "Einen Urlaub planen",
+  warmup: [],
+  listening: A2_DAY24_CLASSROOM_LISTENING,
 };
 
 ENTRIES["A2-8.21"] = {
