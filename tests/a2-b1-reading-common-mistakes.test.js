@@ -122,7 +122,7 @@ test('all 56 A2/B1 presenters use the standard music and reading layout',()=>{
     assert.equal(ids[1],'warmup',slide.assignmentId);
     assert.equal(ids.indexOf('reading'),ids.indexOf('common-mistakes')+1,slide.assignmentId);
     assert.equal(ids.indexOf('grammar-check'),ids.indexOf('reading')+1,slide.assignmentId);
-    assert.deepEqual(ids.slice(-4),["questions", "workbook", "lesson-summary", "workbook-presentation"],slide.assignmentId);
+    assert.deepEqual(ids.slice(-4),["questions", "workbook-presentation", "workbook", "lesson-summary"],slide.assignmentId);
     assert.equal(stages.filter(x=>x.id==='reading').length,1,slide.assignmentId);
     assert.equal(stages.filter(x=>x.id==='common-mistakes').length,1,slide.assignmentId);
     const expected=getInteractiveLessonOpening(slide.assignmentId)?.musicIntro;
