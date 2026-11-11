@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import PresentationFollowUpQuestions from './PresentationFollowUpQuestions.jsx';
 import './A2WorkbookPresentation.css';
 
 export default function A2WorkbookPresentation({stage}) {
@@ -31,6 +32,7 @@ export default function A2WorkbookPresentation({stage}) {
     {item.starter && <details><summary>Satzanfang zeigen</summary><p>{item.starter}</p></details>}
    </li>)}</ol>}
   <p className="presenter-presentation-instruction">{task.instruction}</p>
+  <PresentationFollowUpQuestions level="A2" day={task.day}/>
   <small>{selected?'Aus dem Workbook-Aufgabenpool · unbewertete Unterrichtsübung':'Workbook · Präsentationsübung zu Goethe A2 Teil 2'}</small>
  </section>;
 }
