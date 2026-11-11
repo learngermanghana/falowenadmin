@@ -61,6 +61,30 @@ export function verifiedRecordedLyrics(pack, track) {
     ...(pack.timingStatus==='estimated' ? {timingStatus:'estimated'} : {})};
 }
 
+// Return a playable range only when the evidence can be mapped to the exact
+// recorded lyric lines and their matching timing cues. A line preview ends at
+// its published end cue, or at the next line's start when no end is supplied.
+export function recordedEvidenceRange(lyrics, cues, evidence) {
+  const lines=lyricLines(lyrics);
+  const checked=validateLyricCues(cues,lines);
+  const normalize=value=>String(value||'').toLocaleLowerCase('de')
+    .replace(/[^\p{L}\p{N}]+/gu,' ').trim().replace(/\s+/g,' ');
+  const evidenceLines=String(evidence||'').replaceAll(' / ','\n').split(/\r?\n/)
+    .map(normalize).filter(Boolean);
+  if (!evidenceLines.length || checked.length!==lines.length) return null;
+  const matched=[];
+  for (const part of evidenceLines) {
+    const index=lines.findIndex(line=>normalize(line)===part);
+    if (index<0) return null;
+    matched.push(index);
+  }
+  const first=Math.min(...matched), last=Math.max(...matched);
+  const start=checked[first]?.start;
+  const end=checked[last]?.end ?? checked[last+1]?.start;
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end<=start) return null;
+  return {start,end};
+}
+
 const LESSON_CHECKS = {
   'A1-14': [
     {prompt:'Wo müssen Mia und Ben umsteigen?',options:['In Hannover.','In Berlin.','In Accra.'],correctIndex:0,answer:'In Hannover.',evidence:'Wir müssen in Hannover umsteigen,'},

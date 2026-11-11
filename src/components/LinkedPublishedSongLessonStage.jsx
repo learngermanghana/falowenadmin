@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import LessonSongLyrics from './LessonSongLyrics.jsx';
-import { recordedSongQuestions, selectRecordedLessonTrack, verifiedRecordedLyrics } from '../utils/recordedLessonMusic.js';
+import { recordedEvidenceRange, recordedSongQuestions, selectRecordedLessonTrack, verifiedRecordedLyrics } from '../utils/recordedLessonMusic.js';
 import './PublishedSongLessonStage.css';
 import './LessonSongStage.css';
 
@@ -20,6 +20,9 @@ export default function LinkedPublishedSongLessonStage({ music }) {
   const [showAnswer,setShowAnswer] = useState(false);
   const [audioError,setAudioError] = useState('');
   const audio = useRef(null);
+  const previewStart = useRef(null);
+  const previewEnd = useRef(null);
+  const previewPlayPending = useRef(false);
   const assignmentKey = music?.assignmentKey || (level === 'B1'
     ? ({24:'B1-8.24',25:'B1-8.25',26:'B1-9.26',27:'B1-10.27'}[day] || '')
     : day === 23 ? 'A2-9.23' : day === 1 ? 'A2-1.1' : day === 2 ? 'A2-1.2' : day === 21 ? 'A2-8.21' : 'A2-7.'+day);
@@ -98,6 +101,20 @@ export default function LinkedPublishedSongLessonStage({ music }) {
   const displayText=pack || reference;
   const questions=recordedSongQuestions(displayText,day,level);
   const question=questions[questionIndex];
+  const evidenceRange=pack && question?.evidence
+    ? recordedEvidenceRange(pack.lyrics,pack.cues,question.evidence) : null;
+  const cancelPreview=()=>{previewStart.current=null;previewEnd.current=null;previewPlayPending.current=false;};
+  const playLinePreview=range=>{
+    if (!audio.current) return;
+    previewStart.current=range.start;
+    previewEnd.current=range.end;
+    previewPlayPending.current=true;
+    audio.current.currentTime=range.start;
+    setTime(range.start);
+    const playback=audio.current.play();
+    if (playback?.then) playback.then(()=>{previewPlayPending.current=false;},cancelPreview);
+    else previewPlayPending.current=false;
+  };
   const musicLink=track ? 'https://music.falowen.app/?track='+encodeURIComponent(track.id) : music.musicLibraryUrl;
   const song=displayText && track ? {id:track.id,objectKey:track.objectKey,lyrics:displayText.lyrics, englishTranslation:pack?.englishTranslation} : null;
   const verified=Boolean(pack && !pack.referenceOnly);
@@ -116,9 +133,24 @@ export default function LinkedPublishedSongLessonStage({ music }) {
         {loading && <p role="status">Veröffentlichte Aufnahme wird geladen…</p>}
         {track && <audio key={track.objectKey} ref={audio} controls preload="none"
           src={track.src} aria-label={track.title}
-          onTimeUpdate={e=>setTime(e.currentTarget.currentTime)}
+          onTimeUpdate={e=>{
+            const player=e.currentTarget;
+            setTime(player.currentTime);
+            if (previewEnd.current!==null && player.currentTime>=previewEnd.current) {
+              const end=previewEnd.current;
+              player.pause(); player.currentTime=end; cancelPreview();
+            }
+          }}
+          onSeeking={e=>{
+            const position=e.currentTarget.currentTime;
+            if (previewEnd.current!==null && (position<previewStart.current || position>=previewEnd.current)) cancelPreview();
+          }}
+          onPlay={()=>{
+            if (previewPlayPending.current) previewPlayPending.current=false;
+            else cancelPreview();
+          }}
           onSeeked={e=>setTime(e.currentTarget.currentTime)}
-          onEnded={()=>setTime(-1)}
+          onEnded={()=>{cancelPreview();setTime(-1);}}
           onError={()=>setAudioError('Die veröffentlichte MP3-Datei konnte nicht abgespielt werden.')} />}
         <a href={musicLink} target="_blank" rel="noopener noreferrer">In Falowen Music öffnen</a>
         {error && <p className="published-song-lesson__error" role="alert">{error}</p>}
@@ -155,7 +187,7 @@ export default function LinkedPublishedSongLessonStage({ music }) {
             : <p role="status"><strong>Referenztext · noch nicht mit dieser MP3 abgeglichen.</strong> Dieser originale Day-{day}-Liedtext ist bereits veröffentlicht, aber die aktuelle Aufnahme hat einen anderen Dateinamen. Deshalb sind die Zeilen hier nicht zeitgesteuert. Bitte den Text beim Hören mit der Aufnahme vergleichen.</p>}
           {synchronized && <label><input type="checkbox" checked={follow} onChange={e=>setFollow(e.target.checked)}/> Mitlesen folgen</label>}
           <LessonSongLyrics song={song} cues={synchronized ? pack.cues : []} time={time}
-            onSeek={synchronized ? (seconds=>{if(audio.current){audio.current.currentTime=seconds;setTime(seconds);}}) : undefined}
+            onSeek={synchronized ? (seconds=>{if(audio.current){cancelPreview();audio.current.currentTime=seconds;setTime(seconds);}}) : undefined}
             follow={synchronized && follow}/>
         </> : <p role="status">{loading ? 'Der Liedtext wird geladen…' :
           'Für genau diese veröffentlichte MP3 ist noch kein geprüfter Liedtext mit Zeitmarken hinterlegt. Bitte die passende .lyrics.json neben dem MP3 in R2 veröffentlichen; ein anderer Liedtext wird nicht eingeblendet.'}</p>}
@@ -170,6 +202,8 @@ export default function LinkedPublishedSongLessonStage({ music }) {
             <span>{question.type==='speaking'?'SPRECHEN':'HÖRVERSTEHEN'}</span>
           </div>
           <h3 lang="de">{question.prompt}</h3>
+          {evidenceRange && <button type="button" className="published-song-lesson__line-preview"
+            onClick={()=>playLinePreview(evidenceRange)}>▶ Zeile anhören</button>}
           {question.type==='speaking' ? <p>Sprich mit deinem Partner. Antworte in ganzen Sätzen.</p>
             : <p>Antworte mit Informationen aus der veröffentlichten Aufnahme. Die Lösung wird erst nach der Auswahl gezeigt.</p>}
           {Array.isArray(question.options) && <div className="published-song-lesson__options" role="group" aria-label="Antwortmöglichkeiten">

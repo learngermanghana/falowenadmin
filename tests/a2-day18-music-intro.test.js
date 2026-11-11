@@ -41,10 +41,10 @@ test("A2 Day 18 slide 2 is real Falowen R2 music with original questions, slide 
   assert.equal(isInteractiveOpeningStage("A2-7.18","warmup"),false);
   assert.equal(isInteractiveOpeningStage("A2-7.18","knowledge"),true);
   const remainingIds = stages.slice(3).map(s => s.id);
-  assert.equal(remainingIds.length, 7);
-  assert.deepEqual(remainingIds.slice(0, 3), ["common-mistakes", "reading", "grammar-check"]);
-  assert.ok(["practice", "scenario-challenge"].includes(remainingIds[3]));
-  assert.deepEqual(remainingIds.slice(4), ["questions", "workbook", "lesson-summary"]);
+  assert.equal(remainingIds.length, 9);
+  assert.deepEqual(remainingIds.slice(0, 4), ["workbook-grammar", "common-mistakes", "reading", "grammar-check"]);
+  assert.equal(remainingIds[4], "scenario-challenge");
+  assert.deepEqual(remainingIds.slice(5), ["questions", "workbook-presentation", "workbook", "lesson-summary"]);
 });
 
 test("Music stage uses signed R2 music, lyrics and 3 canonical questions without breaking B1 YouTube lessons",()=>{
@@ -60,7 +60,7 @@ test("Music stage uses signed R2 music, lyrics and 3 canonical questions without
 });
 
 test("only teacher-approved selected days have in-class music, even though the full songbook is available",()=>{
-  assert.equal(CURATED_MUSIC_DAYS.filter(x=>x.status==="published").length,12);
+  assert.equal(CURATED_MUSIC_DAYS.filter(x=>x.status==="published").length,15);
   assert.equal(getCuratedMusicByAssignment("A1-14.1").day,22);
   assert.equal(getCuratedMusicByAssignment("A2-7.18").day,18);
   assert.equal(getCuratedMusicByAssignment("A2-10.26"),null);
