@@ -1,5 +1,5 @@
 import { hasCompleteSongTiming } from '../utils/songLyrics.js';
-import { recordedSongQuestions } from '../utils/recordedLessonMusic.js';
+import { recordedEvidenceRange, recordedSongQuestions } from '../utils/recordedLessonMusic.js';
 import { useEffect, useRef, useState } from 'react';
 import { getReusableSongDraft } from '../data/reusableMusicSongbook.js';
 import { getReusableMusicQuestions } from '../data/reusableMusicQuestions.js';
@@ -51,6 +51,9 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
       }
     : approvedRecording;
   const audio = useRef(null);
+  const previewStart = useRef(null);
+  const previewEnd = useRef(null);
+  const previewPlayPending = useRef(false);
   const [time, setTime] = useState(0);
   const [follow, setFollow] = useState(true);
   const timedSong = song && recording ? {...song, id:recording.trackId, objectKey:recording.objectKey} : null;
@@ -75,6 +78,20 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
     : bank.questions;
   const synchronized=hasCompleteSongTiming(cues,recordedLyrics);
   const question = questions[questionIndex];
+  const evidenceRange = question?.evidence
+    ? recordedEvidenceRange(recordedLyrics, cues, question.evidence) : null;
+  const cancelPreview = () => { previewStart.current=null; previewEnd.current=null; previewPlayPending.current=false; };
+  const playLinePreview = range => {
+    if (!audio.current) return;
+    previewStart.current=range.start;
+    previewEnd.current=range.end;
+    previewPlayPending.current=true;
+    audio.current.currentTime=range.start;
+    setTime(range.start);
+    const playback=audio.current.play();
+    if (playback?.then) playback.then(()=>{previewPlayPending.current=false;},cancelPreview);
+    else previewPlayPending.current=false;
+  };
   const musicLink = recording.trackId
     ? `https://music.falowen.app/?track=${encodeURIComponent(recording.trackId)}`
     : `https://music.falowen.app/?level=${encodeURIComponent(recording.level)}&day=${encodeURIComponent(recording.day)}`;
@@ -93,7 +110,20 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
       <div className="published-song-lesson__player">
         <div><strong>♫ Lied anhören</strong><small>Das Lernlied aus Cloudflare R2 · Keine Goethe-Hörprüfung</small></div>
         {recording.audioUrl
-          ? <audio key={recording.objectKey} ref={audio} onTimeUpdate={e=>setTime(e.currentTarget.currentTime)} onSeeked={e=>setTime(e.currentTarget.currentTime)} onEnded={()=>setTime(-1)} controls preload="none" src={recording.audioUrl} onError={() => setAudioError('Diese Aufnahme konnte nicht geladen werden. Bitte die R2-Datei und den Falowen-Musiklink prüfen.')} aria-label={song.title}/>
+          ? <audio key={recording.objectKey} ref={audio} onTimeUpdate={e=>{
+              const player=e.currentTarget;
+              setTime(player.currentTime);
+              if (previewEnd.current!==null && player.currentTime>=previewEnd.current) {
+                const end=previewEnd.current;
+                player.pause(); player.currentTime=end; cancelPreview();
+              }
+            }} onSeeking={e=>{
+              const position=e.currentTarget.currentTime;
+              if (previewEnd.current!==null && (position<previewStart.current || position>=previewEnd.current)) cancelPreview();
+            }} onPlay={()=>{
+              if (previewPlayPending.current) previewPlayPending.current=false;
+              else cancelPreview();
+            }} onSeeked={e=>setTime(e.currentTarget.currentTime)} onEnded={()=>{cancelPreview();setTime(-1);}} controls preload="none" src={recording.audioUrl} onError={() => setAudioError('Diese Aufnahme konnte nicht geladen werden. Bitte die R2-Datei und den Falowen-Musiklink prüfen.')} aria-label={song.title}/>
           : <p role="status">{discoveryError || `Die ${recording.level}-Day-${recording.day}-Aufnahme wird in Falowen Music gesucht…`}</p>}
         <a href={musicLink} target="_blank" rel="noopener noreferrer">In Falowen Music öffnen</a>
         {audioError && <p className="published-song-lesson__error" role="alert">{audioError}</p>}
@@ -120,7 +150,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
         <p>Lies mit und achte auf die wichtigen Ausdrücke aus Kapitel {song.assignmentKey}.</p>
         <label><input type="checkbox" disabled={!synchronized} checked={synchronized && follow} onChange={e=>setFollow(e.target.checked)}/> Mitlesen folgen</label>
         {!synchronized && <p role="status">Zeitmarken fehlen für diese Aufnahme. Mitlesen wird nach der Veröffentlichung der passenden Zeitmarken verfügbar.</p>}
-        <LessonSongLyrics song={displaySong} cues={cues} time={time} onSeek={seconds=>{if(audio.current){audio.current.currentTime=seconds;setTime(seconds);}}} follow={follow}/>
+          <LessonSongLyrics song={displaySong} cues={cues} time={time} onSeek={seconds=>{if(audio.current){cancelPreview();audio.current.currentTime=seconds;setTime(seconds);}}} follow={follow}/>
         <SongTimingEditor song={displaySong} audio={audio} cues={cues} onSave={saveCues}/>
 
         <button type="button" onClick={()=>{setView('questions');setQuestionIndex(0);setSelectedOption(-1);setShowAnswer(false);}}>Weiter · Fragen beantworten</button>
@@ -128,6 +158,8 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
       {view==='questions' && <div className="published-song-lesson__section published-song-lesson__quiz">
         <div className="published-song-lesson__quizmeta"><strong>FRAGE {questionIndex+1} / {questions.length}</strong><span>{question.type==='speaking'?'SPRECHEN':'HÖRVERSTEHEN'}</span></div>
         <h3 lang="de">{question.prompt}</h3>
+        {evidenceRange && <button type="button" className="published-song-lesson__line-preview"
+          onClick={()=>playLinePreview(evidenceRange)}>▶ Zeile anhören</button>}
         {question.type==='speaking'
           ? <p>Sprich mit deinem Partner. {question.teacherNote}</p>
           : <p>Antworte mit Informationen aus dem Lied. Die Musterlösung wird erst nach deiner Antwort gezeigt.</p>}
