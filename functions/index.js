@@ -357,6 +357,78 @@ app.post("/openSession", async (req, res) => {
 
     const ref = sessionDocRef(classId, sessionId);
 
+    if (action === "end") {
+      const role = String(user.role || user.user_role || "").trim().toLowerCase();
+      if (!teacherAllowlist.length && user.admin !== true && !["admin", "teacher", "staff"].includes(role)) {
+        return res.status(403).json({ error: "Staff access required to end a class." });
+      }
+      if (classId.includes("/") || sessionId.includes("/")) {
+        return res.status(400).json({ error: "Invalid class or session ID." });
+      }
+
+      const liveRef = db.collection("classSessions").doc(sessionId);
+      const auditRef = db.collection("auditLogs").doc();
+      const failure = await db.runTransaction(async (transaction) => {
+        const [live, attendance] = await Promise.all([transaction.get(liveRef), transaction.get(ref)]);
+        if (!live.exists) return "The matching Live Classes session was not found.";
+        const session = live.data() || {};
+        const sessionClassId = normalizeClassComparable(session.classRecordId || session.classId);
+        if (sessionClassId !== classId) return "The selected session belongs to a different class.";
+        const attendanceData = attendance.exists ? attendance.data() || {} : {};
+        const previousStatus = String(session.status || session.sessionStatus || "scheduled").trim().toLowerCase();
+        if (isAppAssessment(session) || isAppAssessment(attendanceData)
+          || ["cancelled", "canceled", "superseded", "deleted"].includes(previousStatus)) {
+          return "This session cannot be ended from Attendance.";
+        }
+        if (previousStatus === "completed" && attendanceData.opened === false
+          && attendanceData.sessionStatus === "completed") return null;
+
+        const timestamp = admin.firestore.FieldValue.serverTimestamp();
+        const completion = {
+          status: "completed",
+          completionSource: "manual",
+          completionPreviousStatus: previousStatus,
+          completedBy: user.uid,
+          completedAt: timestamp,
+          remindersSuppressed: true,
+          sequence: Number(session.sequence || 0) + 1,
+          updatedAt: timestamp,
+        };
+
+        if (previousStatus !== "completed") {
+          transaction.update(liveRef, completion);
+          transaction.set(auditRef, {
+            type: "classSession.completed",
+            classId,
+            sessionId,
+            previousStatus,
+            completionSource: "manual",
+            actorId: user.uid,
+            createdAt: timestamp,
+          });
+        }
+        transaction.set(ref, {
+          classId,
+          classSessionId: sessionId,
+          sessionId,
+          status: "completed",
+          sessionStatus: "completed",
+          completionSource: session.completionSource || "manual",
+          completedAt: session.completedAt || timestamp,
+          remindersSuppressed: true,
+          sequence: previousStatus === "completed" ? Number(session.sequence || 0) : completion.sequence,
+          opened: false,
+          openTo: timestamp,
+          closedBy: user.uid,
+          updatedAt: timestamp,
+        }, { merge: true });
+        return null;
+      });
+
+      if (failure) return res.status(409).json({ error: failure });
+      return res.json({ ok: true, opened: false, status: "completed" });
+    }
+
     if (action === "close") {
       await ref.set(
         {
