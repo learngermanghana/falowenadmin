@@ -107,7 +107,7 @@ const admin = {
   },
 };
 
-test("scheduler auto-opens check-in and uses CLOUD_RUNTIME_CONFIG check-in base URL in the sent reminder", async () => {
+test("scheduler opens check-in at 30 minutes and sends one email at 15 despite legacy lead settings", async () => {
   const classId = "Y4xjoaF5wK0RmDyIEvkY";
   const sessionId = "A2 Munich Klasse_2026-09-02_1900";
   const klass = {
@@ -153,22 +153,29 @@ test("scheduler auto-opens check-in and uses CLOUD_RUNTIME_CONFIG check-in base 
     communication: {
       announcement_webhook_url: "https://mailer.example.test/class-reminder",
       class_checkin_base_url: "https://attendance.example.test/",
-      class_reminder_leads_minutes: [30],
+      class_reminder_leads_minutes: [30, 5],
     },
   };
 
-  const result = await runClassSessionReminderEmailJob({
+  const runAt = (time) => runClassSessionReminderEmailJob({
     admin,
     db,
     runtimeConfig,
-    now: new Date("2026-09-02T18:30:00.000Z"),
+    now: new Date(`2026-09-02T${time}:00.000Z`),
     fetchImpl,
   });
 
-  assert.equal(result.autoOpen.opened, 1);
+  const early = await runAt("18:30");
+  assert.equal(early.autoOpen.opened, 1);
+  assert.equal(early.sent, 0);
+  assert.equal(delivered, null);
+
+  const result = await runAt("18:45");
   assert.equal(result.sent, 1);
   assert.equal(delivered.url, "https://mailer.example.test/class-reminder");
   assert.equal(delivered.body.rows.length, 1);
+  assert.equal(delivered.body.rows[0].reminder_lead_minutes, "15");
+  assert.equal((await runAt("18:55")).sent, 0);
   assert.match(delivered.body.rows[0].checkin_link, /^https:\/\/attendance\.example\.test\/checkin\?/);
   assert.match(delivered.body.rows[0].announcement, /https:\/\/attendance\.example\.test\/checkin\?/);
 

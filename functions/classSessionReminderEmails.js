@@ -3,7 +3,7 @@ const crypto = require("crypto");
 const { runAutoOpenCheckins } = require("./classSessionAutoCheckin.js");
 
 const TZ = "Africa/Accra";
-const DEFAULT_LEADS = [30, 10];
+const DEFAULT_LEADS = [15];
 const DEFAULT_GRACE_MIN = 7;
 const DEFAULT_CHECKIN_BASE_URL = "https://admin.falowen.app";
 const PROCESSING_STALE_MS = 20 * 60 * 1000;
@@ -857,12 +857,7 @@ async function runClassSessionReminderEmailJob({
     sessions,
     classes,
     now: nowDate,
-    leadMinutes: communication.class_reminder_leads_minutes
-      || process.env.CLASS_REMINDER_LEADS_MINUTES
-      || DEFAULT_LEADS,
-    graceMinutes: communication.class_reminder_grace_minutes
-      || process.env.CLASS_REMINDER_GRACE_MINUTES
-      || DEFAULT_GRACE_MIN,
+    graceMinutes,
   });
   const dueClasses = [...new Map(due.map((item) => {
     const klass = resolveClassForSession(item.session, classes);
