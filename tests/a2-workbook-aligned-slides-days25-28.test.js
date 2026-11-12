@@ -67,12 +67,12 @@ test("A2 days 25-28 teacher support matches the grammar actually taught in Falow
   }
 });
 
-test("Day 25 uses the Hamburg Lesen-only assessment and explicitly no Hören", () => {
+test("Day 25 uses the Hamburg Lesen-only assessment with separate ungraded classroom Hören", () => {
   const slide = getA2WorkbookAlignedSlideDay25To28("A2-9.25");
   const labels = slide.workbookConnection.parts.map((part) => part.label);
   assert.deepEqual(labels, ["Grammar", "Teil 1 · Sprechen", "Teil 3 · Lesen"]);
   assert.match(slide.workbookConnection.subtitle, /Lesen is the only submitted assessment/i);
-  assert.match(slide.workbookConnection.subtitle, /no Hören/i);
+  assert.match(slide.workbookConnection.subtitle, /classroom Hören on working hours is ungraded/i);
   assert.equal(labels.some((label) => /Hören|Schreiben/i.test(label)), false);
   assert.match(slide.workbookConnection.parts.at(-1).detailEn, /Mein Tagesablauf in Hamburg/i);
   assert.match(slide.workbookConnection.parts.at(-1).detailEn, /five questions/i);

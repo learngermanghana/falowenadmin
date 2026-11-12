@@ -1,6 +1,40 @@
 // A2 teacher-led oral missions. Each replaces exactly one existing focused-practice page.
 const definitions = [
   {
+    assignmentId: "A2-9.25", title: "Ein neuer Tagesplan", eyebrow: "Den Tagesablauf planen und ändern",
+    grammar: "Präsens · trennbare Verben · um / von … bis · zuerst / danach",
+    goal: "Agree on a daily plan, respond to a change and confirm the new plan in order.",
+    scenarios: [
+      {
+        id: "day25-meeting", label: "Das Team-Meeting beginnt früher", icon: "🕣",
+        context: "Du und deine Kollegin fangt normalerweise um 9 Uhr an. Morgen beginnt das Team-Meeting um 8:30 Uhr. Der Bus von Person B fährt um 7:55 Uhr und kommt um 8:20 Uhr an.",
+        steps: [
+          {actionDe:"Änderung erklären",questionDe:"Person A: Sag deiner Kollegin, wann das Meeting morgen beginnt. Frag, ob sie pünktlich da sein kann.",modelDe:"Morgen beginnt das Meeting schon um 8:30 Uhr. Kannst du pünktlich da sein?"},
+          {actionDe:"Morgen planen",questionDe:"Person B: Sag, wann du aufstehst und wann du losfährst. Beginne einen Satz mit danach.",modelDe:"Ich stehe um 7 Uhr auf. Danach frühstücke ich. Um 7:55 Uhr fahre ich los."},
+          {actionDe:"Treffpunkt bestätigen",questionDe:"Einigt euch auf einen Treffpunkt und eine Uhrzeit vor dem Meeting.",modelDe:"Wir treffen uns um 8:25 Uhr vor dem Konferenzraum."},
+        ],
+      },
+      {
+        id: "day25-pause", label: "Die Mittagspause verschieben", icon: "🍽️",
+        context: "Ihr esst normalerweise um 12 Uhr zusammen. Person A hat bis 12:30 Uhr einen Termin. Person B muss um 13 Uhr wieder arbeiten.",
+        steps: [
+          {actionDe:"Neuen Vorschlag machen",questionDe:"Person A: Erkläre das Problem und schlage eine neue Uhrzeit für das Mittagessen vor.",modelDe:"Ich habe bis 12:30 Uhr einen Termin. Können wir um 12:35 Uhr essen?"},
+          {actionDe:"Auf den Vorschlag reagieren",questionDe:"Person B: Sag, ob die Uhrzeit passt. Wann musst du wieder arbeiten?",modelDe:"Ja, 12:35 Uhr passt. Um 13 Uhr arbeite ich wieder."},
+          {actionDe:"Pause zusammenfassen",questionDe:"Bestätigt, von wann bis wann ihr Pause macht und was danach passiert.",modelDe:"Wir machen von 12:35 Uhr bis 13 Uhr Pause. Danach arbeiten wir weiter."},
+        ],
+      },
+      {
+        id: "day25-evening", label: "Nach der Arbeit noch zum Deutschkurs", icon: "📚",
+        context: "Ihr habt um 18 Uhr Deutschkurs. Person A arbeitet bis 16:30 Uhr und möchte vorher einkaufen. Person B kann sich frühestens um 17:40 Uhr mit Person A treffen.",
+        steps: [
+          {actionDe:"Abend planen",questionDe:"Person A: Sag, wann du mit der Arbeit fertig bist und was du danach machst.",modelDe:"Um 16:30 Uhr bin ich mit der Arbeit fertig. Danach kaufe ich ein."},
+          {actionDe:"Treffen vorschlagen",questionDe:"Person B: Schlage eine Zeit und einen Treffpunkt vor. Frag, ob der Plan passt.",modelDe:"Treffen wir uns um 17:45 Uhr vor dem Kursraum? Passt das für dich?"},
+          {actionDe:"Reihenfolge bestätigen",questionDe:"Person A: Bestätige den Plan mit zuerst, danach und um.",modelDe:"Zuerst kaufe ich ein. Danach treffen wir uns um 17:45 Uhr vor dem Kursraum. Um 18 Uhr beginnt der Kurs."},
+        ],
+      },
+    ],
+  },
+  {
     assignmentId: "A2-9.23", title: "Pünktlich ankommen", eyebrow: "Schul- und Arbeitswege planen",
     grammar: "mit + Dativ · zur / zum · nach · zu Fuß · weil",
     goal: "Choose a realistic route, explain the transport and duration, then react to a change using simple A2 German.",

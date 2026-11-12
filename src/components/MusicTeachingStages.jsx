@@ -13,6 +13,9 @@ export function MusicVideoStage({ music }) {
   if (music?.assignmentKey === 'A2-7.18' && music?.audioUrl) {
     return <PublishedSongLessonStage assignmentKey="A2-7.18" />;
   }
+  if (music?.assignmentKey === 'A2-9.25') {
+    return <PublishedSongLessonStage assignmentKey={music.assignmentKey} />;
+  }
   // Match the Day 18 published music presentation, including its original
   // styling and tabs. Dynamic Day 19/20 uploads stay in the music library:
   // we never invent an MP3 path, lyrics or cue timings for them.
