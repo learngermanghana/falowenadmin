@@ -20,3 +20,20 @@
 /* A2 Days 19–20: native audio and synchronized in-slide lyrics exactly as Day 18. */
 .published-song-lesson--linked .published-song-lesson__player audio{display:block;width:100%;min-height:44px}
 .published-song-lesson--linked .published-song-lesson__section{min-width:0}
+
+.published-song-lesson .published-song-lesson__follow,
+.published-song-lesson .lesson-song-english-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  flex-direction: row;
+  gap: .55rem;
+  margin: 0;
+}
+
+.published-song-lesson :is(.published-song-lesson__follow, .lesson-song-english-toggle) input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 1rem;
+  margin: 0;
+}

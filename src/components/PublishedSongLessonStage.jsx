@@ -11,6 +11,7 @@ import './LessonSongStage.css';
 import LessonSongLyrics from './LessonSongLyrics.jsx';
 import SongTimingEditor from './SongTimingEditor.jsx';
 import useSongTiming from '../hooks/useSongTiming.js';
+import day25AlignedTiming from '../data/a2Day25SongTiming.json';
 import { resolveTeachingSongEnglishTranslation } from '../utils/musicEnglishDrafts.js';
 
 // This is a teacher-led, unscored song activity. The separately graded
@@ -58,7 +59,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
   const [follow, setFollow] = useState(true);
   const timedSong = song && recording ? {...song, id:recording.trackId, objectKey:recording.objectKey} : null;
   const [cues, saveCues, recordedLyrics, recordingMetadata] = useSongTiming(timedSong, {
-    allowEstimated: assignmentKey !== 'A2-9.25',
+    alignedTiming: assignmentKey === 'A2-9.25' ? day25AlignedTiming : undefined,
   });
   const englishTranslation = timedSong ? resolveTeachingSongEnglishTranslation({
     assignmentKey, objectKey:recording.objectKey, lyrics:recordedLyrics,
@@ -132,7 +133,9 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
       </div>
       {recordingMetadata?.transcriptionStatus==='automatic'
         ? <p role="status">AUTOMATISCHER TRANSKRIPTENTWURF · Wörter und Zeitmarken stammen aus der Aufnahme. Erkennungsfehler sind möglich; bitte beim Hören prüfen. Fragen dazu sind unbewertete Lese-/Sprechübungen.</p>
-        : recordingMetadata?.timingStatus==='estimated'
+        : recordingMetadata?.timingStatus==='audio-aligned'
+          ? <p role="status">An die Aufnahme angepasste Zeitmarken · Kurze Gesangsrufe können leicht abweichen.</p>
+          : recordingMetadata?.timingStatus==='estimated'
           ? <p role="status">{assignmentKey === 'A2-9.25' && !synchronized
             ? 'Automatisches Mitlesen wartet auf geprüfte Zeitmarken. Die Lehrkraft kann die Zeilen unten markieren.'
             : 'Geschätzte veröffentlichte Zeitmarken · Bitte die Zeilengrenzen beim Hören prüfen.'}</p>
@@ -149,10 +152,10 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
         <button type="button" onClick={()=>setView('lyrics')}>Weiter · Liedtext ansehen</button>
       </div>}
       {view==='lyrics' && <div className="published-song-lesson__section">
-        {recordedLyrics === song.lyrics && <p role="status">KURSENTWURF · Dieser Text und seine Übungsfragen sind noch nicht gegen die ausgewählte Aufnahme geprüft.</p>}
+        {recordedLyrics === song.lyrics && !recordingMetadata && <p role="status">KURSENTWURF · Dieser Text und seine Übungsfragen sind noch nicht gegen die ausgewählte Aufnahme geprüft.</p>}
         <h3>Liedtext · {song.title}</h3>
         <p>Lies mit und achte auf die wichtigen Ausdrücke aus Kapitel {song.assignmentKey}.</p>
-        <label><input type="checkbox" disabled={!synchronized} checked={synchronized && follow} onChange={e=>setFollow(e.target.checked)}/> Mitlesen folgen</label>
+        <label className="published-song-lesson__follow"><input type="checkbox" disabled={!synchronized} checked={synchronized && follow} onChange={e=>setFollow(e.target.checked)}/> Mitlesen folgen</label>
         {!synchronized && recordingMetadata?.timingStatus !== 'estimated' && <p role="status">Zeitmarken fehlen für diese Aufnahme. Mitlesen wird nach der Veröffentlichung der passenden Zeitmarken verfügbar.</p>}
           <LessonSongLyrics song={displaySong} cues={cues} time={time} onSeek={seconds=>{if(audio.current){cancelPreview();audio.current.currentTime=seconds;setTime(seconds);}}} follow={follow}/>
         <SongTimingEditor song={displaySong} audio={audio} cues={cues} onSave={saveCues}/>
