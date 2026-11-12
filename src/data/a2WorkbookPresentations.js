@@ -1,5 +1,5 @@
 // Saved from the existing A2 workbook speaking tasks. No runtime requests.
-export const A2_PRESENTATION_SOURCE_SHA = "6ff042da13b014c2a384b0a00d645680a114aab7";
+export const A2_PRESENTATION_SOURCE_SHA = "512e59b94eec0ec9a5b6ebf4615dc170b5707262";
 export const A2_WORKBOOK_PRESENTATIONS = {
   "1": {
     "day": 1,
