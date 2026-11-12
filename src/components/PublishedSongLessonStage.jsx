@@ -11,7 +11,7 @@ import './LessonSongStage.css';
 import LessonSongLyrics from './LessonSongLyrics.jsx';
 import SongTimingEditor from './SongTimingEditor.jsx';
 import useSongTiming from '../hooks/useSongTiming.js';
-import day25AlignedTiming from '../data/a2Day25SongTiming.json';
+import day25AlignedTiming from '../data/a2Day25SongTiming.js';
 import { resolveTeachingSongEnglishTranslation } from '../utils/musicEnglishDrafts.js';
 
 // This is a teacher-led, unscored song activity. The separately graded

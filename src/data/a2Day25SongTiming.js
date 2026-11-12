@@ -1,4 +1,5 @@
-{
+// Audio-aligned draft for the exact Day 25 recording.
+export default {
   "objectKey": "music/a2/day-25/Endlich Urlaub.mp3",
   "recordingSha256": "84d4697e7c03467ae8bbe2b13e6e8700029f2e3bbb287d1ba9067cea0791fd29",
   "duration": 177.12,
@@ -249,4 +250,4 @@
       "text": "Die Reise geht los."
     }
   ]
-}
+};
