@@ -216,7 +216,7 @@ jobs:
           grep -F 'classStartsAt: startsAt.toISOString()' functions/classSessionAutoCheckin.js
           grep -F 'const resolvedAssignmentId' src/pages/CheckinPage.jsx
           grep -F 'Teacher presentation slides are not shared from the attendance page.' src/pages/CheckinPage.jsx
-          grep -F 'schedule: "*/30 * * * *"' functions/attendanceConfirmationEmails.js
+          grep -F 'schedule: "0 8 * * *"' functions/attendanceConfirmationEmails.js
           grep -F 'async function queueAttendanceConfirmationEvent' functions/attendanceConfirmationEmails.js
           grep -F '.where("nextRunAt", "<=",' functions/attendanceConfirmationEmails.js
           ! grep -F 'const classSnap = await db.collection("classes").get();' functions/attendanceConfirmationEmails.js
