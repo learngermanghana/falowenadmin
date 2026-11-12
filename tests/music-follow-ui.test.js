@@ -112,3 +112,40 @@ for(const [level,day,assignmentKey,Component] of [['A1',6,'A1-2.3',Published],['
   }finally{await act(async()=>root.unmount());dom.window.close();}
  });
 }
+
+test('A2 Day 25 follows the audio-aligned cues instead of the old estimates', async () => {
+  const dom = new JSDOM('<div id="root"></div>', {url: 'https://admin.falowen.app'});
+  const w = dom.window;
+  Object.assign(globalThis, {window:w, document:w.document, localStorage:w.localStorage, IS_REACT_ACT_ENVIRONMENT:true});
+  w.matchMedia = () => ({matches:true});
+  const {getReusableSongDraft} = await import('../src/data/reusableMusicSongbook.js');
+  const lyrics = getReusableSongDraft('A2-9.25').lyrics;
+  const recording = getCuratedMusicByAssignment('A2-9.25');
+  const lines = lyrics.split('\n').filter(line => line && !line.startsWith('['));
+  globalThis.fetch = async () => ({ok:true, json:async () => ({
+    objectKey: recording.objectKey, lyrics, timingStatus:'estimated',
+    cues: lines.map((text, i) => ({text, start:25 + i * 3})),
+  })});
+  const root = createRoot(document.getElementById('root'));
+  try {
+    await act(async () => root.render(React.createElement(Published, {assignmentKey:'A2-9.25'})));
+    await act(async () => [...document.querySelectorAll('button')].find(button => button.textContent.includes('2 · Liedtext')).click());
+    assert.equal(document.querySelector('.published-song-lesson__follow input').checked, true);
+    const audio = document.querySelector('audio');
+    const at = seconds => act(async () => {
+      audio.currentTime = seconds;
+      audio.dispatchEvent(new w.Event('timeupdate', {bubbles:true}));
+    });
+    await at(41);
+    assert.equal(document.querySelector('[aria-current="true"]')?.dataset.line, '10');
+    await at(105);
+    assert.equal(document.querySelector('[aria-current="true"]')?.dataset.line, '30');
+    await at(157);
+    assert.equal(document.querySelector('[aria-current="true"]'), null);
+    await act(async () => document.querySelector('[data-line="10"]').click());
+    assert.equal(audio.currentTime, 40.04);
+  } finally {
+    await act(async () => root.unmount());
+    w.close();
+  }
+});

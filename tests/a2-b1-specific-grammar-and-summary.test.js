@@ -73,7 +73,7 @@ for (const level of ["A2", "B1"]) {
 }
 
 test("A2 and B1 open with music and finish with the workbook presentation", () => {
-  const listeningDays = { A2: [1, 2, 3, 4, 17, 18, 19, 20, 21, 23, 24], B1: [24, 25, 26, 27] };
+  const listeningDays = { A2: [1, 2, 3, 4, 17, 18, 19, 20, 21, 23, 24, 25], B1: [24, 25, 26, 27] };
   for (const slide of ["A2", "B1"].flatMap(getSlidesByCourse)) {
     const stages = buildTeachingPresenterStages(slide);
     const music = stages.filter(stage => stage.variant === "interactive-music-video");

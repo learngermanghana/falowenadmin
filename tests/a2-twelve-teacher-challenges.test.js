@@ -8,14 +8,14 @@ const days = new Map([
  ["A2-1.1", "Small Talk Challenge"], ["A2-1.2", "Personen vorstellen · 3 Rollenspiele"], ["A2-1.3", "Vergleichen · 3 Alltagssituationen"], ["A2-9.23", "Pünktlich ankommen"],
  ["A2-2.4", "Meeting Planner"], ["A2-3.8","Restaurant Challenge"],
  ["A2-6.17","Pharmacy Challenge"], ["A2-7.18","Banking Emergency"],
- ["A2-7.20","Customer Service"], ["A2-9.24","Holiday Planner"],
+ ["A2-7.20","Customer Service"], ["A2-9.24","Holiday Planner"], ["A2-9.25","Ein neuer Tagesplan"],
  ["A2-3.6","Room Makeover"], ["A2-4.11","Transport Decision"],
  ["A2-5.13","Mini Interview"], ["A2-8.21","Weekend Surprise"],
  ["A2-10.27","Message Challenge"], ["A2-10.28","Future Mission"],
 ]);
 
-test("All 16 A2 missions contain three distinct realistic scenarios and nine topic-specific modelled questions", () => {
- assert.equal(Object.keys(A2_TEACHER_CHALLENGES).length,16);
+test("A2 missions contain three distinct realistic scenarios and nine topic-specific modelled questions", () => {
+ assert.equal(Object.keys(A2_TEACHER_CHALLENGES).length,days.size);
  for (const [id,title] of days) {
   const mission=getA2TeacherChallenge(id);
   assert.equal(mission.title,title);
