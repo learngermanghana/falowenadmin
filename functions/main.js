@@ -6,7 +6,6 @@ const {
   resolveLifecycleWebhookConfig,
 } = require("./pendingStudentCleanup.js");
 const { runClassSessionReminderEmailJob } = require("./classSessionReminderEmails.js");
-const { createStudentLearningNudgeJob } = require("./studentLearningInterventionEmails.js");
 
 const db = admin.firestore();
 
@@ -35,13 +34,6 @@ async function cleanupExpiredPendingStudentsNow() {
 }
 
 module.exports = baseExports;
-
-module.exports.sendStudentLearningNudges = createStudentLearningNudgeJob({
-  admin,
-  db,
-  onSchedule,
-  runtimeConfig: parseRuntimeConfig(),
-});
 
 module.exports.cleanupExpiredPendingStudents = onSchedule({
   cpu: "gcf_gen1",
