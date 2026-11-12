@@ -127,7 +127,6 @@ jobs:
             scripts/patchClassReminderDiagnosticBestEffort.mjs \
             scripts/patchClassReminderConciseLinks.mjs \
             scripts/patchCheckinStatusMetadataHydration.mjs \
-            scripts/patchAutoCompleteClassSessions.mjs \
             scripts/patchCloudCostOptimizations.mjs \
             scripts/patchCourseReviewRequestEmails.mjs \
             scripts/patchGoetheExamConfig.mjs
@@ -142,7 +141,6 @@ jobs:
           node --check functions/pendingStudentCleanup.js
           node --check functions/classSessionReminderEmails.js
           node --check functions/classSessionAutoCheckin.js
-          node --check functions/autoCompleteClassSessions.js
           node --check functions/attendanceConfirmationEmails.js
           node --check functions/attendanceConfirmationRetry.js
           node --test --test-concurrency=1 tests/attendance-confirmation-retry.test.js tests/attendance-participation-summary-email.test.js tests/attendance-structured-participation-delivery.test.js
@@ -191,7 +189,6 @@ jobs:
           grep -F 'exports.queueAttendanceConfirmationFromSession = onDocumentWritten' functions/index.js
           grep -F 'exports.queueAttendanceConfirmationFromCheckin = onDocumentWritten' functions/index.js
           grep -F 'exports.queueAttendanceConfirmationFromClassSession = onDocumentWritten' functions/index.js
-          grep -F 'exports.autoCompleteClassSessions = createAutoCompleteClassSessionsJob' functions/index.js
           grep -F 'exports.sendCourseReviewRequestEmails = createCourseReviewRequestEmailJob' functions/index.js
           grep -F 'exports.sendDueHolidayNotices = onSchedule' functions/index.js
           grep -F 'exports.trackStudentRegistrationReceived = registrationLifecycleTriggers.registrationReceived' functions/index.js
@@ -220,9 +217,6 @@ jobs:
           ! grep -F 'const classSnap = await db.collection("classes").get();' functions/attendanceConfirmationEmails.js
           ! grep -F 'const studentSnap = await db.collection("students").get();' functions/attendanceConfirmationEmails.js
           grep -F 'acceptClassNameSessionMatch(session, klass)' functions/attendanceConfirmationEmails.js
-          grep -F 'schedule: "5 21 * * 1-6"' functions/autoCompleteClassSessions.js
-          grep -F 'async function loadRecentCompletionCandidates' functions/autoCompleteClassSessions.js
-          ! grep -F 'const snapshot = await db.collection("classSessions").get();' functions/autoCompleteClassSessions.js
           grep -F 'schedule: "0 10 1 * *"' functions/courseReviewRequestEmails.js
           grep -F 'app.get("/exam-file/config"' functions/index.js
           grep -F 'app.put("/exam-file/config"' functions/index.js
@@ -337,9 +331,6 @@ jobs:
 
           deploy_group "class reminder worker" \
             "functions:falowenadmin:sendClassSessionReminderEmails,functions:falowenadmin:sendSaturdayClassSessionReminderEmails"
-
-          deploy_group "automatic class completion worker" \
-            "functions:falowenadmin:autoCompleteClassSessions"
 
           deploy_group "holiday notice worker" \
             "functions:falowenadmin:sendDueHolidayNotices"
