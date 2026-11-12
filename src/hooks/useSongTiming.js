@@ -7,7 +7,7 @@ export function validatePublishedTiming(data, song) {
   const cues = validateLyricCues(data.cues, lines);
   return lines.length && cues.length === lines.length ? cues : [];
 }
-export default function useSongTiming(song) {
+export default function useSongTiming(song, { allowEstimated = true } = {}) {
   const id = song?.id || song?.trackId || '';
   const objectKey = song?.objectKey || song?.audioKey || '';
   const lyrics = song?.lyrics || '';
@@ -30,7 +30,8 @@ export default function useSongTiming(song) {
       if (cancelled || edits.current !== revision) return;
       const recordedLyrics = typeof data?.lyrics === 'string' ? data.lyrics : lyrics;
       const recording = {...record, lyrics:recordedLyrics};
-      const checked = validatePublishedTiming(data, recording);
+      const checked = !allowEstimated && data?.timingStatus === 'estimated'
+        ? [] : validatePublishedTiming(data, recording);
       // Published text does not require line timing. Show the exact recording's
       // new lyrics even when its cue file is still untimed; never keep an older
       // songwriting draft merely because timestamps have not been added.
@@ -46,7 +47,7 @@ export default function useSongTiming(song) {
       }
     });
     return () => { cancelled = true; };
-  }, [id, objectKey, lyrics]);
+  }, [id, objectKey, lyrics, allowEstimated]);
   useEffect(() => {
     function changed(event) {
       if (event.detail === objectKey) setCues(readSongCues({id,objectKey,lyrics:displayLyrics}));

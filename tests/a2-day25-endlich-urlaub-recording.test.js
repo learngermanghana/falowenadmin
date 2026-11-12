@@ -41,3 +41,17 @@ test('A2 Day 25 listening questions and music editors recognize the new recorded
   assert.ok(studio.includes("key === 'A2-9.25'"));
   assert.ok(video.includes('"music/a2/day-25/Endlich Urlaub.mp3":"A2-9.25"'));
 });
+
+test('Day 25 presents the separate true/false recording and the three speaking scenarios', async () => {
+  const { buildTeachingPresenterStages } = await import('../src/utils/teachingPresenter.js');
+  const { getA2WorkbookAlignedSlideDay25To28 } = await import('../src/data/a2WorkbookAlignedSlidesDays25To28.js');
+  const stages = buildTeachingPresenterStages(getA2WorkbookAlignedSlideDay25To28('A2-9.25'));
+  const music = stages.find(stage => stage.variant === 'interactive-music-video');
+  const listening = stages.find(stage => stage.variant === 'interactive-listening');
+  const scenario = stages.find(stage => stage.id === 'scenario-challenge');
+  assert.equal(music.musicVideo.assignmentKey, 'A2-9.25');
+  assert.equal(listening.audioKey, 'a2/day-25/tagesablauf.mp3');
+  assert.deepEqual(listening.listeningItems.map(item => item.answer), ['Richtig', 'Falsch', 'Richtig', 'Falsch', 'Richtig']);
+  assert.match(listening.listeningItems[0].prompt, /ab sofort/);
+  assert.deepEqual(scenario.items.map(item => item.steps.length), [3, 3, 3]);
+});

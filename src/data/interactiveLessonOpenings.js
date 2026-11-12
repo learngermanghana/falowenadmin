@@ -1,3 +1,4 @@
+import { A2_DAY25_CLASSROOM_LISTENING } from './a2Day25ClassroomListening.js';
 import { B1_DAY27_LISTENING } from './b1Day27Listening.js';
 import { A2_DAY23_CLASSROOM_LISTENING } from './a2Day23ClassroomListening.js';
 import { A2_DAY24_CLASSROOM_LISTENING } from './a2Day24ClassroomListening.js';
@@ -530,6 +531,13 @@ ENTRIES["A2-9.24"] = {
   title: "Einen Urlaub planen",
   warmup: [],
   listening: A2_DAY24_CLASSROOM_LISTENING,
+};
+
+ENTRIES["A2-9.25"] = {
+  assignmentId: "A2-9.25",
+  title: "Tagesablauf",
+  warmup: [],
+  listening: A2_DAY25_CLASSROOM_LISTENING,
 };
 
 ENTRIES["A2-8.21"] = {

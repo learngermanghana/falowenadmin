@@ -58,7 +58,7 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
       "Keep the separable-verb frame visible: Ich stehe um 7 Uhr auf. / Abends sehe ich fern.",
       "Build the speaking answer chronologically: Morgenroutine → Arbeit/Schule → Mittag/Nachmittag → Abend → Freizeit/Hobbys.",
       "Bridge to the Hamburg Tagesablauf reading: learners scan the two-day itinerary for sequence, price, place and time details.",
-      "Lesen is the only submitted Day 25 assessment. There is no Schreiben or Hören submission.",
+      "Lesen is the only submitted Day 25 assessment. Use the separate classroom Hören for ungraded practice.",
     ],
     interactionFlow: [
       { phase: "Timeline warm-up", detailEn: "6 min: students place five routine actions from waking up to bedtime on a simple timeline." },
@@ -69,7 +69,7 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
     ],
     wrapUpTaskDe: "Beschreibe deinen Tagesablauf in 6 Sätzen. Benutze mindestens ein trennbares Verb und die Wörter dann, danach oder später.",
     workbookConnection: {
-      subtitle: "Teach toward the Day 25 Hamburg Tagesablauf reading. Lesen is the only submitted assessment, and there is no Hören assignment.",
+      subtitle: "Teach toward the Day 25 Hamburg Tagesablauf reading. Lesen is the only submitted assessment. The classroom Hören on working hours is ungraded.",
       grammarUrl: null,
       workbookUrl: "/campus/course/a2-day-25-tagesablauf-workbook",
       parts: [
@@ -79,7 +79,7 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
       ],
     },
     teacherSupport: {
-      lessonOverviewEn: "Day 25 consolidates everyday A2 narration through a daily-routine timeline. The teacher should help students order actions, control separable verbs and use time expressions naturally, then apply those skills to the Hamburg Tagesablauf reading. Lesen is the only submitted assessment, and there is no Hören section.",
+      lessonOverviewEn: "Day 25 consolidates everyday A2 narration through a daily-routine timeline. The teacher should help students order actions, control separable verbs and use time expressions naturally, then apply those skills to the Hamburg Tagesablauf reading. Use the separate Hören slide to practise listening for working hours. Lesen is the submitted assessment.",
       grammarFocusEn: [
         "Regular routines are normally expressed in Präsens: Jeden Morgen fahre ich zur Arbeit.",
         "Use time expressions to structure the day: morgens, um 7 Uhr, am Nachmittag, abends.",
