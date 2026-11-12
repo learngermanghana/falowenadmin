@@ -218,6 +218,7 @@ export function reconcileMarkingQuality(result, objective, submission = {}, { wr
   const modelWriting = writingExpected && Array.isArray(result.corrections) ? result.corrections.filter((item) =>
     item && typeof item === "object"
     && String(item.from || "").trim() && String(item.to || "").trim()
+    && String(item.from).replace(/\s+/g, " ").trim() !== String(item.to).replace(/\s+/g, " ").trim()
     && sourceText.toLocaleLowerCase("de").includes(String(item.from).trim().toLocaleLowerCase("de"))
     && !/^(?:teil[134]|main)$/i.test(String(item.partId || item.part || ""))
   ) : [];

@@ -428,12 +428,53 @@ function a2ApartmentEvidence(assignmentKey = "", label = "", source = "", index 
   return null;
 }
 
+function a2VacationInvitationEvidence(assignmentKey, label, source, index) {
+  if (String(assignmentKey || "").trim().toUpperCase() !== "A2-9.24"
+    || !/invite sandra to plan a vacation/i.test(label)) return null;
+
+  const lines = sentences(source);
+  const vacation = /\b(?:urlaub(?:sreise|splanung)?|ferien|reise)\b/i;
+  const planning = /\b(?:planen|planung|urlaubsplanung|organisieren|besprechen|vorbereiten)\b/i;
+  const shared = /\b(?:unser(?:en|e|em|er)?|wir|uns|zusammen|gemeinsam|mit\s+dir)\b/i;
+  const explicitInvitation = /\b(?:hast\s+du\s+lust|m[oö]chtest\s+du|willst\s+du|wollen\s+wir|sollen\s+wir|lass\s+uns|lade\s+dich\s+ein|wir\s+k[oö]nnen)\b/i;
+  const planningMeeting = /\b(?:hast\s+du\b[^.!?]{0,65}\bzeit|passt\s+dir|k[oö]nnen\s+wir\s+uns\s+treffen|wir\s+k[oö]nnen\s+uns\b[^.!?]{0,65}\btreffen)\b/i;
+  const negated = /\b(?:nicht|nie|kein(?:e|en|em|er|es)?)\b/i;
+  const mentionsPlanning = (line) => vacation.test(line) && planning.test(line) && !negated.test(line);
+  const invitesMeeting = (line) => planningMeeting.test(line) && !negated.test(line);
+  let evidence = "";
+
+  for (const [i, line] of lines.entries()) {
+    if (!mentionsPlanning(line)) continue;
+    if (explicitInvitation.test(line) || (shared.test(line) && invitesMeeting(line))) {
+      evidence = line;
+      break;
+    }
+    // The invitation can span a shared purpose followed by a concrete proposal.
+    const next = lines[i + 1] || "";
+    if (shared.test(line) && (invitesMeeting(next) || (explicitInvitation.test(next) && /\btreffen\b/i.test(next) && !negated.test(next)))) {
+      evidence = [line, next].join(" | ");
+      break;
+    }
+  }
+  return {
+    index,
+    label,
+    status: evidence ? "met" : "missing",
+    evidence,
+    reason: evidence
+      ? "The student invites Sandra to plan a vacation together."
+      : "No invitation to plan the vacation together was found.",
+  };
+}
+
 export function evaluateWritingTaskEvidence(task = {}, source = "") {
   const text = String(source || "");
   return (Array.isArray(task.taskPoints) ? task.taskPoints : []).map((rawPoint, index) => {
     const label = clean(typeof rawPoint === "string" ? rawPoint : rawPoint?.label);
     const apartmentEvidence = a2ApartmentEvidence(task.assignmentKey, label, text, index);
     if (apartmentEvidence) return apartmentEvidence;
+    const vacationInvitation = a2VacationInvitationEvidence(task.assignmentKey, label, text, index);
+    if (vacationInvitation) return vacationInvitation;
     const pattern = ruleForPoint(label, task.assignmentKey);
     if (!pattern) {
       return {

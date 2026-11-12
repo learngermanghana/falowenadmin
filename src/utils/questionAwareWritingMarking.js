@@ -594,6 +594,7 @@ function mergeCorrections(existing = [], additions = []) {
   const rows = [...(Array.isArray(existing) ? existing : []), ...(Array.isArray(additions) ? additions : [])];
   const seen = new Set();
   return rows.filter((item) => {
+    if (item && typeof item === "object" && clean(item.from) === clean(item.to)) return false;
     const key = typeof item === "string"
       ? clean(item).toLowerCase()
       : [item?.partId, item?.from, item?.to, item?.reason].map(clean).join("|").toLowerCase();
