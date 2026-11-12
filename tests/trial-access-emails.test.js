@@ -6,6 +6,7 @@ const require = createRequire(import.meta.url);
 const { TRIAL_DURATION_MS, TRIAL_RETENTION_MS } = require("../functions/pendingStudentCleanup.js");
 const {
   createTrialAccessWelcomeEmailTrigger,
+  createTrialAccessReminderEmailJob,
   runTrialAccessEmailJob,
   _test,
 } = require("../functions/trialAccessEmails.js");
@@ -401,7 +402,7 @@ test("Announcement Apps Script is the default owner of trial email delivery", as
 });
 
 
-test("hourly candidates use bounded queries, deduplicate legacy dates and omit old rows", async () => {
+test("evening candidates use bounded queries, deduplicate legacy dates and omit old rows", async () => {
   const recent = student({ createdAt: new Date(NOW) });
   const old = student({ createdAt: new Date(NOW - 100 * DAY_MS) });
   const rows = [
@@ -423,9 +424,9 @@ test("hourly candidates use bounded queries, deduplicate legacy dates and omit o
           return { docs, size: docs.length };
         } };
       } };
-    }, get() { throw new Error("hourly scan must not read the entire student collection"); } };
+    }, get() { throw new Error("evening scan must not read the entire student collection"); } };
   } };
-  const result = await _test.loadTrialEmailCandidates(db, new Date(NOW));
+  const result = await _test.loadTrialEmailCandidates(db, new Date(Date.UTC(2026, 8, 25, 18)));
   assert.deepEqual(result.docs.map(doc => doc.id).sort(), ["legacy", "numeric", "recent"]);
   assert.equal(result.size, 3);
   assert.equal(queries, 48);
@@ -435,8 +436,14 @@ test("daily recovery sweep retains students with unusual or extended trial dates
   const docs = [{ id: "extended", data: () => student({ createdAt: new Date(NOW - 100 * DAY_MS), trialPurgeAt: new Date(NOW + DAY_MS) }) }];
   let scans = 0;
   const db = { collection() { return { async get() { scans += 1; return { docs, size: docs.length }; } }; } };
-  const now = new Date(NOW); now.setUTCHours(3);
+  const now = new Date(NOW); now.setUTCHours(12);
   const result = await _test.loadTrialEmailCandidates(db, now);
   assert.equal(result.docs[0].id, "extended");
   assert.equal(scans, 1);
+});
+
+test("trial reminders run at noon and 18:00 Ghana time", () => {
+  const schedule = createTrialAccessReminderEmailJob({ onSchedule: (options) => options });
+  assert.equal(schedule.schedule, "0 12,18 * * *");
+  assert.equal(schedule.timeZone, "Africa/Accra");
 });
