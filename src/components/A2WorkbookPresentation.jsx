@@ -23,7 +23,7 @@ export default function A2WorkbookPresentation({stage}) {
    <h2>Zusatzübung · Restaurant-Rollenspiel</h2>
   </section>}
   <h2>{selected?.prompt||task.prompt}</h2>
-  {task.keywords && <p className="presenter-presentation-keywords">{task.keywords.length} Stichpunkte · Satzanfänge einzeln öffnen</p>}
+  {task.keywords && <p className="presenter-presentation-keywords">Stichpunkte: {task.keywords.join(' · ')}</p>}
   {task.instructionEn && <p lang="en" className="presenter-presentation-instruction">{task.instructionEn}</p>}
   {task.situation && <p className="presenter-presentation-instruction">{task.situation}</p>}
   {selected ? <p className="presenter-presentation-keywords">{selected.keywords}</p> :
