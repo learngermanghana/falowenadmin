@@ -226,7 +226,7 @@ jobs:
           grep -F 'schedule: "5 21 * * 1-6"' functions/autoCompleteClassSessions.js
           grep -F 'async function loadRecentCompletionCandidates' functions/autoCompleteClassSessions.js
           ! grep -F 'const snapshot = await db.collection("classSessions").get();' functions/autoCompleteClassSessions.js
-          grep -F 'schedule: "0 10 * * *"' functions/courseReviewRequestEmails.js
+          grep -F 'schedule: "0 10 1 * *"' functions/courseReviewRequestEmails.js
           grep -F 'app.get("/exam-file/config"' functions/index.js
           grep -F 'app.put("/exam-file/config"' functions/index.js
 

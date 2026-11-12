@@ -2,7 +2,7 @@ const crypto = require("crypto");
 
 const TZ = "Africa/Accra";
 const DEFAULT_DELAY_HOURS = 12;
-const DEFAULT_LOOKBACK_DAYS = 30;
+const DEFAULT_LOOKBACK_DAYS = 40;
 const PROCESSING_STALE_MS = 30 * 60 * 1000;
 const FALLBACK_GOOGLE_REVIEW_URL = "https://www.google.com/maps/place/Learn+Language+Education+Academy+(Former+%22Learn+German+Ghana%22)/data=!4m2!3m1!1s0x0:0xbd2e1fb7eabd20da?sa=X&ved=1t:2428&ictx=111";
 const BLOCKED_CLASS_STATUSES = new Set(["deleted", "cancelled", "canceled"]);
@@ -526,7 +526,7 @@ async function runCourseReviewRequestEmailJob({
 
 function createCourseReviewRequestEmailJob({ admin, db, onSchedule, runtimeConfig = {} }) {
   return onSchedule({
-    schedule: "0 10 * * *",
+    schedule: "0 10 1 * *",
     timeZone: TZ,
     retryCount: 1,
   }, async () => runCourseReviewRequestEmailJob({ admin, db, runtimeConfig }));
