@@ -275,6 +275,7 @@ test("A2-9.24 credits an invitation expressed as a shared plan and a meeting pro
     objectiveCorrect: 9,
     objectiveTotal: 10,
     writingScorePercent: 91,
+    finalScore: 90,
     taskCompletion: { completed: 2, total: 3, missing: [task.taskPoints[0]] },
     corrections: [
       { partId: "teil2", from: "Ich möchte gern", to: "Ich möchte  gern" },
