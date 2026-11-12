@@ -316,7 +316,7 @@ function createAttendanceConfirmationEmailJob({ admin, db, onSchedule, runtimeCo
   // class and every student every 30 minutes.
   return onSchedule({
     cpu: "gcf_gen1",
-    schedule: "*/30 * * * *",
+    schedule: "0 8 * * *",
     timeZone: ACCRA_TIMEZONE,
     retryCount: 1,
   }, async () => runAttendanceConfirmationEmailJob({ admin, db, runtimeConfig }));
@@ -375,7 +375,7 @@ const checks = [
   [finalIndex.includes("exports.queueAttendanceConfirmationFromSession = onDocumentWritten"), "Attendance session event trigger is missing."],
   [finalIndex.includes("exports.queueAttendanceConfirmationFromCheckin = onDocumentWritten"), "Attendance check-in event trigger is missing."],
   [finalIndex.includes("exports.queueAttendanceConfirmationFromClassSession = onDocumentWritten"), "Class-session completion event trigger is missing."],
-  [finalWorker.includes('schedule: "*/30 * * * *"'), "Attendance due-queue dispatcher schedule is missing."],
+  [finalWorker.includes('schedule: "0 8 * * *"'), "Attendance due-queue dispatcher schedule is missing."],
   [finalWorker.includes('error.code = "ATTENDANCE_PARTIAL_FAILURE"'), "Partial attendance failures must preserve the queue for retry."],
 ];
 for (const [passed, message] of checks) {
