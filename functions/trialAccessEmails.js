@@ -489,9 +489,9 @@ async function writeTrialEmailDiagnostic({
 }
 
 // A daily compatibility sweep retains recovery for legacy date formats and
-// explicitly extended trials. Ordinary hourly ticks only read recent records.
+// explicitly extended trials. Evening runs only read recent records.
 async function loadTrialEmailCandidates(db, now) {
-  if (now.getUTCHours() === 3) return db.collection("students").get();
+  if (now.getUTCHours() === 12) return db.collection("students").get();
   const oldest = new Date(now.getTime() - TRIAL_DURATION_MS - TRIAL_RETENTION_MS);
   const fields = [
     "trialStartedAt", "trialStartAt", "trialStart", "trial_started_at",
@@ -656,7 +656,7 @@ function createTrialAccessReminderEmailJob({
     throw new Error("Trial access scheduler is unavailable.");
   }
   return onSchedule({
-    schedule: "15 * * * *",
+    schedule: "0 12,18 * * *",
     timeZone: TZ,
     retryCount: 1,
     memory: "256MiB",
