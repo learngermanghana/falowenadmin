@@ -33,6 +33,7 @@ export const WORKER_TARGETS = {
   // marking bundle, not merely Admin UI copy.
   "src/data/a2WritingTaskSpecs.js": ["api", "markCourseSubmissionAutomatically"],
   "src/utils/writingTaskEvidence.js": ["api", "markCourseSubmissionAutomatically"],
+  "src/utils/markingQuality.js": ["api", "markCourseSubmissionAutomatically"],
   "functions/trialAccessEmails.js": ["sendTrialAccessWelcomeEmail", "sendTrialAccessReminderEmails"],
   "functions/finalMockResultEmails.js": ["sendFinalMockResultEmail"],
   "functions/studentLearningInterventionEmails.js": ["sendStudentLearningNudges"],

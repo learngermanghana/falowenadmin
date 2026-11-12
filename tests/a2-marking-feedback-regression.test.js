@@ -5,6 +5,7 @@ import { evaluateWritingTaskEvidence } from "../src/utils/writingTaskEvidence.js
 import { applyQuestionAwareWritingGuard, resolveQuestionAwareWritingTask } from "../src/utils/questionAwareWritingMarking.js";
 import { comparePublishedAnswerKeys } from "../src/utils/publishedMarkingContract.js";
 import { dedupeRepeatedFeedback, limitFeedbackWords } from "../src/utils/feedbackPolicy.js";
+import { compareExaminerResults } from "../src/utils/markingIntelligence.js";
 import { reconcileMarkingQuality } from "../src/utils/markingQuality.js";
 
 const victoriaSubmission = [
@@ -257,4 +258,54 @@ test("A2-6.15 evidence checks favourite sport, enjoyment, frequency and invitati
     .map(point => point.status);
   assert.deepEqual(withoutInvitation, ["met", "met", "missing"]);
   assert.doesNotMatch(evidence.map(e => e.label).join(" "), /course place|training times and costs/i);
+});
+
+test("A2-9.24 credits an invitation expressed as a shared plan and a meeting proposal", () => {
+  const task = getA2WritingTaskSpec("A2-9.24");
+  const writing = "Liebe Sandra,\nIch möchte gern unseren Urlaub planen Hast du am Freitag Zeit? "
+    + "Wir können uns in der Bibliothek treffen. Was hältst du von Österreich?\nViele Grüße";
+  const evidence = evaluateWritingTaskEvidence(task, writing);
+  assert.deepEqual(evidence.map((point) => point.status), ["met", "met", "met"]);
+  assert.match(evidence[0].evidence, /Urlaub planen Hast du am Freitag Zeit/);
+
+  const result = applyQuestionAwareWritingGuard({
+    level: "A2",
+    assignmentKey: task.assignmentKey,
+    objectiveScore: 90,
+    objectiveCorrect: 9,
+    objectiveTotal: 10,
+    writingScorePercent: 91,
+    finalScore: 90,
+    taskCompletion: { completed: 2, total: 3, missing: [task.taskPoints[0]] },
+    corrections: [
+      { partId: "teil2", from: "Ich möchte gern", to: "Ich möchte  gern" },
+      { partId: "teil2", from: "planen Hast du", to: "planen. Hast du" },
+    ],
+    status: "marked",
+  }, {
+    referenceEntry: { assignmentKey: task.assignmentKey, level: "A2", writingParts: ["teil2"] },
+    submission: { assignmentKey: task.assignmentKey, level: "A2" },
+  }, writing);
+  assert.equal(result.taskCompletion.completed, 3);
+  assert.equal(result.objectiveScore, 90);
+  assert.equal(result.writingScorePercent, 91);
+  const examiner = { ...result, confidence: 0.98 };
+  assert.equal(compareExaminerResults(examiner, examiner).requiresTutorReview, false);
+  assert.ok(!result.reviewReasons.some((reason) => reason.code === "missing_task_points"));
+  assert.ok(!result.corrections.some((item) => item.from === "Ich möchte gern"));
+  assert.ok(result.corrections.some((item) => item.to === "planen. Hast du"));
+});
+
+test("A2-9.24 quotes linked evidence and rejects a solo plan or unrelated invitation", () => {
+  const task = getA2WritingTaskSpec("A2-9.24");
+  const opening = "Liebe Sandra, wie geht es dir? ";
+  const evidence = evaluateWritingTaskEvidence(task,
+    opening + "Ich möchte unseren Urlaub planen. Hast du am Freitag Zeit?")[0];
+  assert.equal(evidence.evidence, "Ich möchte unseren Urlaub planen. | Hast du am Freitag Zeit?");
+  for (const text of [
+    "Ich möchte meinen Urlaub planen. Hast du am Freitag Zeit?",
+    "Ich möchte unseren Urlaub planen. Das Hotel ist günstig.",
+    "Hast du Lust auf Kaffee? Mein Urlaub ist im Juli.",
+    "Ich möchte unseren Urlaub nicht planen. Hast du am Freitag Zeit?",
+  ]) assert.equal(evaluateWritingTaskEvidence(task, opening + text)[0].status, "missing", text);
 });
