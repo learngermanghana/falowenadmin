@@ -105,7 +105,7 @@ test("questions and solutions PDFs number items cumulatively across A1 parts",as
  assert.equal(manifest.parts[0].topic,"Meine eigene Auswahl 1");
  assert.equal(manifest.parts[1].topic,"Meine eigene Auswahl 2");
 });
-test("enabled CapCut export includes paired question and solution PNGs with matching cumulative numbering",async()=>{
+test("CapCut export groups each Teil and puts the cumulative answer key last",async()=>{
  const painted=[];
  const previous=globalThis.document;
  globalThis.document={
@@ -136,15 +136,13 @@ test("enabled CapCut export includes paired question and solution PNGs with matc
    const pack=await buildExamZip({level:"A1",mock:"05",parts,includeSlides:true});
    const files=await entriesOf(pack.blob);
    const pngs=files.filter(f=>f.name.endsWith(".png"));
-   assert.equal(pngs.length,6,"two pages for Teil 1, one page for Teil 2, each with answer slide");
-   assert.ok(pngs.some(p=>p.name.endsWith("/loesungen-teil-1-seite-1.png")));
-   assert.ok(pngs.some(p=>p.name.endsWith("/loesungen-teil-1-seite-2.png")));
-   assert.ok(pngs.some(p=>p.name.endsWith("/loesungen-teil-2-seite-1.png")));
-   assert.equal(painted.length,6);
-   assert.ok(painted[1].some(x=>x.includes("Lösung: Richtig")));
-   assert.ok(painted[2].includes("6"));
-   assert.ok(painted[4].includes("7"),"Teil 2 first slide uses question 7");
-   assert.ok(painted[5].includes("7"),"Teil 2 answer slide also uses question 7");
+   assert.deepEqual(pngs.map(p=>p.name.split("/").pop()),[
+     "0001-Teil-1-Seite-1.png","0002-Teil-2-Seite-1.png","0003-Loesungen-1.png"
+   ]);
+   assert.ok(painted[0].includes("6. Frage 1 6"));
+   assert.ok(painted[1].includes("7. Frage 2 1"));
+   assert.ok(painted[2].includes("7.   Richtig"));
+   assert.ok(painted[2].includes("10.   Richtig"));
  }finally{
    if(previous===undefined)delete globalThis.document;else globalThis.document=previous;
  }
