@@ -384,13 +384,21 @@ export default function CanonicalAttendancePageV3() {
           classId: klass.id,
           sessionId: selected.id,
           date: selectedDate,
-          action: "close",
+          action,
         }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data?.error || `Failed to ${action} check-in`);
+      if (action === "end" && data.status !== "completed") throw new Error("The server did not confirm class completion.");
       setSessionOpen(action === "open");
-      success(`Check-in ${action === "open" ? "opened" : "closed"}.`);
+      if (action === "end") {
+        setSessions((current) => current.map((session) => session.id === selected.id
+          ? { ...session, status: "completed" }
+          : session));
+        success("Class ended. Check-in closed and session marked complete.");
+      } else {
+        success(`Check-in ${action === "open" ? "opened" : "closed"}.`);
+      }
     } catch (cause) {
       error(sessionApiError(cause, action));
     } finally {
@@ -466,6 +474,7 @@ export default function CanonicalAttendancePageV3() {
             <strong>Student QR Check-in</strong>
             <button disabled={sessionBusy || sessionOpen || !assignmentId || !isToday || sessionLocked} onClick={() => changeCheckin("open")}>{sessionBusy && !sessionOpen ? "Opening…" : "Open Check-in"}</button>
             <button disabled={sessionBusy || !sessionOpen} onClick={() => changeCheckin("close")}>{sessionBusy && sessionOpen ? "Closing…" : "Close Check-in"}</button>
+            <button type="button" disabled={sessionBusy || sessionLocked} onClick={() => changeCheckin("end")}>End class</button>
             <button type="button" onClick={refreshCheckins}>Refresh Check-ins</button>
             {slidesUrl && <a href={slidesUrl} target="_blank" rel="noopener noreferrer">Open slides</a>}
             {lessonLinks.map(({ assignmentId: linkedAssignment, url, label }) => <a key={`${linkedAssignment}:${url}`} href={url} target="_blank" rel="noopener noreferrer">{label}</a>)}
