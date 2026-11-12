@@ -102,42 +102,152 @@ function paperSections(parts,answers=false){
   };
   });
 }
-function wrapCanvas(ctx,txt,x,y,maxWidth,lineHeight){
-  const words=String(txt).split(/\s+/);let line="";
-  for(const word of words){
-    const test=line?line+" "+word:word;
-    if(ctx.measureText(test).width>maxWidth && line){ctx.fillText(line,x,y);y+=lineHeight;line=word}
-    else line=test;
-  }
-  if(line){ctx.fillText(line,x,y);y+=lineHeight}
-  return y;
+const slideFont = (size, bold) => `${bold ? "bold " : ""}${size}px Arial`;
+
+function newSlide(level, mock, title, instruction) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1920;
+  canvas.height = 1080;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#f7f7ef";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#00766d";
+  ctx.font = slideFont(38, true);
+  ctx.fillText("Falowen", 65, 70);
+  ctx.font = slideFont(32);
+  ctx.fillText(`${level}   /   Hören   /   Mock ${mock}`, 1400, 70, 455);
+  ctx.fillStyle = "#17363a";
+  ctx.font = slideFont(52, true);
+  ctx.fillText(title, 65, 145, 1790);
+  ctx.font = slideFont(32);
+  ctx.fillText(instruction, 65, 202, 1790);
+  return { canvas, ctx };
 }
-function paintSlide(level,mock,part,questions,offset,solved=false){
-  const c=document.createElement("canvas");c.width=1920;c.height=1080;
-  const ctx=c.getContext("2d");
-  ctx.fillStyle="#f7fbff";ctx.fillRect(0,0,1920,1080);
-  ctx.fillStyle="#071a3c";ctx.fillRect(0,0,1920,160);
-  ctx.fillStyle="#ffffff";ctx.font="bold 65px Arial";
-  ctx.fillText(`Falowen  ·  ${level} Mock ${mock}  ·  ${solved?"Lösungen":"Hören Teil "+part}`,70,100);
-  ctx.fillStyle="#147ac7";ctx.fillRect(0,160,1920,16);
-  ctx.fillStyle="#132d51";ctx.font="36px Arial";
-  ctx.fillText(solved?"Lösungsschlüssel · Nach dem Hören kontrollieren":"Aufgaben lesen, Audio hören und Antworten notieren",70,238);
-  const columns=[{x:74,width:846},{x:1008,width:846}];
-  questions.forEach((q,i)=>{
-    const col=columns[Math.floor(i/3)],within=i%3;
-    const x=col.x,limit=col.width;
-    let y=308+within*235;
-    ctx.fillStyle="#d9ecfa";ctx.fillRect(x-8,y-47,80,65);
-    ctx.fillStyle="#082348";ctx.font="bold 42px Arial";ctx.fillText(String(offset+i+1),x,y);
-    ctx.font="bold 34px Arial";y=wrapCanvas(ctx,q.question,x+96,y-8,limit-110,41);
-    ctx.font="30px Arial";ctx.fillStyle="#23405c";y+=6;
-    if(solved){ctx.fillStyle="#1973bb";ctx.font="bold 37px Arial";ctx.fillText("Lösung: "+answerFor(q),x+96,y+28);}
-    else if(q.kind==="richtig-falsch"){ctx.fillText("□ Richtig          □ Falsch",x+96,y+28)}
-    else {q.options.forEach((t,j)=>{y=wrapCanvas(ctx,`□ ${"abc"[j]}) ${t}`,x+96,y+25,limit-125,34)})}
-  });
-  ctx.fillStyle="#56708e";ctx.font="28px Arial";
-  ctx.fillText("Original Falowen practice · Mehr Prüfungsübungen: falowen.app",70,1036);
-  return new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(new Error("Cannot export PNG")), "image/png"));
+
+function slideLines(ctx, text, width) {
+  const lines = [];
+  let line = "";
+  for (const word of String(text).trim().split(/\s+/)) {
+    const joined = line ? line + " " + word : word;
+    if (line && ctx.measureText(joined).width > width) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = joined;
+    }
+  }
+  lines.push(line);
+  return lines;
+}
+
+function partLayout(ctx, questions, offset, size, columns, sharedChoices) {
+  const width = columns === 1 ? 1790 : 865;
+  const pages = [[]];
+  let col = 0;
+  let y = 252;
+  function advance() {
+    col = (col + 1) % columns;
+    if (!col) pages.push([]);
+    y = 252;
+  }
+  for (const [index, question] of questions.entries()) {
+    const number = offset + index + 1;
+    const blocks = [[number + ".  " + question.question, true]];
+    if (!sharedChoices) {
+      const options = question.kind === "richtig-falsch"
+        ? ["Richtig oder falsch?"]
+        : question.options.map((option, j) => `${"ABC"[j]})  ${option}`);
+      blocks.push(...options.map(option => [option, false]));
+    }
+    const rows = [];
+    for (const [text, bold] of blocks) {
+      const font = slideFont(size + (bold ? 2 : 0), bold);
+      ctx.font = font;
+      const indent = bold ? 0 : 30;
+      for (const line of slideLines(ctx, text, width - indent)) {
+        rows.push({ line, font, indent, height: Math.ceil(size * 1.2) });
+      }
+    }
+    const height = rows.reduce((sum, row) => sum + row.height, 0);
+    if (y > 252 && y + height > 1035) advance();
+    for (const row of rows) {
+      if (y + row.height > 1035) advance();
+      pages[pages.length - 1].push({ ...row, x: 65 + 930 * col + row.indent, y, width: width - row.indent });
+      y += row.height;
+    }
+    y += 18;
+  }
+  return pages;
+}
+
+function slidePng(canvas) {
+  return new Promise((resolve, reject) => canvas.toBlob(
+    blob => blob ? resolve(blob) : reject(new Error("Cannot export PNG")), "image/png"
+  ));
+}
+
+async function appendExamSlides(entries, folder, level, mock, parts, keys) {
+  let sequence = 0;
+  async function append(canvas, name) {
+    const prefix = String(++sequence).padStart(4, "0");
+    entries.push([`${folder}/YouTube-Slides/${prefix}-${name}.png`, await slidePng(canvas)]);
+  }
+  for (const [index, part] of parts.entries()) {
+    const { questions } = part;
+    const title = `Teil ${index + 1}${part.topic ? "   /   " + part.topic : ""}`;
+    let instruction = "Wählen Sie die richtige Antwort.";
+    let shared = questions.every(q => q.kind === "richtig-falsch");
+    const { canvas, ctx } = newSlide(level, mock, title, "");
+    if (shared) {
+      instruction = "Ist die Aussage richtig oder falsch?";
+    } else if (questions.every(q => q.kind !== "richtig-falsch" &&
+        JSON.stringify(q.options) === JSON.stringify(questions[0].options))) {
+      const legend = questions[0].options.map((o, i) => `${"ABC"[i]})  ${o}`).join("      ");
+      if (ctx.measureText(legend).width <= 1790) {
+        instruction = legend;
+        shared = true;
+      }
+    }
+    let best;
+    for (const size of [38, 34, 30, 28, 26]) {
+      for (const columns of [1, 2]) {
+        const candidate = partLayout(ctx, questions, keys[index].answers[0].number - 1, size, columns, shared);
+        if (!best || candidate.length < best.length) best = candidate;
+        if (best.length === 1) break;
+      }
+      if (best.length === 1) break;
+    }
+    for (const [page, rows] of best.entries()) {
+      const slide = page === 0 ? { canvas, ctx } : newSlide(level, mock, title, "");
+      slide.ctx.font = slideFont(32);
+      slide.ctx.fillText(instruction, 65, 202, 1790);
+      for (const row of rows) {
+        slide.ctx.font = row.font;
+        slide.ctx.fillText(row.line, row.x, row.y, row.width);
+      }
+      await append(slide.canvas, `Teil-${index + 1}-Seite-${page + 1}`);
+    }
+  }
+  const columns = [];
+  for (const key of keys) {
+    for (let start = 0; start < key.answers.length; start += 12) {
+      columns.push({ part: key.part, answers: key.answers.slice(start, start + 12) });
+    }
+  }
+  for (let start = 0; start < columns.length; start += 4) {
+    const { canvas, ctx } = newSlide(level, mock, "Lösungen", "Vergleichen Sie Ihre Antworten.");
+    columns.slice(start, start + 4).forEach((column, col) => {
+      const x = 65 + col * 450;
+      ctx.font = slideFont(40, true);
+      ctx.fillText(`Teil ${column.part}`, x, 290);
+      ctx.font = slideFont(38);
+      column.answers.forEach((item, i) => {
+        const answer = item.answer.length === 1 ? item.answer.toUpperCase() : item.answer;
+        ctx.fillText(`${item.number}.   ${answer}`, x, 365 + 58 * i, 420);
+      });
+    });
+    await append(canvas, `Loesungen-${1 + start / 4}`);
+  }
 }
 export async function buildExamZip({level,mock,parts,includeSlides=true}){
   if(!Array.isArray(parts)||!parts.length||parts.some(p=>!(p.audio instanceof Blob)||!p.questions?.length||!p.approved))throw new Error("Review and approve every part with questions and MP3 before exporting.");
@@ -152,15 +262,8 @@ export async function buildExamZip({level,mock,parts,includeSlides=true}){
     publicParts.push({part:number,questionCount:p.questions.length,mediaKey:key,topic:p.topic||"",repeats:p.repeats||1});
     teacherKeys.push({part:number,answers:p.questions.map((q,j)=>({number:totalQuestions+j+1,answer:answerFor(q),evidence:q.evidence||""}))});
     totalQuestions+=p.questions.length;
-    if(includeSlides){
-      for(let start=0;start<p.questions.length;start+=5){
-        const img=await paintSlide(level,mock,number,p.questions.slice(start,start+5),totalQuestions-p.questions.length+start);
-        entries.push([`${folder}/YouTube-Slides/teil-${number}-seite-${1+Math.floor(start/5)}.png`,img]);
-        const solution=await paintSlide(level,mock,number,p.questions.slice(start,start+5),totalQuestions-p.questions.length+start,true);
-        entries.push([`${folder}/YouTube-Slides/loesungen-teil-${number}-seite-${1+Math.floor(start/5)}.png`,solution]);
-      }
-    }
   }
+  if (includeSlides) await appendExamSlides(entries, folder, level, mock, parts, teacherKeys);
   const manifest={level,mockId:`mock-${String(mock).padStart(2,"0")}`,task:"Hören",type:"original-practice",questionCount:totalQuestions,parts:publicParts};
   entries.push([`${folder}/manifest.json`,JSON.stringify(manifest,null,2)]);
   entries.push([`${folder}/Antwortschluessel.json`,JSON.stringify(teacherKeys,null,2)]);
