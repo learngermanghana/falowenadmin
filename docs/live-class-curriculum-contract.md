@@ -87,12 +87,12 @@ request during class.
 ## A2 workbook presentation practice — 4 November 2026
 
 The learner source `web/src/data/a2PresentationCards.js` owns the classroom
-presentation questions and four keyword cues. Admin snapshots them through
+presentation questions and five keyword cues. Admin snapshots them through
 `scripts/syncA2WorkbookPresentations.mjs <learner-checkout>` into the existing
 `src/data/a2WorkbookPresentations.js`; commit both repositories together and
 use `--check` against the recorded learner revision to verify parity.
 
-The presenter shows the question, four keywords and bilingual instructions for
+The presenter shows the question, five keywords and bilingual instructions for
 an individual talk inspired by Goethe A2 Sprechen Teil 2. Small Talk is Day 1
 (`A2-1.1`) and uses “Wer bist du?” despite the legacy day-2 workbook URL. Day 8
 shows personal restaurant presentation practice before the separate restaurant
