@@ -18,7 +18,7 @@ const {
   topicForSession,
 } = _test;
 
-test("selects 30-minute and 10-minute reminders from actual sessions", () => {
+test("selects a single 15-minute reminder from actual sessions", () => {
   const base = {
     classId: "a1-bonn",
     startsAt: "2026-07-22T11:00:00.000Z",
@@ -30,12 +30,12 @@ test("selects 30-minute and 10-minute reminders from actual sessions", () => {
     sessions: [{ id: "day-4", ...base }],
     now: new Date("2026-07-22T10:30:00.000Z"),
   });
-  const atTen = findDueSessionReminders({
+  const atFifteen = findDueSessionReminders({
     sessions: [{ id: "day-4", ...base }],
-    now: new Date("2026-07-22T10:50:00.000Z"),
+    now: new Date("2026-07-22T10:45:00.000Z"),
   });
-  assert.deepEqual(atThirty.map((item) => item.leadMin), [30]);
-  assert.deepEqual(atTen.map((item) => item.leadMin), [10]);
+  assert.deepEqual(atThirty.map((item) => item.leadMin), []);
+  assert.deepEqual(atFifteen.map((item) => item.leadMin), [15]);
 });
 
 test("cancelled, completed, superseded and suppressed sessions never become due", () => {
@@ -55,7 +55,7 @@ test("cancelled, completed, superseded and suppressed sessions never become due"
   });
   assert.equal(findDueSessionReminders({
     sessions,
-    now: new Date("2026-07-22T10:30:00.000Z"),
+    now: new Date("2026-07-22T10:45:00.000Z"),
   }).length, 0);
 });
 
@@ -82,7 +82,7 @@ test("duplicate session aliases produce one official reminder", () => {
   ];
   const due = findDueSessionReminders({
     sessions,
-    now: new Date("2026-07-22T10:30:00.000Z"),
+    now: new Date("2026-07-22T10:45:00.000Z"),
   });
   assert.equal(due.length, 1);
   assert.equal(due[0].session.id, "official-copy");
