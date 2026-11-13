@@ -44,7 +44,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
   if (!slideId) {
     return (
       <section className="slides-index swahili-admin-slides">
-        <div className="swahili-admin-slides__crumb"><Link to="/teaching-slides">← All languages</Link></div>
+        <div className="swahili-admin-slides__crumb"><Link to="/teaching-slides?language=swahili">← All languages</Link></div>
         <p className="slide-meta">Kiswahili · Beginner</p>
         <h1>Swahili teaching slides</h1>
         <p>Only the approved Day 1 alphabet and pronunciation lesson is available. Later lessons can be added when teaching material is ready.</p>
