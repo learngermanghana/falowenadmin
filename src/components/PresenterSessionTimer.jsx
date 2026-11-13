@@ -217,7 +217,7 @@ export default function PresenterSessionTimer({ slide, stage = null, toolbarActi
   const attendanceOriginatedEnd = Boolean(attendanceEndRequestId);
   const agendaAutoStartRequested = typeof window !== "undefined"
     && new URLSearchParams(window.location.search).get("autostart") === "1";
-  const [classId, setClassId] = useState(currentPresenterClassId);
+  const [classId, setClassId] = useState(() => normalize(slide?.course).toUpperCase() === "SWAHILI" ? normalize(presenterLive.classContext?.classId) : currentPresenterClassId());
   const storageKey = useMemo(
     () => presenterClassTimerStorageKey(level, classId, new Date(), presenterLive.sessionKey),
     [level, classId, presenterLive.sessionKey],
@@ -248,7 +248,7 @@ export default function PresenterSessionTimer({ slide, stage = null, toolbarActi
   const pendingPresenterEndRef = useRef(null);
 
   useEffect(() => {
-    const next = normalize(presenterLive.classContext?.classId) || currentPresenterClassId();
+    const next = normalize(presenterLive.classContext?.classId) || (normalize(slide?.course).toUpperCase() === "SWAHILI" ? "" : currentPresenterClassId());
     setClassId((current) => current === next ? current : next);
   }, [presenterLive.classContext?.classId]);
 
