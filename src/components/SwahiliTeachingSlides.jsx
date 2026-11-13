@@ -182,8 +182,8 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
         {stage.type === "music" || stage.type === "listening" ? (
           <div className="swahili-a2-presenter__audio">
             <div className="swahili-a2-presenter__audio-icon" aria-hidden="true">{stage.type === "music" ? "♫" : "◉"}</div>
-            <strong>{stage.type === "music" ? "Song lyrics · Teacher-led practice" : stage.radioUrl ? "Falowen Radio · Listening" : "Teacher-led listening"}</strong>
-            <p>{stage.type === "music" ? "The lyrics are available. An approved song recording has not been linked yet." : stage.radioUrl ? "Open the lesson's published Falowen Radio episode, then discuss the classroom dialogue." : "The teacher reads the existing words aloud. A recorded track will be added later."}</p>
+            <strong>{stage.type === "music" ? (isDaySix ? "Song lyrics · Teacher-led practice" : "Music not uploaded yet") : stage.radioUrl ? "Falowen Radio · Listening" : "Teacher-led listening"}</strong>
+            <p>{stage.type === "music" ? (isDaySix ? "The lyrics are available. An approved song recording has not been linked yet." : "Falowen will show the published song here once it is available.") : stage.radioUrl ? "Open the lesson's published Falowen Radio episode, then discuss the classroom dialogue." : "The teacher reads the existing words aloud. A recorded track will be added later."}</p>
             {stage.radioUrl && <a className="swahili-a2-presenter__radio-link" href={stage.radioUrl} target="_blank" rel="noreferrer">Open Falowen Radio on YouTube</a>}
             <p className="swahili-a2-presenter__model">{stage.content}</p>
           </div>
