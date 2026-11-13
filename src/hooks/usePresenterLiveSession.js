@@ -66,8 +66,13 @@ export default function usePresenterLiveSession(slide = {}) {
   const urlAssignmentId = normalize(rawUrlIdentity.assignmentId).toLowerCase();
   const urlIdentityMatchesSlide = !urlAssignmentId || slideIds.includes(urlAssignmentId);
   const urlIdentity = urlIdentityMatchesSlide ? rawUrlIdentity : EMPTY_URL_IDENTITY;
+  // The new Kiswahili program does not inherit German class/session context.
+  // It may connect to a live session only through explicit matching URL identity.
+  const isolatedLanguage = normalize(slide?.course).toUpperCase() === "SWAHILI";
+  const sourceContext = () => isolatedLanguage && !normalize(urlIdentity.classRecordId)
+    ? {} : getPresenterClassContext();
   const [classContext, setClassContext] = useState(
-    () => mergePresenterContext(getPresenterClassContext(), urlIdentity),
+    () => mergePresenterContext(sourceContext(), urlIdentity),
   );
   const [liveState, setLiveState] = useState({});
   const [syncState, setSyncState] = useState("waiting");
@@ -97,14 +102,14 @@ export default function usePresenterLiveSession(slide = {}) {
 
   useEffect(() => {
     if (!normalize(urlIdentity.sessionKey)) return undefined;
-    const next = mergePresenterContext(getPresenterClassContext(), urlIdentity);
+    const next = mergePresenterContext(sourceContext(), urlIdentity);
     setPresenterClassContext(next);
     setClassContext(next);
     return undefined;
   }, [urlIdentity]);
 
   useEffect(() => subscribePresenterClassContext((next) => {
-    setClassContext(mergePresenterContext(next, urlIdentity));
+    setClassContext(mergePresenterContext(isolatedLanguage && !normalize(urlIdentity.classRecordId) ? {} : next, urlIdentity));
   }), [urlIdentity]);
 
   const requestedSessionKey = normalize(urlIdentity.sessionKey || classContext.sessionKey);
