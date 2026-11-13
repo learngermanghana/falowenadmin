@@ -18,9 +18,9 @@ test("Swahili receives a real named class duration from Falowen timing utility",
   assert.equal(presenterSessionMinutes("B1"), 90);
 });
 
-test("German and Swahili both use the same activity timer and existing class controls", () => {
-  assert.match(german, /import PresenterActivityTimer from/);
-  assert.match(german, /<PresenterActivityTimer/);
+test("Swahili uses Falowen class tools and the A2-styled activity timer without altering German", () => {
+  assert.match(german, /aria-label="Activity timer duration"/);
+  assert.match(german, /onClick=\{\(\) => setTimerMinutes\(minutes, a2B1ActivityTimer \? "activity" : "stage"\)\}/);
   assert.match(swahili, /<PresenterActivityTimer/);
   assert.match(swahili, /<PresenterSessionTimer/);
   assert.match(swahili, /<PresenterStudentPicker/);
