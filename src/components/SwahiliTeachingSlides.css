@@ -1,1 +1,38 @@
-.swahili-admin-slides{max-width:1150px;margin:0 auto;padding:20px 24px;color:#163729}.swahili-admin-slides__crumb{display:flex;align-items:center;gap:16px;margin-bottom:22px;flex-wrap:wrap}.swahili-admin-slides__crumb a{color:#17664a}.swahili-admin-slides__stage{background:linear-gradient(145deg,#f4faf6,#fff);border:1px solid #cce1d1;border-radius:22px;min-height:500px;padding:clamp(22px,5vw,55px);display:flex;flex-direction:column;box-shadow:0 16px 38px #153e2314}.swahili-admin-slides__stageTop{display:flex;justify-content:space-between;gap:16px;font-size:.77rem;font-weight:800;letter-spacing:.1em;color:#3b7958}.swahili-admin-slides__stage h1{font-size:clamp(1.5rem,4vw,2.7rem);line-height:1.2;margin:30px 0 18px}.swahili-admin-slides__content{font-size:clamp(1.35rem,4.2vw,2.8rem);font-weight:800;line-height:1.65;white-space:pre-line;overflow-wrap:anywhere;flex:1;display:flex;align-items:center;justify-content:center;text-align:center}.swahili-admin-slides__english{font-size:clamp(.88rem,1.7vw,1.1rem);color:#526f5a;text-align:center;margin-top:24px}.swahili-admin-slides__controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:16px 0}.swahili-admin-slides__controls button{border:1px solid #acd0b4;background:#fff;color:#174d31;border-radius:11px;padding:11px 15px;min-height:44px;font-weight:750;cursor:pointer}.swahili-admin-slides__controls button:hover:not(:disabled){background:#e5f6e9}.swahili-admin-slides__controls button:disabled{opacity:.4;cursor:not-allowed}.swahili-admin-slides__notes{margin:10px auto;padding:16px 20px;border-radius:14px;background:#fffbe8;border:1px solid #e8dea4;max-width:900px}.swahili-admin-slides__footer{text-align:center;font-size:.88rem;color:#50695a}.swahili-admin-slides--presenting{max-width:none;min-height:100vh;background:#f4f9f4;padding:14px}.swahili-admin-slides--presenting .swahili-admin-slides__stage{min-height:calc(100vh - 130px);justify-content:space-between}.swahili-admin-slides--presenting .swahili-admin-slides__content{font-size:clamp(1.8rem,5vw,4rem)}@media(max-width:600px){.swahili-admin-slides{padding:12px}.swahili-admin-slides__stage{min-height:420px}.swahili-admin-slides__stage h1{margin:20px 0}.swahili-admin-slides__controls button{flex:1}}@media print{.swahili-admin-slides__controls,.swahili-admin-slides__crumb,.swahili-admin-slides__notes,.swahili-admin-slides__footer{display:none!important}.swahili-admin-slides__stage{box-shadow:none;border:0;min-height:96vh}}
+/* Kiswahili uses the shared A2 PresenterControls and stage picker.
+   Scope only content variations that differ by the lesson language. */
+.swahili-admin-slides{max-width:1150px;margin:0 auto;padding:20px 24px}
+.swahili-admin-slides__crumb{margin-bottom:16px}
+.swahili-a2-presenter{--swahili-accent:#167349;color:#18372b;min-height:100vh;background:#f5f8f5;display:flex;flex-direction:column}
+.swahili-a2-presenter__topbar{padding:14px 22px;border-bottom:1px solid #d7e4dc;background:white;gap:15px;align-items:center}
+.swahili-a2-presenter__identity{display:flex;flex-wrap:wrap;align-items:center;gap:12px;min-width:0}
+.swahili-a2-presenter__identity a{color:var(--swahili-accent);font-weight:750}
+.swahili-a2-presenter__identity strong{font-size:.92rem}
+.swahili-a2-presenter__identity span{font-size:.78rem;color:#64756a}
+.swahili-a2-presenter__actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.swahili-a2-presenter__actions button,.swahili-a2-presenter__question button{padding:9px 13px;border:1px solid #b5caba;background:#fff;border-radius:9px;font:inherit;font-size:.85rem;font-weight:750;cursor:pointer;color:#205b3b}
+.swahili-a2-presenter__actions button:disabled{opacity:.4;cursor:not-allowed}
+.swahili-a2-presenter__content{flex:1;width:min(1040px,calc(100% - 32px));margin:24px auto;padding:clamp(20px,4vw,48px);background:#fff;border:1px solid #dfebe3;border-radius:20px;box-shadow:0 12px 36px #162b2010;min-height:500px;overflow-wrap:anywhere}
+.swahili-a2-presenter__meta{display:flex;justify-content:space-between;gap:12px;color:#20744e;font-size:.8rem;font-weight:850;letter-spacing:.06em}
+.swahili-a2-presenter__content h1{font-size:clamp(1.65rem,3.6vw,2.65rem);line-height:1.2;margin:24px 0 20px;color:#173e2c}
+.swahili-a2-presenter__model{font-size:clamp(1.35rem,3.1vw,2.25rem);font-weight:800;line-height:1.75;white-space:pre-line;text-align:center;padding:22px 12px;background:#f1f8f3;border-radius:16px}
+.swahili-a2-presenter__english{text-align:center;color:#60756a;font-size:.98rem;margin:20px auto}
+.swahili-a2-presenter__question{border-top:1px solid #e2e9e4;margin-top:22px;padding-top:18px}
+.swahili-a2-presenter__question>span{font-size:.78rem;font-weight:850;letter-spacing:.06em;color:#60756a}
+.swahili-a2-presenter__question h2{font-size:clamp(1.1rem,2vw,1.5rem);margin:9px 0 14px}
+.swahili-a2-presenter__answer{background:#e8f6eb;color:#175a34;border-radius:12px;padding:15px 18px;font-weight:750;font-size:1.05rem;white-space:pre-line}
+.swahili-a2-presenter__audio{text-align:center;background:#f2f7f4;border:1px dashed #b9d4c3;border-radius:18px;padding:24px}
+.swahili-a2-presenter__audio-icon{font-size:2.8rem;color:#278358}
+.swahili-a2-presenter__audio>strong{display:block;font-size:1.25rem;color:#20543c}
+.swahili-a2-presenter__audio>p{color:#4e6e5b}
+.swahili-a2-presenter__audio .swahili-a2-presenter__model{margin-bottom:0;background:white}
+.swahili-a2-presenter__grammar{border:1px solid #d4e6d9;border-radius:18px;padding:18px;background:#fbfdfb}
+.swahili-a2-presenter__grammar-head{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:.8rem;font-weight:850;color:#447b56}
+.swahili-a2-presenter__grammar h2{margin:12px 0}
+.swahili-a2-presenter__grammar .swahili-a2-presenter__model{margin-bottom:0}
+.swahili-a2-presenter__notes{background:#fffbea;border:1px solid #e8dba1;border-radius:12px;padding:14px 18px;margin-top:18px;color:#503f11}
+.swahili-a2-presenter__foot{display:flex;justify-content:space-between;gap:16px;padding:12px 24px;flex-wrap:wrap;font-size:.83rem;color:#536b5b}
+.swahili-a2-presenter__foot a{color:#12633e;font-weight:750}
+.swahili-a2-presenter.is-focus-mode .swahili-a2-presenter__content{width:min(1200px,calc(100% - 20px));margin:12px auto;padding:clamp(20px,5vw,70px);min-height:calc(100vh - 120px)}
+.swahili-a2-presenter.is-focus-mode .swahili-a2-presenter__model{font-size:clamp(1.6rem,4.1vw,3rem)}
+@media(max-width:650px){.swahili-a2-presenter__topbar{padding:10px}.swahili-a2-presenter__content{width:calc(100% - 16px);margin:8px auto;padding:18px;min-height:420px}.swahili-a2-presenter__identity{font-size:.82rem}.swahili-a2-presenter__grammar{padding:12px}.swahili-a2-presenter__model{padding:14px 8px}.swahili-a2-presenter__foot{padding:10px}}
+@media print{.swahili-a2-presenter .no-print,.swahili-a2-presenter .presenter-shared-controls{display:none!important}.swahili-a2-presenter__content{border:0;box-shadow:none;margin:0;min-height:90vh;width:100%}}
