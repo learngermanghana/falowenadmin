@@ -64,7 +64,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
         ArrowRight: () => goTo(index + 1), PageDown: () => goTo(index + 1), " ": () => goTo(index + 1),
         ArrowLeft: () => goTo(index - 1), PageUp: () => goTo(index - 1),
         Home: () => goTo(0), End: () => goTo(stages.length - 1),
-        Escape: () => setFocusMode(false),
+        Escape: () => { setFocusMode(false); setPresenting(false); },
       };
       if (actions[event.key]) { event.preventDefault(); actions[event.key](); }
     };
@@ -100,6 +100,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
 
   const grammar = stage.type === "grammar" ? stage.details?.[grammarPage] : null;
   return (
+    <div className={presenting ? `presenter-shell swahili-a2-shell ${focusMode ? "is-presentation-mode" : ""}` : "swahili-a2-inline-shell"}>
     <main className={`presenter-stage swahili-a2-presenter ${presenting ? "is-presenting" : ""} ${focusMode ? "is-focus-mode" : ""}`} lang="sw">
       {!focusMode && (
         <header className="presenter-topbar swahili-a2-presenter__topbar no-print">
@@ -212,5 +213,6 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
         <span>Music and recorded Hören will be linked after upload.</span>
       </footer>}
     </main>
+    </div>
   );
 }
