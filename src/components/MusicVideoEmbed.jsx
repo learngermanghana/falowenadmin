@@ -3,7 +3,7 @@ import "./MusicVideoEmbed.css";
 const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
 
 /** Shared, teacher-controlled YouTube player for music-based lesson stages. */
-export default function MusicVideoEmbed({ videoId, title = "Musik anhören", variant = "listening" }) {
+export default function MusicVideoEmbed({ videoId, title = "Musik anhören", variant = "listening", footerLabel = "Falowen · Deutsch lernen mit Musik" }) {
   if (!YOUTUBE_ID.test(String(videoId || ""))) return null;
 
   const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?rel=0`;
@@ -22,7 +22,7 @@ export default function MusicVideoEmbed({ videoId, title = "Musik anhören", var
         />
       </div>
       <div className="music-video-embed-footer">
-        <span>Falowen · Deutsch lernen mit Musik</span>
+        <span>{footerLabel}</span>
         <a href={watchUrl} target="_blank" rel="noreferrer noopener">Video auf YouTube öffnen ↗</a>
       </div>
     </section>
