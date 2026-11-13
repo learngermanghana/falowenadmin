@@ -1,3 +1,4 @@
+import { SWAHILI_DAY_SIX_FOOD_CARDS, SWAHILI_DAY_SIX_DRINK_CARDS, SWAHILI_DAY_SIX_RESTAURANT_SCENARIOS } from "./swahiliDaySixVisualActivities.js";
 // Source-aligned Lesson 6 content adapted from Ruth's "FOOD&DRINKS=LIKE&DISLIKES.pdf",
 // "Odering Food.pdf", and "22MGAHAWANI GRAMMAR AND SONG LYRICS.docx".
 // These source extracts and the workbook's radio reference were already published
@@ -43,6 +44,7 @@ const grammarPages = [
 export const SWAHILI_DAY_SIX_SLIDES = Object.freeze([
   {
     id:"intro",type:"intro",kicker:"Utangulizi · Introduction",
+    foodCards:SWAHILI_DAY_SIX_FOOD_CARDS,
     title:"Somo la 6 · Mgahawani",
     content:"Chakula · Vinywaji · Kuomba kwa adabu\nTunaagiza chakula mgahawani.",
     english:"At the restaurant: food, drinks, polite requests and ordering.",
@@ -77,6 +79,8 @@ export const SWAHILI_DAY_SIX_SLIDES = Object.freeze([
   },
   {
     id:"reading",type:"reading",kicker:"Kusoma · Reading",
+    foodCards:SWAHILI_DAY_SIX_FOOD_CARDS,
+    drinkCards:SWAHILI_DAY_SIX_DRINK_CARDS,
     title:"Soma menyu · Read the menu",
     content:"CHAKULA\nwali kuku · ugali samaki · pilau nyama\nVINYWAJI\nmaji · soda · juisi ya embe",
     english:"Practice menu assembled from Ruth's lesson vocabulary. Prices are intentionally omitted because the original food PDFs did not supply menu prices.",
@@ -101,13 +105,14 @@ export const SWAHILI_DAY_SIX_SLIDES = Object.freeze([
     notes:"Students write in the existing workbook, not in a new slide-specific assignment. Keep the current submission fields and review workflow unchanged.",
   },
   {
-    id:"presentation",type:"presentation",kicker:"Uwasilishaji · Presentation",
+    id:"presentation",type:"scenario",kicker:"Uwasilishaji · Restaurant scenario",
+    scenarios:SWAHILI_DAY_SIX_RESTAURANT_SCENARIOS,
     title:"Agiza chakula mwenyewe",
     content:"1. Salimia mhudumu.\n2. Uliza kuhusu chakula.\n3. Agiza chakula na kinywaji.\n4. Uliza bei na omba bili.",
     english:"Individual demonstration: greet the server, ask about food, order a dish and drink, ask the price and request the bill.",
     prompt:"Naomba bili, tafadhali. Jumla ni shilingi ngapi?",
     answer:"The bill, please. How much is the total?",
-    notes:"Call on volunteers for a short unscripted restaurant exchange. Use the class participation picker and timer already shared with German A2/B1.",
+    notes:"Use the shared A2-style speaking scenario sequence. Pick a student, reveal model answers only after the student responds, then select another restaurant situation. This is teacher-led, ungraded oral practice; the Day 6 workbook submission remains unchanged.",
   },
   {
     id:"summary",type:"summary",kicker:"Hitimisho · Summary",
