@@ -47,15 +47,37 @@ function SlideCoursesIndex() {
       <p>Select a teaching language, then open the course slides. German lessons remain unchanged.</p>
       <div className="slide-actions slide-language-picker" role="group" aria-label="Teaching language">
         <button type="button" aria-pressed={language === "german"} onClick={() => setLanguage("german")}>German · Deutsch</button>
-        <button type="button" aria-pressed={language === "swahili"} onClick={() => setLanguage("swahili")}>Swahili · Kiswahili</button>
+        <button type="button" aria-pressed={language === "swahili"} onClick={() => setLanguage("swahili")}>Swahili · Kiswahili · A1 Days 1 &amp; 6</button>
+      </div>
+      <div className="slide-actions no-print" aria-label="Quick access to Kiswahili A1 Lesson 6">
+        <Link to="/teaching-slides/course/SWAHILI/swahili-day-6?present=1">Swahili A1 · Day 6 — Mgahawani · Present</Link>
+        <Link to="/teaching-slides/course/SWAHILI">All Swahili lessons</Link>
       </div>
       {language === "swahili" ? (
         <div className="slide-card-grid">
+          <article className="slide-card slide-card-lesson">
+            <p className="slide-meta">SWAHILI · A1 · DAY 1</p>
+            <h2>Alfabeti, sauti na matamshi</h2>
+            <p>Alphabet, sounds and pronunciation · 9 classroom stages.</p>
+            <div className="slide-card-actions">
+              <Link to="/teaching-slides/course/SWAHILI/swahili-day-1">Open Day 1</Link>
+              <Link to="/teaching-slides/course/SWAHILI/swahili-day-1?present=1">Present</Link>
+            </div>
+          </article>
+          <article className="slide-card slide-card-lesson">
+            <p className="slide-meta">SWAHILI · A1 · DAY 6</p>
+            <h2>Mgahawani · At the Restaurant</h2>
+            <p>Food, drinks, ordering and polite requests · 9 classroom stages.</p>
+            <div className="slide-card-actions">
+              <Link to="/teaching-slides/course/SWAHILI/swahili-day-6">Open Day 6</Link>
+              <Link to="/teaching-slides/course/SWAHILI/swahili-day-6?present=1">Present</Link>
+            </div>
+          </article>
           <article className="slide-card">
-            <p className="slide-meta">SWAHILI · BEGINNER</p>
+            <p className="slide-meta">SWAHILI · A1</p>
             <h2>Kiswahili teaching pack</h2>
-            <p>Day 1: Alfabeti, sauti na matamshi · 10 classroom presentation slides.</p>
-            <Link to="/teaching-slides/course/SWAHILI">Open Swahili slides</Link>
+            <p>Browse the published lessons and classroom presentations. Days 2–5 have not been published.</p>
+            <Link to="/teaching-slides/course/SWAHILI">View all Swahili slides</Link>
           </article>
         </div>
       ) : (
