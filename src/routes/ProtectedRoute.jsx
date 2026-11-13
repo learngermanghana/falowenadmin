@@ -13,7 +13,7 @@ export default function ProtectedRoute({ children }) {
   if (role === "staff" && staffLanguages) {
     const requested = location.pathname.includes("/SWAHILI") || new URLSearchParams(location.search).get("language") === "swahili" ? "swahili" : "german";
     const directCourse = location.pathname.includes("/teaching-slides/course/");
-    if ((location.pathname === "/marking" || directCourse) && !staffLanguages.includes(requested)) return <section role="alert">Your account does not have {requested} teaching access. Contact the Falowen administrator.</section>;
+    if (directCourse && !staffLanguages.includes(requested)) return <section role="alert">Your account does not have {requested} teaching access. Contact the Falowen administrator.</section>;
   }
   return children;
 }
