@@ -67,7 +67,7 @@ export default function SwahiliA2LessonStage({ stage, grammar, isDaySix }) {
       <h2>{isDaySix ? "Falowen Radio · Mgahawani" : "Sikiliza na utambue sauti"}</h2>
       <p>{isDaySix ? "Play the published radio episode with the same shared video player used in German A2." : "Listen as your teacher reads each word, then identify the vowel."}</p>
     </header>
-    {stage.radioUrl ? <MusicVideoEmbed videoId={stage.radioUrl.match(/(?:youtu\.be\/|[?&]v=)([\w-]{11})/)?.[1]} title="Falowen Radio · Mgahawani" variant="listening" /> : <WordTiles text={stage.content}/>}
+    {stage.radioUrl ? <MusicVideoEmbed videoId={stage.radioUrl.match(/(?:youtu\.be\/|[?&]v=)([\w-]{11})/)?.[1]} title="Falowen Radio · Mgahawani" variant="listening" footerLabel="Falowen · Jifunze Kiswahili" /> : <WordTiles text={stage.content}/>}
     {stage.radioUrl && <p className="swahili-a2-presenter__support-note">The classroom question below refers to the original waiter–customer dialogue; it is not an answer key for the radio programme.</p>}
   </section>;
 
