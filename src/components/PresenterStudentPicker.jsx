@@ -79,7 +79,8 @@ function classMatchesCourse(entry = {}, course = "") {
   const candidates = [entry.levelId, entry.level, entry.courseLevel, entry.languageLevel, entry.classId, entry.name]
     .map((value) => normalize(value).toUpperCase())
     .filter(Boolean);
-  return candidates.some((value) => value === expected || value.startsWith(`${expected} `));
+  const aliases = expected === "SWAHILI" ? ["SWAHILI", "KISWAHILI"] : [expected];
+  return candidates.some((value) => aliases.some((name) => value === name || value.startsWith(`${name} `)));
 }
 
 function participationStorageKey(slide = {}, classId = "", sessionDate = "") {
