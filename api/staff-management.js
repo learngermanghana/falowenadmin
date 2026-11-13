@@ -127,7 +127,7 @@ async function revoke(body, accessToken) {
   if (!user || String(user.email || "").toLowerCase() === OWNER) fail("Staff account not found or protected.", 403);
   const claims = parseAttributes(user);
   if (claims.admin === true || claims.role === "admin") fail("Admin permissions cannot be changed here.", 403);
-  await updateClaims(user, { staff: false, staffRole: null, staffLanguages: [] }, accessToken);
+  await updateClaims(user, { staff: false, role: ["staff", "tutor"].includes(claims.role) ? null : claims.role || null, staffRole: null, staffLanguages: [] }, accessToken);
   const d = await apiFetch(docUrl(uid), "GET", undefined, accessToken).catch(() => null);
   const prior = fieldsToObject(d?.fields);
   await writeStaff({ uid, email: user.email || prior.email, name: prior.name, staffRole: prior.staffRole || "teacher", languages: [], active: false }, accessToken);
