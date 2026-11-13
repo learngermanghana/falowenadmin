@@ -225,7 +225,7 @@ Day 21 session. The next Day 20 follows the saved weekly pattern and closures.
 
 ## Flexible remaining-session recalculation
 
-In Live Classes → Sessions → Change session, choose “Recalculate from this lesson onward”, select the weekly days/times for subsequent lessons, then choose the exact first date/time. The selected anchor is accepted outside the former timetable; remaining sessions follow the selected weekly rules. The rules and explicit anchor persist in the existing atomic schedule transaction with attendance dates, calendar version and audit history. Earlier session records and assignment arrays remain unchanged. Completed/live records and actual overlaps remain protected. The full dictionary can be opened for inspection even when a session is locked for editing.
+Live Classes opens on Sessions and includes cancelled lessons in the default view. Reschedule, Reactivate and Cancel class open the same editor used by Session Attendance. Rescheduling defaults to recalculating later lessons when weekly days are configured. Staff can move just one lesson and can change the weekly days under the advanced controls. The selected date can precede an unfinished earlier lesson. The planner skips occupied weekly slots, keeps actual overlaps blocked, and saves the updated class end date with the schedule. Ending a class from Attendance closes check-in and marks the session complete.
 
 ## Correcting a completed session
 

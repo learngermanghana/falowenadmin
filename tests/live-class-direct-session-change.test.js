@@ -96,9 +96,7 @@ test("rescheduling detects partial overlaps and supports shifting following less
   assert.match(reschedulePlan, /left\.start\.getTime\(\) < right\.end\.getTime\(\)/);
   assert.match(reschedulePlan, /left\.end\.getTime\(\) > right\.start\.getTime\(\)/);
   assert.match(reschedulePlan, /live-class\/time-overlap/);
-  assert.match(reschedulePlan, /live-class\/curriculum-order/);
-  assert.match(reschedulePlan, /Move this and all following sessions/);
-  assert.match(reschedulePlan, /ordered\.slice\(selectedIndex\)/);
+  assert.match(reschedulePlan, /ordered\.slice\(selectedIndex \+ 1\)/);
 });
 
 test("legacy collisions recover the latest moved lesson and all following lessons", async () => {
