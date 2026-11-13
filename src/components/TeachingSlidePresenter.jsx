@@ -817,6 +817,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                   onToggle={togglePresenterTimer}
                   onReset={resetPresenterTimer}
                   expired={timerExpired}
+                  highlightSelection={a2B1ActivityTimer}
                 />
               )}
           </div>
