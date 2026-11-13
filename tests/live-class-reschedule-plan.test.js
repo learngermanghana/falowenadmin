@@ -186,30 +186,24 @@ test("completed history still counts toward all current A1 class sessions withou
   assert.equal(report.issues.some((issue) => ["duplicate-time", "overlap", "curriculum-order"].includes(issue.code)), false);
 });
 
-test("following mode still protects unfinished lessons before the shifted group", () => {
+test("following mode can start before an unfinished earlier lesson without moving it", () => {
   const sessions = [
     session(11, "2026-07-16T18:00:00.000Z", "completed"),
     session(12, "2026-07-17T18:00:00.000Z", "scheduled"),
     session(13, "2026-07-18T08:00:00.000Z"),
     session(14, "2026-07-23T18:00:00.000Z"),
   ];
-
-  assert.throws(
-    () => buildSessionReschedulePlan({
-      klass,
-      sessions,
-      sessionId: "day-13",
-      targetStartsAt: "2026-07-16T08:00:00.000Z",
-      targetEndsAt: "2026-07-16T09:00:00.000Z",
-      mode: "following",
-    }),
-    (error) => error?.code === "live-class/curriculum-order"
-      && /cannot move before unfinished/i.test(error.message)
-      && /Mark earlier lessons complete first/i.test(error.message),
-  );
+  const plan = buildSessionReschedulePlan({
+    klass, sessions, sessionId: "day-13",
+    targetStartsAt: "2026-07-16T08:00:00.000Z",
+    targetEndsAt: "2026-07-16T09:00:00.000Z",
+    mode: "following",
+  });
+  assert.deepEqual(plan.changes.map(change => change.session.id), ["day-13", "day-14"]);
+  assert.equal(plan.changes[0].startsAt, "2026-07-16T08:00:00.000Z");
 });
 
-test("following mode shifts the selected and every later curriculum session by the same amount", () => {
+test("following mode shifts later scheduled sessions and preserves cancelled dates", () => {
   const sessions = [
     session(0, "2026-06-19T18:00:00.000Z"),
     session(1, "2026-06-20T08:00:00.000Z"),
@@ -227,7 +221,7 @@ test("following mode shifts the selected and every later curriculum session by t
   });
 
   assert.equal(plan.mode, "following");
-  assert.equal(plan.affectedCount, 3);
+  assert.equal(plan.affectedCount, 2);
   assert.equal(plan.deltaMs, 24 * 60 * 60 * 1000);
   assert.equal(plan.recoveredFromPreviousStart, false);
   assert.deepEqual(
@@ -235,7 +229,6 @@ test("following mode shifts the selected and every later curriculum session by t
     [
       ["day-1", "2026-06-21T08:00:00.000Z", "scheduled"],
       ["day-2", "2026-06-26T18:00:00.000Z", "scheduled"],
-      ["day-3", "2026-06-27T18:00:00.000Z", "cancelled"],
     ],
   );
 });
@@ -349,4 +342,23 @@ test("refresh preserves the day and assignments of independently moved A1 lesson
   assert.deepEqual(refreshed.find((item) => item.id === day11.id).assignmentIds, day11.assignmentIds);
   const report = inspectTimetableIntegrity({ klass: { ...klass, endDate: "2026-11-01" }, sessions: refreshed, requireCurriculum: true, enforceEndDate: false });
   assert.equal(report.issues.some((issue) => issue.code === "curriculum-order"), false);
+});
+
+test("weekly recalculation skips a slot occupied by an earlier unfinished lesson", () => {
+  const plan = buildSessionReschedulePlan({
+    klass: { ...klass, scheduleRules: [{ day: "Fri", startTime: "18:00", durationMinutes: 60 }] },
+    sessions: [
+      session(12, "2026-07-17T18:00:00.000Z"),
+      session(13, "2026-07-18T08:00:00.000Z", "cancelled"),
+      session(14, "2026-07-24T18:00:00.000Z"),
+    ],
+    sessionId: "day-13",
+    targetStartsAt: "2026-07-16T18:00:00.000Z",
+    targetEndsAt: "2026-07-16T19:00:00.000Z",
+    mode: "following",
+  });
+  assert.deepEqual(plan.changes.map(({ session, startsAt, plannedStatus }) => [session.id, startsAt, plannedStatus]), [
+    ["day-13", "2026-07-16T18:00:00.000Z", "scheduled"],
+    ["day-14", "2026-07-24T18:00:00.000Z", "scheduled"],
+  ]);
 });

@@ -365,8 +365,10 @@ export default function LiveClassLessonDateRepair() {
         : Number(result.moved || 0) || Number(result.created || 0) || cleaned
           ? `Weekly pattern restored after the selected anchor: ${result.moved} session(s) moved, ${result.created} created, ${cleaned} stale future record(s) superseded. New end date: ${formatDate(result.endDate)}.`
           : `Anchor saved. Earlier historical gaps will not block future session rescheduling. Timetable health is ${result.healthStatus || "healthy"}.`;
-      setMessage(successMessage);
-      toast.success(successMessage, { durationMs: 12000 });
+      const cancelledCount = restorePlan.skippedCancelled?.length || 0;
+      const message = cancelledCount ? `${successMessage} ${cancelledCount} cancelled lesson(s) kept their status. Use Sessions → Reactivate to schedule one again.` : successMessage;
+      setMessage(message);
+      toast.success(message, { durationMs: 12000 });
     } catch (error) {
       const errorMessage = `${error?.code ? `${error.code}: ` : ""}${error?.message || "Could not restore the following timetable pattern"}`;
       setMessage(errorMessage);

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { nextTeachingSession } from "../utils/liveClassWorkspace.js";
 
-export default function LiveClassNextLesson({ dashboard, onComplete, busy }) {
+export default function LiveClassNextLesson({ dashboard, onComplete, onChange, busy }) {
   const session = nextTeachingSession(dashboard.sessions);
   const classId = dashboard.klass.id;
   if (!session) return <article className="card"><h2>Next class</h2><p>No remaining class is scheduled. Review the sessions if a lesson needs reopening.</p></article>;
@@ -12,6 +12,8 @@ export default function LiveClassNextLesson({ dashboard, onComplete, busy }) {
     <div className="live-workspace-actions">
       <Link to={`/lesson-dashboard?classId=${encodeURIComponent(classId)}`}>Prepare / start teaching</Link>
       <Link to={attendanceUrl}>Attendance / QR check-in</Link>
+      <button type="button" disabled={busy || session.status === "live"} onClick={() => onChange(session)}>Reschedule</button>
+      <button type="button" disabled={busy} onClick={() => onChange(session, "cancel")}>Cancel class</button>
       <button type="button" disabled={busy} onClick={() => onComplete(session)}>Mark lesson completed</button>
     </div>
   </article>;

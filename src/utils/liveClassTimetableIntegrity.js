@@ -269,7 +269,7 @@ export function inspectTimetableIntegrity({
 
     // Completed/cancelled lessons are historical evidence, not active timetable
     // constraints. A later unfinished lesson may legitimately reuse their former
-    // slot; the reschedule planner separately enforces unfinished predecessors.
+    // slot. Explicit schedule anchors identify the current timetable.
     const unfinishedNumbered = numbered.filter((item) => !["completed", "cancelled"].includes(statusOf(item.session)));
     const orderedForValidation = anchor
       ? unfinishedNumbered.filter((item) => !beforeSelectedAnchor(item.session, groups, levelId, anchor))
@@ -294,9 +294,7 @@ export function inspectTimetableIntegrity({
     }
   }
 
-  const finalRecord = requireCurriculum && numbered.length
-    ? numbered.at(-1)
-    : dated.slice().sort((left, right) => left.startsAt.getTime() - right.startsAt.getTime()).at(-1);
+  const finalRecord = dated.filter(({ session }) => statusOf(session) !== "cancelled").reduce((latest, record) => !latest || record.startsAt > latest.startsAt ? record : latest, null);
   const finalSession = finalRecord?.session || null;
   const derivedEndDate = finalSession ? sessionDateInTimezone(finalSession.startsAt, timezone) : "";
   const storedEndDate = normalize(klass.endDate);

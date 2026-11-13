@@ -99,7 +99,7 @@ export function findRescheduleOverlap({
   }) || null;
 }
 
-function canonicalOrderedSessions(klass = {}, sessions = []) {
+function canonicalOrderedSessions(klass = {}, sessions = [], selectedId = "") {
   const levelId = levelIdForClass(klass);
   const groups = getCourseSessionGroups(levelId);
   const canonical = sessions.filter((session) => !superseded(session));
@@ -114,50 +114,13 @@ function canonicalOrderedSessions(klass = {}, sessions = []) {
     };
   }
 
-  const ordered = canonical.map((session) => {
+  const ordered = canonical.flatMap((session) => {
     const number = resolveOfficialSessionNumber(session, groups, levelId);
-    if (!number) {
-      throw codedError(
-        "live-class/missing-curriculum-position",
-        `${sessionLabel(session)} cannot be matched to an official ${levelId} curriculum position. Run Official class timetable repair first.`,
-        { sessionId: normalize(session.id) },
-      );
-    }
-    return { session, number, startsAt: toDate(session.startsAt) };
+    if (!number && normalize(session.id) !== normalize(selectedId)) return [];
+    return [{ session, number, startsAt: toDate(session.startsAt) }];
   }).sort((left, right) => left.number - right.number);
 
   return { levelId, groups, ordered };
-}
-
-function previousUnfinishedSession(ordered = [], selectedIndex = 0) {
-  for (let index = selectedIndex - 1; index >= 0; index -= 1) {
-    const candidate = ordered[index];
-    if (!completed(candidate?.session)) return candidate;
-  }
-  return null;
-}
-
-function assertCurriculumBoundary({ ordered, selectedIndex, targetStart, mode }) {
-  const previous = previousUnfinishedSession(ordered, selectedIndex);
-  const next = selectedIndex < ordered.length - 1 ? ordered[selectedIndex + 1] : null;
-  const previousStart = toDate(previous?.session?.startsAt);
-  const nextStart = toDate(next?.session?.startsAt);
-
-  if (previousStart && targetStart.getTime() <= previousStart.getTime()) {
-    throw codedError(
-      "live-class/curriculum-order",
-      `${sessionLabel(ordered[selectedIndex].session)} cannot move before unfinished ${sessionLabel(previous.session)}. Mark earlier lessons complete first, choose a later time, or shift from an earlier lesson.`,
-      { previousSessionId: normalize(previous.session.id) },
-    );
-  }
-
-  if (mode === "single" && nextStart && targetStart.getTime() >= nextStart.getTime()) {
-    throw codedError(
-      "live-class/curriculum-order",
-      `${sessionLabel(ordered[selectedIndex].session)} must remain before ${sessionLabel(next.session)}. Choose an earlier time or use “Move this and all following sessions”.`,
-      { nextSessionId: normalize(next.session.id) },
-    );
-  }
 }
 
 function completedPredecessorSlotsToRelease({ ordered = [], selectedIndex = 0, target }) {
@@ -235,12 +198,15 @@ function buildFollowingTimetableChanges({
     scheduleAnchorSource: "admin-selected-following-restore",
   };
 
+  const movingIds = new Set(affected.map(({ session }) => normalize(session.id)));
+  const occupied = sessions.filter(session => !movingIds.has(normalize(session.id)) && collisionEligible(session));
   let officialPlan;
   try {
     officialPlan = buildOfficialLessonSchedulePlan({
       classId,
       klass: anchoredClass,
       sessions: planningSessions,
+      occupiedFollowingSlots: [{ startsAt: target.start, endsAt: target.end }, ...occupied],
       excludedDates: Array.isArray(klass.holidayDatesExcluded) ? klass.holidayDatesExcluded : [],
     });
   } catch (error) {
@@ -267,8 +233,8 @@ function buildFollowingTimetableChanges({
     return {
       session,
       sessionNumber: number,
-      startsAt: officialItem.targetStartsAt,
-      endsAt: officialItem.targetEndsAt,
+      startsAt: index === 0 ? target.start.toISOString() : officialItem.targetStartsAt,
+      endsAt: index === 0 ? target.end.toISOString() : officialItem.targetEndsAt,
       plannedStatus: index === 0 ? "scheduled" : statusOf(session),
     };
   });
@@ -284,7 +250,7 @@ export function buildSessionReschedulePlan({
 } = {}) {
   const normalizedMode = normalize(mode).toLowerCase() === "following" ? "following" : "single";
   const target = validInterval(targetStartsAt, targetEndsAt, "New session time");
-  const { levelId, ordered } = canonicalOrderedSessions(klass, sessions);
+  const { levelId, ordered } = canonicalOrderedSessions(klass, sessions, sessionId);
   const selectedIndex = ordered.findIndex(({ session }) => normalize(session.id) === normalize(sessionId));
   if (selectedIndex < 0) throw codedError("live-class/session-not-found", "Session not found in this class timetable.");
 
@@ -297,13 +263,6 @@ export function buildSessionReschedulePlan({
     target,
     mode: normalizedMode,
   });
-  // A single session may be moved independently to a different day without
-  // rewriting adjacent teaching records. Following moves retain the stricter
-  // curriculum boundary check.
-  if (normalizedMode === "following") {
-    assertCurriculumBoundary({ ordered, selectedIndex, targetStart: target.start, mode: normalizedMode });
-  }
-
   const releasedCompletedSessions = completedPredecessorSlotsToRelease({
     ordered,
     selectedIndex,
@@ -313,17 +272,12 @@ export function buildSessionReschedulePlan({
   if (["completed", "live"].includes(statusOf(selected.session))) {
     throw codedError("live-class/locked-following-session", `${sessionLabel(selected.session)} is ${statusOf(selected.session)}. Reopen a completed lesson before changing its date.`);
   }
-  const affected = normalizedMode === "following"
-    ? ordered.slice(selectedIndex).filter(({ session }) => !["completed", "live"].includes(statusOf(session)))
-    : [selected];
-  const locked = affected.find(({ session }) => ["completed", "live"].includes(statusOf(session)));
-  if (locked) {
-    throw codedError(
-      "live-class/locked-following-session",
-      `${sessionLabel(locked.session)} is ${statusOf(locked.session)} and cannot be shifted. Choose “Move only this session”.`,
-      { sessionId: normalize(locked.session.id) },
-    );
+  if (normalizedMode === "following" && !selected.number) {
+    throw codedError("live-class/missing-curriculum-position", "This lesson has no curriculum day. Use Move only this lesson to change its date.");
   }
+  const affected = normalizedMode === "following"
+    ? [selected, ...ordered.slice(selectedIndex + 1).filter(({ session }) => !["completed", "live", "cancelled"].includes(statusOf(session)))]
+    : [selected];
 
   const deltaMs = normalizedMode === "following"
     ? target.start.getTime() - selectedBaseline.start.getTime()

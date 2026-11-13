@@ -11,7 +11,6 @@ import {
 import { db } from "../firebase.js";
 import { attendanceFingerprint, captureFields } from "../utils/liveClassUndo.js";
 import { normalizeScheduleRules, zonedLocalToUtcIso } from "../utils/liveClassScheduling.js";
-import { assertTimetableIntegrity } from "../utils/liveClassTimetableIntegrity.js";
 import {
   buildClassScheduleHealth,
   timetableHealthClassFields,
@@ -471,15 +470,6 @@ export async function rescheduleSession(sessionId, payload = {}) {
     scheduleAnchorSource: "admin-selected-following-restore",
     scheduleAnchorMode: "rebuild-from-selected-session",
   } : klass;
-  if (reschedulePlan.mode === "following") {
-    assertTimetableIntegrity({
-      klass: anchoredClass,
-      sessions: proposedSessions,
-      requireCurriculum: true,
-      enforceEndDate: false,
-    });
-  }
-
   const preliminaryHealth = buildClassScheduleHealth({
     klass: anchoredClass,
     sessions: proposedSessions,

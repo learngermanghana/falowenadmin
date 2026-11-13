@@ -237,6 +237,7 @@ function resolveScheduleAnchor(
 function buildOfficialSlotsAroundAnchor({
   anchor,
   anchorSession,
+  occupiedFollowingSlots = [],
   rules,
   timezone,
   excluded,
@@ -293,6 +294,9 @@ function buildOfficialSlotsAroundAnchor({
       .filter((slot) => new Date(slot.startsAt).getTime() > followingFloor);
     for (const slot of slots) {
       if (following.length >= followingCount) break;
+      if ([...occupiedFollowingSlots, ...following].some(other =>
+        toDate(slot.startsAt) < toDate(other.endsAt) && toDate(slot.endsAt) > toDate(other.startsAt)
+      )) continue;
       following.push(slot);
     }
     cursorDate = addDays(cursorDate, 1);
@@ -467,6 +471,7 @@ export function buildOfficialLessonSchedulePlan({
   klass = {},
   sessions = [],
   excludedDates = [],
+  occupiedFollowingSlots = [],
 } = {}) {
   const levelId = resolveLevelId(klass);
   const groups = getCourseSessionGroups(levelId);
@@ -490,6 +495,7 @@ export function buildOfficialLessonSchedulePlan({
   const slots = anchor
     ? buildOfficialSlotsAroundAnchor({
       anchor,
+      occupiedFollowingSlots,
       anchorSession: sessions.find(row => toDate(row.startsAt)?.toISOString() === anchor.startsAt && resolveOfficialSessionNumber(row, groups, levelId) === anchor.sessionNumber),
       rules,
       timezone,

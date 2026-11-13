@@ -1,3 +1,4 @@
+import LiveClassSessionEditor from "../components/LiveClassSessionEditor.jsx";
 import { isAppAssessment } from "../utils/appAssessment.js";
 
 import { learnerLessonLinksForAttendanceSession, resolveTeacherLessonSlide } from "../utils/teacherLessonDashboard.js";
@@ -16,9 +17,7 @@ import {
 import { resolveClassCohort } from "../services/liveClassService.js";
 import {
   getCompatibleClassDashboard,
-  overrideCompatibleSessionDate,
 } from "../services/liveClassCompatibilityService.js";
-import { buildManualDateOverridePatch } from "../utils/attendanceSessionOverride.js";
 
 const TIMEZONE = "Africa/Accra";
 
@@ -97,10 +96,9 @@ function mergeStudents(template = {}, saved = {}) {
 function chooseSession(sessions, timezone, requestedId) {
   const today = localDate(new Date(), timezone);
   const requested = sessions.find((session) => session.id === requestedId);
-  if (requested && localDate(requested.startsAt, timezone) === today) return requested;
+  if (requested) return requested;
   return sessions.find((session) => String(session.status || "").toLowerCase() !== "cancelled" && localDate(session.startsAt, timezone) === today)
     || sessions.find((session) => String(session.status || "").toLowerCase() !== "cancelled" && (asDate(session.startsAt)?.getTime() || 0) >= Date.now())
-    || requested
     || [...sessions].reverse().find((session) => String(session.status || "").toLowerCase() !== "cancelled")
     || sessions[0]
     || null;
@@ -134,12 +132,12 @@ export default function CanonicalAttendancePageV3() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sessionBusy, setSessionBusy] = useState(false);
+  const [scheduleAction, setScheduleAction] = useState("");
   const [sessionOpen, setSessionOpen] = useState(false);
   const [klass, setKlass] = useState(null);
   const [sessions, setSessions] = useState([]);
   const [attendance, setAttendance] = useState({});
   const [selectedId, setSelectedId] = useState("");
-  const [dateDraft, setDateDraft] = useState("");
   const [selectedEmailCodes, setSelectedEmailCodes] = useState([]);
 
   useEffect(() => {
@@ -187,6 +185,7 @@ export default function CanonicalAttendancePageV3() {
     if (!selectedId) return;
     setSearchParams({ session: selectedId }, { replace: true });
     setSessionOpen(false);
+    setScheduleAction("");
     setSelectedEmailCodes([]);
   }, [selectedId, setSearchParams]);
 
@@ -204,10 +203,6 @@ export default function CanonicalAttendancePageV3() {
   const endTime = localTime(selected?.endsAt, timezone);
   const status = String(selected?.status || "scheduled").toLowerCase();
   const sessionLocked = status === "cancelled" || status === "completed";
-
-  useEffect(() => {
-    setDateDraft(selectedDate);
-  }, [selectedDate, selectedId]);
 
   const rows = useMemo(() => Object.entries(selected?.students || {})
     .map(([code, student]) => ({ code, ...student }))
@@ -288,48 +283,6 @@ export default function CanonicalAttendancePageV3() {
     }));
   }
 
-  async function saveDateOverride() {
-    if (!klass || !selected || !dateDraft) return;
-
-    setSessionBusy(true);
-    try {
-      const overridePatch = buildManualDateOverridePatch({
-        session: selected,
-        dateDraft,
-        timezone,
-        actorId: user?.uid || user?.email || "admin",
-      });
-      const result = await overrideCompatibleSessionDate(klass.id, selected.id, overridePatch);
-      const savedSession = result?.session || {};
-      const patch = {
-        ...overridePatch,
-        ...savedSession,
-        classId: klass.id,
-        classRecordId: klass.id,
-        className: klass.name || "",
-      };
-
-      if (result?.schedule) {
-        setKlass((current) => current ? {
-          ...current,
-          sessionDerivedStartDate: result.schedule.sessionDerivedStartDate || current.sessionDerivedStartDate,
-          sessionDerivedEndDate: result.schedule.sessionDerivedEndDate || current.sessionDerivedEndDate,
-        } : current);
-      }
-      setAttendance((current) => ({
-        ...current,
-        [selectedId]: { ...current[selectedId], ...patch },
-      }));
-      setSessions((current) => current
-        .map((session) => session.id === selected.id ? { ...session, ...patch } : session)
-        .sort((left, right) => (asDate(left.startsAt)?.getTime() || 0) - (asDate(right.startsAt)?.getTime() || 0)));
-      success(`Lesson date changed to ${dateDraft}. Live Classes, attendance and class schedule dates now use the same session record.`);
-    } catch (cause) {
-      error(cause?.message || "Could not change the lesson date.");
-    } finally {
-      setSessionBusy(false);
-    }
-  }
 
   async function refreshCheckins() {
     if (!klass?.id || !selectedId) return;
@@ -395,6 +348,11 @@ export default function CanonicalAttendancePageV3() {
         setSessions((current) => current.map((session) => session.id === selected.id
           ? { ...session, status: "completed" }
           : session));
+        setAttendance((current) => ({
+          ...current,
+          [selected.id]: { ...current[selected.id], status: "completed" },
+        }));
+        setScheduleAction("");
         success("Class ended. Check-in closed and session marked complete.");
       } else {
         success(`Check-in ${action === "open" ? "opened" : "closed"}.`);
@@ -438,7 +396,7 @@ export default function CanonicalAttendancePageV3() {
     <section className="page-container" style={{ maxWidth: 1000 }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
         <div><h1>Session Attendance</h1><p><strong>{klass.name}</strong> · {rows.length} student(s)</p></div>
-        <Link to="/live-classes">Manage schedule</Link>
+        <Link to={`/live-classes?classId=${encodeURIComponent(klass.id)}&tab=sessions`}>Full timetable</Link>
       </div>
 
       <article className="card" style={{ display: "grid", gap: 14 }}>
@@ -451,20 +409,34 @@ export default function CanonicalAttendancePageV3() {
 
         {selected ? <>
           <div>
-            <div style={{ fontSize: 12, opacity: 0.72 }}>Official lesson source</div>
             <h2 style={{ margin: "4px 0" }}>{assignmentId ? `${assignmentId} — ` : ""}{selected.topic || "Lesson details to be confirmed"}</h2>
-            <div style={{ fontSize: 13, opacity: 0.75 }}>The lesson title and curriculum ID come from this class session. Change lesson mapping under Live Classes, not on the attendance page.</div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(180px, 260px) auto", gap: 10, alignItems: "end" }}>
-            <label style={{ display: "grid", gap: 6 }}>
-              <strong>Class date</strong>
-              <input type="date" value={dateDraft} onChange={(event) => setDateDraft(event.target.value)} />
-            </label>
-            <button type="button" disabled={sessionBusy || !dateDraft || dateDraft === selectedDate} onClick={saveDateOverride}>{sessionBusy ? "Saving date…" : "Override date"}</button>
-          </div>
-          <p style={{ margin: 0 }}>Time: {startTime || "--:--"}–{endTime || "--:--"} · Status: <strong>{selected.status || "scheduled"}</strong></p>
-          {!isToday && !sessionLocked ? <div style={{ padding: 10, border: "1px solid #fde68a", background: "#fffbeb", borderRadius: 8 }}>This lesson is dated {selectedDate}. Choose today ({today}) above and click “Override date” to use it for today’s attendance.</div> : null}
+          <p style={{ margin: 0 }}>{selectedDate} · {startTime || "--:--"}–{endTime || "--:--"} · <strong>{status}</strong></p>
+          {!isAppAssessment(selected) ? <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {!["completed", "live"].includes(status) && !sessionOpen ? <button type="button" disabled={sessionBusy} onClick={() => setScheduleAction("reschedule")}>{status === "cancelled" ? "Reactivate lesson" : "Reschedule"}</button> : null}
+            {!sessionLocked ? <button type="button" disabled={sessionBusy} onClick={() => setScheduleAction("cancel")}>Cancel class</button> : null}
+          </div> : null}
+          {scheduleAction ? <LiveClassSessionEditor
+            key={`${selected.id}:${scheduleAction}`}
+            klass={klass}
+            sessions={sessions}
+            session={selected}
+            initialAction={scheduleAction}
+            adminId={user?.uid || user?.email || "admin"}
+            onClose={() => setScheduleAction("")}
+            onSaved={async message => {
+              const dashboard = await getCompatibleClassDashboard(klass.id);
+              setKlass(dashboard.klass);
+              setSessions(dashboard.sessions);
+              setAttendance(current => Object.fromEntries(dashboard.sessions.map(session => [
+                session.id, { ...current[session.id], ...session, students: current[session.id]?.students || {} },
+              ])));
+              setSessionOpen(false);
+              setScheduleAction("");
+              success(message);
+            }}
+          /> : null}
         </> : null}
       </article>
 
@@ -474,7 +446,7 @@ export default function CanonicalAttendancePageV3() {
             <strong>Student QR Check-in</strong>
             <button disabled={sessionBusy || sessionOpen || !assignmentId || !isToday || sessionLocked} onClick={() => changeCheckin("open")}>{sessionBusy && !sessionOpen ? "Opening…" : "Open Check-in"}</button>
             <button disabled={sessionBusy || !sessionOpen} onClick={() => changeCheckin("close")}>{sessionBusy && sessionOpen ? "Closing…" : "Close Check-in"}</button>
-            <button type="button" disabled={sessionBusy || sessionLocked} onClick={() => changeCheckin("end")}>End class</button>
+            <button type="button" disabled={sessionBusy || sessionLocked} onClick={() => changeCheckin("end")}>End class &amp; mark complete</button>
             <button type="button" onClick={refreshCheckins}>Refresh Check-ins</button>
             {slidesUrl && <a href={slidesUrl} target="_blank" rel="noopener noreferrer">Open slides</a>}
             {lessonLinks.map(({ assignmentId: linkedAssignment, url, label }) => <a key={`${linkedAssignment}:${url}`} href={url} target="_blank" rel="noopener noreferrer">{label}</a>)}

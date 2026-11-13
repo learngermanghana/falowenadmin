@@ -33,10 +33,11 @@ export function scheduleChangePreview({ klass, sessions, change }) {
   if (change.moveMode === "following" && !change.scheduleRules?.length) throw new Error("Select at least one weekly day.");
   const plan = buildSessionReschedulePlan({ klass: { ...klass, ...(change.moveMode === "following" ? { scheduleRules: change.scheduleRules } : {}) }, sessions, sessionId: session.id, targetStartsAt, targetEndsAt, mode: change.moveMode });
   const byId = new Map(plan.changes.map(row => [row.session.id, row]));
-  const level = String(klass.levelId || klass.level || klass.name || "").match(/\b(A1|A2|B1|B2|C1|C2)\b/i)?.[1]?.toUpperCase() || "";
-  const ordered = orderedWorkspaceSessions(sessions, level, "all", "lesson");
-  const last = ordered.at(-1);
-  return { ...plan, endDate: sessionDateInTimezone(byId.get(last?.id)?.startsAt || last?.startsAt, klass.timezone) };
+  const lastStart = sessions
+    .filter(row => !row.superseded && !["cancelled", "superseded"].includes(byId.get(row.id)?.plannedStatus || status(row)))
+    .map(row => toSessionDate(byId.get(row.id)?.startsAt || row.startsAt)?.getTime() || 0)
+    .reduce((latest, time) => Math.max(latest, time), 0);
+  return { ...plan, endDate: lastStart ? sessionDateInTimezone(new Date(lastStart), klass.timezone) : klass.endDate };
 }
 export function failedClassCommunications(classes = []) {
   return classes.flatMap(klass => [
