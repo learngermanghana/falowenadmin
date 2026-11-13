@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import PresenterControls, { PresenterStageJump } from "./PresenterControls.jsx";
+import PresenterControls, { PresenterActions, PresenterStageJump } from "./PresenterControls.jsx";
+import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
+import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
+import PresenterActivityTimer, { usePresenterActivityTimer } from "./PresenterActivityTimer.jsx";
 import { SWAHILI_DAY_ONE_ADMIN_LESSON } from "../data/swahiliTeachingSlides.js";
 import "./TeachingSlidePresenter.css";
 import "./SwahiliTeachingSlides.css";
@@ -8,10 +11,19 @@ import "./SwahiliTeachingSlides.css";
 const courseRoot = "/teaching-slides/course/SWAHILI";
 const lessonRoot = courseRoot + "/swahili-day-1";
 const learnerWorkbook = "https://www.falowen.app/swahili/day-1";
+// Keep the shared presenter identity stable across slide navigation, so its
+// roster and class clock never reload due to a new object on every render.
+const presenterSlide = Object.freeze({
+  ...SWAHILI_DAY_ONE_ADMIN_LESSON,
+  assignmentId: "SWAHILI-DAY-1",
+  workbookConnection: { workbookUrl: learnerWorkbook, subtitle: "Continue Kiswahili Day 1 in your learner workbook." },
+});
 
 export default function SwahiliTeachingSlides({ slideId, present = false }) {
   const lesson = SWAHILI_DAY_ONE_ADMIN_LESSON;
   const stages = lesson.stages;
+  const activityTimer = usePresenterActivityTimer(7);
+  const [reportOpen, setReportOpen] = useState(false);
   const [index, setIndex] = useState(0);
   const [notesVisible, setNotesVisible] = useState(false);
   const [answerVisible, setAnswerVisible] = useState(false);
@@ -31,6 +43,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
     setAnswerVisible(false);
     setGrammarPage(0);
     setFocusMode(false);
+    setReportOpen(false);
   }, [slideId, present]);
 
   const goTo = (position) => {
@@ -51,7 +64,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
         ArrowRight: () => goTo(index + 1), PageDown: () => goTo(index + 1), " ": () => goTo(index + 1),
         ArrowLeft: () => goTo(index - 1), PageUp: () => goTo(index - 1),
         Home: () => goTo(0), End: () => goTo(stages.length - 1),
-        Escape: () => setFocusMode(false),
+        Escape: () => { setFocusMode(false); setPresenting(false); },
       };
       if (actions[event.key]) { event.preventDefault(); actions[event.key](); }
     };
@@ -87,6 +100,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
 
   const grammar = stage.type === "grammar" ? stage.details?.[grammarPage] : null;
   return (
+    <div className={presenting ? `presenter-shell swahili-a2-shell ${focusMode ? "is-presentation-mode" : ""}` : "swahili-a2-inline-shell"}>
     <main className={`presenter-stage swahili-a2-presenter ${presenting ? "is-presenting" : ""} ${focusMode ? "is-focus-mode" : ""}`} lang="sw">
       {!focusMode && (
         <header className="presenter-topbar swahili-a2-presenter__topbar no-print">
@@ -95,8 +109,28 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
             <strong>{lesson.title}</strong>
             <span>Day 1</span>
           </div>
+          <PresenterSessionTimer
+            slide={presenterSlide}
+            stage={stage}
+            toolbarActions={
+              <PresenterActions
+                onPresent={() => { setPresenting(true); setFocusMode(true); }}
+                onExit={() => { setPresenting(false); setFocusMode(false); }}
+                onReport={() => setReportOpen(true)}
+              />
+            }
+          />
           <div className="presenter-v2-tools">
             <PresenterStageJump stages={stages} index={index} onChange={goTo} />
+            <PresenterActivityTimer
+              remaining={activityTimer.remaining}
+              running={activityTimer.running}
+              minutes={activityTimer.minutes}
+              onDurationChange={activityTimer.chooseDuration}
+              onToggle={activityTimer.toggle}
+              onReset={activityTimer.reset}
+              expired={activityTimer.remaining === 0}
+            />
             <div className="swahili-a2-presenter__actions">
               <button type="button" onClick={() => setPresenting(p => !p)}>{presenting ? "Exit presenter" : "Start presenter"}</button>
               <button type="button" onClick={() => setFocusMode(true)}>Focus</button>
@@ -105,6 +139,13 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
           </div>
         </header>
       )}
+
+      <PresenterStudentPicker
+        slide={presenterSlide}
+        reportOpen={reportOpen}
+        onReportClose={() => setReportOpen(false)}
+        responseContext={{ question: stage.prompt || stage.title, stageId: stage.id }}
+      />
 
       <div className="presenter-content swahili-a2-presenter__content" aria-live="polite">
         <div className="swahili-a2-presenter__meta">
@@ -164,7 +205,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
         onPrevious={() => goTo(index - 1)}
         onNext={() => goTo(index + 1)}
         onRestore={() => setFocusMode(false)}
-        onReport={() => goTo(stages.length - 1)}
+        onReport={() => setReportOpen(true)}
         nextLabel="Next stage →"
       />
       {!focusMode && <footer className="swahili-a2-presenter__foot no-print">
@@ -172,5 +213,6 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
         <span>Music and recorded Hören will be linked after upload.</span>
       </footer>}
     </main>
+    </div>
   );
 }

@@ -1,5 +1,6 @@
 export const SESSION_MINUTES_BY_LEVEL = Object.freeze({
   A1: 60,
+  SWAHILI: 60,
   A2: 90,
   B1: 90,
   B2: 90,
@@ -13,7 +14,7 @@ function normalize(value) {
 
 export function inferPresenterLevel(...values) {
   for (const value of values) {
-    const match = normalize(value).toUpperCase().match(/\b(A1|A2|B1|B2|C1|C2)\b/);
+    const match = normalize(value).toUpperCase().match(/\b(A1|A2|B1|B2|C1|C2|SWAHILI)\b/);
     if (match) return match[1];
   }
   return "";

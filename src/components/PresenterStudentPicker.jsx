@@ -79,7 +79,8 @@ function classMatchesCourse(entry = {}, course = "") {
   const candidates = [entry.levelId, entry.level, entry.courseLevel, entry.languageLevel, entry.classId, entry.name]
     .map((value) => normalize(value).toUpperCase())
     .filter(Boolean);
-  return candidates.some((value) => value === expected || value.startsWith(`${expected} `));
+  const aliases = expected === "SWAHILI" ? ["SWAHILI", "KISWAHILI"] : [expected];
+  return candidates.some((value) => aliases.some((name) => value === name || value.startsWith(`${name} `)));
 }
 
 function participationStorageKey(slide = {}, classId = "", sessionDate = "") {
@@ -245,7 +246,7 @@ export default function PresenterStudentPicker({
   const [classOptions, setClassOptions] = useState([]);
   const classContext = useMemo(() => readPresenterClassContext(window.location.search), []);
   const classContextApplied = useRef(false);
-  const [selectedClassId, setSelectedClassId] = useState(() => (classContext.classRecordId || classContext.classId) ? "" : safeStorageGet(LAST_CLASS_KEY));
+  const [selectedClassId, setSelectedClassId] = useState(() => (normalize(slide?.course).toUpperCase() === "SWAHILI" || classContext.classRecordId || classContext.classId) ? "" : safeStorageGet(LAST_CLASS_KEY));
   const [students, setStudents] = useState([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
   const [loadingStudents, setLoadingStudents] = useState(false);
@@ -278,7 +279,8 @@ export default function PresenterStudentPicker({
   const activeClasses = useMemo(() => classOptions.filter((entry) => !entry.archived && entry.status !== "archived"), [classOptions]);
   const matchingClasses = useMemo(() => {
     const matches = activeClasses.filter((entry) => classMatchesCourse(entry, course));
-    return matches.length ? matches : activeClasses;
+    // A Swahili lesson must never inherit a German class roster or cloud session.
+    return course === "SWAHILI" ? matches : matches.length ? matches : activeClasses;
   }, [activeClasses, course]);
   const selectedClass = useMemo(
     () => matchingClasses.find((entry) => classIdOf(entry) === selectedClassId) || null,
