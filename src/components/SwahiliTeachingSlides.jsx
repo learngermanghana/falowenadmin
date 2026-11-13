@@ -15,11 +15,22 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
   const stages = lesson.stages;
   const current = stages[index];
 
+  // React Router reuses this component when navigating between the course
+  // index and its lesson. Reflect the new route, not just the initial prop.
+  useEffect(() => {
+    setPresenting(Boolean(slideId) && present);
+    setIndex(0);
+    setNotesVisible(false);
+  }, [slideId, present]);
+
   useEffect(() => {
     if (!presenting) return undefined;
     const onKeyDown = (event) => {
       if (["ArrowRight", "PageDown", " "].includes(event.key)) {
-        if (event.target instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(event.target.tagName)) return;
+        // Arrow keys and PageDown should advance even if a presenter button
+        // retains focus. Space must keep its native button activation behavior.
+        if (event.target instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(event.target.tagName)) return;
+        if (event.key === " " && event.target instanceof HTMLElement && (event.target.closest("button, a, [role='button']") || event.target.isContentEditable)) return;
         event.preventDefault();
         setIndex((value) => Math.min(stages.length - 1, value + 1));
       } else if (["ArrowLeft", "PageUp"].includes(event.key)) {
