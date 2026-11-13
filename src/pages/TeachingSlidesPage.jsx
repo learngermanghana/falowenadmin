@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useLocation, useParams } from "react-router-dom";
 import TeachingSlidePresenter from "../components/TeachingSlidePresenter.jsx";
+import SwahiliTeachingSlides from "../components/SwahiliTeachingSlides.jsx";
 import A1GrammarPresenter from "../components/A1GrammarPresenter.jsx";
 import TeacherLessonBlocks from "../components/TeacherLessonBlocks.jsx";
 import StudentCourseSlides from "../components/StudentCourseSlides.jsx";
@@ -38,11 +39,26 @@ function SlideHeader({ slide }) {
 
 function SlideCoursesIndex() {
   const courses = useMemo(() => getAvailableSlideCourses(), []);
+  const [language, setLanguage] = useState("german");
 
   return (
     <section className="slides-index">
       <h1>Teaching Slides</h1>
-      <p>Teacher lesson guides with objectives, language focus, guided practice, common mistakes, and a classroom-ready Presenter Mode.</p>
+      <p>Select a teaching language, then open the course slides. German lessons remain unchanged.</p>
+      <div className="slide-actions slide-language-picker" role="group" aria-label="Teaching language">
+        <button type="button" aria-pressed={language === "german"} onClick={() => setLanguage("german")}>German · Deutsch</button>
+        <button type="button" aria-pressed={language === "swahili"} onClick={() => setLanguage("swahili")}>Swahili · Kiswahili</button>
+      </div>
+      {language === "swahili" ? (
+        <div className="slide-card-grid">
+          <article className="slide-card">
+            <p className="slide-meta">SWAHILI · BEGINNER</p>
+            <h2>Kiswahili teaching pack</h2>
+            <p>Day 1: Alfabeti, sauti na matamshi · 10 classroom presentation slides.</p>
+            <Link to="/teaching-slides/course/SWAHILI">Open Swahili slides</Link>
+          </article>
+        </div>
+      ) : (
       <div className="slide-card-grid">
         {courses.map((courseId) => {
           const slides = getSlidesByCourse(courseId);
@@ -56,7 +72,8 @@ function SlideCoursesIndex() {
           );
         })}
       </div>
-      {teachingSlides.length === 0 && <p>No teaching slides available yet.</p>}
+      )}
+      {language === "german" && teachingSlides.length === 0 && <p>No teaching slides available yet.</p>}
     </section>
   );
 }
@@ -369,6 +386,9 @@ export default function TeachingSlidesPage({ publicView = false }) {
   }
 
   if (!courseId && !slideId && !legacySlideId) return <SlideCoursesIndex />;
+  if (String(courseId || "").trim().toUpperCase() === "SWAHILI") {
+    return <SwahiliTeachingSlides slideId={slideId} present={new URLSearchParams(location.search).get("present") === "1"} />;
+  }
   if (courseId && slideId === "print") return <SlidePrintPack courseId={courseId} />;
   if (courseId && !slideId) return <CourseSlidesIndex courseId={courseId} />;
 
