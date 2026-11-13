@@ -39,7 +39,7 @@ function SlideHeader({ slide }) {
 
 function SlideCoursesIndex() {
   const courses = useMemo(() => getAvailableSlideCourses(), []);
-  const [language, setLanguage] = useState("german");
+  const [language, setLanguage] = useState(() => new URLSearchParams(window.location.search).get("language") === "swahili" ? "swahili" : "german");
 
   return (
     <section className="slides-index">
