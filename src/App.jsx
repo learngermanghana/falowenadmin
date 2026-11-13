@@ -61,7 +61,7 @@ function RouteFallback() {
 }
 
 function TopBar() {
-  const { user, logout, isStaff } = useAuth();
+  const { user, logout, isStaff, role } = useAuth();
   const nav = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -75,7 +75,7 @@ function TopBar() {
   const [deploymentStatus, setDeploymentStatus] = useState(null);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || !role) {
       setDeploymentStatus(null);
       return undefined;
     }
@@ -117,9 +117,9 @@ function TopBar() {
       if (startupTimerId != null) window.clearTimeout(startupTimerId);
       stopPolling?.();
     };
-  }, [user]);
+  }, [user, role]);
 
-  if (!user || location.pathname === "/checkin/display") return null;
+  if (!user || !role || location.pathname === "/checkin/display") return null;
 
   return (
     <header className="topbar">
@@ -136,7 +136,7 @@ function TopBar() {
             {menuOpen ? "✕" : "☰"}
           </button>
 
-          <Link to={isStaff ? "/students" : "/"} className="topbar-brand" onClick={() => setMenuOpen(false)}>
+          <Link to={isStaff ? "/marking" : "/"} className="topbar-brand" onClick={() => setMenuOpen(false)}>
             Falowen Dashboard
           </Link>
           <span
@@ -162,12 +162,8 @@ function TopBar() {
           <div id="topbar-navigation" className={`topbar-links ${menuOpen ? "topbar-links-open" : ""}`}>
             {isStaff ? (
               <>
-                <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
-                <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
-                <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
-                <Link to="/timed-attempts" onClick={() => setMenuOpen(false)}>Mock Monitoring & Timers</Link>
-                <Link to="/exam-tracking" onClick={() => setMenuOpen(false)}>Exam Tracking</Link>
-                <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
+                <Link to="/marking" onClick={() => setMenuOpen(false)}>Marking</Link>
+                <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Teaching Slides</Link>
               </>
             ) : (
               <>
@@ -225,25 +221,25 @@ function ToastViewport() {
 }
 
 function MarkingRoute() {
-  return <ProtectedRoute allowStaff={false}><MarkingHubPage /></ProtectedRoute>;
+  return <ProtectedRoute><MarkingHubPage /></ProtectedRoute>;
 }
 
 function OwnerMusicAnalyticsRoute() {
   const { user, loading, isStaff } = useAuth();
   const ownerUid = String(import.meta.env.VITE_HOEREN_STUDIO_OWNER_UID || "").trim();
   if (!loading && user && (isStaff || !ownerUid || user.uid !== ownerUid)) return <Navigate to="/" replace />;
-  return <ProtectedRoute allowStaff={false}><MusicAnalyticsPage /></ProtectedRoute>;
+  return <ProtectedRoute><MusicAnalyticsPage /></ProtectedRoute>;
 }
 
 function OwnerStudioRoute({ music = false, lesson = false }) {
   const { user, loading, isStaff } = useAuth();
   const ownerUid = String(import.meta.env.VITE_HOEREN_STUDIO_OWNER_UID || "").trim();
   if (!loading && user && (isStaff || !ownerUid || user.uid !== ownerUid)) return <Navigate to="/" replace />;
-  return <ProtectedRoute allowStaff={false}>{lesson ? <LessonVideoStudioPage /> : music ? <MusicStudioPage /> : <HoerenStudioPage />}</ProtectedRoute>;
+  return <ProtectedRoute>{lesson ? <LessonVideoStudioPage /> : music ? <MusicStudioPage /> : <HoerenStudioPage />}</ProtectedRoute>;
 }
 
 function ExamReviewRoute() {
-  return <ProtectedRoute allowStaff={false}><ExamTutorReviewQueuePage /></ProtectedRoute>;
+  return <ProtectedRoute><ExamTutorReviewQueuePage /></ProtectedRoute>;
 }
 
 function CurrentAttendanceRoute() {
@@ -263,7 +259,8 @@ function PublicVisitorGuideRedirect() {
 export default function App() {
   const location = useLocation();
   const isFullscreenRoute = location.pathname === "/checkin/display";
-  const showLeadNotification = location.pathname === "/";
+  const { role } = useAuth();
+  const showLeadNotification = location.pathname === "/" && role === "admin";
 
   return (
     <>
@@ -275,25 +272,25 @@ export default function App() {
         <Suspense fallback={<RouteFallback />}>
           <Routes>
           <Route path="/partnerships" element={<PartnershipPage />} />
-          <Route path="/paystack" element={<ProtectedRoute allowStaff={false}><PaystackPage /></ProtectedRoute>} />
-          <Route path="/appointments" element={<ProtectedRoute allowStaff={false}><AppointmentAdminPage /></ProtectedRoute>} />
+          <Route path="/paystack" element={<ProtectedRoute><PaystackPage /></ProtectedRoute>} />
+          <Route path="/appointments" element={<ProtectedRoute><AppointmentAdminPage /></ProtectedRoute>} />
           <Route path="/book-appointment" element={<AppointmentBookingPage />} />
-          <Route path="/referral-review" element={<ProtectedRoute allowStaff={false}><ReferralReviewPage /></ProtectedRoute>} />
+          <Route path="/referral-review" element={<ProtectedRoute><ReferralReviewPage /></ProtectedRoute>} />
           <Route path="/organisation-enrolment" element={<OrganisationEnrolmentPage />} />
-          <Route path="/organisation-submissions" element={<ProtectedRoute allowStaff={false}><OrganisationEnrolmentPage review /></ProtectedRoute>} />
+          <Route path="/organisation-submissions" element={<ProtectedRoute><OrganisationEnrolmentPage review /></ProtectedRoute>} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/checkin" element={<CheckinPage />} />
           <Route path="/checkin/display" element={<CheckinDisplayPage />} />
 
-          <Route path="/" element={<ProtectedRoute allowStaff={false}><DashboardPage /></ProtectedRoute>} />
-          <Route path="/attendance" element={<ProtectedRoute allowStaff={false}><AttendanceOverviewPage /></ProtectedRoute>} />
+          <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+          <Route path="/attendance" element={<ProtectedRoute><AttendanceOverviewPage /></ProtectedRoute>} />
           <Route path="/attendance/session/:classId" element={<ProtectedRoute><CurrentAttendanceRoute /></ProtectedRoute>} />
-          <Route path="/attendance/:classId" element={<ProtectedRoute allowStaff={false}><AttendancePage /></ProtectedRoute>} />
+          <Route path="/attendance/:classId" element={<ProtectedRoute><AttendancePage /></ProtectedRoute>} />
           <Route path="/class-participation" element={<ProtectedRoute><ClassParticipationPage /></ProtectedRoute>} />
-          <Route path="/course-schedule" element={<ProtectedRoute allowStaff={false}><CourseSchedulePage /></ProtectedRoute>} />
+          <Route path="/course-schedule" element={<ProtectedRoute><CourseSchedulePage /></ProtectedRoute>} />
           <Route path="/course-schedule/public" element={<PublicCourseSchedulePage />} />
           <Route path="/marking" element={<MarkingRoute />} />
-          <Route path="/student-results" element={<ProtectedRoute allowStaff={false}><StudentResultsComparePage /></ProtectedRoute>} />
+          <Route path="/student-results" element={<ProtectedRoute><StudentResultsComparePage /></ProtectedRoute>} />
           <Route path="/marking/ai-audit" element={<Navigate to="/marking" replace />} />
           <Route path="/marking/answer-keys" element={<Navigate to="/marking" replace />} />
           <Route path="/ai-marking-audit" element={<Navigate to="/marking" replace />} />
@@ -303,39 +300,39 @@ export default function App() {
           <Route path="/examTutorReviewQueue" element={<ExamReviewRoute />} />
           <Route path="/examTutorReviewQueue/:reviewId" element={<ExamReviewRoute />} />
           <Route path="/tutor-marking" element={<Navigate to="/campus/tutor-marking" replace />} />
-          <Route path="/campus/tutor-marking" element={<ProtectedRoute allowStaff={false}><TutorMarkingSimplePage /></ProtectedRoute>} />
-          <Route path="/grammar-issues" element={<ProtectedRoute allowStaff={false}><GrammarIssueReportsPage /></ProtectedRoute>} />
-          <Route path="/communication" element={<ProtectedRoute allowStaff={false}><CommunicationHubPage /></ProtectedRoute>} />
-          <Route path="/exam-file" element={<ProtectedRoute allowStaff={false}><GoetheExamConfigPage /></ProtectedRoute>} />
-          <Route path="/whatsapp-reminders" element={<ProtectedRoute allowStaff={false}><WhatsAppRemindersPage /></ProtectedRoute>} />
-          <Route path="/teaching-slides" element={<ProtectedRoute allowStaff={false}><TeachingSlidesPage /></ProtectedRoute>} />
-          <Route path="/orientation" element={<ProtectedRoute allowStaff={false}><OrientationPage /></ProtectedRoute>} />
+          <Route path="/campus/tutor-marking" element={<ProtectedRoute><TutorMarkingSimplePage /></ProtectedRoute>} />
+          <Route path="/grammar-issues" element={<ProtectedRoute><GrammarIssueReportsPage /></ProtectedRoute>} />
+          <Route path="/communication" element={<ProtectedRoute><CommunicationHubPage /></ProtectedRoute>} />
+          <Route path="/exam-file" element={<ProtectedRoute><GoetheExamConfigPage /></ProtectedRoute>} />
+          <Route path="/whatsapp-reminders" element={<ProtectedRoute><WhatsAppRemindersPage /></ProtectedRoute>} />
+          <Route path="/teaching-slides" element={<ProtectedRoute><TeachingSlidesPage /></ProtectedRoute>} />
+          <Route path="/orientation" element={<ProtectedRoute><OrientationPage /></ProtectedRoute>} />
           <Route path="/students" element={<ProtectedRoute><StudentHubPage /></ProtectedRoute>} />
-          <Route path="/leads" element={<ProtectedRoute allowStaff={false}><LeadsPage /></ProtectedRoute>} />
-          <Route path="/student-activity" element={<ProtectedRoute allowStaff={false}><Navigate to="/students" replace /></ProtectedRoute>} />
-          <Route path="/social-media" element={<ProtectedRoute allowStaff={false}><SocialMediaPage /></ProtectedRoute>} />
+          <Route path="/leads" element={<ProtectedRoute><LeadsPage /></ProtectedRoute>} />
+          <Route path="/student-activity" element={<ProtectedRoute><Navigate to="/students" replace /></ProtectedRoute>} />
+          <Route path="/social-media" element={<ProtectedRoute><SocialMediaPage /></ProtectedRoute>} />
           <Route path="/ai-studio" element={<OwnerStudioRoute />} />
           <Route path="/music-studio" element={<OwnerStudioRoute music />} />
           <Route path="/lesson-video-studio" element={<OwnerStudioRoute lesson />} />
           <Route path="/music-analytics" element={<OwnerMusicAnalyticsRoute />} />
           <Route path="/visitor-guide" element={<PublicVisitorGuideRedirect />} />
           <Route path="/visitor-guide/edit" element={<PublicVisitorGuideRedirect />} />
-          <Route path="/writing-submissions" element={<ProtectedRoute allowStaff={false}><WritingSubmissionTrackerPage /></ProtectedRoute>} />
-          <Route path="/writing-submissions/:submissionId" element={<ProtectedRoute allowStaff={false}><WritingSubmissionTrackerPage /></ProtectedRoute>} />
+          <Route path="/writing-submissions" element={<ProtectedRoute><WritingSubmissionTrackerPage /></ProtectedRoute>} />
+          <Route path="/writing-submissions/:submissionId" element={<ProtectedRoute><WritingSubmissionTrackerPage /></ProtectedRoute>} />
           <Route path="/timed-attempts" element={<ProtectedRoute><TimedAssignmentAttemptsPage /></ProtectedRoute>} />
           <Route path="/exam-tracking" element={<ProtectedRoute><ExamTrackingPage /></ProtectedRoute>} />
           <Route path="/speaking-review" element={<ProtectedRoute><SpeakingPracticeReviewPage /></ProtectedRoute>} />
           <Route path="/quality-check" element={<Navigate to="/" replace />} />
-          <Route path="/class-schedule-setup" element={<ProtectedRoute allowStaff={false}><ClassScheduleSetupPage /></ProtectedRoute>} />
-          <Route path="/holiday-calendar" element={<ProtectedRoute allowStaff={false}><HolidayCalendarPage /></ProtectedRoute>} />
+          <Route path="/class-schedule-setup" element={<ProtectedRoute><ClassScheduleSetupPage /></ProtectedRoute>} />
+          <Route path="/holiday-calendar" element={<ProtectedRoute><HolidayCalendarPage /></ProtectedRoute>} />
           <Route path="/class-operations" element={<ProtectedRoute><ClassOperationsPage /></ProtectedRoute>} />
           <Route path="/class-archive" element={<ProtectedRoute><ClassArchivePage /></ProtectedRoute>} />
           <Route path="/live-classes" element={<ProtectedRoute><LiveClassesPage /></ProtectedRoute>} />
           <Route path="/lesson-dashboard" element={<ProtectedRoute><TeacherLessonDashboardPage /></ProtectedRoute>} />
-          <Route path="/teaching-slides/course/:courseId" element={<ProtectedRoute allowStaff={false}><TeachingSlidesPage /></ProtectedRoute>} />
-          <Route path="/teaching-slides/course/:courseId/:slideId" element={<ProtectedRoute allowStaff={false}><TeachingSlidesPage /></ProtectedRoute>} />
+          <Route path="/teaching-slides/course/:courseId" element={<ProtectedRoute><TeachingSlidesPage /></ProtectedRoute>} />
+          <Route path="/teaching-slides/course/:courseId/:slideId" element={<ProtectedRoute><TeachingSlidesPage /></ProtectedRoute>} />
           <Route path="/teaching-slides/public/:courseId/print" element={<TeachingSlidesPage publicView />} />
-          <Route path="/teaching-slides/:legacySlideId" element={<ProtectedRoute allowStaff={false}><TeachingSlidesPage /></ProtectedRoute>} />
+          <Route path="/teaching-slides/:legacySlideId" element={<ProtectedRoute><TeachingSlidesPage /></ProtectedRoute>} />
           </Routes>
         </Suspense>
       </main>

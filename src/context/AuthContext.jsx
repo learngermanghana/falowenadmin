@@ -1,30 +1,36 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { onIdTokenChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth } from "../firebaseAuth";
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { isStaffEmail } from "../utils/authRoles";
+import { getAdminRole } from "../utils/authRoles";
 
 const AuthCtx = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState({ user: null, role: null, loading: Boolean(auth) });
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setUser(u || null);
-      setLoading(false);
+    if (!auth) return undefined;
+    let revision = 0;
+    const unsubscribe = onIdTokenChanged(auth, async (user) => {
+      const current = ++revision;
+      let role = null;
+      try {
+        if (user) role = getAdminRole((await user.getIdTokenResult()).claims);
+      } catch {
+        // Keep protected routes closed when the token cannot be read.
+      }
+      if (current === revision) setSession({ user, role, loading: false });
     });
-    return () => unsub();
+    return () => { revision += 1; unsubscribe(); };
   }, []);
 
   const value = useMemo(() => ({
-    user,
-    loading,
-    isStaff: isStaffEmail(user?.email),
+    ...session,
+    isStaff: session.role === "staff",
     login: (email, password) => signInWithEmailAndPassword(auth, email, password),
     logout: () => signOut(auth),
-  }), [user, loading]);
+  }), [session]);
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
