@@ -46,7 +46,7 @@ export function usePresenterActivityTimer(initialMinutes = 7) {
 // The optional callbacks keep the existing German timer behavior unchanged.
 export default function PresenterActivityTimer({
   remaining, running, minutes, presets = ACTIVITY_TIMER_PRESETS,
-  onDurationChange, onToggle, onReset, expired = false,
+  onDurationChange, onToggle, onReset, expired = false, highlightSelection = true,
 }) {
   return (
     <div className={`presenter-timer ${expired ? "presenter-timer-expired" : ""}`}>
@@ -55,8 +55,8 @@ export default function PresenterActivityTimer({
       <div className="presenter-timer-presets" role="group" aria-label="Activity timer duration">
         {presets.map(value => (
           <button key={value} type="button"
-            className={minutes === value ? "is-active" : ""}
-            aria-pressed={minutes === value}
+            className={highlightSelection && minutes === value ? "is-active" : ""}
+            aria-pressed={highlightSelection ? minutes === value : undefined}
             onClick={() => onDurationChange?.(value)}>
             {value < 1 ? `${value * 60}s` : `${value}m`}
           </button>
