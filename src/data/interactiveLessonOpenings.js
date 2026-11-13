@@ -613,17 +613,8 @@ ENTRIES["B1-10.27"] = {
 
 ENTRIES["B1-10.28"] = {
   assignmentId: "B1-10.28", title: "Klimafreundlich leben", warmup: [],
-  // Classroom Hören only; learner workbook Teil 4 remains a distinct task.
+  // Classroom Hören only; learner workbook Teil 4 and song stage are distinct.
   listening: B1_DAY28_LISTENING,
-  musicIntro: {
-    mediaType: "music", level: "B1", day: 28,
-    title: "Klimafreundlich leben · Lernlied",
-    musicLibraryUrl: "https://music.falowen.app/?level=B1&day=28",
-    introQuestion: "Welche klimafreundliche Gewohnheit kannst du sofort umsetzen?",
-    studentPurpose: "Höre das vorhandene Lied für B1 Tag 28 und nenne eine umsetzbare Idee.",
-    teacherPurpose: "Öffne das bereits veröffentlichte B1-Tag-28-Lied in der Falowen-Musikbibliothek. Danach kommt die separate Aufnahme mit Lisa und Jonas und fünf Richtig/Falsch-Aussagen.",
-    nextStep: "Danach: Klimafreundlich leben · Lisa und Jonas · fünf Hörfragen zum separaten Gespräch.",
-  },
 };
 
 export const INTERACTIVE_LESSON_OPENINGS = Object.freeze(
