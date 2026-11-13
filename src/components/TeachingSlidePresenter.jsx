@@ -26,8 +26,8 @@ import A2ApplicationLab from "./A2ApplicationLab.jsx";
 import { MusicVideoStage, MusicReadingStage } from "./MusicTeachingStages.jsx";
 import { isInteractiveOpeningStage } from "../data/interactiveLessonOpenings.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
-import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import PresenterActivityTimer from "./PresenterActivityTimer.jsx";
+import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import "./TeachingSlidePresenter.css";
 
 const FALOWEN_BASE_URL = "https://www.falowen.app";
