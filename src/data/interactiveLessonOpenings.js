@@ -1,5 +1,6 @@
 import { A2_DAY25_CLASSROOM_LISTENING } from './a2Day25ClassroomListening.js';
 import { B1_DAY27_LISTENING } from './b1Day27Listening.js';
+import { B1_DAY28_LISTENING } from './b1Day28Listening.js';
 import { A2_DAY23_CLASSROOM_LISTENING } from './a2Day23ClassroomListening.js';
 import { A2_DAY24_CLASSROOM_LISTENING } from './a2Day24ClassroomListening.js';
 import { A2_DAY4_CLASSROOM_LISTENING } from './a2Day4ClassroomListening.js';
@@ -607,6 +608,13 @@ ENTRIES["B1-10.27"] = {
     teacherPurpose: "Spiele die veröffentlichte Day-27-Musik aus der Musikbibliothek. Danach folgt die separate Gesprächsaufnahme mit sechs Hörfragen. Unbewertete Unterrichtsübung.",
     nextStep: "Danach: Lisas Tipps beim Einkaufen und Energiesparen. Das Gespräch ist zweimal aufgenommen.",
   },
+};
+
+
+ENTRIES["B1-10.28"] = {
+  assignmentId: "B1-10.28", title: "Klimafreundlich leben", warmup: [],
+  // Classroom Hören only; learner workbook Teil 4 and song stage are distinct.
+  listening: B1_DAY28_LISTENING,
 };
 
 export const INTERACTIVE_LESSON_OPENINGS = Object.freeze(

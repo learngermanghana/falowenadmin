@@ -167,7 +167,7 @@ test("Day 26 teacher guide matches formal Vienna Schreiben and seven Anzeigen wi
   assert.doesNotMatch(guideText,/Markus|Max\/Lisa|Urlaubsland Deutschland|Hören is self-check|Hören.*excluded/i);
 });
 
-for (const assignmentId of ["B1-10.27", "B1-10.28"]) {
+for (const assignmentId of ["B1-10.27"]) {
   test(`${assignmentId} blocks Teil 4 instead of inventing audio when the grader expects five answers`, () => {
     const slide = getB1WorkbookAlignedSlideDay21To28(assignmentId);
     const contract = contractByAssignmentId[assignmentId];
@@ -181,6 +181,19 @@ for (const assignmentId of ["B1-10.27", "B1-10.28"]) {
     assert.match(slide.workbookConnection.subtitle, /unresolved Teil 4 source mismatch/i);
   });
 }
+
+test("B1 Day 28 classroom Hören is sourced but separately graded workbook Teil 4 is not changed", () => {
+  const slide=getB1WorkbookAlignedSlideDay21To28("B1-10.28");
+  const contract=contractByAssignmentId["B1-10.28"];
+  assert.deepEqual(contract.expectedParts, ["teil2","teil3","teil4"]);
+  assert.equal(Object.keys(contract.answers.teil4).length,5);
+  const listening=part(slide,"Teil 4 · Hören").detailEn;
+  assert.match(listening,/Admin classroom Hören/i);
+  assert.match(listening,/five source-backed Richtig\/Falsch statements/i);
+  assert.match(listening,/separate from the student workbook Teil 4/i);
+  assert.match(slide.workbookConnection.subtitle,/learner workbook Teil 4 assessment is still separate/i);
+  assert.match(slide.teacherNotesEn.join(" "),/does not by itself resolve the separate student workbook Teil 4 grading contract/i);
+});
 
 test("all 28 B1 assignments now resolve to workbook-aligned teacher guides", () => {
   const b1Slides = getSlidesByCourse("B1");
