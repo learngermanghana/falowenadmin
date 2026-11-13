@@ -16,7 +16,7 @@ const learnerWorkbook = "https://www.falowen.app/swahili/day-1";
 const presenterSlide = Object.freeze({
   ...SWAHILI_DAY_ONE_ADMIN_LESSON,
   assignmentId: "SWAHILI-DAY-1",
-  workbookConnection: { url: learnerWorkbook },
+  workbookConnection: { workbookUrl: learnerWorkbook, subtitle: "Continue Kiswahili Day 1 in your learner workbook." },
 });
 
 export default function SwahiliTeachingSlides({ slideId, present = false }) {
