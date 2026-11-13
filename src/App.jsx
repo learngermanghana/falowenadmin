@@ -55,6 +55,7 @@ const LiveClassesPage = lazy(() => import("./pages/LiveClassesPage"));
 const HolidayCalendarPage = lazy(() => import("./pages/HolidayCalendarPage"));
 const GoetheExamConfigPage = lazy(() => import("./pages/GoetheExamConfigPage.jsx"));
 const StudentResultsComparePage = lazy(() => import("./pages/StudentResultsComparePage.jsx"));
+const StaffWorkspacePage = lazy(() => import("./pages/StaffWorkspacePage.jsx"));
 
 function RouteFallback() {
   return <div className="route-loading" role="status" aria-live="polite">Loading…</div>;
@@ -169,6 +170,7 @@ function TopBar() {
               <>
                 <Link to="/" onClick={() => setMenuOpen(false)}>Dashboard</Link>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
+                <Link to="/staff" onClick={() => setMenuOpen(false)}>Staff Workspace</Link>
                 <Link to="/leads" onClick={() => setMenuOpen(false)}>Leads</Link>
                 <Link to="/exam-file" onClick={() => setMenuOpen(false)}>Goethe Exam File</Link>
                 <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
@@ -308,6 +310,7 @@ export default function App() {
           <Route path="/teaching-slides" element={<ProtectedRoute><TeachingSlidesPage /></ProtectedRoute>} />
           <Route path="/orientation" element={<ProtectedRoute><OrientationPage /></ProtectedRoute>} />
           <Route path="/students" element={<ProtectedRoute><StudentHubPage /></ProtectedRoute>} />
+          <Route path="/staff" element={<ProtectedRoute><StaffWorkspacePage /></ProtectedRoute>} />
           <Route path="/leads" element={<ProtectedRoute><LeadsPage /></ProtectedRoute>} />
           <Route path="/student-activity" element={<ProtectedRoute><Navigate to="/students" replace /></ProtectedRoute>} />
           <Route path="/social-media" element={<ProtectedRoute><SocialMediaPage /></ProtectedRoute>} />
