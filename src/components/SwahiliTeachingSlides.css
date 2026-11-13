@@ -92,3 +92,53 @@
     font-size:clamp(1.45rem,6vw,2.3rem);
   }
 }
+
+/* Mount the same fixed 16:9 Falowen presentation shell as German A2.
+   The Dashboard must not take up the projected viewport. */
+.swahili-a2-shell.presenter-shell .swahili-a2-presenter{
+  display:grid;
+  grid-template-rows:auto auto minmax(0,1fr) auto auto;
+  width:min(96vw,calc(94vh * 16 / 9));
+  height:min(94vh,calc(96vw * 9 / 16));
+  max-height:94vh;
+  min-height:0;
+  aspect-ratio:16 / 9;
+  overflow:hidden;
+  border-radius:18px;
+  padding:0;
+  flex-direction:unset;
+}
+.swahili-a2-shell .swahili-a2-presenter__topbar{grid-row:1;min-width:0;overflow-y:auto;max-height:min(30vh,210px)}
+.swahili-a2-shell .presenter-student-picker{grid-row:2;min-height:0}
+.swahili-a2-shell .swahili-a2-presenter__content{
+  grid-row:3;
+  min-height:0;
+  max-height:none;
+  width:100%;
+  margin:0 auto;
+  border:0;
+  border-radius:0;
+  padding:clamp(14px,2.5vw,34px);
+  overflow-y:auto;
+}
+.swahili-a2-shell .presenter-shared-controls{grid-row:4;min-height:0}
+.swahili-a2-shell .swahili-a2-presenter__foot{grid-row:5}
+.swahili-a2-shell.is-presentation-mode .swahili-a2-presenter{
+  width:100vw;
+  height:100dvh;
+  min-height:100dvh;
+  max-height:100dvh;
+  aspect-ratio:auto;
+  border-radius:0;
+}
+@media(max-width:900px) and (orientation:portrait){
+  .swahili-a2-shell.presenter-shell{padding:0}
+  .swahili-a2-shell.presenter-shell .swahili-a2-presenter{
+    width:100vw;
+    height:100dvh;
+    min-height:100dvh;
+    max-height:100dvh;
+    aspect-ratio:auto;
+    border-radius:0;
+  }
+}
