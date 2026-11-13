@@ -1,4 +1,5 @@
 import MusicVideoEmbed from "./MusicVideoEmbed.jsx";
+import SwahiliRestaurantScenario from "./SwahiliRestaurantScenario.jsx";
 
 // A2 Day 1 uses dedicated lesson stage layouts and a real shared media
 // component, not a generic preformatted text panel. Reuse those components
@@ -25,17 +26,48 @@ function WordTiles({ text }) {
   </div>;
 }
 
-function Menu({ content }) {
+function FoodCards({ cards = [], compact = false }) {
+  if (!cards.length) return null;
+  return <div className={`swahili-a2-presenter__food-cards ${compact ? "is-compact" : ""}`} aria-label="Food picture vocabulary">
+    {cards.map(card=><article className="swahili-a2-presenter__food-photo-card" key={card.id}>
+      <div className="swahili-a2-presenter__food-photo-frame">
+        {card.image ? <img src={card.image} alt={card.en} loading="lazy" decoding="async"
+          onError={event=>{event.currentTarget.hidden=true;event.currentTarget.nextElementSibling.hidden=false;}} /> : null}
+        <span className="swahili-a2-presenter__photo-fallback" hidden={Boolean(card.image)}>{card.icon || "🍽️"}</span>
+      </div>
+      <div className="swahili-a2-presenter__food-photo-caption">
+        <strong lang="sw">{card.sw}</strong><small>{card.en}</small>
+      </div>
+      {card.credit && <a className="swahili-a2-presenter__photo-credit" href={card.credit} target="_blank" rel="noreferrer" aria-label={`Photo source for ${card.sw}, ${card.author || "Wikimedia Commons"}`}>Photo: {card.author || "Commons"}</a>}
+    </article>)}
+  </div>;
+}
+function Menu({ content, cards = [], drinks = [] }) {
   const lines=Lines({text:content});
   const foodIndex=lines.indexOf("CHAKULA");
   const drinkIndex=lines.indexOf("VINYWAJI");
   if (foodIndex<0 || drinkIndex<0) return <p className="presenter-topic">{content}</p>;
-  const groups=[["Chakula · Food",lines.slice(foodIndex+1,drinkIndex)],["Vinywaji · Drinks",lines.slice(drinkIndex+1)]];
+  const foodNames=lines.slice(foodIndex+1,drinkIndex).flatMap(row=>row.split(/\s*[·]\s*/)).filter(Boolean);
+  const drinkNames=lines.slice(drinkIndex+1).flatMap(row=>row.split(/\s*[·]\s*/)).filter(Boolean);
+  const matchingFoods=cards.filter(card=>foodNames.some(name=>name.toLowerCase()===card.sw.toLowerCase()));
   return <div className="swahili-a2-presenter__menu" aria-label="Practice restaurant menu">
-    {groups.map(([title,values])=><section key={title} className="swahili-a2-presenter__menu-column">
-      <h2>{title}</h2>
-      {values.flatMap(row=>row.split(/\s*[·]\s*/)).filter(Boolean).map((label,i)=><p key={i}>{label}</p>)}
-    </section>)}
+    <section className="swahili-a2-presenter__menu-column">
+      <h2>Chakula · Food</h2>
+      <FoodCards cards={matchingFoods} compact />
+      {foodNames.filter(name=>!matchingFoods.some(card=>card.sw.toLowerCase()===name.toLowerCase())).map(name=><p key={name}>{name}</p>)}
+    </section>
+    <section className="swahili-a2-presenter__menu-column">
+      <h2>Vinywaji · Drinks</h2>
+      <div className="swahili-a2-presenter__menu-drinks">
+        {drinkNames.map(name=>{
+          const card=drinks.find(item=>item.sw.toLowerCase()===name.toLowerCase());
+          return <div className="swahili-a2-presenter__menu-drink" key={name}>
+            <span aria-hidden="true">{card?.icon || "🥤"}</span>
+            <strong>{name}</strong><small>{card?.en || ""}</small>
+          </div>;
+        })}
+      </div>
+    </section>
   </div>;
 }
 
@@ -46,6 +78,7 @@ export default function SwahiliA2LessonStage({ stage, grammar, isDaySix }) {
     <h2>{isDaySix ? "Chakula · Vinywaji · Kuomba kwa adabu" : "Vokali · Silabi · Matamshi"}</h2>
     <p className="presenter-objective">{stage.english}</p>
     <div className="swahili-a2-presenter__lesson-highlight">{lines.map((line,i)=><p key={i}>{line}</p>)}</div>
+    {isDaySix && <FoodCards cards={stage.foodCards} />}
   </section>;
 
   if(stage.type==="music") return <section className="swahili-a2-presenter__media-stage">
@@ -81,7 +114,7 @@ export default function SwahiliA2LessonStage({ stage, grammar, isDaySix }) {
     </section>;
   }
 
-  if(stage.type==="reading" && isDaySix) return <Menu content={stage.content} />;
+  if(stage.type==="reading" && isDaySix) return <Menu content={stage.content} cards={stage.foodCards} drinks={stage.drinkCards} />;
 
   if(stage.type==="speaking" && isDaySix) return <section className="swahili-a2-presenter__dialogue" aria-label="Server and customer dialogue">
     <p className="presenter-kicker">Model the conversation · Switch roles</p>
@@ -92,6 +125,8 @@ export default function SwahiliA2LessonStage({ stage, grammar, isDaySix }) {
     <span className="presenter-kicker">{stage.type==="speaking"?"Read aloud · Rudia":"Read and identify · Soma"}</span>
     <WordTiles text={stage.content}/>
   </section>;
+
+  if(stage.type==="scenario" && isDaySix) return <SwahiliRestaurantScenario scenarios={stage.scenarios} />;
 
   if(stage.type==="writing" || stage.type==="presentation" || stage.type==="summary") return <section className="swahili-a2-presenter__task-grid">
     {lines.map((line,i)=><div className="swahili-a2-presenter__task" key={i}>
