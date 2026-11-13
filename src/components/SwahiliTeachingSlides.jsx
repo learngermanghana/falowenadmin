@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import PresenterControls, { PresenterStageJump } from "./PresenterControls.jsx";
+import PresenterControls, { PresenterActions, PresenterStageJump } from "./PresenterControls.jsx";
+import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
+import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
+import PresenterActivityTimer, { usePresenterActivityTimer } from "./PresenterActivityTimer.jsx";
 import { SWAHILI_DAY_ONE_ADMIN_LESSON } from "../data/swahiliTeachingSlides.js";
 import "./TeachingSlidePresenter.css";
 import "./SwahiliTeachingSlides.css";
@@ -12,6 +15,8 @@ const learnerWorkbook = "https://www.falowen.app/swahili/day-1";
 export default function SwahiliTeachingSlides({ slideId, present = false }) {
   const lesson = SWAHILI_DAY_ONE_ADMIN_LESSON;
   const stages = lesson.stages;
+  const activityTimer = usePresenterActivityTimer(7);
+  const [reportOpen, setReportOpen] = useState(false);
   const [index, setIndex] = useState(0);
   const [notesVisible, setNotesVisible] = useState(false);
   const [answerVisible, setAnswerVisible] = useState(false);
@@ -31,6 +36,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
     setAnswerVisible(false);
     setGrammarPage(0);
     setFocusMode(false);
+    setReportOpen(false);
   }, [slideId, present]);
 
   const goTo = (position) => {
@@ -86,6 +92,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
   }
 
   const grammar = stage.type === "grammar" ? stage.details?.[grammarPage] : null;
+  const presenterSlide = { ...lesson, assignmentId: "SWAHILI-DAY-1", workbookConnection: { url: learnerWorkbook } };
   return (
     <main className={`presenter-stage swahili-a2-presenter ${presenting ? "is-presenting" : ""} ${focusMode ? "is-focus-mode" : ""}`} lang="sw">
       {!focusMode && (
@@ -95,8 +102,28 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
             <strong>{lesson.title}</strong>
             <span>Day 1</span>
           </div>
+          <PresenterSessionTimer
+            slide={presenterSlide}
+            stage={stage}
+            toolbarActions={
+              <PresenterActions
+                onPresent={() => { setPresenting(true); setFocusMode(true); }}
+                onExit={() => { setPresenting(false); setFocusMode(false); }}
+                onReport={() => setReportOpen(true)}
+              />
+            }
+          />
           <div className="presenter-v2-tools">
             <PresenterStageJump stages={stages} index={index} onChange={goTo} />
+            <PresenterActivityTimer
+              remaining={activityTimer.remaining}
+              running={activityTimer.running}
+              minutes={activityTimer.minutes}
+              onDurationChange={activityTimer.chooseDuration}
+              onToggle={activityTimer.toggle}
+              onReset={activityTimer.reset}
+              expired={activityTimer.remaining === 0}
+            />
             <div className="swahili-a2-presenter__actions">
               <button type="button" onClick={() => setPresenting(p => !p)}>{presenting ? "Exit presenter" : "Start presenter"}</button>
               <button type="button" onClick={() => setFocusMode(true)}>Focus</button>
@@ -105,6 +132,13 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
           </div>
         </header>
       )}
+
+      <PresenterStudentPicker
+        slide={presenterSlide}
+        reportOpen={reportOpen}
+        onReportClose={() => setReportOpen(false)}
+        responseContext={{ question: stage.prompt || stage.title, stageId: stage.id }}
+      />
 
       <div className="presenter-content swahili-a2-presenter__content" aria-live="polite">
         <div className="swahili-a2-presenter__meta">
@@ -164,7 +198,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
         onPrevious={() => goTo(index - 1)}
         onNext={() => goTo(index + 1)}
         onRestore={() => setFocusMode(false)}
-        onReport={() => goTo(stages.length - 1)}
+        onReport={() => setReportOpen(true)}
         nextLabel="Next stage →"
       />
       {!focusMode && <footer className="swahili-a2-presenter__foot no-print">
