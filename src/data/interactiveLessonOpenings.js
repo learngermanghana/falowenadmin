@@ -1,5 +1,6 @@
 import { A2_DAY25_CLASSROOM_LISTENING } from './a2Day25ClassroomListening.js';
 import { B1_DAY27_LISTENING } from './b1Day27Listening.js';
+import { B1_DAY28_LISTENING } from './b1Day28Listening.js';
 import { A2_DAY23_CLASSROOM_LISTENING } from './a2Day23ClassroomListening.js';
 import { A2_DAY24_CLASSROOM_LISTENING } from './a2Day24ClassroomListening.js';
 import { A2_DAY4_CLASSROOM_LISTENING } from './a2Day4ClassroomListening.js';
@@ -606,6 +607,22 @@ ENTRIES["B1-10.27"] = {
     studentPurpose: "Höre das veröffentlichte Lied für B1 Tag 27 und nenne eine Idee für deinen Alltag.",
     teacherPurpose: "Spiele die veröffentlichte Day-27-Musik aus der Musikbibliothek. Danach folgt die separate Gesprächsaufnahme mit sechs Hörfragen. Unbewertete Unterrichtsübung.",
     nextStep: "Danach: Lisas Tipps beim Einkaufen und Energiesparen. Das Gespräch ist zweimal aufgenommen.",
+  },
+};
+
+
+ENTRIES["B1-10.28"] = {
+  assignmentId: "B1-10.28", title: "Klimafreundlich leben", warmup: [],
+  // Classroom Hören only; learner workbook Teil 4 remains a distinct task.
+  listening: B1_DAY28_LISTENING,
+  musicIntro: {
+    mediaType: "music", level: "B1", day: 28,
+    title: "Klimafreundlich leben · Lernlied",
+    musicLibraryUrl: "https://music.falowen.app/?level=B1&day=28",
+    introQuestion: "Welche klimafreundliche Gewohnheit kannst du sofort umsetzen?",
+    studentPurpose: "Höre das vorhandene Lied für B1 Tag 28 und nenne eine umsetzbare Idee.",
+    teacherPurpose: "Öffne das bereits veröffentlichte B1-Tag-28-Lied in der Falowen-Musikbibliothek. Danach kommt die separate Aufnahme mit Lisa und Jonas und fünf Richtig/Falsch-Aussagen.",
+    nextStep: "Danach: Klimafreundlich leben · Lisa und Jonas · fünf Hörfragen zum separaten Gespräch.",
   },
 };
 
