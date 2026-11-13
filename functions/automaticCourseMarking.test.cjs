@@ -497,3 +497,19 @@ test('prior tutor score on the SAME submission cannot be replaced automatically'
     score: 40, manualScoreOverride: true, submissionPath: 'submissions/new',
   }, { submittedAt: '2026-10-28T11:00:00Z' }, 'submissions/new', {}), false);
 });
+
+test('Day 19 partial recordings go to tutor review without AI or an automatic score', async () => {
+  const attachments = [{ name: 'Teil 1 recording', url: 'https://example.test/recording.webm' }];
+  const store = memoryDb({
+    'markingJobs/day19': { automatic: true, submissionPath: 'submissions/day19', level: 'A1', assignmentKey: 'A1-5.9', status: 'pending' },
+    'submissions/day19': { status: 'submitted', studentId: 'uid', workbookRevision: 'a1-5.9-tutor-speaking-v1', submissionText: 'TEIL 1\nIch wohne in Accra.', attachments },
+    'students/uid': { studentCode: 'ST1' },
+  });
+  const unexpected = async () => assert.fail('Tutor marking must not invoke automatic assessment');
+  await createCourseMarkingWorker({ db: store.db, loadReference: unexpected, mark: unexpected })({ data: store.snapshot('markingJobs/day19') });
+  const review = store.rows.get('markingResults/day19');
+  assert.equal(review.status, 'needs_review');
+  assert.equal(review.sentToStudent, false);
+  assert.deepEqual(review.attachments, attachments);
+  assert.equal(store.rows.has('scores/ST1__A1-5.9'), false);
+});

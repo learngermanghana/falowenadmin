@@ -158,9 +158,11 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         throw new Error('Registered student identity unavailable; tutor review required');
       }
       const text = String(submission.submissionText || submission.text || submission.answer || submission.workContent || '').trim();
+      const tutorSpeakingWorkbook = job.assignmentKey === 'A1-5.9'
+        && submission.workbookRevision === 'a1-5.9-tutor-speaking-v1';
       const emptySubmission = !text;
       let referenceEntry;
-      if (emptySubmission) {
+      if (emptySubmission || tutorSpeakingWorkbook) {
         referenceEntry = { parts: [], referenceAnswerParts: [], title: assignmentTitle(submission.assignmentTitle, submission.title, job.assignmentKey) };
       } else {
         referenceEntry = await loadReference(job.assignmentKey);
@@ -174,14 +176,17 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         && (Boolean(referenceEntry.speakingParts?.length) || Object.values(referenceEntry.partGrading || {}).some(part => part.gradingMode === 'tutor_verified_speaking'));
       const serverSpeakingAssessment = speakingRequired
         ? await verifiedSpeakingAssessment(db, text, studentId, job.assignmentKey) : null;
-      const markedResult = emptySubmission ? emptySubmissionResult()
+      const markedResult = tutorSpeakingWorkbook
+        ? { status: 'needs_review', score: null, finalScore: null,
+          reviewReasons: ['Listen to the saved Day 19 speaking recordings and enter the tutor score.'] }
+        : emptySubmission ? emptySubmissionResult()
         : await withMarkingTransport(callAi, () => mark({
           submission: { ...submission, id: snap.id, path: snap.ref.path, text },
           submissionText: text, referenceEntry, serverSpeakingAssessment,
         }));
       const result = emptySubmission ? markedResult : holdIncompleteObjectiveResult(markedResult, referenceEntry);
       const speakingReviewRequired = !emptySubmission && speakingRequired && !serverSpeakingAssessment;
-      const release = !speakingReviewRequired && releasable(result);
+      const release = !tutorSpeakingWorkbook && !speakingReviewRequired && releasable(result);
       const timestamp = new Date(now()).toISOString();
       const studentCode = registeredCode;
       if (!studentCode || !studentId) throw new Error('Student identity missing; tutor review required');
@@ -210,7 +215,7 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         const replacesFailed = replacesFailedAttempt(previous, submission, snap.ref.path, previousSubmission);
         const publish = release && (!existingScore.exists || existingSameAttempt || replacesFailed);
         const status = publish ? 'marked' : 'needs_review';
-        const publicationReviewReasons = publish ? [] : [
+        const publicationReviewReasons = publish ? [] : tutorSpeakingWorkbook ? result.reviewReasons : [
           ...(!result.incompleteAssessment && (Number(result.finalScore ?? result.score) < 60 || result.passed === false || result.writingMinimumMet === false) ? ['Failed assessment requires tutor review before publication.'] : []),
           ...(result.incompleteAssessment ? ['A required workbook section was not submitted or scored; the assessment is incomplete and has no final pass/fail status.'] : []),
           ...(speakingReviewRequired ? ['Speaking checkpoint requires verified server assessment or tutor review; student-supplied score is not authoritative.'] : []),
