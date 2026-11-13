@@ -189,7 +189,7 @@ test("B1 Day 28 classroom Hören is sourced but separately graded workbook Teil 
   assert.equal(Object.keys(contract.answers.teil4).length,5);
   const listening=part(slide,"Teil 4 · Hören").detailEn;
   assert.match(listening,/Admin classroom Hören/i);
-  assert.match(listening,/five source-backed Richtig\\/Falsch statements/i);
+  assert.match(listening,/five source-backed Richtig\/Falsch statements/i);
   assert.match(listening,/separate from the student workbook Teil 4/i);
   assert.match(slide.workbookConnection.subtitle,/learner workbook Teil 4 assessment is still separate/i);
   assert.match(slide.teacherNotesEn.join(" "),/does not by itself resolve the separate student workbook Teil 4 grading contract/i);
