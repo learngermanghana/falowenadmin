@@ -178,3 +178,71 @@
 .swahili-a2-presenter__grammar-rule{padding:10px 12px}
 .swahili-a2-presenter__radio-link{width:100%;box-sizing:border-box}
 }
+
+/* Reuse the visual rhythm of A2 Day 1's native presenter: discrete media,
+   model, dialogue, rule, activity and objective panels rather than one
+   large monospace-like green text box. Shared presenter controls stay intact. */
+.swahili-a2-presenter.is-a2-classroom-style .swahili-a2-presenter__content{
+  display:flex;flex-direction:column;gap:clamp(10px,1.5vw,18px);
+  background:#fff;color:#172f24;
+}
+.swahili-a2-presenter.is-a2-classroom-style .swahili-a2-presenter__content h1{
+  margin:8px 0 2px;font-size:clamp(1.5rem,3vw,2.9rem);
+}
+.swahili-a2-presenter.is-a2-classroom-style .swahili-a2-presenter__english{
+  margin:0;color:#64748b;text-align:left;font-size:clamp(.78rem,1.25vw,.98rem)
+}
+.swahili-a2-presenter__intro-stage{
+  display:grid;gap:14px;
+  padding:clamp(15px,2.5vw,26px);
+  border-radius:16px;background:linear-gradient(125deg,#f1f8f4,#eaf3f6);
+  border:1px solid #dce8e0;
+}
+.swahili-a2-presenter__intro-stage h2{font-size:clamp(1.25rem,2.5vw,2.3rem);margin:0;color:#154c34}
+.swahili-a2-presenter__intro-stage .presenter-objective{font-size:clamp(.92rem,1.5vw,1.2rem);margin:0}
+.swahili-a2-presenter__lesson-highlight{display:grid;gap:6px;padding:12px 18px;border:1px solid #cde0d2;border-radius:13px;background:#fff}
+.swahili-a2-presenter__lesson-highlight p{margin:0;font-size:clamp(1rem,1.9vw,1.55rem);font-weight:750;line-height:1.5}
+.swahili-a2-presenter__media-stage{display:grid;gap:12px;min-width:0}
+.swahili-a2-presenter__media-heading{display:grid;gap:4px}
+.swahili-a2-presenter__media-heading h2{font-size:clamp(1.25rem,2.3vw,2rem);margin:0}
+.swahili-a2-presenter__media-heading p{margin:0;color:#50675a;font-size:clamp(.88rem,1.4vw,1.1rem)}
+.swahili-a2-presenter__media-stage .music-video-embed{width:min(100%,650px);margin:0 auto}
+.swahili-a2-presenter__media-stage .music-video-embed-frame{aspect-ratio:16/9}
+.swahili-a2-presenter__lyrics{border:1px solid #d6e8de;border-radius:15px;background:#f5faf6;padding:clamp(14px,2.4vw,25px);display:grid;gap:6px;text-align:center}
+.swahili-a2-presenter__lyrics p{margin:0;font-size:clamp(1.05rem,2.3vw,2.1rem);line-height:1.45;font-weight:750;color:#19482f}
+.swahili-a2-presenter__support-note{margin:0;font-size:.78rem;color:#687d70}
+.swahili-a2-presenter__word-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(8px,1.5vw,15px)}
+.swahili-a2-presenter__word-grid span{display:grid;place-items:center;padding:12px 17px;min-height:48px;background:#f0f8f3;border:1px solid #d0e6d7;border-radius:13px;color:#194b34;font-size:clamp(1.05rem,2.35vw,1.9rem);font-weight:800;overflow-wrap:anywhere}
+.swahili-a2-presenter__grammar-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;font-weight:800;color:#225f3d}
+.swahili-a2-presenter__grammar-stage{display:grid;gap:12px}
+.swahili-a2-presenter__grammar-model{display:grid;gap:8px;background:#f0f6fa;border:1px solid #dbe7f1;border-radius:14px;padding:clamp(12px,2vw,24px)}
+.swahili-a2-presenter__grammar-model p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:clamp(1.02rem,2.25vw,1.9rem);font-weight:750;color:#163f63}
+.swahili-a2-presenter__grammar-explanation{display:grid;gap:5px;padding:12px 17px;border-left:4px solid #26724e;border-radius:9px;background:#edf7f1}
+.swahili-a2-presenter__grammar-explanation span{font-size:.78rem;letter-spacing:.04em;font-weight:900;color:#1d6740;text-transform:uppercase}
+.swahili-a2-presenter__grammar-explanation p{margin:0;line-height:1.5;font-size:clamp(.84rem,1.45vw,1.1rem)}
+.swahili-a2-presenter__menu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(10px,1.7vw,24px)}
+.swahili-a2-presenter__menu-column{padding:clamp(12px,2vw,22px);border-radius:15px;border:1px solid #d6e5d9;background:#fafdfb}
+.swahili-a2-presenter__menu-column:nth-child(2){background:#fffaf2;border-color:#eedfca}
+.swahili-a2-presenter__menu-column h2{font-size:clamp(1.05rem,1.7vw,1.6rem);margin:0 0 12px;color:#1a6845;border-bottom:1px solid #d7e5d9;padding-bottom:9px}
+.swahili-a2-presenter__menu-column p{margin:0;padding:8px 0;border-bottom:1px solid #e6ede8;font-size:clamp(.96rem,1.5vw,1.35rem);font-weight:700}
+.swahili-a2-presenter__dialogue{display:grid;gap:8px}
+.swahili-a2-presenter__dialogue-turn{display:flex;gap:10px;align-items:flex-start;border-radius:13px;border:1px solid #dbe7dd;padding:10px 15px;background:#f9fcfa}
+.swahili-a2-presenter__dialogue-turn:nth-child(odd){background:#fffaf2}
+.swahili-a2-presenter__dialogue-turn span{font-size:.75rem;text-transform:uppercase;font-weight:850;letter-spacing:.05em;color:#21734b;min-width:84px;padding-top:5px}
+.swahili-a2-presenter__dialogue-turn span.is-customer{color:#96601e}
+.swahili-a2-presenter__dialogue-turn p{margin:0;font-weight:750;line-height:1.5;font-size:clamp(.96rem,1.6vw,1.4rem)}
+.swahili-a2-presenter__reading-words{display:grid;gap:18px}
+.swahili-a2-presenter__task-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.swahili-a2-presenter__task{display:flex;gap:12px;align-items:center;border:1px solid #dae8de;border-radius:12px;padding:14px;background:#f9fcfa}
+.swahili-a2-presenter__task>span{background:#e4f2e8;color:#267148;border-radius:8px;font-size:.75rem;padding:7px;font-weight:850}
+.swahili-a2-presenter__task strong{font-size:clamp(.95rem,1.55vw,1.3rem);line-height:1.45}
+.swahili-a2-presenter.is-a2-classroom-style .swahili-a2-presenter__question{margin-top:auto;background:#f7faf8;border:1px solid #dbe8df;border-radius:13px;padding:12px 18px}
+.swahili-a2-presenter.is-a2-classroom-style .swahili-a2-presenter__question h2{margin:6px 0 10px;font-size:clamp(1rem,1.8vw,1.45rem)}
+@media(max-width:650px){
+ .swahili-a2-presenter__task-grid{grid-template-columns:1fr}
+ .swahili-a2-presenter__menu{gap:8px}
+ .swahili-a2-presenter__dialogue-turn{display:grid;gap:4px}
+ .swahili-a2-presenter__dialogue-turn span{padding:0}
+ .swahili-a2-presenter__word-grid span{min-height:40px;padding:8px 11px}
+ .swahili-a2-presenter__menu-column{padding:10px}
+}
