@@ -93,3 +93,21 @@ test('students and signed-out visitors cannot list, inspect or write private moc
     }));
   }
 });
+
+test('Swahili feedback is written by verified teaching staff and read only by its learner', async () => {
+  const staff = env.authenticatedContext('swahili-teacher', { role: 'tutor' }).firestore();
+  const student = env.authenticatedContext('swahili-student').firestore();
+  const other = env.authenticatedContext('other-learner').firestore();
+  const unverified = env.authenticatedContext('unverified', { email: 'staff@falowen.app' }).firestore();
+  const id = 'swahili-student_day-6';
+  const review = { program: 'swahili', lessonId: 'swahili-day-6', studentId: 'swahili-student', status: 'reviewed', feedback: 'Practice requests.' };
+  await assertSucceeds(getDocs(collectionGroup(staff, 'swahiliLessons')));
+  await assertFails(getDocs(collectionGroup(student, 'swahiliLessons')));
+  await assertFails(getDocs(collectionGroup(unverified, 'swahiliLessons')));
+  await assertSucceeds(getDoc(doc(student, 'swahiliTeacherReviews', id)));
+  await assertFails(setDoc(doc(student, 'swahiliTeacherReviews', id), review));
+  await assertFails(setDoc(doc(staff, 'swahiliTeacherReviews', id), { ...review, lessonId: 'swahili-day-1' }));
+  await assertSucceeds(setDoc(doc(staff, 'swahiliTeacherReviews', id), review));
+  await assertSucceeds(getDoc(doc(student, 'swahiliTeacherReviews', id)));
+  await assertFails(getDoc(doc(other, 'swahiliTeacherReviews', id)));
+});

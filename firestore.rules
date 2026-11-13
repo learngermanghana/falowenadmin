@@ -109,6 +109,34 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    function canReviewSwahili() {
+      return isSignedIn() && (
+        request.auth.token.get('admin', false) == true ||
+        request.auth.token.get('staff', false) == true ||
+        request.auth.token.get('role', '') in ['admin', 'staff', 'tutor'] ||
+        (request.auth.token.get('email_verified', false) == true &&
+          request.auth.token.get('email', '') in ['moxflex@gmail.com', 'staff@falowen.app'])
+      );
+    }
+
+    match /{path=**}/swahiliLessons/{lessonId} {
+      allow read: if canReviewSwahili();
+    }
+
+    match /swahiliTeacherReviews/{reviewId} {
+      allow get: if canReviewSwahili() || (isSignedIn() &&
+        (reviewId == request.auth.uid || reviewId == request.auth.uid + '_day-6') &&
+        (resource == null || resource.data.studentId == request.auth.uid));
+      allow list: if canReviewSwahili();
+      allow create, update: if canReviewSwahili() &&
+        request.resource.data.program == 'swahili' &&
+        request.resource.data.status in ['reviewed', 'needs_revision'] &&
+        request.resource.data.feedback is string &&
+        request.resource.data.feedback.size() <= 3000 &&
+        ((request.resource.data.lessonId == 'swahili-day-1' && reviewId == request.resource.data.studentId) ||
+          (request.resource.data.lessonId == 'swahili-day-6' && reviewId == request.resource.data.studentId + '_day-6'));
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

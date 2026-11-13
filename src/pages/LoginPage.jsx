@@ -1,24 +1,10 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { auth } from "../firebaseAuth";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { isStaffEmail, STAFF_ACCOUNT_PASSWORD } from "../utils/authRoles";
-
-const STAFF_ALLOWED_REDIRECTS = new Set(["/students", "/class-operations"]);
-
-function getPostLoginPath(from, normalizedEmail) {
-  const defaultPath = isStaffEmail(normalizedEmail) ? "/students" : "/";
-  const pathname = from?.pathname;
-
-  if (!pathname || pathname === "/login" || !pathname.startsWith("/")) return defaultPath;
-  if (isStaffEmail(normalizedEmail) && !STAFF_ALLOWED_REDIRECTS.has(pathname)) return defaultPath;
-
-  return `${pathname}${from.search || ""}${from.hash || ""}`;
-}
+import { getAdminRole, getPostLoginPath } from "../utils/authRoles";
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const nav = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState("");
@@ -34,32 +20,16 @@ export default function LoginPage() {
     const normalizedEmail = email.trim().toLowerCase();
 
     try {
-      await login(normalizedEmail, password);
-      nav(getPostLoginPath(location.state?.from, normalizedEmail), { replace: true });
-    } catch (e2) {
-      const canProvisionStaffAccount =
-        isStaffEmail(normalizedEmail) &&
-        password === STAFF_ACCOUNT_PASSWORD &&
-        e2?.code === "auth/invalid-credential";
-
-      if (canProvisionStaffAccount) {
-        try {
-          await createUserWithEmailAndPassword(auth, normalizedEmail, password);
-          nav(getPostLoginPath(location.state?.from, normalizedEmail), { replace: true });
-          return;
-        } catch (createError) {
-          if (createError?.code !== "auth/email-already-in-use") {
-            setErr(createError?.message || "Login failed");
-            return;
-          }
-
-          await login(normalizedEmail, password);
-          nav(getPostLoginPath(location.state?.from, normalizedEmail), { replace: true });
-          return;
-        }
+      const { user } = await login(normalizedEmail, password);
+      const role = getAdminRole((await user.getIdTokenResult()).claims);
+      if (!role) {
+        await logout();
+        setErr("This account needs Falowen staff or admin access.");
+        return;
       }
-
-      setErr(e2?.message || "Login failed");
+      nav(getPostLoginPath(location.state?.from, role), { replace: true });
+    } catch (error) {
+      setErr(error?.message || "Login failed");
     } finally {
       setBusy(false);
     }

@@ -1,0 +1,45 @@
+.marking-language-nav, .swahili-marking-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.marking-language-nav { margin-block: 12px 20px; }
+
+.marking-language-nav a {
+  padding: 8px 14px;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  color: #1e40af;
+  text-decoration: none;
+}
+
+.marking-language-nav a[aria-current="page"] {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.swahili-marking-queue, .swahili-marking-form, .swahili-marking-form fieldset {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+  min-width: 0;
+}
+
+.swahili-marking-toolbar h2 { margin: 0; }
+
+.swahili-marking-form {
+  width: 100%;
+  padding: 16px;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  background: #fff;
+  overflow-wrap: anywhere;
+}
+
+.swahili-marking-form h3, .swahili-marking-form h4, .swahili-marking-form p { margin: 0; }
+.swahili-marking-form fieldset { width: 100%; padding: 0; border: 0; }
+.swahili-marking-queue label, .swahili-marking-form label, .swahili-marking-lesson { display: grid; gap: 4px; }
+.swahili-marking-lesson { margin-bottom: 16px; width: fit-content; max-width: 100%; }
+.swahili-marking-form label { width: min(100%, 640px); }
