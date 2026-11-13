@@ -11,6 +11,13 @@ import "./SwahiliTeachingSlides.css";
 const courseRoot = "/teaching-slides/course/SWAHILI";
 const lessonRoot = courseRoot + "/swahili-day-1";
 const learnerWorkbook = "https://www.falowen.app/swahili/day-1";
+// Keep the shared presenter identity stable across slide navigation, so its
+// roster and class clock never reload due to a new object on every render.
+const presenterSlide = Object.freeze({
+  ...SWAHILI_DAY_ONE_ADMIN_LESSON,
+  assignmentId: "SWAHILI-DAY-1",
+  workbookConnection: { url: learnerWorkbook },
+});
 
 export default function SwahiliTeachingSlides({ slideId, present = false }) {
   const lesson = SWAHILI_DAY_ONE_ADMIN_LESSON;
@@ -92,7 +99,6 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
   }
 
   const grammar = stage.type === "grammar" ? stage.details?.[grammarPage] : null;
-  const presenterSlide = { ...lesson, assignmentId: "SWAHILI-DAY-1", workbookConnection: { url: learnerWorkbook } };
   return (
     <main className={`presenter-stage swahili-a2-presenter ${presenting ? "is-presenting" : ""} ${focusMode ? "is-focus-mode" : ""}`} lang="sw">
       {!focusMode && (
