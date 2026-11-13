@@ -5,11 +5,13 @@ import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterActivityTimer, { usePresenterActivityTimer } from "./PresenterActivityTimer.jsx";
 import { SWAHILI_DAY_ONE_ADMIN_LESSON } from "../data/swahiliTeachingSlides.js";
+import { SWAHILI_DAY_SIX_ADMIN_LESSON } from "../data/swahiliDaySixTeachingSlides.js";
 import "./TeachingSlidePresenter.css";
 import "./SwahiliTeachingSlides.css";
 
 const courseRoot = "/teaching-slides/course/SWAHILI";
 const lessonRoot = courseRoot + "/swahili-day-1";
+const daySixRoot = courseRoot + "/swahili-day-6";
 const learnerWorkbook = "https://www.falowen.app/swahili/day-1";
 // Keep the shared presenter identity stable across slide navigation, so its
 // roster and class clock never reload due to a new object on every render.
@@ -19,8 +21,20 @@ const presenterSlide = Object.freeze({
   workbookConnection: { workbookUrl: learnerWorkbook, subtitle: "Continue Kiswahili Day 1 in your learner workbook." },
 });
 
+const daySixPresenterSlide = Object.freeze({
+  ...SWAHILI_DAY_SIX_ADMIN_LESSON,
+  assignmentId: "SWAHILI-DAY-6",
+  workbookConnection: {
+    workbookUrl: "https://www.falowen.app/swahili/day-6",
+    subtitle: "Continue Kiswahili Day 6 in your learner workbook.",
+  },
+});
+
 export default function SwahiliTeachingSlides({ slideId, present = false }) {
-  const lesson = SWAHILI_DAY_ONE_ADMIN_LESSON;
+  const isDaySix = slideId === SWAHILI_DAY_SIX_ADMIN_LESSON.id;
+  const lesson = isDaySix ? SWAHILI_DAY_SIX_ADMIN_LESSON : SWAHILI_DAY_ONE_ADMIN_LESSON;
+  const selectedPresenterSlide = isDaySix ? daySixPresenterSlide : presenterSlide;
+  const selectedWorkbook = isDaySix ? "https://www.falowen.app/swahili/day-6" : learnerWorkbook;
   const stages = lesson.stages;
   const activityTimer = usePresenterActivityTimer(7);
   const [reportOpen, setReportOpen] = useState(false);
@@ -72,7 +86,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [slideId, presenting, index, stages.length]);
 
-  if (slideId && slideId !== lesson.id) {
+  if (slideId && slideId !== SWAHILI_DAY_ONE_ADMIN_LESSON.id && slideId !== SWAHILI_DAY_SIX_ADMIN_LESSON.id) {
     return <section className="slides-index"><h1>Lesson not found</h1><Link to={courseRoot}>Back to Swahili</Link></section>;
   }
 
@@ -82,7 +96,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
         <div className="swahili-admin-slides__crumb"><Link to="/teaching-slides?language=swahili">← All languages</Link></div>
         <p className="slide-meta">Kiswahili · Beginner</p>
         <h1>Swahili teaching slides</h1>
-        <p>Uses the same nine-part classroom flow as Falowen A2. Day 1 is available; music and recorded Hören are awaiting approved audio.</p>
+        <p>Uses the same nine-part classroom flow as Falowen A2. Day 1 and A1 Lesson 6 (Mgahawani) use the shared Falowen classroom presenter. Day 6 includes the existing Falowen Radio link; song audio is pending.</p>
         <div className="slide-card-grid">
           <article className="slide-card slide-card-lesson">
             <p className="slide-meta">Day 1 · {stages.length} classroom stages</p>
@@ -93,12 +107,24 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
               <Link to={lessonRoot + "?present=1"}>Present</Link>
             </div>
           </article>
+          <article className="slide-card slide-card-lesson">
+            <p className="slide-meta">A1 · Day 6 · {SWAHILI_DAY_SIX_ADMIN_LESSON.stages.length} classroom stages</p>
+            <h2>{SWAHILI_DAY_SIX_ADMIN_LESSON.title}</h2>
+            <p>{SWAHILI_DAY_SIX_ADMIN_LESSON.objective}</p>
+            <div className="slide-card-actions">
+              <Link to={daySixRoot}>Open lesson</Link>
+              <Link to={daySixRoot + "?present=1"}>Present</Link>
+            </div>
+          </article>
         </div>
       </section>
     );
   }
 
   const grammar = stage.type === "grammar" ? stage.details?.[grammarPage] : null;
+  const stageQuestion = grammar?.question || stage.prompt;
+  const stageAnswer = grammar?.answer || stage.answer;
+  const stageEnglish = grammar?.english || stage.english;
   return (
     <div className={presenting ? `presenter-shell swahili-a2-shell ${focusMode ? "is-presentation-mode" : ""}` : "swahili-a2-inline-shell"}>
     <main className={`presenter-stage swahili-a2-presenter ${presenting ? "is-presenting" : ""} ${focusMode ? "is-focus-mode" : ""}`} lang="sw">
@@ -107,10 +133,10 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
           <div className="swahili-a2-presenter__identity">
             <Link to={courseRoot}>← Kiswahili</Link>
             <strong>{lesson.title}</strong>
-            <span>Day 1</span>
+            <span>{lesson.day}</span>
           </div>
           <PresenterSessionTimer
-            slide={presenterSlide}
+            slide={selectedPresenterSlide}
             stage={stage}
             toolbarActions={
               <PresenterActions
@@ -144,7 +170,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
         slide={presenterSlide}
         reportOpen={reportOpen}
         onReportClose={() => setReportOpen(false)}
-        responseContext={{ question: stage.prompt || stage.title, stageId: stage.id }}
+        responseContext={{ question: stageQuestion || stage.title, stageId: `${lesson.id}-${stage.id}${grammar ? `-${grammarPage + 1}` : ""}` }}
       />
 
       <div className="presenter-content swahili-a2-presenter__content" aria-live="polite">
@@ -156,8 +182,9 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
         {stage.type === "music" || stage.type === "listening" ? (
           <div className="swahili-a2-presenter__audio">
             <div className="swahili-a2-presenter__audio-icon" aria-hidden="true">{stage.type === "music" ? "♫" : "◉"}</div>
-            <strong>{stage.type === "music" ? "Music not uploaded yet" : "Teacher-led listening"}</strong>
-            <p>{stage.type === "music" ? "Falowen will show the published song here once it is available." : "The teacher reads the existing words aloud. A recorded track will be added later."}</p>
+            <strong>{stage.type === "music" ? "Song lyrics · Teacher-led practice" : stage.radioUrl ? "Falowen Radio · Listening" : "Teacher-led listening"}</strong>
+            <p>{stage.type === "music" ? "The lyrics are available. An approved song recording has not been linked yet." : stage.radioUrl ? "Open the lesson's published Falowen Radio episode, then discuss the classroom dialogue." : "The teacher reads the existing words aloud. A recorded track will be added later."}</p>
+            {stage.radioUrl && <a className="swahili-a2-presenter__radio-link" href={stage.radioUrl} target="_blank" rel="noreferrer">Open Falowen Radio on YouTube</a>}
             <p className="swahili-a2-presenter__model">{stage.content}</p>
           </div>
         ) : stage.type === "grammar" && grammar ? (
@@ -171,23 +198,24 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
             </div>
             <h2>{grammar.title}</h2>
             <p className="swahili-a2-presenter__model">{grammar.body}</p>
+            {grammar.rule && <p className="swahili-a2-presenter__grammar-rule"><strong>Rule:</strong> {grammar.rule}</p>}
           </div>
         ) : (
           <p className="swahili-a2-presenter__model">{stage.content}</p>
         )}
 
-        <p className="swahili-a2-presenter__english" lang="en">{stage.english}</p>
+        <p className="swahili-a2-presenter__english" lang="en">{stageEnglish}</p>
 
-        {stage.prompt && (
+        {stageQuestion && (
           <section className="swahili-a2-presenter__question" aria-label="Classroom question">
             <span>Classroom question</span>
-            <h2>{stage.prompt}</h2>
-            {stage.answer && (
+            <h2>{stageQuestion}</h2>
+            {stageAnswer && (
               <>
                 <button type="button" onClick={() => setAnswerVisible(v => !v)} aria-expanded={answerVisible}>
                   {answerVisible ? "Hide answer" : "Show answer"}
                 </button>
-                {answerVisible && <p className="swahili-a2-presenter__answer">{stage.answer}</p>}
+                {answerVisible && <p className="swahili-a2-presenter__answer">{stageAnswer}</p>}
               </>
             )}
           </section>
@@ -209,8 +237,8 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
         nextLabel="Next stage →"
       />
       {!focusMode && <footer className="swahili-a2-presenter__foot no-print">
-        <a href={learnerWorkbook} target="_blank" rel="noreferrer">Open Day 1 learner workbook</a>
-        <span>Music and recorded Hören will be linked after upload.</span>
+        <a href={selectedWorkbook} target="_blank" rel="noreferrer">Open {lesson.day} learner workbook</a>
+        <span>{isDaySix ? "Restaurant lesson · Falowen Radio available · Song audio pending" : "Music and recorded Hören will be linked after upload."}</span>
       </footer>}
     </main>
     </div>
