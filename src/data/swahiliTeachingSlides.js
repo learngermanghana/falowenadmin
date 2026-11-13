@@ -1,18 +1,98 @@
-// Source: Ruth's "Kiswahili Alfabeti Sauti na Matamshi", the Day 1
-// source already used in the Falowen learner workbook. Do not extrapolate
-// the A1/A2 syllabus into unpublished lessons or present audio as recorded.
+// Day 1 content is taken from the existing Kiswahili alphabet and
+// pronunciation lesson. This is the same A2-inspired teaching sequence
+// (introduction, music, listening, grammar, reading, speaking, writing,
+// presentation, summary), not a separate slide engine or a new lesson.
+// Audio stages remain intentionally unrecorded until supplied by the teacher.
 export const SWAHILI_DAY_ONE_SLIDES = Object.freeze([
-  { id: "intro", title: "Somo la 1 · Alfabeti, sauti na matamshi", content: "Leo tunajifunza vokali, silabi na matamshi.", english: "Today we learn vowels, syllables and pronunciation.", notes: "Tell learners the objective. Read each model first, then ask the class to repeat." },
-  { id: "vowels", title: "Vokali tano", content: "A  ·  E  ·  I  ·  O  ·  U", english: "Five vowels: listen, repeat, then say them in reverse order.", notes: "Say each vowel clearly. Ask: Ni vokali gani unayosikia?" },
-  { id: "vowel-words", title: "Vokali katika maneno", content: "A — mama\nE — wewe\nI — kiti\nO — mtoto\nU — kuku", english: "mother · you · chair · child · chicken", notes: "Model each word and invite volunteers to identify its highlighted vowel." },
-  { id: "syllables-b", title: "Silabi za B", content: "ba  ·  be  ·  bi  ·  bo  ·  bu", english: "Combine consonants and vowels.", notes: "Students read each syllable slowly and then as a continuous sequence." },
-  { id: "syllables-ch", title: "Silabi za CH", content: "cha  ·  che  ·  chi  ·  cho  ·  chu", english: "Practise the ch consonant combination.", notes: "Demonstrate ch, then practise pair repetition." },
-  { id: "syllables-l", title: "Silabi za L", content: "la  ·  le  ·  li  ·  lo  ·  lu", english: "One more consonant–vowel series.", notes: "Ask learners to read a random syllable instead of only memorising the sequence." },
-  { id: "letter-pairs", title: "Miunganiko ya herufi", content: "ch — chai\ndh — dhahabu\ngh — gharama\nng’ — ng’ombe\nny — nyanya\nsh — shule\nth — thelathini", english: "tea · gold · cost · cow · tomato · school · thirty", notes: "Focus on contrasts: ng / ng’, s / sh, t / th. Correct pronunciation, not spelling speed." },
-  { id: "stress", title: "Mkazo wa neno", content: "MA-ma\nra-FI-ki\nmwa-LI-mu\ncha-KU-la\nKi-swa-HI-li", english: "In many Kiswahili words the penultimate syllable is stressed.", notes: "Tap the beat on the stressed syllable. Uppercase indicates stress here." },
-  { id: "speaking", title: "Teil 1 · Kuzungumza", content: "A · E · I · O · U\nba · be · bi · bo · bu\nchai · shule · nyanya · ng’ombe", english: "Pair speaking practice: one learner reads, the other repeats.", notes: "Switch partners or roles. Invite volunteers to demonstrate." },
-  { id: "finish", title: "Kazi ya Somo la 1", content: "Teil 2 · Kuandika\nTeil 3 · Kusoma\nTeil 4 · Kusikiliza (mwalimu)\nSubmit · Wasilisha", english: "Complete the exercises in the Falowen Kiswahili Day 1 workbook.", notes: "Teacher-led listening only until approved recorded audio is uploaded. Workbook: https://www.falowen.app/swahili/day-1" },
+  {
+    id: "intro", type: "intro", kicker: "Utangulizi · Introduction",
+    title: "Somo la 1 · Alfabeti, sauti na matamshi",
+    content: "Leo tunajifunza vokali, silabi na matamshi.",
+    english: "Today we learn vowels, syllables and pronunciation.",
+    prompt: "Ni vokali zipi unazozijua?",
+    answer: "A · E · I · O · U",
+    notes: "Introduce the goal. Invite learners to name sounds they already recognise before revealing the five vowels."
+  },
+  {
+    id: "music", type: "music", kicker: "Muziki · Music",
+    title: "Muziki · Sauti za Kiswahili",
+    content: "A · E · I · O · U",
+    english: "Music is planned for this lesson but has not been uploaded.",
+    status: "pending-audio",
+    prompt: "Unaweza kutamka vokali hizi?",
+    notes: "Do not simulate or play missing recordings. Use a spoken call-and-response activity until an approved Falowen track is published."
+  },
+  {
+    id: "listening", type: "listening", kicker: "Kusikiliza · Hören",
+    title: "Sikiliza na utambue sauti",
+    content: "mama · kiti · mtoto · kuku · chai",
+    english: "Teacher-led listening: listen to each spoken word and identify its vowel.",
+    status: "teacher-led",
+    prompt: "Ni vokali gani unayosikia?",
+    answer: "mama → a · kiti → i · mtoto → o · kuku → u · chai → a / i",
+    notes: "Read each example aloud once or twice. Let learners answer before revealing. No recorded listening file exists yet."
+  },
+  {
+    id: "grammar", type: "grammar", kicker: "Sarufi · Grammatik",
+    title: "Vokali, silabi na matamshi",
+    content: "A · E · I · O · U\nba · be · bi · bo · bu\ncha · che · chi · cho · chu\nla · le · li · lo · lu",
+    english: "Five vowels and consonant–vowel syllables. Pronounce the combinations clearly.",
+    details: [
+      { title: "Vokali tano", body: "A · E · I · O · U" },
+      { title: "Silabi za B", body: "ba · be · bi · bo · bu" },
+      { title: "Silabi za CH", body: "cha · che · chi · cho · chu" },
+      { title: "Silabi za L", body: "la · le · li · lo · lu" },
+      { title: "Miunganiko", body: "ch — chai\ndh — dhahabu\ngh — gharama\nng’ — ng’ombe\nny — nyanya\nsh — shule\nth — thelathini" },
+      { title: "Mkazo", body: "MA-ma · ra-FI-ki · mwa-LI-mu · cha-KU-la · Ki-swa-HI-li" }
+    ],
+    prompt: "Soma: cha · che · chi · cho · chu",
+    answer: "The combination CH is pronounced together in each syllable.",
+    notes: "Use the same A2 rule → model → quick-check sequence. Contrast ng/ng’, s/sh and t/th. Stress generally falls on the penultimate syllable."
+  },
+  {
+    id: "reading", type: "reading", kicker: "Kusoma · Lesen",
+    title: "Soma maneno haya",
+    content: "mama\nmtoto\nkiti\nkuku\nchai",
+    english: "Read the five familiar Day 1 words. Do not introduce new vocabulary.",
+    prompt: "Neno gani linamaanisha ‘chair’?",
+    answer: "kiti",
+    notes: "Ask learners to read individually, then match each word to its familiar meaning: mother, child, chair, chicken, tea."
+  },
+  {
+    id: "speaking", type: "speaking", kicker: "Kuzungumza · Sprechen",
+    title: "Soma na rudia",
+    content: "A · E · I · O · U\nba · be · bi · bo · bu\nchai · shule · nyanya · ng’ombe",
+    english: "Pair practice: one learner reads and the other repeats; switch roles.",
+    prompt: "Unaweza kutamka ‘ng’ombe’ na ‘nyanya’?",
+    notes: "Model carefully, allow pair practice, then invite volunteers to read and provide one additional pronunciation attempt."
+  },
+  {
+    id: "writing", type: "writing", kicker: "Kuandika · Schreiben",
+    title: "Andika vokali na silabi",
+    content: "a · e · i · o · u\nba · be · bi · bo · bu\nmama · kiti · kuku",
+    english: "Write the vowels, five B syllables and familiar words from the Day 1 workbook.",
+    prompt: "Andika silabi tano za B.",
+    answer: "ba · be · bi · bo · bu",
+    notes: "This is a classroom bridge to the workbook's existing Teil 2 writing task, not a separate graded submission."
+  },
+  {
+    id: "presentation", type: "presentation", kicker: "Uwasilishaji · Presentation",
+    title: "Onyesha unachojua",
+    content: "1. Taja vokali tano.\n2. Soma silabi za CH.\n3. Soma ‘mama’, ‘kiti’ na ‘mtoto’.",
+    english: "One learner demonstrates vowel recognition and pronunciation, while classmates listen.",
+    prompt: "Ni sauti gani ilikuwa ngumu kutamka?",
+    notes: "Invite a brief individual demonstration and one follow-up question. Keep it supportive and ungraded."
+  },
+  {
+    id: "summary", type: "summary", kicker: "Hitimisho · Summary",
+    title: "Umejifunza nini?",
+    content: "Vokali · Silabi · Matamshi\nTeil 2 · Kuandika\nTeil 3 · Kusoma\nTeil 4 · Kusikiliza\nSubmit · Wasilisha",
+    english: "You can identify vowels, read syllables and pronounce simple words. Continue in the Day 1 learner workbook.",
+    prompt: "Taja neno moja jipya ulilojifunza.",
+    notes: "Return to the existing Day 1 workbook. Recorded music/listening and further lessons will be attached when available."
+  }
 ]);
+
 export const SWAHILI_DAY_ONE_ADMIN_LESSON = Object.freeze({
   id: "swahili-day-1",
   course: "SWAHILI",
