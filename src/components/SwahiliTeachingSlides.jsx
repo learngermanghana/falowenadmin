@@ -1,52 +1,63 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import PresenterControls, { PresenterStageJump } from "./PresenterControls.jsx";
 import { SWAHILI_DAY_ONE_ADMIN_LESSON } from "../data/swahiliTeachingSlides.js";
+import "./TeachingSlidePresenter.css";
 import "./SwahiliTeachingSlides.css";
 
 const courseRoot = "/teaching-slides/course/SWAHILI";
 const lessonRoot = courseRoot + "/swahili-day-1";
+const learnerWorkbook = "https://www.falowen.app/swahili/day-1";
 
 export default function SwahiliTeachingSlides({ slideId, present = false }) {
-  const navigate = useNavigate();
-  const [index, setIndex] = useState(0);
-  const [notesVisible, setNotesVisible] = useState(false);
-  const [presenting, setPresenting] = useState(present);
   const lesson = SWAHILI_DAY_ONE_ADMIN_LESSON;
   const stages = lesson.stages;
-  const current = stages[index];
+  const [index, setIndex] = useState(0);
+  const [notesVisible, setNotesVisible] = useState(false);
+  const [answerVisible, setAnswerVisible] = useState(false);
+  const [grammarPage, setGrammarPage] = useState(0);
+  const [presenting, setPresenting] = useState(Boolean(slideId) && present);
+  const [focusMode, setFocusMode] = useState(false);
+  const stage = stages[index];
+  const atStart = index === 0;
+  const atEnd = index === stages.length - 1;
 
-  // React Router reuses this component when navigating between the course
-  // index and its lesson. Reflect the new route, not just the initial prop.
+  // React Router reuses the course component across index, lesson and
+  // ?present=1 navigations. Reset the lesson, not just the initial state.
   useEffect(() => {
     setPresenting(Boolean(slideId) && present);
     setIndex(0);
     setNotesVisible(false);
+    setAnswerVisible(false);
+    setGrammarPage(0);
+    setFocusMode(false);
   }, [slideId, present]);
 
+  const goTo = (position) => {
+    setIndex(Math.max(0, Math.min(stages.length - 1, position)));
+    setNotesVisible(false);
+    setAnswerVisible(false);
+    setGrammarPage(0);
+  };
+
   useEffect(() => {
-    if (!presenting) return undefined;
+    if (!slideId || !presenting) return undefined;
     const onKeyDown = (event) => {
-      if (["ArrowRight", "PageDown", " "].includes(event.key)) {
-        // Arrow keys and PageDown should advance even if a presenter button
-        // retains focus. Space must keep its native button activation behavior.
-        if (event.target instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(event.target.tagName)) return;
-        if (event.key === " " && event.target instanceof HTMLElement && (event.target.closest("button, a, [role='button']") || event.target.isContentEditable)) return;
-        event.preventDefault();
-        setIndex((value) => Math.min(stages.length - 1, value + 1));
-      } else if (["ArrowLeft", "PageUp"].includes(event.key)) {
-        event.preventDefault();
-        setIndex((value) => Math.max(0, value - 1));
-      } else if (event.key === "Home") {
-        event.preventDefault();
-        setIndex(0);
-      } else if (event.key === "End") {
-        event.preventDefault();
-        setIndex(stages.length - 1);
-      } else if (event.key === "Escape") setPresenting(false);
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+      const target = event.target;
+      if (target instanceof HTMLElement && target.closest('input, textarea, select, summary, [contenteditable="true"]')) return;
+      if (event.key === " " && target instanceof HTMLElement && target.closest('button, a, [role="button"]')) return;
+      const actions = {
+        ArrowRight: () => goTo(index + 1), PageDown: () => goTo(index + 1), " ": () => goTo(index + 1),
+        ArrowLeft: () => goTo(index - 1), PageUp: () => goTo(index - 1),
+        Home: () => goTo(0), End: () => goTo(stages.length - 1),
+        Escape: () => setFocusMode(false),
+      };
+      if (actions[event.key]) { event.preventDefault(); actions[event.key](); }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [presenting, stages.length]);
+  }, [slideId, presenting, index, stages.length]);
 
   if (slideId && slideId !== lesson.id) {
     return <section className="slides-index"><h1>Lesson not found</h1><Link to={courseRoot}>Back to Swahili</Link></section>;
@@ -58,10 +69,10 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
         <div className="swahili-admin-slides__crumb"><Link to="/teaching-slides?language=swahili">← All languages</Link></div>
         <p className="slide-meta">Kiswahili · Beginner</p>
         <h1>Swahili teaching slides</h1>
-        <p>Only the approved Day 1 alphabet and pronunciation lesson is available. Later lessons can be added when teaching material is ready.</p>
+        <p>Uses the same nine-part classroom flow as Falowen A2. Day 1 is available; music and recorded Hören are awaiting approved audio.</p>
         <div className="slide-card-grid">
           <article className="slide-card slide-card-lesson">
-            <p className="slide-meta">Day 1 · {stages.length} presentation slides</p>
+            <p className="slide-meta">Day 1 · {stages.length} classroom stages</p>
             <h2>{lesson.title}</h2>
             <p>{lesson.objective}</p>
             <div className="slide-card-actions">
@@ -74,33 +85,92 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
     );
   }
 
+  const grammar = stage.type === "grammar" ? stage.details?.[grammarPage] : null;
   return (
-    <main className={"swahili-admin-slides " + (presenting ? "swahili-admin-slides--presenting" : "")} lang="sw">
-      {!presenting && (
-        <div className="swahili-admin-slides__crumb">
-          <Link to={courseRoot}>← Swahili lessons</Link>
-          <span>Day 1 · {stages.length} slides</span>
-        </div>
+    <main className={`presenter-stage swahili-a2-presenter ${presenting ? "is-presenting" : ""} ${focusMode ? "is-focus-mode" : ""}`} lang="sw">
+      {!focusMode && (
+        <header className="presenter-topbar swahili-a2-presenter__topbar no-print">
+          <div className="swahili-a2-presenter__identity">
+            <Link to={courseRoot}>← Kiswahili</Link>
+            <strong>{lesson.title}</strong>
+            <span>Day 1</span>
+          </div>
+          <div className="presenter-v2-tools">
+            <PresenterStageJump stages={stages} index={index} onChange={goTo} />
+            <div className="swahili-a2-presenter__actions">
+              <button type="button" onClick={() => setPresenting(p => !p)}>{presenting ? "Exit presenter" : "Start presenter"}</button>
+              <button type="button" onClick={() => setFocusMode(true)}>Focus</button>
+              <button type="button" onClick={() => setNotesVisible(v => !v)} aria-expanded={notesVisible}>Teacher notes</button>
+            </div>
+          </div>
+        </header>
       )}
-      <div className="swahili-admin-slides__stage" aria-live="polite" aria-label="Swahili teacher slide">
-        <div className="swahili-admin-slides__stageTop">
-          <span>FALOWEN · KISWAHILI</span>
+
+      <div className="presenter-content swahili-a2-presenter__content" aria-live="polite">
+        <div className="swahili-a2-presenter__meta">
+          <span>{stage.kicker}</span>
           <span>{index + 1} / {stages.length}</span>
         </div>
-        <h1>{current.title}</h1>
-        <div className="swahili-admin-slides__content">{current.content}</div>
-        <p className="swahili-admin-slides__english">{current.english}</p>
+        <h1>{stage.title}</h1>
+        {stage.type === "music" || stage.type === "listening" ? (
+          <div className="swahili-a2-presenter__audio">
+            <div className="swahili-a2-presenter__audio-icon" aria-hidden="true">{stage.type === "music" ? "♫" : "◉"}</div>
+            <strong>{stage.type === "music" ? "Music not uploaded yet" : "Teacher-led listening"}</strong>
+            <p>{stage.type === "music" ? "Falowen will show the published song here once it is available." : "The teacher reads the existing words aloud. A recorded track will be added later."}</p>
+            <p className="swahili-a2-presenter__model">{stage.content}</p>
+          </div>
+        ) : stage.type === "grammar" && grammar ? (
+          <div className="swahili-a2-presenter__grammar">
+            <div className="swahili-a2-presenter__grammar-head">
+              <span>Grammar {grammarPage + 1} / {stage.details.length}</span>
+              <div className="swahili-a2-presenter__actions">
+                <button type="button" disabled={grammarPage === 0} onClick={() => {setGrammarPage(n => n - 1);setAnswerVisible(false);}}>←</button>
+                <button type="button" disabled={grammarPage === stage.details.length - 1} onClick={() => {setGrammarPage(n => n + 1);setAnswerVisible(false);}}>→</button>
+              </div>
+            </div>
+            <h2>{grammar.title}</h2>
+            <p className="swahili-a2-presenter__model">{grammar.body}</p>
+          </div>
+        ) : (
+          <p className="swahili-a2-presenter__model">{stage.content}</p>
+        )}
+
+        <p className="swahili-a2-presenter__english" lang="en">{stage.english}</p>
+
+        {stage.prompt && (
+          <section className="swahili-a2-presenter__question" aria-label="Classroom question">
+            <span>Classroom question</span>
+            <h2>{stage.prompt}</h2>
+            {stage.answer && (
+              <>
+                <button type="button" onClick={() => setAnswerVisible(v => !v)} aria-expanded={answerVisible}>
+                  {answerVisible ? "Hide answer" : "Show answer"}
+                </button>
+                {answerVisible && <p className="swahili-a2-presenter__answer">{stage.answer}</p>}
+              </>
+            )}
+          </section>
+        )}
+
+        {notesVisible && <aside className="swahili-a2-presenter__notes"><strong>Teacher notes</strong><p>{stage.notes}</p></aside>}
       </div>
-      <div className="swahili-admin-slides__controls no-print">
-        <button type="button" disabled={index === 0} onClick={() => setIndex(i => Math.max(0, i - 1))}>← Previous</button>
-        <button type="button" disabled={index === stages.length - 1} onClick={() => setIndex(i => Math.min(stages.length - 1, i + 1))}>Next →</button>
-        <button type="button" onClick={() => setPresenting(value => !value)}>{presenting ? "Exit presenter" : "Start presenter"}</button>
-        <button type="button" onClick={() => setNotesVisible(value => !value)} aria-expanded={notesVisible}>{notesVisible ? "Hide teacher notes" : "Teacher notes"}</button>
-        {!presenting && <button type="button" onClick={() => window.print()}>Print</button>}
-        {presenting && <button type="button" onClick={() => navigate(courseRoot)}>All Swahili lessons</button>}
-      </div>
-      {notesVisible && <aside className="swahili-admin-slides__notes"><strong>Teacher notes</strong><p>{current.notes}</p></aside>}
-      {!presenting && <p className="swahili-admin-slides__footer"><a href="https://www.falowen.app/swahili/day-1" target="_blank" rel="noreferrer">Open learner workbook</a> · Audio and music will be added when supplied.</p>}
+
+      <PresenterControls
+        focus={focusMode}
+        index={index}
+        total={stages.length}
+        atStart={atStart}
+        atEnd={atEnd}
+        onPrevious={() => goTo(index - 1)}
+        onNext={() => goTo(index + 1)}
+        onRestore={() => setFocusMode(false)}
+        onReport={() => goTo(stages.length - 1)}
+        nextLabel="Next stage →"
+      />
+      {!focusMode && <footer className="swahili-a2-presenter__foot no-print">
+        <a href={learnerWorkbook} target="_blank" rel="noreferrer">Open Day 1 learner workbook</a>
+        <span>Music and recorded Hören will be linked after upload.</span>
+      </footer>}
     </main>
   );
 }
