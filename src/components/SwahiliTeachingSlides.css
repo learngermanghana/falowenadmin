@@ -142,3 +142,39 @@
     border-radius:0;
   }
 }
+
+/* Day 6 shares the existing Falowen A2 presenter. These two additions
+   support a sourced radio link and rule-by-rule grammar slides. */
+.swahili-a2-presenter__grammar-rule{
+  margin:12px auto 0;
+  width:min(100%,850px);
+  padding:13px 18px;
+  border-left:4px solid #258c5a;
+  border-radius:9px;
+  background:#e9f7ef;
+  color:#1d5037;
+  line-height:1.55;
+  font-size:clamp(.93rem,1.6vw,1.2rem);
+}
+.swahili-a2-presenter__radio-link{
+  display:inline-flex;
+  justify-content:center;
+  align-items:center;
+  width:fit-content;
+  max-width:100%;
+  margin:5px auto 14px;
+  padding:12px 18px;
+  border-radius:11px;
+  background:#206a4c;
+  color:white;
+  font-size:clamp(.87rem,1.5vw,1.05rem);
+  font-weight:800;
+  text-decoration:none;
+  overflow-wrap:anywhere;
+}
+.swahili-a2-presenter__radio-link:focus-visible{outline:3px solid #bbecce;outline-offset:3px}
+.swahili-a2-presenter__radio-link:hover{background:#14543b}
+@media(max-width:650px){
+.swahili-a2-presenter__grammar-rule{padding:10px 12px}
+.swahili-a2-presenter__radio-link{width:100%;box-sizing:border-box}
+}
