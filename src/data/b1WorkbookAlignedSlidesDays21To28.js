@@ -755,15 +755,15 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
     teacherNotesEn: [
       "Day 28 has no day-specific deep grammar page. Use the workbook's general B1 argument training and the lesson's indem/dass/weil/trotzdem contrast-and-reason frames.",
       "Teil 3 is a separate seven-question reading about water as a scarce resource, water saving, pollution and government responsibility.",
-      "Critical operational mismatch: the workbook calls Hören self-check and the old video is removed from the rendered page, but the current marking contract expects teil4 and stores five reference answers.",
-      "Do not fabricate a listening task. Treat Teil 4 as an unresolved assessment-source blocker until a live medium/question set or a corrected grading contract is provided.",
+      "Classroom Hören now uses the teacher-supplied b1/day-28/klimafreundlich-leben.mp3 with five Richtig/Falsch questions. This does not by itself resolve the separate student workbook Teil 4 grading contract.",
+      "Use the five source-backed statements in the Admin classroom Hören stage. Keep the independently scored learner workbook Teil 4 untouched until its media/answer contract is aligned.",
     ],
     interactionFlow: [
       { phase: "Climate-action map", detailEn: "8 min: sort actions into energy, transport, consumption, food, recycling and education." },
       { phase: "Language links", detailEn: "9 min: connect methods with indem, reasons with weil and obstacles with dass/trotzdem." },
       { phase: "Country comparison", detailEn: "11 min: discuss what is realistic in the learner's country and why." },
       { phase: "Opinion rehearsal", detailEn: "10 min: prepare a structured answer with measures, obstacles and conclusion." },
-      { phase: "Contract warning", detailEn: "6 min: flag the unresolved scored-Teil4/no-media contradiction before assignment." },
+      { phase: "Hören · Lisa und Jonas", detailEn: "8 min: play the private Day 28 MP3, answer five Richtig/Falsch statements and identify textual evidence." },
     ],
     wrapUpTaskDe: "Erkläre eine klimafreundliche Maßnahme, einen Vorteil und ein Hindernis. Nutze indem, weil und trotzdem.",
     workbookConnection: workbookConnection(28, [
@@ -771,13 +771,13 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       { label: "Teil 1 · Sprechen", detailEn: "Explain how people can live climate-friendly in your country across energy, transport, consumption, food, recycling and education; discuss advantages, disadvantages and one realistic personal action. Practice only." },
       { label: "Teil 2 · Schreiben", detailEn: "Opinion text on whether everyone can live climate-friendly; include everyday examples, obstacles such as rural transport/money/habits, justification and conclusion." },
       { label: "Teil 3 · Lesen", detailEn: "Scored seven-question reading ‘Bewusst Leben: Wasser als kostbare Ressource’ on scarcity, water use, saving measures, pollution, policy and public education." },
-      { label: "Teil 4 · Hören", detailEn: "BLOCKING MISMATCH: the marking contract expects/scored teil4 with five reference answers, but the current workbook labels Hören self-check and the old video is removed, leaving no live listening medium. Do not invent a task; resolve the source/contract mismatch before scoring." },
+      { label: "Teil 4 · Hören", detailEn: "The Admin classroom Hören has an approved private MP3 and five source-backed Richtig/Falsch statements. This is separate from the student workbook Teil 4; confirm the learner scoring contract independently before treating it as graded work." },
     ], {
       grammarUrl: null,
-      subtitle: "Day 28 has an unresolved Teil 4 source mismatch: grading expects five Hören answers, but the rendered workbook currently has no live listening medium.",
+      subtitle: "Admin classroom Hören now uses a source-backed recording and five questions; the learner workbook Teil 4 assessment is still separate.",
     }),
     teacherSupport: {
-      lessonOverviewEn: "Day 28 completes B1 with climate-action argumentation and a water-resource reading, while the listening assessment remains blocked by a contract-versus-media mismatch.",
+      lessonOverviewEn: "Day 28 completes B1 with climate-action argumentation, a water-resource reading and a new classroom listening exercise. The separately scored learner Teil 4 still needs its own contract review.",
       grammarFocusEn: [
         "indem explains the method used to reduce environmental impact.",
         "weil gives a reason and sends the verb to the end.",
@@ -794,7 +794,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
         "Using indem or weil with main-clause word order.",
         "Using trotzdem like a subordinate conjunction and putting the verb at the end.",
         "Talking only about abstract climate policy without concrete everyday measures.",
-        "Inventing a Day 28 listening task merely because the grading contract currently contains five teil4 answers.",
+        "Confusing the new five-question Admin classroom Hören with the separately scored learner workbook Teil 4.",
       ],
     },
   },
