@@ -36,3 +36,59 @@
 .swahili-a2-presenter.is-focus-mode .swahili-a2-presenter__model{font-size:clamp(1.6rem,4.1vw,3rem)}
 @media(max-width:650px){.swahili-a2-presenter__topbar{padding:10px}.swahili-a2-presenter__content{width:calc(100% - 16px);margin:8px auto;padding:18px;min-height:420px}.swahili-a2-presenter__identity{font-size:.82rem}.swahili-a2-presenter__grammar{padding:12px}.swahili-a2-presenter__model{padding:14px 8px}.swahili-a2-presenter__foot{padding:10px}}
 @media print{.swahili-a2-presenter .no-print,.swahili-a2-presenter .presenter-shared-controls{display:none!important}.swahili-a2-presenter__content{border:0;box-shadow:none;margin:0;min-height:90vh;width:100%}}
+
+/* Presenter mode must change the projected layout, not just button text.
+   Like the A2 presentation shell, fill the viewport with scroll-safe content;
+   unlike Focus mode, keep stage navigation and teacher controls visible. */
+.swahili-a2-presenter.is-presenting{
+  width:100%;
+  min-height:100dvh;
+  height:100dvh;
+  max-height:100dvh;
+  overflow:hidden;
+  padding:0;
+}
+.swahili-a2-presenter.is-presenting .swahili-a2-presenter__topbar{
+  flex:0 0 auto;
+  padding:10px 16px;
+}
+.swahili-a2-presenter.is-presenting .swahili-a2-presenter__content{
+  flex:1 1 auto;
+  min-height:0;
+  width:min(100%,1400px);
+  margin:8px auto;
+  padding:clamp(20px,3vw,48px);
+  overflow-y:auto;
+  overscroll-behavior:contain;
+}
+.swahili-a2-presenter.is-presenting .swahili-a2-presenter__content h1{
+  font-size:clamp(2rem,4.5vw,4rem);
+}
+.swahili-a2-presenter.is-presenting .swahili-a2-presenter__model{
+  font-size:clamp(1.8rem,4.4vw,3.65rem);
+  line-height:1.5;
+}
+.swahili-a2-presenter.is-presenting .swahili-a2-presenter__question h2{
+  font-size:clamp(1.4rem,2.4vw,2.15rem);
+}
+.swahili-a2-presenter.is-presenting .presenter-shared-controls{
+  flex:0 0 auto;
+}
+.swahili-a2-presenter.is-presenting .swahili-a2-presenter__foot{
+  flex:0 0 auto;
+  padding:6px 14px;
+}
+@media(max-width:650px){
+  .swahili-a2-presenter.is-presenting .swahili-a2-presenter__content{
+    width:100%;
+    margin:0 auto;
+    border-radius:0;
+    padding:16px;
+  }
+  .swahili-a2-presenter.is-presenting .swahili-a2-presenter__content h1{
+    font-size:clamp(1.65rem,6vw,2.5rem);
+  }
+  .swahili-a2-presenter.is-presenting .swahili-a2-presenter__model{
+    font-size:clamp(1.45rem,6vw,2.3rem);
+  }
+}
