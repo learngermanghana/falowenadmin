@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PresenterControls, { PresenterActions, PresenterStageJump } from "./PresenterControls.jsx";
+import SwahiliA2LessonStage from "./SwahiliA2LessonStage.jsx";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterActivityTimer, { usePresenterActivityTimer } from "./PresenterActivityTimer.jsx";
@@ -127,7 +128,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
   const stageEnglish = grammar?.english || stage.english;
   return (
     <div className={presenting ? `presenter-shell swahili-a2-shell ${focusMode ? "is-presentation-mode" : ""}` : "swahili-a2-inline-shell"}>
-    <main className={`presenter-stage swahili-a2-presenter ${presenting ? "is-presenting" : ""} ${focusMode ? "is-focus-mode" : ""}`} lang="sw">
+    <main className={`presenter-stage swahili-a2-presenter is-a2-classroom-style ${presenting ? "is-presenting" : ""} ${focusMode ? "is-focus-mode" : ""}`} lang="sw">
       {!focusMode && (
         <header className="presenter-topbar swahili-a2-presenter__topbar no-print">
           <div className="swahili-a2-presenter__identity">
@@ -167,7 +168,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
       )}
 
       <PresenterStudentPicker
-        slide={presenterSlide}
+        slide={selectedPresenterSlide}
         reportOpen={reportOpen}
         onReportClose={() => setReportOpen(false)}
         responseContext={{ question: stageQuestion || stage.title, stageId: `${lesson.id}-${stage.id}${grammar ? `-${grammarPage + 1}` : ""}` }}
@@ -179,30 +180,16 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
           <span>{index + 1} / {stages.length}</span>
         </div>
         <h1>{stage.title}</h1>
-        {stage.type === "music" || stage.type === "listening" ? (
-          <div className="swahili-a2-presenter__audio">
-            <div className="swahili-a2-presenter__audio-icon" aria-hidden="true">{stage.type === "music" ? "♫" : "◉"}</div>
-            <strong>{stage.type === "music" ? (isDaySix ? "Song lyrics · Teacher-led practice" : "Music not uploaded yet") : stage.radioUrl ? "Falowen Radio · Listening" : "Teacher-led listening"}</strong>
-            <p>{stage.type === "music" ? (isDaySix ? "The lyrics are available. An approved song recording has not been linked yet." : "Falowen will show the published song here once it is available.") : stage.radioUrl ? "Open the lesson's published Falowen Radio episode, then discuss the classroom dialogue." : "The teacher reads the existing words aloud. A recorded track will be added later."}</p>
-            {stage.radioUrl && <a className="swahili-a2-presenter__radio-link" href={stage.radioUrl} target="_blank" rel="noreferrer">Open Falowen Radio on YouTube</a>}
-            <p className="swahili-a2-presenter__model">{stage.content}</p>
-          </div>
-        ) : stage.type === "grammar" && grammar ? (
-          <div className="swahili-a2-presenter__grammar">
-            <div className="swahili-a2-presenter__grammar-head">
-              <span>Grammar {grammarPage + 1} / {stage.details.length}</span>
-              <div className="swahili-a2-presenter__actions">
-                <button type="button" disabled={grammarPage === 0} onClick={() => {setGrammarPage(n => n - 1);setAnswerVisible(false);}}>←</button>
-                <button type="button" disabled={grammarPage === stage.details.length - 1} onClick={() => {setGrammarPage(n => n + 1);setAnswerVisible(false);}}>→</button>
-              </div>
+        {stage.type === "grammar" && grammar && (
+          <div className="swahili-a2-presenter__grammar-head">
+            <span>Sarufi · {grammarPage + 1} / {stage.details.length}</span>
+            <div className="swahili-a2-presenter__actions">
+              <button type="button" disabled={grammarPage === 0} onClick={() => {setGrammarPage(n => n - 1);setAnswerVisible(false);}}>← Previous rule</button>
+              <button type="button" disabled={grammarPage === stage.details.length - 1} onClick={() => {setGrammarPage(n => n + 1);setAnswerVisible(false);}}>Next rule →</button>
             </div>
-            <h2>{grammar.title}</h2>
-            <p className="swahili-a2-presenter__model">{grammar.body}</p>
-            {grammar.rule && <p className="swahili-a2-presenter__grammar-rule"><strong>Rule:</strong> {grammar.rule}</p>}
           </div>
-        ) : (
-          <p className="swahili-a2-presenter__model">{stage.content}</p>
         )}
+        <SwahiliA2LessonStage stage={stage} grammar={grammar} isDaySix={isDaySix} />
 
         <p className="swahili-a2-presenter__english" lang="en">{stageEnglish}</p>
 
