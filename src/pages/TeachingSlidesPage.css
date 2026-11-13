@@ -552,3 +552,9 @@
     page-break-inside: avoid;
   }
 }
+
+/* Language selector: German and Kiswahili share the existing teaching-slides home. */
+.slide-language-picker{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:18px 0 22px}
+.slide-language-picker button{border:1px solid #cbd5e1;border-radius:12px;background:#fff;color:#334155;padding:11px 18px;min-height:44px;cursor:pointer;font-weight:750}
+.slide-language-picker button[aria-pressed="true"]{border-color:#176d4d;background:#e8f6ee;color:#16553b;box-shadow:inset 0 0 0 1px #176d4d}
+.slide-language-picker button:focus-visible{outline:3px solid #86efac;outline-offset:3px}
