@@ -27,6 +27,7 @@ import { MusicVideoStage, MusicReadingStage } from "./MusicTeachingStages.jsx";
 import { isInteractiveOpeningStage } from "../data/interactiveLessonOpenings.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
+import PresenterActivityTimer from "./PresenterActivityTimer.jsx";
 import "./TeachingSlidePresenter.css";
 
 const FALOWEN_BASE_URL = "https://www.falowen.app";
@@ -806,27 +807,18 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
           <div className="presenter-v2-tools">
             <PresenterStageJump stages={stages} index={stageIndex} onChange={goTo} />
 
-              {showPresenterTimer && <div className={`presenter-timer ${timerExpired ? "presenter-timer-expired" : ""}`}>
-                <span className="presenter-timer-mode">Activity timer</span>
-                <strong>{formatTimer(timerRemaining)}</strong>
-                <div className="presenter-timer-presets" role="group" aria-label="Activity timer duration">
-                  {timerPresets.map((minutes) => (
-                    <button
-                      key={minutes}
-                      type="button"
-                      className={a2B1ActivityTimer && activityTimerMinutes === minutes ? "is-active" : ""}
-                      aria-pressed={a2B1ActivityTimer ? activityTimerMinutes === minutes : undefined}
-                      onClick={() => setTimerMinutes(minutes, a2B1ActivityTimer ? "activity" : "stage")}
-                    >
-                      {minutes < 1 ? `${minutes * 60}s` : `${minutes}m`}
-                    </button>
-                  ))}
-                </div>
-                <button type="button" onClick={togglePresenterTimer} disabled={timerRemaining <= 0}>
-                  {timerRunning ? "Pause" : "Start"}
-                </button>
-                <button type="button" onClick={resetPresenterTimer}>Reset</button>
-              </div>}
+              {showPresenterTimer && (
+                <PresenterActivityTimer
+                  remaining={timerRemaining}
+                  running={timerRunning}
+                  minutes={activityTimerMinutes}
+                  presets={timerPresets}
+                  onDurationChange={(minutes) => setTimerMinutes(minutes, a2B1ActivityTimer ? "activity" : "stage")}
+                  onToggle={togglePresenterTimer}
+                  onReset={resetPresenterTimer}
+                  expired={timerExpired}
+                />
+              )}
           </div>
 
         </header>
