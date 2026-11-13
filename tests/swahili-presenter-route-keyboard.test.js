@@ -21,7 +21,7 @@ test("keyboard navigation works from focused buttons without overriding native S
 });
 
 test("Swahili reuses the A2 shared stage navigation instead of copying it", () => {
-  assert.ok(source.includes('PresenterControls, { PresenterStageJump }'));
+  assert.ok(source.includes('PresenterControls, { PresenterActions, PresenterStageJump }'));
   assert.ok(source.includes('<PresenterControls'));
   assert.ok(source.includes('<PresenterStageJump'));
   assert.ok(source.includes('"./TeachingSlidePresenter.css"'));
@@ -35,4 +35,13 @@ test("presenter mode has a real A2-sized viewport and enlarged classroom content
   assert.match(css, /\.swahili-a2-presenter\.is-presenting \.swahili-a2-presenter__model\s*\{[^}]*font-size:clamp\(1\.8rem/s);
   assert.match(css, /\.swahili-a2-presenter\.is-presenting \.swahili-a2-presenter__content\s*\{[^}]*overflow-y:auto/s);
   assert.match(css, /\.swahili-a2-presenter\.is-presenting \.presenter-shared-controls/);
+});
+
+test("Swahili presenter uses Falowen fixed classroom shell rather than Dashboard layout", () => {
+  const css = readFileSync(new URL("../src/components/SwahiliTeachingSlides.css", import.meta.url), "utf8");
+  assert.match(source, /presenter-shell swahili-a2-shell/);
+  assert.match(css, /\.swahili-a2-shell\.presenter-shell \.swahili-a2-presenter/);
+  assert.match(css, /grid-template-rows:auto auto minmax\(0,1fr\) auto auto/);
+  assert.match(css, /grid-row:2/);
+  assert.match(css, /grid-row:3/);
 });
