@@ -21,6 +21,7 @@ import "./TeachingSlidesPage.css";
 import { getUnifiedTopicLabel } from "../data/courseDictionary.js";
 import { listClasses } from "../services/classesService.js";
 import { listStudentsByClass } from "../services/studentsService.js";
+import { useAuth } from "../context/AuthContext.jsx";
 
 function SlideHeader({ slide }) {
   return (
@@ -38,21 +39,23 @@ function SlideHeader({ slide }) {
 }
 
 function SlideCoursesIndex() {
+  const { role, staffLanguages } = useAuth();
+  const permitted = role !== "staff" || !staffLanguages ? ["german", "swahili"] : staffLanguages;
   const courses = useMemo(() => getAvailableSlideCourses(), []);
-  const [language, setLanguage] = useState(() => new URLSearchParams(window.location.search).get("language") === "swahili" ? "swahili" : "german");
+  const [language, setLanguage] = useState(() => permitted.includes(new URLSearchParams(window.location.search).get("language")) ? new URLSearchParams(window.location.search).get("language") : permitted[0] || "german");
 
   return (
     <section className="slides-index">
       <h1>Teaching Slides</h1>
       <p>Select a teaching language, then open the course slides. German lessons remain unchanged.</p>
       <div className="slide-actions slide-language-picker" role="group" aria-label="Teaching language">
-        <button type="button" aria-pressed={language === "german"} onClick={() => setLanguage("german")}>German · Deutsch</button>
-        <button type="button" aria-pressed={language === "swahili"} onClick={() => setLanguage("swahili")}>Swahili · Kiswahili · A1 Days 1 &amp; 6</button>
+        {permitted.includes("german") && <button type="button" aria-pressed={language === "german"} onClick={() => setLanguage("german")}>German · Deutsch</button>}
+        {permitted.includes("swahili") && <button type="button" aria-pressed={language === "swahili"} onClick={() => setLanguage("swahili")}>Swahili · Kiswahili · A1 Days 1 &amp; 6</button>}
       </div>
-      <div className="slide-actions no-print" aria-label="Quick access to Kiswahili A1 Lesson 6">
+      {permitted.includes("swahili") && <div className="slide-actions no-print" aria-label="Quick access to Kiswahili A1 Lesson 6">
         <Link to="/teaching-slides/course/SWAHILI/swahili-day-6?present=1">Swahili A1 · Day 6 — Mgahawani · Present</Link>
         <Link to="/teaching-slides/course/SWAHILI">All Swahili lessons</Link>
-      </div>
+      </div>}
       {language === "swahili" ? (
         <div className="slide-card-grid">
           <article className="slide-card slide-card-lesson">
