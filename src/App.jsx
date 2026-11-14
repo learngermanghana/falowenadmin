@@ -62,9 +62,14 @@ function RouteFallback() {
 }
 
 function TopBar() {
-  const { user, logout, isStaff, role } = useAuth();
-  const nav = useNavigate();
+  const { user, logout, isStaff, role, staffLanguages, staffPagePermissions, staffRole } = useAuth();
   const location = useLocation();
+  const availableLanguages = staffLanguages?.length ? staffLanguages : [];
+  const requestedLanguage = new URLSearchParams(location.search).get("language");
+  const activeLanguage = availableLanguages.includes(requestedLanguage) ? requestedLanguage : (availableLanguages[0] || "german");
+  const staffPages = staffPagePermissions?.[activeLanguage] || (availableLanguages.includes(activeLanguage) ? (staffRole === "reviewer" ? ["marking"] : ["marking", "slides"]) : []);
+  const staffLink = path => path + "?language=" + activeLanguage;
+  const nav = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => { setMenuOpen(false); }, [location.pathname]);
   useEffect(() => {
@@ -163,8 +168,12 @@ function TopBar() {
           <div id="topbar-navigation" className={`topbar-links ${menuOpen ? "topbar-links-open" : ""}`}>
             {isStaff ? (
               <>
-                <Link to="/marking" onClick={() => setMenuOpen(false)}>Marking</Link>
-                <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Teaching Slides</Link>
+                {availableLanguages.length > 1 && <label>Workspace <select aria-label="Staff language workspace" value={activeLanguage} onChange={event => nav("/marking?language=" + event.target.value)}>{availableLanguages.map(lang => <option key={lang} value={lang}>{lang === "swahili" ? "Swahili" : "German"}</option>)}</select></label>}
+                {staffPages.includes("marking") && <Link to={staffLink("/marking")} onClick={() => setMenuOpen(false)}>Marking</Link>}
+                {staffPages.includes("slides") && <Link to={staffLink("/teaching-slides")} onClick={() => setMenuOpen(false)}>Teaching Slides</Link>}
+                {staffPages.includes("attendance") && <Link to={staffLink("/attendance")} onClick={() => setMenuOpen(false)}>Attendance</Link>}
+                {staffPages.includes("music") && <Link to={staffLink("/music-studio")} onClick={() => setMenuOpen(false)}>Music Studio</Link>}
+                {staffPages.includes("social") && <Link to={staffLink("/social-media")} onClick={() => setMenuOpen(false)}>Social Media</Link>}
               </>
             ) : (
               <>
@@ -236,7 +245,7 @@ function OwnerMusicAnalyticsRoute() {
 function OwnerStudioRoute({ music = false, lesson = false }) {
   const { user, loading, isStaff } = useAuth();
   const ownerUid = String(import.meta.env.VITE_HOEREN_STUDIO_OWNER_UID || "").trim();
-  if (!loading && user && (isStaff || !ownerUid || user.uid !== ownerUid)) return <Navigate to="/" replace />;
+  if (!loading && user && (!music || !isStaff) && (isStaff || !ownerUid || user.uid !== ownerUid)) return <Navigate to="/" replace />;
   return <ProtectedRoute>{lesson ? <LessonVideoStudioPage /> : music ? <MusicStudioPage /> : <HoerenStudioPage />}</ProtectedRoute>;
 }
 
