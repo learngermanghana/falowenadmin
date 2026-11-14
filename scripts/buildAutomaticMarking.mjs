@@ -11,7 +11,13 @@ let markingPatches = false;
 for (const command of commands) {
   if (command === 'node scripts/repairAnswersJson.mjs') markingPatches = true;
   if (command === 'node scripts/patchA1AttendanceDayLabels.mjs') break;
-  if (!process.argv.includes('--prepared') && markingPatches && /^node scripts\/[^ ]+\.mjs$/.test(command)) execFileSync(process.execPath, [command.slice(5)], { cwd: root, stdio: 'inherit' });
+  if (!process.argv.includes('--prepared') && markingPatches && /^node scripts\/[^ ]+\.mjs$/.test(command)) {
+    // Only marking patches belong in the Firebase marking bundle. The answer
+    // repair also imports legacy Live Classes UI patches, which cannot operate
+    // on the redesigned Live Classes screen and are unrelated to this worker.
+    const args = [command.slice(5), ...(command === 'node scripts/repairAnswersJson.mjs' ? ['--marking-only'] : [])];
+    execFileSync(process.execPath, args, { cwd: root, stdio: 'inherit' });
+  }
 }
 execFileSync(process.execPath, ['--test', 'tests/course-marking-current-contract.test.js', 'functions/markingReliability.test.cjs'], { cwd: root, stdio: 'inherit' });
 await build({
