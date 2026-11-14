@@ -572,6 +572,8 @@ function createFinalMockResultEmailTrigger({
 }
 
 module.exports = {
+  resolveAnnouncementConfig,
+  postAnnouncementRow,
   createFinalMockResultEmailTrigger,
   processFinalMockResultScore,
   _test: {

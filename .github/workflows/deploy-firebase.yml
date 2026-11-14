@@ -311,6 +311,9 @@ jobs:
           deploy_group "automatic course score Sheet sync worker" \
             "functions:falowenadmin:syncAutomaticCourseScore"
 
+          deploy_group "Swahili tutor results worker" \
+            "functions:falowenadmin:publishSwahiliTutorResult"
+
           deploy_group "automatic course marking worker" \
             "functions:falowenadmin:markCourseSubmissionAutomatically"
 
