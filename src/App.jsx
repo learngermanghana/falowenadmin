@@ -67,13 +67,16 @@ function RouteFallback() {
 
 function TopBar() {
   const { user, logout, isStaff, role, staffAccess, staffLanguages, staffRole, workspaceLanguage, setWorkspaceLanguage } = useAuth();
-  const staffLanguage = resolveLanguage(useLocation().pathname, useLocation().search, workspaceLanguage);
+  const location = useLocation();
+  const staffLanguage = resolveLanguage(location.pathname, location.search, workspaceLanguage);
   const staffHas = capability => staffCan(staffAccess, staffLanguages, staffLanguage, capability, staffRole);
   const staffUrl = path => path + (staffLanguage === "swahili" ? "?language=swahili" : "");
   const nav = useNavigate();
-  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => { setMenuOpen(false); }, [location.pathname]);
+  useEffect(() => {
+    if (isStaff && staffLanguages?.includes(staffLanguage) && workspaceLanguage !== staffLanguage) setWorkspaceLanguage(staffLanguage);
+  }, [isStaff, staffLanguages, staffLanguage, workspaceLanguage, setWorkspaceLanguage]);
   useEffect(() => {
     if (!menuOpen) return undefined;
     const onEscape = (event) => { if (event.key === "Escape") setMenuOpen(false); };
