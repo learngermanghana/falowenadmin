@@ -22,6 +22,7 @@ import { getUnifiedTopicLabel } from "../data/courseDictionary.js";
 import { listClasses } from "../services/classesService.js";
 import { listStudentsByClass } from "../services/studentsService.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import { staffCan } from "../utils/staffAccess.js";
 
 function SlideHeader({ slide }) {
   return (
@@ -39,18 +40,25 @@ function SlideHeader({ slide }) {
 }
 
 function SlideCoursesIndex() {
-  const { role, staffLanguages } = useAuth();
-  const permitted = role !== "staff" || !staffLanguages ? ["german", "swahili"] : staffLanguages;
+  const { role, staffLanguages, staffAccess, staffRole, workspaceLanguage, setWorkspaceLanguage } = useAuth();
+  const permitted = role !== "staff" || !staffLanguages ? ["german", "swahili"]
+    : staffLanguages.filter(language => staffCan(staffAccess, staffLanguages, language, "slides", staffRole));
   const courses = useMemo(() => getAvailableSlideCourses(), []);
-  const [language, setLanguage] = useState(() => permitted.includes(new URLSearchParams(window.location.search).get("language")) ? new URLSearchParams(window.location.search).get("language") : permitted[0] || "german");
+  const [language, setLanguage] = useState(() => {
+    const requested = new URLSearchParams(window.location.search).get("language") || workspaceLanguage;
+    return permitted.includes(requested) ? requested : permitted[0] || "german";
+  });
+  useEffect(() => {
+    if (!permitted.includes(language)) setLanguage(permitted[0] || "german");
+  }, [permitted.join(","), language]);
 
   return (
     <section className="slides-index">
       <h1>Teaching Slides</h1>
       <p>Select a teaching language, then open the course slides. German lessons remain unchanged.</p>
       <div className="slide-actions slide-language-picker" role="group" aria-label="Teaching language">
-        {permitted.includes("german") && <button type="button" aria-pressed={language === "german"} onClick={() => setLanguage("german")}>German · Deutsch</button>}
-        {permitted.includes("swahili") && <button type="button" aria-pressed={language === "swahili"} onClick={() => setLanguage("swahili")}>Swahili · Kiswahili · A1 Days 1, 5 &amp; 6</button>}
+        {permitted.includes("german") && <button type="button" aria-pressed={language === "german"} onClick={() => { setLanguage("german"); setWorkspaceLanguage("german"); }}>German · Deutsch</button>}
+        {permitted.includes("swahili") && <button type="button" aria-pressed={language === "swahili"} onClick={() => { setLanguage("swahili"); setWorkspaceLanguage("swahili"); }}>Swahili · Kiswahili · A1 Days 1, 5 &amp; 6</button>}
       </div>
       {permitted.includes("swahili") && <div className="slide-actions no-print" aria-label="Quick access to Kiswahili teaching slides">
         <Link to="/teaching-slides/course/SWAHILI/swahili-day-5?present=1">Swahili A1 · Day 5 · Present</Link>
