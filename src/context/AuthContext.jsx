@@ -7,7 +7,7 @@ import { getAdminRole } from "../utils/authRoles";
 const AuthCtx = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [session, setSession] = useState({ user: null, role: null, staffLanguages: null, staffRole: null, loading: Boolean(auth) });
+  const [session, setSession] = useState({ user: null, role: null, staffLanguages: null, staffRole: null, staffPagePermissions: null, loading: Boolean(auth) });
 
   useEffect(() => {
     if (!auth) return undefined;
@@ -17,17 +17,19 @@ export function AuthProvider({ children }) {
       let role = null;
       let staffLanguages = null;
       let staffRole = null;
+      let staffPagePermissions = null;
       try {
         if (user) {
           const claims = (await user.getIdTokenResult()).claims;
           role = getAdminRole(claims);
           staffLanguages = Array.isArray(claims.staffLanguages) ? claims.staffLanguages.filter(lang => ["german", "swahili"].includes(lang)) : null;
           staffRole = claims.staffRole || null;
+          staffPagePermissions = claims.staffPagePermissions && typeof claims.staffPagePermissions === "object" ? claims.staffPagePermissions : null;
         }
       } catch {
         // Keep protected routes closed when the token cannot be read.
       }
-      if (current === revision) setSession({ user, role, staffLanguages, staffRole, loading: false });
+      if (current === revision) setSession({ user, role, staffLanguages, staffRole, staffPagePermissions, loading: false });
     });
     return () => { revision += 1; unsubscribe(); };
   }, []);
