@@ -94,4 +94,6 @@ test("Day 6 workbook reaches the marking queue and upserts the tutor score to Sh
   assert.equal(data.get(jobPath).status, "synced");
   assert.equal(data.get(job.scorePath).sheetSaved, true);
   assert.equal(emails.length, 1);
+  assert.equal(data.get(reviewPath).answerReference.reading.food.answer, "wali na kuku");
+  assert.match(emails[0].link, /#swahili-day-6$/);
 });
