@@ -16,7 +16,7 @@ if (process.argv.includes('--legacy-source-patches') && !process.argv.includes('
   for (const command of commands) {
     if (command === 'node scripts/repairAnswersJson.mjs') markingPatches = true;
     if (command === 'node scripts/patchA1AttendanceDayLabels.mjs') break;
-    if (markingPatches && /^node scripts\\/[^ ]+\\.mjs$/.test(command))
+    if (markingPatches && /^node scripts\/[^ ]+\.mjs$/.test(command))
       execFileSync(process.execPath, [command.slice(5)], { cwd: root, stdio: 'inherit' });
   }
 }
