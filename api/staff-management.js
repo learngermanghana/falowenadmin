@@ -282,3 +282,6 @@ export default async function staffManagementHandler(req, res) {
     return res.status(status).json({ ok: false, error: status >= 500 && !(ownerVerified && err.staffDiagnostic) ? "Staff management is unavailable. Check server credentials and Firebase access." : err.message });
   }
 }
+
+// Shared server-only utilities for the assigned-class attendance endpoint.
+export { tokenForGoogle, PROJECT, KEY, fieldsToObject };
