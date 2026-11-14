@@ -31,6 +31,49 @@ function eligible(submission, level, assignmentKey) {
     && !submission.examTask && !submission.mockAttemptId && !submission.courseSpeakingAttemptId
     && !/mock|exam-speaking/i.test(String(submission.source || submission.type || ''));
 }
+// The objective scorer already chooses this revision from the version tag in the
+// student's work. The outer Firebase worker must use that SAME reference for
+// completeness checks and the student-facing answer reference, otherwise the
+// old three-part A1-12.1 key incorrectly requires a nonexistent Teil 2.
+function selectSubmittedWorkbookReference(referenceEntry = {}, assignmentKey = '', submissionText = '') {
+  if (String(assignmentKey).trim().toUpperCase() !== 'A1-12.1') return referenceEntry;
+  const tags = [...new Set((String(submissionText).match(/\bA1-12\.1-(?:BAHNHOF-HOEREN-V3|READING-V2)\b/gi) || [])
+    .map(value => value.toUpperCase()))];
+  if (!tags.length) return referenceEntry;
+  if (tags.length > 1) throw new Error('Conflicting A1-12.1 workbook revision tags; tutor review required');
+  const revisionId = tags[0].endsWith('BAHNHOF-HOEREN-V3')
+    ? 'a1-12.1-bahnhof-hoeren-v3'
+    : 'a1-12.1-bahn-auto-beruf-v2';
+  // Never trust a versioned submission tag as permission to bypass required
+  // parts. The declared requirements must exist in the bundled answer key.
+  const revision = referenceEntry.workbookRevisions?.[revisionId];
+  const expected = revision?.expectedParts;
+  const objective = revision?.referenceAnswerParts;
+  if (!revision?.answers || !Array.isArray(expected) || !Array.isArray(objective)
+      || !objective.length || expected.length !== objective.length
+      || expected.some(part => !objective.includes(part)))
+    throw new Error(`Missing or invalid A1-12.1 answer-key revision ${revisionId}; tutor review required`);
+  const parts = Object.fromEntries(Object.entries(revision.answers).map(([label, answers]) => [
+    String(label).trim().toLowerCase().replace(/\s+/g, ''),
+    { answers: Object.entries(answers).map(([questionKey, rawCorrectAnswer]) => ({
+      questionKey, rawCorrectAnswer: String(rawCorrectAnswer),
+    })) },
+  ]));
+  if (objective.some(part => !parts[part]?.answers?.length))
+    throw new Error(`Incomplete A1-12.1 answer-key revision ${revisionId}; tutor review required`);
+  return {
+    ...referenceEntry, ...revision,
+    parts, rawAnswers: revision.answers,
+    expectedParts: expected, referenceAnswerParts: objective,
+    excludedParts: ['teil2'], writingParts: [], aiGradedParts: [],
+    partGrading: Object.fromEntries(objective.map(part => [part, {
+      label: part, hasReferenceAnswers: true, gradingMode: 'answer_key',
+    }])),
+    totalAnswers: Object.values(parts).reduce((sum, part) => sum + part.answers.length, 0),
+    selectedWorkbookRevision: revisionId,
+  };
+}
+
 function missingObjectiveSubmissionParts(referenceEntry = {}, result = {}) {
   const expected = Array.isArray(referenceEntry.referenceAnswerParts) ? referenceEntry.referenceAnswerParts
     : Array.isArray(referenceEntry.reference_answer_parts) ? referenceEntry.reference_answer_parts : [];
@@ -174,6 +217,7 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         const versionProblem = referenceVersionProblem(submission, referenceEntry);
         if (versionProblem) throw new Error(versionProblem);
         referenceEntry = familyRecordingReference(referenceEntry, submission, job.assignmentKey);
+        referenceEntry = selectSubmittedWorkbookReference(referenceEntry, job.assignmentKey, text);
       }
       const speakingRequired = A1_SPEAKING_REVIEW_ASSIGNMENTS.has(String(job.assignmentKey || "").toUpperCase())
         && (Boolean(referenceEntry.speakingParts?.length) || Object.values(referenceEntry.partGrading || {}).some(part => part.gradingMode === 'tutor_verified_speaking'));
@@ -401,4 +445,4 @@ function createScoreSyncWorker({ db, config, post = fetch }) {
     await updateSheetStatus('synced');
   };
 }
-module.exports = { idForPath, eligible, releasable, emptySubmissionResult, missingObjectiveSubmissionParts, holdIncompleteObjectiveResult, replacesFailedAttempt, createCourseMarkingWorker, createScoreSyncWorker };
+module.exports = { idForPath, eligible, releasable, emptySubmissionResult, selectSubmittedWorkbookReference, missingObjectiveSubmissionParts, holdIncompleteObjectiveResult, replacesFailedAttempt, createCourseMarkingWorker, createScoreSyncWorker };

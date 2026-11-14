@@ -69,6 +69,102 @@ test('complete objective sections keep their AI result unchanged', () => {
   assert.equal(releasable(result), true);
 });
 
+test('A1-12.1 V3 uses the revision with Teil 1 and Teil 3, never the old Teil 2', () => {
+  const dictionary = require('../src/data/answers_dictionary.json');
+  const source = Object.values(dictionary).find(entry => entry.assignment_id === 'A1-12.1');
+  const { selectSubmittedWorkbookReference } = require('./automaticCourseMarking');
+  const submitted = 'TEIL 1 A1-12.1-BAHNHOF-HOEREN-V3 1. Richtig 2. Richtig 3. Richtig 4. Richtig 5. Falsch TEIL 3 1. Richtig 2. Richtig 3. Richtig 4. Falsch 5. Richtig';
+  const v3 = selectSubmittedWorkbookReference(source, 'A1-12.1', submitted);
+  assert.deepEqual(v3.referenceAnswerParts, ['teil1', 'teil3']);
+  assert.deepEqual(v3.expectedParts, ['teil1', 'teil3']);
+  assert.deepEqual(Object.keys(v3.parts), ['teil1', 'teil3']);
+  assert.equal(v3.parts.teil3.answers[1].rawCorrectAnswer, 'Falsch');
+  assert.equal(v3.totalAnswers, 10);
+
+  const details = {
+    'teil1.1': { partId: 'teil1', student: 'Richtig', correct: true },
+    'teil3.1': { partId: 'teil3', student: 'Richtig', correct: true },
+  };
+  const grade = { status: 'marked', finalScore: 70, score: 70, confidence: 1, objectiveDetails: details };
+  assert.equal(holdIncompleteObjectiveResult(grade, v3), grade);
+  const missing = holdIncompleteObjectiveResult(grade, source);
+  assert.deepEqual(missing.missingRequiredParts, ['teil2']);
+
+  // An actually missing V3 listening section must still be held for review.
+  const absent = holdIncompleteObjectiveResult({ ...grade, objectiveDetails: {
+    'teil1.1': details['teil1.1'],
+  } }, v3);
+  assert.deepEqual(absent.missingRequiredParts, ['teil3']);
+  assert.equal(absent.finalScore, null);
+  assert.equal(releasable(absent), false);
+
+  const v2 = selectSubmittedWorkbookReference(source, 'A1-12.1', submitted.replace('BAHNHOF-HOEREN-V3', 'READING-V2'));
+  assert.deepEqual(v2.referenceAnswerParts, ['teil1', 'teil3']);
+  assert.equal(v2.parts.teil3.answers[1].rawCorrectAnswer, 'A) Richtig');
+  assert.equal(selectSubmittedWorkbookReference(source, 'A1-12.1', 'TEIL 1 1. Richtig'), source);
+  assert.throws(() => selectSubmittedWorkbookReference(source, 'A1-12.1', 'A1-12.1-READING-V2 A1-12.1-BAHNHOF-HOEREN-V3'), /Conflicting/);
+  assert.throws(() => selectSubmittedWorkbookReference({ ...source, workbookRevisions: {} }, 'A1-12.1', submitted), /answer-key revision/);
+});
+
+test('automatic Firebase worker publishes 7/10 for A1-12.1 Bahnhof V3 and queues the score sync', async () => {
+  const dictionary = require('../src/data/answers_dictionary.json');
+  const source = Object.values(dictionary).find(entry => entry.assignment_id === 'A1-12.1');
+  const submissionText = [
+    'TEIL 1', 'A1-12.1-BAHNHOF-HOEREN-V3',
+    '1. Richtig', '2. Richtig', '3. Richtig', '4. Richtig', '5. Falsch',
+    'TEIL 3', '1. Richtig', '2. Richtig', '3. Richtig', '4. Falsch', '5. Richtig',
+  ].join('\n');
+  const store = memoryDb({
+    'markingJobs/j-v3': { automatic: true, submissionPath: 'submissions/bahnhof-v3',
+      level: 'A1', assignmentKey: 'A1-12.1', status: 'pending' },
+    'submissions/bahnhof-v3': { status: 'submitted', studentId: 'uid', submissionText },
+    'students/uid': { studentCode: 'ST1', email: 'student@example.test' },
+  });
+  let markCalls = 0;
+  await createCourseMarkingWorker({
+    db: store.db,
+    loadReference: async () => ({ ...source, assignmentKey: 'A1-12.1', level: 'A1',
+      parts: { teil2: { answers: [{ questionKey: 'Answer1', rawCorrectAnswer: 'Falsch' }] } } }),
+    mark: async ({ referenceEntry }) => {
+      markCalls++;
+      assert.deepEqual(referenceEntry.referenceAnswerParts, ['teil1', 'teil3']);
+      const submitted = {
+        teil1: ['Richtig', 'Richtig', 'Richtig', 'Richtig', 'Falsch'],
+        teil3: ['Richtig', 'Richtig', 'Richtig', 'Falsch', 'Richtig'],
+      };
+      const details = {};
+      for (const partId of ['teil1', 'teil3']) {
+        const answers = referenceEntry.parts[partId].answers;
+        for (let i = 0; i < answers.length; i++) {
+          details[`${partId}.${i + 1}`] = {
+            partId, student: submitted[partId][i],
+            correct: submitted[partId][i] === answers[i].rawCorrectAnswer,
+          };
+        }
+      }
+      const correct = Object.values(details).filter(row => row.correct).length;
+      assert.equal(correct, 7);
+      return { status: 'marked', score: 70, finalScore: 70, passed: true, confidence: 1,
+        objectiveCorrect: 7, objectiveTotal: 10, objectiveScore: 70, objectiveDetails: details,
+        feedback: '7/10. Review Teil 1 questions 2 and 3 and Teil 3 question 2.' };
+    },
+  })({ data: store.snapshot('markingJobs/j-v3') });
+
+  const result = store.rows.get('markingResults/bahnhof-v3');
+  assert.equal(markCalls, 1);
+  assert.equal(result.status, 'marked');
+  assert.equal(result.publicationStatus, 'published');
+  assert.equal(result.finalScore, 70);
+  assert.deepEqual(result.publicationReviewReasons, []);
+  assert.deepEqual(result.answerReference.parts.map(part => part.id), ['teil1', 'teil3']);
+  assert.equal(result.answerReference.parts[1].answers[1].answer, 'Falsch');
+  assert.equal(store.rows.get('scores/ST1__A1-12.1').score, 70);
+  assert.equal(store.rows.get('submissions/bahnhof-v3').markingStatus, 'marked');
+  assert.equal([...store.rows.keys()].filter(path => path.startsWith('automaticScoreSync/')).length, 1);
+  assert.equal([...store.rows.keys()].filter(path => path.startsWith('studentNotifications/')).length, 1);
+  assert.equal(store.rows.get('markingJobs/j-v3').status, 'marked');
+});
+
 test('job identity is stable across repeated deliveries and distinct across paths', () => {
   assert.equal(idForPath('submissions/a'),idForPath('submissions/a'));
   assert.notEqual(idForPath('submissions/A1/posts/a'),idForPath('submissions/A2/posts/a'));
