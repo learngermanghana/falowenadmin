@@ -79,7 +79,7 @@ test("Day 6 workbook reaches the marking queue and upserts the tutor score to Sh
     db, config: () => ({ url: "https://example.com/mock-sheet", token: "test", sheetName: "Scores" }),
     post: async (_, request) => {
       requests.push(JSON.parse(request.body));
-      return { ok: true, json: async () => ({ ok: true, action: "upsertScoreRows" }) };
+      return { ok: true, text: async () => JSON.stringify({ ok: true, mode: "upsert" }) };
     },
   });
   await sync({ data: { ref: ref(jobPath) } });
