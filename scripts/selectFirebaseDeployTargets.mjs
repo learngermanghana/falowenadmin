@@ -13,6 +13,7 @@ export const WORKER_TARGETS = {
   "functions/resultAnswerReference.cjs": ["markCourseSubmissionAutomatically"],
   "functions/automaticCourseMarking.test.cjs": [],
   "functions/scoreSheetUpsert.cjs": ["syncAutomaticCourseScore"],
+  "functions/swahiliDeliveryStatus.js": ["publishSwahiliTutorResult", "syncAutomaticCourseScore"],
   "functions/swahiliResults.js": ["publishSwahiliTutorResult"],
   "functions/swahiliResults.test.cjs": [],
   "functions/automaticMarkingPipeline.test.cjs": [],
