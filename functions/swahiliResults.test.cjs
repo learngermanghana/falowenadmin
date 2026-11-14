@@ -30,6 +30,7 @@ function fixture({ currentVersion = 10, program = "swahili" } = {}) {
     }),
   };
   const work = createSwahiliResultWorker({
+    runtimeConfig: { communication: { swahili_result_bcc: "teacher@example.com" } },
     db, auth: { getUser: async () => ({ email: "learner@example.com" }) },
     postAnnouncement: async (_, row) => email.push(row),
   });
@@ -49,6 +50,7 @@ test("publishes a zero tutor score, queues Sheet sync, and emails Results once o
   assert.equal(job.status, "pending");
   assert.equal(email.length, 1);
   assert.equal(email[0].email, "learner@example.com");
+  assert.equal(email[0].bcc, "teacher@example.com");
   assert.match(email[0].link, /\/campus\/results$/);
 });
 

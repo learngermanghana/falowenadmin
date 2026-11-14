@@ -52,8 +52,13 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
 
     const account = await auth.getUser(uid);
     if (!account.email) return;
+    const teacherBcc = String(process.env.SWAHILI_RESULT_BCC || runtimeConfig?.communication?.swahili_result_bcc || "").trim();
+    if (teacherBcc && !/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(teacherBcc)) {
+      throw new Error("Configure one valid Swahili result BCC email address.");
+    }
     await postAnnouncement(resolveAnnouncementConfig(runtimeConfig), {
       email: account.email,
+      ...(teacherBcc ? { bcc: teacherBcc } : {}),
       announcement: review.status === "needs_revision"
         ? "Your tutor reviewed your Swahili workbook and requested a revision. Open Campus Results for feedback."
         : "Your Swahili workbook result is available. Open Campus Results to read your tutor’s feedback.",
