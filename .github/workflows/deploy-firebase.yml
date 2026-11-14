@@ -167,7 +167,8 @@ jobs:
           grep -F 'app.post("/payments/reconcile-student/:studentId"' functions/index.js
           grep -F 'exports.maintainStudentPaymentContracts = onSchedule' functions/index.js
           grep -F 'schedule: "0 7,19 * * *"' functions/index.js
-          grep -F 'schedule: "every 6 hours"' functions/index.js
+          grep -A 4 -F 'exports.syncPendingOperationalSheets = onSchedule({' functions/index.js |
+          grep -F 'schedule: "0 6 * * *"'
           grep -F 'exports.autoSyncPaidStudentOrientation = onDocumentUpdated' functions/index.js
           grep -F 'exports.autoSyncApprovedStudentOrientation = onDocumentUpdated' functions/index.js
           grep -F 'exports.autoRemoveDeletedStudentFromOrientationSheet = onDocumentDeleted' functions/index.js
