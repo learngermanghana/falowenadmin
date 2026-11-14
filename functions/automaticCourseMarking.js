@@ -1,3 +1,4 @@
+const { updateSwahiliDeliveryStatus } = require("./swahiliDeliveryStatus");
 const { upsertScoreRows } = require("./scoreSheetUpsert.cjs");
 const { resultAnswerReference } = require('./resultAnswerReference.cjs');
 const crypto = require('node:crypto');
@@ -364,7 +365,16 @@ function createScoreSyncWorker({ db, config, post = fetch }) {
   return async event => {
     const ref = event.data.ref;
     const job = (await ref.get()).data();
-    if (!job || job.status === 'synced' || job.status === 'needs_review') return;
+    if (!job) return;
+    const updateSheetStatus = async sheetDelivery => {
+      if (job.source === 'swahili_tutor' && job.reviewPath && job.reviewedAt) {
+        await updateSwahiliDeliveryStatus(db, db.doc(job.reviewPath), job.reviewedAt, { sheetDelivery });
+      }
+    };
+    if (job.status === 'synced' || job.status === 'needs_review') {
+      await updateSheetStatus(job.status === 'synced' ? 'synced' : 'failed');
+      return;
+    }
     const attempts = Number(job.attempts || 0) + 1;
     await ref.set({ attempts }, { merge: true });
     try {
@@ -384,8 +394,11 @@ function createScoreSyncWorker({ db, config, post = fetch }) {
       await batch.commit();
     } catch (error) {
       await ref.set({ status: attempts >= 5 ? 'needs_review' : 'pending', error: String(error.message).slice(0, 500) }, { merge: true });
+      await updateSheetStatus(attempts >= 5 ? 'failed' : 'retrying');
       if (attempts < 5) throw error;
+      return;
     }
+    await updateSheetStatus('synced');
   };
 }
 module.exports = { idForPath, eligible, releasable, emptySubmissionResult, missingObjectiveSubmissionParts, holdIncompleteObjectiveResult, replacesFailedAttempt, createCourseMarkingWorker, createScoreSyncWorker };
