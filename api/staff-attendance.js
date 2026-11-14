@@ -171,9 +171,6 @@ export default async function staffAttendanceHandler(req, res) {
       markedBy: { stringValue: uid }, updatedAt: { timestampValue: new Date().toISOString() },
       students: { mapValue: { fields: Object.fromEntries(Object.entries(newMap).map(([key,value]) => [key, encodeStudent(value)])) } },
     };
-    const url = base() + "/" + path.split("/").map(encodeURIComponent).join("/") + "?" + new URLSearchParams({
-      ...Object.fromEntries(Object.keys(fields).map((key,index) => ["updateMask.fieldPaths" + index, key])),
-    });
     // Repeated updateMask.fieldPaths are required by Firestore REST; preserve unrelated fields.
     const mask = new URLSearchParams();
     for (const name of Object.keys(fields)) mask.append("updateMask.fieldPaths", name);
