@@ -1,0 +1,18 @@
+# Language-scoped staff access (German and Swahili)
+
+## Admin setup
+Open `/staff` as the verified owner and choose **Edit access** for an existing staff member (e.g. an existing Swahili teacher). Keep the same email and Firebase login. Select languages, then select the pages that teacher can use **under each language independently**: Marking, Teaching Slides, Attendance, Music Studio, Social Media. **Publish music** and **Publish to connected accounts** are separate capabilities with no implied permission from the editor toggles. Choose the exact assigned classes under Attendance. Save. The teacher signs out and back in to refresh Firebase claims. No student account, enrollment or password is modified.
+
+A Swahili-only staff account opens its Swahili workspace. Users with both languages receive a language switch. Normal German owner pages and Campus enrolments remain independent. Old staff without explicit access maps retain only their previous Marking/Slides privileges; they never automatically inherit Attendance, Music or Social.
+
+## Security model
+The owner-only `/api/staff-management` endpoint persists page capabilities to Firebase Auth custom claims and an authoritative `falowenStaffAccess/{uid}` Firestore document. Attendance's `/api/staff-attendance` verifies the signed-in identity against the active staff document **on every request**, checks `staffAccess[language].attendance`, assigned class ID and the language of that actual class, then sends only the matching roster/sessions. The backend's roster check includes active `coursePlacements[secondaryProgram]` for a dual-enrolled learner and excludes inactive/archived secondary placements. Admin Firestore rules must deny direct staff reads/writes of the cross-language `classes`, `classSessions`, and `attendance` collections. **Deploy rules alongside the Admin endpoint**; navigation hiding is not a security boundary.
+
+The Cloud Function `/music-studio` keeps the existing owner path and additionally checks the active staff Firestore document and language-scoped Music capability for staff song generation; the shared fixed usage budget still applies. Staff video editing cannot directly publish Cloudflare lyrics/timing: the existing R2 publishing API remains owner-only.
+
+Social Media's initial staff workspace supports language-separated, per-account **browser-local drafts** (edit/copy/delete); it does not currently provide cloud draft sync or automatic posting to connected accounts. The separate publish checkbox records the future permission but does **not** activate an unimplemented social account publishing integration. Likewise the staff music publish checkbox does **not** override existing owner-only public publishing. Until a reviewed publishing API exists, staff should send drafts for owner approval.
+
+## Deployment and validation
+Deploy Admin Vercel UI/API, Admin Firebase Functions `api` (for music authorization), and the compatible Firestore security rules together. Existing production Firestore rules may contain other permissions; **merge this rule change into the currently deployed rules** rather than replacing live rules without review. These are separate deployments and a GitHub merge alone does not deploy them.
+
+Run `node --test tests/staff-page-access.test.js tests/staff-music-access.test.js`, followed by `npm run build`, and the repository's scoped regression tests and rule-emulator checks. Verify a Swahili-only staff member sees the new staff menu and only an assigned Swahili roster, a German deep link is blocked, and an inactive secondary placement is not shown. Verify owner music and German attendance still work.
