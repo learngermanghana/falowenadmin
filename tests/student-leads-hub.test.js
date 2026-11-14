@@ -41,7 +41,7 @@ test("Student Activity stays retired and mock timing monitor is in navigation", 
   const app = read("src/App.jsx");
   const timedAttempts = read("src/pages/TimedAssignmentAttemptsPage.jsx");
 
-  assert.equal(app.split("\n").filter(line => line.includes('to="/timed-attempts"') && line.includes("Mock Monitoring & Timers</Link>")).length, 2, "both staff and administrator navigation must include the monitoring link");
+  assert.equal(app.split("\n").filter(line => line.includes('to="/timed-attempts"') && line.includes("Mock Monitoring & Timers</Link>")).length, 1, "only the administrator navigation includes the unrestricted mock monitor; staff uses assigned page permissions");
   assert.match(app, /TimedAssignmentAttemptsPage = lazy/);
   assert.match(app, /path="\/timed-attempts"[\s\S]{0,160}<TimedAssignmentAttemptsPage/);
   assert.match(app, /path="\/student-activity"[\s\S]{0,160}Navigate to="\/students"/);
