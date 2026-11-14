@@ -1,3 +1,4 @@
+const { resultAnswerReference } = require('./resultAnswerReference.cjs');
 const crypto = require('node:crypto');
 const { familyRecordingReference } = require('./a1FamilyRecordingReference');
 const { withMarkingTransport } = require('./automaticMarkingContext');
@@ -186,6 +187,7 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         }));
       const result = emptySubmission ? markedResult : holdIncompleteObjectiveResult(markedResult, referenceEntry);
       const speakingReviewRequired = !emptySubmission && speakingRequired && !serverSpeakingAssessment;
+      const answerReference = resultAnswerReference(referenceEntry, job.assignmentKey);
       const release = !tutorSpeakingWorkbook && !speakingReviewRequired && releasable(result);
       const timestamp = new Date(now()).toISOString();
       const studentCode = registeredCode;
@@ -232,7 +234,7 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
           ...submission, submissionId: snap.id, submissionPath: snap.ref.path,
           studentId, studentCode, studentName: student.name || student.fullName || student.studentName || [student.firstName, student.lastName].filter(Boolean).join(' ') || submission.studentName || submission.name || '', assignmentId: job.assignmentKey,
           assignmentTitle: assignmentTitle(submission.assignmentTitle, submission.title, referenceEntry.title, job.assignmentKey),
-          result, status, publicationReviewReasons, publicationStatus: publish ? 'published' : 'awaiting_approval', finalScore: result.finalScore ?? result.score, feedback: result.feedback,
+          result, answerReference, status, publicationReviewReasons, publicationStatus: publish ? 'published' : 'awaiting_approval', finalScore: result.finalScore ?? result.score, feedback: result.feedback,
           sentToStudent: publish, source: 'automatic_course_marking', createdAt: timestamp, updatedAt: timestamp,
         }));
         tx.set(db.collection('aiMarkingAudit').doc(idForPath(snap.ref.path)), clean({
@@ -280,12 +282,16 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
           objective_total: result.objectiveTotal ?? '', writing_score: result.writingScorePercent ?? result.writingScore ?? '',
           corrections: JSON.stringify(result.corrections || []), sheetSaved: false,
           submissionId: snap.id, submissionPath: snap.ref.path,
+          answerReferenceId: answerReference ? idForPath(snap.ref.path) : "",
           ...(Number.isFinite(timestampMillis(submission.resubmittedAt || submission.submittedAt
             || submission.createdAt || submission.timestamp || submission.date))
             ? { submissionSubmittedAt: new Date(timestampMillis(submission.resubmittedAt || submission.submittedAt
               || submission.createdAt || submission.timestamp || submission.date)).toISOString() } : {}),
         });
         tx.set(scoreRef, row);
+        if (answerReference) tx.set(db.collection('publishedAnswerReferences').doc(idForPath(snap.ref.path)), {
+          studentId, ...answerReference,
+        });
         // Persist the same inbox event used by tutor marking, atomically with the score.
         // The existing notification consumer mirrors it and delivers device push.
         const notificationId = idForPath(snap.ref.path);
@@ -373,7 +379,7 @@ function createScoreSyncWorker({ db, config, post = fetch }) {
           ...(settings.sheetName ? { sheet_name: settings.sheetName } : {}),
           ...(settings.sheetGid ? { sheet_gid: settings.sheetGid } : {}),
           dedupe_columns: ['studentcode', 'assignment_id'], remove_duplicate_rows: true,
-          create_missing_columns: true, rows: [score.data()] }),
+          create_missing_columns: true, rows: [Object.fromEntries(Object.entries(score.data()).filter(([key]) => key !== "answerReferenceId"))] }),
       });
       const receipt = await response.json();
       if (!response.ok || receipt.ok !== true || !(receipt.action === 'upsertScoreRows' || receipt.mode === 'upsert' || receipt.upsert === true)) throw new Error('Score Sheet did not confirm an upsert');

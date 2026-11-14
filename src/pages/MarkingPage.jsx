@@ -737,6 +737,8 @@ function TutorMarkingWorkspace() {
 
       const receipt = await saveScoreRow({
         studentCode: selectedStudent.studentCode,
+        studentId: selectedStudent.uid || "",
+        publicationReference: pageAIReference,
         name: selectedStudent.name,
         assignment: safeAssignment,
         assignmentId: assignmentIdValue.trim(),

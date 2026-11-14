@@ -167,6 +167,15 @@ export async function saveAutomaticMarkingReview(detail, { score, feedback, reas
       action: approve ? 'approve' : 'edit', tutorUid: auth.currentUser.uid, createdAt: timestamp };
     tx.set(reviewRef, { ...review, previousScore: current.score ?? null, previousFeedback: current.comments || current.feedback || '',
       previousSubmissionPath: current.submissionPath || '' });
+    const reference = marking.data().answerReference;
+    if (!sameAttempt || !current.answerReferenceId) {
+      updated.answerReferenceId = "";
+      if (reference?.assignmentId === assignmentId) {
+        const referenceRef = doc(collection(db, 'publishedAnswerReferences'));
+        tx.set(referenceRef, { studentId: updated.studentId, ...reference });
+        updated.answerReferenceId = referenceRef.id;
+      }
+    }
     tx.set(scoreRef, updated);
     // Keep the original AI result and its evidence intact; tutor changes have a separate history.
     tx.set(markingRef, { finalScore: correction.score, feedback: feedback.trim(), tutorReview: review,
