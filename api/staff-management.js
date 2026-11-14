@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { normalizeStaffAccess, STAFF_LANGUAGES } from "../src/utils/staffAccess.js";
+import { classProgramLanguage } from "../src/utils/classProgramLanguage.js";
 const env = (name) => String(process.env[name] || "").trim();
 const PROJECT = env("FIREBASE_PROJECT_ID") || env("VITE_FIREBASE_PROJECT_ID");
 const KEY = env("FIREBASE_API_KEY") || env("VITE_FIREBASE_API_KEY");
@@ -264,7 +265,7 @@ export default async function staffManagementHandler(req, res) {
         const fields = doc.fields || {};
         const field = key => fields[key]?.stringValue || "";
         const id = String(doc.name || "").split("/").pop();
-        const language = field("language").toLowerCase() === "swahili" || field("program").toLowerCase() === "swahili" ? "swahili" : "german";
+        const language = classProgramLanguage({ language: field("language"), program: field("program"), courseLanguage: field("courseLanguage"), name: field("name"), className: field("className") });
         return { id, name: field("name") || field("className") || id, language };
       }).filter(klass => klass.id);
       return res.status(200).json({ ok: true, staff, classes });
