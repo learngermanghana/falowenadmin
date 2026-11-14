@@ -62,9 +62,9 @@ export const SWAHILI_DAY_SIX_SLIDES = Object.freeze([
   {
     id:"listening",type:"listening",kicker:"Kusikiliza · Listening",
     title:"Falowen Radio · Mgahawani",
-    content:"Sikiliza: Mteja anaagiza chakula na kinywaji.\nhttps://youtu.be/oErMpRojTkg",
+    content:"Sikiliza: Mteja anaagiza chakula na kinywaji.\nhttps://youtu.be/ZesonfipX4I",
     english:"Listen to the published Falowen Radio restaurant discussion. The teacher can also read the original Mhudumu/Mteja dialogue aloud.",
-    radioUrl:"https://youtu.be/oErMpRojTkg",
+    radioUrl:"https://youtu.be/ZesonfipX4I",
     prompt:"Mteja anapenda kula nini? Na kunywa nini?",
     answer:"In the source restaurant dialogue: wali na kuku; juisi ya embe. These answers apply to the classroom dialogue, not necessarily the radio video.",
     notes:"The supplied radio link is already used by the Day 6 learner workbook. Use it as a listening discussion. For this comprehension check read the original dialogue aloud; do not assume the radio script matches that dialogue.",
