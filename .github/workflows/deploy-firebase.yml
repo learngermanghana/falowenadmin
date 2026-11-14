@@ -46,6 +46,7 @@ jobs:
       GOOGLE_CLOUD_PROJECT: falowen-examiner-trainer
       GCLOUD_PROJECT: falowen-examiner-trainer
       CLOUD_RUNTIME_CONFIG: ${{ secrets.FALOWEN_ADMIN_CLOUD_RUNTIME_CONFIG || '{}' }}
+      SWAHILI_RESULT_BCC: ${{ secrets.SWAHILI_RESULT_BCC }}
 
     steps:
       - name: Checkout repo
@@ -292,6 +293,13 @@ jobs:
             # runtime-config secret as base64 so webhook URLs/tokens reach workers.
             runtime_config_b64="$(printf '%s' "$CLOUD_RUNTIME_CONFIG" | base64 -w0)"
             printf 'CLOUD_RUNTIME_CONFIG_B64=%s\n' "$runtime_config_b64" > "functions/.env.$FIREBASE_PROJECT_ID"
+            if [[ -n "$SWAHILI_RESULT_BCC" ]]; then
+              if [[ ! "$SWAHILI_RESULT_BCC" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+                echo "SWAHILI_RESULT_BCC must contain one email address."
+                return 1
+              fi
+              printf 'SWAHILI_RESULT_BCC=%s\n' "$SWAHILI_RESULT_BCC" >> "functions/.env.$FIREBASE_PROJECT_ID"
+            fi
 
             # The score worker must share Admin's existing webhook and sheet selectors.
             # Firebase validates all declared secrets even for an API-only batch.
