@@ -28,7 +28,7 @@ test("stale in-progress progress never pretends the student is online", () => {
 test("navigation restores mock monitoring and preserves timed attempt resets", () => {
   const app=fs.readFileSync("src/App.jsx","utf8");
   const page=fs.readFileSync("src/pages/TimedAssignmentAttemptsPage.jsx","utf8");
-  assert.equal(app.split("\n").filter(line => line.includes('to="/timed-attempts"') && line.includes("Mock Monitoring & Timers</Link>")).length, 2, "both staff and administrator navigation must include the monitoring link");
+  assert.equal(app.split("\n").filter(line => line.includes('to="/timed-attempts"') && line.includes("Mock Monitoring & Timers</Link>")).length, 1, "only the administrator navigation includes the unrestricted mock monitor; staff uses assigned page permissions");
   assert.match(page,/data-testid="mock-monitoring"/);
   assert.match(page, /key=\{receipt\.path\}/, "multi-layout receipt cards need unique full-path keys");
   assert.match(page,/data-testid="timed-assignments"/);
