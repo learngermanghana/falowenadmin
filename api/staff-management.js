@@ -98,6 +98,27 @@ function allowedLanguages(value) {
   if (!Array.isArray(value) || !value.length || value.some(v => !["german", "swahili"].includes(v))) fail("Choose German, Swahili or both.");
   return [...new Set(value)];
 }
+async function listAuthAccounts(accessToken, search = "") {
+  // Admin-only and user-triggered. Limited to avoid unbounded directory reads.
+  let pageToken = "";
+  const users = [];
+  for (let page = 0; page < 5; page += 1) {
+    const url = new URL(`${host}/projects/${encodeURIComponent(PROJECT)}/accounts:batchGet`);
+    url.searchParams.set("maxResults", "100");
+    if (pageToken) url.searchParams.set("nextPageToken", pageToken);
+    const data = await apiFetch(url.toString(), "GET", undefined, accessToken);
+    users.push(...(data.users || []).map(user => ({
+      uid: user.localId,
+      email: String(user.email || "").toLowerCase(),
+      name: user.displayName || "",
+      hasStaffAccess: parseAttributes(user).staff === true,
+    })).filter(user => user.uid && user.email && user.email !== OWNER));
+    pageToken = data.nextPageToken || "";
+    if (!pageToken) break;
+  }
+  const needle = String(search || "").toLowerCase().trim();
+  return users.filter(user => !needle || (user.name + " " + user.email).toLowerCase().includes(needle)).slice(0, 100);
+}
 async function upsert(body, accessToken) {
   const email = String(body.email || "").toLowerCase().trim();
   if (!emailPattern.test(email) || email.length > 254) fail("Enter a valid email address.");
@@ -148,6 +169,11 @@ export default async function staffManagementHandler(req, res) {
     const accessToken = await tokenForGoogle();
     await requireOwner(req, accessToken);
     if (req.method === "GET") {
+      const parsedUrl = new URL(req.url, "https://admin.falowen.app");
+      if (parsedUrl.searchParams.get("source") === "accounts") {
+        const accounts = await listAuthAccounts(accessToken, parsedUrl.searchParams.get("q"));
+        return res.status(200).json({ ok: true, accounts, limited: accounts.length === 100 });
+      }
       const result = await apiFetch(docUrl() + "?pageSize=100", "GET", undefined, accessToken);
       const staff = (result.documents || []).map(doc => fieldsToObject(doc.fields)).filter(s => s.uid && s.email);
       return res.status(200).json({ ok: true, staff });
