@@ -81,9 +81,9 @@ test('bundled Firebase worker grades versioned A1-12.1 Bahnhof Hören, not the p
   // Exact reported student submission: Teil 1 = 3/5, Teil 3 = 4/5.
   // This must be deterministically marked 70%, never held for missing Teil 2.
   const submitted = answers
-    .replace('TEIL 1\\nA1-12.1-BAHNHOF-HOEREN-V3\\n1. Richtig\\n2. Falsch\\n3. Falsch',
-      'TEIL 1\\nA1-12.1-BAHNHOF-HOEREN-V3\\n1. Richtig\\n2. Richtig\\n3. Richtig')
-    .replace('TEIL 3\\n1. Richtig\\n2. Falsch', 'TEIL 3\\n1. Richtig\\n2. Richtig');
+    .replace('TEIL 1\nA1-12.1-BAHNHOF-HOEREN-V3\n1. Richtig\n2. Falsch\n3. Falsch',
+      'TEIL 1\nA1-12.1-BAHNHOF-HOEREN-V3\n1. Richtig\n2. Richtig\n3. Richtig')
+    .replace('TEIL 3\n1. Richtig\n2. Falsch', 'TEIL 3\n1. Richtig\n2. Richtig');
   const studentResult = await mark(submitted);
   assert.equal(studentResult.objectiveCorrect, 7);
   assert.equal(studentResult.objectiveTotal, 10);
