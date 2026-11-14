@@ -85,3 +85,49 @@ jobs:
           set -euo pipefail
           firebase deploy --project "$FIREBASE_PROJECT_ID" \
             --only functions:falowenadmin:publishSwahiliTutorResult --force
+
+      - name: Replay untouched Swahili reviews queued before the worker was deployed
+        working-directory: functions
+        run: |
+          node <<'NODE'
+          const admin = require("firebase-admin");
+          admin.initializeApp({ projectId: process.env.FIREBASE_PROJECT_ID });
+          const db = admin.firestore();
+          const timestamp = admin.firestore.FieldValue.serverTimestamp();
+          (async () => {
+            const snapshot = await db.collection("swahiliTeacherReviews")
+              .where("sheetDelivery", "==", "queued").limit(50).get();
+            let requested = 0, skipped = 0;
+            for (const candidate of snapshot.docs) {
+              await db.runTransaction(async (tx) => {
+                const latest = await tx.get(candidate.ref);
+                const review = latest.data() || {};
+                const day = review.lessonId === "swahili-day-1" ? "1"
+                  : review.lessonId === "swahili-day-6" ? "6" : "";
+                const uid = String(review.studentId || "");
+                if (review.program !== "swahili" || !day || !uid || uid.includes("/")
+                  || candidate.id !== (day === "1" ? uid : uid + "_day-6")
+                  || review.sheetDelivery !== "queued" || review.emailDelivery !== "queued"
+                  || !["reviewed", "needs_revision"].includes(review.status)
+                  || !Number.isInteger(review.score) || review.score < 0 || review.score > 100
+                  || !review.submissionVersion || !review.reviewedAt) {
+                  skipped++;
+                  return;
+                }
+                const source = await tx.get(db.doc("users/" + uid + "/swahiliLessons/day-" + day));
+                const submitted = source.data()?.submittedAt;
+                const currentVersion = submitted
+                  ? submitted.seconds + ":" + submitted.nanoseconds : "";
+                if (currentVersion !== review.submissionVersion) { skipped++; return; }
+                tx.update(candidate.ref, {
+                  reviewedAt: timestamp,
+                  deliveryRetryRequestedAt: timestamp,
+                  deliveryRetryReason: "worker-deployment-recovery",
+                });
+                requested++;
+              });
+            }
+            console.log("Swahili queued review recovery requested:", requested, "skipped:", skipped,
+              "pageSize:", snapshot.size, "limit: 50");
+          })().catch(error => { console.error("Swahili recovery failed:", error.message); process.exitCode = 1; });
+          NODE
