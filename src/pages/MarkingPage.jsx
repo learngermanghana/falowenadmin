@@ -1,5 +1,5 @@
+import MarkingSectionTabs from "../components/MarkingSectionTabs.jsx";
 import ManualMarking from "../components/ManualMarking.jsx";
-import { useSearchParams } from "react-router-dom";
 import { familyRecordingReference } from "../utils/a1FamilyRecordingReference.js";
 import { tryStoreMarkingDraft } from "../utils/markingDraftStorage.js";
 import { useAdminRefresh } from "../hooks/useAdminRefresh.js";
@@ -192,17 +192,9 @@ function findRosterMatchForSubmission(roster = [], submission = {}) {
 }
 
 export default function MarkingPage() {
-  const [params, setParams] = useSearchParams();
-  const tab = ['automatic', 'manual'].includes(params.get('tab')) ? params.get('tab') : 'incoming';
-  const setTab = value => { const next = new URLSearchParams(params); next.set('tab', value); setParams(next); };
-  return <>
-    <nav aria-label="Marking sections" style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-      <button type="button" aria-pressed={tab === 'incoming'} onClick={() => setTab('incoming')}>Submissions to mark</button>
-      <button type="button" aria-pressed={tab === 'automatic'} onClick={() => setTab('automatic')}>AI-marked · Review & edit</button>
-      <button type="button" aria-pressed={tab === 'manual'} onClick={() => setTab('manual')}>Manual marking</button>
-    </nav>
-    {tab === 'manual' ? <ManualMarking /> : tab === 'automatic' ? <AutomaticMarkingReview /> : <TutorMarkingWorkspace />}
-  </>;
+  return <MarkingSectionTabs>{tab =>
+    tab === "manual" ? <ManualMarking /> : tab === "automatic" ? <AutomaticMarkingReview /> : <TutorMarkingWorkspace />
+  }</MarkingSectionTabs>;
 }
 
 function TutorMarkingWorkspace() {
