@@ -4,6 +4,7 @@ import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
 import { startVisiblePolling } from "./utils/visiblePolling.js";
+import { staffCan, staffLandingRoute, workspaceLanguage as resolveLanguage } from "./utils/staffAccess.js";
 import "./App.css";
 import "./LiveClassesMobile.css";
 
@@ -56,13 +57,19 @@ const HolidayCalendarPage = lazy(() => import("./pages/HolidayCalendarPage"));
 const GoetheExamConfigPage = lazy(() => import("./pages/GoetheExamConfigPage.jsx"));
 const StudentResultsComparePage = lazy(() => import("./pages/StudentResultsComparePage.jsx"));
 const StaffWorkspacePage = lazy(() => import("./pages/StaffWorkspacePage.jsx"));
+const StaffAttendancePage = lazy(() => import("./pages/StaffAttendancePage.jsx"));
+const StaffMusicStudioPage = lazy(() => import("./pages/StaffMusicStudioPage.jsx"));
+const StaffSocialMediaPage = lazy(() => import("./pages/StaffSocialMediaPage.jsx"));
 
 function RouteFallback() {
   return <div className="route-loading" role="status" aria-live="polite">Loading…</div>;
 }
 
 function TopBar() {
-  const { user, logout, isStaff, role } = useAuth();
+  const { user, logout, isStaff, role, staffAccess, staffLanguages, staffRole, workspaceLanguage, setWorkspaceLanguage } = useAuth();
+  const staffLanguage = resolveLanguage(useLocation().pathname, useLocation().search, workspaceLanguage);
+  const staffHas = capability => staffCan(staffAccess, staffLanguages, staffLanguage, capability, staffRole);
+  const staffUrl = path => path + (staffLanguage === "swahili" ? "?language=swahili" : "");
   const nav = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -137,7 +144,7 @@ function TopBar() {
             {menuOpen ? "✕" : "☰"}
           </button>
 
-          <Link to={isStaff ? "/marking" : "/"} className="topbar-brand" onClick={() => setMenuOpen(false)}>
+          <Link to={isStaff ? staffLandingRoute(staffAccess, staffLanguages, staffLanguage, staffRole) : "/"} className="topbar-brand" onClick={() => setMenuOpen(false)}>
             Falowen Dashboard
           </Link>
           <span
@@ -163,8 +170,11 @@ function TopBar() {
           <div id="topbar-navigation" className={`topbar-links ${menuOpen ? "topbar-links-open" : ""}`}>
             {isStaff ? (
               <>
-                <Link to="/marking" onClick={() => setMenuOpen(false)}>Marking</Link>
-                <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Teaching Slides</Link>
+                {staffHas("marking") && <Link to={staffUrl("/marking")} onClick={() => setMenuOpen(false)}>Marking</Link>}
+                {staffHas("slides") && <Link to={staffUrl("/teaching-slides")} onClick={() => setMenuOpen(false)}>Teaching Slides</Link>}
+                {staffHas("attendance") && <Link to={staffUrl("/attendance")} onClick={() => setMenuOpen(false)}>Attendance</Link>}
+                {staffHas("music") && <Link to={staffUrl("/music-studio")} onClick={() => setMenuOpen(false)}>Music Studio</Link>}
+                {staffHas("social") && <Link to={staffUrl("/social-media")} onClick={() => setMenuOpen(false)}>Social Media</Link>}
               </>
             ) : (
               <>
@@ -191,6 +201,20 @@ function TopBar() {
           </div>
 
           <div className={`topbar-user ${menuOpen ? "topbar-user-open" : ""}`}>
+            {isStaff && staffLanguages?.length > 1 && <label style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <span>Workspace</span>
+              <select aria-label="Staff language workspace" value={staffLanguage}
+                onChange={event => {
+                  const next = event.target.value;
+                  setWorkspaceLanguage(next);
+                  const path = location.pathname.startsWith("/teaching-slides/") ? "/teaching-slides" : location.pathname;
+                  nav(path + "?language=" + next);
+                  setMenuOpen(false);
+                }}>
+                {staffLanguages.includes("german") && <option value="german">German</option>}
+                {staffLanguages.includes("swahili") && <option value="swahili">Swahili</option>}
+              </select>
+            </label>}
             <span className="topbar-email">{user.email}</span>
             <button
               onClick={async () => {
@@ -234,8 +258,9 @@ function OwnerMusicAnalyticsRoute() {
 }
 
 function OwnerStudioRoute({ music = false, lesson = false }) {
-  const { user, loading, isStaff } = useAuth();
+  const { user, loading, isStaff, workspaceLanguage } = useAuth();
   const ownerUid = String(import.meta.env.VITE_HOEREN_STUDIO_OWNER_UID || "").trim();
+  if (isStaff && music) return <ProtectedRoute><StaffMusicStudioPage key={workspaceLanguage} /></ProtectedRoute>;
   if (!loading && user && (isStaff || !ownerUid || user.uid !== ownerUid)) return <Navigate to="/" replace />;
   return <ProtectedRoute>{lesson ? <LessonVideoStudioPage /> : music ? <MusicStudioPage /> : <HoerenStudioPage />}</ProtectedRoute>;
 }
@@ -246,6 +271,14 @@ function ExamReviewRoute() {
 
 function CurrentAttendanceRoute() {
   return <CanonicalAttendancePage />;
+}
+function AttendanceWorkspaceRoute() {
+  const { isStaff, workspaceLanguage } = useAuth();
+  return <ProtectedRoute>{isStaff ? <StaffAttendancePage key={workspaceLanguage} /> : <AttendanceOverviewPage />}</ProtectedRoute>;
+}
+function SocialWorkspaceRoute() {
+  const { isStaff, workspaceLanguage } = useAuth();
+  return <ProtectedRoute>{isStaff ? <StaffSocialMediaPage key={workspaceLanguage} /> : <SocialMediaPage />}</ProtectedRoute>;
 }
 
 function PublicVisitorGuideRedirect() {
@@ -281,11 +314,12 @@ export default function App() {
           <Route path="/organisation-enrolment" element={<OrganisationEnrolmentPage />} />
           <Route path="/organisation-submissions" element={<ProtectedRoute><OrganisationEnrolmentPage review /></ProtectedRoute>} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/no-staff-access" element={<ProtectedRoute><section role="alert" style={{ padding: 24 }}>No staff pages have been assigned to this account. Contact the Falowen administrator.</section></ProtectedRoute>} />
           <Route path="/checkin" element={<CheckinPage />} />
           <Route path="/checkin/display" element={<CheckinDisplayPage />} />
 
           <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-          <Route path="/attendance" element={<ProtectedRoute><AttendanceOverviewPage /></ProtectedRoute>} />
+          <Route path="/attendance" element={<AttendanceWorkspaceRoute />} />
           <Route path="/attendance/session/:classId" element={<ProtectedRoute><CurrentAttendanceRoute /></ProtectedRoute>} />
           <Route path="/attendance/:classId" element={<ProtectedRoute><AttendancePage /></ProtectedRoute>} />
           <Route path="/class-participation" element={<ProtectedRoute><ClassParticipationPage /></ProtectedRoute>} />
@@ -313,7 +347,7 @@ export default function App() {
           <Route path="/staff" element={<ProtectedRoute><StaffWorkspacePage /></ProtectedRoute>} />
           <Route path="/leads" element={<ProtectedRoute><LeadsPage /></ProtectedRoute>} />
           <Route path="/student-activity" element={<ProtectedRoute><Navigate to="/students" replace /></ProtectedRoute>} />
-          <Route path="/social-media" element={<ProtectedRoute><SocialMediaPage /></ProtectedRoute>} />
+          <Route path="/social-media" element={<SocialWorkspaceRoute />} />
           <Route path="/ai-studio" element={<OwnerStudioRoute />} />
           <Route path="/music-studio" element={<OwnerStudioRoute music />} />
           <Route path="/lesson-video-studio" element={<OwnerStudioRoute lesson />} />
