@@ -4,9 +4,9 @@ import { musicBlob, musicRequest } from "../services/musicStudioService.js";
 import MusicLyricsVideoStudio from "../components/MusicLyricsVideoStudio.jsx";
 import "./MusicStudioPage.css";
 
-export default function StaffMusicStudioPage() {
+export default function StaffMusicStudioPage({ language: explicitLanguage }) {
   const { workspaceLanguage } = useAuth();
-  const language = workspaceLanguage;
+  const language = explicitLanguage || workspaceLanguage;
   const [tab, setTab] = useState("generator");
   const [prompt, setPrompt] = useState("");
   const [lyrics, setLyrics] = useState("");
