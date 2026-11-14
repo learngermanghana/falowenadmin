@@ -101,8 +101,14 @@ export default function SwahiliA2LessonStage({ stage, grammar, isDaySix }) {
       <p>{isDaySix ? "Play the published radio episode with the same shared video player used in German A2." : "Listen as your teacher reads each word, then identify the vowel."}</p>
     </header>
     {stage.radioUrl ? <MusicVideoEmbed videoId={stage.radioUrl.match(/(?:youtu\.be\/|[?&]v=)([\w-]{11})/)?.[1]} title="Falowen Radio · Mgahawani" variant="listening" footerLabel="Falowen · Jifunze Kiswahili" /> : <WordTiles text={stage.content}/>}
-    {stage.radioUrl && <p className="swahili-a2-presenter__support-note">The classroom question below refers to the original waiter–customer dialogue; it is not an answer key for the radio programme.</p>}
   </section>;
+
+  if (stage.type === "radio-questions") return (
+    <section className="swahili-a2-presenter__radio-questions" aria-label="Falowen Radio questions">
+      {stage.content.split("\n\n").map(block => <p key={block}>{block}</p>)}
+      {stage.radioUrl && <a className="swahili-a2-presenter__radio-link" href={stage.radioUrl} target="_blank" rel="noreferrer">Play Falowen Radio on YouTube</a>}
+    </section>
+  );
 
   if(stage.type==="grammar" && grammar) {
     const entries=Lines({text:grammar.body});
