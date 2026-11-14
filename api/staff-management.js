@@ -39,13 +39,20 @@ async function tokenForGoogle() {
   const data = await response.json().catch(() => ({}));
   if (!response.ok || !data.access_token) {
     const explanations = {
+      disabled_client: "Google reports that the OAuth client is disabled. Check that the service account and its key are enabled.",
+      deleted_client: "Google reports that the OAuth client was deleted. Check the configured service account.",
+      invalid_scope: "Google rejected the OAuth scope in the server request.",
+      admin_policy_enforced: "A Google administrator policy blocked the token request.",
+      org_internal: "Google restricted the OAuth client to its organization.",
+      invalid_request: "Google rejected the token request as malformed.",
       invalid_grant: "Google rejected the signed assertion. Verify that the key is active and belongs to the configured service-account email.",
       invalid_client: "Google rejected the service-account identity. Check the configured email.",
       unauthorized_client: "The service account is not authorized to request this token.",
     };
-    const code = Object.hasOwn(explanations, data.error) ? data.error : null;
+    const code = typeof data.error === "string" && /^[a-z_]{1,48}$/.test(data.error) ? data.error : null;
+    const explanation = code && Object.hasOwn(explanations, code) ? `: ${explanations[code]}` : "";
     diagnostic(code
-      ? `Google OAuth (${code}, HTTP ${response.status}): ${explanations[code]}`
+      ? `Google OAuth (${code}, HTTP ${response.status})${explanation}`
       : `Google OAuth did not issue an access token (HTTP ${response.status}).`);
   }
   return data.access_token;
