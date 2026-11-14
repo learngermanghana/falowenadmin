@@ -74,6 +74,40 @@ export function watchSwahiliReview(submission, day, onReview, onError) {
   }, onError);
 }
 
+// A queued review can be retriggered after the result worker has been restored.
+// Only untouched, fully queued reviews are eligible; never resend a delivered score.
+export async function retryQueuedSwahiliDelivery({ submission, day }) {
+  const target = reviewRef(submission.studentId, day);
+  await runTransaction(db, async (transaction) => {
+    const [reviewSnapshot, submissionSnapshot] = await Promise.all([
+      transaction.get(target),
+      transaction.get(doc(db, submission.path)),
+    ]);
+    const current = reviewSnapshot.data() || {};
+    const latest = canonicalSwahiliSubmission(submissionSnapshot, day);
+    const version = latest?.submittedAt
+      ? `${latest.submittedAt.seconds}:${latest.submittedAt.nanoseconds}`
+      : "";
+    if (!latest || current.studentId !== latest.studentId
+      || current.lessonId !== latest.lessonId
+      || !version || current.submissionVersion !== version) {
+      throw new Error("The learner submitted newer work. Refresh before retrying delivery.");
+    }
+    if (current.sheetDelivery !== "queued" || current.emailDelivery !== "queued") {
+      throw new Error("Delivery has already started or completed. Refresh to view its status.");
+    }
+    if (!["reviewed", "needs_revision"].includes(current.status)
+      || !Number.isInteger(current.score) || current.score < 0 || current.score > 100) {
+      throw new Error("This review is not ready for result delivery.");
+    }
+    // One unchanged grade, new event timestamp: existing server-side publisher.
+    transaction.update(target, {
+      reviewedAt: serverTimestamp(),
+      deliveryRetryRequestedAt: serverTimestamp(),
+    });
+  });
+}
+
 export async function saveSwahiliReview({ submission, day, status, feedback, score }) {
   if (!["reviewed", "needs_revision"].includes(status)) throw new Error("Choose a valid review decision.");
   if (!Number.isInteger(score) || score < 0 || score > 100) throw new Error("Enter a whole-number score from 0 to 100.");

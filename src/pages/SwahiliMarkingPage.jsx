@@ -1,7 +1,7 @@
 import answerKeys from "../../functions/swahili-answers.json";
 import MarkingSectionTabs from "../components/MarkingSectionTabs.jsx";
 import { useEffect, useState } from "react";
-import { loadAllSwahiliMarkingPage, loadSwahiliMarkingPage, loadSwahiliRoster, loadSwahiliStudentSubmission, loadSwahiliReview, saveSwahiliReview, watchSwahiliReview } from "../services/swahiliMarkingService";
+import { loadAllSwahiliMarkingPage, loadSwahiliMarkingPage, loadSwahiliRoster, loadSwahiliStudentSubmission, loadSwahiliReview, saveSwahiliReview, retryQueuedSwahiliDelivery, watchSwahiliReview } from "../services/swahiliMarkingService";
 import { getSwahiliReviewStatus } from "../utils/swahiliReviewQueue";
 
 const LESSONS = {
@@ -42,6 +42,8 @@ function SubmissionReview({ submission, day }) {
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const [deliveryError, setDeliveryError] = useState("");
+  const [retryingDelivery, setRetryingDelivery] = useState(false);
+  const [retryRequested, setRetryRequested] = useState(false);
 
   useEffect(() => watchSwahiliReview(submission, day, setReview, () => {
     setDeliveryError("Live delivery status is unavailable. Refresh to check again.");
@@ -79,6 +81,21 @@ function SubmissionReview({ submission, day }) {
       setError(failure.message || "Could not save feedback.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function retryDelivery() {
+    setRetryingDelivery(true);
+    setDeliveryError("");
+    try {
+      await retryQueuedSwahiliDelivery({ submission, day });
+      // Firestore will update this receipt when the restored publisher runs.
+      // Do not suggest a second retry until the operator refreshes the page.
+      setRetryRequested(true);
+    } catch (failure) {
+      setDeliveryError(failure.message || "Could not retry delivery. Refresh and try again.");
+    } finally {
+      setRetryingDelivery(false);
     }
   }
 
@@ -127,6 +144,11 @@ function SubmissionReview({ submission, day }) {
           <p><strong>Result email</strong> · {emailMessages[currentReview?.emailDelivery] || (currentReview ? "No delivery receipt recorded for this review." : "Checking status…")}
             {currentReview?.emailDelivery === "sent" && (currentReview.emailBccRequested ? " Ruth was included as BCC in the request." : " No teacher BCC was configured for this send.")}
           </p>
+          {currentReview?.sheetDelivery === "queued" && currentReview?.emailDelivery === "queued" && (
+            <button type="button" disabled={retryingDelivery || retryRequested || saving} onClick={retryDelivery}>
+              {retryingDelivery ? "Requesting delivery…" : retryRequested ? "Delivery retry requested" : "Retry queued result delivery"}
+            </button>
+          )}
         </section>
       )}
       {deliveryError && <p role="alert">{deliveryError}</p>}
