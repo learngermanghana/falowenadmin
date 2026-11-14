@@ -1,6 +1,7 @@
 // Dedicated staff attendance API. No direct class/roster Firestore access is granted by this endpoint.
 // The owner continues using the existing full attendance editor.
 import { STAFF_LANGUAGES, staffCan } from "../src/utils/staffAccess.js";
+import { classProgramLanguage } from "../src/utils/classProgramLanguage.js";
 import { tokenForGoogle, PROJECT, KEY, fieldsToObject } from "./staff-management.js";
 
 const base = () => `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(PROJECT)}/databases/(default)/documents`;
@@ -20,7 +21,7 @@ function decode(field = {}) {
   return null;
 }
 const unpack = doc => Object.fromEntries(Object.entries(doc?.fields || {}).map(([key, value]) => [key, decode(value)]));
-const classLanguage = item => str(item.language || item.program).toLowerCase() === "swahili" ? "swahili" : "german";
+const classLanguage = classProgramLanguage;
 async function request(url, bearer, method = "GET", body) {
   const result = await fetch(url, {
     method, headers: { Authorization: `Bearer ${bearer}`, ...(body ? { "Content-Type": "application/json" } : {}) },
