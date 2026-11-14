@@ -3,7 +3,8 @@ import { SWAHILI_DAY_SIX_FOOD_CARDS, SWAHILI_DAY_SIX_DRINK_CARDS, SWAHILI_DAY_SI
 // "Odering Food.pdf", and "22MGAHAWANI GRAMMAR AND SONG LYRICS.docx".
 // These source extracts and the workbook's radio reference were already published
 // in Falowen's student app; the former PDF uploads are no longer required here.
-// Keep the shared nine-stage A2-style presenter; all practice remains ungraded.
+// Use the shared A2-style presenter for classroom practice.
+const radioUrl = "https://youtu.be/ZesonfipX4I";
 const grammarPages = [
   { title:"1 · Kuomba kwa adabu · Polite requests",
     body:"Naomba wali na samaki, tafadhali.\nNaomba maji.\nNaomba bili, tafadhali.",
@@ -62,12 +63,96 @@ export const SWAHILI_DAY_SIX_SLIDES = Object.freeze([
   {
     id:"listening",type:"listening",kicker:"Kusikiliza · Listening",
     title:"Falowen Radio · Mgahawani",
-    content:"Sikiliza: Mteja anaagiza chakula na kinywaji.\nhttps://youtu.be/ZesonfipX4I",
-    english:"Listen to the published Falowen Radio restaurant discussion. The teacher can also read the original Mhudumu/Mteja dialogue aloud.",
-    radioUrl:"https://youtu.be/ZesonfipX4I",
-    prompt:"Mteja anapenda kula nini? Na kunywa nini?",
-    answer:"In the source restaurant dialogue: wali na kuku; juisi ya embe. These answers apply to the classroom dialogue, not necessarily the radio video.",
-    notes:"The supplied radio link is already used by the Day 6 learner workbook. Use it as a listening discussion. For this comprehension check read the original dialogue aloud; do not assume the radio script matches that dialogue.",
+    radioUrl,
+    english:"Read the questions for each round before playing the video.",
+    notes:"Use the next slides for two rounds of listening. Return here to play the video for the class.",
+  },
+  {
+    id:"radio-first-listening",type:"radio-questions",kicker:"Falowen Radio · First listening",
+    title:"First listening · Q01–Q02",
+    radioUrl,
+    english:"Read both questions, then listen once and choose one answer for each. Focus on the main idea.",
+    content:`Q01 · How does the restaurant conversation begin? [1 point]
+A. The customer asks for the bill.
+B. The customer and server exchange greetings.
+C. The server asks for payment.
+
+Q02 · Which expression asks for the menu? [1 point]
+A. Naomba bili, tafadhali.
+B. Mna vinywaji gani?
+C. Naomba orodha ya vyakula, tafadhali.`,
+    prompt:"Check Q01–Q02",
+    answer:"Q01 · B. The customer and server exchange greetings.\nQ02 · C. Naomba orodha ya vyakula, tafadhali.",
+  },
+  {
+    id:"radio-second-listening",type:"radio-questions",kicker:"Falowen Radio · Second listening",
+    title:"Second listening · Q03–Q05",
+    radioUrl,
+    english:"Read Q03–Q05, then listen again. Choose True or False for Q03 and Q04.",
+    content:`Q03 · Naomba can be used to make a polite request. [1 point]
+True / False
+
+Q04 · Sipendi means “I like”. [1 point]
+True / False
+
+Q05 · What total price is given in the example? [1 point]
+Write the amount in digits or in Swahili.`,
+    prompt:"Check Q03–Q05",
+    answer:"Q03 · True.\nQ04 · False. Sipendi means “I do not like”.\nQ05 · Replay the price example to check the amount.",
+  },
+  {
+    id:"radio-drinks-and-preferences",type:"radio-questions",kicker:"Falowen Radio · After listening",
+    title:"Drinks and preferences · Q06–Q07",
+    content:`Q06 · Match each drink to its English meaning. [3 points]
+1. maji · 2. juisi ya embe · 3. juisi ya chungwa
+A. orange juice · B. water · C. mango juice
+
+Q07 · Fill each gap. Use each word once. [2 points]
+Word bank: Sipendi · Ninapenda
+1. _____ wali samaki. I like rice with fish.
+2. _____ soda. I do not like soda.`,
+    prompt:"Check Q06–Q07",
+    answer:"Q06 · 1–B, 2–C, 3–A.\nQ07 · 1. Ninapenda. 2. Sipendi.",
+  },
+  {
+    id:"radio-ordering",type:"radio-questions",kicker:"Falowen Radio · After listening",
+    title:"Ordering at a restaurant · Q08–Q09",
+    content:`Q08 · Put the expressions in the order of a restaurant visit. [1 point]
+A. Naomba bili, tafadhali.
+B. Kwa heri!
+C. Habari yako?
+D. Ninaomba wali samaki.
+E. Naomba orodha ya vyakula, tafadhali.
+
+Q09 · Arrange the words to ask for two cups of tea. [1 point]
+chai · viwili · Naomba · vya · vikombe`,
+    prompt:"Check Q08–Q09",
+    answer:"Q08 · C → E → D → A → B.\nQ09 · Naomba vikombe viwili vya chai.",
+  },
+  {
+    id:"radio-write",type:"radio-questions",kicker:"Falowen Radio · Write and speak",
+    title:"Write three lines · Q10",
+    content:`Q10 · Write three short lines. [3 points]
+1. Greet the server.
+2. Politely order one dish and one drink.
+3. Ask for the bill.
+
+Use naomba or ninaomba. Choose your own food and drink.
+Useful words: wali, ugali, kuku, samaki, mbogamboga, maji, juisi, soda.`,
+    prompt:"Show a model response for Q10",
+    answer:"1. Habari yako?\n2. Naomba wali na kuku na maji, tafadhali.\n3. Naomba bili, tafadhali.",
+  },
+  {
+    id:"radio-speak",type:"radio-questions",kicker:"Falowen Radio · Write and speak",
+    title:"Restaurant conversation · Q11",
+    content:`Q11 · Record a 30–45 second restaurant conversation. [4 points]
+Include a greeting, a polite food order, a drink, a question about the total, and a thank-you and goodbye.
+Use any reasonable practice price.
+
+In class, perform with a partner. For the app, upload the recording. Say both names at the start of a shared recording. If working alone, record both parts.`,
+    english:"Helpful beginnings: Habari yako? / Naomba… / Mna…? / Jumla ni shilingi ngapi? / Asante! / Kwa heri!",
+    prompt:"Show a model conversation for Q11",
+    answer:"Mteja: Habari yako? Naomba ugali na samaki, tafadhali. Mna maji?\nMhudumu: Ndiyo. Karibu!\nMteja: Asante. Jumla ni shilingi ngapi?\nMhudumu: Jumla ni shilingi elfu tano.\nMteja: Asante! Kwa heri!",
   },
   {
     id:"grammar",type:"grammar",kicker:"Sarufi · Grammar",
