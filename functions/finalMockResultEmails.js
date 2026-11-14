@@ -642,7 +642,7 @@ function createFinalMockResultEmailTrigger({
     const scoreId = text(event?.params?.scoreId || snap.id);
     if (isFinalMockScore(score) && score.sheetSaved !== true) {
       const sync = await queueFinalMockScoreSync({ db, admin, scoreId, score });
-      return { sent: false, reason: "awaiting_score_sheet", scoreId, ...sync };
+      return { sent: false, reason: "awaiting_score_sheet", scoreId, sync };
     }
     const result = await processFinalMockResultScore({
       db,
