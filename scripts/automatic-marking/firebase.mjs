@@ -6,6 +6,7 @@ export const auth = null;
 export function doc(_db, ...segments) { return db.doc(segments.join('/')); }
 export function collection(_db, ...segments) { return db.collection(segments.join('/')); }
 export function setDoc(ref, data, options) { return ref.set(data, options); }
+export function writeBatch(_db) { return db.batch(); }
 export async function getDoc(ref) { const snap = await ref.get(); return { exists: () => snap.exists, data: () => snap.data(), id: snap.id }; }
 export function updateDoc(ref, data) { return ref.update(data); }
 export function deleteDoc(ref) { return ref.delete(); }
