@@ -25,7 +25,7 @@ function fixture({ currentVersion = 10, program = "swahili" } = {}) {
     }),
     runTransaction: (work) => work({
       get: async ({ path }) => ({ exists: docs.has(path), data: () => docs.get(path) }),
-      set: (target, value) => docs.set(target.path, value),
+      set: (target, value, options) => docs.set(target.path, options?.merge ? { ...docs.get(target.path), ...value } : value),
       create: (target, value) => docs.set(target.path, value),
     }),
   };
@@ -50,6 +50,10 @@ test("publishes a zero tutor score, queues Sheet sync, and emails Results once o
   assert.equal(score.dedupe_id, "legacy-code__swahili-day-1");
   const job = Array.from(docs).find(([key]) => key.startsWith("automaticScoreSync/"))[1];
   assert.equal(job.scorePath, path);
+  assert.equal(job.reviewPath, "swahiliTeacherReviews/uid");
+  assert.equal(docs.get(job.reviewPath).sheetDelivery, "pending");
+  assert.equal(docs.get(job.reviewPath).emailDelivery, "sent");
+  assert.equal(docs.get(job.reviewPath).emailBccRequested, true);
   assert.equal(job.status, "pending");
   assert.equal(email.length, 1);
   assert.equal(email[0].email, "learner@example.com");
@@ -64,4 +68,38 @@ test("skips outdated submissions and profiles enrolled in German", async () => {
     assert.equal(docs.size, 2);
     assert.equal(email.length, 0);
   }
+});
+
+test("the shared Sheet worker reports retry and confirmed write on the current review", async () => {
+  const { createScoreSyncWorker } = require("./automaticCourseMarking");
+  const { work, event, docs } = fixture();
+  await work(event);
+  const [jobPath, job] = Array.from(docs).find(([path]) => path.startsWith("automaticScoreSync/"));
+  const ref = {
+    id: "swahili-job",
+    get: async () => ({ data: () => docs.get(jobPath) }),
+    set: async fields => Object.assign(job, fields),
+  };
+  let offline = true;
+  const worker = createScoreSyncWorker({
+    config: () => ({ url: "https://example.test", token: "test" }),
+    post: async () => {
+      if (offline) throw new Error("offline");
+      return { ok: true, text: async () => '{"ok":true,"mode":"upsert"}' };
+    },
+    db: {
+      doc: path => ({ path, get: async () => ({ exists: docs.has(path), data: () => docs.get(path) }) }),
+      batch: () => ({ set() {}, commit: async () => {} }),
+      runTransaction: async action => action({
+        get: async target => target.get(),
+        set: ({ path }, fields) => Object.assign(docs.get(path), fields),
+      }),
+    },
+  });
+  await assert.rejects(worker({ data: { ref } }), /offline/);
+  assert.equal(docs.get(job.reviewPath).sheetDelivery, "retrying");
+  offline = false;
+  await worker({ data: { ref } });
+  assert.equal(docs.get(job.reviewPath).sheetDelivery, "synced");
+  assert.equal(docs.get(job.reviewPath).emailDelivery, "sent");
 });

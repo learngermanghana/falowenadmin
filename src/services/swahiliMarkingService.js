@@ -1,4 +1,4 @@
-import { collection, collectionGroup, doc, getDoc, getDocs, limit, orderBy, query, runTransaction, serverTimestamp, startAfter, where } from "firebase/firestore";
+import { collection, collectionGroup, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, runTransaction, serverTimestamp, startAfter, where } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { canonicalSwahiliSubmission, swahiliReviewDocId } from "../utils/swahiliReviewQueue.js";
 
@@ -68,6 +68,12 @@ export async function loadSwahiliReview(submission, day) {
   return snapshot.exists() ? snapshot.data() : null;
 }
 
+export function watchSwahiliReview(submission, day, onReview, onError) {
+  return onSnapshot(reviewRef(submission.studentId, day), snapshot => {
+    if (!snapshot.metadata.hasPendingWrites) onReview(snapshot.data() || null);
+  }, onError);
+}
+
 export async function saveSwahiliReview({ submission, day, status, feedback, score }) {
   if (!["reviewed", "needs_revision"].includes(status)) throw new Error("Choose a valid review decision.");
   if (!Number.isInteger(score) || score < 0 || score > 100) throw new Error("Enter a whole-number score from 0 to 100.");
@@ -85,6 +91,9 @@ export async function saveSwahiliReview({ submission, day, status, feedback, sco
       submissionVersion: `${latest.submittedAt.seconds}:${latest.submittedAt.nanoseconds}`,
       feedback: feedback.trim().slice(0, 3000),
       reviewedAt: serverTimestamp(),
+      sheetDelivery: "queued",
+      emailDelivery: "queued",
+      emailBccRequested: false,
     }, { merge: true });
   });
 }

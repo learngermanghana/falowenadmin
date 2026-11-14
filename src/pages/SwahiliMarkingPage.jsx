@@ -1,12 +1,34 @@
 import answerKeys from "../../functions/swahili-answers.json";
 import MarkingSectionTabs from "../components/MarkingSectionTabs.jsx";
 import { useEffect, useState } from "react";
-import { loadAllSwahiliMarkingPage, loadSwahiliMarkingPage, loadSwahiliRoster, loadSwahiliStudentSubmission, loadSwahiliReview, saveSwahiliReview } from "../services/swahiliMarkingService";
+import { loadAllSwahiliMarkingPage, loadSwahiliMarkingPage, loadSwahiliRoster, loadSwahiliStudentSubmission, loadSwahiliReview, saveSwahiliReview, watchSwahiliReview } from "../services/swahiliMarkingService";
 import { getSwahiliReviewStatus } from "../utils/swahiliReviewQueue";
 
 const LESSONS = {
   1: { title: "Alfabeti, sauti na matamshi", writing: { vowels: "Vokali", syllables: "Silabi", words: "Maneno" } },
   6: { title: "Mgahawani", writing: { likes: "Ninapenda", dislikes: "Sipendi", order: "Agizo" } },
+};
+
+const scoresSheetUrl = "https://docs.google.com/spreadsheets/d/1BRb8p3Rq0VpFCLSwL4eS9tSgXBo9hSWzfW_J_7W36NQ/edit?gid=2121051612#gid=2121051612";
+const sheetMessages = {
+  queued: "Waiting for the result worker.",
+  pending: "Waiting for Google Sheets to confirm the write.",
+  synced: "Saved to Google Sheets.",
+  retrying: "Sheet write failed. Falowen is retrying.",
+  failed: "Sheet write failed after retries.",
+  no_profile: "Sheet write blocked. No Swahili learner profile was found.",
+  outdated: "Sheet write skipped. The learner submitted a newer workbook.",
+  publication_failed: "Could not prepare the score for Google Sheets.",
+};
+const emailMessages = {
+  queued: "Waiting for the result worker.",
+  pending: "Waiting for the email service.",
+  sent: "Email service accepted the result.",
+  failed: "Email delivery failed or could not be confirmed. Falowen will retry.",
+  no_profile: "Email blocked. No Swahili learner profile was found.",
+  no_email: "Email skipped. The learner has no account email.",
+  outdated: "Email skipped. The learner submitted a newer workbook.",
+  publication_failed: "Could not prepare the result email.",
 };
 
 function SubmissionReview({ submission, day }) {
@@ -19,12 +41,16 @@ function SubmissionReview({ submission, day }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [deliveryError, setDeliveryError] = useState("");
+
+  useEffect(() => watchSwahiliReview(submission, day, setReview, () => {
+    setDeliveryError("Live delivery status is unavailable. Refresh to check again.");
+  }), [submission, day]);
 
   useEffect(() => {
     let active = true;
     loadSwahiliReview(submission, day).then((value) => {
       if (!active) return;
-      setReview(value);
       const currentStatus = getSwahiliReviewStatus(submission, value);
       if (currentStatus !== "awaiting_review") {
         setStatus(currentStatus);
@@ -57,6 +83,7 @@ function SubmissionReview({ submission, day }) {
   }
 
   const reviewState = saved ? status : getSwahiliReviewStatus(submission, review);
+  const currentReview = getSwahiliReviewStatus(submission, review) !== "awaiting_review" ? review : null;
   return (
     <form className="marking-card swahili-marking-form" onSubmit={submit}>
       <h3>{submission.studentName || submission.studentEmail || submission.studentId}</h3>
@@ -91,7 +118,18 @@ function SubmissionReview({ submission, day }) {
         </label>
         <button type="submit">{saving ? "Saving…" : "Save feedback"}</button>
       </fieldset>
-      {saved && <p role="status">Result saved. Sheet sync and email delivery are queued.</p>}
+      {(saved || currentReview) && (
+        <section aria-label="Result delivery" role="status">
+          <p><strong>Review saved in Falowen.</strong></p>
+          <p><strong>Google Sheets</strong> · {sheetMessages[currentReview?.sheetDelivery] || (currentReview ? "No delivery receipt recorded for this review." : "Checking status…")}{" "}
+            <a href={scoresSheetUrl} target="_blank" rel="noreferrer">Open scores sheet</a>
+          </p>
+          <p><strong>Result email</strong> · {emailMessages[currentReview?.emailDelivery] || (currentReview ? "No delivery receipt recorded for this review." : "Checking status…")}
+            {currentReview?.emailDelivery === "sent" && (currentReview.emailBccRequested ? " Ruth was included as BCC in the request." : " No teacher BCC was configured for this send.")}
+          </p>
+        </section>
+      )}
+      {deliveryError && <p role="alert">{deliveryError}</p>}
       {error && <p role="alert">{error}</p>}
     </form>
   );
