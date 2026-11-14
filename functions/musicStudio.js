@@ -35,13 +35,31 @@ function extract(result) {
   if (audio.data.length > 28 * 1024 * 1024 || !/^[A-Za-z0-9+/\r\n]*={0,2}$/.test(audio.data)) throw fail('Google returned an invalid or oversized audio response.', 502);
   return { audio: audio.data, mimeType: 'audio/mpeg', lyrics: blocks.filter(b => b.type === 'text').map(b => b.text || '').join('\n') };
 }
+async function mayUseMusicStudio(db, user, language, runtimeConfig) {
+  if (isStudioOwner(user.uid, runtimeConfig)) return true;
+  if (language !== "german" && language !== "swahili") return false;
+  const snapshot = await db.collection("falowenStaffAccess").doc(user.uid).get();
+  if (!snapshot.exists) return false;
+  const record = snapshot.data() || {};
+  if (record.active !== true || record.uid !== user.uid || String(record.email || "").toLowerCase() !== String(user.email || "").toLowerCase()) return false;
+  let access;
+  try { access = JSON.parse(record.accessJson || "{}"); } catch { return false; }
+  return Array.isArray(record.languages) && record.languages.includes(language)
+    && access?.[language]?.music === true;
+}
 function createHandler({ db, verifyToken, key, runtimeConfig = {}, fetchImpl = fetch }) {
   return async (req, res) => {
     res.set('Cache-Control', 'no-store');
     let user;
     try { user = await verifyToken(String(req.headers.authorization || '').replace(/^Bearer /, '')); }
-    catch { return res.status(401).json({ ok: false, error: 'Sign in with your Falowen owner account.' }); }
-    if (!isStudioOwner(user.uid, runtimeConfig)) return res.status(403).json({ ok: false, error: 'Music Studio is owner-only.' });
+    catch { return res.status(401).json({ ok: false, error: 'Sign in with your Falowen staff or owner account.' }); }
+    const language = String(req.method === 'GET' ? (req.query?.language || 'german') : (req.body?.language || 'german')).trim().toLowerCase();
+    try {
+      if (!(await mayUseMusicStudio(db, user, language, runtimeConfig)))
+        return res.status(403).json({ ok: false, error: 'Music Studio access is not assigned for this language.' });
+    } catch {
+      return res.status(503).json({ ok: false, error: 'Could not verify Music Studio permissions.' });
+    }
     let slot, request;
     try {
       if (req.method === 'GET') {
@@ -73,4 +91,4 @@ function createHandler({ db, verifyToken, key, runtimeConfig = {}, fetchImpl = f
     }
   };
 }
-module.exports = { MODELS, LIMITS, validate, reserve, extract, createHandler };
+module.exports = { MODELS, LIMITS, validate, reserve, extract, mayUseMusicStudio, createHandler };

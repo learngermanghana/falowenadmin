@@ -6,7 +6,7 @@ const client=readFileSync(new URL("../src/services/speakingPracticeReviewService
 const app=readFileSync(new URL("../src/App.jsx",import.meta.url),"utf8");
 test("Speaking usage dashboard is a protected Admin route",()=>{
   assert.match(app,/Route path="\/speaking-review" element=\{<ProtectedRoute><SpeakingPracticeReviewPage\s*\/><\/ProtectedRoute>\}/);
-  assert.equal((app.match(/to="\/exam-tracking"/g)||[]).length,2);
+  assert.equal((app.match(/to="\/exam-tracking"/g)||[]).length,1, "Exam Tracking is visible only in the unrestricted Admin navigation");
 });
 test("Activity is fetched only on staff button click; no periodic checks",()=>{
   assert.match(page,/onClick=\{\(\)=>check\("activity"\)\}/);

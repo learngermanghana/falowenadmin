@@ -1,3 +1,5 @@
+import { staffLandingRoute, staffRouteCapability } from "./staffAccess.js";
+
 export const STAFF_ACCOUNT_EMAIL = "staff@falowen.app";
 const OWNER_ACCOUNT_EMAIL = "moxflex@gmail.com";
 
@@ -9,12 +11,12 @@ export function getAdminRole(claims = {}) {
 }
 
 export function isTeachingWorkspace(pathname) {
-  return pathname === "/marking" || pathname === "/teaching-slides" || pathname.startsWith("/teaching-slides/");
+  return Boolean(staffRouteCapability(pathname));
 }
 
-export function getPostLoginPath(from, role) {
+export function getPostLoginPath(from, role, staffAccess = null, staffLanguages = null, language = "german") {
   const path = from?.pathname || "";
-  const fallback = role === "staff" ? "/marking" : "/";
+  const fallback = role === "staff" ? (staffLanguages ? staffLandingRoute(staffAccess, staffLanguages, language) : "/marking") : "/";
   if (!path.startsWith("/") || path.startsWith("//") || path === "/login") return fallback;
   if (role === "staff" && !isTeachingWorkspace(path)) return fallback;
   return `${path}${from.search || ""}${from.hash || ""}`;

@@ -15,6 +15,18 @@ service cloud.firestore {
       );
     }
 
+    // Class and attendance documents contain cross-language rosters and session data.
+    // Assigned staff must use /api/staff-attendance, which enforces the active
+    // Firestore staff record and assigned class before returning any data.
+    function isOwnerAdmin() {
+      return isSignedIn() && (
+        request.auth.token.get('admin', false) == true ||
+        request.auth.token.get('role', '') == 'admin' ||
+        (request.auth.token.get('email_verified', false) == true &&
+          request.auth.token.get('email', '') == 'moxflex@gmail.com')
+      );
+    }
+
     // Staff may review old and nested student submissions, but students can
     // only read documents carrying their own authenticated identity.
     match /{path=**}/submissions/{submissionId} {
@@ -70,19 +82,19 @@ service cloud.firestore {
 
     // Live class administration collections used by /live-classes.
     match /classes/{classId} {
-      allow read, write: if isAdmin();
+      allow read, write: if isOwnerAdmin();
     }
 
     match /classSessions/{sessionId} {
-      allow read, write: if isAdmin();
+      allow read, write: if isOwnerAdmin();
     }
 
     match /attendance/{classId}/sessions/{sessionId} {
-      allow read, write: if isAdmin();
+      allow read, write: if isOwnerAdmin();
     }
 
     match /attendance/{classId}/sessions/{sessionId}/{document=**} {
-      allow read, write: if isAdmin();
+      allow read, write: if isOwnerAdmin();
     }
 
     match /calendarFeeds/{feedId} {

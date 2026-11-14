@@ -62,7 +62,7 @@ function audioFilenameObjectKey(text) {
   if (SWAHILI_MUSIC_TRACKS.some((track) => track.objectKey === key)) return key;
   return /^music\/(a1|a2|b1|b2|c1|c2)\/day-(0[1-9]|1[0-9]|2[0-8])\/[^/]{1,150}\.mp3$/i.test(key) ? key : "";
 }
-export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", title = "Falowen Music", level = "", day = "", onOverwriteLyrics = null, savingLyrics = false, loadingLyrics = false, lyricsSaveNotice = "", assignmentKey = "", active = true, swahili = false }) {
+export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", title = "Falowen Music", level = "", day = "", onOverwriteLyrics = null, savingLyrics = false, loadingLyrics = false, lyricsSaveNotice = "", assignmentKey = "", active = true, swahili = false, allowPublish = true }) {
   const [file,setFile] = useState(null);
   const [tracks,setTracks] = useState([]);
   const [publishedTrack,setPublishedTrack] = useState(null);
@@ -391,6 +391,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   useEffect(()=>{if(!exporting)drawAt(audioRef.current?.currentTime||0);},[scenes,videoTitle,videoLevel,videoDay,duration,exporting,videoPresetId,coverImage,reviewNote]);
   useEffect(()=>()=>{cancelRef.current?.();if(exportedUrlRef.current)URL.revokeObjectURL(exportedUrlRef.current);},[]);
   async function publishTimingDirectly(){
+    if (!allowPublish) { setError("Only the owner can publish shared music timing."); return; }
     if(savingTiming || exporting || timingReview)return;
     setError("");setMessage("");
     try {
@@ -677,13 +678,13 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       }}>I reviewed and confirmed all lyric time marks</button>
     </div>}}
     <p role="status">Shared line timing: {cues.length}/{lines.length} marked. {timingReview ? "Estimated timing for this exact MP3 — not yet verified. Listen, adjust and save the marks below." : completeCues ? "Ready to use in the video." : "Mark missing lines or import a matching timing file."}</p>
-    <div style={{display:"grid",gap:6,border:"1px solid #b5d7ba",borderRadius:12,padding:12}}>
+    {allowPublish && <div style={{display:"grid",gap:6,border:"1px solid #b5d7ba",borderRadius:12,padding:12}}>
       <strong>Save timing to Falowen Music</strong>
       <p style={{margin:0,fontSize:13}}>When every sung line is marked and reviewed, save directly beside the published MP3 in Cloudflare. No JSON download or manual upload is needed. Your local marks remain available if publishing fails.</p>
       <button type="button" disabled={savingTiming||exporting||timingReview||!completeCues||!audioFilenameObjectKey(objectKey)}
         onClick={publishTimingDirectly}>{savingTiming?"Saving to Cloudflare…":"Save Timing to Falowen · Cloudflare R2"}</button>
       {!audioFilenameObjectKey(objectKey) && <small>Select a published song or enter its exact R2 MP3 key in the backup section below.</small>}
-    </div>
+    </div>}
     <p style={{margin:0,fontSize:12,color:"#52635e"}}>{completeCues
       ? "The exported video follows each sung line using its saved timing, including the matching English translation when enabled."
       : "To export real active-line highlighting, play the song and mark every lyric line's beginning in the timing editor. Screen-only estimates are not sufficient."} Keep this browser tab open while exporting; recording runs in real time.</p>
