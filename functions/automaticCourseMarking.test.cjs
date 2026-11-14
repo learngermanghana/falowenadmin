@@ -80,8 +80,9 @@ test('sheet retries use the saved result and stable upsert identity, not AI', as
   const db={doc:()=>({get:async()=>({exists:true,data:()=>({score:90,studentcode:'s',assignment_id:'A1-1.1'})})}),batch:()=>({set(){},commit:async()=>{data.status='synced';}})};
   const worker=createScoreSyncWorker({db,config:()=>({url:'https://example.test',token:'secret'}),post:async(_url,opts)=>{
     calls++; payload=JSON.parse(opts.body);
+    assert.equal(opts.headers['Content-Type'], 'text/plain;charset=UTF-8');
     if(calls===1) throw Error('offline');
-    return {ok:true,json:async()=>({ok:true,mode:'upsert'})};
+    return {ok:true,text:async()=>JSON.stringify({ok:true,mode:'upsert'})};
   }});
   await assert.rejects(worker({data:{ref}}),/offline/);
   assert.equal(data.status,'pending');
@@ -99,7 +100,7 @@ test('speaking sync preserves its separate history identity and marks background
   const db = { doc: path => ({ path, get: async () => ({ exists: true, data: () => saved }) }),
     batch: () => ({ set: (target, patch) => updates.push([target.path, patch]), commit: async () => {} }) };
   await createScoreSyncWorker({ db, config: () => ({ url: 'https://example.test', token: 'secret' }),
-    post: async (_url, options) => { payload = JSON.parse(options.body); return { ok: true, json: async () => ({ ok: true, mode: 'upsert' }) }; } })({ data: { ref } });
+    post: async (_url, options) => { payload = JSON.parse(options.body); return { ok: true, text: async () => JSON.stringify({ ok: true, mode: 'upsert' }) }; } })({ data: { ref } });
   assert.equal(payload.rows[0].dedupe_id, saved.dedupe_id);
   assert.ok(updates.some(([path, patch]) => path === 'scores/s' && patch.sheetSyncStatus === 'complete'));
 });

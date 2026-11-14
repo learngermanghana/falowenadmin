@@ -47,6 +47,7 @@ test("publishes a zero tutor score, queues Sheet sync, and emails Results once o
   assert.equal(score.passed, false);
   assert.equal(score.outcome, "failed");
   assert.equal(score.assignment_id, "swahili-day-1");
+  assert.equal(score.dedupe_id, "legacy-code__swahili-day-1");
   const job = Array.from(docs).find(([key]) => key.startsWith("automaticScoreSync/"))[1];
   assert.equal(job.scorePath, path);
   assert.equal(job.status, "pending");

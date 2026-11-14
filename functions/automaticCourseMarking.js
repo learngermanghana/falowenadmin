@@ -1,3 +1,4 @@
+const { upsertScoreRows } = require("./scoreSheetUpsert.cjs");
 const { resultAnswerReference } = require('./resultAnswerReference.cjs');
 const crypto = require('node:crypto');
 const { familyRecordingReference } = require('./a1FamilyRecordingReference');
@@ -372,17 +373,8 @@ function createScoreSyncWorker({ db, config, post = fetch }) {
       // Read the latest saved score so a later tutor correction wins over a retry.
       const score = await db.doc(job.scorePath).get();
       if (!score.exists) throw new Error('Saved score is missing');
-      const response = await post(settings.url, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(30000),
-        body: JSON.stringify({ token: settings.token, action: 'upsertScoreRows', mode: 'upsert',
-          event_id: ref.id, source: 'falowen-admin',
-          ...(settings.sheetName ? { sheet_name: settings.sheetName } : {}),
-          ...(settings.sheetGid ? { sheet_gid: settings.sheetGid } : {}),
-          dedupe_columns: ['studentcode', 'assignment_id'], remove_duplicate_rows: true,
-          create_missing_columns: true, rows: [Object.fromEntries(Object.entries(score.data()).filter(([key]) => key !== "answerReferenceId"))] }),
-      });
-      const receipt = await response.json();
-      if (!response.ok || receipt.ok !== true || !(receipt.action === 'upsertScoreRows' || receipt.mode === 'upsert' || receipt.upsert === true)) throw new Error('Score Sheet did not confirm an upsert');
+      const { answerReferenceId, ...row } = score.data();
+      const { body: receipt } = await upsertScoreRows(settings, { rows: [row], eventId: ref.id }, post);
       const batch = db.batch();
       batch.set(ref, { status: 'synced', receipt: clean(receipt) }, { merge: true });
       batch.set(db.doc(job.scorePath), { sheetSaved: true }, { merge: true });
