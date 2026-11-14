@@ -25,8 +25,9 @@ export async function loadSwahiliReview(submission, day) {
   return snapshot.exists() ? snapshot.data() : null;
 }
 
-export async function saveSwahiliReview({ submission, day, status, feedback }) {
+export async function saveSwahiliReview({ submission, day, status, feedback, score }) {
   if (!["reviewed", "needs_revision"].includes(status)) throw new Error("Choose a valid review decision.");
+  if (!Number.isInteger(score) || score < 0 || score > 100) throw new Error("Enter a whole-number score from 0 to 100.");
   await runTransaction(db, async (transaction) => {
     const latest = canonicalSwahiliSubmission(await transaction.get(doc(db, submission.path)), day);
     if (!latest || !latest.submittedAt?.isEqual?.(submission.submittedAt)) {
@@ -37,6 +38,8 @@ export async function saveSwahiliReview({ submission, day, status, feedback }) {
       lessonId: latest.lessonId,
       program: "swahili",
       status,
+      score,
+      submissionVersion: `${latest.submittedAt.seconds}:${latest.submittedAt.nanoseconds}`,
       feedback: feedback.trim().slice(0, 3000),
       reviewedAt: serverTimestamp(),
     }, { merge: true });

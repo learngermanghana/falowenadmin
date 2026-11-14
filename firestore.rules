@@ -112,8 +112,9 @@ service cloud.firestore {
     function canReviewSwahili() {
       return isSignedIn() && (
         request.auth.token.get('admin', false) == true ||
-        request.auth.token.get('staff', false) == true ||
-        request.auth.token.get('role', '') in ['admin', 'staff', 'tutor'] ||
+        request.auth.token.get('role', '') == 'admin' ||
+        ((request.auth.token.get('staff', false) == true || request.auth.token.get('role', '') in ['staff', 'tutor']) &&
+          'swahili' in request.auth.token.get('staffLanguages', ['swahili'])) ||
         (request.auth.token.get('email_verified', false) == true &&
           request.auth.token.get('email', '') in ['moxflex@gmail.com', 'staff@falowen.app'])
       );
@@ -133,6 +134,9 @@ service cloud.firestore {
         request.resource.data.status in ['reviewed', 'needs_revision'] &&
         request.resource.data.feedback is string &&
         request.resource.data.feedback.size() <= 3000 &&
+        (!request.resource.data.keys().hasAny(['score']) ||
+          (request.resource.data.score is int && request.resource.data.score >= 0 &&
+            request.resource.data.score <= 100 && request.resource.data.submissionVersion is string)) &&
         ((request.resource.data.lessonId == 'swahili-day-1' && reviewId == request.resource.data.studentId) ||
           (request.resource.data.lessonId == 'swahili-day-6' && reviewId == request.resource.data.studentId + '_day-6'));
     }

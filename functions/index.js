@@ -2468,6 +2468,11 @@ exports.sendFinalMockResultEmail = createFinalMockResultEmailTrigger({
   runtimeConfig,
 });
 
+exports.publishSwahiliTutorResult = onDocumentWritten({
+  document: "swahiliTeacherReviews/{reviewId}",
+  retry: true,
+}, require("./swahiliResults").createSwahiliResultWorker({ db, auth: admin.auth(), runtimeConfig }));
+
 exports.createFlatSubmissionMarkingJob = onDocumentCreated({ document: "submissions/{submissionId}", retry: true }, async (event) => {
   await createAutomaticMarkingJob(event, "flat");
 });

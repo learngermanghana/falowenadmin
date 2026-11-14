@@ -10,6 +10,7 @@ const LESSONS = {
 function SubmissionReview({ submission, day }) {
   const [review, setReview] = useState(null);
   const [status, setStatus] = useState("reviewed");
+  const [score, setScore] = useState("");
   const [feedback, setFeedback] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -25,6 +26,7 @@ function SubmissionReview({ submission, day }) {
       if (currentStatus !== "awaiting_review") {
         setStatus(currentStatus);
         setFeedback(value.feedback || "");
+        setScore(value.score ?? "");
       }
       setLoading(false);
     }).catch(() => {
@@ -39,7 +41,7 @@ function SubmissionReview({ submission, day }) {
     setSaved(false);
     setError("");
     try {
-      await saveSwahiliReview({ submission, day, status, feedback });
+      await saveSwahiliReview({ submission, day, status, feedback, score: score === "" ? null : Number(score) });
       setSaved(true);
     } catch (failure) {
       setError(failure.message || "Could not save feedback.");
@@ -74,12 +76,16 @@ function SubmissionReview({ submission, day }) {
             <option value="needs_revision">Needs revision</option>
           </select>
         </label>
+        <label>Score out of 100
+          <input type="number" min="0" max="100" step="1" value={score} required
+            onChange={(event) => { setScore(event.target.value); setSaved(false); }} />
+        </label>
         <label>Feedback for the learner
-          <textarea value={feedback} onChange={(event) => { setFeedback(event.target.value); setSaved(false); }} maxLength={3000} rows={5} />
+          <textarea value={feedback} onChange={(event) => { setFeedback(event.target.value); setSaved(false); }} maxLength={3000} rows={5} required />
         </label>
         <button type="submit">{saving ? "Saving…" : "Save feedback"}</button>
       </fieldset>
-      {saved && <p role="status">Feedback saved to the learner’s workbook.</p>}
+      {saved && <p role="status">Result saved. Sheet sync and email delivery are queued.</p>}
       {error && <p role="alert">{error}</p>}
     </form>
   );
