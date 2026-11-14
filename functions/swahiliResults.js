@@ -1,3 +1,4 @@
+const answerKeys = require("./swahili-answers.json");
 const { createHash } = require("node:crypto");
 const { resolveAnnouncementConfig, postAnnouncementRow } = require("./finalMockResultEmails");
 
@@ -14,6 +15,7 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
       || typeof review.studentId !== "string" || !review.studentId || review.studentId.includes("/")) return;
 
     const passed = review.score >= PASS_MARK;
+    if (event.data?.before?.data()?.reviewedAt?.isEqual?.(review.reviewedAt)) return;
     const day = review.lessonId.split("-").at(-1);
     const uid = review.studentId;
     if (snapshot.id !== (day === "1" ? uid : `${uid}_day-6`) || !review.submissionVersion) return;
@@ -39,6 +41,7 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
       const version = submittedAt && `${submittedAt.seconds}:${submittedAt.nanoseconds}`;
       if (!latest.data()?.reviewedAt?.isEqual(review.reviewedAt) || version !== review.submissionVersion) return null;
       if (delivery.exists) return delivery.data();
+      tx.set(snapshot.ref, { answerReference: answerKeys[review.lessonId] }, { mergeFields: ["answerReference"] });
       tx.set(scoreRef, {
         program: "swahili", studentId: uid, studentCode, studentcode: studentCode,
         name: student.name || "", assignment, assignmentId: review.lessonId,
@@ -66,7 +69,8 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
         ? "Your tutor reviewed your Swahili workbook and requested a revision. Open Campus Results for feedback."
         : "Your Swahili workbook result is available. Open Campus Results to read your tutor’s feedback.",
       topic: `${assignment} result`,
-      link: "https://www.falowen.app/campus/results",
+      link: `https://www.falowen.app/campus/results#swahili-day-${day}`,
+      link_label: "Open score, feedback and reference answers",
       button_label: "Open Falowen Results",
       class: "Swahili A1",
       delivery_mode: "individual",

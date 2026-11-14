@@ -1,0 +1,54 @@
+{
+  "swahili-day-1": {
+    "version": 1,
+    "writing": {
+      "Vokali": "A, E, I, O, U",
+      "Silabi": "ba, be, bi, bo, bu",
+      "Maneno": "mama, kiti, kuku"
+    },
+    "reading": {
+      "mother": {
+        "prompt": "Ni neno gani lina maana ya mother?",
+        "answer": "mama"
+      },
+      "child": {
+        "prompt": "Ni neno gani lina maana ya child?",
+        "answer": "mtoto"
+      },
+      "chair": {
+        "prompt": "Ni neno gani lina maana ya chair?",
+        "answer": "kiti"
+      },
+      "u": {
+        "prompt": "Ni neno gani lina vokali U mara mbili?",
+        "answer": "kuku"
+      }
+    }
+  },
+  "swahili-day-6": {
+    "version": 1,
+    "writing": {
+      "Ninapenda": "Ninapenda kula wali na kuku. Ninapenda kunywa maji.",
+      "Sipendi": "Sipendi kunywa soda.",
+      "Agizo": "Naomba wali na kuku na maji, tafadhali."
+    },
+    "reading": {
+      "food": {
+        "prompt": "Mteja anapenda kula nini?",
+        "answer": "wali na kuku"
+      },
+      "drink": {
+        "prompt": "Mteja anapenda kunywa nini?",
+        "answer": "juisi ya embe"
+      },
+      "server": {
+        "prompt": "Nani anauliza ‘Wewe unapenda kula nini?’",
+        "answer": "Mhudumu"
+      },
+      "menu": {
+        "prompt": "Ni chakula gani kina samaki?",
+        "answer": "ugali samaki"
+      }
+    }
+  }
+}

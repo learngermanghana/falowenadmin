@@ -1,14 +1,16 @@
+import answerKeys from "../../functions/swahili-answers.json";
 import MarkingSectionTabs from "../components/MarkingSectionTabs.jsx";
 import { useEffect, useState } from "react";
 import { loadAllSwahiliMarkingPage, loadSwahiliMarkingPage, loadSwahiliRoster, loadSwahiliStudentSubmission, loadSwahiliReview, saveSwahiliReview } from "../services/swahiliMarkingService";
 import { getSwahiliReviewStatus } from "../utils/swahiliReviewQueue";
 
 const LESSONS = {
-  1: { title: "Alfabeti, sauti na matamshi", writing: { vowels: "Vokali", syllables: "Silabi", words: "Maneno" }, reading: { mother: "Ni neno gani lina maana ya mother?", child: "Ni neno gani lina maana ya child?", chair: "Ni neno gani lina maana ya chair?", u: "Ni neno gani lina vokali U mara mbili?" } },
-  6: { title: "Mgahawani", writing: { likes: "Ninapenda", dislikes: "Sipendi", order: "Agizo" }, reading: { food: "Mteja anapenda kula nini?", drink: "Mteja anapenda kunywa nini?", server: "Nani anauliza ‘Wewe unapenda kula nini?’", menu: "Ni chakula gani kina samaki?" } },
+  1: { title: "Alfabeti, sauti na matamshi", writing: { vowels: "Vokali", syllables: "Silabi", words: "Maneno" } },
+  6: { title: "Mgahawani", writing: { likes: "Ninapenda", dislikes: "Sipendi", order: "Agizo" } },
 };
 
 function SubmissionReview({ submission, day }) {
+  const reference = answerKeys[submission.lessonId];
   const [review, setReview] = useState(null);
   const [status, setStatus] = useState("reviewed");
   const [score, setScore] = useState("");
@@ -62,14 +64,14 @@ function SubmissionReview({ submission, day }) {
       <section>
         <h4>Teil 2 · Kuandika</h4>
         {Object.entries(LESSONS[day].writing).map(([key, label]) => (
-          <p key={key}><strong>{label}</strong> {String(submission.writing?.[key] ?? "—")}</p>
+          <p key={key}><strong>{label}</strong> {String(submission.writing?.[key] ?? "—")}<br /><small>{day === 6 ? "Model response (accept suitable alternatives)" : "Example answer"}: {reference.writing[label]}</small></p>
         ))}
       </section>
       <section>
         <h4>Teil 3 · Kusoma</h4>
         <ol>
-          {Object.entries(LESSONS[day].reading).map(([key, question]) => (
-            <li key={key}><strong>{question}</strong> {String(submission.readingAnswers?.[key] ?? "—")}</li>
+          {Object.entries(reference.reading).map(([key, { prompt, answer }]) => (
+            <li key={key}><strong>{prompt}</strong> {String(submission.readingAnswers?.[key] ?? "—")}<br /><small>Expected: {answer}</small></li>
           ))}
         </ol>
       </section>

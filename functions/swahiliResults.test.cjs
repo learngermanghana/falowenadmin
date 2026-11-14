@@ -53,7 +53,7 @@ test("publishes a zero tutor score, queues Sheet sync, and emails Results once o
   assert.equal(email.length, 1);
   assert.equal(email[0].email, "learner@example.com");
   assert.equal(email[0].bcc, "teacher@example.com");
-  assert.match(email[0].link, /\/campus\/results$/);
+  assert.match(email[0].link, /\/campus\/results#swahili-day-1$/);
 });
 
 test("skips outdated submissions and profiles enrolled in German", async () => {
