@@ -1,6 +1,7 @@
 const { createHash } = require("node:crypto");
 const { resolveAnnouncementConfig, postAnnouncementRow } = require("./finalMockResultEmails");
 
+const PASS_MARK = 60;
 const lessonTitles = { "swahili-day-1": "Alfabeti, sauti na matamshi", "swahili-day-6": "Mgahawani" };
 
 function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement = postAnnouncementRow }) {
@@ -12,6 +13,7 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
       || !Number.isInteger(review.score) || review.score < 0 || review.score > 100
       || typeof review.studentId !== "string" || !review.studentId || review.studentId.includes("/")) return;
 
+    const passed = review.score >= PASS_MARK;
     const day = review.lessonId.split("-").at(-1);
     const uid = review.studentId;
     if (snapshot.id !== (day === "1" ? uid : `${uid}_day-6`) || !review.submissionVersion) return;
@@ -41,7 +43,8 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
         program: "swahili", studentId: uid, studentCode, studentcode: studentCode,
         name: student.name || "", assignment, assignmentId: review.lessonId,
         assignment_id: review.lessonId, level: "A1", score: review.score,
-        comments: review.feedback, resultStatus: review.status, source: "swahili_tutor",
+        comments: review.feedback, resultStatus: review.status, passed,
+        passMark: PASS_MARK, outcome: passed ? "passed" : "failed", source: "swahili_tutor",
         date: review.reviewedAt.toDate().toISOString(), sheetSaved: false,
       });
       const job = { scorePath: scoreRef.path, status: "pending", attempts: 0, source: "swahili_tutor" };

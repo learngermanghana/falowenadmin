@@ -45,11 +45,12 @@ test("Day 6 workbook reaches the marking queue and upserts the tutor score to Sh
     getDoc: target => target.get(),
     getDocs: async query => {
       if (query.name === "students") return { docs: [{ data: () => student }], size: 1 };
+      const lesson = query.filters[1][2];
       assert.deepEqual(query.filters.slice(0, 3), [
-        ["program", "==", "swahili"], ["lessonId", "==", "swahili-day-6"], ["status", "==", "submitted"],
+        ["program", "==", "swahili"], ["lessonId", "==", lesson], ["status", "==", "submitted"],
       ]);
       if (context.missingIndex) throw Object.assign(new Error("Index building"), { code: "failed-precondition" });
-      return { docs: [snapshot(path)], size: 1 };
+      return lesson === "swahili-day-6" ? { docs: [snapshot(path)], size: 1 } : { docs: [], size: 0 };
     },
     runTransaction: (_, callback) => db.runTransaction(callback),
     serverTimestamp: () => timestamp(20),
@@ -58,11 +59,11 @@ test("Day 6 workbook reaches the marking queue and upserts the tutor score to Sh
     const source = readFileSync(join(__dirname, "../src", file), "utf8");
     vm.runInNewContext(source.replace(/^import .*\n/gm, "").replace(/^export /gm, ""), context);
   }
-  const page = await context.loadSwahiliMarkingPage(6);
+  const page = await context.loadAllSwahiliMarkingPage();
   assert.equal(page.rows[0].path, path);
   assert.equal(page.rows[0].writing.order, "Ninaomba maji.");
   context.missingIndex = true;
-  assert.equal((await context.loadSwahiliMarkingPage(6)).rows[0].path, path);
+  assert.equal((await context.loadAllSwahiliMarkingPage()).rows[0].path, path);
   await context.saveSwahiliReview({ submission: page.rows[0], day: 6, status: "reviewed", feedback: "Good work.", score: 81 });
   const emails = [];
   await createSwahiliResultWorker({
@@ -89,6 +90,7 @@ test("Day 6 workbook reaches the marking queue and upserts the tutor score to Sh
   assert.equal(requests[0].rows[0].program, "swahili");
   assert.equal(requests[0].rows[0].assignment_id, "swahili-day-6");
   assert.equal(requests[0].rows[0].score, 81);
+  assert.equal(requests[0].rows[0].passed, true);
   assert.equal(data.get(jobPath).status, "synced");
   assert.equal(data.get(job.scorePath).sheetSaved, true);
   assert.equal(emails.length, 1);
