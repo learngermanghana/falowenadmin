@@ -16,6 +16,8 @@ export const WORKER_TARGETS = {
   "functions/swahiliDeliveryStatus.js": ["publishSwahiliTutorResult", "syncAutomaticCourseScore"],
   "functions/swahiliResults.js": ["publishSwahiliTutorResult"],
   "functions/swahiliResults.test.cjs": [],
+  // Test-only webhook stub refresh; no runtime function changed.
+  "functions/swahiliSubmissionFlow.test.cjs": [],
   "functions/automaticMarkingPipeline.test.cjs": [],
   "src/utils/verifiedSpeakingMarking.js": ["api", "markCourseSubmissionAutomatically"],
   "src/utils/a1WritingTaskEvidence.js": ["api", "markCourseSubmissionAutomatically"],
