@@ -49,7 +49,7 @@ jobs:
           node --check functions/swahiliResults.js
           node --check functions/automaticCourseMarking.js
           node --test functions/swahiliResults.test.cjs functions/swahiliSubmissionFlow.test.cjs functions/automaticCourseMarking.test.cjs
-          node --test tests/firebase-deploy-selection.test.js
+          node --test tests/firebase-deploy-selection.test.js tests/swahili-result-delivery-recovery.test.cjs
 
       - name: Authenticate to the same Firebase project as German marking
         uses: google-github-actions/auth@v2
