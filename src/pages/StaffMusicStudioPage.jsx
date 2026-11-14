@@ -54,7 +54,7 @@ export default function StaffMusicStudioPage() {
           placeholder={"[Verse 1]\n…"} style={{ display: "block", width: "100%" }} /></label>
         <p>Shared music generation budget: $0.80 per day / $5.00 per month. A full song is approximately $0.08. No automatic retry.</p>
         <button type="submit" disabled={!status?.ready || busy || !prompt.trim()}>{busy ? "Generating music…" : "Generate full song"}</button>
-        {status && <small>Usage today: ${(status.dailyCents / 100).toFixed(2)} · this month: ${(status.monthlyCents / 100).toFixed(2)}</small>}
+        {status && <small>Usage today: ${''}{(status.dailyCents / 100).toFixed(2)} · this month: ${''}{(status.monthlyCents / 100).toFixed(2)}</small>}
         {error && <p role="alert">{error}</p>}
         {result && <section><h2>Teacher draft</h2><audio controls src={result.url} /><a href={result.url} download="falowen-teacher-draft.mp3">Download MP3</a>
           <p>This audio stays in your browser until you download it. Publishing is a separate approval.</p>
