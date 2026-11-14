@@ -1,0 +1,87 @@
+name: Recover Swahili marking result delivery
+
+# One-time targeted release for the Swahili result and shared score-sheet workers.
+# The normal full Firebase release currently has unreleased unrelated functions;
+# do not redeploy them just to repair Swahili result delivery.
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/recover-swahili-delivery.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: falowenadmin-firebase-deploy
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+
+    env:
+      FIREBASE_PROJECT_ID: falowen-examiner-trainer
+      CLOUD_RUNTIME_CONFIG: ${{ secrets.FALOWEN_ADMIN_CLOUD_RUNTIME_CONFIG || '{}' }}
+      SWAHILI_RESULT_BCC: ${{ secrets.SWAHILI_RESULT_BCC }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install the existing marking and Firebase dependencies
+        run: |
+          npm ci --ignore-scripts
+          npm --prefix functions ci
+          npm install --global firebase-tools
+
+      - name: Validate the Swahili -> Scores sheet -> result-email contract
+        run: |
+          node --check functions/index.js
+          node --check functions/swahiliResults.js
+          node --check functions/automaticCourseMarking.js
+          node --test functions/swahiliResults.test.cjs functions/swahiliSubmissionFlow.test.cjs functions/automaticCourseMarking.test.cjs
+          node --test tests/firebase-deploy-selection.test.js
+
+      - name: Authenticate to the same Firebase project as German marking
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FALOWEN }}'
+
+      - name: Prepare existing Scores and Announcements webhook configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          runtime_config_b64="$(printf '%s' "$CLOUD_RUNTIME_CONFIG" | base64 -w0)"
+          printf 'CLOUD_RUNTIME_CONFIG_B64=%s\n' "$runtime_config_b64" > "functions/.env.$FIREBASE_PROJECT_ID"
+          if [[ -n "$SWAHILI_RESULT_BCC" ]]; then
+            if [[ ! "$SWAHILI_RESULT_BCC" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+              echo "SWAHILI_RESULT_BCC must be one valid email address."
+              exit 1
+            fi
+            printf 'SWAHILI_RESULT_BCC=%s\n' "$SWAHILI_RESULT_BCC" >> "functions/.env.$FIREBASE_PROJECT_ID"
+          fi
+          node scripts/ensureScoreWebhookSecrets.mjs
+
+      - name: Deploy the existing Google Scores sheet upsert worker
+        run: |
+          set -euo pipefail
+          firebase deploy --project "$FIREBASE_PROJECT_ID" \
+            --only functions:falowenadmin:syncAutomaticCourseScore --force
+
+      - name: Restore committed source before the second Firebase predeploy
+        run: git reset --hard "$GITHUB_SHA"
+
+      - name: Deploy the Swahili tutor result/email worker
+        run: |
+          set -euo pipefail
+          firebase deploy --project "$FIREBASE_PROJECT_ID" \
+            --only functions:falowenadmin:publishSwahiliTutorResult --force
