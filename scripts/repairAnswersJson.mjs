@@ -110,13 +110,8 @@ if (!progressCallFound) {
 }
 
 await import("./applyMarkingManualSelectionFix.mjs");
+await import("./patchCommunicationUpcomingClasses.mjs");
+await import("./patchLiveClassRescheduleUi.mjs");
 await import("./patchMarkingScoreConsistency.mjs");
-// The Firebase objective-marking bundle does not include Live Classes or
-// Attendance UI. Do not run their legacy source-rewrite scripts while building
-// a backend worker from the already committed marking source.
-if (!process.argv.includes("--marking-only")) {
-  await import("./patchCommunicationUpcomingClasses.mjs");
-  await import("./patchLiveClassRescheduleUi.mjs");
-  await import("./patchLiveClassStudentsLoading.mjs");
-  await import("./patchAttendanceBccEmailTemplates.mjs");
-}
+await import("./patchLiveClassStudentsLoading.mjs");
+await import("./patchAttendanceBccEmailTemplates.mjs");
