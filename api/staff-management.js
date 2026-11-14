@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { normalizeStaffAccess, STAFF_LANGUAGES } from "../src/utils/staffAccess.js";
 const env = (name) => String(process.env[name] || "").trim();
 const PROJECT = env("FIREBASE_PROJECT_ID") || env("VITE_FIREBASE_PROJECT_ID");
 const KEY = env("FIREBASE_API_KEY") || env("VITE_FIREBASE_API_KEY");
@@ -101,15 +102,19 @@ async function updateClaims(user, changes, accessToken) {
   }, accessToken);
 }
 const docUrl = (uid = "") => `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(PROJECT)}/databases/(default)/documents/falowenStaffAccess${uid ? "/" + encodeURIComponent(uid) : ""}`;
+function parseJson(value, fallback) { try { const parsed = JSON.parse(value || ""); return parsed && typeof parsed === "object" ? parsed : fallback; } catch { return fallback; } }
 function fieldsToObject(fields = {}) {
   const str = key => fields[key]?.stringValue || "";
   const array = key => (fields[key]?.arrayValue?.values || []).map(v => v.stringValue).filter(Boolean);
-  return { uid: str("uid"), email: str("email"), name: str("name"), staffRole: str("staffRole"), languages: array("languages"), active: fields.active?.booleanValue === true };
+  return { uid: str("uid"), email: str("email"), name: str("name"), staffRole: str("staffRole"), languages: array("languages"), active: fields.active?.booleanValue === true,
+    access: parseJson(str("accessJson"), null), assignedClasses: parseJson(str("assignedClassesJson"), { german: [], swahili: [] }) };
 }
 function asFields(input) {
   const str = value => ({ stringValue: value || "" });
   return { uid: str(input.uid), email: str(input.email), name: str(input.name),
     staffRole: str(input.staffRole), languages: { arrayValue: { values: input.languages.map(str) } },
+    accessJson: str(JSON.stringify(input.access || normalizeStaffAccess(null, input.languages, input.staffRole))),
+    assignedClassesJson: str(JSON.stringify(input.assignedClasses || { german: [], swahili: [] })),
     active: { booleanValue: input.active === true },
     updatedAt: { timestampValue: new Date().toISOString() } };
 }
@@ -120,6 +125,14 @@ function allowedLanguages(value) {
   if (!Array.isArray(value) || !value.length || value.some(v => !["german", "swahili"].includes(v))) fail("Choose German, Swahili or both.");
   return [...new Set(value)];
 }
+function allowedClassAssignments(value, languages) {
+  const input = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  return Object.fromEntries(STAFF_LANGUAGES.map(lang => {
+    const ids = languages.includes(lang) && Array.isArray(input[lang]) ? input[lang] : [];
+    if (ids.length > 40 || ids.some(id => typeof id !== "string" || !/^[a-zA-Z0-9_ -]{1,128}$/.test(id))) fail("Choose valid assigned class IDs.");
+    return [lang, [...new Set(ids.map(id => id.trim()).filter(Boolean))]];
+  }));
+}
 async function upsert(body, accessToken) {
   const email = String(body.email || "").toLowerCase().trim();
   if (!emailPattern.test(email) || email.length > 254) fail("Enter a valid email address.");
@@ -128,6 +141,8 @@ async function upsert(body, accessToken) {
   const staffRole = body.staffRole;
   if (!["teacher", "reviewer"].includes(staffRole)) fail("Invalid staff role.");
   const languages = allowedLanguages(body.languages);
+  const access = normalizeStaffAccess(body.access, languages, staffRole);
+  const assignedClasses = allowedClassAssignments(body.assignedClasses, languages);
   let account = await accountsLookup({ email: [email] }, accessToken);
   if (account?.disabled) fail("This Falowen account is disabled.", 409);
   if (body.existingUid && account?.localId !== body.existingUid) fail("Search for the existing account again before saving.", 409);
@@ -141,8 +156,8 @@ async function upsert(body, accessToken) {
     account = { localId: created.localId, email, customAttributes: "{}" };
     if (!account.localId) fail("Account was not created.", 502);
   }
-  await updateClaims(account, { staff: true, staffRole, staffLanguages: languages }, accessToken);
-  await writeStaff({ uid: account.localId, email, name: name || account.displayName || "", staffRole, languages, active: true }, accessToken);
+  await updateClaims(account, { staff: true, staffRole, staffLanguages: languages, staffAccess: access }, accessToken);
+  await writeStaff({ uid: account.localId, email, name: name || account.displayName || "", staffRole, languages, access, assignedClasses, active: true }, accessToken);
   if (!existing) {
     const response = await fetch(`${host}/accounts:sendOobCode?key=${encodeURIComponent(KEY)}`, {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -222,10 +237,10 @@ async function revoke(body, accessToken) {
   if (!user || String(user.email || "").toLowerCase() === OWNER) fail("Staff account not found or protected.", 403);
   const claims = parseAttributes(user);
   if (claims.admin === true || claims.role === "admin") fail("Admin permissions cannot be changed here.", 403);
-  await updateClaims(user, { staff: false, role: ["staff", "tutor"].includes(claims.role) ? null : claims.role || null, staffRole: null, staffLanguages: [] }, accessToken);
+  await updateClaims(user, { staff: false, role: ["staff", "tutor"].includes(claims.role) ? null : claims.role || null, staffRole: null, staffLanguages: [], staffAccess: null }, accessToken);
   const d = await apiFetch(docUrl(uid), "GET", undefined, accessToken).catch(() => null);
   const prior = fieldsToObject(d?.fields);
-  await writeStaff({ uid, email: user.email || prior.email, name: prior.name, staffRole: prior.staffRole || "teacher", languages: [], active: false }, accessToken);
+  await writeStaff({ uid, email: user.email || prior.email, name: prior.name, staffRole: prior.staffRole || "teacher", languages: [], access: null, assignedClasses: {}, active: false }, accessToken);
   return { ok: true };
 }
 export default async function staffManagementHandler(req, res) {
@@ -243,7 +258,16 @@ export default async function staffManagementHandler(req, res) {
     if (req.method === "GET") {
       const result = await apiFetch(docUrl() + "?pageSize=100", "GET", undefined, accessToken);
       const staff = (result.documents || []).map(doc => fieldsToObject(doc.fields)).filter(s => s.uid && s.email);
-      return res.status(200).json({ ok: true, staff });
+      // Only the owner sees class choices; do not hand the full class collection to staff.
+      const classResponse = await apiFetch(`https://firestore.googleapis.com/v1/projects/${encodeURIComponent(PROJECT)}/databases/(default)/documents/classes?pageSize=100`, "GET", undefined, accessToken);
+      const classes = (classResponse.documents || []).map(doc => {
+        const fields = doc.fields || {};
+        const field = key => fields[key]?.stringValue || "";
+        const id = String(doc.name || "").split("/").pop();
+        const language = field("language").toLowerCase() === "swahili" || field("program").toLowerCase() === "swahili" ? "swahili" : "german";
+        return { id, name: field("name") || field("className") || id, language };
+      }).filter(klass => klass.id);
+      return res.status(200).json({ ok: true, staff, classes });
     }
     const input = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
     const result = input.action === "upsert" ? await upsert(input, accessToken)
