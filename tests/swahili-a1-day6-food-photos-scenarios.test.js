@@ -15,17 +15,19 @@ const stage=read("../src/components/SwahiliA2LessonStage.jsx");
 const challenge=read("../src/components/SwahiliRestaurantScenario.jsx");
 const css=read("../src/components/SwahiliTeachingSlides.css");
 
-test("A1 Day 6 reuses nine existing stages and puts scenario directly before summary",()=>{
-  assert.equal(SWAHILI_DAY_SIX_ADMIN_LESSON.stages.length,9);
+test("A1 Day 6 reuses the existing stages and puts scenario directly before summary",()=>{
+  assert.equal(SWAHILI_DAY_SIX_ADMIN_LESSON.stages.length,15);
   assert.deepEqual(SWAHILI_DAY_SIX_ADMIN_LESSON.stages.map(x=>x.id),[
-    "intro","music","listening","grammar","reading","speaking","writing","presentation","summary"
+    "intro","music","listening",
+    "radio-first-listening","radio-second-listening","radio-drinks-and-preferences",
+    "radio-ordering","radio-write","radio-speak","grammar","reading","speaking","writing","presentation","summary"
   ]);
   const scenario=SWAHILI_DAY_SIX_ADMIN_LESSON.stages.at(-2);
   assert.equal(scenario.type,"scenario");
   assert.equal(scenario.scenarios,SWAHILI_DAY_SIX_RESTAURANT_SCENARIOS);
   assert.equal(SWAHILI_DAY_SIX_ADMIN_LESSON.stages[0].foodCards,SWAHILI_DAY_SIX_FOOD_CARDS);
-  assert.equal(SWAHILI_DAY_SIX_ADMIN_LESSON.stages[4].foodCards,SWAHILI_DAY_SIX_FOOD_CARDS);
-  assert.equal(SWAHILI_DAY_SIX_ADMIN_LESSON.stages[4].drinkCards,SWAHILI_DAY_SIX_DRINK_CARDS);
+  assert.equal(SWAHILI_DAY_SIX_ADMIN_LESSON.stages.find(stage => stage.id === "reading").foodCards,SWAHILI_DAY_SIX_FOOD_CARDS);
+  assert.equal(SWAHILI_DAY_SIX_ADMIN_LESSON.stages.find(stage => stage.id === "reading").drinkCards,SWAHILI_DAY_SIX_DRINK_CARDS);
   assert.equal(SWAHILI_DAY_ONE_ADMIN_LESSON.stages.length,9);
   assert.equal(SWAHILI_DAY_ONE_ADMIN_LESSON.stages.at(-2).type,"presentation");
 });

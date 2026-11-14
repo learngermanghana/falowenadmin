@@ -108,7 +108,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
         <div className="swahili-admin-slides__crumb"><Link to="/teaching-slides?language=swahili">← All languages</Link></div>
         <p className="slide-meta">Kiswahili · Beginner</p>
         <h1>Swahili teaching slides</h1>
-        <p>Uses the same nine-part classroom flow as Falowen A2. Open the A1 teaching slides for Day 1, Day 5 or Day 6.</p>
+        <p>Open the A1 teaching slides for Day 1, Day 5 or Day 6.</p>
         <div className="slide-card-grid">
           <article className="slide-card slide-card-lesson">
             <p className="slide-meta">Day 1 · {stages.length} classroom stages</p>
@@ -213,7 +213,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
           {stage.audio ? <SwahiliSlideMusic track={stage.audio} /> : <p style={{ whiteSpace: "pre-line" }}>{stage.content}</p>}
         </section> : <SwahiliA2LessonStage stage={stage} grammar={grammar} isDaySix={isDaySix} />}
 
-        <p className="swahili-a2-presenter__english" lang="en">{stageEnglish}</p>
+        {stageEnglish && <p className="swahili-a2-presenter__english" lang="en">{stageEnglish}</p>}
 
         {stageQuestion && (
           <section className="swahili-a2-presenter__question" aria-label="Classroom question">
