@@ -13,14 +13,14 @@ test('primary music composer has Prompt and Saved Lyrics choices and one full-so
   assert.match(page, /className="music-simple-action"/);
   assert.match(page, /'✦ Generate music'/);
   assert.match(page, /const generationMode = simple \? 'song' : mode/);
-  assert.match(page, /mode: 'song', durationSeconds: 150/);
+  assert.match(page, /mode: 'song', durationSeconds: swahili && usingLessonLyrics \? 180 : 150/);
   assert.match(styles, /\.music-create-tabs/);
   assert.match(styles, /\.music-simple-action \.music-generate/);
 });
 
 test('freeform prompts do not silently include lesson lyrics', () => {
   assert.match(page, /const usingLessonLyrics = simple \? composerTab === 'saved'/);
-  assert.match(page, /brief: shortPrompt, lyrics: usingLessonLyrics \? lyrics : ''/);
+  assert.match(page, /brief: usingLessonLyrics \? simpleSavedPrompt : shortPrompt, lyrics: usingLessonLyrics \? lyrics : ''/);
   assert.match(page, /composerTab === 'prompt' \|\| Boolean\(lyrics.trim\(\)\)/);
 });
 
@@ -47,4 +47,16 @@ test('Music Generator and Lyrics Video Studio are visible, top-level workspaces'
   assert.match(page, /onClick=\{\(\) => setStudioTab\('video'\)\}/);
   assert.match(page, /onClick=\{\(\) => setStudioTab\('generator'\)\}/);
   assert.doesNotMatch(page, /<summary>Lyrics Video Studio<\/summary>/);
+});
+
+test('Kiswahili lesson generation accepts the full restaurant draft and uses isolated saved lyrics keys', async () => {
+  const { buildFalowenShortMusicPrompt } = await import('../src/utils/musicGenerationPrompt.js');
+  const { swahiliMusicDays, swahiliDaySixLyrics } = await import('../src/data/swahiliMusic.js');
+  const { validKey } = (await import('../functions/musicStudioLyrics.js')).default;
+  for (const group of swahiliMusicDays) assert.equal(validKey(group.lessons[0].assignmentKey), group.lessons[0].assignmentKey);
+  assert.throws(() => validKey('SWAHILI-DAY-99'));
+  const prompt = buildFalowenShortMusicPrompt({ brief: 'Gentle guitar', lyrics: swahiliDaySixLyrics, durationSeconds: 180, songLanguage: 'swahili' });
+  assert.match(prompt, /Sing in Kiswahili/);
+  assert.ok(prompt.endsWith(swahiliDaySixLyrics));
+  assert.doesNotMatch(buildFalowenShortMusicPrompt({ brief: 'German song' }), /Kiswahili/);
 });

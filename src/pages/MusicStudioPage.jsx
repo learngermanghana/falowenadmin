@@ -26,6 +26,7 @@ function isSupersededMusicLyrics(key, text) {
 import { musicSongTeachingPackText } from '../data/reusableMusicQuestions.js';
 import ReusableMusicQuestions from '../components/ReusableMusicQuestions.jsx';
 import MusicLyricsVideoStudio from '../components/MusicLyricsVideoStudio.jsx';
+import { swahiliMusicDays, swahiliDaySixLyrics } from '../data/swahiliMusic.js';
 import { falowenMusicFileName } from '../utils/musicExportNames.js';
 const PRESETS = {
   welcome: 'A gentle Falowen welcome song for German learners before their Zoom class. Encourage learners not to give up: Gemeinsam schaffen wir das / Together we can. Bilingual German and English. Acoustic guitar only, one smooth warm male voice, relaxed Afro-soul feel, quiet and reassuring, no backing singers.',
@@ -34,6 +35,9 @@ const PRESETS = {
   acoustic: 'An original emotional singer-songwriter pop song with warm acoustic guitar, expressive piano chords, one rich adult lead voice, natural storytelling and a moving chorus. Clear German with musical phrasing rather than childish rhymes.',
 };
 export default function MusicStudioPage() {
+  const [program, setProgram] = useState('german');
+  const swahili = program === 'swahili';
+  const [swahiliPrompt, setSwahiliPrompt] = useState('A warm acoustic song with clear Kiswahili vocals.');
   const [studioTab, setStudioTab] = useState('generator');
   const [composerTab, setComposerTab] = useState('prompt');
   const [courseMode, setCourseMode] = useState('course');
@@ -42,20 +46,22 @@ export default function MusicStudioPage() {
   const [assignment, setAssignment] = useState('');
   const [language, setLanguage] = useState('bilingual');
   const [focus, setFocus] = useState('');
-  const days = useMemo(() => getMusicDays(level), [level]);
+  const days = useMemo(() => swahili ? swahiliMusicDays : getMusicDays(level), [swahili, level]);
   const selectedDay = days.find(group => String(group.day) === day) || days[0];
   const lesson = selectedDay?.lessons.find(entry => entry.assignmentKey === assignment) || selectedDay?.lessons[0];
   const [brief, setBrief] = useState(PRESETS.vocabulary);
   const [promptMode, setPromptMode] = useState('short');
-  const [shortPrompt, setShortPrompt] = useState(() => {
+  const [germanPrompt, setGermanPrompt] = useState(() => {
     try { return localStorage.getItem('falowen-music-short-prompt') || 'Create a hip-hop song with an Afrobeats feel.'; }
     catch { return 'Create a hip-hop song with an Afrobeats feel.'; }
   });
+  const shortPrompt = swahili ? swahiliPrompt : germanPrompt;
+  const setShortPrompt = swahili ? setSwahiliPrompt : setGermanPrompt;
   const [directionOverride, setDirectionOverride] = useState(null);
   const [advancedSavedPromptOverride, setAdvancedSavedPromptOverride] = useState("");
   useEffect(() => {
-    try { localStorage.setItem('falowen-music-short-prompt', shortPrompt); } catch { /* Optional device-only draft. */ }
-  }, [shortPrompt]);
+    try { localStorage.setItem('falowen-music-short-prompt', germanPrompt); } catch { /* Optional device-only draft. */ }
+  }, [germanPrompt]);
   const [styleMode, setStyleMode] = useState('auto');
   const [productionProfile, setProductionProfile] = useState('auto');
   // Prewritten A1–C2 lyrics are selected from the local dictionary; edits are
@@ -67,8 +73,9 @@ export default function MusicStudioPage() {
   const [lyricsNotice, setLyricsNotice] = useState('');
   const [customLyrics, setCustomLyrics] = useState('');
   const [copyStatus, setCopyStatus] = useState('');
-  const draft = courseMode === 'course' ? getReusableSongDraft(lesson?.assignmentKey) : null;
+  const draft = !swahili && courseMode === 'course' ? getReusableSongDraft(lesson?.assignmentKey) : null;
   const assignmentKey = lesson?.assignmentKey || '';
+  const defaultLyrics = swahili && lesson?.day === 6 ? swahiliDaySixLyrics : draft?.lyrics || '';
   const isAdvancedSavedSong = courseMode === 'course' && ['B2','C1','C2'].includes(level) && !!draft;
   const simpleSavedPrompt = isAdvancedSavedSong
     ? (advancedSavedPromptOverride || draft.musicStyle)
@@ -100,7 +107,7 @@ export default function MusicStudioPage() {
     ? Object.prototype.hasOwnProperty.call(lyricsOverrides, assignmentKey)
       ? lyricsOverrides[assignmentKey]
       : Object.prototype.hasOwnProperty.call(savedLyrics, assignmentKey) && savedLyrics[assignmentKey] && !obsoleteDay7Draft && !obsoleteDay8Draft && !supersededWeekendLyrics && !supersededA2Day22Draft && !obsoleteA1Day10Draft && !obsoleteA1Day11Draft && !obsoleteA1Day12Draft && !obsoleteA1Day17Draft && !obsoleteA1Day18Draft && !obsoleteA1Day21Draft && !obsoleteA1Day22Draft && !isSupersededMusicLyrics(assignmentKey, savedLyrics[assignmentKey] || '')
-        ? savedLyrics[assignmentKey] : draft?.lyrics || ''
+        ? savedLyrics[assignmentKey] : defaultLyrics
     : customLyrics;
   const setLyrics = next => {
     if (courseMode === 'course' && assignmentKey) {
@@ -108,9 +115,9 @@ export default function MusicStudioPage() {
     } else setCustomLyrics(next);
   };
   const savedText = Object.prototype.hasOwnProperty.call(savedLyrics, assignmentKey)
-    ? savedLyrics[assignmentKey] || draft?.lyrics || '' : draft?.lyrics || '';
+    ? savedLyrics[assignmentKey] || defaultLyrics : defaultLyrics;
   const dirtyLyrics = courseMode === 'course' && !!assignmentKey && lyrics !== savedText;
-  const trackTitle = draft?.title || lesson?.germanTitle || 'Falowen Music';
+  const trackTitle = lesson?.swahiliTitle || draft?.title || lesson?.germanTitle || 'Falowen Music';
   const englishDraft = courseMode === 'course' ? matchingMusicEnglishDraft(assignmentKey, lyrics) : null;
   const [mode, setMode] = useState('song');
   const [durationSeconds, setDurationSeconds] = useState(150);
@@ -190,7 +197,7 @@ export default function MusicStudioPage() {
       const data = await overwriteSavedMusicLyrics(key, text);
       setSavedLyrics(previous => ({ ...previous, [key]: data.lyrics }));
       setLyricsOverrides(previous => ({ ...previous, [key]: data.lyrics }));
-      setLyricsNotice('Lyrics overwritten and saved for ' + key + '. They will be reused after refresh and appear as a course draft on Falowen Music.');
+      setLyricsNotice('Lyrics saved for ' + key + (swahili ? '.' : '. They will be reused after refresh and appear as a course draft on Falowen Music.'));
     } catch (error) {
       setLyricsNotice('Lyrics were NOT saved: ' + error.message);
     } finally {
@@ -278,7 +285,7 @@ export default function MusicStudioPage() {
       const prompt = simple
         ? buildFalowenShortMusicPrompt({
             brief: usingLessonLyrics ? simpleSavedPrompt : shortPrompt, lyrics: usingLessonLyrics ? lyrics : '',
-            mode: 'song', durationSeconds: 150, vocalMode: 'voice', lyricTreatment: 'exact',
+            mode: 'song', durationSeconds: swahili && usingLessonLyrics ? 180 : 150, vocalMode: 'voice', lyricTreatment: 'exact', songLanguage: swahili ? 'swahili' : undefined,
           })
         : promptMode === 'short'
           ? buildFalowenShortMusicPrompt({ brief: shortPrompt, lyrics: vocalMode === 'instrumental' ? '' : lyrics,
@@ -290,7 +297,7 @@ export default function MusicStudioPage() {
       if (audioUrl.current) URL.revokeObjectURL(audioUrl.current);
       audioUrl.current = url;
       const generatedTitle = simple && !usingLessonLyrics ? 'Falowen Music' : trackTitle;
-      setResult({ url, title: generatedTitle, isFreeform: simple && !usingLessonLyrics, level: usingLessonLyrics ? level : '',
+      setResult({ url, title: generatedTitle, isFreeform: simple && !usingLessonLyrics, level: usingLessonLyrics ? lesson?.level : '',
         day: usingLessonLyrics ? lesson?.day : undefined, lyrics: data.lyrics,
         filename: usingLessonLyrics && lesson
           ? falowenMusicFileName(lesson, generatedTitle, 'mp3') : 'falowen-custom-music.mp3' });
@@ -322,6 +329,13 @@ export default function MusicStudioPage() {
       style={{ display: studioTab === 'generator' ? undefined : 'none' }}>
     <section className="music-simple-shell" aria-label="Create your song">
       <form onSubmit={event => generate(event, 'simple')} className="music-simple-form">
+        <label htmlFor="music-program">Music program</label>
+        <select id="music-program" value={program} disabled={busy || savingLyrics} onChange={event => {
+          setProgram(event.target.value); setDay('1'); setAssignment(''); setCourseMode('course');
+          setResult(null); setLyricsNotice(''); setError('');
+        }}>
+          <option value="german">German</option><option value="swahili">Swahili · Kiswahili</option>
+        </select>
         <div className="music-create-tabs" role="tablist" aria-label="Music creation modes">
           <button id="music-prompt-tab" type="button" role="tab" aria-controls="music-simple-compose"
             aria-selected={composerTab === 'prompt'} className={composerTab === 'prompt' ? 'is-active' : ''}
@@ -333,11 +347,11 @@ export default function MusicStudioPage() {
         <div id="music-simple-compose" role="tabpanel" aria-labelledby={composerTab === 'saved' ? 'music-saved-tab' : 'music-prompt-tab'}>
           {composerTab === 'saved' && <div className="music-simple-library">
             <div className="music-simple-selects">
-              <div><label htmlFor="music-saved-level">Level</label>
+              {!swahili && <div><label htmlFor="music-saved-level">Level</label>
                 <select id="music-saved-level" value={level} disabled={busy} onChange={e => { setLevel(e.target.value); setDay('1'); setAssignment(''); setFocus(''); }}>
                   {STUDIO_COURSE_LEVELS.map(value => <option key={value}>{value}</option>)}
                 </select>
-              </div>
+              </div>}
               <div><label htmlFor="music-saved-day">Day</label>
                 <select id="music-saved-day" value={selectedDay?.day ?? ''} disabled={busy} onChange={e => { setDay(e.target.value); setAssignment(''); setFocus(''); }}>
                   {days.map(group => <option key={group.day} value={group.day}>{group.day === 0 ? 'Orientation' : 'Day ' + group.day}</option>)}
@@ -355,7 +369,7 @@ export default function MusicStudioPage() {
             maxLength={1500} required disabled={busy}
             value={composerTab === 'saved' ? simpleSavedPrompt : shortPrompt}
             onChange={e => (composerTab === 'saved' && isAdvancedSavedSong ? setAdvancedSavedPromptOverride(e.target.value) : setShortPrompt(e.target.value))}
-            placeholder="A heartfelt Afro-soul song, clear German vocals, a memorable chorus and warm piano…" />
+            placeholder={swahili ? "Describe your Kiswahili song…" : "A heartfelt Afro-soul song, clear German vocals, a memorable chorus and warm piano…"} />
           {composerTab === 'saved' && isAdvancedSavedSong && <p className="music-note">The curated {level} arrangement is selected for this song. Edit the music style above if you want another sound. It will reset to the next lesson's arrangement when you change songs.</p>}
           {composerTab === 'saved' && <div className="music-simple-saved-editor">
             <label htmlFor="music-create-lyrics">Lyrics</label>
@@ -379,11 +393,12 @@ export default function MusicStudioPage() {
             </details> : draft && lyrics.trim() && <p className="music-note">English subtitles are hidden because these German lyrics differ from the reviewed songbook text. This prevents mismatched translations.</p>}
           </div>}
         </div>
+        {swahili && <p>R2 upload folder: <code>music/swahili/{composerTab === 'saved' ? 'day-' + String(selectedDay.day).padStart(2, '0') : 'library'}/</code></p>}
         <div className="music-simple-action">
           <button className="music-generate" disabled={!simpleReady} type="submit">
             {busy ? 'Generating your song…' : '✦ Generate music'}
           </button>
-          <span>Full song · about 2½ minutes · estimated $0.08</span>
+          <span>Full song · about {swahili && composerTab === 'saved' ? '3' : '2½'} minutes · estimated $0.08</span>
         </div>
         {busy && <p role="status" className="music-simple-message">Creating music with Google Lyria. Keep this page open; attempts do not retry automatically.</p>}
         {error && <p role="alert" className="music-error">{error}</p>}
@@ -405,7 +420,7 @@ export default function MusicStudioPage() {
           (status.monthlyCents / 100).toFixed(2) + ' / $5.00 this month'}
       </p>}
     </section>
-    <div className="music-simple-extras">
+    {!swahili && <div className="music-simple-extras">
       <details className="music-simple-extra">
         <summary>Advanced music controls</summary>
         <p className="music-simple-extra-note">Optional previews, instrumental music, lesson packs and detailed arrangements.</p>
@@ -533,15 +548,15 @@ export default function MusicStudioPage() {
     {courseMode === 'course' && draft && <ReusableMusicQuestions assignmentKey={assignmentKey} lyricsChanged={lyrics !== draft.lyrics} />}
 
       </details>
-    </div>
+    </div>}
     </div>
     <section id="music-video-panel" role="tabpanel" aria-labelledby="music-video-tab"
       style={{ display: studioTab === 'video' ? undefined : 'none' }}>
       <div className="music-video-main">
     <MusicLyricsVideoStudio active={studioTab === 'video'} assignmentKey={result?.isFreeform ? '' : assignmentKey}
-      generated={result?.isFreeform ? result : result && result.title === trackTitle && (courseMode === 'custom' || (result.level === level && result.day === lesson?.day)) ? result : null}
+      generated={result?.isFreeform ? result : result && result.title === trackTitle && (courseMode === 'custom' || (result.level === lesson?.level && result.day === lesson?.day)) ? result : null}
       title={result?.isFreeform ? result.title : trackTitle}
-      level={result?.isFreeform ? '' : courseMode === 'course' ? level : ''}
+      level={result?.isFreeform ? '' : courseMode === 'course' ? lesson?.level : ''}
       day={result?.isFreeform ? '' : courseMode === 'course' ? lesson?.day : ''}
       lyrics={result?.isFreeform ? result.lyrics || '' : lyrics}
       onOverwriteLyrics={!result?.isFreeform && courseMode === 'course' && assignmentKey ? overwriteLyrics : null}
