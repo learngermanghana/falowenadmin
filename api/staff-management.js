@@ -11,7 +11,15 @@ function base64(value) { return Buffer.from(value).toString("base64url"); }
 async function tokenForGoogle() {
   const client = env("GOOGLE_SERVICE_ACCOUNT_EMAIL") || env("GCP_CLIENT_EMAIL");
   const key = (env("GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY") || env("GCP_PRIVATE_KEY")).replace(/\\n/g, "\n");
-  if (!client || !key || !PROJECT || !KEY) fail("Staff management needs server-side Firebase and Google service-account configuration.", 503);
+  if (!client || !key || !PROJECT || !KEY) {
+    const missing = [
+      ...(!client ? ["GOOGLE_SERVICE_ACCOUNT_EMAIL"] : []),
+      ...(!key ? ["GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY"] : []),
+      ...(!PROJECT ? ["FIREBASE_PROJECT_ID"] : []),
+      ...(!KEY ? ["FIREBASE_API_KEY"] : []),
+    ];
+    fail("Staff management cannot provision accounts until the Vercel server configuration is complete. Missing: " + missing.join(", ") + ". Existing student search is still available.", 503);
+  }
   const now = Math.floor(Date.now() / 1000);
   const header = base64(JSON.stringify({ alg: "RS256", typ: "JWT" }));
   const claims = base64(JSON.stringify({
@@ -90,6 +98,27 @@ function allowedLanguages(value) {
   if (!Array.isArray(value) || !value.length || value.some(v => !["german", "swahili"].includes(v))) fail("Choose German, Swahili or both.");
   return [...new Set(value)];
 }
+async function listAuthAccounts(accessToken, search = "") {
+  // Admin-only and user-triggered. Limited to avoid unbounded directory reads.
+  let pageToken = "";
+  const users = [];
+  for (let page = 0; page < 5; page += 1) {
+    const url = new URL(`${host}/projects/${encodeURIComponent(PROJECT)}/accounts:batchGet`);
+    url.searchParams.set("maxResults", "100");
+    if (pageToken) url.searchParams.set("nextPageToken", pageToken);
+    const data = await apiFetch(url.toString(), "GET", undefined, accessToken);
+    users.push(...(data.users || []).map(user => ({
+      uid: user.localId,
+      email: String(user.email || "").toLowerCase(),
+      name: user.displayName || "",
+      hasStaffAccess: parseAttributes(user).staff === true,
+    })).filter(user => user.uid && user.email && user.email !== OWNER));
+    pageToken = data.nextPageToken || "";
+    if (!pageToken) break;
+  }
+  const needle = String(search || "").toLowerCase().trim();
+  return users.filter(user => !needle || (user.name + " " + user.email).toLowerCase().includes(needle)).slice(0, 100);
+}
 async function upsert(body, accessToken) {
   const email = String(body.email || "").toLowerCase().trim();
   if (!emailPattern.test(email) || email.length > 254) fail("Enter a valid email address.");
@@ -140,6 +169,11 @@ export default async function staffManagementHandler(req, res) {
     const accessToken = await tokenForGoogle();
     await requireOwner(req, accessToken);
     if (req.method === "GET") {
+      const parsedUrl = new URL(req.url, "https://admin.falowen.app");
+      if (parsedUrl.searchParams.get("source") === "accounts") {
+        const accounts = await listAuthAccounts(accessToken, parsedUrl.searchParams.get("q"));
+        return res.status(200).json({ ok: true, accounts, limited: accounts.length === 100 });
+      }
       const result = await apiFetch(docUrl() + "?pageSize=100", "GET", undefined, accessToken);
       const staff = (result.documents || []).map(doc => fieldsToObject(doc.fields)).filter(s => s.uid && s.email);
       return res.status(200).json({ ok: true, staff });
@@ -152,6 +186,6 @@ export default async function staffManagementHandler(req, res) {
   } catch (err) {
     const status = err?.status || 500;
     console.error("staff_management_failed", { status, message: err?.message });
-    return res.status(status).json({ ok: false, error: status >= 500 ? "Staff management is unavailable. Check server credentials and Firebase access." : err.message });
+    return res.status(status).json({ ok: false, error: status === 503 ? err.message : status >= 500 ? "Staff management could not reach Firebase. Review server permissions and runtime logs." : err.message });
   }
 }

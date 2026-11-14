@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
+import { listAllStudents } from "../services/studentsService.js";
 
 const LANGUAGES = ["german", "swahili"];
 const normalizeError = (err) => err?.message || "Unable to complete the request.";
@@ -13,6 +14,14 @@ export default function StaffWorkspacePage() {
   const [staff, setStaff] = useState([]);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
+  const [search, setSearch] = useState("");
+  const [existingAccounts, setExistingAccounts] = useState([]);
+  const [accountsLoaded, setAccountsLoaded] = useState(false);
+  const [accountsBusy, setAccountsBusy] = useState(false);
+  const [accountsError, setAccountsError] = useState("");
+  const [staffSearch, setStaffSearch] = useState("");
+  const [authAccounts, setAuthAccounts] = useState([]);
+  const [authLoaded, setAuthLoaded] = useState(false);
   const [error, setError] = useState("");
 
   const request = useCallback(async (method, payload) => {
@@ -36,6 +45,40 @@ export default function StaffWorkspacePage() {
   }, [request]);
 
   useEffect(() => { if (role === "admin") refresh(); }, [role, refresh]);
+
+  const loadAuthAccounts = async () => {
+    setAccountsBusy(true); setAccountsError("");
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch("/api/staff-management?source=accounts", { headers: { Authorization: `Bearer ${token}` } });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.ok) throw new Error(data.error || "Firebase account lookup is unavailable.");
+      setAuthAccounts(data.accounts || []); setAuthLoaded(true);
+    } catch (err) { setAccountsError(normalizeError(err)); }
+    finally { setAccountsBusy(false); }
+  };
+  const loadExistingAccounts = async () => {
+    setAccountsBusy(true); setAccountsError("");
+    try {
+      // Admin's registered student directory; not an exhaustive Firebase Auth export.
+      const rows = await listAllStudents();
+      const seen = new Set();
+      setExistingAccounts(rows.map(row => ({
+        name: String(row.name || row.fullName || row.studentName || "").trim(),
+        email: String(row.email || row.emailAddress || "").trim().toLowerCase(),
+      })).filter(row => {
+        if (!row.email || seen.has(row.email)) return false;
+        seen.add(row.email);
+        return true;
+      }).sort((a, b) => a.name.localeCompare(b.name)));
+      setAccountsLoaded(true);
+    } catch (err) { setAccountsError(normalizeError(err)); }
+    finally { setAccountsBusy(false); }
+  };
+  const accountChoices = [...authAccounts, ...existingAccounts].filter((item, index, array) =>
+    array.findIndex(other => other.email === item.email) === index);
+  const matches = search.trim().length < 2 ? [] : accountChoices.filter(row =>
+    (row.name + " " + row.email).toLowerCase().includes(search.trim().toLowerCase())).slice(0, 25);
 
   const toggle = (language) => setPermissions((old) =>
     old.includes(language) ? old.filter((item) => item !== language) : [...old, language]);
@@ -78,6 +121,26 @@ export default function StaffWorkspacePage() {
     <div style={{ display: "grid", gap: 24, gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))" }}>
       <form onSubmit={save} style={{ border: "1px solid #d5dbe5", borderRadius: 12, padding: 20, display: "grid", gap: 12, alignContent: "start" }}>
         <h2>Add or update staff</h2>
+        <div style={{ border: "1px solid #e0e5eb", padding: 12, borderRadius: 8, display: "grid", gap: 8 }}>
+          <strong>Select an existing Falowen student account</strong>
+          <button type="button" onClick={loadExistingAccounts} disabled={accountsBusy}>
+            {accountsBusy ? "Loading accounts…" : accountsLoaded ? "Reload student accounts" : "Load existing student accounts"}
+          </button>
+          <button type="button" onClick={loadAuthAccounts} disabled={accountsBusy}>
+            {accountsBusy ? "Loading…" : authLoaded ? "Reload Firebase accounts" : "Load Firebase login accounts"}
+          </button>
+          <small>Student records load separately. The Firebase login list requires configured administrator credentials; neither option changes an existing password.</small>
+          <input aria-label="Search existing student accounts" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search name or email" />
+          {accountsError && <p role="alert">{accountsError}</p>}
+          {accountsLoaded && <small>{existingAccounts.length} student records with an email available</small>}
+          {authLoaded && <small>{authAccounts.length} Firebase login accounts available in this view</small>}
+          {matches.map(account => <button type="button" key={account.email}
+            onClick={() => { setName(account.name); setEmail(account.email); setSearch(""); }}
+            style={{ textAlign: "left", padding: 9, overflowWrap: "anywhere" }}>
+            {account.name || "Unnamed student"} — {account.email}
+          </button>)}
+          {(accountsLoaded || authLoaded) && search.trim().length >= 2 && matches.length === 0 && <small>No matching account in the loaded records. You can still enter the staff email manually.</small>}
+        </div>
         <label>Full name <input style={{ display: "block", width: "100%" }} value={name} onChange={e => setName(e.target.value)} maxLength={100} autoComplete="name" /></label>
         <label>Email address <input style={{ display: "block", width: "100%" }} value={email} onChange={e => setEmail(e.target.value)} type="email" required autoComplete="email" /></label>
         <label>Role <select style={{ display: "block", width: "100%" }} value={staffRole} onChange={e => setStaffRole(e.target.value)}><option value="teacher">Teacher — marking and slides</option><option value="reviewer">Reviewer — marking only</option></select></label>
@@ -87,9 +150,10 @@ export default function StaffWorkspacePage() {
       </form>
       <div style={{ border: "1px solid #d5dbe5", borderRadius: 12, padding: 20, minWidth: 0 }}>
         <h2>Current staff</h2>
+        <input aria-label="Search current staff" value={staffSearch} onChange={event => setStaffSearch(event.target.value)} placeholder="Search staff name or email" />
         <button type="button" onClick={refresh} disabled={busy}>Refresh list</button>
         {!staff.length && <p>No managed staff accounts found.</p>}
-        {staff.map(member => <article key={member.uid} style={{ borderBottom: "1px solid #e2e8f0", padding: "12px 0", overflowWrap: "anywhere" }}>
+        {staff.filter(member => (member.name + " " + member.email).toLowerCase().includes(staffSearch.toLowerCase())).map(member => <article key={member.uid} style={{ borderBottom: "1px solid #e2e8f0", padding: "12px 0", overflowWrap: "anywhere" }}>
           <strong>{member.name || member.email}</strong><div>{member.email}</div>
           <small>{member.staffRole || "teacher"} · {(member.languages || []).join(", ") || "No languages"} · {member.active ? "Active" : "Inactive"}</small>
           {member.active && <div><button type="button" disabled={busy} onClick={() => deactivate(member)}>Remove teaching access</button></div>}
