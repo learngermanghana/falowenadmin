@@ -43,6 +43,7 @@ jobs:
           npm --prefix functions ci
           npm install --global firebase-tools
 
+      # Validate both server delivery and the staff-only, guarded retry action.
       - name: Validate the Swahili -> Scores sheet -> result-email contract
         # Test fixtures use a fixed fake BCC. Real BCC stays enabled for deployed workers.
         env:
