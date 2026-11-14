@@ -54,11 +54,8 @@ export const SWAHILI_DAY_SIX_SLIDES = Object.freeze([
   },
   {
     id:"music",type:"music",kicker:"Muziki · Music",
-    title:"MGAHAWANI · Naomba, tafadhali",
-    content:"Naomba, naomba, tafadhali,\nNaomba chakula na maji.\nAsante, asante, asante sana,\nMgahawani tunaagiza kwa adabu!",
-    english:"Teacher-supplied song chorus. The complete lyrics are available in the Day 6 workbook; no song audio is confirmed.",
-    prompt:"Which polite word appears in the chorus?",answer:"tafadhali",
-    notes:"Read or sing the supplied chorus together. This is text-only until the approved song audio is attached; do not treat the published Falowen Radio discussion as the song.",
+    title:"Falowen Music",
+    notes:"Start on Listen. Open Lyrics for the second play, then use Questions to check what learners heard.",
   },
   {
     id:"listening",type:"listening",kicker:"Kusikiliza · Listening",

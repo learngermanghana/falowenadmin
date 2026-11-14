@@ -1,3 +1,4 @@
+import SwahiliRestaurantSong from "./SwahiliRestaurantSong.jsx";
 import { SWAHILI_DAY_FIVE_ADMIN_LESSON } from "../data/swahiliDayFiveTeachingSlides.js";
 import SwahiliSlideMusic from "./SwahiliSlideMusic.jsx";
 import { useEffect, useState } from "react";
@@ -209,7 +210,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
             </div>
           </div>
         )}
-        {isDayFive ? <section className="swahili-a2-presenter__media-stage">
+        {isDaySix && stage.type === "music" ? <SwahiliRestaurantSong /> : isDayFive ? <section className="swahili-a2-presenter__media-stage">
           {stage.audio ? <SwahiliSlideMusic track={stage.audio} /> : <p style={{ whiteSpace: "pre-line" }}>{stage.content}</p>}
         </section> : <SwahiliA2LessonStage stage={stage} grammar={grammar} isDaySix={isDaySix} />}
 
@@ -247,7 +248,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
       />
       {!focusMode && <footer className="swahili-a2-presenter__foot no-print">
         <a href={selectedWorkbook} target="_blank" rel="noreferrer">Open {lesson.day} learner workbook</a>
-        <span>{isDayFive ? "A1 · Day 5 practice" : isDaySix ? "Restaurant lesson · Falowen Radio available · Song audio pending" : "Music and recorded Hören will be linked after upload."}</span>
+        <span>{isDayFive ? "A1 · Day 5 practice" : isDaySix ? "Restaurant lesson · Falowen Music and Radio" : "Music and recorded Hören will be linked after upload."}</span>
       </footer>}
     </main>
     </div>

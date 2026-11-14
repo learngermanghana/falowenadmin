@@ -38,8 +38,8 @@ test("All Day 6 food and grammar content is source-aligned and no song is invent
   const stages=SWAHILI_DAY_SIX_ADMIN_LESSON.stages;
   const music=stages.find(s=>s.id==="music");
   const radio=stages.find(s=>s.id==="listening");
-  assert.match(music.content,/Naomba, naomba, tafadhali/);
-  assert.match(music.notes,/no.*song.*audio|text-only/i);
+  assert.equal(music.title, "Falowen Music");
+  assert.match(presenter, /<SwahiliRestaurantSong/);
   assert.equal(radio.radioUrl,"https://youtu.be/ZesonfipX4I");
   assert.match(stages.find(s=>s.id==="speaking").content,/Mimi ninapenda kula wali na kuku/);
   assert.match(stages.find(s=>s.id==="reading").content,/ugali samaki/);
