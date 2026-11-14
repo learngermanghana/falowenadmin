@@ -44,6 +44,9 @@ jobs:
           npm install --global firebase-tools
 
       - name: Validate the Swahili -> Scores sheet -> result-email contract
+        # Test fixtures use a fixed fake BCC. Real BCC stays enabled for deployed workers.
+        env:
+          SWAHILI_RESULT_BCC: ""
         run: |
           node --check functions/index.js
           node --check functions/swahiliResults.js
