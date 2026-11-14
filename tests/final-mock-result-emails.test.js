@@ -107,6 +107,97 @@ function testDb({ existingSend = null } = {}) {
   };
 }
 
+test("A1 final mock saves a canonical Score Sheet row without issuing a certificate", () => {
+  const row = _test.buildFinalMockScoreRow(score(), {
+    now: new Date("2026-11-14T17:00:00Z"),
+  });
+  assert.equal(row.studentcode, "AMA123");
+  assert.equal(row.assignment_id, "A1-5.10");
+  assert.equal(row.dedupe_id, "AMA123__A1-5.10");
+  assert.equal(row.score, 78);
+  assert.equal(row.source, "a1_final_mock");
+  assert.equal(row.resultType, "final_mock");
+  assert.equal(row.practiceEstimate, true);
+  assert.equal(JSON.parse(row.sectionScores).sprechen, 21);
+  assert.match(row.comments, /not a course certificate/i);
+});
+
+test("later final mock practice attempts have separate dedupe keys", () => {
+  const first = _test.buildFinalMockScoreRow(score());
+  const repeat = _test.buildFinalMockScoreRow(score({
+    attempt: 2,
+    attemptNumber: 2,
+    firstAttempt: false,
+    attemptType: "practice",
+    mockAttemptId: "attempt-a1-2",
+    score: 83.5,
+  }));
+  assert.equal(repeat.assignment_id, "A1-5.10");
+  assert.equal(repeat.dedupe_id, "AMA123__A1-5.10__practice-2");
+  assert.notEqual(first.dedupe_id, repeat.dedupe_id);
+  assert.equal(repeat.score, 83.5);
+});
+
+test("final mock Firestore trigger queues Score Sheet sync before sending any announcement", async () => {
+  let handler;
+  const queued = [];
+  let fetchCount = 0;
+  const worker = createFinalMockResultEmailTrigger({
+    admin: testAdmin(),
+    db: {
+      collection(name) {
+        assert.equal(name, "automaticScoreSync");
+        return {
+          doc(id) {
+            assert.match(id, /^final-mock-[a-f0-9]{64}$/);
+            return { async create(row) { queued.push(row); } };
+          },
+        };
+      },
+    },
+    onDocumentWritten(_options, fn) { handler = fn; return "registered"; },
+    fetchImpl: async () => { fetchCount++; throw Error("Not allowed to email before sync"); },
+  });
+  assert.equal(worker, "registered");
+  const result = await handler({
+    params: { scoreId: "mock-score-1" },
+    data: { after: {
+      exists: true, id: "mock-score-1", data: () => score({ sheetSaved: false }),
+    } },
+  });
+  assert.equal(result.reason, "awaiting_score_sheet");
+  assert.equal(result.sent, false);
+  assert.equal(result.sync.queued, true);
+  assert.equal(queued.length, 1);
+  assert.equal(queued[0].source, "final_mock");
+  assert.equal(queued[0].scorePath, "scores/mock-score-1");
+  assert.equal(queued[0].row.dedupe_id, "AMA123__A1-5.10");
+  assert.equal(fetchCount, 0);
+});
+
+test("after Sheet sync acknowledgement, result email sends using the existing webhook", async () => {
+  const { db } = testDb();
+  let handler;
+  let posted = 0;
+  createFinalMockResultEmailTrigger({
+    db, admin: testAdmin(),
+    runtimeConfig: { communication: { announcement_webhook_url: "https://example.test/ann" } },
+    onDocumentWritten(_options, fn) { handler = fn; return "registered"; },
+    fetchImpl: async () => {
+      posted++;
+      return { ok: true, status: 200, async json() { return { ok: true, count: 1 }; } };
+    },
+  });
+  const result = await handler({
+    params: { scoreId: "mock-score-2" },
+    data: { after: {
+      exists: true, id: "mock-score-2", data: () => score({ sheetSaved: true }),
+    } },
+  });
+  assert.equal(result.sent, true);
+  assert.equal(posted, 1);
+});
+
 test("A1, A2, B1 and B2 final mock scores enter the announcement flow", () => {
   assert.equal(isFinalMockScore(score()), true);
   assert.equal(isFinalMockScore(score({ source: "a2_final_mock", level: "A2" })), true);
