@@ -40,3 +40,17 @@ test("Firestore class transfer suppresses a stale published-sheet roster entry f
   assert.equal(newClass.length, 1);
   assert.equal(newClass[0].studentCode, "S-001");
 });
+
+test("includes only active class placements in presenter and attendance rosters", async () => {
+  const student = { id: "learner", name: "Test learner", program: "swahili", className: "Morning",
+    secondaryProgram: "german", coursePlacements: { german: { className: "B1 Evening" }, swahili: { className: "Former class" } } };
+  const roster = (className, published = []) => listStudentsByClassWithDeps("class-id", {
+    className, loadAllStudents: async () => [student], loadStudentsByField: async () => [],
+    loadPublishedStudentsByClass: async () => published,
+  });
+  assert.deepEqual(await roster("B1 Evening"), [student]);
+  assert.deepEqual(await roster("Morning"), [student]);
+  assert.deepEqual(await roster("Former class"), []);
+  student.secondaryProgram = null;
+  assert.deepEqual(await roster("B1 Evening", [{ id: "learner", name: student.name }]), []);
+});

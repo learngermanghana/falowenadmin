@@ -64,19 +64,16 @@ function uniqueStudents(rows = []) {
 }
 
 function studentClassValues(student = {}) {
-  return [
-    student.classId,
-    student.classRecordId,
-    student.className,
-    student.classname,
-    student.class,
-    student.group,
-    student.groupId,
-    student.groupName,
-    student.cohort,
-    student.cohortId,
-    student.cohortName,
-  ].map(normalizeComparable).filter(Boolean);
+  const primary = String(student.program || "german").trim().toLowerCase();
+  const secondary = student.secondaryProgram;
+  const additional = secondary !== primary && ["german", "swahili"].includes(secondary)
+    ? student.coursePlacements?.[secondary] : null;
+  return [student, additional].filter(Boolean).flatMap(placement => [
+    placement.classId, placement.classRecordId, placement.assignedClassId,
+    placement.className, placement.classname, placement.class,
+    placement.group, placement.groupId, placement.groupName,
+    placement.cohort, placement.cohortId, placement.cohortName,
+  ]).map(normalizeComparable).filter(Boolean);
 }
 
 function resolvePublishedClass(row) {
