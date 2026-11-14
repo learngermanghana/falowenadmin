@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 
-export default function StaffAttendancePage() {
+export default function StaffAttendancePage({ language: explicitLanguage }) {
   const { user, workspaceLanguage } = useAuth();
-  const language = workspaceLanguage;
+  const language = explicitLanguage || workspaceLanguage;
   const [classes, setClasses] = useState([]);
   const [classId, setClassId] = useState("");
   const [detail, setDetail] = useState(null);
