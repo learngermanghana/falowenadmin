@@ -6,6 +6,7 @@ const normalizeError = (err) => err?.message || "Unable to complete the request.
 
 export default function StaffWorkspacePage() {
   const { user, role } = useAuth();
+  const [selectedAccount, setSelectedAccount] = useState(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [permissions, setPermissions] = useState(["german"]);
@@ -40,6 +41,36 @@ export default function StaffWorkspacePage() {
   const toggle = (language) => setPermissions((old) =>
     old.includes(language) ? old.filter((item) => item !== language) : [...old, language]);
 
+  const search = async () => {
+    setBusy(true); setError(""); setNotice(""); setSelectedAccount(null);
+    try {
+      const { account } = await request("POST", { action: "search", email });
+      if (!account) {
+        setNotice("No Falowen account found with this email.");
+        return;
+      }
+      const member = staff.find(item => item.uid === account.uid && item.active);
+      setSelectedAccount(account);
+      setEmail(account.email);
+      setName(member?.name || account.name);
+      setStaffRole(member?.staffRole || "teacher");
+      setPermissions(member?.languages?.length ? member.languages : ["german"]);
+      setNotice("Existing Falowen account found. Choose staff access and save.");
+    } catch (err) { setError(normalizeError(err)); }
+    finally { setBusy(false); }
+  };
+
+  const welcome = async (member) => {
+    setBusy(true); setError(""); setNotice("");
+    try {
+      const result = await request("POST", { action: "welcome", uid: member.uid });
+      setNotice(result.duplicate
+        ? `A welcome email was already queued for ${member.email}.`
+        : `Welcome email queued for ${member.email}.`);
+    } catch (err) { setError(normalizeError(err)); }
+    finally { setBusy(false); }
+  };
+
   const save = async (event) => {
     event.preventDefault();
     if (!permissions.length || !email.trim()) return;
@@ -47,12 +78,12 @@ export default function StaffWorkspacePage() {
     try {
       const result = await request("POST", {
         action: "upsert", email: email.trim().toLowerCase(), name: name.trim(),
-        staffRole, languages: permissions,
+        staffRole, languages: permissions, existingUid: selectedAccount?.uid,
       });
       setNotice(result.existing
-        ? "Existing Falowen account granted access. Their password was not changed."
+        ? "Existing Falowen account granted access. Use Send welcome email in Current staff."
         : "New staff account created. A password setup email was requested.");
-      setName(""); setEmail("");
+      setName(""); setEmail(""); setSelectedAccount(null);
       await refresh();
     } catch (err) { setError(normalizeError(err)); }
     finally { setBusy(false); }
@@ -79,7 +110,8 @@ export default function StaffWorkspacePage() {
       <form onSubmit={save} style={{ border: "1px solid #d5dbe5", borderRadius: 12, padding: 20, display: "grid", gap: 12, alignContent: "start" }}>
         <h2>Add or update staff</h2>
         <label>Full name <input style={{ display: "block", width: "100%" }} value={name} onChange={e => setName(e.target.value)} maxLength={100} autoComplete="name" /></label>
-        <label>Email address <input style={{ display: "block", width: "100%" }} value={email} onChange={e => setEmail(e.target.value)} type="email" required autoComplete="email" /></label>
+        <label>Email address <input style={{ display: "block", width: "100%" }} value={email} disabled={busy} onChange={e => { setEmail(e.target.value); setSelectedAccount(null); }} type="email" required autoComplete="email" /></label>
+        <button type="button" onClick={search} disabled={busy || !email.trim()}>Search Falowen account</button>
         <label>Role <select style={{ display: "block", width: "100%" }} value={staffRole} onChange={e => setStaffRole(e.target.value)}><option value="teacher">Teacher — marking and slides</option><option value="reviewer">Reviewer — marking only</option></select></label>
         <fieldset><legend>Language access</legend>{LANGUAGES.map(lang => <label key={lang} style={{ display: "block", margin: "8px 0" }}><input type="checkbox" checked={permissions.includes(lang)} onChange={() => toggle(lang)} /> {lang === "german" ? "German" : "Swahili"}</label>)}</fieldset>
         <button type="submit" disabled={busy || !permissions.length}>{busy ? "Saving…" : "Save staff access"}</button>
@@ -92,7 +124,7 @@ export default function StaffWorkspacePage() {
         {staff.map(member => <article key={member.uid} style={{ borderBottom: "1px solid #e2e8f0", padding: "12px 0", overflowWrap: "anywhere" }}>
           <strong>{member.name || member.email}</strong><div>{member.email}</div>
           <small>{member.staffRole || "teacher"} · {(member.languages || []).join(", ") || "No languages"} · {member.active ? "Active" : "Inactive"}</small>
-          {member.active && <div><button type="button" disabled={busy} onClick={() => deactivate(member)}>Remove teaching access</button></div>}
+          {member.active && <div><button type="button" disabled={busy} onClick={() => welcome(member)}>Send welcome email</button> <button type="button" disabled={busy} onClick={() => deactivate(member)}>Remove teaching access</button></div>}
         </article>)}
       </div>
     </div>
