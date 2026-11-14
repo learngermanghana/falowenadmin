@@ -163,7 +163,7 @@ export default function StaffWorkspacePage() {
         </fieldset>)}
         <button type="submit" disabled={busy || !languages.length}>{busy ? "Saving…" : "Save staff access"}</button>
         {selectedAccount && <button type="button" disabled={busy} onClick={() => { setSelectedAccount(null); setEmail(""); setName(""); }}>Cancel editing</button>}
-        <small>Page access does not include publishing unless its separate checkbox is enabled. Staff permissions refresh on their next sign-in.</small>
+        <small>Publishing controls are separate and recorded for approval planning. Public music publishing and connected-account posting are still owner-only; checking these boxes does not activate publishing. Staff permissions refresh at their next sign-in.</small>
       </form>
       <div style={{ border: "1px solid #d5dbe5", borderRadius: 12, padding: 20, minWidth: 0 }}>
         <h2>Current staff</h2>
