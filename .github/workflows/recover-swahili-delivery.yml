@@ -97,15 +97,59 @@ jobs:
           console.log("Isolated Firebase config prepared for tested functions.");
           NODE
 
+      # The complete Admin index declares secrets for unrelated services, some of
+      # which are not configured in this project. Stage the two *existing* worker
+      # factories after validating their original code, and publish them under
+      # the same original function names, without changing repository source.
+      - name: Stage only the already-tested result worker exports
+        shell: bash
+        run: |
+          cat > functions/index.js <<'NODE'
+          const admin = require("firebase-admin");
+          const { setGlobalOptions } = require("firebase-functions/v2");
+          const { onDocumentCreated, onDocumentWritten } = require("firebase-functions/v2/firestore");
+          const { defineSecret } = require("firebase-functions/params");
+
+          setGlobalOptions({ region: "us-central1", minInstances: 0, maxInstances: 2 });
+          if (!admin.apps.length) admin.initializeApp();
+          const db = admin.firestore();
+          const scoresWebhookUrlSecret = defineSecret("SCORES_WEBHOOK_URL");
+          const scoresWebhookTokenSecret = defineSecret("SCORES_WEBHOOK_TOKEN");
+
+          const encoded = String(process.env.CLOUD_RUNTIME_CONFIG_B64 || "").trim();
+          const raw = encoded
+            ? Buffer.from(encoded, "base64").toString("utf8")
+            : (process.env.CLOUD_RUNTIME_CONFIG || "{}");
+          const runtimeConfig = JSON.parse(raw);
+
+          exports.syncAutomaticCourseScore = onDocumentCreated({
+            document: "automaticScoreSync/{syncId}",
+            secrets: [scoresWebhookUrlSecret, scoresWebhookTokenSecret],
+            timeoutSeconds: 60, maxInstances: 1, concurrency: 1, retry: true, cpu: "gcf_gen1",
+          }, require("./automaticCourseMarking").createScoreSyncWorker({
+            db,
+            config: () => require("./scoreWebhookConfig").scoreWebhookConfig(runtimeConfig, {
+              ...process.env,
+              SCORES_WEBHOOK_URL: scoresWebhookUrlSecret.value(),
+              SCORES_WEBHOOK_TOKEN: scoresWebhookTokenSecret.value(),
+            }),
+          }));
+
+          exports.publishSwahiliTutorResult = onDocumentWritten({
+            document: "swahiliTeacherReviews/{reviewId}",
+            retry: true,
+          }, require("./swahiliResults").createSwahiliResultWorker({
+            db, auth: admin.auth(), runtimeConfig,
+          }));
+          NODE
+          node --check functions/index.js
+
       - name: Deploy the existing Google Scores sheet upsert worker
         run: |
           set -euo pipefail
           firebase deploy --config firebase.swahili-targeted.json \
             --project "$FIREBASE_PROJECT_ID" \
             --only functions:falowenadmin:syncAutomaticCourseScore --force
-
-      - name: Restore committed source before deploying the second existing worker
-        run: git reset --hard "$GITHUB_SHA"
 
       - name: Deploy the Swahili tutor result/email worker
         run: |
