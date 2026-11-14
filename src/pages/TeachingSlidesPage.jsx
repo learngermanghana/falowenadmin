@@ -50,9 +50,10 @@ function SlideCoursesIndex() {
       <p>Select a teaching language, then open the course slides. German lessons remain unchanged.</p>
       <div className="slide-actions slide-language-picker" role="group" aria-label="Teaching language">
         {permitted.includes("german") && <button type="button" aria-pressed={language === "german"} onClick={() => setLanguage("german")}>German · Deutsch</button>}
-        {permitted.includes("swahili") && <button type="button" aria-pressed={language === "swahili"} onClick={() => setLanguage("swahili")}>Swahili · Kiswahili · A1 Days 1 &amp; 6</button>}
+        {permitted.includes("swahili") && <button type="button" aria-pressed={language === "swahili"} onClick={() => setLanguage("swahili")}>Swahili · Kiswahili · A1 Days 1, 5 &amp; 6</button>}
       </div>
-      {permitted.includes("swahili") && <div className="slide-actions no-print" aria-label="Quick access to Kiswahili A1 Lesson 6">
+      {permitted.includes("swahili") && <div className="slide-actions no-print" aria-label="Quick access to Kiswahili teaching slides">
+        <Link to="/teaching-slides/course/SWAHILI/swahili-day-5?present=1">Swahili A1 · Day 5 · Present</Link>
         <Link to="/teaching-slides/course/SWAHILI/swahili-day-6?present=1">Swahili A1 · Day 6 — Mgahawani · Present</Link>
         <Link to="/teaching-slides/course/SWAHILI">All Swahili lessons</Link>
       </div>}

@@ -46,3 +46,9 @@ The teacher re-uploaded `FOOD&DRINKS=LIKE&DISLIKES(1).pdf` and `Odering Food(1).
 The existing Day 6 `presentation` stage (same identifier, position eight of nine) now has the `scenario` rendering mode, with five selectable oral situations adapted to Ruth's grammar/food material: wali kuku and juice, no meat, choosing a different dish, ordering for two, and only ordering a drink. `SwahiliRestaurantScenario.jsx` follows the existing German A2 scenario component conventions (`presenter-career-hero`, `presenter-career-roadmap`, `presenter-career-question`, model-answer reveal and random next situation), but operates **client-side** and is ungraded; no student workbook fields or Firestore writes are introduced. The nine-stage course layout, the existing Falowen audio/video player, navigation, timers and student picker remain unchanged. Day 1 and German lessons are not changed.
 
 The Swahili review publisher validates the current submission and the enrolled UID, writes a Firestore score, queues the existing score Sheet worker, and uses the Announcement webhook to email a direct Campus Results link. The review remains the source for the learner’s feedback. Legacy reviews display without a score and can be scored by the tutor. Swahili submissions do not enter the German AI queue.
+
+## Kiswahili A1 Day 5
+
+Kiswahili A1 Day 5 uses the shared teaching presenter and the Swahili Music tab in Music Studio. Select the Day 5 recording, enter the sung lyrics, and mark each line to preview or export the video. Saving shared timing writes the matching R2 sidecar for the slide and workbook.
+
+The Swahili Music recording uses `swahili/music/A1/day-05/Karibu Kufahamu Familia Yangu.mp3`. The separate `swahili/A1/day-05/` prefix is reserved for future Hören recordings.
