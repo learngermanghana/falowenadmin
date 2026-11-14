@@ -129,6 +129,8 @@ async function upsert(body, accessToken) {
   if (!["teacher", "reviewer"].includes(staffRole)) fail("Invalid staff role.");
   const languages = allowedLanguages(body.languages);
   let account = await accountsLookup({ email: [email] }, accessToken);
+  if (account?.disabled) fail("This Falowen account is disabled.", 409);
+  if (body.existingUid && account?.localId !== body.existingUid) fail("Search for the existing account again before saving.", 409);
   const existing = Boolean(account);
   if (account && (parseAttributes(account).admin === true || parseAttributes(account).role === "admin")) fail("Admin accounts cannot be altered through staff management.", 403);
   if (!account) {
@@ -150,6 +152,69 @@ async function upsert(body, accessToken) {
   }
   return { ok: true, existing };
 }
+async function searchAccount(body, accessToken) {
+  const email = String(body.email || "").trim().toLowerCase();
+  if (!emailPattern.test(email) || email.length > 254) fail("Enter a full Falowen email address.");
+  const account = await accountsLookup({ email: [email] }, accessToken);
+  if (!account) return { ok: true, account: null };
+  const claims = parseAttributes(account);
+  if (email === OWNER || claims.admin === true || claims.role === "admin") {
+    fail("Admin accounts cannot be managed through Staff Workspace.", 403);
+  }
+  if (account.disabled) fail("This Falowen account is disabled.", 409);
+  return { ok: true, account: { uid: account.localId, email, name: account.displayName || "" } };
+}
+
+async function sendWelcome(body, accessToken) {
+  const uid = String(body.uid || "").trim();
+  if (!/^[A-Za-z0-9_-]{6,128}$/.test(uid)) fail("Invalid staff account.");
+  const account = await accountsLookup({ localId: [uid] }, accessToken);
+  const claims = parseAttributes(account);
+  const email = String(account?.email || "").trim().toLowerCase();
+  if (!emailPattern.test(email) || email === OWNER || account.disabled || claims.staff !== true) {
+    fail("Save active staff access before sending the welcome email.", 409);
+  }
+  const staff = fieldsToObject((await apiFetch(docUrl(uid), "GET", undefined, accessToken)).fields);
+  if (!staff.active || staff.email !== email) fail("Save active staff access before sending the welcome email.", 409);
+
+  const webhookSetting = (name) => env(`ANNOUNCEMENT_WEBHOOK_${name}`) || env(`VITE_ANNOUNCEMENT_WEBHOOK_${name}`);
+  const url = webhookSetting("URL");
+  if (!url) diagnostic("The announcement email webhook is not configured.");
+  const link = "https://admin.falowen.app/login";
+  const eventId = `staff-welcome-${uid}`;
+  const row = {
+    email,
+    topic: "Welcome to the Falowen teaching team",
+    announcement: "Your Falowen staff access is ready. Open the staff sign-in link and use your existing Falowen email and password to sign in. After signing in, you can open the tools assigned to you.",
+    link,
+    event_id: eventId,
+    attach_certificate: "FALSE",
+  };
+  let response;
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=UTF-8" },
+      body: JSON.stringify({
+        token: webhookSetting("TOKEN"),
+        sheet_name: webhookSetting("SHEET_NAME"),
+        sheet_gid: webhookSetting("SHEET_GID"),
+        event_id: eventId,
+        row,
+        rows: [row],
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+  } catch {
+    diagnostic("Could not confirm the welcome email request. Check the announcement queue before retrying.", 502);
+  }
+  const receipt = await response.json().catch(() => null);
+  if (!response.ok || receipt?.ok !== true) {
+    diagnostic("The announcement webhook did not confirm the welcome email request.", 502);
+  }
+  return { ok: true, duplicate: receipt.duplicate === true };
+}
+
 async function revoke(body, accessToken) {
   const uid = String(body.uid || "").trim();
   if (!/^[A-Za-z0-9_-]{6,128}$/.test(uid)) fail("Invalid staff account.");
@@ -182,6 +247,8 @@ export default async function staffManagementHandler(req, res) {
     }
     const input = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
     const result = input.action === "upsert" ? await upsert(input, accessToken)
+      : input.action === "search" ? await searchAccount(input, accessToken)
+      : input.action === "welcome" ? await sendWelcome(input, accessToken)
       : input.action === "revoke" ? await revoke(input, accessToken)
       : fail("Invalid staff action.");
     return res.status(200).json(result);
