@@ -7,11 +7,18 @@ const host = "https://identitytoolkit.googleapis.com/v1";
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function fail(message, status = 400) { throw Object.assign(new Error(message), { status }); }
+function diagnostic(message, status = 503) {
+  throw Object.assign(new Error(message), { status, staffDiagnostic: true });
+}
 function base64(value) { return Buffer.from(value).toString("base64url"); }
 async function tokenForGoogle() {
   const client = env("GOOGLE_SERVICE_ACCOUNT_EMAIL") || env("GCP_CLIENT_EMAIL");
   const key = (env("GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY") || env("GCP_PRIVATE_KEY")).replace(/\\n/g, "\n");
-  if (!client || !key || !PROJECT || !KEY) fail("Staff management needs server-side Firebase and Google service-account configuration.", 503);
+  const missing = [
+    [client, "GOOGLE_SERVICE_ACCOUNT_EMAIL"],
+    [key, "GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY"],
+  ].filter(([value]) => !value).map(([, name]) => name);
+  if (missing.length) diagnostic(`Missing server configuration: ${missing.join(", ")}.`);
   const now = Math.floor(Date.now() / 1000);
   const header = base64(JSON.stringify({ alg: "RS256", typ: "JWT" }));
   const claims = base64(JSON.stringify({
@@ -19,13 +26,28 @@ async function tokenForGoogle() {
     scope: "https://www.googleapis.com/auth/cloud-platform", iat: now, exp: now + 3600,
   }));
   const payload = `${header}.${claims}`;
-  const signature = crypto.sign("RSA-SHA256", Buffer.from(payload), key).toString("base64url");
+  let signature;
+  try {
+    signature = crypto.sign("RSA-SHA256", Buffer.from(payload), key).toString("base64url");
+  } catch {
+    diagnostic("Google OAuth: the service-account private key could not sign the request. Check the PEM value.");
+  }
   const response = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:jwt-bearer", assertion: `${payload}.${signature}` }),
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok || !data.access_token) fail("Staff service credentials are not authorized.", 503);
+  if (!response.ok || !data.access_token) {
+    const explanations = {
+      invalid_grant: "Google rejected the signed assertion. Verify that the key is active and belongs to the configured service-account email.",
+      invalid_client: "Google rejected the service-account identity. Check the configured email.",
+      unauthorized_client: "The service account is not authorized to request this token.",
+    };
+    const code = Object.hasOwn(explanations, data.error) ? data.error : null;
+    diagnostic(code
+      ? `Google OAuth (${code}, HTTP ${response.status}): ${explanations[code]}`
+      : `Google OAuth did not issue an access token (HTTP ${response.status}).`);
+  }
   return data.access_token;
 }
 async function apiFetch(url, method, body, bearer) {
@@ -35,8 +57,11 @@ async function apiFetch(url, method, body, bearer) {
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const e = data?.error?.message || `Service request failed (${response.status}).`;
-    fail(e, response.status === 403 ? 503 : 502);
+    const service = url.startsWith(host) ? "Firebase Authentication" : "Firestore";
+    const code = data?.error?.status;
+    const detail = ["PERMISSION_DENIED", "UNAUTHENTICATED", "NOT_FOUND", "INVALID_ARGUMENT", "FAILED_PRECONDITION", "RESOURCE_EXHAUSTED", "UNAVAILABLE", "INTERNAL"].includes(code)
+      ? `, ${code}` : "";
+    diagnostic(`${service} request failed (HTTP ${response.status}${detail}).`, response.status === 403 ? 503 : 502);
   }
   return data;
 }
@@ -45,9 +70,10 @@ async function accountsLookup(body, accessToken) {
   const result = await apiFetch(authUrl(":lookup"), "POST", body, accessToken);
   return result.users?.[0] || null;
 }
-async function requireOwner(req, accessToken) {
+async function requireOwner(req) {
   const match = String(req.headers.authorization || "").match(/^Bearer\s+(.+)$/i);
   if (!match) fail("Sign in as an administrator.", 401);
+  if (!KEY || !PROJECT) fail("Staff management needs server-side Firebase configuration.", 503);
   const data = await fetch(`${host}/accounts:lookup?key=${encodeURIComponent(KEY)}`, {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idToken: match[1] }),
   });
@@ -55,9 +81,6 @@ async function requireOwner(req, accessToken) {
   const identity = lookup.users?.[0];
   if (!data.ok || !identity?.localId) fail("Your session has expired.", 401);
   if (identity.emailVerified !== true || String(identity.email || "").toLowerCase() !== OWNER) fail("Only the owner may manage staff access.", 403);
-  // Confirm account identity against the privileged project as well.
-  const privileged = await accountsLookup({ localId: [identity.localId] }, accessToken);
-  if (!privileged || String(privileged.email || "").toLowerCase() !== OWNER) fail("Administrator identity mismatch.", 403);
   return identity;
 }
 function parseAttributes(user) {
@@ -116,7 +139,7 @@ async function upsert(body, accessToken) {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ requestType: "PASSWORD_RESET", email }),
     });
-    if (!response.ok) fail("Account created, but password setup email failed. Check Firebase email templates before retrying.", 502);
+    if (!response.ok) diagnostic(`Account created, but Firebase rejected the password setup email (HTTP ${response.status}).`, 502);
   }
   return { ok: true, existing };
 }
@@ -136,9 +159,15 @@ async function revoke(body, accessToken) {
 export default async function staffManagementHandler(req, res) {
   res.setHeader("Cache-Control", "private, no-store");
   if (!["GET", "POST"].includes(req.method)) { res.setHeader("Allow", "GET, POST"); return res.status(405).json({ ok: false, error: "Method not allowed" }); }
+  let ownerVerified = false;
   try {
+    const identity = await requireOwner(req);
+    ownerVerified = true;
     const accessToken = await tokenForGoogle();
-    await requireOwner(req, accessToken);
+    const privileged = await accountsLookup({ localId: [identity.localId] }, accessToken);
+    if (!privileged || privileged.emailVerified !== true || String(privileged.email || "").toLowerCase() !== OWNER) {
+      fail("Administrator identity mismatch.", 403);
+    }
     if (req.method === "GET") {
       const result = await apiFetch(docUrl() + "?pageSize=100", "GET", undefined, accessToken);
       const staff = (result.documents || []).map(doc => fieldsToObject(doc.fields)).filter(s => s.uid && s.email);
@@ -152,6 +181,6 @@ export default async function staffManagementHandler(req, res) {
   } catch (err) {
     const status = err?.status || 500;
     console.error("staff_management_failed", { status, message: err?.message });
-    return res.status(status).json({ ok: false, error: status >= 500 ? "Staff management is unavailable. Check server credentials and Firebase access." : err.message });
+    return res.status(status).json({ ok: false, error: status >= 500 && !(ownerVerified && err.staffDiagnostic) ? "Staff management is unavailable. Check server credentials and Firebase access." : err.message });
   }
 }
