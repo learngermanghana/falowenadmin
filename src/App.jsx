@@ -262,8 +262,10 @@ function OwnerMusicAnalyticsRoute() {
 
 function OwnerStudioRoute({ music = false, lesson = false }) {
   const { user, loading, isStaff, workspaceLanguage } = useAuth();
+  const location = useLocation();
+  const language = resolveLanguage(location.pathname, location.search, workspaceLanguage);
   const ownerUid = String(import.meta.env.VITE_HOEREN_STUDIO_OWNER_UID || "").trim();
-  if (isStaff && music) return <ProtectedRoute><StaffMusicStudioPage key={workspaceLanguage} /></ProtectedRoute>;
+  if (isStaff && music) return <ProtectedRoute><StaffMusicStudioPage key={language} language={language} /></ProtectedRoute>;
   if (!loading && user && (isStaff || !ownerUid || user.uid !== ownerUid)) return <Navigate to="/" replace />;
   return <ProtectedRoute>{lesson ? <LessonVideoStudioPage /> : music ? <MusicStudioPage /> : <HoerenStudioPage />}</ProtectedRoute>;
 }
@@ -277,11 +279,15 @@ function CurrentAttendanceRoute() {
 }
 function AttendanceWorkspaceRoute() {
   const { isStaff, workspaceLanguage } = useAuth();
-  return <ProtectedRoute>{isStaff ? <StaffAttendancePage key={workspaceLanguage} /> : <AttendanceOverviewPage />}</ProtectedRoute>;
+  const location = useLocation();
+  const language = resolveLanguage(location.pathname, location.search, workspaceLanguage);
+  return <ProtectedRoute>{isStaff ? <StaffAttendancePage key={language} language={language} /> : <AttendanceOverviewPage />}</ProtectedRoute>;
 }
 function SocialWorkspaceRoute() {
   const { isStaff, workspaceLanguage } = useAuth();
-  return <ProtectedRoute>{isStaff ? <StaffSocialMediaPage key={workspaceLanguage} /> : <SocialMediaPage />}</ProtectedRoute>;
+  const location = useLocation();
+  const language = resolveLanguage(location.pathname, location.search, workspaceLanguage);
+  return <ProtectedRoute>{isStaff ? <StaffSocialMediaPage key={language} language={language} /> : <SocialMediaPage />}</ProtectedRoute>;
 }
 
 function PublicVisitorGuideRedirect() {
