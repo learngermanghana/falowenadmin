@@ -56,3 +56,5 @@ The Swahili Music recording uses `swahili/music/A1/day-05/Karibu Kufahamu Famili
 The versioned Swahili answer key lives in `functions/swahili-answers.json`. Admin compares learner work with this key, and the result publisher snapshots the key onto the learner-owned review and emails its Campus Results link.
 
 Published German workbook marks create a learner-owned reference snapshot from the objective parts of the exact marking key. Draft AI reviews keep the snapshot staff-only pending publication. The score references the snapshot by ID, and the Scores Sheet sync omits that ID.
+
+Swahili A1 Day 6 presents its song through Listen, Lyrics and Questions. The learner Music catalog owns its recording, lyrics, English and quiz data. Falowen Radio remains a separate stage.
