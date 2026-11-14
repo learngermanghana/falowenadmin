@@ -42,7 +42,7 @@ const fieldLabels = {
   studentCode: "Student code",
   level: "Level",
   className: "Class name",
-  program: "Program",
+  program: "Course language",
   location: "Location",
   status: "Status",
   tuitionFee: "Tuition fee",
@@ -689,7 +689,20 @@ export default function StudentDirectoryPage() {
         return (
           <label key={`${selectedStudent.id}-${field}`} style={{ display: "grid", gap: 6 }}>
             <span style={{ fontSize: 13, fontWeight: 600 }}>{fieldLabels[field] || field}</span>
-            {STATUS_CHOICES[field] ? (
+            {field === "program" ? (
+              <>
+                <select value={draft.program || "german"} disabled={isSaving}
+                  onChange={(event) => updateDraftField(selectedStudent.id, field, event.target.value, selectedStudent)}
+                  style={{ width: "100%", padding: "8px 9px", borderRadius: 6, border: "1px solid #ccd4e2" }}>
+                  <option value="german">German</option>
+                  <option value="swahili">Swahili (Kiswahili)</option>
+                  {draft.program && !["german", "swahili"].includes(draft.program) && (
+                    <option value={draft.program} disabled>{draft.program} (current record)</option>
+                  )}
+                </select>
+                <small style={{ color: "#64748b" }}>Save the student to switch which course they see in Campus. Their sign-in, past results and class details stay on the same record.</small>
+              </>
+            ) : STATUS_CHOICES[field] ? (
               <select value={draft[field]} disabled={isSaving}
                 onChange={(event) => {
                   if (field === "status" && event.target.value === "trial_active") activateTrialForStudent(selectedStudent);
