@@ -1,0 +1,16 @@
+.restaurant-song { display: grid; gap: 1rem; padding: clamp(1rem, 3vw, 1.8rem); border-radius: 1rem; color: #fff; background: #174836; text-align: left; }
+.restaurant-song h2 { color: #fff; margin: .3rem 0; }
+.restaurant-song h3, .restaurant-song h4, .restaurant-song p { margin: 0; }
+.restaurant-song__panel { display: grid; gap: .8rem; padding: 1rem; min-width: 0; border-radius: .8rem; background: #f8fbf3; color: #173f37; }
+.restaurant-song__panel a { color: #14593e; }
+.restaurant-song__panel audio { width: 100%; }
+.restaurant-song__tabs, .restaurant-song__options { display: flex; flex-wrap: wrap; gap: .6rem; }
+.restaurant-song button { color: #173f37; background: #fff; border: 1px solid #a3c9bb; border-radius: .65rem; padding: .65rem .9rem; font: inherit; cursor: pointer; }
+.restaurant-song button[aria-pressed="true"] { background: #daf1bb; border-color: #527749; }
+.restaurant-song button:disabled { opacity: .5; cursor: default; }
+.restaurant-song__tabs button { flex: 1 1 7rem; }
+.restaurant-song__lyrics { max-height: 43vh; overflow: auto; display: grid; gap: .5rem; }
+.restaurant-song__lyrics p { padding: .25rem .4rem; }
+.restaurant-song__lyrics h4 { margin-top: .5rem; }
+.restaurant-song__lyrics small { display: block; }
+.restaurant-song__lyrics .is-current { background: #daf1bb; }
