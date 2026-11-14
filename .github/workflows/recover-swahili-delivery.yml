@@ -75,19 +75,43 @@ jobs:
           fi
           node scripts/ensureScoreWebhookSecrets.mjs
 
+      # Firebase invokes every declared predeploy hook even for --only one worker.
+      # Unrelated Live Classes patch hooks currently fail on the committed UI.
+      # Keep the normal Firebase config unchanged; this isolated release only
+      # packages the two code-checked and test-validated existing functions.
+      - name: Create isolated Firebase config for the two tested workers
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          const original = JSON.parse(fs.readFileSync("firebase.json", "utf8"));
+          const entries = Array.isArray(original.functions) ? original.functions : [original.functions];
+          const entry = entries.find(item => item?.source === "functions" && item?.codebase === "falowenadmin");
+          if (!entry) throw new Error("Expected falowenadmin Functions source missing");
+          const config = { functions: [{
+            source: entry.source,
+            codebase: entry.codebase,
+            ignore: entry.ignore || [],
+          }] };
+          fs.writeFileSync("firebase.swahili-targeted.json", JSON.stringify(config, null, 2));
+          console.log("Isolated Firebase config prepared for tested functions.");
+          NODE
+
       - name: Deploy the existing Google Scores sheet upsert worker
         run: |
           set -euo pipefail
-          firebase deploy --project "$FIREBASE_PROJECT_ID" \
+          firebase deploy --config firebase.swahili-targeted.json \
+            --project "$FIREBASE_PROJECT_ID" \
             --only functions:falowenadmin:syncAutomaticCourseScore --force
 
-      - name: Restore committed source before the second Firebase predeploy
+      - name: Restore committed source before deploying the second existing worker
         run: git reset --hard "$GITHUB_SHA"
 
       - name: Deploy the Swahili tutor result/email worker
         run: |
           set -euo pipefail
-          firebase deploy --project "$FIREBASE_PROJECT_ID" \
+          firebase deploy --config firebase.swahili-targeted.json \
+            --project "$FIREBASE_PROJECT_ID" \
             --only functions:falowenadmin:publishSwahiliTutorResult --force
 
       - name: Replay untouched Swahili reviews queued before the worker was deployed
