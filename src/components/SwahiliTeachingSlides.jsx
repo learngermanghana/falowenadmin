@@ -1,3 +1,5 @@
+import { SWAHILI_DAY_FIVE_ADMIN_LESSON } from "../data/swahiliDayFiveTeachingSlides.js";
+import SwahiliSlideMusic from "./SwahiliSlideMusic.jsx";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PresenterControls, { PresenterActions, PresenterStageJump } from "./PresenterControls.jsx";
@@ -31,11 +33,20 @@ const daySixPresenterSlide = Object.freeze({
   },
 });
 
+const dayFiveRoot = courseRoot + "/swahili-day-5";
+const dayFiveWorkbook = "https://www.falowen.app/swahili/day-5";
+const dayFivePresenterSlide = Object.freeze({
+  ...SWAHILI_DAY_FIVE_ADMIN_LESSON,
+  assignmentId: "SWAHILI-DAY-5",
+  workbookConnection: { workbookUrl: dayFiveWorkbook, subtitle: "Continue Kiswahili Day 5 in your learner workbook." },
+});
+
 export default function SwahiliTeachingSlides({ slideId, present = false }) {
+  const isDayFive = slideId === SWAHILI_DAY_FIVE_ADMIN_LESSON.id;
   const isDaySix = slideId === SWAHILI_DAY_SIX_ADMIN_LESSON.id;
-  const lesson = isDaySix ? SWAHILI_DAY_SIX_ADMIN_LESSON : SWAHILI_DAY_ONE_ADMIN_LESSON;
-  const selectedPresenterSlide = isDaySix ? daySixPresenterSlide : presenterSlide;
-  const selectedWorkbook = isDaySix ? "https://www.falowen.app/swahili/day-6" : learnerWorkbook;
+  const lesson = isDayFive ? SWAHILI_DAY_FIVE_ADMIN_LESSON : isDaySix ? SWAHILI_DAY_SIX_ADMIN_LESSON : SWAHILI_DAY_ONE_ADMIN_LESSON;
+  const selectedPresenterSlide = isDayFive ? dayFivePresenterSlide : isDaySix ? daySixPresenterSlide : presenterSlide;
+  const selectedWorkbook = isDayFive ? dayFiveWorkbook : isDaySix ? "https://www.falowen.app/swahili/day-6" : learnerWorkbook;
   const stages = lesson.stages;
   const activityTimer = usePresenterActivityTimer(7);
   const [reportOpen, setReportOpen] = useState(false);
@@ -87,7 +98,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [slideId, presenting, index, stages.length]);
 
-  if (slideId && slideId !== SWAHILI_DAY_ONE_ADMIN_LESSON.id && slideId !== SWAHILI_DAY_SIX_ADMIN_LESSON.id) {
+  if (slideId && !isDayFive && slideId !== SWAHILI_DAY_ONE_ADMIN_LESSON.id && slideId !== SWAHILI_DAY_SIX_ADMIN_LESSON.id) {
     return <section className="slides-index"><h1>Lesson not found</h1><Link to={courseRoot}>Back to Swahili</Link></section>;
   }
 
@@ -97,7 +108,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
         <div className="swahili-admin-slides__crumb"><Link to="/teaching-slides?language=swahili">← All languages</Link></div>
         <p className="slide-meta">Kiswahili · Beginner</p>
         <h1>Swahili teaching slides</h1>
-        <p>Uses the same nine-part classroom flow as Falowen A2. Day 1 and A1 Lesson 6 (Mgahawani) use the shared Falowen classroom presenter. Day 6 includes the existing Falowen Radio link; song audio is pending.</p>
+        <p>Uses the same nine-part classroom flow as Falowen A2. Open the A1 teaching slides for Day 1, Day 5 or Day 6.</p>
         <div className="slide-card-grid">
           <article className="slide-card slide-card-lesson">
             <p className="slide-meta">Day 1 · {stages.length} classroom stages</p>
@@ -106,6 +117,15 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
             <div className="slide-card-actions">
               <Link to={lessonRoot}>Open lesson</Link>
               <Link to={lessonRoot + "?present=1"}>Present</Link>
+            </div>
+          </article>
+          <article className="slide-card slide-card-lesson">
+            <p className="slide-meta">A1 · Day 5</p>
+            <h2>{SWAHILI_DAY_FIVE_ADMIN_LESSON.title}</h2>
+            <p>{SWAHILI_DAY_FIVE_ADMIN_LESSON.objective}</p>
+            <div className="slide-card-actions">
+              <Link to={dayFiveRoot}>Open lesson</Link>
+              <Link to={dayFiveRoot + "?present=1"}>Present</Link>
             </div>
           </article>
           <article className="slide-card slide-card-lesson">
@@ -189,7 +209,9 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
             </div>
           </div>
         )}
-        <SwahiliA2LessonStage stage={stage} grammar={grammar} isDaySix={isDaySix} />
+        {isDayFive ? <section className="swahili-a2-presenter__media-stage">
+          {stage.audio ? <SwahiliSlideMusic track={stage.audio} /> : <p style={{ whiteSpace: "pre-line" }}>{stage.content}</p>}
+        </section> : <SwahiliA2LessonStage stage={stage} grammar={grammar} isDaySix={isDaySix} />}
 
         <p className="swahili-a2-presenter__english" lang="en">{stageEnglish}</p>
 
@@ -225,7 +247,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
       />
       {!focusMode && <footer className="swahili-a2-presenter__foot no-print">
         <a href={selectedWorkbook} target="_blank" rel="noreferrer">Open {lesson.day} learner workbook</a>
-        <span>{isDaySix ? "Restaurant lesson · Falowen Radio available · Song audio pending" : "Music and recorded Hören will be linked after upload."}</span>
+        <span>{isDayFive ? "A1 · Day 5 practice" : isDaySix ? "Restaurant lesson · Falowen Radio available · Song audio pending" : "Music and recorded Hören will be linked after upload."}</span>
       </footer>}
     </main>
     </div>

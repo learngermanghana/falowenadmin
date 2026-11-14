@@ -1,3 +1,4 @@
+import { SWAHILI_MUSIC_TRACKS } from "../data/swahiliMusicTracks.js";
 import fixWebmDuration from "fix-webm-duration";
 import SongTimingEditor from "./SongTimingEditor.jsx";
 import { savePublishedMusicTiming } from "../services/musicStudioService.js";
@@ -58,9 +59,10 @@ function nameSlug(value) {
 }
 function audioFilenameObjectKey(text) {
   const key=String(text||"").trim();
+  if (SWAHILI_MUSIC_TRACKS.some((track) => track.objectKey === key)) return key;
   return /^music\/(a1|a2|b1|b2|c1|c2)\/day-(0[1-9]|1[0-9]|2[0-8])\/[^/]{1,150}\.mp3$/i.test(key) ? key : "";
 }
-export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", title = "Falowen Music", level = "", day = "", onOverwriteLyrics = null, savingLyrics = false, loadingLyrics = false, lyricsSaveNotice = "", assignmentKey = "", active = true }) {
+export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", title = "Falowen Music", level = "", day = "", onOverwriteLyrics = null, savingLyrics = false, loadingLyrics = false, lyricsSaveNotice = "", assignmentKey = "", active = true, swahili = false }) {
   const [file,setFile] = useState(null);
   const [tracks,setTracks] = useState([]);
   const [publishedTrack,setPublishedTrack] = useState(null);
@@ -414,6 +416,11 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   async function loadTracks(){
     setLoadingTracks(true);setCatalogError("");setCatalogLoaded(false);
     try {
+      if (swahili) {
+        setTracks(SWAHILI_MUSIC_TRACKS);
+        setCatalogLoaded(true);
+        return;
+      }
       const response=await fetch("/api/attendance-music-library", {cache:"no-cache",signal:AbortSignal.timeout(15000)});
       if(!response.ok)throw Error("Could not load the public song catalog.");
       const data=await response.json();

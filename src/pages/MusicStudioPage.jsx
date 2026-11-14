@@ -316,6 +316,9 @@ export default function MusicStudioPage() {
       <button id="music-video-tab" type="button" role="tab" aria-controls="music-video-panel"
         aria-selected={studioTab === 'video'} className={studioTab === 'video' ? 'is-active' : ''}
         onClick={() => setStudioTab('video')}>Lyrics Video Studio</button>
+      <button id="music-swahili-tab" type="button" role="tab" aria-controls="music-swahili-panel"
+        aria-selected={studioTab === "swahili"} className={studioTab === "swahili" ? "is-active" : ""}
+        onClick={() => setStudioTab("swahili")}>Swahili Music</button>
     </div>
     {/* Keep both workspaces mounted so drafts and generated audio survive tab changes. */}
     <div id="music-generator-panel" role="tabpanel" aria-labelledby="music-generator-tab"
@@ -548,6 +551,9 @@ export default function MusicStudioPage() {
       savingLyrics={savingLyrics} loadingLyrics={loadingLyrics}
       lyricsSaveNotice={lyricsNotice} />
       </div>
+    </section>
+    <section id="music-swahili-panel" role="tabpanel" aria-labelledby="music-swahili-tab" hidden={studioTab !== "swahili"}>
+      <MusicLyricsVideoStudio active={studioTab === "swahili"} swahili />
     </section>
   </main>;
 }
