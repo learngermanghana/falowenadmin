@@ -11,7 +11,15 @@ function base64(value) { return Buffer.from(value).toString("base64url"); }
 async function tokenForGoogle() {
   const client = env("GOOGLE_SERVICE_ACCOUNT_EMAIL") || env("GCP_CLIENT_EMAIL");
   const key = (env("GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY") || env("GCP_PRIVATE_KEY")).replace(/\\n/g, "\n");
-  if (!client || !key || !PROJECT || !KEY) fail("Staff management needs server-side Firebase and Google service-account configuration.", 503);
+  if (!client || !key || !PROJECT || !KEY) {
+    const missing = [
+      ...(!client ? ["GOOGLE_SERVICE_ACCOUNT_EMAIL"] : []),
+      ...(!key ? ["GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY"] : []),
+      ...(!PROJECT ? ["FIREBASE_PROJECT_ID"] : []),
+      ...(!KEY ? ["FIREBASE_API_KEY"] : []),
+    ];
+    fail("Staff management cannot provision accounts until the Vercel server configuration is complete. Missing: " + missing.join(", ") + ". Existing student search is still available.", 503);
+  }
   const now = Math.floor(Date.now() / 1000);
   const header = base64(JSON.stringify({ alg: "RS256", typ: "JWT" }));
   const claims = base64(JSON.stringify({
@@ -152,6 +160,6 @@ export default async function staffManagementHandler(req, res) {
   } catch (err) {
     const status = err?.status || 500;
     console.error("staff_management_failed", { status, message: err?.message });
-    return res.status(status).json({ ok: false, error: status >= 500 ? "Staff management is unavailable. Check server credentials and Firebase access." : err.message });
+    return res.status(status).json({ ok: false, error: status === 503 ? err.message : status >= 500 ? "Staff management could not reach Firebase. Review server permissions and runtime logs." : err.message });
   }
 }
