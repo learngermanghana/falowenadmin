@@ -11,6 +11,7 @@ function normalizeClassMatchKey(value) {
 const STUDENT_CLASS_FIELDS = [
   "classId",
   "classRecordId",
+  "assignedClassId",
   "className",
   "classname",
   "class",
@@ -77,7 +78,13 @@ function collectComparableClassValues(value, seenObjects = new WeakSet()) {
 }
 
 function studentClassValues(student = {}) {
-  return STUDENT_CLASS_FIELDS.flatMap((field) => collectComparableClassValues(student[field]));
+  const primary = String(student.program || "german").trim().toLowerCase();
+  const secondary = student.secondaryProgram;
+  const additional = secondary !== primary && ["german", "swahili"].includes(secondary)
+    ? student.coursePlacements?.[secondary] : null;
+  return [student, additional].filter(Boolean).flatMap(placement =>
+    STUDENT_CLASS_FIELDS.flatMap(field => collectComparableClassValues(placement[field]))
+  );
 }
 
 function canonicalClassValues(classId, classRecord = {}, documentId = "") {

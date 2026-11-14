@@ -79,3 +79,16 @@ test("accepts a student whose legacy class id matches a class alias", () => {
     classId: "old-class-id",
   }, keys), true);
 });
+
+test("matches the active secondary placement against canonical names and IDs", () => {
+  const student = { classId: "primary", program: "german", secondaryProgram: "swahili",
+    coursePlacements: { swahili: { assignedClassId: "secondary", className: "Evening" }, german: { classId: "archived" } } };
+  const matches = key => studentMatchesCanonicalClass(student, buildCanonicalClassKeys(key));
+  assert.equal(matches("primary"), true);
+  assert.equal(matches("evening"), true);
+  assert.equal(matches("secondary"), true);
+  assert.equal(matches("archived"), false);
+  student.secondaryProgram = null;
+  assert.equal(matches("secondary"), false);
+  assert.equal(matches("primary"), true);
+});
