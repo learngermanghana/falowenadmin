@@ -54,3 +54,5 @@ Kiswahili A1 Day 5 uses the shared teaching presenter and the Swahili Music tab 
 The Swahili Music recording uses `swahili/music/A1/day-05/Karibu Kufahamu Familia Yangu.mp3`. The separate `swahili/A1/day-05/` prefix is reserved for future Hören recordings.
 
 The versioned Swahili answer key lives in `functions/swahili-answers.json`. Admin compares learner work with this key, and the result publisher snapshots the key onto the learner-owned review and emails its Campus Results link.
+
+Published German workbook marks create a learner-owned reference snapshot from the objective parts of the exact marking key. Draft AI reviews keep the snapshot staff-only pending publication. The score references the snapshot by ID, and the Scores Sheet sync omits that ID.

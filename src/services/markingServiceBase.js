@@ -1,7 +1,9 @@
+import answerReferenceTools from "../../functions/resultAnswerReference.cjs";
+import { canonicalCourseReference } from "../utils/canonicalCourseReference.js";
 import { tryStoreMarkingDraft } from "../utils/markingDraftStorage.js";
 import { plainObjectiveAnswer } from "../utils/markingFeedbackText.js";
 import { assignmentTitle } from "../utils/assignmentTitle.js";
-import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
+import { writeBatch, addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { normalizeAnswerDictionary, safeRegistryId, validateAnswerDictionary } from "../utils/answerKeyNormalizer.js";
 import { checkDeterministicObjectiveAnswers } from "../utils/autoMarking.js";
@@ -1039,9 +1041,21 @@ export async function saveScoreRow({
   markingDetails = {},
   forceSheetDedupeId = false,
   requireAllTargets = false,
+  publicationReference = null,
 }) {
   const nowIso = new Date().toISOString();
   const row = buildScoreRow({ studentCode, studentEmail, studentId, studentScopeKey, name, assignment, assignmentId, score, comments, level, link, source, markingDetails });
+  const snapshot = SAVE_SCORES_TO_FIRESTORE ? answerReferenceTools.resultAnswerReference(
+    publicationReference || canonicalCourseReference(assignmentId), assignmentId,
+  ) : null;
+  if (snapshot && !row.studentId && row.studentCode) {
+    const matches = await Promise.all(["studentCode", "studentcode"].map(field =>
+      getDocs(query(collection(db, "students"), where(field, "==", row.studentCode)))
+    )).catch(() => []);
+    const ids = new Set(matches.flatMap(result => result.docs.map(entry => entry.data().uid).filter(Boolean)));
+    if (ids.size === 1) [row.studentId] = ids;
+  }
+  if (snapshot && row.studentId) row.link = "https://www.falowen.app/campus/results";
   const dedupeId = scoreDedupeId(row);
   const scoreRef = doc(db, "scores", dedupeId);
   const existingSnap = SAVE_SCORES_TO_FIRESTORE ? await getDoc(scoreRef).catch(() => null) : null;
@@ -1101,7 +1115,19 @@ export async function saveScoreRow({
             createdAt: existingScore?.createdAt || nowIso,
             updatedAt: nowIso,
           };
-      await setDoc(scoreRef, firestoreScore, { merge: true });
+      if (!duplicateSkipped) {
+        if (snapshot && row.studentId) {
+          const referenceRef = doc(collection(db, "publishedAnswerReferences"));
+          const batch = writeBatch(db);
+          batch.set(referenceRef, { ...snapshot, studentId: row.studentId });
+          batch.set(scoreRef, { ...firestoreScore, answerReferenceId: referenceRef.id }, { merge: true });
+          await batch.commit();
+        } else {
+          await setDoc(scoreRef, { ...firestoreScore, answerReferenceId: "" }, { merge: true });
+        }
+      } else {
+        await setDoc(scoreRef, firestoreScore, { merge: true });
+      }
       receipt.firestore.success = true;
       receipt.firestore.message = existingScore ? "Updated Firestore score mirror." : "Saved to Firestore mirror.";
     } catch (error) {
