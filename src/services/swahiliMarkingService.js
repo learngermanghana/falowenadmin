@@ -1,4 +1,4 @@
-import { collection, collectionGroup, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, runTransaction, serverTimestamp, startAfter, where } from "firebase/firestore";
+import { collection, collectionGroup, doc, getDoc, getDocs, limit, or, onSnapshot, orderBy, query, runTransaction, serverTimestamp, startAfter, where } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { canonicalSwahiliSubmission, swahiliReviewDocId } from "../utils/swahiliReviewQueue.js";
 
@@ -6,7 +6,7 @@ const PAGE_SIZE = 25;
 const reviewRef = (studentId, day) => doc(db, "swahiliTeacherReviews", swahiliReviewDocId(studentId, day));
 
 export async function loadSwahiliRoster(cursor) {
-  const constraints = [where("program", "==", "swahili")];
+  const constraints = [or(where("program", "==", "swahili"), where("secondaryProgram", "==", "swahili"))];
   if (cursor) constraints.push(startAfter(cursor));
   const snapshot = await getDocs(query(collection(db, "students"), ...constraints, limit(PAGE_SIZE)));
   return {
