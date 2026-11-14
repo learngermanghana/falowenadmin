@@ -20,6 +20,8 @@ export default function StaffWorkspacePage() {
   const [accountsBusy, setAccountsBusy] = useState(false);
   const [accountsError, setAccountsError] = useState("");
   const [staffSearch, setStaffSearch] = useState("");
+  const [authAccounts, setAuthAccounts] = useState([]);
+  const [authLoaded, setAuthLoaded] = useState(false);
   const [error, setError] = useState("");
 
   const request = useCallback(async (method, payload) => {
@@ -44,6 +46,17 @@ export default function StaffWorkspacePage() {
 
   useEffect(() => { if (role === "admin") refresh(); }, [role, refresh]);
 
+  const loadAuthAccounts = async () => {
+    setAccountsBusy(true); setAccountsError("");
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch("/api/staff-management?source=accounts", { headers: { Authorization: `Bearer ${token}` } });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.ok) throw new Error(data.error || "Firebase account lookup is unavailable.");
+      setAuthAccounts(data.accounts || []); setAuthLoaded(true);
+    } catch (err) { setAccountsError(normalizeError(err)); }
+    finally { setAccountsBusy(false); }
+  };
   const loadExistingAccounts = async () => {
     setAccountsBusy(true); setAccountsError("");
     try {
@@ -62,7 +75,9 @@ export default function StaffWorkspacePage() {
     } catch (err) { setAccountsError(normalizeError(err)); }
     finally { setAccountsBusy(false); }
   };
-  const matches = search.trim().length < 2 ? [] : existingAccounts.filter(row =>
+  const accountChoices = [...authAccounts, ...existingAccounts].filter((item, index, array) =>
+    array.findIndex(other => other.email === item.email) === index);
+  const matches = search.trim().length < 2 ? [] : accountChoices.filter(row =>
     (row.name + " " + row.email).toLowerCase().includes(search.trim().toLowerCase())).slice(0, 25);
 
   const toggle = (language) => setPermissions((old) =>
@@ -111,16 +126,20 @@ export default function StaffWorkspacePage() {
           <button type="button" onClick={loadExistingAccounts} disabled={accountsBusy}>
             {accountsBusy ? "Loading accounts…" : accountsLoaded ? "Reload student accounts" : "Load existing student accounts"}
           </button>
-          <small>Search registered student records by name or email. Not every Firebase login is necessarily listed here.</small>
+          <button type="button" onClick={loadAuthAccounts} disabled={accountsBusy}>
+            {accountsBusy ? "Loading…" : authLoaded ? "Reload Firebase accounts" : "Load Firebase login accounts"}
+          </button>
+          <small>Student records load separately. The Firebase login list requires configured administrator credentials; neither option changes an existing password.</small>
           <input aria-label="Search existing student accounts" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search name or email" />
           {accountsError && <p role="alert">{accountsError}</p>}
           {accountsLoaded && <small>{existingAccounts.length} student records with an email available</small>}
+          {authLoaded && <small>{authAccounts.length} Firebase login accounts available in this view</small>}
           {matches.map(account => <button type="button" key={account.email}
             onClick={() => { setName(account.name); setEmail(account.email); setSearch(""); }}
             style={{ textAlign: "left", padding: 9, overflowWrap: "anywhere" }}>
             {account.name || "Unnamed student"} — {account.email}
           </button>)}
-          {accountsLoaded && search.trim().length >= 2 && matches.length === 0 && <small>No matching student record. You can still enter the staff email manually.</small>}
+          {(accountsLoaded || authLoaded) && search.trim().length >= 2 && matches.length === 0 && <small>No matching account in the loaded records. You can still enter the staff email manually.</small>}
         </div>
         <label>Full name <input style={{ display: "block", width: "100%" }} value={name} onChange={e => setName(e.target.value)} maxLength={100} autoComplete="name" /></label>
         <label>Email address <input style={{ display: "block", width: "100%" }} value={email} onChange={e => setEmail(e.target.value)} type="email" required autoComplete="email" /></label>
