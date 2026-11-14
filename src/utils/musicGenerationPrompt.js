@@ -14,7 +14,7 @@ export function musicLyricLimit(mode = "song", durationSeconds = 150) {
 // explicitly supplied lyrics are sent to the provider.
 export function buildFalowenShortMusicPrompt({
   brief = "", lyrics = "", mode = "song", durationSeconds = 150,
-  vocalMode = "voice", lyricTreatment = "exact",
+  vocalMode = "voice", lyricTreatment = "exact", songLanguage,
 } = {}) {
   if (!["clip", "song"].includes(mode)) throw new Error("Choose a 30-second preview or a full song.");
   if (!["voice", "instrumental"].includes(vocalMode)) throw new Error("Choose vocals or instrumental.");
@@ -43,7 +43,8 @@ export function buildFalowenShortMusicPrompt({
         ? `Use these words as inspiration, not fixed lyrics:\n${cleanLyrics}`
         : `Sing these lyrics exactly:\n${cleanLyrics}`
       : "";
-  const prompt = [cleanBrief, durationHint, lyricInstruction].filter(Boolean).join("\n\n");
+  const languageHint = songLanguage === "swahili" && vocalMode === "voice" ? "Sing in Kiswahili with natural pronunciation." : "";
+  const prompt = [cleanBrief, languageHint, durationHint, lyricInstruction].filter(Boolean).join("\n\n");
   if (prompt.length > 8000) throw new Error("Your music prompt and lyrics exceed 8,000 characters.");
   return prompt;
 }

@@ -286,3 +286,7 @@ New lyrics are authoring drafts and require new recordings before publication.
 
 To check all 56 topic/chapter mappings against a learner checkout, run
 `node scripts/checkAdvancedMusicCurriculum.mjs /path/to/falowenexamtrainer`.
+
+## Swahili generation
+
+Select **Swahili · Kiswahili** in Music Generator. Prompt creates a standalone song. Saved Lyrics offers Day 1 (alphabet) and Day 6 (restaurant), with the workbook restaurant lyrics prefilled. Teacher edits use program-specific keys. Download the approved MP3 and upload it to the R2 folder shown in the form. The public music catalog discovers it on refresh.

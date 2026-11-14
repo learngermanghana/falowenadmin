@@ -7,7 +7,7 @@ const KEY_PATTERN = /^(A1|A2|B1|B2|C1|C2)-(?:TUTORIAL|[0-9]+(?:\.[0-9]+)?(?:-PRA
 const fail = (error,status=400) => Object.assign(new Error(error),{status});
 function validKey(value) {
   const key=String(value || "").trim().toUpperCase();
-  if (!KEY_PATTERN.test(key) || key.length > 64) throw fail("Choose a valid course lesson.");
+  if ((!KEY_PATTERN.test(key) && !/^SWAHILI-DAY-(?:01|06)$/.test(key)) || key.length > 64) throw fail("Choose a valid course lesson.");
   return key;
 }
 function validLyrics(value) {
