@@ -159,7 +159,7 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
       }
       const text = String(submission.submissionText || submission.text || submission.answer || submission.workContent || '').trim();
       const tutorSpeakingWorkbook = job.assignmentKey === 'A1-5.9'
-        && submission.workbookRevision === 'a1-5.9-tutor-speaking-v1';
+        && (!submission.workbookRevision || submission.workbookRevision === 'a1-5.9-tutor-speaking-v1');
       const emptySubmission = !text;
       let referenceEntry;
       if (emptySubmission || tutorSpeakingWorkbook) {
@@ -178,7 +178,7 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         ? await verifiedSpeakingAssessment(db, text, studentId, job.assignmentKey) : null;
       const markedResult = tutorSpeakingWorkbook
         ? { status: 'needs_review', score: null, finalScore: null,
-          reviewReasons: ['Listen to the saved Day 19 speaking recordings and enter the tutor score.'] }
+          reviewReasons: ['Day 19 is tutor-marked. Review the submitted work and any available speaking recordings, then enter the tutor score.'] }
         : emptySubmission ? emptySubmissionResult()
         : await withMarkingTransport(callAi, () => mark({
           submission: { ...submission, id: snap.id, path: snap.ref.path, text },
@@ -339,7 +339,7 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
             assignmentTitle: assignmentTitle(submission.assignmentTitle, submission.title, job.assignmentKey),
             status: 'needs_review', publicationStatus: 'awaiting_approval', sentToStudent: false,
             publicationReviewReasons: [reason], errorKind, attempts: fresh.attempts || 0,
-            result: { status: 'needs_review', confidence: 0, reviewReasons: [reason] },
+            result: { status: 'needs_review', reviewReasons: [reason] },
             source: 'automatic_course_marking', createdAt: timestamp, updatedAt: timestamp,
           }));
         }
