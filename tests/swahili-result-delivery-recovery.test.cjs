@@ -25,6 +25,7 @@ function fixture({ sheetDelivery = "queued", emailDelivery = "queued", submissio
   let writes = 0;
   const ctx = {
     db: {},
+    swahiliReviewDocId: (uid, day) => Number(day) === 1 ? uid : `${uid}_day-${day}`,
     doc: (_db, ...pieces) => ({ path: pieces.join("/") }),
     serverTimestamp: () => "new-timestamp",
     canonicalSwahiliSubmission: (snapshot) => snapshot.data(),
