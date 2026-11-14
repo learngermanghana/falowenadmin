@@ -162,15 +162,23 @@ export default async function staffAttendanceHandler(req, res) {
       newMap[student.code] = { ...oldRecord, name: student.name, present: provided.get(student.id),
         status: provided.get(student.id) ? "present" : "absent" };
     }
-    const encodeStudent = value => ({ mapValue: { fields: {
-      name: { stringValue: value.name }, present: { booleanValue: value.present }, status: { stringValue: value.status },
-    } } });
+    // Preserve existing attendance/check-in metadata when rewriting the student map.
+    const encodeField = value => {
+      if (typeof value === "boolean") return { booleanValue: value };
+      if (typeof value === "number" && Number.isFinite(value))
+        return Number.isInteger(value) ? { integerValue: String(value) } : { doubleValue: value };
+      if (typeof value === "string") return { stringValue: value };
+      if (Array.isArray(value)) return { arrayValue: { values: value.map(encodeField) } };
+      if (value && typeof value === "object")
+        return { mapValue: { fields: Object.fromEntries(Object.entries(value).map(([key, field]) => [key, encodeField(field)])) } };
+      return { nullValue: null };
+    };
     const fields = {
       classId: { stringValue: classId }, classSessionId: { stringValue: session.id },
       className: { stringValue: klass.name || klass.className || classId },
       title: { stringValue: session.title }, startsAt: { stringValue: str(session.startsAt) },
       markedBy: { stringValue: uid }, updatedAt: { timestampValue: new Date().toISOString() },
-      students: { mapValue: { fields: Object.fromEntries(Object.entries(newMap).map(([key,value]) => [key, encodeStudent(value)])) } },
+      students: { mapValue: { fields: Object.fromEntries(Object.entries(newMap).map(([key,value]) => [key, encodeField(value)])) } },
     };
     // Repeated updateMask.fieldPaths are required by Firestore REST; preserve unrelated fields.
     const mask = new URLSearchParams();
