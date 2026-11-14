@@ -63,13 +63,13 @@ function RouteFallback() {
 
 function TopBar() {
   const { user, logout, isStaff, role, staffLanguages, staffPagePermissions, staffRole } = useAuth();
+  const location = useLocation();
   const availableLanguages = staffLanguages?.length ? staffLanguages : [];
   const requestedLanguage = new URLSearchParams(location.search).get("language");
   const activeLanguage = availableLanguages.includes(requestedLanguage) ? requestedLanguage : (availableLanguages[0] || "german");
   const staffPages = staffPagePermissions?.[activeLanguage] || (availableLanguages.includes(activeLanguage) ? (staffRole === "reviewer" ? ["marking"] : ["marking", "slides"]) : []);
   const staffLink = path => path + "?language=" + activeLanguage;
   const nav = useNavigate();
-  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => { setMenuOpen(false); }, [location.pathname]);
   useEffect(() => {
