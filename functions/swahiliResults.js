@@ -25,6 +25,7 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
     if (!profile) return;
     const student = profile.data();
     const studentCode = student.studentCode || student.studentcode || profile.id;
+    const dedupeId = `${studentCode}__${review.lessonId}`;
     const submissionRef = db.doc(`users/${uid}/swahiliLessons/day-${day}`);
     const resultId = createHash("sha256").update(`swahili:${uid}:${day}`).digest("hex");
     const publicationId = createHash("sha256").update(`${resultId}:${review.submissionVersion}`).digest("hex");
@@ -45,7 +46,7 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
       tx.set(scoreRef, {
         program: "swahili", studentId: uid, studentCode, studentcode: studentCode,
         name: student.name || "", assignment, assignmentId: review.lessonId,
-        assignment_id: review.lessonId, level: "A1", score: review.score,
+        assignment_id: review.lessonId, dedupe_id: dedupeId, level: "A1", score: review.score,
         comments: review.feedback, resultStatus: review.status, passed,
         passMark: PASS_MARK, outcome: passed ? "passed" : "failed", source: "swahili_tutor",
         date: review.reviewedAt.toDate().toISOString(), sheetSaved: false,
