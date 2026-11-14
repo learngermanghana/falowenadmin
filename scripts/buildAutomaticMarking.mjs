@@ -5,20 +5,19 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 const root = path.resolve(import.meta.dirname, '..');
 if (!process.argv.includes('--prepared') && !process.argv.includes('--offline')) execFileSync(process.execPath, ['scripts/syncCourseMarkingSnapshot.mjs'], { cwd: root, stdio: 'inherit' });
-// Apply the same marking patches used by the Admin production build before bundling.
-const commands = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).scripts['sync:build'].split(' && ');
-let markingPatches = false;
-for (const command of commands) {
-  if (command === 'node scripts/repairAnswersJson.mjs') markingPatches = true;
-  if (command === 'node scripts/patchA1AttendanceDayLabels.mjs') break;
-  if (!process.argv.includes('--prepared') && markingPatches && /^node scripts\/[^ ]+\.mjs$/.test(command)) {
-    if (command === 'node scripts/repairAnswersJson.mjs') {
-      // This backend bundles the committed, validated JSON. The legacy repair
-      // script also mutates Live Classes UI and must not run in Firebase builds.
-      JSON.parse(fs.readFileSync(path.join(root, 'src/data/answers_dictionary.json'), 'utf8'));
-      continue;
-    }
-    execFileSync(process.execPath, [command.slice(5)], { cwd: root, stdio: 'inherit' });
+// Firebase must bundle the committed Admin marking source, not mutate it by
+// replaying legacy source-rewrite scripts. Several older patch scripts refer
+// to removed Live Classes UI and transaction imports. Keep the old patching
+// route available explicitly for maintenance, never as an implicit deploy step.
+JSON.parse(fs.readFileSync(path.join(root, 'src/data/answers_dictionary.json'), 'utf8'));
+if (process.argv.includes('--legacy-source-patches') && !process.argv.includes('--prepared')) {
+  const commands = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).scripts['sync:build'].split(' && ');
+  let markingPatches = false;
+  for (const command of commands) {
+    if (command === 'node scripts/repairAnswersJson.mjs') markingPatches = true;
+    if (command === 'node scripts/patchA1AttendanceDayLabels.mjs') break;
+    if (markingPatches && /^node scripts\\/[^ ]+\\.mjs$/.test(command))
+      execFileSync(process.execPath, [command.slice(5)], { cwd: root, stdio: 'inherit' });
   }
 }
 execFileSync(process.execPath, ['--test', 'tests/course-marking-current-contract.test.js', 'functions/markingReliability.test.cjs'], { cwd: root, stdio: 'inherit' });
