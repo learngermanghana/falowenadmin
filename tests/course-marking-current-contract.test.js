@@ -202,3 +202,14 @@ test('A1 12.3 still holds results with unrelated AI review reasons', async () =>
   assert.equal(result.shouldSendAutomatically, false);
   assert.ok(result.reviewReasons.some(reason => reason.code === 'second_examiner_disagreement'));
 });
+
+test('inline A1 letters preserve understandable party details and distinguish an ambiguous request', async () => {
+  const { resolveQuestionAwareWritingTask } = await import('../src/utils/questionAwareWritingMarking.js');
+  const { evaluateA1WritingTaskEvidence } = await import('../src/utils/a1WritingTaskEvidence.js');
+  const task = resolveQuestionAwareWritingTask({ referenceEntry: canonicalCourseReference('A1-12.3') });
+  const text = 'TEIL 1 Hallo Julia, die Feier ist am Samstag um 6:30 pm vor meine Wohnung. Sie kann Saft bringen. TEIL 2 Sehr geehrte Damen und Herren, wann beginnt der Kurs?';
+  const points = evaluateA1WritingTaskEvidence(task, text);
+  assert.deepEqual([points[1].status, points[2].status, points[5].status], ['met', 'partial', 'missing']);
+  assert.equal(evaluateA1WritingTaskEvidence(task, text.replace('Sie kann', 'Kannst du bitte'))[2].status, 'met');
+  assert.equal(evaluateA1WritingTaskEvidence(task, text.replace('vor meine Wohnung', ''))[1].status, 'missing');
+});

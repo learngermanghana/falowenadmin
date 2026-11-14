@@ -3,6 +3,7 @@ import { filterMarkingInbox, markingInboxCategory } from '../utils/markingInbox.
 import './AutomaticMarkingReview.css';
 import { closeAutomaticMarkingReview, loadAutomaticMarkingPage, loadMarkingHealth, openAutomaticMarking, saveAutomaticMarkingReview } from '../services/automaticMarkingReviewService.js';
 import { assignmentTitle } from '../utils/assignmentTitle.js';
+import { markingReviewCopy } from '../utils/markingReviewCopy.js';
 import { auth } from '../firebase.js';
 import { automaticPublicationLabel, automaticReviewReasons, isAutomaticResultPublished } from '../utils/automaticReviewStatus.js';
 
@@ -12,6 +13,15 @@ export default function AutomaticMarkingReview() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [copyState, setCopyState] = useState('');
+  async function copyReview() {
+    try {
+      await navigator.clipboard.writeText(markingReviewCopy(detail));
+      setCopyState('copied');
+    } catch {
+      setCopyState('manual');
+    }
+  }
   const [score, setScore] = useState('');
   const [feedback, setFeedback] = useState('');
   const [reason, setReason] = useState('');
@@ -37,7 +47,7 @@ export default function AutomaticMarkingReview() {
   }
   useEffect(() => { load(); }, []);
   async function open(row) {
-    setBusy(true); setError(''); setMessage(''); setDetail(null);
+    setBusy(true); setError(''); setMessage(''); setCopyState(''); setDetail(null);
     try {
       const next = await openAutomaticMarking(row);
       setDetail(next); setEditing(false);
@@ -131,6 +141,11 @@ export default function AutomaticMarkingReview() {
     {!busy && !visibleRows.length && <p>No results match these filters in the loaded page.{page.hasMore ? ' Load more to check the next page.' : ''}</p>}
     {page.hasMore && <button type="button" disabled={busy} onClick={() => load(true)}>Load more</button>}
     {detail && <article style={{ marginTop: 24 }}>
+      <button type="button" onClick={copyReview}>Copy review</button>
+      {copyState === 'copied' && <span role="status"> Review copied.</span>}
+      {copyState === 'manual' && <label>Copy the selected review text
+        <textarea readOnly rows={8} value={markingReviewCopy(detail)} ref={node => node?.select()} />
+      </label>}
       <p><strong>Status: {automaticPublicationLabel(detail.row)}</strong></p>
       {detail.priorFailedAttempt && <p role="status" className="marking-retake-notice">
         <strong>New attempt after an earlier failure:</strong> Previous saved score {detail.score?.score}/100 · New AI result {detail.row.finalScore ?? detail.row.result?.finalScore ?? detail.row.result?.score ?? 'not available'}/100.

@@ -1415,14 +1415,14 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     markingRubricVersion: task.rubricVersion || (task.level === "A1" ? A1_WRITING_RUBRIC_VERSION : task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : task.level === "B1" ? B1_WRITING_RUBRIC_VERSION : "question-aware-v1"),
     feedback: joinStudentFeedback([
       studentFeedback,
-      ...(currentA1123 && partialTaskPoints.length
+      ...(currentA1123 && partialTaskPoints.some(point => point.missingDetails?.includes("course times"))
         ? ["You asked about the cost, but also ask when the classes take place (for example: Wann findet der Unterricht statt?)."]
         : []),
       endingAdvice,
     ]),
     improvementSummary: joinStudentFeedback([
       studentImprovementSummary,
-      ...(currentA1123 && partialTaskPoints.length
+      ...(currentA1123 && partialTaskPoints.some(point => point.missingDetails?.includes("course times"))
         ? ["Next step: ask about course times as well as course costs."]
         : []),
       endingAdvice,

@@ -136,6 +136,8 @@ function questionClauses(source = "") {
 }
 
 function evaluateCurrentA1123(taskPoints, source) {
+  // Older pasted letters can place both headings and salutations on one line.
+  source = source.replace(/(?:^|\s+)(teil\s*[12])\s*[:.-]?\s+(?=liebe\b|lieber\b|hallo\b|sehr\s+geehrt)/gi, '\n$1\n');
   const informal = partText(source, 'teil1');
   const formal = partText(source, 'teil2');
   const invitation = /einlad|lad[^.!?\n]{0,100}ein|(?:party|feier)[\s\S]{0,100}(?:komm|besuch)|(?:komm|besuch)[\s\S]{0,100}(?:party|feier)/i;
@@ -143,9 +145,12 @@ function evaluateCurrentA1123(taskPoints, source) {
   // understandable A1 invitation ("ich mache ... eine Party ... mitbringen").
   const plannedParty = /\b(?:ich|wir)\s+(?:mache|machen|habe|haben|plane|planen|feiere|feiern)\b[^.!?\n]{0,100}\b(?:party|feier)\b/i;
   const day = /samstag|sonntag|freitag|montag|dienstag|mittwoch|donnerstag|wochenende|morgen|\d{1,2}\.\s*\d/i;
-  const time = /\d{1,2}(?::\d{2})?\s*uhr|halb\s+\w+|viertel\s+\w+/i;
-  const place = /bei\s+mir|zu\s+hause|in\s+mein|stra[ßs]e|\b(?:im|in|bei)\s+[A-ZÄÖÜ]/;
+  const time = /\d{1,2}(?::\d{2})?\s*uhr|\b(?:1[0-2]|0?[1-9])(?::[0-5]\d)?\s*[ap]\.?m\.?\b|\b(?:[01]?\d|2[0-3]):[0-5]\d\b|halb\s+\w+|viertel\s+\w+/i;
+  const place = /[Bb]ei\s+mir|[Zz]u\s+[Hh]ause|[Ii]n\s+mein|[Ss]tra(?:ß|ss)e|\b[Vv]or\s+(?:mein\w*|dein\w*|de[mrn])\s+\p{L}+|\b(?:im|in|bei)\s+[A-ZÄÖÜ]/u;
   const bring = /mitbring|bring[^.!?\n]{0,100}mit|mit[^.!?\n]{0,40}bring/i;
+  const food = /\b(?:essen|getr[aä]nke?|saft|wasser|pizza|pommes|kuchen|salat|brot|obst)\b/i;
+  const foodTransport = sentences(informal).find(line => food.test(line) && /\bbring\w*/i.test(line));
+  const clearBringRequest = foodTransport && /\b(?:bitte|kannst\s+du|k[oö]nnen\s+sie|bring\s+(?:doch\s+)?(?:eine?|etwas))\b/i.test(foodTransport);
   const register = /anmeld|deutschkurs[^.!?\n]{0,60}besuchen|besuchen[^.!?\n]{0,60}deutschkurs/i;
   // "Wie lange dauert der Kurs?" asks for duration, NOT the lesson schedule.
   const times = /kurszeiten|unterrichtszeiten|stundenplan|wann\s+findet\s+(?:der\s+)?(?:kurs|unterricht)\s+statt|wann\s+(?:ist|sind)\s+(?:der\s+)?(?:kurs|unterricht)|wann\s+(?:beginnt|startet)\s+(?:der\s+)?unterricht|(?:kurs|unterricht)[^.!?\n]{0,60}(?:um\s+wie\s+viel\s+uhr|an\s+welchen\s+tagen|zu\s+welchen\s+zeiten)|(?:um\s+wie\s+viel\s+uhr|an\s+welchen\s+tagen|zu\s+welchen\s+zeiten)[^.!?\n]{0,60}(?:kurs|unterricht)/i;
@@ -173,7 +178,10 @@ function evaluateCurrentA1123(taskPoints, source) {
     row(taskPoints[0], invitation.test(informal) || implicitInvitation,
       invitation.test(informal) ? sentenceFor(informal, invitation) : informal),
     row(taskPoints[1], day.test(informal) && time.test(informal) && place.test(informal), informal),
-    row(taskPoints[2], bring.test(informal), sentenceFor(informal, bring)),
+    foodTransport && !bring.test(informal) && !clearBringRequest
+      ? { label: clean(taskPoints[2]), status: "partial", evidence: foodTransport,
+        missingDetails: ["a clear request to the guest"], reason: "Food or drinks and bringing them are mentioned, but the request is unclear." }
+      : row(taskPoints[2], bring.test(informal) || clearBringRequest, foodTransport || sentenceFor(informal, bring)),
     row(taskPoints[3], register.test(formal), sentenceFor(formal, register)),
     scheduleAndCostPoint,
     row(taskPoints[5], start.test(formal), sentenceFor(formal, start)),
