@@ -1,8 +1,8 @@
 import { auth } from '../firebaseAuth';
 const BASE = (import.meta.env.VITE_MUSIC_STUDIO_API_URL || 'https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/music-studio').replace(/\/+$/, '');
-export async function musicRequest(payload) {
+export async function musicRequest(payload, language = "german") {
   if (!auth.currentUser) throw new Error('Sign in to Falowen Admin first.');
-  const response = await fetch(BASE, {
+  const response = await fetch(payload ? BASE : BASE + "?language=" + encodeURIComponent(language), {
     method: payload ? 'POST' : 'GET', cache: 'no-store',
     headers: { Authorization: `Bearer ${await auth.currentUser.getIdToken()}`, 'Content-Type': 'application/json' },
     ...(payload ? { body: JSON.stringify(payload) } : {}),
