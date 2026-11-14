@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const platforms = ["Instagram", "TikTok", "Facebook", "LinkedIn", "WhatsApp"];
-export default function StaffSocialMediaPage() {
+export default function StaffSocialMediaPage({ language: explicitLanguage }) {
   const { user, workspaceLanguage } = useAuth();
-  const language = workspaceLanguage;
+  const language = explicitLanguage || workspaceLanguage;
   const storeKey = "falowen-staff-social-drafts:" + user.uid + ":" + language;
   const readDrafts = () => { try { const data = JSON.parse(localStorage.getItem(storeKey) || "[]"); return Array.isArray(data) ? data : []; } catch { return []; } };
   const [drafts, setDrafts] = useState(readDrafts);
