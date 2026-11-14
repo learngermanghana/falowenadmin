@@ -30,6 +30,17 @@ async function loadRosterSubmissions(day, cursor) {
   };
 }
 
+export async function loadAllSwahiliMarkingPage(cursors = { 1: null, 6: null }) {
+  const pages = await Promise.all(Object.entries(cursors).map(async ([day, cursor]) => ({
+    day,
+    ...await loadSwahiliMarkingPage(Number(day), cursor),
+  })));
+  const rows = pages.flatMap(page => page.rows)
+    .sort((a, b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0));
+  const next = Object.fromEntries(pages.filter(page => page.nextCursor).map(page => [page.day, page.nextCursor]));
+  return { rows, nextCursor: Object.keys(next).length ? next : null };
+}
+
 export async function loadSwahiliMarkingPage(day, cursor) {
   if (cursor?.rosterCursor) return loadRosterSubmissions(day, cursor.rosterCursor);
   const constraints = [

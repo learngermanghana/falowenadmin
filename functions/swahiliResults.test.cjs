@@ -44,6 +44,8 @@ test("publishes a zero tutor score, queues Sheet sync, and emails Results once o
   await work(event);
   const [path, score] = Array.from(docs).find(([key]) => key.startsWith("scores/"));
   assert.equal(score.score, 0);
+  assert.equal(score.passed, false);
+  assert.equal(score.outcome, "failed");
   assert.equal(score.assignment_id, "swahili-day-1");
   const job = Array.from(docs).find(([key]) => key.startsWith("automaticScoreSync/"))[1];
   assert.equal(job.scorePath, path);

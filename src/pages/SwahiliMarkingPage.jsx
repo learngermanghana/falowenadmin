@@ -1,6 +1,6 @@
 import MarkingSectionTabs from "../components/MarkingSectionTabs.jsx";
 import { useEffect, useState } from "react";
-import { loadSwahiliMarkingPage, loadSwahiliRoster, loadSwahiliStudentSubmission, loadSwahiliReview, saveSwahiliReview } from "../services/swahiliMarkingService";
+import { loadAllSwahiliMarkingPage, loadSwahiliMarkingPage, loadSwahiliRoster, loadSwahiliStudentSubmission, loadSwahiliReview, saveSwahiliReview } from "../services/swahiliMarkingService";
 import { getSwahiliReviewStatus } from "../utils/swahiliReviewQueue";
 
 const LESSONS = {
@@ -104,7 +104,7 @@ function LessonQueue({ day }) {
 
   useEffect(() => {
     let active = true;
-    loadSwahiliMarkingPage(day).then((result) => {
+    (day ? loadSwahiliMarkingPage(day) : loadAllSwahiliMarkingPage()).then((result) => {
       if (!active) return;
       setPage(result);
       setSelectedPath(result.rows[0]?.path || "");
@@ -120,7 +120,8 @@ function LessonQueue({ day }) {
     setLoading(true);
     setError("");
     try {
-      const next = await loadSwahiliMarkingPage(day, page.nextCursor);
+      const next = await (day ? loadSwahiliMarkingPage(day, page.nextCursor) : loadAllSwahiliMarkingPage(page.nextCursor));
+      if (!selectedPath && next.rows.length) setSelectedPath(next.rows[0].path);
       setPage(({ rows }) => ({
         rows: [...rows, ...next.rows.filter((row) => !rows.some(({ path }) => path === row.path))],
         nextCursor: next.nextCursor,
@@ -136,7 +137,7 @@ function LessonQueue({ day }) {
   return (
     <section aria-label="Swahili student submissions" className="swahili-marking-queue">
       <div className="swahili-marking-toolbar">
-        <h2>Day {day} · {LESSONS[day].title}</h2>
+        <h2>{day ? `Day ${day} · ${LESSONS[day].title}` : "All Swahili submissions"}</h2>
         <button type="button" disabled={loading} onClick={() => {
           setLoading(true);
           setError("");
@@ -146,15 +147,15 @@ function LessonQueue({ day }) {
       </div>
       {loading && <p role="status">Loading submissions…</p>}
       {error && <p role="alert">{error}</p>}
-      {!loading && !error && page.rows.length === 0 && <p>{page.nextCursor ? "No submissions on this page. Load more to keep checking." : "No submitted work for this lesson."}</p>}
+      {!loading && !error && page.rows.length === 0 && <p>{page.nextCursor ? "No submissions on this page. Load more to keep checking." : day ? "No submitted work for this lesson." : "No submitted Swahili work."}</p>}
       {page.rows.length > 0 && (
         <label>Learner submission
           <select value={selectedPath} onChange={(event) => setSelectedPath(event.target.value)}>
-            {page.rows.map((row) => <option key={row.path} value={row.path}>{row.studentName || row.studentEmail || row.studentId}</option>)}
+            {page.rows.map((row) => <option key={row.path} value={row.path}>{row.studentName || row.studentEmail || row.studentId} · Day {row.lessonId.split("-").at(-1)}</option>)}
           </select>
         </label>
       )}
-      {selected && <SubmissionReview key={selected.path} submission={selected} day={day} />}
+      {selected && <SubmissionReview key={selected.path} submission={selected} day={Number(selected.lessonId.split("-").at(-1))} />}
       {page.nextCursor && <button type="button" disabled={loading} onClick={loadMore}>Load more submissions</button>}
     </section>
   );
@@ -238,11 +239,12 @@ export default function SwahiliMarkingPage() {
 }
 
 function SwahiliLessonSelection({ manual }) {
-  const [day, setDay] = useState(1);
+  const [day, setDay] = useState(manual ? 1 : 0);
   return (
     <>
       <label className="swahili-marking-lesson">Lesson
         <select value={day} onChange={(event) => setDay(Number(event.target.value))}>
+          {!manual && <option value={0}>All lessons</option>}
           {Object.entries(LESSONS).map(([number, { title }]) => <option key={number} value={number}>Day {number} · {title}</option>)}
         </select>
       </label>
