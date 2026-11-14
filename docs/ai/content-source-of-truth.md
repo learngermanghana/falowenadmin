@@ -50,3 +50,5 @@ The Swahili review publisher validates the current submission and the enrolled U
 ## Kiswahili A1 Day 5
 
 Kiswahili A1 Day 5 uses the shared teaching presenter and the Swahili Music tab in Music Studio. Select the Day 5 recording, enter the sung lyrics, and mark each line to preview or export the video. Saving shared timing writes the matching R2 sidecar for the slide and workbook.
+
+The Swahili Music recording uses `swahili/music/A1/day-05/Karibu Kufahamu Familia Yangu.mp3`. The separate `swahili/A1/day-05/` prefix is reserved for future Hören recordings.
