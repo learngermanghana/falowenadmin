@@ -58,3 +58,7 @@ The versioned Swahili answer key lives in `functions/swahili-answers.json`. Admi
 Published German workbook marks create a learner-owned reference snapshot from the objective parts of the exact marking key. Draft AI reviews keep the snapshot staff-only pending publication. The score references the snapshot by ID, and the Scores Sheet sync omits that ID.
 
 Swahili A1 Day 6 presents its song through Listen, Lyrics and Questions. The learner Music catalog owns its recording, lyrics, English and quiz data. Falowen Radio remains a separate stage.
+
+### German and Swahili enrollment
+
+Admin keeps the primary programme and placement in the existing student fields. An active second course is identified by `secondaryProgram` and uses its own level and class in `coursePlacements[secondaryProgram]`. Retained placements do not grant access. Campus selects an enrolled course for the current browser tab. German results and Swahili tutor reviews keep their existing identifiers, stores and publication workflows. Deploy the learner Firestore rules and Campus switch, then the Admin profile API, Swahili result worker and Admin editor before assigning dual enrollment.

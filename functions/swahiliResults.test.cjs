@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const { test } = require("node:test");
 const { createSwahiliResultWorker } = require("./swahiliResults");
 
-function fixture({ currentVersion = 10, program = "swahili" } = {}) {
+function fixture({ currentVersion = 10, program = "swahili", secondaryProgram } = {}) {
   const docs = new Map();
   const email = [];
   const ref = (path) => ({
@@ -21,7 +21,7 @@ function fixture({ currentVersion = 10, program = "swahili" } = {}) {
     doc: ref,
     collection: (name) => ({
       doc: (id) => ref(`${name}/${id}`),
-      where: () => ({ get: async () => ({ docs: [{ id: "legacy-code", data: () => ({ program }) }] }) }),
+      where: () => ({ get: async () => ({ docs: [{ id: "legacy-code", data: () => ({ program, secondaryProgram }) }] }) }),
     }),
     runTransaction: (work) => work({
       get: async ({ path }) => ({ exists: docs.has(path), data: () => docs.get(path) }),
@@ -102,4 +102,12 @@ test("the shared Sheet worker reports retry and confirmed write on the current r
   await worker({ data: { ref } });
   assert.equal(docs.get(job.reviewPath).sheetDelivery, "synced");
   assert.equal(docs.get(job.reviewPath).emailDelivery, "sent");
+});
+
+test("publishes the Swahili mark for a German-primary dual learner", async () => {
+  const { work, event, docs, email } = fixture({ program: "german", secondaryProgram: "swahili" });
+  await work(event);
+  const score = [...docs].find(([key]) => key.startsWith("scores/"))[1];
+  assert.equal(score.program, "swahili");
+  assert.equal(email.length, 1);
 });

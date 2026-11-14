@@ -1,3 +1,4 @@
+const { courseEnrollmentPatch } = require("./courseEnrollment");
 const EDITABLE_STUDENT_FIELDS = new Set([
   "name",
   "email",
@@ -275,8 +276,9 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
       const studentId = cleanStudentId(req.params?.studentId);
       if (!studentId) return res.status(400).json({ ok: false, error: "Student ID is required" });
 
-      const updates = sanitizeStudentProfileUpdates(req.body?.updates ?? req.body);
-      if (!Object.keys(updates).length) {
+      const input = req.body?.updates ?? req.body;
+      let updates = sanitizeStudentProfileUpdates(input);
+      if (!Object.keys(updates).length && !input?.courseEnrollment) {
         return res.status(400).json({ ok: false, error: "No supported student fields were provided" });
       }
 
@@ -289,12 +291,23 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
         ? { authEmail: authIdentity.email }
         : {};
 
-      await studentRef.update({
-        ...updates,
+      const audit = {
         ...identityPatch,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedBy: String(user?.email || user?.uid || "").trim(),
-      });
+      };
+      if (input?.courseEnrollment) {
+        updates = await db.runTransaction(async tx => {
+          const snapshot = await tx.get(studentRef);
+          if (!snapshot.exists) throw Object.assign(new Error("Student not found"), { statusCode: 404 });
+          const { program: ignoredProgram, ...ordinary } = updates;
+          const patch = { ...ordinary, ...courseEnrollmentPatch({ ...snapshot.data(), ...ordinary }, input.courseEnrollment) };
+          tx.update(studentRef, { ...patch, ...audit });
+          return patch;
+        });
+      } else {
+        await studentRef.update({ ...updates, ...audit });
+      }
 
       return res.json({
         ok: true,

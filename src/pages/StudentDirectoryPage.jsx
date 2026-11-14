@@ -440,7 +440,7 @@ export default function StudentDirectoryPage() {
       const normalized = Object.prototype.hasOwnProperty.call(emergencyFields, field)
         ? emergencyFields[field]
         : dateFields.has(field) ? normalizeDateValue(student[field]) : normalizeEditableValue(student[field]);
-      acc[field] = normalized;
+      acc[field] = field === "program" && student.secondaryProgram ? "both" : normalized;
       return acc;
     }, {});
   };
@@ -483,6 +483,14 @@ export default function StudentDirectoryPage() {
         ? normalizeDateValue(student[field]).trim()
         : normalizeEditableValue(student[field]).trim();
 
+      if (field === "program") {
+        const primary = String(student.program || "german").toLowerCase();
+        const mode = draft.program || primary;
+        if (mode !== (student.secondaryProgram ? "both" : primary) || draft.secondaryLevel !== undefined || draft.secondaryClassName !== undefined) {
+          payload.courseEnrollment = { mode, expectedPrimary: primary, secondaryLevel: draft.secondaryLevel, secondaryClassName: draft.secondaryClassName };
+        }
+        continue;
+      }
       if (incomingValue !== originalValue) {
         payload[field] = dateFields.has(field) && !incomingValue ? null : incomingValue;
       }
@@ -498,7 +506,8 @@ export default function StudentDirectoryPage() {
     setSavingId(student.id);
     try {
       const result = await updateStudentById(student.id, payload);
-      const appliedUpdates = { ...payload, ...(result?.updates || {}) };
+      if (payload.courseEnrollment && !Object.hasOwn(result?.updates || {}, "secondaryProgram")) throw new Error("The enrollment API needs to be deployed. Reload the student and retry.");
+      const appliedUpdates = result?.updates || payload;
       setStudents((prev) => prev.map((record) => (record.id === student.id ? { ...record, ...appliedUpdates } : record)));
       setDrafts((prev) => {
         const next = { ...prev };
@@ -696,11 +705,12 @@ export default function StudentDirectoryPage() {
                   style={{ width: "100%", padding: "8px 9px", borderRadius: 6, border: "1px solid #ccd4e2" }}>
                   <option value="german">German</option>
                   <option value="swahili">Swahili (Kiswahili)</option>
-                  {draft.program && !["german", "swahili"].includes(draft.program) && (
+                  <option value="both">German + Swahili</option>
+                  {draft.program && !["german", "swahili", "both"].includes(draft.program) && (
                     <option value={draft.program} disabled>{draft.program} (current record)</option>
                   )}
                 </select>
-                <small style={{ color: "#64748b" }}>Save the student to switch which course they see in Campus. Their sign-in, past results and class details stay on the same record.</small>
+                <small style={{ color: "#64748b" }}>Save to update this student’s course access.</small>
               </>
             ) : STATUS_CHOICES[field] ? (
               <select value={draft[field]} disabled={isSaving}
@@ -998,6 +1008,22 @@ export default function StudentDirectoryPage() {
                               </div>
                             )}
                             {renderEditableFields(tab.fields)}
+                            {tab.id === "class" && getDraft(selectedStudent).program === "both" && (() => {
+                              const primary = String(selectedStudent.program || "german").toLowerCase();
+                              const secondary = primary === "german" ? "swahili" : "german";
+                              const saved = selectedStudent.coursePlacements?.[secondary];
+                              const draft = getDraft(selectedStudent);
+                              return <fieldset>
+                                <legend>Additional course · {secondary === "swahili" ? "Swahili" : "German"}</legend>
+                                <label>Level <select value={draft.secondaryLevel ?? saved?.level ?? "A1"}
+                                  onChange={event => updateDraftField(selectedStudent.id, "secondaryLevel", event.target.value, selectedStudent)}>
+                                  {["A1","A2","B1","B2","C1","C2"].map(level => <option key={level}>{level}</option>)}
+                                </select></label>
+                                <label>Class name <input value={draft.secondaryClassName ?? saved?.className ?? ""} maxLength={160}
+                                  onChange={event => updateDraftField(selectedStudent.id, "secondaryClassName", event.target.value, selectedStudent)} /></label>
+                                <p>The main level and class transfer controls apply to {primary === "german" ? "German" : "Swahili"}.</p>
+                              </fieldset>;
+                            })()}
                             {/* STUDENT_EMERGENCY_CONTACT_FIELD: Emergency contact stays in the staff-only Profile tab. */}
                             {tab.id === "profile" && <StudentAccountActivationPanel student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast} />}
                             {tab.id === "profile" && <StudentEmergencyContact student={selectedStudent} />}

@@ -25,7 +25,7 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
     let published = false;
     try {
       const profiles = await db.collection("students").where("uid", "==", uid).get();
-      const profile = profiles.docs.find((entry) => entry.data().program === "swahili");
+      const profile = profiles.docs.find((entry) => entry.data().program === "swahili" || entry.data().secondaryProgram === "swahili");
       if (!profile) {
         await updateStatus({ sheetDelivery: "no_profile", emailDelivery: "no_profile" });
         return;
