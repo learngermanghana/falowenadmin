@@ -2,6 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const LANGUAGES = ["german", "swahili"];
+const PAGE_OPTIONS = [
+  ["marking", "Marking"], ["slides", "Teaching Slides"], ["attendance", "Attendance"],
+  ["music", "Music Studio"], ["musicPublish", "Publish music"],
+  ["social", "Social Media"], ["socialPublish", "Publish to connected accounts"],
+];
+const defaultPages = role => role === "reviewer" ? ["marking"] : ["marking", "slides"];
 const normalizeError = (err) => err?.message || "Unable to complete the request.";
 
 export default function StaffWorkspacePage() {
@@ -10,6 +16,7 @@ export default function StaffWorkspacePage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [permissions, setPermissions] = useState(["german"]);
+  const [pagePermissions, setPagePermissions] = useState({ german: defaultPages("teacher"), swahili: defaultPages("teacher") });
   const [staffRole, setStaffRole] = useState("teacher");
   const [staff, setStaff] = useState([]);
   const [busy, setBusy] = useState(false);
@@ -38,6 +45,25 @@ export default function StaffWorkspacePage() {
 
   useEffect(() => { if (role === "admin") refresh(); }, [role, refresh]);
 
+  const togglePage = (language, page) => setPagePermissions(old => {
+    const current = old[language] || [];
+    let next = current.includes(page) ? current.filter(value => value !== page) : [...current, page];
+    if (page === "music" && !next.includes("music")) next = next.filter(value => value !== "musicPublish");
+    if (page === "social" && !next.includes("social")) next = next.filter(value => value !== "socialPublish");
+    if (page === "musicPublish" && next.includes("musicPublish") && !next.includes("music")) next.push("music");
+    if (page === "socialPublish" && next.includes("socialPublish") && !next.includes("social")) next.push("social");
+    return { ...old, [language]: next };
+  });
+  const editMember = member => {
+    setSelectedAccount({ uid: member.uid, email: member.email });
+    setEmail(member.email);
+    setName(member.name || "");
+    setStaffRole(member.staffRole || "teacher");
+    setPermissions(member.languages || []);
+    setPagePermissions(Object.fromEntries(LANGUAGES.map(language => [language, member.pagePermissions?.[language] || ((member.languages || []).includes(language) ? defaultPages(member.staffRole) : [])])));
+    setNotice("Editing " + member.email);
+    setError("");
+  };
   const toggle = (language) => setPermissions((old) =>
     old.includes(language) ? old.filter((item) => item !== language) : [...old, language]);
 
@@ -55,6 +81,7 @@ export default function StaffWorkspacePage() {
       setName(member?.name || account.name);
       setStaffRole(member?.staffRole || "teacher");
       setPermissions(member?.languages?.length ? member.languages : ["german"]);
+      setPagePermissions(Object.fromEntries(LANGUAGES.map(lang => [lang, member?.pagePermissions?.[lang] || defaultPages(member?.staffRole || "teacher")])));
       setNotice("Existing Falowen account found. Choose staff access and save.");
     } catch (err) { setError(normalizeError(err)); }
     finally { setBusy(false); }
@@ -78,7 +105,7 @@ export default function StaffWorkspacePage() {
     try {
       const result = await request("POST", {
         action: "upsert", email: email.trim().toLowerCase(), name: name.trim(),
-        staffRole, languages: permissions, existingUid: selectedAccount?.uid,
+        staffRole, languages: permissions, pagePermissions, existingUid: selectedAccount?.uid,
       });
       setNotice(result.existing
         ? "Existing Falowen account granted access. Use Send welcome email in Current staff."
@@ -113,7 +140,10 @@ export default function StaffWorkspacePage() {
         <label>Email address <input style={{ display: "block", width: "100%" }} value={email} disabled={busy} onChange={e => { setEmail(e.target.value); setSelectedAccount(null); }} type="email" required autoComplete="email" /></label>
         <button type="button" onClick={search} disabled={busy || !email.trim()}>Search Falowen account</button>
         <label>Role <select style={{ display: "block", width: "100%" }} value={staffRole} onChange={e => setStaffRole(e.target.value)}><option value="teacher">Teacher — marking and slides</option><option value="reviewer">Reviewer — marking only</option></select></label>
-        <fieldset><legend>Language access</legend>{LANGUAGES.map(lang => <label key={lang} style={{ display: "block", margin: "8px 0" }}><input type="checkbox" checked={permissions.includes(lang)} onChange={() => toggle(lang)} /> {lang === "german" ? "German" : "Swahili"}</label>)}</fieldset>
+        <fieldset><legend>Language and page access</legend>{LANGUAGES.map(lang => <div key={lang} style={{ marginBottom: 12 }}>
+          <label style={{ display: "block", fontWeight: 700 }}><input type="checkbox" checked={permissions.includes(lang)} onChange={() => toggle(lang)} /> {lang === "german" ? "German" : "Swahili"}</label>
+          {permissions.includes(lang) && <div style={{ paddingLeft: 18, display: "grid", gap: 5, marginTop: 7 }}>{PAGE_OPTIONS.map(([page, label]) => <label key={page}><input type="checkbox" checked={(pagePermissions[lang] || []).includes(page)} onChange={() => togglePage(lang, page)} /> {label}</label>)}</div>}
+        </div>)}</fieldset>
         <button type="submit" disabled={busy || !permissions.length}>{busy ? "Saving…" : "Save staff access"}</button>
         <small>New accounts receive a password-setup email. Existing users are not asked to reset their password.</small>
       </form>
@@ -124,7 +154,7 @@ export default function StaffWorkspacePage() {
         {staff.map(member => <article key={member.uid} style={{ borderBottom: "1px solid #e2e8f0", padding: "12px 0", overflowWrap: "anywhere" }}>
           <strong>{member.name || member.email}</strong><div>{member.email}</div>
           <small>{member.staffRole || "teacher"} · {(member.languages || []).join(", ") || "No languages"} · {member.active ? "Active" : "Inactive"}</small>
-          {member.active && <div><button type="button" disabled={busy} onClick={() => welcome(member)}>Send welcome email</button> <button type="button" disabled={busy} onClick={() => deactivate(member)}>Remove teaching access</button></div>}
+          {member.active && <div><button type="button" disabled={busy} onClick={() => editMember(member)}>Edit access</button> <button type="button" disabled={busy} onClick={() => welcome(member)}>Send welcome email</button> <button type="button" disabled={busy} onClick={() => deactivate(member)}>Remove teaching access</button></div>}
         </article>)}
       </div>
     </div>
