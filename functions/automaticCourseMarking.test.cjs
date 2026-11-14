@@ -91,6 +91,45 @@ test('sheet retries use the saved result and stable upsert identity, not AI', as
   await worker({data:{ref}});
   assert.equal(calls,2);
 });
+test('final mock score sync exports the official A1 assignment and exact decimal mark', async () => {
+  const updates = [];
+  const ref = {
+    id: 'final-mock-sync-1',
+    get: async () => ({ data: () => ({ source: 'final_mock', scorePath: 'scores/mock-score', attempts: 0 }) }),
+    set: async () => {},
+  };
+  const saved = {
+    source: 'a1_final_mock', studentCode: 'DorothyQuayson843',
+    studentName: 'Dorothy Quayson', email: 'dorothy@example.test',
+    assignmentId: 'A1-FINAL-MOCK', level: 'A1', score: 64.4,
+    sectionScores: { lesen: 21.7, hoeren: 16.7, schreiben: 10, sprechen: 16 },
+    attempt: 1, passed: true,
+  };
+  let payload;
+  const db = {
+    doc: path => ({ path, get: async () => ({ exists: true, data: () => saved }) }),
+    batch: () => ({ set: (target, patch) => updates.push([target.path, patch]), commit: async () => {} }),
+  };
+  await createScoreSyncWorker({
+    db, config: () => ({ url: 'https://example.test/scores', token: 'shared-test' }),
+    post: async (_url, options) => {
+      payload = JSON.parse(options.body);
+      return { ok: true, json: async () => ({ ok: true, action: 'upsertScoreRows' }) };
+    },
+  })({ data: { ref } });
+  const row = payload.rows[0];
+  assert.equal(payload.action, 'upsertScoreRows');
+  assert.equal(row.studentcode, 'DOROTHYQUAYSON843');
+  assert.equal(row.assignment_id, 'A1-5.10');
+  assert.equal(row.dedupe_id, 'DOROTHYQUAYSON843__A1-5.10');
+  assert.equal(row.score, 64.4);
+  assert.equal(JSON.parse(row.sectionScores).schreiben, 10);
+  assert.ok(updates.some(([path, patch]) =>
+    path === 'scores/mock-score' && patch.sheetSyncStatus === 'complete' && patch.sheetSaved === undefined));
+  assert.ok(updates.some(([path, patch]) =>
+    path === 'scores/mock-score' && patch.sheetSaved === true));
+});
+
 test('speaking sync preserves its separate history identity and marks background export complete', async () => {
   const updates = [];
   const ref = { id: 'speaking-job', get: async () => ({ data: () => ({ source: 'course_speaking_mock', scorePath: 'scores/s', attempts: 0 }) }), set: async () => {} };

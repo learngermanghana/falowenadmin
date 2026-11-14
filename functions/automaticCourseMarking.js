@@ -372,6 +372,12 @@ function createScoreSyncWorker({ db, config, post = fetch }) {
       // Read the latest saved score so a later tutor correction wins over a retry.
       const score = await db.doc(job.scorePath).get();
       if (!score.exists) throw new Error('Saved score is missing');
+      // The final-mock email trigger queues this export before announcing.
+      // Build the canonical row from the latest Firestore result so regrading wins.
+      const scoreData = score.data();
+      const outgoingRow = job.source === 'final_mock'
+        ? { ...scoreData, ...require('./finalMockResultEmails').buildFinalMockScoreRow(scoreData) }
+        : scoreData;
       const response = await post(settings.url, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(30000),
         body: JSON.stringify({ token: settings.token, action: 'upsertScoreRows', mode: 'upsert',
@@ -379,14 +385,14 @@ function createScoreSyncWorker({ db, config, post = fetch }) {
           ...(settings.sheetName ? { sheet_name: settings.sheetName } : {}),
           ...(settings.sheetGid ? { sheet_gid: settings.sheetGid } : {}),
           dedupe_columns: ['studentcode', 'assignment_id'], remove_duplicate_rows: true,
-          create_missing_columns: true, rows: [Object.fromEntries(Object.entries(score.data()).filter(([key]) => key !== "answerReferenceId"))] }),
+          create_missing_columns: true, rows: [Object.fromEntries(Object.entries(outgoingRow).filter(([key]) => key !== "answerReferenceId"))] }),
       });
       const receipt = await response.json();
       if (!response.ok || receipt.ok !== true || !(receipt.action === 'upsertScoreRows' || receipt.mode === 'upsert' || receipt.upsert === true)) throw new Error('Score Sheet did not confirm an upsert');
       const batch = db.batch();
       batch.set(ref, { status: 'synced', receipt: clean(receipt) }, { merge: true });
       batch.set(db.doc(job.scorePath), { sheetSaved: true }, { merge: true });
-      if (job.source === 'course_speaking_mock') {
+      if (job.source === 'course_speaking_mock' || job.source === 'final_mock') {
         batch.set(db.doc(job.scorePath), { sheetSyncStatus: 'complete', sheetSyncError: '', sheetSyncLeaseUntil: 0 }, { merge: true });
       }
       await batch.commit();

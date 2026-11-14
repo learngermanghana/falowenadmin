@@ -333,6 +333,89 @@ async function postAnnouncementRow(config, row, fetchImpl = fetch) {
   return body;
 }
 
+
+/**
+ * The final mock is a real saved assessment result, not just an email.
+ * The first A1 readiness attempt is the Day-23 A1-5.10 course item.
+ * Later practice attempts get their own dedupe key and never replace it.
+ */
+function buildFinalMockScoreRow(score = {}, { now = new Date() } = {}) {
+  if (!isFinalMockScore(score)) throw new Error("Not a final mock result.");
+  const studentcode = text(score.studentCode || score.studentcode || score.student_code)
+    .toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const level = levelFromScore(score);
+  const attempt = Math.max(1, Math.trunc(number(score.attempt ?? score.attemptNumber, 1)));
+  const assignmentId = level === "A1"
+    ? "A1-5.10"
+    : text(score.assignmentId || score.assignment_id || score.assignmentKey)
+      || `${level}-FINAL-MOCK`;
+  const dedupeId = studentcode && assignmentId
+    ? `${studentcode}__${assignmentId}${attempt > 1 ? `__practice-${attempt}` : ""}`
+    : "";
+  const sections = sectionScores(score);
+  const candidate = score.date || score.submittedAt || score.createdAt || now;
+  const parsed = candidate?.toDate?.() || new Date(candidate);
+  const date = Number.isFinite(parsed?.getTime?.()) ? parsed.toISOString() : now.toISOString();
+  const numericScore = number(score.score ?? score.finalScore ?? score.percent);
+  const summary = `Final Mock (attempt ${attempt}): Lesen ${formatScore(sections.lesen)}/25, Hören ${formatScore(sections.hoeren)}/25, Schreiben ${formatScore(sections.schreiben)}/25, Sprechen ${formatScore(sections.sprechen)}/25. Practice/readiness result; not a course certificate.`;
+  const feedback = typeof score.comments === "string" ? text(score.comments)
+    : typeof score.feedback === "string" ? text(score.feedback) : "";
+  const status = passStatus(score);
+  return {
+    studentcode,
+    name: text(score.studentName || score.name),
+    assignment: text(score.assignment || score.assignmentText) || `${level} Final Mock Exam`,
+    score: numericScore,
+    comments: [feedback, summary].filter(Boolean).join("\n"),
+    date,
+    level,
+    link: RESULT_URL,
+    assignment_id: assignmentId,
+    dedupe_id: dedupeId,
+    source: lower(score.source),
+    studentName: text(score.studentName || score.name),
+    studentEmail: lower(score.email || score.studentEmail),
+    studentId: text(score.studentId || score.uid),
+    attempt,
+    attemptNumber: attempt,
+    mockAttemptId: text(score.mockAttemptId || score.examRoomAttemptId),
+    sectionScores: JSON.stringify(sections),
+    score_breakdown: JSON.stringify({ ...sections, total: numericScore, max: 100 }),
+    passed: status.passed,
+    status: status.passed ? "passed" : "needs_improvement",
+    resultType: "final_mock",
+    practiceEstimate: true,
+  };
+}
+
+async function queueFinalMockScoreSync({ db, admin, scoreId, score }) {
+  const row = buildFinalMockScoreRow(score);
+  if (!row.studentcode || !row.assignment_id) {
+    console.error("final_mock_score_missing_identity", { scoreId: text(scoreId) });
+    return { queued: false, reason: "missing_score_identity" };
+  }
+  const syncId = `final-mock-${stateId(scoreId, score)}`;
+  const ref = db.collection("automaticScoreSync").doc(syncId);
+  try {
+    await ref.create({
+      row,
+      scorePath: `scores/${scoreId}`,
+      source: "final_mock",
+      status: "pending",
+      attempts: 0,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    return { queued: true, reason: "queued" };
+  } catch (error) {
+    // A repeated score update must not generate a second score-export job.
+    if (error?.code === 6 || error?.code === "already-exists"
+      || error?.code === "ALREADY_EXISTS") {
+      return { queued: false, reason: "already_queued" };
+    }
+    throw error;
+  }
+}
+
 async function reserveFinalMockResultSend({ db, admin, scoreId, score = {}, now = new Date() }) {
   const ref = db.collection("finalMockResultEmailSends").doc(stateId(scoreId, score));
   let result = { reserved: false, ref, reason: "" };
@@ -557,6 +640,10 @@ function createFinalMockResultEmailTrigger({
 
     const score = snap.data?.() || {};
     const scoreId = text(event?.params?.scoreId || snap.id);
+    if (isFinalMockScore(score) && score.sheetSaved !== true) {
+      const sync = await queueFinalMockScoreSync({ db, admin, scoreId, score });
+      return { sent: false, reason: "awaiting_score_sheet", scoreId, sync };
+    }
     const result = await processFinalMockResultScore({
       db,
       admin,
@@ -572,6 +659,7 @@ function createFinalMockResultEmailTrigger({
 }
 
 module.exports = {
+  buildFinalMockScoreRow,
   resolveAnnouncementConfig,
   postAnnouncementRow,
   createFinalMockResultEmailTrigger,
@@ -587,6 +675,7 @@ module.exports = {
     buildExamRoomPracticeResultMessage,
     buildFinalMockAnnouncementRow,
     buildFinalMockResultMessage,
+    buildFinalMockScoreRow,
     isExamRoomEmailScore,
     isExamRoomPracticeScore,
     isFinalMockScore,
