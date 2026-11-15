@@ -1,3 +1,4 @@
+import { useAuth } from "../context/AuthContext.jsx";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { resolveClassCohort } from "../services/liveClassService.js";
@@ -51,6 +52,8 @@ function CancelledSessionNotice() {
 }
 
 export default function CanonicalAttendancePage() {
+  const { isStaff } = useAuth();
+  if (isStaff) return <CanonicalAttendancePageV3 />;
   return (
     <>
       <CancelledSessionNotice />

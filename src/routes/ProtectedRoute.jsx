@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { isTeachingWorkspace } from "../utils/authRoles";
+import { isTeachingWorkspace, isTutorAttendance } from "../utils/authRoles";
 
 export default function ProtectedRoute({ children }) {
   const { user, loading, role, staffLanguages, staffRole } = useAuth();
@@ -8,7 +8,7 @@ export default function ProtectedRoute({ children }) {
 
   if (loading) return <div style={{ padding: 16 }}>Loading...</div>;
   if (!user || !role) return <Navigate to="/login" replace state={{ from: location }} />;
-  if (role === "staff" && !isTeachingWorkspace(location.pathname)) return <Navigate to="/marking" replace />;
+  if (role === "staff" && !isTeachingWorkspace(location.pathname) && !(staffRole === "teacher" && isTutorAttendance(location.pathname))) return <Navigate to="/marking" replace />;
   if (role === "staff" && location.pathname.startsWith("/teaching-slides") && staffRole === "reviewer") return <Navigate to="/marking" replace />;
   if (role === "staff" && staffLanguages) {
     const requested = location.pathname.includes("/SWAHILI") || new URLSearchParams(location.search).get("language") === "swahili" ? "swahili" : "german";

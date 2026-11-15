@@ -1,5 +1,5 @@
 import "./CanonicalAttendancePage.css";
-import { saveAnnouncementBatch } from "../services/communicationService.js";
+import { attendanceRequest } from "../services/assignedTutorAttendanceService.js";
 import LiveClassSessionEditor from "../components/LiveClassSessionEditor.jsx";
 import { isAppAssessment } from "../utils/appAssessment.js";
 
@@ -126,10 +126,16 @@ function sessionApiError(errorValue, action) {
   return message || `Could not ${action} check-in.`;
 }
 
+async function readCheckins(user, isStaff, classId, sessionId) {
+  if (!isStaff) return listSessionCheckins({ classId, sessionId });
+  const result = await attendanceRequest(user, "assigned-tutor-attendance", { action: "checkins", classId, sessionId });
+  return result.checkins;
+}
+
 export default function CanonicalAttendancePageV3() {
   const { classId = "" } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { user } = useAuth();
+  const { user, isStaff } = useAuth();
   const { success, error, info } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -140,7 +146,7 @@ export default function CanonicalAttendancePageV3() {
   const [sessions, setSessions] = useState([]);
   const [attendance, setAttendance] = useState({});
   const [selectedId, setSelectedId] = useState("");
-  const [reminderRecipients, setReminderRecipients] = useState([]);
+  const [hasReminderRecipients, setHasReminderRecipients] = useState(false);
   const [sendingReminder, setSendingReminder] = useState(false);
 
   useEffect(() => {
@@ -149,17 +155,27 @@ export default function CanonicalAttendancePageV3() {
       setLoading(true);
       setKlass(null);
       try {
-        const resolved = await resolveClassCohort(decodeURIComponent(classId));
-        if (!resolved) throw new Error("Class not found in Live Classes.");
-        const dashboard = await getCompatibleClassDashboard(resolved.id);
-        const className = dashboard.klass.name || resolved.name || "";
-        const [students, savedById, savedByName] = await Promise.all([
-          listStudentsByClass(resolved.id, { className }),
-          loadAttendanceFromFirestore(resolved.id).catch(() => ({})),
-          className ? loadAttendanceFromFirestore(className).catch(() => ({})) : {},
-        ]);
+        const requestedClass = decodeURIComponent(classId);
+        let dashboard, students, saved;
+        if (isStaff) {
+          const response = await attendanceRequest(user, "assigned-tutor-attendance", { action: "load", classId: requestedClass });
+          dashboard = response;
+          students = response.students;
+          saved = response.saved;
+        } else {
+          const resolved = await resolveClassCohort(requestedClass);
+          if (!resolved) throw new Error("Class not found in Live Classes.");
+          dashboard = await getCompatibleClassDashboard(resolved.id);
+          const className = dashboard.klass.name || resolved.name || "";
+          const [roster, savedById, savedByName] = await Promise.all([
+            listStudentsByClass(resolved.id, { className }),
+            loadAttendanceFromFirestore(resolved.id).catch(() => ({})),
+            className ? loadAttendanceFromFirestore(className).catch(() => ({})) : {},
+          ]);
+          students = roster;
+          saved = { ...savedByName, ...savedById };
+        }
         if (!active) return;
-        const saved = { ...savedByName, ...savedById };
         const template = studentTemplate(students);
         const map = Object.fromEntries(dashboard.sessions.map((session) => {
           const stored = saved[session.id] || {};
@@ -172,7 +188,7 @@ export default function CanonicalAttendancePageV3() {
         }));
         const timezone = dashboard.klass.timezone || TIMEZONE;
         const chosen = chooseSession(dashboard.sessions, timezone, searchParams.get("session") || "");
-        setReminderRecipients(students.filter((student) => student.email?.trim() || student.contactEmail?.trim()));
+        setHasReminderRecipients(students.some((student) => student.email?.trim()));
         setKlass(dashboard.klass);
         setSessions(dashboard.sessions);
         setAttendance(map);
@@ -184,7 +200,7 @@ export default function CanonicalAttendancePageV3() {
       }
     })();
     return () => { active = false; };
-  }, [classId, error]);
+  }, [classId, error, isStaff, user]);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -231,7 +247,7 @@ export default function CanonicalAttendancePageV3() {
   useEffect(() => {
     if (!klass?.id || !selectedId) return;
     let active = true;
-    listSessionCheckins({ classId: klass.id, sessionId: selectedId })
+    readCheckins(user, isStaff, klass.id, selectedId)
       .then((checkins) => {
         if (!active || !checkins.length) return;
         setAttendance((current) => {
@@ -248,7 +264,7 @@ export default function CanonicalAttendancePageV3() {
       })
       .catch(() => {});
     return () => { active = false; };
-  }, [klass?.id, selectedId]);
+  }, [klass?.id, selectedId, isStaff, user]);
 
   function mark(code, value) {
     setAttendance((current) => ({
@@ -267,7 +283,7 @@ export default function CanonicalAttendancePageV3() {
   async function refreshCheckins() {
     if (!klass?.id || !selectedId) return;
     try {
-      const checkins = await listSessionCheckins({ classId: klass.id, sessionId: selectedId });
+      const checkins = await readCheckins(user, isStaff, klass.id, selectedId);
       if (!checkins.length) {
         info("No student check-ins found yet.");
         return;
@@ -348,7 +364,10 @@ export default function CanonicalAttendancePageV3() {
     if (!klass || !selected || isAppAssessment(selected)) return;
     setSaving(true);
     try {
-      await saveCanonicalAttendanceSession({
+      if (isStaff) {
+        const marks = Object.fromEntries(Object.entries(selected.students).map(([code, student]) => [code, student.present]));
+        await attendanceRequest(user, "assigned-tutor-attendance", { action: "save", classId: klass.id, sessionId: selected.id, marks });
+      } else await saveCanonicalAttendanceSession({
         classRecordId: klass.id,
         className: klass.name,
         session: selected,
@@ -364,29 +383,18 @@ export default function CanonicalAttendancePageV3() {
   }
 
   async function sendClassReminder() {
-    if (!klass || !selected || sessionLocked || isAppAssessment(selected) || sendingReminder || !reminderRecipients.length) return;
+    if (isStaff || !klass || !selected || sessionLocked || isAppAssessment(selected) || sendingReminder || !hasReminderRecipients) return;
     setSendingReminder(true);
     try {
-      const result = await saveAnnouncementBatch({
-        input: {
-          topic: "Class reminder",
-          announcement: [
-            `Reminder: ${klass.name} meets on ${selectedDate} from ${startTime} to ${endTime} (${timezone === TIMEZONE ? "Ghana time" : timezone}).`,
-            selected.topic ? `Lesson: ${selected.topic}` : "",
-            "Open Falowen to view the class details and join.",
-          ].filter(Boolean).join("\n"),
-          className: klass.name,
-          classId: klass.id,
-          date: selectedDate,
-          link: "https://www.falowen.app/campus/attendance",
-        },
-        recipients: reminderRecipients,
-        session: selected,
-      });
-      if (result.failureCount) {
-        info(`Reminder sent to ${result.successCount} students. ${result.failureCount} deliveries failed.`);
+      const result = await attendanceRequest(user, "class-reminder", { classId: klass.id, sessionId: selected.id });
+      if (!result.sent) {
+        info(result.skipped === "already_sent_or_changed"
+          ? "A reminder was already sent, is in progress, or the session changed."
+          : "A reminder could not be sent for this session.");
+      } else if (result.tutorCopyFailed) {
+        info(`Reminder accepted for ${result.sent} students. The tutor copy failed.`);
       } else {
-        success(`Class reminder sent to ${result.successCount} student(s).`);
+        success(`Class reminder accepted for ${result.sent} student(s).`);
       }
     } catch (cause) {
       error(cause?.message || "Could not send the class reminder.");
@@ -405,7 +413,8 @@ export default function CanonicalAttendancePageV3() {
           <h1>Attendance check-in</h1>
           <p>Manage the session, student check-ins and attendance corrections.</p>
         </div>
-        <Link className="session-attendance__button" to={`/live-classes?classId=${encodeURIComponent(klass.id)}&tab=sessions`}>Full timetable ↗</Link>
+        {isStaff ? <Link to="/attendance">My classes</Link>
+          : <Link className="session-attendance__button" to={`/live-classes?classId=${encodeURIComponent(klass.id)}&tab=sessions`}>Full timetable ↗</Link>}
       </header>
 
       <article className="card session-attendance__card">
@@ -434,7 +443,7 @@ export default function CanonicalAttendancePageV3() {
               <small>Lesson</small>
               <strong>{assignmentId ? `${assignmentId} · ` : ""}{selected.topic || "Lesson details to be confirmed"}</strong>
             </div>
-            {!isAppAssessment(selected) ? <div className="session-attendance__actions">
+            {!isStaff && !isAppAssessment(selected) ? <div className="session-attendance__actions">
               {!["completed", "live"].includes(status) && !sessionOpen ? <button type="button" disabled={sessionBusy || sendingReminder} onClick={() => setScheduleAction("reschedule")}>{status === "cancelled" ? "Reactivate lesson" : "Reschedule"}</button> : null}
               {!sessionLocked ? <button className="session-attendance__danger" type="button" disabled={sessionBusy || sendingReminder} onClick={() => setScheduleAction("cancel")}>Cancel class</button> : null}
             </div> : null}
@@ -482,13 +491,13 @@ export default function CanonicalAttendancePageV3() {
             </div>}
           </section>
 
-          <section className="session-attendance__panel">
+          {!isStaff && <section className="session-attendance__panel">
             <h3>Backup class reminder</h3>
-            <p>{sessionLocked ? "Reminders are available for scheduled and live sessions." : reminderRecipients.length ? "Use this when the automatic reminder didn’t go out." : "There are no enrolled students with an email address."}</p>
-            <button type="button" className="session-attendance__button" disabled={!reminderRecipients.length || sessionLocked || sessionBusy || sendingReminder || Boolean(scheduleAction)} onClick={sendClassReminder}>
+            <p>{sessionLocked ? "Reminders are available for scheduled and live sessions." : hasReminderRecipients ? "Use this when the automatic reminder didn’t go out." : "There are no enrolled students with an email address."}</p>
+            <button type="button" className="session-attendance__button" disabled={!hasReminderRecipients || sessionLocked || sessionBusy || sendingReminder || Boolean(scheduleAction)} onClick={sendClassReminder}>
               {sendingReminder ? "Sending reminder…" : "Send class reminder"}
             </button>
-          </section>
+          </section>}
         </div>}
         {selected && !isAppAssessment(selected) && (slidesUrl || lessonLinks.length > 0) ? <div className="session-attendance__actions">
           {slidesUrl && <a href={slidesUrl} target="_blank" rel="noopener noreferrer">Open slides</a>}

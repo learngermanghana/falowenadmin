@@ -209,7 +209,7 @@ jobs:
           grep -F 'class_reminder_diagnostic_write_failed' functions/classSessionReminderEmails.js
           grep -F 'new URLSearchParams({ classId, sessionId })' functions/classSessionReminderEmails.js
           grep -F 'Open today’s Course Book:' functions/classSessionReminderEmails.js
-          grep -F 'button_label: text(zoom.url || DEFAULT_CLASS_REMINDER_ZOOM.joinUrl) ? "Join Zoom" : ""' functions/classSessionReminderEmails.js
+          grep -F 'button_label: text(zoom.url) ? "Join Zoom" : ""' functions/classSessionReminderEmails.js
           grep -F '/^(tutorial|orientation|complete)$/i' functions/classSessionReminderEmails.js
           grep -F 'checkinMetadataHydrated: true' functions/index.js
           grep -F '.find((value) => /^\d{4}-\d{2}-\d{2}$/.test(value))' functions/index.js

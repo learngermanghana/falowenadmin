@@ -21,13 +21,14 @@ export default function LoginPage() {
 
     try {
       const { user } = await login(normalizedEmail, password);
-      const role = getAdminRole((await user.getIdTokenResult()).claims);
+      const { claims } = await user.getIdTokenResult();
+      const role = getAdminRole(claims);
       if (!role) {
         await logout();
         setErr("This account needs Falowen staff or admin access.");
         return;
       }
-      nav(getPostLoginPath(location.state?.from, role), { replace: true });
+      nav(getPostLoginPath(location.state?.from, role, claims), { replace: true });
     } catch (error) {
       setErr(error?.message || "Login failed");
     } finally {

@@ -20,6 +20,7 @@ const ADMIN_BUILD_LABEL = ADMIN_BUILD_SHA === "dev" ? "dev" : ADMIN_BUILD_SHA.sl
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const LeadHomepageNotification = lazy(() => import("./components/LeadHomepageNotification.jsx"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const AssignedTutorAttendancePage = lazy(() => import("./pages/AssignedTutorAttendancePage"));
 const AttendanceOverviewPage = lazy(() => import("./pages/AttendanceOverviewPage"));
 const AttendancePage = lazy(() => import("./pages/AttendancePage"));
 const CanonicalAttendancePage = lazy(() => import("./pages/CanonicalAttendancePage.jsx"));
@@ -62,7 +63,7 @@ function RouteFallback() {
 }
 
 function TopBar() {
-  const { user, logout, isStaff, role } = useAuth();
+  const { user, logout, isStaff, role, staffRole } = useAuth();
   const nav = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -165,6 +166,7 @@ function TopBar() {
               <>
                 <Link to="/marking" onClick={() => setMenuOpen(false)}>Marking</Link>
                 <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Teaching Slides</Link>
+                {staffRole === "teacher" && <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>}
               </>
             ) : (
               <>
@@ -244,6 +246,11 @@ function ExamReviewRoute() {
   return <ProtectedRoute><ExamTutorReviewQueuePage /></ProtectedRoute>;
 }
 
+function AttendanceHome() {
+  const { isStaff } = useAuth();
+  return isStaff ? <AssignedTutorAttendancePage /> : <AttendanceOverviewPage />;
+}
+
 function CurrentAttendanceRoute() {
   return <CanonicalAttendancePage />;
 }
@@ -285,7 +292,7 @@ export default function App() {
           <Route path="/checkin/display" element={<CheckinDisplayPage />} />
 
           <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-          <Route path="/attendance" element={<ProtectedRoute><AttendanceOverviewPage /></ProtectedRoute>} />
+          <Route path="/attendance" element={<ProtectedRoute><AttendanceHome /></ProtectedRoute>} />
           <Route path="/attendance/session/:classId" element={<ProtectedRoute><CurrentAttendanceRoute /></ProtectedRoute>} />
           <Route path="/attendance/:classId" element={<ProtectedRoute><AttendancePage /></ProtectedRoute>} />
           <Route path="/class-participation" element={<ProtectedRoute><ClassParticipationPage /></ProtectedRoute>} />

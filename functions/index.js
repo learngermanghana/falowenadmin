@@ -332,9 +332,17 @@ async function getExistingSessionRef(classId, sessionId) {
   };
 }
 
+const { authorizeAssignedTutor, canAdministerAttendance, registerAssignedTutorAttendance } = require("./assignedTutorAttendance");
+async function verifyAttendanceUser(req) {
+  const match = String(req.headers.authorization || "").match(/^Bearer (.+)$/);
+  if (!match) throw new Error("Authorization required.");
+  return admin.auth().verifyIdToken(match[1]);
+}
+registerAssignedTutorAttendance(app, { admin, db, runtimeConfig, verifyUser: verifyAttendanceUser });
+
 app.post("/openSession", async (req, res) => {
   try {
-    const user = await requireAuth(req);
+    const user = await verifyAttendanceUser(req);
 
     const body = req.body || {};
     const classId = normalizeClassComparable(body.classId || body.className);
@@ -357,11 +365,16 @@ app.post("/openSession", async (req, res) => {
 
     const ref = sessionDocRef(classId, sessionId);
 
-    if (action === "end") {
-      const role = String(user.role || user.user_role || "").trim().toLowerCase();
-      if (!teacherAllowlist.length && user.admin !== true && !["admin", "teacher", "staff"].includes(role)) {
-        return res.status(403).json({ error: "Staff access required to end a class." });
+    const isAdmin = canAdministerAttendance(user);
+    if (!isAdmin) {
+      const assigned = await authorizeAssignedTutor(db, user, classId, sessionId);
+      if (!assigned) return res.status(403).json({ error: "This session is not assigned to you." });
+      if (isAppAssessment(assigned.session) || (action !== "end" && ["cancelled", "canceled", "completed", "superseded", "deleted"].includes(assigned.session.status))) {
+        return res.status(409).json({ error: "Check-in is unavailable for this session." });
       }
+    }
+
+    if (action === "end") {
       if (classId.includes("/") || sessionId.includes("/")) {
         return res.status(400).json({ error: "Invalid class or session ID." });
       }
