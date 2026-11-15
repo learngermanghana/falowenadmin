@@ -288,7 +288,6 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       const approvedUnreviewedSong={
         "music/a1/day-02/Ich heiße Bina.mp3":"A1-0.2",
         "music/a1/day-03/Wer bist du_ Sag es mir!.mp3":"A1-1.1",
-        "music/a1/day-04/Meine Nummer, meine Adresse.mp3":"A1-2",
         "music/a2/day-23/Fahrrad zur Schule.mp3":"A2-9.23",
         "music/a2/day-24/Endlich Urlaub.mp3":"A2-9.24",
         "music/a2/day-25/Endlich Urlaub.mp3":"A2-9.25",

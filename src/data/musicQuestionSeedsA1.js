@@ -51,10 +51,10 @@ export const MUSIC_QUESTION_SEEDS_A1 = Object.freeze([
   ],
   [
     "A1-2",
-    "Wie alt ist Ben?",
-    "Vierundzwanzig Jahre alt.",
-    "Mit welchen drei Ziffern beginnt Bens Telefonnummer?",
-    "Null, zwei, vier.",
+    "Wie alt ist Daniel?",
+    "Einundzwanzig Jahre alt.",
+    "In welcher Stadt wohnt Daniel?",
+    "In Berlin.",
     "Wie alt bist du? Wie lauten deine erfundene Hausnummer und Telefonnummer?"
   ],
   [

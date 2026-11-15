@@ -6,17 +6,17 @@ import { getReusableSongDraft } from '../src/data/reusableMusicSongbook.js';
 import { getReusableMusicQuestions } from '../src/data/reusableMusicQuestions.js';
 import { getCuratedMusicByAssignment } from '../src/data/curatedLessonMusic.js';
 
-test('Day 4 has one approved A1 music slide with original R2 audio and song questions', () => {
+test('Day 4 has one approved A1 music slide with replacement R2 audio and song questions', () => {
   const stage = getA1PresenterMusicStage('A1-2');
   assert.equal(stage?.id, 'music-lesson');
   assert.equal(stage?.type, 'published-music');
-  assert.match(stage.title, /Meine Nummer, meine Adresse/);
+  assert.match(stage.title, /Das ist meine Nummer/);
   assert.equal(stage.items.length, 1);
-  assert.equal(getCuratedMusicByAssignment('A1-2').objectKey, 'music/a1/day-04/Meine Nummer, meine Adresse.mp3');
-  assert.match(getCuratedMusicByAssignment('A1-2').introQuestion, /Wie alt ist Ben/);
+  assert.equal(getCuratedMusicByAssignment('A1-2').objectKey, 'music/a1/day-04/Das ist meine Nummer.mp3');
+  assert.match(getCuratedMusicByAssignment('A1-2').introQuestion, /Wie alt ist Daniel/);
   const song = getReusableSongDraft('A1-2');
-  assert.match(song.lyrics, /ich heiße Ben/i);
-  assert.match(song.lyrics, /Blumenstraße/);
+  assert.match(song.lyrics, /Mein Name ist Daniel/i);
+  assert.match(song.lyrics, /Gartenstraße/);
   assert.deepEqual(getReusableMusicQuestions('A1-2').questions.map(question => question.type), ['listening', 'listening', 'speaking']);
 });
 
