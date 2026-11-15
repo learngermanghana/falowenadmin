@@ -1,3 +1,4 @@
+import { STAFF_PAGES, staffPageIds } from "../src/utils/staffPageAccess.js";
 import crypto from "node:crypto";
 const env = (name) => String(process.env[name] || "").trim();
 const PROJECT = env("FIREBASE_PROJECT_ID") || env("VITE_FIREBASE_PROJECT_ID");
@@ -104,12 +105,13 @@ const docUrl = (uid = "") => `https://firestore.googleapis.com/v1/projects/${enc
 function fieldsToObject(fields = {}) {
   const str = key => fields[key]?.stringValue || "";
   const array = key => (fields[key]?.arrayValue?.values || []).map(v => v.stringValue).filter(Boolean);
-  return { uid: str("uid"), email: str("email"), name: str("name"), staffRole: str("staffRole"), languages: array("languages"), active: fields.active?.booleanValue === true };
+  return { uid: str("uid"), email: str("email"), name: str("name"), staffRole: str("staffRole"), languages: array("languages"), pages: staffPageIds(fields.pages ? array("pages") : undefined, str("staffRole")), active: fields.active?.booleanValue === true };
 }
 function asFields(input) {
   const str = value => ({ stringValue: value || "" });
   return { uid: str(input.uid), email: str(input.email), name: str(input.name),
     staffRole: str(input.staffRole), languages: { arrayValue: { values: input.languages.map(str) } },
+    pages: { arrayValue: { values: input.pages.map(str) } },
     active: { booleanValue: input.active === true },
     updatedAt: { timestampValue: new Date().toISOString() } };
 }
@@ -125,13 +127,19 @@ async function upsert(body, accessToken) {
   if (!emailPattern.test(email) || email.length > 254) fail("Enter a valid email address.");
   if (email === OWNER) fail("Owner permissions cannot be changed here.", 403);
   const name = String(body.name || "").trim().slice(0, 100);
-  const staffRole = body.staffRole;
-  if (!["teacher", "reviewer"].includes(staffRole)) fail("Invalid staff role.");
+  const supported = STAFF_PAGES.map(page => page.id);
+  if (!Array.isArray(body.pages) || !body.pages.length || body.pages.some(page => !supported.includes(page))) {
+    fail("Choose at least one supported staff page.");
+  }
+  const pages = staffPageIds(body.pages);
   const languages = allowedLanguages(body.languages);
   let account = await accountsLookup({ email: [email] }, accessToken);
   if (account?.disabled) fail("This Falowen account is disabled.", 409);
   if (body.existingUid && account?.localId !== body.existingUid) fail("Search for the existing account again before saving.", 409);
   const existing = Boolean(account);
+  const previousRole = parseAttributes(account).staffRole;
+  const staffRole = previousRole === "teacher" || pages.includes("attendance") || pages.includes("teaching-slides")
+    ? "teacher" : "reviewer";
   if (account && (parseAttributes(account).admin === true || parseAttributes(account).role === "admin")) fail("Admin accounts cannot be altered through staff management.", 403);
   if (!account) {
     // High-entropy temporary credential is never shown or emailed. Firebase emails a one-time setup link.
@@ -141,8 +149,8 @@ async function upsert(body, accessToken) {
     account = { localId: created.localId, email, customAttributes: "{}" };
     if (!account.localId) fail("Account was not created.", 502);
   }
-  await updateClaims(account, { staff: true, staffRole, staffLanguages: languages }, accessToken);
-  await writeStaff({ uid: account.localId, email, name: name || account.displayName || "", staffRole, languages, active: true }, accessToken);
+  await updateClaims(account, { staff: true, staffRole, staffLanguages: languages, staffPages: pages }, accessToken);
+  await writeStaff({ uid: account.localId, email, name: name || account.displayName || "", staffRole, languages, pages, active: true }, accessToken);
   if (!existing) {
     const response = await fetch(`${host}/accounts:sendOobCode?key=${encodeURIComponent(KEY)}`, {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -222,10 +230,10 @@ async function revoke(body, accessToken) {
   if (!user || String(user.email || "").toLowerCase() === OWNER) fail("Staff account not found or protected.", 403);
   const claims = parseAttributes(user);
   if (claims.admin === true || claims.role === "admin") fail("Admin permissions cannot be changed here.", 403);
-  await updateClaims(user, { staff: false, role: ["staff", "tutor"].includes(claims.role) ? null : claims.role || null, staffRole: null, staffLanguages: [] }, accessToken);
+  await updateClaims(user, { staff: false, role: ["staff", "tutor"].includes(claims.role) ? null : claims.role || null, staffRole: null, staffLanguages: [], staffPages: [] }, accessToken);
   const d = await apiFetch(docUrl(uid), "GET", undefined, accessToken).catch(() => null);
   const prior = fieldsToObject(d?.fields);
-  await writeStaff({ uid, email: user.email || prior.email, name: prior.name, staffRole: prior.staffRole || "teacher", languages: [], active: false }, accessToken);
+  await writeStaff({ uid, email: user.email || prior.email, name: prior.name, staffRole: prior.staffRole || "teacher", languages: [], pages: [], active: false }, accessToken);
   return { ok: true };
 }
 export default async function staffManagementHandler(req, res) {

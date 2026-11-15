@@ -2,12 +2,13 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { onIdTokenChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth } from "../firebaseAuth";
+import { staffPageIds } from "../utils/staffPageAccess.js";
 import { getAdminRole } from "../utils/authRoles";
 
 const AuthCtx = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [session, setSession] = useState({ user: null, role: null, staffLanguages: null, staffRole: null, loading: Boolean(auth) });
+  const [session, setSession] = useState({ user: null, role: null, staffLanguages: null, staffRole: null, staffPages: [], loading: Boolean(auth) });
 
   useEffect(() => {
     if (!auth) return undefined;
@@ -17,17 +18,19 @@ export function AuthProvider({ children }) {
       let role = null;
       let staffLanguages = null;
       let staffRole = null;
+      let staffPages = [];
       try {
         if (user) {
           const claims = (await user.getIdTokenResult()).claims;
           role = getAdminRole(claims);
           staffLanguages = Array.isArray(claims.staffLanguages) ? claims.staffLanguages.filter(lang => ["german", "swahili"].includes(lang)) : null;
           staffRole = claims.staffRole || null;
+          staffPages = staffPageIds(claims.staffPages, staffRole);
         }
       } catch {
         // Keep protected routes closed when the token cannot be read.
       }
-      if (current === revision) setSession({ user, role, staffLanguages, staffRole, loading: false });
+      if (current === revision) setSession({ user, role, staffLanguages, staffRole, staffPages, loading: false });
     });
     return () => { revision += 1; unsubscribe(); };
   }, []);

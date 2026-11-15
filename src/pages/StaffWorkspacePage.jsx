@@ -1,3 +1,4 @@
+import { STAFF_PAGES, staffPageIds } from "../utils/staffPageAccess.js";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 
@@ -10,7 +11,7 @@ export default function StaffWorkspacePage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [permissions, setPermissions] = useState(["german"]);
-  const [staffRole, setStaffRole] = useState("teacher");
+  const [pages, setPages] = useState([]);
   const [staff, setStaff] = useState([]);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
@@ -41,6 +42,19 @@ export default function StaffWorkspacePage() {
   const toggle = (language) => setPermissions((old) =>
     old.includes(language) ? old.filter((item) => item !== language) : [...old, language]);
 
+  const togglePage = (page) => setPages(current =>
+    current.includes(page) ? current.filter(id => id !== page) : [...current, page]);
+
+  function editAccess(member) {
+    setSelectedAccount(member);
+    setEmail(member.email);
+    setName(member.name || "");
+    setPermissions(member.languages?.length ? member.languages : ["german"]);
+    setPages(staffPageIds(member.pages, member.staffRole));
+    setError("");
+    setNotice(`Editing access for ${member.name || member.email}.`);
+  }
+
   const search = async () => {
     setBusy(true); setError(""); setNotice(""); setSelectedAccount(null);
     try {
@@ -53,7 +67,7 @@ export default function StaffWorkspacePage() {
       setSelectedAccount(account);
       setEmail(account.email);
       setName(member?.name || account.name);
-      setStaffRole(member?.staffRole || "teacher");
+      setPages(member ? staffPageIds(member.pages, member.staffRole) : []);
       setPermissions(member?.languages?.length ? member.languages : ["german"]);
       setNotice("Existing Falowen account found. Choose staff access and save.");
     } catch (err) { setError(normalizeError(err)); }
@@ -73,17 +87,17 @@ export default function StaffWorkspacePage() {
 
   const save = async (event) => {
     event.preventDefault();
-    if (!permissions.length || !email.trim()) return;
+    if (!permissions.length || !pages.length || !email.trim()) return;
     setBusy(true); setError(""); setNotice("");
     try {
       const result = await request("POST", {
         action: "upsert", email: email.trim().toLowerCase(), name: name.trim(),
-        staffRole, languages: permissions, existingUid: selectedAccount?.uid,
+        pages, languages: permissions, existingUid: selectedAccount?.uid,
       });
       setNotice(result.existing
-        ? "Existing Falowen account granted access. Use Send welcome email in Current staff."
+        ? "Staff access saved. Ask the staff member to sign in again to refresh their permissions."
         : "New staff account created. A password setup email was requested.");
-      setName(""); setEmail(""); setSelectedAccount(null);
+      setName(""); setEmail(""); setSelectedAccount(null); setPages([]);
       await refresh();
     } catch (err) { setError(normalizeError(err)); }
     finally { setBusy(false); }
@@ -112,9 +126,15 @@ export default function StaffWorkspacePage() {
         <label>Full name <input style={{ display: "block", width: "100%" }} value={name} onChange={e => setName(e.target.value)} maxLength={100} autoComplete="name" /></label>
         <label>Email address <input style={{ display: "block", width: "100%" }} value={email} disabled={busy} onChange={e => { setEmail(e.target.value); setSelectedAccount(null); }} type="email" required autoComplete="email" /></label>
         <button type="button" onClick={search} disabled={busy || !email.trim()}>Search Falowen account</button>
-        <label>Role <select style={{ display: "block", width: "100%" }} value={staffRole} onChange={e => setStaffRole(e.target.value)}><option value="teacher">Teacher — marking and slides</option><option value="reviewer">Reviewer — marking only</option></select></label>
+        <fieldset disabled={busy}>
+          <legend>Page access</legend>
+          {STAFF_PAGES.map(page => <label key={page.id} style={{ display: "block", margin: "8px 0" }}>
+            <input type="checkbox" checked={pages.includes(page.id)} onChange={() => togglePage(page.id)} /> {page.label}
+          </label>)}
+          <small>Attendance shows the classes assigned to this tutor.</small>
+        </fieldset>
         <fieldset><legend>Language access</legend>{LANGUAGES.map(lang => <label key={lang} style={{ display: "block", margin: "8px 0" }}><input type="checkbox" checked={permissions.includes(lang)} onChange={() => toggle(lang)} /> {lang === "german" ? "German" : "Swahili"}</label>)}</fieldset>
-        <button type="submit" disabled={busy || !permissions.length}>{busy ? "Saving…" : "Save staff access"}</button>
+        <button type="submit" disabled={busy || !permissions.length || !pages.length}>{busy ? "Saving…" : "Save staff access"}</button>
         <small>New accounts receive a password-setup email. Existing users are not asked to reset their password.</small>
       </form>
       <div style={{ border: "1px solid #d5dbe5", borderRadius: 12, padding: 20, minWidth: 0 }}>
@@ -123,8 +143,8 @@ export default function StaffWorkspacePage() {
         {!staff.length && <p>No managed staff accounts found.</p>}
         {staff.map(member => <article key={member.uid} style={{ borderBottom: "1px solid #e2e8f0", padding: "12px 0", overflowWrap: "anywhere" }}>
           <strong>{member.name || member.email}</strong><div>{member.email}</div>
-          <small>{member.staffRole || "teacher"} · {(member.languages || []).join(", ") || "No languages"} · {member.active ? "Active" : "Inactive"}</small>
-          {member.active && <div><button type="button" disabled={busy} onClick={() => welcome(member)}>Send welcome email</button> <button type="button" disabled={busy} onClick={() => deactivate(member)}>Remove teaching access</button></div>}
+          <small>{STAFF_PAGES.filter(page => member.pages?.includes(page.id)).map(page => page.label).join(", ") || "No pages"} · {(member.languages || []).join(", ") || "No languages"} · {member.active ? "Active" : "Inactive"}</small>
+          {member.active && <div><button type="button" disabled={busy} onClick={() => editAccess(member)}>Edit access</button>{" "}<button type="button" disabled={busy} onClick={() => welcome(member)}>Send welcome email</button> <button type="button" disabled={busy} onClick={() => deactivate(member)}>Remove teaching access</button></div>}
         </article>)}
       </div>
     </div>

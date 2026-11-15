@@ -40,3 +40,11 @@ test("Swahili reminders and attendance include active secondary placements only"
   assert.equal(studentBelongsToClass(student, { id: "german-cohort", language: "German" }), true);
   assert.equal(studentBelongsToClass({ program: "german", classId }, { ...klass, id: classId }), false);
 });
+
+test("assigned attendance requires permission in both the token and current staff record", async () => {
+  const staff = { active: true, staffRole: "teacher", languages: ["swahili"], pages: ["attendance"] };
+  const token = { ...teacher, staffPages: ["attendance"] };
+  assert.ok(await authorizeAssignedTutor(attendanceDb({ staff }), token, classId, sessionId));
+  assert.equal(await authorizeAssignedTutor(attendanceDb({ staff }), { ...token, staffPages: ["marking"] }, classId, sessionId), null);
+  assert.equal(await authorizeAssignedTutor(attendanceDb({ staff: { ...staff, pages: ["teaching-slides"] } }), token, classId, sessionId), null);
+});

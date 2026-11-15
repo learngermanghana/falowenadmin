@@ -13,9 +13,10 @@ function canAdministerAttendance(user) {
 
 async function loadTeachingStaff(db, user) {
   if (!(user.staff === true || ["staff", "tutor"].includes(user.role))
-    || user.staffRole !== "teacher") return null;
+    || !(Array.isArray(user.staffPages) ? user.staffPages.includes("attendance") : user.staffRole === "teacher")) return null;
   const staff = (await db.collection("falowenStaffAccess").doc(user.uid).get()).data();
-  return staff?.active && staff.staffRole === "teacher" ? staff : null;
+  const hasAttendance = Array.isArray(staff?.pages) ? staff.pages.includes("attendance") : staff?.staffRole === "teacher";
+  return staff?.active && hasAttendance ? staff : null;
 }
 
 function allowsClass(user, staff, klass) {
