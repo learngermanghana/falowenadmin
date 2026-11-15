@@ -30,7 +30,7 @@ export const MUSIC_SONG_DRAFTS_B1_PART2 = Object.freeze([
   },
   {
     "assignmentKey": "B1-6.19",
-    "title": "Die Frage im Bewerbungsgespräch",
+    "title": "Nicht perfekt klingen",
     "musicStyle": "German Pop, 90 BPM: contemporary German pop with clean electric guitar, gentle electronic drums and a memorable melodic keyboard hook; confident and conversational. One lead singer, clear German phrases, quiet instrumental mix.",
     "lyrics": "[Verse 1]\nVor der Tür atme ich noch einmal tief durch.\nHeute habe ich mein erstes Vorstellungsgespräch.\nDie Chefin fragt nach meinen Stärken,\nund für einen Moment fehlen mir die Worte.\n\n[Chorus]\nIch muss nicht perfekt klingen,\nich darf kurz überlegen und dann antworten.\nEin ehrlicher Satz kann viel sagen.\n\n[Verse 2]\nIch erzähle von einem schwierigen Projekt,\nbei dem wir gemeinsam eine Lösung fanden.\nDanach frage ich selbst nach dem Team,\nweil mir die Zusammenarbeit besonders wichtig ist.\n\n[Chorus]\nIch muss nicht perfekt klingen,\nich darf kurz überlegen und dann antworten.\nEin ehrlicher Satz kann viel sagen.\n\n[Outro]\nBeim Abschied fühle ich mich erleichtert.\nIch habe mich von meiner besten Seite gezeigt.\nMit Falowen kann ich selbstbewusst über meine Stärken sprechen.",
     "genre": "German Pop"
