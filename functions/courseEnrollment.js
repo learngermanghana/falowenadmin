@@ -11,19 +11,19 @@ function courseEnrollmentPatch(student, request) {
   const other = languages.find(language => language !== primary);
   const placements = { ...student.coursePlacements };
   const saved = placements[other] || { level: "A1", className: "" };
-  if (mode === "both") {
-    const level = secondaryLevel ?? saved.level;
-    const className = secondaryClassName ?? saved.className;
+  if (mode === "both" || (mode === other && (secondaryLevel !== undefined || secondaryClassName !== undefined))) {
+    const level = secondaryLevel ?? saved.level ?? "A1";
+    const className = secondaryClassName ?? saved.className ?? "";
     if (!/^(A1|A2|B1|B2|C1|C2)$/.test(level) || typeof className !== "string" || className.length > 160) throw invalid("Invalid secondary course placement");
     placements[other] = { ...saved, level, levelId: level, className: className.trim() };
-    if (className.trim() !== saved.className) {
+    if (className.trim() !== (saved.className || "")) {
       for (const key of classFields.filter(key => !["level", "levelId", "className"].includes(key))) delete placements[other][key];
     }
-    return { program: primary, secondaryProgram: other, coursePlacements: placements };
+    if (mode === "both") return { program: primary, secondaryProgram: other, coursePlacements: placements };
   }
   if (mode === primary) return { program: primary, secondaryProgram: null };
   placements[primary] = Object.fromEntries(classFields.map(key => [key, student[key] || ""]));
-  const root = Object.fromEntries(classFields.map(key => [key, saved[key] || ""]));
+  const root = Object.fromEntries(classFields.map(key => [key, (placements[other] || saved)[key] || ""]));
   return { ...root, program: other, secondaryProgram: null, coursePlacements: placements };
 }
 module.exports = { courseEnrollmentPatch };

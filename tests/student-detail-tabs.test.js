@@ -4,7 +4,7 @@ import { STUDENT_DETAIL_TABS, nextStudentDetailTab } from "../src/utils/studentD
 
 test("grouping preserves every editable student field exactly once", () => {
   const fields = STUDENT_DETAIL_TABS.flatMap((tab) => tab.fields);
-  const expected = ["name", "email", "phone", "studentCode", "level", "program", "location", "status", "tuitionFee", "initialPaymentAmount", "paymentIntentAmount", "balanceDue", "paymentStatus", "contractStart", "contractEnd", "contractTermMonths"];
+  const expected = ["name", "email", "phone", "emergencyContactPhoneNumber", "studentCode", "level", "program", "location", "status", "tuitionFee", "initialPaymentAmount", "paymentIntentAmount", "balanceDue", "paymentStatus", "contractStart", "contractEnd", "contractTermMonths"];
   assert.equal(new Set(fields).size, fields.length);
   assert.deepEqual([...fields].sort(), expected.sort());
   assert.ok(STUDENT_DETAIL_TABS.find((tab) => tab.id === "payments").fields.includes("balanceDue"));
