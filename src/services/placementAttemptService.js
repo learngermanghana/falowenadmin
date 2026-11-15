@@ -44,7 +44,7 @@ export function isSettledPlacementPayment(value) {
 }
 
 export function placementConversionStage(attempt,lead) {
-  if(!attempt?.consent)return "Anonymous result";
+  if(!attempt?.consent)return attempt?.classEmails === false && attempt.email ? "Result email only" : "Anonymous result";
   const status=String(lead?.status||"").toLowerCase();
   const isPaid=isSettledPlacementPayment(lead?.paymentStatus);
   if(lead?.studentCode||/student_registered|registered|converted|enrolled/.test(status)){
