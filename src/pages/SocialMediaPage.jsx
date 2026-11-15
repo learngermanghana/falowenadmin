@@ -26,7 +26,9 @@ const FORMATS = [
 
 const DEFAULT_CLASS_PHOTO = SOCIAL_PHOTO_GALLERY[0];
 const TEMPLATES = [
-  { id: "brochure", label: "Falowen Brochure", background: "#10332d", accent: "#f3d09a", soft: "#21574b", text: "#fff9ee", layout: "framed-photo" },
+  { id: "brochure", label: "Falowen Brochure", description: "Framed photo beside the class details", background: "#10332d", accent: "#f3d09a", soft: "#21574b", text: "#fff9ee", layout: "framed-photo" },
+  { id: "banner", label: "Classroom Banner", description: "Wide photo above a two-column timetable", background: "#f6f0e3", accent: "#783d24", ink: "#fffaf2", soft: "#ecdcc4", text: "#281f1a", layout: "photo-banner" },
+  { id: "spotlight", label: "Photo Spotlight", description: "Full-bleed photo with a dark overlay", background: "#101126", accent: "#e5c2ff", soft: "#382250", text: "#ffffff", layout: "photo-spotlight" },
   { id: "academy", label: "Academy Blue", background: "#071a3a", accent: "#f8c84a", soft: "#12366f", text: "#ffffff", layout: "photo" },
   { id: "falowen", label: "Falowen Gradient", background: "#111827", accent: "#60a5fa", soft: "#1d4ed8", text: "#ffffff", layout: "photo" },
   { id: "gold", label: "Premium Gold", background: "#17120b", accent: "#f7c65a", soft: "#3a2c14", text: "#fffaf0", layout: "photo" },
@@ -277,6 +279,35 @@ function drawBackground(ctx, width, height, template, photo, photoControls) {
     ctx.globalAlpha = 1;
   }
 
+  if (template.layout === "photo-banner" && photo) {
+    const bannerHeight = width * (0.23 + Number(photoControls.width || 45) / 450);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, width, bannerHeight);
+    ctx.clip();
+    drawFocalCover(ctx, photo, 0, 0, width, bannerHeight, photoControls);
+    ctx.restore();
+    ctx.fillStyle = template.accent;
+    ctx.fillRect(0, bannerHeight, width, width * 0.009);
+    return { contentTop: bannerHeight + width * 0.008 };
+  }
+
+  if (template.layout === "photo-spotlight" && photo) {
+    drawFocalCover(ctx, photo, 0, 0, width, height, photoControls);
+    const shade = ctx.createLinearGradient(0, 0, width, 0);
+    shade.addColorStop(0, template.background);
+    shade.addColorStop(0.55, template.background + "d9");
+    shade.addColorStop(1, template.background + "26");
+    ctx.fillStyle = shade;
+    ctx.fillRect(0, 0, width, height);
+    const footer = ctx.createLinearGradient(0, height * 0.54, 0, height);
+    footer.addColorStop(0, template.background + "00");
+    footer.addColorStop(0.82, template.background);
+    ctx.fillStyle = footer;
+    ctx.fillRect(0, height * 0.54, width, height * 0.46);
+    return { photoX: width * 0.65 };
+  }
+
   if (template.layout === "framed-photo" && photo) {
     const panelWidth = width * Math.min(0.55, Math.max(0.32, Number(photoControls.width || 45) / 100));
     const photoX = width - panelWidth;
@@ -329,7 +360,7 @@ function drawBrand(ctx, width, data, template, pad, maxWidth) {
   roundRect(ctx, pad, pillY, pillWidth, pillHeight, pillHeight / 2);
   ctx.fillStyle = template.accent;
   ctx.fill();
-  ctx.fillStyle = template.id === "clean" ? "#ffffff" : template.background;
+  ctx.fillStyle = template.ink || (template.id === "clean" ? "#ffffff" : template.background);
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(pillText, pad + pillWidth / 2, pillY + pillHeight / 2 + 1, pillWidth - width * 0.022);
@@ -376,7 +407,8 @@ async function renderPoster(canvas, data, template, format, photoSrc, photoContr
   ctx = contentCanvas.getContext("2d");
   if (!ctx) return false;
   const pad = Math.round(width * 0.065);
-  const rightBoundary = photoLayout ? photoLayout.photoX - width * 0.035 : width - pad;
+  const contentTop = photoLayout?.contentTop || 0;
+  const rightBoundary = photoLayout?.photoX ? photoLayout.photoX - width * 0.035 : width - pad;
   const maxWidth = Math.max(width * 0.38, rightBoundary - pad);
   let y = drawBrand(ctx, width, data, template, pad, maxWidth);
 
@@ -393,7 +425,7 @@ async function renderPoster(canvas, data, template, format, photoSrc, photoContr
     roundRect(ctx, pad, badgeY, badgeWidth, badgeHeight, badgeHeight * 0.28);
     ctx.fillStyle = template.accent;
     ctx.fill();
-    ctx.fillStyle = template.id === "clean" ? "#ffffff" : template.background;
+    ctx.fillStyle = template.ink || (template.id === "clean" ? "#ffffff" : template.background);
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(badgeText, pad + badgeWidth / 2, badgeY + badgeHeight / 2 + 1);
@@ -402,10 +434,22 @@ async function renderPoster(canvas, data, template, format, photoSrc, photoContr
     y = badgeY + badgeHeight + width * 0.05;
   }
 
-  y = drawDetailRow(ctx, template, width, pad, maxWidth, "START", data.startDate, y);
-  y = drawDetailRow(ctx, template, width, pad, maxWidth, "SCHEDULE", data.schedule, y);
-  y = drawDetailRow(ctx, template, width, pad, maxWidth, "MODE", data.mode, y);
-  y = drawDetailRow(ctx, template, width, pad, maxWidth, "FEE", data.fee, y);
+  if (template.layout === "photo-banner") {
+    const gap = width * 0.045;
+    const column = (maxWidth - gap) / 2;
+    const right = pad + column + gap;
+    const startBottom = drawDetailRow(ctx, template, width, pad, column, "START", data.startDate, y);
+    const scheduleBottom = drawDetailRow(ctx, template, width, right, column, "SCHEDULE", data.schedule, y);
+    const secondRow = Math.max(startBottom, scheduleBottom);
+    const modeBottom = drawDetailRow(ctx, template, width, pad, column, "MODE", data.mode, secondRow);
+    const feeBottom = drawDetailRow(ctx, template, width, right, column, "FEE", data.fee, secondRow);
+    y = Math.max(modeBottom, feeBottom);
+  } else {
+    y = drawDetailRow(ctx, template, width, pad, maxWidth, "START", data.startDate, y);
+    y = drawDetailRow(ctx, template, width, pad, maxWidth, "SCHEDULE", data.schedule, y);
+    y = drawDetailRow(ctx, template, width, pad, maxWidth, "MODE", data.mode, y);
+    y = drawDetailRow(ctx, template, width, pad, maxWidth, "FEE", data.fee, y);
+  }
 
   if (data.duration) {
     const boxY = y + width * 0.005;
@@ -425,14 +469,14 @@ async function renderPoster(canvas, data, template, format, photoSrc, photoContr
   const buttonHeight = width * 0.075;
   const buttonWidth = Math.min(maxWidth, width * 0.39);
   const buttonY = height - footerSpace - buttonHeight;
-  const contentLimit = buttonY - width * 0.025;
+  const contentLimit = buttonY - contentTop - width * 0.025;
   const contentScale = Math.min(1, contentLimit / Math.max(y, 1));
   ctx = backgroundCtx;
-  ctx.drawImage(contentCanvas, 0, 0, width, Math.ceil(y), pad * (1 - contentScale), 0, width * contentScale, y * contentScale);
+  ctx.drawImage(contentCanvas, 0, 0, width, Math.ceil(y), pad * (1 - contentScale), contentTop, width * contentScale, y * contentScale);
   roundRect(ctx, pad, buttonY, buttonWidth, buttonHeight, buttonHeight / 2);
   ctx.fillStyle = template.accent;
   ctx.fill();
-  ctx.fillStyle = template.id === "clean" ? "#ffffff" : template.background;
+  ctx.fillStyle = template.ink || (template.id === "clean" ? "#ffffff" : template.background);
   ctx.font = `800 ${Math.round(width * 0.024)}px Arial, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -890,13 +934,14 @@ export default function SocialMediaPage() {
             <small className="social-campaign-help">Video is encoded in this browser at the selected ratio. Keep this tab active during recording. No AI/video service or R2 upload is used.</small>
           </section>
 
-          <details className="social-poster-details">
-            <summary>4. Poster design &amp; colors</summary>
+          <details className="social-poster-details" open>
+            <summary>4. Poster design</summary>
             <div style={{ display: "grid", gridTemplateColumns: isNarrow ? "1fr" : "repeat(2, minmax(0, 1fr))", gap: 8 }}>
               {TEMPLATES.map((item) => (
                 <button key={item.id} type="button" aria-pressed={templateId === item.id} onClick={() => setTemplateId(item.id)} style={{ minHeight: 76, borderRadius: 12, border: templateId === item.id ? `2px solid ${item.accent}` : "1px solid #cbd5e1", background: item.background, color: item.text, padding: 10, fontWeight: 800, textAlign: "left" }}>
                   <span style={{ display: "block", width: 26, height: 5, borderRadius: 999, background: item.accent, marginBottom: 8 }} />
                   {item.label}
+                  {item.description && <small style={{ display: "block", marginTop: 4, fontWeight: 500 }}>{item.description}</small>}
                 </button>
               ))}
             </div>
@@ -930,7 +975,7 @@ export default function SocialMediaPage() {
                   <Slider label="Left / right" value={photoControls.x} min={0} max={100} onChange={(value) => updatePhotoControl("x", value)} suffix="%" />
                   <Slider label="Up / down" value={photoControls.y} min={0} max={100} onChange={(value) => updatePhotoControl("y", value)} suffix="%" />
                   <Slider label="Zoom" value={Math.round(photoControls.zoom * 100)} min={100} max={180} onChange={(value) => updatePhotoControl("zoom", value / 100)} suffix="%" />
-                  <Slider label="Photo area" value={photoControls.width} min={36} max={58} onChange={(value) => updatePhotoControl("width", value)} suffix="%" />
+                  {template.layout !== "photo-spotlight" && <Slider label={template.layout === "photo-banner" ? "Banner height" : "Photo area"} value={photoControls.width} min={36} max={58} onChange={(value) => updatePhotoControl("width", value)} />}
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <button type="button" onClick={() => setPhotoControls(DEFAULT_PHOTO)}>Reset photo position</button>
                     <button type="button" onClick={removePhoto}>Remove photo</button>
