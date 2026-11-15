@@ -151,7 +151,7 @@ export default function StudentClassTransferPanel({
       }}
     >
       <div>
-        <h3 style={{ margin: "0 0 4px" }}>Transfer class</h3>
+        <h3 style={{ margin: "0 0 4px" }}>Transfer class · {String(student?.program).toLowerCase() === "swahili" ? "Swahili" : "German"}</h3>
         <p style={{ margin: 0, color: "#475569" }}>
           Change only the student's current class. Historical attendance, class participation and scores remain attached to the original class and lesson.
         </p>

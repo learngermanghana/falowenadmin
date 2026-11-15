@@ -42,7 +42,7 @@ const fieldLabels = {
   studentCode: "Student code",
   level: "Level",
   className: "Class name",
-  program: "Course language",
+  program: "Course languages",
   location: "Location",
   status: "Status",
   tuitionFee: "Tuition fee",
@@ -54,6 +54,9 @@ const fieldLabels = {
   contractEnd: "Contract end",
   contractTermMonths: "Contract term months",
 };
+
+const courseLevels = ["A1", "A2", "B1", "B2", "C1", "C2"];
+const languageName = program => program === "swahili" ? "Swahili" : "German";
 
 const addStudentFields = [
   "name",
@@ -1007,23 +1010,40 @@ export default function StudentDirectoryPage() {
                                 {!selectedStudent.uid && <p role="alert">This record has no Firebase UID. Link the existing sign-in before activating a trial.</p>}
                               </div>
                             )}
-                            {renderEditableFields(tab.fields)}
-                            {tab.id === "class" && getDraft(selectedStudent).program === "both" && (() => {
+                            {tab.id === "class" ? (() => {
+                              const draft = getDraft(selectedStudent);
                               const primary = String(selectedStudent.program || "german").toLowerCase();
                               const secondary = primary === "german" ? "swahili" : "german";
+                              const mode = draft.program || primary;
+                              const programs = mode === "both" ? [primary, secondary] : [mode];
                               const saved = selectedStudent.coursePlacements?.[secondary];
-                              const draft = getDraft(selectedStudent);
-                              return <fieldset>
-                                <legend>Additional course · {secondary === "swahili" ? "Swahili" : "German"}</legend>
-                                <label>Level <select value={draft.secondaryLevel ?? saved?.level ?? "A1"}
-                                  onChange={event => updateDraftField(selectedStudent.id, "secondaryLevel", event.target.value, selectedStudent)}>
-                                  {["A1","A2","B1","B2","C1","C2"].map(level => <option key={level}>{level}</option>)}
-                                </select></label>
-                                <label>Class name <input value={draft.secondaryClassName ?? saved?.className ?? ""} maxLength={160}
-                                  onChange={event => updateDraftField(selectedStudent.id, "secondaryClassName", event.target.value, selectedStudent)} /></label>
-                                <p>The main level and class transfer controls apply to {primary === "german" ? "German" : "Swahili"}.</p>
-                              </fieldset>;
-                            })()}
+                              const disabled = savingId === selectedStudent.id;
+                              return <>
+                                {renderEditableFields(["program"])}
+                                <div className="student-detail-fields">
+                                  {programs.map(program => {
+                                    const isPrimary = program === primary;
+                                    const level = isPrimary ? draft.level : draft.secondaryLevel ?? saved?.level ?? "A1";
+                                    const label = languageName(program);
+                                    return <fieldset key={program}>
+                                      <legend>{label}</legend>
+                                      <label>{label} level
+                                        <select value={level || ""} disabled={disabled}
+                                          onChange={event => updateDraftField(selectedStudent.id, isPrimary ? "level" : "secondaryLevel", event.target.value, selectedStudent)}>
+                                          {!courseLevels.includes(level) && <option value={level || ""}>{level || "Select level"}</option>}
+                                          {courseLevels.map(value => <option key={value}>{value}</option>)}
+                                        </select>
+                                      </label>
+                                      {!isPrimary && <label>{label} class name
+                                        <input value={draft.secondaryClassName ?? saved?.className ?? ""} maxLength={160} disabled={disabled}
+                                          onChange={event => updateDraftField(selectedStudent.id, "secondaryClassName", event.target.value, selectedStudent)} />
+                                      </label>}
+                                    </fieldset>;
+                                  })}
+                                </div>
+                                {renderEditableFields(tab.fields.filter(field => field !== "program" && field !== "level"))}
+                              </>;
+                            })() : renderEditableFields(tab.fields)}
                             {/* STUDENT_EMERGENCY_CONTACT_FIELD: Emergency contact stays in the staff-only Profile tab. */}
                             {tab.id === "profile" && <StudentAccountActivationPanel student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast} />}
                             {tab.id === "profile" && <StudentEmergencyContact student={selectedStudent} />}

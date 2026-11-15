@@ -20,3 +20,12 @@ for (const primary of ["swahili", "german"]) {
     assert.equal(student.secondaryProgram, null);
   });
 }
+
+test("switching to a single course applies edits to that language", () => {
+  const student = { program: "swahili", level: "A1", secondaryProgram: "german",
+    coursePlacements: { german: { level: "A1", classId: "evening" } } };
+  const patch = courseEnrollmentPatch(student, { expectedPrimary: "swahili", mode: "german", secondaryLevel: "C2" });
+  assert.equal(patch.level, "C2");
+  assert.equal(patch.classId, "evening");
+  assert.equal(patch.coursePlacements.swahili.level, "A1");
+});
