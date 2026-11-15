@@ -43,17 +43,17 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
     const endDate = recalculate
       ? calculateClassEndDate({ ...next, scheduleRules: scheduleRulesForEditor(next.scheduleRules) })
       : "";
-    return endDate ? { ...next, endDate } : next;
+    return { ...next, endDate };
   });
-  const patchRule = (index, values) => setForm((current) => ({ ...current, scheduleRules: current.scheduleRules.map((rule, i) => i === index ? { ...rule, ...values } : rule) }));
-  const removeRule = (index) => setForm((current) => ({ ...current, scheduleRules: current.scheduleRules.filter((_, i) => i !== index) }));
+  const patchRule = (index, values) => setForm((current) => {\n    const next = { ...current, scheduleRules: current.scheduleRules.map((rule, i) => i === index ? { ...rule, ...values } : rule) };\n    return { ...next, endDate: calculateClassEndDate({ ...next, scheduleRules: scheduleRulesForEditor(next.scheduleRules) }) };\n  });
+  const removeRule = (index) => setForm((current) => {\n    const next = { ...current, scheduleRules: current.scheduleRules.filter((_, i) => i !== index) };\n    return { ...next, endDate: calculateClassEndDate({ ...next, scheduleRules: scheduleRulesForEditor(next.scheduleRules) }) };\n  });
   const addRule = () => setForm((current) => {
     const nextDay = nextUnusedScheduleDay(current.scheduleRules);
     if (!nextDay) {
       setMessage("All seven weekdays already have a teaching time. A class can have only one session per date.");
       return current;
     }
-    return { ...current, scheduleRules: [...current.scheduleRules, makeRule(current.levelId, dayLabel(nextDay))] };
+    const next = { ...current, scheduleRules: [...current.scheduleRules, makeRule(current.levelId, dayLabel(nextDay))] };\n    return { ...next, endDate: calculateClassEndDate({ ...next, scheduleRules: scheduleRulesForEditor(next.scheduleRules) }) };
   });
 
   function chooseSuggestion(name) {
@@ -73,7 +73,7 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
         scheduleRules: current.scheduleRules.map((rule) => ({ ...rule, durationMinutes })),
       };
       const endDate = calculateClassEndDate({ ...next, scheduleRules: scheduleRulesForEditor(next.scheduleRules) });
-      return endDate ? { ...next, endDate } : next;
+      return { ...next, endDate };
     });
     setMessage("");
   }
@@ -136,7 +136,7 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
       }}><option>German</option><option>Swahili</option></select></label>
       <label>Level<select value={form.levelId} onChange={(event) => changeLevel(event.target.value)}>{(form.language === "Swahili" ? ["A1"] : ["A1", "A2", "B1", "B2", "C1"]).map((level) => <option key={level}>{level}</option>)}</select></label>
       <label>Start date<input required type="date" value={form.startDate} onChange={(event) => patch({ startDate: event.target.value }, true)} /></label>
-      <label>Graduation / end date<input required type="date" value={form.endDate} onChange={(event) => patch({ endDate: event.target.value })} /></label>
+      <label>Graduation / end date<input required type="date" value={form.endDate} readOnly aria-label="Automatically calculated graduation date" /><small>Calculated from the start date, selected teaching days and course session count.</small></label>
       <label>Tutor ID<input value={form.tutorId} onChange={(event) => patch({ tutorId: event.target.value })} /></label><label>Zoom profile ID<input value={form.zoomProfileId} onChange={(event) => patch({ zoomProfileId: event.target.value })} /></label>
       <label>Status<select value={form.status} onChange={(event) => patch({ status: event.target.value })}>{["draft", "upcoming", "active", "graduated"].map((status) => <option key={status}>{status}</option>)}</select></label><label>Timezone<input required value={form.timezone} onChange={(event) => patch({ timezone: event.target.value })} /></label>
     </div>
