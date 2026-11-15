@@ -11,7 +11,7 @@ async function loadSavedClass(classId) {
 }
 
 export async function createClassCohort(payload) {
-  const schedule = await prepareLiveClassSchedule(payload);
+  const schedule = await prepareLiveClassSchedule(payload, { creating: true });
   const record = await base.createClassCohort(schedule.payload);
   const grouped = await applyGroupedCurriculumToClass(record.id);
   await saveLiveClassScheduleMetadata(record.id, schedule);

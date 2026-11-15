@@ -109,6 +109,7 @@ function ActiveClassCard({ klass, sessions, timing, rank, onOpenTracker }) {
       <div style={{ display: "grid", gap: 4, marginTop: 10, fontSize: 13 }}>
         {timing?.source === "timetable" ? <small style={{ color: "#64748b" }}>From weekly timetable; no upcoming generated session.</small> : null}
         <span><strong>Course dates:</strong> {formatDate(klass.startDate)} → {formatDate(klass.endDate)}</span>
+        <span><strong>Language:</strong> {klass.language || "German"}</span>
         <span><strong>Level:</strong> {klass.levelId || klass.level || "Not set"}</span>
         {timetable.length ? <span><strong>Weekly timetable:</strong> {timetable.join(" · ")}</span> : null}
         {sessionCount > 0 ? <span><strong>Generated sessions:</strong> {sessionCount}</span> : null}
@@ -123,7 +124,7 @@ function ActiveClassCard({ klass, sessions, timing, rank, onOpenTracker }) {
           View attendance tracker
         </button>
         <Link to={`/attendance/session/${encodeURIComponent(classId)}`}>Mark attendance</Link>
-        <Link to="/live-classes">Open in Live Classes</Link>
+        <Link to={`/live-classes?classId=${encodeURIComponent(classId)}`}>Open in Live Classes</Link>
       </div>
     </article>
   );
@@ -137,6 +138,7 @@ export default function AttendanceOverviewPage() {
   const [sessionsByClass, setSessionsByClass] = useState({});
   const [now, setNow] = useState(() => new Date());
   const [classFilter, setClassFilter] = useState("upcoming");
+  const [languageFilter, setLanguageFilter] = useState("all");
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 60000);
@@ -189,19 +191,22 @@ export default function AttendanceOverviewPage() {
     return () => { active = false; };
   }, [activeClasses]);
 
+  const languageClasses = useMemo(() => activeClasses.filter((klass) =>
+    languageFilter === "all" || (klass.language === "Swahili" ? "swahili" : "german") === languageFilter
+  ), [activeClasses, languageFilter]);
   const orderedClassEntries = useMemo(
-    () => orderAttendanceClasses(activeClasses, sessionsByClass, now),
-    [activeClasses, sessionsByClass, now],
+    () => orderAttendanceClasses(languageClasses, sessionsByClass, now),
+    [languageClasses, sessionsByClass, now],
   );
   const orderedActiveClasses = useMemo(() => orderedClassEntries.map(({ klass }) => klass), [orderedClassEntries]);
-  const schedulesLoading = activeClasses.some((klass) => sessionsByClass[classRecordKey(klass)] === undefined);
+  const schedulesLoading = languageClasses.some((klass) => sessionsByClass[classRecordKey(klass)] === undefined);
   const upcomingEntries = orderedClassEntries.filter(({ timing }) => Number.isFinite(timing?.sortTime));
   const todayEntries = upcomingEntries.filter(({ timing }) => timing.tone === "today" || timing.tone === "live");
   const visibleEntries = classFilter === "all" ? orderedClassEntries : classFilter === "today" ? todayEntries : upcomingEntries;
   const unavailableCount = orderedClassEntries.filter(({ klass }) => sessionsByClass[classRecordKey(klass)] === null).length;
 
 
-  const selectedTrackerClass = activeClasses.find((klass) => classRecordKey(klass) === selectedTrackerId) || orderedActiveClasses[0] || null;
+  const selectedTrackerClass = languageClasses.find((klass) => classRecordKey(klass) === selectedTrackerId) || orderedActiveClasses[0] || null;
 
 
 
@@ -211,7 +216,7 @@ export default function AttendanceOverviewPage() {
   }
 
   function openTracker(classId = selectedTrackerId) {
-    const nextId = activeClasses.some((klass) => classRecordKey(klass) === classId)
+    const nextId = languageClasses.some((klass) => classRecordKey(klass) === classId)
       ? classId : classRecordKey(orderedActiveClasses[0]);
     if (nextId) setSelectedTrackerId(nextId);
     setActiveTab("tracker");
@@ -244,6 +249,16 @@ export default function AttendanceOverviewPage() {
         </button>
       </nav>
 
+      {!loading && !error ? <label>Language{" "}
+        <select value={languageFilter} onChange={(event) => {
+          setLanguageFilter(event.target.value);
+          setClassFilter("all");
+        }}>
+          <option value="all">All languages</option>
+          <option value="german">German</option>
+          <option value="swahili">Swahili</option>
+        </select>
+      </label> : null}
       {loading ? <p>Loading active Live Classes…</p> : null}
       {error ? <p style={{ color: "#a00000" }}>❌ {error}</p> : null}
 
@@ -251,14 +266,14 @@ export default function AttendanceOverviewPage() {
         <section>
           <h2>{classFilter === "all" ? "All active classes" : classFilter === "today" ? "Today’s classes" : "Next upcoming classes"}</h2>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }} aria-label="Filter active classes">
-            {[["upcoming", `Upcoming (${upcomingEntries.length})`], ["today", `Today (${todayEntries.length})`], ["all", `All classes (${activeClasses.length})`]].map(([value, label]) => (
+            {[["upcoming", `Upcoming (${upcomingEntries.length})`], ["today", `Today (${todayEntries.length})`], ["all", `All classes (${languageClasses.length})`]].map(([value, label]) => (
               <button key={value} type="button" aria-pressed={classFilter === value}
                 style={tabButtonStyle(classFilter === value)} onClick={() => setClassFilter(value)}>{label}</button>
             ))}
           </div>
           <p>Classes in progress appear first, followed by the nearest upcoming sessions. This order updates automatically.</p>
           {unavailableCount ? <p role="status">Schedules could not be loaded for {unavailableCount} class{unavailableCount === 1 ? "" : "es"}. Use All classes to view them.</p> : null}
-          {schedulesLoading ? <p role="status">Loading class schedules…</p> : !activeClasses.length ? (
+          {schedulesLoading ? <p role="status">Loading class schedules…</p> : !languageClasses.length ? (
             <p>No active classes were found in Live Classes.</p>
           ) : !visibleEntries.length ? <p>{classFilter === "today" ? "No remaining classes today. Choose Upcoming to see the next classes." : "No upcoming classes were found. Choose All classes to check their schedules."}</p> : (
             <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>

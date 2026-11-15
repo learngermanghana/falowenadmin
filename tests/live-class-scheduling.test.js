@@ -169,3 +169,23 @@ test("B1 generation uses all 28 dictionary sessions even when an old record requ
   });
   assert.equal(sessions.length, 28);
 });
+
+test("Swahili A1 ends on the twentieth teaching day and skips school closures", () => {
+  const monday = { day: "Mon", startTime: "09:15", durationMinutes: 90 };
+  const thursday = { day: "Thu", startTime: "09:15", durationMinutes: 60 };
+  const input = {
+    classId: "kiswahili-arusha",
+    language: "Swahili",
+    levelId: "A1",
+    startDate: "2026-10-26",
+    scheduleRules: [monday, thursday],
+    excludedDates: [],
+  };
+
+  assert.equal(calculateClassEndDate(input), "2026-12-31");
+  assert.equal(calculateClassEndDate({ ...input, scheduleRules: [monday] }), "2027-03-08");
+  const holidaySchedule = { ...input, excludedDates: ["2026-12-31"] };
+  const endDate = calculateClassEndDate(holidaySchedule);
+  assert.equal(endDate, "2027-01-04");
+  assert.equal(generateSessionOccurrences({ ...holidaySchedule, endDate }).length, 20);
+});

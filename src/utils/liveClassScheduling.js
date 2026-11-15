@@ -1,5 +1,6 @@
 import { isAppAssessment } from "./appAssessment.js";
 import { getCourseDictionaryEntry } from "../data/courseDictionary.js";
+import { swahiliClassDictionary } from "../data/swahiliClassDictionary.js";
 import { getCourseSessionCount } from "../data/courseSessionGroups.js";
 
 export const CLASS_STATUSES = ["draft", "upcoming", "active", "graduated", "archived"];
@@ -127,8 +128,10 @@ function resolveSessionLimit(levelId, totalSessions) {
 }
 
 export function calculateClassEndDate({ levelId, language, startDate, scheduleRules = [], excludedDates }) {
-  if (language === "Swahili" || !/^\d{4}-\d{2}-\d{2}$/.test(String(startDate || ""))) return "";
-  const sessionCount = getCourseDictionarySessionCount(levelId);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(startDate || ""))) return "";
+  const sessionCount = language === "Swahili"
+    ? (levelId === "A1" ? swahiliClassDictionary.length : 0)
+    : getCourseDictionarySessionCount(levelId);
   if (!sessionCount) return "";
   const rules = normalizeScheduleRules(scheduleRules);
   if (!rules.length) return "";
