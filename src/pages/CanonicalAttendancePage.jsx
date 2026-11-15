@@ -54,8 +54,8 @@ export default function CanonicalAttendancePage() {
   return (
     <>
       <CancelledSessionNotice />
-      <BulkAttendanceRepairPanel />
       <CanonicalAttendancePageV3 />
+      <BulkAttendanceRepairPanel />
     </>
   );
 }
