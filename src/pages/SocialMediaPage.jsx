@@ -2,8 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { listClassCohorts } from "../services/liveClassService";
 import { normalizeScheduleRules } from "../utils/liveClassScheduling";
 import { useToast } from "../context/ToastContext";
-import SocialCourseContentCreator from "../components/SocialCourseContentCreator.jsx";
-import SocialVocabularyCreator from "../components/SocialVocabularyCreator.jsx";
+import SocialBookPromotions from "../components/SocialBookPromotions.jsx";
 import SocialAdsDictionary from "../components/SocialAdsDictionary.jsx";
 import SocialGermanChallenges from "../components/SocialGermanChallenges.jsx";
 import SocialPhotoGallery from "../components/SocialPhotoGallery.jsx";
@@ -553,7 +552,7 @@ export default function SocialMediaPage() {
   const qrCanvasRef = useRef(null);
   const renderVersionRef = useRef(0);
   const isNarrow = useNarrowWorkspace();
-  const [activeTab, setActiveTab] = useState("creator");
+  const [activeTab, setActiveTab] = useState("posters");
   const [campaignMode, setCampaignMode] = useState(true);
   const [campaignSlideId, setCampaignSlideId] = useState("registration");
   const [includeQr, setIncludeQr] = useState(true);
@@ -807,17 +806,16 @@ export default function SocialMediaPage() {
         <div>
           <span className="social-studio-kicker">Falowen Admin</span>
           <h1>Social Media Studio</h1>
-          <p>Prepare German lesson content and ready-to-share campaigns for upcoming classes.</p>
+          <p>Create ready-to-share campaigns for classes, books, and Falowen promotions.</p>
         </div>
       </header>
       <nav className="social-studio-tabs" aria-label="Social media tools">
-        <button type="button" className="social-studio-tab" aria-pressed={activeTab === "creator"} onClick={() => setActiveTab("creator")}>Course Content Creator</button>
         <button type="button" className="social-studio-tab" aria-pressed={activeTab === "posters"} onClick={() => setActiveTab("posters")}>Upcoming Classes</button>
+        <button type="button" className="social-studio-tab" aria-pressed={activeTab === "books"} onClick={() => setActiveTab("books")}>Book Promotions</button>
         <button type="button" className="social-studio-tab" aria-pressed={activeTab === "challenges"} onClick={() => setActiveTab("challenges")}>German Challenges</button>
-        <button type="button" className="social-studio-tab" aria-pressed={activeTab === "vocabulary"} onClick={() => setActiveTab("vocabulary")}>Vocabulary</button>
         <button type="button" className="social-studio-tab" aria-pressed={activeTab === "ads"} onClick={() => setActiveTab("ads")}>Ads & Motivation</button>
       </nav>
-      {activeTab === "creator" ? <SocialCourseContentCreator /> : activeTab === "vocabulary" ? <SocialVocabularyCreator /> : activeTab === "challenges" ? <SocialGermanChallenges /> : activeTab === "ads" ? <SocialAdsDictionary /> : (
+      {activeTab === "books" ? <SocialBookPromotions /> : activeTab === "challenges" ? <SocialGermanChallenges /> : activeTab === "ads" ? <SocialAdsDictionary /> : (
         <div className="social-poster-workspace">
           <section className="social-poster-header">
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between" }}>
