@@ -26,8 +26,8 @@ const REVIEWED_LISTENING_CHOICES = Object.freeze({
     {options:['In Bonn.','In Berlin.','In Hamburg.'],correctIndex:0},
   ]),
   'A1-2': Object.freeze([
-    { options: ['Zwanzig Jahre alt.', 'Vierundzwanzig Jahre alt.', 'Vierzehn Jahre alt.'], correctIndex: 1 },
-    { options: ['Null, zwei, vier.', 'Null, vier, zwei.', 'Zwei, null, fünf.'], correctIndex: 0 },
+    { options: ['Zwanzig Jahre alt.', 'Einundzwanzig Jahre alt.', 'Vierzehn Jahre alt.'], correctIndex: 1 },
+    { options: ['In Berlin.', 'In Bonn.', 'In Accra.'], correctIndex: 0 },
   ]),
   'A2-7.18': Object.freeze([
     { options: ['Die Bankkarte oder das Zahlungsgerät.', 'Das Handy der Mitarbeiterin.', 'Der Geldautomat in der Bank.'], correctIndex: 0 },
@@ -84,8 +84,8 @@ export function getReusableMusicQuestions(assignmentKey) {
     songTitle: song.title,
     topic: song.assignmentKey,
     questions: [
-      { id: key + '-listen-1', type: 'listening', prompt: row[1], answer: row[2], evidence: key === 'A1-2' ? chorusEvidence(song.lyrics) : verseEvidence(song.lyrics, key === 'A1-14.1' ? 2 : 1), ...listeningChoice(key, 0) },
-      { id: key + '-listen-2', type: 'listening', prompt: row[3], answer: row[4], evidence: key === 'A2-4.10' ? chorusEvidence(song.lyrics) : verseEvidence(song.lyrics, key === 'A1-14.1' ? 3 : 2), ...listeningChoice(key, 1) },
+      { id: key + '-listen-1', type: 'listening', prompt: row[1], answer: row[2], evidence: key === 'A1-2' ? song.lyrics.split('\n').find(line => line.includes('ich bin 21 Jahre alt')) : verseEvidence(song.lyrics, key === 'A1-14.1' ? 2 : 1), ...listeningChoice(key, 0) },
+      { id: key + '-listen-2', type: 'listening', prompt: row[3], answer: row[4], evidence: key === 'A1-2' ? song.lyrics.split('\n').find(line => line.includes('Mein Zuhause ist in Berlin')) : key === 'A2-4.10' ? chorusEvidence(song.lyrics) : verseEvidence(song.lyrics, key === 'A1-14.1' ? 3 : 2), ...listeningChoice(key, 1) },
       { id: key + '-speak-1', type: 'speaking', prompt: row[5], answer: null, evidence: '', teacherNote: guidance, ...(SPEAKING_SUPPORT[key] || {}) },
     ],
   };
