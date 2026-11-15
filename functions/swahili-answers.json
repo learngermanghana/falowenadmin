@@ -26,7 +26,7 @@
     }
   },
   "swahili-day-6": {
-    "version": 1,
+    "version": 2,
     "writing": {
       "Ninapenda": "Ninapenda kula wali na kuku. Ninapenda kunywa maji.",
       "Sipendi": "Sipendi kunywa soda.",
@@ -48,6 +48,28 @@
       "menu": {
         "prompt": "Ni chakula gani kina samaki?",
         "answer": "ugali samaki"
+      }
+    },
+    "listening": {
+      "listen-greeting": {
+        "prompt": "Mhudumu anasema nini mwanzoni?",
+        "answer": "Karibu"
+      },
+      "listen-menu": {
+        "prompt": "Mteja anaomba nini kwanza?",
+        "answer": "Menyu"
+      },
+      "listen-drinks": {
+        "prompt": "Mteja anakunywa nini?",
+        "answer": "Maji na juisi ya embe"
+      },
+      "listen-meal": {
+        "prompt": "Mteja anakula nini?",
+        "answer": "Wali na kuku"
+      },
+      "listen-price": {
+        "prompt": "Chakula kinagharimu shilingi ngapi?",
+        "answer": "Elfu nane"
       }
     }
   }
