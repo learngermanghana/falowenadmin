@@ -26,28 +26,32 @@
     }
   },
   "swahili-day-6": {
-    "version": 2,
+    "version": 3,
     "writing": {
       "Ninapenda": "Ninapenda kula wali na kuku. Ninapenda kunywa maji.",
       "Sipendi": "Sipendi kunywa soda.",
       "Agizo": "Naomba wali na kuku na maji, tafadhali."
     },
     "reading": {
-      "food": {
-        "prompt": "Mteja anapenda kula nini?",
-        "answer": "wali na kuku"
+      "read-day": {
+        "prompt": "Amina alienda mgahawani siku gani?",
+        "answer": "Siku ya Jumamosi"
       },
-      "drink": {
-        "prompt": "Mteja anapenda kunywa nini?",
-        "answer": "juisi ya embe"
+      "read-order": {
+        "prompt": "Amina aliomba (aliagiza) chakula gani?",
+        "answer": "Wali na kuku"
       },
-      "server": {
-        "prompt": "Nani anauliza ‘Wewe unapenda kula nini?’",
-        "answer": "Mhudumu"
+      "read-drink": {
+        "prompt": "Amina alinywa kinywaji gani?",
+        "answer": "Juisi ya embe"
       },
-      "menu": {
-        "prompt": "Ni chakula gani kina samaki?",
-        "answer": "ugali samaki"
+      "read-bill": {
+        "prompt": "Jumla ya bili ilikuwa shilingi ngapi?",
+        "answer": "Shilingi elfu kumi (10,000)"
+      },
+      "read-thanks": {
+        "prompt": "Amina alimwambia mhudumu nini alipomaliza kula na kulipa?",
+        "answer": "Asante sana!"
       }
     },
     "listening": {
