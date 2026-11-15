@@ -10,6 +10,9 @@ on:
       - "tests/hoeren-course-catalog.test.js"
       - "functions/index.js"
       - "src/components/HoerenBatchPanel.jsx"
+      - "src/components/GrammarAudioStudio.jsx"
+      - "src/utils/grammarAudio.js"
+      - "tests/grammar-audio-studio.test.js"
       - "src/utils/hoerenExamBundle.js"
       - "src/utils/hoerenExamBundleCache.js"
       - "tests/hoeren-bundle-export.test.js"
@@ -39,5 +42,5 @@ jobs:
           cache: npm
       - run: npm ci
       - run: node --check functions/hoerenStudioApi.js && node --check functions/hoerenQuestions.js && node --check functions/hoerenCurriculumContext.js && node --check functions/index.js
-      - run: node --test tests/hoeren-studio.test.js tests/hoeren-course-catalog.test.js tests/a1-12.1-hoeren-v3-and-soundscape.test.js tests/hoeren-question-publishing.test.js tests/hoeren-bundle-export.test.js
+      - run: node --test tests/grammar-audio-studio.test.js tests/hoeren-studio.test.js tests/hoeren-course-catalog.test.js tests/a1-12.1-hoeren-v3-and-soundscape.test.js tests/hoeren-question-publishing.test.js tests/hoeren-bundle-export.test.js
       - run: npm run build

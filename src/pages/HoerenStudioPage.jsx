@@ -1,4 +1,5 @@
 import HoerenBatchPanel from "../components/HoerenBatchPanel.jsx";
+import GrammarAudioStudio from "../components/GrammarAudioStudio.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useToast } from "../context/ToastContext";
 import { getStudioStatus, makeListeningScript, makeSpeechClip, makeListeningQuestions, publishListeningLesson, getHoerenPublishCatalog } from "../services/hoerenStudioService";
@@ -404,8 +405,8 @@ export default function HoerenStudioPage() {
     <div className="hoeren-studio">
       <header className="hoeren-hero">
         <div className="hoeren-kicker">FALOWEN · PRIVATE AI STUDIO</div>
-        <h1>Hören Studio</h1>
-        <p>Make everyday Course Book audio or build Goethe-style Hören practice automatically from a selected level and exam Teil. Edit only the sentences that need new voices.</p>
+        <h1>AI Audio Studio</h1>
+        <p>Create Hören practice and original grammar narration in English and German using the same protected, budget-aware Falowen audio tools.</p>
         <div className="hoeren-tags"><span>Owner account only</span><span>No audio stored online</span><span>Daily budget limits</span></div>
       </header>
       {serverError ? <div className="hoeren-alert" role="alert">Studio setup: {serverError}. Access is disabled until the owner UID and Gemini API key are configured securely.</div> : null}
@@ -428,7 +429,12 @@ export default function HoerenStudioPage() {
           <strong>Goethe Exam Audio</strong>
           <span>Pick a CEFR level and Teil. Questions, format and replay settings follow the exam template automatically.</span>
         </button>
-        <button type="button" className={`hoeren-mode-choice ${workspace === "pack" ? "is-active" : ""}`}
+        <button type="button" className={`hoeren-mode-choice ${workspace === "grammar" ? "is-active" : ""}`}
+           aria-pressed={workspace === "grammar"} disabled={!!busy || packBusy} onClick={() => setWorkspace("grammar")}>
+           <strong>Grammar Audio</strong>
+           <span>Turn a grammar script into clear English explanations and German examples. Preview, reuse clips and download MP3/WAV.</span>
+         </button>
+         <button type="button" className={`hoeren-mode-choice ${workspace === "pack" ? "is-active" : ""}`}
           aria-pressed={workspace === "pack"} disabled={!!busy || packBusy || !status?.profiles} onClick={() => setWorkspace("pack")}>
           <strong>Complete level ZIP</strong>
           <span>Generate every Hören Teil for one level and mock. Review once, then download MP3s, transcripts, questions and answers together.</span>
@@ -436,6 +442,9 @@ export default function HoerenStudioPage() {
       </section>
       <div hidden={workspace !== "pack"}>
         <HoerenBatchPanel profiles={status?.profiles || {}} ready={ready} initialLevel={level} onBusyChange={setPackBusy} onStatusChange={setStatus} />
+      </div>
+      <div hidden={workspace !== "grammar"}>
+        <GrammarAudioStudio ready={ready} status={status} onStatusChange={setStatus} onBusyChange={setPackBusy} />
       </div>
       <div hidden={workspace !== "single"}>
       <div className="hoeren-columns">

@@ -25,7 +25,7 @@ jobs:
       - name: Verify speech and Studio behavior
         run: |
           node --check functions/hoerenStudioApi.js
-          node --test tests/hoeren-studio.test.js tests/hoeren-course-catalog.test.js tests/a1-12.1-hoeren-v3-and-soundscape.test.js tests/hoeren-question-publishing.test.js tests/hoeren-bundle-export.test.js
+          node --test tests/grammar-audio-studio.test.js tests/hoeren-studio.test.js tests/hoeren-course-catalog.test.js tests/a1-12.1-hoeren-v3-and-soundscape.test.js tests/hoeren-question-publishing.test.js tests/hoeren-bundle-export.test.js
       - name: Install shared marking build dependencies
         run: npm ci
       - name: Install functions dependencies
