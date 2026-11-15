@@ -14,7 +14,7 @@ import { SOCIAL_VIDEO_ASPECTS, SOCIAL_VIDEO_QUALITIES, socialVideoDimensions, re
 import { QRCodeCanvas } from "qrcode.react";
 import {
   CAMPAIGN_FORMATS, campaignClassEligibility, accraToday,
-  createClassCampaign, classCampaignCaption, classCampaignManifest, isSafeCampaignUrl, makeCampaignZip,
+  createClassCampaign, classCampaignCaption, classCampaignManifest, campaignLearningFormat, isSafeCampaignUrl, makeCampaignZip,
 } from "../utils/socialClassCampaign.js";
 import "./SocialMediaPage.css";
 
@@ -142,7 +142,7 @@ function draftFromClass(klass = {}) {
   const language = klass.language === "Swahili" ? "Swahili" : "German";
   const name = textValue(klass.name, klass.className, klass.title, [level, language, "Class"].filter(Boolean).join(" "));
   const startDate = formatDate(klass.startDate);
-  const mode = textValue(klass.learningMode, klass.mode, klass.location);
+  const mode = campaignLearningFormat(klass);
   const fee = formatFee(textValue(klass.tuitionGhs || "", klass.tuitionFee, klass.fee, klass.price));
   const classUrl = textValue(klass.classUrl, klass.registrationUrl, klass.url);
   const registerUrl = classUrl
