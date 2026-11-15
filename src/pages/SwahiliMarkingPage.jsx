@@ -162,7 +162,6 @@ function LessonQueue({ day }) {
   const [page, setPage] = useState({ rows: [], nextCursor: null });
   const [selectedPath, setSelectedPath] = useState("");
   const [reviewStatuses, setReviewStatuses] = useState({});
-  const [queueView, setQueueView] = useState("pending");
   const [queueNotice, setQueueNotice] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -203,9 +202,7 @@ function LessonQueue({ day }) {
     }
   }
 
-  const pendingRows = filterSwahiliMarkingRows(page.rows, reviewStatuses, "pending");
-  const markedRows = filterSwahiliMarkingRows(page.rows, reviewStatuses, "marked");
-  const visibleRows = queueView === "marked" ? markedRows : pendingRows;
+  const visibleRows = filterSwahiliMarkingRows(page.rows, reviewStatuses);
   const activePath = visibleRows.some((row) => row.path === selectedPath)
     ? selectedPath : visibleRows[0]?.path || "";
   const selected = visibleRows.find(({ path }) => path === activePath);
@@ -224,14 +221,10 @@ function LessonQueue({ day }) {
           setVersion((value) => value + 1);
         }}>Refresh</button>
       </div>
-      <div className="swahili-marking-views" role="group" aria-label="Submission status">
-        <button type="button" aria-pressed={queueView === "pending"} onClick={() => setQueueView("pending")}>
-          To mark ({pendingRows.length})
-        </button>
-        <button type="button" aria-pressed={queueView === "marked"} onClick={() => setQueueView("marked")}>
-          Already marked ({markedRows.length})
-        </button>
-      </div>
+      <p className="swahili-marking-queue-summary">
+        To mark: <strong>{visibleRows.length}</strong>
+        <span> · Completed assignments are available in Results.</span>
+      </p>
       {queueNotice && <p role="status" className="swahili-marking-notice">{queueNotice}</p>}
       {loading && <p role="status">Loading submissions and review status…</p>}
       {error && <p role="alert">{error}</p>}
@@ -239,18 +232,15 @@ function LessonQueue({ day }) {
         <p role="alert">Could not verify the review status of {unavailableCount} submission{unavailableCount === 1 ? "" : "s"}. Refresh to retry. These remain visible in To mark for safety.</p>
       )}
       {!loading && !error && visibleRows.length === 0 && (
-        <p>{queueView === "pending"
-          ? page.nextCursor ? "No work awaiting review on this page. Load more to check older submissions."
-            : "All caught up — no Swahili submissions awaiting review."
-          : page.nextCursor ? "No marked work on this page. Load more to check older submissions."
-            : "No marked Swahili submissions in the loaded lessons."}</p>
+        <p>{page.nextCursor
+          ? "No work awaiting review on this page. Load more to check older submissions."
+          : "All caught up — no Swahili submissions awaiting review."}</p>
       )}
       {visibleRows.length > 0 && (
         <label>Learner submission
           <select value={activePath} onChange={(event) => setSelectedPath(event.target.value)}>
             {visibleRows.map((row) => <option key={row.path} value={row.path}>
               {row.studentName || row.studentEmail || row.studentId} · Day {row.lessonId.split("-").at(-1)}
-              {queueView === "marked" && reviewStatuses[row.path] === "needs_revision" ? " · Needs revision" : ""}
             </option>)}
           </select>
         </label>
@@ -259,7 +249,7 @@ function LessonQueue({ day }) {
         day={Number(selected.lessonId.split("-").at(-1))}
         onReviewSaved={(row, status) => {
           setReviewStatuses((previous) => ({ ...previous, [row.path]: status }));
-          setQueueNotice("Feedback saved. This submission is now in Already marked.");
+          setQueueNotice("Feedback saved. This submission has left the marking queue. Its score remains in Results.");
         }} />}
       {page.nextCursor && <button type="button" disabled={loading} onClick={loadMore}>Load more submissions</button>
     </section>
