@@ -52,12 +52,12 @@ export function isSafeCampaignUrl(value) {
     return false;
   }
 }
-function headingForCountdown(days, active) {
+function headingForCountdown(days, active, language) {
   if (active) return "JOIN AN ONGOING CLASS";
   if (days === 0) return "CLASS STARTS TODAY";
   if (days === 1) return "STARTS TOMORROW";
   if (days !== null && days > 1 && days <= 14) return "STARTS IN " + days + " DAYS";
-  return "NEXT GERMAN CLASS";
+  return "NEXT " + language.toUpperCase() + " CLASS";
 }
 export function createClassCampaign(klass = {}, base = {}, today = accraToday()) {
   const days = daysUntilClass(klass.startDate, today);
@@ -69,11 +69,14 @@ export function createClassCampaign(klass = {}, base = {}, today = accraToday())
     countdown: { id: "countdown", label: "Class countdown", format: "story" },
     whatsapp: { id: "whatsapp", label: "WhatsApp status", format: "story" },
   };
+  const language = klass.language === "Swahili" ? "Swahili" : "German";
+  const swahili = language === "Swahili";
+  const cta = swahili ? "ENQUIRE NOW" : "REGISTER NOW";
   const baseData = { ...base };
   const slides = [
     {
       ...group.registration,
-      data: { ...baseData, eyebrow: active ? "ENROLMENT OPEN" : "REGISTRATION OPEN", highlight: "", cta: "REGISTER NOW" },
+      data: { ...baseData, eyebrow: swahili ? "UPCOMING SWAHILI CLASS" : active ? "ENROLMENT OPEN" : "REGISTRATION OPEN", highlight: "", cta },
     },
     {
       ...group.overview,
@@ -81,20 +84,20 @@ export function createClassCampaign(klass = {}, base = {}, today = accraToday())
     },
     {
       ...group.logistics,
-      data: { ...baseData, eyebrow: "CLASS DETAILS · 2/2", startDate: "", schedule: "", highlight: "Registration and contact information", cta: "REGISTER NOW" },
+      data: { ...baseData, eyebrow: "CLASS DETAILS · 2/2", startDate: "", schedule: "", highlight: swahili ? "Class and contact information" : "Registration and contact information", cta },
     },
     {
       ...group.countdown,
       label: active ? "Join this class" : (days !== null && days <= 14 ? "Starts soon" : "Starting date"),
       data: {
-        ...baseData, eyebrow: headingForCountdown(days, active),
-        highlight: active ? "Registration is open for this ongoing class." : "Prepare for your next step in German.",
-        schedule: "", fee: "", duration: "", cta: "ENROL TODAY",
+        ...baseData, eyebrow: headingForCountdown(days, active, language),
+        highlight: active ? (swahili ? "This class is accepting enquiries." : "Registration is open for this ongoing class.") : "Prepare for your next step in " + language + ".",
+        schedule: "", fee: "", duration: "", cta: swahili ? cta : "ENROL TODAY",
       },
     },
     {
       ...group.whatsapp,
-      data: { ...baseData, eyebrow: "LEARN GERMAN WITH FALOWEN", highlight: "Join our German classes.", duration: "", cta: "REGISTER NOW" },
+      data: { ...baseData, eyebrow: "LEARN " + language.toUpperCase() + " WITH FALOWEN", highlight: "Join our " + language + " classes.", duration: "", cta },
     },
   ];
   return slides.map((slide) => ({
@@ -109,22 +112,24 @@ export function classCampaignCaption(klass = {}, data = {}, campaignId = "regist
   const starts = !active && days !== null && days >= 0
     ? days === 0 ? "Classes start today." : days === 1 ? "Classes start tomorrow." : days <= 14 ? "Starts in " + days + " days." : ""
     : "";
+  const language = klass.language === "Swahili" ? "Swahili" : "German";
+  const swahili = language === "Swahili";
   const lead = {
-    registration: "German class registration is open!",
-    overview: "Explore our German class schedule.",
-    logistics: "Find the right German class for you.",
-    countdown: active ? "Registration is open for this ongoing class." : starts || "Prepare for your next German class.",
-    whatsapp: "Learn German with Falowen.",
-  }[campaignId] || "Learn German with Falowen.";
+    registration: swahili ? "Enquire about our Swahili class." : "German class registration is open!",
+    overview: "Explore our " + language + " class schedule.",
+    logistics: "Find the right " + language + " class for you.",
+    countdown: active ? (swahili ? "This Swahili class is accepting enquiries." : "Registration is open for this ongoing class.") : starts || "Prepare for your next " + language + " class.",
+    whatsapp: "Learn " + language + " with Falowen.",
+  }[campaignId] || "Learn " + language + " with Falowen.";
   return [
     lead, normalized(data.className),
     data.startDate && !active ? "Start: " + normalized(data.startDate) : "",
     data.schedule ? "Schedule: " + normalized(data.schedule) : "",
     data.mode ? "Mode: " + normalized(data.mode) : "",
     data.fee ? "Fee: " + normalized(data.fee) : "",
-    data.website && isSafeCampaignUrl(data.website) ? "Register: " + normalized(data.website) : "",
+    data.website && isSafeCampaignUrl(data.website) ? (swahili ? "Enquire: " : "Register: ") + normalized(data.website) : "",
     data.phone ? "Contact: " + normalized(data.phone) : "",
-    "#Falowen #LearnGerman #GermanInGhana",
+    swahili ? "#Falowen #LearnSwahili #Kiswahili" : "#Falowen #LearnGerman #GermanInGhana",
   ].filter(Boolean).join("\n");
 }
 export function classCampaignManifest(klass = {}, slides = []) {

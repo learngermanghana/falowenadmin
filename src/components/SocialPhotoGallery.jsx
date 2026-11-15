@@ -17,11 +17,11 @@ function readUsedPhotos() {
   }
 }
 
-// Convert the picked Pexels photograph to local canvas pixels before passing it
+// Convert the selected gallery photo to local canvas pixels before passing it
 // to a poster. This prevents a cross-origin/tainted canvas from breaking export.
 // If the provider blocks CORS or the image goes offline, keep the previous photo.
 export async function prepareSocialGalleryPhoto(photo, createImage = () => new Image(), createCanvas = () => document.createElement("canvas")) {
-  if (!SOCIAL_PHOTO_GALLERY.some(item => item.id === photo?.id)) throw new Error("Choose a listed Pexels photo.");
+  if (!SOCIAL_PHOTO_GALLERY.some(item => item.id === photo?.id)) throw new Error("Choose a photo from the gallery.");
   const image = await new Promise((resolve, reject) => {
     const candidate = createImage();
     candidate.crossOrigin = "anonymous";
@@ -41,7 +41,7 @@ export async function prepareSocialGalleryPhoto(photo, createImage = () => new I
     // If CORS is missing, this fails before we change the poster image.
     return canvas.toDataURL("image/jpeg", 0.88);
   } catch {
-    throw new Error("This photo cannot be exported securely from Pexels in your browser. Choose another photo.");
+    throw new Error("This photo could not be prepared for export in your browser. Choose another photo.");
   }
 }
 
@@ -83,8 +83,8 @@ export default function SocialPhotoGallery({ onSelect, activeId = "", defaultOpe
 
   return (
     <details open={defaultOpen} style={{ border: "1px solid #dbe3ed", borderRadius: 12, background: "#f8fafc", padding: 12 }}>
-      <summary style={{ cursor: "pointer", fontWeight: 800 }}>Built-in photo gallery · {SOCIAL_PHOTO_GALLERY.length} fresh photos · {unusedCount} unused</summary>
-      <p style={{ ...small, margin: "9px 0" }}>African-centred students, learning groups, tutors and online classes, including real scenes from Ghana and Africa. Choose a picture for your Falowen poster. No upload or API key required.</p>
+      <summary style={{ cursor: "pointer", fontWeight: 800 }}>Built-in photo gallery · {SOCIAL_PHOTO_GALLERY.length} photos · {unusedCount} unused</summary>
+      <p style={{ ...small, margin: "9px 0" }}>Choose from new AI-generated Ghanaian learning scenes and credited stock photography for your poster.</p>
       <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, margin: "8px 0" }}>
         <input type="checkbox" checked={unusedOnly} onChange={event => setUnusedOnly(event.target.checked)} />
         Show only unused pictures ({unusedCount} remaining)
@@ -119,10 +119,10 @@ export default function SocialPhotoGallery({ onSelect, activeId = "", defaultOpe
               style={{ cursor: "pointer", background: usedIds.includes(photo.id) ? "#e2e8f0" : "#eef6ff", border: "1px solid #cbd5e1", color: "#17365c", borderRadius: 7, padding: "5px 4px", fontSize: 11, fontWeight: 650 }}>
               {usedIds.includes(photo.id) ? "✓ Used · Undo" : "Mark used"}
             </button>
-            <a href={photo.source} target="_blank" rel="noopener noreferrer"
+            {photo.source ? <a href={photo.source} target="_blank" rel="noopener noreferrer"
               style={{ fontSize: 11, color: "#375d88", lineHeight: 1.3 }} title={"Photo by " + photo.photographer + " on Pexels"}>
               Photo: {photo.photographer} ↗
-            </a>
+            </a> : <span style={small}>AI-generated illustration</span>}
           </div>
         ))}
       </div>
@@ -132,7 +132,7 @@ export default function SocialPhotoGallery({ onSelect, activeId = "", defaultOpe
       <p style={{ ...small, marginBottom: 0 }}>
         Used/unused labels are saved only in this browser and do not change published posts.
         Pexels photos are free for use in original branded designs; credit is appreciated.
-        These are illustrative stock photos, not actual Falowen students or staff. Models do not endorse Falowen. Do not redistribute unaltered photos.
+        Images are illustrative. The people shown do not represent Falowen students or staff. Do not redistribute unaltered Pexels photos.
         {" "}<a href={SOCIAL_PHOTO_LICENSE_URL} target="_blank" rel="noopener noreferrer">Read the Pexels license ↗</a>
       </p>
     </details>

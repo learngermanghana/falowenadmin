@@ -64,3 +64,7 @@ Swahili A1 Day 6 presents its song through Listen, Lyrics and Questions. The lea
 The Admin Class tab labels each level by language. Campus opens the selected language at its assigned level. Swahili currently has published course books at A1 only.
 
 Admin keeps the primary programme and placement in the existing student fields. An active second course is identified by `secondaryProgram` and uses its own level and class in `coursePlacements[secondaryProgram]`. Retained placements do not grant access. Campus selects an enrolled course for the current browser tab. German results and Swahili tutor reviews keep their existing identifiers, stores and publication workflows. Deploy the learner Firestore rules and Campus switch, then the Admin profile API, Swahili result worker and Admin editor before assigning dual enrollment.
+
+## Social Media campaigns
+
+The Upcoming Classes campaign and single-poster exports use the same renderer in `src/pages/SocialMediaPage.jsx`. The default Falowen Brochure preset uses a framed photo with class details beside it. Class language determines the campaign copy and enquiry or registration wording. The shared photo picker in `src/components/SocialPhotoGallery.jsx` loads generated illustrations from `public/social-photos/` and keeps source credits for external stock photography. The generated images illustrate learning scenes and do not depict actual Falowen students or staff.
