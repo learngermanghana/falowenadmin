@@ -57,12 +57,18 @@ function validateSceneRequest(body = {}) {
   if (cleaned.reduce((total, turn) => total + turn.text.length, 0) > 520) {
     throw Object.assign(new Error("Each scene must contain at most 520 spoken characters. Split into smaller scenes."), { status: 400 });
   }
-  return { turns: cleaned, engine };
+  const style = body.style == null ? "" : String(body.style).trim();
+  if (style && style !== "grammar") throw Object.assign(new Error("Unsupported speech style."), { status: 400 });
+  const language = style === "grammar" ? String(body.language || "en-GB").trim() : "";
+  if (style === "grammar" && !["en-GB", "en-US", "de-DE"].includes(language)) {
+    throw Object.assign(new Error("Choose English or German grammar narration."), { status: 400 });
+  }
+  return { turns: cleaned, engine, ...(style ? { style, language } : {}) };
 }
 
 // Interactions accepts a list of SpeechConfig entries. Do not send the
 // generateContent-style/conversational mode wrapper: it is not in this schema.
-function buildSpeechPayload({ turns, engine }) {
+function buildSpeechPayload({ turns, engine, style, language }) {
   const voices = { A: "Kore", B: "Puck", C: "Charon", D: "Zephyr" };
   const speakers = [...new Set(turns.map(turn => turn.speaker))];
   return {
@@ -71,13 +77,15 @@ function buildSpeechPayload({ turns, engine }) {
     input: [{ type: "user_input", content: turns.map(turn => ({
       type: "text", text: turn.text,
       annotations: [{ type: "speech_metadata", ...(speakers.length === 2 ? { speaker: turn.speaker } : {}),
-        style: turn.speaker === "A"
-          ? "Professional German exam narrator: crisp, deliberate, instructional delivery with calm neutral emphasis."
-          : "Natural conversational standard German for an independent task speaker; clear but lifelike intonation, distinct from the exam narrator." }],
+        style: style === "grammar"
+          ? "Warm, patient language teacher reading an educational grammar narration. Natural pronunciation, careful pacing, clearly separate words and short pauses at punctuation. Speak exactly the supplied words without adding explanations."
+          : turn.speaker === "A"
+            ? "Professional German exam narrator: crisp, deliberate, instructional delivery with calm neutral emphasis."
+            : "Natural conversational standard German for an independent task speaker; clear but lifelike intonation, distinct from the exam narrator." }],
     })) }],
     response_format: { type: "audio", mime_type: "audio/wav" },
     generation_config: {
-      speech_config: speakers.map(speaker => ({ ...(speakers.length === 2 ? { speaker } : {}), voice: voices[speaker], language: "de-DE" })),
+      speech_config: speakers.map(speaker => ({ ...(speakers.length === 2 ? { speaker } : {}), voice: voices[speaker], language: style === "grammar" ? language : "de-DE" })),
     },
   };
 }
@@ -98,6 +106,17 @@ function validateScriptRequest(body = {}) {
   if (profile && type !== profile.type) throw Object.assign(new Error("Recording type does not match this exam Teil."), { status: 400 });
   const lessonContext = mode === "course" ? validateCourseLessonContext(body.lessonContext, level) : null;
   return { level, type, topic, part, profile, mode, kind: profile?.kind || kind, lessonContext };
+}
+
+
+function validateGrammarScriptRequest(body = {}) {
+  const level = String(body.level || "B1").trim().toUpperCase();
+  const topic = String(body.topic || "").trim();
+  const languageMode = String(body.languageMode || "bilingual").trim();
+  if (!ALLOWED_LEVELS.has(level)) throw Object.assign(new Error("Choose an A1–C2 grammar level."), { status: 400 });
+  if (topic.length < 4 || topic.length > 160) throw Object.assign(new Error("Enter a grammar topic (4–160 characters)."), { status: 400 });
+  if (!["bilingual", "german"].includes(languageMode)) throw Object.assign(new Error("Choose bilingual or German-only narration."), { status: 400 });
+  return { level, topic, languageMode };
 }
 
 function extractAudio(result = {}) {
@@ -319,10 +338,48 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
     } catch (error) { await refundFailedRequest(db, slot); return handleError(res, error); }
   });
 
+  app.post("/ai-studio/grammar-script", guard, async (req, res) => {
+    let slot;
+    try {
+      const { level, topic, languageMode } = validateGrammarScriptRequest(req.body);
+      const key = String(geminiKey.value() || "").trim();
+      if (!key) return res.status(503).json({ ok: false, error: "Gemini API key is not configured." });
+      slot = await reserveUsage(db, req.hoerenOwnerUid, "script");
+      const remaining = slot.remaining;
+      const prompt = [
+        "Write an original educational German grammar lesson narrated for Falowen.",
+        "CEFR level: " + level + ". Grammar topic: " + topic + ".",
+        "Return ONLY spoken script lines; no Markdown, headings, stage directions or JSON.",
+        "Each line MUST start EN: for English narration or DE: for German narration.",
+        "One language per line. Never join German words: write 'desto besser', NOT 'destobesser'.",
+        "Do not pronounce the EN:/DE: labels; they are editing metadata.",
+        "Include a short introduction, plain grammar explanation, exact German example sentences, a common mistake and its correction, one practice question, and a conclusion.",
+        "Aim for 240–330 spoken words total. Keep each line below 250 characters for reliable speech.",
+        "Insert up to three optional [PAUSE 2] lines for thinking time.",
+        languageMode === "bilingual"
+          ? "Explain mainly in natural English; write example sentences as separate DE: lines. Provide brief English translations as EN: lines."
+          : "Use DE: lines only, in German accessible to the chosen CEFR level.",
+        "Use accurate German grammar and natural word order; no fabricated grammar rules."
+      ].join("\n");
+      const result = await postGemini(
+        `https://generativelanguage.googleapis.com/v1beta/models/${SCRIPT_MODEL}:generateContent`,
+        key,
+        { contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: 0.35, maxOutputTokens: 2200 } }
+      );
+      const script = extractScript(result);
+      if (!script.split(/\r?\n/).some(line => /^DE:\s*\S/i.test(line)) ||
+          (languageMode === "bilingual" && !script.split(/\r?\n/).some(line => /^EN:\s*\S/i.test(line)))) {
+        throw Object.assign(new Error("Gemini returned an incomplete grammar script. No text was replaced."), { status: 502 });
+      }
+      await settleUsage(db, slot, true);
+      return res.json({ ok: true, script, remaining });
+    } catch (error) { await refundFailedRequest(db, slot); return handleError(res, error); }
+  });
+
   app.post("/ai-studio/speech", guard, async (req, res) => {
     let slot;
     try {
-      const { turns, engine } = validateSceneRequest(req.body);
+      const { turns, engine, style, language } = validateSceneRequest(req.body);
       const key = String(geminiKey.value() || "").trim();
       if (!key) return res.status(503).json({ ok: false, error: "Gemini API key is not configured." });
       slot = await reserveUsage(db, req.hoerenOwnerUid, "speech");
@@ -330,7 +387,7 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
       const result = await postGemini(
         "https://generativelanguage.googleapis.com/v1beta/interactions",
         key,
-        buildSpeechPayload({ turns, engine }),
+        buildSpeechPayload({ turns, engine, style, language }),
         60_000,
       );
       res.set("Cache-Control", "no-store");
@@ -342,6 +399,6 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
 }
 
 module.exports = {
-  MODELS, LIMITS, ownerUid, isStudioOwner, validateSpeechRequest, validateSceneRequest, validateScriptRequest,
+  MODELS, LIMITS, ownerUid, isStudioOwner, validateSpeechRequest, validateSceneRequest, validateScriptRequest, validateGrammarScriptRequest,
   extractAudio, extractScript, describeGoogleRejection, buildSpeechPayload, registerHoerenStudioRoutes, reserveUsage, settleUsage,
 };
