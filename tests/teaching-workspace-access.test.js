@@ -31,3 +31,18 @@ test("Swahili queue binds identity to the learner path and distinguishes resubmi
   assert.equal(getSwahiliReviewStatus(submission, { ...review, reviewedAt: { toMillis: () => 49 } }), "awaiting_review");
   assert.equal(getSwahiliReviewStatus(submission, { ...review, reviewedAt: { toMillis: () => 51 } }), "reviewed");
 });
+
+test("explicit page grants override role defaults for staff routes and login", async () => {
+  const { canOpenStaffPage, staffPageIds } = await import("../src/utils/staffPageAccess.js");
+  const claims = { staffRole: "teacher", staffLanguages: ["swahili"], staffPages: ["attendance"] };
+  const pages = staffPageIds(claims.staffPages, claims.staffRole);
+  assert.equal(canOpenStaffPage("/attendance/session/assigned-class", pages), true);
+  assert.equal(canOpenStaffPage("/attendance/other-class", pages), false);
+  assert.equal(canOpenStaffPage("/marking", pages), false);
+  assert.equal(canOpenStaffPage("/teaching-slides/course/SWAHILI/day-1", pages), false);
+  assert.equal(getPostLoginPath({ pathname: "/marking" }, "staff", claims), "/attendance");
+  assert.equal(getPostLoginPath({ pathname: "/attendance/session/assigned-class" }, "staff", claims), "/attendance/session/assigned-class");
+  assert.deepEqual(staffPageIds([], "teacher"), []);
+  assert.deepEqual(staffPageIds(undefined, "reviewer"), ["marking"]);
+  assert.deepEqual(staffPageIds(["attendance", "staff", "students"], "teacher"), ["attendance"]);
+});

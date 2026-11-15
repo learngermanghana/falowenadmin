@@ -1,3 +1,4 @@
+import { STAFF_PAGES, staffHomePath } from "./utils/staffPageAccess.js";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Navigate, Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
@@ -63,7 +64,7 @@ function RouteFallback() {
 }
 
 function TopBar() {
-  const { user, logout, isStaff, role, staffRole } = useAuth();
+  const { user, logout, isStaff, role, staffPages, staffLanguages } = useAuth();
   const nav = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -138,7 +139,7 @@ function TopBar() {
             {menuOpen ? "✕" : "☰"}
           </button>
 
-          <Link to={isStaff ? "/marking" : "/"} className="topbar-brand" onClick={() => setMenuOpen(false)}>
+          <Link to={isStaff ? staffHomePath(staffPages, staffLanguages) : "/"} className="topbar-brand" onClick={() => setMenuOpen(false)}>
             Falowen Dashboard
           </Link>
           <span
@@ -163,11 +164,9 @@ function TopBar() {
 
           <div id="topbar-navigation" className={`topbar-links ${menuOpen ? "topbar-links-open" : ""}`}>
             {isStaff ? (
-              <>
-                <Link to="/marking" onClick={() => setMenuOpen(false)}>Marking</Link>
-                <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Teaching Slides</Link>
-                {staffRole === "teacher" && <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>}
-              </>
+              STAFF_PAGES.filter(page => staffPages.includes(page.id)).map(page =>
+                <Link key={page.id} to={page.path} onClick={() => setMenuOpen(false)}>{page.label}</Link>
+              )
             ) : (
               <>
                 <Link to="/" onClick={() => setMenuOpen(false)}>Dashboard</Link>

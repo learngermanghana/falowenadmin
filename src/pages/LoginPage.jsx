@@ -21,7 +21,7 @@ export default function LoginPage() {
 
     try {
       const { user } = await login(normalizedEmail, password);
-      const { claims } = await user.getIdTokenResult();
+      const { claims } = await user.getIdTokenResult(true);
       const role = getAdminRole(claims);
       if (!role) {
         await logout();
