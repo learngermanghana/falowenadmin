@@ -251,7 +251,7 @@ function LessonQueue({ day }) {
           setReviewStatuses((previous) => ({ ...previous, [row.path]: status }));
           setQueueNotice("Feedback saved. This submission has left the marking queue. Its score remains in Results.");
         }} />}
-      {page.nextCursor && <button type="button" disabled={loading} onClick={loadMore}>Load more submissions</button>
+      {page.nextCursor && <button type="button" disabled={loading} onClick={loadMore}>Load more submissions</button>}
     </section>
   );
 }
