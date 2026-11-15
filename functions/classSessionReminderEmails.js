@@ -266,17 +266,19 @@ function classValues(klass = {}) {
   ].map(comparable).filter(Boolean);
 }
 
-function studentClassValues(student = {}) {
-  return [
-    student.classId, student.classRecordId, student.assignedClassId,
-    student.className, student.class, student.group, student.groupId,
-    student.groupName, student.cohort, student.cohortId, student.cohortName,
-  ].map(comparable).filter(Boolean);
-}
-
 function studentBelongsToClass(student = {}, klass = {}) {
+  const language = comparable(klass.language) === "swahili" ? "swahili" : "german";
+  const primary = comparable(student.program || "german");
+  const placement = primary === language
+    ? student
+    : comparable(student.secondaryProgram) === language ? student.coursePlacements?.[language] : null;
+  if (!placement) return false;
   const values = new Set(classValues(klass));
-  return studentClassValues(student).some((value) => values.has(value));
+  return [
+    placement.classId, placement.classRecordId, placement.assignedClassId,
+    placement.className, placement.class, placement.group, placement.groupId,
+    placement.groupName, placement.cohort, placement.cohortId, placement.cohortName,
+  ].map(comparable).some((value) => values.has(value));
 }
 
 function isActiveStudent(student = {}) {
@@ -402,28 +404,12 @@ function activeClassRoster(students = [], klass = {}) {
     });
 }
 
-function buildCheckinUrl({ klass = {}, session = {}, students = [], baseUrl = DEFAULT_CHECKIN_BASE_URL } = {}) {
+function buildCheckinUrl({ klass = {}, session = {}, baseUrl = DEFAULT_CHECKIN_BASE_URL } = {}) {
   const classId = text(klass.id || klass.classId || klass.classRecordId);
   const sessionId = text(session.id);
   if (!classId || !sessionId) return "";
 
-  const timezone = text(klass.timezone) || TZ;
-  const roster = activeClassRoster(students, klass);
-  const expectedNames = roster
-    .map((student) => text(student.name || student.displayName))
-    .filter(Boolean)
-    .slice(0, 15);
-  const params = new URLSearchParams({
-    classId,
-    sessionId,
-    date: isoDate(sessionStart(session), timezone),
-    sessionLabel: text(session.topic || klass.name || klass.className || "Live class"),
-    assignmentId: assignmentIds(session)[0] || "",
-    startTime: formatTime24(sessionStart(session), timezone),
-    endTime: formatTime24(sessionEnd(session), timezone),
-    expectedStudents: expectedNames.join(", "),
-    expectedCount: String(roster.length),
-  });
+  const params = new URLSearchParams({ classId, sessionId });
   return `${text(baseUrl).replace(/\/+$/, "") || DEFAULT_CHECKIN_BASE_URL}/checkin?${params.toString()}`;
 }
 
@@ -453,7 +439,7 @@ function buildReminderMessage({ student, klass, session, leadMin, zoom = {}, che
   const lines = [
     `Hello ${name},`,
     "",
-    `Your ${className} class starts in ${leadMin} minutes.`,
+    leadMin ? `Your ${className} class starts in ${leadMin} minutes.` : `This is a reminder for your ${className} class.`,
     "",
     `Topic: ${topicForSession(session)}`,
     ...(assignments.length ? [`Assignment${assignments.length === 1 ? "" : "s"}: ${assignments.join(" + ")}`] : []),
@@ -475,12 +461,12 @@ function buildReminderMessage({ student, klass, session, leadMin, zoom = {}, che
   return lines.join("\n");
 }
 
-function rowForReminder({ klass, student, session, leadMin, message, checkinUrl = "" } = {}) {
+function rowForReminder({ klass, student, session, leadMin, message, checkinUrl = "", zoom = {} } = {}) {
   return {
     announcement: message,
     class: text(klass.name || klass.className || klass.classId || klass.id),
     date: isoDate(sessionStart(session), text(klass.timezone) || TZ),
-    link: "",
+    link: text(zoom.url),
     checkin_link: checkinUrl,
     checkin_link_label: checkinUrl ? "Check In Now" : "",
     topic: `Class reminder — ${topicForSession(session)}`,
@@ -523,7 +509,7 @@ async function postRows(config, rows, fetchImpl = fetch) {
 function sendId({ classId, session, leadMin }) {
   return crypto.createHash("sha256").update([
     text(classId), officialSessionId(session),
-    sessionStart(session)?.toISOString() || "", `${leadMin}min`,
+    leadMin === "tutor" ? "" : sessionStart(session)?.toISOString() || "", String(leadMin === "tutor" ? leadMin : `${leadMin}min`),
   ].join("::")).digest("hex");
 }
 
@@ -532,9 +518,7 @@ async function reserveSend({ db, admin, klass, session, leadMin, now }) {
   const ref = db.collection("classReminderSends").doc(sendId({ classId, session, leadMin }));
   const sessionRef = db.collection("classSessions").doc(text(session.id));
   const expectedStart = sessionStart(session)?.toISOString() || "";
-  let reserved = false;
-
-  await db.runTransaction(async (transaction) => {
+  const reserved = await db.runTransaction(async (transaction) => {
     const [sendSnap, currentSessionSnap] = await Promise.all([
       transaction.get(ref), transaction.get(sessionRef),
     ]);
@@ -548,7 +532,6 @@ async function reserveSend({ db, admin, klass, session, leadMin, now }) {
       && updated && now.getTime() - updated.getTime() < PROCESSING_STALE_MS;
     if (comparable(existing.status) === "sent" || processingFresh) return;
 
-    reserved = true;
     transaction.set(ref, {
       classId,
       className: text(klass.name || klass.className || klass.classId),
@@ -557,14 +540,15 @@ async function reserveSend({ db, admin, klass, session, leadMin, now }) {
       sessionStartsAt: expectedStart,
       topic: topicForSession(session),
       assignmentIds: assignmentIds(session),
-      leadMinutes: leadMin,
-      reminderType: `${leadMin}min`,
+      leadMinutes: leadMin === "tutor" ? null : leadMin,
+      reminderType: leadMin === "tutor" ? "tutor_copy" : `${leadMin}min`,
       status: "processing",
       attemptCount: Number(existing.attemptCount || 0) + 1,
       processingStartedAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       ...(sendSnap.exists ? {} : { createdAt: admin.firestore.FieldValue.serverTimestamp() }),
     }, { merge: true });
+    return true;
   });
   return reserved ? ref : null;
 }
@@ -617,6 +601,29 @@ function classReminderEnabled(klass = {}) {
   return !["off", "disabled"].includes(comparable(klass.classReminderEmailMode));
 }
 
+async function sendTutorCopy({ admin, db, klass, session, config, now, fetchImpl, zoom, checkinUrl }) {
+  const uid = text(klass.tutorId);
+  if (!uid || uid.includes("/")) return;
+  const staff = (await db.collection("falowenStaffAccess").doc(uid).get()).data();
+  const language = comparable(klass.language) === "swahili" ? "swahili" : "german";
+  if (!staff?.active || staff.staffRole !== "teacher" || !staff.languages?.includes(language) || !text(staff.email)) return;
+  const ref = await reserveSend({ db, admin, klass, session, leadMin: "tutor", now });
+  if (!ref) return;
+  const timestamp = admin.firestore.FieldValue.serverTimestamp();
+  try {
+    const message = buildReminderMessage({ student: staff, klass, session, zoom, checkinUrl });
+    await postRows(resolveClassWebhookConfig(klass, config), [{
+      ...rowForReminder({ klass, student: staff, session, message, checkinUrl, zoom }),
+      topic: `Teacher copy — ${topicForSession(session)}`,
+      reminder_lead_minutes: "",
+    }], fetchImpl);
+    await ref.set({ status: "sent", sentAt: timestamp, updatedAt: timestamp, recipientCount: 1 }, { merge: true });
+  } catch (error) {
+    await ref.set({ status: "failed", updatedAt: timestamp, lastError: error.message }, { merge: true });
+    throw error;
+  }
+}
+
 async function processReminder({ admin, db, due, classes, students, config, now, fetchImpl, runtimeConfig = {} }) {
   const { leadMin } = due;
   let { session } = due;
@@ -655,12 +662,11 @@ async function processReminder({ admin, db, due, classes, students, config, now,
   const checkinUrl = buildCheckinUrl({
     klass,
     session,
-    students,
     baseUrl: resolveCheckinBaseUrl(runtimeConfig),
   });
   const rows = recipients.map((student) => {
-    const message = buildReminderMessage({ student, klass, session, leadMin, zoom, checkinUrl });
-    return rowForReminder({ klass, student, session, leadMin, message, checkinUrl });
+    const message = buildReminderMessage({ student, klass, session, leadMin: due.manual ? undefined : leadMin, zoom, checkinUrl });
+    return rowForReminder({ klass, student, session, leadMin, message, checkinUrl, zoom });
   });
   const timestamp = admin.firestore.FieldValue.serverTimestamp();
 
@@ -676,18 +682,29 @@ async function processReminder({ admin, db, due, classes, students, config, now,
       checkinLinkIncluded: Boolean(checkinUrl),
       lastError: "",
     }, { merge: true });
-    await db.collection("classes").doc(klass.id).set({
-      classReminderEmailLastRunAt: timestamp,
-      classReminderEmailLastSentAt: timestamp,
-      classReminderEmailLastStatus: "sent",
-      classReminderEmailLastSentCount: rows.length,
-      classReminderEmailLastSessionId: text(session.id),
-      classReminderEmailLastTopic: topicForSession(session),
-      classReminderEmailLastCheckinUrl: checkinUrl,
-      classReminderEmailLastCheckinIncluded: Boolean(checkinUrl),
-      classReminderEmailLastError: "",
-    }, { merge: true });
-    return { sent: rows.length, skipped: "", checkinUrl };
+    try {
+      await db.collection("classes").doc(klass.id).set({
+        classReminderEmailLastRunAt: timestamp,
+        classReminderEmailLastSentAt: timestamp,
+        classReminderEmailLastStatus: "sent",
+        classReminderEmailLastSentCount: rows.length,
+        classReminderEmailLastSessionId: text(session.id),
+        classReminderEmailLastTopic: topicForSession(session),
+        classReminderEmailLastCheckinUrl: checkinUrl,
+        classReminderEmailLastCheckinIncluded: Boolean(checkinUrl),
+        classReminderEmailLastError: "",
+      }, { merge: true });
+    } catch (diagnosticError) {
+      console.warn("class_reminder_success_diagnostic_write_failed", { classId: klass.id, sessionId: session.id, message: diagnosticError.message });
+    }
+    let tutorCopyFailed = false;
+    try {
+      await sendTutorCopy({ admin, db, klass, session, config, now, fetchImpl, zoom, checkinUrl });
+    } catch {
+      tutorCopyFailed = true;
+      console.warn("class_reminder_tutor_copy_failed", { classId: klass.id, sessionId: session.id });
+    }
+    return { sent: rows.length, skipped: "", checkinUrl, tutorCopyFailed };
   } catch (error) {
     const message = error?.message || "Class reminder email delivery failed";
     await sendRef.set({ status: "failed", failedAt: timestamp, updatedAt: timestamp, lastError: message }, { merge: true });
@@ -797,6 +814,17 @@ async function loadStudentsForDueClasses(db, classes = []) {
       for (const field of ["className", "class", "group", "groupName", "cohort", "cohortName"]) {
         plans.push([field, value]);
       }
+    }
+  }
+
+  // Secondary placements use the same class IDs and names as primary placements.
+  for (const klass of classes) {
+    const language = comparable(klass.language) === "swahili" ? "swahili" : "german";
+    for (const id of new Set([klass.id, klass.classId, klass.classRecordId].map(text).filter(Boolean))) {
+      plans.push([`coursePlacements.${language}.classId`, id], [`coursePlacements.${language}.classRecordId`, id]);
+    }
+    for (const name of new Set([klass.name, klass.className].map(text).filter(Boolean))) {
+      plans.push([`coursePlacements.${language}.className`, name]);
     }
   }
 
@@ -918,8 +946,30 @@ function createClassSessionReminderEmailJob({ admin, db, onSchedule, runtimeConf
   }, async () => runClassSessionReminderEmailJob({ admin, db, runtimeConfig }));
 }
 
+async function sendManualClassReminder({ admin, db, classId, sessionId, runtimeConfig }) {
+  const [classDoc, sessionDoc] = await Promise.all([
+    db.collection("classes").doc(classId).get(),
+    db.collection("classSessions").doc(sessionId).get(),
+  ]);
+  if (!classDoc.exists || !sessionDoc.exists) throw new Error("Class or session not found.");
+  const klass = { ...classDoc.data(), id: classId };
+  const session = { ...sessionDoc.data(), id: sessionId };
+  if (text(session.classRecordId || session.classId) !== classId) throw new Error("Session does not belong to this class.");
+  const now = new Date();
+  if (isSuppressedSession(session) || sessionEnd(session)?.getTime() <= now.getTime()) throw new Error("This session can no longer receive a reminder.");
+  const students = await loadStudentsForDueClasses(db, [klass]);
+  return processReminder({
+    admin, db, due: { session, leadMin: DEFAULT_LEADS[0], manual: true }, classes: [klass], students,
+    config: resolveWebhookConfig(runtimeConfig), now, runtimeConfig,
+  });
+}
+
 module.exports = {
   createClassSessionReminderEmailJob,
+  sendManualClassReminder,
+  loadStudentsForDueClasses,
+  studentBelongsToClass,
+  isActiveStudent,
   runClassSessionReminderEmailJob,
   _test: {
     activeClassRoster,

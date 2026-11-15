@@ -1,3 +1,4 @@
+import AssignedTutorSelect from "./AssignedTutorSelect.jsx";
 import { useEffect, useState } from "react";
 import { useToast } from "../context/ToastContext.jsx";
 import { buildClassEndDateMismatchWarning } from "../utils/classEndDateWarning.js";
@@ -168,7 +169,7 @@ export default function ClassEditorCard({ klass, onSaved }) {
       <label>Tuition (GHS)<input type="number" min={form.language === "Swahili" ? "0" : "1"} value={form.tuitionGhs} onChange={(event) => patch({ tuitionGhs: Number(event.target.value) })} /></label>
       <label>Status<select value={form.status} onChange={(event) => patch({ status: event.target.value })}>{["draft", "upcoming", "active", "graduated", "archived"].map((status) => <option key={status}>{status}</option>)}</select></label>
       <label>Timezone<input value={form.timezone} onChange={(event) => patch({ timezone: event.target.value })} /></label>
-      <label>Tutor ID<input value={form.tutorId} onChange={(event) => patch({ tutorId: event.target.value })} /></label>
+      <AssignedTutorSelect language={klass.language} value={form.tutorId} onChange={(tutorId) => patch({ tutorId })} />
       <label>Zoom profile ID<input value={form.zoomProfileId} onChange={(event) => patch({ zoomProfileId: event.target.value })} /></label>
     </div>
     <strong>Weekly teaching times</strong>

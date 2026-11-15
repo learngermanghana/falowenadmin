@@ -65,6 +65,9 @@ if (!source.includes("function buildChapterLinks")) {
     '',
     'function buildChapterLinks({ klass = {}, session = {}, baseUrl = DEFAULT_FALOWEN_LEARNING_BASE_URL } = {}) {',
     '  const root = text(baseUrl).replace(/\\/+$/, "") || DEFAULT_FALOWEN_LEARNING_BASE_URL;',
+    '  if (comparable(klass.language) === "swahili") {',
+    '    return [{ chapter: "Swahili", label: "Open Swahili Course Book", url: `${root}/swahili` }];',
+    '  }',
     '  const fallbackLevel = text(klass.levelId || klass.level).toUpperCase();',
     '  const day = resolveSessionDay(session);',
     '  const seen = new Set();',
@@ -127,7 +130,7 @@ if (!source.includes("Attendance Check-in")) {
     '  const lines = [',
     '    `Hello ${name},`,',
     '    "",',
-    '    `Your ${className} class starts in ${leadMin} minutes.`,',
+    '    leadMin ? `Your ${className} class starts in ${leadMin} minutes.` : `This is a reminder for your ${className} class.`,',
     '    "",',
     '    `Topic: ${topicForSession(session)}` ,',
     '    ...(assignments.length ? [`Assignment${assignments.length === 1 ? "" : "s"}: ${assignments.join(" + ")}`] : []),',
@@ -163,8 +166,8 @@ if (!source.includes("chapter_links: JSON.stringify(chapterLinks),")) {
     '    announcement: message,',
     '    class: text(klass.name || klass.className || klass.classId || klass.id),',
     '    date: isoDate(sessionStart(session), text(klass.timezone) || TZ),',
-    '    link: text(zoom.url || DEFAULT_CLASS_REMINDER_ZOOM.joinUrl),',
-    '    button_label: text(zoom.url || DEFAULT_CLASS_REMINDER_ZOOM.joinUrl) ? "Join Zoom" : "",',
+    '    link: text(zoom.url),',
+    '    button_label: text(zoom.url) ? "Join Zoom" : "",',
     '    checkin_link: checkinUrl,',
     '    checkin_link_label: checkinUrl ? "Check In Now" : "",',
     '    course_link: chapterLinks[0]?.url || "",',
@@ -195,8 +198,8 @@ if (!source.includes("chapter_links: JSON.stringify(chapterLinks),")) {
 if (!source.includes("const chapterLinks = buildChapterLinks")) {
   const before = [
     '  const rows = recipients.map((student) => {',
-    '    const message = buildReminderMessage({ student, klass, session, leadMin, zoom, checkinUrl });',
-    '    return rowForReminder({ klass, student, session, leadMin, message, checkinUrl });',
+    '    const message = buildReminderMessage({ student, klass, session, leadMin: due.manual ? undefined : leadMin, zoom, checkinUrl });',
+    '    return rowForReminder({ klass, student, session, leadMin, message, checkinUrl, zoom });',
     '  });',
   ].join("\n");
   const after = [
@@ -206,7 +209,7 @@ if (!source.includes("const chapterLinks = buildChapterLinks")) {
     '    baseUrl: resolveReminderLearningBaseUrl(runtimeConfig),',
     '  });',
     '  const rows = recipients.map((student) => {',
-    '    const message = buildReminderMessage({ student, klass, session, leadMin, zoom, checkinUrl, chapterLinks });',
+    '    const message = buildReminderMessage({ student, klass, session, leadMin: due.manual ? undefined : leadMin, zoom, checkinUrl, chapterLinks });',
     '    return rowForReminder({ klass, student, session, leadMin, message, checkinUrl, zoom, chapterLinks });',
     '  });',
   ].join("\n");
@@ -230,7 +233,7 @@ const required = [
   "new URLSearchParams({ classId, sessionId })",
   "Attendance Check-in",
   "Open today’s Course Book:",
-  'button_label: text(zoom.url || DEFAULT_CLASS_REMINDER_ZOOM.joinUrl) ? "Join Zoom" : "",',
+  'button_label: text(zoom.url) ? "Join Zoom" : "",',
   "chapter_links: JSON.stringify(chapterLinks),",
   "const chapterLinks = buildChapterLinks",
   "/^(tutorial|orientation|complete)$/i",

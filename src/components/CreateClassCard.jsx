@@ -1,3 +1,4 @@
+import AssignedTutorSelect from "./AssignedTutorSelect.jsx";
 import { useEffect, useMemo, useState } from "react";
 import { createClassCohort } from "../services/liveClassService.js";
 import { calculateClassEndDate, validateIanaTimezone } from "../utils/liveClassScheduling.js";
@@ -132,12 +133,12 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
       </label>
       <label>Language<select value={form.language} onChange={(event) => {
         setNameSelectionSource("auto");
-        patch({ language: event.target.value, levelId: "A1", name: "", endDate: "" }, true);
+        patch({ language: event.target.value, levelId: "A1", name: "", tutorId: "", endDate: "" }, true);
       }}><option>German</option><option>Swahili</option></select></label>
       <label>Level<select value={form.levelId} onChange={(event) => changeLevel(event.target.value)}>{(form.language === "Swahili" ? ["A1"] : ["A1", "A2", "B1", "B2", "C1"]).map((level) => <option key={level}>{level}</option>)}</select></label>
       <label>Start date<input required type="date" value={form.startDate} onChange={(event) => patch({ startDate: event.target.value }, true)} /></label>
       <label>Graduation / end date<input required type="date" value={form.endDate} readOnly /></label>
-      <label>Tutor ID<input value={form.tutorId} onChange={(event) => patch({ tutorId: event.target.value })} /></label><label>Zoom profile ID<input value={form.zoomProfileId} onChange={(event) => patch({ zoomProfileId: event.target.value })} /></label>
+      <AssignedTutorSelect language={form.language} value={form.tutorId} onChange={(tutorId) => patch({ tutorId })} /><label>Zoom profile ID<input value={form.zoomProfileId} onChange={(event) => patch({ zoomProfileId: event.target.value })} /></label>
       <label>Status<select value={form.status} onChange={(event) => patch({ status: event.target.value })}>{["draft", "upcoming", "active", "graduated"].map((status) => <option key={status}>{status}</option>)}</select></label><label>Timezone<input required value={form.timezone} onChange={(event) => patch({ timezone: event.target.value })} /></label>
     </div>
 

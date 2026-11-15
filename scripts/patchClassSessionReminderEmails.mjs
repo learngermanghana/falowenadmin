@@ -45,7 +45,8 @@ if (!workerSource.includes("const DEFAULT_CLASS_REMINDER_ZOOM")) {
 if (!workerSource.includes("chatUrl: DEFAULT_CLASS_REMINDER_ZOOM.chatUrl")) {
   const zoomDetailsPattern = /function zoomDetails\(klass = \{\}, profile = \{\}\) \{[\s\S]*?\n\}\n\nfunction buildReminderMessage/;
   const fixedZoomDetails = [
-    "function zoomDetails() {",
+    "function zoomDetails(klass = {}, profile = {}) {",
+    '  if (comparable(klass.language) === "swahili") return configuredZoomDetails(klass, profile);',
     "  return {",
     "    url: DEFAULT_CLASS_REMINDER_ZOOM.joinUrl,",
     "    chatUrl: DEFAULT_CLASS_REMINDER_ZOOM.chatUrl,",
@@ -58,7 +59,9 @@ if (!workerSource.includes("chatUrl: DEFAULT_CLASS_REMINDER_ZOOM.chatUrl")) {
     "function buildReminderMessage",
   ].join("\n");
   if (!zoomDetailsPattern.test(workerSource)) throw new Error("Could not find the class reminder Zoom details function.");
-  workerSource = workerSource.replace(zoomDetailsPattern, fixedZoomDetails);
+  workerSource = workerSource.replace(zoomDetailsPattern, (match) =>
+    match.replace("function zoomDetails(", "function configuredZoomDetails(")
+      .replace("function buildReminderMessage", fixedZoomDetails));
 }
 
 if (!workerSource.includes('lines.push("", "Meeting chat link", zoom.chatUrl);')) {
@@ -76,11 +79,6 @@ if (!workerSource.includes('lines.push("", "Meeting chat link", zoom.chatUrl);')
   ].join("\n");
   if (!joinBlockPattern.test(workerSource)) throw new Error("Could not find the class reminder Zoom message block.");
   workerSource = workerSource.replace(joinBlockPattern, fixedJoinBlock);
-}
-
-if (!workerSource.includes("link: text(DEFAULT_CLASS_REMINDER_ZOOM.joinUrl),")) {
-  if (!workerSource.includes('    link: "",')) throw new Error("Could not find the class reminder announcement link field.");
-  workerSource = workerSource.replace('    link: "",', "    link: text(DEFAULT_CLASS_REMINDER_ZOOM.joinUrl),");
 }
 
 const attendanceMetadataHelpers = `function mergeAttendanceReminderMetadata(session = {}, attendanceSession = {}) {
@@ -262,7 +260,7 @@ const checks = [
   [worker.includes("https://us06web.zoom.us/j/6886900916?pwd=bEdtR3RLQ2dGTytvYzNrMUV3eFJwUT09"), "Class reminder Zoom join link is missing."],
   [worker.includes("https://us06web.zoom.us/launch/jc/6886900916"), "Class reminder Zoom chat link is missing."],
   [worker.includes("6886900916@zoomcrc.com"), "Class reminder Zoom SIP address is missing."],
-  [worker.includes("link: text(DEFAULT_CLASS_REMINDER_ZOOM.joinUrl),"), "Announcement row Zoom link is missing."],
+  [worker.includes("link: text(zoom.url),"), "Announcement row Zoom link is missing."],
   [worker.includes("runAutoOpenCheckins"), "Automatic 30-minute attendance opener is missing."],
   [worker.includes("baseUrl: resolveCheckinBaseUrl(runtimeConfig)"), "Runtime check-in base URL is not threaded into reminder delivery."],
 ];

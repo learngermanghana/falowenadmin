@@ -275,3 +275,19 @@ New Swahili classes calculate their end date from 20 meetings on the selected
 weekdays, excluding school closures when saved. Existing Swahili schedules retain
 their configured end date. Attendance uses the same class records as Live
 Classes and offers a language filter for class cards and the tracker.
+
+### Assigned tutors
+
+Create Class and Class & settings use the Staff Workspace directory to assign
+an active teacher for the class language. The class stores the teacher's
+Firebase UID in `tutorId`. Teachers open Attendance to see their assigned
+classes. The assigned attendance API checks the teacher's active staff record,
+language, class assignment and session ownership before loading or changing a
+session. Timetable edits and the manual class reminder remain administrator
+actions.
+
+The backup reminder uses the scheduled worker's delivery reservation and roster,
+including active secondary enrolments. An active assigned tutor gets a separate
+teacher copy, with its own delivery reservation for the session. The existing
+Swahili result BCC is configured separately. Deploy the Firebase functions
+before enabling the updated Admin UI.

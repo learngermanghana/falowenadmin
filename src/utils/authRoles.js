@@ -8,14 +8,20 @@ export function getAdminRole(claims = {}) {
   return null;
 }
 
+export function isTutorAttendance(pathname) {
+  return pathname === "/attendance" || /^\/attendance\/session\/[^/]+$/.test(pathname);
+}
+
 export function isTeachingWorkspace(pathname) {
   return pathname === "/marking" || pathname === "/teaching-slides" || pathname.startsWith("/teaching-slides/");
 }
 
-export function getPostLoginPath(from, role) {
+export function getPostLoginPath(from, role, claims = {}) {
   const path = from?.pathname || "";
-  const fallback = role === "staff" ? "/marking" : "/";
+  const swahiliTeacher = claims.staffRole === "teacher"
+    && claims.staffLanguages?.includes("swahili") && !claims.staffLanguages.includes("german");
+  const fallback = role === "staff" ? (swahiliTeacher ? "/attendance" : "/marking") : "/";
   if (!path.startsWith("/") || path.startsWith("//") || path === "/login") return fallback;
-  if (role === "staff" && !isTeachingWorkspace(path)) return fallback;
+  if (role === "staff" && !isTeachingWorkspace(path) && !isTutorAttendance(path)) return fallback;
   return `${path}${from.search || ""}${from.hash || ""}`;
 }
