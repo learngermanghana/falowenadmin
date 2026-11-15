@@ -4,7 +4,7 @@ import { getCourseSessionCount } from "../data/courseSessionGroups.js";
 
 export const CLASS_STATUSES = ["draft", "upcoming", "active", "graduated", "archived"];
 export const SESSION_STATUSES = ["scheduled", "live", "completed", "cancelled", "rescheduled"];
-const DAY_INDEX = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
+export const SWAHILI_A1_PLANNED_SESSION_COUNT = 20;\nconst DAY_INDEX = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
 let cachedSchoolClosureDates = new Set();
 
 function normalizeIsoDate(value) {
@@ -128,7 +128,7 @@ function resolveSessionLimit(levelId, totalSessions) {
 
 export function calculateClassEndDate({ levelId, language, startDate, scheduleRules = [], excludedDates }) {
   if (language === "Swahili" || !/^\d{4}-\d{2}-\d{2}$/.test(String(startDate || ""))) return "";
-  const sessionCount = getCourseDictionarySessionCount(levelId);
+  const sessionCount = language === "Swahili"\n    ? (String(levelId || "").toUpperCase() === "A1" ? SWAHILI_A1_PLANNED_SESSION_COUNT : 0)\n    : getCourseDictionarySessionCount(levelId);
   if (!sessionCount) return "";
   const rules = normalizeScheduleRules(scheduleRules);
   if (!rules.length) return "";
@@ -167,7 +167,7 @@ export function generateSessionOccurrences({
   if (rules.length === 0) throw new Error("at least one weekly schedule rule is required");
   assertNoDuplicateScheduleRules(rules);
 
-  const sessionLimit = language === "Swahili" ? Number.POSITIVE_INFINITY : resolveSessionLimit(levelId, totalSessions);
+  const sessionLimit = language === "Swahili"\n    ? (String(levelId || "").toUpperCase() === "A1" ? SWAHILI_A1_PLANNED_SESSION_COUNT : Number.POSITIVE_INFINITY)\n    : resolveSessionLimit(levelId, totalSessions);
   const excluded = toExcludedDateSet(excludedDates);
   const sessions = [];
   const finalDate = new Date(`${endDate}T00:00:00.000Z`);
