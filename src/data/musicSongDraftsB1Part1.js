@@ -79,9 +79,9 @@ export const MUSIC_SONG_DRAFTS_B1_PART1 = Object.freeze([
   },
   {
     "assignmentKey": "B1-4.12",
-    "title": "Der falsche Weg im Wald",
+    "title": "Ein Umweg zum Ziel",
     "musicStyle": "Soft Pop-Rock, 96 BPM: light pop-rock with clean electric guitars, soft live drum kit, gentle bass and a singable, uplifting hook. One lead singer, clear German phrases, quiet instrumental mix.",
-    "lyrics": "[Verse 1]\nWir wandern am Samstag durch den Wald.\nDie Sonne scheint und alles sieht einfach aus.\nNach einer Stunde fehlt die Markierung,\nund plötzlich wissen wir nicht mehr weiter.\n\n[Chorus]\nManchmal führt ein Umweg zum Ziel,\nwenn wir ruhig bleiben und nachdenken.\nZusammen finden wir den richtigen Weg.\n\n[Verse 2]\nWir setzen uns hin und öffnen die Karte.\nBen entdeckt einen Weg entlang des Bachs.\nObwohl wir etwas später ankommen,\nsehen wir unterwegs einen schönen Wasserfall.\n\n[Chorus]\nManchmal führt ein Umweg zum Ziel,\nwenn wir ruhig bleiben und nachdenken.\nZusammen finden wir den richtigen Weg.\n\n[Outro]\nAm Abend erzählen wir lachend davon.\nDas Abenteuer vergessen wir nicht.\nBei Falowen kann ich sogar Abenteuer gut erzählen.",
+    "lyrics": "[Verse 1]\nWir wandern am Samstag durch den Wald.\nDie Sonne scheint und alles sieht einfach aus.\nNach einer Stunde fehlt die Markierung,\nund plötzlich wissen wir nicht mehr weiter.\n\n[Chorus]\nManchmal führt ein Umweg zum Ziel,\nwenn wir ruhig bleiben und nachdenken.\nZusammen finden wir den richtigen Weg.\nZusammen, richtigen Weg.\n\n[Verse 2]\nWir setzen uns hin und öffnen die Karte.\nBen entdeckt einen Weg entlang des Bachs.\nObwohl wir etwas später ankommen,\nsehen wir unterwegs einen schönen Wasserfall.\n\n[Chorus]\nManchmal führt ein Umweg zum Ziel,\nwenn wir ruhig bleiben und nachdenken.\nZusammen finden wir den richtigen Weg.\nZusammen finden wir den richtigen Weg.\n\n[Outro]\nAm Abend erzählen wir lachend davon.\nDas Abenteuer vergessen wir nicht.\nBei Falowen kann ich sogar Abenteuer gut erzählen.\nZusammen, richtigen Weg.",
     "genre": "Soft Pop-Rock"
   },
   {
