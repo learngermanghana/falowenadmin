@@ -88,3 +88,12 @@ test("page retains original single-poster mode and shows a campaign pack", () =>
   assert.match(page, /<QRCodeCanvas/);
   assert.match(page, /downloadBrowserBlob\(makeCampaignZip/);
 });
+
+test("Swahili campaigns use enquiry wording and Swahili captions", () => {
+  const klass = { ...upcoming, language: "Swahili", startDate: "2026-11-28" };
+  const slides = createClassCampaign(klass, { ...data, className: "Kiswahili A1" }, today);
+  assert.equal(slides.find(slide => slide.id === "registration").data.cta, "ENQUIRE NOW");
+  assert.equal(slides.find(slide => slide.id === "countdown").data.eyebrow, "NEXT SWAHILI CLASS");
+  assert.ok(slides.every(slide => /#LearnSwahili/.test(slide.caption)));
+  assert.ok(slides.every(slide => !/German|Register:/.test(slide.caption)));
+});

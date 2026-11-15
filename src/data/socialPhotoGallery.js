@@ -1,7 +1,10 @@
-// Twenty African-centred, source-credited stock photos for Falowen's Ghana-based audience.
+// African-centred illustrative photos for Falowen’s education campaigns.
 // Keep the images illustrative: pictured people are not presented as actual Falowen learners or tutors.
 // Pexels free-use photography is incorporated into Falowen-branded designs, not resold alone.
 export const SOCIAL_PHOTO_GALLERY = Object.freeze([
+  { id: "accra-language-class", title: "Language class in Accra", category: "Ghana & Africa", path: "/social-photos/accra-language-class.webp", tags: "Ghana Accra African adult learning classroom tutor" },
+  { id: "accra-study-group", title: "Group study in Accra", category: "Students", path: "/social-photos/accra-study-group.webp", tags: "Ghana Accra African adult students classroom study partners" },
+  { id: "ghana-online-class", title: "Online lesson from home", category: "Online learning", path: "/social-photos/ghana-online-class.webp", tags: "Ghana African adult student study online home headphones" },
   {"id":"accra-tech-class","title":"Accra learning workshop","category":"Ghana & Africa","photoId":33920044,"photographer":"Zeal Creative Studios","tags":"Ghana Accra African adult students computer skills class training","source":"https://www.pexels.com/photo/focused-students-in-it-workshop-in-accra-33920044/"},
   {"id":"african-classroom-notes","title":"Students taking notes","category":"Ghana & Africa","photoId":10614241,"photographer":"Unique Digitals","tags":"Africa African students learning classroom university notes adult education","source":"https://www.pexels.com/photo/people-sitting-on-chair-inside-room-10614241/"},
   {"id":"african-discussion","title":"Learning in class","category":"Ghana & Africa","photoId":10614242,"photographer":"Unique Digitals","tags":"Africa African class lecture young adults studying classroom","source":"https://www.pexels.com/photo/a-people-sitting-in-the-classroom-10614242/"},
@@ -29,6 +32,7 @@ export const SOCIAL_PHOTO_LICENSE_URL = "https://www.pexels.com/license";
 
 // Use original Pexels IDs, with no API key, backend endpoint or paid image service.
 export function socialPhotoImageUrl(photo, width = 1100) {
+  if (photo?.path) return photo.path;
   if (!photo || !Number.isSafeInteger(Number(photo.photoId))) return "";
   const safeWidth = Math.min(1800, Math.max(240, Math.round(Number(width) || 1100)));
   return "https://images.pexels.com/photos/" + photo.photoId + "/pexels-photo-" + photo.photoId +

@@ -7,13 +7,14 @@ import SocialVocabularyCreator from "../components/SocialVocabularyCreator.jsx";
 import SocialAdsDictionary from "../components/SocialAdsDictionary.jsx";
 import SocialGermanChallenges from "../components/SocialGermanChallenges.jsx";
 import SocialPhotoGallery from "../components/SocialPhotoGallery.jsx";
+import { SOCIAL_PHOTO_GALLERY } from "../data/socialPhotoGallery.js";
 import SocialMusicPicker, { EMPTY_SOCIAL_MUSIC } from "../components/SocialMusicPicker.jsx";
 import { chooseSocialVideoFormat } from "../utils/socialMp4Export.js";
 import { SOCIAL_VIDEO_ASPECTS, SOCIAL_VIDEO_QUALITIES, socialVideoDimensions, recordSocialPosterVideo } from "../utils/socialVideoFormats.js";
 import { QRCodeCanvas } from "qrcode.react";
 import {
   CAMPAIGN_FORMATS, campaignClassEligibility, accraToday,
-  createClassCampaign, classCampaignManifest, isSafeCampaignUrl, makeCampaignZip,
+  createClassCampaign, classCampaignCaption, classCampaignManifest, isSafeCampaignUrl, makeCampaignZip,
 } from "../utils/socialClassCampaign.js";
 import "./SocialMediaPage.css";
 
@@ -23,7 +24,9 @@ const FORMATS = [
   { id: "story", label: "Story", width: 1080, height: 1920, hint: "Stories / Status" },
 ];
 
+const DEFAULT_CLASS_PHOTO = SOCIAL_PHOTO_GALLERY[0];
 const TEMPLATES = [
+  { id: "brochure", label: "Falowen Brochure", background: "#10332d", accent: "#f3d09a", soft: "#21574b", text: "#fff9ee", layout: "framed-photo" },
   { id: "academy", label: "Academy Blue", background: "#071a3a", accent: "#f8c84a", soft: "#12366f", text: "#ffffff", layout: "photo" },
   { id: "falowen", label: "Falowen Gradient", background: "#111827", accent: "#60a5fa", soft: "#1d4ed8", text: "#ffffff", layout: "photo" },
   { id: "gold", label: "Premium Gold", background: "#17120b", accent: "#f7c65a", soft: "#3a2c14", text: "#fffaf0", layout: "photo" },
@@ -134,18 +137,19 @@ function classSort(left, right) {
 
 function draftFromClass(klass = {}) {
   const level = textValue(klass.levelId, klass.level, klass.program);
-  const name = textValue(klass.name, klass.className, klass.title, level ? `${level} German Class` : "German Class");
+  const language = klass.language === "Swahili" ? "Swahili" : "German";
+  const name = textValue(klass.name, klass.className, klass.title, [level, language, "Class"].filter(Boolean).join(" "));
   const startDate = formatDate(klass.startDate);
   const endDate = formatShortDate(klass.endDate);
   const mode = textValue(klass.learningMode, klass.mode, klass.location);
-  const fee = formatFee(textValue(klass.tuitionGhs, klass.tuitionFee, klass.fee, klass.price));
+  const fee = formatFee(textValue(klass.tuitionGhs || "", klass.tuitionFee, klass.fee, klass.price));
   const classUrl = textValue(klass.classUrl, klass.registrationUrl, klass.url);
   const registerUrl = classUrl
     ? classUrl.startsWith("http") ? classUrl : `https://www.falowen.app${classUrl.startsWith("/") ? classUrl : `/${classUrl}`}`
     : "https://www.falowen.app/classes";
 
   return {
-    eyebrow: "LEARN GERMAN WITH US",
+    eyebrow: `LEARN ${language.toUpperCase()} WITH US`,
     className: name,
     level: level || "German A1–C1",
     startDate: startDate || "Starting soon",
@@ -153,7 +157,7 @@ function draftFromClass(klass = {}) {
     mode,
     fee,
     duration: endDate ? `Runs until ${endDate}` : "",
-    cta: "REGISTER NOW",
+    cta: language === "Swahili" ? "ENQUIRE NOW" : "REGISTER NOW",
     website: registerUrl,
     phone: textValue(klass.phone, klass.contactPhone, "0205706589"),
     footer: "Learn Language Education Academy • Powered by Falowen",
@@ -273,6 +277,25 @@ function drawBackground(ctx, width, height, template, photo, photoControls) {
     ctx.globalAlpha = 1;
   }
 
+  if (template.layout === "framed-photo" && photo) {
+    const panelWidth = width * Math.min(0.55, Math.max(0.32, Number(photoControls.width || 45) / 100));
+    const photoX = width - panelWidth;
+    const inset = width * 0.033;
+    const photoHeight = height - width * 0.31;
+    const frameX = photoX + inset;
+    const frameWidth = panelWidth - inset * 2;
+    ctx.save();
+    roundRect(ctx, frameX, inset, frameWidth, photoHeight, width * 0.045);
+    ctx.clip();
+    drawFocalCover(ctx, photo, frameX, inset, frameWidth, photoHeight, photoControls);
+    ctx.restore();
+    roundRect(ctx, frameX, inset, frameWidth, photoHeight, width * 0.045);
+    ctx.strokeStyle = template.accent;
+    ctx.lineWidth = Math.max(2, width * 0.002);
+    ctx.stroke();
+    return { photoX, panelWidth };
+  }
+
   if (photo) return drawPhotoPanel(ctx, width, height, template, photo, photoControls);
 
   ctx.globalAlpha = 0.09;
@@ -309,7 +332,7 @@ function drawBrand(ctx, width, data, template, pad, maxWidth) {
   ctx.fillStyle = template.id === "clean" ? "#ffffff" : template.background;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(pillText, pad + pillWidth / 2, pillY + pillHeight / 2 + 1);
+  ctx.fillText(pillText, pad + pillWidth / 2, pillY + pillHeight / 2 + 1, pillWidth - width * 0.022);
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
   return pillY + pillHeight + width * 0.055;
@@ -413,7 +436,7 @@ async function renderPoster(canvas, data, template, format, photoSrc, photoContr
   ctx.font = `800 ${Math.round(width * 0.024)}px Arial, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(data.cta || "REGISTER NOW", pad + buttonWidth / 2, buttonY + buttonHeight / 2 + 1);
+  ctx.fillText(data.cta || "REGISTER NOW", pad + buttonWidth / 2, buttonY + buttonHeight / 2 + 1, buttonWidth - width * 0.035);
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
 
@@ -517,8 +540,8 @@ export default function SocialMediaPage() {
   const [selectedClassId, setSelectedClassId] = useState("");
   const [templateId, setTemplateId] = useState(TEMPLATES[0].id);
   const [formatId, setFormatId] = useState(FORMATS[0].id);
-  const [photoSrc, setPhotoSrc] = useState("");
-  const [selectedGalleryId, setSelectedGalleryId] = useState("");
+  const [photoSrc, setPhotoSrc] = useState(DEFAULT_CLASS_PHOTO.path);
+  const [selectedGalleryId, setSelectedGalleryId] = useState(DEFAULT_CLASS_PHOTO.id);
   const [photoReading, setPhotoReading] = useState(false);
   const [photoControls, setPhotoControls] = useState(DEFAULT_PHOTO);
   const [loading, setLoading] = useState(true);
@@ -735,16 +758,8 @@ export default function SocialMediaPage() {
 
   const caption = useMemo(() => {
     if (campaignMode && selectedCampaign) return selectedCampaign.caption;
-    const parts = [
-      `German class registration is open: ${draft.className}.`,
-      draft.startDate ? `Starts: ${draft.startDate}.` : "",
-      draft.schedule ? `Schedule: ${draft.schedule}.` : "",
-      draft.mode ? `${draft.mode}.` : "",
-      draft.website ? `Register: ${draft.website}` : "",
-      "#LearnGerman #GermanInGhana #Falowen",
-    ].filter(Boolean);
-    return parts.join("\n");
-  }, [draft, campaignMode, selectedCampaign]);
+    return classCampaignCaption(selectedClass || {}, draft);
+  }, [draft, campaignMode, selectedCampaign, selectedClass]);
 
   const copyCaption = async () => {
     try {
@@ -879,7 +894,7 @@ export default function SocialMediaPage() {
             <summary>4. Poster design &amp; colors</summary>
             <div style={{ display: "grid", gridTemplateColumns: isNarrow ? "1fr" : "repeat(2, minmax(0, 1fr))", gap: 8 }}>
               {TEMPLATES.map((item) => (
-                <button key={item.id} type="button" onClick={() => setTemplateId(item.id)} style={{ minHeight: 76, borderRadius: 12, border: templateId === item.id ? `2px solid ${item.accent}` : "1px solid #cbd5e1", background: item.background, color: item.text, padding: 10, fontWeight: 800, textAlign: "left" }}>
+                <button key={item.id} type="button" aria-pressed={templateId === item.id} onClick={() => setTemplateId(item.id)} style={{ minHeight: 76, borderRadius: 12, border: templateId === item.id ? `2px solid ${item.accent}` : "1px solid #cbd5e1", background: item.background, color: item.text, padding: 10, fontWeight: 800, textAlign: "left" }}>
                   <span style={{ display: "block", width: 26, height: 5, borderRadius: 999, background: item.accent, marginBottom: 8 }} />
                   {item.label}
                 </button>
