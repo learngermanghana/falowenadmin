@@ -97,6 +97,7 @@ function normalizeFirestoreClass(docSnap) {
     level: data.level || levelId,
     courseLevel: data.courseLevel || levelId,
     languageLevel: data.languageLevel || levelId,
+    language: data.language || "",
     startDate: data.startDate || "",
     endDate: data.endDate || "",
     startsAt: data.startsAt || "",

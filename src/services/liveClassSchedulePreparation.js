@@ -21,7 +21,7 @@ export async function prepareLiveClassSchedule(payload = {}) {
   setSchedulingSchoolClosureDates(closureDates);
   const calculatedEndDate = calculateClassEndDate({ ...normalizedPayload, excludedDates: closureDates });
   const historicalMode = isHistoricalSchedulePayload(normalizedPayload);
-  const endDate = historicalMode
+  const endDate = historicalMode || normalizedPayload.language === "Swahili"
     ? String(normalizedPayload.endDate || calculatedEndDate || "").trim()
     : String(calculatedEndDate || "").trim();
 
@@ -48,6 +48,7 @@ export async function prepareLiveClassSchedule(payload = {}) {
       ...preparedPayload,
       excludedDates: relevantClosures,
     });
+    if (preparedPayload.language === "Swahili" && !occurrences.length) throw new Error("Choose dates that include at least one scheduled Swahili lesson.");
     integrity = assertTimetableIntegrity({
       klass: preparedPayload,
       sessions: occurrences,

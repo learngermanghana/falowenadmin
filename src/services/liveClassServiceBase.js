@@ -163,7 +163,10 @@ export async function createClassCohort(payload) {
   if (!name) throw new Error("Class name is required");
   if (!payload.startDate || !payload.endDate) throw new Error("Start and end dates are required");
 
-  const slug = String(payload.slug || slugifyClassName(name)).trim();
+  const language = payload.language === "Swahili" ? "Swahili" : "German";
+  if (language === "Swahili" && payload.levelId !== "A1") throw new Error("Select A1 for Swahili.");
+  const nameSlug = slugifyClassName(name);
+  const slug = String(payload.slug || (language === "Swahili" ? `swahili-${nameSlug}` : nameSlug)).trim();
   const duplicate = await getDocs(query(collection(db, "classes"), where("slug", "==", slug)));
   const duplicateDoc = duplicate.docs[0] || null;
   const existing = duplicateDoc ? { ...duplicateDoc.data(), id: duplicateDoc.id } : null;
@@ -180,6 +183,7 @@ export async function createClassCohort(payload) {
     id: classRef.id,
     slug,
     name,
+    language,
     levelId: String(payload.levelId || existing?.levelId || "").toUpperCase(),
     tutorId: String(payload.tutorId ?? existing?.tutorId ?? "").trim(),
     startDate: payload.startDate,
@@ -190,7 +194,7 @@ export async function createClassCohort(payload) {
     scheduleRules: payload.scheduleRules || existing?.scheduleRules || [],
     publicVisible: payload.publicVisible ?? existing?.publicVisible ?? true,
     registrationOpen: payload.registrationOpen ?? existing?.registrationOpen ?? true,
-    classUrl: buildClassUrl({ slug }),
+    classUrl: buildClassUrl({ slug, language }),
     classReminderEmailEnabled: existing?.classReminderEmailEnabled ?? true,
     classReminderEmailMode: existing?.classReminderEmailMode || "automatic",
     classReminderEmailLastStatus: existing?.classReminderEmailLastStatus || "waiting_for_first_session",
@@ -254,6 +258,7 @@ export async function rebuildClassSessionsFromSchedule(classId, classRecord = nu
     timezone: normalizedClass.timezone,
     scheduleRules: normalizedClass.scheduleRules,
     levelId: normalizedClass.levelId,
+    language: normalizedClass.language,
   });
   const existingSnap = await getDocs(query(collection(db, "classSessions"), where("classId", "==", classId)));
   const sessions = existingSnap.docs.map((item) => ({ ...item.data(), id: item.id }));
@@ -261,7 +266,7 @@ export async function rebuildClassSessionsFromSchedule(classId, classRecord = nu
     const snap = await getDoc(attendanceSessionRef(classId, session.id));
     return [session.id, snap.exists() ? { ...snap.data(), id: snap.id } : null];
   }));
-  const plan = buildRebuildClassSessionsPlan({ klass: normalizedClass, occurrences, sessions, attendanceBySessionId: new Map(attendanceEntries), buildCurriculumPatch });
+  const plan = buildRebuildClassSessionsPlan({ klass: normalizedClass, occurrences, sessions, attendanceBySessionId: new Map(attendanceEntries), buildCurriculumPatch: normalizedClass.language === "Swahili" ? null : buildCurriculumPatch });
   const batch = writeBatch(db);
   let created = 0; let refreshed = 0; let mapped = 0;
 
@@ -325,7 +330,7 @@ export async function generateClassSessions(classId, classRecord = null) {
 
   occurrences.forEach((occurrence, index) => {
     const existing = existingById.get(occurrence.id);
-    const curriculumPatch = buildCurriculumPatch(klass.levelId, index, existing || {}, { force: !existing });
+    const curriculumPatch = klass.language === "Swahili" ? null : buildCurriculumPatch(klass.levelId, index, existing || {}, { force: !existing });
     if (curriculumPatch) mapped += 1;
 
     if (existing) {
@@ -377,6 +382,7 @@ export async function listClassSessions(classId) {
 
 export async function syncClassCurriculum(classId, { force = false } = {}) {
   const [klass, sessions] = await Promise.all([loadClassRecord(classId), listClassSessions(classId)]);
+  if (klass.language === "Swahili") return { updated: 0, mapped: 0, total: sessions.length, availableCurriculumItems: 0 };
   const batch = writeBatch(db);
   let updated = 0;
   let mapped = 0;

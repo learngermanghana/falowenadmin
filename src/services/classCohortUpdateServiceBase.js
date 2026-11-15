@@ -148,7 +148,8 @@ export async function updateClassCohort(classId, payload) {
     throw new Error("This class has already started. Keep its original start date, level, and timezone. You can still change the weekly timetable for future sessions and extend the graduation date.");
   }
 
-  const tuitionGhs = Number(payload.tuitionGhs ?? current.tuitionGhs ?? TUITION[levelId] ?? 3000);
+  const swahili = current.language === "Swahili";
+  const tuitionGhs = Number(payload.tuitionGhs ?? current.tuitionGhs ?? (swahili ? 0 : TUITION[levelId] ?? 3000));
   const next = {
     ...current,
     id: classId,
@@ -163,7 +164,7 @@ export async function updateClassCohort(classId, payload) {
     status: String(payload.status || current.status || "upcoming").toLowerCase(),
     city: String(payload.city ?? current.city ?? cityFromName(name)).trim(),
     orientationDate: String(payload.orientationDate ?? current.orientationDate ?? "").trim(),
-    tuitionGhs: Number.isFinite(tuitionGhs) && tuitionGhs > 0 ? tuitionGhs : TUITION[levelId] || 3000,
+    tuitionGhs: Number.isFinite(tuitionGhs) && tuitionGhs > 0 ? tuitionGhs : swahili ? 0 : TUITION[levelId] || 3000,
     publicVisible: payload.publicVisible ?? current.publicVisible ?? true,
     registrationOpen: payload.registrationOpen ?? current.registrationOpen ?? true,
     archived: false,
@@ -199,7 +200,7 @@ export async function updateClassCohort(classId, payload) {
   occurrences.forEach((occurrence, index) => {
     if (toMillis(occurrence.startsAt) < nowMs || protectedIds.has(occurrence.id)) return;
     const existing = existingById.get(occurrence.id) || null;
-    const curriculum = curriculumFor(levelId, preservedCount + index, existing || {}, levelChanged || !existing);
+    const curriculum = curriculumFor(swahili ? "" : levelId, preservedCount + index, existing || {}, levelChanged || !existing);
     if (curriculum.assignmentIds.length) mapped += 1;
     const session = {
       ...(existing || {}),

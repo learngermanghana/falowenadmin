@@ -24,7 +24,7 @@ function classLevel(klass = {}) {
 
 function canRepairSchedule(klass = {}) {
   const status = normalize(klass.status).toLowerCase();
-  if (klass.historical === true || ["graduated", "archived", "deleted"].includes(status)) return false;
+  if (klass.language === "Swahili" || klass.historical === true || ["graduated", "archived", "deleted"].includes(status)) return false;
   return Array.isArray(klass.scheduleRules) && klass.scheduleRules.length > 0;
 }
 

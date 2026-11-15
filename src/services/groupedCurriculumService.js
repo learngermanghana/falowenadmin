@@ -62,6 +62,9 @@ export async function applyGroupedCurriculumToClass(classId, { removeExtraFuture
   const classSnap = await getDoc(classRef);
   if (!classSnap.exists()) throw new Error("Class not found");
   const klass = { id: classSnap.id, ...classSnap.data() };
+  if (klass.language === "Swahili") {
+    return { total: Number(klass.generatedSessionCount || 0), mapped: 0, attendanceDays: 0, availableCurriculumItems: 0 };
+  }
   const levelId = String(klass.levelId || "").trim().toUpperCase();
   const groups = getCourseSessionGroups(levelId);
   const taskCount = Object.keys(courseDictionary[levelId] || {}).length;

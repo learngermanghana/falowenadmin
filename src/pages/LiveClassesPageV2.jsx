@@ -204,7 +204,8 @@ export default function LiveClassesPageV2() {
   }, [selectedClassId]);
 
   const levelId = useMemo(() => resolveLevel(dashboard?.klass || {}), [dashboard?.klass]);
-  const dictionaryEntries = useMemo(() => Object.values(courseDictionary[levelId] || {}).sort(compareCourseDictionaryEntries), [levelId]);
+  const isSwahili = dashboard?.klass?.language === "Swahili";
+  const dictionaryEntries = useMemo(() => isSwahili ? [] : Object.values(courseDictionary[levelId] || {}).sort(compareCourseDictionaryEntries), [isSwahili, levelId]);
   const progress = useMemo(
     () => calculateClassProgress(dashboard?.sessions || [], new Date(), dashboard?.klass || {}),
     [dashboard],
@@ -416,7 +417,7 @@ export default function LiveClassesPageV2() {
       {!loading && dashboard && activeTab === "overview" ? <article className="card">
         <h2>{dashboard.klass.name || dashboard.klass.className || selectedClassId}</h2>
         <p>Status: <strong>{dashboard.klass.status || "active"}</strong> · Progress: <strong>{progress}%</strong></p>
-        <p>Level: <strong>{levelId || "Not set"}</strong> · Sessions found: <strong>{dashboard.sessions.length}</strong> · Dictionary items: <strong>{dictionaryEntries.length}</strong></p>
+        <p>Language: <strong>{dashboard.klass.language || "German"}</strong> · Level: <strong>{levelId || "Not set"}</strong> · Sessions found: <strong>{dashboard.sessions.length}</strong> · Dictionary items: <strong>{dictionaryEntries.length}</strong></p>
         <p>Stable student URL: <code>{buildClassUrl(dashboard.klass)}</code></p>
         <p>Start: {dashboard.klass.startDate || "Not set"} · Graduation: {getEffectiveClassEndDate(dashboard.klass, dashboard.sessions) || "Not set"} · Timezone: {dashboard.klass.timezone || "Africa/Accra"}</p>
       </article> : null}

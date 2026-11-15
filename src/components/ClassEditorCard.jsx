@@ -26,10 +26,11 @@ function initialForm(klass = {}) {
   const levelId = String(klass.levelId || klass.level || "").toUpperCase();
   const normalizedRules = scheduleRulesForEditor(klass.scheduleRules || []);
   return {
+    language: klass.language || "German",
     name: klass.name || "", city: klass.city || "", levelId,
     startDate: klass.startDate || "", endDate: klass.endDate || "",
     timezone: klass.timezone || "Africa/Accra", status: klass.status || "upcoming",
-    tuitionGhs: Number(klass.tuitionGhs || defaultTuitionForLevel(levelId || "A1")),
+    tuitionGhs: Number(klass.tuitionGhs || (klass.language === "Swahili" ? 0 : defaultTuitionForLevel(levelId || "A1"))),
     publicVisible: klass.publicVisible !== false, registrationOpen: klass.registrationOpen !== false,
     tutorId: klass.tutorId || "", zoomProfileId: klass.zoomProfileId || "",
     scheduleRules: normalizedRules.length ? normalizedRules : [makeDefaultRule(levelId || "A1")],
@@ -160,10 +161,11 @@ export default function ClassEditorCard({ klass, onSaved }) {
     <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
       <label>Class name<input required value={form.name} onChange={(event) => patch({ name: event.target.value })} /></label>
       <label>City<input value={form.city} onChange={(event) => patch({ city: event.target.value })} /></label>
-      <label>Level<select value={form.levelId} onChange={(event) => { const levelId = event.target.value; patch({ levelId, tuitionGhs: defaultTuitionForLevel(levelId) }); }}>{LEVELS.map((level) => <option key={level}>{level}</option>)}</select></label>
+      <label>Language<input readOnly value={form.language} /></label>
+      <label>Level<select value={form.levelId} onChange={(event) => { const levelId = event.target.value; patch({ levelId, tuitionGhs: defaultTuitionForLevel(levelId) }); }}>{(form.language === "Swahili" ? ["A1"] : LEVELS).map((level) => <option key={level}>{level}</option>)}</select></label>
       <label>Start date<input type="date" required value={form.startDate} onChange={(event) => patch({ startDate: event.target.value })} /></label>
       <label>Graduation / end date<input type="date" required value={form.endDate} onChange={(event) => patch({ endDate: event.target.value })} /></label>
-      <label>Tuition (GHS)<input type="number" min="1" value={form.tuitionGhs} onChange={(event) => patch({ tuitionGhs: Number(event.target.value) })} /></label>
+      <label>Tuition (GHS)<input type="number" min={form.language === "Swahili" ? "0" : "1"} value={form.tuitionGhs} onChange={(event) => patch({ tuitionGhs: Number(event.target.value) })} /></label>
       <label>Status<select value={form.status} onChange={(event) => patch({ status: event.target.value })}>{["draft", "upcoming", "active", "graduated", "archived"].map((status) => <option key={status}>{status}</option>)}</select></label>
       <label>Timezone<input value={form.timezone} onChange={(event) => patch({ timezone: event.target.value })} /></label>
       <label>Tutor ID<input value={form.tutorId} onChange={(event) => patch({ tutorId: event.target.value })} /></label>

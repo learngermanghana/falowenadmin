@@ -37,7 +37,7 @@ export function slugifyClassName(name) {
 
 export function buildClassUrl(classRecord = {}) {
   const slug = classRecord.slug || slugifyClassName(classRecord.name || classRecord.id || classRecord.classId);
-  return `/classes/${slug}`;
+  return classRecord.language === "Swahili" ? `/classes/#${slug}` : `/classes/${slug}`;
 }
 
 export function validateIanaTimezone(timezone) {
@@ -126,8 +126,8 @@ function resolveSessionLimit(levelId, totalSessions) {
   return Number.POSITIVE_INFINITY;
 }
 
-export function calculateClassEndDate({ levelId, startDate, scheduleRules = [], excludedDates }) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(startDate || ""))) return "";
+export function calculateClassEndDate({ levelId, language, startDate, scheduleRules = [], excludedDates }) {
+  if (language === "Swahili" || !/^\d{4}-\d{2}-\d{2}$/.test(String(startDate || ""))) return "";
   const sessionCount = getCourseDictionarySessionCount(levelId);
   if (!sessionCount) return "";
   const rules = normalizeScheduleRules(scheduleRules);
@@ -153,6 +153,7 @@ export function generateSessionOccurrences({
   classId,
   id,
   levelId,
+  language,
   totalSessions,
   startDate,
   endDate,
@@ -166,7 +167,7 @@ export function generateSessionOccurrences({
   if (rules.length === 0) throw new Error("at least one weekly schedule rule is required");
   assertNoDuplicateScheduleRules(rules);
 
-  const sessionLimit = resolveSessionLimit(levelId, totalSessions);
+  const sessionLimit = language === "Swahili" ? Number.POSITIVE_INFINITY : resolveSessionLimit(levelId, totalSessions);
   const excluded = toExcludedDateSet(excludedDates);
   const sessions = [];
   const finalDate = new Date(`${endDate}T00:00:00.000Z`);
