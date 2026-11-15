@@ -22,8 +22,28 @@ export function getSwahiliReviewStatus(submission, review) {
   if (!review || review.studentId !== submission.studentId || review.lessonId !== submission.lessonId) {
     return "awaiting_review";
   }
+  // A review applies only to the exact submitted workbook version. A learner
+  // who submits an updated Day 1/6 workbook must return to the To mark queue.
+  const submittedVersion = submission.submittedAt?.seconds != null
+    ? `${submission.submittedAt.seconds}:${submission.submittedAt.nanoseconds || 0}`
+    : "";
+  if (review.submissionVersion && submittedVersion && review.submissionVersion !== submittedVersion) {
+    return "awaiting_review";
+  }
   const submittedAt = submission.submittedAt?.toMillis?.();
   const reviewedAt = review.reviewedAt?.toMillis?.();
   if (submittedAt && (!reviewedAt || reviewedAt < submittedAt)) return "awaiting_review";
   return review.status === "reviewed" || review.status === "needs_revision" ? review.status : "awaiting_review";
+}
+
+  
+// Local UI filtering only: no change to saved scores, queue documents or
+// result-delivery workers. Needs revision is already tutor-marked and stays
+// available under Already marked until a newer student submission arrives.
+export const isSwahiliMarkedStatus = (status) =>
+  status === "reviewed" || status === "needs_revision";
+
+export function filterSwahiliMarkingRows(rows = [], statusesByPath = {}, view = "pending") {
+  return rows.filter((row) =>
+    isSwahiliMarkedStatus(statusesByPath[row.path]) === (view === "marked"));
 }
