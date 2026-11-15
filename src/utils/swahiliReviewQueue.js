@@ -36,14 +36,13 @@ export function getSwahiliReviewStatus(submission, review) {
   return review.status === "reviewed" || review.status === "needs_revision" ? review.status : "awaiting_review";
 }
 
-  
-// Local UI filtering only: no change to saved scores, queue documents or
-// result-delivery workers. Needs revision is already tutor-marked and stays
-// available under Already marked until a newer student submission arrives.
+
+// As in the German Marking queue, display only actionable, unreviewed work.
+// Finished scores remain in Results; do not duplicate an archive in Marking.
+// "Needs revision" is a completed tutor decision until the learner resubmits.
 export const isSwahiliMarkedStatus = (status) =>
   status === "reviewed" || status === "needs_revision";
 
-export function filterSwahiliMarkingRows(rows = [], statusesByPath = {}, view = "pending") {
-  return rows.filter((row) =>
-    isSwahiliMarkedStatus(statusesByPath[row.path]) === (view === "marked"));
+export function filterSwahiliMarkingRows(rows = [], statusesByPath = {}) {
+  return rows.filter((row) => !isSwahiliMarkedStatus(statusesByPath[row.path]));
 }
