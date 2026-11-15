@@ -1,0 +1,32 @@
+{
+  "a1-course-workbook": {
+    "title": "Deutsch A1 Course & Workbook",
+    "description": "Beginner German lessons, grammar notes and workbook practice from Falowen.",
+    "href": "/books/deutsch-a1-course-workbook"
+  },
+  "german-a1-exam-preparation": {
+    "title": "German A1 Exam Preparation — The Falowen Method",
+    "description": "50-page German A1 exam preparation workbook: 30-day plan, Lesen, Hören, Schreiben and Sprechen, picture cards and two practice tests. Hören audio requires separate Falowen Exams Room access.",
+    "href": "/books/german-a1-exam-preparation"
+  },
+  "a2-course-workbook": {
+    "title": "Deutsch A2 Course & Workbook",
+    "description": "Elementary German lessons, grammar notes and workbook practice from Falowen.",
+    "href": "/books/deutsch-a2-course-workbook"
+  },
+  "b1-course-workbook": {
+    "title": "Deutsch B1 Course & Workbook",
+    "description": "Intermediate German lessons, grammar notes and workbook practice from Falowen.",
+    "href": "/books/deutsch-b1-course-workbook"
+  },
+  "writing-skills-a1-c2": {
+    "title": "How to Unlock Your German Writing Skills (A1–C2)",
+    "description": "A 68-page German writing guide for A1–C2 learners covering sentence structure, connectors, model texts and exercises.",
+    "href": "/books/how-to-unlock-your-german-writing-skills-a1-c2"
+  },
+  "catalog": {
+    "title": "Falowen Books",
+    "description": "Explore German course books, workbooks and writing practice from Falowen.",
+    "href": "/books"
+  }
+}

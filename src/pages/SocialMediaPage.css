@@ -113,3 +113,15 @@
 .social-grammar-disclaimer{font-size:12px;line-height:1.6;color:#56687d;background:#f5f8fc;border:1px solid #e2e8f0;padding:10px;border-radius:9px}
 @media(max-width:1180px){.social-grammar-grid{grid-template-columns:minmax(250px,1fr) minmax(350px,1.35fr)}.social-grammar-preview{grid-column:1/-1}}
 @media(max-width:730px){.social-grammar-grid{grid-template-columns:1fr}.social-grammar-preview{grid-column:auto}.social-grammar-results{max-height:315px}.social-grammar-summary strong{font-size:18px}}
+
+.social-books { display: grid; gap: 20px; }
+.social-books h2, .social-books p { margin: 0; }
+.social-books header p { margin-top: 6px; color: #475569; }
+.social-books-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 20px; align-items: start; }
+.social-books-fields, .social-books-preview { min-width: 0; display: grid; gap: 14px; }
+.social-books-fields label { display: grid; gap: 6px; }
+.social-books-fields select, .social-books-fields textarea { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; line-height: 1.4; }
+.social-books-fields textarea { resize: vertical; }
+.social-books-preview img { width: 100%; max-height: 480px; object-fit: contain; border-radius: 12px; background: #eff4f6; }
+.social-books-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.social-books-download { display: inline-block; padding: 10px 14px; border-radius: 8px; background: #123f37; color: white; text-decoration: none; font-weight: 700; }

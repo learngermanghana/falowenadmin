@@ -75,12 +75,14 @@ test("scene times and video MIME fallback produce safe, portable exports", () =>
   assert.deepEqual(Object.values(CHALLENGE_EXPORT_SIZES).map(size => [size.width, size.height]), [[1080, 1350], [1080, 1080], [1080, 1920]]);
 });
 
-test("social-media page adds challenges without removing vocabulary and advert editors", () => {
+test("social-media page opens on class campaigns and keeps book, challenge and advert tools", () => {
   const page = readFileSync(new URL("../src/pages/SocialMediaPage.jsx", import.meta.url), "utf8");
   const component = readFileSync(new URL("../src/components/SocialGermanChallenges.jsx", import.meta.url), "utf8");
   assert.match(page, /<SocialGermanChallenges \/>/);
   assert.match(page, /German Challenges/);
-  assert.match(page, /<SocialVocabularyCreator \/>/);
+  assert.match(page, /<SocialBookPromotions \/>/);
+  assert.match(page, /useState\("posters"\)/);
+  assert.doesNotMatch(page, /SocialVocabularyCreator|SocialCourseContentCreator/);
   assert.match(page, /<SocialAdsDictionary \/>/);
   assert.match(component, /localStorage\.setItem\(STORAGE_KEY/);
   assert.match(component, /status(?:es)?\[selected\.id\]/);
