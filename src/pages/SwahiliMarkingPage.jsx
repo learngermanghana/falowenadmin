@@ -210,7 +210,7 @@ function LessonQueue({ day }) {
   return (
     <section aria-label="Swahili student submissions" className="swahili-marking-queue">
       <div className="swahili-marking-toolbar">
-        <h2>{day ? `Day ${day} · ${LESSONS[day].title}` : "All Swahili submissions"}</h2>
+        <h2>{day ? `Day ${day} · ${LESSONS[day].title}` : "Swahili submissions to mark"}</h2>
         <button type="button" disabled={loading} onClick={() => {
           setLoading(true);
           setError("");
