@@ -41,7 +41,7 @@ function safeName(topic, level) {
   return "Falowen-" + level + "-Grammar-" + slug;
 }
 
-export default function GrammarAudioStudio({ ready, status, onStatusChange }) {
+export default function GrammarAudioStudio({ ready, status, onStatusChange, onBusyChange }) {
   const toast = useToast();
   const [topic, setTopic] = useState("je … desto");
   const [level, setLevel] = useState("B1");
@@ -84,6 +84,7 @@ export default function GrammarAudioStudio({ ready, status, onStatusChange }) {
     return () => { active = false; };
   }, [engine, scenes]);
 
+  useEffect(() => onBusyChange(Boolean(busy)), [busy, onBusyChange]);
   useEffect(() => () => { if (audioUrl) URL.revokeObjectURL(audioUrl); }, [audioUrl]);
 
   const invalidate = () => {
