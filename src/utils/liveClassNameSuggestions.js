@@ -35,7 +35,7 @@ const CITY_NAME_DICTIONARY = [
   "Saarbrucken",
 ];
 
-function normalize(value) {
+export const SWAHILI_CITY_NAME_DICTIONARY = Object.freeze([\n  "Dar es Salaam", "Arusha", "Zanzibar", "Nairobi", "Mombasa", "Dodoma", "Mwanza", "Kisumu",\n]);\n\nfunction normalize(value) {
   return String(value || "").trim().replace(/\s+/g, " ").toLowerCase();
 }
 
@@ -64,13 +64,15 @@ export function blockedClassSlugs(classes = []) {
   );
 }
 
-export function classNameSuggestions(levelId, classes = [], limit = 6) {
+export function classNameSuggestions(levelId, classes = [], limit = 6, language = "German") {
   const level = String(levelId || "").trim().toUpperCase();
   if (!level) return [];
 
   const blocked = blockedClassSlugs(classes);
-  return CITY_NAME_DICTIONARY
-    .map((city) => `${level} ${city} Klasse`)
+  const swahili = normalize(language) === "swahili";
+  const cities = swahili ? SWAHILI_CITY_NAME_DICTIONARY : CITY_NAME_DICTIONARY;
+  return cities
+    .map((city) => swahili ? `Kiswahili ${level} – ${city}` : `${level} ${city} Klasse`)
     .filter((name) => !blocked.has(slugifyClassName(name)))
     .slice(0, Math.max(1, Number(limit) || 6));
 }
