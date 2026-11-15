@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   CAMPAIGN_FORMATS, campaignClassEligibility, daysUntilClass,
-  createClassCampaign, classCampaignCaption, classCampaignManifest,
+  createClassCampaign, classCampaignCaption, classCampaignManifest, campaignLearningFormat,
   isSafeCampaignUrl, makeCampaignZip,
 } from "../src/utils/socialClassCampaign.js";
 
@@ -96,4 +96,22 @@ test("Swahili campaigns use enquiry wording and Swahili captions", () => {
   assert.equal(slides.find(slide => slide.id === "countdown").data.eyebrow, "NEXT SWAHILI CLASS");
   assert.ok(slides.every(slide => /#LearnSwahili/.test(slide.caption)));
   assert.ok(slides.every(slide => !/German|Register:/.test(slide.caption)));
+});
+
+test("Upcoming Classes shows the caption above the poster and leaves the end date off the artwork", () => {
+  const ui = readFileSync(new URL("../src/pages/SocialMediaPage.jsx", import.meta.url), "utf8");
+  assert.ok(ui.indexOf(">Ready caption</h2>") < ui.indexOf(">Live preview</h2>"));
+  assert.match(ui, /<textarea[^>]+readOnly[^>]+value=\{caption\}/);
+  assert.match(ui, /onClick=\{copyCaption\}/);
+  assert.doesNotMatch(ui, /Runs until|data\.duration|draft\.duration/);
+});
+
+test("German registration captions show the hybrid format alongside real class details", () => {
+  const format = campaignLearningFormat(upcoming);
+  assert.equal(format, "Hybrid (in person in Accra or live online). Recordings available.");
+  const caption = classCampaignCaption(upcoming, { ...data, mode: format }, "registration", today);
+  assert.match(caption, /Schedule: [^\n]+\nFormat: Hybrid/);
+  assert.match(caption, /Register: https:/);
+  assert.equal(campaignLearningFormat({ ...upcoming, format: "Online only" }), "Online only");
+  assert.equal(campaignLearningFormat({ ...upcoming, language: "Swahili" }), "");
 });

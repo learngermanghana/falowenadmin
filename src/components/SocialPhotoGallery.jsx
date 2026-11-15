@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
-  SOCIAL_PHOTO_CATEGORIES, SOCIAL_PHOTO_GALLERY, SOCIAL_PHOTO_LICENSE_URL,
-  filterSocialPhotos, socialPhotoImageUrl,
+  SOCIAL_PHOTO_CATEGORIES, SOCIAL_PHOTO_GALLERY, filterSocialPhotos,
 } from "../data/socialPhotoGallery.js";
 
 const fieldStyle = { width: "100%", boxSizing: "border-box", border: "1px solid #cbd5e1", borderRadius: 9, padding: 10 };
@@ -18,16 +17,14 @@ function readUsedPhotos() {
 }
 
 // Convert the selected gallery photo to local canvas pixels before passing it
-// to a poster. This prevents a cross-origin/tainted canvas from breaking export.
-// If the provider blocks CORS or the image goes offline, keep the previous photo.
+// to a poster in one consistent format across the poster editors.
 export async function prepareSocialGalleryPhoto(photo, createImage = () => new Image(), createCanvas = () => document.createElement("canvas")) {
   if (!SOCIAL_PHOTO_GALLERY.some(item => item.id === photo?.id)) throw new Error("Choose a photo from the gallery.");
   const image = await new Promise((resolve, reject) => {
     const candidate = createImage();
-    candidate.crossOrigin = "anonymous";
     candidate.onload = () => resolve(candidate);
     candidate.onerror = () => reject(new Error("This photo could not be loaded for export. Choose another gallery photo."));
-    candidate.src = socialPhotoImageUrl(photo, 1400);
+    candidate.src = photo.path;
   });
   const canvas = createCanvas();
   const maxSide = 1400;
@@ -38,7 +35,6 @@ export async function prepareSocialGalleryPhoto(photo, createImage = () => new I
   if (!context) throw new Error("Your browser cannot prepare this photo.");
   context.drawImage(image, 0, 0, canvas.width, canvas.height);
   try {
-    // If CORS is missing, this fails before we change the poster image.
     return canvas.toDataURL("image/jpeg", 0.88);
   } catch {
     throw new Error("This photo could not be prepared for export in your browser. Choose another photo.");
@@ -84,7 +80,7 @@ export default function SocialPhotoGallery({ onSelect, activeId = "", defaultOpe
   return (
     <details open={defaultOpen} style={{ border: "1px solid #dbe3ed", borderRadius: 12, background: "#f8fafc", padding: 12 }}>
       <summary style={{ cursor: "pointer", fontWeight: 800 }}>Built-in photo gallery · {SOCIAL_PHOTO_GALLERY.length} photos · {unusedCount} unused</summary>
-      <p style={{ ...small, margin: "9px 0" }}>Choose from new AI-generated Ghanaian learning scenes and credited stock photography for your poster.</p>
+      <p style={{ ...small, margin: "9px 0" }}>Choose an AI-generated African learning scene for your poster.</p>
       <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, margin: "8px 0" }}>
         <input type="checkbox" checked={unusedOnly} onChange={event => setUnusedOnly(event.target.checked)} />
         Show only unused pictures ({unusedCount} remaining)
@@ -107,7 +103,7 @@ export default function SocialPhotoGallery({ onSelect, activeId = "", defaultOpe
             <button type="button" disabled={!!loadingId} aria-pressed={activeId === photo.id}
               aria-label={"Use " + photo.title + " photo"} onClick={() => selectPhoto(photo)}
               style={{ padding: 3, borderRadius: 10, border: activeId === photo.id ? "3px solid #1266b6" : "1px solid #cbd5e1", background: "white", cursor: loadingId ? "wait" : "pointer", textAlign: "left" }}>
-              <img src={socialPhotoImageUrl(photo, 360)} alt={photo.title} loading="lazy"
+              <img src={photo.path} alt={photo.title} loading="lazy"
                 style={{ width: "100%", height: 96, objectFit: "cover", borderRadius: 6, display: "block", background: "#e2e8f0", opacity: usedIds.includes(photo.id) ? 0.68 : 1 }} />
               <span style={{ display: "block", fontSize: 12, fontWeight: 700, padding: "5px 4px" }}>{photo.title}</span>
               <span style={{ display: "block", fontSize: 11, color: "#475569", padding: "0 4px 4px" }}>
@@ -119,10 +115,7 @@ export default function SocialPhotoGallery({ onSelect, activeId = "", defaultOpe
               style={{ cursor: "pointer", background: usedIds.includes(photo.id) ? "#e2e8f0" : "#eef6ff", border: "1px solid #cbd5e1", color: "#17365c", borderRadius: 7, padding: "5px 4px", fontSize: 11, fontWeight: 650 }}>
               {usedIds.includes(photo.id) ? "✓ Used · Undo" : "Mark used"}
             </button>
-            {photo.source ? <a href={photo.source} target="_blank" rel="noopener noreferrer"
-              style={{ fontSize: 11, color: "#375d88", lineHeight: 1.3 }} title={"Photo by " + photo.photographer + " on Pexels"}>
-              Photo: {photo.photographer} ↗
-            </a> : <span style={small}>AI-generated illustration</span>}
+            <span style={small}>AI-generated illustration</span>
           </div>
         ))}
       </div>
@@ -131,9 +124,7 @@ export default function SocialPhotoGallery({ onSelect, activeId = "", defaultOpe
       {!error && lastSelected && activeId === lastSelected && <p role="status" style={{ color: "#166534", fontSize: 12 }}>Photo applied. Your PNG export will use a local, export-safe copy.</p>}
       <p style={{ ...small, marginBottom: 0 }}>
         Used/unused labels are saved only in this browser and do not change published posts.
-        Pexels photos are free for use in original branded designs; credit is appreciated.
-        Images are illustrative. The people shown do not represent Falowen students or staff. Do not redistribute unaltered Pexels photos.
-        {" "}<a href={SOCIAL_PHOTO_LICENSE_URL} target="_blank" rel="noopener noreferrer">Read the Pexels license ↗</a>
+        Images are illustrative. The people shown do not represent Falowen students or staff.
       </p>
     </details>
   );

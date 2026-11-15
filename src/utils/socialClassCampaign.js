@@ -52,6 +52,13 @@ export function isSafeCampaignUrl(value) {
     return false;
   }
 }
+export function campaignLearningFormat(klass = {}) {
+  const published = [klass.learningMode, klass.mode, klass.format].map(normalized).find(Boolean);
+  if (published) return published;
+  if (klass.language === "Swahili" || !klass.startDate) return "";
+  return "Hybrid (in person in Accra or live online). Recordings available.";
+}
+
 function headingForCountdown(days, active, language) {
   if (active) return "JOIN AN ONGOING CLASS";
   if (days === 0) return "CLASS STARTS TODAY";
@@ -80,7 +87,7 @@ export function createClassCampaign(klass = {}, base = {}, today = accraToday())
     },
     {
       ...group.overview,
-      data: { ...baseData, eyebrow: "CLASS DETAILS · 1/2", fee: "", duration: "", highlight: "", cta: "SWIPE FOR MORE" },
+      data: { ...baseData, eyebrow: "CLASS DETAILS · 1/2", fee: "", highlight: "", cta: "SWIPE FOR MORE" },
     },
     {
       ...group.logistics,
@@ -92,12 +99,12 @@ export function createClassCampaign(klass = {}, base = {}, today = accraToday())
       data: {
         ...baseData, eyebrow: headingForCountdown(days, active, language),
         highlight: active ? (swahili ? "This class is accepting enquiries." : "Registration is open for this ongoing class.") : "Prepare for your next step in " + language + ".",
-        schedule: "", fee: "", duration: "", cta: swahili ? cta : "ENROL TODAY",
+        schedule: "", fee: "", cta: swahili ? cta : "ENROL TODAY",
       },
     },
     {
       ...group.whatsapp,
-      data: { ...baseData, eyebrow: "LEARN " + language.toUpperCase() + " WITH FALOWEN", highlight: "Join our " + language + " classes.", duration: "", cta },
+      data: { ...baseData, eyebrow: "LEARN " + language.toUpperCase() + " WITH FALOWEN", highlight: "Join our " + language + " classes.", cta },
     },
   ];
   return slides.map((slide) => ({
@@ -125,7 +132,7 @@ export function classCampaignCaption(klass = {}, data = {}, campaignId = "regist
     lead, normalized(data.className),
     data.startDate && !active ? "Start: " + normalized(data.startDate) : "",
     data.schedule ? "Schedule: " + normalized(data.schedule) : "",
-    data.mode ? "Mode: " + normalized(data.mode) : "",
+    data.mode ? "Format: " + normalized(data.mode) : "",
     data.fee ? "Fee: " + normalized(data.fee) : "",
     data.website && isSafeCampaignUrl(data.website) ? (swahili ? "Enquire: " : "Register: ") + normalized(data.website) : "",
     data.phone ? "Contact: " + normalized(data.phone) : "",
