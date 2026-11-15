@@ -112,3 +112,20 @@ test("automatic mode clears a stale generated name when no suggestions remain", 
   assert.equal(resolveClassNameSelection("A1 Berlin Klasse", [], "auto"), "");
   assert.equal(resolveClassNameSelection("Custom Saturday Group", [], "explicit"), "Custom Saturday Group");
 });
+
+
+test("Swahili class suggestions use East African city names without changing German defaults", () => {
+  assert.deepEqual(classNameSuggestions("A1", [], 3, "Swahili"), [
+    "Kiswahili A1 – Dar es Salaam", "Kiswahili A1 – Arusha", "Kiswahili A1 – Zanzibar",
+  ]);
+  assert.deepEqual(classNameSuggestions("A1", [], 2), ["A1 Berlin Klasse", "A1 Dortmund Klasse"]);
+});
+
+test("Swahili names skip occupied class identities and preserve manually selected names", () => {
+  const classes = [{ name: "Kiswahili A1 – Dar es Salaam", status: "active", startDate: "2026-11-01", endDate: "2027-01-01" }];
+  const suggestions = classNameSuggestions("A1", classes, 2, "Swahili");
+  assert.deepEqual(suggestions, ["Kiswahili A1 – Arusha", "Kiswahili A1 – Zanzibar"]);
+  assert.equal(isClassNameBlocked("Kiswahili A1 – Dar es Salaam", classes), true);
+  assert.equal(resolveClassNameSelection("", suggestions, "auto"), "Kiswahili A1 – Arusha");
+  assert.equal(resolveClassNameSelection("My Swahili Group", suggestions, "explicit"), "My Swahili Group");
+});
