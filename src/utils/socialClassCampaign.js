@@ -80,7 +80,7 @@ export function createClassCampaign(klass = {}, base = {}, today = accraToday())
     },
     {
       ...group.overview,
-      data: { ...baseData, eyebrow: "CLASS DETAILS · 1/2", fee: "", duration: "", highlight: "", cta: "SWIPE FOR MORE" },
+      data: { ...baseData, eyebrow: "CLASS DETAILS · 1/2", fee: "", highlight: "", cta: "SWIPE FOR MORE" },
     },
     {
       ...group.logistics,
@@ -92,12 +92,12 @@ export function createClassCampaign(klass = {}, base = {}, today = accraToday())
       data: {
         ...baseData, eyebrow: headingForCountdown(days, active, language),
         highlight: active ? (swahili ? "This class is accepting enquiries." : "Registration is open for this ongoing class.") : "Prepare for your next step in " + language + ".",
-        schedule: "", fee: "", duration: "", cta: swahili ? cta : "ENROL TODAY",
+        schedule: "", fee: "", cta: swahili ? cta : "ENROL TODAY",
       },
     },
     {
       ...group.whatsapp,
-      data: { ...baseData, eyebrow: "LEARN " + language.toUpperCase() + " WITH FALOWEN", highlight: "Join our " + language + " classes.", duration: "", cta },
+      data: { ...baseData, eyebrow: "LEARN " + language.toUpperCase() + " WITH FALOWEN", highlight: "Join our " + language + " classes.", cta },
     },
   ];
   return slides.map((slide) => ({

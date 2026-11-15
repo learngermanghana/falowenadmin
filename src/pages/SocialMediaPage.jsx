@@ -142,7 +142,6 @@ function draftFromClass(klass = {}) {
   const language = klass.language === "Swahili" ? "Swahili" : "German";
   const name = textValue(klass.name, klass.className, klass.title, [level, language, "Class"].filter(Boolean).join(" "));
   const startDate = formatDate(klass.startDate);
-  const endDate = formatShortDate(klass.endDate);
   const mode = textValue(klass.learningMode, klass.mode, klass.location);
   const fee = formatFee(textValue(klass.tuitionGhs || "", klass.tuitionFee, klass.fee, klass.price));
   const classUrl = textValue(klass.classUrl, klass.registrationUrl, klass.url);
@@ -158,7 +157,6 @@ function draftFromClass(klass = {}) {
     schedule: formatSchedule(klass.scheduleRules),
     mode,
     fee,
-    duration: endDate ? `Runs until ${endDate}` : "",
     cta: language === "Swahili" ? "ENQUIRE NOW" : "REGISTER NOW",
     website: registerUrl,
     phone: textValue(klass.phone, klass.contactPhone, "0205706589"),
@@ -449,20 +447,6 @@ async function renderPoster(canvas, data, template, format, photoSrc, photoContr
     y = drawDetailRow(ctx, template, width, pad, maxWidth, "SCHEDULE", data.schedule, y);
     y = drawDetailRow(ctx, template, width, pad, maxWidth, "MODE", data.mode, y);
     y = drawDetailRow(ctx, template, width, pad, maxWidth, "FEE", data.fee, y);
-  }
-
-  if (data.duration) {
-    const boxY = y + width * 0.005;
-    const boxHeight = width * 0.055;
-    roundRect(ctx, pad, boxY, Math.min(maxWidth, width * 0.45), boxHeight, boxHeight * 0.3);
-    ctx.fillStyle = `${template.soft}cc`;
-    ctx.fill();
-    ctx.fillStyle = template.text;
-    ctx.globalAlpha = 0.9;
-    ctx.font = `600 ${Math.round(width * 0.02)}px Arial, sans-serif`;
-    ctx.fillText(data.duration, pad + width * 0.018, boxY + boxHeight * 0.66);
-    ctx.globalAlpha = 1;
-    y = boxY + boxHeight + width * 0.04;
   }
 
   const footerSpace = width * 0.19;
@@ -995,7 +979,6 @@ export default function SocialMediaPage() {
               <Field label="Schedule" value={draft.schedule} onChange={(value) => updateDraft("schedule", value)} />
               <Field label="Mode / location" value={draft.mode} onChange={(value) => updateDraft("mode", value)} />
               <Field label="Fee (leave blank to hide)" value={draft.fee} onChange={(value) => updateDraft("fee", value)} />
-              <Field label="Duration / extra line" value={draft.duration} onChange={(value) => updateDraft("duration", value)} />
               <Field label="Button text" value={draft.cta} onChange={(value) => updateDraft("cta", value)} />
               <Field label="Registration URL" value={draft.website} onChange={(value) => updateDraft("website", value)} />
               {!qrValue && <small className="social-campaign-error">A valid HTTPS registration URL is needed for the full campaign export.</small>}
@@ -1010,6 +993,14 @@ export default function SocialMediaPage() {
         </div>
 
         <div style={{ display: "grid", gap: 14, position: isNarrow ? "static" : "sticky", top: isNarrow ? undefined : 12, minWidth: 0 }}>
+          <section style={panelStyle} aria-labelledby="class-campaign-caption">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
+              <h2 id="class-campaign-caption" style={{ margin: 0, fontSize: 17 }}>Ready caption</h2>
+              <button type="button" onClick={copyCaption}>Copy caption</button>
+            </div>
+            <textarea aria-labelledby="class-campaign-caption" readOnly rows={Math.max(8, caption.split("\n").length + 1)} value={caption} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.45 }} />
+            <small className="social-campaign-help">Review the final class date, fee and registration details before publishing.</small>
+          </section>
           <section style={{ ...panelStyle, display: "grid", gap: 12, minWidth: 0 }}>
             <div style={{ display: "flex", gap: 8, alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}>
               <div>
@@ -1025,14 +1016,6 @@ export default function SocialMediaPage() {
             </div>
           </section>
 
-          <section style={panelStyle}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
-              <h2 style={{ margin: 0, fontSize: 17 }}>Ready caption</h2>
-              <button type="button" onClick={copyCaption}>Copy caption</button>
-            </div>
-            <textarea readOnly rows={7} value={caption} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.45 }} />
-            <small className="social-campaign-help">Review the final class date, fee and registration details before publishing.</small>
-          </section>
         </div>
       </div>
           <div className="social-qr-cache" aria-hidden="true">

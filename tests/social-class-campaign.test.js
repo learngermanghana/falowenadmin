@@ -97,3 +97,11 @@ test("Swahili campaigns use enquiry wording and Swahili captions", () => {
   assert.ok(slides.every(slide => /#LearnSwahili/.test(slide.caption)));
   assert.ok(slides.every(slide => !/German|Register:/.test(slide.caption)));
 });
+
+test("Upcoming Classes shows the caption above the poster and leaves the end date off the artwork", () => {
+  const ui = readFileSync(new URL("../src/pages/SocialMediaPage.jsx", import.meta.url), "utf8");
+  assert.ok(ui.indexOf(">Ready caption</h2>") < ui.indexOf(">Live preview</h2>"));
+  assert.match(ui, /<textarea[^>]+readOnly[^>]+value=\{caption\}/);
+  assert.match(ui, /onClick=\{copyCaption\}/);
+  assert.doesNotMatch(ui, /Runs until|data\.duration|draft\.duration/);
+});
