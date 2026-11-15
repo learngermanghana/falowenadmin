@@ -65,7 +65,7 @@ export const MUSIC_SONG_DRAFTS_B1_PART1 = Object.freeze([
   },
   {
     "assignmentKey": "B1-4.10",
-    "title": "Ein Sonntag ohne Bildschirm",
+    "title": "Einen Moment weg",
     "musicStyle": "Flute Chill, 80 BPM: air-filled flute-led chill-pop with gentle marimba, light downtempo percussion and warm pads; calm and open. One lead singer, clear German phrases, quiet instrumental mix.",
     "lyrics": "[Verse 1]\nAm Sonntag greife ich wieder zum Handy.\nIch wollte nur kurz die Nachrichten lesen.\nEine Stunde später merke ich,\ndass der Morgen schon fast vorbei ist.\n\n[Chorus]\nLeg das Handy einen Moment weg,\ndie Welt ist auch vor deinem Fenster.\nEin freier Tag gehört auch dir.\n\n[Verse 2]\nIch gehe hinaus und treffe meine Freundin.\nWir sprechen, ohne ständig aufs Display zu schauen.\nSpäter koche ich etwas und lese ein Buch.\nAm Abend habe ich viele neue Gedanken.\n\n[Chorus]\nLeg das Handy einen Moment weg,\ndie Welt ist auch vor deinem Fenster.\nEin freier Tag gehört auch dir.\n\n[Outro]\nDie Nachrichten sind morgen noch da.\nDiesen Sonntag habe ich wirklich erlebt.\nBei Falowen lerne ich, über Gewohnheiten nachzudenken.",
     "genre": "Flute Chill"
