@@ -1,6 +1,6 @@
 import { collection, collectionGroup, doc, getDoc, getDocs, limit, or, onSnapshot, orderBy, query, runTransaction, serverTimestamp, startAfter, where } from "firebase/firestore";
 import { db } from "../firebase.js";
-import { canonicalSwahiliSubmission, swahiliReviewDocId } from "../utils/swahiliReviewQueue.js";
+import { canonicalSwahiliSubmission, getSwahiliReviewStatus, swahiliReviewDocId } from "../utils/swahiliReviewQueue.js";
 
 const PAGE_SIZE = 25;
 const reviewRef = (studentId, day) => doc(db, "swahiliTeacherReviews", swahiliReviewDocId(studentId, day));
@@ -66,6 +66,23 @@ export async function loadSwahiliMarkingPage(day, cursor) {
 export async function loadSwahiliReview(submission, day) {
   const snapshot = await getDoc(reviewRef(submission.studentId, day));
   return snapshot.exists() ? snapshot.data() : null;
+}
+
+// Check only the displayed page, once per explicit page load / Load more /
+// Refresh. Review status is stored separately from the learner's workbook.
+// Preserve rows when a read fails: the editor itself disallows saving until
+// the existing review can be loaded, avoiding accidental overwrites.
+export async function loadSwahiliReviewStatuses(rows = []) {
+  const entries = await Promise.all(rows.map(async (submission) => {
+    const day = Number(submission.lessonId?.split("-").at(-1));
+    try {
+      const review = await loadSwahiliReview(submission, day);
+      return [submission.path, getSwahiliReviewStatus(submission, review)];
+    } catch {
+      return [submission.path, "unavailable"];
+    }
+  }));
+  return Object.fromEntries(entries);
 }
 
 export function watchSwahiliReview(submission, day, onReview, onError) {
