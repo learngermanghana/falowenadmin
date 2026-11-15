@@ -21,7 +21,7 @@ export async function prepareLiveClassSchedule(payload = {}) {
   setSchedulingSchoolClosureDates(closureDates);
   const calculatedEndDate = calculateClassEndDate({ ...normalizedPayload, excludedDates: closureDates });
   const historicalMode = isHistoricalSchedulePayload(normalizedPayload);
-  const endDate = historicalMode || normalizedPayload.language === "Swahili"
+  const endDate = historicalMode
     ? String(normalizedPayload.endDate || calculatedEndDate || "").trim()
     : String(calculatedEndDate || "").trim();
 
