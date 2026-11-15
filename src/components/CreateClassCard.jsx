@@ -22,7 +22,7 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
   const [nameSelectionSource, setNameSelectionSource] = useState("auto");
 
   const suggestions = useMemo(
-    () => form.language === "Swahili" ? [] : classNameSuggestions(form.levelId, classes, 6),
+    () => classNameSuggestions(form.levelId, classes, 6, form.language),
     [form.language, form.levelId, classes],
   );
   const selectedNameBlocked = useMemo(
@@ -32,7 +32,6 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
 
   useEffect(() => {
     setForm((current) => {
-      if (current.language === "Swahili") return current;
       const nextName = resolveClassNameSelection(current.name, suggestions, nameSelectionSource);
       if (current.name === nextName) return current;
       return { ...current, name: nextName };
@@ -128,7 +127,7 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
         <small style={{ color: selectedNameBlocked ? "#b91c1c" : "#64748b" }}>
           {selectedNameBlocked
             ? "Already in use. Pick another available name below."
-            : form.language === "Swahili" ? "Enter a name for this Swahili class." : "Suggested automatically from names not currently in use."}
+            : "Suggested from cities associated with the selected language; you can also enter a custom name."}
         </small>
       </label>
       <label>Language<select value={form.language} onChange={(event) => {
@@ -166,8 +165,8 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
         </div>
         <small style={{ color: "#64748b" }}>Names already occupied by current or graduated classes are skipped automatically. Archived/draft names can be reused.</small>
       </div>
-    ) : form.language === "German" ? (
-      <small style={{ color: "#92400e" }}>No unused dictionary name is available for {form.levelId}. You can enter a custom class name.</small>
+    ) : (
+      <small style={{ color: "#92400e" }}>No unused city name is available for {form.levelId}. You can enter a custom class name.</small>
     ) : null}
 
     <strong>Weekly teaching times</strong><p style={{ margin: 0, fontSize: 13 }}>Use one teaching time per weekday. This prevents two curriculum sessions from being created on the same date.</p>{form.scheduleRules.map((rule, index) => <div key={`${index}-${rule.day}`} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><select value={rule.day} onChange={(event) => patchRule(index, { day: event.target.value })}>{DAYS.map((day) => <option key={day} disabled={form.scheduleRules.some((item, itemIndex) => itemIndex !== index && String(item.day).slice(0, 3).toLowerCase() === day.toLowerCase())}>{day}</option>)}</select><input type="time" value={rule.startTime} onChange={(event) => patchRule(index, { startTime: event.target.value })} /><input
