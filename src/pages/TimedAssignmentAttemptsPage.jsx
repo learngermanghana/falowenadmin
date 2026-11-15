@@ -760,10 +760,11 @@ export default function TimedAssignmentAttemptsPage() {
           return <article key={attempt.id} style={card}>
             <div style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
               <div style={{display:"grid",gap:4}}>
-                <strong style={{fontSize:16}}>{attempt.name || (attempt.completedAt ? "Result saved · no contact details" : "Visitor · no contact details")}</strong>
+                <strong style={{fontSize:16}}>{attempt.name || (email ? "Placement learner" : "") || (attempt.completedAt ? "Result saved · no contact details" : "Visitor · no contact details")}</strong>
                 <small style={{color:"#64748b",overflowWrap:"anywhere"}}>{attempt.email||attempt.phone||attempt.id}</small>
                 {attempt.emailSentAt && <small style={{color:"#166534",fontWeight:700}}>Result email sent · {formatDate(attempt.emailSentAt)}</small>}
-                {attempt.consent && attempt.email && !attempt.emailSentAt && <small style={{color:"#b45309"}}>Result email not confirmed · manual follow-up available</small>}
+                {typeof attempt.classEmails === "boolean" && <small>Class emails: {attempt.classEmails ? "Opted in" : "Not requested"}</small>}
+                {attempt.classEmails === undefined && attempt.consent && attempt.email && !attempt.emailSentAt && <small style={{color:"#b45309"}}>Result email not confirmed · manual follow-up available</small>}
               </div>
               <strong style={{color:status==="completed"?"#166534":status==="expired"?"#b45309":"#1d4ed8"}}>
                 {status==="in_progress"?"In progress":status==="expired"?"Expired":"Completed"}
