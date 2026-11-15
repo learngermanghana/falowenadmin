@@ -76,6 +76,7 @@ function classIdOf(entry = {}) {
 function classMatchesCourse(entry = {}, course = "") {
   const expected = normalize(course).toUpperCase();
   if (!expected) return true;
+  if (normalize(entry.language).toLowerCase() === "swahili") return expected === "SWAHILI";
   const candidates = [entry.levelId, entry.level, entry.courseLevel, entry.languageLevel, entry.classId, entry.name]
     .map((value) => normalize(value).toUpperCase())
     .filter(Boolean);
@@ -278,9 +279,12 @@ export default function PresenterStudentPicker({
   const sessionDate = classContext.sessionDate || localDateKey();
   const activeClasses = useMemo(() => classOptions.filter((entry) => !entry.archived && entry.status !== "archived"), [classOptions]);
   const matchingClasses = useMemo(() => {
-    const matches = activeClasses.filter((entry) => classMatchesCourse(entry, course));
+    const eligibleClasses = course === "SWAHILI"
+      ? activeClasses
+      : activeClasses.filter((entry) => !classMatchesCourse(entry, "SWAHILI"));
+    const matches = eligibleClasses.filter((entry) => classMatchesCourse(entry, course));
     // A Swahili lesson must never inherit a German class roster or cloud session.
-    return course === "SWAHILI" ? matches : matches.length ? matches : activeClasses;
+    return course === "SWAHILI" ? matches : matches.length ? matches : eligibleClasses;
   }, [activeClasses, course]);
   const selectedClass = useMemo(
     () => matchingClasses.find((entry) => classIdOf(entry) === selectedClassId) || null,
