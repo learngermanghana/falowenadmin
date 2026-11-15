@@ -1,3 +1,5 @@
+import "./CanonicalAttendancePage.css";
+import { saveAnnouncementBatch } from "../services/communicationService.js";
 import LiveClassSessionEditor from "../components/LiveClassSessionEditor.jsx";
 import { isAppAssessment } from "../utils/appAssessment.js";
 
@@ -138,12 +140,14 @@ export default function CanonicalAttendancePageV3() {
   const [sessions, setSessions] = useState([]);
   const [attendance, setAttendance] = useState({});
   const [selectedId, setSelectedId] = useState("");
-  const [selectedEmailCodes, setSelectedEmailCodes] = useState([]);
+  const [reminderRecipients, setReminderRecipients] = useState([]);
+  const [sendingReminder, setSendingReminder] = useState(false);
 
   useEffect(() => {
     let active = true;
     (async () => {
       setLoading(true);
+      setKlass(null);
       try {
         const resolved = await resolveClassCohort(decodeURIComponent(classId));
         if (!resolved) throw new Error("Class not found in Live Classes.");
@@ -168,6 +172,7 @@ export default function CanonicalAttendancePageV3() {
         }));
         const timezone = dashboard.klass.timezone || TIMEZONE;
         const chosen = chooseSession(dashboard.sessions, timezone, searchParams.get("session") || "");
+        setReminderRecipients(students.filter((student) => student.email?.trim() || student.contactEmail?.trim()));
         setKlass(dashboard.klass);
         setSessions(dashboard.sessions);
         setAttendance(map);
@@ -186,7 +191,6 @@ export default function CanonicalAttendancePageV3() {
     setSearchParams({ session: selectedId }, { replace: true });
     setSessionOpen(false);
     setScheduleAction("");
-    setSelectedEmailCodes([]);
   }, [selectedId, setSearchParams]);
 
   const selected = attendance[selectedId] || null;
@@ -223,30 +227,6 @@ export default function CanonicalAttendancePageV3() {
 
   const checkinUrl = checkinQuery ? `${window.location.origin}/checkin?${checkinQuery}` : "";
   const displayUrl = checkinQuery ? `${window.location.origin}/checkin/display?${checkinQuery}` : "";
-
-  const selectedEmailRows = useMemo(() => {
-    const codes = new Set(selectedEmailCodes);
-    return rows.filter((row) => codes.has(row.code) && row.email);
-  }, [rows, selectedEmailCodes]);
-
-  const backupMailto = useMemo(() => {
-    const emails = selectedEmailRows.map((row) => row.email).filter(Boolean);
-    if (!emails.length || !checkinUrl) return "";
-    const subject = `Backup check-in link for ${klass?.name || "class"} (${sessionLabel})`;
-    const body = [
-      "Hi student,",
-      "",
-      "Please use this backup link to check in for the live class:",
-      checkinUrl,
-      "",
-      `Class: ${klass?.name || ""}`,
-      `Session: ${sessionLabel}`,
-      `Date: ${selectedDate}`,
-      "",
-      "Thank you.",
-    ].join("\n");
-    return `mailto:${emails.join(",")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  }, [checkinUrl, klass?.name, selectedDate, selectedEmailRows, sessionLabel]);
 
   useEffect(() => {
     if (!klass?.id || !selectedId) return;
@@ -383,40 +363,82 @@ export default function CanonicalAttendancePageV3() {
     }
   }
 
-  function selectEmailTargets(mode) {
-    setSelectedEmailCodes(rows
-      .filter((row) => row.email && (mode === "all" || !row.present))
-      .map((row) => row.code));
+  async function sendClassReminder() {
+    if (!klass || !selected || sessionLocked || isAppAssessment(selected) || sendingReminder || !reminderRecipients.length) return;
+    setSendingReminder(true);
+    try {
+      const result = await saveAnnouncementBatch({
+        input: {
+          topic: "Class reminder",
+          announcement: [
+            `Reminder: ${klass.name} meets on ${selectedDate} from ${startTime} to ${endTime} (${timezone === TIMEZONE ? "Ghana time" : timezone}).`,
+            selected.topic ? `Lesson: ${selected.topic}` : "",
+            "Open Falowen to view the class details and join.",
+          ].filter(Boolean).join("\n"),
+          className: klass.name,
+          classId: klass.id,
+          date: selectedDate,
+          link: "https://www.falowen.app/campus/attendance",
+        },
+        recipients: reminderRecipients,
+        session: selected,
+      });
+      if (result.failureCount) {
+        info(`Reminder sent to ${result.successCount} students. ${result.failureCount} deliveries failed.`);
+      } else {
+        success(`Class reminder sent to ${result.successCount} student(s).`);
+      }
+    } catch (cause) {
+      error(cause?.message || "Could not send the class reminder.");
+    } finally {
+      setSendingReminder(false);
+    }
   }
 
   if (loading) return <div className="page-container">Loading attendance…</div>;
   if (!klass) return <div className="page-container"><h1>Attendance</h1><p>The class could not be loaded.</p></div>;
 
   return (
-    <section className="page-container" style={{ maxWidth: 1000 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-        <div><h1>Session Attendance</h1><p><strong>{klass.name}</strong> · {rows.length} student(s)</p></div>
-        <Link to={`/live-classes?classId=${encodeURIComponent(klass.id)}&tab=sessions`}>Full timetable</Link>
-      </div>
+    <section className="page-container session-attendance">
+      <header className="session-attendance__header">
+        <div>
+          <h1>Attendance check-in</h1>
+          <p>Manage the session, student check-ins and attendance corrections.</p>
+        </div>
+        <Link className="session-attendance__button" to={`/live-classes?classId=${encodeURIComponent(klass.id)}&tab=sessions`}>Full timetable ↗</Link>
+      </header>
 
-      <article className="card" style={{ display: "grid", gap: 14 }}>
-        <label style={{ display: "grid", gap: 6 }}>
-          <strong>Lesson</strong>
+      <article className="card session-attendance__card">
+        <div className="session-attendance__header">
+          <div>
+            <h2>{klass.name}</h2>
+            <p>{rows.length} {rows.length === 1 ? "student" : "students"} enrolled</p>
+          </div>
+          {selected && <span className="session-attendance__badge">{status}</span>}
+        </div>
+        <label className="session-attendance__selector">
+          <strong>Select session</strong>
           <select value={selectedId} onChange={(event) => setSelectedId(event.target.value)}>
-            {sessions.map((session) => <option key={session.id} value={session.id}>{lessonLabel(session, klass.timezone || TIMEZONE)} · {session.status || "scheduled"}</option>)}
+            {sessions.map((session) => <option key={session.id} value={session.id}>{lessonLabel(session, timezone)} · {session.status || "scheduled"}</option>)}
           </select>
         </label>
 
         {selected ? <>
-          <div>
-            <h2 style={{ margin: "4px 0" }}>{assignmentId ? `${assignmentId} — ` : ""}{selected.topic || "Lesson details to be confirmed"}</h2>
+          <div className="session-attendance__summary">
+            <div>
+              <small>{new Intl.DateTimeFormat("en-GB", { timeZone: timezone, dateStyle: "full" }).format(asDate(selected.startsAt))}</small>
+              <strong className="session-attendance__time">{startTime || "--:--"}–{endTime || "--:--"}</strong>
+              <small>{timezone === TIMEZONE ? "Ghana time" : timezone}</small>
+            </div>
+            <div className="session-attendance__lesson">
+              <small>Lesson</small>
+              <strong>{assignmentId ? `${assignmentId} · ` : ""}{selected.topic || "Lesson details to be confirmed"}</strong>
+            </div>
+            {!isAppAssessment(selected) ? <div className="session-attendance__actions">
+              {!["completed", "live"].includes(status) && !sessionOpen ? <button type="button" disabled={sessionBusy || sendingReminder} onClick={() => setScheduleAction("reschedule")}>{status === "cancelled" ? "Reactivate lesson" : "Reschedule"}</button> : null}
+              {!sessionLocked ? <button className="session-attendance__danger" type="button" disabled={sessionBusy || sendingReminder} onClick={() => setScheduleAction("cancel")}>Cancel class</button> : null}
+            </div> : null}
           </div>
-
-          <p style={{ margin: 0 }}>{selectedDate} · {startTime || "--:--"}–{endTime || "--:--"} · <strong>{status}</strong></p>
-          {!isAppAssessment(selected) ? <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {!["completed", "live"].includes(status) && !sessionOpen ? <button type="button" disabled={sessionBusy} onClick={() => setScheduleAction("reschedule")}>{status === "cancelled" ? "Reactivate lesson" : "Reschedule"}</button> : null}
-            {!sessionLocked ? <button type="button" disabled={sessionBusy} onClick={() => setScheduleAction("cancel")}>Cancel class</button> : null}
-          </div> : null}
           {scheduleAction ? <LiveClassSessionEditor
             key={`${selected.id}:${scheduleAction}`}
             klass={klass}
@@ -438,38 +460,52 @@ export default function CanonicalAttendancePageV3() {
             }}
           /> : null}
         </> : null}
+
+        {selected && !isAppAssessment(selected) && <div className="session-attendance__tools">
+          <section className="session-attendance__panel">
+            <div className="session-attendance__header">
+              <h3>Student QR check-in</h3>
+              <span className="session-attendance__badge" data-closed={!sessionOpen}>{sessionOpen ? "Open" : "Closed"}</span>
+            </div>
+            <div className="session-attendance__actions">
+              <button type="button" className="session-attendance__primary" disabled={sessionBusy || sessionOpen || !assignmentId || !isToday || sessionLocked} onClick={() => changeCheckin("open")}>{sessionBusy && !sessionOpen ? "Opening…" : "Open check-in"}</button>
+              <button type="button" disabled={sessionBusy || !sessionOpen} onClick={() => changeCheckin("close")}>{sessionBusy && sessionOpen ? "Closing…" : "Close check-in"}</button>
+              <button type="button" disabled={sessionBusy || sessionLocked || sendingReminder} onClick={() => changeCheckin("end")}>End class &amp; mark complete</button>
+            </div>
+            <div className="session-attendance__actions">
+              <a href={displayUrl} target="_blank" rel="noreferrer">Open Full-Screen QR Page ↗</a>
+              <button type="button" onClick={refreshCheckins}>Refresh check-ins</button>
+            </div>
+            {sessionOpen && checkinUrl && <div className="session-attendance__qr">
+              <QRCodeCanvas value={checkinUrl} size={170} />
+              <a href={checkinUrl} target="_blank" rel="noreferrer">Open student check-in link ↗</a>
+            </div>}
+          </section>
+
+          <section className="session-attendance__panel">
+            <h3>Backup class reminder</h3>
+            <p>{sessionLocked ? "Reminders are available for scheduled and live sessions." : reminderRecipients.length ? "Use this when the automatic reminder didn’t go out." : "There are no enrolled students with an email address."}</p>
+            <button type="button" className="session-attendance__button" disabled={!reminderRecipients.length || sessionLocked || sessionBusy || sendingReminder || Boolean(scheduleAction)} onClick={sendClassReminder}>
+              {sendingReminder ? "Sending reminder…" : "Send class reminder"}
+            </button>
+          </section>
+        </div>}
+        {selected && !isAppAssessment(selected) && (slidesUrl || lessonLinks.length > 0) ? <div className="session-attendance__actions">
+          {slidesUrl && <a href={slidesUrl} target="_blank" rel="noopener noreferrer">Open slides</a>}
+          {lessonLinks.map(({ assignmentId: linkedAssignment, url, label }) => <a key={`${linkedAssignment}:${url}`} href={url} target="_blank" rel="noopener noreferrer">{label}</a>)}
+        </div> : null}
       </article>
 
       {selected && isAppAssessment(selected) ? <article className="card"><h2>App Assessment · No live class</h2><p>Students complete all three speaking parts with the Falowen AI examiner in the app. Progress and saved results appear in their assignment. This day is excluded from live attendance.</p>{lessonLinks.map(({ url, label }) => <a key={url} href={url} target="_blank" rel="noopener noreferrer">{label}</a>)}</article> : selected ? <>
-        <article className="card">
-          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-            <strong>Student QR Check-in</strong>
-            <button disabled={sessionBusy || sessionOpen || !assignmentId || !isToday || sessionLocked} onClick={() => changeCheckin("open")}>{sessionBusy && !sessionOpen ? "Opening…" : "Open Check-in"}</button>
-            <button disabled={sessionBusy || !sessionOpen} onClick={() => changeCheckin("close")}>{sessionBusy && sessionOpen ? "Closing…" : "Close Check-in"}</button>
-            <button type="button" disabled={sessionBusy || sessionLocked} onClick={() => changeCheckin("end")}>End class &amp; mark complete</button>
-            <button type="button" onClick={refreshCheckins}>Refresh Check-ins</button>
-            {slidesUrl && <a href={slidesUrl} target="_blank" rel="noopener noreferrer">Open slides</a>}
-            {lessonLinks.map(({ assignmentId: linkedAssignment, url, label }) => <a key={`${linkedAssignment}:${url}`} href={url} target="_blank" rel="noopener noreferrer">{label}</a>)}
-            <a href={displayUrl} target="_blank" rel="noreferrer">Open Full-Screen QR Page</a>
-            <span style={{ marginLeft: "auto", fontSize: 12 }}>Status: <strong>{sessionOpen ? "OPEN" : "CLOSED"}</strong></span>
-          </div>
-          {sessionOpen && checkinUrl ? <div style={{ marginTop: 14, display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}><div style={{ padding: 10, border: "1px solid #e5e7eb", borderRadius: 10 }}><QRCodeCanvas value={checkinUrl} size={170} /><div style={{ maxWidth: 360, fontSize: 12, opacity: 0.8, marginTop: 8, wordBreak: "break-all" }}>{checkinUrl}</div></div></div> : null}
-        </article>
-
-        <article className="card">
-          <strong>Backup Email Check-in Link</strong>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
-            <button type="button" onClick={() => selectEmailTargets("all")}>Select all with email</button>
-            <button type="button" onClick={() => selectEmailTargets("absent")}>Select absent with email</button>
-            <button type="button" onClick={() => setSelectedEmailCodes([])}>Clear selection</button>
-            {backupMailto ? <a href={backupMailto} role="button">Email selected students</a> : <button type="button" disabled>Email selected students</button>}
-          </div>
-          <div style={{ marginTop: 8, fontSize: 12 }}>Selected recipients: {selectedEmailRows.length}</div>
-        </article>
-
-        <article className="card">
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}><h2 style={{ margin: 0 }}>Students</h2><span>Present: {present} · Absent: {rows.length - present}</span></div>
-          {rows.length ? <div style={{ display: "grid", gap: 8, marginTop: 12 }}>{rows.map((row) => <div key={row.code} style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 10, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}><input type="checkbox" checked={selectedEmailCodes.includes(row.code)} disabled={!row.email} onChange={(event) => setSelectedEmailCodes((current) => event.target.checked ? [...new Set([...current, row.code])] : current.filter((code) => code !== row.code))} aria-label={`Select ${row.name || row.code} for email`} /><div style={{ flex: "1 1 220px" }}><strong>{row.name || row.code}</strong><div style={{ fontSize: 12, opacity: 0.75 }}>{row.code}{row.email ? ` · ${row.email}` : ""}</div></div><button onClick={() => mark(row.code, true)} style={{ background: row.present ? "#166534" : undefined, color: row.present ? "white" : undefined }}>Present</button><button onClick={() => mark(row.code, false)} style={{ background: !row.present ? "#6b7280" : undefined, color: !row.present ? "white" : undefined }}>Absent</button></div>)}</div> : <p>No active students were found. Confirm the student's Class name in Student Directory.</p>}
+        <article className="card session-attendance__card">
+          <div className="session-attendance__header"><h2>Students</h2><span>Present: {present} · Absent: {rows.length - present}</span></div>
+          {rows.length ? <div className="session-attendance__roster">{rows.map((row) => (
+            <div key={row.code} className="session-attendance__student">
+              <div><strong>{row.name || row.code}</strong><small>{row.code}</small></div>
+              <button type="button" onClick={() => mark(row.code, true)} aria-pressed={row.present}>Present</button>
+              <button type="button" onClick={() => mark(row.code, false)} aria-pressed={!row.present}>Absent</button>
+            </div>
+          ))}</div> : <p>No active students were found. Confirm the student's class in Student Directory.</p>}
           <button style={{ marginTop: 14 }} disabled={saving || !rows.length} onClick={save}>{saving ? "Saving…" : "Save attendance"}</button>
         </article>
       </> : <p>No sessions were found for this class.</p>}
