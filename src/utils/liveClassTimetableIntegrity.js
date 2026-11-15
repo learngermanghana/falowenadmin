@@ -93,7 +93,7 @@ export function inspectTimetableIntegrity({
   enforceEndDate = true,
 } = {}) {
   const levelId = normalizeLevel(klass.levelId || klass.level || klass.name);
-  const groups = getCourseSessionGroups(levelId);
+  const groups = klass.language === "Swahili" ? [] : getCourseSessionGroups(levelId);
   const expectedCount = groups.length;
   const timezone = normalize(klass.timezone) || "Africa/Accra";
   const canonicalSessions = sessions.filter((session) => !isSupersededRecord(session));

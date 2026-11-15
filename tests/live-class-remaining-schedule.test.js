@@ -15,3 +15,19 @@ for (const levelId of ['A1','A2','B1','B2','C1']) {
     assert.equal(new Set(future.map(s => s.id)).size, future.length);
   });
 }
+
+test('Swahili uses the entered end date and preserves existing lessons when weekdays change', () => {
+  const klass = {
+    id: 'swahili-cohort',
+    language: 'Swahili',
+    levelId: 'A1',
+    startDate: '2027-01-02',
+    endDate: '2027-01-30',
+    scheduleRules: [{ day: 'Sat', startTime: '18:00', durationMinutes: 60 }],
+    excludedDates: ['2027-01-16'],
+  };
+  const history = [{ id: 'finished', startsAt: '2027-01-02T18:00:00Z', status: 'completed' }];
+  const future = remainingClassOccurrences(klass, history, Date.parse('2027-01-03T12:00:00Z'));
+  assert.deepEqual(future.map(session => session.startsAt.slice(0, 10)), ['2027-01-09', '2027-01-23', '2027-01-30']);
+  assert.ok(future.every(session => session.chapterIds.length === 0));
+});

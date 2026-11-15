@@ -200,7 +200,7 @@ export async function updateClassCohort(classId, payload) {
     name: normalizedPayload.name,
     endDate: sessionEndDate?.endDate || endDate,
   });
-  const classScheduleSheetSync = sheetPayload.className && sheetPayload.startDate && sheetPayload.endDate && sheetPayload.time && sheetPayload.meetingDays.length
+  const classScheduleSheetSync = normalizedPayload.language !== "Swahili" && sheetPayload.className && sheetPayload.startDate && sheetPayload.endDate && sheetPayload.time && sheetPayload.meetingDays.length
     ? await syncClassSchedule(sheetPayload)
       .then((result) => ({ status: "synced", result }))
       .catch((error) => ({ status: "failed", error: error?.message || "Class schedule sheet sync failed" }))

@@ -12,7 +12,7 @@ const makeRule = (levelId = "A1", day = "Sat") => ({
   startTime: "09:00",
   durationMinutes: defaultDurationMinutes(levelId),
 });
-const emptyForm = () => ({ name: "", levelId: "A1", tutorId: "", startDate: "", endDate: "", timezone: "Africa/Accra", status: "upcoming", zoomProfileId: "", scheduleRules: [makeRule("A1")] });
+const emptyForm = () => ({ name: "", language: "German", levelId: "A1", tutorId: "", startDate: "", endDate: "", timezone: "Africa/Accra", status: "upcoming", zoomProfileId: "", scheduleRules: [makeRule("A1")] });
 const dayLabel = (value) => String(value || "").slice(0, 3).toLowerCase().replace(/^./, (letter) => letter.toUpperCase());
 
 export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }) {
@@ -22,8 +22,8 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
   const [nameSelectionSource, setNameSelectionSource] = useState("auto");
 
   const suggestions = useMemo(
-    () => classNameSuggestions(form.levelId, classes, 6),
-    [form.levelId, classes],
+    () => form.language === "Swahili" ? [] : classNameSuggestions(form.levelId, classes, 6),
+    [form.language, form.levelId, classes],
   );
   const selectedNameBlocked = useMemo(
     () => Boolean(form.name.trim()) && isClassNameBlocked(form.name, classes),
@@ -32,6 +32,7 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
 
   useEffect(() => {
     setForm((current) => {
+      if (current.language === "Swahili") return current;
       const nextName = resolveClassNameSelection(current.name, suggestions, nameSelectionSource);
       if (current.name === nextName) return current;
       return { ...current, name: nextName };
@@ -127,10 +128,14 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
         <small style={{ color: selectedNameBlocked ? "#b91c1c" : "#64748b" }}>
           {selectedNameBlocked
             ? "Already in use. Pick another available name below."
-            : "Suggested automatically from names not currently in use."}
+            : form.language === "Swahili" ? "Enter a name for this Swahili class." : "Suggested automatically from names not currently in use."}
         </small>
       </label>
-      <label>Level<select value={form.levelId} onChange={(event) => changeLevel(event.target.value)}>{["A1", "A2", "B1", "B2", "C1"].map((level) => <option key={level}>{level}</option>)}</select></label>
+      <label>Language<select value={form.language} onChange={(event) => {
+        setNameSelectionSource("auto");
+        patch({ language: event.target.value, levelId: "A1", name: "", endDate: "" }, true);
+      }}><option>German</option><option>Swahili</option></select></label>
+      <label>Level<select value={form.levelId} onChange={(event) => changeLevel(event.target.value)}>{(form.language === "Swahili" ? ["A1"] : ["A1", "A2", "B1", "B2", "C1"]).map((level) => <option key={level}>{level}</option>)}</select></label>
       <label>Start date<input required type="date" value={form.startDate} onChange={(event) => patch({ startDate: event.target.value }, true)} /></label>
       <label>Graduation / end date<input required type="date" value={form.endDate} onChange={(event) => patch({ endDate: event.target.value })} /></label>
       <label>Tutor ID<input value={form.tutorId} onChange={(event) => patch({ tutorId: event.target.value })} /></label><label>Zoom profile ID<input value={form.zoomProfileId} onChange={(event) => patch({ zoomProfileId: event.target.value })} /></label>
@@ -161,9 +166,9 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
         </div>
         <small style={{ color: "#64748b" }}>Names already occupied by current or graduated classes are skipped automatically. Archived/draft names can be reused.</small>
       </div>
-    ) : (
+    ) : form.language === "German" ? (
       <small style={{ color: "#92400e" }}>No unused dictionary name is available for {form.levelId}. You can enter a custom class name.</small>
-    )}
+    ) : null}
 
     <strong>Weekly teaching times</strong><p style={{ margin: 0, fontSize: 13 }}>Use one teaching time per weekday. This prevents two curriculum sessions from being created on the same date.</p>{form.scheduleRules.map((rule, index) => <div key={`${index}-${rule.day}`} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><select value={rule.day} onChange={(event) => patchRule(index, { day: event.target.value })}>{DAYS.map((day) => <option key={day} disabled={form.scheduleRules.some((item, itemIndex) => itemIndex !== index && String(item.day).slice(0, 3).toLowerCase() === day.toLowerCase())}>{day}</option>)}</select><input type="time" value={rule.startTime} onChange={(event) => patchRule(index, { startTime: event.target.value })} /><input
   type="number"

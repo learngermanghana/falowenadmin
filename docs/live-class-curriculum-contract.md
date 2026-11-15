@@ -262,3 +262,7 @@ Attendance confirmation is already event-queued during predeploy. Keep its
 and failure retries. No new job, schedule, index or email policy is introduced.
 Regression checks: `node --test tests/scheduled-job-read-cost.test.cjs
 tests/class-session-reminder-runtime-config.test.js tests/auto-complete-class-sessions.test.js`.
+
+## Public Swahili classes
+
+Choose Swahili under **Live Classes → Create** and enter the class name, dates and weekly meeting times. The available level is A1. The selected language is stored as `classes.language`; older records without a language are German. Swahili sessions follow the entered dates and school closures, with no German curriculum assignments or German schedule-sheet sync. To publish the listing, use Upcoming status and keep **Show publicly** and **Registration open** enabled in class settings. Add the confirmed tuition in class settings if it should appear publicly. Admissions handles enquiries through WhatsApp.

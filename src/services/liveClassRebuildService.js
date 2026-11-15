@@ -34,7 +34,7 @@ export async function rebuildClassSessionsFromSchedule(classId) {
     return {
       ...result,
       mapped: grouped.mapped,
-      total: grouped.total,
+      total: canonicalSchedule.language === "Swahili" ? result.total : grouped.total,
       curriculumAttendanceDayCount: grouped.attendanceDays,
       curriculumTaskCount: grouped.availableCurriculumItems,
       legacyRemoved: cleanup.removed,

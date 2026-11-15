@@ -8,6 +8,11 @@ export function preserveClassSession(session, now = Date.now()) {
 
 // Count actual saved history, rather than hypothetical meetings on the new weekdays.
 export function remainingClassOccurrences(klass, sessions, now = Date.now()) {
+  if (klass.language === "Swahili") {
+    const timezone = klass.timezone || "Africa/Accra";
+    const occupied = new Set(sessions.filter((session) => preserveClassSession(session, now)).map((session) => sessionDateInTimezone(session.startsAt, timezone)));
+    return generateSessionOccurrences(klass).filter((session) => !occupied.has(sessionDateInTimezone(session.startsAt, timezone)));
+  }
   const count = getCourseDictionarySessionCount(klass.levelId);
   if (!count) return generateSessionOccurrences(klass);
   const preserved = sessions.filter((session) => preserveClassSession(session, now));

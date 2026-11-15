@@ -182,6 +182,7 @@ async function loadCompatibleSessions(classId, klass = {}) {
 }
 
 function enrichSessions(klass, sessions = []) {
+  if (klass.language === "Swahili") return sessions;
   const levelId = resolveLevel(klass);
   const groups = getCourseSessionGroups(levelId);
   return enrichSessionsWithStableCurriculum(klass, sessions, groups);
@@ -274,7 +275,7 @@ export async function getCompatibleClassDashboard(classId) {
       sessionRepair = { repaired: false, error: error?.message || "Missing B1 lessons could not be repaired" };
     }
   }
-  const groups = getCourseSessionGroups(normalizedClass.levelId);
+  const groups = normalizedClass.language === "Swahili" ? [] : getCourseSessionGroups(normalizedClass.levelId);
   const sessions = enrichSessions(normalizedClass, rawSessions);
   let repairedDayNumbers = 0;
   let dayNumberRepairError = "";
@@ -288,7 +289,7 @@ export async function getCompatibleClassDashboard(classId) {
   } catch (error) {
     dayNumberRepairError = error?.message || "Could not update existing session day numbers.";
   }
-  const availableCurriculumItems = Object.keys(courseDictionary[normalizedClass.levelId] || {}).length;
+  const availableCurriculumItems = normalizedClass.language === "Swahili" ? 0 : Object.keys(courseDictionary[normalizedClass.levelId] || {}).length;
 
   return {
     klass: normalizedClass,
