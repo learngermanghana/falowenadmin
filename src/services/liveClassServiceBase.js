@@ -190,6 +190,7 @@ export async function createClassCohort(payload) {
     endDate: payload.endDate,
     timezone: payload.timezone || existing?.timezone || "Africa/Accra",
     status: payload.status || "upcoming",
+    active: ["active", "upcoming"].includes(payload.status || "upcoming"),
     zoomProfileId: String(payload.zoomProfileId ?? existing?.zoomProfileId ?? "").trim(),
     scheduleRules: payload.scheduleRules || existing?.scheduleRules || [],
     publicVisible: payload.publicVisible ?? existing?.publicVisible ?? true,
@@ -416,12 +417,13 @@ export async function syncClassCurriculum(classId, { force = false } = {}) {
 }
 
 export async function listClassCohorts() {
-  const snap = await getDocs(query(collection(db, "classes"), orderBy("name", "asc")));
+  const snap = await getDocs(collection(db, "classes"));
   return snap.docs.map((item) => ({
     ...item.data(),
     id: item.id,
     classUrl: buildClassUrl({ ...item.data(), id: item.id }),
-  }));
+  })).sort((left, right) =>
+    String(left.name || left.className || left.id).localeCompare(String(right.name || right.className || right.id)));
 }
 
 export async function resolveClassCohort(value) {

@@ -38,22 +38,23 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
     });
   }, [suggestions, nameSelectionSource]);
 
+  const withEndDate = (next) => ({
+    ...next,
+    endDate: calculateClassEndDate({ ...next, scheduleRules: scheduleRulesForEditor(next.scheduleRules) }),
+  });
   const patch = (values, recalculate = false) => setForm((current) => {
     const next = { ...current, ...values };
-    const endDate = recalculate
-      ? calculateClassEndDate({ ...next, scheduleRules: scheduleRulesForEditor(next.scheduleRules) })
-      : "";
-    return endDate ? { ...next, endDate } : next;
+    return recalculate ? withEndDate(next) : next;
   });
-  const patchRule = (index, values) => setForm((current) => ({ ...current, scheduleRules: current.scheduleRules.map((rule, i) => i === index ? { ...rule, ...values } : rule) }));
-  const removeRule = (index) => setForm((current) => ({ ...current, scheduleRules: current.scheduleRules.filter((_, i) => i !== index) }));
+  const patchRule = (index, values) => setForm((current) => withEndDate({ ...current, scheduleRules: current.scheduleRules.map((rule, i) => i === index ? { ...rule, ...values } : rule) }));
+  const removeRule = (index) => setForm((current) => withEndDate({ ...current, scheduleRules: current.scheduleRules.filter((_, i) => i !== index) }));
   const addRule = () => setForm((current) => {
     const nextDay = nextUnusedScheduleDay(current.scheduleRules);
     if (!nextDay) {
       setMessage("All seven weekdays already have a teaching time. A class can have only one session per date.");
       return current;
     }
-    return { ...current, scheduleRules: [...current.scheduleRules, makeRule(current.levelId, dayLabel(nextDay))] };
+    return withEndDate({ ...current, scheduleRules: [...current.scheduleRules, makeRule(current.levelId, dayLabel(nextDay))] });
   });
 
   function chooseSuggestion(name) {
@@ -72,8 +73,7 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
         name: "",
         scheduleRules: current.scheduleRules.map((rule) => ({ ...rule, durationMinutes })),
       };
-      const endDate = calculateClassEndDate({ ...next, scheduleRules: scheduleRulesForEditor(next.scheduleRules) });
-      return endDate ? { ...next, endDate } : next;
+      return withEndDate(next);
     });
     setMessage("");
   }
@@ -136,7 +136,7 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
       }}><option>German</option><option>Swahili</option></select></label>
       <label>Level<select value={form.levelId} onChange={(event) => changeLevel(event.target.value)}>{(form.language === "Swahili" ? ["A1"] : ["A1", "A2", "B1", "B2", "C1"]).map((level) => <option key={level}>{level}</option>)}</select></label>
       <label>Start date<input required type="date" value={form.startDate} onChange={(event) => patch({ startDate: event.target.value }, true)} /></label>
-      <label>Graduation / end date<input required type="date" value={form.endDate} onChange={(event) => patch({ endDate: event.target.value })} /></label>
+      <label>Graduation / end date<input required type="date" value={form.endDate} readOnly /></label>
       <label>Tutor ID<input value={form.tutorId} onChange={(event) => patch({ tutorId: event.target.value })} /></label><label>Zoom profile ID<input value={form.zoomProfileId} onChange={(event) => patch({ zoomProfileId: event.target.value })} /></label>
       <label>Status<select value={form.status} onChange={(event) => patch({ status: event.target.value })}>{["draft", "upcoming", "active", "graduated"].map((status) => <option key={status}>{status}</option>)}</select></label><label>Timezone<input required value={form.timezone} onChange={(event) => patch({ timezone: event.target.value })} /></label>
     </div>
@@ -167,7 +167,7 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
       </div>
     ) : (
       <small style={{ color: "#92400e" }}>No unused city name is available for {form.levelId}. You can enter a custom class name.</small>
-    ) : null}
+    )}
 
     <strong>Weekly teaching times</strong><p style={{ margin: 0, fontSize: 13 }}>Use one teaching time per weekday. This prevents two curriculum sessions from being created on the same date.</p>{form.scheduleRules.map((rule, index) => <div key={`${index}-${rule.day}`} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><select value={rule.day} onChange={(event) => patchRule(index, { day: event.target.value })}>{DAYS.map((day) => <option key={day} disabled={form.scheduleRules.some((item, itemIndex) => itemIndex !== index && String(item.day).slice(0, 3).toLowerCase() === day.toLowerCase())}>{day}</option>)}</select><input type="time" value={rule.startTime} onChange={(event) => patchRule(index, { startTime: event.target.value })} /><input
   type="number"

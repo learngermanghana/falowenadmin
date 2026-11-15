@@ -35,7 +35,11 @@ const CITY_NAME_DICTIONARY = [
   "Saarbrucken",
 ];
 
-export const SWAHILI_CITY_NAME_DICTIONARY = Object.freeze([\n  "Dar es Salaam", "Arusha", "Zanzibar", "Nairobi", "Mombasa", "Dodoma", "Mwanza", "Kisumu",\n]);\n\nfunction normalize(value) {
+export const SWAHILI_CITY_NAME_DICTIONARY = Object.freeze([
+  "Dar es Salaam", "Arusha", "Zanzibar", "Nairobi", "Mombasa", "Dodoma", "Mwanza", "Kisumu",
+]);
+
+function normalize(value) {
   return String(value || "").trim().replace(/\s+/g, " ").toLowerCase();
 }
 

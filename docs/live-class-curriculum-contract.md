@@ -266,3 +266,12 @@ tests/class-session-reminder-runtime-config.test.js tests/auto-complete-class-se
 ## Public Swahili classes
 
 Choose Swahili under **Live Classes → Create** and enter the class name, dates and weekly meeting times. The available level is A1. The selected language is stored as `classes.language`; older records without a language are German. Swahili sessions follow the entered dates and school closures, with no German curriculum assignments or German schedule-sheet sync. To publish the listing, use Upcoming status and keep **Show publicly** and **Registration open** enabled in class settings. Add the confirmed tuition in class settings if it should appear publicly. Admissions handles enquiries through WhatsApp.
+
+### Swahili A1 in Admin
+
+Live Classes uses the 20 classroom topics from the learner A1 sequence for the
+Swahili session picker. Planned topics may be selected for classroom scheduling.
+New Swahili classes calculate their end date from 20 meetings on the selected
+weekdays, excluding school closures when saved. Existing Swahili schedules retain
+their configured end date. Attendance uses the same class records as Live
+Classes and offers a language filter for class cards and the tracker.

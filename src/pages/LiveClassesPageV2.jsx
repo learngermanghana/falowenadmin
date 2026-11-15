@@ -12,6 +12,7 @@ import { useToast } from "../context/ToastContext.jsx";
 import CreateClassCard from "../components/CreateClassCard.jsx";
 import ClassEditorCard from "../components/ClassEditorCard.jsx";
 import SessionDictionaryPicker from "../components/SessionDictionaryPicker.jsx";
+import { swahiliClassDictionary } from "../data/swahiliClassDictionary.js";
 import { compareCourseDictionaryEntries, courseDictionary } from "../data/courseDictionary.js";
 import {
   listClassCohorts,
@@ -134,7 +135,8 @@ export default function LiveClassesPageV2() {
   const [classes, setClasses] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState(() => searchParams.get("classId") || "");
   const [classSearch, setClassSearch] = useState("");
-  const [classFilter, setClassFilter] = useState("active");
+  const [classFilter, setClassFilter] = useState(() => searchParams.get("language") === "swahili" ? "all" : "active");
+  const [languageFilter, setLanguageFilter] = useState(() => searchParams.get("language") || "all");
   const [sessionFilter, setSessionFilter] = useState("all");
   const [sessionSort, setSessionSort] = useState("lesson");
   const [dashboard, setDashboard] = useState(null);
@@ -205,7 +207,7 @@ export default function LiveClassesPageV2() {
 
   const levelId = useMemo(() => resolveLevel(dashboard?.klass || {}), [dashboard?.klass]);
   const isSwahili = dashboard?.klass?.language === "Swahili";
-  const dictionaryEntries = useMemo(() => isSwahili ? [] : Object.values(courseDictionary[levelId] || {}).sort(compareCourseDictionaryEntries), [isSwahili, levelId]);
+  const dictionaryEntries = useMemo(() => isSwahili ? swahiliClassDictionary : Object.values(courseDictionary[levelId] || {}).sort(compareCourseDictionaryEntries), [isSwahili, levelId]);
   const progress = useMemo(
     () => calculateClassProgress(dashboard?.sessions || [], new Date(), dashboard?.klass || {}),
     [dashboard],
@@ -216,7 +218,8 @@ export default function LiveClassesPageV2() {
   const visibleClasses = classes.filter(klass => {
     const status = String(klass.status || "active").toLowerCase();
     const matchesStatus = klass.id === selectedClassId || classFilter === "all" || (classFilter === "active" ? !["graduated", "archived", "cancelled", "draft"].includes(status) : classFilter === "completed" ? ["graduated", "archived"].includes(status) : status === "upcoming");
-    return matchesStatus && (klass.id === selectedClassId || `${klass.name || klass.className || ""} ${klass.levelId || klass.level || ""}`.toLowerCase().includes(classSearch.toLowerCase()));
+    const matchesLanguage = languageFilter === "all" || (klass.language === "Swahili" ? "swahili" : "german") === languageFilter;
+    return klass.id === selectedClassId || (matchesStatus && matchesLanguage && `${klass.name || klass.className || ""} ${klass.levelId || klass.level || ""}`.toLowerCase().includes(classSearch.toLowerCase()));
   });
   async function undoSchedule() {
     if (!window.confirm("Undo the last schedule change? Dates and calendar will be restored. Any notices already sent remain sent.")) return;
@@ -230,7 +233,11 @@ export default function LiveClassesPageV2() {
   }
 
   async function handleCreated(classId) {
-    await refreshClasses(classId);
+    const rows = await refreshClasses(classId);
+    const created = rows.find((klass) => klass.id === classId);
+    setClassFilter("all");
+    setClassSearch("");
+    setLanguageFilter(created?.language === "Swahili" ? "swahili" : "all");
     await refreshDashboard(classId);
     setActiveTab("overview");
     setMessage("Class created and loaded.");
@@ -376,6 +383,7 @@ export default function LiveClassesPageV2() {
       <article className="card" style={{ display: "grid", gap: 12 }}>
         <div className="live-workspace-toolbar">
           <label>Find class<input type="search" value={classSearch} onChange={event => setClassSearch(event.target.value)} placeholder="Name or level" /></label>
+          <label>Language<select value={languageFilter} onChange={event => setLanguageFilter(event.target.value)}><option value="all">All languages</option><option value="german">German</option><option value="swahili">Swahili</option></select></label>
           <label>Show classes<select value={classFilter} onChange={event => setClassFilter(event.target.value)}><option value="active">Active / upcoming</option><option value="upcoming">Upcoming</option><option value="completed">Completed</option><option value="all">All classes</option></select></label>
         </div>
         <label><select aria-label="Select class" value={selectedClassId} onChange={(event) => { setSelectedClassId(event.target.value); setActiveTab("sessions"); setMessage(""); setSessionChange(null); }}>

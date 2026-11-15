@@ -10,7 +10,7 @@ import { isHistoricalSchedulePayload } from "../utils/liveClassScheduleMode.js";
 import { assertTimetableIntegrity } from "../utils/liveClassTimetableIntegrity.js";
 import { loadSchoolClosureDates } from "./schoolClosureService.js";
 
-export async function prepareLiveClassSchedule(payload = {}) {
+export async function prepareLiveClassSchedule(payload = {}, { creating = false } = {}) {
   const scheduleRules = singleSessionPerWeekdayRules(payload.scheduleRules || []);
   const normalizedPayload = { ...payload, scheduleRules };
   const closureDates = await loadSchoolClosureDates({
@@ -21,7 +21,7 @@ export async function prepareLiveClassSchedule(payload = {}) {
   setSchedulingSchoolClosureDates(closureDates);
   const calculatedEndDate = calculateClassEndDate({ ...normalizedPayload, excludedDates: closureDates });
   const historicalMode = isHistoricalSchedulePayload(normalizedPayload);
-  const endDate = historicalMode || normalizedPayload.language === "Swahili"
+  const endDate = historicalMode || (normalizedPayload.language === "Swahili" && !creating)
     ? String(normalizedPayload.endDate || calculatedEndDate || "").trim()
     : String(calculatedEndDate || "").trim();
 
