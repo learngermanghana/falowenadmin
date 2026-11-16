@@ -256,7 +256,7 @@ function attendanceMetadata(klass, session, patch) {
   };
 }
 
-export function isA1StuttgartGreetingsCohort(klass = {}) {
+function isA1StuttgartGreetingsCohort(klass = {}) {
   return klass.language !== "Swahili" && resolveLevel(klass) === "A1"
     && comparable(klass.name || klass.className) === "a1 stuttgart klasse"
     && !klass.historical
@@ -293,7 +293,12 @@ export async function getCompatibleClassDashboard(classId) {
     && sessionDateInTimezone(stuttgartRepair.at(-1).startsAt, "Africa/Accra") === "2027-01-05"
     ? stuttgartRepair
     : null;
-  const sessions = restoredA1 || enrichSessions(normalizedClass, rawSessions);
+  const displayedSessions = restoredA1 || enrichSessions(normalizedClass, rawSessions);
+  const sessions = isA1StuttgartGreetingsCohort(normalizedClass)
+    ? displayedSessions.map((session) => Number.isInteger(session.curriculumDay) && session.curriculumDay >= 0
+      ? { ...session, curriculumIndex: session.curriculumDay + 1 }
+      : session)
+    : displayedSessions;
   let repairedDayNumbers = 0;
   let dayNumberRepairError = "";
   try {
