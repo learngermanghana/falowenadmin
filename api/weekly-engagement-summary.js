@@ -1,108 +1,231 @@
-// One Sunday scan, delivering through the existing Calendar Apps Script.
+// Once-weekly attendance + class participation digest.
+// Owner can preview without sending; Cron can send only after explicit cutover flag.
+// Preserve tutor manual overrides, check-in records and class-specific email settings.
+import { verifyFirebaseAdminUser, bearerToken } from "./integration-hub.js";
 import { env, googleAccessToken, firestoreGet, docValue, listStudents, hasClass, norm, timeMs, err } from "./checkin-invitations.js";
+
+const GHS = "Africa/Accra";
+const excludedStatuses = new Set(["cancelled","canceled","deleted","superseded","postponed"]);
 const dateOf = (value) => {
   if (!value) return "";
   if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return String(value);
-  const t = timeMs(value);
-  return Number.isFinite(t) ? new Date(t).toISOString().slice(0,10) : "";
+  const ms = timeMs(value);
+  if (!Number.isFinite(ms)) return "";
+  return new Intl.DateTimeFormat("en-CA",{timeZone:GHS,year:"numeric",month:"2-digit",day:"2-digit"})
+    .format(new Date(ms));
 };
-const stamp = (t) => new Date(t).toISOString().slice(0,10);
-async function collection(path, token, limit = 3000) {
-  let page = "", rows = [];
+const stamp = (ms) => new Date(ms).toISOString().slice(0,10);
+const weekWindow = (now = new Date()) => {
+  const midnight = Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate());
+  const monday = midnight - ((now.getUTCDay() + 6) % 7) * 86400000;
+  return {weekStart:stamp(monday), weekEnd:stamp(monday + 6*86400000)};
+};
+async function listCollection(path, token, max=6000) {
+  let rows = [], page = "";
   do {
-    const query = "?pageSize=300" + (page ? "&pageToken=" + encodeURIComponent(page) : "");
-    const result = await firestoreGet(path + query, token, true);
-    rows.push(...(result?.documents || []).map(d => ({ ...docValue(d), _id: d.name.split("/").pop() })));
-    if (rows.length > limit) err("Weekly report exceeded its bounded scan limit.", 409);
-    page = result?.nextPageToken || "";
-  } while (page);
+    const q = new URLSearchParams({pageSize:"300", ...(page ? {pageToken:page} : {})});
+    const result = await firestoreGet(path + "?" + q, token, true);
+    rows.push(...(result?.documents || []).map(d=>({...docValue(d),_id:d.name.split("/").pop()})));
+    if (rows.length>max) err("Weekly report scan limit exceeded; review collection size.",409);
+    page=result?.nextPageToken || "";
+  } while(page);
   return rows;
 }
-const active = (row) => !["inactive","archived","cancelled","canceled","withdrawn","removed"].includes(norm(row.status || row.enrollmentStatus));
-const present = (value) => value === true || value?.present === true || value?.attended === true || ["present","late"].includes(norm(value?.status || value?.attendance));
-const presentFor = (session, student) => {
-  const ids = [student.studentCode, student.studentcode, student.uid, student._id, student.email].map(norm).filter(Boolean);
-  for (const source of [session.attendance || {}, session.students || {}]) {
-    for (const [key,val] of Object.entries(source)) {
-      if ((ids.includes(norm(key)) || ids.includes(norm(val?.email || val?.studentCode || val?.uid))) && present(val)) return true;
+const personKeys = (student) => [student.studentCode,student.studentcode,student.uid,student._id,student.email]
+  .map(norm).filter(Boolean);
+const entryKeys = (id,entry) => [id,entry?.studentCode,entry?.studentId,entry?.uid,entry?.studentUid,entry?.email]
+  .map(norm).filter(Boolean);
+const asEntries = (value) => value && typeof value==="object" && !Array.isArray(value) ? Object.entries(value) : [];
+function matchingEntry(source, student) {
+  const keys = new Set(personKeys(student));
+  return asEntries(source).find(([id,value])=>entryKeys(id,value).some(key=>keys.has(key)))?.[1] || null;
+}
+const statusOf = (value) => {
+  if (value === true) return "present";
+  if (value === false) return "absent";
+  const status=norm(value?.status || value?.attendanceStatus || value?.attendance);
+  if (["present","late","absent","excused"].includes(status)) return status;
+  if (value?.present === true || value?.attended === true) return "present";
+  if (value?.present === false) return "absent";
+  return "";
+};
+const present = (value) => ["present","late"].includes(statusOf(value));
+const asTime = (v) => {const t=timeMs(v);return Number.isFinite(t)?t:NaN;};
+function attendanceStatus({session, attendance={}, checkins=[], student, lateMinutes=15}) {
+  // Tutor register is authoritative even when it differs from self-check-in.
+  const manual=matchingEntry(attendance.students,student) || matchingEntry(attendance.attendance,student);
+  if(manual!=null) {
+    const explicit=statusOf(manual);
+    if(explicit) return explicit;
+  }
+  const keys=new Set(personKeys(student));
+  const check=checkins.filter(c=>entryKeys(c._id,c).some(k=>keys.has(k)))
+    .sort((a,b)=>(asTime(a.checkedInAt||a.submittedAt||a.createdAt)||Infinity)-(asTime(b.checkedInAt||b.submittedAt||b.createdAt)||Infinity))[0];
+  if(check) {
+    const when=asTime(check.checkedInAt||check.submittedAt||check.createdAt);
+    const start=asTime(session.startsAt||session.startAt);
+    return Number.isFinite(when)&&Number.isFinite(start)&&when>start+lateMinutes*60000?"late":"present";
+  }
+  const record=(attendance.records||[]).find(r=>entryKeys("",r).some(k=>keys.has(k)));
+  if(record) return statusOf(record)||"absent";
+  return "absent";
+}
+const active = (row) => !["inactive","archived","withdrawn","removed","cancelled","canceled","deleted","blocked","suspended","trial_expired"].includes(norm(row.status||row.studentStatus||row.enrollmentStatus));
+const held = (session,now=Date.now()) => {
+  const state=norm(session.status||session.sessionStatus);
+  if(excludedStatuses.has(state)||session.superseded===true||session.isSuperseded===true||session.isAppAssessment===true) return false;
+  const end=asTime(session.endsAt||session.endAt);
+  if(!Number.isFinite(end)||end>now) return false;
+  return ["completed","finished","ended"].includes(state);
+};
+const classIds=(klass)=>[klass._id,klass.id,klass.classId,klass.classRecordId,klass.name,klass.className]
+  .map(v=>String(v||"").trim()).filter(Boolean);
+const acceptsSession=(s,klass)=>{
+  // Prefer canonical immutable identity when available to avoid same-name collisions.
+  const canonical=norm(klass._id);
+  const stable=[s.classRecordId,s.canonicalClassId].map(norm).filter(Boolean);
+  if(stable.length && !stable.includes(canonical))return false;
+  return [s.classId,s.classRecordId,s.className].map(norm)
+    .some(v=>v && classIds(klass).map(norm).includes(v));
+};
+const enrolledBefore=(student,session)=>{
+  const start=asTime(session.startsAt||session.startAt);
+  const explicit=[student.classJoinedAt,student.classAssignedAt,student.classEnrollmentAt,student.classEnrollmentDate,student.classStartDate]
+    .map(asTime).filter(Number.isFinite);
+  const generic=[student.trialStartedAt,student.enrollDate,student.enrollmentDate,student.registrationDate]
+    .map(asTime).filter(Number.isFinite);
+  const first=explicit.length?Math.min(...explicit):generic.length?Math.min(...generic):NaN;
+  return !Number.isFinite(first) || !Number.isFinite(start) || first<=start;
+};
+function participationFor(rows,student,klass,start,end) {
+  const ids=new Set(personKeys(student)), sessions=new Set();
+  let turns=0,correct=0,needsReview=0;
+  for(const row of rows){
+    const day=dateOf(row.sessionDate||row.markedDate);
+    if(!day||day<start||day>end)continue;
+    if(!classIds(klass).map(norm).includes(norm(row.classId)))continue;
+    if(![row.studentEmailNormalized,row.studentEmail,row.studentCode,row.studentUid].map(norm).some(v=>ids.has(v)))continue;
+    sessions.add(String(row.classSessionId||row.sessionId||row._id));
+    turns+=Math.max(0,Number(row.turns||0));
+    correct+=Math.max(0,Number(row.correct||0));
+    needsReview+=Math.max(0,Number(row.needsReview||0));
+  }
+  return {participatedSessions:sessions.size,turns,correct,needsReview};
+}
+async function readSessionAttendance(token,klass,session){
+  // Legacy records may be keyed by class name or immutable ID.
+  const aliases=[...new Set([...classIds(klass),session.classId,session.classRecordId,session.className].filter(Boolean))];
+  const all=await Promise.all(aliases.map(async alias=>{
+    const prefix="attendance/"+encodeURIComponent(alias)+"/sessions/"+encodeURIComponent(session._id);
+    const document=await firestoreGet(prefix,token,true);
+    if(!document)return null;
+    const checkins=await listCollection(prefix+"/checkins",token,2000);
+    return {parent:alias,data:docValue(document),checkins};
+  }));
+  const found=all.filter(Boolean);
+  const withManual=found.find(x=>x.parent===klass._id && Object.keys(x.data.students||{}).length)
+    || found.find(x=>Object.keys(x.data.students||{}).length)
+    || found.find(x=>x.parent===klass._id) || found[0];
+  return {attendance:withManual?.data||{},checkins:found.flatMap(x=>x.checkins)};
+}
+function classEmailMode(klass){
+  if(klass.attendanceConfirmationEmailEnabled===false)return "off";
+  const mode=norm(klass.attendanceConfirmationEmailMode||"weekly");
+  return ["off","weekly","each_class"].includes(mode)?mode:"weekly";
+}
+async function buildDigest(token, now=new Date()) {
+  const {weekStart,weekEnd}=weekWindow(now);
+  const [classes, students, sessions, participation]=await Promise.all([
+    listCollection("classes",token,300),listStudents(token),
+    listCollection("classSessions",token,12000),
+    listCollection("classParticipationRecords",token,20000),
+  ]);
+  const rows=[],classSummaries=[];
+  for (const klass of classes){
+    if(!active(klass))continue;
+    const mode=classEmailMode(klass);
+    if(mode!=="weekly"){
+      classSummaries.push({classId:klass._id,className:klass.name||klass._id,mode,skipped:true});
+      continue;
     }
-  }
-  return (session.records || []).some(r => ids.includes(norm(r.studentCode || r.studentId || r.email)) && present(r));
-};
-const held = (s) => {
-  const status = norm(s.sessionStatus || s.status);
-  if (["cancelled","canceled","deleted","postponed"].includes(status)) return false;
-  return s.opened === true || s.active === true || ["completed","finished","ended","open","active"].includes(status)
-    || Object.keys(s.attendance || {}).length > 0 || Object.values(s.students || {}).some(present);
-};
-const participationFor = (rows, student, classId, start, end) => {
-  const ids = [student.studentCode,student.studentcode,student.uid,student._id,student.email].map(norm).filter(Boolean);
-  const sessions = new Set();
-  let turns = 0, correct = 0, needsReview = 0;
-  for (const row of rows) {
-    const date = dateOf(row.sessionDate || row.markedDate || row.updatedAt);
-    if (date < start || date > end || norm(row.classId) !== norm(classId)) continue;
-    if (![row.studentEmailNormalized,row.studentEmail,row.studentCode,row.studentUid].map(norm).some(k => ids.includes(k))) continue;
-    sessions.add(String(row.classSessionId || row.sessionId || row._id));
-    turns += Math.max(0, Number(row.turns || 0));
-    correct += Math.max(0, Number(row.correct || 0));
-    needsReview += Math.max(0, Number(row.needsReview || 0));
-  }
-  return { participatedSessions: sessions.size, turns, correct, needsReview };
-};
-export default async function handler(req, res) {
-  res.setHeader("Cache-Control","no-store");
-  if (req.method !== "GET") return res.status(405).json({ok:false,error:"GET required"});
-  const secret = env("CRON_SECRET");
-  if (!secret) return res.status(503).json({ok:false,error:"Cron is not configured"});
-  if (req.headers.authorization !== "Bearer " + secret) return res.status(401).json({ok:false,error:"Unauthorized"});
-  if (env("WEEKLY_ENGAGEMENT_ENABLED") !== "true") return res.status(200).json({ok:true,disabled:true,reason:"Enable after the legacy weekly attendance email job has been retired."});
-  try {
-    const webhook = env("CALENDAR_APPS_SCRIPT_URL"), dispatchSecret = env("CLASS_SCHEDULE_SYNC_SECRET");
-    if (!webhook || !dispatchSecret) err("Calendar Apps Script integration is not configured",503);
-    const now = new Date(), midnight = Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate());
-    const start = stamp(midnight - ((now.getUTCDay() + 6) % 7) * 86400000), end = stamp(midnight);
-    const token = await googleAccessToken();
-    const [classes, students, records] = await Promise.all([
-      collection("classes",token,300),listStudents(token),collection("classParticipationRecords",token,20000)
-    ]);
-    const validClasses = classes.filter(active);
-    const attendance = await Promise.all(validClasses.map(c => collection("attendance/"+encodeURIComponent(c._id)+"/sessions",token,2000)));
-    let rows = [];
-    for (let i = 0; i < validClasses.length; i++) {
-      const klass = validClasses[i], classId = klass._id;
-      const sessions = attendance[i].filter(s => {
-        const day = dateOf(s.date || s.sessionDate || s.startsAt || s.openFrom);
-        return day >= start && day <= end && held(s);
-      });
-      if (!sessions.length) continue;
-      const emails = new Set();
-      for (const student of students) {
-        if (!active(student) || !hasClass(student,klass,classId)) continue;
-        const email = norm(student.email);
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || emails.has(email)) continue;
-        emails.add(email);
-        rows.push({classId,className:String(klass.name || classId),email,
-          name:String(student.name || student.fullName || "Student"),lessonsHeld:sessions.length,
-          attended:sessions.filter(s => presentFor(s,student)).length,
-          ...participationFor(records,student,classId,start,end)});
+    const relevant=sessions.filter(s=>acceptsSession(s,klass) &&
+      dateOf(s.startsAt||s.startAt||s.date)>=weekStart &&
+      dateOf(s.startsAt||s.startAt||s.date)<=weekEnd && held(s,now.getTime()))
+      .sort((a,b)=>asTime(a.startsAt)-asTime(b.startsAt));
+    if(!relevant.length){
+      classSummaries.push({classId:klass._id,className:klass.name||klass._id,mode,lessonsHeld:0,recipients:0});
+      continue;
+    }
+    const attendance=await Promise.all(relevant.map(session=>readSessionAttendance(token,klass,session)));
+    const roster=students.filter(student=>active(student)&&hasClass(student,klass,klass._id));
+    const seen=new Set();
+    let recipients=0;
+    for(const student of roster) {
+      const email=norm(student.email);
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||seen.has(email))continue;
+      seen.add(email);
+      const eligible=relevant.map((session,i)=>({session,attendance:attendance[i]}))
+        .filter(x=>enrolledBefore(student,x.session));
+      if(!eligible.length)continue;
+      const counts={present:0,late:0,excused:0,absent:0};
+      for(const {session,attendance:record} of eligible){
+        const status=attendanceStatus({session,...record,student,lateMinutes:Number(klass.attendanceConfirmationLateMinutes??15)});
+        counts[status]=(counts[status]||0)+1;
       }
+      const participationSummary=participationFor(participation,student,klass,weekStart,weekEnd);
+      rows.push({classId:klass._id,className:klass.name||klass.className||klass._id,
+        email,name:student.name||student.fullName||"Student",
+        lessonsHeld:eligible.length,attended:counts.present+counts.late,
+        present:counts.present,late:counts.late,excused:counts.excused,absent:counts.absent,
+        ...participationSummary});
+      recipients++;
     }
-    let sent = 0, skipped = 0;
-    for (let offset = 0; offset < rows.length; offset += 100) {
-      const response = await fetch(webhook,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
-        body:JSON.stringify({action:"sendWeeklyEngagementSummaries",secret:dispatchSecret,
-          weekStart:start,weekEnd:end,recipients:rows.slice(offset,offset+100)}),redirect:"follow"});
-      const result = await response.json().catch(() => null);
-      if (!response.ok || !result?.ok) err("Weekly Apps Script did not confirm delivery",502);
-      sent += Number(result.sent || 0);
-      skipped += Number(result.skipped || 0);
+    classSummaries.push({classId:klass._id,className:klass.name||klass._id,mode,
+      lessonsHeld:relevant.length,recipients});
+  }
+  return {weekStart,weekEnd,rows,classSummaries,scanned:{classes:classes.length,students:students.length,sessions:sessions.length,participationRecords:participation.length}};
+}
+async function dispatch(rows,period,fetchImpl=fetch){
+  const webhook=env("CALENDAR_APPS_SCRIPT_URL"),secret=env("CLASS_SCHEDULE_SYNC_SECRET");
+  if(!webhook||!secret)err("Calendar Apps Script email integration not configured.",503);
+  let sent=0,skipped=0;
+  // Per-recipient batches isolate bad rows and make retries safer. Script
+  // maintains week+class+recipient dedupe keys.
+  for(const row of rows){
+    const response=await fetchImpl(webhook,{method:"POST",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify({action:"sendWeeklyEngagementSummaries",secret,
+        weekStart:period.weekStart,weekEnd:period.weekEnd,recipients:[row]}),redirect:"follow"});
+    const reply=await response.json().catch(()=>null);
+    if(!response.ok||reply?.ok!==true)err("Weekly email delivery failed: "+String(reply?.error||response.status),502);
+    sent+=Number(reply.sent||0);skipped+=Number(reply.skipped||0);
+  }
+  return {sent,skipped};
+}
+export default async function handler(req,res){
+  res.setHeader("Cache-Control","no-store");
+  if(req.method!=="GET")return res.status(405).json({ok:false,error:"GET required."});
+  const preview=req.query?.preview==="1";
+  const secret=env("CRON_SECRET");
+  try{
+    if(preview){
+      await verifyFirebaseAdminUser(bearerToken(req));
+    }else{
+      if(!secret||req.headers.authorization!=="Bearer "+secret)return res.status(401).json({ok:false,error:"Unauthorized"});
+      if(env("WEEKLY_ENGAGEMENT_ENABLED")!=="true")return res.status(200).json({ok:true,disabled:true});
     }
-    return res.status(200).json({ok:true,sent,skipped,weekStart:start,weekEnd:end,classes:validClasses.length});
-  } catch (error) {
-    console.error("weekly-engagement-summary", error.message);
-    return res.status(error.status || error.statusCode || 500).json({ok:false,error:error.message || "Weekly report failed"});
+    const token=await googleAccessToken();
+    const report=await buildDigest(token);
+    if(preview)return res.status(200).json({ok:true,preview:true,
+      weekStart:report.weekStart,weekEnd:report.weekEnd,
+      eligibleRecipients:report.rows.length,classes:report.classSummaries,
+      scanned:report.scanned,sendEnabled:env("WEEKLY_ENGAGEMENT_ENABLED")==="true"});
+    const delivery=await dispatch(report.rows,report);
+    return res.status(200).json({ok:true,...delivery,weekStart:report.weekStart,
+      weekEnd:report.weekEnd,classes:report.classSummaries.length});
+  }catch(error){
+    console.error("weekly_engagement_summary_failed",{message:error?.message||String(error)});
+    return res.status(Number(error.status||error.statusCode)||500).json({ok:false,error:error.message||"Weekly report failed"});
   }
 }
-
-export { dateOf, presentFor, held, participationFor };
+export { dateOf, weekWindow, held, attendanceStatus, participationFor, buildDigest, classEmailMode, enrolledBefore };
