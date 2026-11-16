@@ -193,7 +193,7 @@ jobs:
           grep -F 'exports.queueAttendanceConfirmationFromClassSession = onDocumentWritten' functions/index.js
           grep -F 'exports.autoCompleteClassSessions = createAutoCompleteClassSessionsJob' functions/index.js
           grep -F 'exports.sendCourseReviewRequestEmails = createCourseReviewRequestEmailJob' functions/index.js
-          grep -F 'exports.sendDueHolidayNotices = onSchedule' functions/index.js
+          if grep -F 'exports.sendDueHolidayNotices = onSchedule' functions/index.js; then echo "Daily holiday emails must stay retired"; exit 1; fi
           grep -F 'exports.trackStudentRegistrationReceived = registrationLifecycleTriggers.registrationReceived' functions/index.js
           grep -F 'exports.sendEnrollmentConfirmationDocuments = registrationLifecycleTriggers.enrollmentConfirmed' functions/index.js
           grep -F 'exports.sendTrialAccessWelcomeEmail = createTrialAccessWelcomeEmailTrigger' functions/index.js
@@ -346,9 +346,6 @@ jobs:
 
           deploy_group "automatic class completion worker" \
             "functions:falowenadmin:autoCompleteClassSessions"
-
-          deploy_group "holiday notice worker" \
-            "functions:falowenadmin:sendDueHolidayNotices"
 
           deploy_group "attendance session event worker" \
             "functions:falowenadmin:queueAttendanceConfirmationFromSession"
