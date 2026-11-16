@@ -1098,6 +1098,8 @@ export async function saveScoreRow({
       throw new Error("Duplicate-safe score saving requires the Firestore score mirror.");
     }
     attemptMetadata = buildScoreAttemptMetadata(null, row.score, nowIso);
+    duplicateSkipped = shouldSkipExistingScore(null, row.score, allowDuplicate);
+    duplicateBlockReason = duplicateSkipped ? "same_score" : "";
   }
 
   Object.assign(row, attemptMetadata);
