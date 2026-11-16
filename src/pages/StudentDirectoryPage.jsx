@@ -3,7 +3,7 @@ import "./StudentDirectoryPage.css";
 import { STUDENT_DETAIL_TABS, nextStudentDetailTab } from "../utils/studentDetailTabs.js";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { createStudent, listAllStudents, updateStudentById, activateExistingStudentTrial } from "../services/studentsService";
+import { createStudent, listAllStudents, updateStudentById, activateExistingStudentTrial, reviewUniversityStudent } from "../services/studentsService";
 import { listClassCohorts } from "../services/liveClassService";
 import { useToast } from "../context/ToastContext";
 import StudentSupportTools from "../components/StudentSupportTools";
@@ -374,7 +374,15 @@ function getStudentLanguages({ program, secondaryProgram }) {
   return [...new Set([primary, secondary])].filter((language) => language === "german" || language === "swahili");
 }
 
-const DIRECTORY_VIEWS = new Set(["all", "trials", "attention", "archived"]);
+const DIRECTORY_VIEWS = new Set(["all", "trials", "attention", "archived", "university"]);
+
+const HAMBURG_SIGNUP_LINK = "https://www.falowen.app/signup?invite=UH-KISWAHILI-A1";
+
+function isHamburgCohortStudent(student) {
+  return student?.registrationSource === "university-invite" &&
+    student?.institutionId === "university-hamburg" &&
+    student?.cohortId === "university-hamburg-kiswahili-a1";
+}
 
 function normalizeDirectoryView(value) {
   const normalized = String(value || "").trim().toLowerCase();
@@ -400,6 +408,7 @@ export default function StudentDirectoryPage() {
   const [creatingStudent, setCreatingStudent] = useState(false);
   const [createDraft, setCreateDraft] = useState(addStudentDefaultDraft);
   const [activatingTrialId, setActivatingTrialId] = useState("");
+  const [reviewingUniversityId, setReviewingUniversityId] = useState("");
   const [error, setError] = useState("");
   const [followUpType, setFollowUpType] = useState("balance");
   const [followUpMessage, setFollowUpMessage] = useState("");
@@ -427,7 +436,8 @@ export default function StudentDirectoryPage() {
   );
 
   const viewStudents = useMemo(() => {
-    if (directoryView === "trials") return students.filter(isTrialOrUnpaidStudent);
+    if (directoryView === "trials") return students.filter((student) => !isHamburgCohortStudent(student) && isTrialOrUnpaidStudent(student));
+    if (directoryView === "university") return students.filter(isHamburgCohortStudent);
     if (directoryView === "attention") return sortStudentsByAttention(students).map(({ student }) => student);
     if (directoryView === "archived") return students.filter(isArchivedStudent);
     return students.filter((student) => !isArchivedStudent(student));
@@ -435,7 +445,8 @@ export default function StudentDirectoryPage() {
 
   const directoryCounts = useMemo(() => ({
     all: students.filter((student) => !isArchivedStudent(student)).length,
-    trials: students.filter(isTrialOrUnpaidStudent).length,
+    trials: students.filter((student) => !isHamburgCohortStudent(student) && isTrialOrUnpaidStudent(student)).length,
+    university: students.filter(isHamburgCohortStudent).length,
     attention: attentionSummary.total,
     archived: students.filter(isArchivedStudent).length,
   }), [attentionSummary.total, students]);
@@ -505,6 +516,12 @@ export default function StudentDirectoryPage() {
     () => filteredStudents.find((student) => student.id === selectedStudentId) || null,
     [filteredStudents, selectedStudentId],
   );
+
+  useEffect(() => {
+    if (selectedStudent && isHamburgCohortStudent(selectedStudent) && detailTab === "payments") {
+      setDetailTab("profile");
+    }
+  }, [selectedStudent, detailTab]);
 
   useEffect(() => {
     if (!selectedStudent) {
@@ -588,6 +605,24 @@ export default function StudentDirectoryPage() {
     }
   };
 
+
+  const reviewUniversityRegistration = async (student, decision) => {
+    const isApproved = student.institutionVerification === "approved";
+    if (!window.confirm(decision === "approve"
+      ? `Approve complimentary Kiswahili A1 access for ${student.name || student.id}? Verify this student belongs to Ruth's University of Hamburg course first.`
+      : `Suspend complimentary access for ${student.name || student.id} until re-verification?`)) return;
+    setReviewingUniversityId(student.id);
+    try {
+      const result = await reviewUniversityStudent(student.id, decision);
+      setStudents((previous) => previous.map((record) => record.id === student.id
+        ? { ...record, ...result.updates } : record));
+      pushToast({ type: "success", message: result.message || (isApproved ? "Verification updated." : "Access approved.") });
+    } catch (error) {
+      pushToast({ type: "error", message: error?.message || "University verification failed." });
+    } finally {
+      setReviewingUniversityId("");
+    }
+  };
 
   const activateTrialForStudent = async (student) => {
     if (!window.confirm("Start a NEW seven-day trial from today? This keeps the existing login, student code and unpaid balance.")) return;
@@ -819,12 +854,30 @@ export default function StudentDirectoryPage() {
           Search for a student, call them directly, edit records, and generate WhatsApp follow-up messages.
         </p>
         <div style={{ display: "grid", gap: 9, marginBottom: 12 }}>
+          {directoryView === "university" && (
+            <div style={{ border: "1px solid #bfdbfe", background: "#eff6ff", padding: 12, borderRadius: 10, display: "grid", gap: 6 }}>
+              <strong>University of Hamburg · Kiswahili A1</strong>
+              <span>Registration invitation for Ruth's students (approval required)</span>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+                <a href={HAMBURG_SIGNUP_LINK} target="_blank" rel="noopener noreferrer">{HAMBURG_SIGNUP_LINK}</a>
+                <button type="button" onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(HAMBURG_SIGNUP_LINK);
+                    pushToast({ type: "success", message: "University invitation link copied." });
+                  } catch {
+                    pushToast({ type: "info", message: "Select and copy the invitation link." });
+                  }
+                }}>Copy link</button>
+              </div>
+            </div>
+          )}
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }} role="tablist" aria-label="Student directory views">
             {[
               ["all", "All students"],
               ["trials", "Trials & unpaid"],
               ["attention", "Needs attention"],
               ["archived", "Archived"],
+              ["university", "University of Hamburg"],
             ].map(([view, label]) => (
               <button
                 key={view}
@@ -1039,7 +1092,7 @@ export default function StudentDirectoryPage() {
                         }}>← Back to students</button>
                         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
                           <h2 style={{ marginTop: 0, marginBottom: 8 }}>{selectedStudent.name || "Student details"}</h2>
-                          <button
+                          {!isHamburgCohortStudent(selectedStudent) && <button
                             type="button"
                             onClick={() => {
                               setDetailTab("payments");
@@ -1057,14 +1110,14 @@ export default function StudentDirectoryPage() {
                             }}
                           >
                             Generate payment link →
-                          </button>
+                          </button>}
                         </div>
                         <p style={{ marginTop: 0, marginBottom: 12, opacity: 0.75 }}>
                           Use the tabs to manage this student’s records, then save your changes. Use <strong>Transfer class</strong> in the Class tab for class changes so attendance and participation history stay intact.
                         </p>
 
                         <div className="student-detail-tabs" role="tablist" aria-label="Student details">
-                          {STUDENT_DETAIL_TABS.map((tab) => (
+                          {STUDENT_DETAIL_TABS.filter((tab) => !isHamburgCohortStudent(selectedStudent) || tab.id !== "payments").map((tab) => (
                             <button key={tab.id} id={`student-tab-${tab.id}`} type="button" role="tab"
                               aria-selected={detailTab === tab.id} aria-controls={`student-panel-${tab.id}`}
                               tabIndex={detailTab === tab.id ? 0 : -1}
@@ -1084,8 +1137,24 @@ export default function StudentDirectoryPage() {
                             aria-labelledby={`student-tab-${tab.id}`} hidden={detailTab !== tab.id}
                             className="student-detail-panel">
                             <h3>{tab.label === "Class" ? "Class and contract" : tab.label}</h3>
+                            {tab.id === "profile" && isHamburgCohortStudent(selectedStudent) && (
+                              <div data-university-verification style={{ marginBottom: 14, padding: 14, border: "1px solid #bfdbfe", background: "#eff6ff", borderRadius: 10 }}>
+                                <strong>University of Hamburg · Kiswahili A1</strong>
+                                <p style={{ margin: "8px 0", fontSize: 13 }}>Instructor: Ruth · Source: university invitation</p>
+                                <p style={{ margin: "8px 0", fontSize: 13 }}>
+                                  Eligibility: <strong>{selectedStudent.institutionVerification === "approved" ? "Approved — complimentary access" : "Awaiting verification — no access or payment"}</strong>
+                                </p>
+                                <p style={{ margin: "8px 0", fontSize: 12 }}>
+                                  Confirm this student is enrolled in Ruth's STiNE Kiswahili class before approving.
+                                </p>
+                                <button type="button" disabled={Boolean(reviewingUniversityId)}
+                                  onClick={() => reviewUniversityRegistration(selectedStudent, selectedStudent.institutionVerification === "approved" ? "revoke" : "approve")}>
+                                  {reviewingUniversityId === selectedStudent.id ? "Saving…" : selectedStudent.institutionVerification === "approved" ? "Suspend complimentary access" : "Approve university access"}
+                                </button>
+                              </div>
+                            )}
                             {tab.id === "profile" && <StudentLearningStatusPanel student={selectedStudent} />}
-                            {tab.id === "profile" && (
+                            {tab.id === "profile" && !isHamburgCohortStudent(selectedStudent) && (
                               <div className="student-trial-activation" style={{marginBottom:14,padding:12,border:"1px solid #c7d2fe",borderRadius:10}}>
                                 <strong>Trial access</strong>
                                 <p style={{margin:"6px 0",fontSize:13}}>Current trial: {selectedStudent.trialStatus || selectedStudent.status || "Not set"}. Start: {selectedStudent.trialStartedAt ? new Date(selectedStudent.trialStartedAt).toLocaleDateString("en-GB") : "missing"} · Ends: {selectedStudent.trialEndsAt ? new Date(selectedStudent.trialEndsAt).toLocaleDateString("en-GB") : "missing"}.</p>
@@ -1134,7 +1203,7 @@ export default function StudentDirectoryPage() {
                             {/* STUDENT_EMERGENCY_CONTACT_FIELD: Emergency contact stays in the staff-only Profile tab. */}
                             {tab.id === "profile" && <StudentAccountActivationPanel student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast} />}
                             {tab.id === "profile" && <StudentEmergencyContact student={selectedStudent} />}
-                            {tab.id === "payments" && (
+                            {tab.id === "payments" && !isHamburgCohortStudent(selectedStudent) && (
                               <>
                         <StudentPaymentTools
                           student={selectedStudent}

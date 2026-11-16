@@ -136,6 +136,10 @@ function trialPurgeAtMillis(student = {}) {
 }
 
 function expiredPendingReason(student = {}, now = Date.now()) {
+  // University invitation records are not seven-day trials, whether awaiting
+  // staff verification or already approved. Never auto-delete these records.
+  if (student.registrationSource === "university-invite" &&
+      student.institutionId === "university-hamburg") return "institutional_access";
   const role = comparable(student.role);
   if (role && role !== "student") return "not_student";
   if (hasQualifyingPayment(student)) return "has_payment";

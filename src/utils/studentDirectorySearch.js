@@ -19,6 +19,10 @@ export function matchesStudentDirectorySearch(student = {}, query = "", primaryP
     emergencyName,
     student.level,
     student.program,
+    student.institutionName,
+    student.cohortId,
+    student.instructorName,
+    student.institutionVerification,
   ].map((value) => String(value || "").toLowerCase()).join(" ");
 
   // Only normalize phone-like searches. Short numeric searches are too
