@@ -370,11 +370,11 @@ function mergeSecondExaminer(primary = {}, secondary = null, error = null) {
   };
   return comparison.requiresTutorReview
     ? withReviewReason(merged, {
-      code: "second_examiner_disagreement",
+      code: scoreDisagreement ? "second_examiner_disagreement" : "second_examiner_review_flag",
       message: scoreDisagreement
         ? `Independent examiners disagree beyond score thresholds (score delta: ${comparison.scoreDelta ?? "unknown"}, writing delta: ${comparison.writingScoreDelta ?? "unknown"}); tutor review required.`
         : comparison.hardSecondaryReviewSignal
-          ? `The second examiner flagged missing or uncertain writing evidence for tutor review (score delta: ${comparison.scoreDelta ?? "unknown"}, writing delta: ${comparison.writingScoreDelta ?? "unknown"}; both within disagreement thresholds).`
+          ? "The second examiner confirms that a required writing point may be missing or uncertain; tutor review is needed for that writing evidence, not because the examiners' scores disagree."
           : "The second examiner needs tutor review because of incomplete scores or low confidence.",
       source: "second_examiner",
     })
