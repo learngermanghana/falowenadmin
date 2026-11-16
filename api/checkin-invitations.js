@@ -131,3 +131,6 @@ export default async function handler(req, res) {
     return res.status(Number(error.status || error.statusCode) || 500).json({ ok: false, error: error.message || "Check-in invitation failed." });
   }
 }
+
+// Reused by the once-weekly engagement summary; no credentials are exported.
+export { project, env, googleAccessToken, firestoreGet, docValue, listStudents, hasClass, norm, timeMs, err };
