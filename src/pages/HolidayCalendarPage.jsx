@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   getHolidayAppsScriptHealth,
   getHolidayNoticeHistory,
@@ -62,15 +63,15 @@ function formatNoticeStatus(holiday) {
   }
   if (status === "failed") return "Failed";
   if (status === "no_recipients") return "No recipients";
-  if (holiday.schoolClosed && holiday.autoSendNotice && status === "scheduled") {
-    return "Scheduled for 7:00 AM";
-  }
+  if (status === "scheduled") return "Ready for manual review";
   if (!holiday.schoolClosed) return "Not scheduled — school open";
   return "Not scheduled";
 }
 
 export default function HolidayCalendarPage() {
-  const [year, setYear] = useState(currentYear);
+  const [searchParams] = useSearchParams();
+  const requestedYear = Number(searchParams.get("year"));
+  const [year, setYear] = useState(Number.isInteger(requestedYear) && requestedYear >= 2000 && requestedYear <= 2100 ? requestedYear : currentYear);
   const [holidays, setHolidays] = useState([]);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
@@ -180,7 +181,7 @@ export default function HolidayCalendarPage() {
       adminNote: adminNoteAuto ? buildDefaultAdminNote(nextHoliday) : getAdminNote(nextHoliday),
       adminNoteAuto,
       studentMessage: nextHoliday.studentMessage || "",
-      autoSendNotice: Boolean(nextHoliday.autoSendNotice),
+      autoSendNotice: false,
       noticeAudienceType: nextHoliday.noticeAudienceType === "class" ? "class" : "all_active",
       noticeClassName: nextHoliday.noticeAudienceType === "class" ? (nextHoliday.noticeClassName || "") : "",
     };
@@ -311,6 +312,7 @@ export default function HolidayCalendarPage() {
   return (
     <div className="page-container holiday-calendar-page">
       <h1>Holiday Calendar (Ghana)</h1>
+      <p>Upcoming holidays appear on the dashboard. Emails are manual only: preview the message and recipients, then send when ready.</p>
       <OperationsCommunicationPanel context="holidays" />
 
       <div className="holiday-calendar-toolbar" style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16 }}>
@@ -386,8 +388,7 @@ export default function HolidayCalendarPage() {
               <th>Action</th>
               <th>Admin Note</th>
               <th>Student Message</th>
-              <th>Auto Send Notice</th>
-              <th>Send Timing</th>
+              <th>Delivery</th>
               <th>Audience</th>
               <th>Manual Send</th>
               <th>Notice Status</th>
@@ -453,17 +454,7 @@ export default function HolidayCalendarPage() {
                       onBlur={(e) => handleUpdate(holiday.date, { studentMessage: e.target.value })}
                     />
                   </td>
-                  <td>
-                    <select
-                      value={holiday.autoSendNotice ? "YES" : "NO"}
-                      disabled={updatingDate === holiday.date || !holiday.schoolClosed}
-                      onChange={(e) => handleUpdate(holiday.date, { autoSendNotice: e.target.value === "YES" })}
-                    >
-                      <option value="NO">NO</option>
-                      <option value="YES">YES</option>
-                    </select>
-                  </td>
-                  <td>{holiday.schoolClosed ? "Automatically sends 1 day before holiday at 7:00 AM Ghana time" : "Automatic email is off because school is open."}</td>
+                  <td>Manual only — preview and send when ready.</td>
                   <td>
                     <select
                       value={noticeAudienceType}
