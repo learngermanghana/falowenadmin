@@ -254,6 +254,18 @@ export async function updateStudentById(studentId, payload) {
   return updateStudentByIdThroughApi(studentId, payload);
 }
 
+export async function reviewUniversityStudent(studentId, decision, { fetchImpl = globalThis.fetch, headersLoader = authHeaders } = {}) {
+  const normalizedId = normalize(studentId);
+  if (!normalizedId) throw new Error("Student ID is required");
+  if (!["approve", "revoke"].includes(decision)) throw new Error("Choose approve or revoke");
+  const response = await fetchImpl(`/api/students/${encodeURIComponent(normalizedId)}/university-approval`, {
+    method: "POST",
+    headers: await headersLoader(),
+    body: JSON.stringify({ decision }),
+  });
+  return parseStudentProfileUpdateResponse(response, await response.text());
+}
+
 export async function activateExistingStudentTrial(studentId, { fetchImpl = globalThis.fetch, headersLoader = authHeaders } = {}) {
   const normalizedId = normalize(studentId);
   if (!normalizedId) throw new Error("Student ID is required");
