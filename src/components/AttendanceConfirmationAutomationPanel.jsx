@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { auth } from "../firebase.js";
 import { listClasses } from "../services/classesService.js";
 import {
   ATTENDANCE_EMAIL_MODES,
@@ -76,6 +77,9 @@ export default function AttendanceConfirmationAutomationPanel() {
   const [saving, setSaving] = useState(false);
   const [classesError, setClassesError] = useState("");
   const [settingsError, setSettingsError] = useState("");
+  const [previewing, setPreviewing] = useState(false);
+  const [weeklyPreview, setWeeklyPreview] = useState(null);
+  const [weeklyPreviewError, setWeeklyPreviewError] = useState("");
 
   async function loadClassesNow() {
     setLoadingClasses(true);
@@ -157,6 +161,27 @@ export default function AttendanceConfirmationAutomationPanel() {
       error(message);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function previewWeeklyReport() {
+    setPreviewing(true);
+    setWeeklyPreview(null);
+    setWeeklyPreviewError("");
+    try {
+      const user = auth?.currentUser;
+      if (!user) throw new Error("Sign in to preview the weekly report.");
+      const token = await user.getIdToken();
+      const response = await fetch("/api/weekly-engagement-summary?preview=1", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload.ok !== true) throw new Error(payload.error || `Preview failed (HTTP ${response.status}).`);
+      setWeeklyPreview(payload);
+    } catch (cause) {
+      setWeeklyPreviewError(cause?.message || "Could not preview weekly attendance.");
+    } finally {
+      setPreviewing(false);
     }
   }
 
@@ -304,6 +329,23 @@ export default function AttendanceConfirmationAutomationPanel() {
           <strong>Delivery job error:</strong> {settings.lastError}
         </div>
       ) : null}
+
+      <section style={{ border: "1px solid #bfdbfe", background: "#f8fbff", borderRadius: 12, padding: 14, display: "grid", gap: 10 }}>
+        <h3 style={{ margin: 0, color: "#1d4ed8" }}>New weekly attendance + participation email</h3>
+        <p style={{ margin: 0, fontSize: 13, color: "#475569" }}>Preview current-week class totals directly from Falowen. This is read-only and sends no emails. The replacement sender stays off until verified.</p>
+        <button type="button" onClick={previewWeeklyReport} disabled={previewing} style={{ justifySelf: "start" }}>{previewing ? "Checking records…" : "Preview weekly report (no emails)"}</button>
+        {weeklyPreviewError && <p role="alert" style={{ color: "#b91c1c", margin: 0, overflowWrap: "anywhere" }}>{weeklyPreviewError}</p>}
+        {weeklyPreview && <div role="status" style={{ display: "grid", gap: 8 }}>
+          <strong>{weeklyPreview.weekStart} to {weeklyPreview.weekEnd} · {weeklyPreview.eligibleRecipients} eligible student summaries</strong>
+          <small>{weeklyPreview.sendEnabled ? "Replacement sending is enabled" : "Replacement sending remains disabled"}</small>
+          <div style={{ display: "grid", gap: 6 }}>
+            {(weeklyPreview.classes || []).map((row) => <div key={row.classId} style={{ borderTop: "1px solid #dbeafe", paddingTop: 6, display: "flex", justifyContent: "space-between", gap: 12 }}>
+              <span>{row.className}</span>
+              <strong>{row.skipped ? `Excluded (${row.mode})` : `${row.lessonsHeld || 0} held · ${row.recipients || 0} recipients`}</strong>
+            </div>)}
+          </div>
+        </div>}
+      </section>
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <button type="button" onClick={save} disabled={!selectedId || saving || loadingSettings || Boolean(settingsError)}>
