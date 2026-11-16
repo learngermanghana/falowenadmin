@@ -182,8 +182,14 @@ async function buildDigest(token, now=new Date()) {
         ...participationSummary});
       recipients++;
     }
+    const classRows=rows.filter(row=>row.classId===klass._id);
+    const totals=classRows.reduce((counts,row)=>({
+      attended:counts.attended+row.attended,late:counts.late+row.late,
+      excused:counts.excused+row.excused,absent:counts.absent+row.absent,
+      participationTurns:counts.participationTurns+row.turns,
+    }),{attended:0,late:0,excused:0,absent:0,participationTurns:0});
     classSummaries.push({classId:klass._id,className:klass.name||klass._id,mode,
-      lessonsHeld:relevant.length,recipients});
+      lessonsHeld:relevant.length,recipients,...totals});
   }
   return {weekStart,weekEnd,rows,classSummaries,scanned:{classes:classes.length,students:students.length,sessions:sessions.length,participationRecords:participation.length}};
 }
