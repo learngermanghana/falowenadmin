@@ -57,3 +57,15 @@ export function buildDictionarySelectionTopic({
   const prefix = String(existingTopic || "").match(/^\s*((?:Day|Lesson)\s+\d+)\s*:/i)?.[1] || "";
   return `${prefix ? `${prefix}: ` : ""}${titles.join(" + ")}`.trim();
 }
+
+export function filterSessionDictionaryEntries(entries, search) {
+  const query = String(search || "").trim().toLowerCase();
+  if (!query) return entries;
+  const day = entries.some((entry) => entry.dayLabel) ? query.match(/\bday\s+\d+\b/)?.[0] : undefined;
+  const terms = (day ? query.replace(day, "") : query).trim().split(/\s+/);
+  return entries.filter((entry) => {
+    if (day && entry.dayLabel?.toLowerCase() !== day.replace(/\s+/g, " ")) return false;
+    const label = [entry.dayLabel, entry.assignment_id, entry.chapter, entry.en, entry.de].join(" ").toLowerCase();
+    return terms.every((term) => label.includes(term));
+  });
+}
