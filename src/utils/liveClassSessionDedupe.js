@@ -260,6 +260,26 @@ function enrichCompleteSessionSet(ordered = [], groups = []) {
   });
 }
 
+export function recoverA1MissingGreetings(sessions = [], groups = []) {
+  const ordered = [...sessions].sort((left, right) => sessionTime(left) - sessionTime(right));
+  if (groups.length < 3 || ordered.length !== groups.length
+    || groups[1].assignmentIds[0] !== "A1-0.1"
+    || normalize(ordered[0].status).toLowerCase() !== "completed"
+    || !sameAssignmentSet(assignmentIdsForSession(ordered[0]), groups[0].assignmentIds)) return null;
+
+  const remaining = ordered.slice(1);
+  const shiftedGroups = [...groups.slice(2), groups.at(-1)];
+  const matchesShift = remaining.every((session, index) =>
+    normalize(session.status).toLowerCase() === "scheduled"
+    && sameAssignmentSet(assignmentIdsForSession(session), shiftedGroups[index].assignmentIds));
+  if (!matchesShift) return null;
+
+  return [ordered[0], ...remaining.map((session, index) => ({
+    ...applyCurriculumGroup(session, groups[index + 1], index + 1),
+    curriculumIndex: index + 2,
+  }))];
+}
+
 export function enrichSessionsWithStableCurriculum(klass = {}, sessions = [], groups = []) {
   const ordered = [...sessions].sort((left, right) => sessionTime(left) - sessionTime(right));
 
