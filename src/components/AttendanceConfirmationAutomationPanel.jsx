@@ -79,6 +79,7 @@ export default function AttendanceConfirmationAutomationPanel() {
   const [settingsError, setSettingsError] = useState("");
   const [previewing, setPreviewing] = useState(false);
   const [weeklyPreview, setWeeklyPreview] = useState(null);
+  const [weeklyPreviewPeriod, setWeeklyPreviewPeriod] = useState("previous");
   const [weeklyPreviewError, setWeeklyPreviewError] = useState("");
   const [sendingWeeklyTest, setSendingWeeklyTest] = useState(false);
   const [weeklyTestResult, setWeeklyTestResult] = useState("");
@@ -196,7 +197,7 @@ export default function AttendanceConfirmationAutomationPanel() {
       const user = auth?.currentUser;
       if (!user) throw new Error("Sign in to preview the weekly report.");
       const token = await user.getIdToken();
-      const response = await fetch("/api/weekly-engagement-summary?preview=1", {
+      const response = await fetch(`/api/weekly-engagement-summary?preview=1&period=${weeklyPreviewPeriod}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const payload = await response.json().catch(() => ({}));
@@ -356,7 +357,8 @@ export default function AttendanceConfirmationAutomationPanel() {
 
       <section style={{ border: "1px solid #bfdbfe", background: "#f8fbff", borderRadius: 12, padding: 14, display: "grid", gap: 10 }}>
         <h3 style={{ margin: 0, color: "#1d4ed8" }}>New weekly attendance + participation email</h3>
-        <p style={{ margin: 0, fontSize: 13, color: "#475569" }}>Preview current-week class totals directly from Falowen. This is read-only and sends no emails. The replacement sender stays off until verified.</p>
+        <p style={{ margin: 0, fontSize: 13, color: "#475569" }}>Check last week’s completed sessions against Falowen records, or view the current week. This is read-only and sends no emails. The replacement sender stays off until verified.</p>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><strong>Reporting period</strong><select value={weeklyPreviewPeriod} onChange={(event) => { setWeeklyPreviewPeriod(event.target.value); setWeeklyPreview(null); }} style={inputStyle}><option value="previous">Previous week (completed)</option><option value="current">Current week</option></select></label>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           <button type="button" onClick={previewWeeklyReport} disabled={previewing}>{previewing ? "Checking records…" : "Preview weekly report (no emails)"}</button>
           <button type="button" onClick={sendWeeklyTestToOwner} disabled={sendingWeeklyTest}>{sendingWeeklyTest ? "Sending test…" : "Send test weekly email to administrator"}</button>
