@@ -1,0 +1,55 @@
+name: Retire daily holiday email scheduler
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/retire-daily-holiday-notices.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: falowenadmin-firebase-deploy
+  cancel-in-progress: false
+
+jobs:
+  retire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Confirm no daily holiday scheduled function remains in source
+        run: |
+          if grep -F 'exports.sendDueHolidayNotices = onSchedule' functions/index.js; then
+            echo "Holiday scheduler is still exported. Refusing deletion."
+            exit 1
+          fi
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FALOWEN }}'
+      - run: npm install -g firebase-tools
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Delete daily holiday Firebase function
+        run: |
+          set -euo pipefail
+          project="falowen-examiner-trainer"
+          if gcloud functions describe sendDueHolidayNotices --gen2 --region=us-central1 --project="$project" >/dev/null 2>&1; then
+            firebase functions:delete sendDueHolidayNotices --region us-central1 --project "$project" --force
+          fi
+      - name: Delete any orphan Scheduler job
+        run: |
+          set -euo pipefail
+          project="falowen-examiner-trainer"
+          job="firebase-schedule-sendDueHolidayNotices-us-central1"
+          if gcloud scheduler jobs describe "$job" --location us-central1 --project "$project" >/dev/null 2>&1; then
+            gcloud scheduler jobs delete "$job" --location us-central1 --project "$project" --quiet
+          fi
+          if gcloud functions describe sendDueHolidayNotices --gen2 --region us-central1 --project "$project" >/dev/null 2>&1; then
+            echo "::error::Daily holiday function still exists"
+            exit 1
+          fi
+          if gcloud scheduler jobs describe "$job" --location us-central1 --project "$project" >/dev/null 2>&1; then
+            echo "::error::Daily holiday job still exists"
+            exit 1
+          fi
+          echo "Daily holiday Cloud function and Scheduler job deleted"
