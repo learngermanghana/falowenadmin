@@ -74,11 +74,15 @@ const localDate = (date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Africa
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   if (req.method !== "POST") return res.status(405).json({ ok: false, error: "POST required." });
+  const requestId = crypto.randomUUID().slice(0, 12);
+  let stage = "admin-auth";
   try {
     await verifyFirebaseAdminUser(bearerToken(req));
+    stage = "google-access";
     const classId = safeId(req.body?.classId);
     const sessionId = safeId(req.body?.sessionId);
     const token = await googleAccessToken();
+    stage = "class-and-session-lookup";
     const [klassDoc, sessionDoc, attendanceDoc] = await Promise.all([
       firestoreGet(`classes/${encodeURIComponent(classId)}`, token),
       firestoreGet(`classSessions/${encodeURIComponent(sessionId)}`, token),
@@ -108,6 +112,7 @@ export default async function handler(req, res) {
     const starts = new Date(timeMs(session.startsAt || attendance.startsAt));
     const ends = new Date(timeMs(session.endsAt || attendance.endsAt));
     if (Number.isNaN(starts.getTime()) || Number.isNaN(ends.getTime())) err("Session timing is missing.", 409);
+    stage = "recipient-lookup";
     const allStudents = await listStudents(token);
     const recipients = [...new Map(allStudents
       .filter(s => hasClass(s, klass, classId) && !["inactive", "archived", "withdrawn", "removed", "cancelled", "canceled", "trial_expired"].includes(norm(s.status || s.studentStatus || s.enrollmentStatus)))
@@ -119,16 +124,27 @@ export default async function handler(req, res) {
     const assignmentId = String(session.assignmentIds?.[0] || attendance.assignmentIds?.[0] || session.assignmentId || "").trim();
     const label = String(session.topic || attendance.sessionLabel || klass.name || "Live class").trim();
     Object.entries({ classId, sessionId, date: localDate(starts), sessionLabel: label, assignmentId, startTime: friendlyTime(starts), endTime: friendlyTime(ends), expectedCount: recipients.length }).forEach(([k,v]) => url.searchParams.set(k,String(v)));
+    stage = "apps-script-config";
     const webhook = env("CALENDAR_APPS_SCRIPT_URL");
     const secret = env("CLASS_SCHEDULE_SYNC_SECRET");
     if (!webhook || !secret) err("Calendar email integration is not configured (CALENDAR_APPS_SCRIPT_URL, CLASS_SCHEDULE_SYNC_SECRET).", 503);
     const request = { secret, action: "sendCheckinInvitations", classId, sessionId, className: klass.name || classId, sessionLabel: label, date: localDate(starts), startTime: friendlyTime(starts), endTime: friendlyTime(ends), checkinUrl: url.toString(), recipients };
+    stage = "apps-script-delivery";
     const response = await fetch(webhook, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(request), redirect: "follow" });
-    const result = await response.json().catch(() => null);
-    if (!response.ok || !result?.ok) err("Calendar Apps Script did not confirm delivery: " + String(result?.error || response.status), 502);
-    return res.status(200).json({ ok: true, sent: Number(result.sent || 0), skipped: Number(result.skipped || 0), recipients: recipients.length });
+    const replyText = await response.text();
+    let result = null;
+    try { result = JSON.parse(replyText); } catch { /* Google can return HTML on login or deployment errors. */ }
+    if (!response.ok || !result?.ok) {
+      const reportedError = String(result?.error || result?.message || "").slice(0, 300);
+      console.error("checkin_invitation_script_failed", { requestId, stage, status: response.status, contentType: response.headers.get("content-type"), json: Boolean(result), reportedError });
+      err(`Apps Script delivery failed (HTTP ${response.status}; ${result ? (reportedError || "script rejected request") : "non-JSON response; check web-app deployment and access permissions"}).`, 502);
+    }
+    return res.status(200).json({ ok: true, sent: Number(result.sent || 0), skipped: Number(result.skipped || 0), recipients: recipients.length, requestId });
   } catch (error) {
-    return res.status(Number(error.status || error.statusCode) || 500).json({ ok: false, error: error.message || "Check-in invitation failed." });
+    const status = Number(error.status || error.statusCode) || 500;
+    console.error("checkin_invitation_error", { requestId, stage, status, errorName: error.name, message: String(error.message || "").slice(0, 400) });
+    const safe = status < 500 ? error.message : (stage === "apps-script-delivery" ? String(error.message || "Apps Script delivery failed.").slice(0, 350) : String(error.message || "Check-in invitation failed.").slice(0, 300));
+    return res.status(status).json({ ok: false, error: `[${stage}] ${safe}`, requestId });
   }
 }
 
