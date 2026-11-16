@@ -56,6 +56,7 @@ export default async function handler(req, res) {
   const secret = env("CRON_SECRET");
   if (!secret) return res.status(503).json({ok:false,error:"Cron is not configured"});
   if (req.headers.authorization !== "Bearer " + secret) return res.status(401).json({ok:false,error:"Unauthorized"});
+  if (env("WEEKLY_ENGAGEMENT_ENABLED") !== "true") return res.status(200).json({ok:true,disabled:true,reason:"Enable after the legacy weekly attendance email job has been retired."});
   try {
     const webhook = env("CALENDAR_APPS_SCRIPT_URL"), dispatchSecret = env("CLASS_SCHEDULE_SYNC_SECRET");
     if (!webhook || !dispatchSecret) err("Calendar Apps Script integration is not configured",503);
