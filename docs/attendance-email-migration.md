@@ -12,7 +12,7 @@
 2. Configure the production Vercel project **attendance** (admin.falowen.app): `CALENDAR_APPS_SCRIPT_URL` with that web app URL and `CLASS_SCHEDULE_SYNC_SECRET` with the corresponding **already configured Apps Script secret**. These are server-only vars, **not** `VITE_*`. Redeploy after setting them.
 3. `CRON_SECRET` is provisioned as a production encrypted variable for the weekly cron; redeploy after environment changes.
 4. Use a controlled test class: Open check-in, press Send check-in invitation, confirm emails, verify retry reports skipped recipients and never duplicates.
-5. Verify the Calender Apps Script five-minute trigger is installed and its 30-minute reminder works on a weekday and Saturday; verify BCC and correct Zoom link for **each language**. The existing script's Zoom constants are German-specific — update them for Swahili before turning on reminders for Swahili.
+5. Verify the Calender Apps Script five-minute trigger is installed. To enable the 30-minute reminders **only after** Cloud replacement testing, set Apps Script property `ENABLE_CLASS_EMAIL_REMINDERS=true` and verify one weekday and Saturday reminder. The updated script uses `SWAHILI_CLASS_JOIN_LINK` (and optional `SWAHILI_ZOOM_ID`, `SWAHILI_ZOOM_PASS`) for Kiswahili rather than sending the German Zoom credentials.
 6. After **one complete week** of weekly digest comparison, pause the Cloud job `sendAttendanceConfirmationEmails` if the new weekly summary replaces that email for every program. Keep attendance data and `queueAttendanceConfirmation...` event triggers until verified.
 7. Only once Apps Script reminder delivery is confirmed, **delete the deployed Firebase functions** `sendClassSessionReminderEmails` and `sendSaturdayClassSessionReminderEmails` in us-central1. Deleting the Scheduler jobs alone is insufficient.
 
@@ -22,3 +22,8 @@
 - One invite per **class+session+recipient**, one weekly digest per **week+class+recipient**; both deduplicated in `===LOGS===`.
 - Do **not** disable the two existing Cloud reminder jobs until verified end-to-end. Otherwise students may stop receiving reminders.
 - Current weekly report is based on stored classes and participation records; do not treat class participation as an academic grade.
+
+## Safe migration flags
+- Apps Script property `ENABLE_CLASS_EMAIL_REMINDERS` defaults to off. Set to `true` only after confirming the new sender and retiring Cloud weekday/Saturday reminder jobs.
+- Vercel production env `WEEKLY_ENGAGEMENT_ENABLED` defaults to off. Set to `true` only after validating weekly numbers and retiring the legacy weekly attendance sender.
+- One weekly Vercel Cron exists but intentionally returns a harmless `disabled: true` response until the flag is enabled.
