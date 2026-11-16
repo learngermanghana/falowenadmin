@@ -9,6 +9,7 @@ import { db } from "../firebase.js";
 import {
   buildTutorCalibrationEvent,
   compareExaminerResults,
+  a2Day4WritingDeltaThreshold,
   ensureExplicitWritingLabel,
   hasLikelyUnlabelledWritingBeforeObjective,
   hasWritingEvidence,
@@ -317,7 +318,7 @@ async function requestSecondExaminer(options = {}) {
   ), options, originalText);
 }
 
-function mergeSecondExaminer(primary = {}, secondary = null, error = null) {
+function mergeSecondExaminer(primary = {}, secondary = null, error = null, assignmentKey = "") {
   const primaryScore = normalizePercent(scoreValueFromResult(primary));
 
   if (!secondary) {
@@ -345,7 +346,9 @@ function mergeSecondExaminer(primary = {}, secondary = null, error = null) {
     });
   }
 
-  const comparison = compareExaminerResults(primary, secondary);
+  const comparison = compareExaminerResults(primary, secondary, {
+    writingDeltaThreshold: a2Day4WritingDeltaThreshold(primary, secondary, assignmentKey),
+  });
   const agreementConfidence = comparison.scoreDelta === null
     ? 0.5
     : Math.max(0.35, Math.min(1, 1 - (comparison.scoreDelta / 50)));
@@ -517,7 +520,7 @@ export async function markSubmissionWithAI(options = {}) {
         source: "second_examiner",
       }));
     }
-    return finalizeVerified(mergeSecondExaminer(primary, secondary));
+    return finalizeVerified(mergeSecondExaminer(primary, secondary, null, reference?.assignmentKey || options.submission?.assignmentKey));
   } catch (error) {
     console.warn("Second examiner unavailable; routing writing submission to tutor review.", {
       assignment: options?.submission?.assignment || options?.submission?.assignmentId || options?.submission?.assignmentKey || "",
