@@ -3,6 +3,7 @@ import { B1_DAY27_LISTENING } from './b1Day27Listening.js';
 import { B1_DAY28_LISTENING } from './b1Day28Listening.js';
 import { A2_DAY23_CLASSROOM_LISTENING } from './a2Day23ClassroomListening.js';
 import { A2_DAY24_CLASSROOM_LISTENING } from './a2Day24ClassroomListening.js';
+import { A2_DAY5_CLASSROOM_LISTENING } from './a2Day5ClassroomListening.js';
 import { A2_DAY4_CLASSROOM_LISTENING } from './a2Day4ClassroomListening.js';
 import { A2_DAY1_LISTENING } from './a2Day1Listening.js';
 import { A2_DAY2_LISTENING } from './a2Day2Listening.js';
@@ -523,6 +524,13 @@ ENTRIES["A2-2.4"] = {
   title: "Wo möchten wir uns treffen?",
   warmup: [],
   listening: A2_DAY4_CLASSROOM_LISTENING,
+};
+
+ENTRIES["A2-2.5"] = {
+  assignmentId: "A2-2.5",
+  title: "Was machst du in deiner Freizeit?",
+  warmup: [],
+  listening: A2_DAY5_CLASSROOM_LISTENING,
 };
 
 // The existing A2 Day 24 published music remains slide 2. This separate
