@@ -212,12 +212,15 @@ async function dispatch(rows,period,fetchImpl=fetch){
 }
 export default async function handler(req,res){
   res.setHeader("Cache-Control","no-store");
-  if(req.method!=="GET")return res.status(405).json({ok:false,error:"GET required."});
-  const preview=req.query?.preview==="1";
+  if(!["GET","POST"].includes(req.method))return res.status(405).json({ok:false,error:"GET or POST required."});
+  const preview=req.method==="GET" && req.query?.preview==="1";
+  const test=req.method==="POST" && req.query?.test==="1";
+  if(req.method==="POST"&&!test)return res.status(405).json({ok:false,error:"Test action required."});
   const secret=env("CRON_SECRET");
   try{
-    if(preview){
-      await verifyFirebaseAdminUser(bearerToken(req));
+    let owner=null;
+    if(preview||test){
+      owner=await verifyFirebaseAdminUser(bearerToken(req));
     }else{
       if(!secret||req.headers.authorization!=="Bearer "+secret)return res.status(401).json({ok:false,error:"Unauthorized"});
       if(env("WEEKLY_ENGAGEMENT_ENABLED")!=="true")return res.status(200).json({ok:true,disabled:true});
@@ -228,6 +231,17 @@ export default async function handler(req,res){
       weekStart:report.weekStart,weekEnd:report.weekEnd,
       eligibleRecipients:report.rows.length,classes:report.classSummaries,
       scanned:report.scanned,sendEnabled:env("WEEKLY_ENGAGEMENT_ENABLED")==="true"});
+    if(test){
+      // Do not send student names, addresses or individual student results.
+      // The test is an aggregate fixture for the verified Falowen owner only.
+      const fixture={classId:"falowen-test-weekly",className:"Falowen Weekly Email Test",
+        email:owner.email,name:"Falowen administrator",lessonsHeld:2,attended:1,
+        present:1,late:0,excused:1,absent:0,
+        participatedSessions:1,turns:3,correct:2,needsReview:1};
+      const delivery=await dispatch([fixture],report);
+      return res.status(200).json({ok:true,test:true,...delivery,weekStart:report.weekStart,
+        description:"One synthetic sample to the authenticated owner; no student records were emailed."});
+    }
     const delivery=await dispatch(report.rows,report);
     return res.status(200).json({ok:true,...delivery,weekStart:report.weekStart,
       weekEnd:report.weekEnd,classes:report.classSummaries.length});
