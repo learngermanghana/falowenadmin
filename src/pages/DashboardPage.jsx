@@ -227,7 +227,11 @@ export default function DashboardPage() {
       const currentYear = new Date().getFullYear();
       const secondaryTask = Promise.allSettled([
         loadWhatsappReminderDashboard(),
-        getUpcomingHolidays({ year: currentYear, countryCode: "GH" }),
+        Promise.all([
+          getUpcomingHolidays({ year: currentYear, countryCode: "GH" }),
+          getUpcomingHolidays({ year: currentYear + 1, countryCode: "GH" }),
+        ]).then(([thisYear, nextYear]) => [...thisYear, ...nextYear]
+          .sort((left, right) => String(left.date).localeCompare(String(right.date)))),
         fetchStudentLeads(),
       ]).then((results) => {
         if (!active) return;
@@ -398,7 +402,12 @@ export default function DashboardPage() {
                   <span className="avatar-chip calendar">📅</span>
                   <span>
                     <strong>{holiday.name || holiday.localName || holiday.date}</strong>
-                    <small>{holiday.date} · {isSchoolClosed(holiday) ? "School closed" : "School open"}</small>
+                    <small>{holiday.date} · {isSchoolClosed(holiday) ? "School closed" : "School open"} · {holiday.noticeStatus === "sent" ? "Notice sent" : "Email not sent"}</small>
+                    {holiday.noticeStatus !== "sent" && (
+                      <Link to={`/holiday-calendar?year=${String(holiday.date).slice(0, 4)}&notice=${holiday.date}`} style={{ display: "inline-block", marginTop: 6, color: "#1d4ed8", fontWeight: 700 }}>
+                        Review and send holiday email
+                      </Link>
+                    )}
                     <small>
                       <b>Affected classes:</b>{" "}
                       {isSchoolClosed(holiday)
