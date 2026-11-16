@@ -98,7 +98,7 @@ export default async function handler(req, res) {
     const recipients = [...new Map(allStudents
       .filter(s => hasClass(s, klass, classId) && !["inactive", "archived", "withdrawn", "removed", "cancelled", "canceled", "trial_expired"].includes(norm(s.status || s.studentStatus || s.enrollmentStatus)))
       .map(s => ({ email: norm(s.email), name: String(s.name || s.fullName || "Student").trim() }))
-      .filter(s => /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(s.email))
+      .filter(s => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.email))
       .map(s => [s.email, s])).values()];
     if (!recipients.length) err("No eligible recipients with email addresses were found.", 409);
     const url = new URL("https://admin.falowen.app/checkin");
