@@ -103,3 +103,5 @@ export default async function handler(req, res) {
     return res.status(error.status || error.statusCode || 500).json({ok:false,error:error.message || "Weekly report failed"});
   }
 }
+
+export { dateOf, presentFor, held, participationFor };
