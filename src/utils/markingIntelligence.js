@@ -81,6 +81,29 @@ function hasHardSecondaryReviewSignal(result = {}) {
   );
 }
 
+// A2-2.4 contains three short communicative points. A small difference in the
+// language-quality score should not turn two otherwise consistent, confident
+// assessments into a tutor-review case. Do not apply this to other tasks or
+// missing/uncertain evidence, and never change either examiner's actual score.
+export function a2Day4WritingDeltaThreshold(primary = {}, secondary = {}, assignmentKey = "") {
+  if (String(assignmentKey || "").trim().toUpperCase() !== "A2-2.4") return 10;
+  const completeEvidence = (result) => Array.isArray(result.taskPointEvidence)
+    && result.taskPointEvidence.length === 3
+    && result.taskPointEvidence.every((point) => point?.status === "met")
+    && !(result.missingTaskPoints || []).length
+    && !(result.taskCompletion?.missing || []).length
+    && !(result.reviewReasons || []).length
+    && String(result.status || "").toLowerCase() === "marked"
+    && Number.isFinite(Number(result.confidence))
+    && Number(result.confidence) >= 0.9;
+  const primaryScore = numericScore(primary.finalScore ?? primary.score);
+  const secondaryScore = numericScore(secondary.finalScore ?? secondary.score);
+  if (!completeEvidence(primary) || !completeEvidence(secondary)
+    || primaryScore === null || secondaryScore === null
+    || Math.abs(primaryScore - secondaryScore) > 5) return 10;
+  return 14;
+}
+
 export function compareExaminerResults(primary = {}, secondary = {}, options = {}) {
   const scoreThreshold = Number(options.scoreDeltaThreshold ?? DEFAULT_SCORE_DELTA_THRESHOLD);
   const writingThreshold = Number(options.writingDeltaThreshold ?? DEFAULT_WRITING_DELTA_THRESHOLD);
