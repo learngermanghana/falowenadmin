@@ -376,6 +376,8 @@ function getStudentLanguages({ program, secondaryProgram }) {
 
 const DIRECTORY_VIEWS = new Set(["all", "trials", "attention", "archived", "university"]);
 
+const HAMBURG_SIGNUP_LINK = "https://www.falowen.app/signup?invite=UH-KISWAHILI-A1";
+
 function isHamburgCohortStudent(student) {
   return student?.registrationSource === "university-invite" &&
     student?.institutionId === "university-hamburg" &&
@@ -514,6 +516,12 @@ export default function StudentDirectoryPage() {
     () => filteredStudents.find((student) => student.id === selectedStudentId) || null,
     [filteredStudents, selectedStudentId],
   );
+
+  useEffect(() => {
+    if (selectedStudent && isHamburgCohortStudent(selectedStudent) && detailTab === "payments") {
+      setDetailTab("profile");
+    }
+  }, [selectedStudent, detailTab]);
 
   useEffect(() => {
     if (!selectedStudent) {
@@ -846,6 +854,23 @@ export default function StudentDirectoryPage() {
           Search for a student, call them directly, edit records, and generate WhatsApp follow-up messages.
         </p>
         <div style={{ display: "grid", gap: 9, marginBottom: 12 }}>
+          {directoryView === "university" && (
+            <div style={{ border: "1px solid #bfdbfe", background: "#eff6ff", padding: 12, borderRadius: 10, display: "grid", gap: 6 }}>
+              <strong>University of Hamburg · Kiswahili A1</strong>
+              <span>Registration invitation for Ruth's students (approval required)</span>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+                <a href={HAMBURG_SIGNUP_LINK} target="_blank" rel="noopener noreferrer">{HAMBURG_SIGNUP_LINK}</a>
+                <button type="button" onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(HAMBURG_SIGNUP_LINK);
+                    pushToast({ type: "success", message: "University invitation link copied." });
+                  } catch {
+                    pushToast({ type: "info", message: "Select and copy the invitation link." });
+                  }
+                }}>Copy link</button>
+              </div>
+            </div>
+          )}
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }} role="tablist" aria-label="Student directory views">
             {[
               ["all", "All students"],
@@ -1092,7 +1117,7 @@ export default function StudentDirectoryPage() {
                         </p>
 
                         <div className="student-detail-tabs" role="tablist" aria-label="Student details">
-                          {STUDENT_DETAIL_TABS.map((tab) => (
+                          {STUDENT_DETAIL_TABS.filter((tab) => !isHamburgCohortStudent(selectedStudent) || tab.id !== "payments").map((tab) => (
                             <button key={tab.id} id={`student-tab-${tab.id}`} type="button" role="tab"
                               aria-selected={detailTab === tab.id} aria-controls={`student-panel-${tab.id}`}
                               tabIndex={detailTab === tab.id ? 0 : -1}
