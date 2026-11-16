@@ -13,7 +13,7 @@ test("trial email edits deploy both trial workers without unrelated attendance w
 
 test("multiple changes union targets and retain API consumers", () => {
   const plan = selectFirebaseDeployTargets({ changedPaths: ["functions/autoCompleteClassSessions.js", "functions/classSessionReminderEmails.js"] });
-  assert.deepEqual(plan.targets, ["api", "autoCompleteClassSessions", "sendClassSessionReminderEmails", "sendSaturdayClassSessionReminderEmails"]);
+  assert.deepEqual(plan.targets, ["api", "autoCompleteClassSessions"]);
 });
 
 test("shared dependencies, patch scripts, unknown modules and package changes use full deployment", () => {

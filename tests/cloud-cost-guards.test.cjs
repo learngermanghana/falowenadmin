@@ -27,8 +27,9 @@ test("background schedules use fractional CPU and exam marking keeps its own res
   const eventDrivenPatch = read("scripts/patchAttendanceConfirmationEventDriven.mjs");
   assert.match(index, /syncAutomaticCourseScore = onDocumentCreated\([\s\S]*?cpu: "gcf_gen1"/);
   assert.match(index, /markCourseSubmissionAutomatically = onDocumentCreated\(\{[\s\S]*?memory: "512MiB"/);
-  for (const worker of ["cleanupExpiredPendingStudents", "sendClassSessionReminderEmails", "sendSaturdayClassSessionReminderEmails"]) {
-    assert.match(main, new RegExp("module\\.exports\\." + worker + " = onSchedule\\(\\{\\s*cpu: \"gcf_gen1\""));
+  assert.match(main, /module\.exports\.cleanupExpiredPendingStudents = onSchedule\(\{\s*cpu: "gcf_gen1"/);
+  for (const source of [index, main, read("scripts/patchClassSessionReminderEmails.mjs")]) {
+    assert.doesNotMatch(source, /exports\.send(Saturday)?ClassSessionReminderEmails\s*=/);
   }
   assert.match(eventDrivenPatch, /cpu: "gcf_gen1"/);
 });
