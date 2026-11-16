@@ -5,14 +5,15 @@ import { getTeachingSlideByAssignmentId } from "../data/teachingSlides.js";
 import {
   canonicalDictionarySelection,
   dictionaryEntriesForSelection,
+  filterSessionDictionaryEntries,
   normalizeDictionaryId,
   toggleDictionarySelection,
 } from "../utils/liveClassDictionarySelection.js";
 
-function entryLabel(entry = {}, labelPrefix = "") {
+function entryLabel(entry = {}) {
   const title = String(entry.en || entry.de || "").trim();
   const chapter = String(entry.chapter || "").trim();
-  return `${labelPrefix ? `${labelPrefix} · ` : ""}${entry.assignment_id}${chapter ? ` · ${chapter}` : ""}${title ? ` — ${title}` : ""}`;
+  return `${entry.dayLabel ? `${entry.dayLabel} · ` : ""}${entry.assignment_id}${chapter ? ` · ${chapter}` : ""}${title ? ` — ${title}` : ""}`;
 }
 
 export default function SessionDictionaryPicker({
@@ -20,7 +21,6 @@ export default function SessionDictionaryPicker({
   assignmentIds = [],
   disabled = false,
   onChange,
-  entryLabelPrefix,
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -42,25 +42,16 @@ export default function SessionDictionaryPicker({
       .filter((entry) => entry.slide && entry.assignmentId.toUpperCase() !== "A1-5.10"),
     [selectedIds],
   );
-  const filteredEntries = useMemo(() => {
-    const query = String(search || "").trim().toLowerCase();
-    if (!query) return entries;
-    const day = entryLabelPrefix ? query.match(/\bday\s+\d+\b/)?.[0] : undefined;
-    const terms = (day ? query.replace(day, "") : query).trim().split(/\s+/);
-    return entries.filter((entry) => {
-      const prefix = entryLabelPrefix?.(entry);
-      if (day && prefix?.toLowerCase() !== day.replace(/\s+/g, " ")) return false;
-      const label = entryLabel(entry, prefix).toLowerCase();
-      return terms.every((term) => label.includes(term));
-    });
-  }, [entries, entryLabelPrefix, search]);
+  const filteredEntries = useMemo(() => filterSessionDictionaryEntries(entries, search), [entries, search]);
 
   async function toggle(entry) {
     const nextIds = toggleDictionarySelection(entries, selectedIds, entry.assignment_id);
     await onChange?.(nextIds);
   }
 
-  const summary = selectedEntries.length
+  const summary = !onChange && !selectedEntries.length
+    ? `Browse all ${entries.length} dictionary items`
+    : selectedEntries.length
     ? `${selectedEntries.length} selected: ${selectedEntries.map((entry) => entry.assignment_id).join(", ")}`
     : `No item selected — choose from all ${entries.length}`;
 
@@ -154,7 +145,7 @@ export default function SessionDictionaryPicker({
                     disabled={disabled}
                     onChange={() => toggle(entry)}
                   />
-                  <span>{entryLabel(entry, entryLabelPrefix?.(entry))}</span>
+                  <span>{entryLabel(entry)}</span>
                 </label>
               );
             })}

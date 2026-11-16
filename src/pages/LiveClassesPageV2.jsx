@@ -12,9 +12,8 @@ import { useToast } from "../context/ToastContext.jsx";
 import CreateClassCard from "../components/CreateClassCard.jsx";
 import ClassEditorCard from "../components/ClassEditorCard.jsx";
 import SessionDictionaryPicker from "../components/SessionDictionaryPicker.jsx";
-import { getA1DictionaryDayLabel } from "../data/courseSessionGroups.js";
+import { getCourseSessionDictionary, resolveCourseDictionaryLevel } from "../data/courseSessionGroups.js";
 import { swahiliClassDictionary } from "../data/swahiliClassDictionary.js";
-import { compareCourseDictionaryEntries, courseDictionary } from "../data/courseDictionary.js";
 import {
   listClassCohorts,
   markSessionCompleted,
@@ -45,15 +44,6 @@ const tabs = [
 
 function normalize(value) {
   return String(value || "").trim();
-}
-
-function resolveLevel(klass = {}) {
-  const candidates = [klass.levelId, klass.level, klass.courseLevel, klass.name, klass.className, klass.classId, klass.id];
-  for (const candidate of candidates) {
-    const match = normalize(candidate).match(/\b(A1|A2|B1|B2|C1|C2)\b/i);
-    if (match) return match[1].toUpperCase();
-  }
-  return "";
 }
 
 function formatDateTime(value) {
@@ -206,9 +196,9 @@ export default function LiveClassesPageV2() {
     return () => { active = false; };
   }, [selectedClassId]);
 
-  const levelId = useMemo(() => resolveLevel(dashboard?.klass || {}), [dashboard?.klass]);
+  const levelId = useMemo(() => resolveCourseDictionaryLevel(dashboard?.klass || {}), [dashboard?.klass]);
   const isSwahili = dashboard?.klass?.language === "Swahili";
-  const dictionaryEntries = useMemo(() => isSwahili ? swahiliClassDictionary : Object.values(courseDictionary[levelId] || {}).sort(compareCourseDictionaryEntries), [isSwahili, levelId]);
+  const dictionaryEntries = useMemo(() => isSwahili ? swahiliClassDictionary : getCourseSessionDictionary(levelId), [isSwahili, levelId]);
   const progress = useMemo(
     () => calculateClassProgress(dashboard?.sessions || [], new Date(), dashboard?.klass || {}),
     [dashboard],
@@ -345,7 +335,6 @@ export default function LiveClassesPageV2() {
                   <td data-label="Dictionary selection" style={{ padding: 8, minWidth: 350 }}>
                     <SessionDictionaryPicker
                       entries={dictionaryEntries}
-                      entryLabelPrefix={!isSwahili && levelId === "A1" ? getA1DictionaryDayLabel : undefined}
                       assignmentIds={curriculumIds(session)}
                       disabled={busy || contentLocked || !dictionaryEntries.length}
                       onChange={(nextIds) => saveDictionarySelection(session, nextIds)}
@@ -445,7 +434,12 @@ export default function LiveClassesPageV2() {
       {!loading && dashboard && activeTab === "sessions" ? <article className="card"><h2>Lessons</h2><div className="live-workspace-toolbar">
         <label>Show lessons<select value={sessionFilter} onChange={event => setSessionFilter(event.target.value)}><option value="remaining">Remaining</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="all">All lessons</option></select></label>
         <label>Order<select value={sessionSort} onChange={event => setSessionSort(event.target.value)}><option value="lesson">Lesson day</option><option value="date">Date</option></select></label>
-      </div>{renderSessions()}</article> : null}
+      </div>
+        {!isSwahili && ["A1", "A2", "B1"].includes(levelId) ? (
+          <SessionDictionaryPicker entries={dictionaryEntries} disabled />
+        ) : null}
+        {renderSessions()}
+      </article> : null}
 
       {!loading && dashboard && activeTab === "students" ? (
         <LiveClassStudentsPanel

@@ -74,10 +74,6 @@ export function getCourseTaskDay(levelId, assignmentId, fallbackIndex = 0) {
   return ORIENTATION_ENTRY_BY_LEVEL[level] ? fallbackIndex : fallbackIndex + 1;
 }
 
-export function getA1DictionaryDayLabel(entry) {
-  return `Day ${getCourseTaskDay("A1", entry.assignment_id)}`;
-}
-
 export function getCourseSessionGroups(levelId) {
   const level = normalizeLevel(levelId);
   const dictionaryEntries = Object.values(courseDictionary[level] || {}).sort(compareCourseDictionaryEntries);
@@ -119,6 +115,21 @@ export function getCourseSessionGroups(levelId) {
       label: `${dayLabel} — ${chapters.join(" + ")} — ${titles.join(" + ")}`,
     };
   });
+}
+
+export function resolveCourseDictionaryLevel(klass = {}) {
+  const candidates = [klass.levelId, klass.resolvedLevelId, klass.level, klass.courseLevel,
+    klass.name, klass.className, klass.classId, klass.id];
+  return candidates.map((candidate) => String(candidate || "").match(/\b(A1|A2|B1|B2|C1|C2)\b/i))
+    .find(Boolean)?.[1].toUpperCase() || "";
+}
+
+export function getCourseSessionDictionary(levelId) {
+  const level = normalizeLevel(levelId);
+  return getCourseSessionGroups(level).flatMap(({ day, entries }) => entries.map((entry) => ({
+    ...entry,
+    dayLabel: DAY_NUMBERED_LEVELS.has(level) ? `Day ${day}` : "",
+  })));
 }
 
 export function getCourseSessionGroup(levelId, sessionIndex) {
