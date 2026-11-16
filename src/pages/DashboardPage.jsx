@@ -405,7 +405,7 @@ export default function DashboardPage() {
                     <small>{holiday.date} · {isSchoolClosed(holiday) ? "School closed" : "School open"} · {holiday.noticeStatus === "sent" ? "Notice sent" : "Email not sent"}</small>
                     <small style={{ color: "#1d4ed8", fontWeight: 700 }}>
                       {(() => {
-                        const days = Math.ceil((Date.parse(`${holiday.date}T00:00:00Z`) - Date.parse(`${new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Accra", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date())}T00:00:00Z`)) / 86400000);
+                        const days = Math.ceil((Date.parse(`${holiday.date}T00:00:00Z`) - Date.parse(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`)) / 86400000);
                         return days === 0 ? "Today" : days === 1 ? "Tomorrow" : Number.isFinite(days) ? `In ${days} days` : "Upcoming";
                       })()}
                     </small>
