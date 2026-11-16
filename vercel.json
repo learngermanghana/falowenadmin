@@ -37,9 +37,21 @@
     }
   ],
   "redirects": [
-    { "source": "/organisation-enrolment", "destination": "https://www.falowen.app/organisation-enrolment", "permanent": false },
-    { "source": "/partnerships", "destination": "https://www.falowen.app/partnerships", "permanent": false },
-    { "source": "/book-appointment", "destination": "https://falowen.app/book-appointment", "permanent": false }
+    {
+      "source": "/organisation-enrolment",
+      "destination": "https://www.falowen.app/organisation-enrolment",
+      "permanent": false
+    },
+    {
+      "source": "/partnerships",
+      "destination": "https://www.falowen.app/partnerships",
+      "permanent": false
+    },
+    {
+      "source": "/book-appointment",
+      "destination": "https://falowen.app/book-appointment",
+      "permanent": false
+    }
   ],
   "rewrites": [
     {
@@ -120,5 +132,11 @@
       "main": true,
       "*": false
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/weekly-engagement-summary",
+      "schedule": "0 20 * * 0"
+    }
+  ]
 }
