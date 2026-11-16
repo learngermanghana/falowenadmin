@@ -97,10 +97,10 @@ export default function SwahiliA2LessonStage({ stage, grammar, isDaySix }) {
   if(stage.type==="listening") return <section className="swahili-a2-presenter__media-stage">
     <header className="swahili-a2-presenter__media-heading">
       <span className="presenter-kicker">Kusikiliza · Listening</span>
-      <h2>{isDaySix ? "Falowen Radio · Mgahawani" : "Sikiliza na utambue sauti"}</h2>
-      <p>{isDaySix ? "Play the published radio episode with the same shared video player used in German A2." : "Listen as your teacher reads each word, then identify the vowel."}</p>
+      <h2>{stage.radioUrl ? stage.title : "Sikiliza na utambue sauti"}</h2>
+      <p>{stage.radioUrl ? "Play the Falowen Radio episode for the class." : "Listen as your teacher reads each word, then identify the vowel."}</p>
     </header>
-    {stage.radioUrl ? <MusicVideoEmbed videoId={stage.radioUrl.match(/(?:youtu\.be\/|[?&]v=)([\w-]{11})/)?.[1]} title="Falowen Radio · Mgahawani" variant="listening" footerLabel="Falowen · Jifunze Kiswahili" /> : <WordTiles text={stage.content}/>}
+    {stage.radioUrl ? <MusicVideoEmbed videoId={stage.radioUrl.match(/(?:youtu\.be\/|[?&]v=)([\w-]{11})/)?.[1]} title={stage.title} variant="listening" footerLabel="Falowen · Jifunze Kiswahili" /> : <WordTiles text={stage.content}/>}
   </section>;
 
   if (stage.type === "radio-questions") return (
