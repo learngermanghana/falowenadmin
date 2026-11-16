@@ -22,12 +22,14 @@ function replacePatternRequired(source, pattern, replacement, label) {
 
 let source = await readFile(servicePath, "utf8");
 
-source = replaceRequired(
-  source,
-  'import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";',
-  'import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, query, runTransaction, setDoc, updateDoc, where } from "firebase/firestore";',
-  "Firestore transaction import",
-);
+const firestoreImport = /^import \{([^\n{}]+)\} from "firebase\/firestore";$/m;
+const firestoreSpecifiers = source.match(firestoreImport)?.[1].split(",").map((specifier) => specifier.trim());
+if (!firestoreSpecifiers) {
+  throw new Error("Could not patch Firestore transaction import: expected named import was not found.");
+}
+if (!firestoreSpecifiers.includes("runTransaction")) {
+  source = source.replace(firestoreImport, (statement) => statement.replace(/\s*\} from/, ", runTransaction } from"));
+}
 
 const pristineScoreImports = 'import { buildScoreAttemptMetadata, hasSavedScoreForAssignment, shouldSkipExistingScore } from "../utils/scoreAttempts.js";';
 const previousReservationImports = 'import { buildScoreAttemptMetadata, shouldSkipExistingScore } from "../utils/scoreAttempts.js";\nimport { buildScoreSaveReservation, shouldBlockScoreSave } from "../utils/scoreSaveReservation.js";';
