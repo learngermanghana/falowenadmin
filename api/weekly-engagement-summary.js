@@ -225,12 +225,6 @@ export default async function handler(req,res){
       if(!secret||req.headers.authorization!=="Bearer "+secret)return res.status(401).json({ok:false,error:"Unauthorized"});
       if(env("WEEKLY_ENGAGEMENT_ENABLED")!=="true")return res.status(200).json({ok:true,disabled:true});
     }
-    const token=await googleAccessToken();
-    const report=await buildDigest(token);
-    if(preview)return res.status(200).json({ok:true,preview:true,
-      weekStart:report.weekStart,weekEnd:report.weekEnd,
-      eligibleRecipients:report.rows.length,classes:report.classSummaries,
-      scanned:report.scanned,sendEnabled:env("WEEKLY_ENGAGEMENT_ENABLED")==="true"});
     if(test){
       // Do not send student names, addresses or individual student results.
       // The test is an aggregate fixture for the verified Falowen owner only.
@@ -238,10 +232,17 @@ export default async function handler(req,res){
         email:owner.email,name:"Falowen administrator",lessonsHeld:2,attended:1,
         present:1,late:0,excused:1,absent:0,
         participatedSessions:1,turns:3,correct:2,needsReview:1};
-      const delivery=await dispatch([fixture],report);
-      return res.status(200).json({ok:true,test:true,...delivery,weekStart:report.weekStart,
+      const delivery=await dispatch([fixture],weekWindow());
+      return res.status(200).json({ok:true,test:true,...delivery,weekStart:weekWindow().weekStart,
         description:"One synthetic sample to the authenticated owner; no student records were emailed."});
     }
+
+    const token=await googleAccessToken();
+    const report=await buildDigest(token);
+    if(preview)return res.status(200).json({ok:true,preview:true,
+      weekStart:report.weekStart,weekEnd:report.weekEnd,
+      eligibleRecipients:report.rows.length,classes:report.classSummaries,
+      scanned:report.scanned,sendEnabled:env("WEEKLY_ENGAGEMENT_ENABLED")==="true"});
     const delivery=await dispatch(report.rows,report);
     return res.status(200).json({ok:true,...delivery,weekStart:report.weekStart,
       weekEnd:report.weekEnd,classes:report.classSummaries.length});
