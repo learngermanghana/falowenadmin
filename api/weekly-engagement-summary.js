@@ -118,9 +118,11 @@ async function readSessionAttendance(token,klass,session){
   const all=await Promise.all(aliases.map(async alias=>{
     const prefix="attendance/"+encodeURIComponent(alias)+"/sessions/"+encodeURIComponent(session._id);
     const document=await firestoreGet(prefix,token,true);
-    if(!document)return null;
+    // Firestore permits a checkins subcollection when the parent document
+    // was deleted. Do not lose verified attendance in that case.
     const checkins=await listCollection(prefix+"/checkins",token,2000);
-    return {parent:alias,data:docValue(document),checkins};
+    if(!document && !checkins.length)return null;
+    return {parent:alias,data:document?docValue(document):{},checkins};
   }));
   const found=all.filter(Boolean);
   const withManual=found.find(x=>x.parent===klass._id && Object.keys(x.data.students||{}).length)
