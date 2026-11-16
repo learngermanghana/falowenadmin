@@ -149,6 +149,7 @@ export default function CanonicalAttendancePageV3() {
   const [hasReminderRecipients, setHasReminderRecipients] = useState(false);
   const [sendingReminder, setSendingReminder] = useState(false);
   const [sendingCheckinInvitation, setSendingCheckinInvitation] = useState(false);
+  const [checkinEmailDiagnostic, setCheckinEmailDiagnostic] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -386,6 +387,7 @@ export default function CanonicalAttendancePageV3() {
   async function sendCheckinInvitation() {
     if (isStaff || !sessionOpen || !klass?.id || !selected?.id || sendingCheckinInvitation) return;
     setSendingCheckinInvitation(true);
+    setCheckinEmailDiagnostic("");
     try {
       const token = await user.getIdToken();
       const response = await fetch("/api/checkin-invitations", {
@@ -393,11 +395,21 @@ export default function CanonicalAttendancePageV3() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ classId: klass.id, sessionId: selected.id }),
       });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok || !result.ok) throw new Error(result.error || "Check-in email delivery failed.");
+      const raw = await response.text();
+      let result = {};
+      try { result = JSON.parse(raw); } catch { /* A non-JSON server error is explained below. */ }
+      if (!response.ok || result.ok !== true) {
+        const safeResponse = !/^\s*</.test(raw) ? raw.slice(0, 400) : "";
+        const details = result.error || result.message || safeResponse || "The server returned an empty or HTML response.";
+        const requestId = result.requestId ? ` · Reference: ${result.requestId}` : "";
+        throw new Error(`HTTP ${response.status}: ${details}${requestId}`);
+      }
+      setCheckinEmailDiagnostic(`Success (HTTP ${response.status}): sent ${result.sent}, skipped ${result.skipped}, eligible ${result.recipients}.`);
       success(`Check-in invitations sent: ${result.sent}. Already sent: ${result.skipped}.`);
     } catch (cause) {
-      error(cause?.message || "Could not deliver check-in invitations.");
+      const message = cause?.message || "Could not deliver check-in invitations.";
+      setCheckinEmailDiagnostic(message);
+      error(message);
     } finally {
       setSendingCheckinInvitation(false);
     }
@@ -511,6 +523,7 @@ export default function CanonicalAttendancePageV3() {
                 {sendingCheckinInvitation ? "Sending invitations…" : "Send check-in invitation emails"}
               </button>
               <small>Uses the existing Calender Apps Script. Sends only to enrolled students and skips duplicates.</small>
+              {checkinEmailDiagnostic ? <div role="status" style={{ width: "100%", overflowWrap: "anywhere", padding: 10, border: "1px solid #cbd5e1", borderRadius: 8, fontSize: 13 }}><strong>Email delivery diagnostic:</strong> {checkinEmailDiagnostic}</div> : null}
             </div>}
             {sessionOpen && checkinUrl && <div className="session-attendance__qr">
               <QRCodeCanvas value={checkinUrl} size={170} />
