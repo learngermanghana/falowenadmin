@@ -8,7 +8,7 @@ const radioUrl = "https://youtu.be/ZesonfipX4I";
 const grammarPages = [
   { title:"1 · Kuomba kwa adabu · Polite requests",
     body:"Naomba wali na samaki, tafadhali.\nNaomba maji.\nNaomba bili, tafadhali.",
-    rule:"Naomba / Ninaomba politely introduces a request; tafadhali means please.",
+    rule:"Ninataka states what you want. Naomba or ninaomba makes it a polite request. Add tafadhali (please) and respond with asante (thank you).",
     english:"Rice and fish, please. Water, please. The bill, please.",
     question:"How do you ask politely for water?",answer:"Naomba maji, tafadhali." },
   { title:"2 · Nafsi sita · Six persons",
@@ -23,7 +23,7 @@ const grammarPages = [
     question:"How do you say 'I don't want meat'?",answer:"Sitaki nyama." },
   { title:"4 · Chakula, vinywaji na bei · Questions",
     body:"Mna chakula gani?\nMna vinywaji gani?\nJumla ni shilingi ngapi?",
-    rule:"Mna…? asks staff what they have; ngapi asks how much/how many.",
+    rule:"Mna…? asks staff what they have. Gani asks which or what; ngapi asks how much or how many.",
     english:"What food do you have? What drinks do you have? How much is the total?",
     question:"Ask for the total price in Kiswahili.",answer:"Jumla ni shilingi ngapi?" },
   { title:"5 · Namba na bei · Numbers and prices",
@@ -37,9 +37,9 @@ const grammarPages = [
     english:"one cup of tea / two cups of tea / three cups of tea",
     question:"How do you ask for two cups of tea?",answer:"Naomba vikombe viwili vya chai." },
   { title:"7 · Kiambishi -ni · Locative",
-    body:"mgahawa → mgahawani\nsoko → sokoni\nmeza → mezani",
+    body:"mgahawa → mgahawani\nNinakula mgahawani.\nNinakwenda mgahawani.",
     rule:"With suitable common nouns, -ni creates a place expression. The verb tells location or movement.",
-    english:"restaurant → at/to the restaurant; market → at/to the market; table → at/on the table",
+    english:"restaurant → at/to the restaurant / I am eating at the restaurant. / I am going to the restaurant.",
     question:"How do you say 'I am eating at the restaurant'?",answer:"Ninakula mgahawani." },
 ];
 export const SWAHILI_DAY_SIX_SLIDES = Object.freeze([
