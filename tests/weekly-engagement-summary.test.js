@@ -8,6 +8,8 @@ const finished={status:"completed",startsAt:"2026-11-16T18:00:00Z",endsAt:"2026-
 test("weekly window is Monday through Sunday",()=>{
   assert.deepEqual(weekWindow(new Date("2026-11-22T20:00:00Z")),{weekStart:"2026-11-16",weekEnd:"2026-11-22"});
   assert.equal(dateOf("2026-11-16"),"2026-11-16");
+  assert.equal(dateOf("2026-11-16T18:00:00Z"),"2026-11-16");
+  assert.deepEqual(weekWindow(new Date("2026-11-16T12:00:00Z"),1),{weekStart:"2026-11-09",weekEnd:"2026-11-15"});
 });
 test("only completed non-cancelled sessions count, after end time",()=>{
   const now=Date.parse("2026-11-16T19:10:00Z");
