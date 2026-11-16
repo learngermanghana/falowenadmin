@@ -12,13 +12,14 @@ import {
 import { db } from "../firebase.js";
 import { courseDictionary } from "../data/courseDictionary.js";
 import { getCourseSessionGroups } from "../data/courseSessionGroups.js";
-import { selectLatestCompletedSession, selectNextSession } from "../utils/liveClassScheduling.js";
+import { selectLatestCompletedSession, selectNextSession, sessionDateInTimezone } from "../utils/liveClassScheduling.js";
 import { belongsToSelectedClass } from "../utils/liveClassSessionOwnership.js";
 import { buildDisplayedCurriculumPatch } from "../utils/liveClassCurriculumSync.js";
 import {
   assignmentIdsForSession,
   dedupeCompatibleSessionRecords,
   enrichSessionsWithStableCurriculum,
+  recoverA1MissingGreetings,
 } from "../utils/liveClassSessionDedupe.js";
 import { syncClassCurriculum as syncBaseClassCurriculum } from "./liveClassService.js";
 
@@ -188,12 +189,13 @@ function enrichSessions(klass, sessions = []) {
   return enrichSessionsWithStableCurriculum(klass, sessions, groups);
 }
 
-async function repairOneBasedCurriculumDays(classId, klass, storedSessions = [], enrichedSessions = []) {
+async function repairOneBasedCurriculumDays(classId, klass, storedSessions = [], enrichedSessions = [], restoreA1 = false) {
   const levelId = resolveLevel(klass);
-  if (!["A2", "B1"].includes(levelId)) return 0;
+  if (!restoreA1 && !["A2", "B1"].includes(levelId)) return 0;
 
   const storedById = new Map(storedSessions.map((session) => [session.id, session]));
-  const repairs = enrichedSessions.filter((session) => {
+  const repairs = enrichedSessions.filter((session, index) => {
+    if (restoreA1 && index === 0) return false;
     const stored = storedById.get(session.id);
     // Explicit B1 assignments are teaching history, including repeated days.
     // Do not persist derived display indexes or metadata over these records.
@@ -218,7 +220,7 @@ async function repairOneBasedCurriculumDays(classId, klass, storedSessions = [],
     );
   });
   batch.set(doc(db, "classes", String(classId)), {
-    curriculumDayNumbering: "one-based",
+    ...(!restoreA1 ? { curriculumDayNumbering: "one-based" } : {}),
     curriculumDayNumberingRepairedAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   }, { merge: true });
@@ -254,6 +256,13 @@ function attendanceMetadata(klass, session, patch) {
   };
 }
 
+export function isA1StuttgartGreetingsCohort(klass = {}) {
+  return klass.language !== "Swahili" && resolveLevel(klass) === "A1"
+    && comparable(klass.name || klass.className) === "a1 stuttgart klasse"
+    && !klass.historical
+    && !["graduated", "archived", "deleted"].includes(comparable(klass.status));
+}
+
 export async function getCompatibleClassDashboard(classId) {
   const klass = await loadClassRecord(classId);
   let rawSessions = await loadCompatibleSessions(classId, klass);
@@ -276,7 +285,15 @@ export async function getCompatibleClassDashboard(classId) {
     }
   }
   const groups = normalizedClass.language === "Swahili" ? [] : getCourseSessionGroups(normalizedClass.levelId);
-  const sessions = enrichSessions(normalizedClass, rawSessions);
+  const stuttgartRepair = isA1StuttgartGreetingsCohort(normalizedClass)
+    ? recoverA1MissingGreetings(rawSessions, groups)
+    : null;
+  const restoredA1 = stuttgartRepair
+    && sessionDateInTimezone(stuttgartRepair[1].startsAt, "Africa/Accra") === "2026-11-16"
+    && sessionDateInTimezone(stuttgartRepair.at(-1).startsAt, "Africa/Accra") === "2027-01-05"
+    ? stuttgartRepair
+    : null;
+  const sessions = restoredA1 || enrichSessions(normalizedClass, rawSessions);
   let repairedDayNumbers = 0;
   let dayNumberRepairError = "";
   try {
@@ -285,6 +302,7 @@ export async function getCompatibleClassDashboard(classId) {
       normalizedClass,
       rawSessions,
       sessions,
+      Boolean(restoredA1),
     );
   } catch (error) {
     dayNumberRepairError = error?.message || "Could not update existing session day numbers.";
