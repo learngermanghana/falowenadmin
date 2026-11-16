@@ -44,7 +44,7 @@ export const WORKER_TARGETS = {
   "functions/trialAccessEmails.js": ["sendTrialAccessWelcomeEmail", "sendTrialAccessReminderEmails"],
   "functions/finalMockResultEmails.js": ["sendFinalMockResultEmail"],
   "functions/studentLearningInterventionEmails.js": ["sendStudentLearningNudges"],
-  "functions/classSessionReminderEmails.js": ["api", "sendClassSessionReminderEmails", "sendSaturdayClassSessionReminderEmails"],
+  "functions/classSessionReminderEmails.js": ["api"],
   "functions/autoCompleteClassSessions.js": ["api", "autoCompleteClassSessions"],
 };
 

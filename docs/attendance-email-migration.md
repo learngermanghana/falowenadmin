@@ -14,13 +14,12 @@
 4. Use a controlled test class: Open check-in, press Send check-in invitation, confirm emails, verify retry reports skipped recipients and never duplicates.
 5. Verify the Calender Apps Script five-minute trigger is installed. To enable the 30-minute reminders **only after** Cloud replacement testing, set Apps Script property `ENABLE_CLASS_EMAIL_REMINDERS=true` and verify one weekday and Saturday reminder. The updated script uses `SWAHILI_CLASS_JOIN_LINK` (and optional `SWAHILI_ZOOM_ID`, `SWAHILI_ZOOM_PASS`) for Kiswahili rather than sending the German Zoom credentials.
 6. After **one complete week** of weekly digest comparison, pause the Cloud job `sendAttendanceConfirmationEmails` if the new weekly summary replaces that email for every program. Keep attendance data and `queueAttendanceConfirmation...` event triggers until verified.
-7. Only once Apps Script reminder delivery is confirmed, **delete the deployed Firebase functions** `sendClassSessionReminderEmails` and `sendSaturdayClassSessionReminderEmails` in us-central1. Deleting the Scheduler jobs alone is insufficient.
+7. Firebase confirmed deletion of `sendClassSessionReminderEmails` and `sendSaturdayClassSessionReminderEmails` in `us-central1` on 16 November 2026. Their exports and deploy targets are retired.
 
 ## Safety/quality notes
 - A class-reminder email and an open-check-in invitation are distinct events. Pre-class emails go out 30 minutes before class and **must not** contain an open check-in link unless the server confirms the window is open.
 - The check-in URL is shared per session; authorization belongs to the Falowen check-in endpoint and student login, not secrecy of the URL.
 - One invite per **class+session+recipient**, one weekly digest per **week+class+recipient**; both deduplicated in `===LOGS===`.
-- Do **not** disable the two existing Cloud reminder jobs until verified end-to-end. Otherwise students may stop receiving reminders.
 - Current weekly report is based on stored classes and participation records; do not treat class participation as an academic grade.
 
 ## Safe migration flags
