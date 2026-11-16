@@ -89,7 +89,8 @@ export default async function handler(req, res) {
       firestoreGet(`attendance/${encodeURIComponent(classId)}/sessions/${encodeURIComponent(sessionId)}`, token, true),
     ]);
     const klass = docValue(klassDoc), session = docValue(sessionDoc), attendance = docValue(attendanceDoc);
-    if (String(session.classId || "") !== classId) err("Session does not belong to this class.", 403);
+    const sessionClassId = String(session.classRecordId || session.classId || "").trim();
+    if (sessionClassId !== classId) err("Session does not belong to this class.", 403);
     if (["cancelled", "canceled", "completed", "ended", "deleted"].includes(norm(session.status))) err("This session is not active.", 409);
     const now = Date.now();
     // Match Falowen's check-in authorization semantics: legacy sessions use
