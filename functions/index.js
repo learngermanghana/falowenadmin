@@ -2531,79 +2531,8 @@ exports.syncAutomaticCourseScore = onDocumentCreated({
   SCORES_WEBHOOK_TOKEN: scoresWebhookTokenSecret.value(),
 }) }));
 
-exports.sendDueHolidayNotices = onSchedule({
-  cpu: "gcf_gen1",
-  schedule: "0 7 * * *",
-  timeZone: "Africa/Accra",
-  secrets: [holidaysAppsScriptUrlSecret, holidaysSyncSecret],
-}, async () => {
-  const tomorrowIso = getTomorrowIsoInAccra();
-  console.log(`sendDueHolidayNotices checking ${tomorrowIso}`);
-
-  const snapshot = await db
-    .collection("holidayCalendar")
-    .where("countryCode", "==", "GH")
-    .where("date", "==", tomorrowIso)
-    .where("schoolClosed", "==", true)
-    .where("autoSendNotice", "==", true)
-    .get();
-
-  if (snapshot.empty) {
-    console.log(`sendDueHolidayNotices no due holidays for ${tomorrowIso}`);
-    return;
-  }
-
-  for (const docSnap of snapshot.docs) {
-    const holiday = docSnap.data() || {};
-    const date = String(holiday.date || tomorrowIso).trim();
-    const countryCode = String(holiday.countryCode || "GH").trim().toUpperCase() || "GH";
-    const logPrefix = `sendDueHolidayNotices ${docSnap.id} ${date}`;
-
-    await docSnap.ref.set({
-      noticeLastCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
-    }, { merge: true });
-
-    if (!String(holiday.studentMessage || "").trim()) {
-      console.log(`${logPrefix} skipped: empty studentMessage`);
-      continue;
-    }
-    if (normalizeNoticeStatus(holiday.noticeStatus) === "sent") {
-      console.log(`${logPrefix} skipped: noticeStatus already sent`);
-      continue;
-    }
-    if (holiday.noticeSentAt) {
-      console.log(`${logPrefix} skipped: noticeSentAt exists`);
-      continue;
-    }
-
-    const noticeConfig = resolveNoticeConfig(holiday, holiday);
-    if (noticeConfig.audienceType === "class" && !noticeConfig.className) {
-      console.log(`${logPrefix} skipped: missing className`);
-      await docSnap.ref.set({
-        noticeStatus: "failed",
-        noticeLastError: "noticeClassName is required for class audience",
-        noticeLastCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
-      }, { merge: true });
-      continue;
-    }
-
-    try {
-      const result = await sendHolidayNoticeForDoc({
-        docRef: docSnap.ref,
-        holiday,
-        date,
-        countryCode,
-        noticeConfig,
-        triggerType: "automatic",
-        actor: { uid: "system", email: "system" },
-      });
-      console.log(`${logPrefix} sent: ${result.noticeRecipientCount} recipient(s)`);
-    } catch (error) {
-      console.error(`${logPrefix} failed: ${error?.message || error}`);
-    }
-  }
-});
-
+// Holiday notices are now sent only by an authenticated administrator through
+// POST /holidays/:date/notice-send. No daily scheduled holiday email worker.
 
 function toIcsDate(value) {
   return new Date(value).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
