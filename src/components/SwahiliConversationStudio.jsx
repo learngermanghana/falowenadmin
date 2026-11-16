@@ -4,6 +4,7 @@ import { assembleListeningExam, base64WavToBytes, parseStudioTranscript } from "
 import { assemblyScenePlan, buildStudioSpeechPlan, sceneVoiceKey } from "../utils/hoerenSpeechPlan";
 import { getSavedVoice, saveVoice } from "../utils/hoerenVoiceCache";
 import { encodeWavAsMp3 } from "../utils/hoerenMp3";
+import { swahiliClassDictionary } from "../data/swahiliClassDictionary.js";
 
 const ENGINE = "lite";
 const TEMPLATE = "A: Habari za asubuhi!\nB: Nzuri, asante. Unaenda wapi?\nA: Ninaenda sokoni kununua matunda.\nB: Twende pamoja!";
@@ -18,6 +19,7 @@ function download(blob, filename) {
 }
 
 export default function SwahiliConversationStudio({ ready, remaining, refreshStatus, onBusyChange }) {
+  const [lessonId, setLessonId] = useState(swahiliClassDictionary[0].assignment_id);
   const [topic, setTopic] = useState("");
   const [format, setFormat] = useState("dialogue");
   const [script, setScript] = useState("");
@@ -25,6 +27,11 @@ export default function SwahiliConversationStudio({ ready, remaining, refreshSta
   const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
   const [progress, setProgress] = useState("");
+  const lesson = swahiliClassDictionary.find((entry) => entry.assignment_id === lessonId);
+  const focus = topic.trim();
+  const scriptTopic = lesson
+    ? `${lesson.assignment_id} · ${lesson.en}${focus ? ` · Focus: ${focus}` : ""}`
+    : focus;
 
   useEffect(() => () => { if (recording) URL.revokeObjectURL(recording.url); }, [recording]);
 
@@ -88,13 +95,21 @@ export default function SwahiliConversationStudio({ ready, remaining, refreshSta
           <option value="podcast">Two-host podcast</option>
         </select>
       </label>
-      <label>Topic
-        <input maxLength={240} value={topic} disabled={!!busy} onChange={(event) => setTopic(event.target.value)}
-          placeholder="Ordering lunch at a restaurant" />
+      <label>Swahili Course Book chapter
+        <select value={lessonId} disabled={!!busy} onChange={(event) => { setLessonId(event.target.value); setTopic(""); }}>
+          {swahiliClassDictionary.map(({ assignment_id, en }) => (
+            <option key={assignment_id} value={assignment_id}>{en}</option>
+          ))}
+          <option value="">Custom topic</option>
+        </select>
+      </label>
+      <label>{lesson ? "Optional focus" : "Topic"}
+        <input maxLength={lesson ? 140 : 240} value={topic} disabled={!!busy} onChange={(event) => setTopic(event.target.value)}
+          placeholder={lesson ? "e.g. practise a polite request" : "Ordering lunch at a restaurant"} />
       </label>
     </div>
-    <button type="button" className="hoeren-button" disabled={!ready || !!busy || topic.trim().length < 4 || !remaining?.script}
-      onClick={() => run("script", async () => updateScript((await makeSwahiliScript({ topic, format })).script))}>
+    <button type="button" className="hoeren-button" disabled={!ready || !!busy || scriptTopic.length < 4 || !remaining?.script}
+      onClick={() => run("script", async () => updateScript((await makeSwahiliScript({ topic: scriptTopic, format })).script))}>
       {busy === "script" ? "Generating script…" : "Generate script"}
     </button>
     <label>Editable transcript
