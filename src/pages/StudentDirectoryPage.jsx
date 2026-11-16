@@ -342,6 +342,38 @@ function whatsappUrl(phone, message) {
   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
 }
 
+const SIGNUP_DAY_MS = 24 * 60 * 60 * 1000;
+const SIGNUP_DATE_FIELDS = [
+  "signupAt", "signupDate", "registeredAt", "registered_at",
+  "registrationDate", "registration_date", "joinedAt", "joined_at",
+  "createdAt", "created_at", "enrollDate", "enrollmentDate",
+];
+const signupDateFormatter = new Intl.DateTimeFormat("en-GH", {
+  dateStyle: "medium",
+  timeZone: "Africa/Accra",
+});
+
+function getSignupTime(student) {
+  for (const field of SIGNUP_DATE_FIELDS) {
+    const value = student[field];
+    if (!value) continue;
+    const time = typeof value.toMillis === "function" ? value.toMillis()
+      : typeof value === "string" ? Date.parse(value)
+      : value instanceof Date ? value.getTime()
+      : typeof value === "number" ? (value < 1e12 ? value * 1000 : value)
+      : typeof value.seconds === "number" ? value.seconds * 1000
+      : NaN;
+    if (Number.isFinite(time) && time > 0) return time;
+  }
+  return null;
+}
+
+function getStudentLanguages({ program, secondaryProgram }) {
+  const primary = String(program || "").trim().toLowerCase() || "german";
+  const secondary = String(secondaryProgram || "").trim().toLowerCase();
+  return [...new Set([primary, secondary])].filter((language) => language === "german" || language === "swahili");
+}
+
 const DIRECTORY_VIEWS = new Set(["all", "trials", "attention", "archived"]);
 
 function normalizeDirectoryView(value) {
@@ -358,6 +390,8 @@ export default function StudentDirectoryPage() {
   const [classes, setClasses] = useState([]);
   const [drafts, setDrafts] = useState({});
   const [query, setQuery] = useState(() => searchParams.get("search") || "");
+  const [languageFilter, setLanguageFilter] = useState("");
+  const [signupDays, setSignupDays] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState("");
   const [detailTab, setDetailTab] = useState("profile");
   const [mobileDetails, setMobileDetails] = useState(false);
@@ -406,9 +440,28 @@ export default function StudentDirectoryPage() {
     archived: students.filter(isArchivedStudent).length,
   }), [attentionSummary.total, students]);
 
-  const filteredStudents = useMemo(() => (
-    viewStudents.filter((student) => matchesStudentDirectorySearch(student, query, resolveStudentPhone(student)))
-  ), [viewStudents, query]);
+  const signupTimes = useMemo(
+    () => new Map(students.map((student) => [student.id, getSignupTime(student)])),
+    [students],
+  );
+
+  const filteredStudents = useMemo(() => {
+    const now = Date.now();
+    const earliestSignup = now - Number(signupDays) * SIGNUP_DAY_MS;
+    const matches = viewStudents.filter((student) => {
+      const languages = getStudentLanguages(student);
+      if (languageFilter === "both" ? languages.length !== 2 : languageFilter && !languages.includes(languageFilter)) {
+        return false;
+      }
+      const signupTime = signupTimes.get(student.id);
+      if (signupDays && (signupTime === null || signupTime < earliestSignup || signupTime > now)) {
+        return false;
+      }
+      return matchesStudentDirectorySearch(student, query, resolveStudentPhone(student));
+    });
+    if (signupDays) matches.sort((a, b) => signupTimes.get(b.id) - signupTimes.get(a.id));
+    return matches;
+  }, [viewStudents, query, languageFilter, signupDays, signupTimes]);
 
   const selectDirectoryView = (view) => {
     const nextView = normalizeDirectoryView(view);
@@ -829,6 +882,34 @@ export default function StudentDirectoryPage() {
               placeholder="Search by name, phone, email, class, student code..."
               style={{ width: "100%", maxWidth: 460, padding: "8px 10px", borderRadius: 8, border: "1px solid #ccd4e2" }}
             />
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "end", gap: 12, marginTop: 12 }}>
+              <label style={{ display: "grid", gap: 6, fontWeight: 600 }}>
+                Course language
+                <select value={languageFilter} onChange={(event) => setLanguageFilter(event.target.value)}>
+                  <option value="">All languages</option>
+                  <option value="german">German (includes dual enrolment)</option>
+                  <option value="swahili">Swahili (includes dual enrolment)</option>
+                  <option value="both">German and Swahili</option>
+                </select>
+              </label>
+              <label style={{ display: "grid", gap: 6, fontWeight: 600 }}>
+                Signup date
+                <select value={signupDays} onChange={(event) => setSignupDays(event.target.value)}>
+                  <option value="">Any time</option>
+                  <option value="1">Last 24 hours</option>
+                  <option value="7">Last 7 days</option>
+                  <option value="30">Last 30 days</option>
+                </select>
+              </label>
+              {(languageFilter || signupDays) && (
+                <button type="button" onClick={() => {
+                  setLanguageFilter("");
+                  setSignupDays("");
+                }}>
+                  Clear filters
+                </button>
+              )}
+            </div>
             <SignupAccountLookup email={query} />
           </>
         )}
@@ -851,7 +932,7 @@ export default function StudentDirectoryPage() {
                   {directoryView === "attention" ? " This queue is calculated from data already loaded in Admin; opening it creates no new intervention write." : ""}
                 </p>
 
-                {filteredStudents.length === 0 && <p>No students found for this search.</p>}
+                {filteredStudents.length === 0 && <p>No student records match your search and filters.</p>}
 
                 {filteredStudents.length > 0 && (
                   <div className={`student-workspace ${mobileDetails ? "is-detail-view" : "is-list-view"}`}>
@@ -860,6 +941,8 @@ export default function StudentDirectoryPage() {
                         const isSelected = student.id === selectedStudentId;
                         const phone = resolveStudentPhone(student, getDraft(student));
                         const phoneCallUrl = callUrl(phone);
+                        const languages = getStudentLanguages(student);
+                        const signupTime = signupTimes.get(student.id);
                         const learningStatus = attentionStudentIds.has(student.id)
                           ? resolveStudentLearningStatus(student)
                           : null;
@@ -897,6 +980,10 @@ export default function StudentDirectoryPage() {
                               <div style={{ fontWeight: 600 }}>{student.name || "Unnamed"}</div>
                               <div style={{ fontSize: 12, opacity: 0.8 }}>{student.studentCode || "No student code"}</div>
                               <div style={{ fontSize: 12, opacity: 0.75 }}>{student.className || "No class"}</div>
+                              <div style={{ fontSize: 12, opacity: 0.8 }}>
+                                {languages.length ? languages.map(languageName).join(" + ") : "Language unspecified"}
+                                {signupTime !== null && ` · Signed up ${signupDateFormatter.format(signupTime)}`}
+                              </div>
                               {learningStatus?.primaryReason ? (
                                 <div
                                   style={{
