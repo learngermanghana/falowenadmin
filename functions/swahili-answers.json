@@ -1,26 +1,26 @@
 {
   "swahili-day-1": {
-    "version": 1,
+    "version": 2,
     "writing": {
       "Vokali": "A, E, I, O, U",
       "Silabi": "ba, be, bi, bo, bu",
-      "Maneno": "mama, kiti, kuku"
+      "Maneno": "Mfano: mama, kiti, kuku. Any three complete Kiswahili words from Day 1 are acceptable."
     },
     "reading": {
       "mother": {
-        "prompt": "Ni neno gani lina maana ya mother?",
+        "prompt": "Katika kifungu, ni neno gani lina maana ya “mother”?",
         "answer": "mama"
       },
       "child": {
-        "prompt": "Ni neno gani lina maana ya child?",
+        "prompt": "Katika kifungu, ni neno gani lina maana ya “child”?",
         "answer": "mtoto"
       },
       "chair": {
-        "prompt": "Ni neno gani lina maana ya chair?",
+        "prompt": "Katika kifungu, ni neno gani lina maana ya “chair”?",
         "answer": "kiti"
       },
       "u": {
-        "prompt": "Ni neno gani lina vokali U mara mbili?",
+        "prompt": "Katika kifungu, ni neno gani lina vokali U mara mbili?",
         "answer": "kuku"
       }
     }
