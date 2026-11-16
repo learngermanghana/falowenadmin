@@ -2,6 +2,18 @@ import fs from "node:fs";
 
 const filePath = new URL("../src/pages/LiveClassesPageV2.jsx", import.meta.url);
 let source = fs.readFileSync(filePath, "utf8");
+const modernSessionEditor = source.includes('import LiveClassSessionEditor from "../components/LiveClassSessionEditor.jsx"')
+  && source.includes("function openSessionChange(session")
+  && source.includes("initialAction={sessionChange.action}")
+  && source.includes("onSaved={async message =>");
+if (modernSessionEditor) {
+  // Reschedule, cancel and class-ID handling moved into LiveClassSessionEditor.
+  // Never inject old inline forms or hard-coded reason templates into this page.
+  if (!source.includes("klass={dashboard.klass}") || !source.includes("session={editingSession}")) {
+    throw new Error("Modern Live Classes session editor is missing its canonical session context.");
+  }
+  console.log("Modern Live Classes session editor handles rescheduling; legacy patch skipped.");
+} else {
 let changed = false;
 
 function hasAny(patterns) {
@@ -69,4 +81,6 @@ if (changed) {
   console.log("Live Classes V2 reschedule UI patched.");
 } else {
   console.log("Live Classes V2 reschedule UI already patched.");
+}
+
 }
