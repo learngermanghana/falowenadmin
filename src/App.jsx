@@ -234,11 +234,22 @@ function OwnerMusicAnalyticsRoute() {
   return <ProtectedRoute><MusicAnalyticsPage /></ProtectedRoute>;
 }
 
-function OwnerStudioRoute({ music = false, lesson = false }) {
+function OwnerStudioRoute({ lesson = false }) {
   const { user, loading, isStaff } = useAuth();
   const ownerUid = String(import.meta.env.VITE_HOEREN_STUDIO_OWNER_UID || "").trim();
   if (!loading && user && (isStaff || !ownerUid || user.uid !== ownerUid)) return <Navigate to="/" replace />;
-  return <ProtectedRoute>{lesson ? <LessonVideoStudioPage /> : music ? <MusicStudioPage /> : <HoerenStudioPage />}</ProtectedRoute>;
+  return <ProtectedRoute>{lesson ? <LessonVideoStudioPage /> : <HoerenStudioPage />}</ProtectedRoute>;
+}
+
+function MusicStudioRoute() {
+  const { user, loading, isStaff, staffLanguages } = useAuth();
+  const ownerUid = String(import.meta.env.VITE_HOEREN_STUDIO_OWNER_UID || "").trim();
+  if (!loading && user && !isStaff && (!ownerUid || user.uid !== ownerUid)) return <Navigate to="/" replace />;
+  const languages = isStaff ? staffLanguages || [] : ["german", "swahili"];
+  return <ProtectedRoute>
+    {languages.length ? <MusicStudioPage key={languages.join("+")} languages={languages} /> :
+      <section role="alert">Assign a language in Staff Workspace to open Music Studio.</section>}
+  </ProtectedRoute>;
 }
 
 function ExamReviewRoute() {
@@ -321,7 +332,7 @@ export default function App() {
           <Route path="/student-activity" element={<ProtectedRoute><Navigate to="/students" replace /></ProtectedRoute>} />
           <Route path="/social-media" element={<ProtectedRoute><SocialMediaPage /></ProtectedRoute>} />
           <Route path="/ai-studio" element={<OwnerStudioRoute />} />
-          <Route path="/music-studio" element={<OwnerStudioRoute music />} />
+          <Route path="/music-studio" element={<MusicStudioRoute />} />
           <Route path="/lesson-video-studio" element={<OwnerStudioRoute lesson />} />
           <Route path="/music-analytics" element={<OwnerMusicAnalyticsRoute />} />
           <Route path="/visitor-guide" element={<PublicVisitorGuideRedirect />} />

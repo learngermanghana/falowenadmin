@@ -46,3 +46,10 @@ test("explicit page grants override role defaults for staff routes and login", a
   assert.deepEqual(staffPageIds(undefined, "reviewer"), ["marking"]);
   assert.deepEqual(staffPageIds(["attendance", "staff", "students"], "teacher"), ["attendance"]);
 });
+
+test("Music Studio is opt-in even for existing teachers", async () => {
+  const { canOpenStaffPage, staffPageIds } = await import("../src/utils/staffPageAccess.js");
+  assert.equal(canOpenStaffPage("/music-studio", staffPageIds(undefined, "teacher")), false);
+  assert.equal(canOpenStaffPage("/music-studio", staffPageIds(["music-studio"], "teacher")), true);
+  assert.equal(canOpenStaffPage("/ai-studio", staffPageIds(["music-studio"], "teacher")), false);
+});

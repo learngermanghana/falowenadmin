@@ -58,7 +58,7 @@ function validateSceneRequest(body = {}) {
     throw Object.assign(new Error("Each scene must contain at most 520 spoken characters. Split into smaller scenes."), { status: 400 });
   }
   const style = body.style == null ? "" : String(body.style).trim();
-  if (style && style !== "grammar") throw Object.assign(new Error("Unsupported speech style."), { status: 400 });
+  if (style && !["grammar", "swahili"].includes(style)) throw Object.assign(new Error("Unsupported speech style."), { status: 400 });
   const language = style === "grammar" ? String(body.language || "en-GB").trim() : "";
   if (style === "grammar" && !["en-GB", "en-US", "de-DE"].includes(language)) {
     throw Object.assign(new Error("Choose English or German grammar narration."), { status: 400 });
@@ -79,13 +79,15 @@ function buildSpeechPayload({ turns, engine, style, language }) {
       annotations: [{ type: "speech_metadata", ...(speakers.length === 2 ? { speaker: turn.speaker } : {}),
         style: style === "grammar"
           ? "Warm, patient language teacher reading an educational grammar narration. Natural pronunciation, careful pacing, clearly separate words and short pauses at punctuation. Speak exactly the supplied words without adding explanations."
-          : turn.speaker === "A"
+          : style === "swahili"
+            ? "Speak the supplied words exactly in standard East African Kiswahili. Use clear, natural conversational pacing and distinct voices for the two speakers."
+            : turn.speaker === "A"
             ? "Professional German exam narrator: crisp, deliberate, instructional delivery with calm neutral emphasis."
             : "Natural conversational standard German for an independent task speaker; clear but lifelike intonation, distinct from the exam narrator." }],
     })) }],
     response_format: { type: "audio", mime_type: "audio/wav" },
     generation_config: {
-      speech_config: speakers.map(speaker => ({ ...(speakers.length === 2 ? { speaker } : {}), voice: voices[speaker], language: style === "grammar" ? language : "de-DE" })),
+      speech_config: speakers.map(speaker => ({ ...(speakers.length === 2 ? { speaker } : {}), voice: voices[speaker], ...(style === "swahili" ? {} : { language: style === "grammar" ? language : "de-DE" }) })),
     },
   };
 }
@@ -108,6 +110,31 @@ function validateScriptRequest(body = {}) {
   return { level, type, topic, part, profile, mode, kind: profile?.kind || kind, lessonContext };
 }
 
+
+function buildSwahiliConversationPrompt(body = {}) {
+  const topic = String(body.topic || "").trim();
+  const format = String(body.format || "dialogue");
+  if (topic.length < 4 || topic.length > 240 || !["dialogue", "podcast"].includes(format)) {
+    throw Object.assign(new Error("Choose a format and enter a topic (4–240 characters)."), { status: 400 });
+  }
+  return [
+    "Write an original listening conversation in standard East African Kiswahili for adult A1 learners.",
+    format === "podcast" ? "Write a short two-host podcast with a greeting, a friendly discussion and a simple closing."
+      : "Write a short, realistic everyday conversation between two people.",
+    "Use short sentences, frequent vocabulary, and clear turn-taking. Write only Kiswahili.",
+    "Use 8–16 spoken turns on separate lines, each beginning with A: or B:. Use both speakers. No titles, Markdown, questions for the learner or stage directions.",
+    "Keep each turn below 180 characters. Center the conversation on this topic: " + topic,
+  ].join("\n");
+}
+
+function validateSwahiliTranscript(script) {
+  const lines = script.trim().split(/\r?\n/).filter(line => line.trim());
+  if (lines.length < 2 || lines.length > 24 || !lines.every(line => /^[AB]:\s*\S.{0,319}$/u.test(line.trim()))
+      || !lines.some(line => /^A:/.test(line.trim())) || !lines.some(line => /^B:/.test(line.trim()))) {
+    throw Object.assign(new Error("Google returned an incomplete two-speaker conversation."), { status: 502 });
+  }
+  return lines.map(line => line.trim()).join("\n");
+}
 
 function validateGrammarScriptRequest(body = {}) {
   const level = String(body.level || "B1").trim().toUpperCase();
@@ -338,6 +365,24 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
     } catch (error) { await refundFailedRequest(db, slot); return handleError(res, error); }
   });
 
+  app.post("/ai-studio/swahili-script", guard, async (req, res) => {
+    let slot;
+    try {
+      const prompt = buildSwahiliConversationPrompt(req.body);
+      const key = String(geminiKey.value() || "").trim();
+      if (!key) return res.status(503).json({ ok: false, error: "Gemini API key is not configured." });
+      slot = await reserveUsage(db, req.hoerenOwnerUid, "script");
+      const result = await postGemini(
+        `https://generativelanguage.googleapis.com/v1beta/models/${SCRIPT_MODEL}:generateContent`,
+        key,
+        { contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: 0.4, maxOutputTokens: 1800 } },
+      );
+      const script = validateSwahiliTranscript(extractScript(result));
+      await settleUsage(db, slot, true);
+      return res.json({ ok: true, script, remaining: slot.remaining });
+    } catch (error) { await refundFailedRequest(db, slot); return handleError(res, error); }
+  });
+
   app.post("/ai-studio/grammar-script", guard, async (req, res) => {
     let slot;
     try {
@@ -400,5 +445,5 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
 
 module.exports = {
   MODELS, LIMITS, ownerUid, isStudioOwner, validateSpeechRequest, validateSceneRequest, validateScriptRequest, validateGrammarScriptRequest,
-  extractAudio, extractScript, describeGoogleRejection, buildSpeechPayload, registerHoerenStudioRoutes, reserveUsage, settleUsage,
+  buildSwahiliConversationPrompt, validateSwahiliTranscript, extractAudio, extractScript, describeGoogleRejection, buildSpeechPayload, registerHoerenStudioRoutes, reserveUsage, settleUsage,
 };

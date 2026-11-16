@@ -33,7 +33,7 @@ const PRESETS = {
   instrumental: 'An original intimate fingerstyle acoustic guitar instrumental for adult listeners, with a flowing Dadd9 – A/C# – Bm7 – Gmaj7 chord progression, beautiful natural acoustic tone, expressive melody, evolving dynamics and a resolved outro. Warm, calm, unhurried. No vocals, lyrics or drums.',
   acoustic: 'An original emotional singer-songwriter pop song with warm acoustic guitar, expressive piano chords, one rich adult lead voice, natural storytelling and a moving chorus. Clear German with musical phrasing rather than childish rhymes.',
 };
-export default function MusicStudioPage() {
+function GermanMusicStudio({ allowSwahili }) {
   const [studioTab, setStudioTab] = useState('generator');
   const [composerTab, setComposerTab] = useState('prompt');
   const [courseMode, setCourseMode] = useState('course');
@@ -316,9 +316,9 @@ export default function MusicStudioPage() {
       <button id="music-video-tab" type="button" role="tab" aria-controls="music-video-panel"
         aria-selected={studioTab === 'video'} className={studioTab === 'video' ? 'is-active' : ''}
         onClick={() => setStudioTab('video')}>Lyrics Video Studio</button>
-      <button id="music-swahili-tab" type="button" role="tab" aria-controls="music-swahili-panel"
+      {allowSwahili && <button id="music-swahili-tab" type="button" role="tab" aria-controls="music-swahili-panel"
         aria-selected={studioTab === "swahili"} className={studioTab === "swahili" ? "is-active" : ""}
-        onClick={() => setStudioTab("swahili")}>Swahili Music</button>
+        onClick={() => setStudioTab("swahili")}>Swahili Music</button>}
     </div>
     {/* Keep both workspaces mounted so drafts and generated audio survive tab changes. */}
     <div id="music-generator-panel" role="tabpanel" aria-labelledby="music-generator-tab"
@@ -552,8 +552,18 @@ export default function MusicStudioPage() {
       lyricsSaveNotice={lyricsNotice} />
       </div>
     </section>
-    <section id="music-swahili-panel" role="tabpanel" aria-labelledby="music-swahili-tab" hidden={studioTab !== "swahili"}>
+    {allowSwahili && <section id="music-swahili-panel" role="tabpanel" aria-labelledby="music-swahili-tab" hidden={studioTab !== "swahili"}>
       <MusicLyricsVideoStudio active={studioTab === "swahili"} swahili />
-    </section>
+    </section>}
+  </main>;
+}
+
+
+export default function MusicStudioPage({ languages = ["german", "swahili"] }) {
+  if (languages.includes("german")) return <GermanMusicStudio allowSwahili={languages.includes("swahili")} />;
+  if (!languages.includes("swahili")) return null;
+  return <main className="music-studio music-studio-simple">
+    <header className="music-simple-header"><h1>Swahili Music Studio</h1></header>
+    <MusicLyricsVideoStudio swahili />
   </main>;
 }

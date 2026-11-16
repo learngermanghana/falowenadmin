@@ -8,7 +8,7 @@ Reviewed: 2026-11-01.
 | Student assignment submissions | Learner request format, Admin marking parser and versioning | [Structured submission](../structured-submission-contract.md), learner [assessment sync](https://github.com/learngermanghana/falowenexamtrainer/blob/main/docs/assessment-task-sync.md) |
 | AI-marked coursework | Server-owned answer keys, grading worker, tutor review gates | [Automatic marking](../automatic-course-marking.md), marking and result tests |
 | Teacher lectures / live classes | Admin lesson presenters, session data and access policies | [Live curriculum](../live-class-curriculum-contract.md) |
-| Songs, music generation, lyrics videos | Owner-scoped `/music-studio` source and APIs | [Music Studio](../music-studio.md), learner music publishing |
+| Songs, music generation, lyrics videos | Language-scoped `/music-studio` source and APIs | [Music Studio](../music-studio.md), learner music publishing |
 | Music consent/reporting | Public player opt-in and read-only Admin GA4 API | [Music analytics](../music-analytics.md) |
 | Communication, scores, lifecycle webhooks | Server-side event hub + Apps Script contracts | [Event hub](../integration-event-hub.md) |
 | Deployment | Admin Vercel and separate Firebase workflows | `README.md`, workflow files, verified live revision |
@@ -46,6 +46,12 @@ The teacher re-uploaded `FOOD&DRINKS=LIKE&DISLIKES(1).pdf` and `Odering Food(1).
 The existing Day 6 `presentation` stage (same identifier, position eight of nine) now has the `scenario` rendering mode, with five selectable oral situations adapted to Ruth's grammar/food material: wali kuku and juice, no meat, choosing a different dish, ordering for two, and only ordering a drink. `SwahiliRestaurantScenario.jsx` follows the existing German A2 scenario component conventions (`presenter-career-hero`, `presenter-career-roadmap`, `presenter-career-question`, model-answer reveal and random next situation), but operates **client-side** and is ungraded; no student workbook fields or Firestore writes are introduced. The nine-stage course layout, the existing Falowen audio/video player, navigation, timers and student picker remain unchanged. Day 1 and German lessons are not changed.
 
 The Swahili review publisher validates the current submission and the enrolled UID, writes a Firestore score, queues the existing score Sheet worker, and uses the Announcement webhook to email a direct Campus Results link. The review remains the source for the learner’s feedback. Legacy reviews display without a score and can be scored by the tutor. Swahili submissions do not enter the German AI queue.
+
+## Language access for Music Studio and Swahili Hören
+
+Staff Workspace can grant Music Studio. Admin authorizes German generation and lyric edits against the staff permission and assigned language. A Swahili-only staff account sees the Swahili lyrics and video tools. The learner timing API checks the recording's catalog language with the Admin authorization endpoint before a staff member can publish a sidecar. Owners retain both workspaces.
+
+The owner Hören Studio's Swahili workspace creates A1 two-person conversations and podcasts, reuses the speech quota and browser audio cache, and exports a transcript, WAV or MP3 for manual upload. German exam controls remain in their own workspace.
 
 ## Kiswahili A1 Day 5
 

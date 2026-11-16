@@ -1,3 +1,4 @@
+import SwahiliConversationStudio from "../components/SwahiliConversationStudio.jsx";
 import HoerenBatchPanel from "../components/HoerenBatchPanel.jsx";
 import GrammarAudioStudio from "../components/GrammarAudioStudio.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -439,7 +440,15 @@ export default function HoerenStudioPage() {
           <strong>Complete level ZIP</strong>
           <span>Generate every Hören Teil for one level and mock. Review once, then download MP3s, transcripts, questions and answers together.</span>
         </button>
+        <button type="button" className={`hoeren-mode-choice ${workspace === "swahili" ? "is-active" : ""}`}
+          aria-pressed={workspace === "swahili"} disabled={!!busy || packBusy} onClick={() => setWorkspace("swahili")}>
+          <strong>Swahili</strong>
+          <span>Create a Kiswahili conversation or a short two-host podcast.</span>
+        </button>
       </section>
+      <div hidden={workspace !== "swahili"}>
+        <SwahiliConversationStudio ready={ready} remaining={status?.remaining} refreshStatus={reloadStatus} onBusyChange={setPackBusy} />
+      </div>
       <div hidden={workspace !== "pack"}>
         <HoerenBatchPanel profiles={status?.profiles || {}} ready={ready} initialLevel={level} onBusyChange={setPackBusy} onStatusChange={setStatus} />
       </div>

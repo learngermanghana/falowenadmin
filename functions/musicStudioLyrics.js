@@ -1,5 +1,5 @@
 "use strict";
-const { isStudioOwner } = require("./hoerenStudioApi");
+const { canUseMusicStudio } = require("./musicStudioAccess");
 
 // One document per lesson. No searches, listeners, background jobs or model calls.
 const COLLECTION = "musicStudioLyrics";
@@ -31,8 +31,8 @@ function createLyricsHandlers({db,verifyToken,runtimeConfig={}}) {
     }catch{
       return res.status(401).json({ok:false,error:"Sign in to Falowen Admin."});
     }
-    if (!isStudioOwner(actor.uid,runtimeConfig)) return res.status(403).json({ok:false,error:"Only the Music Studio owner can overwrite lyrics."});
     try {
+      if (!await canUseMusicStudio(db, actor, runtimeConfig, "german")) return res.status(403).json({ok:false,error:"German Music Studio access is required."});
       if(req.method !== "GET" && req.method !== "POST")return res.status(405).json({ok:false,error:"Method not allowed."});
       const assignmentKey=validKey(req.method==="GET"?req.query?.assignmentKey:req.body?.assignmentKey);
       const ref=db.collection(COLLECTION).doc(assignmentKey);
