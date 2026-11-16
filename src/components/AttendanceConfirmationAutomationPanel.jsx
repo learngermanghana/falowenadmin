@@ -341,7 +341,9 @@ export default function AttendanceConfirmationAutomationPanel() {
           <div style={{ display: "grid", gap: 6 }}>
             {(weeklyPreview.classes || []).map((row) => <div key={row.classId} style={{ borderTop: "1px solid #dbeafe", paddingTop: 6, display: "flex", justifyContent: "space-between", gap: 12 }}>
               <span>{row.className}</span>
-              <strong>{row.skipped ? `Excluded (${row.mode})` : `${row.lessonsHeld || 0} held · ${row.recipients || 0} recipients`}</strong>
+              <strong style={{ textAlign: "right" }}>{row.skipped
+                ? `Excluded (${row.mode})`
+                : `${row.lessonsHeld || 0} held · ${row.recipients || 0} recipients · ${row.attended || 0} attendance records present/late · ${row.late || 0} late · ${row.excused || 0} excused · ${row.absent || 0} absent · ${row.participationTurns || 0} participation turns`}</strong>
             </div>)}
           </div>
         </div>}
