@@ -1,5 +1,5 @@
 "use strict";
-const { isStudioOwner } = require('./hoerenStudioApi');
+const { canUseMusicStudio } = require("./musicStudioAccess");
 const MODELS = Object.freeze({ clip: { id: 'lyria-3-clip-preview', cents: 4 }, song: { id: 'lyria-3.5', cents: 8 } });
 const LIMITS = Object.freeze({ dailyCents: 80, monthlyCents: 500 });
 const fail = (message, status = 400) => Object.assign(new Error(message), { status });
@@ -40,10 +40,10 @@ function createHandler({ db, verifyToken, key, runtimeConfig = {}, fetchImpl = f
     res.set('Cache-Control', 'no-store');
     let user;
     try { user = await verifyToken(String(req.headers.authorization || '').replace(/^Bearer /, '')); }
-    catch { return res.status(401).json({ ok: false, error: 'Sign in with your Falowen owner account.' }); }
-    if (!isStudioOwner(user.uid, runtimeConfig)) return res.status(403).json({ ok: false, error: 'Music Studio is owner-only.' });
+    catch { return res.status(401).json({ ok: false, error: 'Sign in to Falowen Admin.' }); }
     let slot, request;
     try {
+      if (!await canUseMusicStudio(db, user, runtimeConfig, "german")) return res.status(403).json({ ok: false, error: "German Music Studio access is required." });
       if (req.method === 'GET') {
         const usage = (await db.collection('musicStudioPrivate').doc('budget').get()).data() || {};
         const today = new Date().toISOString().slice(0, 10);

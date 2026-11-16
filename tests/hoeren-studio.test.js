@@ -536,3 +536,17 @@ test("speech payload maps each annotated speaker to one documented Interactions 
     assert.deepEqual(payload.response_format, { type: "audio", mime_type: "audio/wav" });
   }
 });
+
+test("Swahili conversation generation and speech stay in the Kiswahili workflow", () => {
+  const { buildSwahiliConversationPrompt, validateSwahiliTranscript, buildSpeechPayload, validateSceneRequest } = require("../functions/hoerenStudioApi.js");
+  assert.match(buildSwahiliConversationPrompt({ topic: "Sokoni", format: "podcast" }), /two-host podcast/);
+  assert.match(buildSwahiliConversationPrompt({ topic: "Sokoni" }), /everyday conversation/);
+  assert.throws(() => buildSwahiliConversationPrompt({ topic: "Sokoni", format: "goethe" }), /Choose a format/);
+  assert.throws(() => validateSwahiliTranscript("A: Habari?\nC: Nzuri."), /two-speaker/);
+  assert.equal(validateSwahiliTranscript("A: Habari?\nB: Nzuri."), "A: Habari?\nB: Nzuri.");
+  const scene = validateSceneRequest({ style: "swahili", turns: [{ speaker: "A", text: "Habari?" }, { speaker: "B", text: "Nzuri." }] });
+  const payload = buildSpeechPayload(scene);
+  assert.match(payload.input[0].content[0].annotations[0].style, /Kiswahili/);
+  assert.equal(payload.generation_config.speech_config.length, 2);
+  assert.ok(payload.generation_config.speech_config.every(voice => !Object.hasOwn(voice, "language")));
+});

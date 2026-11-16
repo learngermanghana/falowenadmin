@@ -32,6 +32,7 @@ export const makeSpeechClip = ({ turns, text, speaker, engine, style, language }
   ...(turns ? { turns } : { text, speaker }), engine,
   ...(style ? { style, language } : {}),
 });
+export const makeSwahiliScript = ({ topic, format }) => request("swahili-script", { topic, format });
 export const makeGrammarScript = ({ topic, level, languageMode }) => request("grammar-script", { topic, level, languageMode });
 export const makeListeningQuestions = ({ script, kind, level, part, mode, lessonContext }) => request("questions", { script, kind, level, part, mode, lessonContext });
 

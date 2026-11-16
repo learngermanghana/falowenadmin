@@ -1,8 +1,11 @@
 # Falowen Music Studio
 
-Owner-only `/music-studio` navigation uses the same owner account and build-time
-`VITE_HOEREN_STUDIO_OWNER_UID` as AI Hören Studio. Server authorization also checks
-the existing owner UID/hash. Staff and students cannot generate music.
+The owner has access to both Music Studio languages. Staff Workspace can grant
+Music Studio for German, Swahili or both. German access includes music
+generation and German lesson lyrics. Swahili access includes the Swahili
+recording catalog, timing editor and video export. Staff timing publication
+checks the assigned language of the exact song before writing its R2 sidecar.
+The studio's existing generation budget remains shared.
 
 Google Lyria Clip (`lyria-3-clip-preview`) generates 30 seconds; `lyria-3.5`
 generates a full song with optional custom lyrics. Both return MP3. Pricing checked

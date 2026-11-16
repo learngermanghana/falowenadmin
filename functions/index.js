@@ -2673,6 +2673,9 @@ const musicStudioHandler = require('./musicStudio').createHandler({
   key: () => geminiAudioKeySecret.value(), runtimeConfig,
 });
 app.all('/music-studio', musicStudioHandler);
+app.post('/music-studio/timing-access', require('./musicStudioAccess').createTimingAccessHandler({
+  db, runtimeConfig, verifyToken: token => admin.auth().verifyIdToken(token),
+}));
 const musicLyricsHandlers = require('./musicStudioLyrics').createLyricsHandlers({
   db, verifyToken: token => admin.auth().verifyIdToken(token), runtimeConfig,
 });
