@@ -1,0 +1,76 @@
+name: Retire five-minute Firebase class reminders
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/retire-five-minute-class-reminders.yml'
+  workflow_dispatch:
+
+# These functions are retired from functions/main.js and index.js.
+# Delete the deployed functions and their orphaned Firebase Scheduler jobs once.
+concurrency:
+  group: falowenadmin-firebase-deploy
+  cancel-in-progress: false
+
+jobs:
+  retire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate to Falowen Firebase
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FALOWEN }}'
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+      - name: Install gcloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+      - name: Verify retired functions cannot be recreated
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -En '^(exports|module\.exports)\.send(Saturday)?ClassSessionReminderEmails\s*=' functions/main.js functions/index.js; then
+            echo "Retired functions are still exported. Refusing to delete."
+            exit 1
+          fi
+      - name: Delete only the retired weekday and Saturday Firebase functions
+        shell: bash
+        run: |
+          set -euo pipefail
+          project="falowen-examiner-trainer"
+          for fn in sendClassSessionReminderEmails sendSaturdayClassSessionReminderEmails; do
+            if gcloud functions describe "$fn" --gen2 --region=us-central1 --project="$project" >/dev/null 2>&1; then
+              echo "Deleting retired Firebase function: $fn"
+              firebase functions:delete "$fn" --region us-central1 --project "$project" --force
+            else
+              echo "Already absent: $fn"
+            fi
+          done
+      - name: Remove orphaned five-minute Scheduler jobs and verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          project="falowen-examiner-trainer"
+          for fn in sendClassSessionReminderEmails sendSaturdayClassSessionReminderEmails; do
+            job="firebase-schedule-${fn}-us-central1"
+            if gcloud scheduler jobs describe "$job" --location=us-central1 --project="$project" >/dev/null 2>&1; then
+              echo "Deleting orphaned five-minute job: $job"
+              gcloud scheduler jobs delete "$job" --location=us-central1 --project="$project" --quiet
+            fi
+          done
+          for fn in sendClassSessionReminderEmails sendSaturdayClassSessionReminderEmails; do
+            if gcloud functions describe "$fn" --gen2 --region=us-central1 --project="$project" >/dev/null 2>&1; then
+              echo "::error::Retired function still exists: $fn"
+              exit 1
+            fi
+            job="firebase-schedule-${fn}-us-central1"
+            if gcloud scheduler jobs describe "$job" --location=us-central1 --project="$project" >/dev/null 2>&1; then
+              echo "::error::Retired Scheduler job still exists: $job"
+              exit 1
+            fi
+          done
+          echo "Both five-minute reminder functions and jobs are absent."
