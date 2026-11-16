@@ -88,9 +88,23 @@ export default async function handler(req, res) {
     if (String(session.classId || "") !== classId) err("Session does not belong to this class.", 403);
     if (["cancelled", "canceled", "completed", "ended", "deleted"].includes(norm(session.status))) err("This session is not active.", 409);
     const now = Date.now();
-    const opened = timeMs(attendance.openFrom || attendance.openedAt || attendance.checkinOpenedAt);
-    const closes = timeMs(attendance.openTo || attendance.expiresAt || attendance.activeUntil);
-    if (!Number.isFinite(opened) || !Number.isFinite(closes) || opened > now || closes <= now) err("Open check-in first. Its active window could not be verified.", 409);
+    // Match Falowen's check-in authorization semantics: legacy sessions use
+    // opened/openFrom/openTo, newer sessions use active/status/expiry.
+    const openFrom = timeMs(attendance.openFrom);
+    const openTo = timeMs(attendance.openTo);
+    let checkinOpen = false;
+    if (Object.prototype.hasOwnProperty.call(attendance, "opened")) {
+      checkinOpen = attendance.opened === true
+        && (!Number.isFinite(openFrom) || now >= openFrom)
+        && (!Number.isFinite(openTo) || now <= openTo);
+    } else {
+      const sessionState = norm(attendance.status);
+      const expiry = timeMs(attendance.expiresAt || attendance.endsAt || attendance.closesAt || attendance.activeUntil);
+      checkinOpen = (attendance.active === true || attendance.isActive === true || ["open", "active"].includes(sessionState))
+        && attendance.closed !== true && attendance.isClosed !== true && sessionState !== "closed"
+        && (!Number.isFinite(expiry) || expiry > now);
+    }
+    if (!checkinOpen) err("Open check-in first. The session is not active.", 409);
     const starts = new Date(timeMs(session.startsAt || attendance.startsAt));
     const ends = new Date(timeMs(session.endsAt || attendance.endsAt));
     if (Number.isNaN(starts.getTime()) || Number.isNaN(ends.getTime())) err("Session timing is missing.", 409);
