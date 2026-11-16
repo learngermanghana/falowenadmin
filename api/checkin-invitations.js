@@ -2,6 +2,7 @@
 // Never accept recipient lists, check-in URLs, or schedule data from the browser.
 import crypto from "node:crypto";
 import { verifyFirebaseAdminUser, bearerToken } from "./integration-hub.js";
+import { sessionBelongsToVerifiedClass } from "./checkin-session-class.js";
 
 const project = () => String(process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID || "").trim();
 const env = (key) => String(process.env[key] || "").trim();
@@ -89,8 +90,7 @@ export default async function handler(req, res) {
       firestoreGet(`attendance/${encodeURIComponent(classId)}/sessions/${encodeURIComponent(sessionId)}`, token, true),
     ]);
     const klass = docValue(klassDoc), session = docValue(sessionDoc), attendance = docValue(attendanceDoc);
-    const sessionClassId = String(session.classRecordId || session.classId || "").trim();
-    if (sessionClassId !== classId) err("Session does not belong to this class.", 403);
+    if (!sessionBelongsToVerifiedClass(session, klass, classId)) err("Session does not belong to this class.", 403);
     if (["cancelled", "canceled", "completed", "ended", "deleted"].includes(norm(session.status))) err("This session is not active.", 409);
     const now = Date.now();
     // Match Falowen's check-in authorization semantics: legacy sessions use
