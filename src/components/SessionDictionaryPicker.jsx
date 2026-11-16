@@ -9,10 +9,10 @@ import {
   toggleDictionarySelection,
 } from "../utils/liveClassDictionarySelection.js";
 
-function entryLabel(entry = {}) {
+function entryLabel(entry = {}, labelPrefix = "") {
   const title = String(entry.en || entry.de || "").trim();
   const chapter = String(entry.chapter || "").trim();
-  return `${entry.assignment_id}${chapter ? ` · ${chapter}` : ""}${title ? ` — ${title}` : ""}`;
+  return `${labelPrefix ? `${labelPrefix} · ` : ""}${entry.assignment_id}${chapter ? ` · ${chapter}` : ""}${title ? ` — ${title}` : ""}`;
 }
 
 export default function SessionDictionaryPicker({
@@ -20,6 +20,7 @@ export default function SessionDictionaryPicker({
   assignmentIds = [],
   disabled = false,
   onChange,
+  entryLabelPrefix,
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -44,8 +45,15 @@ export default function SessionDictionaryPicker({
   const filteredEntries = useMemo(() => {
     const query = String(search || "").trim().toLowerCase();
     if (!query) return entries;
-    return entries.filter((entry) => entryLabel(entry).toLowerCase().includes(query));
-  }, [entries, search]);
+    const day = entryLabelPrefix ? query.match(/\bday\s+\d+\b/)?.[0] : undefined;
+    const terms = (day ? query.replace(day, "") : query).trim().split(/\s+/);
+    return entries.filter((entry) => {
+      const prefix = entryLabelPrefix?.(entry);
+      if (day && prefix?.toLowerCase() !== day.replace(/\s+/g, " ")) return false;
+      const label = entryLabel(entry, prefix).toLowerCase();
+      return terms.every((term) => label.includes(term));
+    });
+  }, [entries, entryLabelPrefix, search]);
 
   async function toggle(entry) {
     const nextIds = toggleDictionarySelection(entries, selectedIds, entry.assignment_id);
@@ -129,7 +137,7 @@ export default function SessionDictionaryPicker({
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search assignment ID, chapter or title"
+            placeholder="Search day, assignment ID, chapter or title"
             style={{ width: "100%", marginBottom: 8 }}
           />
           <div style={{ maxHeight: 320, overflowY: "auto", display: "grid", gap: 4, paddingRight: 4 }}>
@@ -146,7 +154,7 @@ export default function SessionDictionaryPicker({
                     disabled={disabled}
                     onChange={() => toggle(entry)}
                   />
-                  <span>{entryLabel(entry)}</span>
+                  <span>{entryLabel(entry, entryLabelPrefix?.(entry))}</span>
                 </label>
               );
             })}
