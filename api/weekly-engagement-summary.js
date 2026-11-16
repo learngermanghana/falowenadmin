@@ -11,13 +11,15 @@ const dateOf = (value) => {
   if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return String(value);
   const ms = timeMs(value);
   if (!Number.isFinite(ms)) return "";
-  return new Intl.DateTimeFormat("en-CA",{timeZone:GHS,year:"numeric",month:"2-digit",day:"2-digit"})
-    .format(new Date(ms));
+  const parts = new Intl.DateTimeFormat("en-GB",{timeZone:GHS,year:"numeric",month:"2-digit",day:"2-digit"})
+    .formatToParts(new Date(ms));
+  const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
 };
 const stamp = (ms) => new Date(ms).toISOString().slice(0,10);
-const weekWindow = (now = new Date()) => {
+const weekWindow = (now = new Date(), weeksAgo = 0) => {
   const midnight = Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate());
-  const monday = midnight - ((now.getUTCDay() + 6) % 7) * 86400000;
+  const monday = midnight - ((now.getUTCDay() + 6) % 7) * 86400000 - weeksAgo*7*86400000;
   return {weekStart:stamp(monday), weekEnd:stamp(monday + 6*86400000)};
 };
 async function listCollection(path, token, max=6000) {
@@ -135,8 +137,8 @@ function classEmailMode(klass){
   const mode=norm(klass.attendanceConfirmationEmailMode||"weekly");
   return ["off","weekly","each_class"].includes(mode)?mode:"weekly";
 }
-async function buildDigest(token, now=new Date()) {
-  const {weekStart,weekEnd}=weekWindow(now);
+async function buildDigest(token, now=new Date(), weeksAgo=0) {
+  const {weekStart,weekEnd}=weekWindow(now,weeksAgo);
   const [classes, students, sessions, participation]=await Promise.all([
     listCollection("classes",token,300),listStudents(token),
     listCollection("classSessions",token,12000),
@@ -238,7 +240,8 @@ export default async function handler(req,res){
     }
 
     const token=await googleAccessToken();
-    const report=await buildDigest(token);
+    const weeksAgo=preview && req.query?.period==="previous" ? 1 : 0;
+    const report=await buildDigest(token,new Date(),weeksAgo);
     if(preview)return res.status(200).json({ok:true,preview:true,
       weekStart:report.weekStart,weekEnd:report.weekEnd,
       eligibleRecipients:report.rows.length,classes:report.classSummaries,
