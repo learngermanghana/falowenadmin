@@ -323,6 +323,64 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
     }
   });
 
+  // Staff-only approval: knowing the shared invitation URL must never grant free access.
+  app.post("/students/:studentId/university-approval", async (req, res) => {
+    try {
+      const user = await requireAuth(req);
+      assertStudentProfileEditor(user, staffEmails);
+      const studentId = cleanStudentId(req.params.studentId);
+      if (!studentId) return res.status(400).json({ ok: false, error: "Student ID is required" });
+      const decision = String(req.body?.decision || "").trim().toLowerCase();
+      if (!["approve", "revoke"].includes(decision)) {
+        return res.status(400).json({ ok: false, error: "Choose approve or revoke" });
+      }
+      const studentRef = db.collection("students").doc(studentId);
+      const patch = await db.runTransaction(async (tx) => {
+        const snap = await tx.get(studentRef);
+        if (!snap.exists) throw Object.assign(new Error("Student not found"), { statusCode: 404 });
+        const student = snap.data();
+        if (student.program !== "swahili" ||
+            student.registrationSource !== "university-invite" ||
+            student.institutionId !== "university-hamburg" ||
+            student.cohortId !== "university-hamburg-kiswahili-a1") {
+          throw Object.assign(new Error("This student does not belong to the University of Hamburg Kiswahili invitation cohort"), { statusCode: 409 });
+        }
+        if (!student.uid) {
+          throw Object.assign(new Error("Student has no connected Firebase login"), { statusCode: 409 });
+        }
+        const approved = decision === "approve";
+        const next = {
+          institutionVerification: approved ? "approved" : "pending",
+          accessType: approved ? "complimentary" : "invitation_pending",
+          status: approved ? "active" : "registered",
+          paymentStatus: approved ? "exempt" : "exempt_pending",
+          trialStatus: "not_applicable",
+          tuitionFee: null, balanceDue: null, paymentIntentAmount: null,
+          institutionReviewedBy: String(user?.email || user?.uid || "").trim(),
+          institutionReviewedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        };
+        for (const field of ["trialStartedAt", "trialUsedAt", "trialEndsAt", "trialPurgeAt", "trialExpiredAt", "trialAccessBlockedAt"]) {
+          next[field] = admin.firestore.FieldValue.delete();
+        }
+        tx.update(studentRef, next);
+        return {
+          institutionVerification: next.institutionVerification,
+          accessType: next.accessType,
+          status: next.status,
+          paymentStatus: next.paymentStatus,
+          trialStatus: next.trialStatus,
+          tuitionFee: null, balanceDue: null, paymentIntentAmount: null,
+        };
+      });
+      return res.json({ ok: true, updates: patch, message: decision === "approve"
+        ? "Complimentary University of Hamburg Kiswahili access approved."
+        : "University course access returned to pending verification." });
+    } catch (error) {
+      return res.status(statusCodeForError(error)).json({ ok: false, error: error?.message || "Could not review university registration" });
+    }
+  });
+
   app.post("/students/:studentId/activate-trial", async (req, res) => {
     try {
       const user = await requireAuth(req);
