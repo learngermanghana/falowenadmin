@@ -8,8 +8,11 @@ const importAnchor = 'import { buildManualDateOverridePatch } from "../utils/att
 const importLine = 'import AttendanceBccEmailPanel from "../components/AttendanceBccEmailPanel.jsx";\n';
 
 if (!source.includes(importLine)) {
-  if (!source.includes(importAnchor)) throw new Error("Could not find attendance import anchor");
-  source = source.replace(importAnchor, `${importAnchor}${importLine}`);
+  const actualImportAnchor = source.includes(importAnchor)
+    ? importAnchor
+    : 'import LiveClassSessionEditor from "../components/LiveClassSessionEditor.jsx";\n';
+  if (!source.includes(actualImportAnchor)) throw new Error("Could not find attendance import anchor");
+  source = source.replace(actualImportAnchor, `${actualImportAnchor}${importLine}`);
   changed = true;
 }
 
@@ -29,8 +32,17 @@ const panelMarkup = `        <AttendanceBccEmailPanel
 `;
 
 if (!source.includes("<AttendanceBccEmailPanel")) {
-  if (!source.includes(studentsCardAnchor)) throw new Error("Could not find Students card anchor in attendance page");
-  source = source.replace(studentsCardAnchor, `${panelMarkup}${studentsCardAnchor}`);
+  const modernCardAnchor = '        <article className="card session-attendance__card">\n          <div className="session-attendance__header"><h2>Students</h2>';
+  const modernPanelMarkup = panelMarkup
+    .replace('        <AttendanceBccEmailPanel', '        {!isStaff && <AttendanceBccEmailPanel')
+    .replace('        />', '        />}');
+  if (source.includes(studentsCardAnchor)) {
+    source = source.replace(studentsCardAnchor, `${panelMarkup}${studentsCardAnchor}`);
+  } else if (source.includes(modernCardAnchor)) {
+    source = source.replace(modernCardAnchor, `${modernPanelMarkup}${modernCardAnchor}`);
+  } else {
+    throw new Error("Could not find Students card anchor in attendance page");
+  }
   changed = true;
 }
 
