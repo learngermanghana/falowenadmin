@@ -27,3 +27,12 @@
 - Apps Script property `ENABLE_CLASS_EMAIL_REMINDERS` defaults to off. Set to `true` only after confirming the new sender and retiring Cloud weekday/Saturday reminder jobs.
 - Vercel production env `WEEKLY_ENGAGEMENT_ENABLED` defaults to off. Set to `true` only after validating weekly numbers and retiring the legacy weekly attendance sender.
 - One weekly Vercel Cron exists but intentionally returns a harmless `disabled: true` response until the flag is enabled.
+
+## Weekly preview added (Nov 16, 2026)
+- Admin → Communication → Attendance confirmation emails → **Preview weekly report (no emails)**.
+- Calls GET `/api/weekly-engagement-summary?preview=1` using the owner's Firebase ID token; this does not send messages and never returns students' email addresses.
+- New digest reads canonical `classSessions` and legacy attendance aliases, tutor manual Present/Late/Absent/Excused overrides, checkin subcollections, current eligible class roster, and `classParticipationRecords` once per Sunday run. Completed sessions only; cancelled, superseded and future sessions excluded. Students enrolled after a session are not marked absent for earlier classes.
+- Classes configured `off` or `each_class` are **excluded**. Review them before retiring the old job; selecting weekly in Communication is a separate deliberate setting change.
+- The owner must check preview totals against Attendance and Class Participation on real classes, especially German and Swahili and students with transfers. If a class is absent or numbers are wrong, do not enable sending.
+- Deploy `Falowen_Calender_Weekly_Attendance_Updated.gs` as a new version of the existing bound Apps Script. It includes Late/Excused/Absent and excludes Excused from the attendance-rate denominator.
+- After the Google Apps Script weekly delivery test, pause Cloud Scheduler `firebase-schedule-sendAttendanceConfirmationEmails-us-central1` (check the actual job name/region), then set Vercel production `WEEKLY_ENGAGEMENT_ENABLED=true` and redeploy. Do not run both systems concurrently. Maintain the attendance checkin tracking job.
