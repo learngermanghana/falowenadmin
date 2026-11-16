@@ -148,6 +148,7 @@ export default function CanonicalAttendancePageV3() {
   const [selectedId, setSelectedId] = useState("");
   const [hasReminderRecipients, setHasReminderRecipients] = useState(false);
   const [sendingReminder, setSendingReminder] = useState(false);
+  const [sendingCheckinInvitation, setSendingCheckinInvitation] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -382,6 +383,26 @@ export default function CanonicalAttendancePageV3() {
     }
   }
 
+  async function sendCheckinInvitation() {
+    if (isStaff || !sessionOpen || !klass?.id || !selected?.id || sendingCheckinInvitation) return;
+    setSendingCheckinInvitation(true);
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch("/api/checkin-invitations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ classId: klass.id, sessionId: selected.id }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.ok) throw new Error(result.error || "Check-in email delivery failed.");
+      success(`Check-in invitations sent: ${result.sent}. Already sent: ${result.skipped}.`);
+    } catch (cause) {
+      error(cause?.message || "Could not deliver check-in invitations.");
+    } finally {
+      setSendingCheckinInvitation(false);
+    }
+  }
+
   async function sendClassReminder() {
     if (isStaff || !klass || !selected || sessionLocked || isAppAssessment(selected) || sendingReminder || !hasReminderRecipients) return;
     setSendingReminder(true);
@@ -485,6 +506,12 @@ export default function CanonicalAttendancePageV3() {
               <a href={displayUrl} target="_blank" rel="noreferrer">Open Full-Screen QR Page ↗</a>
               <button type="button" onClick={refreshCheckins}>Refresh check-ins</button>
             </div>
+            {!isStaff && sessionOpen && checkinUrl && <div className="session-attendance__actions">
+              <button type="button" className="session-attendance__primary" disabled={sendingCheckinInvitation || sessionBusy || !hasReminderRecipients} onClick={sendCheckinInvitation}>
+                {sendingCheckinInvitation ? "Sending invitations…" : "Send check-in invitation emails"}
+              </button>
+              <small>Uses the existing Calender Apps Script. Sends only to enrolled students and skips duplicates.</small>
+            </div>}
             {sessionOpen && checkinUrl && <div className="session-attendance__qr">
               <QRCodeCanvas value={checkinUrl} size={170} />
               <a href={checkinUrl} target="_blank" rel="noreferrer">Open student check-in link ↗</a>
