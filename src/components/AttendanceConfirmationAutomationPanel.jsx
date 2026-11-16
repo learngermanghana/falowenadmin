@@ -80,6 +80,8 @@ export default function AttendanceConfirmationAutomationPanel() {
   const [previewing, setPreviewing] = useState(false);
   const [weeklyPreview, setWeeklyPreview] = useState(null);
   const [weeklyPreviewError, setWeeklyPreviewError] = useState("");
+  const [sendingWeeklyTest, setSendingWeeklyTest] = useState(false);
+  const [weeklyTestResult, setWeeklyTestResult] = useState("");
 
   async function loadClassesNow() {
     setLoadingClasses(true);
@@ -161,6 +163,28 @@ export default function AttendanceConfirmationAutomationPanel() {
       error(message);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function sendWeeklyTestToOwner() {
+    setSendingWeeklyTest(true);
+    setWeeklyTestResult("");
+    try {
+      const user = auth?.currentUser;
+      if (!user) throw new Error("Sign in as the Falowen administrator.");
+      const token = await user.getIdToken();
+      const response = await fetch("/api/weekly-engagement-summary?test=1", {
+        method: "POST", headers: { Authorization: `Bearer ${token}` },
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload.ok !== true) throw new Error(payload.error || `Test email failed (HTTP ${response.status}).`);
+      const message = payload.sent ? "One test email delivered to the owner account." : payload.skipped ? "Test email was already sent this week; the duplicate was skipped." : "The test completed but did not confirm delivery.";
+      setWeeklyTestResult(message);
+      if (payload.sent) success(message);
+    } catch (cause) {
+      setWeeklyTestResult(cause?.message || "Could not send the weekly test email.");
+    } finally {
+      setSendingWeeklyTest(false);
     }
   }
 
@@ -333,7 +357,11 @@ export default function AttendanceConfirmationAutomationPanel() {
       <section style={{ border: "1px solid #bfdbfe", background: "#f8fbff", borderRadius: 12, padding: 14, display: "grid", gap: 10 }}>
         <h3 style={{ margin: 0, color: "#1d4ed8" }}>New weekly attendance + participation email</h3>
         <p style={{ margin: 0, fontSize: 13, color: "#475569" }}>Preview current-week class totals directly from Falowen. This is read-only and sends no emails. The replacement sender stays off until verified.</p>
-        <button type="button" onClick={previewWeeklyReport} disabled={previewing} style={{ justifySelf: "start" }}>{previewing ? "Checking records…" : "Preview weekly report (no emails)"}</button>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <button type="button" onClick={previewWeeklyReport} disabled={previewing}>{previewing ? "Checking records…" : "Preview weekly report (no emails)"}</button>
+          <button type="button" onClick={sendWeeklyTestToOwner} disabled={sendingWeeklyTest}>{sendingWeeklyTest ? "Sending test…" : "Send test weekly email to administrator"}</button>
+        </div>
+        {weeklyTestResult ? <p role="status" style={{ margin: 0, fontSize: 13, overflowWrap: "anywhere" }}>{weeklyTestResult}</p> : null}
         {weeklyPreviewError && <p role="alert" style={{ color: "#b91c1c", margin: 0, overflowWrap: "anywhere" }}>{weeklyPreviewError}</p>}
         {weeklyPreview && <div role="status" style={{ display: "grid", gap: 8 }}>
           <strong>{weeklyPreview.weekStart} to {weeklyPreview.weekEnd} · {weeklyPreview.eligibleRecipients} eligible student summaries</strong>
