@@ -1,5 +1,7 @@
 import "./CanonicalAttendancePage.css";
 import { attendanceRequest } from "../services/assignedTutorAttendanceService.js";
+import SessionDictionaryPicker from "../components/SessionDictionaryPicker.jsx";
+import { getA1DictionaryDayLabel, getCourseSessionGroups } from "../data/courseSessionGroups.js";
 import LiveClassSessionEditor from "../components/LiveClassSessionEditor.jsx";
 import { isAppAssessment } from "../utils/appAssessment.js";
 
@@ -22,6 +24,7 @@ import {
 } from "../services/liveClassCompatibilityService.js";
 
 const TIMEZONE = "Africa/Accra";
+const A1_DICTIONARY_ENTRIES = getCourseSessionGroups("A1").flatMap((group) => group.entries);
 
 function asDate(value) {
   if (typeof value?.toDate === "function") return value.toDate();
@@ -217,6 +220,8 @@ export default function CanonicalAttendancePageV3() {
   const today = localDate(new Date(), timezone);
   const isToday = selectedDate === today;
   const assignmentId = String(selected?.assignmentIds?.[0] || selected?.assignment_id || "").trim();
+  const showA1Dictionary = klass?.language !== "Swahili"
+    && String(klass?.levelId || klass?.level || "").trim().toUpperCase() === "A1";
   const lessonSlide = resolveTeacherLessonSlide({ dashboard: { klass }, session: selected });
   const lessonLinks = learnerLessonLinksForAttendanceSession({ session: selected, dashboard: { klass } });
   const slidesUrl = lessonSlide ? `/teaching-slides/course/${encodeURIComponent(lessonSlide.course)}/${encodeURIComponent(lessonSlide.id)}?${new URLSearchParams({ present: "1", classId: String(klass?.id || ""), classRecordId: String(klass?.id || ""), sessionId: String(selectedId || ""), assignmentId, curriculumDay: String(lessonSlide.dayNumber || ""), sessionDate: selectedDate })}` : "";
@@ -481,6 +486,15 @@ export default function CanonicalAttendancePageV3() {
               {!sessionLocked ? <button className="session-attendance__danger" type="button" disabled={sessionBusy || sendingReminder} onClick={() => setScheduleAction("cancel")}>Cancel class</button> : null}
             </div> : null}
           </div>
+          {showA1Dictionary ? <div className="session-attendance__lesson">
+            <strong>A1 lesson dictionary</strong>
+            <SessionDictionaryPicker
+              entries={A1_DICTIONARY_ENTRIES}
+              entryLabelPrefix={getA1DictionaryDayLabel}
+              assignmentIds={selected.assignmentIds?.length ? selected.assignmentIds : [assignmentId]}
+              disabled
+            />
+          </div> : null}
           {scheduleAction ? <LiveClassSessionEditor
             key={`${selected.id}:${scheduleAction}`}
             klass={klass}

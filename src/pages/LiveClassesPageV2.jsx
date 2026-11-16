@@ -12,6 +12,7 @@ import { useToast } from "../context/ToastContext.jsx";
 import CreateClassCard from "../components/CreateClassCard.jsx";
 import ClassEditorCard from "../components/ClassEditorCard.jsx";
 import SessionDictionaryPicker from "../components/SessionDictionaryPicker.jsx";
+import { getA1DictionaryDayLabel } from "../data/courseSessionGroups.js";
 import { swahiliClassDictionary } from "../data/swahiliClassDictionary.js";
 import { compareCourseDictionaryEntries, courseDictionary } from "../data/courseDictionary.js";
 import {
@@ -344,6 +345,7 @@ export default function LiveClassesPageV2() {
                   <td data-label="Dictionary selection" style={{ padding: 8, minWidth: 350 }}>
                     <SessionDictionaryPicker
                       entries={dictionaryEntries}
+                      entryLabelPrefix={!isSwahili && levelId === "A1" ? getA1DictionaryDayLabel : undefined}
                       assignmentIds={curriculumIds(session)}
                       disabled={busy || contentLocked || !dictionaryEntries.length}
                       onChange={(nextIds) => saveDictionarySelection(session, nextIds)}

@@ -74,6 +74,10 @@ export function getCourseTaskDay(levelId, assignmentId, fallbackIndex = 0) {
   return ORIENTATION_ENTRY_BY_LEVEL[level] ? fallbackIndex : fallbackIndex + 1;
 }
 
+export function getA1DictionaryDayLabel(entry) {
+  return `Day ${getCourseTaskDay("A1", entry.assignment_id)}`;
+}
+
 export function getCourseSessionGroups(levelId) {
   const level = normalizeLevel(levelId);
   const dictionaryEntries = Object.values(courseDictionary[level] || {}).sort(compareCourseDictionaryEntries);
