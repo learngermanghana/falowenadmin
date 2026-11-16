@@ -1,6 +1,6 @@
 {
   "swahili-day-1": {
-    "version": 2,
+    "version": 3,
     "writing": {
       "Vokali": "A, E, I, O, U",
       "Silabi": "ba, be, bi, bo, bu",
@@ -22,6 +22,28 @@
       "u": {
         "prompt": "Katika kifungu, ni neno gani lina vokali U mara mbili?",
         "answer": "kuku"
+      }
+    },
+    "listening": {
+      "listen-topic": {
+        "prompt": "Leo wanajifunza nini?",
+        "answer": "Alfabeti na sauti za Kiswahili"
+      },
+      "listen-count": {
+        "prompt": "Kiswahili kina irabu ngapi?",
+        "answer": "Tano"
+      },
+      "listen-vowels": {
+        "prompt": "Mwalimu anataja irabu zipi?",
+        "answer": "a, e, i, o, u"
+      },
+      "listen-practice": {
+        "prompt": "Mwalimu anamwambia mwanafunzi aseme neno gani?",
+        "answer": "Baba"
+      },
+      "listen-next": {
+        "prompt": "Mwalimu anasema watakutana lini?",
+        "answer": "Kesho"
       }
     }
   },
