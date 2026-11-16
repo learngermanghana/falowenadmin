@@ -1,5 +1,7 @@
 import { SWAHILI_MUSIC_TRACKS } from "./swahiliMusicTracks.js";
 
+const radioUrl = "https://youtu.be/SKVEqbLqjSY";
+
 export const SWAHILI_DAY_FIVE_ADMIN_LESSON = {
   id: "swahili-day-5",
   course: "SWAHILI",
@@ -10,8 +12,49 @@ export const SWAHILI_DAY_FIVE_ADMIN_LESSON = {
   objective: "Introduce your family using simple Kiswahili sentences.",
   stages: [
     { id: "intro", type: "day-five", title: "Familia yangu", content: "Name two members of your family." },
-    { id: "music", type: "day-five", title: "Muziki · Listen and repeat", audio: SWAHILI_MUSIC_TRACKS[0] },
-    { id: "listening", type: "day-five", title: "Kusikiliza · Listening", content: "Listen to the recording and share one word you recognize." },
+    { id: "music", type: "day-five", title: "Muziki · Listen and repeat", audio: SWAHILI_MUSIC_TRACKS.find(track => track.id === "swahili-a1-day-05") },
+    {
+      id: "listening", type: "listening", kicker: "Kusikiliza · Listening",
+      title: "Falowen Radio · Familia yangu", radioUrl,
+      english: "Read the first-round prompts, then play the episode for the class.",
+      notes: "Use the next two stages for the first and second listens. Return here to play the embedded episode.",
+    },
+    {
+      id: "radio-first-listening",
+      type: "radio-questions",
+      kicker: "Falowen Radio · First listening",
+      title: "First listening · Main idea",
+      english: "Listen once. Compare your notes with a partner.",
+      content: "Mazungumzo yanahusu nini? · What is the conversation about?\n\nWrite one Swahili family word you hear.",
+      radioUrl,
+    },
+    {
+      id: "radio-second-listening",
+      type: "radio-questions",
+      kicker: "Falowen Radio · Second listening",
+      title: "Second listening · Details",
+      english: "Listen again. Compare answers and replay the relevant line to check.",
+      content: "Ni maneno gani ya familia unayosikia? · Which family words do you hear?\n\nWrite one detail you hear about a family member.\n\nRepeat one complete phrase from the recording.",
+      radioUrl,
+    },
+    {
+      id: "radio-write",
+      type: "radio-questions",
+      kicker: "Falowen Radio · After listening",
+      title: "Write · Familia yangu",
+      content: "Use one family word from the episode in a new sentence. Introduce one family member in a second sentence.",
+      prompt: "Show a model response",
+      answer: "Huyu ni dada yangu. Anaitwa Amina.",
+    },
+    {
+      id: "radio-speak",
+      type: "radio-questions",
+      kicker: "Falowen Radio · After listening",
+      title: "Speak · Mazungumzo ya jozi",
+      content: "Tell a partner about one family member. Your partner asks a follow-up question. Then switch roles.",
+      prompt: "Show a model exchange",
+      answer: "A: Huyu ni kaka yangu.\nB: Anaitwa nani?\nA: Anaitwa Juma.",
+    },
     { id: "grammar", type: "day-five", title: "Sarufi · Introductions", content: "Use huyu ni to introduce a person and nina to say what you have. Huyu ni mama yangu. Nina kaka mmoja." },
     { id: "vocabulary", type: "day-five", title: "Msamiati · Vocabulary", content: "mama · mother\nbaba · father\nkaka · brother\ndada · sister" },
     { id: "reading", type: "day-five", title: "Kusoma · Reading", content: "Huyu ni Asha. Ana kaka mmoja na dada wawili. How many sisters does Asha have?" },

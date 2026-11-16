@@ -210,7 +210,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
             </div>
           </div>
         )}
-        {isDaySix && stage.type === "music" ? <SwahiliRestaurantSong /> : isDayFive ? <section className="swahili-a2-presenter__media-stage">
+        {isDaySix && stage.type === "music" ? <SwahiliRestaurantSong /> : isDayFive && stage.type === "day-five" ? <section className="swahili-a2-presenter__media-stage">
           {stage.audio ? <SwahiliSlideMusic track={stage.audio} /> : <p style={{ whiteSpace: "pre-line" }}>{stage.content}</p>}
         </section> : <SwahiliA2LessonStage stage={stage} grammar={grammar} isDaySix={isDaySix} />}
 
