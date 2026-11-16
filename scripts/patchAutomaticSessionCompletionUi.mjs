@@ -141,7 +141,9 @@ function patchPage() {
   if (source.includes("function openSessionChange(session")
     && source.includes("function renderSessions()")
     && source.includes('handleSessionAction(session, "reopen")')) {
-    if (!source.includes('await markSessionCompleted(session.id, user?.uid || user?.email || "admin", dashboard?.klass?.id || selectedClassId);')) {
+    const canonicalCompletion = 'await markSessionCompleted(session.id, user?.uid || user?.email || "admin", dashboard?.klass?.id || selectedClassId);';
+    const earlyGuardedCompletion = 'await markSessionCompleted(session.id, user?.uid || user?.email || "admin", dashboard?.klass?.id || selectedClassId, { allowEarlyCompletion: earlyCompletion });';
+    if (!source.includes(canonicalCompletion) && !source.includes(earlyGuardedCompletion)) {
       throw new Error("Modern Live Classes completion must pass its canonical class ID.");
     }
     return;
