@@ -5,6 +5,7 @@ import socialMetricsHandler from "./social-metrics.js";
 import studentResultsSheetUpsertHandler from "./student-results-sheet-upsert.js";
 import integrationHubHandler from "./integration-hub.js";
 import checkinInvitationsHandler from "./checkin-invitations.js";
+import weeklyEngagementSummaryHandler from "./weekly-engagement-summary.js";
 import appointmentHandler from "./appointments.js";
 import staffManagementHandler from "./staff-management.js";
 import { autoMarkSubmission } from "../src/utils/autoMarking.js";
@@ -1314,6 +1315,7 @@ export default async function handler(req, res) {
   if (path === "staff-management") return staffManagementHandler(req, res);
 
   if (path === "checkin-invitations") return checkinInvitationsHandler(req, res);
+  if (path === "weekly-engagement-summary") return weeklyEngagementSummaryHandler(req, res);
 
   if (path === "appointments") return appointmentHandler(req, res);
 
