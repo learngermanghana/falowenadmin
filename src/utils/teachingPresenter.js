@@ -1557,6 +1557,58 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         instruction: vocabularyStage ? vocabularyInstruction(level) : "",
         suggestedMinutes: vocabularyStage ? 5 : 0,
       },
+      ...(normalizedAssignmentId(slide) === "A2-3.6" ? [
+        {
+          id: "two-way-rule", type: "list", kicker: "Grammatik 1 · Wechselpräpositionen",
+          title: "Wo? = Dativ · Wohin? = Akkusativ",
+          instruction: "Zuerst die Frage verstehen. Danach den richtigen Artikel wählen.",
+          items: [
+            "9 Wechselpräpositionen: an, auf, hinter, in, neben, über, unter, vor, zwischen.",
+            "WO? Der Gegenstand ist schon dort: Das Buch liegt auf DEM Tisch.",
+            "WOHIN? Jemand legt oder stellt etwas dorthin: Ich lege das Buch auf DEN Tisch.",
+            "Nicht jede Bewegung bedeutet Akkusativ! Ich laufe IM Zimmer (Wo?) / Ich laufe INS Zimmer (Wohin?).",
+          ],
+          suggestedMinutes: 5,
+        },
+        {
+          id: "two-way-articles", type: "list", kicker: "Grammatik 2 · Artikel",
+          title: "Akkusativ und Dativ: alle vier Formen",
+          instruction: "Lest jede Reihe laut. Denkt an das Genus des Nomens hinter der Präposition.",
+          items: [
+            "Maskulin: der Tisch → Akkusativ DEN Tisch → Dativ DEM Tisch.",
+            "Feminin: die Wand → Akkusativ DIE Wand → Dativ DER Wand.",
+            "Neutrum: das Bett → Akkusativ DAS Bett → Dativ DEM Bett.",
+            "Plural: die Stühle → Akkusativ DIE Stühle → Dativ DEN Stühlen (+n, wenn möglich).",
+            "Unbestimmt: einen/einem Tisch · eine/einer Wand · ein/einem Bett.",
+          ],
+          suggestedMinutes: 6,
+        },
+        {
+          id: "two-way-room-picture", type: "list", kicker: "Grammatik 3 · Zimmerbild",
+          title: "Ein Zimmer – zwei Situationen",
+          instruction: "Zeichne Tisch, Bett, Wand, Lampe und Stühle. Zeige zuerst die Position und dann mit einem Pfeil das neue Ziel.",
+          items: [
+            "🛋️ WO? Der Tisch steht VOR DEM Schrank. → WOHIN? Ich stelle den Tisch VOR DEN Schrank.",
+            "🖼️ WO? Das Bild hängt AN DER Wand. → WOHIN? Ich hänge das Bild AN DIE Wand.",
+            "📖 WO? Das Buch liegt AUF DEM Bett. → WOHIN? Ich lege das Buch AUF DAS Bett.",
+            "💡 WO? Die Lampe steht ZWISCHEN DEN Stühlen. → WOHIN? Ich stelle sie ZWISCHEN DIE Stühle.",
+            "Kurzformen: im = in dem; ins = in das; am = an dem; ans = an das.",
+          ],
+          suggestedMinutes: 6,
+        },
+        {
+          id: "two-way-transform", type: "list", kicker: "Grammatik 4 · Übung",
+          title: "Satz-Transformation: Wo? → Wohin?",
+          instruction: "Partner A liest den Wo-Satz. Partner B bildet einen Wohin-Satz mit stellen oder legen.",
+          items: [
+            "Das Buch liegt unter dem Tisch. → Ich lege das Buch unter den Tisch.",
+            "Die Lampe steht neben der Tür. → Ich stelle die Lampe neben die Tür.",
+            "Der Teppich liegt vor dem Bett. → Ich lege den Teppich vor das Bett.",
+            "Die Schuhe stehen zwischen den Stühlen. → Ich stelle die Schuhe zwischen die Stühle.",
+          ],
+          suggestedMinutes: 7,
+        },
+      ] : []),
       buildA2B1GrammarCheckStage(slide, level),
       ...(() => {
         // Day 15 has its own interactive sport game. The V2 presenter returns
