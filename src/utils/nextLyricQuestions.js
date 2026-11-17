@@ -35,3 +35,38 @@ export function threeVerifiedNextLyricQuestions(pack, recording) {
   }
   return chosen.length===3?chosen:[];
 }
+
+// These three excerpts use the word timings for the published Day 2 MP3
+// (SHA-256 bff8440f79a18941381e371c2cfdacac4ce0fbbde7aad84c52d0ca8df40740ff).
+// Stop before the continuation starts. The choices use the approved lyrics.
+export const BINA_RECORDING_KEY = 'music/a1/day-02/Ich heiße Bina.mp3';
+
+export const BINA_NEXT_LYRIC_QUESTIONS = [
+  {
+    id: 'bina-school', type: 'listening',
+    prompt: 'Welche Liedzeile kommt als Nächstes?',
+    evidence: 'Heute rufe ich die Schule an,',
+    options: ['Ich möchte einen Deutschkurs machen.', 'Ich komme aus Ghana, das ist mein Land.', 'Ich buchstabiere langsam dann.'],
+    correctIndex: 0,
+    answer: 'Ich möchte einen Deutschkurs machen.',
+    previewRange: { start: 21.80, end: 24.72 },
+  },
+  {
+    id: 'bina-accra', type: 'listening',
+    prompt: 'Welche Liedzeile kommt als Nächstes?',
+    evidence: 'Die Frau fragt: „Wo wohnen Sie?“',
+    options: ['Ich sage: „Hallo, ich heiße Bina,', 'Ich sage: „In Accra, hier bin ich.“', 'Sie schreibt meinen Namen auf,'],
+    correctIndex: 1,
+    answer: 'Ich sage: „In Accra, hier bin ich.“',
+    previewRange: { start: 82.40, end: 84.54 },
+  },
+  {
+    id: 'bina-monday', type: 'listening',
+    prompt: 'Welche Liedzeile kommt als Nächstes?',
+    evidence: 'Ihr Deutschkurs beginnt am Montag.“',
+    options: ['So schreibt man meinen Namen!', 'Jetzt kennst du meinen Namen!', 'Ich freue mich, ich bin bald da!'],
+    correctIndex: 2,
+    answer: 'Ich freue mich, ich bin bald da!',
+    previewRange: { start: 97.52, end: 99.94 },
+  },
+];
