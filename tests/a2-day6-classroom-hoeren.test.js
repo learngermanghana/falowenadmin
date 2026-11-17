@@ -17,7 +17,7 @@ test('A2 Day 6 presenter keeps published music and adds separate Hören from the
   const listen=stages.find(s=>s.id==='knowledge');
   assert.equal(listen.variant,'interactive-listening');
   assert.deepEqual(listen.listeningItems,lesson.listening.questions);
-  assert.ok(stages.some(s=>s.id==='music'));
+  assert.ok(stages.some(s=>s.id==='warmup'&&s.variant==='interactive-music-video'));
   assert.equal(slide.workbookConnection.parts.find(p=>p.label.includes('Teil 4')).label,'Teil 4 · Hören');
 });
 test('all five teacher-supplied A2 Day 6 listening answers and evidence remain unchanged',()=>{
