@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { A1_DAY12_STAGES, DAY12_MONTHS, DAY12_MINUTES, DAY12_ORDINALS } from '../src/data/a1Day12Classroom.js';
-import { stageList } from '../src/components/A1GrammarPresenter.jsx';
 import { getTeachingSlideByAssignmentId } from '../src/data/teachingSlides.js';
 test('Day 12 has the approved fourteen projected classroom stages in order',()=>{
   assert.equal(A1_DAY12_STAGES.length,14);
