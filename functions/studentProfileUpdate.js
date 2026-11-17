@@ -1,4 +1,5 @@
 const { courseEnrollmentPatch } = require("./courseEnrollment");
+const { CONTRACT_TERM_MONTHS, addCalendarMonths, asDate, isoDate, normalizeLevel } = require("./studentContractLifecycle");
 const EDITABLE_STUDENT_FIELDS = new Set([
   "name",
   "email",
@@ -147,6 +148,20 @@ function targetClassIdentity(classDoc = {}, classRecordId = "") {
   };
 }
 
+function nextUniversityClass(classes, level, today) {
+  return classes
+    .flatMap(snapshot => {
+      const data = snapshot.data();
+      const target = targetClassIdentity(snapshot);
+      const start = isoDate(data.startDate || data.startsAt);
+      const status = cleanStudentId(data.status).toLowerCase();
+      const closed = data.archived === true || data.isArchived === true || data.active === false ||
+        data.registrationOpen === false || (status && !["upcoming", "active", "scheduled"].includes(status));
+      return !closed && target.level === level && start && start >= today ? [{ ...target, start }] : [];
+    })
+    .sort((a, b) => a.start.localeCompare(b.start) || a.classRecordId.localeCompare(b.classRecordId))[0];
+}
+
 function buildStudentClassTransferPatch({ target = {}, previous = {}, effectiveDate = "", transferSummary = {}, admin }) {
   const timestamp = admin.firestore.FieldValue.serverTimestamp();
   const arrayUnion = admin.firestore.FieldValue.arrayUnion;
@@ -263,7 +278,7 @@ function makeManualTrialPatch(student = {}, now = new Date(), fieldValue = {}) {
   return patch;
 }
 
-function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffEmails = [] }) {
+function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffEmails = [], now = () => new Date() }) {
   if (!app?.patch || !app?.post || !app?.get || !db?.collection || !db?.batch || !admin?.firestore?.FieldValue?.serverTimestamp || typeof requireAuth !== "function") {
     throw new Error("Student profile update route dependencies are incomplete");
   }
@@ -349,7 +364,33 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
           throw Object.assign(new Error("Student has no connected Firebase login"), { statusCode: 409 });
         }
         const approved = decision === "approve";
+        const enrollment = {};
+        if (approved) {
+          const approvalDate = now();
+          const level = normalizeLevel(student.level || student.levelId) || "A1";
+          const previousContract = asDate(student.contractStart) && asDate(student.contractEnd);
+          if (!previousContract || !student.classRecordId) {
+            const classes = await tx.get(db.collection("classes").where("language", "in", ["Swahili", "swahili", "Kiswahili", "kiswahili"]));
+            const target = nextUniversityClass(classes.docs, level, isoDate(approvalDate));
+            if (!target) {
+              throw Object.assign(new Error(`No upcoming Swahili ${level} class is open for registration. Open a class and retry approval.`), { statusCode: 409 });
+            }
+            Object.assign(enrollment, {
+              classId: target.classRecordId, classRecordId: target.classRecordId,
+              assignedClassId: target.classRecordId, className: target.className,
+              level, levelId: level,
+            });
+          }
+          if (!previousContract) {
+            Object.assign(enrollment, {
+              contractStart: isoDate(approvalDate),
+              contractEnd: isoDate(addCalendarMonths(approvalDate, CONTRACT_TERM_MONTHS)),
+              contractTermMonths: CONTRACT_TERM_MONTHS,
+            });
+          }
+        }
         const next = {
+          ...enrollment,
           institutionVerification: approved ? "approved" : "pending",
           accessType: approved ? "complimentary" : "invitation_pending",
           status: approved ? "active" : "registered",
@@ -365,6 +406,7 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
         }
         tx.update(studentRef, next);
         return {
+          ...enrollment,
           institutionVerification: next.institutionVerification,
           accessType: next.accessType,
           status: next.status,

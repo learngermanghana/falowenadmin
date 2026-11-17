@@ -68,6 +68,7 @@ export default function UniversityInvitationsPage() {
     <section className="card">
       <h2>University of Hamburg · Kiswahili A1</h2>
       <p><a href={URL}>{URL}</a></p>
+      <p>This link registers learners for Kiswahili A1. On approval, Falowen assigns the next open Swahili A1 class and starts six months of complimentary access.</p>
       <p>{loading ? "Loading expiry…" : savedExpiry
         ? `${savedExpiry > new Date() ? "Expires" : "Expired"} on ${savedExpiry.toLocaleString()} (${zone}).`
         : "No expiry configured. Set an expiry to open registration."}</p>
