@@ -3,8 +3,20 @@ import { A1_DAY2_PRONOUNS, A1_DAY2_QUIZ } from '../data/a1Day2Classroom.js';
 import PublishedSongLessonStage from './PublishedSongLessonStage.jsx';
 import './A1Day2TeachingStage.css';
 
-const ABC='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-const DETAILS=[['Ä','A-Umlaut','Äpfel'],['Ö','O-Umlaut','Öl'],['Ü','U-Umlaut','Übung'],['ß','Eszett','Straße']];
+const LETTER_NAMES = [
+  ['A', 'ah'], ['B', 'bay'], ['C', 'tsay'], ['D', 'day'], ['E', 'ay'],
+  ['F', 'eff'], ['G', 'gay'], ['H', 'hah'], ['I', 'ee'], ['J', 'yot'],
+  ['K', 'kah'], ['L', 'ell'], ['M', 'emm'], ['N', 'enn'], ['O', 'oh'],
+  ['P', 'pay'], ['Q', 'koo'], ['R', 'ehr'], ['S', 'ess'], ['T', 'tay'],
+  ['U', 'oo'], ['V', 'fow'], ['W', 'vay'], ['X', 'iks'], ['Y', 'üp-si-lon'],
+  ['Z', 'tsett'],
+];
+const SPECIAL_LETTERS = [
+  ['Ä', 'A-Umlaut', 'Hold the “eh” sound in “bed”.', 'Äpfel'],
+  ['Ö', 'O-Umlaut', 'Say a steady “ay” with rounded lips.', 'Öl'],
+  ['Ü', 'U-Umlaut', 'Say “ee” with rounded lips.', 'Übung'],
+  ['ß', 'Eszett', 'ess-tsett. In a word it sounds like “ss”.', 'Straße'],
+];
 const SENTENCES=[
   'Ich heiße Anna.','Du wohnst in Accra.','Er kommt aus Ghana.',
   'Sie heißt Maria.','Das Kind heißt Leo. Es kommt aus Berlin.',
@@ -23,11 +35,26 @@ export default function A1Day2TeachingStage({step}){
       <div className="a1-day2-grid">{['Das Alphabet','ich · du · er · sie · es','heißen · wohnen · kommen','Fragen und Antworten'].map(t=><BasicCard key={t}><h2>{t}</h2></BasicCard>)}</div>
       <p>Erst lernen, dann sprechen und zuletzt mit Musik üben.</p></>}
     {step==='alphabet'&&<><h1>Das deutsche Alphabet</h1><p>Sprich jeden Buchstaben nach.</p>
-      <div className="a1-day2-letters">{ABC.map(letter=><span key={letter}>{letter}</span>)}</div>
-      <p>26 Buchstaben: A bis Z.</p></>}
+      <ul className="a1-day2-letters">
+        {LETTER_NAMES.map(([letter, pronunciation]) => (
+          <li key={letter}><strong>{letter}</strong><span lang="en">{pronunciation}</span></li>
+        ))}
+      </ul>
+      <p lang="en">The hints approximate German letter names. Keep “ay” and “oh” steady, and use the Ü sound for the first part of “üp-si-lon”.</p></>}
     {step==='special'&&<><h1>Die besonderen Buchstaben</h1><div className="a1-day2-special">
-      {DETAILS.map(([letter,name,example])=><BasicCard key={letter}><strong>{letter}</strong><span>{name}</span><p>{example}</p></BasicCard>)}</div>
-      <p>Ä, Ö und Ü sind Umlaute. ß heißt Eszett oder scharfes S.</p></>}
+      {SPECIAL_LETTERS.map(([letter, name, pronunciation, example]) => (
+        <BasicCard key={letter}>
+          <strong>{letter}</strong><span>{name}</span><span lang="en">{pronunciation}</span><p>{example}</p>
+        </BasicCard>
+      ))}</div>
+      <BasicCard>
+        <h2>Schon oder schön?</h2>
+        <div className="a1-day2-grid a1-day2-word-pair">
+          <p><strong>schon</strong> <span lang="en">means already</span><br/>Ich bin schon da. <span lang="en">I’m already here.</span></p>
+          <p><strong>schön</strong> <span lang="en">means beautiful</span><br/>Das Bild ist schön. <span lang="en">The picture is beautiful.</span></p>
+        </div>
+        <p lang="en">The two dots change the sound and the meaning. Use a plain “oh” sound in <em lang="de">schon</em> and the rounded Ö sound in <em lang="de">schön</em>.</p>
+      </BasicCard></>}
     {step==='spell'&&<><h1>Wie buchstabierst du deinen Namen?</h1><BasicCard><h2>Wie buchstabiert man „Felix“?</h2>
       {show?<p className="a1-day2-biganswer">F – E – L – I – X</p>:<p>Sprich die Buchstaben laut.</p>}
       <button type="button" onClick={()=>setShow(v=>!v)}>{show?'Antwort verbergen':'Antwort zeigen'}</button></BasicCard>
