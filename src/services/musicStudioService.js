@@ -34,6 +34,10 @@ async function lyricsRequest(assignmentKey, lyrics) {
 }
 export const loadSavedMusicLyrics = assignmentKey => lyricsRequest(assignmentKey);
 export const overwriteSavedMusicLyrics = (assignmentKey, lyrics) => lyricsRequest(assignmentKey, lyrics);
+// Swahili keys are namespaced to prevent collisions with the existing German songbook.
+export const swahiliLyricsAssignmentKey = (level, day) => `SWAHILI-${String(level).toUpperCase()}-DAY-${String(day).padStart(2, "0")}`;
+export const loadSavedSwahiliLyrics = (level, day) => lyricsRequest(swahiliLyricsAssignmentKey(level, day));
+export const overwriteSavedSwahiliLyrics = (level, day, lyrics) => lyricsRequest(swahiliLyricsAssignmentKey(level, day), lyrics);
 
 /** Publish reviewed line timings to the same R2 sidecar the public music player reads. */
 export async function savePublishedMusicTiming(payload) {
