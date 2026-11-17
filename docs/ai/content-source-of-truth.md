@@ -82,3 +82,7 @@ The Create Class form on `/live-classes` reuses `src/utils/liveClassNameSuggesti
 ## German A1 classroom presenter
 
 The workbook rules and model sentences in `a1WorkbookGrammarTeaching.js` are keyed by assignment. The dedicated A1 presenter shows them immediately after the lesson objective. Days 11 and 12 reuse their existing authored grammar pages. The presenter uses the existing song stages, A1 classroom reading passages with answer evidence, and speaking scenarios with model answers. The A1 speaking readiness lesson retains its exam exercises. The reading and scenarios are classroom practice and do not alter Campus submissions or marking.
+
+### Course discount links
+
+Invitations → Discount Links manages program, level, original tuition, expiry, and maximum uses. Admin uses the Campus `/api/course-discounts/admin` API, which owns offers and use counts. Allocated uses include students who have not paid yet. Redeemed uses are recorded when Paystack confirms a payment. Revocation closes the link to new allocations.
