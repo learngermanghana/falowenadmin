@@ -292,7 +292,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
         "music/a2/day-24/Endlich Urlaub.mp3":"A2-9.24",
         "music/a2/day-25/Endlich Urlaub.mp3":"A2-9.25",
         "music/a1/day-11/Mein Tag – Von morgens bis.mp3":"A1-7",
-        "music/a1/day-12/Zeit und Datum.mp3":"A1-8",
+        "music/a1/day-12/Samstag um zehn.mp3":"A1-8",
         "music/a1/day-21/Heute kann ich leider nicht.mp3":"A1-13",
       };
       const approvedAssignment=approvedUnreviewedSong[key];
