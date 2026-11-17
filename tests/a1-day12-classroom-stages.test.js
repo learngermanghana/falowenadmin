@@ -36,8 +36,11 @@ test('Samstag um zehn has bilingual cues and three excerpts for the exact publis
   assert.equal(questions[0].evidence, '„Wann kommst du? Sag mir wann!“');
   assert.equal(questions[0].answer, 'Am Samstag habe ich Zeit,');
   for (const question of questions) {
-    const line = pack.cues.findIndex(cue => cue.text === question.evidence &&
-      cue.end === question.previewRange.end);
+    const line = pack.cues.findIndex(cue => cue.text === question.evidence);
+    assert.ok(question.previewRange.end <= pack.cues[line].end);
+    assert.ok(question.previewRange.end < pack.cues[line + 1].start);
+    assert.ok(question.previewRange.end - question.previewRange.start <= 7.5);
+    assert.ok(question.previewRange.end - question.previewRange.start >= 4.5);
     assert.equal(pack.cues[line + 1].text, question.answer);
     assert.equal(question.continuationRange.start, pack.cues[line + 1].start);
     assert.ok(question.continuationRange.start >= question.previewRange.end);

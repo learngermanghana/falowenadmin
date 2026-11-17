@@ -22,10 +22,20 @@ export function threeVerifiedNextLyricQuestions(pack, recording) {
     if (questionEndings && !questionEndings.includes(current)) continue;
     if (end > answerStart || current.length < 8 || answer.length < 8 ||
         counts.get(normal(current)) !== 1 || normal(current) === normal(answer)) continue;
-    // Include a preceding line when it fits in the excerpt, so the class
-    // hears the lead-in. The continuation starts at the answer's own cue.
-    const leadIn = i > 0 && end - cues[i - 1].start <= 12 ? i - 1 : i;
+    // Play about seven seconds ending with the evidence line. Never play
+    // even a fraction of the answer line before learners choose.
+    const MAX_SECONDS = 7.5;
+    const MIN_SECONDS = 4.5;
+    const safeEnd = Math.min(end, answerStart - 0.05);
+    if (safeEnd <= cues[i].start || safeEnd - cues[i].start > MAX_SECONDS) continue;
+    let leadIn = i;
+    for (let prior = i - 1; prior >= 0; prior--) {
+      const duration = safeEnd - cues[prior].start;
+      if (duration > MAX_SECONDS) break;
+      leadIn = prior;
+    }
     const start = cues[leadIn].start;
+    if (safeEnd - start < MIN_SECONDS) continue;
     const continuationEnd = cues[i + 1].end ?? cues[i + 2]?.start;
     const heard = new Set(lines.slice(leadIn, i + 1).map(normal));
     heard.add(normal(answer));
@@ -35,12 +45,12 @@ export function threeVerifiedNextLyricQuestions(pack, recording) {
       if (line.length >= 8 && !heard.has(key)) incorrect.set(key, line);
       if (incorrect.size === 2) break;
     }
-    if (incorrect.size < 2 || end <= start) continue;
+    if (incorrect.size < 2 || safeEnd <= start) continue;
     candidates.push({
       id: 'next-lyric-' + i, type: 'listening',
       prompt: 'Welche Liedzeile kommt als Nächstes?',
       options: [...incorrect.values()], answer, evidence: current,
-      previewRange: {start, end},
+      previewRange: {start, end: safeEnd},
       ...(continuationEnd > answerStart ? {continuationRange: {start: answerStart, end: continuationEnd}} : {}),
     });
   }
