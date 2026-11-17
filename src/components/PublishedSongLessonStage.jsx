@@ -114,7 +114,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
   const saturdayTiming = classroomSongTiming['A1-8'];
   // Local timing edits can omit line ends. The classroom excerpts need the
   // recorded line endings as well as the starts used for lyric highlighting.
-  const quizCues = recording.objectKey === saturdayTiming.objectKey &&
+  const quizCues = assignmentKey === 'A1-8' && recording.objectKey === saturdayTiming.objectKey &&
     recordedLyrics === saturdayTiming.lyrics && recordingMetadata?.timingStatus === 'audio-aligned'
     ? saturdayTiming.cues : cues;
   const questions = useBinaQuestions ? BINA_NEXT_LYRIC_QUESTIONS : nextLyricOnly
