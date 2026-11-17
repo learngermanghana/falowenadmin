@@ -200,6 +200,8 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
         {showAnswer && <div role="status" className="published-song-lesson__answer">
           <strong>{question.type==='speaking'?'Lehrerhinweis':Array.isArray(question.options) ? (selectedOption === question.correctIndex ? 'Richtig!' : 'Noch einmal hören · Richtige Antwort') : 'Musterlösung'}</strong>
           <p>{question.type==='speaking'?question.teacherNote:question.answer}</p>
+          {question.continuationRange && <button type="button" className="published-song-lesson__line-preview"
+            onClick={()=>playLinePreview(question.continuationRange)}>▶ Weiterhören · Nächste Zeilen</button>}
           {question.evidence && <details><summary>Textbeleg</summary><blockquote>{question.evidence}</blockquote></details>}
         </div>}
         <div className="published-song-lesson__quiznav">
