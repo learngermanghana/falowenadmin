@@ -115,11 +115,11 @@ export const MUSIC_QUESTION_SEEDS_A1 = Object.freeze([
   ],
   [
     "A1-8",
-    "Um wie viel Uhr trifft die Person Freunde?",
-    "Um sechzehn Uhr.",
-    "In welchem Monat hat die Person Geburtstag?",
-    "Im Mai.",
-    "Welches Datum und welche Uhrzeit hat dein nächster Termin?"
+    "Um wie viel Uhr trifft sich die Person mit Anna?",
+    "Um zehn Uhr.",
+    "Wann trinken sie Kaffee?",
+    "Um halb elf.",
+    "An welchem Datum und um wie viel Uhr möchtest du jemanden treffen?"
   ],
   [
     "A1-3.5",
