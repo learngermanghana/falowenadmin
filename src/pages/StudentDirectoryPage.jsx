@@ -608,15 +608,33 @@ export default function StudentDirectoryPage() {
 
   const reviewUniversityRegistration = async (student, decision) => {
     const isApproved = student.institutionVerification === "approved";
-    if (!window.confirm(decision === "approve"
-      ? `Approve complimentary Kiswahili A1 access for ${student.name || student.id}? Verify this student belongs to Ruth's University of Hamburg course first.`
-      : `Suspend complimentary access for ${student.name || student.id} until re-verification?`)) return;
+    const studentName = student.name || student.id;
+    const confirmation = decision === "revoke"
+      ? `Suspend complimentary access for ${studentName} until re-verification?`
+      : isApproved
+        ? `Complete the Swahili class and six-month contract for ${studentName}?`
+        : `Approve complimentary Kiswahili A1 access for ${studentName}? Verify this student belongs to Ruth's University of Hamburg course first.`;
+    if (!window.confirm(confirmation)) return;
     setReviewingUniversityId(student.id);
     try {
       const result = await reviewUniversityStudent(student.id, decision);
       setStudents((previous) => previous.map((record) => record.id === student.id
         ? { ...record, ...result.updates } : record));
-      pushToast({ type: "success", message: result.message || (isApproved ? "Verification updated." : "Access approved.") });
+      if (decision === "approve") {
+        setDrafts((previous) => {
+          if (!previous[student.id]) return previous;
+          const draft = { ...previous[student.id] };
+          for (const field of dateFields) {
+            if (Object.hasOwn(result.updates || {}, field)) {
+              draft[field] = normalizeDateValue(result.updates[field]);
+            }
+          }
+          return { ...previous, [student.id]: draft };
+        });
+      }
+      pushToast({ type: "success", message: decision === "approve" && isApproved
+        ? "Swahili class and contract updated."
+        : result.message || "Verification updated." });
     } catch (error) {
       pushToast({ type: "error", message: error?.message || "University verification failed." });
     } finally {
@@ -1147,6 +1165,18 @@ export default function StudentDirectoryPage() {
                                 <p style={{ margin: "8px 0", fontSize: 12 }}>
                                   Confirm this student is enrolled in Ruth's STiNE Kiswahili class before approving.
                                 </p>
+                                <p style={{ margin: "8px 0", fontSize: 13 }}>
+                                  Class: <strong>{selectedStudent.className || "Not assigned"}</strong>
+                                  {" · Contract starts: "}<strong>{normalizeDateValue(selectedStudent.contractStart) || "Not set"}</strong>
+                                  {" · Contract ends: "}<strong>{normalizeDateValue(selectedStudent.contractEnd) || "Not set"}</strong>
+                                </p>
+                                {selectedStudent.institutionVerification === "approved" &&
+                                  (!selectedStudent.classRecordId || !normalizeDateValue(selectedStudent.contractStart) || !normalizeDateValue(selectedStudent.contractEnd)) && (
+                                  <button type="button" disabled={Boolean(reviewingUniversityId)}
+                                    onClick={() => reviewUniversityRegistration(selectedStudent, "approve")}>
+                                    Complete class and contract
+                                  </button>
+                                )}
                                 <button type="button" disabled={Boolean(reviewingUniversityId)}
                                   onClick={() => reviewUniversityRegistration(selectedStudent, selectedStudent.institutionVerification === "approved" ? "revoke" : "approve")}>
                                   {reviewingUniversityId === selectedStudent.id ? "Saving…" : selectedStudent.institutionVerification === "approved" ? "Suspend complimentary access" : "Approve university access"}
