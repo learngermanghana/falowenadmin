@@ -8,7 +8,7 @@ export const a2WorkbookAlignedSlidesDays6To10 = [
     title: "A2 Day 6 · Möbel und Räume kennenlernen",
     topic: "3.6 Möbel und Räume kennenlernen",
     objective: "Students describe a room clearly, place furniture with Wo? + Dativ, describe movement with Wohin? + Akkusativ, and transfer the same room language into the workbook writing and listening tasks.",
-    estimatedDuration: "45–60 minutes",
+    estimatedDuration: "60–75 minutes",
     warmupQuestionsDe: [
       "Welchen Raum in deiner Wohnung magst du am liebsten? Warum?",
       "Welche Möbel gibt es in deinem Zimmer?",
@@ -56,7 +56,8 @@ export const a2WorkbookAlignedSlidesDays6To10 = [
     teacherNotesEn: [
       "Follow the workbook speaking route: Raum → Möbel → Wo? → Veränderung/Wohin? → Lieblingsplatz + weil.",
       "Teach Wechselpräpositionen as a meaning decision before article endings: fixed position answers Wo? and takes dative; movement toward a destination answers Wohin? and takes accusative.",
-      "Keep the nine core two-way prepositions visible: an, auf, hinter, in, neben, über, unter, vor, zwischen.",
+      "Keep all nine two-way prepositions visible. Display the full four-column gender/number article comparison and model Dativ plural -n.",
+      "Draw an object in a room, then draw an arrow to its new destination. Contrast im Zimmer laufen with ins Zimmer laufen to prevent the movement-only misconception.",
       "Bridge the same room-description language into the workbook email about a new room: reason for writing → room/furniture → favourite feature + reason.",
       "Treat the Lesen text about being new in town/WG and the Hören comparison of two apartment ads as related housing comprehension tasks, not as extra grammar targets.",
     ],
@@ -82,10 +83,18 @@ export const a2WorkbookAlignedSlidesDays6To10 = [
     teacherSupport: {
       lessonOverviewEn: "Day 6 turns the furniture topic into a clear spatial-language lesson. Students first create a mental picture of a room, then decide Wo? versus Wohin? so that dative and accusative follow meaning. The same language prepares the room email, while Lesen and Hören extend the housing context through WG life and apartment advertisements.",
       grammarFocusEn: [
-        "Start with meaning: Wo? describes a fixed position and requires Dativ; Wohin? describes movement toward a destination and requires Akkusativ.",
-        "Keep the same preposition while contrasting case: Die Kommode steht im Flur. → Ich stelle die Kommode in den Flur.",
-        "Use the core Wechselpräpositionen for rooms: an, auf, hinter, in, neben, über, unter, vor, zwischen.",
-        "Article reminder: Dativ dem/der/den (+n); Akkusativ den/die/das. Do not teach the endings separately from the Wo/Wohin decision.",
+        "WECHSELPRÄPOSITIONEN (two-way prepositions): an, auf, hinter, in, neben, über, unter, vor, zwischen. Each can govern Dativ or Akkusativ depending on the meaning.",
+        "QUESTION FIRST: Wo? (position, where something is) → Dativ. Wohin? (destination, where something is placed or goes) → Akkusativ. Movement alone is NOT enough: Ich laufe im Zimmer (Wo? Dativ), but Ich laufe ins Zimmer (Wohin? Akkusativ).",
+        "DEFINITE ARTICLE TABLE, nominative / accusative / dative: masculine der / den / dem; feminine die / die / der; neuter das / das / dem; plural die / die / den (+ -n on the plural noun if possible: den Stühlen).",
+        "INDEFINITE ARTICLE TABLE, accusative / dative: masculine einen / einem; feminine eine / einer; neuter ein / einem. Plural negative article: keine / keinen (+ noun -n where possible).",
+        "MASCULINE: Der Tisch steht vor dem Schrank (Wo? Dativ). Ich stelle den Tisch vor den Schrank (Wohin? Akkusativ). The object den Tisch is a separate accusative direct object.",
+        "FEMININE: Das Bild hängt an der Wand (Wo? Dativ). Ich hänge das Bild an die Wand (Wohin? Akkusativ).",
+        "NEUTER: Das Buch liegt auf dem Bett (Wo? Dativ). Ich lege das Buch auf das Bett (Wohin? Akkusativ).",
+        "PLURAL: Die Lampe steht zwischen den Stühlen (Wo? Dativ). Ich stelle die Lampe zwischen die Stühle (Wohin? Akkusativ).",
+        "VERB PAIRS: stehen / stellen; liegen / legen; sitzen / setzen; hängen / hängen. Focus on the destination of the prepositional phrase, not the verb alone.",
+        "CONTRACTIONS: in dem = im, in das = ins; an dem = am, an das = ans. Compare: im Zimmer (Wo?) versus ins Zimmer (Wohin?).",
+        "ROOM DRAWING: Draw a table, bed, shelf, lamp and two chairs. Ask: Wo steht die Lampe? Sie steht auf dem Tisch. Then physically move it: Wohin stellst du die Lampe? Ich stelle sie auf den Tisch.",
+        "PAIR PRACTICE: Student A names a position (Das Buch liegt unter dem Bett); student B moves the object (Ich lege das Buch unter das Bett). Change gender and plural nouns.",
       ],
       modelExamplesDe: [
         "Das Sofa steht neben dem Fenster, und der Teppich liegt unter dem Tisch.",
