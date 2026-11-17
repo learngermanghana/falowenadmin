@@ -33,12 +33,14 @@ test('Samstag um zehn has bilingual cues and three excerpts for the exact publis
   assert.equal(pack.objectKey, recording.objectKey);
   const questions = threeVerifiedNextLyricQuestions(pack, recording);
   assert.equal(questions.length, 3);
+  assert.equal(questions[0].evidence, 'Am Samstag habe ich Zeit,');
+  assert.equal(questions[0].answer, 'Um zehn Uhr bin ich bereit.');
   for (const question of questions) {
     const line = pack.cues.findIndex(cue => cue.text === question.evidence &&
       cue.end === question.previewRange.end);
     assert.equal(pack.cues[line + 1].text, question.answer);
     assert.equal(question.continuationRange.start, pack.cues[line + 1].start);
-    assert.ok(question.previewRange.end <= question.continuationRange.start);
+    assert.ok(question.continuationRange.start - question.previewRange.end >= 0.25);
   }
   assert.equal(resolveTeachingSongEnglishTranslation({
     assignmentKey: 'A1-8', objectKey: recording.objectKey, lyrics: pack.lyrics,

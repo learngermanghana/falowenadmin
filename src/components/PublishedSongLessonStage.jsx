@@ -56,7 +56,6 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
   const audio = useRef(null);
   const previewStart = useRef(null);
   const previewEnd = useRef(null);
-  const previewPlayPending = useRef(false);
   const [time, setTime] = useState(0);
   const [follow, setFollow] = useState(true);
   const timedSong = song && recording ? {...song, id:recording.trackId, objectKey:recording.objectKey} : null;
@@ -84,7 +83,6 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
       player.currentTime = end;
       previewStart.current = null;
       previewEnd.current = null;
-      previewPlayPending.current = false;
     }
     setTime(player.currentTime);
   };
@@ -113,9 +111,15 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
   const useBinaQuestions = nextLyricOnly && recording.objectKey === BINA_RECORDING_KEY &&
     recordedLyrics === classroomSongTiming['A1-0.2'].lyrics &&
     recordingMetadata?.timingStatus === 'audio-aligned';
+  const saturdayTiming = classroomSongTiming['A1-8'];
+  // Local timing edits can omit line ends. The classroom excerpts need the
+  // recorded line endings as well as the starts used for lyric highlighting.
+  const quizCues = assignmentKey === 'A1-8' && recording.objectKey === saturdayTiming.objectKey &&
+    recordedLyrics === saturdayTiming.lyrics && recordingMetadata?.timingStatus === 'audio-aligned'
+    ? saturdayTiming.cues : cues;
   const questions = useBinaQuestions ? BINA_NEXT_LYRIC_QUESTIONS : nextLyricOnly
     ? threeVerifiedNextLyricQuestions(recordingMetadata && {
-        ...recordingMetadata, objectKey:recording.objectKey, lyrics:recordedLyrics, cues,
+        ...recordingMetadata, objectKey:recording.objectKey, lyrics:recordedLyrics, cues:quizCues,
       }, recording)
     : recordedLyrics !== song.lyrics
       ? recordedSongQuestions({objectKey:recording.objectKey,lyrics:recordedLyrics},recording.day,recording.level)
@@ -124,7 +128,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
   const question = questions[Math.min(questionIndex, questions.length - 1)];
   const evidenceRange = question?.previewRange || (question?.evidence
     ? recordedEvidenceRange(recordedLyrics, cues, question.evidence) : null);
-  const cancelPreview = () => { previewStart.current=null; previewEnd.current=null; previewPlayPending.current=false; };
+  const cancelPreview = () => { previewStart.current=null; previewEnd.current=null; };
   const stopExcerpt = () => {
     if (previewEnd.current !== null) audio.current?.pause();
     cancelPreview();
@@ -140,12 +144,10 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
     if (!audio.current || !range) return;
     previewStart.current=range.start;
     previewEnd.current=range.end;
-    previewPlayPending.current=true;
     audio.current.currentTime=range.start;
     setTime(range.start);
     const playback=audio.current.play();
-    if (playback?.then) playback.then(()=>{previewPlayPending.current=false;},cancelPreview);
-    else previewPlayPending.current=false;
+    playback?.catch(cancelPreview);
   };
   const musicLink = recording.trackId
     ? `https://music.falowen.app/?track=${encodeURIComponent(recording.trackId)}`
@@ -167,10 +169,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
         {recording.audioUrl
           ? <audio key={recording.objectKey} ref={audio} onTimeUpdate={e=>updatePlayback(e.currentTarget)} onSeeking={e=>{
               const position=e.currentTarget.currentTime;
-              if (previewEnd.current!==null && (position<previewStart.current || position>=previewEnd.current)) cancelPreview();
-            }} onPlay={()=>{
-              if (previewPlayPending.current) previewPlayPending.current=false;
-              else cancelPreview();
+              if (previewEnd.current !== null && (position < previewStart.current - 0.05 || position >= previewEnd.current)) cancelPreview();
             }} onSeeked={e=>setTime(e.currentTarget.currentTime)} onEnded={()=>{cancelPreview();setTime(-1);}} controls preload="none" src={recording.audioUrl} onError={() => setAudioError('Diese Aufnahme konnte nicht geladen werden. Bitte die R2-Datei und den Falowen-Musiklink prüfen.')} aria-label={song.title}/>
           : <p role="status">{discoveryError || `Die ${recording.level}-Day-${recording.day}-Aufnahme wird in Falowen Music gesucht…`}</p>}
         <a href={musicLink} target="_blank" rel="noopener noreferrer">In Falowen Music öffnen</a>
