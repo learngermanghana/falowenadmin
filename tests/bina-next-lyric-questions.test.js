@@ -15,7 +15,7 @@ test('Bina excerpts end at the displayed line and replay its immediate successor
   for (const {evidence, answer, options, correctIndex, previewRange, continuationRange} of questions) {
     const line = pack.cues.findIndex(cue => cue.text === evidence);
     assert.equal(pack.cues[line + 1].text, answer);
-    assert.equal(previewRange.end, pack.cues[line].end);
+    assert.ok(previewRange.end <= pack.cues[line].end);\n    assert.ok(previewRange.end < pack.cues[line + 1].start);\n    assert.ok(previewRange.end - previewRange.start >= 4.5);\n    assert.ok(previewRange.end - previewRange.start <= 7.5);
     assert.equal(continuationRange.start, pack.cues[line + 1].start);
     assert.equal(continuationRange.end, pack.cues[line + 1].end);
     assert.equal(new Set(options).size, 3);
