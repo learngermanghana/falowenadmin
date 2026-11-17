@@ -1,5 +1,6 @@
 import { hasCompleteSongTiming } from '../utils/songLyrics.js';
 import { recordedEvidenceRange, recordedSongQuestions } from '../utils/recordedLessonMusic.js';
+import { threeVerifiedNextLyricQuestions } from '../utils/nextLyricQuestions.js';
 import { useEffect, useRef, useState } from 'react';
 import { getReusableSongDraft } from '../data/reusableMusicSongbook.js';
 import { getReusableMusicQuestions } from '../data/reusableMusicQuestions.js';
@@ -17,7 +18,7 @@ import { resolveTeachingSongEnglishTranslation } from '../utils/musicEnglishDraf
 // This is a teacher-led, unscored song activity. The separately graded
 // coursebook/Goethe Hören and private A2 Day 18 bank telephone recording
 // remain separate and retain their own source, transcript and answer key.
-export default function PublishedSongLessonStage({ assignmentKey, courseDay, onExit = null, compact = false }) {
+export default function PublishedSongLessonStage({ assignmentKey, courseDay, onExit = null, compact = false, nextLyricOnly = false }) {
   const song = getReusableSongDraft(assignmentKey);
   const bank = getReusableMusicQuestions(assignmentKey);
   const approvedRecording = getCuratedMusicByAssignment(assignmentKey) || getA1PresenterRecording(assignmentKey, courseDay);
@@ -76,13 +77,17 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
   }, [assignmentKey]);
 
   if (!song || !bank || !recording) return null;
-  const questions = recordedLyrics !== song.lyrics
-    ? recordedSongQuestions({objectKey:recording.objectKey,lyrics:recordedLyrics},recording.day,recording.level)
-    : bank.questions;
+  const questions = nextLyricOnly
+    ? threeVerifiedNextLyricQuestions(recordingMetadata && {
+        ...recordingMetadata, objectKey:recording.objectKey, lyrics:recordedLyrics, cues,
+      }, recording)
+    : recordedLyrics !== song.lyrics
+      ? recordedSongQuestions({objectKey:recording.objectKey,lyrics:recordedLyrics},recording.day,recording.level)
+      : bank.questions;
   const synchronized=hasCompleteSongTiming(cues,recordedLyrics);
   const question = questions[questionIndex];
-  const evidenceRange = question?.evidence
-    ? recordedEvidenceRange(recordedLyrics, cues, question.evidence) : null;
+  const evidenceRange = question?.previewRange || (question?.evidence
+    ? recordedEvidenceRange(recordedLyrics, cues, question.evidence) : null);
   const cancelPreview = () => { previewStart.current=null; previewEnd.current=null; previewPlayPending.current=false; };
   const playLinePreview = range => {
     if (!audio.current) return;
@@ -162,11 +167,15 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
 
         <button type="button" onClick={()=>{setView('questions');setQuestionIndex(0);setSelectedOption(-1);setShowAnswer(false);}}>Weiter · Fragen beantworten</button>
       </div>}
-      {view==='questions' && <div className="published-song-lesson__section published-song-lesson__quiz">
-        <div className="published-song-lesson__quizmeta"><strong>FRAGE {questionIndex+1} / {questions.length}</strong><span>{question.type==='speaking'?'SPRECHEN':'HÖRVERSTEHEN'}</span></div>
+      {view==='questions' && (!question ? <div className="published-song-lesson__section" role="status">
+        <h3>Die drei Liedtext-Fragen sind noch nicht bereit</h3>
+        <p>Bitte die exakten Liedzeilen und Zeitmarken für „Ich heiße Bina“ im Musikstudio prüfen und veröffentlichen. Danach stehen drei Ausschnitte mit Antworten zur Verfügung.</p>
+      </div> : <div className="published-song-lesson__section published-song-lesson__quiz">
+        <div className="published-song-lesson__quizmeta"><strong>FRAGE {questionIndex+1} / {questions.length}</strong><span>{nextLyricOnly?'WAS KOMMT ALS NÄCHSTES?':question.type==='speaking'?'SPRECHEN':'HÖRVERSTEHEN'}</span></div>
         <h3 lang="de">{question.prompt}</h3>
+        {nextLyricOnly && <p>Spiele die Zeile ab, stoppe vor der nächsten und lass die Klasse A, B oder C wählen.</p>}
         {evidenceRange && <button type="button" className="published-song-lesson__line-preview"
-          onClick={()=>playLinePreview(evidenceRange)}>▶ Zeile anhören</button>}
+          onClick={()=>playLinePreview(evidenceRange)}>▶ Ausschnitt abspielen</button>}
         {question.type==='speaking'
           ? <p>Sprich mit deinem Partner. {question.teacherNote}</p>
           : <p>Antworte mit Informationen aus dem Lied. Die Musterlösung wird erst nach deiner Antwort gezeigt.</p>}
@@ -198,7 +207,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
             ? <button type="button" onClick={()=>{setView('listen');setShowAnswer(false);setSelectedOption(-1)}}>Wiederholen</button>
             : <button type="button" onClick={()=>{setQuestionIndex(i=>Math.min(questions.length-1,i+1));setShowAnswer(false);setSelectedOption(-1)}}>Nächste Frage →</button>}
         </div>
-      </div>}
+      </div>)}
       <p className="published-song-lesson__note">Liedfragen sind unbewertete Unterrichtsübungen und beziehen sich auf den gespeicherten Liedtext. Bei abweichenden Audios die Antworten vor der Stunde prüfen.</p>
     </section>
   );
