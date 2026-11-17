@@ -11,8 +11,7 @@ export const A1_DAY12_STAGES = Object.freeze([
   ['ordinals','Datum','Die Ordinalzahlen'],
   ['calendar','Datum','Welches Datum ist heute?'],
   ['timetable','Lesen','Wann fährt der Zug?'],
-  ['music','Falowen Music','Samstag um zehn · Das ganze Lied'],
-  ['music-challenge','Liedtext','Welche Zeile kommt als Nächstes?'],
+  ['music','Falowen Music','Samstag um zehn · Hören, Liedtext und Fragen'],
   ['workbook','Abschluss','Lesen und wiederholen'],
 ].map(([step,kicker,title])=>Object.freeze({
   id:'a1-day12-'+step,type:'a1-day12',step,kicker,title,items:[{label:title,detail:'Teacher-led classroom activity'}],

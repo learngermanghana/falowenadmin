@@ -12,6 +12,7 @@ import './LessonSongStage.css';
 import LessonSongLyrics from './LessonSongLyrics.jsx';
 import SongTimingEditor from './SongTimingEditor.jsx';
 import useSongTiming from '../hooks/useSongTiming.js';
+import classroomSongTiming from '../data/a1ClassroomSongTiming.js';
 import day25AlignedTiming from '../data/a2Day25SongTiming.js';
 import { resolveTeachingSongEnglishTranslation } from '../utils/musicEnglishDrafts.js';
 
@@ -60,7 +61,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
   const [follow, setFollow] = useState(true);
   const timedSong = song && recording ? {...song, id:recording.trackId, objectKey:recording.objectKey} : null;
   const [cues, saveCues, recordedLyrics, recordingMetadata] = useSongTiming(timedSong, {
-    alignedTiming: assignmentKey === 'A2-9.25' ? day25AlignedTiming : undefined,
+    alignedTiming: assignmentKey === 'A2-9.25' ? day25AlignedTiming : classroomSongTiming[assignmentKey],
   });
   const englishTranslation = timedSong ? resolveTeachingSongEnglishTranslation({
     assignmentKey, objectKey:recording.objectKey, lyrics:recordedLyrics,
@@ -76,8 +77,42 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
     setView('listen'); setQuestionIndex(0); setSelectedOption(-1); setShowAnswer(false); setAudioError(''); setTime(0);
   }, [assignmentKey]);
 
+  const updatePlayback = player => {
+    const end = previewEnd.current;
+    if (end !== null && player.currentTime >= end) {
+      player.pause();
+      player.currentTime = end;
+      previewStart.current = null;
+      previewEnd.current = null;
+      previewPlayPending.current = false;
+    }
+    setTime(player.currentTime);
+  };
+
+  useEffect(() => {
+    const player = audio.current;
+    if (!player || !window.requestAnimationFrame) return undefined;
+    let frame;
+    const tick = () => {
+      if (player.paused) return;
+      if (previewEnd.current !== null && player.currentTime >= previewEnd.current) updatePlayback(player);
+      if (!player.paused) frame = window.requestAnimationFrame(tick);
+    };
+    const start = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(tick);
+    };
+    player.addEventListener('playing', start);
+    return () => {
+      player.removeEventListener('playing', start);
+      window.cancelAnimationFrame(frame);
+    };
+  }, [recording?.audioUrl]);
+
   if (!song || !bank || !recording) return null;
-  const useBinaQuestions = nextLyricOnly && recording.objectKey === BINA_RECORDING_KEY;
+  const useBinaQuestions = nextLyricOnly && recording.objectKey === BINA_RECORDING_KEY &&
+    recordedLyrics === classroomSongTiming['A1-0.2'].lyrics &&
+    recordingMetadata?.timingStatus === 'audio-aligned';
   const questions = useBinaQuestions ? BINA_NEXT_LYRIC_QUESTIONS : nextLyricOnly
     ? threeVerifiedNextLyricQuestions(recordingMetadata && {
         ...recordingMetadata, objectKey:recording.objectKey, lyrics:recordedLyrics, cues,
@@ -86,12 +121,23 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
       ? recordedSongQuestions({objectKey:recording.objectKey,lyrics:recordedLyrics},recording.day,recording.level)
       : bank.questions;
   const synchronized=hasCompleteSongTiming(cues,recordedLyrics);
-  const question = questions[questionIndex];
+  const question = questions[Math.min(questionIndex, questions.length - 1)];
   const evidenceRange = question?.previewRange || (question?.evidence
     ? recordedEvidenceRange(recordedLyrics, cues, question.evidence) : null);
   const cancelPreview = () => { previewStart.current=null; previewEnd.current=null; previewPlayPending.current=false; };
+  const stopExcerpt = () => {
+    if (previewEnd.current !== null) audio.current?.pause();
+    cancelPreview();
+  };
+  const openView = next => {
+    stopExcerpt();
+    setView(next);
+    setQuestionIndex(0);
+    setSelectedOption(-1);
+    setShowAnswer(false);
+  };
   const playLinePreview = range => {
-    if (!audio.current) return;
+    if (!audio.current || !range) return;
     previewStart.current=range.start;
     previewEnd.current=range.end;
     previewPlayPending.current=true;
@@ -119,14 +165,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
       <div className="published-song-lesson__player">
         <div><strong>♫ Lied anhören</strong><small>Das Lernlied aus Cloudflare R2 · Keine Goethe-Hörprüfung</small></div>
         {recording.audioUrl
-          ? <audio key={recording.objectKey} ref={audio} onTimeUpdate={e=>{
-              const player=e.currentTarget;
-              setTime(player.currentTime);
-              if (previewEnd.current!==null && player.currentTime>=previewEnd.current) {
-                const end=previewEnd.current;
-                player.pause(); player.currentTime=end; cancelPreview();
-              }
-            }} onSeeking={e=>{
+          ? <audio key={recording.objectKey} ref={audio} onTimeUpdate={e=>updatePlayback(e.currentTarget)} onSeeking={e=>{
               const position=e.currentTarget.currentTime;
               if (previewEnd.current!==null && (position<previewStart.current || position>=previewEnd.current)) cancelPreview();
             }} onPlay={()=>{
@@ -147,15 +186,15 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
             : 'Geschätzte veröffentlichte Zeitmarken · Bitte die Zeilengrenzen beim Hören prüfen.'}</p>
           : null}
       <div className="published-song-lesson__tabs" role="group" aria-label="Musik-Lernschritte">
-        <button type="button" aria-pressed={view==='listen'} className={view==='listen'?'is-active':''} onClick={()=>setView('listen')}>1 · Hören</button>
-        <button type="button" aria-pressed={view==='lyrics'} className={view==='lyrics'?'is-active':''} onClick={()=>setView('lyrics')}>2 · Liedtext</button>
-        <button type="button" aria-pressed={view==='questions'} className={view==='questions'?'is-active':''} onClick={()=>setView('questions')}>3 · Fragen</button>
+        <button type="button" aria-pressed={view==='listen'} className={view==='listen'?'is-active':''} onClick={()=>openView('listen')}>1 · Hören</button>
+        <button type="button" aria-pressed={view==='lyrics'} className={view==='lyrics'?'is-active':''} onClick={()=>openView('lyrics')}>2 · Liedtext</button>
+        <button type="button" aria-pressed={view==='questions'} className={view==='questions'?'is-active':''} onClick={()=>openView('questions')}>3 · Fragen</button>
       </div>
       {view==='listen' && <div className="published-song-lesson__section">
         <h3>Höre zuerst zu.</h3>
         <p>{listenPrompt}</p>
         <p>Beim ersten Hören brauchst du den Text nicht. Beim zweiten Hören kannst du mitlesen.</p>
-        <button type="button" onClick={()=>setView('lyrics')}>Weiter · Liedtext ansehen</button>
+        <button type="button" onClick={()=>openView('lyrics')}>Weiter · Liedtext ansehen</button>
       </div>}
       {view==='lyrics' && <div className="published-song-lesson__section">
         {recordedLyrics === song.lyrics && !recordingMetadata && <p role="status">KURSENTWURF · Dieser Text und seine Übungsfragen sind noch nicht gegen die ausgewählte Aufnahme geprüft.</p>}
@@ -166,11 +205,14 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
           <LessonSongLyrics song={displaySong} cues={cues} time={time} onSeek={seconds=>{if(audio.current){cancelPreview();audio.current.currentTime=seconds;setTime(seconds);}}} follow={follow}/>
         <SongTimingEditor song={displaySong} audio={audio} cues={cues} onSave={saveCues}/>
 
-        <button type="button" onClick={()=>{setView('questions');setQuestionIndex(0);setSelectedOption(-1);setShowAnswer(false);}}>Weiter · Fragen beantworten</button>
+        <button type="button" onClick={()=>openView('questions')}>Weiter · Fragen beantworten</button>
       </div>}
       {view==='questions' && (!question ? <div className="published-song-lesson__section" role="status">
-        <h3>Die drei Liedtext-Fragen sind noch nicht bereit</h3>
-        <p>Bitte die exakten Liedzeilen und Zeitmarken für „Ich heiße Bina“ im Musikstudio prüfen und veröffentlichen. Danach stehen drei Ausschnitte mit Antworten zur Verfügung.</p>
+        <h3>Welche Liedzeile kommt als Nächstes?</h3>
+        {recording.audioUrl
+          ? <p>Spiele das Lied oben ab und pausiere nach einer Zeile. Was kommt danach? Spielt weiter und vergleicht eure Antworten mit dem Lied.</p>
+          : <p>{discoveryError || 'Die Aufnahme wird geladen.'}</p>}
+        {recording.audioUrl && <p>Automatische Ausschnitte erscheinen, sobald geprüfte Liedzeilen und Zeitmarken verfügbar sind.</p>}
       </div> : <div className="published-song-lesson__section published-song-lesson__quiz">
         <div className="published-song-lesson__quizmeta"><strong>FRAGE {questionIndex+1} / {questions.length}</strong><span>{nextLyricOnly?'WAS KOMMT ALS NÄCHSTES?':question.type==='speaking'?'SPRECHEN':'HÖRVERSTEHEN'}</span></div>
         <h3 lang="de">{question.prompt}</h3>
@@ -205,10 +247,10 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
           {question.evidence && <details><summary>Textbeleg</summary><blockquote>{question.evidence}</blockquote></details>}
         </div>}
         <div className="published-song-lesson__quiznav">
-          <button type="button" onClick={()=>{setQuestionIndex(i=>Math.max(0,i-1));setShowAnswer(false);setSelectedOption(-1)}} disabled={questionIndex===0}>← Vorherige</button>
+          <button type="button" onClick={()=>{stopExcerpt();setQuestionIndex(i=>Math.max(0,i-1));setShowAnswer(false);setSelectedOption(-1)}} disabled={questionIndex===0}>← Vorherige</button>
           {questionIndex===questions.length-1
-            ? <button type="button" onClick={()=>{setView('listen');setShowAnswer(false);setSelectedOption(-1)}}>Wiederholen</button>
-            : <button type="button" onClick={()=>{setQuestionIndex(i=>Math.min(questions.length-1,i+1));setShowAnswer(false);setSelectedOption(-1)}}>Nächste Frage →</button>}
+            ? <button type="button" onClick={()=>openView('listen')}>Wiederholen</button>
+            : <button type="button" onClick={()=>{stopExcerpt();setQuestionIndex(i=>Math.min(questions.length-1,i+1));setShowAnswer(false);setSelectedOption(-1)}}>Nächste Frage →</button>}
         </div>
       </div>)}
       <p className="published-song-lesson__note">Liedfragen sind unbewertete Unterrichtsübungen und beziehen sich auf den gespeicherten Liedtext. Bei abweichenden Audios die Antworten vor der Stunde prüfen.</p>

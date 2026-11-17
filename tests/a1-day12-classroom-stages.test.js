@@ -1,15 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { A1_DAY12_STAGES, DAY12_MONTHS, DAY12_MINUTES, DAY12_ORDINALS } from '../src/data/a1Day12Classroom.js';
+import classroomSongTiming from '../src/data/a1ClassroomSongTiming.js';
+import { getA1PresenterRecording } from '../src/data/a1PresenterMusicStage.js';
+import { threeVerifiedNextLyricQuestions } from '../src/utils/nextLyricQuestions.js';
+import { resolveTeachingSongEnglishTranslation } from '../src/utils/musicEnglishDrafts.js';
 import { getTeachingSlideByAssignmentId } from '../src/data/teachingSlides.js';
-test('Day 12 has the approved fourteen projected classroom stages in order',()=>{
-  assert.equal(A1_DAY12_STAGES.length,14);
+test('Day 12 has the approved thirteen projected classroom stages in order',()=>{
+  assert.equal(A1_DAY12_STAGES.length,13);
   assert.deepEqual(A1_DAY12_STAGES.map(s=>s.step),[
     'intro','compare','all-hours','convert','minutes','minute-practice',
     'months','months-practice','ordinals','calendar','timetable','music',
-    'music-challenge','workbook'
+    'workbook'
   ]);
-  assert.equal(new Set(A1_DAY12_STAGES.map(s=>s.id)).size,14);
+  assert.equal(new Set(A1_DAY12_STAGES.map(s=>s.id)).size,13);
   assert.ok(A1_DAY12_STAGES.every(s=>s.items.length>0));
 });
 test('Day 12 teaches all months, exact minutes and ordinal dates without adding a graded section',()=>{
@@ -21,4 +25,23 @@ test('Day 12 teaches all months, exact minutes and ordinal dates without adding 
   assert.equal(slide.dayNumber,12);
   assert.equal(slide.workbookConnection.parts.length,2);
   assert.ok(slide.workbookConnection.parts.every(p=>p.label.includes('Lesen')));
+});
+
+test('Samstag um zehn has bilingual cues and three excerpts for the exact published recording', () => {
+  const pack = classroomSongTiming['A1-8'];
+  const recording = getA1PresenterRecording('A1-8', 12);
+  assert.equal(pack.objectKey, recording.objectKey);
+  const questions = threeVerifiedNextLyricQuestions(pack, recording);
+  assert.equal(questions.length, 3);
+  for (const question of questions) {
+    const line = pack.cues.findIndex(cue => cue.text === question.evidence &&
+      cue.end === question.previewRange.end);
+    assert.equal(pack.cues[line + 1].text, question.answer);
+    assert.equal(question.continuationRange.start, pack.cues[line + 1].start);
+    assert.ok(question.previewRange.end <= question.continuationRange.start);
+  }
+  assert.equal(resolveTeachingSongEnglishTranslation({
+    assignmentKey: 'A1-8', objectKey: recording.objectKey, lyrics: pack.lyrics,
+    publishedEnglish: pack.englishTranslation,
+  }).lines.length, pack.cues.length);
 });

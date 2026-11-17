@@ -6,6 +6,7 @@ import { transformWithEsbuild } from 'vite';
 import { JSDOM } from 'jsdom';
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
+import { A1_DAY2_LESSON_ID } from '../src/data/a1Day2Classroom.js';
 import { getSlidesByCourse } from '../src/data/teachingSlides.js';
 import { getA1PresenterRecording, getA1PresenterMusicStage } from '../src/data/a1PresenterMusicStage.js';
 import { waitingRoomDiscoveredMusicTrack } from '../src/utils/waitingRoomDayMusic.js';
@@ -31,6 +32,11 @@ test('A1 presenter uses one music stage for each lesson with complete authored s
  assert.equal(new Set(slides.map(s=>s.dayNumber)).size,23);
  for(const slide of slides){
   const stages=stagesFor(slide,slide.topic);
+  if (slide.id === A1_DAY2_LESSON_ID || slide.assignmentId === 'A1-8') {
+   assert.equal(stages.filter(stage => stage.step === 'music').length, 1, slide.assignmentId);
+   assert.ok(!stages.some(stage => stage.step === 'music-challenge'), slide.assignmentId);
+   continue;
+  }
   assert.equal(stages[0].type,'intro',slide.assignmentId);
   // Do not create empty music slides for A1 lessons with no complete
   // authored lyrics and question pack. Day 22 owns a separate music finale.
@@ -102,6 +108,13 @@ test('actual A1 presenter orders workbook grammar, Lesen and speaking for every 
  const stagesFor = await loadStageBuilder();
  for (const slide of getSlidesByCourse('A1').filter(slide => slide.dayNumber > 0)) {
   const stages = stagesFor(slide, slide.topic);
+  if (slide.id === A1_DAY2_LESSON_ID || slide.assignmentId === 'A1-8') {
+   const grammar = stages.findIndex(stage => ['pronouns', 'compare'].includes(stage.step));
+   const music = stages.findIndex(stage => stage.step === 'music');
+   assert.ok(grammar > 0 && music > grammar, slide.assignmentId);
+   assert.ok(!stages.some(stage => stage.step === 'warmup'), slide.assignmentId);
+   continue;
+  }
   assert.equal(stages[0].id, 'intro', slide.assignmentId);
   assert.equal(stages[1].grammarTeaching, true, slide.assignmentId);
   const grammar = stages.filter(stage => stage.grammarTeaching);

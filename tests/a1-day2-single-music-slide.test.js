@@ -31,7 +31,12 @@ test('exact recording and reviewed cues yield precisely three playable next-lyri
   const q=threeVerifiedNextLyricQuestions(pack,recording);
   assert.equal(q.length,3);
   assert.ok(q.every(x=>x.options.length===3&&x.options[x.correctIndex]===x.answer));
-  assert.deepEqual(q.map(x=>x.previewRange),[{start:0,end:2},{start:2,end:4},{start:4,end:6}]);
+  for (const question of q) {
+    const i = lyrics.indexOf(question.evidence);
+    assert.equal(question.answer, lyrics[i + 1]);
+    assert.equal(question.previewRange.end, pack.cues[i].end);
+    assert.equal(question.continuationRange.start, pack.cues[i + 1].start);
+  }
 });
 test('never generate playable questions from another MP3, draft, auto transcript or incomplete timing',()=>{
   for(const altered of [

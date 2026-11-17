@@ -17,12 +17,13 @@ export default function useSongTiming(song, { alignedTiming } = {}) {
   const displayLyrics = recordedPack?.objectKey === objectKey ? recordedPack.lyrics : lyrics;
   useEffect(() => {
     let cancelled = false;
-    const record = {id, objectKey, lyrics};
+    const bundledLyrics = alignedTiming?.objectKey === objectKey ? alignedTiming?.lyrics : null;
+    const record = {id, objectKey, lyrics: bundledLyrics || lyrics};
     const revision = edits.current;
     const local = readSongCues(record);
     const bundled = validatePublishedTiming(alignedTiming, record);
     setCues(local.length ? local : bundled);
-    setRecordedPack(bundled.length ? { objectKey, lyrics, timingStatus: 'audio-aligned' } : null);
+    setRecordedPack(bundled.length ? { ...alignedTiming, lyrics: record.lyrics, timingStatus: 'audio-aligned' } : null);
     if (!objectKey) return () => { cancelled = true; };
     if (!published.has(objectKey)) published.set(objectKey,
       fetch('https://www.falowen.app/api/music-lyrics?key=' + encodeURIComponent(objectKey), {cache:'no-cache'})
@@ -32,10 +33,12 @@ export default function useSongTiming(song, { alignedTiming } = {}) {
       const recordedLyrics = typeof data?.lyrics === 'string' ? data.lyrics : lyrics;
       const recording = {...record, lyrics:recordedLyrics};
       const sameRecording = !data?.recordingSha256 || data.recordingSha256 === alignedTiming?.recordingSha256;
+      if (bundledLyrics && bundled.length && sameRecording && data?.objectKey === objectKey &&
+          (data?.referenceOnly || data?.transcriptionStatus === 'automatic' || data?.timingStatus === 'estimated')) return;
       const aligned = sameRecording ? validatePublishedTiming(alignedTiming, recording) : [];
       const estimated = data?.timingStatus === 'estimated';
-      const checked = estimated && alignedTiming
-        ? aligned : validatePublishedTiming(data, recording);
+      const publishedCues = estimated && alignedTiming ? [] : validatePublishedTiming(data, recording);
+      const checked = publishedCues.length ? publishedCues : aligned;
       // Published text does not require line timing. Show the exact recording's
       // new lyrics even when its cue file is still untimed; never keep an older
       // songwriting draft merely because timestamps have not been added.
@@ -44,8 +47,8 @@ export default function useSongTiming(song, { alignedTiming } = {}) {
         setRecordedPack({objectKey, lyrics:recordedLyrics,
           referenceOnly:data.referenceOnly===true,
           transcriptionStatus:data.transcriptionStatus,
-          timingStatus:estimated && aligned.length ? 'audio-aligned' : data.timingStatus,
-          englishTranslation:data.englishTranslation});
+          timingStatus:!publishedCues.length && aligned.length ? 'audio-aligned' : data.timingStatus,
+          englishTranslation:data.englishTranslation || (aligned.length ? alignedTiming.englishTranslation : undefined)});
         const saved = readSongCues(recording);
         setCues(saved.length === lyricLines(recordedLyrics).length ? saved : checked);
       }

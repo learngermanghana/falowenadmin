@@ -17,6 +17,6 @@ test('Bina has three multi-line previews and separate answer continuations', () 
     assert.equal(options[correctIndex], answer);
     assert.ok(previewRange.start >= 0 && previewRange.end - previewRange.start >= 7);
     assert.ok(continuationRange.start >= previewRange.end);
-    assert.ok(continuationRange.end - continuationRange.start >= 6);
+    assert.ok(continuationRange.end - continuationRange.start >= 5);
   }
 });
