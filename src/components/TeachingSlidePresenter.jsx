@@ -26,6 +26,8 @@ import A2ApplicationLab from "./A2ApplicationLab.jsx";
 import { MusicVideoStage, MusicReadingStage } from "./MusicTeachingStages.jsx";
 import { isInteractiveOpeningStage } from "../data/interactiveLessonOpenings.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
+import A1Day2TeachingStage from "./A1Day2TeachingStage.jsx";
+import { A1_DAY2_LESSON_ID, A1_DAY2_CLASSROOM_STAGES } from "../data/a1Day2Classroom.js";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import "./TeachingSlidePresenter.css";
 
@@ -138,6 +140,7 @@ function buildB1CorrectionTeacherGuide(questionDe = "", modelAnswerDe = "") {
 
 export default function TeachingSlidePresenter({ slide, topicLabel, onExit, nextLessonHref = "", nextLessonLabel = "" }) {
   const stages = useMemo(() => {
+    if (slide.id === A1_DAY2_LESSON_ID) return A1_DAY2_CLASSROOM_STAGES;
     const curriculumStages = buildTeachingPresenterStages(slide, topicLabel);
     // Keep every original A1 curriculum stage in the source contract for
     // teacher audits, but project the three music stages and the redundant
@@ -894,7 +897,9 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
               </div>
             </aside>
           ) : null}
-          {stage.type === "intro" ? (
+          {stage.type === "a1-day2" ? (
+            <A1Day2TeachingStage key={stage.id} step={stage.step} />
+          ) : stage.type === "intro" ? (
             <>
               {stage.skillTarget ? (
                 <div className="presenter-c2-skill-target">
