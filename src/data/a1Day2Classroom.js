@@ -25,8 +25,7 @@ const lesson = [
   ['sentences','Satzbau','Bilde ganze Sätze!',4],
   ['practice','Übung','Welches Verb ist richtig?',5],
   ['partners','Sprechen','Frag deinen Partner!',5],
-  ['music','Musik hören','Höre das ganze Lied',5],
-  ['music-challenge','Liedtext','Welche Zeile kommt als Nächstes?',6],
+  ['music','Musik hören','Hören · Liedtext · Drei Fragen',10],
   ['recap','Abschluss','Was hast du heute gelernt?',3],
 ];
 export const A1_DAY2_CLASSROOM_STAGES = Object.freeze(lesson.map(([id,kicker,title,minutes])=>Object.freeze({
