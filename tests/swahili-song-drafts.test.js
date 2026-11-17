@@ -13,6 +13,6 @@ test('Swahili lesson music drafts cover A1 gaps and A2–B1 without changing rec
     assert.equal(song.status,'draft');
     assert.ok(song.topic && song.musicStyle);
     for(const marker of ['[Verse 1]','[Chorus]','[Verse 2]','[Final Chorus]','[Outro]']) assert.ok(song.lyrics.includes(marker),song.id);
-    assert.ok(song.lyrics.split('\\n').length>=20,song.id);
+    assert.ok(song.lyrics.split('\n').length>=20,song.id);
   }
 });
