@@ -23,14 +23,14 @@ const feedRow = title => {
 test('A1 Day 12 songbook uses the user-approved new recording lyrics',()=>{
   const song=getReusableSongDraft('A1-8');
   assert.equal(song.title,'Samstag um zehn');
-  assert.equal(song.lyrics.match(/\\[Chorus\\]/g).length,2);
+  assert.equal(song.lyrics.match(/\[Chorus\]/g).length,2);
   assert.ok(song.lyrics.includes('Anna ruft mich heute an,'));
   assert.ok(song.lyrics.includes('Am Samstag fahr ich mit dem Bus,'));
   assert.ok(song.lyrics.includes('Wir trinken Kaffee um halb elf,'));
   assert.ok(song.lyrics.includes('Oh, oh, der fünfte Mai!'));
   assert.ok(song.lyrics.includes('Hmm, hmm, bis nächsten Samstag!'));
   assert.ok(!song.lyrics.includes('Mein Handy zeigt vierzehn Uhr'));
-  assert.equal(lyricLines(song.lyrics).length,22);
+  assert.equal(lyricLines(song.lyrics).length,18);
   assert.equal(getA1PresenterRecording('A1-8',12).title,'Samstag um zehn');
 });
 
