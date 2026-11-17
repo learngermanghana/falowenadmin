@@ -129,7 +129,7 @@ export default async function handler(req, res) {
     const webhook = env("CALENDAR_APPS_SCRIPT_URL");
     const secret = env("CLASS_SCHEDULE_SYNC_SECRET");
     if (!webhook || !secret) err("Calendar email integration is not configured (CALENDAR_APPS_SCRIPT_URL, CLASS_SCHEDULE_SYNC_SECRET).", 503);
-    const request = { secret, action: "sendCheckinInvitations", classId, sessionId, className: klass.name || classId, sessionLabel: label, date: localDate(starts), startTime: friendlyTime(starts), endTime: friendlyTime(ends), checkinUrl: url.toString(), recipients };
+    const request = { secret, action: "sendCheckinInvitations", classId, sessionId, className: klass.name || classId, program: String(klass.program || klass.language || "").trim().toLowerCase(), sessionLabel: label, date: localDate(starts), startTime: friendlyTime(starts), endTime: friendlyTime(ends), checkinUrl: url.toString(), recipients };
     stage = "apps-script-delivery";
     const response = await fetch(webhook, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(request), redirect: "follow" });
     const replyText = await response.text();
