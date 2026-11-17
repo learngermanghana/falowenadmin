@@ -10,10 +10,10 @@ function Lines({ text }) {
 }
 
 function SpeakerLine({ line }) {
-  const match = String(line).match(/^(Mhudumu|Mteja):\s*(.+)$/);
+  const match = String(line).match(/^(Mhudumu|Mteja|Muuzaji|Mnunuzi):\s*(.+)$/);
   if (!match) return <p className="swahili-a2-presenter__line">{line}</p>;
   return <div className="swahili-a2-presenter__dialogue-turn">
-    <span className={match[1] === "Mhudumu" ? "is-server" : "is-customer"}>{match[1]}</span>
+    <span className={["Mhudumu", "Muuzaji"].includes(match[1]) ? "is-server" : "is-customer"}>{match[1]}</span>
     <p>{match[2]}</p>
   </div>;
 }
@@ -75,7 +75,7 @@ export default function SwahiliA2LessonStage({ stage, grammar, isDaySix }) {
   const lines=Lines({text:stage.content});
   if(stage.type==="intro") return <section className="swahili-a2-presenter__intro-stage">
     <span className="presenter-kicker">Falowen · Kiswahili A1</span>
-    <h2>{isDaySix ? "Chakula · Vinywaji · Kuomba kwa adabu" : "Vokali · Silabi · Matamshi"}</h2>
+    <h2>{stage.heading || (isDaySix ? "Chakula · Vinywaji · Kuomba kwa adabu" : "Vokali · Silabi · Matamshi")}</h2>
     <p className="presenter-objective">{stage.english}</p>
     <div className="swahili-a2-presenter__lesson-highlight">{lines.map((line,i)=><p key={i}>{line}</p>)}</div>
     {isDaySix && <FoodCards cards={stage.foodCards} />}
@@ -114,6 +114,7 @@ export default function SwahiliA2LessonStage({ stage, grammar, isDaySix }) {
     const entries=Lines({text:grammar.body});
     return <section className="swahili-a2-presenter__grammar-stage">
       <div className="swahili-a2-presenter__grammar-model">
+        {grammar.title && <h2>{grammar.title}</h2>}
         {entries.map((line,i)=><p key={i}>{line}</p>)}
       </div>
       {grammar.rule && <div className="swahili-a2-presenter__grammar-explanation"><span>Rule · Kanuni</span><p>{grammar.rule}</p></div>}
@@ -122,7 +123,7 @@ export default function SwahiliA2LessonStage({ stage, grammar, isDaySix }) {
 
   if(stage.type==="reading" && isDaySix) return <Menu content={stage.content} cards={stage.foodCards} drinks={stage.drinkCards} />;
 
-  if(stage.type==="speaking" && isDaySix) return <section className="swahili-a2-presenter__dialogue" aria-label="Server and customer dialogue">
+  if(stage.type==="dialogue" || (stage.type==="speaking" && isDaySix)) return <section className="swahili-a2-presenter__dialogue" aria-label={isDaySix ? "Server and customer dialogue" : "Seller and buyer dialogue"}>
     <p className="presenter-kicker">Model the conversation · Switch roles</p>
     {lines.map((line,i)=><SpeakerLine key={i} line={line}/>)}
   </section>;

@@ -7,13 +7,14 @@ const stage=read("../src/components/SwahiliA2LessonStage.jsx");
 const video=read("../src/components/MusicVideoEmbed.jsx");
 const css=read("../src/components/SwahiliTeachingSlides.css");
 const daySix=read("../src/data/swahiliDaySixTeachingSlides.js");
+import { SWAHILI_DAY_TEN_ADMIN_LESSON } from "../src/data/swahiliDayTenTeachingSlides.js";
 const dayOne=read("../src/data/swahiliTeachingSlides.js");
 test("Swahili Day 1 and Day 6 reuse existing A2 presenter shell, navigation and timers",()=>{
  for(const name of ["PresenterSessionTimer","PresenterStudentPicker","PresenterActivityTimer","PresenterStageJump","PresenterControls"]) assert.ok(presenter.includes("<"+name),name);
  assert.match(presenter,/presenter-shell swahili-a2-shell/);
  assert.match(presenter,/<SwahiliA2LessonStage stage=\{stage\} grammar=\{grammar\} isDaySix=\{isDaySix\}/);
  assert.match(presenter,/slide=\{selectedPresenterSlide\}/);
- assert.match(presenter,/selectedPresenterSlide = isDaySix \? daySixPresenterSlide : presenterSlide/);
+ assert.match(presenter,/existingPresenterSlide = isDaySix \? daySixPresenterSlide : presenterSlide/);
  assert.ok(dayOne.includes('id: "swahili-day-1"'));
  assert.ok(daySix.includes('id:"swahili-day-6"'));
 });
@@ -36,4 +37,14 @@ test("Day 6 uses A2-style structured menu, dialogue, grammar and workbook tasks"
  assert.match(css,/@media\(max-width:650px\)/);
  assert.match(daySix,/juisi ya embe/);
  assert.match(daySix,/ugali samaki/);
+});
+
+test("Sokoni is available in the shared presenter with five teachable grammar pages", () => {
+  assert.match(presenter, /selectedPresenterSlide = isDayTen \? dayTenPresenterSlide/);
+  assert.match(presenter, /dayTenRoot \+ "\?present=1"/);
+  const { dayNumber, stages } = SWAHILI_DAY_TEN_ADMIN_LESSON;
+  assert.equal(dayNumber, 10);
+  assert.equal(stages.find(({ type }) => type === "grammar").details.length, 5);
+  assert.match(stages.find(({ id }) => id === "listening").answer, /3,350.*150/);
+  assert.equal(stages.at(-1).type, "presentation");
 });

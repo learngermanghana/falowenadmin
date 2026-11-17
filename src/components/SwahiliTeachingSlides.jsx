@@ -10,6 +10,7 @@ import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterActivityTimer, { usePresenterActivityTimer } from "./PresenterActivityTimer.jsx";
 import { SWAHILI_DAY_ONE_ADMIN_LESSON } from "../data/swahiliTeachingSlides.js";
 import { SWAHILI_DAY_SIX_ADMIN_LESSON } from "../data/swahiliDaySixTeachingSlides.js";
+import { SWAHILI_DAY_TEN_ADMIN_LESSON } from "../data/swahiliDayTenTeachingSlides.js";
 import "./TeachingSlidePresenter.css";
 import "./SwahiliTeachingSlides.css";
 
@@ -42,12 +43,22 @@ const dayFivePresenterSlide = Object.freeze({
   workbookConnection: { workbookUrl: dayFiveWorkbook, subtitle: "Continue Kiswahili Day 5 in your learner workbook." },
 });
 
+const dayTenRoot = courseRoot + "/swahili-day-10";
+const dayTenWorkbook = "https://www.falowen.app/campus/course/swahili/day-10";
+const dayTenPresenterSlide = Object.freeze({
+  ...SWAHILI_DAY_TEN_ADMIN_LESSON,
+  assignmentId: "SWAHILI-DAY-10",
+  workbookConnection: { workbookUrl: dayTenWorkbook, subtitle: "Continue Kiswahili Day 10 in Campus." },
+});
+
 export default function SwahiliTeachingSlides({ slideId, present = false }) {
   const isDayFive = slideId === SWAHILI_DAY_FIVE_ADMIN_LESSON.id;
   const isDaySix = slideId === SWAHILI_DAY_SIX_ADMIN_LESSON.id;
-  const lesson = isDayFive ? SWAHILI_DAY_FIVE_ADMIN_LESSON : isDaySix ? SWAHILI_DAY_SIX_ADMIN_LESSON : SWAHILI_DAY_ONE_ADMIN_LESSON;
-  const selectedPresenterSlide = isDayFive ? dayFivePresenterSlide : isDaySix ? daySixPresenterSlide : presenterSlide;
-  const selectedWorkbook = isDayFive ? dayFiveWorkbook : isDaySix ? "https://www.falowen.app/swahili/day-6" : learnerWorkbook;
+  const isDayTen = slideId === SWAHILI_DAY_TEN_ADMIN_LESSON.id;
+  const existingPresenterSlide = isDaySix ? daySixPresenterSlide : presenterSlide;
+  const selectedPresenterSlide = isDayTen ? dayTenPresenterSlide : isDayFive ? dayFivePresenterSlide : existingPresenterSlide;
+  const lesson = selectedPresenterSlide;
+  const selectedWorkbook = selectedPresenterSlide.workbookConnection.workbookUrl;
   const stages = lesson.stages;
   const activityTimer = usePresenterActivityTimer(7);
   const [reportOpen, setReportOpen] = useState(false);
@@ -57,7 +68,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
   const [grammarPage, setGrammarPage] = useState(0);
   const [presenting, setPresenting] = useState(Boolean(slideId) && present);
   const [focusMode, setFocusMode] = useState(false);
-  const stage = stages[index];
+  const stage = stages[index] ?? stages[0];
   const atStart = index === 0;
   const atEnd = index === stages.length - 1;
 
@@ -99,7 +110,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [slideId, presenting, index, stages.length]);
 
-  if (slideId && !isDayFive && slideId !== SWAHILI_DAY_ONE_ADMIN_LESSON.id && slideId !== SWAHILI_DAY_SIX_ADMIN_LESSON.id) {
+  if (slideId && !isDayTen && !isDayFive && slideId !== SWAHILI_DAY_ONE_ADMIN_LESSON.id && slideId !== SWAHILI_DAY_SIX_ADMIN_LESSON.id) {
     return <section className="slides-index"><h1>Lesson not found</h1><Link to={courseRoot}>Back to Swahili</Link></section>;
   }
 
@@ -109,7 +120,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
         <div className="swahili-admin-slides__crumb"><Link to="/teaching-slides?language=swahili">← All languages</Link></div>
         <p className="slide-meta">Kiswahili · Beginner</p>
         <h1>Swahili teaching slides</h1>
-        <p>Open the A1 teaching slides for Day 1, Day 5 or Day 6.</p>
+        <p>Open the A1 teaching slides for Days 1, 5, 6 and 10.</p>
         <div className="slide-card-grid">
           <article className="slide-card slide-card-lesson">
             <p className="slide-meta">Day 1 · {stages.length} classroom stages</p>
@@ -136,6 +147,15 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
             <div className="slide-card-actions">
               <Link to={daySixRoot}>Open lesson</Link>
               <Link to={daySixRoot + "?present=1"}>Present</Link>
+            </div>
+          </article>
+          <article className="slide-card slide-card-lesson">
+            <p className="slide-meta">A1 · Day 10 · {SWAHILI_DAY_TEN_ADMIN_LESSON.stages.length} classroom stages</p>
+            <h2>{SWAHILI_DAY_TEN_ADMIN_LESSON.title}</h2>
+            <p>{SWAHILI_DAY_TEN_ADMIN_LESSON.objective}</p>
+            <div className="slide-card-actions">
+              <Link to={dayTenRoot}>Open lesson</Link>
+              <Link to={dayTenRoot + "?present=1"}>Present</Link>
             </div>
           </article>
         </div>
