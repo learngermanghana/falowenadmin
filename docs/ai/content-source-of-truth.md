@@ -78,3 +78,7 @@ The Upcoming Classes campaign and single-poster exports use the same renderer in
 ## Language-aware live-class naming
 
 The Create Class form on `/live-classes` reuses `src/utils/liveClassNameSuggestions.js` for both languages. German retains its established `A1 Berlin Klasse` style and city order. Swahili A1 offers `Kiswahili A1 – Dar es Salaam`, `Arusha`, `Zanzibar`, `Nairobi`, `Mombasa`, `Dodoma`, `Mwanza` and `Kisumu` in order. These are suggested **cohort names**, not times, physical teaching locations, automatically created classes, or changes to existing records. Scheduling stays in its own fields, staff can enter a custom name, and the shared backend slug collision rules still apply. Swahili level selection remains limited to A1 until the other course levels are published. No automatic renaming or data migration occurs.
+
+## German A1 classroom presenter
+
+The workbook rules and model sentences in `a1WorkbookGrammarTeaching.js` are keyed by assignment. The dedicated A1 presenter shows them immediately after the lesson objective. Days 11 and 12 reuse their existing authored grammar pages. The presenter uses the existing song stages, A1 classroom reading passages with answer evidence, and speaking scenarios with model answers. The A1 speaking readiness lesson retains its exam exercises. The reading and scenarios are classroom practice and do not alter Campus submissions or marking.

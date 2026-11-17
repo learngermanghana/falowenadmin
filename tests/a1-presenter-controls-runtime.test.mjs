@@ -45,11 +45,15 @@ test('A1–C2 controls retain questions, reports use live marks and switching cl
     '../data/a1PresenterUnderstandingChecks.js': { getA1PresenterUnderstandingChecks: () => checks },
     '../data/a1CheckCoaching.js': { buildA1CheckCoaching: check => check ? { hintDe: 'Denke an die Regel.', feedbackQuestionDe: 'Gut?', checkDe: 'Prüfe die Regel.' } : null },
     '../data/a1EverydaySpeaking.js': { getA1EverydaySpeaking: () => null },
+    './InlineReadingTranslations.jsx': { __esModule: true, default: ({text}) => text },
+    '../data/a1WorkbookGrammarTeaching.js': await import('../src/data/a1WorkbookGrammarTeaching.js'),
+    '../data/a1PresenterReadingLessons.js': await import('../src/data/a1PresenterReadingLessons.js'),
     './A1EverydaySpeakingStage.jsx': { __esModule: true, default: () => null },
     './PublishedSongLessonStage.jsx': { __esModule: true, default: () => null },
     './LessonSongStage.jsx': { __esModule: true, default: () => null },
     './B1HousingChoicePractice.jsx': { __esModule: true, default: () => null },
     './B1SustainabilityDecisions.jsx': { __esModule: true, default: () => null },
+    './A2ApplicationLab.jsx': { __esModule: true, default: () => null },
     './A2SportMatchmaker.jsx': { __esModule: true, default: () => null },
     './InteractiveLessonOpening.jsx': { __esModule: true, default: () => null },
     './B1WorkbookPresentation.jsx': { __esModule: true, default: () => null },
@@ -94,6 +98,10 @@ test('A1–C2 controls retain questions, reports use live marks and switching cl
     assert.ok(loadedClasses.includes('A1 Berlin Klasse'));
     assert.equal(button('Pick student').disabled, false);
     const settledLoads = loads;
+    for (const title of ['Modal verbs and meaning', 'The sentence bracket', 'Forms you need']) {
+      await click(document.querySelector('.presenter-footer button:last-of-type'));
+      assert.equal(document.querySelector('main h1').textContent, title);
+    }
     await click(document.querySelector('.presenter-footer button:last-of-type'));
     await click(button('A1-Lernhilfe · vor der Antwort'));
     assert.ok(document.querySelector('.presenter-a1-check-hint')?.textContent.includes('Denke an die Regel.'));

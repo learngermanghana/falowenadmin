@@ -11,6 +11,9 @@ import { getA1Days11To15QuickChecks } from "../data/a1Days11To15Understanding.js
 import { getA1Days16To20QuickChecks } from "../data/a1Days16To20Understanding.js";
 import { getA1Days21To24QuickChecks } from "../data/a1Days21To24Understanding.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
+import InlineReadingTranslations from "./InlineReadingTranslations.jsx";
+import { A1_WORKBOOK_GRAMMAR_TEACHING } from "../data/a1WorkbookGrammarTeaching.js";
+import { getA1PresenterReadingLesson } from "../data/a1PresenterReadingLessons.js";
 import A1EverydaySpeakingStage from "./A1EverydaySpeakingStage.jsx";
 import { getA1EverydaySpeaking } from "../data/a1EverydaySpeaking.js";
 import { getPresenterSlidePhoto } from "../utils/presenterSlidePhotos.js";
@@ -59,7 +62,7 @@ function a1TeacherPurpose(stage = {}) {
       }
     : {
         student: "Lernziel und Ablauf verstehen.",
-        teacher: "Kurz orientieren; die Grammatik wird auf der Falowen-Grammatikseite erklärt.",
+        teacher: "Kurz orientieren, dann die Regeln und Beispiele auf den Grammatikfolien erklären.",
       };
   if (id === "quick-check") return {
     student: "Die eben gelernte Regel kurz erinnern.",
@@ -134,6 +137,25 @@ export function stageList(slide, topicLabel) {
   const mainChecks = checks.slice(0, Math.max(1, checks.length - 1));
   const exitChecks = checks.slice(Math.max(1, checks.length - 1));
   const a1SongStage = getA1PresenterMusicStage(slide.assignmentId, slide.dayNumber);
+  const assignmentId = String(slide.assignmentId || "").trim().toUpperCase();
+  const sections = slide.grammarTeachingSections || A1_WORKBOOK_GRAMMAR_TEACHING[assignmentId] || [];
+  const grammarStages = sections.map((section, index) => ({
+    id: "grammar-topic-" + (index + 1),
+    type: "list",
+    kicker: `Grammatik · ${index + 1}/${sections.length}`,
+    grammarTeaching: true,
+    title: section.title,
+    items: section.items,
+  }));
+  const reading = getA1PresenterReadingLesson(assignmentId);
+  const readingStages = reading ? [{
+    id: "reading",
+    type: "reading",
+    kicker: "Lesen",
+    title: reading.title,
+    reading,
+    items: reading.checks,
+  }] : [];
 
   if (isSpeakingReadiness) {
     const flow = Array.isArray(slide.interactionFlow) ? slide.interactionFlow : [];
@@ -148,6 +170,8 @@ export function stageList(slide, topicLabel) {
         duration: slide.estimatedDuration || "60 minutes",
         examReadiness: true,
       },
+      ...grammarStages,
+      ...readingStages,
       {
         id: "exam-map",
         type: "list",
@@ -229,7 +253,7 @@ export function stageList(slide, topicLabel) {
     : mainChecks
       .filter((item) => /mistake|correct|avoid this/i.test(String(item?.questionDe || "")))
       .slice(0, 2);
-  const speaking = getA1EverydaySpeaking(slide.assignmentId);
+  const speaking = getA1EverydaySpeaking(assignmentId === "A1-0.2_1.1" ? "A1-1.1" : assignmentId);
   const approvedSong = getCuratedMusicByAssignment(slide.assignmentId);
   const isA1HealthMusic = approvedSong?.assignmentKey === "A1-14.1";
   const mistakeItems = Array.isArray(support.commonMistakesEn) ? support.commonMistakesEn : [];
@@ -243,25 +267,15 @@ export function stageList(slide, topicLabel) {
       topic: topicLabel || slide.topic || "",
       objective: slide.objective || "",
       duration: slide.estimatedDuration || "",
-      grammarDiagnostic: !isDay15ObjectLesson,
     },
+    ...grammarStages,
     {
       id: "quick-check",
       type: "check",
       kicker: isDay15ObjectLesson ? "Goethe A1 · Teil 3" : "Quick check",
-      title: isDay15ObjectLesson ? "Eine höfliche Bitte bilden" : "Do you remember the grammar rule?",
+      title: isDay15ObjectLesson ? "Eine höfliche Bitte bilden" : "Apply the grammar rule",
       items: quickChecks,
     },
-    // Optional lesson-specific grammar slides (currently A1-7).
-    ...(Array.isArray(slide.grammarTeachingSections)
-      ? slide.grammarTeachingSections.map((section, index) => ({
-          id: "grammar-topic-" + (index + 1),
-          type: "list",
-          kicker: "Grammatik · Kapitel 7 · " + (index + 1) + "/5",
-          title: section.title,
-          items: Array.isArray(section.items) ? section.items : [],
-        }))
-      : []),
     {
       id: "grammar-check",
       type: "check",
@@ -284,14 +298,21 @@ export function stageList(slide, topicLabel) {
       title: "Common mistakes to watch",
       items: mistakeItems,
     }] : []),
-    // Match A1 Day 14: music immediately follows Common mistakes.
     ...(a1SongStage ? [a1SongStage] : []),
-    ...(!isA1HealthMusic && speaking ? [
+    ...(isA1HealthMusic ? [{
+      id: "music-lesson",
+      type: "published-music",
+      kicker: "Falowen Music",
+      title: `${approvedSong.title} · Hören · Lesen · Sprechen`,
+      items: [{}],
+    }] : []),
+    ...readingStages,
+    ...(speaking ? [
       {
         id: "mini-mission",
         type: "speaking-activity",
         kind: "mission",
-        kicker: "Deutsch im Alltag",
+        kicker: "Sprechen · Alltagssituation",
         words: speaking.words,
         ...speaking.mission,
         items: [speaking.mission],
@@ -300,12 +321,12 @@ export function stageList(slide, topicLabel) {
         id: "listen-respond",
         type: "speaking-activity",
         kind: "reaction",
-        kicker: "Hör zu und reagiere!",
+        kicker: "Sprechen · Reagieren",
         ...speaking.reaction,
         items: [speaking.reaction],
       },
     ] : []),
-    ...(!isA1HealthMusic ? [{
+    {
       id: "exit-check",
       type: "check",
       kicker: isDay15ObjectLesson ? "Teil 3 · Abschluss" : "Exit check",
@@ -313,17 +334,7 @@ export function stageList(slide, topicLabel) {
       teil3ObjectCards: isDay15ObjectLesson,
       items: exitChecks,
       exitCheck: true,
-    }] : []),
-    // A1 Day 22: one focused music finale replaces teacher-scan,
-    // mini-mission, listen/respond and exit-check slides. The two listening
-    // questions and one speaking transfer prompt live INSIDE the final slide.
-    ...(isA1HealthMusic ? [{
-      id: "music-lesson",
-      type: "published-music",
-      kicker: "Falowen Music · Abschluss",
-      title: "Mein Kopf tut weh · Hören · Lesen · Sprechen",
-      items: [{}],
-    }] : []),
+    },
   ].filter((stage) => {
     if (stage.type === "intro") return true;
     return Array.isArray(stage.items) && stage.items.length > 0;
@@ -651,7 +662,7 @@ export default function A1GrammarPresenter({
           <div>
             <span className="presenter-kicker">{stage.kicker}</span>
             <span className="presenter-lesson-label">
-              {isMusicStage ? "A1 · Falowen Music" : (stage.examReadiness ? "A1 · Exam-readiness" : String(slide?.assignmentId || "").trim().toUpperCase() === "A1-4.7" ? "A1 · Sprechen Teil 3" : "A1 · Grammar check")}
+              {isMusicStage ? "A1 · Falowen Music" : (stage.examReadiness ? "A1 · Exam-readiness" : String(slide?.assignmentId || "").trim().toUpperCase() === "A1-4.7" ? "A1 · Sprechen Teil 3" : "A1 · Unterricht")}
               {lessonBlockTotal > 1 ? ` · Day ${slide.dayNumber} · Block ${lessonBlockPosition}/${lessonBlockTotal}` : ""}
             </span>
           </div>
@@ -729,27 +740,12 @@ export default function A1GrammarPresenter({
               {stage.topic ? <p className="presenter-topic">{stage.topic}</p> : null}
               {stage.objective ? <p className="presenter-objective">{stage.objective}</p> : null}
               {stage.duration ? <p className="presenter-duration">{stage.duration}</p> : null}
-              <div className="presenter-model-support" style={{ marginTop: 24 }}>
-                <strong>{stage.examReadiness ? "A1 speaking readiness method" : String(slide?.assignmentId || "").trim().toUpperCase() === "A1-4.7" ? "A1 Teil 3 · Bildkartenmethode" : "A1 grammar-check method"}</strong>
+              <div className="presenter-model-support">
+                <strong>Unterrichtsablauf</strong>
                 <p>{stage.examReadiness
-                  ? "Warm-up diagnosis → exam map → Teil 1 → live performance/knowledge checks → mini mock exam → readiness decision → fresh exit check."
-                  : (Array.isArray(slide.grammarTeachingSections)
-                    ? "Quick check → five grammar topics → individual understanding checks → daily-routine practice → unaided exit check."
-                    : (String(slide?.assignmentId || "").trim().toUpperCase() === "A1-4.7"
-                        ? "Prüfungsteile kurz erkennen → Bitte mit können bauen → Bildkarte je Student → auf Bitten reagieren → Falowen Music → frische Bildkarte ohne Hilfe."
-                        : "Grammar notes first → check understanding → correct the target rule → five-word Mini-Mission → listen and respond → unaided exit check."))}</p>
-                <small>{stage.examReadiness
-                  ? "Use grammar only when it blocks the speaking task. During the mock exam, reduce teacher help and judge whether the student can perform independently."
-                  : (String(slide?.assignmentId || "").trim().toUpperCase() === "A1-4.7"
-                    ? "Show the object first; the student chooses a fitting verb and makes a polite request. Ask for a short reaction, then reveal the model. Mark the actual oral performance Correct or Needs review."
-                    : "Use the grammar page to teach. Presenter should not reteach the lesson: it checks whether each learner can recognize, correct and apply the grammar. Record only Correct or Needs review.")}</small>
+                  ? "Grammatik wiederholen → Lesen → Prüfungsformat und kurze mündliche Aufgaben → Abschlusscheck."
+                  : "Grammatik und Beispiele → Verständnis prüfen → Falowen Music → Lesen → Alltagssituationen im Gespräch → Abschlusscheck."}</p>
               </div>
-              {Array.isArray(slide.grammarTeachingSections) && slide.workbookConnection ? (
-                <div className="presenter-workbook-actions">
-                  {slide.workbookConnection.grammarUrl ? <a href={lessonUrl(slide.workbookConnection.grammarUrl)} target="_blank" rel="noreferrer">Open updated grammar notes</a> : null}
-                  {slide.workbookConnection.workbookUrl ? <a href={lessonUrl(slide.workbookConnection.workbookUrl)} target="_blank" rel="noreferrer">Open unchanged A1-7 workbook</a> : null}
-                </div>
-              ) : null}
             </>
           ) : stage.type === "check" ? (
             <section className="presenter-question-reveal">
@@ -864,6 +860,32 @@ export default function A1GrammarPresenter({
                   )}
                 </>
               )}
+            </section>
+          ) : stage.grammarTeaching ? (
+            <section aria-label="Workbook grammar">
+              <h1>{stage.title}</h1>
+              <div className="presenter-model-support"><p>{stage.items[0]}</p></div>
+              <ul className="presenter-list">
+                {stage.items.slice(1).map(item => <li key={item}>{item}</li>)}
+              </ul>
+            </section>
+          ) : stage.type === "reading" ? (
+            <section className="presenter-knowledge" aria-label="A1 reading practice">
+              <h1>{stage.title}</h1>
+              <p>{stage.reading.readingPurpose}</p>
+              <div className="presenter-model-support" lang="de">
+                <InlineReadingTranslations text={stage.reading.textDe} level="A1" day={slide.dayNumber} assignmentId={slide.assignmentId} />
+              </div>
+              <ol className="presenter-list">
+                {stage.items.map((question, index) => (
+                  <li key={question}>
+                    <details>
+                      <summary>{question}</summary>
+                      <p>{stage.reading.answers[index]}</p>
+                    </details>
+                  </li>
+                ))}
+              </ol>
             </section>
           ) : stage.type === "speaking-activity" ? (
             <A1EverydaySpeakingStage key={`${slide.assignmentId}-${stage.id}`} stage={stage} />
