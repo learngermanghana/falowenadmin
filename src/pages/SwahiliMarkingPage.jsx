@@ -1,8 +1,8 @@
 import answerKeys from "../../functions/swahili-answers.json";
 import MarkingSectionTabs from "../components/MarkingSectionTabs.jsx";
 import { useEffect, useState } from "react";
-import { loadAllSwahiliMarkingPage, loadSwahiliMarkingPage, loadSwahiliRoster, loadSwahiliStudentSubmission, loadSwahiliReview, saveSwahiliReview, retryQueuedSwahiliDelivery, watchSwahiliReview } from "../services/swahiliMarkingService";
-import { getSwahiliReviewStatus } from "../utils/swahiliReviewQueue";
+import { loadAllSwahiliMarkingPage, loadSwahiliMarkingPage, loadSwahiliRoster, loadSwahiliStudentSubmission, loadSwahiliReview, loadSwahiliReviewStatuses, saveSwahiliReview, retryQueuedSwahiliDelivery, watchSwahiliReview } from "../services/swahiliMarkingService";
+import { filterSwahiliMarkingRows, getSwahiliReviewStatus } from "../utils/swahiliReviewQueue";
 
 const LESSONS = {
   1: { title: "Alfabeti, sauti na matamshi", writing: { vowels: "Vokali", syllables: "Silabi", words: "Maneno" } },
@@ -31,7 +31,7 @@ const emailMessages = {
   publication_failed: "Could not prepare the result email.",
 };
 
-function SubmissionReview({ submission, day }) {
+function SubmissionReview({ submission, day, onReviewSaved }) {
   const reference = answerKeys[submission.lessonId];
   const [review, setReview] = useState(null);
   const [status, setStatus] = useState("reviewed");
@@ -77,6 +77,7 @@ function SubmissionReview({ submission, day }) {
     try {
       await saveSwahiliReview({ submission, day, status, feedback, score: score === "" ? null : Number(score) });
       setSaved(true);
+      onReviewSaved?.(submission, status);
     } catch (failure) {
       setError(failure.message || "Could not save feedback.");
     } finally {
@@ -160,16 +161,21 @@ function SubmissionReview({ submission, day }) {
 function LessonQueue({ day }) {
   const [page, setPage] = useState({ rows: [], nextCursor: null });
   const [selectedPath, setSelectedPath] = useState("");
+  const [reviewStatuses, setReviewStatuses] = useState({});
+  const [queueNotice, setQueueNotice] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [version, setVersion] = useState(0);
 
   useEffect(() => {
     let active = true;
-    (day ? loadSwahiliMarkingPage(day) : loadAllSwahiliMarkingPage()).then((result) => {
+    (day ? loadSwahiliMarkingPage(day) : loadAllSwahiliMarkingPage()).then(async (result) => {
+      // Status lives on tutor reviews, not on the submitted workbook itself.
+      const statuses = await loadSwahiliReviewStatuses(result.rows);
       if (!active) return;
       setPage(result);
-      setSelectedPath(result.rows[0]?.path || "");
+      setReviewStatuses(statuses);
+      setSelectedPath("");
     }).catch((failure) => {
       if (active) setError(failure.code === "permission-denied"
         ? "Your account needs Swahili marking access. If it was just granted, sign out and back in."
@@ -183,7 +189,8 @@ function LessonQueue({ day }) {
     setError("");
     try {
       const next = await (day ? loadSwahiliMarkingPage(day, page.nextCursor) : loadAllSwahiliMarkingPage(page.nextCursor));
-      if (!selectedPath && next.rows.length) setSelectedPath(next.rows[0].path);
+      const statuses = await loadSwahiliReviewStatuses(next.rows);
+      setReviewStatuses((previous) => ({ ...previous, ...statuses }));
       setPage(({ rows }) => ({
         rows: [...rows, ...next.rows.filter((row) => !rows.some(({ path }) => path === row.path))],
         nextCursor: next.nextCursor,
@@ -195,29 +202,55 @@ function LessonQueue({ day }) {
     }
   }
 
-  const selected = page.rows.find(({ path }) => path === selectedPath);
+  const visibleRows = filterSwahiliMarkingRows(page.rows, reviewStatuses);
+  const activePath = visibleRows.some((row) => row.path === selectedPath)
+    ? selectedPath : visibleRows[0]?.path || "";
+  const selected = visibleRows.find(({ path }) => path === activePath);
+  const unavailableCount = Object.values(reviewStatuses).filter((status) => status === "unavailable").length;
   return (
     <section aria-label="Swahili student submissions" className="swahili-marking-queue">
       <div className="swahili-marking-toolbar">
-        <h2>{day ? `Day ${day} · ${LESSONS[day].title}` : "All Swahili submissions"}</h2>
+        <h2>{day ? `Day ${day} · ${LESSONS[day].title}` : "Swahili submissions to mark"}</h2>
         <button type="button" disabled={loading} onClick={() => {
           setLoading(true);
           setError("");
           setPage({ rows: [], nextCursor: null });
+          setReviewStatuses({});
+          setSelectedPath("");
+          setQueueNotice("");
           setVersion((value) => value + 1);
         }}>Refresh</button>
       </div>
-      {loading && <p role="status">Loading submissions…</p>}
+      <p className="swahili-marking-queue-summary">
+        To mark: <strong>{visibleRows.length}</strong>
+        <span> · Completed assignments are available in Results.</span>
+      </p>
+      {queueNotice && <p role="status" className="swahili-marking-notice">{queueNotice}</p>}
+      {loading && <p role="status">Loading submissions and review status…</p>}
       {error && <p role="alert">{error}</p>}
-      {!loading && !error && page.rows.length === 0 && <p>{page.nextCursor ? "No submissions on this page. Load more to keep checking." : day ? "No submitted work for this lesson." : "No submitted Swahili work."}</p>}
-      {page.rows.length > 0 && (
+      {!loading && unavailableCount > 0 && (
+        <p role="alert">Could not verify the review status of {unavailableCount} submission{unavailableCount === 1 ? "" : "s"}. Refresh to retry. These remain visible in To mark for safety.</p>
+      )}
+      {!loading && !error && visibleRows.length === 0 && (
+        <p>{page.nextCursor
+          ? "No work awaiting review on this page. Load more to check older submissions."
+          : "All caught up — no Swahili submissions awaiting review."}</p>
+      )}
+      {visibleRows.length > 0 && (
         <label>Learner submission
-          <select value={selectedPath} onChange={(event) => setSelectedPath(event.target.value)}>
-            {page.rows.map((row) => <option key={row.path} value={row.path}>{row.studentName || row.studentEmail || row.studentId} · Day {row.lessonId.split("-").at(-1)}</option>)}
+          <select value={activePath} onChange={(event) => setSelectedPath(event.target.value)}>
+            {visibleRows.map((row) => <option key={row.path} value={row.path}>
+              {row.studentName || row.studentEmail || row.studentId} · Day {row.lessonId.split("-").at(-1)}
+            </option>)}
           </select>
         </label>
       )}
-      {selected && <SubmissionReview key={selected.path} submission={selected} day={Number(selected.lessonId.split("-").at(-1))} />}
+      {selected && <SubmissionReview key={selected.path} submission={selected}
+        day={Number(selected.lessonId.split("-").at(-1))}
+        onReviewSaved={(row, status) => {
+          setReviewStatuses((previous) => ({ ...previous, [row.path]: status }));
+          setQueueNotice("Feedback saved. This submission has left the marking queue. Its score remains in Results.");
+        }} />}
       {page.nextCursor && <button type="button" disabled={loading} onClick={loadMore}>Load more submissions</button>}
     </section>
   );
