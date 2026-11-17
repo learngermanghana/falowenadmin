@@ -338,6 +338,7 @@ async function verifyAttendanceUser(req) {
   if (!match) throw new Error("Authorization required.");
   return admin.auth().verifyIdToken(match[1]);
 }
+require("./staffRecords").registerStaffRecords(app, { admin, db, verifyUser: verifyAttendanceUser });
 registerAssignedTutorAttendance(app, { admin, db, runtimeConfig, verifyUser: verifyAttendanceUser });
 
 app.post("/openSession", async (req, res) => {

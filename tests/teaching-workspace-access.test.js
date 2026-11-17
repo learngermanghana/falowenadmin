@@ -44,7 +44,7 @@ test("explicit page grants override role defaults for staff routes and login", a
   assert.equal(getPostLoginPath({ pathname: "/attendance/session/assigned-class" }, "staff", claims), "/attendance/session/assigned-class");
   assert.deepEqual(staffPageIds([], "teacher"), []);
   assert.deepEqual(staffPageIds(undefined, "reviewer"), ["marking"]);
-  assert.deepEqual(staffPageIds(["attendance", "staff", "students"], "teacher"), ["attendance"]);
+  assert.deepEqual(staffPageIds(["attendance", "staff", "students"], "teacher"), ["attendance", "students"]);
 });
 
 test("Music Studio is opt-in even for existing teachers", async () => {

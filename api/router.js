@@ -1290,6 +1290,7 @@ const FALOWEN_PROXY_ROUTES = new Set([
   "migrateSessionIds",
   "openSession",
   "assigned-tutor-attendance",
+  "staff-records",
   "class-reminder",
   "self-checkin-token",
   "transaction",

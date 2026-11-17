@@ -57,6 +57,7 @@ const LiveClassesPage = lazy(() => import("./pages/LiveClassesPage"));
 const HolidayCalendarPage = lazy(() => import("./pages/HolidayCalendarPage"));
 const GoetheExamConfigPage = lazy(() => import("./pages/GoetheExamConfigPage.jsx"));
 const StudentResultsComparePage = lazy(() => import("./pages/StudentResultsComparePage.jsx"));
+const StaffRecordsPage = lazy(() => import("./pages/StaffRecordsPage.jsx"));
 const StaffWorkspacePage = lazy(() => import("./pages/StaffWorkspacePage.jsx"));
 const UniversityInvitationsPage = lazy(() => import("./pages/UniversityInvitationsPage.jsx"));
 
@@ -311,7 +312,7 @@ export default function App() {
           <Route path="/course-schedule" element={<ProtectedRoute><CourseSchedulePage /></ProtectedRoute>} />
           <Route path="/course-schedule/public" element={<PublicCourseSchedulePage />} />
           <Route path="/marking" element={<MarkingRoute />} />
-          <Route path="/student-results" element={<ProtectedRoute><StudentResultsComparePage /></ProtectedRoute>} />
+          <Route path="/student-results" element={<ProtectedRoute>{role === "staff" ? <StaffRecordsPage key="results" page="results" /> : <StudentResultsComparePage />}</ProtectedRoute>} />
           <Route path="/marking/ai-audit" element={<Navigate to="/marking" replace />} />
           <Route path="/marking/answer-keys" element={<Navigate to="/marking" replace />} />
           <Route path="/ai-marking-audit" element={<Navigate to="/marking" replace />} />
@@ -328,7 +329,7 @@ export default function App() {
           <Route path="/whatsapp-reminders" element={<ProtectedRoute><WhatsAppRemindersPage /></ProtectedRoute>} />
           <Route path="/teaching-slides" element={<ProtectedRoute><TeachingSlidesPage /></ProtectedRoute>} />
           <Route path="/orientation" element={<ProtectedRoute><OrientationPage /></ProtectedRoute>} />
-          <Route path="/students" element={<ProtectedRoute><StudentHubPage /></ProtectedRoute>} />
+          <Route path="/students" element={<ProtectedRoute>{role === "staff" ? <StaffRecordsPage key="students" page="students" /> : <StudentHubPage />}</ProtectedRoute>} />
           <Route path="/staff" element={<ProtectedRoute><StaffWorkspacePage /></ProtectedRoute>} />
           <Route path="/invitations" element={<ProtectedRoute><UniversityInvitationsPage /></ProtectedRoute>} />
           <Route path="/leads" element={<ProtectedRoute><LeadsPage /></ProtectedRoute>} />
