@@ -4,6 +4,7 @@ import { musicRequest, musicBlob, loadSavedMusicLyrics, overwriteSavedMusicLyric
 import { buildFalowenMusicPrompt, buildFalowenShortMusicPrompt, musicLyricLimit } from '../utils/musicGenerationPrompt.js';
 import { waitingRoomMusicObjectKey } from '../utils/waitingRoomDayMusic.js';
 import './MusicStudioPage.css';
+import SwahiliSongDraftWorkspace from '../components/SwahiliSongDraftWorkspace.jsx';
 import { getMusicDays, musicLessonContext } from '../utils/musicCourseContext.js';
 import { matchingMusicEnglishDraft } from '../utils/musicEnglishDrafts.js';
 import { STUDIO_COURSE_LEVELS } from '../utils/hoerenCourseCatalog.js';
@@ -553,7 +554,7 @@ function GermanMusicStudio({ allowSwahili }) {
       </div>
     </section>
     {allowSwahili && <section id="music-swahili-panel" role="tabpanel" aria-labelledby="music-swahili-tab" hidden={studioTab !== "swahili"}>
-      <MusicLyricsVideoStudio active={studioTab === "swahili"} swahili />
+      <SwahiliSongDraftWorkspace active={studioTab === "swahili"} />
     </section>}
   </main>;
 }
@@ -564,6 +565,6 @@ export default function MusicStudioPage({ languages = ["german", "swahili"] }) {
   if (!languages.includes("swahili")) return null;
   return <main className="music-studio music-studio-simple">
     <header className="music-simple-header"><h1>Swahili Music Studio</h1></header>
-    <MusicLyricsVideoStudio swahili />
+    <SwahiliSongDraftWorkspace />
   </main>;
 }
