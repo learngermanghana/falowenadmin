@@ -271,6 +271,13 @@ function ruleForPoint(label = "", assignmentKey = "") {
   if (/weil or denn/.test(value)) return /\b(?:weil|denn)\b/i;
   if (/appearance/.test(value)) return /\b(?:gro[ßs]|klein|haare?|augen|brille|tr[aä]gt|kleidung|blond|schwarz|braun|schlank|sportlich|j[uü]nger|[aä]lter)\b/i;
   if (/personality|behaviour|character/.test(value)) return /\b(?:freundlich|ruhig|geduldig|nett|streng|hilfsbereit|zuverl[aä]ssig|fair|lustig|offen|charakter|verhalten)\b/i;
+  // A2 Day 24 accepts a concrete transport-choice question as a request for
+  // Sandra's preference, even when the learner does not say "Was meinst du?".
+  // Require a question about a journey option; merely naming transport is not enough.
+  if (String(assignmentKey || "").toUpperCase() === "A2-9.24"
+    && /ask sandra for her opinion about destination, transport or accommodation/.test(value)) {
+    return /\\b(?:welch\\w*\\s+verkehrsmittel|(?:wie|was)\\s+(?:fahren|reisen)\\s+wir|(?:auto|zug|bahn|bus|flugzeug)[^?\\n]{0,75}\\boder\\b|(?:lieber|besser)[^?\\n]{0,70}\\b(?:auto|zug|bahn|bus|flugzeug))[^?\\n]{0,115}\\?/i;
+  }
   if (/what you like|what could be better|personal opinion|opinion or preference|friend's opinion|sandra for her opinion|ask alex for his idea/.test(value)) {
     return /\b(?:ich\s+finde|ich\s+mag|mir\s+gef[aä]llt|besser|verbessern|was\s+denkst\s+du|was\s+meinst\s+du|wie\s+findest\s+du|was\s+h[aä]ltst\s+du|deine\s+meinung|idee|empfiehlst\s+du)\b/i;
   }
