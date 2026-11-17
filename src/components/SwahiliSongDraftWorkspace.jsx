@@ -51,7 +51,7 @@ export default function SwahiliSongDraftWorkspace({ active = true }) {
       <label htmlFor="swahili-course-lyrics">Editable Kiswahili lyrics (local draft)</label>
       <textarea id="swahili-course-lyrics" lang="sw" value={lyrics} onChange={event=>saveEdit(event.target.value)} rows={18} maxLength={9000} style={{width:"100%",boxSizing:"border-box"}}/>
       <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:10}}>
-        <button type="button" onClick={()=>navigator.clipboard?.writeText(lyrics).then(()=>setNotice("Lyrics copied."),()=>setNotice("Copy was blocked; select and copy the lyrics manually."))}>Copy lyrics</button>
+        <button type="button" onClick={async()=>{try{if(!navigator.clipboard?.writeText)throw Error("Clipboard unavailable");await navigator.clipboard.writeText(lyrics);setNotice("Lyrics copied.");}catch{setNotice("Copy was blocked; select and copy the lyrics manually.");}}}>Copy lyrics</button>
         <button type="button" onClick={download}>Download lyrics</button>
         <button type="button" onClick={()=>saveEdit(selected.lyrics)}>Restore original draft</button>
       </div>
