@@ -1,6 +1,6 @@
 import { hasCompleteSongTiming } from '../utils/songLyrics.js';
 import { recordedEvidenceRange, recordedSongQuestions } from '../utils/recordedLessonMusic.js';
-import { threeVerifiedNextLyricQuestions } from '../utils/nextLyricQuestions.js';
+import { BINA_NEXT_LYRIC_QUESTIONS, BINA_RECORDING_KEY, threeVerifiedNextLyricQuestions } from '../utils/nextLyricQuestions.js';
 import { useEffect, useRef, useState } from 'react';
 import { getReusableSongDraft } from '../data/reusableMusicSongbook.js';
 import { getReusableMusicQuestions } from '../data/reusableMusicQuestions.js';
@@ -77,7 +77,8 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
   }, [assignmentKey]);
 
   if (!song || !bank || !recording) return null;
-  const questions = nextLyricOnly
+  const useBinaQuestions = nextLyricOnly && recording.objectKey === BINA_RECORDING_KEY;
+  const questions = useBinaQuestions ? BINA_NEXT_LYRIC_QUESTIONS : nextLyricOnly
     ? threeVerifiedNextLyricQuestions(recordingMetadata && {
         ...recordingMetadata, objectKey:recording.objectKey, lyrics:recordedLyrics, cues,
       }, recording)
@@ -173,7 +174,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
       </div> : <div className="published-song-lesson__section published-song-lesson__quiz">
         <div className="published-song-lesson__quizmeta"><strong>FRAGE {questionIndex+1} / {questions.length}</strong><span>{nextLyricOnly?'WAS KOMMT ALS NÄCHSTES?':question.type==='speaking'?'SPRECHEN':'HÖRVERSTEHEN'}</span></div>
         <h3 lang="de">{question.prompt}</h3>
-        {nextLyricOnly && <p>Spiele die Zeile ab, stoppe vor der nächsten und lass die Klasse A, B oder C wählen.</p>}
+        {nextLyricOnly && <p>Spiele den Ausschnitt ab und lass die Klasse A, B oder C wählen.</p>}
         {evidenceRange && <button type="button" className="published-song-lesson__line-preview"
           onClick={()=>playLinePreview(evidenceRange)}>▶ Ausschnitt abspielen</button>}
         {question.type==='speaking'
