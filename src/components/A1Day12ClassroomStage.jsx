@@ -9,7 +9,6 @@ const HOUR_NAMES=['null','ein','zwei','drei','vier','fünf','sechs','sieben','ac
 const Box=({children})=><div className="a1day12-box">{children}</div>;
 function RevealExercise({items,question,displayAnswer}){
   const [i,setI]=useState(0),[revealed,setRevealed]=useState(false);
-  useEffect(()=>{setI(0);setRevealed(false);},[items]);
   return <Box><p>{question}</p><strong className="a1day12-focus">{items[i][0]}</strong>
     {revealed?<p role="status" className="a1day12-answer">{displayAnswer?displayAnswer(items[i][1]):items[i][1]}</p>:<p className="a1day12-muted">Sag zuerst deine Antwort.</p>}
     <div className="a1day12-actions"><button type="button" onClick={()=>setRevealed(x=>!x)}>{revealed?'Antwort verbergen':'Antwort zeigen'}</button>
@@ -73,7 +72,6 @@ function MusicChallenge(){
     {track&&<Box><h2>{track.title}</h2><audio ref={audio} controls preload="none" src={track.src}
       onTimeUpdate={e=>{if(endAt.current!==null&&e.currentTarget.currentTime>=endAt.current){e.currentTarget.pause();endAt.current=null;}}}
       onSeeking={e=>{if(endAt.current!==null&&active&&(e.currentTarget.currentTime<active.start||e.currentTarget.currentTime>=endAt.current))endAt.current=null;}}
-      onPlay={e=>{if(endAt.current===null)return;}}
       onEnded={()=>{endAt.current=null;}}/>
       <p>Spiele das ganze Lied oder einen kurzen Ausschnitt ab.</p></Box>}
     {active?<Box><p>Frage {question+1} / {questions.length}</p>
