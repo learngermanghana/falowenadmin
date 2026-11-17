@@ -4,6 +4,7 @@ import { B1_DAY28_LISTENING } from './b1Day28Listening.js';
 import { A2_DAY23_CLASSROOM_LISTENING } from './a2Day23ClassroomListening.js';
 import { A2_DAY24_CLASSROOM_LISTENING } from './a2Day24ClassroomListening.js';
 import { A2_DAY5_CLASSROOM_LISTENING } from './a2Day5ClassroomListening.js';
+import { A2_DAY6_CLASSROOM_LISTENING } from './a2Day6ClassroomListening.js';
 import { A2_DAY4_CLASSROOM_LISTENING } from './a2Day4ClassroomListening.js';
 import { A2_DAY1_LISTENING } from './a2Day1Listening.js';
 import { A2_DAY2_LISTENING } from './a2Day2Listening.js';
@@ -531,6 +532,16 @@ ENTRIES["A2-2.5"] = {
   title: "Was machst du in deiner Freizeit?",
   warmup: [],
   listening: A2_DAY5_CLASSROOM_LISTENING,
+};
+
+// A2 Day 6: retain the independent published music on slide 2 and add
+// this teacher-supplied, ungraded furniture Hören at the knowledge stage.
+// The existing workbook Teil 4 apartment-ad task is unchanged.
+ENTRIES["A2-3.6"] = {
+  assignmentId: "A2-3.6",
+  title: "Möbel und Räume kennenlernen",
+  warmup: [],
+  listening: A2_DAY6_CLASSROOM_LISTENING,
 };
 
 // The existing A2 Day 24 published music remains slide 2. This separate
