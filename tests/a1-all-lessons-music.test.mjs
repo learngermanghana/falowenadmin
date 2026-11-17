@@ -97,3 +97,23 @@ test('Day 5 player loads discovered audio once; unavailable days retain a visibl
   Object.assign(globalThis,{window:prior.window,document:prior.document,fetch:prior.fetch,IS_REACT_ACT_ENVIRONMENT:prior.act});
  }
 });
+
+test('actual A1 presenter orders workbook grammar, Lesen and speaking for every visible teaching block', async () => {
+ const stagesFor = await loadStageBuilder();
+ for (const slide of getSlidesByCourse('A1').filter(slide => slide.dayNumber > 0)) {
+  const stages = stagesFor(slide, slide.topic);
+  assert.equal(stages[0].id, 'intro', slide.assignmentId);
+  assert.equal(stages[1].grammarTeaching, true, slide.assignmentId);
+  const grammar = stages.filter(stage => stage.grammarTeaching);
+  assert.ok(grammar.length >= 2, slide.assignmentId);
+  assert.ok(grammar.every(stage => stage.items.length >= 2), slide.assignmentId);
+  const readingIndex = stages.findIndex(stage => stage.type === 'reading');
+  assert.ok(readingIndex > grammar.length, slide.assignmentId);
+  const reading = stages[readingIndex];
+  assert.ok(reading.reading.textDe && reading.items.length === 3, slide.assignmentId);
+  assert.equal(reading.reading.answers.length, reading.items.length, slide.assignmentId);
+  const speakingIndex = stages.findIndex(stage => stage.kind === 'mission' || stage.id === 'teil-1');
+  assert.ok(speakingIndex > readingIndex, slide.assignmentId);
+  assert.ok(!stages.some(stage => ['presentation', 'warmup'].includes(stage.id)), slide.assignmentId);
+ }
+});

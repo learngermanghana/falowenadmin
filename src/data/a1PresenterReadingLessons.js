@@ -651,9 +651,49 @@ const A1_READING_LESSONS = Object.freeze({
     ]
   }
 });
+// Supplemental passages for individually openable A1 blocks outside the active
+// curriculum list. These use the same reading renderer and evidence format.
+const A1_SUPPLEMENTAL_READING = {
+  "A1-0.2": {
+    title: "Am Empfang",
+    sentences: ["Die Lehrerin fragt: Wie heißt du?", "Der Schüler sagt: Ich heiße Ben.", "Ben buchstabiert: B – E – N.", "Die Lehrerin schreibt den Namen auf."],
+    checks: [
+      ["Wie heißt der Schüler?", "Ben.", "Satz 2"],
+      ["Welchen Buchstaben sagt Ben zuerst?", "B.", "Satz 3"],
+      ["Was schreibt die Lehrerin auf?", "Den Namen.", "Satz 4"],
+    ],
+  },
+  "A1-1.1": {
+    title: "Zwei neue Schüler",
+    sentences: ["Ich heiße Anna und komme aus Ghana.", "Mein Freund heißt Leo und wohnt in Berlin.", "Wir lernen zusammen Deutsch.", "Am Abend arbeitet Leo."],
+    checks: [
+      ["Woher kommt Anna?", "Aus Ghana.", "Satz 1"],
+      ["Wo wohnt Leo?", "In Berlin.", "Satz 2"],
+      ["Was machen Anna und Leo zusammen?", "Sie lernen Deutsch.", "Satz 3"],
+    ],
+  },
+  "A1-1.1-PRACTICE": {
+    title: "Im Kursraum",
+    sentences: ["Das ist Mia. Sie wohnt in Bonn.", "Der Tisch ist groß. Die Tasche ist klein.", "Mia fragt: Was ist das?", "Ben sagt: Das ist ein Buch."],
+    checks: [
+      ["Wer wohnt in Bonn?", "Mia.", "Satz 1"],
+      ["Wie ist die Tasche?", "Sie ist klein.", "Satz 2"],
+      ["Was zeigt Ben?", "Ein Buch.", "Satz 4"],
+    ],
+  },
+  "A1-14.2": {
+    title: "Hilfe im Kurs",
+    sentences: ["Mia sieht den neuen Schüler vor der Tür.", "Sie hilft dem Schüler mit dem Formular.", "Er dankt Mia und geht in den Kursraum."],
+    checks: [
+      ["Wen sieht Mia?", "Den neuen Schüler.", "Satz 1"],
+      ["Wem hilft Mia?", "Dem Schüler.", "Satz 2"],
+      ["Wem dankt der Schüler?", "Mia.", "Satz 3"],
+    ],
+  },
+};
 export function getA1PresenterReadingLesson(assignmentId = "") {
   const key = String(assignmentId || "").trim().toUpperCase();
-  const source = A1_READING_LESSONS[key];
+  const source = A1_READING_LESSONS[key] || A1_SUPPLEMENTAL_READING[key];
   if (!source) return null;
   return {
     title: source.title,

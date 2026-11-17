@@ -7,11 +7,11 @@ import { getA1GrammarChecks } from "../src/data/a1GrammarChecks.js";
 import { getA1PresenterUnderstandingChecks } from "../src/data/a1PresenterUnderstandingChecks.js";
 import { buildA1PresenterQuestionPool } from "../src/utils/a1PresenterQuestionPool.js";
 
-test("normal A1 Presenter is a grammar diagnostic, while A1-5.9 keeps exam readiness", () => {
+test("normal A1 Presenter teaches workbook grammar, while A1-5.9 keeps exam readiness", () => {
   const source = fs.readFileSync("src/components/A1GrammarPresenter.jsx", "utf8");
 
   assert.match(source, /A1_GRAMMAR_CHECK_FLOW_VERSION = 3/);
-  assert.match(source, /A1 · Grammar check/);
+  assert.match(source, /A1 · Unterricht/);
   assert.match(source, /id: "quick-check"/);
   assert.match(source, /id: "grammar-check"/);
   assert.match(source, /id: "mistake-fix"/);
@@ -24,7 +24,8 @@ test("normal A1 Presenter is a grammar diagnostic, while A1-5.9 keeps exam readi
   assert.doesNotMatch(source, /id: "one-minute-knowledge"/);
 
   assert.match(source, /A1-5\.9/);
-  assert.match(source, /A1 speaking readiness method/);
+  assert.match(source, /Grammatik wiederholen → Lesen → Prüfungsformat/);
+  assert.match(source, /A1_WORKBOOK_GRAMMAR_TEACHING/);
   assert.match(source, /Die drei Teile der A1-Sprechprüfung/);
   assert.match(source, /Is the student ready for the exam\?/);
   assert.match(source, /Task completion: answers or forms exactly what the task asks for/);
@@ -167,7 +168,7 @@ test("A1-5.9 propagates exam-readiness context and distinguishes performance fro
   assert.match(source, /Knowledge check/);
   assert.match(source, /Do not mark an unrelated answer Correct/);
   assert.match(source, /This leaves the exam-readiness live check/);
-  assert.match(source, /stage\.examReadiness \? "A1 · Exam-readiness" : [^\n]+"A1 · Sprechen Teil 3" : "A1 · Grammar check"/);
+  assert.match(source, /stage\.examReadiness \? "A1 · Exam-readiness" : [^\n]+"A1 · Sprechen Teil 3" : "A1 · Unterricht"/);
 });
 
 
