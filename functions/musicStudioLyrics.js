@@ -4,10 +4,11 @@ const { canUseMusicStudio } = require("./musicStudioAccess");
 // One document per lesson. No searches, listeners, background jobs or model calls.
 const COLLECTION = "musicStudioLyrics";
 const KEY_PATTERN = /^(A1|A2|B1|B2|C1|C2)-(?:TUTORIAL|[0-9]+(?:\.[0-9]+)?(?:-PRACTICE)?)$/i;
+const SWAHILI_KEY_PATTERN = /^SWAHILI-(A1|A2|B1)-DAY-(0[1-9]|1[0-9]|2[0-8])$/;
 const fail = (error,status=400) => Object.assign(new Error(error),{status});
 function validKey(value) {
   const key=String(value || "").trim().toUpperCase();
-  if (!KEY_PATTERN.test(key) || key.length > 64) throw fail("Choose a valid course lesson.");
+  if (!(KEY_PATTERN.test(key) || SWAHILI_KEY_PATTERN.test(key)) || key.length > 64) throw fail("Choose a valid course lesson.");
   return key;
 }
 function validLyrics(value) {
@@ -32,9 +33,10 @@ function createLyricsHandlers({db,verifyToken,runtimeConfig={}}) {
       return res.status(401).json({ok:false,error:"Sign in to Falowen Admin."});
     }
     try {
-      if (!await canUseMusicStudio(db, actor, runtimeConfig, "german")) return res.status(403).json({ok:false,error:"German Music Studio access is required."});
       if(req.method !== "GET" && req.method !== "POST")return res.status(405).json({ok:false,error:"Method not allowed."});
       const assignmentKey=validKey(req.method==="GET"?req.query?.assignmentKey:req.body?.assignmentKey);
+      const language=SWAHILI_KEY_PATTERN.test(assignmentKey) ? "swahili" : "german";
+      if (!await canUseMusicStudio(db, actor, runtimeConfig, language)) return res.status(403).json({ok:false,error:`${language === "swahili" ? "Swahili" : "German"} Music Studio access is required.`});
       const ref=db.collection(COLLECTION).doc(assignmentKey);
       if(req.method==="GET"){
         const row=await ref.get();
@@ -42,7 +44,8 @@ function createLyricsHandlers({db,verifyToken,runtimeConfig={}}) {
       }
       const lyrics=validLyrics(req.body?.lyrics);
       const updatedAt=new Date().toISOString();
-      await ref.set({lyrics,updatedAt,publicReference:true},{merge:false});
+      // New Swahili teaching drafts are private until an owner deliberately publishes reviewed audio/timings.
+      await ref.set({lyrics,updatedAt,publicReference:language==="german"},{merge:false});
       return res.json({...publicResponse({lyrics,updatedAt},assignmentKey),saved:true});
     }catch(error){
       return res.status(error.status||503).json({ok:false,error:error.status?error.message:"Could not save lyrics. Please retry manually."});
