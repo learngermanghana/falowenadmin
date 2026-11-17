@@ -19,6 +19,8 @@ import { getA1EverydaySpeaking } from "../data/a1EverydaySpeaking.js";
 import { getPresenterSlidePhoto } from "../utils/presenterSlidePhotos.js";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import PublishedSongLessonStage from "./PublishedSongLessonStage.jsx";
+import A1Day12ClassroomStage from "./A1Day12ClassroomStage.jsx";
+import { A1_DAY12_STAGES } from "../data/a1Day12Classroom.js";
 import { getCuratedMusicByAssignment } from "../data/curatedLessonMusic.js";
 import { getA1PresenterMusicStage } from "../data/a1PresenterMusicStage.js";
 import { getA1Teil3ObjectCard } from "../data/a1Teil3ObjectCards.js";
@@ -125,6 +127,7 @@ function a1TeacherPurpose(stage = {}) {
 
 
 export function stageList(slide, topicLabel) {
+  if (String(slide?.assignmentId || "").trim().toUpperCase() === "A1-8") return A1_DAY12_STAGES;
   const isSpeakingReadiness = String(slide?.assignmentId || "").trim().toUpperCase() === "A1-5.9";
   const isDay15ObjectLesson = String(slide?.assignmentId || "").trim().toUpperCase() === "A1-4.7";
   const support = buildTeacherSlideSupport(slide);
@@ -732,7 +735,9 @@ export default function A1GrammarPresenter({
               </aside>
             </details>
           ) : null}
-          {stage.type === "published-music" ? (
+          {stage.type === "a1-day12" ? (
+            <A1Day12ClassroomStage key={stage.id} step={stage.step} />
+          ) : stage.type === "published-music" ? (
             <PublishedSongLessonStage assignmentKey={slide.assignmentId} courseDay={slide.dayNumber} compact />
           ) : stage.type === "intro" ? (
             <>
