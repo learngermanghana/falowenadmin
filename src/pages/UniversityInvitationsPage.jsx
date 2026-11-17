@@ -3,6 +3,7 @@ import { doc, getDocFromServer, setDoc, Timestamp } from "firebase/firestore";
 import { Navigate } from "react-router-dom";
 import { db } from "../firebase.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import CourseDiscountLinks from "./CourseDiscountLinks.jsx";
 
 const CODE = "UH-KISWAHILI-A1";
 const URL = "https://www.falowen.app/signup?invite=" + CODE;
@@ -14,6 +15,7 @@ function localInputValue(date) {
 
 export default function UniversityInvitationsPage() {
   const { role } = useAuth();
+  const [tab, setTab] = useState("university");
   const [savedExpiry, setSavedExpiry] = useState(null);
   const [expiry, setExpiry] = useState("");
   const [loading, setLoading] = useState(true);
@@ -65,7 +67,11 @@ export default function UniversityInvitationsPage() {
   const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   return <main style={{ maxWidth: 720, margin: "0 auto", padding: 16 }}>
     <h1>Invitations</h1>
-    <section className="card">
+    <nav aria-label="Invitation sections" style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+      <button type="button" aria-pressed={tab === "university"} onClick={() => setTab("university")}>University invitation</button>
+      <button type="button" aria-pressed={tab === "discounts"} onClick={() => setTab("discounts")}>Discount Links</button>
+    </nav>
+    {tab === "discounts" ? <CourseDiscountLinks /> : <section className="card">
       <h2>University of Hamburg · Kiswahili A1</h2>
       <p><a href={URL}>{URL}</a></p>
       <p>This link registers learners for Kiswahili A1. On approval, Falowen assigns the next open Swahili A1 class and starts six months of complimentary access.</p>
@@ -80,6 +86,6 @@ export default function UniversityInvitationsPage() {
       </form>
       {notice && <p role="status">{notice}</p>}
       {error && <p role="alert">{error}</p>}
-    </section>
+    </section>}
   </main>;
 }
