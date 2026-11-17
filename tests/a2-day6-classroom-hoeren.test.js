@@ -1,0 +1,33 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {A2_DAY6_CLASSROOM_AUDIO_KEY,A2_DAY6_CLASSROOM_LISTENING} from '../src/data/a2Day6ClassroomListening.js';
+import {getInteractiveLessonOpening,isInteractiveOpeningStage} from '../src/data/interactiveLessonOpenings.js';
+import {getTeachingSlideById} from '../src/data/teachingSlides.js';
+import {buildTeachingPresenterStages} from '../src/utils/teachingPresenter.js';
+test('A2 Day 6 presenter keeps published music and adds separate Hören from the supplied key',()=>{
+  assert.equal(A2_DAY6_CLASSROOM_AUDIO_KEY,'a2/day-06/mobel-und-raume-kennenlernen.mp3');
+  const lesson=getInteractiveLessonOpening('A2-3.6');
+  assert.equal(lesson?.listening,A2_DAY6_CLASSROOM_LISTENING);
+  assert.equal(lesson.listening.day,6);
+  assert.equal(lesson.listening.level,'A2');
+  assert.equal(isInteractiveOpeningStage('A2-3.6','knowledge'),true);
+  const slide=getTeachingSlideById('a2-day-6-moebel-raeume');
+  assert.equal(slide.assignmentId,'A2-3.6');
+  const stages=buildTeachingPresenterStages(slide,slide.topic);
+  const listen=stages.find(s=>s.id==='knowledge');
+  assert.equal(listen.variant,'interactive-listening');
+  assert.deepEqual(listen.listeningItems,lesson.listening.questions);
+  assert.ok(stages.some(s=>s.id==='music'));
+  assert.equal(slide.workbookConnection.parts.find(p=>p.label.includes('Teil 4')).label,'Teil 4 · Hören');
+});
+test('all five teacher-supplied A2 Day 6 listening answers and evidence remain unchanged',()=>{
+  const prompts=['Wo wohnt Ben jetzt?','Welches Zimmer ist noch sehr leer?','Was sucht Ben für das Wohnzimmer?','Wie sieht das Sofa aus?','Wo steht der Esstisch aktuell?'];
+  const answers=['In Berlin','Das Wohnzimmer','Ein großes Sofa','Grau und bequem','In der Küche'];
+  const indexes=[0,1,2,0,1];
+  const q=A2_DAY6_CLASSROOM_LISTENING.questions;
+  assert.equal(q.length,5);
+  assert.deepEqual(q.map(x=>x.prompt),prompts);
+  assert.deepEqual(q.map(x=>x.correctIndex),indexes);
+  assert.deepEqual(q.map(x=>x.answer),answers);
+  assert.ok(q.every(x=>x.options.length===3&&x.options[x.correctIndex]===x.answer&&x.evidence));
+});
