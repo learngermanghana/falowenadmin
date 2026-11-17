@@ -2,13 +2,6 @@ import { lyricLines, validateLyricCues } from './songLyrics.js';
 
 // Only use lyrics from the exact published MP3 with fully checked cue times.
 // A classroom challenge must never silently derive questions from a songbook draft.
-const SATURDAY_RECORDING = 'music/a1/day-12/Samstag um zehn.mp3';
-const SATURDAY_EXCERPT_ENDINGS = [
-  'Am Samstag habe ich Zeit,',
-  'Anna wartet schon auf mich.',
-  'Oh, oh, wie schön der Tag!',
-];
-
 export function threeVerifiedNextLyricQuestions(pack, recording) {
   if (!pack || !recording || pack.objectKey !== recording.objectKey ||
     typeof pack.lyrics !== 'string' || pack.referenceOnly === true ||
@@ -19,14 +12,14 @@ export function threeVerifiedNextLyricQuestions(pack, recording) {
   const normal = line => String(line).toLocaleLowerCase('de').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
   const counts = new Map();
   for (const line of lines) counts.set(normal(line),(counts.get(normal(line))||0)+1);
-  const saturday = recording.objectKey === SATURDAY_RECORDING;
+  const questionEndings = pack.questionEndings;
   const candidates = [];
   for (let i=0;i<lines.length-1;i++) {
     const current = lines[i];
     const answer = lines[i + 1];
     const answerStart = cues[i + 1].start;
     const end = cues[i].end ?? answerStart;
-    if (saturday && (!SATURDAY_EXCERPT_ENDINGS.includes(current) || answerStart - end < 0.25)) continue;
+    if (questionEndings && !questionEndings.includes(current)) continue;
     if (end > answerStart || current.length < 8 || answer.length < 8 ||
         counts.get(normal(current)) !== 1 || normal(current) === normal(answer)) continue;
     // Include a preceding line when it fits in the excerpt, so the class
@@ -53,48 +46,12 @@ export function threeVerifiedNextLyricQuestions(pack, recording) {
   }
   if (candidates.length < 3) return [];
   const first = candidates.length > 3 && candidates[0].id === 'next-lyric-0' ? 1 : 0;
-  const selected = saturday ? [0, 1, 2] : [first, Math.floor((first + candidates.length - 1) / 2), candidates.length - 1];
-  return selected.map((index, correctIndex) => {
-    const question = candidates[index];
+  const selected = questionEndings
+    ? questionEndings.map(ending => candidates.find(question => question.evidence === ending))
+    : [candidates[first], candidates[Math.floor((first + candidates.length - 1) / 2)], candidates.at(-1)];
+  if (selected.some(question => !question)) return [];
+  return selected.map((question, correctIndex) => {
     question.options.splice(correctIndex, 0, question.answer);
     return {...question, correctIndex};
   });
 }
-
-// These three excerpts use the word timings for the published Day 2 MP3
-// (SHA-256 bff8440f79a18941381e371c2cfdacac4ce0fbbde7aad84c52d0ca8df40740ff).
-// Stop before the continuation starts. The choices use the approved lyrics.
-export const BINA_RECORDING_KEY = 'music/a1/day-02/Ich heiße Bina.mp3';
-
-export const BINA_NEXT_LYRIC_QUESTIONS = [
-  {
-    id: 'bina-school', type: 'listening',
-    prompt: 'Welche Liedzeile kommt als Nächstes?',
-    evidence: 'Wie heißen Sie? Sagen Sie es mir.“',
-    options: ['Ich sage: „Hallo, ich heiße Bina,', 'Ich sage: „In Accra, hier bin ich.“', 'Ich buchstabiere langsam dann.'],
-    correctIndex: 0,
-    answer: 'Ich sage: „Hallo, ich heiße Bina,',
-    previewRange: { start: 31.86, end: 39.70 },
-    continuationRange: { start: 40.52, end: 46.32 },
-  },
-  {
-    id: 'bina-accra', type: 'listening',
-    prompt: 'Welche Liedzeile kommt als Nächstes?',
-    evidence: 'Sie sagt: „Bitte noch einmal Ihren Namen!“',
-    options: ['Ich sage: „In Accra, hier bin ich.“', 'Ich sage langsam: „B – I – N – A.“', 'Sie schreibt meinen Namen auf,'],
-    correctIndex: 1,
-    answer: 'Ich sage langsam: „B – I – N – A.“',
-    previewRange: { start: 82.40, end: 89.86 },
-    continuationRange: { start: 90.16, end: 96.84 },
-  },
-  {
-    id: 'bina-monday', type: 'listening',
-    prompt: 'Welche Liedzeile kommt als Nächstes?',
-    evidence: 'Ihr Deutschkurs beginnt am Montag.“',
-    options: ['So schreibt man meinen Namen!', 'Jetzt kennst du meinen Namen!', 'Ich freue mich, ich bin bald da!'],
-    correctIndex: 2,
-    answer: 'Ich freue mich, ich bin bald da!',
-    previewRange: { start: 90.10, end: 99.88 },
-    continuationRange: { start: 100.38, end: 111.00 },
-  },
-];

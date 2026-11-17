@@ -1,8 +1,9 @@
 // Cues derived from the published MP3s. Unconfirmed vocal fills are omitted.
-function songTiming(objectKey, recordingSha256, lines) {
+function songTiming(objectKey, recordingSha256, lines, questionEndings) {
   return {
     objectKey,
     recordingSha256,
+    questionEndings,
     lyrics: lines.map(([, , de]) => de).join('\n'),
     cues: lines.map(([start, end, text]) => ({start, end, text})),
     englishTranslation: {
@@ -36,6 +37,7 @@ export default {
       [52.56,56.94,"Oh, oh, wie schön der Tag!","Oh, oh, what a lovely day!"],
       [59.97,62.42,"Bis nächsten Samstag!","See you next Saturday!"],
     ],
+    ['„Wann kommst du? Sag mir wann!“', 'Anna wartet schon auf mich.', 'Oh, oh, wie schön der Tag!'],
   ),
   "A1-0.2": songTiming(
     "music/a1/day-02/Ich heiße Bina.mp3",
@@ -74,5 +76,6 @@ export default {
       [143.08,147.26,"Ich heiße Bina, B – I – N – A.","My name is Bina, B – I – N – A."],
       [147.74,150.18,"Oh-oh, und wie heißt du?","Oh-oh, and what's your name?"],
     ],
+    ['Ich möchte einen Deutschkurs machen.', 'Sie sagt: „Bitte noch einmal Ihren Namen!“', 'Ihr Deutschkurs beginnt am Montag.“'],
   ),
 };

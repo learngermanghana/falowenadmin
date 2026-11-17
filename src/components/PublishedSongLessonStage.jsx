@@ -1,6 +1,6 @@
 import { hasCompleteSongTiming } from '../utils/songLyrics.js';
 import { recordedEvidenceRange, recordedSongQuestions } from '../utils/recordedLessonMusic.js';
-import { BINA_NEXT_LYRIC_QUESTIONS, BINA_RECORDING_KEY, threeVerifiedNextLyricQuestions } from '../utils/nextLyricQuestions.js';
+import { threeVerifiedNextLyricQuestions } from '../utils/nextLyricQuestions.js';
 import { useEffect, useRef, useState } from 'react';
 import { getReusableSongDraft } from '../data/reusableMusicSongbook.js';
 import { getReusableMusicQuestions } from '../data/reusableMusicQuestions.js';
@@ -108,19 +108,14 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
   }, [recording?.audioUrl]);
 
   if (!song || !bank || !recording) return null;
-  const useBinaQuestions = nextLyricOnly && recording.objectKey === BINA_RECORDING_KEY &&
-    recordedLyrics === classroomSongTiming['A1-0.2'].lyrics &&
-    recordingMetadata?.timingStatus === 'audio-aligned';
-  const saturdayTiming = classroomSongTiming['A1-8'];
-  // Local timing edits can omit line ends. The classroom excerpts need the
-  // recorded line endings as well as the starts used for lyric highlighting.
-  const quizCues = assignmentKey === 'A1-8' && recording.objectKey === saturdayTiming.objectKey &&
-    recordedLyrics === saturdayTiming.lyrics && recordingMetadata?.timingStatus === 'audio-aligned'
-    ? saturdayTiming.cues : cues;
-  const questions = useBinaQuestions ? BINA_NEXT_LYRIC_QUESTIONS : nextLyricOnly
-    ? threeVerifiedNextLyricQuestions(recordingMetadata && {
-        ...recordingMetadata, objectKey:recording.objectKey, lyrics:recordedLyrics, cues:quizCues,
-      }, recording)
+  const bundledTiming = classroomSongTiming[assignmentKey];
+  const quizPack = bundledTiming && recording.objectKey === bundledTiming.objectKey &&
+    recordedLyrics === bundledTiming.lyrics && recordingMetadata?.timingStatus === 'audio-aligned'
+    ? bundledTiming : recordingMetadata && {
+        ...recordingMetadata, objectKey: recording.objectKey, lyrics: recordedLyrics, cues,
+      };
+  const questions = nextLyricOnly
+    ? threeVerifiedNextLyricQuestions(quizPack, recording)
     : recordedLyrics !== song.lyrics
       ? recordedSongQuestions({objectKey:recording.objectKey,lyrics:recordedLyrics},recording.day,recording.level)
       : bank.questions;
@@ -169,7 +164,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
         {recording.audioUrl
           ? <audio key={recording.objectKey} ref={audio} onTimeUpdate={e=>updatePlayback(e.currentTarget)} onSeeking={e=>{
               const position=e.currentTarget.currentTime;
-              if (previewEnd.current !== null && (position < previewStart.current - 0.05 || position >= previewEnd.current)) cancelPreview();
+              if (previewEnd.current !== null && (position < previewStart.current - 0.05 || position > previewEnd.current)) cancelPreview();
             }} onSeeked={e=>setTime(e.currentTarget.currentTime)} onEnded={()=>{cancelPreview();setTime(-1);}} controls preload="none" src={recording.audioUrl} onError={() => setAudioError('Diese Aufnahme konnte nicht geladen werden. Bitte die R2-Datei und den Falowen-Musiklink prüfen.')} aria-label={song.title}/>
           : <p role="status">{discoveryError || `Die ${recording.level}-Day-${recording.day}-Aufnahme wird in Falowen Music gesucht…`}</p>}
         <a href={musicLink} target="_blank" rel="noopener noreferrer">In Falowen Music öffnen</a>
@@ -216,6 +211,8 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
         <div className="published-song-lesson__quizmeta"><strong>FRAGE {questionIndex+1} / {questions.length}</strong><span>{nextLyricOnly?'WAS KOMMT ALS NÄCHSTES?':question.type==='speaking'?'SPRECHEN':'HÖRVERSTEHEN'}</span></div>
         <h3 lang="de">{question.prompt}</h3>
         {nextLyricOnly && <p>Spiele den Ausschnitt ab und lass die Klasse A, B oder C wählen.</p>}
+        {nextLyricOnly && bundledTiming?.questionEndings.includes(question.evidence) &&
+          <p>Letzte Zeile im Ausschnitt: {question.evidence}</p>}
         {evidenceRange && <button type="button" className="published-song-lesson__line-preview"
           onClick={()=>playLinePreview(evidenceRange)}>▶ Ausschnitt abspielen</button>}
         {question.type==='speaking'

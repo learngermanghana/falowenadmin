@@ -1,22 +1,26 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { getCuratedMusicByAssignment } from '../src/data/curatedLessonMusic.js';
-import { getReusableSongDraft } from '../src/data/reusableMusicSongbook.js';
-import { BINA_NEXT_LYRIC_QUESTIONS, BINA_RECORDING_KEY } from '../src/utils/nextLyricQuestions.js';
-import { lyricLines } from '../src/utils/songLyrics.js';
+import classroomSongTiming from '../src/data/a1ClassroomSongTiming.js';
+import { threeVerifiedNextLyricQuestions } from '../src/utils/nextLyricQuestions.js';
 
-test('Bina has three multi-line previews and separate answer continuations', () => {
-  assert.equal(getCuratedMusicByAssignment('A1-0.2').objectKey, BINA_RECORDING_KEY);
-  const lines = lyricLines(getReusableSongDraft('A1-0.2').lyrics);
-  assert.equal(BINA_NEXT_LYRIC_QUESTIONS.length, 3);
-  for (const { evidence, answer, options, correctIndex, previewRange, continuationRange } of BINA_NEXT_LYRIC_QUESTIONS) {
-    const line = lines.indexOf(evidence);
-    assert.ok(line >= 0, evidence);
-    assert.equal(lines[line + 1], answer);
+test('Bina excerpts end at the displayed line and replay its immediate successor', () => {
+  const pack = classroomSongTiming['A1-0.2'];
+  const recording = getCuratedMusicByAssignment('A1-0.2');
+  assert.equal(recording.objectKey, pack.objectKey);
+  const questions = threeVerifiedNextLyricQuestions(pack, recording);
+  assert.equal(questions.length, 3);
+  assert.equal(questions[0].evidence, 'Ich möchte einen Deutschkurs machen.');
+  assert.equal(questions[0].answer, 'Die Frau sagt freundlich: „Guten Tag!');
+  for (const {evidence, answer, options, correctIndex, previewRange, continuationRange} of questions) {
+    const line = pack.cues.findIndex(cue => cue.text === evidence);
+    assert.equal(pack.cues[line + 1].text, answer);
+    assert.equal(previewRange.end, pack.cues[line].end);
+    assert.equal(continuationRange.start, pack.cues[line + 1].start);
+    assert.equal(continuationRange.end, pack.cues[line + 1].end);
     assert.equal(new Set(options).size, 3);
     assert.equal(options[correctIndex], answer);
-    assert.ok(previewRange.start >= 0 && previewRange.end - previewRange.start >= 7);
-    assert.ok(continuationRange.start >= previewRange.end);
-    assert.ok(continuationRange.end - continuationRange.start >= 5);
+    assert.ok(options.filter(option => option !== answer).every(option =>
+      !pack.cues.some(cue => cue.text === option && cue.start >= previewRange.start && cue.start < previewRange.end)));
   }
 });

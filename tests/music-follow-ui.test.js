@@ -150,9 +150,9 @@ test('A2 Day 25 follows the audio-aligned cues instead of the old estimates', as
   }
 });
 
-for (const [assignmentKey, courseDay, firstAnswer] of [
-  ['A1-0.2', 2, 'Ich sage: „Hallo, ich heiße Bina,'],
-  ['A1-8', 12, 'Um zehn Uhr bin ich bereit.'],
+for (const [assignmentKey, courseDay, firstAnswer, cutoff, continuation] of [
+  ['A1-0.2', 2, 'Die Frau sagt freundlich: „Guten Tag!', 29.8, 31.86],
+  ['A1-8', 12, 'Am Samstag habe ich Zeit,', 7.6, 7.6],
 ]) {
   test(`A1 Day ${courseDay} uses bilingual cues and hides the continuation until students answer`, async () => {
     const dom = new JSDOM('<div id="root"></div>', {url: 'https://admin.falowen.app'});
@@ -196,13 +196,13 @@ for (const [assignmentKey, courseDay, firstAnswer] of [
       });
       const previewEnd = audio.currentTime;
       assert.ok(previewEnd < pack.cues.at(-1).end);
-      if (courseDay === 12) assert.equal(previewEnd, 10.94);
+      assert.equal(previewEnd, cutoff);
       await click(firstAnswer);
       await click('Musterlösung für Lehrkraft zeigen');
       assert.match(document.querySelector('.published-song-lesson__answer').textContent, /Richtig!/);
       await click('Weiterhören');
       assert.ok(audio.currentTime >= previewEnd);
-      if (courseDay === 12) assert.equal(audio.currentTime, 11.34);
+      assert.equal(audio.currentTime, continuation);
     } finally {
       await act(async () => root.unmount());
       w.close();
