@@ -20,6 +20,8 @@ import { getPresenterSlidePhoto } from "../utils/presenterSlidePhotos.js";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import PublishedSongLessonStage from "./PublishedSongLessonStage.jsx";
 import A1Day12ClassroomStage from "./A1Day12ClassroomStage.jsx";
+import A1Day2TeachingStage from "./A1Day2TeachingStage.jsx";
+import { A1_DAY2_LESSON_ID, A1_DAY2_CLASSROOM_STAGES } from "../data/a1Day2Classroom.js";
 import { A1_DAY12_STAGES } from "../data/a1Day12Classroom.js";
 import { getCuratedMusicByAssignment } from "../data/curatedLessonMusic.js";
 import { getA1PresenterMusicStage } from "../data/a1PresenterMusicStage.js";
@@ -127,6 +129,9 @@ function a1TeacherPurpose(stage = {}) {
 
 
 export function stageList(slide, topicLabel) {
+  // A1 lessons are rendered by A1GrammarPresenter, not TeachingSlidePresenter.
+  // Route the combined Day 2 page to its actual twelve teaching stages here.
+  if (slide?.id === A1_DAY2_LESSON_ID) return A1_DAY2_CLASSROOM_STAGES;
   if (String(slide?.assignmentId || "").trim().toUpperCase() === "A1-8") return A1_DAY12_STAGES;
   const isSpeakingReadiness = String(slide?.assignmentId || "").trim().toUpperCase() === "A1-5.9";
   const isDay15ObjectLesson = String(slide?.assignmentId || "").trim().toUpperCase() === "A1-4.7";
@@ -735,7 +740,9 @@ export default function A1GrammarPresenter({
               </aside>
             </details>
           ) : null}
-          {stage.type === "a1-day12" ? (
+          {stage.type === "a1-day2" ? (
+            <A1Day2TeachingStage key={stage.id} step={stage.step} />
+          ) : stage.type === "a1-day12" ? (
             <A1Day12ClassroomStage key={stage.id} step={stage.step} />
           ) : stage.type === "published-music" ? (
             <PublishedSongLessonStage assignmentKey={slide.assignmentId} courseDay={slide.dayNumber} compact />
