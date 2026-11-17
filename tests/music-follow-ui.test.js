@@ -149,3 +149,62 @@ test('A2 Day 25 follows the audio-aligned cues instead of the old estimates', as
     w.close();
   }
 });
+
+for (const [assignmentKey, courseDay, firstAnswer] of [
+  ['A1-0.2', 2, 'Ich sage: „Hallo, ich heiße Bina,'],
+  ['A1-8', 12, 'Am Samstag habe ich Zeit,'],
+]) {
+  test(`A1 Day ${courseDay} uses bilingual cues and hides the continuation until students answer`, async () => {
+    const dom = new JSDOM('<div id="root"></div>', {url: 'https://admin.falowen.app'});
+    const {window: w} = dom;
+    Object.assign(globalThis, {window: w, document: w.document, localStorage: w.localStorage, IS_REACT_ACT_ENVIRONMENT: true});
+    w.matchMedia = () => ({matches: true});
+    w.HTMLElement.prototype.scrollTo = () => {};
+    w.HTMLMediaElement.prototype.play = async function () {
+      this.dispatchEvent(new w.Event('play'));
+    };
+    w.HTMLMediaElement.prototype.pause = () => {};
+    const {default: packs} = await import('../src/data/a1ClassroomSongTiming.js');
+    const pack = packs[assignmentKey];
+    globalThis.fetch = async () => courseDay === 12 ? {ok: false} : {ok: true, json: async () => ({
+      objectKey: pack.objectKey, recordingSha256: pack.recordingSha256,
+      lyrics: 'Older automatic draft.', transcriptionStatus: 'automatic',
+      timingStatus: 'estimated', referenceOnly: true,
+    })};
+    const root = createRoot(document.getElementById('root'));
+    const click = async text => {
+      const button = [...document.querySelectorAll('button')].find(item => item.textContent.includes(text));
+      assert.ok(button, text);
+      await act(async () => button.click());
+    };
+    try {
+      await act(async () => root.render(React.createElement(Published, {assignmentKey, courseDay, nextLyricOnly: true})));
+      await click('2 · Liedtext');
+      assert.equal(document.querySelectorAll('.lesson-song-english').length, pack.cues.length);
+      const audio = document.querySelector('audio');
+      await act(async () => {
+        audio.currentTime = pack.cues[0].start;
+        audio.dispatchEvent(new w.Event('timeupdate'));
+      });
+      assert.equal(document.querySelector('[aria-current="true"]')?.dataset.line, '0');
+      await click('3 · Fragen');
+      assert.equal(document.querySelector('.published-song-lesson__answer'), null);
+      await click('Ausschnitt abspielen');
+      assert.ok(audio.currentTime > 0);
+      await act(async () => {
+        audio.currentTime = pack.cues.at(-1).end;
+        audio.dispatchEvent(new w.Event('timeupdate'));
+      });
+      const previewEnd = audio.currentTime;
+      assert.ok(previewEnd < pack.cues.at(-1).end);
+      await click(firstAnswer);
+      await click('Musterlösung für Lehrkraft zeigen');
+      assert.match(document.querySelector('.published-song-lesson__answer').textContent, /Richtig!/);
+      await click('Weiterhören');
+      assert.ok(audio.currentTime >= previewEnd);
+    } finally {
+      await act(async () => root.unmount());
+      w.close();
+    }
+  });
+}

@@ -12,28 +12,42 @@ export function threeVerifiedNextLyricQuestions(pack, recording) {
   const normal = line => String(line).toLocaleLowerCase('de').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
   const counts = new Map();
   for (const line of lines) counts.set(normal(line),(counts.get(normal(line))||0)+1);
-  const chosen = [];
+  const candidates = [];
   for (let i=0;i<lines.length-1;i++) {
-    const current=lines[i], answer=lines[i+1],start=cues[i]?.start,end=cues[i+1]?.start;
-    if (!Number.isFinite(start) || !Number.isFinite(end) || end<=start ||
-      current.length<8 || answer.length<8 || counts.get(normal(current))!==1 ||
-      normal(current)===normal(answer)) continue;
-    const incorrect=[...new Set(lines.filter((line,j)=>j!==i && j!==i+1
-      && normal(line)!==normal(answer) && normal(line)!==normal(current) && line.length>=8))];
-    if (incorrect.length<2)continue;
-    const correctIndex=chosen.length%3;
-    const options=incorrect.slice(0,2);
-    options.splice(correctIndex,0,answer);
-    chosen.push({
-      id:'next-lyric-'+i,type:'listening',
-      prompt:'Welche Zeile kommt nach „'+current+'“?',
-      options,correctIndex,answer,
-      evidence:current,
-      previewRange:{start,end},
+    const current = lines[i];
+    const answer = lines[i + 1];
+    const answerStart = cues[i + 1].start;
+    const end = cues[i].end ?? answerStart;
+    if (end > answerStart || current.length < 8 || answer.length < 8 ||
+        counts.get(normal(current)) !== 1 || normal(current) === normal(answer)) continue;
+    // Include a preceding line when it fits in the excerpt, so the class
+    // hears the lead-in. The continuation starts at the answer's own cue.
+    const leadIn = i > 0 && end - cues[i - 1].start <= 12 ? i - 1 : i;
+    const start = cues[leadIn].start;
+    const continuationEnd = cues[i + 2]?.start ?? cues[i + 1].end;
+    const incorrect = new Map();
+    for (const line of lines) {
+      const key = normal(line);
+      if (line.length >= 8 && key !== normal(current) && key !== normal(answer)) incorrect.set(key, line);
+      if (incorrect.size === 2) break;
+    }
+    if (incorrect.size < 2 || end <= start) continue;
+    candidates.push({
+      id: 'next-lyric-' + i, type: 'listening',
+      prompt: 'Welche Liedzeile kommt als Nächstes?',
+      options: [...incorrect.values()], answer, evidence: current,
+      previewRange: {start, end},
+      ...(continuationEnd > answerStart ? {continuationRange: {start: answerStart, end: continuationEnd}} : {}),
     });
-    if(chosen.length===3)break;
   }
-  return chosen.length===3?chosen:[];
+  if (candidates.length < 3) return [];
+  const first = candidates.length > 3 && candidates[0].id === 'next-lyric-0' ? 1 : 0;
+  const selected = [first, Math.floor((first + candidates.length - 1) / 2), candidates.length - 1];
+  return selected.map((index, correctIndex) => {
+    const question = candidates[index];
+    question.options.splice(correctIndex, 0, question.answer);
+    return {...question, correctIndex};
+  });
 }
 
 // These three excerpts use the word timings for the published Day 2 MP3
@@ -45,12 +59,12 @@ export const BINA_NEXT_LYRIC_QUESTIONS = [
   {
     id: 'bina-school', type: 'listening',
     prompt: 'Welche Liedzeile kommt als Nächstes?',
-    evidence: 'Ich möchte einen Deutschkurs machen.',
-    options: ['Die Frau sagt freundlich: „Guten Tag!', 'Ich komme aus Ghana, das ist mein Land.', 'Ich buchstabiere langsam dann.'],
+    evidence: 'Wie heißen Sie? Sagen Sie es mir.“',
+    options: ['Ich sage: „Hallo, ich heiße Bina,', 'Ich sage: „In Accra, hier bin ich.“', 'Ich buchstabiere langsam dann.'],
     correctIndex: 0,
-    answer: 'Die Frau sagt freundlich: „Guten Tag!',
-    previewRange: { start: 21.80, end: 29.78 },
-    continuationRange: { start: 31.82, end: 43.82 },
+    answer: 'Ich sage: „Hallo, ich heiße Bina,',
+    previewRange: { start: 31.86, end: 39.70 },
+    continuationRange: { start: 40.52, end: 46.32 },
   },
   {
     id: 'bina-accra', type: 'listening',
@@ -69,7 +83,7 @@ export const BINA_NEXT_LYRIC_QUESTIONS = [
     options: ['So schreibt man meinen Namen!', 'Jetzt kennst du meinen Namen!', 'Ich freue mich, ich bin bald da!'],
     correctIndex: 2,
     answer: 'Ich freue mich, ich bin bald da!',
-    previewRange: { start: 90.10, end: 99.94 },
-    continuationRange: { start: 100.14, end: 111.00 },
+    previewRange: { start: 90.10, end: 99.88 },
+    continuationRange: { start: 100.38, end: 111.00 },
   },
 ];
