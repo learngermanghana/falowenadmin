@@ -1,0 +1,36 @@
+.a1-day2-lesson,.a1-day2-music{width:min(100%,1120px);margin:0 auto;color:#133458;display:grid;gap:18px;font-family:inherit}
+.a1-day2-lesson h1,.a1-day2-music h1{font-size:clamp(28px,3.1vw,46px);line-height:1.14;margin:0;color:#103b73}
+.a1-day2-lesson h2,.a1-day2-music h2{font-size:clamp(21px,2.1vw,32px);margin:0}
+.a1-day2-lesson p,.a1-day2-music p{font-size:clamp(16px,1.5vw,22px);margin:6px 0}
+.a1-day2-card{background:#f4f8ff;border:1px solid #c6d9f5;border-radius:16px;padding:clamp(14px,2.4vw,24px);min-width:0}
+.a1-day2-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.a1-day2-grid .a1-day2-card{display:flex;align-items:center;min-height:105px;justify-content:center;text-align:center}
+.a1-day2-letters{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}
+.a1-day2-letters span{background:#e9f1ff;border:1px solid #b8cfea;border-radius:10px;min-height:67px;display:grid;place-items:center;font-size:clamp(22px,2.8vw,37px);font-weight:800}
+.a1-day2-special{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.a1-day2-special .a1-day2-card{display:grid;gap:10px;text-align:center}
+.a1-day2-special strong{font-size:clamp(38px,5vw,75px)}
+.a1-day2-special span{font-weight:700}
+.a1-day2-lesson table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid #c6d9f5;border-radius:14px;overflow:hidden;font-size:clamp(17px,2vw,27px)}
+.a1-day2-lesson th,.a1-day2-lesson td{padding:12px 22px;border-bottom:1px solid #d9e7fa;text-align:left}
+.a1-day2-lesson tbody tr:nth-child(odd){background:#eff5ff}
+.a1-day2-lesson tbody tr:last-child th,.a1-day2-lesson tbody tr:last-child td{border-bottom:0}
+.a1-day2-lesson button,.a1-day2-music button{background:#1557a3;color:white;border:1px solid #1557a3;border-radius:11px;padding:12px 19px;font:inherit;font-weight:700;cursor:pointer}
+.a1-day2-lesson button:hover,.a1-day2-music button:hover{background:#0a3c78}
+.a1-day2-lesson button:disabled,.a1-day2-music button:disabled{opacity:.5;cursor:not-allowed}
+.a1-day2-options{display:grid;gap:10px;margin:18px 0}
+.a1-day2-options button{text-align:left;background:#fff;color:#133458;border:2px solid #b9cde9}
+.a1-day2-options button.is-selected,.a1-day2-verb-switch button.is-selected{background:#1557a3;color:white}
+.a1-day2-verb-switch,.a1-day2-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.a1-day2-sentences{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.a1-day2-biganswer{font-size:clamp(25px,3vw,42px)!important;letter-spacing:.09em;font-weight:800}
+.a1-day2-dialogue p{padding:9px 0;border-bottom:1px solid #d7e2f2}
+.a1-day2-label{font-size:13px!important;font-weight:800;letter-spacing:.09em;color:#4675ae}
+.a1-day2-music audio{width:100%;margin:15px 0}
+.a1-day2-music .a1-day2-actions a{color:#1557a3;font-weight:700}
+.a1-day2-music blockquote{border-left:5px solid #1557a3;background:white;padding:18px 22px;font-size:clamp(20px,2vw,32px)}
+.a1-day2-chip-row{display:flex;gap:10px;flex-wrap:wrap}
+.a1-day2-chip-row span{padding:10px 15px;border-radius:24px;background:#e1efff;font-size:20px;font-weight:700}
+.a1-day2-lesson ol{padding-left:26px}
+.a1-day2-lesson li{padding-bottom:10px}
+@media(max-width:650px){.a1-day2-grid,.a1-day2-sentences{grid-template-columns:1fr}.a1-day2-special{grid-template-columns:repeat(2,minmax(0,1fr))}.a1-day2-letters{gap:5px}.a1-day2-letters span{min-height:45px}.a1-day2-lesson th,.a1-day2-lesson td{padding:9px 12px}}
