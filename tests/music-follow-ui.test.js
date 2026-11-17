@@ -152,7 +152,7 @@ test('A2 Day 25 follows the audio-aligned cues instead of the old estimates', as
 
 for (const [assignmentKey, courseDay, firstAnswer] of [
   ['A1-0.2', 2, 'Ich sage: „Hallo, ich heiße Bina,'],
-  ['A1-8', 12, 'Am Samstag habe ich Zeit,'],
+  ['A1-8', 12, 'Um zehn Uhr bin ich bereit.'],
 ]) {
   test(`A1 Day ${courseDay} uses bilingual cues and hides the continuation until students answer`, async () => {
     const dom = new JSDOM('<div id="root"></div>', {url: 'https://admin.falowen.app'});
@@ -160,9 +160,7 @@ for (const [assignmentKey, courseDay, firstAnswer] of [
     Object.assign(globalThis, {window: w, document: w.document, localStorage: w.localStorage, IS_REACT_ACT_ENVIRONMENT: true});
     w.matchMedia = () => ({matches: true});
     w.HTMLElement.prototype.scrollTo = () => {};
-    w.HTMLMediaElement.prototype.play = async function () {
-      this.dispatchEvent(new w.Event('play'));
-    };
+    w.HTMLMediaElement.prototype.play = async () => {};
     w.HTMLMediaElement.prototype.pause = () => {};
     const {default: packs} = await import('../src/data/a1ClassroomSongTiming.js');
     const pack = packs[assignmentKey];
@@ -191,17 +189,20 @@ for (const [assignmentKey, courseDay, firstAnswer] of [
       assert.equal(document.querySelector('.published-song-lesson__answer'), null);
       await click('Ausschnitt abspielen');
       assert.ok(audio.currentTime > 0);
+      await act(async () => audio.dispatchEvent(new w.Event('play')));
       await act(async () => {
         audio.currentTime = pack.cues.at(-1).end;
         audio.dispatchEvent(new w.Event('timeupdate'));
       });
       const previewEnd = audio.currentTime;
       assert.ok(previewEnd < pack.cues.at(-1).end);
+      if (courseDay === 12) assert.equal(previewEnd, 10.94);
       await click(firstAnswer);
       await click('Musterlösung für Lehrkraft zeigen');
       assert.match(document.querySelector('.published-song-lesson__answer').textContent, /Richtig!/);
       await click('Weiterhören');
       assert.ok(audio.currentTime >= previewEnd);
+      if (courseDay === 12) assert.equal(audio.currentTime, 11.34);
     } finally {
       await act(async () => root.unmount());
       w.close();
