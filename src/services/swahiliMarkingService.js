@@ -18,7 +18,7 @@ export async function loadSwahiliRoster(cursor) {
 }
 
 export async function loadSwahiliStudentSubmission(uid, day) {
-  return canonicalSwahiliSubmission(await getDoc(doc(db, "users", uid, "swahiliLessons", `day-${day}`)), day);
+  return canonicalSwahiliSubmission(await getDoc(doc(db, "users", uid, "swahiliLessons", submissionDocId(day))), day);
 }
 
 async function loadRosterSubmissions(day, cursor) {
@@ -30,7 +30,7 @@ async function loadRosterSubmissions(day, cursor) {
   };
 }
 
-export async function loadAllSwahiliMarkingPage(cursors = { 1: null, 6: null }) {
+export async function loadAllSwahiliMarkingPage(cursors = { 1: null, 6: null, 28: null }) {
   const pages = await Promise.all(Object.entries(cursors).map(async ([day, cursor]) => ({
     day,
     ...await loadSwahiliMarkingPage(Number(day), cursor),
@@ -45,7 +45,7 @@ export async function loadSwahiliMarkingPage(day, cursor) {
   if (cursor?.rosterCursor) return loadRosterSubmissions(day, cursor.rosterCursor);
   const constraints = [
     where("program", "==", "swahili"),
-    where("lessonId", "==", `swahili-day-${day}`),
+    where("lessonId", "==", submissionLessonId(day)),
     where("status", "==", "submitted"),
     orderBy("submittedAt", "desc"),
   ];
