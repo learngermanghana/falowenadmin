@@ -7,6 +7,7 @@ on:
       - "firestore.rules"
       - ".github/workflows/deploy-shared-dictionary-rules.yml"
       - "scripts/verifyFirestoreRulesBaseline.mjs"
+      - "scripts/deployFirestoreRules.mjs"
   workflow_dispatch:
 
 permissions:
@@ -31,11 +32,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Install Firebase CLI
-        run: npm install --global firebase-tools@14
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_FALOWEN }}"
-      - name: Deploy Firestore rules
-        run: firebase deploy --project "$FIREBASE_PROJECT_ID" --only firestore:rules --force --non-interactive
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: "$FIREBASE_PROJECT_ID"
+      - name: Create and publish Firestore ruleset
+        run: node scripts/deployFirestoreRules.mjs
