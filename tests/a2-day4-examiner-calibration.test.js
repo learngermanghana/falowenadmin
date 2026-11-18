@@ -36,7 +36,7 @@ test("A2 Day 4 still reviews missing task points and large score differences", (
   ], missingTaskPoints: ["Suggest a weekend activity"] };
   assert.equal(a2Day4WritingDeltaThreshold(primary, missing, "A2-2.4"), 10);
   assert.equal(compareExaminerResults(primary, missing).requiresTutorReview, true);
-  assert.equal(a2Day4WritingDeltaThreshold(primary, complete(90, 88), "A2-2.4"), 10);
+  assert.equal(a2Day4WritingDeltaThreshold(primary, complete(91, 88), "A2-2.4"), 10);
   assert.equal(a2Day4WritingDeltaThreshold(primary, complete(87, 88, 0.7), "A2-2.4"), 10);
   assert.equal(a2Day4WritingDeltaThreshold(primary, complete(87, 88), "A2-3.7"), 10);
   assert.equal(a2Day4WritingDeltaThreshold(primary, { ...complete(87, 88), reviewReasons: [{ code: "task_completion_conflict" }] }, "A2-2.4"), 10);
