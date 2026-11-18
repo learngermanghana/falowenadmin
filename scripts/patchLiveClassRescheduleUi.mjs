@@ -19,7 +19,9 @@ function replaceOnce(search, replacement, label, acceptedPatterns = []) {
   changed = true;
 }
 
-if (!source.includes('label: "Wrong date"')) {
+// The extracted editor owns the reason templates, class identity and save result.
+const inlineEditor = !source.includes("<LiveClassSessionEditor");
+if (inlineEditor && !source.includes('label: "Wrong date"')) {
   replaceOnce(
     'const SESSION_CHANGE_REASONS = [\n  { label: "Raining / light out", value: "Class cannot hold because it is raining and the lights are out." },',
     'const SESSION_CHANGE_REASONS = [\n  { label: "Wrong date", value: "This class had the wrong date in the timetable, so the class date has been corrected." },\n  { label: "Raining / light out", value: "Class cannot hold because it is raining and the lights are out." },',
@@ -27,7 +29,7 @@ if (!source.includes('label: "Wrong date"')) {
   );
 }
 
-if (!hasAny([
+if (inlineEditor && !hasAny([
   "classId: dashboard?.klass?.id || dashboard?.klass?.classRecordId || selectedClassId || session.classRecordId || session.classId,",
   "classId: session.classId || dashboard?.klass?.id || selectedClassId,",
   "classId: session.classId || session.classRecordId || dashboard?.klass?.id || selectedClassId,",
@@ -40,7 +42,7 @@ if (!hasAny([
   );
 }
 
-if (!source.includes("const rescheduleResult = await rescheduleSession")) {
+if (inlineEditor && !source.includes("const rescheduleResult = await rescheduleSession")) {
   replaceOnce(
     `        await rescheduleSession(sessionChange.sessionId, {\n          startsAt: new Date(sessionChange.startsAt).toISOString(),\n          endsAt: new Date(endsAt).toISOString(),\n          reason: sessionChange.reason,\n          adminId,\n        });\n        setMessage("Session rescheduled and the attendance session was updated automatically.");`,
     `        const rescheduleResult = await rescheduleSession(sessionChange.sessionId, {\n          startsAt: new Date(sessionChange.startsAt).toISOString(),\n          endsAt: new Date(endsAt).toISOString(),\n          reason: sessionChange.reason,\n          adminId,\n          classId: sessionChange.classId || dashboard?.klass?.id || selectedClassId,\n          className: sessionChange.className || dashboard?.klass?.name || "",\n          timezone: dashboard?.klass?.timezone || "Africa/Accra",\n          durationMinutes: sessionChange.durationMinutes,\n        });\n        const emailNote = rescheduleResult?.emailSubmitted === false ? \` Communication email could not be confirmed: \${rescheduleResult.emailMessage || "check Communication"}\` : "";\n        setMessage(\`Session rescheduled successfully to \${formatDateTime(rescheduleResult?.startsAt || sessionChange.startsAt)}. Attendance was updated automatically.\${emailNote}\`);`,

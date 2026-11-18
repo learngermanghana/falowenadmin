@@ -1,8 +1,8 @@
 import fs from "node:fs";
 
 function replaceOnce(source, search, replacement, label) {
-  if (source.includes(search)) return { source: source.replace(search, replacement), changed: true };
   if (source.includes(replacement)) return { source, changed: false };
+  if (source.includes(search)) return { source: source.replace(search, replacement), changed: true };
   throw new Error(`Could not patch marking score consistency: ${label}`);
 }
 
@@ -46,8 +46,8 @@ let serviceChanged = false;
 
 ({ source: serviceSource, changed: serviceChanged } = replaceOnce(
   serviceSource,
-  `  forceSheetDedupeId = false,\n}) {`,
-  `  forceSheetDedupeId = false,\n  requireAllTargets = false,\n}) {`,
+  `  forceSheetDedupeId = false,\n`,
+  `  forceSheetDedupeId = false,\n  requireAllTargets = false,\n`,
   "saveScoreRow requireAllTargets parameter",
 ));
 

@@ -21,6 +21,7 @@ on:
       - 'src/data/readingPhraseTranslations.js'
       - 'tests/presenter-reading-translation*.js'
       - 'tests/presenter-reading-phrase-coverage.test.js'
+      - 'tests/a2-b1-reading-common-mistakes.test.js'
       - '.github/workflows/reading-translations.yml'
   push:
     branches: [main]
@@ -44,6 +45,7 @@ on:
       - 'src/data/readingPhraseTranslations.js'
       - 'tests/presenter-reading-translation*.js'
       - 'tests/presenter-reading-phrase-coverage.test.js'
+      - 'tests/a2-b1-reading-common-mistakes.test.js'
 jobs:
   reading-translations:
     runs-on: ubuntu-latest

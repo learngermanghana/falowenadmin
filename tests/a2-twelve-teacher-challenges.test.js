@@ -39,7 +39,7 @@ test("A2 selected days replace one practice page; all 28 retain grammar and work
  for (const slide of getSlidesByCourse("A2")) {
   const stages=buildTeachingPresenterStages(slide,slide.topic);
   const ids=stages.map(x=>x.id);
-  const core = stages.filter(s => s.id !== "knowledge" && (s.type !== "workbook-grammar" || s.id === "workbook-grammar"));
+  const core = stages.filter(s => s.id !== "knowledge" && !(slide.assignmentId === "A2-3.6" && s.id.startsWith("two-way-")) && (s.type !== "workbook-grammar" || s.id === "workbook-grammar"));
   const coreIds = core.map(s => s.id);
   assert.equal(core.length,11,slide.assignmentId);
   assert.deepEqual(coreIds.slice(0,6),["intro","warmup","workbook-grammar", "common-mistakes","reading","grammar-check"],slide.assignmentId);

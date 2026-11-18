@@ -35,7 +35,7 @@ test('A1 presenter places the song directly after Common mistakes without modify
   assert.ok(mistakes > 0 && mistakes < song && song < speaking);
   assert.match(src, /getA1PresenterMusicStage\(slide\.assignmentId, slide\.dayNumber\)/);
   assert.match(src, /stage\.type === "published-music"/);
-  assert.match(src, /<PublishedSongLessonStage assignmentKey=\{slide\.assignmentId\} courseDay=\{slide\.dayNumber\} compact/);
+  assert.match(src, /<PublishedSongLessonStage assignmentKey=\{stage\.musicAssignmentKey \|\| slide\.assignmentId\} courseDay=\{slide\.dayNumber\} compact/);
   assert.match(src, /focusMode && !isMusicStage/);
   assert.match(src, /\{!isMusicStage \? <details className="presenter-a1-activity-disclosure">/);
   assert.match(src, /id: "exit-check"/);

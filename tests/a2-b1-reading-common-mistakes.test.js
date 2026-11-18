@@ -27,7 +27,9 @@ test('all 56 lessons have one existing reading and a distinct topic correction p
     const mistakes = stages.find(s => s.id === 'common-mistakes');
     assert.ok(mistakes.items.length >= 2 && mistakes.items.length <= 3);
     assert.equal(ids.indexOf('common-mistakes') + 1, ids.indexOf('reading'));
-    assert.equal(ids.indexOf('reading') + 1, ids.indexOf('grammar-check'));
+    const grammarPages = slide.assignmentId === 'A2-3.6'
+      ? ['two-way-rule', 'two-way-articles', 'two-way-room-picture', 'two-way-transform'] : [];
+    assert.deepEqual(ids.slice(ids.indexOf('reading') + 1, ids.indexOf('grammar-check')), grammarPages, slide.assignmentId);
     for (const item of mistakes.items) {
       assert.notEqual(item.prompt, item.answer);
       assert.ok(item.note.length > 20);
@@ -121,7 +123,6 @@ test('all 56 A2/B1 presenters use the standard music and reading layout',()=>{
     assert.equal(ids[0],'intro',slide.assignmentId);
     assert.equal(ids[1],'warmup',slide.assignmentId);
     assert.equal(ids.indexOf('reading'),ids.indexOf('common-mistakes')+1,slide.assignmentId);
-    assert.equal(ids.indexOf('grammar-check'),ids.indexOf('reading')+1,slide.assignmentId);
     assert.deepEqual(ids.slice(-4),["questions", "workbook-presentation", "workbook", "lesson-summary"],slide.assignmentId);
     assert.equal(stages.filter(x=>x.id==='reading').length,1,slide.assignmentId);
     assert.equal(stages.filter(x=>x.id==='common-mistakes').length,1,slide.assignmentId);

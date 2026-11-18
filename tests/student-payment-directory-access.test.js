@@ -16,7 +16,7 @@ test("Students page restores a discoverable Generate payment link shortcut", () 
 
 test("payment generator and upgrade flow each render only inside the Payments tab", () => {
   const source = read("src/pages/StudentDirectoryPage.jsx");
-  const start = source.indexOf('{tab.id === "payments" && (');
+  const start = source.indexOf('{tab.id === "payments" && !isHamburgCohortStudent(selectedStudent) && (');
   const end = source.indexOf('{tab.id === "class" &&', start);
   assert.ok(start > -1 && end > start, "payment tab must contain the tools ahead of the Class panel");
   const paymentPanel = source.slice(start, end);

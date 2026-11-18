@@ -25,6 +25,7 @@ function preferFirestoreDocumentId(source) {
 }
 
 patchFile(new URL("../src/pages/LiveClassesPageV2.jsx", import.meta.url), (source) => {
+  if (source.includes("<LiveClassSessionEditor")) return source;
   source = replaceOnce(
     source,
     "      classId: session.classId || session.classRecordId || dashboard?.klass?.id || selectedClassId,",

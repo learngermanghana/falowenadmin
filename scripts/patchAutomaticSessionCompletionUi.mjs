@@ -134,6 +134,10 @@ export function resolveSessionChapters`;
 function patchPage() {
   let source = fs.readFileSync(pagePath, "utf8");
 
+  // The current session editor owns its reopen flow and dashboard repair feedback.
+  // Apply the legacy UI migration only to pages using the inline change form.
+  if (source.includes("function openSessionChange(") && source.includes("await reopenSession(")) return;
+
   if (!source.includes("allowAutomaticSessionCompletion,")) {
     source = source.replace(
       "import {\n  cancelSession,",
