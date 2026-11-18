@@ -59,24 +59,22 @@ test("grammar audio is language-aware without changing the existing German Höre
   assert.throws(() => validateSceneRequest({ turns, style: "narrator" }), /Unsupported speech style/);
 });
 
-test("free optimization removes only redundant cue scenes, preserving German and grammar", () => {
+test("free optimization merges German scenes divided only by redundant English cues", () => {
   const original = [
     "EN: The verb lernen means to learn.",
-    "EN: Listen to these German examples.",
     "DE: Ich lerne Deutsch.",
-    "EN: The du form ends with S T.",
-    "EN: Listen to this example.",
+    "EN: Listen to these German examples.",
     "DE: Du lernst Deutsch.",
+    "EN: The du form ends with S T.",
     "[PAUSE 3]",
-    "EN: Complete the sentence.",
     "DE: Wir lernen Deutsch."
-  ].join("\n");
+  ].join("\\n");
   const result = optimizeGrammarAudioScript(original);
   assert.equal(result.saved, 2);
-  assert.equal(result.removed.length, 2);
+  assert.equal(result.removed.length, 1);
   assert.match(result.script, /The du form ends with S T/);
-  assert.match(result.script, /DE: Du lernst Deutsch\./);
-  assert.match(result.script, /\[PAUSE 3\]/);
+  assert.match(result.script, /DE: Du lernst Deutsch\\./);
+  assert.match(result.script, /\\[PAUSE 3\\]/);
   assert.equal(optimizeGrammarAudioScript(result.script).saved, 0);
 });
 
