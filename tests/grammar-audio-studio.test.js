@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { parseGrammarAudioScript, planGrammarAudio, grammarAudioCacheKey, grammarAssemblyPlan } from "../src/utils/grammarAudio.js";
+import { parseGrammarAudioScript, planGrammarAudio, grammarAudioCacheKey, grammarAssemblyPlan, optimizeGrammarAudioScript } from "../src/utils/grammarAudio.js";
 const require = createRequire(import.meta.url);
 const { validateGrammarScriptRequest, validateSceneRequest, buildSpeechPayload } = require("../functions/hoerenStudioApi.js");
 
@@ -57,4 +57,32 @@ test("grammar audio is language-aware without changing the existing German Höre
   assert.equal(legacy.generation_config.speech_config[0].language, "de-DE");
   assert.throws(() => validateSceneRequest({ turns, style: "grammar", language: "fr-FR" }), /English or German/);
   assert.throws(() => validateSceneRequest({ turns, style: "narrator" }), /Unsupported speech style/);
+});
+
+test("free optimization removes only redundant cue scenes, preserving German and grammar", () => {
+  const original = [
+    "EN: The verb lernen means to learn.",
+    "EN: Listen to these German examples.",
+    "DE: Ich lerne Deutsch.",
+    "EN: The du form ends with S T.",
+    "EN: Listen to this example.",
+    "DE: Du lernst Deutsch.",
+    "[PAUSE 3]",
+    "EN: Complete the sentence.",
+    "DE: Wir lernen Deutsch."
+  ].join("\n");
+  const result = optimizeGrammarAudioScript(original);
+  assert.equal(result.saved, 2);
+  assert.equal(result.removed.length, 2);
+  assert.match(result.script, /The du form ends with S T/);
+  assert.match(result.script, /DE: Du lernst Deutsch\./);
+  assert.match(result.script, /\[PAUSE 3\]/);
+  assert.equal(optimizeGrammarAudioScript(result.script).saved, 0);
+});
+
+test("optimizer leaves meaningful language instruction and examples unchanged", () => {
+  const source = "EN: Listen carefully to the difference between O and Ö.\nDE: schon. schön.\nEN: The letter O changes the meaning.";
+  const result = optimizeGrammarAudioScript(source);
+  assert.equal(result.saved, 0);
+  assert.equal(result.script, source);
 });
