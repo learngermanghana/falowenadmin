@@ -7,8 +7,7 @@ import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 
 test("complete A1 Day 2 stays one lesson under speech limits", () => {
   const script = lessonGrammarAudioScript([
-    {course:"A1",day:"Day 2",title:"Deutsches Alphabet"},
-    {course:"A1",day:"Day 2",title:"Personalpronomen und Verbkonjugation"}
+    {course:"A1",day:"Day 2",assignmentId:"A1-0.2_1.1",title:"Alphabet, Personalpronomen und erste Verben"}
   ]);
   const plan = planGrammarAudio(parseGrammarAudioScript(script));
   assert.ok(script.length < 6500);
