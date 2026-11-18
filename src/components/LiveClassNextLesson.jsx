@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { nextTeachingSession } from "../utils/liveClassWorkspace.js";
 
 export default function LiveClassNextLesson({ dashboard, onComplete, onChange, busy }) {
-  const session = nextTeachingSession(dashboard.sessions);
+  const session = nextTeachingSession(dashboard.sessions, new Date(), dashboard.klass);
   const classId = dashboard.klass.id;
   if (!session) return <article className="card"><h2>Next class</h2><p>No remaining class is scheduled. Review the sessions if a lesson needs reopening.</p></article>;
   const attendanceUrl = `/attendance/session/${encodeURIComponent(classId)}?session=${encodeURIComponent(session.id)}`;
