@@ -23,6 +23,7 @@ import B1SustainabilityDecisions from "./B1SustainabilityDecisions.jsx";
 import A2SportMatchmaker from "./A2SportMatchmaker.jsx";
 import InteractiveLessonOpening from "./InteractiveLessonOpening.jsx";
 import A2ApplicationLab from "./A2ApplicationLab.jsx";
+import SwahiliSlideMusic from "./SwahiliSlideMusic.jsx";
 import { MusicVideoStage, MusicReadingStage } from "./MusicTeachingStages.jsx";
 import { isInteractiveOpeningStage } from "../data/interactiveLessonOpenings.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
@@ -940,6 +941,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                 </section>
               ) : null}
             </>
+          ) : stage.type === "swahili-song" ? (
+            <SwahiliSlideMusic key={stage.audio.id} track={stage.audio} />
           ) : isLessonMusicStage ? (
             <LessonSongStage key={`${slide.assignmentId}:${stage.id}`} song={{ ...stage.song, objectKey: stage.song.audioKey }} mode={stage.mode === "speaking" ? "speak" : stage.mode} />
           ) : isMusicVideoStage ? (

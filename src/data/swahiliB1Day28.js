@@ -1,3 +1,5 @@
+import { SWAHILI_MUSIC_TRACKS } from "./swahiliMusicTracks.js";
+
 export const swahiliB1Day28 = {
   "id": "swahili-b1-day-28",
   "course": "SWAHILI",
@@ -224,15 +226,10 @@ export const swahiliB1Day28 = {
     },
     {
       "id": "music",
-      "type": "numbered-list",
-      "title": "Mazingira huanza mlangoni kwetu",
-      "kicker": "Kiswahili B1 · 10.28",
-      "items": [
-        "Mazingira huanza mlangoni kwetu,",
-        "kwa hatua ndogo kila siku.",
-        "Pamoja tunaweza kuleta mabadiliko.",
-        "Ujumbe mkuu wa kiitikio ni upi?"
-      ]
+      "type": "swahili-song",
+      "title": "Mazingira Huanza Na Mimi",
+      "kicker": "Muziki · Kiswahili B1",
+      "audio": SWAHILI_MUSIC_TRACKS.find(track => track.id === "swahili-b1-day-28")
     },
     {
       "id": "workbook",
