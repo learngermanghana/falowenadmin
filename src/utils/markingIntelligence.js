@@ -99,9 +99,18 @@ export function a2Day4WritingDeltaThreshold(primary = {}, secondary = {}, assign
   const primaryScore = numericScore(primary.finalScore ?? primary.score);
   const secondaryScore = numericScore(secondary.finalScore ?? secondary.score);
   if (!completeEvidence(primary) || !completeEvidence(secondary)
-    || primaryScore === null || secondaryScore === null
-    || Math.abs(primaryScore - secondaryScore) > 5) return 10;
-  return 14;
+    || primaryScore === null || secondaryScore === null) return 10;
+  const scoreDelta = Math.abs(primaryScore - secondaryScore);
+  // A2-2.4 is a short invitation with three independently verified task points.
+  // Where both graders independently award strong writing marks and agree on
+  // every point, a language-quality variation up to 17% is not by itself a
+  // reason to hold the learner's result. Never relax this for low writing
+  // marks, missing evidence, explicit review reasons or larger overall gaps.
+  const primaryWriting = readWritingScore(primary);
+  const secondaryWriting = readWritingScore(secondary);
+  if (scoreDelta <= 7 && primaryWriting !== null && secondaryWriting !== null
+    && primaryWriting >= 75 && secondaryWriting >= 75) return 18;
+  return scoreDelta <= 5 ? 14 : 10;
 }
 
 export function compareExaminerResults(primary = {}, secondary = {}, options = {}) {
