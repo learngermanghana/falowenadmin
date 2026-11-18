@@ -14,7 +14,13 @@ export function lessonGrammarAudioScript(lessons) {
     spoken("DE", "Hallo und herzlich willkommen bei Falowen!"),
     spoken("EN", "Welcome to " + title + ". Let's learn today's grammar with short examples."),
   ];
-  const isFullA1Day2 = course === "A1" && day === "Day 2" && selected.length > 1;
+  // The published Day 2 is ONE canonical record (A1-0.2_1.1).
+  // Older retired records are no longer prerequisites for the full narration.
+  const canonicalDay2 = selected.some(item =>
+    String(item.assignmentId || "").trim().toUpperCase() === "A1-0.2_1.1");
+  const legacyDay2Pair = selected.some(item => String(item.assignmentId || "").toUpperCase() === "A1-0.2")
+    && selected.some(item => String(item.assignmentId || "").toUpperCase() === "A1-1.1");
+  const isFullA1Day2 = course === "A1" && day === "Day 2" && (canonicalDay2 || legacyDay2Pair);
   if (isFullA1Day2) {
     lines.push(
       spoken("EN", "First, the German alphabet. It has twenty-six basic letters. Listen to their German names."),
