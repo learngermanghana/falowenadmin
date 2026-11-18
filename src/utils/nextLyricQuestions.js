@@ -22,10 +22,10 @@ export function threeVerifiedNextLyricQuestions(pack, recording) {
     if (questionEndings && !questionEndings.includes(current)) continue;
     if (end > answerStart || current.length < 8 || answer.length < 8 ||
         counts.get(normal(current)) !== 1 || normal(current) === normal(answer)) continue;
-    // Play about seven seconds ending with the evidence line. Never play
+    // Prefer about ten seconds leading into the evidence line. Never play
     // even a fraction of the answer line before learners choose.
-    const MAX_SECONDS = 7.5;
-    const MIN_SECONDS = 4.5;
+    const MAX_SECONDS = 11;
+    const MIN_SECONDS = 8;
     const safeEnd = Math.min(end, answerStart - 0.05);
     if (safeEnd <= cues[i].start || safeEnd - cues[i].start > MAX_SECONDS) continue;
     let leadIn = i;
@@ -34,7 +34,8 @@ export function threeVerifiedNextLyricQuestions(pack, recording) {
       if (duration > MAX_SECONDS) break;
       leadIn = prior;
     }
-    const start = cues[leadIn].start;
+    // Target ten seconds while remaining inside verified lyric cues.
+    const start = Math.max(cues[leadIn].start, safeEnd - 10);
     if (safeEnd - start < MIN_SECONDS) continue;
     const continuationEnd = cues[i + 1].end ?? cues[i + 2]?.start;
     const heard = new Set(lines.slice(leadIn, i + 1).map(normal));
@@ -61,7 +62,14 @@ export function threeVerifiedNextLyricQuestions(pack, recording) {
     : [candidates[first], candidates[Math.floor((first + candidates.length - 1) / 2)], candidates.at(-1)];
   if (selected.some(question => !question)) return [];
   return selected.map((question, correctIndex) => {
-    question.options.splice(correctIndex, 0, question.answer);
-    return {...question, correctIndex};
-  });
+    const options = [...question.options];
+    options.splice(correctIndex, 0, question.answer);
+    // Never render a question unless the immediate next recorded lyric is in
+    // its answer choices exactly once, with two distinct wrong alternatives.
+    const seen = new Set(options.map(normal));
+    if (options.length !== 3 || seen.size !== 3 ||
+        options.filter(option => normal(option) === normal(question.answer)).length !== 1 ||
+        question.previewRange.end >= question.continuationRange?.start) return null;
+    return {...question, options, correctIndex};
+  }).filter(Boolean);
 }
