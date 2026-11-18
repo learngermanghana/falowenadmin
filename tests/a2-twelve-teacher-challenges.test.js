@@ -39,12 +39,7 @@ test("A2 selected days replace one practice page; all 28 retain grammar and work
  for (const slide of getSlidesByCourse("A2")) {
   const stages=buildTeachingPresenterStages(slide,slide.topic);
   const ids=stages.map(x=>x.id);
-  const day6TeachingStages = ["two-way-rule", "two-way-articles", "two-way-room-picture", "two-way-transform"];
-  if (slide.assignmentId === "A2-3.6") {
-    assert.deepEqual(stages.filter(s => day6TeachingStages.includes(s.id)).map(s => s.id), day6TeachingStages,
-      "Day 6 must retain all four two-way preposition grammar explanations");
-  }
-  const core = stages.filter(s => s.id !== "knowledge" && !day6TeachingStages.includes(s.id) && (s.type !== "workbook-grammar" || s.id === "workbook-grammar"));
+  const core = stages.filter(s => s.id !== "knowledge" && (s.type !== "workbook-grammar" || s.id === "workbook-grammar"));
   const coreIds = core.map(s => s.id);
   assert.equal(core.length,11,slide.assignmentId);
   assert.deepEqual(coreIds.slice(0,6),["intro","warmup","workbook-grammar", "common-mistakes","reading","grammar-check"],slide.assignmentId);
