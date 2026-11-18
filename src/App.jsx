@@ -175,7 +175,7 @@ function TopBar() {
                 <Link to="/" onClick={() => setMenuOpen(false)}>Dashboard</Link>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
                 <Link to="/staff" onClick={() => setMenuOpen(false)}>Staff Workspace</Link>
-                <Link to="/shared-dictionary" onClick={() => setMenuOpen(false)}>Shared Dictionary</Link>
+                <Link to="/shared-dictionary" onClick={() => setMenuOpen(false)}>Shared Notes</Link>
                 {role === "admin" && <Link to="/invitations" onClick={() => setMenuOpen(false)}>Invitations</Link>}
                 <Link to="/leads" onClick={() => setMenuOpen(false)}>Leads</Link>
                 <Link to="/exam-file" onClick={() => setMenuOpen(false)}>Goethe Exam File</Link>
@@ -187,7 +187,6 @@ function TopBar() {
                 <Link to="/exam-tracking" onClick={() => setMenuOpen(false)}>Exam Tracking</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
                 <Link to="/marking" onClick={() => setMenuOpen(false)}>Marking</Link>
-                <Link to="/writing-submissions" onClick={() => setMenuOpen(false)}>Writing</Link>
                 <Link to="/student-results" onClick={() => setMenuOpen(false)}>Results</Link>
                 <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
                 <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Slides</Link>
