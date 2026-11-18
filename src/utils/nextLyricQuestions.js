@@ -25,7 +25,7 @@ export function threeVerifiedNextLyricQuestions(pack, recording) {
     // Prefer about ten seconds leading into the evidence line. Never play
     // even a fraction of the answer line before learners choose.
     const MAX_SECONDS = 11;
-    const MIN_SECONDS = 8;
+    const MIN_SECONDS = 7.5;
     const safeEnd = Math.min(end, answerStart - 0.05);
     if (safeEnd <= cues[i].start || safeEnd - cues[i].start > MAX_SECONDS) continue;
     let leadIn = i;
