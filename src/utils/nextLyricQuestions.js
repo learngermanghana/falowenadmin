@@ -58,7 +58,7 @@ export function threeVerifiedNextLyricQuestions(pack, recording) {
     ? questionEndings.map(ending => candidates.find(question => question.evidence === ending))
     : [candidates[first], candidates[Math.floor((first + candidates.length - 1) / 2)], candidates.at(-1)];
   if (selected.some(question => !question)) return [];
-  return selected.map((question, correctIndex) => {
+  const verified = selected.map((question, correctIndex) => {
     const options = [...question.options];
     options.splice(correctIndex, 0, question.answer);
     // Never render a question unless the immediate next recorded lyric is in
@@ -68,5 +68,6 @@ export function threeVerifiedNextLyricQuestions(pack, recording) {
         options.filter(option => normal(option) === normal(question.answer)).length !== 1 ||
         question.previewRange.end >= question.continuationRange?.start) return null;
     return {...question, options, correctIndex};
-  }).filter(Boolean);
+  });
+  return verified.length === 3 && verified.every(Boolean) ? verified : [];
 }
