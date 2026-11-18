@@ -140,6 +140,7 @@ function buildB1CorrectionTeacherGuide(questionDe = "", modelAnswerDe = "") {
 
 export default function TeachingSlidePresenter({ slide, topicLabel, onExit, nextLessonHref = "", nextLessonLabel = "" }) {
   const stages = useMemo(() => {
+    if (slide.classroomStages?.length) return slide.classroomStages;
     if (slide.id === A1_DAY2_LESSON_ID) return A1_DAY2_CLASSROOM_STAGES;
     const curriculumStages = buildTeachingPresenterStages(slide, topicLabel);
     // Keep every original A1 curriculum stage in the source contract for
@@ -155,7 +156,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
     ];
   }, [slide, topicLabel]);
   const presenterShellRef = useRef(null);
-  const presenterV2 = isTeachingPresenterV2Slide(slide);
+  const presenterV2 = Boolean(slide.classroomStages?.length) || isTeachingPresenterV2Slide(slide);
   const advancedClassroom = ["B2", "C1"].includes(String(slide.course || "").toUpperCase());
   const lessonContract = useMemo(() => getA2B1AdminLessonProfileForSlide(slide), [slide]);
   const [reportOpen, setReportOpen] = useState(false);
@@ -1101,7 +1102,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                     {item.example ? <blockquote>{item.example}</blockquote> : null}
                     {item.answer ? (
                       <details>
-                        <summary>{stage.type === "grammar-check" ? "Teacher answer anzeigen" : "Lösung zeigen"}</summary>
+                        <summary>{item.revealLabel || (stage.type === "grammar-check" ? "Teacher answer anzeigen" : "Lösung zeigen")}</summary>
                         <div className="presenter-grammar-check-answer">
                           <strong>{item.answerLabel || "Teacher key"}</strong>
                           <p>{item.answer}</p>

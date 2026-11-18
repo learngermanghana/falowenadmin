@@ -2,7 +2,9 @@ import SwahiliRestaurantSong from "./SwahiliRestaurantSong.jsx";
 import { SWAHILI_DAY_FIVE_ADMIN_LESSON } from "../data/swahiliDayFiveTeachingSlides.js";
 import SwahiliSlideMusic from "./SwahiliSlideMusic.jsx";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import TeachingSlidePresenter from "./TeachingSlidePresenter.jsx";
+import { swahiliB1Day28 } from "../data/swahiliB1Day28.js";
+import { Link, useNavigate } from "react-router-dom";
 import PresenterControls, { PresenterActions, PresenterStageJump } from "./PresenterControls.jsx";
 import SwahiliA2LessonStage from "./SwahiliA2LessonStage.jsx";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
@@ -52,6 +54,7 @@ const dayTenPresenterSlide = Object.freeze({
 });
 
 export default function SwahiliTeachingSlides({ slideId, present = false }) {
+  const navigate = useNavigate();
   const isDayFive = slideId === SWAHILI_DAY_FIVE_ADMIN_LESSON.id;
   const isDaySix = slideId === SWAHILI_DAY_SIX_ADMIN_LESSON.id;
   const isDayTen = slideId === SWAHILI_DAY_TEN_ADMIN_LESSON.id;
@@ -92,7 +95,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
   };
 
   useEffect(() => {
-    if (!slideId || !presenting) return undefined;
+    if (!slideId || slideId === swahiliB1Day28.id || !presenting) return undefined;
     const onKeyDown = (event) => {
       if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
       const target = event.target;
@@ -110,6 +113,11 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [slideId, presenting, index, stages.length]);
 
+  if (slideId === swahiliB1Day28.id) {
+    return <TeachingSlidePresenter slide={swahiliB1Day28} topicLabel={swahiliB1Day28.title}
+      onExit={() => navigate(courseRoot)} />;
+  }
+
   if (slideId && !isDayTen && !isDayFive && slideId !== SWAHILI_DAY_ONE_ADMIN_LESSON.id && slideId !== SWAHILI_DAY_SIX_ADMIN_LESSON.id) {
     return <section className="slides-index"><h1>Lesson not found</h1><Link to={courseRoot}>Back to Swahili</Link></section>;
   }
@@ -118,9 +126,9 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
     return (
       <section className="slides-index swahili-admin-slides">
         <div className="swahili-admin-slides__crumb"><Link to="/teaching-slides?language=swahili">← All languages</Link></div>
-        <p className="slide-meta">Kiswahili · Beginner</p>
+        <p className="slide-meta">Kiswahili</p>
         <h1>Swahili teaching slides</h1>
-        <p>Open the A1 teaching slides for Days 1, 5, 6 and 10.</p>
+        <p>Choose a lesson to present.</p>
         <div className="slide-card-grid">
           <article className="slide-card slide-card-lesson">
             <p className="slide-meta">Day 1 · {stages.length} classroom stages</p>
@@ -156,6 +164,14 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
             <div className="slide-card-actions">
               <Link to={dayTenRoot}>Open lesson</Link>
               <Link to={dayTenRoot + "?present=1"}>Present</Link>
+            </div>
+          </article>
+          <article className="slide-card slide-card-lesson">
+            <p className="slide-meta">B1 · Day 28</p>
+            <h2>{swahiliB1Day28.title}</h2>
+            <p>{swahiliB1Day28.objective}</p>
+            <div className="slide-card-actions">
+              <Link to={courseRoot + "/" + swahiliB1Day28.id + "?present=1"}>Present</Link>
             </div>
           </article>
         </div>
