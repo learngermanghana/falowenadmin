@@ -85,12 +85,29 @@ export default function InteractiveLessonOpening({ stage, slide }) {
         : lesson.listening.level === "A2" && [1, 2, 3, 4, 5, 7, 18, 19, 20, 21, 23, 24, 25, 26].includes(lesson.listening.day)
           ? "https://www.falowen.app/api/course-media/a2/classroom-audio-url"
           : `${AUDIO_API}/course-media/${lesson.listening.level.toLowerCase()}/audio-url`;
-      const response = await fetch(`${audioEndpoint}?${params}`, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${await user.getIdToken()}` },
-        cache: "no-store",
-      });
-      const data = await response.json().catch(() => ({}));
+      const requestSignedAudio = async (endpoint) => {
+        const response = await fetch(`${endpoint}?${params}`, {
+          method: "GET",
+          headers: { Authorization: `Bearer ${await user.getIdToken()}` },
+          cache: "no-store",
+        });
+        const data = await response.json().catch(() => ({}));
+        return { response, data };
+      };
+      let { response, data } = await requestSignedAudio(audioEndpoint);
+      // The Falowen classroom allowlist may lag behind recently uploaded
+      // lesson recordings. Try the existing authenticated Cloud Run signer
+      // only for a missing/invalid classroom route; never expose the R2 key
+      // through a public object URL or bypass staff authentication.
+      const classroomSignerUnavailable = response.status === 404
+        || (response.status === 400 && /invalid .*audio request/i.test(String(data.error || "")));
+      if (lesson.listening.level === "A2" && classroomSignerUnavailable
+          && audioEndpoint.includes("/a2/classroom-audio-url")) {
+        const fallback = await requestSignedAudio(`${AUDIO_API}/course-media/a2/audio-url`);
+        if (fallback.response.ok && fallback.data.url) {
+          ({ response, data } = fallback);
+        }
+      }
       if (!response.ok || !data.url) {
         const reason = response.status === 400 && /invalid .*audio request/i.test(String(data.error || ""))
           ? "Die Audiofreigabe ist auf dem Server noch nicht aktiv. Bitte die API-Bereitstellung prüfen."
