@@ -132,7 +132,7 @@ export default function StaffWorkspacePage() {
             <input type="checkbox" checked={pages.includes(page.id)} onChange={() => togglePage(page.id)} /> {page.label}
             {page.id === "music-analytics" && <small style={{ display: "block", marginLeft: 24 }}>Includes identifiable student music practice activity (names and email addresses).</small>}
           </label>)}
-          <small>Attendance shows the classes assigned to this tutor.</small>
+          <small>Students is read-only. Results allows score and feedback edits. Both use the selected languages. Attendance shows assigned classes.</small>
         </fieldset>
         <fieldset><legend>Language access</legend>{LANGUAGES.map(lang => <label key={lang} style={{ display: "block", margin: "8px 0" }}><input type="checkbox" checked={permissions.includes(lang)} onChange={() => toggle(lang)} /> {lang === "german" ? "German" : "Swahili"}</label>)}</fieldset>
         <button type="submit" disabled={busy || !permissions.length || !pages.length}>{busy ? "Saving…" : "Save staff access"}</button>

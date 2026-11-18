@@ -1,0 +1,36 @@
+name: Deploy Falowen Admin Firestore rules
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "firestore.rules"
+      - ".github/workflows/deploy-shared-dictionary-rules.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: falowenadmin-firestore-rules-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      FIREBASE_PROJECT_ID: falowen-examiner-trainer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Firebase CLI
+        run: npm install --global firebase-tools@14
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_FALOWEN }}"
+      - name: Deploy Firestore rules
+        run: firebase deploy --project "$FIREBASE_PROJECT_ID" --only firestore:rules --force --non-interactive
