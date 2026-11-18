@@ -1184,7 +1184,7 @@ export default function StudentDirectoryPage() {
                               </div>
                             )}
                             {tab.id === "profile" && <StudentLearningStatusPanel student={selectedStudent} />}
-                            {tab.id === "profile" && !isHamburgCohortStudent(selectedStudent) && (
+                            {tab.id === "profile" && !isHamburgCohortStudent(selectedStudent) && !["paid", "partially paid", "partial", "completed", "success"].includes(String(selectedStudent.paymentStatus || selectedStudent.status || "").toLowerCase().replace(/[_-]+/g, " ")) && !["paid", "paidAmount", "amountPaid", "initialPaymentAmount", "tuitionPaid", "totalPaid"].some(field => Number(String(selectedStudent[field] ?? "0").replace(/[^0-9.-]/g, "")) > 0) && (
                               <div className="student-trial-activation" style={{marginBottom:14,padding:12,border:"1px solid #c7d2fe",borderRadius:10}}>
                                 <strong>Trial access</strong>
                                 <p style={{margin:"6px 0",fontSize:13}}>Current trial: {selectedStudent.trialStatus || selectedStudent.status || "Not set"}. Start: {selectedStudent.trialStartedAt ? new Date(selectedStudent.trialStartedAt).toLocaleDateString("en-GB") : "missing"} · Ends: {selectedStudent.trialEndsAt ? new Date(selectedStudent.trialEndsAt).toLocaleDateString("en-GB") : "missing"}.</p>
