@@ -75,7 +75,7 @@ function AnchorRestoreControls({
       <label>Build from next lesson
         <select value={nextLessonNumber} onChange={event => onNextLessonChange(Number(event.target.value))} disabled={busy}>
           <option value={0}>Choose a lesson from the full course</option>
-          {groups.map(group => <option key={group.index} value={group.index + 1}>{group.topic}</option>)}
+          {groups.map(group => <option key={group.index} value={group.index + 1}>{group.topic} · {group.assignmentIds.join(", ")}</option>)}
         </select>
       </label>
       {nextLessonNumber > 0 && <label>Next class date <input type="date" value={nextDate} onChange={event => setNextDate(event.target.value)} disabled={busy} /></label>}
@@ -143,7 +143,7 @@ export default function LiveClassLessonDateRepair() {
       .then((rows) => {
         if (!active) return;
         setClasses(rows);
-        const remembered = window.localStorage.getItem("falowen-live-class-repair-class-id") || "";
+        const remembered = new URLSearchParams(window.location.search).get("classId") || window.localStorage.getItem("falowen-live-class-repair-class-id") || "";
         const nextClassId = rows.some((item) => item.id === remembered) ? remembered : rows[0]?.id || "";
         setClassId(nextClassId);
       })
