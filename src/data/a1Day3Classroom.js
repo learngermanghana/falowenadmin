@@ -29,5 +29,5 @@ export const A1_DAY3_QUIZ = Object.freeze([
   {prompt:'Wir ___ zusammen.',options:['lernt','lernen','lernst'],answer:1,explain:'wir → -en: wir lernen'},
   {prompt:'Ihr ___ heute Deutsch.',options:['lernen','lernt','lernst'],answer:1,explain:'ihr → -t: ihr lernt'},
   {prompt:'Du ___ im Büro.',options:['arbeitst','arbeitest','arbeiten'],answer:1,explain:'arbeiten adds an e: du arbeitest'},
-  {prompt:'Sie ___ Maria.',options:['heißt','heißen','heißest'],answer:0,explain:'er / sie / es → -t: sie heißt'},
+  {prompt:'Meine Schwester ___ Maria.',options:['heißt','heißen','heißest'],answer:0,explain:'er / sie / es → -t: sie heißt'},
 ]);
