@@ -20,9 +20,10 @@ export default function SessionDictionaryPicker({
   entries = [],
   assignmentIds = [],
   disabled = false,
+  initiallyOpen = false,
   onChange,
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initiallyOpen);
   const [search, setSearch] = useState("");
   const selectedIds = useMemo(
     () => canonicalDictionarySelection(entries, assignmentIds),
