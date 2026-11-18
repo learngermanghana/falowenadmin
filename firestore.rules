@@ -431,7 +431,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    /* BEGIN_SHARED_DICTIONARY_EXTENSION */
+    /* BEGIN_ADMIN_RULES_EXTENSION */
+    // Preserve the Admin marking monitor's legacy nested submission layout.
+    match /submissions/{level}/{studentId}/{attemptId} {
+      allow read, write: if isStaff();
+    }
+
     // Shared, staff-only German and Swahili course text and notes.
     function canUseSharedDictionary() {
       return signedIn() && (
@@ -479,7 +484,7 @@ service cloud.firestore {
       allow delete: if canUseSharedDictionary() &&
         (isDictionaryAdmin() || resource.data.authorUid == request.auth.uid);
     }
-    /* END_SHARED_DICTIONARY_EXTENSION */
+    /* END_ADMIN_RULES_EXTENSION */
 
     match /{document=**} {
       allow read, write: if false;
