@@ -85,11 +85,10 @@ export default function InteractiveLessonOpening({ stage, slide }) {
         : lesson.listening.level === "A2" && [1, 2, 3, 4, 5, 7, 18, 19, 20, 21, 23, 24, 25, 26].includes(lesson.listening.day)
           ? "https://www.falowen.app/api/course-media/a2/classroom-audio-url"
           : `${AUDIO_API}/course-media/${lesson.listening.level.toLowerCase()}/audio-url`;
-      const authorization = `Bearer ${await user.getIdToken()}`;
       const requestSignedAudio = async (endpoint) => {
         const response = await fetch(`${endpoint}?${params}`, {
           method: "GET",
-          headers: { Authorization: authorization },
+          headers: { Authorization: `Bearer ${await user.getIdToken()}` },
           cache: "no-store",
         });
         const data = await response.json().catch(() => ({}));
