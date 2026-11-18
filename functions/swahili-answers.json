@@ -98,5 +98,30 @@
         "answer": "Elfu nane"
       }
     }
+  },
+  "swahili-b1-day-28": {
+    "version": 1,
+    "reading": {
+      "read-duty": {
+        "prompt": "Ni kwa nini kutunza mazingira ni jukumu muhimu katika maisha ya kila siku?",
+        "answer": "Kwa sababu mazingira safi na salama huwezesha binadamu na viumbe wengine kuishi kwa afya njema, na husaidia kupunguza mabadiliko ya tabianchi na magonjwa."
+      },
+      "read-waste": {
+        "prompt": "Kulingana na insha, ni njia gani mbili za kushughulikia taka vizuri?",
+        "answer": "Kubali njia zozote mbili kati ya hizi tatu: kupunguza matumizi ya plastiki, kurejeleza taka, au kutenganisha taka za kikaboni na zile zisizooza badala ya kutupa taka ovyo."
+      },
+      "read-trees": {
+        "prompt": "Kupanda miti kuna faida gani mbili zilizotajwa katika maandishi?",
+        "answer": "Hufanya hewa iwe safi na husaidia kuzuia mmomonyoko wa udongo."
+      },
+      "read-energy": {
+        "prompt": "Kutumia nishati kwa busara (kama kuzima umeme) husaidia vipi mazingira?",
+        "answer": "Husaidia kuokoa rasilimali na kupunguza uchafuzi wa hewa."
+      },
+      "read-message": {
+        "prompt": "Insha inasisitiza ujumbe gani mkuu katika hitimisho lake?",
+        "answer": "Inasisitiza kuwa kila kitendo kidogo kina mchango mkubwa, na tukishirikiana tutalinda dunia kwa ajili ya vizazi vya sasa na vijavyo."
+      }
+    }
   }
 }
