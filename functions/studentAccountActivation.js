@@ -81,6 +81,73 @@ async function accountStatus({ db, admin, studentId }) {
   };
 }
 
+
+async function findExistingLogin({ db, admin, studentId }) {
+  const { student } = await readStudent(db, studentId);
+  const email = lower(student.email);
+  if (!validEmail(email)) throw httpError(400, "Save a valid contact email first.");
+  if (clean(student.uid || student.authUid || student.firebaseUid)) {
+    return { ...(await accountStatus({ db, admin, studentId })), linkAvailable: false };
+  }
+  let user;
+  try { user = await admin.auth().getUserByEmail(email); }
+  catch (error) {
+    if (error?.code === "auth/user-not-found") {
+      return { ok: true, studentId, email, uid: null, state: "not_prepared", linkAvailable: false, existingLogin: false };
+    }
+    throw error;
+  }
+  if (user.disabled) throw httpError(409, "This Firebase login is disabled. Review it before linking.");
+  if (lower(user.email) !== email) throw httpError(409, "Firebase login email does not match the saved student email.");
+  const duplicate = await findUidConflicts(db, user.uid, studentId);
+  if (duplicate) throw httpError(409, "This Firebase login is already linked to a different student. Resolve the duplicate first.");
+  const lock = await db.collection("studentAuthLinks").doc(user.uid).get();
+  if (lock.exists && lock.data()?.studentId !== studentId) {
+    throw httpError(409, "This Firebase login is reserved for another student.");
+  }
+  return { ok: true, studentId, email, uid: user.uid, state: loginState(student, user),
+    existingLogin: true, linkAvailable: true, lastSignInAt: user.metadata?.lastSignInTime || null };
+}
+
+async function findUidConflicts(db, uid, studentId) {
+  for (const key of ["uid", "authUid", "firebaseUid"]) {
+    const result = await db.collection("students").where(key, "==", uid).limit(2).get();
+    if (result.docs.some(doc => doc.id !== studentId)) return true;
+  }
+  return false;
+}
+
+async function linkExistingLogin({ db, admin, studentId, actor }) {
+  // An explicit owner action: checking registration never mutates data.
+  const lookup = await findExistingLogin({ db, admin, studentId });
+  if (!lookup.linkAvailable) {
+    if (lookup.uid) return { ...lookup, linked: false };
+    throw httpError(404, "No existing Firebase account matches this student's saved email.");
+  }
+  const studentRef = db.collection("students").doc(studentId);
+  const linkRef = db.collection("studentAuthLinks").doc(lookup.uid);
+  // Recheck identity and legacy aliases before reserving the UID.
+  if (await findUidConflicts(db, lookup.uid, studentId)) {
+    throw httpError(409, "Firebase login is already associated with another student.");
+  }
+  await db.runTransaction(async tx => {
+    const [snap, lock] = await Promise.all([tx.get(studentRef), tx.get(linkRef)]);
+    if (!snap.exists) throw httpError(404, "Student no longer exists.");
+    const record = snap.data() || {};
+    const linkedUid = clean(record.uid || record.authUid || record.firebaseUid);
+    if (linkedUid && linkedUid !== lookup.uid) throw httpError(409, "Student already has a different Firebase UID.");
+    if (lower(record.email) !== lookup.email) throw httpError(409, "Student email changed. Check again before linking.");
+    if (lock.exists && lock.data()?.studentId !== studentId) throw httpError(409, "Firebase login belongs to another student.");
+    tx.set(linkRef, { studentId, email: lookup.email, linkedBy: clean(actor.email || actor.uid),
+      linkedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+    tx.update(studentRef, { uid: lookup.uid, authEmail: lookup.email,
+      accountActivationState: lookup.state, accountLinkedBy: clean(actor.email || actor.uid),
+      accountLinkedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+  });
+  return { ...(await accountStatus({ db, admin, studentId })), linked: true };
+}
+
 async function prepareAccount({ db, admin, studentId, actor }) {
   const { ref, student } = await readStudent(db, studentId);
   const email = lower(student.email);
@@ -169,6 +236,8 @@ function registerStudentAccountActivationRoutes(app, { admin, db, runtimeConfig 
       const studentId = clean(req.params.studentId);
       let result;
       if (operation === "status") result = await accountStatus({ db, admin, studentId });
+      else if (operation === "lookup") result = await findExistingLogin({ db, admin, studentId });
+      else if (operation === "link") result = await linkExistingLogin({ db, admin, studentId, actor });
       else if (operation === "prepare") result = await prepareAccount({ db, admin, studentId, actor });
       else if (operation === "organisation-confirmation") result = { ok: true, ...(await sendOrganisationStudentConfirmation({ db, admin, studentId, runtimeConfig })) };
       else result = await recordInvitation({ db, admin, studentId, actor, runtimeConfig });
@@ -183,6 +252,8 @@ function registerStudentAccountActivationRoutes(app, { admin, db, runtimeConfig 
     }
   }
 
+  app.get("/admin/student-accounts/:studentId/lookup", (req, res) => handle(req, res, "lookup"));
+  app.post("/admin/student-accounts/:studentId/link", (req, res) => handle(req, res, "link"));
   app.get("/admin/student-accounts/:studentId", (req, res) => handle(req, res, "status"));
   app.post("/admin/student-accounts/:studentId/prepare", (req, res) => handle(req, res, "prepare"));
   app.post("/admin/student-accounts/:studentId/invitation-sent", (req, res) => handle(req, res, "invitation"));
@@ -192,6 +263,8 @@ function registerStudentAccountActivationRoutes(app, { admin, db, runtimeConfig 
 module.exports = {
   registerStudentAccountActivationRoutes,
   accountStatus,
+  findExistingLogin,
+  linkExistingLogin,
   prepareAccount,
   recordInvitation,
   validEmail,
