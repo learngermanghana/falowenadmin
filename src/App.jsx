@@ -187,7 +187,6 @@ function TopBar() {
                 <Link to="/exam-tracking" onClick={() => setMenuOpen(false)}>Exam Tracking</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
                 <Link to="/marking" onClick={() => setMenuOpen(false)}>Marking</Link>
-                <Link to="/writing-submissions" onClick={() => setMenuOpen(false)}>Writing</Link>
                 <Link to="/student-results" onClick={() => setMenuOpen(false)}>Results</Link>
                 <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
                 <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Slides</Link>
