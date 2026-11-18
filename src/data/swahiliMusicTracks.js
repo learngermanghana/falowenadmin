@@ -1,5 +1,13 @@
 export const SWAHILI_MUSIC_TRACKS = [
   {
+    id: "swahili-b1-day-28",
+    level: "B1",
+    day: 28,
+    title: "Mazingira Huanza Na Mimi",
+    objectKey: "swahili/music/B1/day-28/Mazingira Huanza Na Mimi.mp3",
+    audioUrl: "https://www.falowen.app/api/music?track=swahili-b1-day-28",
+  },
+  {
     id: "swahili-a1-day-10",
     level: "A1",
     day: 10,
