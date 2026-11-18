@@ -4,7 +4,6 @@ export const STAFF_PAGES = Object.freeze([
   { id: "attendance", label: "Attendance", path: "/attendance" },
   { id: "students", label: "Students", path: "/students" },
   { id: "results", label: "Results", path: "/student-results" },
-  { id: "writing", label: "Writing", path: "/writing-submissions" },
   { id: "music-analytics", label: "Music Analytics", path: "/music-analytics" },
   { id: "shared-dictionary", label: "Shared Dictionary", path: "/shared-dictionary" },
 ]);
@@ -25,7 +24,6 @@ export function isTutorAttendance(path) {
 export function canOpenStaffPage(path, pages) {
   if (path === "/students") return pages.includes("students");
   if (path === "/student-results") return pages.includes("results");
-  if (path === "/writing-submissions" || path.startsWith("/writing-submissions/")) return pages.includes("writing");
   if (path === "/music-analytics") return pages.includes("music-analytics");
   if (path === "/shared-dictionary") return pages.includes("shared-dictionary");
   if (isTutorAttendance(path)) return pages.includes("attendance");
