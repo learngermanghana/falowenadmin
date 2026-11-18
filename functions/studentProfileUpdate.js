@@ -247,7 +247,7 @@ const MANUAL_TRIAL_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 
 function isStudentAlreadyPaid(student = {}) {
   const paymentStatus = String(student.paymentStatus || student.payment_status || "").trim().toLowerCase().replace(/[_-]+/g," ");
-  if (["paid","partially paid","partial","completed","success"].includes(paymentStatus)) return true;
+  if (["paid","partially paid","partial","completed","success"].includes(paymentStatus) || ["paid", "completed"].includes(String(student.status || "").trim().toLowerCase())) return true;
   return ["paid","paidAmount","amountPaid","initialPaymentAmount","tuitionPaid","totalPaid"]
     .some(field => Number(String(student[field] ?? "0").replace(/[^0-9.-]/g,"")) > 0);
 }
