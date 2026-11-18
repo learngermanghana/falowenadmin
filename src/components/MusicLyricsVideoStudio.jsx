@@ -60,10 +60,20 @@ function nameSlug(value) {
 }
 function audioFilenameObjectKey(text) {
   const key=String(text||"").trim();
-  if (SWAHILI_MUSIC_TRACKS.some((track) => track.objectKey === key)) return key;
+  if (/^swahili\/music\/(A1|A2|B1|B2|C1|C2)\/day-(0[1-9]|1[0-9]|2[0-8])\/[^/]{1,150}\.mp3$/.test(key)) return key;
   return /^music\/(a1|a2|b1|b2|c1|c2)\/day-(0[1-9]|1[0-9]|2[0-8])\/[^/]{1,150}\.mp3$/i.test(key) ? key : "";
 }
+// Never mix German and Swahili catalogs or manual R2 sidecars in the same editor.
+export function isMusicKeyForLanguage(key, language) {
+  const normalized = audioFilenameObjectKey(key);
+  if (!normalized) return false;
+  if (language === "swahili") return normalized.startsWith("swahili/music/");
+  if (language === "german") return /^music\/(a1|a2|b1|b2|c1|c2)\/day-/i.test(normalized);
+  return false;
+}
 export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", title = "Falowen Music", level = "", day = "", onOverwriteLyrics = null, savingLyrics = false, loadingLyrics = false, lyricsSaveNotice = "", assignmentKey = "", active = true, swahili = false }) {
+  const assignedLanguage = swahili ? "swahili" : "german";
+  const allowedMusicKey = key => isMusicKeyForLanguage(key, assignedLanguage);
   const [file,setFile] = useState(null);
   const [tracks,setTracks] = useState([]);
   const [publishedTrack,setPublishedTrack] = useState(null);
@@ -375,7 +385,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     if (publishedTrack?.objectKey || timingStatus==="estimated") setTimingStatus(checked.length===lines.length ? "local" : "edited");
     try {
       localStorage.setItem(timingKey,JSON.stringify({lyrics:lyricText,cues:checked,recordingHash:recordingFingerprint || undefined,reviewed:!timingReview}));
-      if(audioFilenameObjectKey(objectKey) && !timingReview){
+      if(allowedMusicKey(objectKey) && !timingReview){
         localStorage.setItem("falowen-song-timing:"+objectKey,JSON.stringify({objectKey,cues:checked}));
         window.dispatchEvent(new CustomEvent("falowen-song-cues-changed",{detail:objectKey}));
       }
@@ -394,7 +404,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     if(savingTiming || exporting || timingReview)return;
     setError("");setMessage("");
     try {
-      const key=audioFilenameObjectKey(objectKey);
+      const key=allowedMusicKey(objectKey) ? audioFilenameObjectKey(objectKey) : "";
       if(!key || !completeCues)throw Error("Choose the exact published MP3 and mark every sung line first.");
       setSavingTiming(true);
       const payload=timedLyricsPack(key,lyricText,cues);
@@ -405,7 +415,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     finally{setSavingTiming(false);}
   }
   function exportLyricsSidecar(){
-    const key=audioFilenameObjectKey(objectKey);
+    const key=allowedMusicKey(objectKey) ? audioFilenameObjectKey(objectKey) : "";
     if(!key || !hasLyrics || !completeCues){setError("Enter the exact R2 MP3 key and mark every lyric line before exporting shared timing.");return;}
     const payload=timedLyricsPack(key,lyricText,cues);
     saveBlob(new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}),
@@ -417,7 +427,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     setLoadingTracks(true);setCatalogError("");setCatalogLoaded(false);
     try {
       if (swahili) {
-        setTracks(SWAHILI_MUSIC_TRACKS);
+        setTracks(SWAHILI_MUSIC_TRACKS.filter(track => allowedMusicKey(track.objectKey)));
         setCatalogLoaded(true);
         return;
       }
@@ -425,7 +435,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       if(!response.ok)throw Error("Could not load the public song catalog.");
       const data=await response.json();
       if (!Array.isArray(data.tracks) || data.ok === false) throw Error("The song catalog is unavailable. Please retry.");
-      setTracks(data.tracks.filter(track=>audioFilenameObjectKey(track.objectKey) &&
+      setTracks(data.tracks.filter(track=>allowedMusicKey(track.objectKey) &&
         track.audioUrl==="https://www.falowen.app/api/music?track="+track.id));
       setCatalogLoaded(true);
     }catch(cause){setCatalogError("Could not load Falowen songs. Check your connection and retry. " + (cause.message || ""));}
@@ -659,7 +669,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
         </div>)}
       </div>
     </div>
-    {!exporting && <SongTimingEditor song={{lyrics:lyricText,objectKey:audioFilenameObjectKey(objectKey)}} audio={audioRef} cues={cues} onSave={saveCues}/>}
+    {!exporting && <SongTimingEditor song={{lyrics:lyricText,objectKey:(allowedMusicKey(objectKey) ? audioFilenameObjectKey(objectKey) : "")}} audio={audioRef} cues={cues} onSave={saveCues}/>}
     {timingReview && completeCues && <div role="group" style={{border:"1px solid #e0c88b",padding:12,borderRadius:12,display:"grid",gap:8}}>
       <strong>Time marks still require listening review</strong>
       <p style={{margin:0,fontSize:13}}>Open the teacher timing editor above, play this uploaded MP3, adjust each sung line and confirm only after you have checked the whole recording. The published R2 timing file stays blocked until then.</p>
@@ -668,7 +678,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
         setTimingStatus("local");
         try{
           localStorage.setItem(timingKey,JSON.stringify({lyrics:lyricText,cues,recordingHash:recordingFingerprint,reviewed:true}));
-          if(audioFilenameObjectKey(objectKey)){
+          if(allowedMusicKey(objectKey)){
             localStorage.setItem("falowen-song-timing:"+objectKey,JSON.stringify({objectKey,cues}));
             window.dispatchEvent(new CustomEvent("falowen-song-cues-changed",{detail:objectKey}));
           }
@@ -680,9 +690,9 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     <div style={{display:"grid",gap:6,border:"1px solid #b5d7ba",borderRadius:12,padding:12}}>
       <strong>Save timing to Falowen Music</strong>
       <p style={{margin:0,fontSize:13}}>When every sung line is marked and reviewed, save directly beside the published MP3 in Cloudflare. No JSON download or manual upload is needed. Your local marks remain available if publishing fails.</p>
-      <button type="button" disabled={savingTiming||exporting||timingReview||!completeCues||!audioFilenameObjectKey(objectKey)}
+      <button type="button" disabled={savingTiming||exporting||timingReview||!completeCues||!allowedMusicKey(objectKey)}
         onClick={publishTimingDirectly}>{savingTiming?"Saving to Cloudflare…":"Save Timing to Falowen · Cloudflare R2"}</button>
-      {!audioFilenameObjectKey(objectKey) && <small>Select a published song or enter its exact R2 MP3 key in the backup section below.</small>}
+      {!allowedMusicKey(objectKey) && <small>Select a published song or enter its exact R2 MP3 key in the backup section below.</small>}
     </div>
     <p style={{margin:0,fontSize:12,color:"#52635e"}}>{completeCues
       ? "The exported video follows each sung line using its saved timing, including the matching English translation when enabled."
@@ -736,7 +746,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
         <input style={fieldStyle} value={objectKey} disabled={exporting} onChange={event=>setObjectKey(event.target.value)}
           placeholder="music/a1/day-13/your-approved-song.mp3" />
       </label>
-      <button type="button" disabled={!audioFilenameObjectKey(objectKey)||!completeCues||exporting||timingReview} onClick={exportLyricsSidecar}>
+      <button type="button" disabled={!allowedMusicKey(objectKey)||!completeCues||exporting||timingReview} onClick={exportLyricsSidecar}>
         Download matching .lyrics.json
       </button>
     </details>

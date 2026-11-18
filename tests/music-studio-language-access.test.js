@@ -35,3 +35,15 @@ test("timing permission endpoint requires a verified token and requested languag
     assert.equal(res.body.ok, expected === 200);
   }
 });
+
+test("music video editor separates German and Swahili song catalogs and sidecars", async () => {
+  const { readFileSync } = await import("node:fs");
+  const video = readFileSync(new URL("../src/components/MusicLyricsVideoStudio.jsx", import.meta.url), "utf8");
+  assert.match(video, /const assignedLanguage = swahili \? "swahili" : "german"/);
+  assert.match(video, /setTracks\(SWAHILI_MUSIC_TRACKS\.filter\(track => allowedMusicKey\(track\.objectKey\)\)\)/);
+  assert.match(video, /setTracks\(data\.tracks\.filter\(track=>allowedMusicKey\(track\.objectKey\)/);
+  assert.match(video, /const key=allowedMusicKey\(objectKey\) \? audioFilenameObjectKey\(objectKey\) : ""/);
+  assert.match(video, /disabled=\{!allowedMusicKey\(objectKey\)/);
+  assert.match(video, /normalized\.startsWith\("swahili\/music\/"\)/);
+  assert.match(video, /if \(language === "german"\)/);
+});
