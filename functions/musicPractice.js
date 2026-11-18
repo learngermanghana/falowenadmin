@@ -4,6 +4,7 @@
 // AI calls, heartbeat writes, per-second events, or scheduled processing.
 const crypto = require('node:crypto');
 const { isStudioOwner } = require('./hoerenStudioApi');
+const { hasCurrentMusicAnalyticsAccess } = require('./musicAnalyticsAccess');
 
 const MAX_DAYS = new Set([1, 7, 30]);
 const TRACK_ID_RE = /^[a-zA-Z0-9_-]{1,245}$/;
@@ -171,9 +172,17 @@ function registerMusicPracticeRoutes({ app, db, verifyToken, fieldValue, runtime
     res.set('Cache-Control', 'private, no-store');
     const user = await authenticate(req);
     if (!user) return res.status(401).json({ ok: false, error: 'Sign in to Falowen Admin.' });
-    const analyticsStaff = user.staff === true && Array.isArray(user.staffPages)
-      && user.staffPages.includes('music-analytics');
-    if (!analyticsStaff && !isStudioOwner(user.uid, runtimeConfig, env)) {
+    const isOwner = isStudioOwner(user.uid, runtimeConfig, env);
+    let analyticsStaff = false;
+    if (!isOwner) {
+      try {
+        analyticsStaff = await hasCurrentMusicAnalyticsAccess(db, user);
+      } catch (error) {
+        console.error('student_music_practice_access_check_failed', { code: error?.code || 'unknown' });
+        return res.status(503).json({ ok: false, error: 'Unable to verify Music Analytics access right now.' });
+      }
+    }
+    if (!analyticsStaff && !isOwner) {
       return res.status(403).json({ ok: false, error: 'Music Analytics access required.' });
     }
     const days = parsePracticeDays(req.query?.days);

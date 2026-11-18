@@ -1,9 +1,10 @@
 'use strict';
 
-// Owner-only read-only GA4 reporting; no per-listen Firestore documents, jobs or AI.
+// Read-only GA4 reporting; no per-listen Firestore documents, jobs or AI.
 // GA4 built-in pagePathPlusQueryString dimension identifies tracks, so no GA custom
 // dimension registration (or paid reporting export) is required.
 const { isStudioOwner } = require('./hoerenStudioApi');
+const { hasCurrentMusicAnalyticsAccess } = require('./musicAnalyticsAccess');
 
 const DAY_OPTIONS = new Set([1, 7, 30]);
 const CACHE_MS = 15 * 60 * 1000;
@@ -191,6 +192,7 @@ function resolveGa4PropertyId(env = process.env) {
 
 function registerMusicAnalyticsRoutes({
   app,
+  db,
   verifyToken,
   runtimeConfig = {},
   getAccessToken = async () => {
@@ -210,9 +212,17 @@ function registerMusicAnalyticsRoutes({
       const decoded = await verifyToken(match[1]);
       uid = decoded?.uid;
       if (!uid) return res.status(401).json({ ok: false, error: 'Invalid admin session.' });
-      const analyticsStaff = decoded?.staff === true && Array.isArray(decoded.staffPages)
-        && decoded.staffPages.includes('music-analytics');
-      if (!analyticsStaff && !isStudioOwner(uid, runtimeConfig, env)) {
+      const isOwner = isStudioOwner(uid, runtimeConfig, env);
+      let analyticsStaff = false;
+      if (!isOwner) {
+        try {
+          analyticsStaff = await hasCurrentMusicAnalyticsAccess(db, decoded);
+        } catch (error) {
+          console.error('music_analytics_access_check_failed', { code: error?.code || 'unknown' });
+          return res.status(503).json({ ok: false, error: 'Unable to verify Music Analytics access right now.' });
+        }
+      }
+      if (!analyticsStaff && !isOwner) {
         return res.status(403).json({ ok: false, error: 'Music Analytics access required.' });
       }
     } catch {

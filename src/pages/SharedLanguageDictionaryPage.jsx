@@ -8,6 +8,7 @@ const LANGUAGES = [
   { id: "swahili", label: "Swahili" },
 ];
 const MAX_TEXT_FILE_BYTES = 500_000;
+const MAX_CONTENT_CHARACTERS = 100_000;
 const cardStyle = { border: "1px solid #dbe3ec", borderRadius: 14, padding: 18, background: "#fff" };
 
 export default function SharedLanguageDictionaryPage() {
@@ -73,6 +74,10 @@ export default function SharedLanguageDictionaryPage() {
     if (file.size > MAX_TEXT_FILE_BYTES) { setError("Text files must be 500 KB or smaller."); return; }
     try {
       const text = await file.text();
+      if (text.length > MAX_CONTENT_CHARACTERS) {
+        setError(`This file contains ${text.length.toLocaleString()} characters. Saved text is limited to ${MAX_CONTENT_CHARACTERS.toLocaleString()} characters; shorten the file and try again.`);
+        return;
+      }
       setContent(text);
       if (!title.trim()) setTitle(file.name.replace(/\.txt$/i, "").slice(0, 160));
       setError(""); setNotice("Text loaded into the editor. Save it to share with the team.");
@@ -132,10 +137,10 @@ export default function SharedLanguageDictionaryPage() {
         <form onSubmit={save} style={{ ...cardStyle, display: "grid", gap: 12 }}>
           <h2 style={{ margin: 0 }}>{editing ? "Edit saved text" : "Add dictionary text or note"}</h2>
           <label>Title<input value={title} onChange={event => setTitle(event.target.value)} maxLength={160} required style={{ display: "block", width: "100%", marginTop: 5, padding: 10, boxSizing: "border-box" }} placeholder="For example: A1 greetings and classroom phrases" /></label>
-          <label>Text<textarea value={content} onChange={event => setContent(event.target.value)} maxLength={100000} rows={10} style={{ display: "block", width: "100%", marginTop: 5, padding: 10, boxSizing: "border-box", font: "inherit" }} placeholder="Type or paste dictionary entries, lesson text, or other course information…" /></label>
+          <label>Text<textarea value={content} onChange={event => setContent(event.target.value)} maxLength={MAX_CONTENT_CHARACTERS} rows={10} style={{ display: "block", width: "100%", marginTop: 5, padding: 10, boxSizing: "border-box", font: "inherit" }} placeholder="Type or paste dictionary entries, lesson text, or other course information…" /></label>
           <label>Note<textarea value={note} onChange={event => setNote(event.target.value)} maxLength={10000} rows={4} style={{ display: "block", width: "100%", marginTop: 5, padding: 10, boxSizing: "border-box", font: "inherit" }} placeholder="Add context or a message for the other staff member…" /></label>
           <label>Load text file (.txt only)<input type="file" accept=".txt,text/plain" onChange={importTextFile} style={{ display: "block", marginTop: 6 }} /></label>
-          <small>Text files up to 500 KB. No documents, images, or other attachments are stored.</small>
+          <small>Plain text only. Files can be up to 500 KB, and saved text can contain up to {MAX_CONTENT_CHARACTERS.toLocaleString()} characters. No documents, images, or other attachments are stored.</small>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><button type="submit" disabled={busy || !title.trim()}>{busy ? "Saving…" : editing ? "Save changes" : "Save to shared dictionary"}</button>{editing && <button type="button" disabled={busy} onClick={resetForm}>Cancel edit</button>}</div>
         </form>
         <section style={{ ...cardStyle, minWidth: 0 }}>
