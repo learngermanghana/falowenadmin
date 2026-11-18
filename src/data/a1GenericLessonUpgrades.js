@@ -4,20 +4,21 @@ import { enhanceA1Days21To24Slide } from "./a1Days21To24Slides.js";
 
 const A1_LESSON_CONTENT_UPGRADES = Object.freeze({
   "A1-3.5": {
-    objective: "Students can read and say common A1 numbers, tell basic times, and give simple prices accurately in short classroom and everyday exchanges.",
-    warmupQuestionsDe: ["Wie viel kostet ein Kaffee bei dir?", "Wie spät ist es jetzt?", "Welche Zahl findest du auf Deutsch schwierig?"],
-    keyPhrasesDe: ["Es kostet zwölf Euro fünfzig.", "Die Bücher kosten vierundzwanzig Euro.", "Es ist halb neun.", "Es ist zehn nach sieben.", "Es ist fünf vor acht."],
-    studentQuestionsDe: ["Wie viel kostet ein Busticket?", "Wie spät beginnt dein Deutschkurs?", "Wie sagst du 32 auf Deutsch?", "Was kostet ein Mittagessen bei dir?"],
-    teacherNotesEn: ["Keep the lesson practical: numbers should always appear inside prices, times or short real-life answers.", "Contrast singular kostet with plural kosten visibly before pair practice.", "Check halb carefully because learners often interpret it from English rather than German clock logic."],
+    title: "A1 Day 13 · Einfache Aussagesätze bilden",
+    topic: "3.5 Einfache Aussagesätze und Fragen bilden",
+    objective: "Students can form simple German statements with the finite verb in position two, and ask and answer yes/no and W-questions.",
+    warmupQuestionsDe: ["Was machst du heute?", "Wo wohnst du?", "Lernst du Deutsch?"],
+    keyPhrasesDe: ["Ich lerne Deutsch.", "Heute lerne ich Deutsch.", "Lernst du Deutsch?", "Wo wohnst du?", "Wann beginnt der Kurs?"],
+    studentQuestionsDe: ["Bilde einen Satz mit lernen.", "Beginne mit Heute: Ich lerne Deutsch.", "Stelle eine Ja-/Nein-Frage mit trinken.", "Stelle eine W-Frage mit wohnen."],
+    teacherNotesEn: ["Show finite verb in position two in statements, including when a time phrase starts the sentence.", "In yes/no questions start with the conjugated verb; W-questions start with question word followed by verb.", "Use picture-supported speaking tasks and ask for complete short answers before revealing models."],
     interactionFlow: [
-      { phase: "Number retrieval", detailEn: "6 min: rapid teacher prompts with prices and two-digit numbers; students say the German form aloud." },
-      { phase: "Clock check", detailEn: "8 min: students read four analogue/digital times and explain halb, vor and nach." },
-      { phase: "Price exchange", detailEn: "10 min: pairs ask Was kostet ...? and answer with realistic prices using kostet or kosten." },
-      { phase: "Mixed transfer", detailEn: "8 min: students combine one time and one price in a short shop or appointment exchange." },
-      { phase: "Correction clinic", detailEn: "12 min: students correct common number, time and kostet/kosten errors in pairs, then explain the correction." },
-      { phase: "Real-life challenge", detailEn: "16 min: mini shop and appointment stations combine a price, a number and a time before a final whole-class check." },
+      { phase: "Visual models", detailEn: "8 min: describe familiar actions using a full subject-verb sentence." },
+      { phase: "Sentence workshop", detailEn: "10 min: reorder cards and check verb-second in normal and time-first statements." },
+      { phase: "Question workshop", detailEn: "12 min: build yes/no questions and W-questions." },
+      { phase: "Partner dialogue", detailEn: "12 min: ask and answer about place, time and everyday activities." },
+      { phase: "Independent practice", detailEn: "8 min: say three statements and ask two different questions without prompts." },
     ],
-    wrapUpTaskDe: "Sage eine Uhrzeit, einen Preis und eine Zahl über 20 korrekt auf Deutsch.",
+    wrapUpTaskDe: "Bilde drei Aussagesätze und zwei Fragen: eine Ja-/Nein-Frage und eine W-Frage.",
   },
   "A1-3.6": {
     objective: "Students can use können, müssen and möchten in simple main clauses to express ability, necessity and polite wishes with the infinitive at the end.",
