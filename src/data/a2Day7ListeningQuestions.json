@@ -1,0 +1,34 @@
+{
+  "mode": "course",
+  "level": "A2",
+  "examPart": "",
+  "title": "Eine Wohnung suchen",
+  "kind": "richtig-falsch",
+  "questions": [
+    {
+      "question": "Die Wohnung in der Bahnhofstraße ist bereits vermietet.",
+      "evidence": "Die Wohnung ist noch frei.",
+      "answer": "Falsch"
+    },
+    {
+      "question": "Der Besichtigungstermin findet am Freitag um halb sieben statt.",
+      "evidence": "Aber um halb sieben habe ich Zeit.",
+      "answer": "Richtig"
+    },
+    {
+      "question": "Die Wohnung hat eine Fläche von vierzig Quadratmetern.",
+      "evidence": "Sie ist vierzig Quadratmeter groß.",
+      "answer": "Richtig"
+    },
+    {
+      "question": "Die Nebenkosten sind nicht in der Miete enthalten.",
+      "evidence": "Die Nebenkosten sind schon inklusive.",
+      "answer": "Falsch"
+    },
+    {
+      "question": "Zur Wohnung gehört ein großer Garten.",
+      "evidence": "Dafür haben Sie aber einen großen Garten.",
+      "answer": "Richtig"
+    }
+  ]
+}
