@@ -31,7 +31,7 @@ const created = await jsonResponse(await fetch(api + '/projects/' + encodeURICom
   body: JSON.stringify({
     source: {
       files: [{ content: rules, name: 'firestore.rules' }],
-      attachment_point: 'firestore.googleapis.com/databases/(default)',
+      attachmentPoint: 'firestore.googleapis.com/databases/(default)',
     },
   }),
 }));
