@@ -51,5 +51,8 @@ test("Music Studio is opt-in even for existing teachers", async () => {
   const { canOpenStaffPage, staffPageIds } = await import("../src/utils/staffPageAccess.js");
   assert.equal(canOpenStaffPage("/music-studio", staffPageIds(undefined, "teacher")), false);
   assert.equal(canOpenStaffPage("/music-studio", staffPageIds(["music-studio"], "teacher")), true);
+  assert.deepEqual(staffPageIds(["music-studio", "attendance"], "teacher"), ["attendance", "music-studio"]);
+  assert.equal(canOpenStaffPage("/music-studio", staffPageIds(["music-analytics"], "teacher")), false);
+  assert.equal(canOpenStaffPage("/music-studio", staffPageIds([], "teacher")), false);
   assert.equal(canOpenStaffPage("/ai-studio", staffPageIds(["music-studio"], "teacher")), false);
 });
