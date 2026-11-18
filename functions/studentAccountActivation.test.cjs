@@ -151,8 +151,7 @@ test("existing signed-in Firebase account can be explicitly linked without a sec
 test("existing UID is never overwritten during explicit link", async () => {
   const f = fixture({ name: "Test Learner", email: "student@example.org", uid: "another-uid" },
     [{ uid: "auth-existing", email: "student@example.org", metadata: {} }]);
-  const lookup = await findExistingLogin({ ...f, studentId: "test-123" });
-  assert.equal(lookup.linkAvailable, false);
-  await assert.rejects(linkExistingLogin({ ...f, studentId: "test-123" }), err => err.status === 404 || err.status === 409);
+  await assert.rejects(findExistingLogin({ ...f, studentId: "test-123" }), err => err.status === 409);
+  await assert.rejects(linkExistingLogin({ ...f, studentId: "test-123" }), err => err.status === 409);
   assert.equal(f.getStudent().uid, "another-uid");
 });
