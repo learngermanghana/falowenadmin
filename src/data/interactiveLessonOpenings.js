@@ -5,6 +5,7 @@ import { B1_DAY28_LISTENING } from './b1Day28Listening.js';
 import { A2_DAY23_CLASSROOM_LISTENING } from './a2Day23ClassroomListening.js';
 import { A2_DAY24_CLASSROOM_LISTENING } from './a2Day24ClassroomListening.js';
 import { A2_DAY5_CLASSROOM_LISTENING } from './a2Day5ClassroomListening.js';
+import { A2_DAY7_LISTENING } from './a2Day7ClassroomListening.js';
 import { A2_DAY4_CLASSROOM_LISTENING } from './a2Day4ClassroomListening.js';
 import { A2_DAY1_LISTENING } from './a2Day1Listening.js';
 import { A2_DAY2_LISTENING } from './a2Day2Listening.js';
@@ -516,6 +517,15 @@ ENTRIES["A2-9.23"] = {
     nextStep: "Danach: Hören zum Schul- und Arbeitsweg · offene Fragen zur Gesprächsaufnahme.",
   },
   listening: A2_DAY23_CLASSROOM_LISTENING,
+};
+
+// Day 7: retain the existing published lesson music on slide 2.
+// Follow it with the teacher-provided private R2 Hören and Richtig/Falsch key.
+ENTRIES["A2-3.7"] = {
+  assignmentId: "A2-3.7",
+  title: "Eine Wohnung suchen",
+  warmup: [],
+  listening: A2_DAY7_LISTENING,
 };
 
 // Day 4: retain the published song on slide 2 and add the private
