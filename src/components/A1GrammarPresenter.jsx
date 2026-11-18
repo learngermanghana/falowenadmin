@@ -134,7 +134,10 @@ export function stageList(slide, topicLabel) {
   // A1 lessons are rendered by A1GrammarPresenter, not TeachingSlidePresenter.
   // Route the combined Day 2 page to its actual twelve teaching stages here.
   if (slide?.id === A1_DAY2_LESSON_ID) return A1_DAY2_CLASSROOM_STAGES;
-  if (String(slide?.assignmentId || "").trim().toUpperCase() === A1_DAY3_ASSIGNMENT) return A1_DAY3_CLASSROOM_STAGES;
+  if (String(slide?.assignmentId || "").trim().toUpperCase() === A1_DAY3_ASSIGNMENT) {
+    const musicStage = getA1PresenterMusicStage(slide.assignmentId, slide.dayNumber);
+    return [...A1_DAY3_CLASSROOM_STAGES, ...(musicStage ? [musicStage] : [])];
+  }
   if (String(slide?.assignmentId || "").trim().toUpperCase() === "A1-8") return A1_DAY12_STAGES;
   const isSpeakingReadiness = String(slide?.assignmentId || "").trim().toUpperCase() === "A1-5.9";
   const isDay15ObjectLesson = String(slide?.assignmentId || "").trim().toUpperCase() === "A1-4.7";
