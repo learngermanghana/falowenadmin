@@ -4,7 +4,7 @@ import { enhanceA1Days21To24Slide } from "./a1Days21To24Slides.js";
 
 const A1_LESSON_CONTENT_UPGRADES = Object.freeze({
   "A1-3.5": {
-    title: "A1 Day 13 · Einfache Aussagesätze bilden",
+    title: "A1 Day 13 · Einfache Aussagesätze und Fragen bilden",
     topic: "3.5 Einfache Aussagesätze und Fragen bilden",
     objective: "Students can form simple German statements with the finite verb in position two, and ask and answer yes/no and W-questions.",
     warmupQuestionsDe: ["Was machst du heute?", "Wo wohnst du?", "Lernst du Deutsch?"],
