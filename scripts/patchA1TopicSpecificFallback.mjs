@@ -44,7 +44,7 @@ if (!presenter.includes("const A1_GRAMMAR_CHECK_FLOW_VERSION = 3;")) {
   throw new Error("A1 topic-specific support requires the grammar-diagnostic presenter.");
 }
 if (!presenter.includes('id: "mini-mission"') || !presenter.includes('id: "listen-respond"') ||
-    !/getA1EverydaySpeaking\((?:slide\.assignmentId|assignmentId(?:\s*===\s*"A1-0\.2_1\.1"\s*\?\s*"A1-1\.1"\s*:\s*assignmentId)?)\)/.test(presenter)) {
+    !presenter.includes("getA1EverydaySpeaking(slide.assignmentId)")) {
   throw new Error("A1 chapter-specific speaking and listening activities are missing.");
 }
 
