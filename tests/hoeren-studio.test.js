@@ -541,6 +541,10 @@ test("Swahili conversation generation and speech stay in the Kiswahili workflow"
   const { buildSwahiliConversationPrompt, validateSwahiliTranscript, buildSpeechPayload, validateSceneRequest } = require("../functions/hoerenStudioApi.js");
   assert.match(buildSwahiliConversationPrompt({ topic: "Sokoni", format: "podcast" }), /two-host podcast/);
   assert.match(buildSwahiliConversationPrompt({ topic: "Sokoni" }), /everyday conversation/);
+  for (const level of ["A1", "A2", "B1"]) {
+    assert.match(buildSwahiliConversationPrompt({ topic: "Mazingira", level }), new RegExp("adult " + level + " learners"));
+  }
+  assert.throws(() => buildSwahiliConversationPrompt({ topic: "Mazingira", level: "C2" }), /Choose A1, A2 or B1/);
   assert.throws(() => buildSwahiliConversationPrompt({ topic: "Sokoni", format: "goethe" }), /Choose a format/);
   assert.throws(() => validateSwahiliTranscript("A: Habari?\nC: Nzuri."), /two-speaker/);
   assert.equal(validateSwahiliTranscript("A: Habari?\nB: Nzuri."), "A: Habari?\nB: Nzuri.");

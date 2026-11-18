@@ -53,7 +53,7 @@ Staff Workspace can grant Students (read-only) and Results (score and feedback c
 
 Staff Workspace can grant Music Studio. Admin authorizes German generation and lyric edits against the staff permission and assigned language. A Swahili-only staff account sees the Swahili lyrics and video tools. The learner timing API checks the recording's catalog language with the Admin authorization endpoint before a staff member can publish a sidecar. Owners retain both workspaces.
 
-The owner Hören Studio's Swahili workspace creates A1 two-person conversations and podcasts, reuses the speech quota and browser audio cache, and exports a transcript, WAV or MP3 for manual upload. German exam controls remain in their own workspace.
+The owner Hören Studio's Swahili workspace uses the selected A1, A2 or B1 course chapter or a custom topic to create level-specific two-person conversations and podcasts, reuses the speech quota and browser audio cache, and exports a transcript, WAV or MP3 for manual upload. German exam controls remain in their own workspace.
 
 ## Kiswahili A1 Day 5
 
