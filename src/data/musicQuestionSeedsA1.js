@@ -195,10 +195,10 @@ export const MUSIC_QUESTION_SEEDS_A1 = Object.freeze([
   ],
   [
     "A1-13",
-    "Warum sagt die Person das Treffen mit Mia ab?",
-    "Weil es stark regnet und draußen kalt ist.",
-    "Wann möchten Mia und die Person sich stattdessen treffen?",
-    "Morgen um drei Uhr.",
+    "Warum sagt die Sängerin das Treffen mit Bina ab?",
+    "Weil das Wetter schlecht ist und es regnet.",
+    "Wann wollen Bina und die Sängerin sich stattdessen treffen?",
+    "Am Freitag.",
     "Wie sagst du ein Treffen höflich ab?"
   ],
   [

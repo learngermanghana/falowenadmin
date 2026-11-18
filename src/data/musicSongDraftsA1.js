@@ -170,9 +170,9 @@ export const MUSIC_SONG_DRAFTS_A1 = Object.freeze([
   },
   {
     "assignmentKey": "A1-13",
-    "title": "Heute kann ich leider nicht",
+    "title": "Bina, tut mir leid",
     "musicStyle": "Warm German Pop · Acoustic Guitar · Soft Piano · Gentle Afrobeat · One Singer. Adult melodic German-pop with a warm lead voice, mellow guitar, soft piano, gentle Afrobeat groove and expressive rising choruses. Preserve the finished song as recorded; no need to regenerate audio.",
-    "lyrics": "[Verse 1]\nHeute ist das Wetter schlecht,\nDer Himmel ist grau, es regnet stark.\nIch möchte Mia im Park treffen,\nDoch draußen ist es nass und kalt.\n\nIch schaue auf mein Handy,\nUnd rufe meine Freundin an.\nIch sage: „Mia, es tut mir leid,\nHeute kann ich leider nicht.“\n\n[Chorus]\nEs regnet, es regnet, der Wind ist kalt,\nIch bleibe heute lieber zu Haus.\nDie Sonne scheint nicht, der Himmel ist grau,\nIch gehe heute nicht mehr raus.\n\nKönnen wir uns morgen treffen?\nVielleicht scheint dann die Sonne.\nHeute muss ich leider absagen,\nDoch morgen habe ich Zeit.\n\n[Verse 2]\nAm Nachmittag kommt ein Gewitter,\nEs blitzt und donnert draußen.\nIch mache meine Fenster zu,\nUnd trinke einen warmen Tee.\n\nAm Abend wird der Regen weniger,\nIch schaue noch einmal hinaus.\nMia schreibt: „Morgen um drei?“\nIch antworte: „Ja, das passt mir gut!“\n\n[Chorus]\nEs regnet, es regnet, der Wind ist kalt,\nIch bleibe heute lieber zu Haus.\nDie Sonne scheint nicht, der Himmel ist grau,\nIch gehe heute nicht mehr raus.\n\nKönnen wir uns morgen treffen?\nVielleicht scheint dann die Sonne.\nHeute muss ich leider absagen,\nDoch morgen habe ich Zeit.\n\n[Outro]\nAm nächsten Tag scheint die Sonne,\nDer Himmel ist wieder blau.\nIch treffe Mia um drei im Park,\nUnd freue mich auf den Tag.",
+    "lyrics": "[Verse 1]\nHeute treffe ich Bina, doch der Himmel ist grau.\nJa, es regnet, ich bleibe heut zu Haus.\n\n[Chorus]\nOh Bina, tut mir leid.\nHmm, hmm, keine Zeit.\nHmm, hmm, das Wetter ist nicht gut.\nHmm, yeah, alles gut.\n\n[Verse 2]\nIch rufe Bina an und sage: Heute nicht.\nYeah, am Freitag vielleicht bei Sonnenlicht.\n\n[Chorus]\nOh Bina, tut mir leid.\nHmm, hmm, keine Zeit.\nHmm, hmm, das Wetter ist nicht gut.\nHmm, alles gut.\n\n[Outro]\nHey, der Regen fällt.\nHmm, bis Freitag dann.",
     "genre": "Warm German Pop"
   },
   {
