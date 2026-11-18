@@ -247,9 +247,11 @@ function OwnerStudioRoute({ lesson = false }) {
 }
 
 function MusicStudioRoute() {
-  const { user, loading, isStaff, staffLanguages } = useAuth();
+  const { user, loading, isStaff, staffLanguages, staffPages } = useAuth();
   const ownerUid = String(import.meta.env.VITE_HOEREN_STUDIO_OWNER_UID || "").trim();
-  if (!loading && user && !isStaff && (!ownerUid || user.uid !== ownerUid)) return <Navigate to="/" replace />;
+  if (!loading && user && (isStaff ? !staffPages.includes("music-studio") : (!ownerUid || user.uid !== ownerUid))) {
+    return <Navigate to={isStaff ? staffHomePath(staffPages, staffLanguages) : "/"} replace />;
+  }
   const languages = isStaff ? staffLanguages || [] : ["german", "swahili"];
   return <ProtectedRoute>
     {languages.length ? <MusicStudioPage key={languages.join("+")} languages={languages} /> :
