@@ -4,7 +4,7 @@ import {threeVerifiedNextLyricQuestions} from "../src/utils/nextLyricQuestions.j
 
 const lines=Array.from({length:16},(_,i)=>"Hier ist die einzigartige Zeile "+String(i+1)+".");
 const cues=lines.map((text,i)=>({text,start:i*3,end:i*3+2.8}));
-const pack={objectKey:"music/a1/day-99/verified.mp3",lyrics:lines.join("\n"),cues,timingStatus:"audio-aligned",transcriptionStatus:"reviewed",referenceOnly:false};
+const pack={questionEndings:[lines[7],lines[10],lines[13]],objectKey:"music/a1/day-99/verified.mp3",lyrics:lines.join("\n"),cues,timingStatus:"audio-aligned",transcriptionStatus:"reviewed",referenceOnly:false};
 const recording={objectKey:pack.objectKey};
 
 test("next-lyric quiz leads in for approximately ten seconds and never leaks the answer",()=>{
