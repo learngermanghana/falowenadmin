@@ -55,6 +55,8 @@ Staff Workspace can grant Music Studio. Admin authorizes German generation and l
 
 The owner Hören Studio's Swahili workspace creates A1 two-person conversations and podcasts, reuses the speech quota and browser audio cache, and exports a transcript, WAV or MP3 for manual upload. German exam controls remain in their own workspace.
 
+**Swahili marking queue visibility (15 November 2026):** Like the German Marking submission queue, the Swahili Submissions tab now lists only actionable, unreviewed work. The learner's `swahiliLessons` document remains untouched, and completed feedback/score lives in the existing Swahili review and Campus Results flow rather than a duplicate “Already marked” view. On page load, refresh or pagination, Admin reads only review status for the currently loaded submissions from `swahiliTeacherReviews` and removes entries with a current-version `reviewed` or `needs_revision` decision. Upon a successful tutor save, that submission immediately disappears from the marking queue. A newer learner submission whose `submittedAt` version differs from the stored `submissionVersion` returns to the pending queue. Missing/failed review status reads remain visible, with a warning, rather than incorrectly hiding work. No new indexed query, worker, archive or background polling is introduced; manual marking remains an explicit learner lookup.
+
 ## Kiswahili A1 Day 5
 
 Kiswahili A1 Day 5 uses the shared teaching presenter and the Swahili Music tab in Music Studio. Select the Day 5 recording, enter the sung lyrics, and mark each line to preview or export the video. Saving shared timing writes the matching R2 sidecar for the slide and workbook.

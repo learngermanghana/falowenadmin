@@ -41,7 +41,7 @@ test("Day 6 workbook reaches the marking queue and upserts the tutor score to Sh
     db, doc: (_, ...parts) => ref(parts.join("/")),
     collection: (_, name) => ({ name }), collectionGroup: (_, name) => ({ name }),
     query: (source, ...filters) => ({ ...source, filters }),
-    where: (...parts) => parts, orderBy: () => null, limit: () => null,
+    where: (...parts) => parts, or: (...parts) => ({ anyOf: parts }), orderBy: () => null, limit: () => null,
     getDoc: target => target.get(),
     getDocs: async query => {
       if (query.name === "students") return { docs: [{ data: () => student }], size: 1 };
