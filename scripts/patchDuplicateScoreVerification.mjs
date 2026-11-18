@@ -238,5 +238,9 @@ for (const marker of [
   if (!source.includes(marker)) throw new Error(`Duplicate score patch validation failed: missing ${marker}`);
 }
 
+// The answer reference now commits inside the score reservation transaction.
+if (!/\bwriteBatch\s*\(/.test(source)) {
+  source = source.replace("import { writeBatch, ", "import { ");
+}
 await writeFile(servicePath, source);
 console.log("Patched duplicate score verification persistence and atomic reservation.");
