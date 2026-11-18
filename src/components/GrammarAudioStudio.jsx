@@ -4,7 +4,7 @@ import { makeGrammarScript, makeSpeechClip, getStudioStatus } from "../services/
 import { assembleListeningExam, base64WavToBytes } from "../utils/hoerenAudio";
 import { encodeWavAsMp3 } from "../utils/hoerenMp3";
 import { getSavedVoice, saveVoice } from "../utils/hoerenVoiceCache";
-import { parseGrammarAudioScript, planGrammarAudio, grammarAudioCacheKey, grammarAssemblyPlan } from "../utils/grammarAudio";
+import { parseGrammarAudioScript, planGrammarAudio, grammarAudioCacheKey, grammarAssemblyPlan, optimizeGrammarAudioScript } from "../utils/grammarAudio";
 import { getSlidesByCourse } from "../data/teachingSlides";
 import { lessonGrammarAudioScript } from "../utils/lessonGrammarAudioScript";
 
@@ -124,6 +124,21 @@ export default function GrammarAudioStudio({ ready, status, onStatusChange, onBu
       setLanguageMode("bilingual");
       invalidate();
       toast.success("Lesson-based script ready · " + count + " voice scenes. Review the German pronunciation before generation.");
+    } catch (error) { toast.error(error.message); }
+  }
+
+  function optimizeCurrentScript() {
+    if (busy || scriptError.error) return;
+    try {
+      const result = optimizeGrammarAudioScript(script);
+      if (!result.saved) {
+        toast.success("The narration is already batched as tightly as the language and scene limits allow. No content changed.");
+        return;
+      }
+      if (!window.confirm("Remove " + result.removed.length + " redundant listening cue(s)? Voice scenes: " + result.before + " → " + result.after + ". The German examples and grammar rules stay unchanged.")) return;
+      setScript(result.script);
+      invalidate();
+      toast.success("Reduced from " + result.before + " to " + result.after + " scenes without changing lesson examples.");
     } catch (error) { toast.error(error.message); }
   }
 
@@ -276,6 +291,7 @@ export default function GrammarAudioStudio({ ready, status, onStatusChange, onBu
           <strong>Cost preview</strong>
           <p>{cacheLoaded ? (scenes.length - missingKeys.length) + " of " + scenes.length + " scenes already saved on this device" : "Checking saved voice scenes…"}</p>
           <p><strong>{cacheLoaded ? missingKeys.length : "—"} new Gemini speech call(s)</strong> · {remaining} Falowen calls left today.</p>
+          {cacheLoaded && missingKeys.length > remaining ? <p role="alert" className="hoeren-validation">Short by {missingKeys.length - remaining} speech call(s). Use the free optimizer or select the improved lesson draft; review the new cost preview before generating.</p> : null}
           <p>Each English/German segment is synthesized in its own language. Editing one segment reuses all unchanged recorded scenes.</p>
         </div>
         <label>Pause between scenes (seconds)

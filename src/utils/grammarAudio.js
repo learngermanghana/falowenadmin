@@ -68,3 +68,29 @@ export function grammarAudioCacheKey(engine, scene) {
 export function grammarAssemblyPlan(plan) {
   return plan.map(item => item.type === "pause" ? item : { type: "speech", speaker: "A", text: "audio" });
 }
+
+
+// Remove only redundant instruction-only cues immediately followed by German speech.
+// Does not reorder bilingual narration, drop grammar rules, or change TTS language.
+// Returns an auditable replacement draft; never edits the original silently.
+export function optimizeGrammarAudioScript(source) {
+  const lines = String(source || "").replace(/\r\n?/g, "\n").split("\n");
+  const keep = [];
+  const removed = [];
+  const disposableCue = /^EN:\s*(?:listen(?: carefully)?(?: to (?:these|the|this|some|our|a|an) (?:german )?(?:examples?|sentences?|conjugation|dialogue|conversation|introduction|words?|forms?))?|now listen(?: to (?:this|these|the|a|an) (?:examples?|sentences?|conjugation|dialogue|conversation|introduction))?|let's listen(?: to (?:these|the|this|some) (?:examples?|sentences?|forms?))?)[.!:]?\s*$/i;
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index].trim();
+    const next = lines.slice(index + 1).find(item => item.trim());
+    const previous = [...keep].reverse().find(item => item.trim());
+    if (disposableCue.test(line) && /^DE:\s*\S/i.test(next || "") && /^DE:\s*\S/i.test(previous || "")) {
+      removed.push(line);
+    } else {
+      keep.push(lines[index]);
+    }
+  }
+  const script = keep.join("\n").trim();
+  // Validate with the exact generation planner, before allowing the user to apply.
+  const before = planGrammarAudio(parseGrammarAudioScript(source)).filter(item => item.type === "speech").length;
+  const after = planGrammarAudio(parseGrammarAudioScript(script)).filter(item => item.type === "speech").length;
+  return { script, removed, before, after, saved: before - after };
+}
