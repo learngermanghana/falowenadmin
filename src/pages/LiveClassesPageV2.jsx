@@ -436,7 +436,7 @@ export default function LiveClassesPageV2() {
         <label>Order<select value={sessionSort} onChange={event => setSessionSort(event.target.value)}><option value="lesson">Lesson day</option><option value="date">Date</option></select></label>
       </div>
         {!isSwahili && ["A1", "A2", "B1"].includes(levelId) ? (
-          <SessionDictionaryPicker entries={dictionaryEntries} disabled />
+          <SessionDictionaryPicker entries={dictionaryEntries} initiallyOpen disabled />
         ) : null}
         {renderSessions()}
       </article> : null}
