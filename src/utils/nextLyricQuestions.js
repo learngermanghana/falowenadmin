@@ -29,14 +29,10 @@ export function threeVerifiedNextLyricQuestions(pack, recording) {
     const MIN_SECONDS = 4.5;
     const safeEnd = Math.min(end, answerStart - 0.05);
     if (safeEnd <= cues[i].start || safeEnd - cues[i].start > MAX_SECONDS) continue;
-    let leadIn = i;
-    for (let prior = i - 1; prior >= 0; prior--) {
-      const duration = safeEnd - cues[prior].start;
-      if (duration > MAX_SECONDS) break;
-      leadIn = prior;
-    }
-    // Target ten seconds while remaining inside verified lyric cues.
-    const start = Math.max(cues[leadIn].start, safeEnd - 10);
+    // Ten-second lead-in can begin inside an earlier cue; the stopping boundary
+    // remains the verified end of the evidence line, before the answer starts.
+    // Do not seek before the first confirmed sung line of this recording.
+    const start = Math.max(cues[0].start, safeEnd - 10);
     if (safeEnd - start < MIN_SECONDS) continue;
     const continuationEnd = cues[i + 1].end ?? cues[i + 2]?.start;
     const heard = new Set(lines.slice(leadIn, i + 1).map(normal));
