@@ -23,7 +23,7 @@ import A1Day12ClassroomStage from "./A1Day12ClassroomStage.jsx";
 import A1Day2TeachingStage from "./A1Day2TeachingStage.jsx";
 import A1Day3TeachingStage from "./A1Day3TeachingStage.jsx";
 import { A1_DAY2_LESSON_ID, A1_DAY2_CLASSROOM_STAGES } from "../data/a1Day2Classroom.js";
-import { A1_DAY3_ASSIGNMENT, A1_DAY3_CLASSROOM_STAGES } from "../data/a1Day3Classroom.js";
+import { A1_DAY3_ASSIGNMENT, A1_DAY3_MUSIC_ASSIGNMENT, A1_DAY3_CLASSROOM_STAGES } from "../data/a1Day3Classroom.js";
 import { A1_DAY12_STAGES } from "../data/a1Day12Classroom.js";
 import { getCuratedMusicByAssignment } from "../data/curatedLessonMusic.js";
 import { getA1PresenterMusicStage } from "../data/a1PresenterMusicStage.js";
@@ -135,8 +135,8 @@ export function stageList(slide, topicLabel) {
   // Route the combined Day 2 page to its actual twelve teaching stages here.
   if (slide?.id === A1_DAY2_LESSON_ID) return A1_DAY2_CLASSROOM_STAGES;
   if (String(slide?.assignmentId || "").trim().toUpperCase() === A1_DAY3_ASSIGNMENT) {
-    const musicStage = getA1PresenterMusicStage(slide.assignmentId, slide.dayNumber);
-    return [...A1_DAY3_CLASSROOM_STAGES, ...(musicStage ? [musicStage] : [])];
+    const musicStage = getA1PresenterMusicStage(A1_DAY3_MUSIC_ASSIGNMENT, slide.dayNumber);
+    return [...A1_DAY3_CLASSROOM_STAGES, ...(musicStage ? [{ ...musicStage, musicAssignmentKey:A1_DAY3_MUSIC_ASSIGNMENT }] : [])];
   }
   if (String(slide?.assignmentId || "").trim().toUpperCase() === "A1-8") return A1_DAY12_STAGES;
   const isSpeakingReadiness = String(slide?.assignmentId || "").trim().toUpperCase() === "A1-5.9";
@@ -753,7 +753,7 @@ export default function A1GrammarPresenter({
           ) : stage.type === "a1-day12" ? (
             <A1Day12ClassroomStage key={stage.id} step={stage.step} />
           ) : stage.type === "published-music" ? (
-            <PublishedSongLessonStage assignmentKey={slide.assignmentId} courseDay={slide.dayNumber} compact nextLyricOnly />
+            <PublishedSongLessonStage assignmentKey={stage.musicAssignmentKey || slide.assignmentId} courseDay={slide.dayNumber} compact nextLyricOnly />
           ) : stage.type === "intro" ? (
             <>
               <h1>{stage.title}</h1>

@@ -1,5 +1,7 @@
 // A1 Day 3 follows the merged Day 2 foundations and teaches all present-tense endings.
 export const A1_DAY3_ASSIGNMENT = 'A1-1.2';
+// The Day 3 live-class lobby uses the approved Day 3 recording and its aligned lyrics.
+export const A1_DAY3_MUSIC_ASSIGNMENT = 'A1-1.1';
 export const A1_DAY3_CLASSROOM_STAGES = Object.freeze([
   ['intro','Einführung','Verbendungen im Präsens',3],
   ['pronouns','Pronomen','Eine Person oder mehrere?',4],
