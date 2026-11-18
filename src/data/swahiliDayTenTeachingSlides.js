@@ -1,3 +1,5 @@
+import { SWAHILI_MUSIC_TRACKS } from "./swahiliMusicTracks.js";
+
 // Adapted from Dr. Ruth’s “Kununua vitu sokoni” handout.
 export const SWAHILI_DAY_TEN_ADMIN_LESSON = Object.freeze({
   "id": "swahili-day-10",
@@ -18,6 +20,15 @@ export const SWAHILI_DAY_TEN_ADMIN_LESSON = Object.freeze({
       "content": "Uliza bidhaa na bei.\nNunua kwa idadi, mafungu au kilo.\nOmba punguzo kwa adabu.",
       "english": "Ask what is available, buy produce and negotiate a price.",
       "notes": "Show real or pictured produce. Ask learners to name the items they recognise."
+    },
+    {
+      "id": "music",
+      "type": "music",
+      "kicker": "Muziki · Music",
+      "title": "Leo Tunaenda Sokoni",
+      "audio": SWAHILI_MUSIC_TRACKS.find(track => track.id === "swahili-a1-day-10"),
+      "prompt": "Baada ya kupatana bei, mnunuzi analipa shilingi ngapi?",
+      "answer": "Shilingi elfu tatu."
     },
     {
       "id": "grammar",
