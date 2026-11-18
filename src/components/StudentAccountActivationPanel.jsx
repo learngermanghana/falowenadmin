@@ -4,6 +4,8 @@ import { auth } from "../firebase.js";
 import { emergencyContactEditedFields } from "../utils/studentEmergencyContact.js";
 import {
   getStudentAccountStatus,
+  lookupExistingStudentLogin,
+  linkExistingStudentLogin,
   prepareStudentAccount,
   recordStudentInvitationSent,
   sendOrganisationEnrolmentConfirmation,
@@ -26,6 +28,7 @@ function statusLabel(state) {
 export default function StudentAccountActivationPanel({ student, draft = {}, onStudentUpdated, pushToast }) {
   const [busy, setBusy] = useState("");
   const [status, setStatus] = useState(null);
+  const [candidate, setCandidate] = useState(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
@@ -54,6 +57,37 @@ export default function StudentAccountActivationPanel({ student, draft = {}, onS
     } finally {
       setBusy("");
     }
+  };
+
+
+  const lookup = async () => {
+    if (unsavedProfileChanges) {
+      setError("Save profile edits before checking the Firebase login.");
+      return;
+    }
+    setBusy("lookup"); setError(""); setNotice(""); setCandidate(null);
+    try {
+      const result = await lookupExistingStudentLogin(studentId);
+      setCandidate(result);
+      if (!result.existingLogin && !result.uid) setNotice("No existing Firebase login was found for this email.");
+      else if (result.linkAvailable) setNotice("An existing Firebase login was found. Verify the email and link it to this student.");
+      else setStatus(result);
+    } catch (err) { setError(err?.message || "Could not check Firebase registration."); }
+    finally { setBusy(""); }
+  };
+
+  const link = async () => {
+    if (!candidate?.linkAvailable || unsavedProfileChanges) return;
+    if (!window.confirm(`Link the existing Firebase account for ${savedEmail} to this student? No login, password, payment, or course data will be recreated.`)) return;
+    setBusy("link"); setError(""); setNotice("");
+    try {
+      const result = await linkExistingStudentLogin(studentId);
+      setStatus(result); setCandidate(null);
+      onStudentUpdated?.(studentId, { uid: result.uid, authEmail: result.email, accountActivationState: result.state });
+      setNotice("Existing Firebase sign-in linked successfully. No activation email or trial was created.");
+      pushToast?.({ type: "success", message: "Existing Firebase account linked." });
+    } catch (err) { setError(err?.message || "Could not link existing login."); }
+    finally { setBusy(""); }
   };
 
   const send = async () => {
@@ -139,7 +173,7 @@ export default function StudentAccountActivationPanel({ student, draft = {}, onS
       <div>
         <h3 style={{ margin: 0, fontSize: 16 }}>Login & activation</h3>
         <p style={{ margin: "6px 0 0", fontSize: 13, color: "#475569" }}>
-          First save the student profile. Then manually send an invitation when everything is ready.
+          First save the student profile. Check for an existing Firebase login before sending an invitation.
           Firebase creates the UID and emails a secure link for the student to choose a password.
           Never collect or email passwords.
         </p>
@@ -154,6 +188,15 @@ export default function StudentAccountActivationPanel({ student, draft = {}, onS
           : null}
       </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {!student.uid && <button type="button" onClick={lookup}
+          disabled={Boolean(busy) || unsavedProfileChanges || !validEmail(savedEmail)}
+          style={{ background: "#fff", color: "#1e40af", border: "1px solid #93c5fd" }}>
+          {busy === "lookup" ? "Checking..." : "Find existing Firebase login"}
+        </button>}
+        {candidate?.linkAvailable && !student.uid && <button type="button" onClick={link}
+          disabled={Boolean(busy) || unsavedProfileChanges}>
+          {busy === "link" ? "Linking..." : "Link existing Firebase account"}
+        </button>}
         <button type="button" onClick={send}
           disabled={Boolean(busy) || unsavedProfileChanges || !validEmail(savedEmail) || !savedName || accountState === "active" || accountState === "disabled"}>
           {busy === "send" ? "Sending..." : accountState === "invited" ? "Resend activation email" : "Send activation email"}
