@@ -4,6 +4,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
   accountStatus, prepareAccount, recordInvitation, registerStudentAccountActivationRoutes,
+  findExistingLogin, linkExistingLogin,
 } = require("./studentAccountActivation.js");
 
 function fixture(initial = { name: "Test Learner", email: "student@example.org" }, existingUsers = []) {
@@ -12,6 +13,8 @@ function fixture(initial = { name: "Test Learner", email: "student@example.org" 
   const byEmail = new Map(existingUsers.map((row) => [row.email, row]));
   const byUid = new Map(existingUsers.map((row) => [row.uid, row]));
   const timestamp = () => "2026-11-04T15:00:00.000Z";
+  const locks = new Map();
+  const studentId = "test-123";
   const ref = {
     get: async () => ({ exists: true, data: () => ({ ...data }) }),
     update: async (patch) => { data = { ...data, ...patch }; },
@@ -37,7 +40,27 @@ function fixture(initial = { name: "Test Learner", email: "student@example.org" 
     },
   };
   return {
-    db: { collection: () => ({ doc: () => ref }) },
+    db: {
+      collection: (name) => name === "students"
+        ? {
+            doc: () => ref,
+            where: (field, op, uid) => ({
+              limit: () => ({ get: async () => ({
+                docs: [ "uid", "authUid", "firebaseUid" ].includes(field) && data[field] === uid
+                  ? [{ id: studentId }] : [],
+              }) }),
+            }),
+          }
+        : { doc: uid => ({
+            uid,
+            get: async () => ({ exists: locks.has(uid), data: () => locks.get(uid) }),
+          }) },
+      runTransaction: async fn => fn({
+        get: async target => target.get(),
+        set: (target, value) => { locks.set(target.uid, value); },
+        update: (target, patch) => { data = { ...data, ...patch }; },
+      }),
+    },
     admin: { auth: () => auth, firestore: { FieldValue: { serverTimestamp: timestamp } } },
     actor: { email: "moxflex@gmail.com", uid: "owner-1" },
     getStudent: () => data,
@@ -108,4 +131,28 @@ test("owner auth is checked before exposing details or provisioning accounts", a
   assert.equal(status, 401);
   assert.equal(body.ok, false);
   assert.equal(f.getCreatedCount(), 0);
+});
+
+test("existing signed-in Firebase account can be explicitly linked without a second login", async () => {
+  const existing = { uid: "auth-existing", email: "student@example.org",
+    metadata: { lastSignInTime: "Wed, 04 Nov 2026 17:00:00 GMT" } };
+  const f = fixture(undefined, [existing]);
+  const candidate = await findExistingLogin({ ...f, studentId: "test-123" });
+  assert.equal(candidate.linkAvailable, true);
+  assert.equal(f.getStudent().uid, undefined, "lookup must not mutate student");
+  const result = await linkExistingLogin({ ...f, studentId: "test-123" });
+  assert.equal(result.linked, true);
+  assert.equal(result.state, "active");
+  assert.equal(f.getStudent().uid, "auth-existing");
+  assert.equal(f.getCreatedCount(), 0);
+  assert.equal(f.getStudent().paymentStatus, undefined);
+});
+
+test("existing UID is never overwritten during explicit link", async () => {
+  const f = fixture({ name: "Test Learner", email: "student@example.org", uid: "another-uid" },
+    [{ uid: "auth-existing", email: "student@example.org", metadata: {} }]);
+  const lookup = await findExistingLogin({ ...f, studentId: "test-123" });
+  assert.equal(lookup.linkAvailable, false);
+  await assert.rejects(linkExistingLogin({ ...f, studentId: "test-123" }), err => err.status === 404 || err.status === 409);
+  assert.equal(f.getStudent().uid, "another-uid");
 });
