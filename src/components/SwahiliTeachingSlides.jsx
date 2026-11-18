@@ -4,7 +4,7 @@ import SwahiliSlideMusic from "./SwahiliSlideMusic.jsx";
 import { useEffect, useState } from "react";
 import TeachingSlidePresenter from "./TeachingSlidePresenter.jsx";
 import { swahiliB1Day28 } from "../data/swahiliB1Day28.js";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import PresenterControls, { PresenterActions, PresenterStageJump } from "./PresenterControls.jsx";
 import SwahiliA2LessonStage from "./SwahiliA2LessonStage.jsx";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
@@ -16,9 +16,8 @@ import { SWAHILI_DAY_TEN_ADMIN_LESSON } from "../data/swahiliDayTenTeachingSlide
 import "./TeachingSlidePresenter.css";
 import "./SwahiliTeachingSlides.css";
 
-const courseRoot = "/teaching-slides/course/SWAHILI";
-const lessonRoot = courseRoot + "/swahili-day-1";
-const daySixRoot = courseRoot + "/swahili-day-6";
+import { swahiliCourseRoot as courseRoot, swahiliSlidePacks } from "../data/swahiliSlidePacks.js";
+import SwahiliRadioMedia from "./SwahiliRadioMedia.jsx";
 const learnerWorkbook = "https://www.falowen.app/swahili/day-1";
 // Keep the shared presenter identity stable across slide navigation, so its
 // roster and class clock never reload due to a new object on every render.
@@ -37,7 +36,6 @@ const daySixPresenterSlide = Object.freeze({
   },
 });
 
-const dayFiveRoot = courseRoot + "/swahili-day-5";
 const dayFiveWorkbook = "https://www.falowen.app/swahili/day-5";
 const dayFivePresenterSlide = Object.freeze({
   ...SWAHILI_DAY_FIVE_ADMIN_LESSON,
@@ -45,7 +43,6 @@ const dayFivePresenterSlide = Object.freeze({
   workbookConnection: { workbookUrl: dayFiveWorkbook, subtitle: "Continue Kiswahili Day 5 in your learner workbook." },
 });
 
-const dayTenRoot = courseRoot + "/swahili-day-10";
 const dayTenWorkbook = "https://www.falowen.app/campus/course/swahili/day-10";
 const dayTenPresenterSlide = Object.freeze({
   ...SWAHILI_DAY_TEN_ADMIN_LESSON,
@@ -55,6 +52,11 @@ const dayTenPresenterSlide = Object.freeze({
 
 export default function SwahiliTeachingSlides({ slideId, present = false }) {
   const navigate = useNavigate();
+  const { search } = useLocation();
+  const selectedLevel = new URLSearchParams(search).get("level");
+  const groups = Object.entries(swahiliSlidePacks);
+  const lessonLevel = groups.find(([, lessons]) => lessons.some(entry => entry.id === slideId))?.[0];
+  const backToPack = lessonLevel ? courseRoot + "?level=" + lessonLevel : courseRoot;
   const isDayFive = slideId === SWAHILI_DAY_FIVE_ADMIN_LESSON.id;
   const isDaySix = slideId === SWAHILI_DAY_SIX_ADMIN_LESSON.id;
   const isDayTen = slideId === SWAHILI_DAY_TEN_ADMIN_LESSON.id;
@@ -113,70 +115,51 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [slideId, presenting, index, stages.length]);
 
-  if (slideId === swahiliB1Day28.id) {
+  if (slideId === swahiliB1Day28.id && present) {
     return <TeachingSlidePresenter slide={swahiliB1Day28} topicLabel={swahiliB1Day28.title}
-      onExit={() => navigate(courseRoot)} />;
+      onExit={() => navigate(backToPack)} />;
   }
 
-  if (slideId && !isDayTen && !isDayFive && slideId !== SWAHILI_DAY_ONE_ADMIN_LESSON.id && slideId !== SWAHILI_DAY_SIX_ADMIN_LESSON.id) {
+  if (slideId === swahiliB1Day28.id) {
+    return <section className="slides-index">
+      <Link to={backToPack}>← Swahili B1 slides</Link>
+      <h1>{swahiliB1Day28.title}</h1>
+      <p>{swahiliB1Day28.objective}</p>
+      <Link to={courseRoot + "/" + slideId + "?present=1"}>Present</Link>
+      <ol>{swahiliB1Day28.classroomStages.map(item => <li key={item.id}>{item.title}</li>)}</ol>
+    </section>;
+  }
+
+  if (slideId && !lessonLevel) {
     return <section className="slides-index"><h1>Lesson not found</h1><Link to={courseRoot}>Back to Swahili</Link></section>;
   }
 
   if (!slideId) {
-    return (
-      <section className="slides-index swahili-admin-slides">
-        <div className="swahili-admin-slides__crumb"><Link to="/teaching-slides?language=swahili">← All languages</Link></div>
-        <p className="slide-meta">Kiswahili</p>
-        <h1>Swahili teaching slides</h1>
-        <p>Choose a lesson to present.</p>
+    const packs = selectedLevel ? groups.filter(([level]) => level === selectedLevel) : groups;
+    return <section className="slides-index">
+      <Link to="/teaching-slides?language=swahili">← All Swahili courses</Link>
+      <h1>Swahili {selectedLevel} Teaching Slides</h1>
+      {!packs.length && <p>No slide pack found.</p>}
+      {packs.map(([level, lessons]) => <section key={level}>
+        {!selectedLevel && <h2>{level} Teaching Pack</h2>}
         <div className="slide-card-grid">
-          <article className="slide-card slide-card-lesson">
-            <p className="slide-meta">Day 1 · {stages.length} classroom stages</p>
-            <h2>{lesson.title}</h2>
-            <p>{lesson.objective}</p>
-            <div className="slide-card-actions">
-              <Link to={lessonRoot}>Open lesson</Link>
-              <Link to={lessonRoot + "?present=1"}>Present</Link>
-            </div>
-          </article>
-          <article className="slide-card slide-card-lesson">
-            <p className="slide-meta">A1 · Day 5</p>
-            <h2>{SWAHILI_DAY_FIVE_ADMIN_LESSON.title}</h2>
-            <p>{SWAHILI_DAY_FIVE_ADMIN_LESSON.objective}</p>
-            <div className="slide-card-actions">
-              <Link to={dayFiveRoot}>Open lesson</Link>
-              <Link to={dayFiveRoot + "?present=1"}>Present</Link>
-            </div>
-          </article>
-          <article className="slide-card slide-card-lesson">
-            <p className="slide-meta">A1 · Day 6 · {SWAHILI_DAY_SIX_ADMIN_LESSON.stages.length} classroom stages</p>
-            <h2>{SWAHILI_DAY_SIX_ADMIN_LESSON.title}</h2>
-            <p>{SWAHILI_DAY_SIX_ADMIN_LESSON.objective}</p>
-            <div className="slide-card-actions">
-              <Link to={daySixRoot}>Open lesson</Link>
-              <Link to={daySixRoot + "?present=1"}>Present</Link>
-            </div>
-          </article>
-          <article className="slide-card slide-card-lesson">
-            <p className="slide-meta">A1 · Day 10 · {SWAHILI_DAY_TEN_ADMIN_LESSON.stages.length} classroom stages</p>
-            <h2>{SWAHILI_DAY_TEN_ADMIN_LESSON.title}</h2>
-            <p>{SWAHILI_DAY_TEN_ADMIN_LESSON.objective}</p>
-            <div className="slide-card-actions">
-              <Link to={dayTenRoot}>Open lesson</Link>
-              <Link to={dayTenRoot + "?present=1"}>Present</Link>
-            </div>
-          </article>
-          <article className="slide-card slide-card-lesson">
-            <p className="slide-meta">B1 · Day 28</p>
-            <h2>{swahiliB1Day28.title}</h2>
-            <p>{swahiliB1Day28.objective}</p>
-            <div className="slide-card-actions">
-              <Link to={courseRoot + "/" + swahiliB1Day28.id + "?present=1"}>Present</Link>
-            </div>
-          </article>
+          {lessons.map(entry => {
+            const href = courseRoot + "/" + entry.id;
+            return <article key={entry.id} className="slide-card slide-card-lesson">
+              <div className="slide-card-topline">
+                <p className="slide-meta">Kiswahili · {level}</p>
+                <span className="slide-day-badge">Day {entry.dayNumber}</span>
+              </div>
+              <h2>{entry.title}</h2><p>{entry.objective}</p>
+              <div className="slide-card-actions">
+                <Link to={href}>Open lesson</Link>
+                <Link to={href + "?present=1"}>Present</Link>
+              </div>
+            </article>;
+          })}
         </div>
-      </section>
-    );
+      </section>)}
+    </section>;
   }
 
   const grammar = stage.type === "grammar" ? stage.details?.[grammarPage] : null;
@@ -189,7 +172,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
       {!focusMode && (
         <header className="presenter-topbar swahili-a2-presenter__topbar no-print">
           <div className="swahili-a2-presenter__identity">
-            <Link to={courseRoot}>← Kiswahili</Link>
+            <Link to={backToPack}>← Kiswahili</Link>
             <strong>{lesson.title}</strong>
             <span>{lesson.day}</span>
           </div>
@@ -246,10 +229,12 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
             </div>
           </div>
         )}
+        {"radioVideoId" in stage && <SwahiliRadioMedia stage={stage} />}
         {isDaySix && stage.type === "music" ? <SwahiliRestaurantSong /> : (stage.audio || (isDayFive && stage.type === "day-five")) ? <section className="swahili-a2-presenter__media-stage">
           {stage.audio ? <SwahiliSlideMusic track={stage.audio} /> : <p style={{ whiteSpace: "pre-line" }}>{stage.content}</p>}
         </section> : <SwahiliA2LessonStage stage={stage} grammar={grammar} isDaySix={isDaySix} />}
 
+        {stage.listeningWorkbookUrl && <a href={stage.listeningWorkbookUrl} target="_blank" rel="noreferrer">Open the recorded listening exercise in Campus</a>}
         {stageEnglish && <p className="swahili-a2-presenter__english" lang="en">{stageEnglish}</p>}
 
         {stageQuestion && (

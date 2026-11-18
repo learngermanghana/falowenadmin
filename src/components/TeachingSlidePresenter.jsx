@@ -23,6 +23,7 @@ import B1SustainabilityDecisions from "./B1SustainabilityDecisions.jsx";
 import A2SportMatchmaker from "./A2SportMatchmaker.jsx";
 import InteractiveLessonOpening from "./InteractiveLessonOpening.jsx";
 import A2ApplicationLab from "./A2ApplicationLab.jsx";
+import SwahiliRadioMedia from "./SwahiliRadioMedia.jsx";
 import SwahiliSlideMusic from "./SwahiliSlideMusic.jsx";
 import { MusicVideoStage, MusicReadingStage } from "./MusicTeachingStages.jsx";
 import { isInteractiveOpeningStage } from "../data/interactiveLessonOpenings.js";
@@ -2013,6 +2014,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
           ) : (
             <>
               <h1>{stage.title}</h1>
+              {"radioVideoId" in stage && <SwahiliRadioMedia stage={stage} />}
               {stage.type === "numbered-list" ? (
                 <ol className="presenter-list">
                   {stage.items.map((item) => <li key={item}>{item}</li>)}

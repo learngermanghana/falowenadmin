@@ -1,3 +1,4 @@
+import { swahiliSlidePacks } from "../src/data/swahiliSlidePacks.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -40,8 +41,8 @@ test("Day 6 uses A2-style structured menu, dialogue, grammar and workbook tasks"
 });
 
 test("Sokoni is available in the shared presenter with five teachable grammar pages", () => {
+  assert.ok(swahiliSlidePacks.A1.some(lesson => lesson.dayNumber === 10));
   assert.match(presenter, /selectedPresenterSlide = isDayTen \? dayTenPresenterSlide/);
-  assert.match(presenter, /dayTenRoot \+ "\?present=1"/);
   const { dayNumber, stages } = SWAHILI_DAY_TEN_ADMIN_LESSON;
   assert.equal(dayNumber, 10);
   assert.equal(stages.find(({ type }) => type === "grammar").details.length, 5);

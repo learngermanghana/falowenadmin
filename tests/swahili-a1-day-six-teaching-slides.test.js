@@ -1,3 +1,4 @@
+import { swahiliSlidePacks } from "../src/data/swahiliSlidePacks.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -22,9 +23,8 @@ test("Swahili Day 6 is a separate A1 lesson with A2-style stages and six radio q
 });
 
 test("Day 6 is available in the Swahili Admin slides index and presenter link", () => {
+  assert.ok(swahiliSlidePacks.A1.some(lesson => lesson.dayNumber === 6));
   assert.match(presenter,/SWAHILI_DAY_SIX_ADMIN_LESSON/);
-  assert.match(presenter,/courseRoot \+ "\/swahili-day-6"/);
-  assert.match(presenter,/daySixRoot \+ "\?present=1"/);
   assert.match(presenter,/Open \{lesson.day\} learner workbook/);
   assert.match(presenter,/selectedPresenterSlide/);
   assert.match(presenter,/<PresenterSessionTimer/);
