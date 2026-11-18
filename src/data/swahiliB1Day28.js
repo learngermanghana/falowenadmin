@@ -46,11 +46,12 @@ export const swahiliB1Day28 = {
       "type": "numbered-list",
       "title": "Falowen Radio · Soma kwa majukumu",
       "items": [
+        "Maria: Ninapoenda kununua bidhaa, ninabeba mfuko wa kitambaa badala ya kuchukua mifuko mipya ya plastiki. Pia ninatumia chupa ya maji inayoweza kutumiwa tena.",
         "Bwana Ali: Unafanya nini na taka nyumbani?",
         "Maria: Ninatenganisha karatasi, plastiki, chupa na taka za chakula kulingana na utaratibu wa eneo letu.",
         "Bwana Ali: Unaokoa vipi maji na nishati?",
-        "Juma: Ninazima taa na vifaa nisivyotumia.",
-        "Asha: Kwa safari fupi ninatembea au kutumia baiskeli."
+        "Juma: Ninazima taa na vifaa nisivyotumia. Pia ninafunga bomba la maji ninapopiga mswaki na ninaoga kwa muda mfupi ili niokoe maji.",
+        "Asha: Kwa safari fupi ninatembea au kutumia baiskeli. Kwa safari ndefu ninatumia basi inapowezekana. Pia ninanunua vyakula vya eneo letu na vya msimu."
       ]
     },
     {
