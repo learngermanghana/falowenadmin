@@ -130,6 +130,7 @@ export default function StaffWorkspacePage() {
           <legend>Page access</legend>
           {STAFF_PAGES.map(page => <label key={page.id} style={{ display: "block", margin: "8px 0" }}>
             <input type="checkbox" checked={pages.includes(page.id)} onChange={() => togglePage(page.id)} /> {page.label}
+            {page.id === "music-studio" && <small style={{ display: "block", marginLeft: 24 }}>Includes Music Generator, Lyrics Video Studio and export for assigned languages only.</small>}
             {page.id === "music-analytics" && <small style={{ display: "block", marginLeft: 24 }}>Includes identifiable student music practice activity (names and email addresses).</small>}
           </label>)}
           <small>Students is read-only. Results allows score and feedback edits. Both use the selected languages. Attendance shows assigned classes.</small>
