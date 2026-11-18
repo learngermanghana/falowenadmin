@@ -39,7 +39,7 @@ test('Samstag um zehn has bilingual cues and three excerpts for the exact publis
     const line = pack.cues.findIndex(cue => cue.text === question.evidence);
     assert.ok(question.previewRange.end <= pack.cues[line].end);
     assert.ok(question.previewRange.end < pack.cues[line + 1].start);
-    assert.ok(question.previewRange.end - question.previewRange.start <= 7.5);
+    assert.ok(question.previewRange.end - question.previewRange.start <= 11);
     assert.ok(question.previewRange.end - question.previewRange.start >= 4.5);
     assert.equal(pack.cues[line + 1].text, question.answer);
     assert.equal(question.continuationRange.start, pack.cues[line + 1].start);

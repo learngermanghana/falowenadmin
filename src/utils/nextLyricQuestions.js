@@ -22,19 +22,17 @@ export function threeVerifiedNextLyricQuestions(pack, recording) {
     if (questionEndings && !questionEndings.includes(current)) continue;
     if (end > answerStart || current.length < 8 || answer.length < 8 ||
         counts.get(normal(current)) !== 1 || normal(current) === normal(answer)) continue;
-    // Play about seven seconds ending with the evidence line. Never play
+    // Prefer about ten seconds leading into the evidence line; very early
+    // lines can only provide a shorter safe clip without leaking the answer. Never play
     // even a fraction of the answer line before learners choose.
-    const MAX_SECONDS = 7.5;
+    const MAX_SECONDS = 11;
     const MIN_SECONDS = 4.5;
     const safeEnd = Math.min(end, answerStart - 0.05);
     if (safeEnd <= cues[i].start || safeEnd - cues[i].start > MAX_SECONDS) continue;
-    let leadIn = i;
-    for (let prior = i - 1; prior >= 0; prior--) {
-      const duration = safeEnd - cues[prior].start;
-      if (duration > MAX_SECONDS) break;
-      leadIn = prior;
-    }
-    const start = cues[leadIn].start;
+    // Ten-second lead-in can begin inside an earlier cue; the stopping boundary
+    // remains the verified end of the evidence line, before the answer starts.
+    // Do not seek before the first confirmed sung line of this recording.
+    const start = Math.max(cues[0].start, safeEnd - 10);
     if (safeEnd - start < MIN_SECONDS) continue;
     const continuationEnd = cues[i + 1].end ?? cues[i + 2]?.start;
     const heard = new Set(lines.slice(leadIn, i + 1).map(normal));
@@ -60,8 +58,79 @@ export function threeVerifiedNextLyricQuestions(pack, recording) {
     ? questionEndings.map(ending => candidates.find(question => question.evidence === ending))
     : [candidates[first], candidates[Math.floor((first + candidates.length - 1) / 2)], candidates.at(-1)];
   if (selected.some(question => !question)) return [];
-  return selected.map((question, correctIndex) => {
-    question.options.splice(correctIndex, 0, question.answer);
-    return {...question, correctIndex};
+  const verified = selected.map((question, correctIndex) => {
+    const options = [...question.options];
+    options.splice(correctIndex, 0, question.answer);
+    // Never render a question unless the immediate next recorded lyric is in
+    // its answer choices exactly once, with two distinct wrong alternatives.
+    const seen = new Set(options.map(normal));
+    if (options.length !== 3 || seen.size !== 3 ||
+        options.filter(option => normal(option) === normal(question.answer)).length !== 1 ||
+        question.previewRange.end >= question.continuationRange?.start) return null;
+    return {...question, options, correctIndex};
+  });
+  return verified.length === 3 && verified.every(Boolean) ? verified : [];
+}
+
+// Listening comprehension: the correct option MUST be audible in the excerpt.
+// This is intentionally different from guessing the next, unheard lyric.
+export function threeVerifiedHeardLyricQuestions(pack, recording) {
+  if (!pack || !recording || pack.objectKey !== recording.objectKey ||
+      typeof pack.lyrics !== 'string' || pack.referenceOnly === true ||
+      pack.transcriptionStatus === 'automatic' || pack.timingStatus === 'estimated') return [];
+  const lines = lyricLines(pack.lyrics);
+  const cues = validateLyricCues(pack.cues, lines);
+  if (lines.length < 4 || cues.length !== lines.length) return [];
+  const normalize = line => String(line).toLocaleLowerCase('de').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  const counts = new Map();
+  for (const line of lines) counts.set(normalize(line), (counts.get(normalize(line)) || 0) + 1);
+  const candidates = [];
+  for (let i = 1; i < lines.length; i++) {
+    // The previous line may be a legacy questionEnding, but today's answer is
+    // the line AFTER it, which must be played in its entirety.
+    if (pack.questionEndings && !pack.questionEndings.includes(lines[i - 1])) continue;
+    const end = cues[i].end ?? cues[i + 1]?.start;
+    if (!Number.isFinite(end) || end <= cues[i].start) continue;
+    const start = Math.max(cues[0].start, end - 10);
+    const duration = end - start;
+    if (duration < 4.5 || duration > 11 ||
+        cues[i].start < start || lines[i].length < 8 ||
+        counts.get(normalize(lines[i])) !== 1) continue;
+    const heard = new Set();
+    for (let j = 0; j < cues.length; j++) {
+      const cueEnd = cues[j].end ?? cues[j + 1]?.start ?? Infinity;
+      if (cues[j].start < end && cueEnd > start) heard.add(normalize(lines[j]));
+    }
+    const wrong = [];
+    const used = new Set([normalize(lines[i])]);
+    for (const line of lines) {
+      const key = normalize(line);
+      if (line.length >= 8 && !heard.has(key) && !used.has(key)) {
+        wrong.push(line);
+        used.add(key);
+      }
+      if (wrong.length === 2) break;
+    }
+    if (wrong.length !== 2) continue;
+    const answer = lines[i];
+    candidates.push({
+      id: 'heard-lyric-' + i,
+      type: 'listening',
+      prompt: 'Welche Liedzeile hast du gehört?',
+      answer, options: wrong,
+      previewRange: {start, end},
+      heardLyric: true,
+    });
+  }
+  if (candidates.length < 3) return [];
+  const selected = pack.questionEndings
+    ? pack.questionEndings.map(line => candidates.find(candidate =>
+        candidate.id === 'heard-lyric-' + (lines.indexOf(line) + 1)))
+    : [candidates[0], candidates[Math.floor((candidates.length - 1) / 2)], candidates.at(-1)];
+  if (selected.some(candidate => !candidate)) return [];
+  return selected.map((candidate, correctIndex) => {
+    const options = [...candidate.options];
+    options.splice(correctIndex, 0, candidate.answer);
+    return {...candidate, options, correctIndex};
   });
 }

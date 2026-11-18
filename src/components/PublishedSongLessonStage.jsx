@@ -1,7 +1,6 @@
 import { hasCompleteSongTiming } from '../utils/songLyrics.js';
-import { A1_DAY3_MUSIC_OBJECT_KEY, A1_DAY3_MUSIC_NEXT_LYRIC_QUESTIONS } from '../data/a1Day3Classroom.js';
 import { recordedEvidenceRange, recordedSongQuestions } from '../utils/recordedLessonMusic.js';
-import { threeVerifiedNextLyricQuestions } from '../utils/nextLyricQuestions.js';
+import { threeVerifiedHeardLyricQuestions } from '../utils/nextLyricQuestions.js';
 import { useEffect, useRef, useState } from 'react';
 import { getReusableSongDraft } from '../data/reusableMusicSongbook.js';
 import { getReusableMusicQuestions } from '../data/reusableMusicQuestions.js';
@@ -115,11 +114,11 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
     ? bundledTiming : recordingMetadata && {
         ...recordingMetadata, objectKey: recording.objectKey, lyrics: recordedLyrics, cues,
       };
-  const verifiedNextQuestions = nextLyricOnly ? threeVerifiedNextLyricQuestions(quizPack, recording) : [];
-  const day3ExcerptQuestions = nextLyricOnly && recording.objectKey === A1_DAY3_MUSIC_OBJECT_KEY
-    ? A1_DAY3_MUSIC_NEXT_LYRIC_QUESTIONS : [];
+  const verifiedNextQuestions = nextLyricOnly ? threeVerifiedHeardLyricQuestions(quizPack, recording) : [];
+  // Hard-coded Day 3 estimates may describe an older recording. Only a
+  // verified cue sequence for the exact audio can set an MCQ answer.
   const questions = nextLyricOnly
-    ? (verifiedNextQuestions.length ? verifiedNextQuestions : day3ExcerptQuestions)
+    ? verifiedNextQuestions
     : recordedLyrics !== song.lyrics
       ? recordedSongQuestions({objectKey:recording.objectKey,lyrics:recordedLyrics},recording.day,recording.level)
       : bank.questions;
@@ -206,23 +205,21 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
         <button type="button" onClick={()=>openView('questions')}>Weiter · Fragen beantworten</button>
       </div>}
       {view==='questions' && (!question ? <div className="published-song-lesson__section" role="status">
-        <h3>Welche Liedzeile kommt als Nächstes?</h3>
+        <h3>Welche Liedzeile hast du gehört?</h3>
         {recording.audioUrl
-          ? <p>Spiele das Lied oben ab und pausiere nach einer Zeile. Was kommt danach? Spielt weiter und vergleicht eure Antworten mit dem Lied.</p>
+          ? <p>Spiele einen Ausschnitt ab und frage, welche Zeile die Klasse tatsächlich gehört hat.</p>
           : <p>{discoveryError || 'Die Aufnahme wird geladen.'}</p>}
-        {recording.audioUrl && <p>Automatische Ausschnitte erscheinen, sobald geprüfte Liedzeilen und Zeitmarken verfügbar sind.</p>}
+        {recording.audioUrl && <p>Keine sichere Hörfrage: Prüfe die Liedzeilen und Zeitmarken der genauen Aufnahme. Eine richtige Antwort muss hörbar sein.</p>}
       </div> : <div className="published-song-lesson__section published-song-lesson__quiz">
-        <div className="published-song-lesson__quizmeta"><strong>FRAGE {questionIndex+1} / {questions.length}</strong><span>{nextLyricOnly?'WAS KOMMT ALS NÄCHSTES?':question.type==='speaking'?'SPRECHEN':'HÖRVERSTEHEN'}</span></div>
+        <div className="published-song-lesson__quizmeta"><strong>FRAGE {questionIndex+1} / {questions.length}</strong><span>{nextLyricOnly?'WAS HAST DU GEHÖRT?':question.type==='speaking'?'SPRECHEN':'HÖRVERSTEHEN'}</span></div>
         <h3 lang="de">{question.prompt}</h3>
-        {nextLyricOnly && <p lang="en">Listen to the short clip. Which lyric comes next?</p>}
-        {nextLyricOnly && <p lang="de">Spiele den Ausschnitt ab und lass die Klasse A, B oder C wählen.</p>}
-        {nextLyricOnly && bundledTiming?.questionEndings.includes(question.evidence) &&
-          <p>Letzte Zeile im Ausschnitt: {question.evidence}</p>}
+        {nextLyricOnly && <p lang="en">Listen to the short clip. Which lyric did you hear?</p>}
+        {nextLyricOnly && <p lang="de">Spiele etwa zehn Sekunden ab. Welche der drei Zeilen war im Ausschnitt zu hören?</p>}
         {evidenceRange && <button type="button" className="published-song-lesson__line-preview"
           onClick={()=>playLinePreview(evidenceRange)}>▶ Ausschnitt abspielen</button>}
         {question.type==='speaking'
           ? <p>Sprich mit deinem Partner. {question.teacherNote}</p>
-          : <p>Antworte mit Informationen aus dem Lied. Die Musterlösung wird erst nach deiner Antwort gezeigt.</p>}
+          : <p>Wähle die Zeile, die du im Ausschnitt gehört hast. Die Musterlösung wird erst nach deiner Antwort gezeigt.</p>}
         {Array.isArray(question.options) && <div className="published-song-lesson__options" role="group" aria-label="Antwortmöglichkeiten">
           {question.options.map((option,i)=><button key={option} type="button"
             aria-pressed={selectedOption === i}
@@ -255,7 +252,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
             : <button type="button" onClick={()=>{stopExcerpt();setQuestionIndex(i=>Math.min(questions.length-1,i+1));setShowAnswer(false);setSelectedOption(-1)}}>Nächste Frage →</button>}
         </div>
       </div>)}
-      <p className="published-song-lesson__note">Liedfragen sind unbewertete Unterrichtsübungen und beziehen sich auf den gespeicherten Liedtext. Bei abweichenden Audios die Antworten vor der Stunde prüfen.{recording.objectKey === A1_DAY3_MUSIC_OBJECT_KEY ? ' Die Zeitmarken dieser Day-3-Ausschnitte sind geschätzt; bitte vor dem Unterricht kurz gegenhören.' : ''}</p>
+      <p className="published-song-lesson__note">Liedfragen sind unbewertete Unterrichtsübungen und beziehen sich auf den gespeicherten Liedtext. Bei abweichenden Audios die Antworten vor der Stunde prüfen.</p>
     </section>
   );
 }
