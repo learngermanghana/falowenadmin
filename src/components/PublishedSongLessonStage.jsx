@@ -1,5 +1,4 @@
 import { hasCompleteSongTiming } from '../utils/songLyrics.js';
-import { A1_DAY3_MUSIC_OBJECT_KEY, A1_DAY3_MUSIC_NEXT_LYRIC_QUESTIONS } from '../data/a1Day3Classroom.js';
 import { recordedEvidenceRange, recordedSongQuestions } from '../utils/recordedLessonMusic.js';
 import { threeVerifiedNextLyricQuestions } from '../utils/nextLyricQuestions.js';
 import { useEffect, useRef, useState } from 'react';
@@ -116,10 +115,10 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
         ...recordingMetadata, objectKey: recording.objectKey, lyrics: recordedLyrics, cues,
       };
   const verifiedNextQuestions = nextLyricOnly ? threeVerifiedNextLyricQuestions(quizPack, recording) : [];
-  const day3ExcerptQuestions = nextLyricOnly && recording.objectKey === A1_DAY3_MUSIC_OBJECT_KEY
-    ? A1_DAY3_MUSIC_NEXT_LYRIC_QUESTIONS : [];
+  // Hard-coded Day 3 estimates may describe an older recording. Only a
+  // verified cue sequence for the exact audio can set an MCQ answer.
   const questions = nextLyricOnly
-    ? (verifiedNextQuestions.length ? verifiedNextQuestions : day3ExcerptQuestions)
+    ? verifiedNextQuestions
     : recordedLyrics !== song.lyrics
       ? recordedSongQuestions({objectKey:recording.objectKey,lyrics:recordedLyrics},recording.day,recording.level)
       : bank.questions;
@@ -210,13 +209,13 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
         {recording.audioUrl
           ? <p>Spiele das Lied oben ab und pausiere nach einer Zeile. Was kommt danach? Spielt weiter und vergleicht eure Antworten mit dem Lied.</p>
           : <p>{discoveryError || 'Die Aufnahme wird geladen.'}</p>}
-        {recording.audioUrl && <p>Automatische Ausschnitte erscheinen, sobald geprüfte Liedzeilen und Zeitmarken verfügbar sind.</p>}
+        {recording.audioUrl && <p>Keine sichere Auswahlfrage: Prüfe zuerst die Liedzeilen und Zeitmarken der genau abgespielten Aufnahme. So erscheint keine falsche nächste Zeile in A, B oder C.</p>}
       </div> : <div className="published-song-lesson__section published-song-lesson__quiz">
         <div className="published-song-lesson__quizmeta"><strong>FRAGE {questionIndex+1} / {questions.length}</strong><span>{nextLyricOnly?'WAS KOMMT ALS NÄCHSTES?':question.type==='speaking'?'SPRECHEN':'HÖRVERSTEHEN'}</span></div>
         <h3 lang="de">{question.prompt}</h3>
         {nextLyricOnly && <p lang="en">Listen to the short clip. Which lyric comes next?</p>}
         {nextLyricOnly && <p lang="de">Spiele den Ausschnitt ab und lass die Klasse A, B oder C wählen.</p>}
-        {nextLyricOnly && bundledTiming?.questionEndings.includes(question.evidence) &&
+        {nextLyricOnly && bundledTiming?.questionEndings?.includes(question.evidence) &&
           <p>Letzte Zeile im Ausschnitt: {question.evidence}</p>}
         {evidenceRange && <button type="button" className="published-song-lesson__line-preview"
           onClick={()=>playLinePreview(evidenceRange)}>▶ Ausschnitt abspielen</button>}
@@ -255,7 +254,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
             : <button type="button" onClick={()=>{stopExcerpt();setQuestionIndex(i=>Math.min(questions.length-1,i+1));setShowAnswer(false);setSelectedOption(-1)}}>Nächste Frage →</button>}
         </div>
       </div>)}
-      <p className="published-song-lesson__note">Liedfragen sind unbewertete Unterrichtsübungen und beziehen sich auf den gespeicherten Liedtext. Bei abweichenden Audios die Antworten vor der Stunde prüfen.{recording.objectKey === A1_DAY3_MUSIC_OBJECT_KEY ? ' Die Zeitmarken dieser Day-3-Ausschnitte sind geschätzt; bitte vor dem Unterricht kurz gegenhören.' : ''}</p>
+      <p className="published-song-lesson__note">Liedfragen sind unbewertete Unterrichtsübungen und beziehen sich auf den gespeicherten Liedtext. Bei abweichenden Audios die Antworten vor der Stunde prüfen.</p>
     </section>
   );
 }
