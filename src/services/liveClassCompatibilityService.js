@@ -5,6 +5,7 @@ import { classScheduleBoundsFromSessions } from "../utils/attendanceSessionOverr
 import { getEffectiveClassEndDate } from "../utils/liveClassScheduling.js";
 import { rebuildClassSessionsFromSchedule, listClassSessions, syncClassCurriculum, syncClassEndDateFromSessions } from "./liveClassService.js";
 import { applyGroupedCurriculumToClass } from "./groupedCurriculumService.js";
+import { hasAdminRebuiltA2Schedule } from "../utils/liveClassSessionDedupe.js";
 import * as base from "./liveClassCompatibilityServiceBase.js";
 
 export * from "./liveClassCompatibilityServiceBase.js";
@@ -23,6 +24,7 @@ function classLevel(klass = {}) {
 }
 
 function canRepairSchedule(klass = {}) {
+  if (hasAdminRebuiltA2Schedule(klass)) return false;
   const status = normalize(klass.status).toLowerCase();
   if (klass.language === "Swahili" || klass.historical === true || ["graduated", "archived", "deleted"].includes(status)) return false;
   return Array.isArray(klass.scheduleRules) && klass.scheduleRules.length > 0;

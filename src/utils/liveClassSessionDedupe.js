@@ -280,8 +280,29 @@ export function recoverA1MissingGreetings(sessions = [], groups = []) {
   }))];
 }
 
+export function hasAdminRebuiltA2Schedule(klass = {}) {
+  return /^A2$/i.test(normalize(klass.levelId || klass.level))
+    && klass.scheduleAnchorMode === "rebuild-from-selected-session"
+    && Number(klass.scheduleAnchorSessionNumber) > 0;
+}
+
 export function enrichSessionsWithStableCurriculum(klass = {}, sessions = [], groups = []) {
   const ordered = [...sessions].sort((left, right) => sessionTime(left) - sessionTime(right));
+
+  if (hasAdminRebuiltA2Schedule(klass)) {
+    // The rebuild assigns each session explicitly. Repeated meetings in the
+    // teaching history must never shift the following lessons by position.
+    const anchorGroup = groups[Number(klass.scheduleAnchorSessionNumber) - 1];
+    return ordered.map(session => {
+      if (anchorGroup && klass.lastSessionChangeType === "restore-following-weekly-pattern"
+        && session.id === klass.lastChangedSessionId
+        && sessionTime(session) === toSessionDate(klass.scheduleAnchorStartsAt)?.getTime()
+        && !sameAssignmentSet(assignmentIdsForSession(session), anchorGroup.assignmentIds)) {
+        return { ...applyCurriculumGroup(session, anchorGroup, anchorGroup.index), curriculumIndex: anchorGroup.index + 1 };
+      }
+      return session;
+    });
+  }
 
   if (normalize(klass.levelId).toUpperCase() === "B1") {
     const storedGroups = new Map(ordered.map((session) => [session.id,
