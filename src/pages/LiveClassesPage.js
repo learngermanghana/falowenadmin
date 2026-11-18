@@ -9,6 +9,7 @@ const TAB_CLASSES = "classes";
 
 function initialTab() {
   if (typeof window === "undefined") return TAB_CLASSES;
+  if (new URLSearchParams(window.location.search).get("tab") === "repair") return TAB_REPAIR;
   if (new URLSearchParams(window.location.search).has("classId")) return TAB_CLASSES;
   const stored = window.localStorage.getItem(TAB_STORAGE_KEY);
   return stored === TAB_REPAIR ? TAB_REPAIR : TAB_CLASSES;
