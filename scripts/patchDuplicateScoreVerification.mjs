@@ -24,8 +24,8 @@ let source = await readFile(servicePath, "utf8");
 
 source = replaceRequired(
   source,
-  'import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";',
-  'import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, query, runTransaction, setDoc, updateDoc, where } from "firebase/firestore";',
+  'getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";',
+  'getDocs, query, runTransaction, setDoc, updateDoc, where } from "firebase/firestore";',
   "Firestore transaction import",
 );
 
@@ -72,8 +72,6 @@ if (source.includes(previousAtomicBlockedReceipt)) {
 
 if (!source.includes("Could not reserve the score key safely; no score was posted.")) {
   const atomicReservationBlock = [
-    '  const nowIso = new Date().toISOString();',
-    '  const row = buildScoreRow({ studentCode, studentEmail, studentId, studentScopeKey, name, assignment, assignmentId, score, comments, level, link, source, markingDetails });',
     '  const dedupeId = scoreDedupeId(row);',
     '  const scoreRef = doc(db, "scores", dedupeId);',
     '  const reservationToken = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;',
@@ -122,7 +120,7 @@ if (!source.includes("Could not reserve the score key safely; no score was poste
 
   source = replacePatternRequired(
     source,
-    /  const nowIso = new Date\(\)\.toISOString\(\);\n  const row = buildScoreRow\([\s\S]*?\n  const sheetDedupeId = forceSheetDedupeId \? dedupeId : \(attemptMetadata\.is_resubmission \? `\$\{dedupeId\}__attempt_\$\{attemptMetadata\.attempt\}` : dedupeId\);/,
+    /  const dedupeId = scoreDedupeId\(row\);\n  const scoreRef = doc\(db, "scores", dedupeId\);[\s\S]*?\n  const sheetDedupeId = forceSheetDedupeId \? dedupeId : \(attemptMetadata\.is_resubmission \? `\$\{dedupeId\}__attempt_\$\{attemptMetadata\.attempt\}` : dedupeId\);/,
     atomicReservationBlock,
     "atomic duplicate reservation",
   );
@@ -199,7 +197,11 @@ if (!source.includes("Could not reserve the score key safely; no score was poste
     '        if (currentScore?.saveReservationToken !== reservationToken || currentScore?.saveReservationStatus !== "pending") {',
     '          throw new Error("The score reservation was lost before Firestore finalization.");',
     '        }',
-    '        transaction.set(scoreRef, firestoreScore, { merge: true });',
+    ...(source.includes('doc(collection(db, "publishedAnswerReferences"))') ? [
+      '        const referenceRef = snapshot && row.studentId ? doc(collection(db, "publishedAnswerReferences")) : null;',
+      '        if (referenceRef) transaction.set(referenceRef, { ...snapshot, studentId: row.studentId });',
+      '        transaction.set(scoreRef, { ...firestoreScore, answerReferenceId: referenceRef?.id || "" }, { merge: true });',
+    ] : ['        transaction.set(scoreRef, firestoreScore, { merge: true });']),
     '      });',
     '      receipt.firestore.success = true;',
     '      receipt.firestore.message = existingScore ? "Updated Firestore score mirror." : "Saved to Firestore mirror.";',

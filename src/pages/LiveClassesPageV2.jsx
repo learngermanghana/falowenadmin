@@ -1,3 +1,4 @@
+import { requiresEarlySessionCompletionOverride } from "../utils/sessionCompletionGuard.js";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import LiveClassNextLesson from "../components/LiveClassNextLesson.jsx";
@@ -289,8 +290,12 @@ export default function LiveClassesPageV2() {
         setMessage("Session reopened. Use Change session to choose its correct date, or Complete after teaching it.");
       }
       if (action === "complete") {
-        if (!window.confirm("Mark this session completed?")) return;
-        await markSessionCompleted(session.id, user?.uid || user?.email || "admin");
+        const earlyCompletion = requiresEarlySessionCompletionOverride(session);
+        const prompt = earlyCompletion
+          ? "This class is still scheduled to run. Completing it now stops class reminders. Confirm EARLY completion override?"
+          : "Mark this session completed?";
+        if (!window.confirm(prompt)) return;
+        await markSessionCompleted(session.id, user?.uid || user?.email || "admin", dashboard?.klass?.id || selectedClassId, { allowEarlyCompletion: earlyCompletion });
       }
       await refreshDashboard(selectedClassId);
     } catch (error) {

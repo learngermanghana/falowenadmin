@@ -58,14 +58,15 @@ if (!source.includes("function attendanceLessonTitle(")) {
   source = source.replace(oldLessonLabel, newLessonLabel);
 }
 
-const optionBefore = `lessonLabel(session, klass.timezone || TIMEZONE)`;
-const optionAfter = `lessonLabel(session, klass.timezone || TIMEZONE, klass.levelId || klass.level)`;
+const modernSelector = source.includes("session-attendance__selector");
+const optionBefore = modernSelector ? "lessonLabel(session, timezone)" : "lessonLabel(session, klass.timezone || TIMEZONE)";
+const optionAfter = modernSelector ? "lessonLabel(session, timezone, klass.levelId || klass.level)" : `lessonLabel(session, klass.timezone || TIMEZONE, klass.levelId || klass.level)`;
 if (!source.includes(optionAfter)) {
   if (!source.includes(optionBefore)) throw new Error("Attendance lesson option anchor changed; update patchA1AttendanceDayLabels.mjs");
   source = source.replace(optionBefore, optionAfter);
 }
 
-const headingBefore = `{assignmentId ? \`${"${assignmentId} — "}\` : ""}{selected.topic || "Lesson details to be confirmed"}`;
+const headingBefore = modernSelector ? '{assignmentId ? `${assignmentId} · ` : ""}{selected.topic || "Lesson details to be confirmed"}' : `{assignmentId ? \`${"${assignmentId} — "}\` : ""}{selected.topic || "Lesson details to be confirmed"}`;
 const headingAfter = `{attendanceLessonTitle(selected, klass?.levelId || klass?.level)}`;
 if (!source.includes(headingAfter)) {
   if (!source.includes(headingBefore)) throw new Error("Attendance lesson heading anchor changed; update patchA1AttendanceDayLabels.mjs");
@@ -74,7 +75,7 @@ if (!source.includes(headingAfter)) {
 
 const noteBefore = `The lesson title and curriculum ID come from this class session. Change lesson mapping under Live Classes, not on the attendance page.`;
 const noteAfter = `For A1, attendance shows one visible label per teaching day. The underlying chapter and curriculum IDs remain unchanged for assignments, marking and check-in.`;
-if (!source.includes(noteAfter)) {
+if (!modernSelector && !source.includes(noteAfter)) {
   if (!source.includes(noteBefore)) throw new Error("Attendance lesson note anchor changed; update patchA1AttendanceDayLabels.mjs");
   source = source.replace(noteBefore, noteAfter);
 }

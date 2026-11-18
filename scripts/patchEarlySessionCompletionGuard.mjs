@@ -108,7 +108,9 @@ function patchPage() {
         await markSessionCompleted(session.id, adminId, canonicalClassId, { allowEarlyCompletion: earlyCompletion });
         successMessage = earlyCompletion ? "Session marked completed with an early-completion override." : "Session marked completed.";
       }`;
-  source = replaceOnce(source, oldCompletion, guardedCompletion, "Live Classes early-completion confirmation");
+  if (!source.includes("allowEarlyCompletion: earlyCompletion")) {
+    source = replaceOnce(source, oldCompletion, guardedCompletion, "Live Classes early-completion confirmation");
+  }
 
   fs.writeFileSync(pagePath, source, "utf8");
 }
