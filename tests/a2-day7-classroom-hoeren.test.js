@@ -38,3 +38,13 @@ test('A2 Day 7 requests the authenticated classroom signer', () => {
   assert.match(source, /\[1, 2, 3, 4, 5, 7, 18, 19, 20, 21, 23, 24, 25, 26\]\.includes\(lesson\.listening\.day\)/);
   assert.match(source, /https:\/\/www\.falowen\.app\/api\/course-media\/a2\/classroom-audio-url/);
 });
+
+test('A2 Day 7 retries only unavailable classroom signers through authenticated Cloud Run', () => {
+  const source = readFileSync(new URL('../src/components/InteractiveLessonOpening.jsx', import.meta.url), 'utf8');
+  assert.match(source, /classroomSignerUnavailable/);
+  assert.match(source, /response\.status === 400/);
+  assert.match(source, /response\.status === 404/);
+  assert.match(source, /requestSignedAudio\(\`\$\{AUDIO_API\}\/course-media\/a2\/audio-url\`\)/);
+  assert.match(source, /Authorization: \`Bearer \$\{await user\.getIdToken\(\)\}\`/);
+  assert.match(source, /if \(fallback\.response\.ok && fallback\.data\.url\)/);
+});
