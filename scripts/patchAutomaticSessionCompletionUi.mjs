@@ -300,14 +300,6 @@ ${curriculumSyncFeedback}
   fs.writeFileSync(pagePath, source, "utf8");
 }
 
-// This legacy migration targets the old Live Classes editor. The current
-// workspace manages session actions without renderSessionChangeForm. Never
-// force outdated automation/completion controls into the redesigned page.
-const activePage = fs.readFileSync(pagePath, "utf8");
-if (activePage.includes("function renderSessionChangeForm")) {
-  patchService();
-  patchPage();
-  console.log("Applied automatic completion, Undo controls and live dashboard refresh to Live Classes.");
-} else {
-  console.log("Skipped obsolete Live Classes completion UI migration; current workspace retained.");
-}
+patchService();
+patchPage();
+console.log("Applied automatic completion, Undo controls and live dashboard refresh to Live Classes.");
