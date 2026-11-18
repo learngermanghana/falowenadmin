@@ -2,9 +2,9 @@ export const STAFF_PAGES = Object.freeze([
   { id: "marking", label: "Marking", path: "/marking" },
   { id: "teaching-slides", label: "Teaching Slides", path: "/teaching-slides" },
   { id: "attendance", label: "Attendance", path: "/attendance" },
-  { id: "students", label: "Students", path: "/students" },
-  { id: "results", label: "Results", path: "/student-results" },
   { id: "music-studio", label: "Music Studio", path: "/music-studio" },
+  { id: "music-analytics", label: "Music Analytics", path: "/music-analytics" },
+  { id: "shared-dictionary", label: "Shared Dictionary", path: "/shared-dictionary" },
 ]);
 
 export function staffPageIds(value, role) {
@@ -21,8 +21,8 @@ export function isTutorAttendance(path) {
 }
 
 export function canOpenStaffPage(path, pages) {
-  if (path === "/students") return pages.includes("students");
-  if (path === "/student-results") return pages.includes("results");
+  if (path === "/music-analytics") return pages.includes("music-analytics");
+  if (path === "/shared-dictionary") return pages.includes("shared-dictionary");
   if (path === "/music-studio") return pages.includes("music-studio");
   if (isTutorAttendance(path)) return pages.includes("attendance");
   if (path === "/teaching-slides" || path.startsWith("/teaching-slides/")) return pages.includes("teaching-slides");

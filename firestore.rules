@@ -141,6 +141,56 @@ service cloud.firestore {
           (request.resource.data.lessonId == 'swahili-day-6' && reviewId == request.resource.data.studentId + '_day-6'));
     }
 
+    // Shared, staff-only language course notes and text dictionary drafts.
+    // Staff need an explicit page grant; each author can edit or delete only
+    // their own saved item while granted staff can read the shared library.
+    function canUseSharedDictionary() {
+      return isSignedIn() && (
+        request.auth.token.get('admin', false) == true ||
+        request.auth.token.get('role', '') == 'admin' ||
+        (request.auth.token.get('email_verified', false) == true &&
+          request.auth.token.get('email', '') == 'moxflex@gmail.com') ||
+        (request.auth.token.get('staff', false) == true &&
+          'shared-dictionary' in request.auth.token.get('staffPages', []))
+      );
+    }
+
+    function isDictionaryAdmin() {
+      return request.auth.token.get('admin', false) == true ||
+        request.auth.token.get('role', '') == 'admin' ||
+        (request.auth.token.get('email_verified', false) == true &&
+          request.auth.token.get('email', '') == 'moxflex@gmail.com');
+    }
+
+    function validSharedDictionaryItem() {
+      return request.resource.data.keys().hasOnly([
+          'language', 'title', 'content', 'note', 'authorUid', 'authorName', 'updatedAt'
+        ]) &&
+        request.resource.data.language in ['german', 'swahili'] &&
+        request.resource.data.title is string && request.resource.data.title.size() > 0 &&
+        request.resource.data.title.size() <= 160 &&
+        request.resource.data.content is string && request.resource.data.content.size() <= 100000 &&
+        request.resource.data.note is string && request.resource.data.note.size() <= 10000 &&
+        request.resource.data.authorUid is string &&
+        request.resource.data.authorName is string && request.resource.data.authorName.size() <= 120;
+    }
+
+    match /sharedLanguageDictionary/{itemId} {
+      allow read: if canUseSharedDictionary() &&
+        (isDictionaryAdmin() ||
+         resource.data.language in request.auth.token.get('staffLanguages', []));
+      allow create: if canUseSharedDictionary() && validSharedDictionaryItem() &&
+        request.resource.data.authorUid == request.auth.uid &&
+        (isDictionaryAdmin() ||
+         request.resource.data.language in request.auth.token.get('staffLanguages', []));
+      allow update: if canUseSharedDictionary() && validSharedDictionaryItem() &&
+        (isDictionaryAdmin() || (resource.data.authorUid == request.auth.uid &&
+          request.resource.data.authorUid == request.auth.uid &&
+          request.resource.data.language == resource.data.language));
+      allow delete: if canUseSharedDictionary() &&
+        (isDictionaryAdmin() || resource.data.authorUid == request.auth.uid);
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

@@ -210,7 +210,11 @@ function registerMusicAnalyticsRoutes({
       const decoded = await verifyToken(match[1]);
       uid = decoded?.uid;
       if (!uid) return res.status(401).json({ ok: false, error: 'Invalid admin session.' });
-      if (!isStudioOwner(uid, runtimeConfig, env)) return res.status(403).json({ ok: false, error: 'Owner access required.' });
+      const analyticsStaff = decoded?.staff === true && Array.isArray(decoded.staffPages)
+        && decoded.staffPages.includes('music-analytics');
+      if (!analyticsStaff && !isStudioOwner(uid, runtimeConfig, env)) {
+        return res.status(403).json({ ok: false, error: 'Music Analytics access required.' });
+      }
     } catch {
       return res.status(401).json({ ok: false, error: 'Invalid admin session.' });
     }

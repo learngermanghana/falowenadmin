@@ -57,8 +57,8 @@ const LiveClassesPage = lazy(() => import("./pages/LiveClassesPage"));
 const HolidayCalendarPage = lazy(() => import("./pages/HolidayCalendarPage"));
 const GoetheExamConfigPage = lazy(() => import("./pages/GoetheExamConfigPage.jsx"));
 const StudentResultsComparePage = lazy(() => import("./pages/StudentResultsComparePage.jsx"));
-const StaffRecordsPage = lazy(() => import("./pages/StaffRecordsPage.jsx"));
 const StaffWorkspacePage = lazy(() => import("./pages/StaffWorkspacePage.jsx"));
+const SharedLanguageDictionaryPage = lazy(() => import("./pages/SharedLanguageDictionaryPage.jsx"));
 const UniversityInvitationsPage = lazy(() => import("./pages/UniversityInvitationsPage.jsx"));
 
 function RouteFallback() {
@@ -174,6 +174,7 @@ function TopBar() {
                 <Link to="/" onClick={() => setMenuOpen(false)}>Dashboard</Link>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
                 <Link to="/staff" onClick={() => setMenuOpen(false)}>Staff Workspace</Link>
+                <Link to="/shared-dictionary" onClick={() => setMenuOpen(false)}>Shared Dictionary</Link>
                 {role === "admin" && <Link to="/invitations" onClick={() => setMenuOpen(false)}>Invitations</Link>}
                 <Link to="/leads" onClick={() => setMenuOpen(false)}>Leads</Link>
                 <Link to="/exam-file" onClick={() => setMenuOpen(false)}>Goethe Exam File</Link>
@@ -231,9 +232,9 @@ function MarkingRoute() {
 }
 
 function OwnerMusicAnalyticsRoute() {
-  const { user, loading, isStaff } = useAuth();
+  const { user, loading, isStaff, staffPages } = useAuth();
   const ownerUid = String(import.meta.env.VITE_HOEREN_STUDIO_OWNER_UID || "").trim();
-  if (!loading && user && (isStaff || !ownerUid || user.uid !== ownerUid)) return <Navigate to="/" replace />;
+  if (!loading && user && (isStaff ? !staffPages.includes("music-analytics") : (!ownerUid || user.uid !== ownerUid))) return <Navigate to="/" replace />;
   return <ProtectedRoute><MusicAnalyticsPage /></ProtectedRoute>;
 }
 
@@ -312,7 +313,7 @@ export default function App() {
           <Route path="/course-schedule" element={<ProtectedRoute><CourseSchedulePage /></ProtectedRoute>} />
           <Route path="/course-schedule/public" element={<PublicCourseSchedulePage />} />
           <Route path="/marking" element={<MarkingRoute />} />
-          <Route path="/student-results" element={<ProtectedRoute>{role === "staff" ? <StaffRecordsPage key="results" page="results" /> : <StudentResultsComparePage />}</ProtectedRoute>} />
+          <Route path="/student-results" element={<ProtectedRoute><StudentResultsComparePage /></ProtectedRoute>} />
           <Route path="/marking/ai-audit" element={<Navigate to="/marking" replace />} />
           <Route path="/marking/answer-keys" element={<Navigate to="/marking" replace />} />
           <Route path="/ai-marking-audit" element={<Navigate to="/marking" replace />} />
@@ -329,8 +330,9 @@ export default function App() {
           <Route path="/whatsapp-reminders" element={<ProtectedRoute><WhatsAppRemindersPage /></ProtectedRoute>} />
           <Route path="/teaching-slides" element={<ProtectedRoute><TeachingSlidesPage /></ProtectedRoute>} />
           <Route path="/orientation" element={<ProtectedRoute><OrientationPage /></ProtectedRoute>} />
-          <Route path="/students" element={<ProtectedRoute>{role === "staff" ? <StaffRecordsPage key="students" page="students" /> : <StudentHubPage />}</ProtectedRoute>} />
+          <Route path="/students" element={<ProtectedRoute><StudentHubPage /></ProtectedRoute>} />
           <Route path="/staff" element={<ProtectedRoute><StaffWorkspacePage /></ProtectedRoute>} />
+          <Route path="/shared-dictionary" element={<ProtectedRoute><SharedLanguageDictionaryPage /></ProtectedRoute>} />
           <Route path="/invitations" element={<ProtectedRoute><UniversityInvitationsPage /></ProtectedRoute>} />
           <Route path="/leads" element={<ProtectedRoute><LeadsPage /></ProtectedRoute>} />
           <Route path="/student-activity" element={<ProtectedRoute><Navigate to="/students" replace /></ProtectedRoute>} />

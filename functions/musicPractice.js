@@ -171,8 +171,10 @@ function registerMusicPracticeRoutes({ app, db, verifyToken, fieldValue, runtime
     res.set('Cache-Control', 'private, no-store');
     const user = await authenticate(req);
     if (!user) return res.status(401).json({ ok: false, error: 'Sign in to Falowen Admin.' });
-    if (!isStudioOwner(user.uid, runtimeConfig, env)) {
-      return res.status(403).json({ ok: false, error: 'Music Analytics owner access required.' });
+    const analyticsStaff = user.staff === true && Array.isArray(user.staffPages)
+      && user.staffPages.includes('music-analytics');
+    if (!analyticsStaff && !isStudioOwner(user.uid, runtimeConfig, env)) {
+      return res.status(403).json({ ok: false, error: 'Music Analytics access required.' });
     }
     const days = parsePracticeDays(req.query?.days);
     const since = new Date(now().getTime() - days * 86400000);
