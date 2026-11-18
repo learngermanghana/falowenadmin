@@ -298,7 +298,7 @@ async function requestSecondExaminer(options = {}) {
     level: options.referenceEntry?.level || options.submission?.level || "",
     submissionText: ensureExplicitWritingLabel(originalText),
     markingMode: "second_examiner",
-    secondExaminerInstruction: "Act as an independent second German examiner. Re-mark the submission from scratch using the same answer key and rubric. Do not copy or assume the first examiner's score. Return your own evidence-based result.",
+    secondExaminerInstruction: "Act as an independent second German examiner. Re-mark from scratch using the same answer key and rubric; never copy the first examiner. Evaluate each requested writing point separately, then language quality. At A2, isolated noun-capitalization or punctuation errors are minor when meaning stays clear: do not deduct as though a required content point were missing. Report genuine missing points, confusing language, and the concrete reason for any tutor-review request. Return your own evidence-based result.",
   };
 
   const response = await fetch("/api/marking/ai", {
