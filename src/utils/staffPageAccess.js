@@ -5,7 +5,7 @@ export const STAFF_PAGES = Object.freeze([
   { id: "students", label: "Students", path: "/students" },
   { id: "results", label: "Results", path: "/student-results" },
   { id: "music-analytics", label: "Music Analytics", path: "/music-analytics" },
-  { id: "shared-dictionary", label: "Shared Dictionary", path: "/shared-dictionary" },
+  { id: "shared-dictionary", label: "Shared Notes", path: "/shared-dictionary" },
 ]);
 
 export function staffPageIds(value, role) {
