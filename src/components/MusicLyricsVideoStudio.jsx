@@ -60,14 +60,14 @@ function nameSlug(value) {
 }
 function audioFilenameObjectKey(text) {
   const key=String(text||"").trim();
-  if (SWAHILI_MUSIC_TRACKS.some((track) => track.objectKey === key)) return key;
+  if (/^swahili\/music\/(A1|A2|B1|B2|C1|C2)\/day-(0[1-9]|1[0-9]|2[0-8])\/[^/]{1,150}\.mp3$/.test(key)) return key;
   return /^music\/(a1|a2|b1|b2|c1|c2)\/day-(0[1-9]|1[0-9]|2[0-8])\/[^/]{1,150}\.mp3$/i.test(key) ? key : "";
 }
 // Never mix German and Swahili catalogs or manual R2 sidecars in the same editor.
 export function isMusicKeyForLanguage(key, language) {
   const normalized = audioFilenameObjectKey(key);
   if (!normalized) return false;
-  if (language === "swahili") return SWAHILI_MUSIC_TRACKS.some(track => track.objectKey === normalized);
+  if (language === "swahili") return normalized.startsWith("swahili/music/");
   if (language === "german") return /^music\/(a1|a2|b1|b2|c1|c2)\/day-/i.test(normalized);
   return false;
 }
