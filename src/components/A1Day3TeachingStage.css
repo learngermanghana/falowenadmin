@@ -1,0 +1,21 @@
+.a1-day3-lesson{width:min(100%,1120px);margin:0 auto;color:#133458;display:grid;gap:clamp(12px,2vh,18px);font-family:inherit}
+.a1-day3-lesson h1{font-size:clamp(27px,3vw,44px);line-height:1.12;margin:0;color:#103b73}
+.a1-day3-lesson h2{font-size:clamp(19px,2vw,29px);line-height:1.2;margin:0}
+.a1-day3-lesson p{font-size:clamp(16px,1.5vw,21px);margin:0}
+.a1-day3-grid,.a1-day3-articles,.a1-day3-pictures{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(9px,1.5vw,15px)}
+.a1-day3-card{display:grid;justify-items:center;align-content:center;gap:9px;min-width:0;min-height:124px;padding:clamp(12px,2vw,20px);text-align:center;background:#f4f8ff;border:1px solid #c6d9f5;border-radius:16px;box-shadow:0 5px 16px #17365d0a}
+.a1-day3-card strong{font-size:clamp(19px,2.1vw,28px)}
+.a1-day3-card span:not(.a1-day3-picture):not(.a1-day3-clue){font-size:clamp(14px,1.3vw,18px);color:#4b6077}
+.a1-day3-picture{font-size:clamp(43px,6vw,75px);line-height:1.1}
+.a1-day3-articles .a1-day3-card{min-height:170px}
+.a1-day3-articles .tone-blue{background:#eaf2ff;border-color:#b9d0f1}.a1-day3-articles .tone-rose{background:#fff0f3;border-color:#f2c7d0}.a1-day3-articles .tone-amber{background:#fff8e8;border-color:#f0dfb5}
+.a1-day3-rule,.a1-day3-answer,.a1-day3-formula{padding:clamp(14px,2.2vw,22px);border-radius:14px;background:#eaf2ff;border:1px solid #c6d9f5;text-align:center;font-size:clamp(20px,2.5vw,34px);font-weight:750}
+.a1-day3-formula span{color:#5684bf;padding:0 8px}
+.a1-day3-pictures .a1-day3-card{min-height:150px}
+.a1-day3-clue{font-size:14px;text-transform:uppercase;letter-spacing:.09em;color:#4675ae;font-weight:800}
+.a1-day3-question{font-size:clamp(18px,2vw,26px)!important;font-weight:750}
+.a1-day3-note{margin-top:14px;padding:14px 18px;background:#eef6ff;border-left:4px solid #1557a3;border-radius:8px}
+.a1-day3-note p{margin-top:6px;font-size:15px}
+.a1-day3-music{display:grid;gap:12px}
+@media(max-width:700px){.a1-day3-grid,.a1-day3-articles,.a1-day3-pictures{grid-template-columns:repeat(2,minmax(0,1fr))}.a1-day3-grid> :last-child,.a1-day3-articles> :last-child{grid-column:1/-1}.a1-day3-card{min-height:104px}.a1-day3-articles .a1-day3-card{min-height:125px}.a1-day3-picture{font-size:54px}}
+@media(max-width:430px){.a1-day3-grid,.a1-day3-articles,.a1-day3-pictures{grid-template-columns:1fr}.a1-day3-grid> :last-child,.a1-day3-articles> :last-child{grid-column:auto}}
