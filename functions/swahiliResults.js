@@ -4,7 +4,7 @@ const { createHash } = require("node:crypto");
 const { resolveAnnouncementConfig, postAnnouncementRow } = require("./finalMockResultEmails");
 
 const PASS_MARK = 60;
-const lessonTitles = { "swahili-day-1": "Alfabeti, sauti na matamshi", "swahili-day-6": "Mgahawani" };
+const lessonTitles = { "swahili-b1-day-28": "Kutunza Mazingira katika Maisha ya Kila Siku", "swahili-day-1": "Alfabeti, sauti na matamshi", "swahili-day-6": "Mgahawani" };
 
 function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement = postAnnouncementRow }) {
   return async (event) => {
@@ -18,8 +18,11 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
     const passed = review.score >= PASS_MARK;
     if (event.data?.before?.data()?.reviewedAt?.isEqual?.(review.reviewedAt)) return;
     const day = review.lessonId.split("-").at(-1);
+    const b1 = review.lessonId === "swahili-b1-day-28";
+    const lessonDoc = b1 ? "b1-day-28" : `day-${day}`;
+    const level = b1 ? "B1" : "A1";
     const uid = review.studentId;
-    if (snapshot.id !== (day === "1" ? uid : `${uid}_day-6`) || !review.submissionVersion) return;
+    if (snapshot.id !== (day === "1" ? uid : `${uid}_${lessonDoc}`) || !review.submissionVersion) return;
 
     const updateStatus = fields => updateSwahiliDeliveryStatus(db, snapshot.ref, review.reviewedAt, fields);
     let published = false;
@@ -33,14 +36,14 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
       const student = profile.data();
       const studentCode = student.studentCode || student.studentcode || profile.id;
       const dedupeId = `${studentCode}__${review.lessonId}`;
-      const submissionRef = db.doc(`users/${uid}/swahiliLessons/day-${day}`);
+      const submissionRef = db.doc(`users/${uid}/swahiliLessons/${lessonDoc}`);
       const resultId = createHash("sha256").update(`swahili:${uid}:${day}`).digest("hex");
       const publicationId = createHash("sha256").update(`${resultId}:${review.submissionVersion}`).digest("hex");
       const reviewVersion = `${review.reviewedAt?.seconds}:${review.reviewedAt?.nanoseconds}`;
       const syncId = createHash("sha256").update(`${publicationId}:${reviewVersion}`).digest("hex");
       const deliveryRef = db.collection("automaticScoreSync").doc(syncId);
       const scoreRef = db.collection("scores").doc(resultId);
-      const assignment = `Swahili A1 Day ${day} · ${lessonTitles[review.lessonId]}`;
+      const assignment = `Swahili ${level} Day ${day} · ${lessonTitles[review.lessonId]}`;
       const result = await db.runTransaction(async (tx) => {
         const [latest, submission, delivery] = await Promise.all([
           tx.get(snapshot.ref), tx.get(submissionRef), tx.get(deliveryRef),
@@ -53,11 +56,11 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
           return null;
         }
         if (delivery.exists) return delivery.data();
-        tx.set(snapshot.ref, { answerReference: answerKeys[review.lessonId], sheetDelivery: "pending", emailDelivery: "pending" }, { merge: true });
+        tx.set(snapshot.ref, { ...(b1 ? {} : { answerReference: answerKeys[review.lessonId] }), sheetDelivery: "pending", emailDelivery: "pending" }, { merge: true });
         tx.set(scoreRef, {
           program: "swahili", studentId: uid, studentCode, studentcode: studentCode,
           name: student.name || "", assignment, assignmentId: review.lessonId,
-          assignment_id: review.lessonId, dedupe_id: dedupeId, level: "A1", score: review.score,
+          assignment_id: review.lessonId, dedupe_id: dedupeId, level, score: review.score,
           comments: review.feedback, resultStatus: review.status, passed,
           passMark: PASS_MARK, outcome: passed ? "passed" : "failed", source: "swahili_tutor",
           date: review.reviewedAt.toDate().toISOString(), sheetSaved: false,
@@ -89,10 +92,10 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
           ? "Your tutor reviewed your Swahili workbook and requested a revision. Open Campus Results for feedback."
           : "Your Swahili workbook result is available. Open Campus Results to read your tutor’s feedback.",
         topic: `${assignment} result`,
-        link: `https://www.falowen.app/campus/results#swahili-day-${day}`,
-        link_label: "Open score, feedback and reference answers",
+        link: `https://www.falowen.app/campus/results#${review.lessonId}`,
+        link_label: b1 ? "Open score and feedback" : "Open score, feedback and reference answers",
         button_label: "Open Falowen Results",
-        class: "Swahili A1",
+        class: `Swahili ${level}`,
         delivery_mode: "individual",
         allow_bcc_fallback: "FALSE",
         attach_certificate: "FALSE",

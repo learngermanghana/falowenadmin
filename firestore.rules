@@ -94,7 +94,7 @@ service cloud.firestore {
 
     match /swahiliTeacherReviews/{reviewId} {
       allow get: if canReviewSwahili() || (signedIn() &&
-        (reviewId == request.auth.uid || reviewId == request.auth.uid + '_day-6') &&
+        (reviewId == request.auth.uid || reviewId == request.auth.uid + '_day-6' || reviewId == request.auth.uid + '_b1-day-28') &&
         (resource == null || resource.data.studentId == request.auth.uid));
       allow list: if canReviewSwahili();
       allow create, update: if canReviewSwahili() &&
@@ -106,7 +106,8 @@ service cloud.firestore {
           (request.resource.data.score is int && request.resource.data.score >= 0 &&
             request.resource.data.score <= 100 && request.resource.data.submissionVersion is string)) &&
         ((request.resource.data.lessonId == 'swahili-day-1' && reviewId == request.resource.data.studentId) ||
-          (request.resource.data.lessonId == 'swahili-day-6' && reviewId == request.resource.data.studentId + '_day-6'));
+          (request.resource.data.lessonId == 'swahili-day-6' && reviewId == request.resource.data.studentId + '_day-6') ||
+          (request.resource.data.lessonId == 'swahili-b1-day-28' && reviewId == request.resource.data.studentId + '_b1-day-28'));
     }
 
     match /writingProgress/{progressId} {

@@ -100,7 +100,7 @@
     }
   },
   "swahili-b1-day-28": {
-    "version": 1,
+    "version": 2,
     "reading": {
       "read-duty": {
         "prompt": "Ni kwa nini kutunza mazingira ni jukumu muhimu katika maisha ya kila siku?",
@@ -121,6 +121,31 @@
       "read-message": {
         "prompt": "Insha inasisitiza ujumbe gani mkuu katika hitimisho lake?",
         "answer": "Inasisitiza kuwa kila kitendo kidogo kina mchango mkubwa, na tukishirikiana tutalinda dunia kwa ajili ya vizazi vya sasa na vijavyo."
+      }
+    },
+    "writing": {
+      "Barua pepe": "Mada: Tuisafishe na kuipendezesha sehemu yetu\nWapendwa majirani,\nKatika uwanja wetu kuna taka nyingi. Kwa hiyo, ningependa kuwaalika kwenye shughuli ya pamoja ya usafi siku ya Jumamosi saa nne asubuhi. Tutakutana mbele ya lango kuu.\nKwanza tutakusanya na kutenganisha taka. Baadaye tutapanda maua ili eneo letu liwe safi na zuri. Tafadhali, leteni glavu na ndoo mlizo nazo. Badala ya kununua vifaa vipya, tunaweza kuazima vifaa kutoka kwa majirani.\nMvua kubwa ikinyesha, tutahamisha shughuli hadi Jumamosi inayofuata. Tafadhali nijulishe kabla ya Alhamisi kama utaweza kushiriki.\nSalamu,\nLena"
+    },
+    "listening": {
+      "listen-plastic": {
+        "prompt": "Kwa nini mwanzoni Juma anapendelea mifuko ya plastiki? Taja sababu mbili.",
+        "answer": "Ni rahisi kubeba na haigharimu pesa nyingi."
+      },
+      "listen-cloth": {
+        "prompt": "Amina anajibu nini Juma anapouliza kama mifuko ya kitambaa inaweza kuchanika kwa urahisi?",
+        "answer": "Anasema ina nguvu na inaweza kutumiwa tena na tena kwa miaka mingi."
+      },
+      "listen-remember": {
+        "prompt": "Amina anapendekeza Juma aweke mifuko yake wapi ili aikumbuke anapoenda kununua vitu? Taja sehemu moja.",
+        "answer": "Kwenye gari lake au katika mfuko anaobeba kila siku. Kubali sehemu moja kati ya hizo mbili."
+      },
+      "listen-tomorrow": {
+        "prompt": "Juma anakubali kubadili tabia yake kuanzia lini, na kwa lengo gani?",
+        "answer": "Kuanzia kesho, ili kupunguza taka za plastiki mtaani mwao."
+      },
+      "listen-compost": {
+        "prompt": "Kulingana na Amina, wanaweza kutumia taka za kikaboni kutengeneza nini, na watakitumia wapi?",
+        "answer": "Wanaweza kutengeneza mbolea na kuitumia katika bustani yao."
       }
     }
   }

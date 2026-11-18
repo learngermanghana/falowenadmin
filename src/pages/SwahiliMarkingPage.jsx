@@ -5,6 +5,7 @@ import { loadAllSwahiliMarkingPage, loadSwahiliMarkingPage, loadSwahiliRoster, l
 import { filterSwahiliMarkingRows, getSwahiliReviewStatus } from "../utils/swahiliReviewQueue";
 
 const LESSONS = {
+  28: { title: "B1 · Kutunza Mazingira katika Maisha ya Kila Siku", writing: { email: "Barua pepe" } },
   1: { title: "Alfabeti, sauti na matamshi", writing: { vowels: "Vokali", syllables: "Silabi", words: "Maneno" } },
   6: { title: "Mgahawani", writing: { likes: "Ninapenda", dislikes: "Sipendi", order: "Agizo" } },
 };
@@ -120,6 +121,12 @@ function SubmissionReview({ submission, day, onReviewSaved }) {
           ))}
         </ol>
       </section>
+      {reference.listening && <section>
+        <h4>Teil 4 · Kusikiliza</h4>
+        <ol>{Object.entries(reference.listening).map(([key, { prompt, answer }]) => (
+          <li key={key}><strong>{prompt}</strong> {String(submission.listeningAnswers?.[key] ?? "—")}<br /><small>Expected: {answer}</small></li>
+        ))}</ol>
+      </section>}
       <fieldset disabled={loading || saving || (!saved && error.startsWith("Could not load existing feedback"))}>
         <label>Decision
           <select value={status} onChange={(event) => { setStatus(event.target.value); setSaved(false); }}>
