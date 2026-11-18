@@ -68,13 +68,13 @@ test("free optimization merges German scenes divided only by redundant English c
     "EN: The du form ends with S T.",
     "[PAUSE 3]",
     "DE: Wir lernen Deutsch."
-  ].join("\\n");
+  ].join("\n");
   const result = optimizeGrammarAudioScript(original);
   assert.equal(result.saved, 2);
   assert.equal(result.removed.length, 1);
   assert.match(result.script, /The du form ends with S T/);
-  assert.match(result.script, /DE: Du lernst Deutsch\\./);
-  assert.match(result.script, /\\[PAUSE 3\\]/);
+  assert.match(result.script, /DE: Du lernst Deutsch\./);
+  assert.match(result.script, /\[PAUSE 3\]/);
   assert.equal(optimizeGrammarAudioScript(result.script).saved, 0);
 });
 
