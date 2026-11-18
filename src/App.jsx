@@ -175,7 +175,7 @@ function TopBar() {
                 <Link to="/" onClick={() => setMenuOpen(false)}>Dashboard</Link>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
                 <Link to="/staff" onClick={() => setMenuOpen(false)}>Staff Workspace</Link>
-                <Link to="/shared-dictionary" onClick={() => setMenuOpen(false)}>Shared Dictionary</Link>
+                <Link to="/shared-dictionary" onClick={() => setMenuOpen(false)}>Shared Notes</Link>
                 {role === "admin" && <Link to="/invitations" onClick={() => setMenuOpen(false)}>Invitations</Link>}
                 <Link to="/leads" onClick={() => setMenuOpen(false)}>Leads</Link>
                 <Link to="/exam-file" onClick={() => setMenuOpen(false)}>Goethe Exam File</Link>
