@@ -13,7 +13,7 @@ const ALLOWED_TYPES = new Set(["dialogue", "announcement", "telephone", "podcast
 const crypto = require("node:crypto");
 const { extractLessonDraft, questionInstructions, validateQuestionSet } = require("./hoerenQuestions");
 const { EXAM_PROFILES, getExamProfile, buildExamPrompt } = require("./hoerenExamProfiles");
-const { validateCourseLessonContext, courseLessonPrompt } = require("./hoerenCurriculumContext");
+const { validateCourseLessonContext, courseLessonPrompt, COURSE_SCRIPT_WORD_RANGES } = require("./hoerenCurriculumContext");
 // SHA-256 identifier for the single verified Falowen owner UID. This is not an API secret.
 // Using a digest avoids publishing the Firebase account UID in public repository code.
 const DEFAULT_OWNER_UID_SHA256 = "e8bc09aac410e86216e384ab4c612d6ac6551273085f8344206b23f4004f90a1";
@@ -128,12 +128,12 @@ function buildSwahiliConversationPrompt(body = {}) {
     throw Object.assign(new Error("Choose a format and enter a topic (4–240 characters)."), { status: 400 });
   }
   return [
-    `Write an original listening conversation in standard East African Kiswahili for adult ${level} learners.`,
-    format === "podcast" ? "Write a short two-host podcast with a greeting, a friendly discussion and a simple closing."
-      : "Write a short, realistic everyday conversation between two people.",
+    `Write an original listening conversation in standard East African Kiswahili for adult ${level} learners. Aim for ${COURSE_SCRIPT_WORD_RANGES[level].join("–")} spoken words, excluding speaker labels.`,
+    format === "podcast" ? "Write a two-host podcast with a greeting, a friendly discussion and a simple closing."
+      : "Write a realistic everyday conversation between two people.",
     swahiliLevelGuidance[level] + " Use clear turn-taking. Write only Kiswahili.",
-    "Use 8–16 spoken turns on separate lines, each beginning with A: or B:. Use both speakers. No titles, Markdown, questions for the learner or stage directions.",
-    "Keep each turn below 180 characters. Center the conversation on this topic: " + topic,
+    "Use up to 18 spoken turns on separate lines, each beginning with A: or B:. Use both speakers. No titles, Markdown, questions for the learner or stage directions.",
+    "Keep each turn at or below 320 characters. Develop the topic with specific details and a natural ending. Avoid padding with repetition. Topic: " + topic,
   ].join("\n");
 }
 
@@ -388,6 +388,12 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
         { contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: 0.4, maxOutputTokens: 1800 } },
       );
       const script = validateSwahiliTranscript(extractScript(result));
+      const level = String(req.body?.level || "A1").trim().toUpperCase();
+      const [minimumWords] = COURSE_SCRIPT_WORD_RANGES[level];
+      const wordCount = script.replace(/^[AB]:\s*/gm, "").split(/\s+/u).length;
+      if (wordCount < minimumWords) {
+        throw Object.assign(new Error(`The generated Kiswahili script has ${wordCount} words. The ${level} minimum is ${minimumWords}. Please generate it again.`), { status: 502 });
+      }
       await settleUsage(db, slot, true);
       return res.json({ ok: true, script, remaining: slot.remaining });
     } catch (error) { await refundFailedRequest(db, slot); return handleError(res, error); }
