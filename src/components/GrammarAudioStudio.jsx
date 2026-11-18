@@ -5,6 +5,8 @@ import { assembleListeningExam, base64WavToBytes } from "../utils/hoerenAudio";
 import { encodeWavAsMp3 } from "../utils/hoerenMp3";
 import { getSavedVoice, saveVoice } from "../utils/hoerenVoiceCache";
 import { parseGrammarAudioScript, planGrammarAudio, grammarAudioCacheKey, grammarAssemblyPlan } from "../utils/grammarAudio";
+import { getSlidesByCourse } from "../data/teachingSlides";
+import { lessonGrammarAudioScript } from "../utils/lessonGrammarAudioScript";
 
 const SAMPLE = [
   "DE: Hallo und herzlich willkommen bei Falowen!",
@@ -44,6 +46,8 @@ function safeName(topic, level) {
 export default function GrammarAudioStudio({ ready, status, onStatusChange, onBusyChange }) {
   const toast = useToast();
   const [topic, setTopic] = useState("je … desto");
+  const [lessonChoice, setLessonChoice] = useState("");
+  const lessons = useMemo(() => ["A1", "A2", "B1", "B2", "C1", "C2"].flatMap(getSlidesByCourse), []);
   const [level, setLevel] = useState("B1");
   const [languageMode, setLanguageMode] = useState("bilingual");
   const [engine, setEngine] = useState("lite");
@@ -102,6 +106,26 @@ export default function GrammarAudioStudio({ ready, status, onStatusChange, onBu
       // The main studio displays provider or account status.
     }
   };
+
+  function loadLessonDraft() {
+    if (!lessonChoice || busy) return;
+    const selected = lessonChoice === "a1-day-2-complete"
+      ? lessons.filter(item => item.course === "A1" && item.day === "Day 2")
+      : lessons.filter(item => item.id === lessonChoice);
+    if (!selected.length) return;
+    try {
+      const draft = lessonGrammarAudioScript(selected);
+      const planned = planGrammarAudio(parseGrammarAudioScript(draft));
+      const count = planned.filter(item => item.type === "speech").length;
+      if (count > 36) throw new Error("Lesson draft is too long.");
+      setScript(draft);
+      setTopic(lessonChoice === "a1-day-2-complete" ? "A1 Day 2 · Full grammar lesson" : selected[0].topic);
+      setLevel(selected[0].course);
+      setLanguageMode("bilingual");
+      invalidate();
+      toast.success("Lesson-based script ready · " + count + " voice scenes. Review the German pronunciation before generation.");
+    } catch (error) { toast.error(error.message); }
+  }
 
   async function generateScript() {
     if (!topic.trim() || !ready || busy) return;
@@ -190,6 +214,20 @@ export default function GrammarAudioStudio({ ready, status, onStatusChange, onBu
       <section className="hoeren-panel">
         <h2>1. Write your grammar lesson</h2>
         <p className="hoeren-hint">Create narrated lessons for YouTube, course grammar pages or classroom slides. English explanations and natural German examples use the same existing Falowen Gemini infrastructure.</p>
+        <div className="hoeren-exam-schema">
+          <strong>Use an existing Falowen lesson</strong>
+          <p>Build a short script directly from the authored teaching curriculum, without using a paid script request. One welcome and one goodbye per complete lesson.</p>
+          <label>Choose a course lesson
+            <select value={lessonChoice} disabled={!!busy} onChange={e => setLessonChoice(e.target.value)}>
+              <option value="">Select a lesson</option>
+              <option value="a1-day-2-complete">A1 Day 2 · Alphabet, pronouns and verbs (complete)</option>
+              {lessons.map(item => <option key={item.id} value={item.id}>{item.course} · {item.day} · {item.topic || item.title}</option>)}
+            </select>
+          </label>
+          <button type="button" className="hoeren-quiet" disabled={!lessonChoice || !!busy} onClick={loadLessonDraft}>
+            Build short lesson audio script · free
+          </button>
+        </div>
         <div className="hoeren-input-grid">
           <label>Grammar topic
             <input maxLength={160} value={topic} disabled={!!busy} onChange={e => setTopic(e.target.value)} placeholder="e.g. je … desto, Konjunktiv II" />
