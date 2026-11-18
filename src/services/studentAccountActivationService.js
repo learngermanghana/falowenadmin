@@ -42,3 +42,11 @@ export function recordStudentInvitationSent(studentId) {
 export function sendOrganisationEnrolmentConfirmation(studentId) {
   return requestStudentAccount(studentId, "POST", "/organisation-confirmation");
 }
+
+export function lookupExistingStudentLogin(studentId) {
+  return requestStudentAccount(studentId, "GET", "/lookup");
+}
+
+export function linkExistingStudentLogin(studentId) {
+  return requestStudentAccount(studentId, "POST", "/link");
+}
