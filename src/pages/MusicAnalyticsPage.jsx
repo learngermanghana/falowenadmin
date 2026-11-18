@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
 import { loadMusicAnalytics } from '../services/musicAnalyticsService.js';
 import './MusicAnalyticsPage.css';
 import StudentMusicPracticePanel from '../components/StudentMusicPracticePanel.jsx';
@@ -44,6 +45,7 @@ function PopularityBars({ rows, valueKey, labelKey, emptyLabel }) {
 }
 
 export default function MusicAnalyticsPage() {
+  const { isStaff, staffPages = [] } = useAuth();
   const [tab, setTab] = useState('visitors');
   const [days, setDays] = useState(7);
   const [refresh, setRefresh] = useState(0);
@@ -180,7 +182,7 @@ export default function MusicAnalyticsPage() {
       ) : null}
         </>
       )}
-      <p className="music-analytics-back"><Link to="/music-studio">← Music Studio</Link></p>
+      {!isStaff || staffPages.includes('music-studio') ? <p className="music-analytics-back"><Link to="/music-studio">← Music Studio</Link></p> : null}
     </main>
   );
 }

@@ -2666,7 +2666,7 @@ registerCompletionDocumentRoute({ app, db, runtimeConfig, requireAuth });
 exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob({ admin, db, onSchedule, runtimeConfig });
 
 registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey: geminiAudioKeySecret, runtimeConfig });
-registerMusicAnalyticsRoutes({ app, runtimeConfig, verifyToken: token => admin.auth().verifyIdToken(token) });
+registerMusicAnalyticsRoutes({ app, db, runtimeConfig, verifyToken: token => admin.auth().verifyIdToken(token) });
 registerMusicPracticeRoutes({ app, db, runtimeConfig, fieldValue: admin.firestore.FieldValue, verifyToken: token => admin.auth().verifyIdToken(token) });
 
 const musicStudioHandler = require('./musicStudio').createHandler({

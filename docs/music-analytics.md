@@ -21,7 +21,7 @@ Tracked events: page_view (only after opt-in), music_play (actual start but not 
 
 ## Admin
 
-The existing Admin Firebase Function serves GET /music-analytics/summary?days=1|7|30. A valid Firebase ID token and the owner-only Music Studio guard are required. It calls Google Analytics Data API, filtering hostName to music.falowen.app, to read aggregate visitors, page views, plays/completions, top songs, levels, country and daily trends. It uses in-memory 15-minute caching and in-flight request coalescing; there are no per-listen Firestore writes, AI calls, scheduled jobs or BigQuery exports.
+The existing Admin Firebase Function serves GET /music-analytics/summary?days=1|7|30. A valid Firebase ID token and either owner identity or the explicit **Music Analytics** staff page grant are required. The Student Practice summary uses the same authorization. Student Practice includes identifiable student account names and emails, so grant this page only to staff who need access to those records. The endpoint calls Google Analytics Data API, filtering hostName to music.falowen.app, to read aggregate visitors, page views, plays/completions, top songs, levels, country and daily trends. It uses in-memory 15-minute caching and in-flight request coalescing; there are no per-listen Firestore writes, AI calls, scheduled jobs or BigQuery exports.
 
 Standard GA4 and its API can be used within free quotas. Server calls and normal CDN/network usage are still subject to the hosting provider's limits. No promise of absolute zero infrastructure charges is made.
 
