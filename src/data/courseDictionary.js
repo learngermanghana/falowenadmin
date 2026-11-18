@@ -16,7 +16,7 @@ export const courseDictionary = {
     "A1-6": { assignment_id: "A1-6", chapter: "6", de: "Gegenstände, Farben und Possessivartikel", en: "Objects, Colors and Possessive Articles" },
     "A1-7": { assignment_id: "A1-7", chapter: "7", de: "Die Uhrzeit und der Tagesablauf", en: "Understanding Time and Daily Routines" },
     "A1-8": { assignment_id: "A1-8", chapter: "8", de: "Die 24-Stunden-Uhr und Datum", en: "The 24 Hour Clock and Dates" },
-    "A1-3.5": { assignment_id: "A1-3.5", chapter: "3.5", de: "Wiederholung: Zahlen, Zeit und Preise", en: "Numbers, Time and Prices Revision" },
+    "A1-3.5": { assignment_id: "A1-3.5", chapter: "3.5", de: "Einfache Aussagesätze bilden", en: "Forming Simple German Statements" },
     "A1-3.6": { assignment_id: "A1-3.6", chapter: "3.6", de: "Modalverben", en: "Modal Verbs" },
     "A1-4.7": { assignment_id: "A1-4.7", chapter: "4.7", de: "Aufbau der Goethe-A1-Sprechprüfung", en: "Goethe A1 Speaking Exam Structure" },
     "A1-9": { assignment_id: "A1-9", chapter: "9", de: "Essen und Verneinung", en: "Food and Negation" },

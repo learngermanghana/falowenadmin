@@ -13,7 +13,7 @@ export const classSchedules = {
     { week: 'Week Four', day: 'Day 10', date: 'Tuesday, 03 March 2026', assignmentId: 'A1-6', topic: '6. Objects, Colors and Possessive Articles' },
     { week: 'Week Five', day: 'Day 11', date: 'Wednesday, 04 March 2026', assignmentId: 'A1-7', topic: '7. The 12 Hour Clock' },
     { week: 'Week Five', day: 'Day 12', date: 'Monday, 09 March 2026', assignmentId: 'A1-8', topic: '8. The 24 Hour Clock and Dates' },
-    { week: 'Week Five', day: 'Day 13', date: 'Tuesday, 10 March 2026', assignmentId: 'A1-3.5', topic: '3.5. Revision: Numbers, Time and Prices' },
+    { week: 'Week Five', day: 'Day 13', date: 'Tuesday, 10 March 2026', assignmentId: 'A1-3.5', topic: '3.5. Forming Simple German Statements' },
     { week: 'Week Six', day: 'Day 14', date: 'Wednesday, 11 March 2026', assignmentId: 'A1-3.6', topic: '3.6. Modal Verbs' },
     { week: 'Week Six', day: 'Day 15', date: 'Monday, 16 March 2026', assignmentId: 'A1-4.7', topic: '4.7. Imperatives' },
     { week: 'Week Six', day: 'Day 16', date: 'Tuesday, 17 March 2026', assignmentId: 'A1-9_10', topic: 'Chapter 9 and 10 - Lesen & Hören' },
