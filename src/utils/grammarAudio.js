@@ -81,7 +81,8 @@ export function optimizeGrammarAudioScript(source) {
   for (let index = 0; index < lines.length; index++) {
     const line = lines[index].trim();
     const next = lines.slice(index + 1).find(item => item.trim());
-    if (disposableCue.test(line) && /^DE:\s*\S/i.test(next || "")) {
+    const previous = [...keep].reverse().find(item => item.trim());
+    if (disposableCue.test(line) && /^DE:\s*\S/i.test(next || "") && /^DE:\s*\S/i.test(previous || "")) {
       removed.push(line);
     } else {
       keep.push(lines[index]);
