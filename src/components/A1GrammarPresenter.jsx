@@ -745,7 +745,9 @@ export default function A1GrammarPresenter({
           ) : null}
           {stage.type === "a1-day2" ? (
             <A1Day2TeachingStage key={stage.id} step={stage.step} />
-          ) : stage.type === "a1-day3" ? (\n            <A1Day3TeachingStage key={stage.id} step={stage.step} />\n          ) : stage.type === "a1-day12" ? (
+          ) : stage.type === "a1-day3" ? (
+            <A1Day3TeachingStage key={stage.id} step={stage.step} />
+          ) : stage.type === "a1-day12" ? (
             <A1Day12ClassroomStage key={stage.id} step={stage.step} />
           ) : stage.type === "published-music" ? (
             <PublishedSongLessonStage assignmentKey={slide.assignmentId} courseDay={slide.dayNumber} compact nextLyricOnly />
