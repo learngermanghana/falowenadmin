@@ -20,81 +20,6 @@ export const swahiliB1Day28 = {
       "topic": "Kiswahili B1 · Somo la 28"
     },
     {
-      "id": "warm-up",
-      "type": "numbered-list",
-      "title": "Unafanya nini tayari?",
-      "kicker": "Kiswahili B1 · 10.28",
-      "items": [
-        "Ni tabia gani ya mazingira ambayo ni rahisi kwako kuanza?",
-        "Taja tabia tatu kutoka nyumbani, dukani au safarini.",
-        "Linganisha mawazo yako na ya mwenzako."
-      ]
-    },
-    {
-      "id": "action-map",
-      "type": "numbered-list",
-      "title": "Ramani ya vitendo",
-      "kicker": "Kiswahili B1 · 10.28",
-      "items": [
-        "Taka — kutenganisha taka; kupunguza plastiki; kutumia tena",
-        "Maji na nishati — kufunga bomba; kuoga kwa muda mfupi; kuzima taa",
-        "Usafiri — kutembea; baiskeli; basi; kushirikiana gari",
-        "Ununuzi — mfuko wa kitambaa; bidhaa za eneo; bidhaa za msimu",
-        "Jamii — kusafisha eneo; kupanda miti; kutoa elimu"
-      ]
-    },
-    {
-      "id": "radio-dialogue",
-      "type": "numbered-list",
-      "title": "Falowen Radio · Soma kwa majukumu",
-      "items": [
-        "Bwana Ali: Unafanya nini na taka nyumbani?",
-        "Maria: Ninatenganisha karatasi, plastiki, chupa na taka za chakula kulingana na utaratibu wa eneo letu.",
-        "Bwana Ali: Unaokoa vipi maji na nishati?",
-        "Juma: Ninazima taa na vifaa nisivyotumia.",
-        "Asha: Kwa safari fupi ninatembea au kutumia baiskeli."
-      ]
-    },
-    {
-      "id": "radio",
-      "type": "grammar-check",
-      "title": "Falowen Radio · Maswali ya majadiliano",
-      "kicker": "Kiswahili B1 · 10.28",
-      "items": [
-        {
-          "prompt": "Maria anatumia nini badala ya mifuko mipya ya plastiki?",
-          "answer": "Ninapoenda kununua bidhaa, ninabeba mfuko wa kitambaa badala ya kuchukua mifuko mipya ya plastiki. Pia ninatumia chupa ya maji inayoweza kutumiwa tena.",
-          "answerLabel": "Mfano wa jibu",
-          "revealLabel": "Onyesha jibu"
-        },
-        {
-          "prompt": "Juma anaokoaje maji na nishati?",
-          "answer": "Ninazima taa na vifaa nisivyotumia. Pia ninafunga bomba la maji ninapopiga mswaki na ninaoga kwa muda mfupi ili niokoe maji.",
-          "answerLabel": "Mfano wa jibu",
-          "revealLabel": "Onyesha jibu"
-        },
-        {
-          "prompt": "Asha anachagua usafiri gani kwa safari fupi?",
-          "answer": "Kwa safari fupi ninatembea au kutumia baiskeli. Kwa safari ndefu ninatumia basi inapowezekana. Pia ninanunua vyakula vya eneo letu na vya msimu.",
-          "answerLabel": "Mfano wa jibu",
-          "revealLabel": "Onyesha jibu"
-        }
-      ]
-    },
-    {
-      "id": "vocabulary",
-      "type": "numbered-list",
-      "title": "Msamiati katika sentensi",
-      "kicker": "Kiswahili B1 · 10.28",
-      "items": [
-        "kupunguza taka — Tunapunguza taka kwa kutumia mifuko yetu.",
-        "kuzima vifaa — Ninazima vifaa nisivyotumia.",
-        "kufunga bomba la maji — Anafunga bomba anapopiga mswaki.",
-        "kuhifadhi rasilimali — Kutumia tena husaidia kuhifadhi rasilimali.",
-        "kuandaa shughuli — Majirani wanaandaa shughuli ya kusafisha eneo."
-      ]
-    },
-    {
       "id": "grammar-method",
       "type": "numbered-list",
       "title": "Namna na njia mbadala",
@@ -177,6 +102,100 @@ export const swahiliB1Day28 = {
       ]
     },
     {
+      "id": "warm-up",
+      "type": "numbered-list",
+      "title": "Unafanya nini tayari?",
+      "kicker": "Kiswahili B1 · 10.28",
+      "items": [
+        "Ni tabia gani ya mazingira ambayo ni rahisi kwako kuanza?",
+        "Taja tabia tatu kutoka nyumbani, dukani au safarini.",
+        "Linganisha mawazo yako na ya mwenzako."
+      ]
+    },
+    {
+      "id": "action-map",
+      "type": "numbered-list",
+      "title": "Ramani ya vitendo",
+      "kicker": "Kiswahili B1 · 10.28",
+      "items": [
+        "Taka — kutenganisha taka; kupunguza plastiki; kutumia tena",
+        "Maji na nishati — kufunga bomba; kuoga kwa muda mfupi; kuzima taa",
+        "Usafiri — kutembea; baiskeli; basi; kushirikiana gari",
+        "Ununuzi — mfuko wa kitambaa; bidhaa za eneo; bidhaa za msimu",
+        "Jamii — kusafisha eneo; kupanda miti; kutoa elimu"
+      ]
+    },
+    {
+      "id": "vocabulary",
+      "type": "numbered-list",
+      "title": "Msamiati katika sentensi",
+      "kicker": "Kiswahili B1 · 10.28",
+      "items": [
+        "kupunguza taka — Tunapunguza taka kwa kutumia mifuko yetu.",
+        "kuzima vifaa — Ninazima vifaa nisivyotumia.",
+        "kufunga bomba la maji — Anafunga bomba anapopiga mswaki.",
+        "kuhifadhi rasilimali — Kutumia tena husaidia kuhifadhi rasilimali.",
+        "kuandaa shughuli — Majirani wanaandaa shughuli ya kusafisha eneo."
+      ]
+    },
+    {
+      "id": "music",
+      "type": "swahili-song",
+      "title": "Mazingira Huanza Na Mimi",
+      "kicker": "Muziki · Kiswahili B1",
+      "audio": SWAHILI_MUSIC_TRACKS.find(track => track.id === "swahili-b1-day-28")
+    },
+    {
+      "id": "radio-dialogue",
+      "radioVideoId": null,
+      "type": "numbered-list",
+      "title": "Falowen Radio · Soma kwa majukumu",
+      "items": [
+        "Bwana Ali: Unafanya nini na taka nyumbani?",
+        "Maria: Ninatenganisha karatasi, plastiki, chupa na taka za chakula kulingana na utaratibu wa eneo letu.",
+        "Bwana Ali: Unaokoa vipi maji na nishati?",
+        "Juma: Ninazima taa na vifaa nisivyotumia.",
+        "Asha: Kwa safari fupi ninatembea au kutumia baiskeli."
+      ]
+    },
+    {
+      "id": "radio",
+      "type": "grammar-check",
+      "title": "Falowen Radio · Maswali ya majadiliano",
+      "kicker": "Kiswahili B1 · 10.28",
+      "items": [
+        {
+          "prompt": "Maria anatumia nini badala ya mifuko mipya ya plastiki?",
+          "answer": "Ninapoenda kununua bidhaa, ninabeba mfuko wa kitambaa badala ya kuchukua mifuko mipya ya plastiki. Pia ninatumia chupa ya maji inayoweza kutumiwa tena.",
+          "answerLabel": "Mfano wa jibu",
+          "revealLabel": "Onyesha jibu"
+        },
+        {
+          "prompt": "Juma anaokoaje maji na nishati?",
+          "answer": "Ninazima taa na vifaa nisivyotumia. Pia ninafunga bomba la maji ninapopiga mswaki na ninaoga kwa muda mfupi ili niokoe maji.",
+          "answerLabel": "Mfano wa jibu",
+          "revealLabel": "Onyesha jibu"
+        },
+        {
+          "prompt": "Asha anachagua usafiri gani kwa safari fupi?",
+          "answer": "Kwa safari fupi ninatembea au kutumia baiskeli. Kwa safari ndefu ninatumia basi inapowezekana. Pia ninanunua vyakula vya eneo letu na vya msimu.",
+          "answerLabel": "Mfano wa jibu",
+          "revealLabel": "Onyesha jibu"
+        }
+      ]
+    },
+    {
+      "id": "listening",
+      "type": "workbook",
+      "title": "Kusikiliza · Juma na Amina",
+      "kicker": "Kiswahili B1 · 10.28",
+      "items": [
+        { "label": "Sikiliza", "detail": "Fungua sehemu ya Kusikiliza katika kitabu cha kozi. Sikiliza mazungumzo ya Juma na Amina." },
+        { "label": "Jadili", "detail": "Kwa nini mwanzoni Juma anapendelea mifuko ya plastiki? Taja sababu mbili." }
+      ],
+      "workbookUrl": "https://www.falowen.app/campus/course/swahili/b1/day-28?view=hoeren"
+    },
+    {
       "id": "comparison",
       "type": "numbered-list",
       "title": "Linganisha eneo lako na eneo jingine",
@@ -185,18 +204,6 @@ export const swahiliB1Day28 = {
         "Ni njia gani za usafiri zinapatikana katika maeneo hayo mawili?",
         "Taja faida moja na changamoto moja.",
         "Kwa maoni yako, ni hatua gani inayowezekana? Kwa nini?"
-      ]
-    },
-    {
-      "id": "presentation",
-      "type": "numbered-list",
-      "title": "Zungumza kwa sekunde 60–90",
-      "kicker": "Kiswahili B1 · 10.28",
-      "items": [
-        "Unafanya nini ili kutunza mazingira katika maisha yako ya kila siku? Taja tabia moja, faida moja, changamoto moja na pendekezo linaloweza kutekelezwa. Andaa jibu la sekunde 60–90.",
-        "Katika maisha yangu ya kila siku …",
-        "Faida moja ni kwamba …",
-        "Changamoto moja ni kwamba …"
       ]
     },
     {
@@ -225,13 +232,6 @@ export const swahiliB1Day28 = {
       ]
     },
     {
-      "id": "music",
-      "type": "swahili-song",
-      "title": "Mazingira Huanza Na Mimi",
-      "kicker": "Muziki · Kiswahili B1",
-      "audio": SWAHILI_MUSIC_TRACKS.find(track => track.id === "swahili-b1-day-28")
-    },
-    {
       "id": "workbook",
       "type": "workbook",
       "title": "Kitabu cha kozi · Kujikagua",
@@ -247,6 +247,18 @@ export const swahiliB1Day28 = {
         }
       ],
       "workbookUrl": "https://www.falowen.app/campus/course/swahili/b1/day-28"
+    },
+    {
+      "id": "presentation",
+      "type": "numbered-list",
+      "title": "Zungumza kwa sekunde 60–90",
+      "kicker": "Kiswahili B1 · 10.28",
+      "items": [
+        "Unafanya nini ili kutunza mazingira katika maisha yako ya kila siku? Taja tabia moja, faida moja, changamoto moja na pendekezo linaloweza kutekelezwa. Andaa jibu la sekunde 60–90.",
+        "Katika maisha yangu ya kila siku …",
+        "Faida moja ni kwamba …",
+        "Changamoto moja ni kwamba …"
+      ]
     }
   ]
 };

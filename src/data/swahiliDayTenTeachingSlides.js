@@ -22,15 +22,6 @@ export const SWAHILI_DAY_TEN_ADMIN_LESSON = Object.freeze({
       "notes": "Show real or pictured produce. Ask learners to name the items they recognise."
     },
     {
-      "id": "music",
-      "type": "music",
-      "kicker": "Muziki · Music",
-      "title": "Leo Tunaenda Sokoni",
-      "audio": SWAHILI_MUSIC_TRACKS.find(track => track.id === "swahili-a1-day-10"),
-      "prompt": "Baada ya kupatana bei, mnunuzi analipa shilingi ngapi?",
-      "answer": "Shilingi elfu tatu."
-    },
-    {
       "id": "grammar",
       "type": "grammar",
       "kicker": "Sarufi · Grammar",
@@ -89,8 +80,28 @@ export const SWAHILI_DAY_TEN_ADMIN_LESSON = Object.freeze({
       "answer": "Maparachichi na mafungu."
     },
     {
+      "id": "music",
+      "type": "music",
+      "kicker": "Muziki · Music",
+      "title": "Leo Tunaenda Sokoni",
+      "audio": SWAHILI_MUSIC_TRACKS.find(track => track.id === "swahili-a1-day-10"),
+      "prompt": "Baada ya kupatana bei, mnunuzi analipa shilingi ngapi?",
+      "answer": "Shilingi elfu tatu."
+    },
+    {
+      "id": "radio",
+      "type": "radio-questions",
+      "radioVideoId": null,
+      "kicker": "Kusikiliza · Falowen Radio",
+      "title": "Falowen Radio · Sokoni",
+      "content": "Fanyeni mazoezi kwa jozi. Mnunuzi anauliza bei ya machungwa. Muuzaji anataja bei. Mnunuzi anaomba punguzo.",
+      "prompt": "Unaombaje punguzo kwa adabu?",
+      "answer": "Unaweza kupunguza bei kidogo, tafadhali?"
+    },
+    {
       "id": "listening",
       "type": "teacher-listening",
+      "listeningWorkbookUrl": "https://www.falowen.app/campus/course/swahili/day-10?view=hoeren",
       "kicker": "Kusikiliza · Teacher-led listening",
       "title": "Sikiliza bei na punguzo",
       "content": "Sikiliza mara mbili. Andika jumla ya kwanza na bei ya mwisho.",

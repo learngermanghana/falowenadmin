@@ -23,6 +23,8 @@ import { listClasses } from "../services/classesService.js";
 import { listStudentsByClass } from "../services/studentsService.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
+import { swahiliCourseRoot, swahiliSlidePacks } from "../data/swahiliSlidePacks.js";
+
 function SlideHeader({ slide }) {
   return (
     <header className="slide-header">
@@ -42,49 +44,33 @@ function SlideCoursesIndex() {
   const { role, staffLanguages } = useAuth();
   const permitted = role !== "staff" || !staffLanguages ? ["german", "swahili"] : staffLanguages;
   const courses = useMemo(() => getAvailableSlideCourses(), []);
-  const [language, setLanguage] = useState(() => permitted.includes(new URLSearchParams(window.location.search).get("language")) ? new URLSearchParams(window.location.search).get("language") : permitted[0] || "german");
+  const { search } = useLocation();
+  const requestedLanguage = new URLSearchParams(search).get("language");
+  const language = permitted.includes(requestedLanguage) ? requestedLanguage : permitted[0];
 
   return (
     <section className="slides-index">
       <h1>Teaching Slides</h1>
-      <p>Select a teaching language, then open the course slides. German lessons remain unchanged.</p>
+      <p>Choose a language and course level.</p>
       <div className="slide-actions slide-language-picker" role="group" aria-label="Teaching language">
-        {permitted.includes("german") && <button type="button" aria-pressed={language === "german"} onClick={() => setLanguage("german")}>German · Deutsch</button>}
-        {permitted.includes("swahili") && <button type="button" aria-pressed={language === "swahili"} onClick={() => setLanguage("swahili")}>Swahili · Kiswahili · A1 Days 1, 5 &amp; 6</button>}
+        {permitted.map(value => (
+          <Link key={value} to={`?language=${value}`} aria-current={language === value ? "page" : undefined}>
+            {value === "swahili" ? "Swahili · Kiswahili" : "German · Deutsch"}
+          </Link>
+        ))}
       </div>
-      {permitted.includes("swahili") && <div className="slide-actions no-print" aria-label="Quick access to Kiswahili teaching slides">
-        <Link to="/teaching-slides/course/SWAHILI/swahili-day-5?present=1">Swahili A1 · Day 5 · Present</Link>
-        <Link to="/teaching-slides/course/SWAHILI/swahili-day-6?present=1">Swahili A1 · Day 6 — Mgahawani · Present</Link>
-        <Link to="/teaching-slides/course/SWAHILI">All Swahili lessons</Link>
-      </div>}
       {language === "swahili" ? (
         <div className="slide-card-grid">
-          <article className="slide-card slide-card-lesson">
-            <p className="slide-meta">SWAHILI · A1 · DAY 1</p>
-            <h2>Alfabeti, sauti na matamshi</h2>
-            <p>Alphabet, sounds and pronunciation · 9 classroom stages.</p>
-            <div className="slide-card-actions">
-              <Link to="/teaching-slides/course/SWAHILI/swahili-day-1">Open Day 1</Link>
-              <Link to="/teaching-slides/course/SWAHILI/swahili-day-1?present=1">Present</Link>
-            </div>
-          </article>
-          <article className="slide-card slide-card-lesson">
-            <p className="slide-meta">SWAHILI · A1 · DAY 6</p>
-            <h2>Mgahawani · At the Restaurant</h2>
-            <p>Food, drinks, ordering and polite requests · 9 classroom stages.</p>
-            <div className="slide-card-actions">
-              <Link to="/teaching-slides/course/SWAHILI/swahili-day-6">Open Day 6</Link>
-              <Link to="/teaching-slides/course/SWAHILI/swahili-day-6?present=1">Present</Link>
-            </div>
-          </article>
-          <article className="slide-card">
-            <p className="slide-meta">SWAHILI · A1</p>
-            <h2>Kiswahili teaching pack</h2>
-            <p>Browse the published lessons and classroom presentations. Days 2–5 have not been published.</p>
-            <Link to="/teaching-slides/course/SWAHILI">View all Swahili slides</Link>
-          </article>
+          {Object.entries(swahiliSlidePacks).map(([level, lessons]) => (
+            <article key={level} className="slide-card">
+              <p className="slide-meta">Kiswahili · {level}</p>
+              <h2>{level} Teaching Pack</h2>
+              <p>{lessons.length} {lessons.length === 1 ? "lesson" : "lessons"} ready · {lessons.length === 1 ? "Day" : "Days"} {lessons.map(lesson => lesson.dayNumber).join(", ")}</p>
+              <Link to={`${swahiliCourseRoot}?level=${level}`}>Open {level} slides</Link>
+            </article>
+          ))}
         </div>
-      ) : (
+      ) : language === "german" ? (
       <div className="slide-card-grid">
         {courses.map((courseId) => {
           const slides = getSlidesByCourse(courseId);
@@ -98,7 +84,7 @@ function SlideCoursesIndex() {
           );
         })}
       </div>
-      )}
+      ) : <p>No teaching languages assigned.</p>}
       {language === "german" && teachingSlides.length === 0 && <p>No teaching slides available yet.</p>}
     </section>
   );

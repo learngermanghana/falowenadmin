@@ -1,23 +1,21 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-const index = readFileSync(new URL("../src/pages/TeachingSlidesPage.jsx",import.meta.url),"utf8");
-const swahili = readFileSync(new URL("../src/components/SwahiliTeachingSlides.jsx",import.meta.url),"utf8");
+import { swahiliSlidePacks } from "../src/data/swahiliSlidePacks.js";
 
-test("Teaching Slides root offers a direct Day 6 presenter link even when German is selected",()=>{
- const chooser=index.indexOf('aria-label="Teaching language"');
- const shortcut=index.indexOf('aria-label="Quick access to Kiswahili A1 Lesson 6"');
- const branch=index.indexOf('language === "swahili" ?');
- assert.ok(chooser>=0 && chooser<shortcut && shortcut<branch,"root quick link must be outside language filter");
- assert.match(index,/Swahili A1 · Day 6 — Mgahawani · Present/);
- assert.match(index,/\/teaching-slides\/course\/SWAHILI\/swahili-day-6\?present=1/);
+test("Swahili packs list the published lessons in day order", () => {
+  assert.deepEqual(swahiliSlidePacks.A1.map(lesson => lesson.dayNumber), [1, 5, 6, 10]);
+  assert.deepEqual(swahiliSlidePacks.B1.map(lesson => lesson.dayNumber), [28]);
 });
-test("Swahili filter lists Days 1 and 6 with working Open and Present links",()=>{
- for(const day of [1,6]){
-   assert.match(index,new RegExp(`Open Day ${day}`));
-   assert.match(index,new RegExp(`/teaching-slides/course/SWAHILI/swahili-day-${day}\\?present=1`));
- }
- assert.match(index,/Days 2–5 have not been published/);
- assert.doesNotMatch(index,/Day 1: Alfabeti, sauti na matamshi · 10 classroom presentation slides/);
- assert.match(swahili,/daySixRoot \+ "\?present=1"/);
+
+test("Sokoni and Mazingira can be presented while their Radio videos are pending", () => {
+  for (const lesson of [swahiliSlidePacks.A1.at(-1), swahiliSlidePacks.B1[0]]) {
+    const stages = lesson.stages || lesson.classroomStages;
+    assert.equal(stages[0].id, "intro");
+    assert.match(stages[1].id, /^grammar/);
+    assert.equal(stages.at(-1).id, "presentation");
+    const radio = stages.find(stage => "radioVideoId" in stage);
+    assert.equal(radio.radioVideoId, null);
+    assert.ok(radio.content || radio.items.length);
+    assert.ok(stages.find(stage => stage.id === "music").audio.audioUrl);
+  }
 });
