@@ -25,6 +25,14 @@ function preferFirestoreDocumentId(source) {
 }
 
 patchFile(new URL("../src/pages/LiveClassesPageV2.jsx", import.meta.url), (source) => {
+  // New Live Classes uses the dedicated session editor, which already takes
+  // the canonical class from klass.id before any legacy session field.
+  // Do not rewrite its removed inline rescheduling handler.
+  if (source.includes('import LiveClassSessionEditor from "../components/LiveClassSessionEditor.jsx"')
+    && source.includes("initialAction={sessionChange.action}")
+    && source.includes("klass={dashboard.klass}")) {
+    return source;
+  }
   source = replaceOnce(
     source,
     "      classId: session.classId || session.classRecordId || dashboard?.klass?.id || selectedClassId,",

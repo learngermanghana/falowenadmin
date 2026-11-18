@@ -26,7 +26,14 @@ let sessionsSource = await readFile(sessionsPath, "utf8");
 const listenerAnchor = "\n  const levelId = useMemo(() => resolveLevel(dashboard?.klass || {}), [dashboard?.klass]);";
 const listenerBlock = `\n  useEffect(() => {\n    let active = true;\n\n    async function handleRepairedSchedule(event) {\n      const changedClassId = String(event?.detail?.classId || \"\").trim();\n      if (!changedClassId || changedClassId !== selectedClassId) return;\n      setLoading(true);\n      try {\n        const next = await getCompatibleClassDashboard(changedClassId);\n        if (!active) return;\n        setDashboard(next);\n        setMessage(next.curriculumSync?.error || \"Timetable repaired. Sessions refreshed.\");\n      } catch (error) {\n        if (active) setMessage(error?.message || \"Could not refresh the repaired timetable\");\n      } finally {\n        if (active) setLoading(false);\n      }\n    }\n\n    window.addEventListener("${eventName}", handleRepairedSchedule);\n    return () => {\n      active = false;\n      window.removeEventListener("${eventName}", handleRepairedSchedule);\n    };\n  }, [selectedClassId]);\n\n  const levelId = useMemo(() => resolveLevel(dashboard?.klass || {}), [dashboard?.klass]);`;
 
-sessionsSource = replaceRequired(sessionsSource, listenerAnchor, listenerBlock, "Live Classes repaired-schedule refresh listener");
+// The redesigned class workspace updates immediately through the Session Editor
+// onSaved callback. It no longer renders the retired inline date-repair control.
+const modernRefresh = sessionsSource.includes('import LiveClassSessionEditor from "../components/LiveClassSessionEditor.jsx"')
+  && sessionsSource.includes("onSaved={async message =>")
+  && sessionsSource.includes("await refreshDashboard(selectedClassId);");
+if (!modernRefresh) {
+  sessionsSource = replaceRequired(sessionsSource, listenerAnchor, listenerBlock, "Live Classes repaired-schedule refresh listener");
+}
 await writeFile(sessionsPath, sessionsSource);
 
 console.log("Live Classes now refreshes the Sessions table immediately after timetable repair.");

@@ -3,7 +3,7 @@ import { canonicalCourseReference } from "../utils/canonicalCourseReference.js";
 import { tryStoreMarkingDraft } from "../utils/markingDraftStorage.js";
 import { plainObjectiveAnswer } from "../utils/markingFeedbackText.js";
 import { assignmentTitle } from "../utils/assignmentTitle.js";
-import { writeBatch, addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, query, runTransaction, setDoc, updateDoc, where } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { normalizeAnswerDictionary, safeRegistryId, validateAnswerDictionary } from "../utils/answerKeyNormalizer.js";
 import { checkDeterministicObjectiveAnswers } from "../utils/autoMarking.js";
@@ -13,7 +13,8 @@ import { resolveStudentIdentity } from "../utils/studentIdentity.js";
 import { AI_FEEDBACK_INSTRUCTION, limitFeedbackWords } from "../utils/feedbackPolicy.js";
 import { shouldIncludeInIncomingQueue } from "../utils/markingQueue.js";
 import { buildManualScoreCorrection } from "../utils/manualScoreCorrection.js";
-import { buildScoreAttemptMetadata, hasSavedScoreForAssignment, shouldSkipExistingScore } from "../utils/scoreAttempts.js";
+import { buildScoreAttemptMetadata, shouldSkipExistingScore } from "../utils/scoreAttempts.js";
+import { buildScoreSaveReservation, getScoreSaveBlockReason } from "../utils/scoreSaveReservation.js";
 import { sanitizeFirestoreData } from "../utils/firestoreSanitizer.js";
 import {
   loadPublishedStudentRows,
@@ -408,6 +409,8 @@ export async function saveMarkingResult({ submissionId, submissionPath, result, 
     improvementSummary: result.improvementSummary || "",
     markingReason: result.markingReason || result.rawAiReason || result.ai?.reason || "",
     manualOverride: Boolean(result.manualOverride),
+    duplicateScoreBlocked: Boolean(result.duplicateScoreBlocked),
+    tutorVerificationRequired: Boolean(result.tutorVerificationRequired || result.duplicateScoreBlocked),
     aiOriginalScore: result.aiOriginalScore ?? null,
     aiOriginalFeedback: result.aiOriginalFeedback ?? "",
     aiDetailedFeedback: result.aiDetailedFeedback ?? result.aiOriginalFeedback ?? "",
@@ -445,6 +448,8 @@ export async function saveMarkingResult({ submissionId, submissionPath, result, 
       improvementSummary: payload.improvementSummary,
       markingReason: payload.markingReason,
       manualOverride: payload.manualOverride,
+      duplicateScoreBlocked: payload.duplicateScoreBlocked,
+      tutorVerificationRequired: payload.tutorVerificationRequired,
       aiOriginalScore: payload.aiOriginalScore,
       aiOriginalFeedback: payload.aiOriginalFeedback,
       aiDetailedFeedback: payload.aiDetailedFeedback,
@@ -1058,13 +1063,46 @@ export async function saveScoreRow({
   if (snapshot && row.studentId) row.link = "https://www.falowen.app/campus/results";
   const dedupeId = scoreDedupeId(row);
   const scoreRef = doc(db, "scores", dedupeId);
-  const existingSnap = SAVE_SCORES_TO_FIRESTORE ? await getDoc(scoreRef).catch(() => null) : null;
-  const existingScore = existingSnap?.exists?.() ? existingSnap.data() : null;
-  const attemptMetadata = buildScoreAttemptMetadata(existingScore, row.score, nowIso);
+  const reservationToken = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  let existingScore = null;
+  let attemptMetadata = null;
+  let duplicateSkipped = false;
+  let duplicateBlockReason = "";
+
+  if (SAVE_SCORES_TO_FIRESTORE) {
+    try {
+      // Reserve the score key atomically before dispatching a sheet write.
+      // Competing saves cannot both read "no score" and submit duplicates.
+      await runTransaction(db, async (transaction) => {
+        const existingSnap = await transaction.get(scoreRef);
+        existingScore = existingSnap.exists() ? existingSnap.data() : null;
+        attemptMetadata = buildScoreAttemptMetadata(existingScore, row.score, nowIso);
+        duplicateBlockReason = getScoreSaveBlockReason(existingScore, row.score, {
+          allowDuplicate,
+          blockAnyDuplicate,
+        });
+        duplicateSkipped = Boolean(duplicateBlockReason);
+        if (duplicateSkipped) return;
+        transaction.set(scoreRef, {
+          dedupe_id: dedupeId,
+          ...buildScoreSaveReservation(reservationToken, nowIso),
+        }, { merge: true });
+      });
+    } catch (error) {
+      const reservationError = new Error("Could not reserve the score key safely; no score was posted.");
+      reservationError.cause = error;
+      throw reservationError;
+    }
+  } else {
+    if (blockAnyDuplicate) {
+      throw new Error("Duplicate-safe score saving requires the Firestore score mirror.");
+    }
+    attemptMetadata = buildScoreAttemptMetadata(null, row.score, nowIso);
+    duplicateSkipped = shouldSkipExistingScore(null, row.score, allowDuplicate);
+    duplicateBlockReason = duplicateSkipped ? "same_score" : "";
+  }
+
   Object.assign(row, attemptMetadata);
-  const duplicateSkipped = blockAnyDuplicate
-    ? hasSavedScoreForAssignment(existingScore)
-    : shouldSkipExistingScore(existingScore, row.score, allowDuplicate);
   const sheetDedupeId = forceSheetDedupeId ? dedupeId : (attemptMetadata.is_resubmission ? `${dedupeId}__attempt_${attemptMetadata.attempt}` : dedupeId);
 
   const sheetRow = { ...row, dedupe_id: sheetDedupeId };
@@ -1072,8 +1110,16 @@ export async function saveScoreRow({
     row,
     dedupeId,
     duplicateSkipped,
-    sheet: { attempted: !duplicateSkipped, success: Boolean(duplicateSkipped), message: duplicateSkipped ? "Duplicate score blocked because this assignment already has the same saved score. Change the score only when the resubmission result is different." : "Pending integration dispatch." },
-    firestore: { attempted: SAVE_SCORES_TO_FIRESTORE, success: !SAVE_SCORES_TO_FIRESTORE, message: SAVE_SCORES_TO_FIRESTORE ? "Pending" : "Firestore mirror skipped (disabled by config)." },
+    sheet: { attempted: !duplicateSkipped, success: Boolean(duplicateSkipped), message: duplicateSkipped
+      ? (duplicateBlockReason === "in_progress"
+        ? "Score save blocked because another save for this assignment is still in progress. Wait a moment and try again."
+        : "Duplicate score blocked because this assignment already has the same saved score. Change the score only when the resubmission result is different.")
+      : "Pending integration dispatch." },
+    firestore: { attempted: SAVE_SCORES_TO_FIRESTORE && !duplicateSkipped, success: duplicateSkipped || !SAVE_SCORES_TO_FIRESTORE, message: duplicateSkipped
+      ? (duplicateBlockReason === "in_progress"
+        ? "Active Firestore score reservation left unchanged; retry after the current save finishes."
+        : "Existing Firestore score left unchanged for tutor verification.")
+      : (SAVE_SCORES_TO_FIRESTORE ? "Pending" : "Firestore mirror skipped (disabled by config).") },
   };
 
   if (!duplicateSkipped) {
@@ -1096,38 +1142,37 @@ export async function saveScoreRow({
     }
   }
 
-  if (SAVE_SCORES_TO_FIRESTORE) {
+  if (SAVE_SCORES_TO_FIRESTORE && !receipt.duplicateSkipped) {
     try {
-      const firestoreScore = receipt.duplicateSkipped
-        ? {
-            dedupe_id: dedupeId,
-            sheetSaved: Boolean(receipt.sheet.success),
-            sheetMessage: receipt.sheet.message,
-            duplicateSkipped: true,
-            updatedAt: nowIso,
-          }
-        : {
-            ...row,
-            dedupe_id: dedupeId,
-            sheetSaved: Boolean(receipt.sheet.success),
-            sheetMessage: receipt.sheet.message,
-            duplicateSkipped: false,
-            createdAt: existingScore?.createdAt || nowIso,
-            updatedAt: nowIso,
-          };
-      if (!duplicateSkipped) {
+      const firestoreScore = {
+        ...row,
+        dedupe_id: dedupeId,
+        sheetSaved: Boolean(receipt.sheet.success),
+        sheetMessage: receipt.sheet.message,
+        duplicateSkipped: false,
+        saveReservationStatus: "completed",
+        saveReservationCompletedAt: new Date().toISOString(),
+        saveReservationExpiresAt: nowIso,
+        createdAt: existingScore?.createdAt || nowIso,
+        updatedAt: nowIso,
+      };
+      // Finalize only the reservation owned by this attempt. Keep the
+      // published answer reference and the score mirror in one transaction.
+      await runTransaction(db, async (transaction) => {
+        const currentSnap = await transaction.get(scoreRef);
+        const currentScore = currentSnap.exists() ? currentSnap.data() : null;
+        if (currentScore?.saveReservationToken !== reservationToken
+          || currentScore?.saveReservationStatus !== "pending") {
+          throw new Error("The score reservation was lost before Firestore finalization.");
+        }
         if (snapshot && row.studentId) {
           const referenceRef = doc(collection(db, "publishedAnswerReferences"));
-          const batch = writeBatch(db);
-          batch.set(referenceRef, { ...snapshot, studentId: row.studentId });
-          batch.set(scoreRef, { ...firestoreScore, answerReferenceId: referenceRef.id }, { merge: true });
-          await batch.commit();
+          transaction.set(referenceRef, { ...snapshot, studentId: row.studentId });
+          transaction.set(scoreRef, { ...firestoreScore, answerReferenceId: referenceRef.id }, { merge: true });
         } else {
-          await setDoc(scoreRef, { ...firestoreScore, answerReferenceId: "" }, { merge: true });
+          transaction.set(scoreRef, { ...firestoreScore, answerReferenceId: "" }, { merge: true });
         }
-      } else {
-        await setDoc(scoreRef, firestoreScore, { merge: true });
-      }
+      });
       receipt.firestore.success = true;
       receipt.firestore.message = existingScore ? "Updated Firestore score mirror." : "Saved to Firestore mirror.";
     } catch (error) {

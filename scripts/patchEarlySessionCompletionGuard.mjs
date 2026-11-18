@@ -108,7 +108,21 @@ function patchPage() {
         await markSessionCompleted(session.id, adminId, canonicalClassId, { allowEarlyCompletion: earlyCompletion });
         successMessage = earlyCompletion ? "Session marked completed with an early-completion override." : "Session marked completed.";
       }`;
-  source = replaceOnce(source, oldCompletion, guardedCompletion, "Live Classes early-completion confirmation");
+  if (source.includes(oldCompletion) || source.includes(guardedCompletion)) {
+    source = replaceOnce(source, oldCompletion, guardedCompletion, "Live Classes early-completion confirmation");
+  } else {
+    const modernCompletion = `      if (action === "complete") {
+        if (!window.confirm("Mark this session completed?")) return;
+        await markSessionCompleted(session.id, user?.uid || user?.email || "admin", dashboard?.klass?.id || selectedClassId);
+      }`;
+    const modernGuardedCompletion = `      if (action === "complete") {
+        if (!window.confirm("Mark this session completed?")) return;
+        const earlyCompletion = requiresEarlySessionCompletionOverride(session);
+        if (earlyCompletion && !window.confirm("This class has NOT reached its scheduled end time. Completing it early will stop class-start reminder emails and mark the session completed. Confirm EARLY completion override?")) return;
+        await markSessionCompleted(session.id, user?.uid || user?.email || "admin", dashboard?.klass?.id || selectedClassId, { allowEarlyCompletion: earlyCompletion });
+      }`;
+    source = replaceOnce(source, modernCompletion, modernGuardedCompletion, "modern Live Classes early-completion confirmation");
+  }
 
   fs.writeFileSync(pagePath, source, "utf8");
 }

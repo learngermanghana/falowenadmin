@@ -290,7 +290,7 @@ export default function LiveClassesPageV2() {
       }
       if (action === "complete") {
         if (!window.confirm("Mark this session completed?")) return;
-        await markSessionCompleted(session.id, user?.uid || user?.email || "admin");
+        await markSessionCompleted(session.id, user?.uid || user?.email || "admin", dashboard?.klass?.id || selectedClassId);
       }
       await refreshDashboard(selectedClassId);
     } catch (error) {

@@ -134,6 +134,21 @@ export function resolveSessionChapters`;
 function patchPage() {
   let source = fs.readFileSync(pagePath, "utf8");
 
+  // The redesigned Live Classes workspace already has a dedicated session
+  // editor, explicit completion, and a safe reopen action. Its layout is not
+  // compatible with the retired renderSessionChangeForm patch anchors.
+  // Keep that intentional redesign and avoid adding 60-second dashboard polling.
+  if (source.includes("function openSessionChange(session")
+    && source.includes("function renderSessions()")
+    && source.includes('handleSessionAction(session, "reopen")')) {
+    const canonicalCompletion = 'await markSessionCompleted(session.id, user?.uid || user?.email || "admin", dashboard?.klass?.id || selectedClassId);';
+    const earlyGuardedCompletion = 'await markSessionCompleted(session.id, user?.uid || user?.email || "admin", dashboard?.klass?.id || selectedClassId, { allowEarlyCompletion: earlyCompletion });';
+    if (!source.includes(canonicalCompletion) && !source.includes(earlyGuardedCompletion)) {
+      throw new Error("Modern Live Classes completion must pass its canonical class ID.");
+    }
+    return;
+  }
+
   if (!source.includes("allowAutomaticSessionCompletion,")) {
     source = source.replace(
       "import {\n  cancelSession,",

@@ -60,23 +60,31 @@ if (!source.includes("function attendanceLessonTitle(")) {
 
 const optionBefore = `lessonLabel(session, klass.timezone || TIMEZONE)`;
 const optionAfter = `lessonLabel(session, klass.timezone || TIMEZONE, klass.levelId || klass.level)`;
-if (!source.includes(optionAfter)) {
-  if (!source.includes(optionBefore)) throw new Error("Attendance lesson option anchor changed; update patchA1AttendanceDayLabels.mjs");
-  source = source.replace(optionBefore, optionAfter);
+const modernOptionBefore = `lessonLabel(session, timezone)`;
+const modernOptionAfter = `lessonLabel(session, timezone, dictionaryLevel)`;
+if (!source.includes(optionAfter) && !source.includes(modernOptionAfter)) {
+  if (source.includes(optionBefore)) source = source.replace(optionBefore, optionAfter);
+  else if (source.includes(modernOptionBefore)) source = source.replace(modernOptionBefore, modernOptionAfter);
+  else throw new Error("Attendance lesson option anchor changed; update patchA1AttendanceDayLabels.mjs");
 }
 
 const headingBefore = `{assignmentId ? \`${"${assignmentId} — "}\` : ""}{selected.topic || "Lesson details to be confirmed"}`;
 const headingAfter = `{attendanceLessonTitle(selected, klass?.levelId || klass?.level)}`;
-if (!source.includes(headingAfter)) {
-  if (!source.includes(headingBefore)) throw new Error("Attendance lesson heading anchor changed; update patchA1AttendanceDayLabels.mjs");
-  source = source.replace(headingBefore, headingAfter);
+const modernHeadingBefore = '<strong>{assignmentId ? `\${assignmentId} · ` : ""}{selected.topic || "Lesson details to be confirmed"}</strong>';
+const modernHeadingAfter = '<strong>{attendanceLessonTitle(selected, dictionaryLevel)}</strong>';
+if (!source.includes(headingAfter) && !source.includes(modernHeadingAfter)) {
+  if (source.includes(headingBefore)) source = source.replace(headingBefore, headingAfter);
+  else if (source.includes(modernHeadingBefore)) source = source.replace(modernHeadingBefore, modernHeadingAfter);
+  else throw new Error("Attendance lesson heading anchor changed; update patchA1AttendanceDayLabels.mjs");
 }
 
 const noteBefore = `The lesson title and curriculum ID come from this class session. Change lesson mapping under Live Classes, not on the attendance page.`;
 const noteAfter = `For A1, attendance shows one visible label per teaching day. The underlying chapter and curriculum IDs remain unchanged for assignments, marking and check-in.`;
 if (!source.includes(noteAfter)) {
-  if (!source.includes(noteBefore)) throw new Error("Attendance lesson note anchor changed; update patchA1AttendanceDayLabels.mjs");
-  source = source.replace(noteBefore, noteAfter);
+  if (source.includes(noteBefore)) source = source.replace(noteBefore, noteAfter);
+  else if (!source.includes('className="session-attendance__lesson"')) {
+    throw new Error("Attendance lesson note anchor changed; update patchA1AttendanceDayLabels.mjs");
+  }
 }
 
 fs.writeFileSync(file, source);
