@@ -181,3 +181,23 @@ test("normal scheduled sessions follow main source order even when old stored ID
   assert.equal(enriched[2].assignment_id, "A1-0.3");
   assert.equal(enriched[2].topic, "Day 3");
 });
+
+test("a rebuilt A2 timetable retains repeated history and restores the saved anchor after positional relabelling", () => {
+  const startsAt = "2026-11-18T13:00:00Z";
+  const groups = Array.from({ length: 29 }, (_, index) => ({
+    index, day: index, assignmentIds: [index === 26 ? "A2-10.26" : "lesson-" + index], topic: "Day " + index,
+  }));
+  const klass = { levelId: "A2", scheduleAnchorMode: "rebuild-from-selected-session",
+    scheduleAnchorSessionNumber: 27, scheduleAnchorStartsAt: startsAt,
+    lastChangedSessionId: "anchor", lastSessionChangeType: "restore-following-weekly-pattern" };
+  const history = Array.from({ length: 30 }, (_, index) => ({
+    id: "history-" + index, startsAt: "2026-10-01T13:00:00Z", assignmentIds: ["A2-6.16"],
+  }));
+  const anchor = { id: "anchor", startsAt, assignmentIds: ["A2-7.19"] };
+  const following = { id: "following", startsAt: "2026-11-19T11:00:00Z", assignmentIds: ["A2-10.27"] };
+  const result = enrichSessionsWithStableCurriculum(klass, [...history, anchor, following], groups);
+  assert.deepEqual(result.slice(0, history.length), history);
+  assert.deepEqual(result.at(-2).assignmentIds, ["A2-10.26"]);
+  assert.equal(result.at(-2).curriculumIndex, 27);
+  assert.deepEqual(result.at(-1), following);
+});
