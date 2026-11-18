@@ -4,7 +4,7 @@ import { assembleListeningExam, base64WavToBytes, parseStudioTranscript } from "
 import { assemblyScenePlan, buildStudioSpeechPlan, sceneVoiceKey } from "../utils/hoerenSpeechPlan";
 import { getSavedVoice, saveVoice } from "../utils/hoerenVoiceCache";
 import { encodeWavAsMp3 } from "../utils/hoerenMp3";
-import { swahiliClassDictionary } from "../data/swahiliClassDictionary.js";
+import { swahiliAudioChapters } from "../data/swahiliAudioChapters.js";
 
 const ENGINE = "lite";
 const TEMPLATE = "A: Habari za asubuhi!\nB: Nzuri, asante. Unaenda wapi?\nA: Ninaenda sokoni kununua matunda.\nB: Twende pamoja!";
@@ -19,7 +19,9 @@ function download(blob, filename) {
 }
 
 export default function SwahiliConversationStudio({ ready, remaining, refreshStatus, onBusyChange }) {
-  const [lessonId, setLessonId] = useState(swahiliClassDictionary[0].assignment_id);
+  const [level, setLevel] = useState("A1");
+  const chapters = swahiliAudioChapters[level];
+  const [lessonId, setLessonId] = useState(chapters[0].assignment_id);
   const [topic, setTopic] = useState("");
   const [format, setFormat] = useState("dialogue");
   const [script, setScript] = useState("");
@@ -27,7 +29,7 @@ export default function SwahiliConversationStudio({ ready, remaining, refreshSta
   const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
   const [progress, setProgress] = useState("");
-  const lesson = swahiliClassDictionary.find((entry) => entry.assignment_id === lessonId);
+  const lesson = chapters.find((entry) => entry.assignment_id === lessonId);
   const focus = topic.trim();
   const scriptTopic = lesson
     ? `${lesson.assignment_id} · ${lesson.en}${focus ? ` · Focus: ${focus}` : ""}`
@@ -89,6 +91,16 @@ export default function SwahiliConversationStudio({ ready, remaining, refreshSta
   return <section className="hoeren-panel" aria-label="Swahili conversation studio">
     <h2>Swahili listening audio</h2>
     <div className="hoeren-input-grid">
+      <label>Course level
+        <select value={level} disabled={!!busy} onChange={(event) => {
+          const nextLevel = event.target.value;
+          setLevel(nextLevel);
+          setLessonId(swahiliAudioChapters[nextLevel][0].assignment_id);
+          setTopic("");
+        }}>
+          {Object.keys(swahiliAudioChapters).map(value => <option key={value}>{value}</option>)}
+        </select>
+      </label>
       <label>Format
         <select value={format} disabled={!!busy} onChange={(event) => setFormat(event.target.value)}>
           <option value="dialogue">Two-person conversation</option>
@@ -97,7 +109,7 @@ export default function SwahiliConversationStudio({ ready, remaining, refreshSta
       </label>
       <label>Swahili Course Book chapter
         <select value={lessonId} disabled={!!busy} onChange={(event) => { setLessonId(event.target.value); setTopic(""); }}>
-          {swahiliClassDictionary.map(({ assignment_id, en }) => (
+          {chapters.map(({ assignment_id, en }) => (
             <option key={assignment_id} value={assignment_id}>{en}</option>
           ))}
           <option value="">Custom topic</option>
@@ -109,7 +121,7 @@ export default function SwahiliConversationStudio({ ready, remaining, refreshSta
       </label>
     </div>
     <button type="button" className="hoeren-button" disabled={!ready || !!busy || scriptTopic.length < 4 || !remaining?.script}
-      onClick={() => run("script", async () => updateScript((await makeSwahiliScript({ topic: scriptTopic, format })).script))}>
+      onClick={() => run("script", async () => updateScript((await makeSwahiliScript({ topic: scriptTopic, format, level })).script))}>
       {busy === "script" ? "Generating script…" : "Generate script"}
     </button>
     <label>Editable transcript

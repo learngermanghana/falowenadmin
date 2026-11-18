@@ -111,17 +111,27 @@ function validateScriptRequest(body = {}) {
 }
 
 
+const swahiliLevelGuidance = {
+  A1: "Use short sentences and frequent everyday words.",
+  A2: "Describe familiar situations, plans and past events with simple connected sentences.",
+  B1: "Compare options, give reasons and respond to another viewpoint using connected sentences.",
+};
+
 function buildSwahiliConversationPrompt(body = {}) {
+  const level = String(body.level || "A1").trim().toUpperCase();
+  if (!Object.hasOwn(swahiliLevelGuidance, level)) {
+    throw Object.assign(new Error("Choose A1, A2 or B1 for Kiswahili."), { status: 400 });
+  }
   const topic = String(body.topic || "").trim();
   const format = String(body.format || "dialogue");
   if (topic.length < 4 || topic.length > 240 || !["dialogue", "podcast"].includes(format)) {
     throw Object.assign(new Error("Choose a format and enter a topic (4–240 characters)."), { status: 400 });
   }
   return [
-    "Write an original listening conversation in standard East African Kiswahili for adult A1 learners.",
+    `Write an original listening conversation in standard East African Kiswahili for adult ${level} learners.`,
     format === "podcast" ? "Write a short two-host podcast with a greeting, a friendly discussion and a simple closing."
       : "Write a short, realistic everyday conversation between two people.",
-    "Use short sentences, frequent vocabulary, and clear turn-taking. Write only Kiswahili.",
+    swahiliLevelGuidance[level] + " Use clear turn-taking. Write only Kiswahili.",
     "Use 8–16 spoken turns on separate lines, each beginning with A: or B:. Use both speakers. No titles, Markdown, questions for the learner or stage directions.",
     "Keep each turn below 180 characters. Center the conversation on this topic: " + topic,
   ].join("\n");
