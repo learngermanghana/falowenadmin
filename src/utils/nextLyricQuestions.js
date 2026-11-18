@@ -71,3 +71,66 @@ export function threeVerifiedNextLyricQuestions(pack, recording) {
   });
   return verified.length === 3 && verified.every(Boolean) ? verified : [];
 }
+
+// Listening comprehension: the correct option MUST be audible in the excerpt.
+// This is intentionally different from guessing the next, unheard lyric.
+export function threeVerifiedHeardLyricQuestions(pack, recording) {
+  if (!pack || !recording || pack.objectKey !== recording.objectKey ||
+      typeof pack.lyrics !== 'string' || pack.referenceOnly === true ||
+      pack.transcriptionStatus === 'automatic' || pack.timingStatus === 'estimated') return [];
+  const lines = lyricLines(pack.lyrics);
+  const cues = validateLyricCues(pack.cues, lines);
+  if (lines.length < 4 || cues.length !== lines.length) return [];
+  const normalize = line => String(line).toLocaleLowerCase('de').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  const counts = new Map();
+  for (const line of lines) counts.set(normalize(line), (counts.get(normalize(line)) || 0) + 1);
+  const candidates = [];
+  for (let i = 1; i < lines.length; i++) {
+    // The previous line may be a legacy questionEnding, but today's answer is
+    // the line AFTER it, which must be played in its entirety.
+    if (pack.questionEndings && !pack.questionEndings.includes(lines[i - 1])) continue;
+    const end = cues[i].end ?? cues[i + 1]?.start;
+    if (!Number.isFinite(end) || end <= cues[i].start) continue;
+    const start = Math.max(cues[0].start, end - 10);
+    const duration = end - start;
+    if (duration < 4.5 || duration > 11 ||
+        cues[i].start < start || lines[i].length < 8 ||
+        counts.get(normalize(lines[i])) !== 1) continue;
+    const heard = new Set();
+    for (let j = 0; j < cues.length; j++) {
+      const cueEnd = cues[j].end ?? cues[j + 1]?.start ?? Infinity;
+      if (cues[j].start < end && cueEnd > start) heard.add(normalize(lines[j]));
+    }
+    const wrong = [];
+    const used = new Set([normalize(lines[i])]);
+    for (const line of lines) {
+      const key = normalize(line);
+      if (line.length >= 8 && !heard.has(key) && !used.has(key)) {
+        wrong.push(line);
+        used.add(key);
+      }
+      if (wrong.length === 2) break;
+    }
+    if (wrong.length !== 2) continue;
+    const answer = lines[i];
+    candidates.push({
+      id: 'heard-lyric-' + i,
+      type: 'listening',
+      prompt: 'Welche Liedzeile hast du gehört?',
+      answer, options: wrong,
+      previewRange: {start, end},
+      heardLyric: true,
+    });
+  }
+  if (candidates.length < 3) return [];
+  const selected = pack.questionEndings
+    ? pack.questionEndings.map(line => candidates.find(candidate =>
+        candidate.id === 'heard-lyric-' + (lines.indexOf(line) + 1)))
+    : [candidates[0], candidates[Math.floor((candidates.length - 1) / 2)], candidates.at(-1)];
+  if (selected.some(candidate => !candidate)) return [];
+  return selected.map((candidate, correctIndex) => {
+    const options = [...candidate.options];
+    options.splice(correctIndex, 0, candidate.answer);
+    return {...candidate, options, correctIndex};
+  });
+}
