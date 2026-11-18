@@ -72,8 +72,8 @@ test("curated Day 21 and Day 22 songs use the new uploaded R2 audio instead of o
   const day21=getCuratedMusicForSession({level:"A1",day:21});
   const day22=getCuratedMusicForSession({level:"A1",day:22});
   assert.equal(day21.assignmentKey,"A1-13");
-  assert.equal(day21.title,"Heute kann ich leider nicht");
-  assert.equal(day21.objectKey,"music/a1/day-21/Heute kann ich leider nicht.mp3");
+  assert.equal(day21.title,"Bina, tut mir leid");
+  assert.equal(day21.objectKey,"music/a1/day-21/Bina, tut mir leid.mp3");
   assert.equal(day22.assignmentKey,"A1-14.1");
   assert.equal(day22.title,"Arzttermin");
   assert.equal(day22.objectKey,"music/a1/day-22/Arzttermin.mp3");
