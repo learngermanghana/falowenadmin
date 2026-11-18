@@ -1,4 +1,5 @@
 import { hasCompleteSongTiming } from '../utils/songLyrics.js';
+import { A1_DAY3_MUSIC_OBJECT_KEY, A1_DAY3_MUSIC_NEXT_LYRIC_QUESTIONS } from '../data/a1Day3Classroom.js';
 import { recordedEvidenceRange, recordedSongQuestions } from '../utils/recordedLessonMusic.js';
 import { threeVerifiedNextLyricQuestions } from '../utils/nextLyricQuestions.js';
 import { useEffect, useRef, useState } from 'react';
@@ -114,8 +115,11 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
     ? bundledTiming : recordingMetadata && {
         ...recordingMetadata, objectKey: recording.objectKey, lyrics: recordedLyrics, cues,
       };
+  const verifiedNextQuestions = nextLyricOnly ? threeVerifiedNextLyricQuestions(quizPack, recording) : [];
+  const day3ExcerptQuestions = nextLyricOnly && recording.objectKey === A1_DAY3_MUSIC_OBJECT_KEY
+    ? A1_DAY3_MUSIC_NEXT_LYRIC_QUESTIONS : [];
   const questions = nextLyricOnly
-    ? threeVerifiedNextLyricQuestions(quizPack, recording)
+    ? (verifiedNextQuestions.length ? verifiedNextQuestions : day3ExcerptQuestions)
     : recordedLyrics !== song.lyrics
       ? recordedSongQuestions({objectKey:recording.objectKey,lyrics:recordedLyrics},recording.day,recording.level)
       : bank.questions;
@@ -249,7 +253,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
             : <button type="button" onClick={()=>{stopExcerpt();setQuestionIndex(i=>Math.min(questions.length-1,i+1));setShowAnswer(false);setSelectedOption(-1)}}>Nächste Frage →</button>}
         </div>
       </div>)}
-      <p className="published-song-lesson__note">Liedfragen sind unbewertete Unterrichtsübungen und beziehen sich auf den gespeicherten Liedtext. Bei abweichenden Audios die Antworten vor der Stunde prüfen.</p>
+      <p className="published-song-lesson__note">Liedfragen sind unbewertete Unterrichtsübungen und beziehen sich auf den gespeicherten Liedtext. Bei abweichenden Audios die Antworten vor der Stunde prüfen.{recording.objectKey === A1_DAY3_MUSIC_OBJECT_KEY ? ' Die Zeitmarken dieser Day-3-Ausschnitte sind geschätzt; bitte vor dem Unterricht kurz gegenhören.' : ''}</p>
     </section>
   );
 }
