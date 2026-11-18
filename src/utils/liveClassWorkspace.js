@@ -12,9 +12,19 @@ export function orderedWorkspaceSessions(sessions = [], levelId = "", filter = "
       ? (toSessionDate(a.startsAt)?.getTime() || 0) - (toSessionDate(b.startsAt)?.getTime() || 0)
       : (resolveOfficialSessionNumber(a, groups, levelId) || Infinity) - (resolveOfficialSessionNumber(b, groups, levelId) || Infinity));
 }
-export function nextTeachingSession(sessions = [], now = new Date()) {
+export function nextTeachingSession(sessions = [], now = new Date(), klass = {}) {
   const active = orderedWorkspaceSessions(sessions, "", "remaining", "date");
-  return active.find(session => (toSessionDate(session.endsAt)?.getTime() || 0) >= now.getTime()) || null;
+  const upcoming = active.filter(session => (toSessionDate(session.endsAt)?.getTime() || 0) >= now.getTime());
+  const first = upcoming[0];
+  const anchorTime = toSessionDate(klass.scheduleAnchorStartsAt)?.getTime();
+  if (first && anchorTime && toSessionDate(first.startsAt)?.getTime() === anchorTime) {
+    const anchor = upcoming.find(session =>
+      toSessionDate(session.startsAt)?.getTime() === anchorTime &&
+      Number(session.curriculumIndex) === Number(klass.scheduleAnchorSessionNumber)
+    );
+    if (anchor) return anchor;
+  }
+  return first || null;
 }
 export function completionLabel(session = {}) {
   if (status(session) !== "completed") return status(session);

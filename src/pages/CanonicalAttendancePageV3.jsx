@@ -23,6 +23,8 @@ import {
   getCompatibleClassDashboard,
 } from "../services/liveClassCompatibilityService.js";
 
+import { nextTeachingSession } from "../utils/liveClassWorkspace.js";
+
 const TIMEZONE = "Africa/Accra";
 
 function asDate(value) {
@@ -97,10 +99,12 @@ function mergeStudents(template = {}, saved = {}) {
   }]));
 }
 
-function chooseSession(sessions, timezone, requestedId) {
+function chooseSession(sessions, timezone, requestedId, klass) {
   const today = localDate(new Date(), timezone);
   const requested = sessions.find((session) => session.id === requestedId);
   if (requested) return requested;
+  const upcoming = nextTeachingSession(sessions, new Date(), klass);
+  if (upcoming && localDate(upcoming.startsAt, timezone) === today) return upcoming;
   return sessions.find((session) => String(session.status || "").toLowerCase() !== "cancelled" && localDate(session.startsAt, timezone) === today)
     || sessions.find((session) => String(session.status || "").toLowerCase() !== "cancelled" && (asDate(session.startsAt)?.getTime() || 0) >= Date.now())
     || [...sessions].reverse().find((session) => String(session.status || "").toLowerCase() !== "cancelled")
@@ -191,10 +195,11 @@ export default function CanonicalAttendancePageV3() {
           }];
         }));
         const timezone = dashboard.klass.timezone || TIMEZONE;
-        const chosen = chooseSession(dashboard.sessions, timezone, searchParams.get("session") || "");
+        const visibleSessions = dashboard.sessions.filter(session => !session.superseded && session.status !== "superseded");
+        const chosen = chooseSession(visibleSessions, timezone, searchParams.get("session") || "", dashboard.klass);
         setHasReminderRecipients(students.some((student) => student.email?.trim()));
         setKlass(dashboard.klass);
-        setSessions(dashboard.sessions);
+        setSessions(visibleSessions);
         setAttendance(map);
         setSelectedId(chosen?.id || "");
       } catch (cause) {
@@ -476,8 +481,10 @@ export default function CanonicalAttendancePageV3() {
           <SessionDictionaryPicker
             entries={dictionaryEntries}
             assignmentIds={selected?.assignmentIds?.length ? selected.assignmentIds : [assignmentId]}
+            initiallyOpen
             disabled
           />
+          {!isStaff && <Link to={`/live-classes?classId=${encodeURIComponent(klass.id)}&tab=repair`}>Override lesson and date</Link>}
         </div> : null}
 
         {selected ? <>
