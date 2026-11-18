@@ -7,6 +7,7 @@ import { getSavedVoice, saveVoice } from "../utils/hoerenVoiceCache";
 import { parseGrammarAudioScript, planGrammarAudio, grammarAudioCacheKey, grammarAssemblyPlan, optimizeGrammarAudioScript } from "../utils/grammarAudio";
 import { getSlidesByCourse } from "../data/teachingSlides";
 import { lessonGrammarAudioScript } from "../utils/lessonGrammarAudioScript";
+import { getGrammarAudioLessonCatalog } from "../utils/grammarAudioLessonCatalog";
 
 const SAMPLE = [
   "DE: Hallo und herzlich willkommen bei Falowen!",
@@ -47,7 +48,7 @@ export default function GrammarAudioStudio({ ready, status, onStatusChange, onBu
   const toast = useToast();
   const [topic, setTopic] = useState("je … desto");
   const [lessonChoice, setLessonChoice] = useState("");
-  const lessons = useMemo(() => ["A1", "A2", "B1", "B2", "C1", "C2"].flatMap(getSlidesByCourse), []);
+  const lessonCatalog = useMemo(() => getGrammarAudioLessonCatalog(getSlidesByCourse), []);
   const [level, setLevel] = useState("B1");
   const [languageMode, setLanguageMode] = useState("bilingual");
   const [engine, setEngine] = useState("lite");
@@ -109,9 +110,8 @@ export default function GrammarAudioStudio({ ready, status, onStatusChange, onBu
 
   function loadLessonDraft() {
     if (!lessonChoice || busy) return;
-    const selected = lessonChoice === "a1-day-2-complete"
-      ? lessons.filter(item => item.course === "A1" && item.day === "Day 2")
-      : lessons.filter(item => item.id === lessonChoice);
+    const selection = lessonCatalog.find(item => item.id === lessonChoice);
+    const selected = selection?.lessons || [];
     if (!selected.length) return;
     try {
       const draft = lessonGrammarAudioScript(selected);
@@ -119,11 +119,11 @@ export default function GrammarAudioStudio({ ready, status, onStatusChange, onBu
       const count = planned.filter(item => item.type === "speech").length;
       if (count > 36) throw new Error("Lesson draft is too long.");
       setScript(draft);
-      setTopic(lessonChoice === "a1-day-2-complete" ? "A1 Day 2 · Full grammar lesson" : selected[0].topic);
-      setLevel(selected[0].course);
+      setTopic(selection.title.slice(0, 160));
+      setLevel(selection.course);
       setLanguageMode("bilingual");
       invalidate();
-      toast.success("Lesson-based script ready · " + count + " voice scenes. Review the German pronunciation before generation.");
+      toast.success(selection.title + " · " + count + " voice scenes. Verify lesson scope and German pronunciation.");
     } catch (error) { toast.error(error.message); }
   }
 
@@ -231,12 +231,11 @@ export default function GrammarAudioStudio({ ready, status, onStatusChange, onBu
         <p className="hoeren-hint">Create narrated lessons for YouTube, course grammar pages or classroom slides. English explanations and natural German examples use the same existing Falowen Gemini infrastructure.</p>
         <div className="hoeren-exam-schema">
           <strong>Use an existing Falowen lesson</strong>
-          <p>Build a short script directly from the authored teaching curriculum, without using a paid script request. One welcome and one goodbye per complete lesson.</p>
+          <p>Choose one official curriculum day. The matching uses canonical assignment IDs, not duplicate historical slide titles. One opening and one closing per lesson.</p>
           <label>Choose a course lesson
             <select value={lessonChoice} disabled={!!busy} onChange={e => setLessonChoice(e.target.value)}>
               <option value="">Select a lesson</option>
-              <option value="a1-day-2-complete">A1 Day 2 · Alphabet, pronouns and verbs (complete)</option>
-              {lessons.map(item => <option key={item.id} value={item.id}>{item.course} · {item.day} · {item.topic || item.title}</option>)}
+              {lessonCatalog.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}
             </select>
           </label>
           <button type="button" className="hoeren-quiet" disabled={!lessonChoice || !!busy} onClick={loadLessonDraft}>
