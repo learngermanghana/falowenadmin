@@ -39,6 +39,7 @@ export const A1_DAY3_MUSIC_NEXT_LYRIC_QUESTIONS = Object.freeze([
   {
     id:'day3-next-1', type:'listening', prompt:'Welche Liedzeile kommt als Nächstes?',
     options:['„Woher kommst du?“, frage ich,','„Was machst du gern am Wochenende?“','Er lächelt und sagt: „Bis dann!“'],
+    optionEnglish:['“Where are you from?” I ask.','“What do you like doing at the weekend?”','He smiles and says, “See you then!”'],
     correctIndex:0, answer:'„Woher kommst du?“, frage ich,',
     evidence:'Er sagt: „Hallo, ich heiße Ben.“',
     previewRange:{start:18.84,end:23.74}, continuationRange:{start:25.5,end:28.42},
@@ -46,6 +47,7 @@ export const A1_DAY3_MUSIC_NEXT_LYRIC_QUESTIONS = Object.freeze([
   {
     id:'day3-next-2', type:'listening', prompt:'Welche Liedzeile kommt als Nächstes?',
     options:['Ich sage: „Schön, dich hier zu sehen!“','Ich möchte dich gern kennenlernen.','Er lächelt und sagt: „Bis dann!“'],
+    optionEnglish:['I say, “It’s nice to see you here!”','I would like to get to know you.','He smiles and says, “See you then!”'],
     correctIndex:0, answer:'Ich sage: „Schön, dich hier zu sehen!“',
     evidence:'Er sagt: „Ich komme aus Berlin.“',
     previewRange:{start:25.5,end:31.06}, continuationRange:{start:31.82,end:34.24},
@@ -53,6 +55,7 @@ export const A1_DAY3_MUSIC_NEXT_LYRIC_QUESTIONS = Object.freeze([
   {
     id:'day3-next-3', type:'listening', prompt:'Welche Liedzeile kommt als Nächstes?',
     options:['Ich möchte dich gern kennenlernen.','Er sagt: „Hallo, ich heiße Ben.“','Ich sage: „Danke, bis morgen!“'],
+    optionEnglish:['I would like to get to know you.','He says, “Hello, my name is Ben.”','I say, “Thanks, see you tomorrow!”'],
     correctIndex:0, answer:'Ich möchte dich gern kennenlernen.',
     evidence:'Was machst du gern?',
     previewRange:{start:86.88,end:93.56}, continuationRange:{start:93.96,end:98.22},

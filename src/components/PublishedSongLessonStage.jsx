@@ -214,7 +214,8 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
       </div> : <div className="published-song-lesson__section published-song-lesson__quiz">
         <div className="published-song-lesson__quizmeta"><strong>FRAGE {questionIndex+1} / {questions.length}</strong><span>{nextLyricOnly?'WAS KOMMT ALS NÄCHSTES?':question.type==='speaking'?'SPRECHEN':'HÖRVERSTEHEN'}</span></div>
         <h3 lang="de">{question.prompt}</h3>
-        {nextLyricOnly && <p>Spiele den Ausschnitt ab und lass die Klasse A, B oder C wählen.</p>}
+        {nextLyricOnly && <p lang="en">Listen to the short clip. Which lyric comes next?</p>}
+        {nextLyricOnly && <p lang="de">Spiele den Ausschnitt ab und lass die Klasse A, B oder C wählen.</p>}
         {nextLyricOnly && bundledTiming?.questionEndings.includes(question.evidence) &&
           <p>Letzte Zeile im Ausschnitt: {question.evidence}</p>}
         {evidenceRange && <button type="button" className="published-song-lesson__line-preview"
@@ -228,6 +229,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
             className={selectedOption === i ? 'is-selected' : ''}
             onClick={()=>{setSelectedOption(i);setShowAnswer(false);}}>
             <strong>{String.fromCharCode(65+i)}.</strong> {option}
+            {question.optionEnglish?.[i] && <small lang="en">{question.optionEnglish[i]}</small>}
           </button>)}
         </div>}
         {question.type === 'speaking' && <div className="published-song-lesson__speaking-note">
