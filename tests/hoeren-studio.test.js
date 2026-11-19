@@ -541,6 +541,8 @@ test("Swahili conversation generation and speech stay in the Kiswahili workflow"
   const { buildSwahiliConversationPrompt, validateSwahiliTranscript, buildSpeechPayload, validateSceneRequest } = require("../functions/hoerenStudioApi.js");
   assert.match(buildSwahiliConversationPrompt({ topic: "Sokoni", format: "podcast" }), /two-host podcast/);
   assert.match(buildSwahiliConversationPrompt({ topic: "Sokoni" }), /everyday conversation/);
+  assert.match(buildSwahiliConversationPrompt({ topic: "Sokoni", level: "A1" }), /50–110 spoken words/);
+  assert.match(buildSwahiliConversationPrompt({ topic: "Sokoni", level: "A2" }), /85–150 spoken words/);
   for (const level of ["A1", "A2", "B1"]) {
     assert.match(buildSwahiliConversationPrompt({ topic: "Mazingira", level }), new RegExp("adult " + level + " learners"));
   }
@@ -548,6 +550,9 @@ test("Swahili conversation generation and speech stay in the Kiswahili workflow"
   assert.throws(() => buildSwahiliConversationPrompt({ topic: "Sokoni", format: "goethe" }), /Choose a format/);
   assert.throws(() => validateSwahiliTranscript("A: Habari?\nC: Nzuri."), /two-speaker/);
   assert.equal(validateSwahiliTranscript("A: Habari?\nB: Nzuri."), "A: Habari?\nB: Nzuri.");
+  const source = readFileSync(new URL("../functions/hoerenStudioApi.js", import.meta.url), "utf8");
+  assert.match(source, /const \[minimumWords\] = SWAHILI_SCRIPT_WORD_RANGES\[level\]/);
+  assert.doesNotMatch(source, /const \[minimumWords\] = COURSE_SCRIPT_WORD_RANGES\[level\]/);
   const scene = validateSceneRequest({ style: "swahili", turns: [{ speaker: "A", text: "Habari?" }, { speaker: "B", text: "Nzuri." }] });
   const payload = buildSpeechPayload(scene);
   assert.match(payload.input[0].content[0].annotations[0].style, /Kiswahili/);
