@@ -1,3 +1,4 @@
+import { A2_DAY27_CLASSROOM_LISTENING } from './a2Day27ClassroomListening.js';
 import { A2_DAY25_CLASSROOM_LISTENING } from './a2Day25ClassroomListening.js';
 import { A2_DAY26_CLASSROOM_LISTENING } from './a2Day26ClassroomListening.js';
 import { B1_DAY27_LISTENING } from './b1Day27Listening.js';
@@ -555,6 +556,7 @@ ENTRIES["A2-9.24"] = {
 
 ENTRIES["A2-10.27"] = {
   assignmentId: "A2-10.27", title: "Digitale Kommunikation", warmup: [],
+  listening: A2_DAY27_CLASSROOM_LISTENING,
   musicIntro: {
     mediaType: "music", assignmentKey: "A2-10.27", level: "A2", day: 27,
     title: "Handy weg",

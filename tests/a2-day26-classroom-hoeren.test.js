@@ -24,7 +24,7 @@ test('A2 Day 26 teaching slide displays the supplied five questions, with answer
 });
 test('A2 Day 26 audio remains staff-authenticated, protected and signed',()=>{
   const source=readFileSync(new URL('../src/components/InteractiveLessonOpening.jsx',import.meta.url),'utf8');
-  assert.match(source,/23, 24, 25, 26\]\.includes\(lesson\.listening\.day\)/);
+  assert.match(source,/23, 24, 25, 26, 27\]\.includes\(lesson\.listening\.day\)/);
   assert.match(source,/\/api\/course-media\/a2\/classroom-audio-url/);
   assert.match(source,/Bearer \$\{await user\.getIdToken\(\)\}/);
   assert.match(source,/onClick=\{prepareAudio\}/);
