@@ -7,7 +7,7 @@ const LANGUAGES = [
   { id: "german", label: "German" },
   { id: "swahili", label: "Swahili" },
 ];
-const COURSE_LEVELS = { german: ["A1", "A2", "B1", "B2", "C1", "C2"], swahili: ["A1", "A2"] };
+const COURSE_LEVELS = { german: ["A1", "A2", "B1", "B2", "C1", "C2"], swahili: ["A1", "A2", "B1"] };
 const COURSE_DAYS = Array.from({ length: 60 }, (_, i) => i + 1);
 const MAX_CONTENT_CHARACTERS = 100_000;
 const cardStyle = { border: "1px solid #dbe3ec", borderRadius: 14, padding: 18, background: "#fff" };
