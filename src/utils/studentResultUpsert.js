@@ -131,6 +131,15 @@ function value(source, ...keys) {
   return "";
 }
 
+export function resultLanguage(score) {
+  const declared = clean(score.language || score.program).toLowerCase();
+  if (declared === "swahili" || declared === "german") return declared;
+  const id = clean(score.assignment_id || score.assignmentId || score.assignmentKey);
+  if (/^swahili-/i.test(id)) return "swahili";
+  if (/^[ABC][12][-_.]\d/i.test(id)) return "german";
+  return "";
+}
+
 export function buildScoreUpsertRow(score = {}, now = new Date()) {
   const assignmentId = canonicalAssignmentId(score);
   const studentCode = normalizeStudentCode(score.studentCode || score.studentcode || score.student_code || score.uid);
@@ -138,6 +147,7 @@ export function buildScoreUpsertRow(score = {}, now = new Date()) {
   const numericScore = Number(score.score ?? score.finalScore);
 
   return {
+    language: resultLanguage(score),
     studentcode: studentCode,
     studentCode,
     name: clean(score.name || score.studentName),
