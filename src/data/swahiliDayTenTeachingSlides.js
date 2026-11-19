@@ -91,12 +91,78 @@ export const SWAHILI_DAY_TEN_ADMIN_LESSON = Object.freeze({
     {
       "id": "radio",
       "type": "radio-questions",
-      "radioVideoId": null,
+      "radioVideoId": "4_ygEiW5QjI",
       "kicker": "Kusikiliza · Falowen Radio",
       "title": "Falowen Radio · Sokoni",
       "content": "Fanyeni mazoezi kwa jozi. Mnunuzi anauliza bei ya machungwa. Muuzaji anataja bei. Mnunuzi anaomba punguzo.",
       "prompt": "Unaombaje punguzo kwa adabu?",
       "answer": "Unaweza kupunguza bei kidogo, tafadhali?"
+    },
+    {
+      "id": "radio-order",
+      "type": "radio-questions",
+      "kicker": "Falowen Radio · A. Kazi ya Mwanafunzi Binafsi",
+      "title": "1 · Panga hatua za kununua sokoni",
+      "english": "Individual work · Arrange the five steps in the correct order.",
+      "content": "Panga hatua hizi kwa mpangilio sahihi:\n\nKuuliza bei\n\nKusalimiana\n\nKuaga\n\nKuomba bidhaa\n\nKulipa",
+      "prompt": "Onyesha mfano wa jibu",
+      "answer": "Kusalimiana → Kuomba bidhaa → Kuuliza bei → Kulipa → Kuaga.",
+      "radioUrl": "https://www.youtube.com/watch?v=4_ygEiW5QjI"
+    },
+    {
+      "id": "radio-products",
+      "type": "radio-questions",
+      "kicker": "Falowen Radio · A. Kazi ya Mwanafunzi Binafsi",
+      "title": "2 · Tatu anataka kununua nini?",
+      "english": "Individual work · Name three products that Tatu wants to buy.",
+      "content": "Tatu anataka kununua bidhaa gani sokoni? Taja bidhaa tatu.",
+      "prompt": "Onyesha mfano wa jibu",
+      "answer": "Mfano wa jibu: Tatu anataka kununua maembe, machungwa na mapapai.",
+      "radioUrl": "https://www.youtube.com/watch?v=4_ygEiW5QjI"
+    },
+    {
+      "id": "radio-match",
+      "type": "radio-questions",
+      "kicker": "Falowen Radio · A. Kazi ya Mwanafunzi Binafsi",
+      "title": "3 · Unganisha sentensi na kazi yake",
+      "english": "Individual work · Match each sentence to its purpose.",
+      "content": "A. Habari yako?\n\nB. Naomba maembe mawili.\n\nC. Jumla ni shilingi ngapi?\n\nD. Tafadhali, punguza bei.\n\n1. Kuuliza bei\n\n2. Kujadiliana kuhusu bei\n\n3. Kusalimia\n\n4. Kuomba bidhaa",
+      "prompt": "Onyesha mfano wa jibu",
+      "answer": "A–3, B–4, C–1, D–2.",
+      "radioUrl": "https://www.youtube.com/watch?v=4_ygEiW5QjI"
+    },
+    {
+      "id": "radio-bargain",
+      "type": "radio-questions",
+      "kicker": "Falowen Radio · A. Kazi ya Mwanafunzi Binafsi",
+      "title": "4 · Omba punguzo kwa heshima",
+      "english": "Individual work · The price is 5,000 shillings. Ask politely for a lower price.",
+      "content": "Bei ni shilingi 5,000, lakini unaona ni ghali. Utasemaje kwa heshima?",
+      "prompt": "Onyesha mfano wa jibu",
+      "answer": "Mfano wa jibu: He! Ni ghali sana. Tafadhali, punguza bei. Ninaweza kulipa shilingi 4,000?",
+      "radioUrl": "https://www.youtube.com/watch?v=4_ygEiW5QjI"
+    },
+    {
+      "id": "radio-roleplay",
+      "type": "radio-questions",
+      "kicker": "Falowen Radio · B. Kazi ya Vikundi",
+      "title": "5 · Igizeni mazungumzo ya sokoni",
+      "english": "Group work · One seller and one buyer. Start with greetings, buy three products, negotiate, pay, thank and say goodbye.",
+      "content": "Mwanafunzi mmoja awe muuzaji; mwingine awe mnunuzi.\n\nAnzeni kwa salamu. Ombeni bidhaa tatu. Ulizeni bei na mjadiliane kuhusu bei. Malizieni kwa kulipa, kushukuru na kuagana.\n\nManeno: Habari yako? · Karibu, mteja wangu. · Nikusaidie nini? · Naomba… · Ni shilingi ngapi? · Tafadhali, punguza bei. · Asante sana. · Karibu tena.",
+      "prompt": "Onyesha mfano wa jibu",
+      "answer": "Mfano: Muuzaji: Habari yako? Karibu, mteja wangu. Nikusaidie nini? Mnunuzi: Nzuri, asante. Naomba maembe mawili, machungwa matatu na papai moja. Ni shilingi ngapi? Muuzaji: Shilingi 5,000. Mnunuzi: Tafadhali, punguza bei. Muuzaji: Sawa, shilingi 4,500. Mnunuzi: Haya, asante sana. Muuzaji: Karibu tena.",
+      "radioUrl": "https://www.youtube.com/watch?v=4_ygEiW5QjI"
+    },
+    {
+      "id": "radio-shopping-list",
+      "type": "radio-questions",
+      "kicker": "Falowen Radio · B. Kazi ya Vikundi",
+      "title": "6 · Orodha ya manunuzi ya kikundi",
+      "english": "Group work · Choose five products, quantities, prices and total. Present the group's shopping list.",
+      "content": "Tengenezeni orodha ya manunuzi ya kikundi. Chagueni bidhaa tano za kununua sokoni. Andikeni idadi, bei na jumla ya gharama. Kisha mwanafunzi mmoja awasilishe orodha ya kikundi.",
+      "prompt": "Onyesha mfano wa jibu",
+      "answer": "Mfano wa uwasilishaji: Tutanunua maembe mawili, machungwa matatu na mapapai mawili. Jumla ni shilingi 8,000. (Huu ni mfano; orodha ya vikundi iwe na bidhaa tano na bei zinazolingana.)",
+      "radioUrl": "https://www.youtube.com/watch?v=4_ygEiW5QjI"
     },
     {
       "id": "listening",
