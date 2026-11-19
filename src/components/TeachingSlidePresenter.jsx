@@ -902,6 +902,23 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
           ) : null}
           {stage.type === "a1-day2" ? (
             <A1Day2TeachingStage key={stage.id} step={stage.step} />
+          ) : stage.type === "teacher-lecture" ? (
+            <section aria-label="Teacher lecture video" style={{width:"min(100%,1000px)",margin:"auto",display:"grid",gap:"16px"}}>
+              <h1>{stage.title}</h1>
+              <p>Lehrervideo · Hör zu und notiere zwei neue Ausdrücke.</p>
+              <div style={{width:"100%",aspectRatio:"16 / 9",borderRadius:"16px",overflow:"hidden",background:"#0f274a"}}>
+                <iframe
+                  title={stage.title}
+                  src={`https://www.youtube-nocookie.com/embed/${stage.videoId}`}
+                  style={{width:"100%",height:"100%",border:"0"}}
+                  loading="lazy"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                />
+              </div>
+              <a href={`https://www.youtube.com/watch?v=${stage.videoId}`} target="_blank" rel="noopener noreferrer">Lehrervideo auf YouTube öffnen</a>
+            </section>
           ) : stage.type === "intro" ? (
             <>
               {stage.skillTarget ? (
