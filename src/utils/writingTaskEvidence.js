@@ -391,7 +391,11 @@ function a2ApartmentEvidence(assignmentKey = "", label = "", source = "", index 
       if (!/\b(?:wohnung(?:en)?|apartment(?:s)?|zimmer)\b/i.test(sentence)) return false;
       const available = /\b(?:frei|verf[uü]gbar|zu\s+(?:haben|mieten|vermieten)|noch\s+da)\b/i.test(sentence);
       const question = /\b(?:haben\s+sie|gibt\s+es|vermieten\s+sie)\b/i.test(sentence) && /\?/.test(sentence);
-      const indirect = /\bob\b/i.test(sentence) && available && enquiry(sentence);
+      // Learners often phrase availability as an embedded question:
+      // "Ich möchte fragen, ob Sie noch eine Wohnung frei haben."
+      const indirect = /\bob\b/i.test(sentence)
+        && available
+        && /\b(?:fragen|wissen|erfahren|mitteilen|sagen)\b/i.test(sentence);
       return question || (available && enquiry(sentence)) || indirect;
     });
     return {

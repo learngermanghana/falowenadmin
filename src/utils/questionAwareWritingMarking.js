@@ -384,7 +384,16 @@ function registerMismatch(task = {}, source = "") {
     return /\bsehr\s+geehrte(?:r|n)?\b|\bmit\s+freundlichen\s+gr(?:ü|u)(?:ß|ss)en\b/i.test(source);
   }
   if (task.register === "formal") {
-    return /(?:^|\n)\s*(?:hallo|liebe?r?)\b|\b(?:liebe\s+grüße|viele\s+grüße|bis\s+bald)\b/i.test(source);
+    // "Lieber/Liebe <name>" may be used with formal Sie in learner emails.
+    // Treat it as informal only when the body or closing also uses du language.
+    const informalGreeting = /(?:^|\n)\s*(?:hallo|liebe?r?)\b/i.test(source);
+    const informalClosing = /\b(?:liebe\s+grüße|viele\s+grüße|bis\s+bald)\b/i.test(source);
+    if (informalClosing) return true;
+    if (!informalGreeting) return false;
+    const formalAddress = /\b(?:sie|ihnen|ihr(?:e|en|em|er|es)?)\b/i.test(source)
+      || /\b(?:mit\s+freundlichen\s+grüßen|hochachtungsvoll)\b/i.test(source);
+    const informalAddress = /\b(?:du|dir|dich|dein(?:e|en|em|er|es)?)\b/i.test(source);
+    return informalAddress || !formalAddress;
   }
   return false;
 }
