@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import LessonSongLyrics from './LessonSongLyrics.jsx';
+import { getCuratedMusicByAssignment } from '../data/curatedLessonMusic.js';
+import { getReusableSongDraft } from '../data/reusableMusicSongbook.js';
 import { recordedEvidenceRange, recordedSongQuestions, selectRecordedLessonTrack, verifiedRecordedLyrics } from '../utils/recordedLessonMusic.js';
 import './PublishedSongLessonStage.css';
 import './LessonSongStage.css';
@@ -39,7 +41,13 @@ export default function LinkedPublishedSongLessonStage({ music }) {
         const response=await fetch('/api/attendance-music-library', {signal:controller.signal});
         if (!response.ok) throw Error('Die Musikbibliothek ist nicht erreichbar.');
         const data=await response.json();
-        const track=selectRecordedLessonTrack(data,{level,day,assignmentKey});
+        // Preserve the existing exact, approved Day 27 R2 recording and ID.
+        const day27Recording=assignmentKey==='A2-10.27' && level==='A2' && day===27
+          ? getCuratedMusicByAssignment('A2-10.27') : null;
+        const track=day27Recording?.objectKey && day27Recording?.audioUrl
+          ? {id:day27Recording.trackId,objectKey:day27Recording.objectKey,
+              src:day27Recording.audioUrl,title:day27Recording.title,level,day}
+          : selectRecordedLessonTrack(data,{level,day,assignmentKey});
         if (!track) throw Error('Keine eindeutige veröffentlichte Aufnahme für '+level+' Tag '+day+' gefunden.');
         if (!controller.signal.aborted) setLoaded({loading:false,track,pack:null,reference:null,error:''});
         // Music lyrics/timings only for this EXACT recording, never the
@@ -86,6 +94,13 @@ export default function LinkedPublishedSongLessonStage({ music }) {
               }
             }
           } catch(error) { if (controller.signal.aborted) return; }
+        }
+        // No recording-matched lyric cues yet? Keep the Day 26 classroom
+        // selection layout as an explicitly unverified text practice only.
+        if (!pack && !reference && assignmentKey==='A2-10.27' &&
+            track.objectKey==='music/a2/day-27/Handy weg.mp3') {
+          const draft=getReusableSongDraft('A2-10.27');
+          if (draft?.lyrics) reference={lyrics:draft.lyrics,objectKey:track.objectKey,draftOnly:true};
         }
         if (!controller.signal.aborted) setLoaded({loading:false,track,pack,reference,error:''});
       } catch(error) {
@@ -180,7 +195,9 @@ export default function LinkedPublishedSongLessonStage({ music }) {
       {view==='lyrics' && <div className="published-song-lesson__section">
         <h3>Liedtext · {track?.title || music.title}</h3>
         {song ? <>
-          {pack?.referenceOnly
+          {reference?.draftOnly
+            ? <p role="status">Liedtextentwurf · Noch nicht mit der veröffentlichten MP3 geprüft. Nutze den Text zur Leseübung, nicht als bestätigtes Hörtranskript.</p>
+            : pack?.referenceOnly
             ? <p>Ungeprüfter Aufnahme-Entwurf · Nutzt den Text zum Mitlesen und prüft die Wörter beim Hören.</p>
             : verified
             ? <p>Lies mit und achte auf die Ausdrücke, die du im Lied hörst.</p>
@@ -196,16 +213,16 @@ export default function LinkedPublishedSongLessonStage({ music }) {
 
       {view==='questions' && <div className="published-song-lesson__section published-song-lesson__quiz">
         {question ? <>
-          {!verified && <p role="status"><strong>Fragen zum originalen Liedtextentwurf:</strong> Die Antworten sind noch nicht gegen die neue MP3 überprüft. Nutzt sie als Lese-/Sprechübung, bis passende Aufnahme-Zeitmarken veröffentlicht sind.</p>}
+          {!verified && <p role="status"><strong>Fragen zum Liedtextentwurf:</strong> Die Antworten sind nicht gegen die MP3 überprüft. Nutzt sie als Lese-/Sprechübung, bis passende Aufnahme-Zeitmarken veröffentlicht sind.</p>}
           <div className="published-song-lesson__quizmeta">
             <strong>FRAGE {questionIndex+1} / {questions.length}</strong>
-            <span>{question.type==='speaking'?'SPRECHEN':'HÖRVERSTEHEN'}</span>
+            <span>{question.type==='speaking'?'SPRECHEN':verified?'HÖRVERSTEHEN':'LESETEXT-ÜBUNG'}</span>
           </div>
           <h3 lang="de">{question.prompt}</h3>
           {evidenceRange && <button type="button" className="published-song-lesson__line-preview"
             onClick={()=>playLinePreview(evidenceRange)}>▶ Zeile anhören</button>}
           {question.type==='speaking' ? <p>Sprich mit deinem Partner. Antworte in ganzen Sätzen.</p>
-            : <p>Antworte mit Informationen aus der veröffentlichten Aufnahme. Die Lösung wird erst nach der Auswahl gezeigt.</p>}
+            : <p>{verified ? 'Antworte mit Informationen aus der veröffentlichten Aufnahme. Die Lösung wird erst nach der Auswahl gezeigt.' : 'Wähle die passende Liedzeile im Textentwurf. Die Lehrkraft zeigt die Musterlösung danach.'}</p>}
           {Array.isArray(question.options) && <div className="published-song-lesson__options" role="group" aria-label="Antwortmöglichkeiten">
             {question.options.map((option,i)=><button key={i} type="button"
               aria-pressed={selectedOption===i} className={selectedOption===i?'is-selected':''}
@@ -218,7 +235,7 @@ export default function LinkedPublishedSongLessonStage({ music }) {
             {showAnswer?'Musterlösung verbergen':'Musterlösung für Lehrkraft zeigen'}
           </button>
           {showAnswer && <div role="status" className="published-song-lesson__answer">
-            <strong>{question.type==='speaking'?'Lehrerhinweis':selectedOption===question.correctIndex?'Richtig!':'Noch einmal hören · Richtige Antwort'}</strong>
+            <strong>{question.type==='speaking'?'Lehrerhinweis':!verified?'Musterlösung zum Textentwurf':selectedOption===question.correctIndex?'Richtig!':'Noch einmal hören · Richtige Antwort'}</strong>
             <p>{question.answer}</p>
             {question.evidence && <details><summary>Textbeleg</summary><blockquote>{question.evidence}</blockquote></details>}
           </div>}
