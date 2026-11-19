@@ -7,6 +7,7 @@ export const SWAHILI_DAY_TEN_ADMIN_LESSON = Object.freeze({
   "language": "Kiswahili",
   "day": "Day 10",
   "dayNumber": 10,
+  "teacherLectureVideoId": "xLN5QX669JA",
   "title": "Somo la 10 · Sokoni",
   "topic": "Sokoni",
   "objective": "Kuweza kupatana bei na kununua matunda, mboga na vyakula.",
@@ -20,6 +21,15 @@ export const SWAHILI_DAY_TEN_ADMIN_LESSON = Object.freeze({
       "content": "Uliza bidhaa na bei.\nNunua kwa idadi, mafungu au kilo.\nOmba punguzo kwa adabu.",
       "english": "Ask what is available, buy produce and negotiate a price.",
       "notes": "Show real or pictured produce. Ask learners to name the items they recognise."
+    },
+    {
+      "id": "ai-video",
+      "type": "teacher-lecture",
+      "kicker": "Video ya somo · AI",
+      "title": "Video ya AI · Sokoni",
+      "videoId": "xLN5QX669JA",
+      "content": "Tazama video. Sikiliza jinsi ya kuuliza bei na kuomba bidhaa sokoni.",
+      "english": "Watch the AI lesson video. Listen for how to ask prices and request items at the market."
     },
     {
       "id": "grammar",
