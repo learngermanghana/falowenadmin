@@ -1,5 +1,5 @@
 import {useEffect,useState} from "react";
-import PublishedSongLessonStage from "./PublishedSongLessonStage.jsx";
+import LinkedPublishedSongLessonStage from "./LinkedPublishedSongLessonStage.jsx";
 import {DAY22_POLITE_QUESTIONS,DAY22_WEIL_PRACTICE,DAY22_WORKBOOK} from "../data/a1Day22Classroom.js";
 import "./A1Day13ClassroomStage.css";
 
@@ -14,11 +14,11 @@ function Practice({items,instruction}){
 export default function A1Day22ClassroomStage({step}){
  const [show,setShow]=useState(false);
  useEffect(()=>setShow(false),[step]);
- if(step==="music")return <PublishedSongLessonStage assignmentKey="A1-14.1" courseDay={22} compact nextLyricOnly />;
+ if(step==="music")return <LinkedPublishedSongLessonStage music={{assignmentKey:"A1-14.1",level:"A1",day:22,title:"Arzttermin",introQuestion:"Welche Körperteile und Beschwerden hörst du im Lied?"}} />;
  return <section className="a1day13" lang="de">
  {step==="intro"&&<><h1>Ich muss meinen Termin absagen.</h1><p>Heute lernst du: einen Termin absagen, einen Grund nennen und höflich einen neuen Termin vereinbaren.</p><div className="a1day13-grid"><Visual icon="🤒 🛏️" title="Ich bin krank." sub="I am sick."/><Visual icon="🌩️ ☔" title="Es gibt ein Gewitter." sub="There is a thunderstorm."/></div><Card><h2>Könnten wir einen anderen Termin vereinbaren?</h2><p>Could we arrange another appointment?</p></Card></>}
  {step==="symptoms"&&<><h1>Warum kannst du nicht kommen?</h1><div className="a1day13-grid"><Visual icon="🤒" title="Ich habe Fieber." sub="I have a fever."/><Visual icon="🤕" title="Ich habe Kopfschmerzen." sub="I have a headache."/><Visual icon="🤢" title="Mein Bauch tut weh." sub="My stomach hurts."/><Visual icon="🛏️" title="Ich bin krank." sub="I am sick."/></div><Card><p><strong>Merke:</strong> Ich bin krank. · Ich habe Fieber. · Mein Kopf tut weh. · Meine Beine tun weh.</p></Card></>}
- {step==="weather"&&<><h1>Wetter: Was kennst du noch?</h1><div className="a1day13-grid"><Visual icon="🌧️" title="Es regnet stark." sub="It is raining heavily."/><Visual icon="🌨️" title="Es schneit." sub="It is snowing."/><Visual icon="⛈️" title="Es gibt ein Gewitter." sub="There is a thunderstorm."/><Visual icon="🥶" title="Es ist sehr kalt." sub="It is very cold."/></div></>}
+
 
  {step==="body-parts"&&<><h1>Mein Körper · Körperteile</h1><p>Zeige auf das Körperteil. Sprich das Wort mit Artikel. Wo tut es weh?</p><div className="a1day13-grid">
  <Visual icon="🧑🏽‍🦱" title="der Kopf · the head" sub="Mein Kopf tut weh."/>
@@ -30,6 +30,7 @@ export default function A1Day22ClassroomStage({step}){
  <Visual icon="🦵🏽" title="das Bein · the leg" sub="Mein Bein tut weh."/>
  <Visual icon="🦶🏽" title="der Fuß · the foot" sub="Mein Fuß tut weh."/>
  </div><Card><h2>Ein Körperteil: tut weh · Mehrere Körperteile: tun weh</h2><p>Mein Arm <strong>tut</strong> weh. · Meine Arme <strong>tun</strong> weh.</p><p><strong>Frage:</strong> Was tut dir weh? <strong>Antwort:</strong> Mein Rücken tut weh.</p></Card></>}
+ {step==="body-practice"&&<><h1>Wo tut es weh?</h1><p>Partnerarbeit: Eine Person fragt, eine Person antwortet. Dann tauscht ihr die Rollen.</p><div className="a1day13-grid"><Visual icon="🤕" title="Was tut dir weh?" sub="Mein Kopf tut weh."/><Visual icon="🦵🏽 🦵🏽" title="Was tut dir weh?" sub="Meine Beine tun weh."/></div><Practice key={step} instruction="Ordne das Körperteil dem passenden Satz zu. Sprich die Antwort erst, dann zeige sie." items={[["Kopf · 1 Person","Mein Kopf tut weh."],["Bauch · 1 Person","Mein Bauch tut weh."],["Beine · 2 Körperteile","Meine Beine tun weh."],["Hände · 2 Körperteile","Meine Hände tun weh."]]}/></>}
  {step==="reschedule"&&<><h1>Einen anderen Termin vereinbaren</h1><Card><p>Ich muss meinen Termin am Samstag absagen.</p><h2>Können wir einen anderen Termin vereinbaren?</h2><h2>Könnten wir einen anderen Termin vereinbaren?</h2><p>Beide Fragen sind korrekt. <strong>Könnten</strong> klingt höflicher.</p></Card><div className="a1day13-grid"><Visual icon="📅" title="Hast du am Montag Zeit?" sub="Do you have time on Monday?"/><Visual icon="🕒" title="Passt es dir um 15 Uhr?" sub="Does 3 p.m. work for you?"/></div></>}
  {step==="polite"&&<><h1>Könnten + Subjekt + … + Infinitiv?</h1><div className="a1day13-words"><strong>Könnten</strong><span>Sie / wir</span><span>… helfen / vereinbaren?</span></div><Card><h2>Könnten Sie mir bitte helfen?</h2><p>Could you please help me?</p><h2>Könnten wir einen anderen Termin vereinbaren?</h2><p>Could we arrange another appointment?</p><p>Im Gespräch mit Freunden: <strong>Könntest du …?</strong> · Formal: <strong>Könnten Sie …?</strong></p><p>Das zweite Verb steht am Ende: <strong>vereinbaren</strong>, <strong>helfen</strong>, <strong>sagen</strong>.</p></Card></>}
  {step==="questions"&&<><h1>Bau eine höfliche Frage</h1><Practice key={step} instruction="Ordne die Wörter. Das zweite Verb steht am Ende." items={DAY22_POLITE_QUESTIONS}/></>}
