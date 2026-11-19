@@ -157,3 +157,11 @@ test("Apps Script updates matches and deletes older duplicate rows", () => {
   assert.match(source, /duplicatesRemoved/);
   assert.match(source, /if \(!matches\.length\)/);
 });
+
+
+test("score exports keep course language for a learner in both programs", () => {
+  const common = { studentCode: "TEST01", score: 80 };
+  assert.equal(buildScoreUpsertRow({ ...common, assignmentId: "A1-2" }).language, "german");
+  assert.equal(buildScoreUpsertRow({ ...common, assignmentId: "swahili-day-2", program: "swahili" }).language, "swahili");
+  assert.equal(buildScoreUpsertRow({ ...common, assignmentId: "external-task" }).language, "");
+});

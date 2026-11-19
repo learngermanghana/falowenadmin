@@ -46,7 +46,7 @@ The server temporarily accepts the existing `VITE_...` equivalents as migration 
 1. Open the Apps Script project used by the score webhook URL.
 2. Replace its score `doPost` implementation with:
    - `docs/apps-script/score-results-upsert.gs`
-3. Copy the existing shared token into `SCORE_WEBHOOK_TOKEN`. Do not commit or share the real token.
+3. In Project Settings, set the Script Property `SCORES_WEBHOOK_TOKEN` to the shared server token. Do not commit or share the real token.
 4. In Apps Script, choose **Deploy → Manage deployments → Edit**.
 5. Select **New version**, then deploy.
 6. Keep the same `/exec` URL in Vercel unless Apps Script issues a different deployment URL.
@@ -90,3 +90,5 @@ The automated Student Result Upsert tests verify that:
 - the API verifies the Firebase user and injects private webhook settings server-side;
 - the frontend and server both require an explicit upsert acknowledgement;
 - the Apps Script updates rows and removes duplicates instead of using an append-only handler.
+
+New and updated score rows include `language` (german or swahili) when identifiable. Swahili result emails use the existing server-side `SWAHILI_RESULT_BCC` setting.

@@ -1,8 +1,4 @@
-// Falowen score-sheet webhook.
-// Replace the old append-only doPost handler with this file, preserve your token,
-// and deploy a new Apps Script web-app version.
-
-const SCORE_WEBHOOK_TOKEN = "REPLACE_WITH_YOUR_EXISTING_TOKEN"; // Use "" only when token checking is intentionally disabled.
+// Set SCORES_WEBHOOK_TOKEN in Script Properties to match the Falowen webhook senders.
 
 function json_(value) {
   return ContentService
@@ -66,7 +62,7 @@ function ensureHeaders_(sheet, rows) {
 
   const preferred = [
     "studentcode", "name", "assignment", "score", "comments", "date", "level", "link",
-    "assignment_id", "dedupe_id", "source",
+    "assignment_id", "dedupe_id", "source", "language",
   ];
   const requested = preferred.concat(rows.reduce(function (keys, row) {
     return keys.concat(Object.keys(row || {}));
@@ -166,6 +162,11 @@ function upsertScoreRows_(sheet, rows) {
     normalized.dedupeid = key;
     normalized.studentcode = normalizedStudentCode_(firstValue_(normalized, ["studentcode", "studentCode"]));
     normalized.assignmentid = canonicalAssignmentId_(firstValue_(normalized, ["assignment_id", "assignmentId", "assignmentKey", "assignment"]));
+    const language = String(firstValue_(normalized, ["language", "program"])).trim().toLowerCase();
+    if (language === "german" || language === "swahili") normalized.language = language;
+    else if (/^swahili-/i.test(normalized.assignmentid)) normalized.language = "swahili";
+    else if (/^[ABC][12][-_.]\d/i.test(normalized.assignmentid)) normalized.language = "german";
+    else delete normalized.language; // Preserve an existing value on a legacy retry.
     latestIncomingByKey[key] = normalized;
   });
 
@@ -213,7 +214,8 @@ function doPost(e) {
     lock.waitLock(30000);
     const body = JSON.parse((e && e.postData && e.postData.contents) || "{}");
 
-    if (SCORE_WEBHOOK_TOKEN && body.token !== SCORE_WEBHOOK_TOKEN) {
+    const token = PropertiesService.getScriptProperties().getProperty("SCORES_WEBHOOK_TOKEN");
+    if (!token || body.token !== token) {
       return json_({ ok: false, error: "Unauthorized" });
     }
     // Existing Marking-page saves may not yet send an action. Treat a missing

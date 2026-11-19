@@ -58,7 +58,7 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
         if (delivery.exists) return delivery.data();
         tx.set(snapshot.ref, { ...(b1 ? {} : { answerReference: answerKeys[review.lessonId] }), sheetDelivery: "pending", emailDelivery: "pending" }, { merge: true });
         tx.set(scoreRef, {
-          program: "swahili", studentId: uid, studentCode, studentcode: studentCode,
+          program: "swahili", language: "swahili", studentId: uid, studentCode, studentcode: studentCode,
           name: student.name || "", assignment, assignmentId: review.lessonId,
           assignment_id: review.lessonId, dedupe_id: dedupeId, level, score: review.score,
           comments: review.feedback, resultStatus: review.status, passed,

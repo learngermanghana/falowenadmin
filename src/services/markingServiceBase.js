@@ -1,3 +1,4 @@
+import { resultLanguage } from "../utils/studentResultUpsert.js";
 import answerReferenceTools from "../../functions/resultAnswerReference.cjs";
 import { canonicalCourseReference } from "../utils/canonicalCourseReference.js";
 import { tryStoreMarkingDraft } from "../utils/markingDraftStorage.js";
@@ -850,6 +851,7 @@ function buildScoreRow({ studentCode, studentEmail = "", studentId = "", student
   const row = {
     ...identity,
     name: identity.studentName,
+    language: resultLanguage({ ...details, assignment_id: safeAssignmentId }),
     assignment: assignmentTitle(assignment, safeAssignmentId),
     assignment_id: safeAssignmentId,
     assignmentId: safeAssignmentId,
