@@ -38,12 +38,16 @@ export default function LinkedPublishedSongLessonStage({ music }) {
       try {
         // Existing read-only, same-origin Vercel rewrite. No new function,
         // R2 listing loop, private credentials, or generated audio.
-        const response=await fetch('/api/attendance-music-library', {signal:controller.signal});
-        if (!response.ok) throw Error('Die Musikbibliothek ist nicht erreichbar.');
-        const data=await response.json();
-        // Preserve the existing exact, approved Day 27 R2 recording and ID.
+        // Day 27 already has an approved published MP3 and needs no
+        // extra music-library network request just to display its questions.
         const day27Recording=assignmentKey==='A2-10.27' && level==='A2' && day===27
           ? getCuratedMusicByAssignment('A2-10.27') : null;
+        let data=null;
+        if (!day27Recording) {
+          const response=await fetch('/api/attendance-music-library', {signal:controller.signal});
+          if (!response.ok) throw Error('Die Musikbibliothek ist nicht erreichbar.');
+          data=await response.json();
+        }
         const track=day27Recording?.objectKey && day27Recording?.audioUrl
           ? {id:day27Recording.trackId,objectKey:day27Recording.objectKey,
               src:day27Recording.audioUrl,title:day27Recording.title,level,day}
