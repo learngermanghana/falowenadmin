@@ -172,7 +172,7 @@ export const MUSIC_SONG_DRAFTS_A1 = Object.freeze([
     "assignmentKey": "A1-13",
     "title": "Bina, tut mir leid",
     "musicStyle": "Warm German Pop · Acoustic Guitar · Soft Piano · Gentle Afrobeat · One Singer. Adult melodic German-pop with a warm lead voice, mellow guitar, soft piano, gentle Afrobeat groove and expressive rising choruses. Preserve the finished song as recorded; no need to regenerate audio.",
-    "lyrics": "[Verse 1]\nHeute treffe ich Bina,\ndoch der Himmel ist grau.\nyie es regnet,\nich bleibe heut zu Haus.\n\n[Chorus]\nOh Bina, tut mir leid,\nhmm, hmm, keine Zeit.\nDas Wetter ist nicht gut,\nhmm, yeee, alles gut.\n\n[Verse 2]\nIch rufe Bina an,\nund sage: „Heute nicht.“\nyeeee, am Freitag,\nvielleicht bei Sonnenlicht.\n\n[Chorus]\nOh Bina, tut mir leid,\nhmm, hmm, keine Zeit.\nDas Wetter ist nicht gut,\nhmm, hmm, alles gut.\n\n[Outro]\nayyyy, der Regen fällt,\nhmm, hmm, bis Freitag dann.",
+    "lyrics": "[Verse 1]\nHeute treffe ich Bina,\ndoch der Himmel ist grau.\nHmm, hmm, es regnet,\nich bleibe heut zu Haus.\n\n[Chorus]\nOh Bina, tut mir leid,\nhmm, hmm, keine Zeit.\nDas Wetter ist nicht gut,\nhmm, hmm, alles gut.\n\n[Verse 2]\nIch rufe Bina an,\nund sage: „Heute nicht.“\nDer Regen fällt so stark,\nhmm, kein Sonnenlicht.\nBina sagt: „Ist okay!“\nWir treffen uns am Freitag.\nHmm, hmm, ich freu mich,\nhoffentlich ist das Wetter gut.\n\n[Chorus]\nOh Bina, tut mir leid,\nhmm, hmm, keine Zeit.\nDas Wetter ist nicht gut,\nhmm, hmm, alles gut.\nOh Bina, tut mir leid,\nhmm, hmm, keine Zeit.\nAm Freitag sehen wir uns,\nhmm, hmm, das wird gut.\n\n[Outro]\nHey, der Regen fällt,\nhmm, hmm, bis Freitag dann.",
     "genre": "Warm German Pop"
   },
   {
