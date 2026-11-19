@@ -148,6 +148,7 @@ function validateSwahiliTranscript(script) {
     let line = raw.trim();
     if (!line || /^\x60\x60\x60/u.test(line) || /^#{1,4}\s/u.test(line)) continue;
     line = line.replace(/^([-*•]\s*|\d+[.)]\s*)/u, "").trim()
+      .replace(/^\*\*([AB]):\*\*\s*/iu, "$1: ")
       .replace(/^\*\*(.*?)\*\*\s*:\s*/u, "$1: ")
       .replace(/^(?:speaker|mzungumzaji)\s*([AB])\s*:/iu, "$1:")
       .replace(/^([AB])\s*[):.\-]\s*/iu, "$1: ")
