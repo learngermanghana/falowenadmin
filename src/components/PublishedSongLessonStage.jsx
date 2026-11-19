@@ -1,4 +1,4 @@
-import { hasCompleteSongTiming } from '../utils/songLyrics.js';
+import { hasCompleteSongTiming, lyricLines } from '../utils/songLyrics.js';
 import { recordedEvidenceRange, recordedSongQuestions } from '../utils/recordedLessonMusic.js';
 import { threeVerifiedHeardLyricQuestions } from '../utils/nextLyricQuestions.js';
 import { useEffect, useRef, useState } from 'react';
@@ -72,8 +72,12 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
   const [showAnswer, setShowAnswer] = useState(false);
   const [selectedOption, setSelectedOption] = useState(-1);
   const [audioError, setAudioError] = useState('');
+  const [teacherLineIndex, setTeacherLineIndex] = useState(0);
+  const [teacherClipStart, setTeacherClipStart] = useState(0);
+  const [teacherSelectedAnswer, setTeacherSelectedAnswer] = useState(-1);
   useEffect(() => {
     setView('listen'); setQuestionIndex(0); setSelectedOption(-1); setShowAnswer(false); setAudioError(''); setTime(0);
+    setTeacherLineIndex(0); setTeacherClipStart(0); setTeacherSelectedAnswer(-1);
   }, [assignmentKey]);
 
   const updatePlayback = player => {
@@ -123,6 +127,11 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
       ? recordedSongQuestions({objectKey:recording.objectKey,lyrics:recordedLyrics},recording.day,recording.level)
       : bank.questions;
   const synchronized=hasCompleteSongTiming(cues,recordedLyrics);
+  // No automatic answer when the precise recording lacks reviewed lyric timings.
+  // Teacher can choose a passage from the available text and listen to a bounded excerpt.
+  const teacherLyricLines = lyricLines(recordedLyrics).filter(line => line.trim().length >= 8);
+  const teacherChallenge = nextLyricOnly && !questions.length && teacherLyricLines.length >= 3 && !!recording.audioUrl;
+  const teacherOptions = teacherChallenge ? [0,1,2].map(offset => teacherLyricLines[(teacherLineIndex+offset)%teacherLyricLines.length]) : [];
   const question = questions[Math.min(questionIndex, questions.length - 1)];
   const evidenceRange = question?.previewRange || (question?.evidence
     ? recordedEvidenceRange(recordedLyrics, cues, question.evidence) : null);
@@ -137,6 +146,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
     setQuestionIndex(0);
     setSelectedOption(-1);
     setShowAnswer(false);
+    setTeacherSelectedAnswer(-1);
   };
   const playLinePreview = range => {
     if (!audio.current || !range) return;
@@ -146,6 +156,12 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
     setTime(range.start);
     const playback=audio.current.play();
     playback?.catch(cancelPreview);
+  };
+  const playTeacherPreview = () => {
+    const player = audio.current;
+    if (!player) return;
+    const start = Math.max(0, Math.min(teacherClipStart, Math.max(0, (player.duration || 0)-12)));
+    playLinePreview({start, end: start + 12});
   };
   const musicLink = recording.trackId
     ? `https://music.falowen.app/?track=${encodeURIComponent(recording.trackId)}`
@@ -209,7 +225,24 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
         {recording.audioUrl
           ? <p>Spiele einen Ausschnitt ab und frage, welche Zeile die Klasse tatsächlich gehört hat.</p>
           : <p>{discoveryError || 'Die Aufnahme wird geladen.'}</p>}
-        {recording.audioUrl && <p>Keine sichere Hörfrage: Prüfe die Liedzeilen und Zeitmarken der genauen Aufnahme. Eine richtige Antwort muss hörbar sein.</p>}
+        {teacherChallenge ? <div className="published-song-lesson__quiz">
+          <p>Lehrkraft-Übung: Wähle den Liedausschnitt und prüfe den Text mit dem Originalaudio. Ohne geprüfte Zeitmarken wird keine Antwort automatisch als richtig bewertet.</p>
+          <label>Startzeit in Sekunden (0 bis Liedende)
+            <input type="number" min="0" max={Math.max(0,Math.floor((audio.current?.duration||0)-12))} value={teacherClipStart}
+              onChange={event=>{setTeacherClipStart(Math.max(0,Number(event.target.value)||0));setTeacherSelectedAnswer(-1);setSelectedOption(-1);}} />
+          </label>
+          <button type="button" className="published-song-lesson__line-preview" onClick={playTeacherPreview}>▶ 12 Sekunden abspielen</button>
+          <p>Welche Liedzeile hast du gehört? Wähle A, B oder C.</p>
+          <div className="published-song-lesson__options" role="group" aria-label="Liedzeile auswählen">
+            {teacherOptions.map((line,i)=><button type="button" key={line+'-'+i} aria-pressed={selectedOption===i}
+              className={selectedOption===i?'is-selected':''} onClick={()=>setSelectedOption(i)}><strong>{String.fromCharCode(65+i)}.</strong> {line}</button>)}
+          </div>
+          <div className="published-song-lesson__quiznav">
+            <button type="button" onClick={()=>{setTeacherLineIndex(i=>(i+1)%teacherLyricLines.length);setSelectedOption(-1);setTeacherSelectedAnswer(-1);}}>Andere drei Liedzeilen →</button>
+            <button type="button" disabled={selectedOption<0} onClick={()=>setTeacherSelectedAnswer(selectedOption)}>Antwort für Lehrkraft markieren</button>
+          </div>
+          {teacherSelectedAnswer>=0 && <p role="status">Lehrkraft-Auswahl: {teacherOptions[teacherSelectedAnswer]}. Bitte mit dem tatsächlich gesungenen Ausschnitt vergleichen; diese Antwort ist nicht automatisch verifiziert.</p>}
+        </div> : recording.audioUrl && <p>Keine sichere Hörfrage: Prüfe die Liedzeilen und Zeitmarken der genauen Aufnahme. Eine richtige Antwort muss hörbar sein.</p>}
       </div> : <div className="published-song-lesson__section published-song-lesson__quiz">
         <div className="published-song-lesson__quizmeta"><strong>FRAGE {questionIndex+1} / {questions.length}</strong><span>{nextLyricOnly?'WAS HAST DU GEHÖRT?':question.type==='speaking'?'SPRECHEN':'HÖRVERSTEHEN'}</span></div>
         <h3 lang="de">{question.prompt}</h3>
