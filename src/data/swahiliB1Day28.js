@@ -146,39 +146,97 @@ export const swahiliB1Day28 = {
       "audio": SWAHILI_MUSIC_TRACKS.find(track => track.id === "swahili-b1-day-28")
     },
     {
-      "id": "radio-dialogue",
-      "radioVideoId": null,
-      "type": "numbered-list",
-      "title": "Falowen Radio · Soma kwa majukumu",
-      "items": [
-        "Bwana Ali: Unafanya nini na taka nyumbani?",
-        "Maria: Ninatenganisha karatasi, plastiki, chupa na taka za chakula kulingana na utaratibu wa eneo letu.",
-        "Bwana Ali: Unaokoa vipi maji na nishati?",
-        "Juma: Ninazima taa na vifaa nisivyotumia.",
-        "Asha: Kwa safari fupi ninatembea au kutumia baiskeli."
-      ]
-    },
-    {
-      "id": "radio",
+      "id": "music-short-answers",
       "type": "grammar-check",
-      "title": "Falowen Radio · Maswali ya majadiliano",
+      "title": "Wimbo · Majibu mafupi",
       "kicker": "Kiswahili B1 · 10.28",
       "items": [
         {
-          "prompt": "Maria anatumia nini badala ya mifuko mipya ya plastiki?",
-          "answer": "Ninapoenda kununua bidhaa, ninabeba mfuko wa kitambaa badala ya kuchukua mifuko mipya ya plastiki. Pia ninatumia chupa ya maji inayoweza kutumiwa tena.",
+          "label": "1",
+          "prompt": "Taja njia mbili za kutunza mazingira zilizotajwa katika wimbo.",
+          "answer": "Tunaweza kupanda miti na kuweka taka kwenye pipa.",
           "answerLabel": "Mfano wa jibu",
           "revealLabel": "Onyesha jibu"
         },
         {
-          "prompt": "Juma anaokoaje maji na nishati?",
-          "answer": "Ninazima taa na vifaa nisivyotumia. Pia ninafunga bomba la maji ninapopiga mswaki na ninaoga kwa muda mfupi ili niokoe maji.",
+          "label": "2",
+          "prompt": "Kwa nini tunapaswa kupunguza matumizi ya plastiki?",
+          "answer": "Tunapaswa kupunguza plastiki kwa sababu inachafua mazingira na inaweza kuwadhuru wanyama.",
+          "answerLabel": "Mfano wa jibu",
+          "revealLabel": "Onyesha jibu"
+        }
+      ]
+    },
+    {
+      "id": "music-discussion",
+      "type": "grammar-check",
+      "title": "Wimbo · Kuzungumza",
+      "kicker": "Kiswahili B1 · 10.28",
+      "items": [
+        {
+          "label": "3",
+          "prompt": "Wewe unafanya nini katika maisha yako ya kila siku ili kutunza mazingira?",
+          "answer": "Katika maisha yangu ya kila siku, ninaweka taka kwenye pipa na ninatumia mfuko unaoweza kutumiwa tena. Pia ninazima taa wakati sizitumii na ninajaribu kutumia maji kwa uangalifu.",
           "answerLabel": "Mfano wa jibu",
           "revealLabel": "Onyesha jibu"
         },
         {
-          "prompt": "Asha anachagua usafiri gani kwa safari fupi?",
-          "answer": "Kwa safari fupi ninatembea au kutumia baiskeli. Kwa safari ndefu ninatumia basi inapowezekana. Pia ninanunua vyakula vya eneo letu na vya msimu.",
+          "label": "4",
+          "prompt": "Ni tatizo gani kubwa la mazingira katika eneo lako? Linaweza kutatuliwa kwa njia gani?",
+          "answer": "Katika eneo langu, taka za plastiki ni tatizo kubwa. Watu wanapaswa kutumia mapipa ya taka na kupunguza matumizi ya plastiki. Serikali pia inaweza kuweka mapipa mengi na kutoa elimu kuhusu mazingira.",
+          "answerLabel": "Mfano wa jibu",
+          "revealLabel": "Onyesha jibu"
+        }
+      ]
+    },
+    {
+      "id": "radio-dialogue",
+      "radioVideoId": "aeXVw4Q4olE",
+      "type": "numbered-list",
+      "title": "Falowen Radio · Kutunza Mazingira",
+      "items": [
+        "Sikiliza kipindi, kisha jibu maswali."
+      ]
+    },
+    {
+      "id": "radio-short-answers",
+      "type": "grammar-check",
+      "title": "Falowen Radio · Majibu mafupi",
+      "kicker": "Kiswahili B1 · 10.28",
+      "items": [
+        {
+          "label": "1",
+          "prompt": "Taja matatizo mawili ya mazingira yaliyozungumziwa katika podcast.",
+          "answer": "Matatizo mawili ni uchafuzi wa mazingira na matumizi makubwa ya plastiki.",
+          "answerLabel": "Mfano wa jibu",
+          "revealLabel": "Onyesha jibu"
+        },
+        {
+          "label": "2",
+          "prompt": "Ni njia gani zilizopendekezwa za kupunguza taka nyumbani?",
+          "answer": "Tunaweza kutenganisha taka, kutumia baadhi ya vitu tena na kuepuka kununua bidhaa zenye vifungashio vingi.",
+          "answerLabel": "Mfano wa jibu",
+          "revealLabel": "Onyesha jibu"
+        }
+      ]
+    },
+    {
+      "id": "radio-discussion",
+      "type": "grammar-check",
+      "title": "Falowen Radio · Kuzungumza",
+      "kicker": "Kiswahili B1 · 10.28",
+      "items": [
+        {
+          "label": "3",
+          "prompt": "Ni nani mwenye jukumu la kutunza mazingira: wananchi, serikali au makampuni? Eleza maoni yako.",
+          "answer": "Kwa maoni yangu, kila mtu ana jukumu la kutunza mazingira. Wananchi wanapaswa kuweka mazingira safi, serikali inapaswa kutunga sheria nzuri na makampuni yanapaswa kupunguza taka zinazotokana na bidhaa zao.",
+          "answerLabel": "Mfano wa jibu",
+          "revealLabel": "Onyesha jibu"
+        },
+        {
+          "label": "4",
+          "prompt": "Kama ungeanzisha mradi wa mazingira katika shule, chuo au eneo lako, ungefanya mradi gani?",
+          "answer": "Ningeanzisha mradi wa kupanda miti na kukusanya taka. Ningewaomba wanafunzi na wakazi washiriki. Pia tungeweka mapipa tofauti kwa plastiki, karatasi na taka nyingine.",
           "answerLabel": "Mfano wa jibu",
           "revealLabel": "Onyesha jibu"
         }
