@@ -77,7 +77,7 @@ async function editResult(db, user, staffRef, input) {
     // Keep the tutor's saved feedback aligned with the published Swahili result.
     if (row.source === "swahili_tutor" && validId(row.studentId)) {
       const lesson = row.assignmentId || row.assignment_id;
-      const day = /^swahili-day-(1|6|11)$/.exec(lesson)?.[1];
+      const day = /^swahili-day-([1-9]|1[0-9]|20)$/.exec(lesson)?.[1];
       if (day) {
         const reviewRef = db.collection("swahiliTeacherReviews").doc(day === "1" ? row.studentId : row.studentId + "_day-" + day);
         const review = (await tx.get(reviewRef)).data();

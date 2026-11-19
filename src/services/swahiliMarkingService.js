@@ -23,29 +23,27 @@ export async function loadSwahiliStudentSubmission(uid, day) {
 
 async function loadRosterSubmissions(day, cursor) {
   const roster = await loadSwahiliRoster(cursor);
-  const documents = await Promise.all(roster.students.map(student => loadSwahiliStudentSubmission(student.uid, day)));
+  const documents = await Promise.all(roster.students.map(async student => {
+    if (day) return loadSwahiliStudentSubmission(student.uid, day);
+    const snapshot = await getDocs(collection(db, "users", student.uid, "swahiliLessons"));
+    return snapshot.docs.map(entry => canonicalSwahiliSubmission(entry, Number(entry.id.split("-").at(-1))));
+  }));
   return {
-    rows: documents.filter(Boolean).sort((a, b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0)),
+    rows: documents.flat().filter(Boolean).sort((a, b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0)),
     nextCursor: roster.nextCursor ? { rosterCursor: roster.nextCursor } : null,
   };
 }
 
-export async function loadAllSwahiliMarkingPage(cursors = { 1: null, 6: null, 11: null, 28: null }) {
-  const pages = await Promise.all(Object.entries(cursors).map(async ([day, cursor]) => ({
-    day,
-    ...await loadSwahiliMarkingPage(Number(day), cursor),
-  })));
-  const rows = pages.flatMap(page => page.rows)
-    .sort((a, b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0));
-  const next = Object.fromEntries(pages.filter(page => page.nextCursor).map(page => [page.day, page.nextCursor]));
-  return { rows, nextCursor: Object.keys(next).length ? next : null };
+export function loadAllSwahiliMarkingPage(cursor) {
+  return loadSwahiliMarkingPage(null, cursor);
 }
 
 export async function loadSwahiliMarkingPage(day, cursor) {
   if (cursor?.rosterCursor) return loadRosterSubmissions(day, cursor.rosterCursor);
   const constraints = [
     where("program", "==", "swahili"),
-    where("lessonId", "==", submissionLessonId(day)),
+    day ? where("lessonId", "==", submissionLessonId(day)) : where("lessonId", "in",
+      [...Array.from({ length: 20 }, (_, i) => i + 1), 28].map(submissionLessonId)),
     where("status", "==", "submitted"),
     orderBy("submittedAt", "desc"),
   ];
@@ -58,7 +56,7 @@ export async function loadSwahiliMarkingPage(day, cursor) {
     throw error;
   }
   return {
-    rows: snapshot.docs.map((entry) => canonicalSwahiliSubmission(entry, day)).filter(Boolean),
+    rows: snapshot.docs.map((entry) => canonicalSwahiliSubmission(entry, day || Number(entry.id.split("-").at(-1)))).filter(Boolean),
     nextCursor: snapshot.size === PAGE_SIZE ? snapshot.docs.at(-1) : null,
   };
 }
