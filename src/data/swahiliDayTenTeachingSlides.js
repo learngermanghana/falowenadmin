@@ -132,7 +132,7 @@ export const SWAHILI_DAY_TEN_ADMIN_LESSON = Object.freeze({
           "prompt": "Tengenezeni mazungumzo mafupi kati ya mnunuzi na muuzaji.",
           "english": "Create a short conversation between a customer and a seller.",
           "instructions": ["Salamu", "Kuomba bidhaa", "Kuuliza bei", "Kujadiliana kuhusu bei", "Kulipa na kuaga"],
-          "answer": "Muuzaji: Habari yako? Karibu, mteja wangu.\\nMnunuzi: Nzuri, asante. Naomba maembe mawili na machungwa matatu.\\nMuuzaji: Sawa. Ni shilingi elfu nne.\\nMnunuzi: Ni ghali sana. Tafadhali, punguza bei.\\nMuuzaji: Sawa. Lipa shilingi elfu tatu.\\nMnunuzi: Asante sana.\\nMuuzaji: Karibu tena siku nyingine."
+          "answer": "Muuzaji: Habari yako? Karibu, mteja wangu.\nMnunuzi: Nzuri, asante. Naomba maembe mawili na machungwa matatu.\nMuuzaji: Sawa. Ni shilingi elfu nne.\nMnunuzi: Ni ghali sana. Tafadhali, punguza bei.\nMuuzaji: Sawa. Lipa shilingi elfu tatu.\nMnunuzi: Asante sana.\nMuuzaji: Karibu tena siku nyingine."
         }
       ]
     },
