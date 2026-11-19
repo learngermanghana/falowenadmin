@@ -86,10 +86,10 @@ export const MUSIC_SONG_DRAFTS_A2_PART2 = Object.freeze([
   },
   {
     "assignmentKey": "A2-10.27",
-    "title": "Eine Nachricht kommt zu spät",
-    "musicStyle": "Electro-Soul, 88 BPM: modern electro-soul with dreamy synthesizer layers, warm Rhodes and understated R&B rhythm. One lead singer, clear German phrases, quiet instrumental mix.",
-    "lyrics": "[Verse 1]\nMia schreibt mir eine Nachricht.\nSie fragt, ob ich heute Zeit habe.\nIch bin unterwegs und sehe sie nicht.\nErst am Abend öffne ich mein Handy.\n\n[Chorus]\nEine Nachricht, ein kleiner Gruß,\nwir bleiben in Kontakt.\nDoch manchmal braucht man auch eine Pause.\n\n[Verse 2]\nIch schreibe: Entschuldige die späte Antwort.\nMia sagt: Kein Problem, ich verstehe.\nWir machen einen Termin für morgen.\nDann legen wir beide das Handy weg.\n\n[Chorus]\nEine Nachricht, ein kleiner Gruß,\nwir bleiben in Kontakt.\nDoch manchmal braucht man auch eine Pause.\n\n[Outro]\nAm nächsten Tag reden wir persönlich.\nDas ist manchmal einfach schöner.\nMit Falowen schreibe ich klare Nachrichten.",
-    "genre": "Electro-Soul"
+    "title": "Handy weg",
+    "musicStyle": "Deutschsprachiger Pop mit kurzen Zeilen und einem wiederkehrenden Refrain.",
+    "lyrics": "[Verse 1]\nJeden Tag auf TikTok,\nschau ich Videos an.\nManchmal mache ich selbst eins,\nyeah, so fängt mein Tag an.\n\n[Chorus]\nOh, das macht mir Spaß,\nich zeige, was ich mag.\nHey, die Welt ist bunt,\njeden neuen Tag.\n\n[Verse 2]\nIch filme meinen Alltag,\nund lade Videos hoch.\nIch tanze zu der Musik,\nmeine Freunde lachen auch.\nIch teile meine Ideen,\nbekomme viele Likes.\nManchmal folge ich Trends,\ndie Zeit vergeht so schnell.\n\n[Chorus]\nOh, das macht mir Spaß,\nich zeige, was ich mag.\nHey, die Welt ist bunt,\njeden neuen Tag.\nYeah, ich bin dabei,\nund teile meinen Tag.\nDoch nach einer Stunde,\nleg ich mein Handy weg.\n\n[Outro]\nLa, la, das macht mir Spaß,\nhey, jetzt ist mein Handy aus!",
+    "genre": "Pop"
   },
   {
     "assignmentKey": "A2-10.28",

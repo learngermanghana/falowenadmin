@@ -13,7 +13,7 @@ export function MusicVideoStage({ music }) {
   if (music?.assignmentKey === 'A2-7.18' && music?.audioUrl) {
     return <PublishedSongLessonStage assignmentKey="A2-7.18" />;
   }
-  if (music?.assignmentKey === 'A2-9.25') {
+  if (['A2-9.25', 'A2-10.27'].includes(music?.assignmentKey)) {
     return <PublishedSongLessonStage assignmentKey={music.assignmentKey} />;
   }
   // Match the Day 18 published music presentation, including its original
