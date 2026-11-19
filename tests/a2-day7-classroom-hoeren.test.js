@@ -35,7 +35,7 @@ test('classroom audio and all five Richtig/Falsch statements preserve teacher ke
 
 test('A2 Day 7 requests the authenticated classroom signer', () => {
   const source = readFileSync(new URL('../src/components/InteractiveLessonOpening.jsx', import.meta.url), 'utf8');
-  assert.match(source, /\[1, 2, 3, 4, 5, 7, 18, 19, 20, 21, 23, 24, 25, 26\]\.includes\(lesson\.listening\.day\)/);
+  assert.match(source, /\[1, 2, 3, 4, 5, 7, 18, 19, 20, 21, 23, 24, 25, 26, 27\]\.includes\(lesson\.listening\.day\)/);
   assert.match(source, /https:\/\/www\.falowen\.app\/api\/course-media\/a2\/classroom-audio-url/);
 });
 
