@@ -209,6 +209,7 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
     dayNumber: 27,
     assignmentId: "A2-10.27",
     title: "A2 Day 27 · Digitale Kommunikation",
+    teacherLectureVideoId: "ZfgJc9_nN0I",
     topic: "10.27 Digitale Kommunikation",
     objective: "Students express opinions about digital communication with dass-clauses, discuss uses, advantages and disadvantages, and apply the topic to digital notices and online ads while using a protected transcript-based Hören task for graded listening practice.",
     estimatedDuration: "45–60 minutes",

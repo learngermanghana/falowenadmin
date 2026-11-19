@@ -2229,7 +2229,26 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
           }];
         })
       : prepared;
-  const filtered = classroomStages.filter((stage) => {
+  // Teacher lecture is a distinct lesson resource, never substituted for
+  // the song (Musik) or the protected assessment Hören recording.
+  const teacherVideoId = String(slide.teacherLectureVideoId || "").trim();
+  const withTeacherLecture = /^[A-Za-z0-9_-]{11}$/.test(teacherVideoId)
+    ? classroomStages.flatMap(stage => stage.id === "intro"
+      ? [stage, {
+          id: "teacher-lecture",
+          type: "teacher-lecture",
+          kicker: "Lehrervideo",
+          title: "Teacher Lecture · " + cleanTopic(slide),
+          videoId: teacherVideoId,
+          items: [{label:"Teacher lecture"}],
+          teacherPurpose: {
+            student: "Sieh dir die Erklärung der Lehrkraft an und notiere zwei neue Ausdrücke.",
+            teacher: "Dieses Lehrervideo gehört zum Thema; die Musik- und Hören-Aufgaben bleiben unverändert.",
+          },
+        }]
+      : [stage])
+    : classroomStages;
+  const filtered = withTeacherLecture.filter((stage) => {
     // A dedicated music slide has a player instead of question/items data.
     if (stage.variant === 'interactive-music-video') return Boolean(stage.musicVideo);
     if (stage.type === "intro") return Boolean(stage.title || stage.topic || stage.objective);
