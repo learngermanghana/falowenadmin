@@ -12,7 +12,8 @@ import './LessonSongStage.css';
 export default function LinkedPublishedSongLessonStage({ music }) {
   const day = Number(music?.day);
   const level = String(music?.level || '').toUpperCase();
-  const supported = (['A2', 'B1'].includes(level) && Number.isInteger(day) && day >= 1 && day <= 28);
+  const supported = (['A2', 'B1'].includes(level) && Number.isInteger(day) && day >= 1 && day <= 28)
+    || (level === 'A1' && day === 22 && music?.assignmentKey === 'A1-14.1');
   const [loaded, setLoaded] = useState({loading:true,track:null,pack:null,reference:null,error:''});
   const [view,setView] = useState('listen');
   const [time,setTime] = useState(0);
@@ -25,7 +26,7 @@ export default function LinkedPublishedSongLessonStage({ music }) {
   const previewStart = useRef(null);
   const previewEnd = useRef(null);
   const previewPlayPending = useRef(false);
-  const assignmentKey = music?.assignmentKey || (level === 'B1'
+  const assignmentKey = music?.assignmentKey || (level === 'A1' && day === 22 ? 'A1-14.1' : level === 'B1'
     ? ({24:'B1-8.24',25:'B1-8.25',26:'B1-9.26',27:'B1-10.27'}[day] || '')
     : day === 23 ? 'A2-9.23' : day === 1 ? 'A2-1.1' : day === 2 ? 'A2-1.2' : day === 21 ? 'A2-8.21' : 'A2-7.'+day);
 
@@ -38,19 +39,19 @@ export default function LinkedPublishedSongLessonStage({ music }) {
       try {
         // Existing read-only, same-origin Vercel rewrite. No new function,
         // R2 listing loop, private credentials, or generated audio.
-        // Day 27 already has an approved published MP3 and needs no
-        // extra music-library network request just to display its questions.
-        const day27Recording=assignmentKey==='A2-10.27' && level==='A2' && day===27
-          ? getCuratedMusicByAssignment('A2-10.27') : null;
+        // A1 Day 22 and A2 Day 27 have pinned, approved published MP3s;
+        // do not fetch the entire library to resolve their recording.
+        const pinnedRecording = (assignmentKey==='A2-10.27' || assignmentKey==='A1-14.1')
+          ? getCuratedMusicByAssignment(assignmentKey) : null;
         let data=null;
-        if (!day27Recording) {
+        if (!pinnedRecording) {
           const response=await fetch('/api/attendance-music-library', {signal:controller.signal});
           if (!response.ok) throw Error('Die Musikbibliothek ist nicht erreichbar.');
           data=await response.json();
         }
-        const track=day27Recording?.objectKey && day27Recording?.audioUrl
-          ? {id:day27Recording.trackId,objectKey:day27Recording.objectKey,
-              src:day27Recording.audioUrl,title:day27Recording.title,level,day}
+        const track=pinnedRecording?.objectKey && pinnedRecording?.audioUrl
+          ? {id:pinnedRecording.trackId,objectKey:pinnedRecording.objectKey,
+              src:pinnedRecording.audioUrl,title:pinnedRecording.title,level,day}
           : selectRecordedLessonTrack(data,{level,day,assignmentKey});
         if (!track) throw Error('Keine eindeutige veröffentlichte Aufnahme für '+level+' Tag '+day+' gefunden.');
         if (!controller.signal.aborted) setLoaded({loading:false,track,pack:null,reference:null,error:''});
@@ -101,9 +102,10 @@ export default function LinkedPublishedSongLessonStage({ music }) {
         }
         // No recording-matched lyric cues yet? Keep the Day 26 classroom
         // selection layout as an explicitly unverified text practice only.
-        if (!pack && !reference && assignmentKey==='A2-10.27' &&
-            track.objectKey==='music/a2/day-27/Handy weg.mp3') {
-          const draft=getReusableSongDraft('A2-10.27');
+        if (!pack && !reference && (
+            (assignmentKey==='A2-10.27' && track.objectKey==='music/a2/day-27/Handy weg.mp3') ||
+            (assignmentKey==='A1-14.1' && track.objectKey==='music/a1/day-22/Arzttermin.mp3'))) {
+          const draft=getReusableSongDraft(assignmentKey);
           if (draft?.lyrics) reference={lyrics:draft.lyrics,objectKey:track.objectKey,draftOnly:true};
         }
         if (!controller.signal.aborted) setLoaded({loading:false,track,pack,reference,error:''});
