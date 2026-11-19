@@ -14,6 +14,7 @@ export default function SwahiliSongDraftWorkspace({ active = true }) {
   const [day,setDay]=useState(2);
   const [edits,setEdits]=useState(readEdits);
   const [notice,setNotice]=useState("");
+  const [workspace,setWorkspace]=useState("library");
   const songs=SWAHILI_SONG_DRAFTS.filter(song=>song.level===level);
   const selected=getSwahiliSongDraft(level,day) || songs[0];
   const id=selected?.id||"";
@@ -35,6 +36,11 @@ export default function SwahiliSongDraftWorkspace({ active = true }) {
   useEffect(()=>{setNotice("");},[id]);
   if(!selected)return <p>No Swahili lyrics found for this level.</p>;
   return <div className="swahili-song-workspace" style={{padding:"16px 0"}}>
+    <nav aria-label="Swahili Music workspaces" className="music-studio-tabs" style={{display:"flex",flexWrap:"wrap",gap:10,marginBottom:20}}>
+      <button type="button" className={workspace==="library"?"is-active":""} aria-current={workspace==="library"?"page":undefined} onClick={()=>setWorkspace("library")}>1. Song lyrics &amp; drafts</button>
+      <button type="button" className={workspace==="video"?"is-active":""} aria-current={workspace==="video"?"page":undefined} onClick={()=>setWorkspace("video")}>2. Load music &amp; create lyrics video</button>
+    </nav>
+    <div hidden={workspace!=="library"}>
     <section className="music-card" aria-label="Swahili course lyric drafts" style={{marginBottom:20,padding:20}}>
       <h2>Swahili A1–B1 lyrics library</h2>
       <p>Original teaching drafts by lesson. A1 Days 1, 5 and 6 retain their existing songs and are not replaced here. A2/B1 lessons are currently titles-only; Dr. Ruth should review the language before any audio is published.</p>
@@ -56,8 +62,12 @@ export default function SwahiliSongDraftWorkspace({ active = true }) {
         <button type="button" onClick={()=>saveEdit(selected.lyrics)}>Restore original draft</button>
       </div>
       {notice&&<p role="status">{notice}</p>}
-      <p><small>Draft changes are stored only in this browser. No music is generated or published automatically. The video studio below requires an actual MP3 and reviewed lyric timing.</small></p>
+      <p><small>Draft changes are stored only in this browser. No music is generated or published automatically. Open “Load music & create lyrics video” to select a published recording or use an approved MP3, review timing and export.</small></p>
+      <button type="button" onClick={()=>setWorkspace("video")}>Continue to music &amp; video studio</button>
     </section>
-    <MusicLyricsVideoStudio key={id} active={active} swahili title={selected.title} level={level} day={selected.day} lyrics={lyrics} />
+    </div>
+    <div hidden={workspace!=="video"}>
+      <MusicLyricsVideoStudio key={id} active={active && workspace==="video"} swahili title={selected.title} level={level} day={selected.day} lyrics={lyrics} />
+    </div>
   </div>;
 }
