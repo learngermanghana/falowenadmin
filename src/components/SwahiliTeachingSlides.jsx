@@ -268,7 +268,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
         )}
         {"radioVideoId" in stage && <SwahiliRadioMedia stage={stage} />}
         {isDaySix && stage.type === "music" ? <SwahiliRestaurantSong /> : (stage.audio || (isDayFive && stage.type === "day-five")) ? <section className="swahili-a2-presenter__media-stage">
-          {stage.audio ? <SwahiliSlideMusic track={stage.audio} /> : <p style={{ whiteSpace: "pre-line" }}>{stage.content}</p>}
+          {stage.audio ? <SwahiliSlideMusic track={stage.audio} questions={stage.questions} /> : <p style={{ whiteSpace: "pre-line" }}>{stage.content}</p>}
         </section> : <SwahiliA2LessonStage stage={stage} grammar={grammar} isDaySix={isDaySix} level={isB1Day28 ? "B1" : "A1"} />}
 
         {stage.listeningWorkbookUrl && <a href={stage.listeningWorkbookUrl} target="_blank" rel="noreferrer">Open the related exercise in Campus</a>}
