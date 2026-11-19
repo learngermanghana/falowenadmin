@@ -71,10 +71,10 @@ function Menu({ content, cards = [], drinks = [] }) {
   </div>;
 }
 
-export default function SwahiliA2LessonStage({ stage, grammar, isDaySix }) {
+export default function SwahiliA2LessonStage({ stage, grammar, isDaySix, level = "A1" }) {
   const lines=Lines({text:stage.content});
   if(stage.type==="intro") return <section className="swahili-a2-presenter__intro-stage">
-    <span className="presenter-kicker">Falowen · Kiswahili A1</span>
+    <span className="presenter-kicker">Falowen · Kiswahili {level}</span>
     <h2>{stage.heading || (isDaySix ? "Chakula · Vinywaji · Kuomba kwa adabu" : "Vokali · Silabi · Matamshi")}</h2>
     <p className="presenter-objective">{stage.english}</p>
     <div className="swahili-a2-presenter__lesson-highlight">{lines.map((line,i)=><p key={i}>{line}</p>)}</div>
