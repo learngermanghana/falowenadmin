@@ -332,7 +332,7 @@ export default function LiveClassesPageV2() {
         ...group.entries.flatMap(entry => [entry.de, entry.en, entry.chapter, entry.assignment_id])]
         .some(value => String(value || "").toLocaleLowerCase().includes(term))
     ) : [];
-    if (!sessions.length && !missingGroups.length) {
+    if (!sessions.length && !missingGroups.length && !term) {
       return <p>No lessons match this filter. Choose All lessons to see the full course.</p>;
     }
 
@@ -351,6 +351,7 @@ export default function LiveClassesPageV2() {
           </div>)}
           <small>These are curriculum entries, not scheduled classes. Repair and refresh to create verified session records without changing attendance here.</small>
         </div> : null}
+        {term && !sessions.length && !missingGroups.length ? <p>No saved sessions or official dictionary lessons match this search.</p> : null}
         <div className="live-class-session-table-wrap" style={{ overflowX: "auto" }}>
         <table className="live-class-sessions-table" style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead><tr><th>Ghana date and time</th><th>Status</th><th>Topic</th><th>Complete dictionary selection</th><th>Actions</th></tr></thead>
