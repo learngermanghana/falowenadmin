@@ -23,7 +23,7 @@ const B1_DAY_28_QUESTIONS = [
 
 function sungLines(text) {
   return String(text || "").split("\n").map(line => line.trim()).filter(line =>
-    line && !/^\\[(?:verse|chorus|outro|bridge|intro|final|kiitikio|ubeti)/i.test(line));
+    line && !/^\[(?:verse|chorus|outro|bridge|intro|final|kiitikio|ubeti)/i.test(line));
 }
 
 export default function SwahiliSlideMusic({ track }) {
