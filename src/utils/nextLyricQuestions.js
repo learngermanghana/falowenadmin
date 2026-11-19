@@ -74,10 +74,11 @@ export function threeVerifiedNextLyricQuestions(pack, recording) {
 
 // Listening comprehension: the correct option MUST be audible in the excerpt.
 // This is intentionally different from guessing the next, unheard lyric.
-export function threeVerifiedHeardLyricQuestions(pack, recording) {
+export function threeVerifiedHeardLyricQuestions(pack, recording, {minSeconds = 4.5, maxSeconds = 11, targetSeconds = 10} = {}) {
   if (!pack || !recording || pack.objectKey !== recording.objectKey ||
       typeof pack.lyrics !== 'string' || pack.referenceOnly === true ||
       pack.transcriptionStatus === 'automatic' || pack.timingStatus === 'estimated') return [];
+  if (![minSeconds,maxSeconds,targetSeconds].every(Number.isFinite) || minSeconds < 4.5 || maxSeconds > 15 || minSeconds > targetSeconds || targetSeconds > maxSeconds) return [];
   const lines = lyricLines(pack.lyrics);
   const cues = validateLyricCues(pack.cues, lines);
   if (lines.length < 4 || cues.length !== lines.length) return [];
@@ -91,9 +92,9 @@ export function threeVerifiedHeardLyricQuestions(pack, recording) {
     if (pack.questionEndings && !pack.questionEndings.includes(lines[i - 1])) continue;
     const end = cues[i].end ?? cues[i + 1]?.start;
     if (!Number.isFinite(end) || end <= cues[i].start) continue;
-    const start = Math.max(cues[0].start, end - 10);
+    const start = Math.max(cues[0].start, end - targetSeconds);
     const duration = end - start;
-    if (duration < 4.5 || duration > 11 ||
+    if (duration < minSeconds || duration > maxSeconds ||
         cues[i].start < start || lines[i].length < 8 ||
         counts.get(normalize(lines[i])) !== 1) continue;
     const heard = new Set();
