@@ -111,6 +111,8 @@ function validateScriptRequest(body = {}) {
 }
 
 
+const SWAHILI_SCRIPT_WORD_RANGES = { A1: [50, 110], A2: [85, 150], B1: [120, 190] };
+
 const swahiliLevelGuidance = {
   A1: "Use short sentences and frequent everyday words.",
   A2: "Describe familiar situations, plans and past events with simple connected sentences.",
@@ -128,7 +130,7 @@ function buildSwahiliConversationPrompt(body = {}) {
     throw Object.assign(new Error("Choose a format and enter a topic (4–240 characters)."), { status: 400 });
   }
   return [
-    `Write an original listening conversation in standard East African Kiswahili for adult ${level} learners. Aim for ${COURSE_SCRIPT_WORD_RANGES[level].join("–")} spoken words, excluding speaker labels.`,
+    `Write an original listening conversation in standard East African Kiswahili for adult ${level} learners. Aim for ${SWAHILI_SCRIPT_WORD_RANGES[level].join("–")} spoken words, excluding speaker labels.`,
     format === "podcast" ? "Write a two-host podcast with a greeting, a friendly discussion and a simple closing."
       : "Write a realistic everyday conversation between two people.",
     swahiliLevelGuidance[level] + " Use clear turn-taking. Write only Kiswahili.",
@@ -389,7 +391,7 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
       );
       const script = validateSwahiliTranscript(extractScript(result));
       const level = String(req.body?.level || "A1").trim().toUpperCase();
-      const [minimumWords] = COURSE_SCRIPT_WORD_RANGES[level];
+      const [minimumWords] = SWAHILI_SCRIPT_WORD_RANGES[level];
       const wordCount = script.replace(/^[AB]:\s*/gm, "").split(/\s+/u).length;
       if (wordCount < minimumWords) {
         throw Object.assign(new Error(`The generated Kiswahili script has ${wordCount} words. The ${level} minimum is ${minimumWords}. Please generate it again.`), { status: 502 });
