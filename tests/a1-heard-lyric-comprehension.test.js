@@ -44,8 +44,26 @@ test('unverified or changed recordings do not produce fabricated heard-lyric ans
 });
 test('presenter asks which lyric was heard, not which one comes later',()=>{
  const ui=readFileSync(new URL('../src/components/PublishedSongLessonStage.jsx',import.meta.url),'utf8');
- assert.match(ui,/threeVerifiedHeardLyricQuestions\(quizPack, recording\)/);
+ assert.match(ui,/threeVerifiedHeardLyricQuestions\(quizPack, recording, heardLyricDuration\)/);
  assert.match(ui,/Welche Liedzeile hast du gehört\?/);
  assert.match(ui,/Which lyric did you hear\?/);
  assert.doesNotMatch(ui,/Which lyric comes next\?/);
+});
+
+test('Day 22 uses longer verified clips without weakening recording safeguards',()=>{
+ const ui=readFileSync(new URL('../src/components/PublishedSongLessonStage.jsx',import.meta.url),'utf8');
+ assert.match(ui,/assignmentKey === 'A1-14.1' \? \{minSeconds: 10, maxSeconds: 15, targetSeconds: 12\}/);
+ const pack=classroomSongTiming['A1-0.2'];
+ const recording=getCuratedMusicByAssignment('A1-0.2');
+ const examples=threeVerifiedHeardLyricQuestions(pack,recording,{minSeconds:10,maxSeconds:15,targetSeconds:12});
+ for(const q of examples){
+   assert.ok(q.previewRange.end-q.previewRange.start>=10);
+   assert.ok(q.previewRange.end-q.previewRange.start<=15);
+   assert.equal(q.options[q.correctIndex],q.answer);
+ }
+ for(const unverified of [
+   {...pack,objectKey:'music/a1/day-22/other.mp3'},
+   {...pack,referenceOnly:true},
+   {...pack,timingStatus:'estimated'},
+ ])assert.deepEqual(threeVerifiedHeardLyricQuestions(unverified,recording,{minSeconds:10,maxSeconds:15,targetSeconds:12}),[]);
 });

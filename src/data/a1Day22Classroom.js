@@ -3,7 +3,7 @@ export const A1_DAY22_STAGES = Object.freeze([
   ["intro","A1 · Tag 22","Ich muss meinen Termin absagen"],
   ["symptoms","Gesundheit","Warum kannst du nicht kommen?"],
   ["weather","Wiederholung","Wie ist das Wetter?"],
-  ["reasons","Sprechen","Zwei Gründe, ein Ziel"],
+  ["body-parts","Körperteile","Mein Körper · Wo tut es weh?"],
   ["reschedule","Termine","Einen anderen Termin vereinbaren"],
   ["polite","Grammatik","Könnten + Subjekt + Infinitiv"],
   ["questions","Übung","Bau eine höfliche Frage"],

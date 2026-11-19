@@ -25,3 +25,14 @@ test("Day 22 preserves existing workbook sections and approved published music",
  assert.match(component,/Könnten wir einen anderen Termin vereinbaren/);
  assert.match(component,/DAY22_WORKBOOK/);
 });
+
+test("Day 22 replaces duplicated reasons slide with eight labeled body parts",()=>{
+ const steps=A1_DAY22_STAGES.map(stage=>stage.step);
+ assert.equal(steps.length,12);
+ assert.equal(steps[3],"body-parts");
+ assert.ok(!steps.includes("reasons"));
+ const component=readFileSync(new URL("../src/components/A1Day22ClassroomStage.jsx",import.meta.url),"utf8");
+ for(const part of ["der Kopf","der Hals","der Bauch","der Rücken","der Arm","die Hand","das Bein","der Fuß"])
+   assert.ok(component.includes(part),"missing body part "+part);
+ assert.match(component,/Meine Arme <strong>tun<\/strong> weh/);
+});

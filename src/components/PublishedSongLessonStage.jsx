@@ -114,7 +114,8 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
     ? bundledTiming : recordingMetadata && {
         ...recordingMetadata, objectKey: recording.objectKey, lyrics: recordedLyrics, cues,
       };
-  const verifiedNextQuestions = nextLyricOnly ? threeVerifiedHeardLyricQuestions(quizPack, recording) : [];
+  const heardLyricDuration = assignmentKey === 'A1-14.1' ? {minSeconds: 10, maxSeconds: 15, targetSeconds: 12} : undefined;
+  const verifiedNextQuestions = nextLyricOnly ? threeVerifiedHeardLyricQuestions(quizPack, recording, heardLyricDuration) : [];
   // Hard-coded Day 3 estimates may describe an older recording. Only a
   // verified cue sequence for the exact audio can set an MCQ answer.
   const questions = nextLyricOnly
@@ -214,7 +215,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
         <div className="published-song-lesson__quizmeta"><strong>FRAGE {questionIndex+1} / {questions.length}</strong><span>{nextLyricOnly?'WAS HAST DU GEHÖRT?':question.type==='speaking'?'SPRECHEN':'HÖRVERSTEHEN'}</span></div>
         <h3 lang="de">{question.prompt}</h3>
         {nextLyricOnly && <p lang="en">Listen to the short clip. Which lyric did you hear?</p>}
-        {nextLyricOnly && <p lang="de">Spiele etwa zehn Sekunden ab. Welche der drei Zeilen war im Ausschnitt zu hören?</p>}
+        {nextLyricOnly && <p lang="de">{assignmentKey === "A1-14.1" ? "Spiele einen 10–15 Sekunden langen Ausschnitt ab. Welche der drei Zeilen hast du wirklich gehört?" : "Spiele etwa zehn Sekunden ab. Welche der drei Zeilen war im Ausschnitt zu hören?"}</p>}
         {evidenceRange && <button type="button" className="published-song-lesson__line-preview"
           onClick={()=>playLinePreview(evidenceRange)}>▶ Ausschnitt abspielen</button>}
         {question.type==='speaking'
