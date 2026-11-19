@@ -12,7 +12,7 @@ import { useToast } from "../context/ToastContext.jsx";
 import CreateClassCard from "../components/CreateClassCard.jsx";
 import ClassEditorCard from "../components/ClassEditorCard.jsx";
 import SessionDictionaryPicker from "../components/SessionDictionaryPicker.jsx";
-import { getCourseSessionDictionary, resolveCourseDictionaryLevel } from "../data/courseSessionGroups.js";
+import { getCourseSessionDictionary, getCourseSessionGroups, resolveCourseDictionaryLevel } from "../data/courseSessionGroups.js";
 import { swahiliClassDictionary } from "../data/swahiliClassDictionary.js";
 import {
   listClassCohorts,
@@ -129,6 +129,7 @@ export default function LiveClassesPageV2() {
   const [classFilter, setClassFilter] = useState(() => searchParams.get("language") === "swahili" ? "all" : "active");
   const [languageFilter, setLanguageFilter] = useState(() => searchParams.get("language") || "all");
   const [sessionFilter, setSessionFilter] = useState("all");
+  const [lessonSearch, setLessonSearch] = useState("");
   const [sessionSort, setSessionSort] = useState("lesson");
   const [dashboard, setDashboard] = useState(null);
   const [activeTab, setActiveTab] = useState(() => searchParams.get("tab") || "sessions");
@@ -309,13 +310,48 @@ export default function LiveClassesPageV2() {
   const editingSession = dashboard?.sessions.find(({ id }) => id === sessionChange?.sessionId);
 
   function renderSessions() {
-    const sessions = orderedWorkspaceSessions(dashboard?.sessions || [], levelId, sessionFilter, sessionSort);
-    if (!sessions.length) {
+    const allSessions = orderedWorkspaceSessions(dashboard?.sessions || [], levelId, sessionFilter, sessionSort);
+    const term = lessonSearch.trim().toLocaleLowerCase();
+    const groups = getCourseSessionGroups(levelId);
+    const groupForSession = (session) => groups.find(group =>
+      group.assignmentIds.some(id => curriculumIds(session).some(savedId => savedId.toUpperCase() === id.toUpperCase())));
+    const matchesSearch = (session) => {
+      const group = groupForSession(session);
+      return [session.topic, session.assignment_id, ...curriculumIds(session),
+        group?.topic, group?.label, ...(group?.chapters || []),
+        ...(group?.entries || []).flatMap(entry => [entry.de, entry.en, entry.chapter, entry.assignment_id])]
+        .some(value => String(value || "").toLocaleLowerCase().includes(term));
+    };
+    const sessions = term ? allSessions.filter(matchesSearch) : allSessions;
+    const savedAssignments = new Set((dashboard?.sessions || [])
+      .filter(session => !session.superseded && String(session.status || "").toLowerCase() !== "superseded")
+      .flatMap(curriculumIds).map(id => id.toUpperCase()));
+    const missingGroups = term ? groups.filter(group =>
+      group.assignmentIds.length && group.assignmentIds.every(id => !savedAssignments.has(id.toUpperCase()))
+      && [group.topic, group.label, ...group.chapters,
+        ...group.entries.flatMap(entry => [entry.de, entry.en, entry.chapter, entry.assignment_id])]
+        .some(value => String(value || "").toLocaleLowerCase().includes(term))
+    ) : [];
+    if (!sessions.length && !missingGroups.length) {
       return <p>No lessons match this filter. Choose All lessons to see the full course.</p>;
     }
 
     return (
-      <div className="live-class-session-table-wrap" style={{ overflowX: "auto" }}>
+      <div>
+        <label style={{ display: "block", marginBottom: 12 }}>
+          Search sessions and official dictionary
+          <input type="search" value={lessonSearch} onChange={event => setLessonSearch(event.target.value)}
+            placeholder="Day 27, 10.27, A2-10.27 or Digitale Kommunikation"
+            style={{ display: "block", maxWidth: 520, width: "100%" }} />
+        </label>
+        {missingGroups.length ? <div style={{ padding: 12, border: "1px solid #f59e0b", borderRadius: 8, marginBottom: 12 }}>
+          <strong>Official dictionary lessons without a saved session</strong>
+          {missingGroups.map(group => <div key={group.key} style={{ marginTop: 8 }}>
+            {group.label} — <strong>Missing session</strong>. <Link to={`/live-classes?tab=repair&classId=${encodeURIComponent(selectedClassId)}`}>Open timetable repair</Link>
+          </div>)}
+          <small>These are curriculum entries, not scheduled classes. Repair and refresh to create verified session records without changing attendance here.</small>
+        </div> : null}
+        <div className="live-class-session-table-wrap" style={{ overflowX: "auto" }}>
         <table className="live-class-sessions-table" style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead><tr><th>Ghana date and time</th><th>Status</th><th>Topic</th><th>Complete dictionary selection</th><th>Actions</th></tr></thead>
           <tbody>
@@ -358,6 +394,7 @@ export default function LiveClassesPageV2() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
     );
   }
