@@ -291,21 +291,21 @@ function ruleForPoint(label = "", assignmentKey = "") {
   if (/bring|can expect/.test(value)) return /\b(?:mitbringen|bringen|solltest|sollten|kannst|k[oö]nnen|erwarten|es\s+gibt)\b/i;
   if (/do something together|invite.*shop|invite sandra|shared weekend/.test(value)) return /\b(?:zusammen|gemeinsam|mitkommen|einladen|einladung|mit\s+dir|mit\s+ihnen)\b/i;
   if (/free at the weekend/.test(value)) return /(?:hast\s+du|bist\s+du)[\s\S]{0,50}(?:zeit|frei)/i;
-  if (/moved/.test(value)) return /\\b(?:umgezogen|neue\\s+wohnung|neues\\s+zimmer|umzug)\\b/i;
+  if (/moved/.test(value)) return /\b(?:umgezogen|neue\s+wohnung|neues\s+zimmer|umzug)\b/i;
   if (/explain that you moved or why you are writing/.test(value)) {
-    return (source) => /\\b(?:umgezogen|neue\\s+wohnung|neues\\s+zimmer|umzug)\\b/i.test(source)
-      || /\\b(?:ich\\s+schreibe|ich\\s+m[oö]chte\\s+(?:erz[aä]hlen|berichten|schreiben))\\b/i.test(source);
+    return (source) => /\b(?:umgezogen|neue\s+wohnung|neues\s+zimmer|umzug)\b/i.test(source)
+      || /\b(?:ich\s+schreibe|ich\s+m[oö]chte\s+(?:erz[aä]hlen|berichten|schreiben))\b/i.test(source);
   }
-  if (/room and important furniture/.test(value)) return /\\b(?:zimmer|wohnung|bett|tisch|stuhl|schrank|sofa|regal|m[oö]bel|lampe)\\b/i;
-  if (/especially like/.test(value)) return /\\b(?:gef[aä]llt\\s+mir|ich\\s+mag|gern(?:e)?|am\\s+besten|besonders|liebe)\\b/i;
-  if (/why you like it/.test(value)) return /\\b(?:weil|denn|da|dort|deshalb)\\b/i;
+  if (/room and important furniture/.test(value)) return /\b(?:zimmer|wohnung|bett|tisch|stuhl|schrank|sofa|regal|m[oö]bel|lampe)\b/i;
+  if (/especially like/.test(value)) return /\b(?:gef[aä]llt\s+mir|ich\s+mag|gern(?:e)?|am\s+besten|besonders|liebe)\b/i;
+  if (/why you like it/.test(value)) return /\b(?:weil|denn|da|dort|deshalb)\b/i;
   if (/say what you especially like and explain why/.test(value)) {
     return (source) => {
       const lines = sentences(source);
-      const preference = lines.find((line) => /\\b(?:gef[aä]llt\\s+mir|ich\\s+mag|gern(?:e)?|am\\s+besten|besonders|liebe)\\b/i.test(line));
+      const preference = lines.find((line) => /\b(?:gef[aä]llt\s+mir|ich\s+mag|gern(?:e)?|am\s+besten|besonders|liebe)\b/i.test(line));
       if (!preference) return false;
-      return /\\b(?:weil|denn|da|dort|deshalb)\\b/i.test(preference)
-        || lines.some((line) => /\\b(?:weil|denn|da|deshalb)\\b/i.test(line));
+      return /\b(?:weil|denn|da|dort|deshalb)\b/i.test(preference)
+        || lines.some((line) => /\b(?:weil|denn|da|deshalb)\b/i.test(line));
     };
   }
   if (/apartment is available/.test(value)) return /\b(?:wohnung|zimmer)\b[\s\S]{0,80}\b(?:frei|verf[uü]gbar)\b|\b(?:frei|verf[uü]gbar)\b[\s\S]{0,80}\b(?:wohnung|zimmer)\b/i;
@@ -363,17 +363,17 @@ function ruleForPoint(label = "", assignmentKey = "") {
   if (/morning and work or school/.test(value)) return /\b(?:morgens?|aufstehen|fr[uü]hst[uü]ck|arbeit|arbeite|schule|unterricht|beginnt|fahre|gehe)\b/i;
   if (/in the evening/.test(value)) return /\b(?:abends?|abend|nach\s+der\s+arbeit|fernsehen|koche|esse|sport|ruhe|schlafe)\b/i;
   if (/friend's daily routine/.test(value)) return /(?:dein(?:e|en)?\s+tagesablauf|was\s+machst\s+du\s+(?:morgens|abends|jeden\s+tag)|wie\s+sieht\s+dein\s+tag)/i;
-  if (/help benefited you/.test(value)) return /\\b(?:geholfen|hilfe|dadurch|deshalb|weil|besser|entlastet|krank)\\b/i;
+  if (/help benefited you/.test(value)) return /\b(?:geholfen|hilfe|dadurch|deshalb|weil|besser|entlastet|krank)\b/i;
   if (/return the favour|give something back/.test(value)) {
     // Accept an explicit offer of future reciprocal help, including
     // conditional wording such as "Wenn du Hilfe brauchst, helfe ich dir gern."
     return (source) => sentences(source).some((sentence) =>
-      /\\b(?:revanchieren|zur[uü]ckgeben|einladen|etwas\\s+f[uü]r\\s+(?:sie|dich))\\b/i.test(sentence)
-      || (/(?:wenn|falls)\\b/i.test(sentence)
-        && /\\b(?:hilfe|hilfsbed[uü]rftig)\\b/i.test(sentence)
-        && /\\b(?:helfe|helfen|unterst[uü]tze|unterst[uü]tzen|mache|bringe)\\b/i.test(sentence)
-        && /\\b(?:gern|gerne|nat[uü]rlich|auch)\\b/i.test(sentence))
-      || /\\bich\\s+(?:helfe|unterst[uü]tze)\\s+(?:dir|ihnen)\\s+(?:gern|gerne)\\b/i.test(sentence));
+      /\b(?:revanchieren|zur[uü]ckgeben|einladen|etwas\s+f[uü]r\s+(?:sie|dich))\b/i.test(sentence)
+      || (/(?:wenn|falls)\b/i.test(sentence)
+        && /\b(?:hilfe|hilfsbed[uü]rftig)\b/i.test(sentence)
+        && /\b(?:helfe|helfen|unterst[uü]tze|unterst[uü]tzen|mache|bringe)\b/i.test(sentence)
+        && /\b(?:gern|gerne|nat[uü]rlich|auch)\b/i.test(sentence))
+      || /\bich\s+(?:helfe|unterst[uü]tze)\s+(?:dir|ihnen)\s+(?:gern|gerne)\b/i.test(sentence));
   }
   if (normalizedAssignmentKey === "A2-7.20" && /exact product problem/.test(value)) {
     // An exact complaint can be about size, fit or colour, not just a defect.
