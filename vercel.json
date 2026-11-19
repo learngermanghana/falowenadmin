@@ -14,6 +14,24 @@
       ]
     },
     {
+      "source": "/",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/teaching-slides/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, must-revalidate"
+        }
+      ]
+    },
+    {
       "source": "/__falowen-admin-build.json",
       "headers": [
         {
@@ -123,7 +141,7 @@
       "destination": "/api/router?path=$1"
     },
     {
-      "source": "/(.*)",
+      "source": "/:path((?!assets/|.*\\.[A-Za-z0-9]+$).*)",
       "destination": "/index.html"
     }
   ],
