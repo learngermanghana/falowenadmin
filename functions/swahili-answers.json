@@ -198,5 +198,472 @@
         "answer": "C) Shilingi elfu tatu"
       }
     }
+  },
+  "swahili-day-5": {
+    "version": 1,
+    "title": "Familia yangu",
+    "writing": {
+      "Kuandika": "Familia yangu ni ndogo. Katika familia yangu kuna watu wanne. Ninaishi na mama yangu, baba yangu na dada yangu. Baba yangu anaitwa Musa na mama yangu anaitwa Amina. Nina dada mmoja, lakini sina kaka. Dada yangu ni mdogo. Babu na bibi yangu wanaishi karibu nasi. Tunapenda kupika na kula pamoja."
+    },
+    "reading": {
+      "read-1": {
+        "prompt": "Asha ana dada wangapi?",
+        "answer": "Ana dada wawili."
+      },
+      "read-2": {
+        "prompt": "Kaka yake anaitwa nani?",
+        "answer": "Anaitwa Juma."
+      },
+      "read-3": {
+        "prompt": "Mariam anafanya kazi gani?",
+        "answer": "Yeye ni mwalimu."
+      },
+      "read-4": {
+        "prompt": "Mama yao anapenda kufanya nini?",
+        "answer": "Anapenda kusoma."
+      }
+    },
+    "listening": {
+      "radio-parents": {
+        "prompt": "Baba na mama ni __________.",
+        "answer": "wazazi"
+      },
+      "radio-grandmother": {
+        "prompt": "__________ ni grandmother, na babu ni grandfather.",
+        "answer": "Bibi"
+      },
+      "radio-children": {
+        "prompt": "Mtoto ni child, lakini __________ ni children.",
+        "answer": "watoto"
+      },
+      "radio-brother": {
+        "prompt": "Nina kaka __________ na dada wawili.",
+        "answer": "mmoja"
+      },
+      "radio-younger-sister": {
+        "prompt": "Neno “dada mdogo” linamaanisha nini?",
+        "answer": "Younger sister"
+      },
+      "radio-one-brother": {
+        "prompt": "Sentensi ipi ni sahihi?",
+        "answer": "Nina kaka mmoja na dada wawili."
+      },
+      "radio-father": {
+        "prompt": "Unasemaje “This is my father” kwa Kiswahili?",
+        "answer": "Huyu ni baba yangu."
+      },
+      "radio-small-family": {
+        "prompt": "Sentensi “Familia yangu ni ndogo” ina maana gani?",
+        "answer": "My family is small."
+      },
+      "children": {
+        "prompt": "Mzungumzaji B ana watoto wangapi?",
+        "answer": "Wawili"
+      },
+      "siblings": {
+        "prompt": "Mzungumzaji B ana kaka na dada wangapi?",
+        "answer": "Kaka mmoja na dada wawili"
+      },
+      "parents": {
+        "prompt": "Wazazi wa mzungumzaji B wanaishi wapi?",
+        "answer": "Arusha"
+      },
+      "wife": {
+        "prompt": "Mzungumzaji B anasema nini kuhusu mke wake?",
+        "answer": "Anampenda sana"
+      },
+      "school": {
+        "prompt": "Watoto wa mzungumzaji B wanasoma shule gani?",
+        "answer": "Shule ya msingi"
+      }
+    }
+  },
+  "swahili-day-2": {
+    "version": 1,
+    "title": "Salamu",
+    "writing": {
+      "Kuandika": "Habari za asubuhi? — Nzuri, asante. Habari yako? — Njema, asante. Kwaheri! — Kwaheri!"
+    },
+    "reading": {
+      "read-1": {
+        "prompt": "Asha anamsalimu nani?",
+        "answer": "Juma."
+      },
+      "read-2": {
+        "prompt": "Asha anasema nini?",
+        "answer": "Habari za asubuhi?"
+      },
+      "read-3": {
+        "prompt": "Juma anajibu nini?",
+        "answer": "Nzuri, asante."
+      }
+    }
+  },
+  "swahili-day-3": {
+    "version": 1,
+    "title": "Utambulisho",
+    "writing": {
+      "Kuandika": "Ninaitwa Amina. Mimi ni mwanafunzi. Huyu ni Omar. Anasoma Kiswahili."
+    },
+    "reading": {
+      "read-1": {
+        "prompt": "Mwanafunzi anaitwa nani?",
+        "answer": "Mariam."
+      },
+      "read-2": {
+        "prompt": "Mwalimu anaitwa nani?",
+        "answer": "Musa."
+      },
+      "read-3": {
+        "prompt": "Musa ni nani?",
+        "answer": "Mwalimu."
+      }
+    }
+  },
+  "swahili-day-4": {
+    "version": 1,
+    "title": "Nchi na Lugha",
+    "writing": {
+      "Kuandika": "Ninatoka Ghana. Ninazungumza Kiingereza na Kiswahili. Unazungumza lugha gani?"
+    },
+    "reading": {
+      "read-1": {
+        "prompt": "Fatuma anatoka wapi?",
+        "answer": "Tanzania."
+      },
+      "read-2": {
+        "prompt": "David anatoka wapi?",
+        "answer": "Kenya."
+      },
+      "read-3": {
+        "prompt": "David anazungumza lugha gani?",
+        "answer": "Kiswahili na Kiingereza."
+      }
+    }
+  },
+  "swahili-day-7": {
+    "version": 1,
+    "title": "Chakula na Vinywaji",
+    "writing": {
+      "Kuandika": "Ninapenda chapati na matunda. Sitaki soda, asante. Nitaleta chapati na maji."
+    },
+    "reading": {
+      "read-1": {
+        "prompt": "Hassan anapenda kinywaji gani?",
+        "answer": "Chai."
+      },
+      "read-2": {
+        "prompt": "Amina anapenda juisi gani?",
+        "answer": "Juisi ya embe."
+      },
+      "read-3": {
+        "prompt": "Nani ataleta chapati?",
+        "answer": "Hassan."
+      }
+    },
+    "listening": {
+      "meal": {
+        "prompt": "Mteja anaagiza chakula gani?",
+        "answer": "Wali na kuku"
+      },
+      "drink": {
+        "prompt": "Mteja anataka kunywa nini?",
+        "answer": "Maji baridi"
+      },
+      "offer": {
+        "prompt": "Mhudumu anampa mteja chaguo gani lingine la kinywaji?",
+        "answer": "Chai au kahawa"
+      },
+      "accept": {
+        "prompt": "Je, mteja anakubali chai au kahawa?",
+        "answer": "Hapana, maji yanatosha"
+      },
+      "bill": {
+        "prompt": "Bili ni shilingi ngapi?",
+        "answer": "Shilingi elfu tano"
+      }
+    }
+  },
+  "swahili-day-8": {
+    "version": 1,
+    "title": "Namba na Umri",
+    "writing": {
+      "Kuandika": "Darasa letu ni namba ishirini na moja. Msimbo ni 0725: sifuri, saba, mbili, tano."
+    },
+    "reading": {
+      "read-1": {
+        "prompt": "Darasa lina namba gani?",
+        "answer": "Ishirini na moja."
+      },
+      "read-2": {
+        "prompt": "Msimbo wa kuingia ni upi?",
+        "answer": "0725."
+      },
+      "read-3": {
+        "prompt": "Msimbo unaanza na namba gani?",
+        "answer": "Sifuri."
+      }
+    }
+  },
+  "swahili-day-9": {
+    "version": 1,
+    "title": "Marafiki",
+    "writing": {
+      "Kuandika": "Habari, Neema! Je, ungependa kucheza mpira Jumamosi? Tukutane uwanjani."
+    },
+    "reading": {
+      "read-1": {
+        "prompt": "Pili na Neema wanapenda nini?",
+        "answer": "Mpira."
+      },
+      "read-2": {
+        "prompt": "Watacheza mpira siku gani?",
+        "answer": "Jumamosi."
+      },
+      "read-3": {
+        "prompt": "Watakutana wapi?",
+        "answer": "Uwanjani."
+      }
+    }
+  },
+  "swahili-day-10": {
+    "version": 1,
+    "title": "Sokoni",
+    "writing": {
+      "Kuandika": "Mnunuzi: Mna maparachichi? Muuzaji: Ndiyo. Mnunuzi: Naomba maparachichi manane na kichane kimoja cha ndizi. Jumla ni shilingi ngapi? Muuzaji: Shilingi elfu moja na mia saba. Mnunuzi: Unaweza kupunguza bei kidogo, tafadhali? Muuzaji: Sawa, lipa shilingi elfu moja na mia sita."
+    },
+    "reading": {
+      "read-1": {
+        "prompt": "Kwa nini Juma anakwenda sokoni asubuhi?",
+        "answer": "Anakwenda kupata matunda na chakula."
+      },
+      "read-2": {
+        "prompt": "Juma ananunua maembe mangapi, machungwa mangapi na mayai mangapi?",
+        "answer": "Maembe matatu, machungwa matano na mayai kumi."
+      },
+      "read-3": {
+        "prompt": "Juma analipa shilingi ngapi sokoni?",
+        "answer": "Shilingi mia nne na hamsini (450)."
+      },
+      "read-4": {
+        "prompt": "Juma anakaa wapi kahawani?",
+        "answer": "Anakaa karibu na dirisha kubwa."
+      },
+      "read-5": {
+        "prompt": "Juma anaomba vinywaji gani kahawani?",
+        "answer": "Kikombe cha kahawa na maji."
+      }
+    },
+    "listening": {
+      "first-item": {
+        "prompt": "Mnunuzi anataka kununua nini kwanza?",
+        "answer": "Nyanya"
+      },
+      "tomato-price": {
+        "prompt": "Muuzaji anataja bei gani ya nyanya?",
+        "answer": "Shilingi mia tano"
+      },
+      "onion-quantity": {
+        "prompt": "Mnunuzi anataka vitunguu vingapi?",
+        "answer": "Vitatu"
+      },
+      "bananas": {
+        "prompt": "Kwa nini mnunuzi hapati ndizi mbivu?",
+        "answer": "Ndizi zimeisha"
+      },
+      "total": {
+        "prompt": "Jumla ni shilingi ngapi?",
+        "answer": "Shilingi mia nane"
+      }
+    }
+  },
+  "swahili-day-12": {
+    "version": 1,
+    "title": "Mapishi ya Kitanzania",
+    "writing": {
+      "Kuandika": "Kwanza, osha nyanya. Kisha, kata nyanya na vitunguu. Mwishowe, ongeza chumvi."
+    },
+    "reading": {
+      "read-1": {
+        "prompt": "Unaosha nini kwanza?",
+        "answer": "Mchele."
+      },
+      "read-2": {
+        "prompt": "Unaongeza nini?",
+        "answer": "Maji."
+      },
+      "read-3": {
+        "prompt": "Unatoa wali kutoka wapi?",
+        "answer": "Kutoka kwenye sufuria."
+      }
+    }
+  },
+  "swahili-day-13": {
+    "version": 1,
+    "title": "Nyumbani",
+    "writing": {
+      "Kuandika": "Ninaishi hapa. Nyumba ina vyumba viwili. Bafu liko karibu na jiko. Bustani iko nyuma ya nyumba."
+    },
+    "reading": {
+      "read-1": {
+        "prompt": "Nyumba ina vyumba vingapi?",
+        "answer": "Viwili."
+      },
+      "read-2": {
+        "prompt": "Bafu liko wapi?",
+        "answer": "Karibu na jiko."
+      },
+      "read-3": {
+        "prompt": "Bustani iko wapi?",
+        "answer": "Mbele ya nyumba."
+      }
+    }
+  },
+  "swahili-day-14": {
+    "version": 1,
+    "title": "Vitu vya Nyumbani",
+    "writing": {
+      "Kuandika": "Kiti kipo hapa. Chumba kiko ghorofani. Funguo zimo ndani ya mfuko."
+    },
+    "reading": {
+      "read-1": {
+        "prompt": "Kiti kipo wapi?",
+        "answer": "Pale karibu na mlango."
+      },
+      "read-2": {
+        "prompt": "Chumba kiko wapi?",
+        "answer": "Ghorofani."
+      },
+      "read-3": {
+        "prompt": "Vitabu vimo wapi?",
+        "answer": "Ndani ya sanduku."
+      }
+    }
+  },
+  "swahili-day-15": {
+    "version": 1,
+    "title": "Shughuli za Kila Siku",
+    "writing": {
+      "Kuandika": "Kila asubuhi mimi huamka mapema. Kisha mimi hunywa chai. Jioni mimi husoma nyumbani. Sasa ninaandika."
+    },
+    "reading": {
+      "read-1": {
+        "prompt": "Asha hunywa nini asubuhi?",
+        "answer": "Chai."
+      },
+      "read-2": {
+        "prompt": "Husoma wapi jioni?",
+        "answer": "Nyumbani."
+      },
+      "read-3": {
+        "prompt": "Anafanya nini sasa?",
+        "answer": "Anaandika barua."
+      }
+    }
+  },
+  "swahili-day-16": {
+    "version": 1,
+    "title": "Saa na Siku",
+    "writing": {
+      "Kuandika": "Jumatatu ninasoma saa mbili asubuhi (08:00). Ijumaa ninakutana na Asha saa moja jioni (19:00)."
+    },
+    "reading": {
+      "read-1": {
+        "prompt": "Darasa linaanza saa ngapi Jumatatu?",
+        "answer": "Saa mbili asubuhi (08:00)."
+      },
+      "read-2": {
+        "prompt": "Darasa linaanza saa ngapi Jumatano?",
+        "answer": "Saa tatu na nusu asubuhi (09:30)."
+      },
+      "read-3": {
+        "prompt": "Ni siku gani darasa linaanza baadaye?",
+        "answer": "Jumatano."
+      }
+    }
+  },
+  "swahili-day-17": {
+    "version": 1,
+    "title": "Burudani na Mapendeleo",
+    "writing": {
+      "Kuandika": "Ninapenda kusoma na kuimba. Sipendi kucheza mpira. Unapenda kufanya nini?"
+    },
+    "reading": {
+      "read-1": {
+        "prompt": "Neema anapenda kufanya nini?",
+        "answer": "Kuimba na kusoma."
+      },
+      "read-2": {
+        "prompt": "Neema hapendi nini?",
+        "answer": "Kucheza mpira."
+      },
+      "read-3": {
+        "prompt": "Wote wanapenda nini?",
+        "answer": "Kusoma."
+      }
+    }
+  },
+  "swahili-day-18": {
+    "version": 1,
+    "title": "Mjini",
+    "writing": {
+      "Kuandika": "Kutoka shuleni, nenda moja kwa moja. Geuka kulia. Benki iko karibu na soko."
+    },
+    "reading": {
+      "read-1": {
+        "prompt": "Unaanzia wapi?",
+        "answer": "Shuleni."
+      },
+      "read-2": {
+        "prompt": "Unageuka upande gani?",
+        "answer": "Kushoto."
+      },
+      "read-3": {
+        "prompt": "Benki iko karibu na nini?",
+        "answer": "Soko."
+      }
+    }
+  },
+  "swahili-day-19": {
+    "version": 1,
+    "title": "Usafiri",
+    "writing": {
+      "Kuandika": "Ninatoka nyumbani saa mbili asubuhi. Ninakwenda mjini kwa basi. Ninafika saa tatu asubuhi."
+    },
+    "reading": {
+      "read-1": {
+        "prompt": "Musa anatoka wapi?",
+        "answer": "Nyumbani."
+      },
+      "read-2": {
+        "prompt": "Anasafiri kwa nini?",
+        "answer": "Kwa daladala."
+      },
+      "read-3": {
+        "prompt": "Anafika saa ngapi?",
+        "answer": "Saa mbili asubuhi."
+      }
+    }
+  },
+  "swahili-day-20": {
+    "version": 1,
+    "title": "Hospitalini",
+    "writing": {
+      "Kuandika": "Habari. Una shida gani? — Ninaumwa. Kichwa kinauma. — Tafadhali, subiri hapa. — Asante. Naomba kuonana na daktari."
+    },
+    "reading": {
+      "read-1": {
+        "prompt": "Asha yuko wapi?",
+        "answer": "Hospitalini."
+      },
+      "read-2": {
+        "prompt": "Anaumwa sehemu gani?",
+        "answer": "Tumbo."
+      },
+      "read-3": {
+        "prompt": "Mhudumu anamwambia nini?",
+        "answer": "Tafadhali, subiri hapa."
+      }
+    }
   }
 }

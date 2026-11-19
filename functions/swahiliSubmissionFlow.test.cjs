@@ -6,7 +6,7 @@ const vm = require("node:vm");
 const { createSwahiliResultWorker } = require("./swahiliResults");
 const { createScoreSyncWorker } = require("./automaticCourseMarking");
 
-for (const day of [6, 11]) test(`Day ${day} workbook reaches the marking queue and upserts the tutor score to Sheets`, async () => {
+for (const day of [2, 5, 6, 10, 11, 20]) test(`Day ${day} workbook reaches the marking queue and upserts the tutor score to Sheets`, async () => {
   const uid = "synthetic-student";
   const path = `users/${uid}/swahiliLessons/day-${day}`;
   const reviewPath = `swahiliTeacherReviews/${uid}_day-${day}`;
@@ -19,7 +19,7 @@ for (const day of [6, 11]) test(`Day ${day} workbook reaches the marking queue a
     studentId: uid, userId: uid, program: "swahili", lessonId: `swahili-day-${day}`,
     status: "submitted", submittedAt: timestamp(10), writing: { order: "Ninaomba maji." },
   }]]);
-  const snapshot = path => ({ ref: ref(path), exists: data.has(path), data: () => data.get(path) });
+  const snapshot = path => ({ id: path.split("/").at(-1), ref: ref(path), exists: data.has(path), data: () => data.get(path) });
   const ref = path => ({
     path, id: path.split("/").at(-1), get: async () => snapshot(path),
     set: async values => data.set(path, { ...data.get(path), ...values }),
@@ -39,18 +39,19 @@ for (const day of [6, 11]) test(`Day ${day} workbook reaches the marking queue a
   };
   const context = {
     db, doc: (_, ...parts) => ref(parts.join("/")),
-    collection: (_, name) => ({ name }), collectionGroup: (_, name) => ({ name }),
+    collection: (_, ...parts) => ({ name: parts.join("/") }), collectionGroup: (_, name) => ({ name }),
     query: (source, ...filters) => ({ ...source, filters }),
     or: (...parts) => parts, where: (...parts) => parts, orderBy: () => null, limit: () => null,
     getDoc: target => target.get(),
     getDocs: async query => {
       if (query.name === "students") return { docs: [{ data: () => student }], size: 1 };
+      if (query.name === `users/${uid}/swahiliLessons`) return { docs: [snapshot(path)] };
       const lesson = query.filters[1][2];
       assert.deepEqual(query.filters.slice(0, 3), [
-        ["program", "==", "swahili"], ["lessonId", "==", lesson], ["status", "==", "submitted"],
+        ["program", "==", "swahili"], ["lessonId", Array.isArray(lesson) ? "in" : "==", lesson], ["status", "==", "submitted"],
       ]);
       if (context.missingIndex) throw Object.assign(new Error("Index building"), { code: "failed-precondition" });
-      return lesson === `swahili-day-${day}` ? { docs: [snapshot(path)], size: 1 } : { docs: [], size: 0 };
+      return [lesson].flat().includes(`swahili-day-${day}`) ? { docs: [snapshot(path)], size: 1 } : { docs: [], size: 0 };
     },
     runTransaction: (_, callback) => db.runTransaction(callback),
     serverTimestamp: () => timestamp(20),
@@ -96,9 +97,10 @@ for (const day of [6, 11]) test(`Day ${day} workbook reaches the marking queue a
   assert.equal(emails.length, 1);
   const reference = data.get(reviewPath).answerReference;
   if (day === 6) assert.equal(reference.reading["read-order"].answer, "Wali na kuku");
-  else {
+  else if (day === 11) {
     assert.deepEqual(Object.values(reference.reading).map(q => q.answer[0]), ["B", "B", "B", "C", "C"]);
     assert.deepEqual(Object.values(reference.listening).map(q => q.answer[0]), ["B", "C", "A", "B", "C"]);
   }
+  assert.ok(Object.keys(reference.reading).length > 0);
   assert.ok(emails[0].link.endsWith(`#swahili-day-${day}`));
 });

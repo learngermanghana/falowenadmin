@@ -5,6 +5,8 @@ import { loadAllSwahiliMarkingPage, loadSwahiliMarkingPage, loadSwahiliRoster, l
 import { filterSwahiliMarkingRows, getSwahiliReviewStatus } from "../utils/swahiliReviewQueue";
 
 const LESSONS = {
+  ...Object.fromEntries(Object.entries(answerKeys).filter(([, key]) => key.title)
+    .map(([id, key]) => [id.split("-").at(-1), { title: key.title, writing: { response: "Kuandika" } }])),
   11: { title: "Dukani", writing: { dialogue: "Mazungumzo" } },
   28: { title: "B1 · Kutunza Mazingira katika Maisha ya Kila Siku", writing: { email: "Barua pepe" } },
   1: { title: "Alfabeti, sauti na matamshi", writing: { vowels: "Vokali", syllables: "Silabi", words: "Maneno" } },
