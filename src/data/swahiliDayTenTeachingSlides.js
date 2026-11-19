@@ -91,7 +91,7 @@ export const SWAHILI_DAY_TEN_ADMIN_LESSON = Object.freeze({
     {
       "id": "radio",
       "type": "radio-questions",
-      "radioVideoId": null,
+      "radioVideoId": "4_ygEiW5QjI",
       "kicker": "Kusikiliza · Falowen Radio",
       "title": "Falowen Radio · Sokoni",
       "content": "Fanyeni mazoezi kwa jozi. Mnunuzi anauliza bei ya machungwa. Muuzaji anataja bei. Mnunuzi anaomba punguzo.",
