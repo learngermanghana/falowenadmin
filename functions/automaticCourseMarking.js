@@ -302,7 +302,7 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         // repeat a notification, or create a second Sheet sync.
         if (!publish || existingSameAttempt) return;
         const row = clean({
-          studentcode: studentCode, studentCode, studentId,
+          language: "german", studentcode: studentCode, studentCode, studentId,
           studentEmail: student.email || student.studentEmail || '',
           studentName: student.name || student.fullName || student.studentName || [student.firstName, student.lastName].filter(Boolean).join(' ') || submission.studentName || submission.name || '', name: student.name || student.fullName || student.studentName || [student.firstName, student.lastName].filter(Boolean).join(' ') || submission.studentName || submission.name || '',
           assignment: assignmentTitle(submission.assignmentTitle, submission.title, submission.assignment,
