@@ -73,6 +73,12 @@ function Menu({ content, cards = [], drinks = [] }) {
 
 export default function SwahiliA2LessonStage({ stage, grammar, isDaySix, level = "A1" }) {
   const lines=Lines({text:stage.content});
+  if(stage.type==="teacher-lecture") return (
+    <section className="swahili-a2-presenter__media-stage" aria-label="AI lesson video">
+      <p>{stage.content}</p>
+      <MusicVideoEmbed videoId={stage.videoId} title={stage.title} variant="lesson" footerLabel="Falowen · Jifunze Kiswahili" />
+    </section>
+  );
   if(stage.type==="intro") return <section className="swahili-a2-presenter__intro-stage">
     <span className="presenter-kicker">Falowen · Kiswahili {level}</span>
     <h2>{stage.heading || (isDaySix ? "Chakula · Vinywaji · Kuomba kwa adabu" : "Vokali · Silabi · Matamshi")}</h2>
