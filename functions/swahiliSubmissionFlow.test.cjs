@@ -95,6 +95,8 @@ for (const day of [2, 5, 6, 10, 11, 20]) test(`Day ${day} workbook reaches the m
   assert.equal(data.get(jobPath).status, "synced");
   assert.equal(data.get(job.scorePath).sheetSaved, true);
   assert.equal(emails.length, 1);
+  assert.equal(emails[0].bcc, "teacher@example.com");
+  assert.equal(requests[0].rows[0].language, "swahili");
   const reference = data.get(reviewPath).answerReference;
   if (day === 6) assert.equal(reference.reading["read-order"].answer, "Wali na kuku");
   else if (day === 11) {
