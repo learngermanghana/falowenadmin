@@ -13,9 +13,13 @@ export function MusicVideoStage({ music }) {
   if (music?.assignmentKey === 'A2-7.18' && music?.audioUrl) {
     return <PublishedSongLessonStage assignmentKey="A2-7.18" />;
   }
-  if (['A2-9.25', 'A2-10.27'].includes(music?.assignmentKey)) {
-    return <PublishedSongLessonStage assignmentKey={music.assignmentKey}
-      nextLyricOnly={music.assignmentKey === 'A2-10.27'} />;
+  // Day 27 must use the same R2 recording-led, three-tab classroom
+  // Fragen presentation as Day 26, not the generic songbook timing editor.
+  if (music?.assignmentKey === 'A2-10.27') {
+    return <LinkedPublishedSongLessonStage music={music} />;
+  }
+  if (music?.assignmentKey === 'A2-9.25') {
+    return <PublishedSongLessonStage assignmentKey={music.assignmentKey} />;
   }
   // Match the Day 18 published music presentation, including its original
   // styling and tabs. Dynamic Day 19/20 uploads stay in the music library:
