@@ -6,17 +6,17 @@ const vm = require("node:vm");
 const { createSwahiliResultWorker } = require("./swahiliResults");
 const { createScoreSyncWorker } = require("./automaticCourseMarking");
 
-test("Day 6 workbook reaches the marking queue and upserts the tutor score to Sheets", async () => {
+for (const day of [6, 11]) test(`Day ${day} workbook reaches the marking queue and upserts the tutor score to Sheets`, async () => {
   const uid = "synthetic-student";
-  const path = `users/${uid}/swahiliLessons/day-6`;
-  const reviewPath = `swahiliTeacherReviews/${uid}_day-6`;
+  const path = `users/${uid}/swahiliLessons/day-${day}`;
+  const reviewPath = `swahiliTeacherReviews/${uid}_day-${day}`;
   const timestamp = (seconds) => ({
     seconds, nanoseconds: 0, toMillis: () => seconds * 1000,
     toDate: () => new Date(seconds * 1000), isEqual: other => other?.seconds === seconds,
   });
   const student = { uid, program: "swahili", studentCode: "TEST01" };
   const data = new Map([[path, {
-    studentId: uid, userId: uid, program: "swahili", lessonId: "swahili-day-6",
+    studentId: uid, userId: uid, program: "swahili", lessonId: `swahili-day-${day}`,
     status: "submitted", submittedAt: timestamp(10), writing: { order: "Ninaomba maji." },
   }]]);
   const snapshot = path => ({ ref: ref(path), exists: data.has(path), data: () => data.get(path) });
@@ -41,7 +41,7 @@ test("Day 6 workbook reaches the marking queue and upserts the tutor score to Sh
     db, doc: (_, ...parts) => ref(parts.join("/")),
     collection: (_, name) => ({ name }), collectionGroup: (_, name) => ({ name }),
     query: (source, ...filters) => ({ ...source, filters }),
-    where: (...parts) => parts, orderBy: () => null, limit: () => null,
+    or: (...parts) => parts, where: (...parts) => parts, orderBy: () => null, limit: () => null,
     getDoc: target => target.get(),
     getDocs: async query => {
       if (query.name === "students") return { docs: [{ data: () => student }], size: 1 };
@@ -50,7 +50,7 @@ test("Day 6 workbook reaches the marking queue and upserts the tutor score to Sh
         ["program", "==", "swahili"], ["lessonId", "==", lesson], ["status", "==", "submitted"],
       ]);
       if (context.missingIndex) throw Object.assign(new Error("Index building"), { code: "failed-precondition" });
-      return lesson === "swahili-day-6" ? { docs: [snapshot(path)], size: 1 } : { docs: [], size: 0 };
+      return lesson === `swahili-day-${day}` ? { docs: [snapshot(path)], size: 1 } : { docs: [], size: 0 };
     },
     runTransaction: (_, callback) => db.runTransaction(callback),
     serverTimestamp: () => timestamp(20),
@@ -64,13 +64,13 @@ test("Day 6 workbook reaches the marking queue and upserts the tutor score to Sh
   assert.equal(page.rows[0].writing.order, "Ninaomba maji.");
   context.missingIndex = true;
   assert.equal((await context.loadAllSwahiliMarkingPage()).rows[0].path, path);
-  await context.saveSwahiliReview({ submission: page.rows[0], day: 6, status: "reviewed", feedback: "Good work.", score: 81 });
+  await context.saveSwahiliReview({ submission: page.rows[0], day, status: "reviewed", feedback: "Good work.", score: 81 });
   const emails = [];
   await createSwahiliResultWorker({
     db, auth: { getUser: async () => ({ email: "learner@example.com" }) },
     runtimeConfig: { communication: { swahili_result_bcc: "teacher@example.com" } },
     postAnnouncement: async (_, row) => emails.push(row),
-  })({ data: { after: { ...snapshot(reviewPath), id: `${uid}_day-6` } } });
+  })({ data: { after: { ...snapshot(reviewPath), id: `${uid}_day-${day}` } } });
   const jobPath = [...data.keys()].find(key => key.startsWith("automaticScoreSync/"));
   assert.ok(jobPath);
   const job = data.get(jobPath);
@@ -88,12 +88,17 @@ test("Day 6 workbook reaches the marking queue and upserts the tutor score to Sh
   assert.equal(requests[0].sheet_name, "Scores");
   assert.deepEqual(requests[0].dedupe_columns, ["studentcode", "assignment_id"]);
   assert.equal(requests[0].rows[0].program, "swahili");
-  assert.equal(requests[0].rows[0].assignment_id, "swahili-day-6");
+  assert.equal(requests[0].rows[0].assignment_id, `swahili-day-${day}`);
   assert.equal(requests[0].rows[0].score, 81);
   assert.equal(requests[0].rows[0].passed, true);
   assert.equal(data.get(jobPath).status, "synced");
   assert.equal(data.get(job.scorePath).sheetSaved, true);
   assert.equal(emails.length, 1);
-  assert.equal(data.get(reviewPath).answerReference.reading.food.answer, "wali na kuku");
-  assert.match(emails[0].link, /#swahili-day-6$/);
+  const reference = data.get(reviewPath).answerReference;
+  if (day === 6) assert.equal(reference.reading["read-order"].answer, "Wali na kuku");
+  else {
+    assert.deepEqual(Object.values(reference.reading).map(q => q.answer[0]), ["B", "B", "B", "C", "C"]);
+    assert.deepEqual(Object.values(reference.listening).map(q => q.answer[0]), ["B", "C", "A", "B", "C"]);
+  }
+  assert.ok(emails[0].link.endsWith(`#swahili-day-${day}`));
 });

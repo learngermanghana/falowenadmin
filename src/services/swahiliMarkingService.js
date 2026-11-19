@@ -1,6 +1,6 @@
 import { collection, collectionGroup, doc, getDoc, getDocs, limit, or, onSnapshot, orderBy, query, runTransaction, serverTimestamp, startAfter, where } from "firebase/firestore";
 import { db } from "../firebase.js";
-import { canonicalSwahiliSubmission, getSwahiliReviewStatus, swahiliReviewDocId } from "../utils/swahiliReviewQueue.js";
+import { submissionDocId, submissionLessonId, canonicalSwahiliSubmission, getSwahiliReviewStatus, swahiliReviewDocId } from "../utils/swahiliReviewQueue.js";
 
 const PAGE_SIZE = 25;
 const reviewRef = (studentId, day) => doc(db, "swahiliTeacherReviews", swahiliReviewDocId(studentId, day));
@@ -30,7 +30,7 @@ async function loadRosterSubmissions(day, cursor) {
   };
 }
 
-export async function loadAllSwahiliMarkingPage(cursors = { 1: null, 6: null, 28: null }) {
+export async function loadAllSwahiliMarkingPage(cursors = { 1: null, 6: null, 11: null, 28: null }) {
   const pages = await Promise.all(Object.entries(cursors).map(async ([day, cursor]) => ({
     day,
     ...await loadSwahiliMarkingPage(Number(day), cursor),

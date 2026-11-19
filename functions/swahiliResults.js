@@ -4,7 +4,7 @@ const { createHash } = require("node:crypto");
 const { resolveAnnouncementConfig, postAnnouncementRow } = require("./finalMockResultEmails");
 
 const PASS_MARK = 60;
-const lessonTitles = { "swahili-b1-day-28": "Kutunza Mazingira katika Maisha ya Kila Siku", "swahili-day-1": "Alfabeti, sauti na matamshi", "swahili-day-6": "Mgahawani" };
+const lessonTitles = { "swahili-day-11": "Dukani", "swahili-b1-day-28": "Kutunza Mazingira katika Maisha ya Kila Siku", "swahili-day-1": "Alfabeti, sauti na matamshi", "swahili-day-6": "Mgahawani" };
 
 function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement = postAnnouncementRow }) {
   return async (event) => {

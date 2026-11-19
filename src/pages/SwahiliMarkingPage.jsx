@@ -5,6 +5,7 @@ import { loadAllSwahiliMarkingPage, loadSwahiliMarkingPage, loadSwahiliRoster, l
 import { filterSwahiliMarkingRows, getSwahiliReviewStatus } from "../utils/swahiliReviewQueue";
 
 const LESSONS = {
+  11: { title: "Dukani", writing: { dialogue: "Mazungumzo" } },
   28: { title: "B1 · Kutunza Mazingira katika Maisha ya Kila Siku", writing: { email: "Barua pepe" } },
   1: { title: "Alfabeti, sauti na matamshi", writing: { vowels: "Vokali", syllables: "Silabi", words: "Maneno" } },
   6: { title: "Mgahawani", writing: { likes: "Ninapenda", dislikes: "Sipendi", order: "Agizo" } },

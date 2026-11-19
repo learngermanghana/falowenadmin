@@ -148,5 +148,55 @@
         "answer": "Wanaweza kutengeneza mbolea na kuitumia katika bustani yao."
       }
     }
+  },
+  "swahili-day-11": {
+    "version": 1,
+    "writing": {
+      "Mazungumzo": "Mteja: Mna madaftari makubwa? Muuzaji: Hatuna, lakini tuna madaftari madogo. Mteja: Nitachukua daftari dogo moja na kalamu mbili. Naweza kulipa kwa simu? Muuzaji: Ndiyo. Mteja: Risiti, tafadhali."
+    },
+    "reading": {
+      "shop": {
+        "prompt": "Amina alienda wapi katika hadithi hii? (Where did Amina go?)",
+        "answer": "B) Dukani (At the shop)"
+      },
+      "first-items": {
+        "prompt": "Amina aliuliza kama muuzaji anayo bidhaa gani za kwanza? (Which items did Amina first ask the shopkeeper about?)",
+        "answer": "B) Maziwa na mkate"
+      },
+      "milk-quantity": {
+        "prompt": "Amina aliomba kiasi gani cha maziwa? (How much milk did Amina request?)",
+        "answer": "B) Lita moja (One liter)"
+      },
+      "total": {
+        "prompt": "Jumla ya gharama ya vitu vyote ilikuwa shilingi ngapi? (What was the total price of all the items?)",
+        "answer": "C) Shilingi elfu nne na mia tano (4,500)"
+      },
+      "price-question": {
+        "prompt": "Maneno gani yanatumiwa kuuliza bei ya kitu kwa Kiswahili? (Which phrase is used to ask the price of something in Swahili?)",
+        "answer": "C) Ni shilingi ngapi?"
+      }
+    },
+    "listening": {
+      "milk": {
+        "prompt": "Mteja anataka maziwa gani?",
+        "answer": "B) Maziwa ya pakti"
+      },
+      "bread": {
+        "prompt": "Mteja anaomba mkate gani?",
+        "answer": "C) Mkate mkubwa mmoja"
+      },
+      "eggs": {
+        "prompt": "Kwa nini mteja hapati mayai sita?",
+        "answer": "A) Mayai yameisha"
+      },
+      "sugar": {
+        "prompt": "Mteja anataka sukari kiasi gani?",
+        "answer": "B) Nusu kilo"
+      },
+      "total": {
+        "prompt": "Jumla ni shilingi ngapi?",
+        "answer": "C) Shilingi elfu tatu"
+      }
+    }
   }
 }
