@@ -2,7 +2,6 @@ import SwahiliRestaurantSong from "./SwahiliRestaurantSong.jsx";
 import { SWAHILI_DAY_FIVE_ADMIN_LESSON } from "../data/swahiliDayFiveTeachingSlides.js";
 import SwahiliSlideMusic from "./SwahiliSlideMusic.jsx";
 import { useEffect, useState } from "react";
-import TeachingSlidePresenter from "./TeachingSlidePresenter.jsx";
 import { swahiliB1Day28 } from "../data/swahiliB1Day28.js";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import PresenterControls, { PresenterActions, PresenterStageJump } from "./PresenterControls.jsx";
@@ -43,6 +42,58 @@ const dayFivePresenterSlide = Object.freeze({
   workbookConnection: { workbookUrl: dayFiveWorkbook, subtitle: "Continue Kiswahili Day 5 in your learner workbook." },
 });
 
+// Convert the existing B1 teaching content to the A1 Day 10 presentation layout.
+// Keep every question and model answer, exposing one question at a time.
+const b1Day28Stages = swahiliB1Day28.classroomStages.flatMap(stage => {
+  const kicker = stage.kicker || "Kiswahili B1 · Somo la 28";
+  if (stage.type === "grammar-check") {
+    return stage.items.map((item, index) => ({
+      id: `${stage.id}-${index + 1}`,
+      type: "question",
+      kicker,
+      title: stage.title,
+      content: item.label ? `Swali ${item.label}` : "",
+      prompt: item.prompt,
+      answer: item.answer,
+    }));
+  }
+  if (stage.type === "swahili-song") {
+    return { ...stage, type: "music", kicker: "Muziki · Music" };
+  }
+  if (stage.id === "radio-dialogue") {
+    return {
+      ...stage, type: "radio-questions", kicker: "Kusikiliza · Falowen Radio",
+      content: stage.items.join("\n"),
+    };
+  }
+  if (stage.type === "intro") {
+    return {
+      ...stage, kicker: "Utangulizi · Introduction",
+      heading: "Kutunza Mazingira · Kiswahili B1",
+      content: stage.objective, english: "Protecting the environment in everyday life.",
+    };
+  }
+  if (stage.type === "workbook") {
+    return {
+      ...stage, type: "writing",
+      content: stage.items.map(item => `${item.label}: ${item.detail}`).join("\n"),
+      listeningWorkbookUrl: stage.workbookUrl,
+    };
+  }
+  if (stage.type === "numbered-list") {
+    const content = stage.items.join("\n");
+    return { ...stage, type: stage.id === "presentation" || stage.id === "writing" || stage.id === "pair-plan" ? "presentation" : "reading-text", content };
+  }
+  return stage;
+});
+const b1Day28PresenterSlide = Object.freeze({
+  ...swahiliB1Day28,
+  stages: b1Day28Stages,
+  workbookConnection: {
+    workbookUrl: "https://www.falowen.app/campus/course/swahili/b1/day-28",
+    subtitle: "Continue B1 Day 28 in Campus.",
+  },
+});
 const dayTenWorkbook = "https://www.falowen.app/campus/course/swahili/day-10";
 const dayTenPresenterSlide = Object.freeze({
   ...SWAHILI_DAY_TEN_ADMIN_LESSON,
@@ -60,8 +111,9 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
   const isDayFive = slideId === SWAHILI_DAY_FIVE_ADMIN_LESSON.id;
   const isDaySix = slideId === SWAHILI_DAY_SIX_ADMIN_LESSON.id;
   const isDayTen = slideId === SWAHILI_DAY_TEN_ADMIN_LESSON.id;
+  const isB1Day28 = slideId === swahiliB1Day28.id;
   const existingPresenterSlide = isDaySix ? daySixPresenterSlide : presenterSlide;
-  const selectedPresenterSlide = isDayTen ? dayTenPresenterSlide : isDayFive ? dayFivePresenterSlide : existingPresenterSlide;
+  const selectedPresenterSlide = isB1Day28 ? b1Day28PresenterSlide : isDayTen ? dayTenPresenterSlide : isDayFive ? dayFivePresenterSlide : existingPresenterSlide;
   const lesson = selectedPresenterSlide;
   const selectedWorkbook = selectedPresenterSlide.workbookConnection.workbookUrl;
   const stages = lesson.stages;
@@ -97,7 +149,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
   };
 
   useEffect(() => {
-    if (!slideId || slideId === swahiliB1Day28.id || !presenting) return undefined;
+    if (!slideId || !presenting) return undefined;
     const onKeyDown = (event) => {
       if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
       const target = event.target;
@@ -114,21 +166,6 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [slideId, presenting, index, stages.length]);
-
-  if (slideId === swahiliB1Day28.id && present) {
-    return <TeachingSlidePresenter slide={swahiliB1Day28} topicLabel={swahiliB1Day28.title}
-      onExit={() => navigate(backToPack)} />;
-  }
-
-  if (slideId === swahiliB1Day28.id) {
-    return <section className="slides-index">
-      <Link to={backToPack}>← Swahili B1 slides</Link>
-      <h1>{swahiliB1Day28.title}</h1>
-      <p>{swahiliB1Day28.objective}</p>
-      <Link to={courseRoot + "/" + slideId + "?present=1"}>Present</Link>
-      <ol>{swahiliB1Day28.classroomStages.map(item => <li key={item.id}>{item.title}</li>)}</ol>
-    </section>;
-  }
 
   if (slideId && !lessonLevel) {
     return <section className="slides-index"><h1>Lesson not found</h1><Link to={courseRoot}>Back to Swahili</Link></section>;
@@ -232,9 +269,9 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
         {"radioVideoId" in stage && <SwahiliRadioMedia stage={stage} />}
         {isDaySix && stage.type === "music" ? <SwahiliRestaurantSong /> : (stage.audio || (isDayFive && stage.type === "day-five")) ? <section className="swahili-a2-presenter__media-stage">
           {stage.audio ? <SwahiliSlideMusic track={stage.audio} /> : <p style={{ whiteSpace: "pre-line" }}>{stage.content}</p>}
-        </section> : <SwahiliA2LessonStage stage={stage} grammar={grammar} isDaySix={isDaySix} />}
+        </section> : <SwahiliA2LessonStage stage={stage} grammar={grammar} isDaySix={isDaySix} level={isB1Day28 ? "B1" : "A1"} />}
 
-        {stage.listeningWorkbookUrl && <a href={stage.listeningWorkbookUrl} target="_blank" rel="noreferrer">Open the recorded listening exercise in Campus</a>}
+        {stage.listeningWorkbookUrl && <a href={stage.listeningWorkbookUrl} target="_blank" rel="noreferrer">Open the related exercise in Campus</a>}
         {stageEnglish && <p className="swahili-a2-presenter__english" lang="en">{stageEnglish}</p>}
 
         {stageQuestion && (
@@ -269,7 +306,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
       />
       {!focusMode && <footer className="swahili-a2-presenter__foot no-print">
         <a href={selectedWorkbook} target="_blank" rel="noreferrer">Open {lesson.day} learner workbook</a>
-        <span>{isDayTen ? "A1 · Sokoni" : isDayFive ? "A1 · Day 5 practice" : isDaySix ? "Restaurant lesson · Falowen Music and Radio" : "Music and recorded Hören will be linked after upload."}</span>
+        <span>{isB1Day28 ? "B1 · Kutunza Mazingira" : isDayTen ? "A1 · Sokoni" : isDayFive ? "A1 · Day 5 practice" : isDaySix ? "Restaurant lesson · Falowen Music and Radio" : "Music and recorded Hören will be linked after upload."}</span>
       </footer>}
     </main>
     </div>
