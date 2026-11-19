@@ -5,7 +5,7 @@ export const submissionLessonId = day => "swahili-" + submissionDocId(day);
 // The canonical path determines ownership; never derive review recipient IDs
 // from a submitted studentId, userId or display name.
 export function canonicalSwahiliSubmission(entry, day = 1) {
-  if (![1, 6, 28].includes(day)) return null;
+  if (![1, 6, 11, 28].includes(day)) return null;
   const path = String(entry?.ref?.path || "");
   const parts = path.split("/");
   if (parts.length !== 4 || parts[0] !== "users" || !parts[1] || parts[2] !== "swahiliLessons" || parts[3] !== submissionDocId(day)) return null;
