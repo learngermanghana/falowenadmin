@@ -350,8 +350,18 @@ function ruleForPoint(label = "", assignmentKey = "") {
   if (/morning and work or school/.test(value)) return /\b(?:morgens?|aufstehen|fr[uü]hst[uü]ck|arbeit|arbeite|schule|unterricht|beginnt|fahre|gehe)\b/i;
   if (/in the evening/.test(value)) return /\b(?:abends?|abend|nach\s+der\s+arbeit|fernsehen|koche|esse|sport|ruhe|schlafe)\b/i;
   if (/friend's daily routine/.test(value)) return /(?:dein(?:e|en)?\s+tagesablauf|was\s+machst\s+du\s+(?:morgens|abends|jeden\s+tag)|wie\s+sieht\s+dein\s+tag)/i;
-  if (/help benefited you/.test(value)) return /\b(?:geholfen|hilfe|dadurch|deshalb|weil|besser|entlastet|krank)\b/i;
-  if (/return the favour|give something back/.test(value)) return /\b(?:revanchieren|zur[uü]ckgeben|gerne\s+helfen|einladen|etwas\s+f[uü]r\s+(?:sie|dich))\b/i;
+  if (/help benefited you/.test(value)) return /\\b(?:geholfen|hilfe|dadurch|deshalb|weil|besser|entlastet|krank)\\b/i;
+  if (/return the favour|give something back/.test(value)) {
+    // Accept an explicit offer of future reciprocal help, including
+    // conditional wording such as "Wenn du Hilfe brauchst, helfe ich dir gern."
+    return (source) => sentences(source).some((sentence) =>
+      /\\b(?:revanchieren|zur[uü]ckgeben|einladen|etwas\\s+f[uü]r\\s+(?:sie|dich))\\b/i.test(sentence)
+      || (/(?:wenn|falls)\\b/i.test(sentence)
+        && /\\b(?:hilfe|hilfsbed[uü]rftig)\\b/i.test(sentence)
+        && /\\b(?:helfe|helfen|unterst[uü]tze|unterst[uü]tzen|mache|bringe)\\b/i.test(sentence)
+        && /\\b(?:gern|gerne|nat[uü]rlich|auch)\\b/i.test(sentence))
+      || /\\bich\\s+(?:helfe|unterst[uü]tze)\\s+(?:dir|ihnen)\\s+(?:gern|gerne)\\b/i.test(sentence));
+  }
   if (normalizedAssignmentKey === "A2-7.20" && /exact product problem/.test(value)) {
     // An exact complaint can be about size, fit or colour, not just a defect.
     // Do not require the learner to say "defekt" or "falsch".
