@@ -291,10 +291,23 @@ function ruleForPoint(label = "", assignmentKey = "") {
   if (/bring|can expect/.test(value)) return /\b(?:mitbringen|bringen|solltest|sollten|kannst|k[oö]nnen|erwarten|es\s+gibt)\b/i;
   if (/do something together|invite.*shop|invite sandra|shared weekend/.test(value)) return /\b(?:zusammen|gemeinsam|mitkommen|einladen|einladung|mit\s+dir|mit\s+ihnen)\b/i;
   if (/free at the weekend/.test(value)) return /(?:hast\s+du|bist\s+du)[\s\S]{0,50}(?:zeit|frei)/i;
-  if (/moved/.test(value)) return /\b(?:umgezogen|neue\s+wohnung|neues\s+zimmer|umzug)\b/i;
-  if (/room and important furniture/.test(value)) return /\b(?:zimmer|wohnung|bett|tisch|stuhl|schrank|sofa|regal|m[oö]bel|lampe)\b/i;
-  if (/especially like/.test(value)) return /\b(?:gef[aä]llt\s+mir|ich\s+mag|am\s+besten|besonders)\b/i;
-  if (/why you like it/.test(value)) return /\b(?:weil|denn)\b/i;
+  if (/moved/.test(value)) return /\\b(?:umgezogen|neue\\s+wohnung|neues\\s+zimmer|umzug)\\b/i;
+  if (/explain that you moved or why you are writing/.test(value)) {
+    return (source) => /\\b(?:umgezogen|neue\\s+wohnung|neues\\s+zimmer|umzug)\\b/i.test(source)
+      || /\\b(?:ich\\s+schreibe|ich\\s+m[oö]chte\\s+(?:erz[aä]hlen|berichten|schreiben))\\b/i.test(source);
+  }
+  if (/room and important furniture/.test(value)) return /\\b(?:zimmer|wohnung|bett|tisch|stuhl|schrank|sofa|regal|m[oö]bel|lampe)\\b/i;
+  if (/especially like/.test(value)) return /\\b(?:gef[aä]llt\\s+mir|ich\\s+mag|gern(?:e)?|am\\s+besten|besonders|liebe)\\b/i;
+  if (/why you like it/.test(value)) return /\\b(?:weil|denn|da|dort|deshalb)\\b/i;
+  if (/say what you especially like and explain why/.test(value)) {
+    return (source) => {
+      const lines = sentences(source);
+      const preference = lines.find((line) => /\\b(?:gef[aä]llt\\s+mir|ich\\s+mag|gern(?:e)?|am\\s+besten|besonders|liebe)\\b/i.test(line));
+      if (!preference) return false;
+      return /\\b(?:weil|denn|da|dort|deshalb)\\b/i.test(preference)
+        || lines.some((line) => /\\b(?:weil|denn|da|deshalb)\\b/i.test(line));
+    };
+  }
   if (/apartment is available/.test(value)) return /\b(?:wohnung|zimmer)\b[\s\S]{0,80}\b(?:frei|verf[uü]gbar)\b|\b(?:frei|verf[uü]gbar)\b[\s\S]{0,80}\b(?:wohnung|zimmer)\b/i;
   if (/criteria such as size, location or price/.test(value)) return /\b(?:zimmer|gr[oö][ßs]e|quadratmeter|lage|stadtteil|miete|preis|kosten|budget|balkon)\b/i;
   if (/rental conditions/.test(value)) return /\b(?:mietbedingungen|kaution|nebenkosten|mietvertrag|vertrag)\b/i;
