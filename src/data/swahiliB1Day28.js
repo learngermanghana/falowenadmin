@@ -8,6 +8,7 @@ export const swahiliB1Day28 = {
   "day": "B1 · Day 28",
   "dayNumber": 28,
   "assignmentId": "SWAHILI-B1-10.28",
+  "teacherLectureVideoId": "kcqRGi5KLMs",
   "title": "Kutunza Mazingira katika Maisha ya Kila Siku",
   "objective": "Mwisho wa siku utaweza kutaja angalau tabia tatu zinazolinda mazingira, kueleza namna na lengo la tendo, na kutoa pendekezo moja linaloweza kutekelezwa katika eneo unaloishi.",
   "classroomStages": [
@@ -18,6 +19,15 @@ export const swahiliB1Day28 = {
       "kicker": "Kiswahili B1 · 10.28",
       "objective": "Mwisho wa siku utaweza kutaja angalau tabia tatu zinazolinda mazingira, kueleza namna na lengo la tendo, na kutoa pendekezo moja linaloweza kutekelezwa katika eneo unaloishi.",
       "topic": "Kiswahili B1 · Somo la 28"
+    },
+    {
+      "id": "ai-video",
+      "type": "teacher-lecture",
+      "kicker": "Video ya somo · AI",
+      "title": "Video ya AI · Kutunza Mazingira",
+      "videoId": "kcqRGi5KLMs",
+      "content": "Tazama video. Taja tabia tatu za kulinda mazingira na eleza umuhimu wake.",
+      "english": "Watch the AI lesson video. Identify three everyday ways to protect the environment."
     },
     {
       "id": "grammar-method",

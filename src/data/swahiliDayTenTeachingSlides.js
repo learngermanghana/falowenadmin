@@ -7,6 +7,7 @@ export const SWAHILI_DAY_TEN_ADMIN_LESSON = Object.freeze({
   "language": "Kiswahili",
   "day": "Day 10",
   "dayNumber": 10,
+  "teacherLectureVideoId": "xLN5QX669JA",
   "title": "Somo la 10 · Sokoni",
   "topic": "Sokoni",
   "objective": "Kuweza kupatana bei na kununua matunda, mboga na vyakula.",
@@ -20,6 +21,15 @@ export const SWAHILI_DAY_TEN_ADMIN_LESSON = Object.freeze({
       "content": "Uliza bidhaa na bei.\nNunua kwa idadi, mafungu au kilo.\nOmba punguzo kwa adabu.",
       "english": "Ask what is available, buy produce and negotiate a price.",
       "notes": "Show real or pictured produce. Ask learners to name the items they recognise."
+    },
+    {
+      "id": "ai-video",
+      "type": "teacher-lecture",
+      "kicker": "Video ya somo · AI",
+      "title": "Video ya AI · Sokoni",
+      "videoId": "xLN5QX669JA",
+      "content": "Tazama video. Sikiliza jinsi ya kuuliza bei na kuomba bidhaa sokoni.",
+      "english": "Watch the AI lesson video. Listen for how to ask prices and request items at the market."
     },
     {
       "id": "grammar",
@@ -85,8 +95,46 @@ export const SWAHILI_DAY_TEN_ADMIN_LESSON = Object.freeze({
       "kicker": "Muziki · Music",
       "title": "Leo Tunaenda Sokoni",
       "audio": SWAHILI_MUSIC_TRACKS.find(track => track.id === "swahili-a1-day-10"),
-      "prompt": "Baada ya kupatana bei, mnunuzi analipa shilingi ngapi?",
-      "answer": "Shilingi elfu tatu."
+      "questions": [
+        {
+          "section": "A. Majibu mafupi · Short Answers",
+          "prompt": "Watu wanaenda wapi kununua bidhaa katika wimbo?",
+          "english": "Where do the people go to buy products in the song?",
+          "answer": "Watu wanaenda sokoni."
+        },
+        {
+          "section": "A. Majibu mafupi · Short Answers",
+          "prompt": "Nani anauza na nani ananunua?",
+          "english": "Who sells and who buys?",
+          "answer": "Muuzaji anauza na mnunuzi ananunua."
+        },
+        {
+          "section": "A. Majibu mafupi · Short Answers",
+          "prompt": "Taja bidhaa nne ambazo mnunuzi anaomba.",
+          "english": "Mention four products requested by the customer.",
+          "answer": "Mnunuzi anaomba embe, machungwa, mayai na mapapai."
+        },
+        {
+          "section": "A. Majibu mafupi · Short Answers",
+          "prompt": "Panga hatua hizi kwa mpangilio sahihi.",
+          "english": "Arrange these steps in the correct order.",
+          "instructions": ["Kulipa", "Kusalimiana", "Kuuliza jumla", "Kuomba bidhaa", "Kujadiliana kuhusu bei", "Kuaga"],
+          "answer": "Kusalimiana → Kuomba bidhaa → Kuuliza jumla → Kujadiliana kuhusu bei → Kulipa → Kuaga."
+        },
+        {
+          "section": "B. Kuzungumza · Speaking Practice",
+          "prompt": "Muuzaji anasema nini ili kumkaribisha na kumsaidia mteja?",
+          "english": "What does the seller say to welcome and assist the customer?",
+          "answer": "Muuzaji anasema: “Karibu, mteja wangu. Nikusaidie nini?”"
+        },
+        {
+          "section": "C. Kazi ya jozi · Pair Work",
+          "prompt": "Tengenezeni mazungumzo mafupi kati ya mnunuzi na muuzaji.",
+          "english": "Create a short conversation between a customer and a seller.",
+          "instructions": ["Salamu", "Kuomba bidhaa", "Kuuliza bei", "Kujadiliana kuhusu bei", "Kulipa na kuaga"],
+          "answer": "Muuzaji: Habari yako? Karibu, mteja wangu.\nMnunuzi: Nzuri, asante. Naomba maembe mawili na machungwa matatu.\nMuuzaji: Sawa. Ni shilingi elfu nne.\nMnunuzi: Ni ghali sana. Tafadhali, punguza bei.\nMuuzaji: Sawa. Lipa shilingi elfu tatu.\nMnunuzi: Asante sana.\nMuuzaji: Karibu tena siku nyingine."
+        }
+      ]
     },
     {
       "id": "radio",

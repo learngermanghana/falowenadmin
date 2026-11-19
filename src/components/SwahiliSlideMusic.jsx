@@ -26,12 +26,12 @@ function sungLines(text) {
     line && !/^\[(?:verse|chorus|outro|bridge|intro|final|kiitikio|ubeti)/i.test(line));
 }
 
-export default function SwahiliSlideMusic({ track }) {
+export default function SwahiliSlideMusic({ track, questions }) {
   if (!track?.objectKey) return <p role="status">Hakuna rekodi iliyochapishwa kwa somo hili.</p>;
-  return <RecordingLyrics key={track.objectKey} track={track} />;
+  return <RecordingLyrics key={track.objectKey} track={track} lessonQuestions={questions} />;
 }
 
-function RecordingLyrics({ track }) {
+function RecordingLyrics({ track, lessonQuestions }) {
   const audioRef = useRef(null);
   const excerptEnd = useRef(null);
   const [pack, setPack] = useState(null);
@@ -67,7 +67,7 @@ function RecordingLyrics({ track }) {
   const cue = matched ? [...cues].reverse().find(entry => Number(entry.start) <= time
     && time < (Number(entry.end) || Infinity)) : null;
   const isB1Day28 = track.id === "swahili-b1-day-28";
-  const questions = isB1Day28 ? B1_DAY_28_QUESTIONS : [];
+  const questions = Array.isArray(lessonQuestions) ? lessonQuestions : isB1Day28 ? B1_DAY_28_QUESTIONS : [];
   const question = questions[questionIndex];
   const openView = next => {
     excerptEnd.current = null;
@@ -166,15 +166,18 @@ function RecordingLyrics({ track }) {
       {question ? <>
         <div className="published-song-lesson__quizmeta">
           <strong>SWALI {questionIndex + 1} / {questions.length}</strong>
-          <span>{questionIndex < 2 ? "UFAHAMU WA WIMBO" : "KUZUNGUMZA"}</span>
+          <span>{question.section || (questionIndex < 2 ? "UFAHAMU WA WIMBO" : "KUZUNGUMZA")}</span>
         </div>
         <h3>{question.prompt}</h3>
+        {question.english && <p lang="en"><em>{question.english}</em></p>}
+        {Array.isArray(question.instructions) && question.instructions.length > 0 &&
+          <ul>{question.instructions.map((step, index) => <li key={index}>{step}</li>)}</ul>}
         <p>Jibu kwa Kiswahili. Mwalimu anaweza kuonyesha mfano wa jibu baada ya majadiliano.</p>
         <button type="button" onClick={() => setShowAnswer(value => !value)}>
           {showAnswer ? "Ficha mfano wa jibu" : "Onyesha mfano wa jibu"}
         </button>
         {showAnswer && <div className="published-song-lesson__answer" role="status">
-          <strong>Mfano wa jibu</strong><p>{question.answer}</p>
+          <strong>Mfano wa jibu</strong><p style={{ whiteSpace: "pre-line" }}>{question.answer}</p>
         </div>}
         <div className="published-song-lesson__quiznav">
           <button type="button" disabled={questionIndex === 0}
