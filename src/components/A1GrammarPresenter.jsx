@@ -21,12 +21,14 @@ import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import PublishedSongLessonStage from "./PublishedSongLessonStage.jsx";
 import A1Day12ClassroomStage from "./A1Day12ClassroomStage.jsx";
 import A1Day13ClassroomStage from "./A1Day13ClassroomStage.jsx";
+import A1Day22ClassroomStage from "./A1Day22ClassroomStage.jsx";
 import A1Day2TeachingStage from "./A1Day2TeachingStage.jsx";
 import A1Day3TeachingStage from "./A1Day3TeachingStage.jsx";
 import { A1_DAY2_LESSON_ID, A1_DAY2_CLASSROOM_STAGES } from "../data/a1Day2Classroom.js";
 import { A1_DAY3_ASSIGNMENT, A1_DAY3_MUSIC_ASSIGNMENT, A1_DAY3_CLASSROOM_STAGES } from "../data/a1Day3Classroom.js";
 import { A1_DAY12_STAGES } from "../data/a1Day12Classroom.js";
 import { A1_DAY13_STAGES } from "../data/a1Day13Classroom.js";
+import { A1_DAY22_STAGES } from "../data/a1Day22Classroom.js";
 import { getCuratedMusicByAssignment } from "../data/curatedLessonMusic.js";
 import { getA1PresenterMusicStage } from "../data/a1PresenterMusicStage.js";
 import { getA1Teil3ObjectCard } from "../data/a1Teil3ObjectCards.js";
@@ -142,6 +144,7 @@ export function stageList(slide, topicLabel) {
   }
   if (String(slide?.assignmentId || "").trim().toUpperCase() === "A1-8") return A1_DAY12_STAGES;
   if (String(slide?.assignmentId || "").trim().toUpperCase() === "A1-3.5") return A1_DAY13_STAGES;
+  if (String(slide?.assignmentId || "").trim().toUpperCase() === "A1-14.1") return A1_DAY22_STAGES;
   const isSpeakingReadiness = String(slide?.assignmentId || "").trim().toUpperCase() === "A1-5.9";
   const isDay15ObjectLesson = String(slide?.assignmentId || "").trim().toUpperCase() === "A1-4.7";
   const support = buildTeacherSlideSupport(slide);
@@ -757,6 +760,8 @@ export default function A1GrammarPresenter({
             <A1Day12ClassroomStage key={stage.id} step={stage.step} />
           ) : stage.type === "a1-day13" ? (
             <A1Day13ClassroomStage key={stage.id} step={stage.step} />
+          ) : stage.type === "a1-day22" ? (
+            <A1Day22ClassroomStage key={stage.id} step={stage.step} />
           ) : stage.type === "published-music" ? (
             <PublishedSongLessonStage assignmentKey={stage.musicAssignmentKey || slide.assignmentId} courseDay={slide.dayNumber} compact nextLyricOnly />
           ) : stage.type === "intro" ? (
