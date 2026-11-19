@@ -553,6 +553,16 @@ ENTRIES["A2-9.24"] = {
   listening: A2_DAY24_CLASSROOM_LISTENING,
 };
 
+ENTRIES["A2-10.27"] = {
+  assignmentId: "A2-10.27", title: "Digitale Kommunikation", warmup: [],
+  musicIntro: {
+    mediaType: "music", assignmentKey: "A2-10.27", level: "A2", day: 27,
+    title: "Handy weg",
+    studentPurpose: "Höre das Lied und nenne zwei Dinge, die die Person auf TikTok macht.",
+    teacherPurpose: "Spiele das Lied und besprecht, wann die Person ihr Handy weglegt.",
+  },
+};
+
 ENTRIES["A2-10.26"] = {
   assignmentId: "A2-10.26", title: "Gefühle in verschiedenen Situationen",
   warmup: [], listening: A2_DAY26_CLASSROOM_LISTENING,
