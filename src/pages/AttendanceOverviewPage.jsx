@@ -5,25 +5,11 @@ import ClassAttendanceTracker from "../components/ClassAttendanceTracker.jsx";
 import AttendanceCommunicationHealthPanel from "../components/AttendanceCommunicationHealthPanel.jsx";
 import { listClassCohorts, listClassSessions } from "../services/liveClassService.js";
 import { orderAttendanceClasses, weeklyTimetableLabels } from "../utils/attendanceClassTiming.js";
+import { isActiveLiveClass } from "../utils/attendanceClassVisibility.js";
 
 const GHANA_TIMEZONE = "Africa/Accra";
-const TERMINAL_CLASS_STATUSES = new Set([
-  "archived",
-  "graduated",
-  "inactive",
-  "cancelled",
-  "canceled",
-  "completed",
-  "closed",
-  "draft",
-]);
-
 function normalize(value) {
   return String(value || "").trim();
-}
-
-function normalizeStatus(value) {
-  return normalize(value).toLowerCase();
 }
 
 function classRecordKey(klass = {}) {
@@ -50,22 +36,6 @@ function formatDate(value) {
     month: "short",
     year: "numeric",
   }).format(date);
-}
-
-
-function isActiveLiveClass(klass = {}) {
-  const status = normalizeStatus(klass.status);
-  if (klass.archived === true || klass.isArchived === true || klass.active === false) return false;
-  if (TERMINAL_CLASS_STATUSES.has(status)) return false;
-
-  if (["active", "ongoing", "upcoming", "scheduled", "open"].includes(status)) return true;
-
-  const endDate = parseClassDate(klass.endDate);
-  if (!endDate) return Boolean(klass.name || klass.className);
-
-  const now = new Date();
-  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 12));
-  return endDate.getTime() >= today.getTime();
 }
 
 
@@ -166,9 +136,15 @@ export default function AttendanceOverviewPage() {
     return () => { active = false; };
   }, []);
 
+  // Recheck eligibility at the calendar-day boundary, not every minute:
+  // finished cohorts leave the active list without repeated Firestore reads.
+  const todayKey = new Intl.DateTimeFormat("en-CA", {
+    timeZone: GHANA_TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(now);
+  const todayAnchor = useMemo(() => new Date(), [todayKey]);
   const activeClasses = useMemo(
-    () => classes.filter(isActiveLiveClass),
-    [classes],
+    () => classes.filter((klass) => isActiveLiveClass(klass, todayAnchor)),
+    [classes, todayAnchor],
   );
 
   useEffect(() => {
