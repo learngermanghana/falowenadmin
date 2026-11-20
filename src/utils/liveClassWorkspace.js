@@ -12,6 +12,60 @@ export function orderedWorkspaceSessions(sessions = [], levelId = "", filter = "
       ? (toSessionDate(a.startsAt)?.getTime() || 0) - (toSessionDate(b.startsAt)?.getTime() || 0)
       : (resolveOfficialSessionNumber(a, groups, levelId) || Infinity) - (resolveOfficialSessionNumber(b, groups, levelId) || Infinity));
 }
+/**
+ * One A1 curriculum day can have several historical meeting documents.
+ * Show one representative in the everyday lesson view without deleting,
+ * modifying, or concealing the others from the explicit history view.
+ * This is display-only; the repair planner still reviews raw session records.
+ */
+export function groupA1OfficialAndRepeatSessions(sessions = []) {
+  const groups = getCourseSessionGroups("A1");
+  const byNumber = new Map();
+  for (const session of sessions) {
+    const number = resolveOfficialSessionNumber(session, groups, "A1");
+    if (!number) continue;
+    if (!byNumber.has(number)) byNumber.set(number, []);
+    byNumber.get(number).push(session);
+  }
+
+  const preference = (session) => {
+    const statusValue = status(session);
+    const attendance = Number(session.attendanceCount || session.attendeeCount || 0) > 0
+      || Boolean(session.students && Object.keys(session.students).length);
+    const manualCompletion = statusValue === "completed"
+      && (session.manualCompletion === true || session.manuallyCompleted === true
+        || session.completionSource === "manual"
+        || (session.completedBy && !String(session.completedBy).startsWith("system:")));
+    const manualMove = session.manualDateOverride === true || Boolean(session.rescheduledAt || session.rescheduledBy);
+    return (attendance ? 10000 : 0) + (manualCompletion ? 8000 : 0)
+      + (manualMove ? 5000 : 0) + (statusValue === "completed" ? 2000 : 0)
+      + (statusValue === "live" ? 1000 : 0);
+  };
+
+  const repeatedIds = new Set();
+  const repeatedDays = [];
+  byNumber.forEach((records, lessonNumber) => {
+    if (records.length < 2) return;
+    const sorted = [...records].sort((left, right) =>
+      preference(right) - preference(left)
+      || (toSessionDate(left.startsAt)?.getTime() || Infinity) - (toSessionDate(right.startsAt)?.getTime() || Infinity)
+      || String(left.id).localeCompare(String(right.id)));
+    sorted.slice(1).forEach((session) => repeatedIds.add(session.id));
+    repeatedDays.push({
+      day: groups[lessonNumber - 1]?.day,
+      lessonNumber,
+      representativeId: sorted[0].id,
+      repeatCount: records.length - 1,
+    });
+  });
+
+  return {
+    primary: sessions.filter((session) => !repeatedIds.has(session.id)),
+    repeats: sessions.filter((session) => repeatedIds.has(session.id)),
+    repeatedDays: repeatedDays.sort((left, right) => left.lessonNumber - right.lessonNumber),
+  };
+}
+
 export function nextTeachingSession(sessions = [], now = new Date(), klass = {}) {
   const active = orderedWorkspaceSessions(sessions, "", "remaining", "date");
   const upcoming = active.filter(session => (toSessionDate(session.endsAt)?.getTime() || 0) >= now.getTime());
