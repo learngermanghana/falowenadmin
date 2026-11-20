@@ -1,0 +1,59 @@
+{
+  "mode": "course",
+  "level": "A2",
+  "examPart": "",
+  "title": "Über die Zukunft sprechen",
+  "kind": "multiple-choice",
+  "questions": [
+    {
+      "question": "Wohin wird Anna im Juli wahrscheinlich reisen?",
+      "evidence": "Ich glaube, dass wir im Juli nach Italien reisen werden.",
+      "options": [
+        "Nach Spanien",
+        "Nach Italien",
+        "Nach Österreich"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "question": "Was wird Anna im August machen?",
+      "evidence": "Ja, im August fange ich einen neuen Job im Café an.",
+      "options": [
+        "Sie fängt einen neuen Job im Café an.",
+        "Sie macht Urlaub am Meer.",
+        "Sie zieht in eine neue Wohnung um."
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "Wie lange wird Anna im Café arbeiten?",
+      "evidence": "Ich werde dort drei Wochen lang arbeiten.",
+      "options": [
+        "Zwei Wochen",
+        "Drei Wochen",
+        "Einen Monat"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "question": "Was plant Anna mit dem verdienten Geld zu tun?",
+      "evidence": "Ich plane, im Herbst einen Fotokurs zu besuchen.",
+      "options": [
+        "Sie kauft ein neues Smartphone.",
+        "Sie kauft eine Kamera.",
+        "Sie besucht einen Fotokurs."
+      ],
+      "correctIndex": 2
+    },
+    {
+      "question": "Was möchten sie vielleicht nächstes Jahr machen?",
+      "evidence": "Und nächstes Jahr ziehen wir vielleicht in eine größere Wohnung um.",
+      "options": [
+        "In eine größere Wohnung umziehen",
+        "Ein neues Auto kaufen",
+        "Einen Hund adoptieren"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
