@@ -21,7 +21,7 @@ import { getB1ApplicationLab } from "../data/b1ApplicationLabs.js";
 import { getInteractiveLessonOpening } from "../data/interactiveLessonOpenings.js";
 import { getB1FocusedPractice, getB1PresenterKnowledge } from "../data/b1PresenterKnowledge.js";
 import { getPresenterTopicFoundation } from "../data/presenterTopicFoundations.js";
-import { getSpeakingDifficultySelection } from "../data/presenterSpeakingDifficulty.js";
+import { closingSentences } from "../data/a2B1ClosingSentences.js";
 import { buildA2B1SpeakingCoaching } from "../data/a2B1SpeakingCoaching.js";
 import { buildC2SpeakingCoaching } from "../data/c2SpeakingCoaching.js";
 import { buildCourseBookBridgeItems, getCurriculumParityReference } from "../data/studentCurriculumParity.js";
@@ -1393,37 +1393,19 @@ function buildA2B1FocusedPracticeStage(slide = {}, focusedPractice = null, suppo
   };
 }
 
-function buildProgressiveSpeakingStage(slide = {}, speakingStage = {}, level = "") {
-  const questions = Array.isArray(speakingStage.items) ? speakingStage.items.filter(Boolean) : [];
-  if (!questions.length) return speakingStage;
-
-  const curated = getSpeakingDifficultySelection(normalizedAssignmentId(slide));
-  const fallbackIndexes = [0, Math.floor((questions.length - 1) / 2), questions.length - 1];
-  const indexes = (curated?.indexes || fallbackIndexes)
-    .map(Number)
-    .filter((index, position, values) => Number.isInteger(index) && index >= 0 && index < questions.length && values.indexOf(index) === position)
-    .slice(0, 3);
-
-  const questionModels = Array.isArray(speakingStage.questionModels) ? speakingStage.questionModels : [];
-  const selectedQuestions = indexes.map((index) => questions[index]).filter(Boolean);
-  const selectedModels = selectedQuestions
-    .map((question) => questionModels.find((item) => item?.questionDe === question))
-    .filter(Boolean);
-  const labels = (curated?.labels || ["Easy", "Neutral", "Difficult"]).slice(0, selectedQuestions.length);
-
+function buildClosingSentenceStage(slide, level) {
   return {
-    ...speakingStage,
-    title: level === "B1" ? "Sprechen · 3 Stufen" : "Sprechen · 3 Fragen",
-    instruction: "Nach Warm-up und Grammatik: eine leichte, eine neutrale und eine schwierigere Frage.",
-    items: selectedQuestions,
-    questionModels: selectedModels,
-    coachingItems: selectedQuestions.map((question) =>
-      (Array.isArray(speakingStage.coachingItems) ? speakingStage.coachingItems : [])
-        .find((item) => item?.questionDe === question) || null),
-    questionLevels: labels,
-    difficultySource: curated ? "curated" : "fallback",
-    difficultyIndexes: indexes,
-    suggestedMinutes: level === "B1" ? 10 : 9,
+    id: "questions",
+    type: "list",
+    kicker: "Abschluss",
+    title: "Ein Satz zum Schluss",
+    timingLabel: "Ergänze den Satz im Chat. Du hast 30 Sekunden.",
+    items: [closingSentences[level][slide.dayNumber - 1]],
+    suggestedMinutes: 1,
+    teacherPurpose: {
+      student: "Schreibe einen Satz zum Thema der Stunde.",
+      teacher: "Nach 30 Sekunden zwei Antworten vorlesen und weitergehen.",
+    },
   };
 }
 
@@ -1645,20 +1627,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         const practiceStage = buildA2B1FocusedPracticeStage(slide, focusedPractice, support, level);
         return practiceStage ? [practiceStage] : [];
       })(),
-      Array.isArray(slide.presenterSpeakingRounds) && slide.presenterSpeakingRounds.length
-        ? {
-            id: "questions",
-            type: "flow",
-            kicker: "Sprechen",
-            title: "Restaurant-Rollenspiel · 3 Runden",
-            variant: "scenario-task",
-            variantLabel: "Progressives Rollenspiel",
-            weekNumber: a2B1PresenterWeek(slide),
-            weekFamily: "Scenarios & decisions",
-            items: slide.presenterSpeakingRounds,
-            suggestedMinutes: slide.presenterSpeakingRounds.reduce((sum, item) => sum + Number(item?.minutes || 0), 0) || 13,
-          }
-        : buildProgressiveSpeakingStage(slide, speakingStage, level),
+      buildClosingSentenceStage(slide, level),
       workbookStage,
     ];
   }
@@ -1751,7 +1720,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         const practiceStage = buildA2B1FocusedPracticeStage(slide, focusedPractice, support, level);
         return practiceStage ? [practiceStage] : [];
       })(),
-      buildProgressiveSpeakingStage(slide, speakingStage, level),
+      buildClosingSentenceStage(slide, level),
       workbookStage,
     ];
   }
@@ -2275,11 +2244,9 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
       });
     }
   }
-  // Keep the existing speaking task from the workbook immediately before
-  // the clarification checkpoint, in the normal classroom sequence.
   const insertWorkbookPresentation = (stage) => {
-    const clarificationIndex = filtered.findIndex((item) => item.id === "workbook");
-    filtered.splice(clarificationIndex < 0 ? filtered.length : clarificationIndex, 0, stage);
+    const closingIndex = filtered.findIndex((item) => item.id === "questions");
+    filtered.splice(closingIndex < 0 ? filtered.length : closingIndex, 0, stage);
   };
   if (presenterV2 && level === "A2") {
     const presentation = A2_WORKBOOK_PRESENTATIONS[day];

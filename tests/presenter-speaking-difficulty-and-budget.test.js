@@ -25,19 +25,13 @@ test("all 56 A2/B1 lessons have explicit Easy Neutral Difficult selections", () 
       assert.ok(Number.isInteger(index) && index >= 0 && index < slide.studentQuestionsDe.length, `${slide.assignmentId} index ${index} out of range`);
     }
 
-    const stage = buildTeachingPresenterStages(slide, slide.topic).find((item) => item.id === "questions");
-    if (slide.assignmentId === "A2-3.8") {
-      // The restaurant lesson deliberately replaces question reveal with a
-      // three-round progressive role-play; the curated selection still exists.
-      assert.equal(stage.type, "flow");
-      assert.equal(stage.items.length, 3);
-      assert.deepEqual(stage.items, slide.presenterSpeakingRounds);
-      continue;
-    }
-    assert.equal(stage.difficultySource, "curated", `${slide.assignmentId} must not use positional fallback`);
-    assert.deepEqual(stage.difficultyIndexes, selection.indexes);
-    assert.deepEqual(stage.items, selection.indexes.map((index) => slide.studentQuestionsDe[index]));
-    assert.deepEqual(stage.questionLevels, ["Easy", "Neutral", "Difficult"]);
+    const stages = buildTeachingPresenterStages(slide);
+    const index = stages.findIndex((stage) => stage.id === "workbook-presentation");
+    assert.ok(index >= 0);
+    const closing = stages[index + 1];
+    assert.equal(closing.title, "Ein Satz zum Schluss");
+    assert.equal(closing.items.length, 1);
+    assert.equal(closing.suggestedMinutes, 1);
   }
 });
 

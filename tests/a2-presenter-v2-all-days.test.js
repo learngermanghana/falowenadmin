@@ -2,7 +2,6 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { getSlidesByCourse, getTeachingSlideByAssignmentId } from "../src/data/teachingSlides.js";
-import { getSpeakingDifficultySelection } from "../src/data/presenterSpeakingDifficulty.js";
 import {
   buildTeachingPresenterStages,
   isA2PresenterV2Slide,
@@ -20,7 +19,7 @@ const ASSIGNMENT_IDS = [
 
 const REQUIRED_STAGES = [
   "intro", "warmup", "common-mistakes", "reading", "grammar-check",
-  "questions", "workbook-presentation", "workbook", "lesson-summary",
+  "workbook-presentation", "questions", "workbook", "lesson-summary",
 ];
 
 test("A2 Teaching Slides expose the complete 28-day workbook-aligned course", () => {
@@ -89,25 +88,11 @@ test("all A2 days use Presenter 2.0 with workbook-aligned classroom support", ()
     assert.equal(workbook.items.length, 3);
     assert.equal(workbook.title, "Was ist noch unklar?");
     assert.ok(stageIds.indexOf("questions") < stageIds.indexOf("workbook"), `${slide.assignmentId} production should come before workbook bridge`);
-    if (slide.assignmentId === "A2-3.8") {
-      // Day 8 deliberately uses a three-round restaurant dialogue instead
-      // of a fixed Easy/Neutral/Difficult question reveal.
-      assert.equal(questions.type, "flow");
-      assert.equal(questions.items.length, 3);
-      assert.deepEqual(questions.items, slide.presenterSpeakingRounds);
-      assert.ok(questions.items.every((item) => Number(item.minutes) > 0));
-      continue;
-    }
-    assert.equal(questions.type, "question-reveal");
-    assert.equal(questions.items.length, 3, `${slide.assignmentId} should use three progressive speaking questions`);
-    assert.deepEqual(questions.questionLevels, ["Easy", "Neutral", "Difficult"]);
-    assert.equal(questions.questionModels.length, 3, `${slide.assignmentId} should keep a model for each selected question`);
-    assert.ok(questions.supportItems.length >= 3, `${slide.assignmentId} should reveal model support`);
-    const difficulty = getSpeakingDifficultySelection(slide.assignmentId);
-    assert.ok(difficulty, `${slide.assignmentId} needs an explicit difficulty map`);
-    assert.equal(questions.difficultySource, "curated");
-    assert.deepEqual(questions.difficultyIndexes, difficulty.indexes);
-    assert.deepEqual(questions.items, difficulty.indexes.map((index) => slide.studentQuestionsDe[index]));
+    assert.equal(questions.type, "list");
+    assert.equal(questions.title, "Ein Satz zum Schluss");
+    assert.equal(questions.suggestedMinutes, 1);
+    assert.equal(questions.items.length, 1);
+    assert.match(questions.items[0], /…/);
   }
 });
 

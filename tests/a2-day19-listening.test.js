@@ -28,7 +28,7 @@ test('Day 19 keeps separate music and Hören alongside Lesen, correction and spe
   assert.equal(stages[2].audioKey, A2_DAY19_LISTENING.audioKey);
   assert.equal(stages[2].listeningItems.length, 5);
   assert.equal(stages[5].title, 'Günstig gekauft?');
-  assert.equal(stages.find(s=>s.id==='questions').items.length, 3);
+  assert.equal(stages.find(s=>s.id==='questions').items.length, 1);
   assert.equal(stages[1].variant, 'interactive-music-video');
   assert.equal(stages[1].musicVideo.musicLibraryUrl, 'https://music.falowen.app/?level=A2&day=19');
   assert.equal(stages[1].musicVideo.youtubeId, undefined);

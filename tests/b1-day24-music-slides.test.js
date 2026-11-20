@@ -75,7 +75,7 @@ test("B1 Day 24 Argumentkarte is a four-case interactive decision activity on it
 
   assert.equal(stages.length, 12, "keep correction, music intro, Hören and workbook presentation");
   assert.equal(stages[7].id, "practice");
-  assert.equal(stages[8].id, "questions", "keep existing speaking tasks after practice");
+  assert.equal(stages[8].id, "workbook-presentation", "keep the workbook presentation after practice");
   assert.equal(practice.type, "flow");
   assert.equal(practice.suggestedMinutes, 7);
   assert.equal(practice.items.length, 1);

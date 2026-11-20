@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { buildA2B1SpeakingCoaching, speakingTaskChecks } from "../src/data/a2B1SpeakingCoaching.js";
-import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 
 test("all 56 A2/B1 lessons use their own verified speaking answers for coaching", () => {
   for (const level of ["A2", "B1"]) {
@@ -38,18 +37,7 @@ test("all 56 A2/B1 lessons use their own verified speaking answers for coaching"
           `${slide.assignmentId}: hint uses neither a lesson phrase nor its own model starter`);
       }
 
-      const speaking = buildTeachingPresenterStages(slide, slide.topic)
-        .find((stage) => stage.id === "questions");
-      assert.ok(speaking, `${slide.assignmentId}: speaking stage disappeared`);
-      if (speaking.type === "question-reveal") {
-        assert.equal(speaking.coachingItems.length, speaking.items.length, `${slide.assignmentId}: selected question coaching mismatch`);
-        for (let index = 0; index < speaking.items.length; index += 1) {
-          assert.equal(speaking.coachingItems[index]?.questionDe, speaking.items[index],
-            `${slide.assignmentId}: selected feedback belongs to a different question`);
-        }
-      } else {
-        assert.equal(speaking.type, "flow", `${slide.assignmentId}: special speaking format changed`);
-      }
+
     }
   }
 });

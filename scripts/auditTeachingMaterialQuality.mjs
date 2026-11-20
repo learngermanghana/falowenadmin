@@ -100,6 +100,7 @@ for (const [index, slide] of slides.entries()) {
       : grammar && examples
   );
   const hasSpeakingSupport = Boolean(questions && (
+    (LEVEL === "A2" && stageMap.has("workbook-presentation") && questions.type === "list" && questions.items?.length === 1) ||
     (Array.isArray(questions.supportItems) && questions.supportItems.length >= 3) ||
     (questions.type === "flow" && Array.isArray(questions.items) && questions.items.length >= 2) ||
     // Day 22's questions are inside the single music activity. Count the

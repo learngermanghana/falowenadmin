@@ -67,8 +67,8 @@ test("A2 Presenter uses the stable teaching spine and removes repetitive ending 
     assert.equal(practice.items.length, 1, `${assignmentId} should have one focused practice, not a repeated drill stack`);
     assert.ok(practice.items[0].prompts?.length >= 2, `${assignmentId} focused practice should be actionable`);
 
-    assert.equal(questions.type, "question-reveal");
-    assert.equal(questions.items.length, 3, `${assignmentId} speaking production should use Easy, Neutral and Difficult`);
+    assert.equal(questions.type, "list");
+    assert.equal(questions.items.length, 1, `${assignmentId} closing activity should have a single prompt`);
 
     assert.equal(workbook.type, "clarification");
     assert.equal(workbook.items.length, 3);
