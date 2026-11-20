@@ -149,7 +149,7 @@ export const MUSIC_QUESTION_SEEDS_A1 = Object.freeze([
     "A1-9",
     "Was bestellt die Person ohne Fleisch?",
     "Eine Suppe.",
-    "Was isst Mia gern?",
+    "Was schmeckt der singenden Person?",
     "Reis und Gemüse.",
     "Was möchtest du im Restaurant essen?"
   ],
