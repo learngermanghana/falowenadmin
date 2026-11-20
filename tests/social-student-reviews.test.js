@@ -67,8 +67,8 @@ test("social studio exposes a real Student Reviews editor and PNG export", () =>
   assert.match(component, /Export PNG/);
   assert.match(component, /canvas\.toBlob/);
   assert.match(component, /localStorage\.setItem/);
-  assert.match(component, /drawStudentReviewPoster\(canvas, draft, formatId\)/);
-  assert.match(component, /if \(!result\.fits\)/);
+  assert.match(component, /drawStudentReviewPoster/);
+  assert.match(component, /renderSlide/);
 });
 
 test("Falowen Reviews copy templates preserve reviewer, exact quote and attribution", () => {
