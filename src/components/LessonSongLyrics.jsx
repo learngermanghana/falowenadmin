@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { activeLyricIndex, lyricLines, songTime, validateLyricCues } from '../utils/songLyrics.js';
 import { publishedVideoEnglish } from '../utils/musicLyricsVideo.js';
-export default function LessonSongLyrics({ song, cues = [], time = 0, onSeek, follow = true }) {
+export default function LessonSongLyrics({ song, cues = [], time = 0, onSeek, follow = true, language = "de", label = "Liedtext" }) {
   const lines = lyricLines(song.lyrics);
-  const [showEnglish, setShowEnglish] = useState(true);
+  const [showEnglish, setShowEnglish] = useState(language === "de");
   const englishText = publishedVideoEnglish(song, song.objectKey || song.audioKey, song.lyrics);
   const english = englishText ? englishText.split('\n') : [];
   const hasEnglish = english.length === lines.length && lines.length > 0;
@@ -24,7 +24,7 @@ export default function LessonSongLyrics({ song, cues = [], time = 0, onSeek, fo
       checked={showEnglish} onChange={event => setShowEnglish(event.target.checked)} /> English translation</label>}
     {hasEnglish && showEnglish && song.englishTranslation?.source === 'course-draft' &&
       <p className="lesson-song-note">English translation of the matching lyric draft · not reviewed against the recording.</p>}
-    <div ref={root} className="lesson-song-lyrics" lang="de" aria-label="Liedtext">
+    <div ref={root} className="lesson-song-lyrics" lang={language} aria-label={label}>
     {lines.map((line, i) => <button key={i} type="button" data-line={i}
       className={i === active ? 'is-active' : ''} aria-current={i === active ? 'true' : undefined}
       disabled={!onSeek || !checked[i]} onClick={() => onSeek?.(checked[i].start)}>
