@@ -182,7 +182,6 @@ export default function CanonicalAttendancePageV3() {
             students: mergeStudents(template, stored.students || {}),
           }];
         }));
-        const timezone = dashboard.klass.timezone || TIMEZONE;
         const visibleSessions = dashboard.sessions.filter(session => !session.superseded && session.status !== "superseded");
         const requestedId = searchParams.get("session") || "";
         const chosen = chooseAttendanceSession(visibleSessions, dashboard.klass, requestedId);
@@ -493,7 +492,7 @@ export default function CanonicalAttendancePageV3() {
           </select>
         </label> : <p role="status">No active attendance check-ins remain for this class. Use View past sessions to inspect earlier records.</p>}
 
-        {dictionaryEntries.length ? <div className="session-attendance__lesson">
+        {selected && dictionaryEntries.length ? <div className="session-attendance__lesson">
           <strong>{dictionaryLevel} lesson dictionary</strong>
           <SessionDictionaryPicker
             entries={dictionaryEntries}
@@ -596,7 +595,7 @@ export default function CanonicalAttendancePageV3() {
           ))}</div> : <p>No active students were found. Confirm the student's class in Student Directory.</p>}
           <button style={{ marginTop: 14 }} disabled={saving || !rows.length} onClick={save}>{saving ? "Saving…" : "Save attendance"}</button>
         </article>
-      </> : <p>No sessions were found for this class.</p>}
+      </> : <p>No active check-in session is available. Past attendance records can be opened using View past sessions.</p>}
     </section>
   );
 }
