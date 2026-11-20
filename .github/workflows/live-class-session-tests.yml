@@ -17,6 +17,10 @@ on:
       - 'src/data/courseDictionary.js'
       - 'src/data/courseSessionGroups.js'
       - 'src/pages/AttendanceOverviewPage.jsx'
+      - 'src/pages/CanonicalAttendancePageV3.jsx'
+      - 'src/utils/attendanceClassTiming.js'
+      - 'src/utils/attendanceClassVisibility.js'
+      - 'tests/attendance-ended-class-visibility.test.js'
       - 'src/pages/CanonicalAttendancePage.jsx'
       - 'src/pages/ClassScheduleSetupPage.jsx'
       - 'src/pages/CommunicationHubPage.jsx'
@@ -96,6 +100,10 @@ on:
       - 'src/data/courseDictionary.js'
       - 'src/data/courseSessionGroups.js'
       - 'src/pages/AttendanceOverviewPage.jsx'
+      - 'src/pages/CanonicalAttendancePageV3.jsx'
+      - 'src/utils/attendanceClassTiming.js'
+      - 'src/utils/attendanceClassVisibility.js'
+      - 'tests/attendance-ended-class-visibility.test.js'
       - 'src/pages/CanonicalAttendancePage.jsx'
       - 'src/pages/ClassScheduleSetupPage.jsx'
       - 'src/pages/CommunicationHubPage.jsx'
@@ -186,6 +194,9 @@ jobs:
           grep -F 'exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob' functions/index.js
           grep -F 'config: classConfig' functions/attendanceConfirmationEmails.js
           grep -F 'schedule: "*/30 * * * *"' functions/attendanceConfirmationEmails.js
+
+      - name: Verify finished classes cannot appear as active check-ins
+        run: node --test tests/attendance-ended-class-visibility.test.js tests/attendance-class-timing.test.js
 
       - name: Test mobile reschedule date handling
         run: node --test tests/live-class-mobile-reschedule-date.test.js
