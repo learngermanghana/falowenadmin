@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import LiveClassNextLesson from "../components/LiveClassNextLesson.jsx";
 import LiveClassSessionEditor from "../components/LiveClassSessionEditor.jsx";
-import { orderedWorkspaceSessions, completionLabel } from "../utils/liveClassWorkspace.js";
+import { orderedWorkspaceSessions, completionLabel, groupA1OfficialAndRepeatSessions } from "../utils/liveClassWorkspace.js";
+import { resolveOfficialSessionNumber } from "../utils/liveClassLessonOrder.js";
 import { undoLastScheduleChange } from "../services/liveClassUndoService.js";
 import "./LiveClassWorkspace.css";
 import LiveClassStudentsPanel from "../components/LiveClassStudentsPanel.jsx";
@@ -129,6 +130,7 @@ export default function LiveClassesPageV2() {
   const [classFilter, setClassFilter] = useState(() => searchParams.get("language") === "swahili" ? "all" : "active");
   const [languageFilter, setLanguageFilter] = useState(() => searchParams.get("language") || "all");
   const [sessionFilter, setSessionFilter] = useState("all");
+  const [showA1MeetingHistory, setShowA1MeetingHistory] = useState(false);
   const [lessonSearch, setLessonSearch] = useState("");
   const [sessionSort, setSessionSort] = useState("lesson");
   const [dashboard, setDashboard] = useState(null);
@@ -311,6 +313,8 @@ export default function LiveClassesPageV2() {
 
   function renderSessions() {
     const allSessions = orderedWorkspaceSessions(dashboard?.sessions || [], levelId, sessionFilter, sessionSort);
+    const a1History = levelId === "A1" && !isSwahili ? groupA1OfficialAndRepeatSessions(allSessions) : null;
+    const displayedSessions = a1History && !showA1MeetingHistory ? a1History.primary : allSessions;
     const term = lessonSearch.trim().toLocaleLowerCase();
     const groups = getCourseSessionGroups(levelId);
     const groupForSession = (session) => groups.find(group =>
@@ -322,15 +326,22 @@ export default function LiveClassesPageV2() {
         ...(group?.entries || []).flatMap(entry => [entry.de, entry.en, entry.chapter, entry.assignment_id])]
         .some(value => String(value || "").toLocaleLowerCase().includes(term));
     };
-    const sessions = term ? allSessions.filter(matchesSearch) : allSessions;
-    const savedAssignments = new Set((dashboard?.sessions || [])
-      .filter(session => !session.superseded && String(session.status || "").toLowerCase() !== "superseded")
-      .flatMap(curriculumIds).map(id => id.toUpperCase()));
-    const missingGroups = term ? groups.filter(group =>
-      group.assignmentIds.length && group.assignmentIds.every(id => !savedAssignments.has(id.toUpperCase()))
-      && [group.topic, group.label, ...group.chapters,
+    const sessions = term ? displayedSessions.filter(matchesSearch) : displayedSessions;
+    const activeRecords = (dashboard?.sessions || [])
+      .filter(session => !session.superseded && String(session.status || "").toLowerCase() !== "superseded");
+    const savedAssignments = new Set(activeRecords.flatMap(curriculumIds).map(id => id.toUpperCase()));
+    // A1's official course positions are defined by Day 0–23, not by a raw
+    // count of assignment IDs; historical records can hold stale ID arrays.
+    const mappedA1LessonNumbers = new Set(levelId === "A1" && !isSwahili
+      ? activeRecords.map(session => resolveOfficialSessionNumber(session, groups, "A1")).filter(Boolean)
+      : []);
+    const missingGroups = (term || (levelId === "A1" && !isSwahili)) ? groups.filter(group =>
+      group.assignmentIds.length && (levelId === "A1" && !isSwahili
+        ? !mappedA1LessonNumbers.has(group.index + 1)
+        : group.assignmentIds.every(id => !savedAssignments.has(id.toUpperCase())))
+      && (!term || [group.topic, group.label, ...group.chapters,
         ...group.entries.flatMap(entry => [entry.de, entry.en, entry.chapter, entry.assignment_id])]
-        .some(value => String(value || "").toLocaleLowerCase().includes(term))
+        .some(value => String(value || "").toLocaleLowerCase().includes(term)))
     ) : [];
     if (!sessions.length && !missingGroups.length && !term) {
       return <p>No lessons match this filter. Choose All lessons to see the full course.</p>;
@@ -344,6 +355,12 @@ export default function LiveClassesPageV2() {
             placeholder="Day 27, 10.27, A2-10.27 or Digitale Kommunikation"
             style={{ display: "block", maxWidth: 520, width: "100%" }} />
         </label>
+        {a1History?.repeats.length ? <div role="status" style={{ padding: 12, border: "1px solid #f59e0b", borderRadius: 8, marginBottom: 12, background: "#fffbeb" }}>
+          <strong>{a1History.repeats.length} additional meeting record(s) share an A1 curriculum day.</strong>
+          <p style={{ margin: "6px 0" }}>The official lesson view keeps one meeting per day. All other records, including completed meetings and attendance, are preserved in the full history.</p>
+          <div style={{ marginBottom: 8 }}>Repeated days: {a1History.repeatedDays.map(item => `Day ${item.day} (+${item.repeatCount})`).join(", ")}</div>
+          <button type="button" onClick={() => setShowA1MeetingHistory((value) => !value)}>{showA1MeetingHistory ? "Show official lessons only" : "Show all meeting records"}</button>
+        </div> : null}
         {missingGroups.length ? <div style={{ padding: 12, border: "1px solid #f59e0b", borderRadius: 8, marginBottom: 12 }}>
           <strong>Official dictionary lessons without a saved session</strong>
           {missingGroups.map(group => <div key={group.key} style={{ marginTop: 8 }}>
