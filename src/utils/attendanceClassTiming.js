@@ -27,7 +27,7 @@ function timeLabel(value, timezone) {
 
 function futureSessions(sessions = [], now = new Date(), klass = {}) {
   const timezone = String(klass.timezone || "Africa/Accra").trim() || "Africa/Accra";
-  const endDate = /^\\d{4}-\\d{2}-\\d{2}$/.test(String(klass.endDate || ""))
+  const endDate = /^\d{4}-\d{2}-\d{2}$/.test(String(klass.endDate || ""))
     ? String(klass.endDate) : dateKey(klass.endDate, timezone);
   return sessions
     .filter((session) => !isAppAssessment(session)
