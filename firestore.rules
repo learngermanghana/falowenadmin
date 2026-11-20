@@ -460,7 +460,7 @@ service cloud.firestore {
 
     function validSharedDictionaryItem() {
       return request.resource.data.keys().hasOnly([
-          'language', 'courseLevel', 'courseDay', 'title', 'content', 'note', 'authorUid', 'authorName', 'updatedAt'
+          'language', 'courseLevel', 'courseDay', 'chapterId', 'resourceType', 'title', 'content', 'note', 'authorUid', 'authorName', 'createdAt', 'updatedAt'
         ]) &&
         request.resource.data.language in ['german', 'swahili'] &&
         request.resource.data.get('courseLevel', '') in ['', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'] &&
@@ -468,6 +468,9 @@ service cloud.firestore {
         request.resource.data.get('courseDay', 0) >= 0 &&
         request.resource.data.get('courseDay', 0) <= 60 &&
         (request.resource.data.language != 'swahili' || request.resource.data.get('courseLevel', '') in ['', 'A1', 'A2', 'B1']) &&
+        request.resource.data.get('chapterId', '') is string &&
+        request.resource.data.get('chapterId', '').size() <= 80 &&
+        request.resource.data.get('resourceType', 'lesson') in ['radio', 'music', 'grammar', 'vocabulary', 'speaking', 'lesson', 'answers', 'other'] &&
         request.resource.data.title is string && request.resource.data.title.size() > 0 &&
         request.resource.data.title.size() <= 160 &&
         request.resource.data.content is string && request.resource.data.content.size() <= 100000 &&
