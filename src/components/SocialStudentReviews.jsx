@@ -45,7 +45,7 @@ function downloadBlob(blob, filename) {
 export default function SocialStudentReviews() {
   const [reviews, setReviews] = useState(readReviews);
   const [selectedId, setSelectedId] = useState(SOCIAL_STUDENT_REVIEWS[0]?.id || "");
-  const [draft, setDraft] = useState(() => ({ ...(SOCIAL_STUDENT_REVIEWS[0] || starterReview()) }));
+  const [draft, setDraft] = useState(() => ({ ...(readReviews()[0] || starterReview()) }));
   const [formatId, setFormatId] = useState("portrait");
   const [fits, setFits] = useState(true);
   const [savingImage, setSavingImage] = useState(false);
