@@ -7,7 +7,7 @@ import "./SocialStudentReviews.css";
 
 const STORAGE_KEY = "falowen-social-student-reviews-v1";
 const MAX_REVIEW_LENGTH = 1800;
-const starterReview = () => ({ id: "", studentName: "", course: "", source: "Google Review", rating: 5, date: "", review: "", status: "Draft" });
+const starterReview = () => ({ id: "", studentName: "", course: "", source: "Student feedback", rating: 5, date: "", review: "", status: "Draft" });
 
 function readReviews() {
   try {
