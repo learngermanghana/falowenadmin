@@ -23,7 +23,7 @@ import {
   getCompatibleClassDashboard,
 } from "../services/liveClassCompatibilityService.js";
 
-import { nextTeachingSession } from "../utils/liveClassWorkspace.js";
+import { chooseAttendanceSession, isActiveCheckinSession, isActiveLiveClass } from "../utils/attendanceClassVisibility.js";
 
 const TIMEZONE = "Africa/Accra";
 
@@ -99,19 +99,6 @@ function mergeStudents(template = {}, saved = {}) {
   }]));
 }
 
-function chooseSession(sessions, timezone, requestedId, klass) {
-  const today = localDate(new Date(), timezone);
-  const requested = sessions.find((session) => session.id === requestedId);
-  if (requested) return requested;
-  const upcoming = nextTeachingSession(sessions, new Date(), klass);
-  if (upcoming && localDate(upcoming.startsAt, timezone) === today) return upcoming;
-  return sessions.find((session) => String(session.status || "").toLowerCase() !== "cancelled" && localDate(session.startsAt, timezone) === today)
-    || sessions.find((session) => String(session.status || "").toLowerCase() !== "cancelled" && (asDate(session.startsAt)?.getTime() || 0) >= Date.now())
-    || [...sessions].reverse().find((session) => String(session.status || "").toLowerCase() !== "cancelled")
-    || sessions[0]
-    || null;
-}
-
 function normalizeApiBaseUrl(value) {
   return String(value || "").trim().replace(/\/+$/, "");
 }
@@ -152,6 +139,7 @@ export default function CanonicalAttendancePageV3() {
   const [sessions, setSessions] = useState([]);
   const [attendance, setAttendance] = useState({});
   const [selectedId, setSelectedId] = useState("");
+  const [showAttendanceHistory, setShowAttendanceHistory] = useState(false);
   const [hasReminderRecipients, setHasReminderRecipients] = useState(false);
   const [sendingReminder, setSendingReminder] = useState(false);
   const [sendingCheckinInvitation, setSendingCheckinInvitation] = useState(false);
@@ -196,7 +184,10 @@ export default function CanonicalAttendancePageV3() {
         }));
         const timezone = dashboard.klass.timezone || TIMEZONE;
         const visibleSessions = dashboard.sessions.filter(session => !session.superseded && session.status !== "superseded");
-        const chosen = chooseSession(visibleSessions, timezone, searchParams.get("session") || "", dashboard.klass);
+        const requestedId = searchParams.get("session") || "";
+        const chosen = chooseAttendanceSession(visibleSessions, dashboard.klass, requestedId);
+        const explicitlyRequested = visibleSessions.some((session) => session.id === requestedId);
+        setShowAttendanceHistory(explicitlyRequested && !isActiveCheckinSession(chosen, dashboard.klass));
         setHasReminderRecipients(students.some((student) => student.email?.trim()));
         setKlass(dashboard.klass);
         setSessions(visibleSessions);
@@ -212,11 +203,16 @@ export default function CanonicalAttendancePageV3() {
   }, [classId, error, isStaff, user]);
 
   useEffect(() => {
-    if (!selectedId) return;
-    setSearchParams({ session: selectedId }, { replace: true });
+    if (!klass) return;
+    const queryId = searchParams.get("session") || "";
+    if (selectedId && queryId !== selectedId) {
+      setSearchParams({ session: selectedId }, { replace: true });
+    } else if (!selectedId && queryId) {
+      setSearchParams({}, { replace: true });
+    }
     setSessionOpen(false);
     setScheduleAction("");
-  }, [selectedId, setSearchParams]);
+  }, [klass, searchParams, selectedId, setSearchParams]);
 
   const selected = attendance[selectedId] || null;
   const timezone = klass?.timezone || TIMEZONE;
@@ -235,7 +231,11 @@ export default function CanonicalAttendancePageV3() {
   const startTime = localTime(selected?.startsAt, timezone);
   const endTime = localTime(selected?.endsAt, timezone);
   const status = String(selected?.status || "scheduled").toLowerCase();
-  const sessionLocked = status === "cancelled" || status === "completed";
+  const classIsActive = isActiveLiveClass(klass || {}, new Date());
+  const activeCheckinSessions = sessions.filter((session) => isActiveCheckinSession(session, klass || {}, new Date()));
+  const sessionOptions = showAttendanceHistory ? sessions : activeCheckinSessions;
+  const selectedIsActiveCheckin = selected ? isActiveCheckinSession(selected, klass || {}, new Date()) : false;
+  const sessionLocked = status === "cancelled" || status === "completed" || !selectedIsActiveCheckin;
 
   const rows = useMemo(() => Object.entries(selected?.students || {})
     .map(([code, student]) => ({ code, ...student }))
@@ -322,6 +322,7 @@ export default function CanonicalAttendancePageV3() {
     try {
       if (action === "open") {
         if (!assignmentId) throw new Error("This lesson needs a curriculum ID before check-in can open. Set it under Live Classes.");
+        if (!selectedIsActiveCheckin) throw new Error("This class or lesson has finished. Open historical attendance for review instead.");
         if (!isToday) throw new Error(`Select or move the lesson to today (${today}) before opening check-in.`);
         if (sessionLocked) throw new Error(`A ${status} session cannot be opened for check-in.`);
       }
@@ -354,9 +355,12 @@ export default function CanonicalAttendancePageV3() {
       if (action === "end" && data.status !== "completed") throw new Error("The server did not confirm class completion.");
       setSessionOpen(action === "open");
       if (action === "end") {
-        setSessions((current) => current.map((session) => session.id === selected.id
+        const nextSessions = sessions.map((session) => session.id === selected.id
           ? { ...session, status: "completed" }
-          : session));
+          : session);
+        setSessions(nextSessions);
+        setSelectedId(chooseAttendanceSession(nextSessions, klass)?.id || "");
+        setShowAttendanceHistory(false);
         setAttendance((current) => ({
           ...current,
           [selected.id]: { ...current[selected.id], status: "completed" },
@@ -427,7 +431,7 @@ export default function CanonicalAttendancePageV3() {
   }
 
   async function sendClassReminder() {
-    if (isStaff || !klass || !selected || sessionLocked || isAppAssessment(selected) || sendingReminder || !hasReminderRecipients) return;
+    if (isStaff || !klass || !selected || sessionLocked || !classIsActive || isAppAssessment(selected) || sendingReminder || !hasReminderRecipients) return;
     setSendingReminder(true);
     try {
       const result = await attendanceRequest(user, "class-reminder", { classId: klass.id, sessionId: selected.id });
@@ -469,12 +473,25 @@ export default function CanonicalAttendancePageV3() {
           </div>
           {selected && <span className="session-attendance__badge">{status}</span>}
         </div>
-        <label className="session-attendance__selector">
-          <strong>Select session</strong>
+        {!classIsActive ? <div role="status" style={{ marginBottom: 12, padding: 12, border: "1px solid #cbd5e1", borderRadius: 8, background: "#f8fafc" }}>
+          <strong>This class has finished.</strong> The official end date was {klass.endDate || "reached"}.
+          No new check-in can be opened. Past sessions and saved attendance remain available for review.
+        </div> : null}
+        <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
+          <button type="button" onClick={() => {
+            const nextHistory = !showAttendanceHistory;
+            setShowAttendanceHistory(nextHistory);
+            if (!nextHistory) setSelectedId(chooseAttendanceSession(sessions, klass)?.id || "");
+            else if (!selectedId) setSelectedId(sessions.at(-1)?.id || "");
+          }}>{showAttendanceHistory ? "Show active check-ins" : "View past sessions"}</button>
+          <small>{showAttendanceHistory ? "Historical attendance — not a live check-in" : "Only upcoming/live teaching sessions"}</small>
+        </div>
+        {sessionOptions.length ? <label className="session-attendance__selector">
+          <strong>{showAttendanceHistory ? "Select historical session" : "Select session"}</strong>
           <select value={selectedId} onChange={(event) => setSelectedId(event.target.value)}>
-            {sessions.map((session) => <option key={session.id} value={session.id}>{lessonLabel(session, timezone)} · {session.status || "scheduled"}</option>)}
+            {sessionOptions.map((session) => <option key={session.id} value={session.id}>{lessonLabel(session, timezone)} · {session.status || "scheduled"}</option>)}
           </select>
-        </label>
+        </label> : <p role="status">No active attendance check-ins remain for this class. Use View past sessions to inspect earlier records.</p>}
 
         {dictionaryEntries.length ? <div className="session-attendance__lesson">
           <strong>{dictionaryLevel} lesson dictionary</strong>
@@ -498,7 +515,7 @@ export default function CanonicalAttendancePageV3() {
               <small>Lesson</small>
               <strong>{assignmentId ? `${assignmentId} · ` : ""}{selected.topic || "Lesson details to be confirmed"}</strong>
             </div>
-            {!isStaff && !isAppAssessment(selected) ? <div className="session-attendance__actions">
+            {!isStaff && !isAppAssessment(selected) && selectedIsActiveCheckin ? <div className="session-attendance__actions">
               {!["completed", "live"].includes(status) && !sessionOpen ? <button type="button" disabled={sessionBusy || sendingReminder} onClick={() => setScheduleAction("reschedule")}>{status === "cancelled" ? "Reactivate lesson" : "Reschedule"}</button> : null}
               {!sessionLocked ? <button className="session-attendance__danger" type="button" disabled={sessionBusy || sendingReminder} onClick={() => setScheduleAction("cancel")}>Cancel class</button> : null}
             </div> : null}
@@ -525,7 +542,7 @@ export default function CanonicalAttendancePageV3() {
           /> : null}
         </> : null}
 
-        {selected && !isAppAssessment(selected) && <div className="session-attendance__tools">
+        {selected && !isAppAssessment(selected) && selectedIsActiveCheckin && <div className="session-attendance__tools">
           <section className="session-attendance__panel">
             <div className="session-attendance__header">
               <h3>Student QR check-in</h3>
