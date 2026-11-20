@@ -238,6 +238,10 @@ export default function LiveClassLessonDateRepair() {
   }, [classId, dashboard, scopedSessions]);
 
   const plan = preview.plan;
+  const repeatedCompletedMeetings = (plan?.duplicateSessions || []).filter(({ session }) =>
+    ["completed", "live", "cancelled"].includes(statusOf(session))
+    || Number(session?.attendanceCount || session?.attendeeCount || 0) > 0
+    || Boolean(session?.students && Object.keys(session.students).length));
   const repairItems = useMemo(() => partitionRepairPlanItems(plan?.items || []), [plan]);
   const changedItems = repairItems.automaticItems;
   const preservedItems = repairItems.preservedItems;
@@ -413,9 +417,17 @@ export default function LiveClassLessonDateRepair() {
             <div>Start date: <strong>{formatDate(dashboard.klass?.startDate)}</strong></div>
             <div>Current end date: <strong>{formatDate(dashboard.klass?.endDate)}</strong></div>
             <div>Calculated official end date: <strong>{formatDate(plan.endDate)}</strong></div>
-            <div>Visible sessions: <strong>{plan.currentSessions}</strong> of <strong>{plan.expectedLessons}</strong></div>
-            <div>Missing sessions: <strong>{plan.missingLessons}</strong> · Automatic date corrections: <strong>{changedItems.length}</strong> · Preserved manual moves: <strong>{preservedItems.length}</strong></div>
+            <div>Saved active meeting records: <strong>{plan.currentSessions}</strong> · Official lesson positions: <strong>{plan.expectedLessons}</strong> · Matched positions: <strong>{plan.expectedLessons - plan.missingLessons}</strong></div>
+            <div>Missing official lessons: <strong>{plan.missingLessons}</strong> · Repeated day records: <strong>{plan.duplicateCount}</strong> · Extra unassigned records: <strong>{plan.orphanCount}</strong> · Automatic date corrections: <strong>{changedItems.length}</strong> · Preserved manual moves: <strong>{preservedItems.length}</strong></div>
           </div>
+
+          {plan.duplicateCount || plan.orphanCount ? (
+            <div role="status" style={{ padding: 12, border: "1px solid #f59e0b", background: "#fff", borderRadius: 10, display: "grid", gap: 6 }}>
+              <strong>Additional meeting records require review</strong>
+              <div>{plan.duplicateCount} record(s) share an official lesson position and {plan.orphanCount} unassigned record(s) exist. {repeatedCompletedMeetings.length} contain completed, live or attendance history.</div>
+              <div>Repairs preserve taught and attended records. The official count describes curriculum positions, not the number of historical meetings. Use Live Classes → Sessions → Show all meeting records to review repeats.</div>
+            </div>
+          ) : null}
 
           {preservedItems.length ? (
             <div style={{ display: "grid", gap: 8, padding: 12, borderRadius: 10, background: "#ecfdf5", border: "1px solid #86efac", color: "#166534" }}>
@@ -456,13 +468,13 @@ export default function LiveClassLessonDateRepair() {
 
           {!needsRepair && !repairBlockedByManualMoves ? (
             <div style={{ padding: 12, borderRadius: 10, background: "#ecfdf5", border: "1px solid #a7f3d0" }}>
-              This class already has the complete official timetable.
+              All official lesson positions are matched. {plan.duplicateCount || plan.orphanCount ? "Additional historical meetings are still saved and can be reviewed separately." : "No further official date correction is needed."}
             </div>
           ) : null}
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <button type="button" onClick={repairOfficialTimetable} disabled={busy || !needsRepair || repairBlockedByManualMoves}>
-              {busy ? "Repairing all sessions atomically…" : repairBlockedByManualMoves ? "Use anchor restoration above" : `Repair to ${plan.expectedLessons} ${plan.countLabel}`}
+              {busy ? "Repairing all sessions atomically…" : repairBlockedByManualMoves ? "Use anchor restoration above" : `Repair ${plan.expectedLessons} official ${plan.countLabel} (keep history)`}
             </button>
             <button type="button" onClick={refresh} disabled={busy}>Check again</button>
           </div>
