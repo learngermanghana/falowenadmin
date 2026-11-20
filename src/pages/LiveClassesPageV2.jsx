@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import LiveClassNextLesson from "../components/LiveClassNextLesson.jsx";
 import LiveClassSessionEditor from "../components/LiveClassSessionEditor.jsx";
 import { orderedWorkspaceSessions, completionLabel, groupA1OfficialAndRepeatSessions } from "../utils/liveClassWorkspace.js";
+import { resolveOfficialSessionNumber } from "../utils/liveClassLessonOrder.js";
 import { undoLastScheduleChange } from "../services/liveClassUndoService.js";
 import "./LiveClassWorkspace.css";
 import LiveClassStudentsPanel from "../components/LiveClassStudentsPanel.jsx";
@@ -326,11 +327,18 @@ export default function LiveClassesPageV2() {
         .some(value => String(value || "").toLocaleLowerCase().includes(term));
     };
     const sessions = term ? displayedSessions.filter(matchesSearch) : displayedSessions;
-    const savedAssignments = new Set((dashboard?.sessions || [])
-      .filter(session => !session.superseded && String(session.status || "").toLowerCase() !== "superseded")
-      .flatMap(curriculumIds).map(id => id.toUpperCase()));
+    const activeRecords = (dashboard?.sessions || [])
+      .filter(session => !session.superseded && String(session.status || "").toLowerCase() !== "superseded");
+    const savedAssignments = new Set(activeRecords.flatMap(curriculumIds).map(id => id.toUpperCase()));
+    // A1's official course positions are defined by Day 0–23, not by a raw
+    // count of assignment IDs; historical records can hold stale ID arrays.
+    const mappedA1LessonNumbers = new Set(levelId === "A1" && !isSwahili
+      ? activeRecords.map(session => resolveOfficialSessionNumber(session, groups, "A1")).filter(Boolean)
+      : []);
     const missingGroups = (term || (levelId === "A1" && !isSwahili)) ? groups.filter(group =>
-      group.assignmentIds.length && group.assignmentIds.every(id => !savedAssignments.has(id.toUpperCase()))
+      group.assignmentIds.length && (levelId === "A1" && !isSwahili
+        ? !mappedA1LessonNumbers.has(group.index + 1)
+        : group.assignmentIds.every(id => !savedAssignments.has(id.toUpperCase())))
       && (!term || [group.topic, group.label, ...group.chapters,
         ...group.entries.flatMap(entry => [entry.de, entry.en, entry.chapter, entry.assignment_id])]
         .some(value => String(value || "").toLocaleLowerCase().includes(term)))
