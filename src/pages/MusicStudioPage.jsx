@@ -89,6 +89,7 @@ function GermanMusicStudio({ allowSwahili }) {
     (savedLyrics[assignmentKey] || '').includes('Um sieben stehe ich auf.');
   const obsoleteA1Day12Draft = assignmentKey === 'A1-8' &&
     (savedLyrics[assignmentKey] || '').includes('Mein Handy zeigt sechzehn Uhr.');
+  const obsoleteA1Day16Draft = assignmentKey === "A1-9" && savedLyrics[assignmentKey] === "[Verse 1]\nIm Restaurant sehe ich die Karte.\nDer Kellner fragt: Was möchten Sie?\nIch sage: Eine Suppe, bitte.\nAber kein Fleisch für mich.\n\n[Chorus]\nIch möchte Suppe, keinen Fisch.\nIch trinke Wasser, keinen Saft.\nSo bestelle ich mein Essen.\n\n[Verse 2]\nMia isst gern Reis und Gemüse.\nSie mag heute keinen Kuchen.\nDer Kellner bringt uns alles.\nWir sagen: Vielen Dank!\n\n[Chorus]\nIch möchte Suppe, keinen Fisch.\nIch trinke Wasser, keinen Saft.\nSo bestelle ich mein Essen.\n\n[Outro]\nDas Essen schmeckt uns sehr.\nWir kommen morgen wieder.\nMit Falowen kann ich Essen bestellen.";
   const obsoleteA1Day17Draft = assignmentKey === 'A1-11' &&
     (savedLyrics[assignmentKey] || '').includes('Ich suche den Bahnhof.');
   const obsoleteA1Day18Draft = assignmentKey === 'A1-12.1' &&
@@ -100,7 +101,7 @@ function GermanMusicStudio({ allowSwahili }) {
   const lyrics = courseMode === 'course'
     ? Object.prototype.hasOwnProperty.call(lyricsOverrides, assignmentKey)
       ? lyricsOverrides[assignmentKey]
-      : Object.prototype.hasOwnProperty.call(savedLyrics, assignmentKey) && savedLyrics[assignmentKey] && !obsoleteDay7Draft && !obsoleteDay8Draft && !supersededWeekendLyrics && !supersededA2Day22Draft && !obsoleteA1Day10Draft && !obsoleteA1Day11Draft && !obsoleteA1Day12Draft && !obsoleteA1Day17Draft && !obsoleteA1Day18Draft && !obsoleteA1Day21Draft && !obsoleteA1Day22Draft && !isSupersededMusicLyrics(assignmentKey, savedLyrics[assignmentKey] || '')
+      : Object.prototype.hasOwnProperty.call(savedLyrics, assignmentKey) && savedLyrics[assignmentKey] && !obsoleteDay7Draft && !obsoleteDay8Draft && !supersededWeekendLyrics && !supersededA2Day22Draft && !obsoleteA1Day10Draft && !obsoleteA1Day11Draft && !obsoleteA1Day12Draft && !obsoleteA1Day16Draft && !obsoleteA1Day17Draft && !obsoleteA1Day18Draft && !obsoleteA1Day21Draft && !obsoleteA1Day22Draft && !isSupersededMusicLyrics(assignmentKey, savedLyrics[assignmentKey] || '')
         ? savedLyrics[assignmentKey] : draft?.lyrics || ''
     : customLyrics;
   const setLyrics = next => {
