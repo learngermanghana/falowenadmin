@@ -216,7 +216,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
         <p>Lies mit und achte auf die wichtigen Ausdrücke aus Kapitel {song.assignmentKey}.</p>
         <label className="published-song-lesson__follow"><input type="checkbox" disabled={!synchronized} checked={synchronized && follow} onChange={e=>setFollow(e.target.checked)}/> Mitlesen folgen</label>
         {!synchronized && recordingMetadata?.timingStatus !== 'estimated' && <p role="status">Zeitmarken fehlen für diese Aufnahme. Mitlesen wird nach der Veröffentlichung der passenden Zeitmarken verfügbar.</p>}
-          <LessonSongLyrics song={displaySong} cues={cues} time={time} onSeek={seconds=>{if(audio.current){cancelPreview();audio.current.currentTime=seconds;setTime(seconds);}}} follow={follow}/>
+          <LessonSongLyrics key={recording.objectKey} audioRef={audio} song={displaySong} cues={cues} time={time} onSeek={seconds=>{if(audio.current){cancelPreview();audio.current.currentTime=seconds;setTime(seconds);}}} follow={follow}/>
         <SongTimingEditor song={displaySong} audio={audio} cues={cues} onSave={saveCues}/>
 
         <button type="button" onClick={()=>openView('questions')}>Weiter · Fragen beantworten</button>

@@ -12,3 +12,7 @@
 @media(max-width:650px){.lesson-song-single-slide-tabs{gap:.3rem}.lesson-song-single-slide-tabs button{padding:.6rem .35rem;font-size:.87rem}}
 
 .lesson-song-lyric-text{display:block;min-width:0}.lesson-song-english{display:block;font-size:.85em;font-weight:400;color:#48635f;margin-top:.2rem}.lesson-song-english-toggle{display:flex;align-items:center;gap:.5rem;margin:.5rem 0;font-size:1rem}
+
+.lesson-song-focused { padding: clamp(1rem, 3vw, 2rem); background: #edf6e9; color: #173f37; border-radius: 14px; }
+.lesson-song-focused .lesson-song-focused-line { font-size: clamp(1.6rem, 3.5vw, 3rem); line-height: 1.25; font-weight: 750; }
+.lesson-song-focused div { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1rem; }
