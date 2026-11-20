@@ -35,7 +35,7 @@ for(const c of a2SpeakingMindMaps){
  }
 
  const card=A2_PRESENTATION_CARDS[c.day];
- if(!card||card.keywords.length!==4)throw Error('Missing four-keyword presentation card for day '+c.day);
+ if(!card||card.keywords.length!==5)throw Error('Missing five-keyword presentation card for day '+c.day);
  lessons[c.day]={...card,sourcePath:page.path,sourceMindMapPath:'web/src/data/a2PresentationCards.js'};
 }
 if(Object.keys(lessons).length!==28)throw Error('Expected all 28 A2 lessons');
