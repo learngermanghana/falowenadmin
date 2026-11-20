@@ -330,23 +330,53 @@
     }
   },
   "swahili-day-3": {
-    "version": 1,
-    "title": "Utambulisho",
+    "version": 2,
+    "title": "Mapishi Jikoni kwa Asha",
     "writing": {
-      "Kuandika": "Ninaitwa Amina. Mimi ni mwanafunzi. Huyu ni Omar. Anasoma Kiswahili."
+      "Kuandika": "Mfano: Leo ninapika ugali. Tunahitaji unga wa mahindi na maji. Kwanza, chemsha maji. Kisha, tia unga polepole. Halafu, koroga mpaka ugali uwe mgumu. Mwishowe, pakua ugali. Kubali pia maelekezo sahihi ya wali wa nazi."
     },
     "reading": {
       "read-1": {
-        "prompt": "Mwanafunzi anaitwa nani?",
-        "answer": "Mariam."
+        "prompt": "Asha na mama yake wanapika chakula gani leo?",
+        "answer": "Wali wa nazi na samaki wa kupaka"
       },
       "read-2": {
-        "prompt": "Mwalimu anaitwa nani?",
-        "answer": "Musa."
+        "prompt": "Asha na mama yake wapo wapi wanapopika?",
+        "answer": "Jikoni"
       },
       "read-3": {
-        "prompt": "Musa ni nani?",
-        "answer": "Mwalimu."
+        "prompt": "Asha anatumia nini kupika wali uwe wa nazi?",
+        "answer": "Tui la nazi"
+      },
+      "read-4": {
+        "prompt": "Chakula kingine gani cha Kitanzania ambacho wanafamilia wanapenda kula?",
+        "answer": "Ugali na maharage"
+      },
+      "read-5": {
+        "prompt": "Baba anasema nini baada ya kuonja chakula?",
+        "answer": "Chakula hiki ni kitamu sana, asante!"
+      }
+    },
+    "listening": {
+      "listen-favorite": {
+        "prompt": "Mzungumzaji A anapenda chakula gani?",
+        "answer": "Ugali"
+      },
+      "listen-skill": {
+        "prompt": "Mzungumzaji B anasema nini kuhusu kupika ugali?",
+        "answer": "Anajua kupika vizuri"
+      },
+      "listen-ingredients": {
+        "prompt": "Wanahitaji nini kupika ugali?",
+        "answer": "Unga wa mahindi na maji"
+      },
+      "listen-water": {
+        "prompt": "Maji ya kupika ugali yanapaswa kuwa ya namna gani?",
+        "answer": "Ya moto"
+      },
+      "listen-process": {
+        "prompt": "Baada ya kutia unga polepole, wanafanya nini?",
+        "answer": "Wanakoroga mpaka ugali uwe mgumu"
       }
     }
   },
