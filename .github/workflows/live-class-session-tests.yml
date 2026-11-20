@@ -61,6 +61,7 @@ on:
       - 'tests/attendance-tracking-ui.test.js'
       - 'tests/course-dictionary-id-casing.test.js'
       - 'tests/live-class-a1-b1-timetable-repair.test.js'
+      - 'tests/live-class-a1-duplicate-session-view.test.js'
       - 'tests/live-class-complete-session-visibility.test.js'
       - 'tests/live-class-dictionary-selection.test.js'
       - 'tests/live-class-direct-session-change.test.js'
@@ -139,6 +140,7 @@ on:
       - 'tests/attendance-tracking-ui.test.js'
       - 'tests/course-dictionary-id-casing.test.js'
       - 'tests/live-class-a1-b1-timetable-repair.test.js'
+      - 'tests/live-class-a1-duplicate-session-view.test.js'
       - 'tests/live-class-complete-session-visibility.test.js'
       - 'tests/live-class-dictionary-selection.test.js'
       - 'tests/live-class-direct-session-change.test.js'
@@ -193,6 +195,9 @@ jobs:
 
       - name: Test superseded status normalization
         run: node --test tests/live-class-superseded-status.test.js
+
+      - name: Test A1 official lesson and repeat meeting views
+        run: node --test tests/live-class-a1-duplicate-session-view.test.js
 
       - name: Run existing live class session tests
         run: >-
