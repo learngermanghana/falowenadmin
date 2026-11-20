@@ -32,3 +32,7 @@ jobs:
           node-version: "22"
       - name: Test student review renderer and tab
         run: node --test tests/social-student-reviews.test.js
+      - name: Install dependencies
+        run: npm ci
+      - name: Build Admin UI
+        run: npm run build
