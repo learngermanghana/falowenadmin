@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import LessonSongLyrics from "./LessonSongLyrics.jsx";
+import { hasCompleteSongTiming, lyricLines } from "../utils/songLyrics.js";
 import "./PublishedSongLessonStage.css";
 import "./LessonSongStage.css";
 
@@ -20,11 +22,6 @@ const B1_DAY_28_QUESTIONS = [
     answer: "Katika eneo langu, taka za plastiki ni tatizo kubwa. Tunaweza kuongeza mapipa, kupunguza plastiki na kutoa elimu kuhusu mazingira.",
   },
 ];
-
-function sungLines(text) {
-  return String(text || "").split("\n").map(line => line.trim()).filter(line =>
-    line && !/^\[(?:verse|chorus|outro|bridge|intro|final|kiitikio|ubeti)/i.test(line));
-}
 
 export default function SwahiliSlideMusic({ track, questions }) {
   if (!track?.objectKey) return <p role="status">Hakuna rekodi iliyochapishwa kwa somo hili.</p>;
@@ -60,18 +57,14 @@ function RecordingLyrics({ track, lessonQuestions }) {
     return () => controller.abort();
   }, [track.objectKey]);
 
-  const lines = sungLines(pack?.lyrics);
-  const cues = Array.isArray(pack?.cues) ? pack.cues : [];
-  const matched = cues.length >= lines.length && lines.length > 0
-    && cues.every(cue => Number.isFinite(Number(cue.start)) && typeof cue.text === "string");
-  const cue = matched ? [...cues].reverse().find(entry => Number(entry.start) <= time
-    && time < (Number(entry.end) || Infinity)) : null;
+  const lines = lyricLines(pack?.lyrics);
+  const matched = hasCompleteSongTiming(pack?.cues, pack?.lyrics);
   const isB1Day28 = track.id === "swahili-b1-day-28";
   const questions = Array.isArray(lessonQuestions) ? lessonQuestions : isB1Day28 ? B1_DAY_28_QUESTIONS : [];
   const question = questions[questionIndex];
   const openView = next => {
     excerptEnd.current = null;
-    audioRef.current?.pause();
+    if (view === "questions" || next === "questions") audioRef.current?.pause();
     setView(next);
     setShowAnswer(false);
   };
@@ -85,7 +78,7 @@ function RecordingLyrics({ track, lessonQuestions }) {
   };
   const updateTime = event => {
     const player = event.currentTarget;
-    setTime(player.currentTime);
+    setTime(player.ended ? -1 : player.currentTime);
     if (excerptEnd.current !== null && player.currentTime >= excerptEnd.current) {
       player.pause();
       excerptEnd.current = null;
@@ -105,7 +98,7 @@ function RecordingLyrics({ track, lessonQuestions }) {
         <small>Wimbo uliochapishwa katika Falowen Music · Si zoezi la Kusikiliza la mtihani</small>
       </div>
       <audio ref={audioRef} controls preload="metadata" src={track.audioUrl}
-        aria-label={track.title} onTimeUpdate={updateTime}
+        aria-label={track.title} onTimeUpdate={updateTime} onSeeked={updateTime}
         onSeeking={() => { excerptEnd.current = null; }}
         onEnded={() => { excerptEnd.current = null; setTime(-1); }}
         onError={() => setAudioError("Rekodi haipatikani. Angalia kiungo cha MP3 katika Falowen Music.")}/>
@@ -146,18 +139,10 @@ function RecordingLyrics({ track, lessonQuestions }) {
         </p>}
         <label><input type="checkbox" checked={follow} disabled={!matched}
           onChange={event => setFollow(event.target.checked)}/> Fuata maneno yanayoimbwa</label>
-        <div className="published-song-lesson__section" aria-label="Maneno yanayoimbwa">
-          {lines.map((line, index) => {
-            const currentCue = matched ? cues[index] : null;
-            const highlighted = Boolean(follow && currentCue
-              && Number(currentCue.start) <= time
-              && time < (Number(currentCue.end) || Infinity));
-            return <p key={index} style={{fontSize:"1.1em",fontWeight:highlighted?700:400}}>
-              {highlighted ? <mark>{line}</mark> : line}
-            </p>;
-          })}
-        </div>
-        {cue && follow && <p aria-live="off"><strong>{cue.text}</strong></p>}
+        {matched && pack.timingStatus === "estimated" && <small>Muda wa kila mstari ni wa kukadiria.</small>}
+        <LessonSongLyrics song={pack} cues={pack.cues} time={time} follow={follow}
+          language="sw" label="Maneno yanayoimbwa"
+          onSeek={start => { if (audioRef.current) audioRef.current.currentTime = start; }} />
       </>}
       <button type="button" onClick={() => openView("questions")}>Endelea · Maswali</button>
     </div>}
