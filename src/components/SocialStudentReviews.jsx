@@ -175,30 +175,68 @@ export default function SocialStudentReviews() {
     setError("");
   };
 
-  const exportPng = async () => {
+  const renderSlide = (canvas, index) => drawStudentReviewPoster(
+    canvas, { ...draft, review: pages[index] }, formatId,
+    { themeId, pageIndex: index, pageCount: pages.length },
+  );
+  const toBlob = (canvas) => new Promise((resolve, reject) => {
+    canvas.toBlob((output) => output ? resolve(output) : reject(new Error("PNG creation failed")), "image/png");
+  });
+  const exportPng = async (all = false) => {
     if (savingImage) return;
-    if (!draft.studentName.trim() || !draft.review.trim()) {
-      setError("Add the student name and review first.");
+    if (!draft.studentName.trim() || !draft.review.trim() || !pages.length) {
+      setError("Add a complete review before exporting.");
       return;
     }
-    const canvas = canvasRef.current;
-    const result = drawStudentReviewPoster(canvas, draft, formatId);
-    if (!result.fits) {
-      setError("This full review does not fit. Choose a taller format or shorten the text.");
-      return;
-    }
-    setSavingImage(true);
-    setError("");
+    setSavingImage(true); setError("");
     try {
-      const blob = await new Promise((resolve, reject) => {
-        canvas.toBlob((output) => output ? resolve(output) : reject(new Error("PNG creation failed")), "image/png");
-      });
-      downloadBlob(blob, reviewImageFileName(draft.studentName, formatId));
-      setMessage("PNG export ready.");
+      if (all && pages.length > 1) {
+        const files = [];
+        for (let index = 0; index < pages.length; index++) {
+          const canvas = document.createElement("canvas");
+          if (!renderSlide(canvas, index).fits) throw new Error("A review slide does not fit.");
+          const blob = await toBlob(canvas);
+          files.push({ name: reviewImageFileName(draft.studentName, formatId, index + 1), content: new Uint8Array(await blob.arrayBuffer()) });
+        }
+        downloadBlob(makeCampaignZip(files), "falowen-review-carousel.zip");
+        setMessage("Carousel ZIP downloaded with " + files.length + " numbered PNG slides.");
+      } else {
+        const index = Math.min(pageIndex, pages.length - 1);
+        const canvas = canvasRef.current;
+        if (!renderSlide(canvas, index).fits) throw new Error("The review text does not fit.");
+        downloadBlob(await toBlob(canvas), reviewImageFileName(draft.studentName, formatId, pages.length > 1 ? index + 1 : null));
+        setMessage("PNG downloaded.");
+      }
     } catch {
-      setError("PNG export failed. Check that your browser allows downloads and try again.");
-    } finally {
-      setSavingImage(false);
+      setError("PNG export failed. Check browser download permissions and retry.");
+    } finally { setSavingImage(false); }
+  };
+  const copyCaption = async () => {
+    try {
+      await navigator.clipboard.writeText(caption);
+      setMessage("Falowen Reviews caption copied. Paste it into your social media post.");
+      setError("");
+    } catch {
+      setError("Clipboard access was blocked. Select and copy the caption text manually.");
+    }
+  };
+  const sharePost = async () => {
+    if (typeof navigator.share !== "function") { await copyCaption(); return; }
+    try {
+      const payload = { title: "Falowen Reviews", text: caption };
+      if (pages.length === 1 && fits && typeof File !== "undefined") {
+        const canvas = document.createElement("canvas");
+        if (renderSlide(canvas, 0).fits) {
+          const blob = await toBlob(canvas);
+          const file = new File([blob], reviewImageFileName(draft.studentName, formatId), { type: "image/png" });
+          if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) payload.files = [file];
+        }
+      }
+      await navigator.share(payload);
+      setMessage("Share dialog opened. Confirm the post in your chosen app.");
+      setError("");
+    } catch (cause) {
+      if (cause?.name !== "AbortError") setError("Sharing is unavailable. Copy the caption and export the PNG instead.");
     }
   };
 
