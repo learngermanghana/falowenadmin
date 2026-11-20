@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   STARTER_DICTIONARIES, currentDictionaryQuarter, dictionaryStoryboard,
   validateDictionaries, DICTIONARY_SCHEMA_VERSION,
@@ -44,4 +45,16 @@ test("import rejects unsafe IDs, duplicates and oversized curriculum fields", ()
 test("calendar quarter uses three-month periods", () => {
   assert.equal(currentDictionaryQuarter(new Date("2026-01-07T12:00:00Z")), "2026-Q1");
   assert.equal(currentDictionaryQuarter(new Date("2026-11-06T12:00:00Z")), "2026-Q4");
+});
+
+test("dictionary editor has a stable empty script override and audio readiness feedback", () => {
+  const editor = readFileSync(new URL("../src/pages/LessonDictionaryVideoStudio.jsx", import.meta.url), "utf8");
+  const tts = readFileSync(new URL("../src/components/LessonTextToSpeech.jsx", import.meta.url), "utf8");
+  assert.match(editor, /const EMPTY_SCRIPT_OVERRIDES = Object\.freeze\(\{\}\)/);
+  assert.match(editor, /scripts\[pack\?\.id\] \|\| EMPTY_SCRIPT_OVERRIDES/);
+  assert.match(tts, /Generate audio unavailable:/);
+  assert.match(tts, /Checking the saved voice clips/);
+  assert.match(tts, /Hören Studio speech service is not configured/);
+  assert.match(tts, /remain in today's shared 72-request Hören Studio allowance/);
+  assert.match(tts, /Cannot check the Hören Studio service/);
 });

@@ -10,6 +10,9 @@ import "./LessonDictionaryVideoStudio.css";
 const PACKS_STORAGE = "falowen.lesson-video-dictionaries.v1";
 const SCRIPTS_STORAGE = "falowen.lesson-video-dictionary-scripts.v1";
 const AUDIO_LIMIT = 80 * 1024 * 1024;
+// Keep the empty override object stable. A new {} every render would rebuild
+// the storyboard and slides continuously, resetting the speech-cache readiness.
+const EMPTY_SCRIPT_OVERRIDES = Object.freeze({});
 const editingFields = [
   ["title", "Lesson title"], ["goal", "Learning goal"], ["intro", "Introduction / hook"],
   ["vocabulary", "Vocabulary (one per line; German — English)"],
@@ -65,7 +68,7 @@ export default function LessonDictionaryVideoStudio() {
   const [error, setError] = useState("");
   const audioRef = useRef(null);
   const pack = packs.find(item => item.id === packId) || packs[0];
-  const activeScripts = scripts[pack?.id] || {};
+  const activeScripts = scripts[pack?.id] || EMPTY_SCRIPT_OVERRIDES;
   const storyboard = useMemo(() => dictionaryStoryboard(pack, activeScripts), [pack, activeScripts]);
   const filtered = useMemo(() => packs.filter(item => (item.title + " " + item.level).toLowerCase().includes(search.toLowerCase())), [packs, search]);
   const current = slides[selected];
