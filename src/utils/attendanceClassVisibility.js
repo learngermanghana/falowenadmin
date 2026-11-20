@@ -52,7 +52,7 @@ export function isActiveCheckinSession(session = {}, klass = {}, now = new Date(
 
   const startsAt = toSessionDate(session.startsAt);
   const endsAt = toSessionDate(session.endsAt) || startsAt;
-  if (!startsAt || !endsAt || endsAt < now) return false;
+  if (!startsAt || !endsAt || (endsAt < now && normalize(session.status).toLowerCase() !== "live")) return false;
 
   const timezone = normalize(klass.timezone) || "Africa/Accra";
   const endDate = endDateForClass(klass);
