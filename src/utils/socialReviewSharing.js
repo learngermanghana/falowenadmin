@@ -120,7 +120,7 @@ export function mergeReviewSources(seed, shared, saved) {
   for (const review of [...seed, ...shared, ...saved]) {
     if (!review || !safe(review.studentName) || !safe(review.review)) continue;
     const identity = normalized(review.studentName) + "|" + normalized(review.review);
-    if (keys.has(identity)) all[keys.get(identity)] = { ...all[keys.get(identity)], ...review };
+    if (keys.has(identity)) { const index = keys.get(identity); all[index] = { ...all[index], ...review, id: all[index].id }; }
     else { keys.set(identity, all.length); all.push({ ...review }); }
   }
   return all;
