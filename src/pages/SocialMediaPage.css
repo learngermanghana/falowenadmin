@@ -3,7 +3,7 @@
 .social-studio-hero h1{margin:0;font-size:clamp(23px,2.5vw,30px);letter-spacing:-.03em}
 .social-studio-hero p{margin:6px 0 0;color:#607086;font-size:14px;line-height:1.5}
 .social-studio-kicker{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:#3566a5}
-.social-studio-tabs{display:flex;gap:6px;background:#eef3fa;padding:5px;border-radius:13px;width:fit-content;max-width:100%;margin-bottom:18px}
+.social-studio-tabs{display:flex;flex-wrap:wrap;gap:6px;background:#eef3fa;padding:5px;border-radius:13px;width:fit-content;max-width:100%;margin-bottom:18px}
 .social-studio-tab{font:inherit;cursor:pointer;background:transparent;color:#4d627b;border:0;border-radius:9px;padding:11px 18px;min-height:43px;font-size:14px;font-weight:750}
 .social-studio-tab[aria-pressed="true"]{background:white;color:#153f79;box-shadow:0 1px 4px #10243f1a}
 .social-studio-tab:focus-visible,.social-course-studio button:focus-visible,.social-course-studio select:focus-visible,.social-course-studio textarea:focus-visible,.social-poster-details summary:focus-visible{outline:3px solid #69a3ed;outline-offset:2px}
