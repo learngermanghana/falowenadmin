@@ -56,7 +56,7 @@ export default function LessonSongStage({ song, mode = 'listen' }) {
     </div>
     <div className={`lesson-song-columns ${activeMode === 'listen' ? 'is-listen' : ''}`}>
       <div><div className="lesson-song-panel-heading"><strong>Liedtext</strong><label><input type="checkbox" disabled={!synchronized} checked={synchronized && follow} onChange={e => setFollow(e.target.checked)} /> Mitlesen folgen</label></div>
-        <LessonSongLyrics song={displaySong} cues={cues} time={time} onSeek={url ? seek : undefined} follow={follow} />
+        <LessonSongLyrics key={song.objectKey || song.audioKey} audioRef={audio} song={displaySong} cues={cues} time={time} onSeek={url ? seek : undefined} follow={follow} />
         <p className="lesson-song-note">{cues.length === lines.length ? 'Zeilen mit Zeitmarken springen zur passenden Stelle im Lied.' : cues.length ? `${cues.length}/${lines.length} Zeilen synchronisiert. Weitere Zeitmarken können unten ergänzt werden.` : 'Der vollständige gespeicherte Liedtext ist sichtbar. Für die genaue Hervorhebung zuerst Zeitmarken zur Aufnahme setzen oder importieren.'}</p>
       </div>
       <div className="lesson-song-question">

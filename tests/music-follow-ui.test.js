@@ -14,7 +14,7 @@ function component(path){
 const Published=component('src/components/PublishedSongLessonStage.jsx');
 const Linked=component('src/components/LinkedPublishedSongLessonStage.jsx');
 for(const [level,day,assignmentKey] of [['A1',14,'A1-3.6'],['A1',13,'A1-3.5'],['A2',18,'A2-7.18'],['B1',24,'B1-8.24']]){
- test(level+' Day '+day+' slide follows playback, seek and repeat; questions select and reveal',async()=>{
+ test(level+' Day '+day+' German slide explains, replays and resumes a lyric, follows playback and reveals answers',async()=>{
   const dom=new JSDOM('<div id="root"></div>',{url:'https://admin.falowen.app'});const w=dom.window;
   Object.assign(globalThis,{window:w,document:w.document,localStorage:w.localStorage,IS_REACT_ACT_ENVIRONMENT:true});
   w.matchMedia=()=>({matches:true});let scrolls=0;
@@ -48,6 +48,7 @@ for(const [level,day,assignmentKey] of [['A1',14,'A1-3.6'],['A1',13,'A1-3.5'],['
   await act(async()=>checkbox.click());assert.ok(scrolls>before);
   await act(async()=>w.document.querySelector('[data-line="2"]').click());assert.equal(audio.currentTime,20);
   await at(0);assert.equal(w.document.querySelector('[aria-current="true"]'),null);
+  await exerciseExplanation(w, {explain:'Diese Zeile erklären', replay:'Zeile wiederholen', resume:'Lied fortsetzen'}, lyrics[2], 'English line 2');
   await click('3 · Fragen');const reveal=buttons().find(b=>b.textContent.includes('Musterlösung für Lehrkraft'));assert.equal(reveal.disabled,true);
   const option=w.document.querySelector('.published-song-lesson__options button');assert.ok(option);
   await act(async()=>option.click());assert.equal(reveal.disabled,false);await act(async()=>reveal.click());assert.ok(w.document.querySelector('.published-song-lesson__answer'));
@@ -62,6 +63,7 @@ test('a slide without complete timings disables Follow and lyric seeking',async(
  await act(async()=>root.render(React.createElement(Published,{assignmentKey:'A1-3.5'})));
  await act(async()=>[...document.querySelectorAll('button')].find(b=>b.textContent.includes('2 · Liedtext')).click());
  const checkbox=document.querySelector('input[type=checkbox]');assert.equal(checkbox.disabled,true);assert.equal(checkbox.checked,false);
+ assert.equal(document.querySelector('.lesson-song-explain'),null);
  assert.ok([...document.querySelectorAll('.lesson-song-lyrics button')].every(b=>b.disabled));
  await act(async()=>root.unmount());dom.window.close();
 });
@@ -208,4 +210,58 @@ for (const [assignmentKey, courseDay, firstAnswer, cutoff, continuation] of [
       w.close();
     }
   });
+}
+
+async function exerciseExplanation(w, labels, expectedLine, expectedEnglish) {
+ const audio = w.document.querySelector('audio');
+ const button = label => [...w.document.querySelectorAll('button')].find(b => b.textContent === label);
+ let paused = false;
+ audio.pause = () => { paused = true; };
+ audio.play = async () => { paused = false; audio.dispatchEvent(new w.Event('play')); };
+ const at = async seconds => act(async () => {
+   audio.currentTime = seconds;
+   audio.dispatchEvent(new w.Event('timeupdate', {bubbles:true}));
+ });
+ await at(0);
+ assert.equal(button(labels.explain).disabled, true);
+ await at(20.1);
+ await act(async () => button(labels.explain).click());
+ assert.equal(paused, true);
+ const panel = w.document.querySelector('.lesson-song-focused');
+ assert.equal(panel.querySelector('.lesson-song-focused-line').textContent, expectedLine);
+ assert.equal(panel.querySelector('[lang="en"]').textContent, expectedEnglish);
+ assert.equal(w.document.querySelector('.lesson-song-lyrics'), null);
+ await act(async () => button(labels.replay).click());
+ assert.equal(audio.currentTime, 20);
+ assert.equal(paused, false);
+ await at(24.2);
+ assert.equal(paused, true);
+ assert.equal(audio.currentTime, 24);
+ assert.equal(panel.querySelector('.lesson-song-focused-line').textContent, expectedLine);
+ await act(async () => button(labels.resume).click());
+ assert.equal(audio.currentTime, 24);
+ assert.equal(paused, false);
+ await at(25.1);
+ assert.equal(w.document.querySelector('.lesson-song-focused'), null);
+ assert.equal(w.document.querySelector('[aria-current="true"]').dataset.line, '3');
+}
+const Swahili = component('src/components/SwahiliSlideMusic.jsx');
+for (const level of ['A1','A2','B1']) {
+ test('Swahili '+level+' timed music slide can explain, replay and continue', async () => {
+  const dom = new JSDOM('<div id="root"></div>');
+  const w = dom.window;
+  Object.assign(globalThis, {window:w, document:w.document, IS_REACT_ACT_ENVIRONMENT:true});
+  const track = {level, day:1, id:'test-'+level, objectKey:level+'/song.mp3', audioUrl:'/song.mp3', title:'Wimbo'};
+  const words = ['Karibu nyumbani.', 'Habari yako?', 'Nzuri, asante.', 'Karibu tena.'];
+  const pack = {objectKey:track.objectKey, lyrics:words.join('\n'),
+    cues:words.map((text,i)=>({text,start:10+5*i,end:14+5*i})),
+    englishTranslation:{lines:words.map((de,i)=>({de,en:['Welcome home.','How are you?','Fine, thank you.','Come again.'][i]}))}};
+  globalThis.fetch = async () => ({ok:true,json:async()=>pack});
+  const root = createRoot(w.document.getElementById('root'));
+  try {
+    await act(async () => root.render(React.createElement(Swahili,{track})));
+    await act(async () => [...w.document.querySelectorAll('button')].find(b=>b.textContent.includes('2 · Maneno')).click());
+    await exerciseExplanation(w, {explain:'Eleza mstari huu', replay:'Rudia mstari', resume:'Endelea na wimbo'}, words[2], 'Fine, thank you.');
+  } finally { await act(async () => root.unmount()); w.close(); }
+ });
 }

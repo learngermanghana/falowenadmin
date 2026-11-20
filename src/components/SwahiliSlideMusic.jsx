@@ -148,7 +148,7 @@ function RecordingLyrics({ track, lessonQuestions }) {
         <label><input type="checkbox" checked={follow} disabled={!matched}
           onChange={event => setFollow(event.target.checked)}/> Fuata maneno yanayoimbwa</label>
         {matched && pack.timingStatus === "estimated" && <small>Muda wa kila mstari ni wa kukadiria.</small>}
-        <LessonSongLyrics song={pack} cues={pack.cues} time={time} follow={follow}
+        <LessonSongLyrics audioRef={audioRef} song={pack} cues={pack.cues} time={time} follow={follow}
           language="sw" label="Maneno yanayoimbwa"
           onSeek={start => { if (audioRef.current) audioRef.current.currentTime = start; }} />
       </>}

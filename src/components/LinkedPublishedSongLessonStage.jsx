@@ -209,7 +209,7 @@ export default function LinkedPublishedSongLessonStage({ music }) {
             ? <p>Lies mit und achte auf die Ausdrücke, die du im Lied hörst.</p>
             : <p role="status"><strong>Referenztext · noch nicht mit dieser MP3 abgeglichen.</strong> Dieser originale Day-{day}-Liedtext ist bereits veröffentlicht, aber die aktuelle Aufnahme hat einen anderen Dateinamen. Deshalb sind die Zeilen hier nicht zeitgesteuert. Bitte den Text beim Hören mit der Aufnahme vergleichen.</p>}
           {synchronized && <label><input type="checkbox" checked={follow} onChange={e=>setFollow(e.target.checked)}/> Mitlesen folgen</label>}
-          <LessonSongLyrics song={song} cues={synchronized ? pack.cues : []} time={time}
+          <LessonSongLyrics key={track?.objectKey} audioRef={audio} song={song} cues={synchronized ? pack.cues : []} time={time}
             onSeek={synchronized ? (seconds=>{if(audio.current){cancelPreview();audio.current.currentTime=seconds;setTime(seconds);}}) : undefined}
             follow={synchronized && follow}/>
         </> : <p role="status">{loading ? 'Der Liedtext wird geladen…' :
