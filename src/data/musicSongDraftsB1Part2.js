@@ -37,9 +37,9 @@ export const MUSIC_SONG_DRAFTS_B1_PART2 = Object.freeze([
   },
   {
     "assignmentKey": "B1-6.20",
-    "title": "Wie wird man eigentlich…?",
+    "title": "Mein Traumberuf",
     "musicStyle": "Soft Pop-Rock, 89 BPM: light pop-rock with clean electric guitars, soft live drum kit, gentle bass and a singable, uplifting hook. One lead singer, clear German phrases, quiet instrumental mix.",
-    "lyrics": "[Verse 1]\nMein Bruder möchte Krankenpfleger werden.\nEr hat im Krankenhaus ein Praktikum gemacht.\nSeitdem interessiert er sich dafür,\nwelche Ausbildung und Prüfungen notwendig sind.\n\n[Chorus]\nEin Beruf beginnt mit einer Frage,\nund aus der Frage wird ein Plan.\nWir lernen jeden Schritt auf diesem Weg.\n\n[Verse 2]\nEr besucht einen Informationstag in der Schule.\nEine Lehrerin erklärt die Aufnahmebedingungen.\nDann spricht er mit einer jungen Pflegerin,\ndie gerade ihre Ausbildung beendet hat.\n\n[Chorus]\nEin Beruf beginnt mit einer Frage,\nund aus der Frage wird ein Plan.\nWir lernen jeden Schritt auf diesem Weg.\n\n[Outro]\nJetzt sammelt mein Bruder seine Unterlagen.\nIm nächsten Monat will er sich bewerben.\nBei Falowen stelle ich Fragen zu Ausbildung und Beruf.",
+    "lyrics": "[Verse 1]\nMein Bruder hat einen Traum,\ner möchte Krankenpfleger sein.\nEr arbeitet gern mit Menschen,\nund hilft den Kranken gern.\nEr möchte vieles lernen,\ndie Zukunft liegt vor ihm.\nOh, oh, ein neuer Anfang,\nsein großer Traum beginnt.\n[Chorus]\nOh, oh, mein Traumberuf,\noh, oh, ich gebe nicht auf.\nIch lerne für die Zukunft,\nund glaube fest daran.\nOh, oh, mein Traumberuf,\noh, oh, die Zeit ist da.\nMit Mut und neuen Ideen,\nwird mein großer Traum bald wahr.\n[Verse 2]\nMein Bruder sucht die Ausbildung,\ner fragt, was er dafür braucht.\nEr schreibt die Bewerbung,\nund schickt die Unterlagen raus.\nEr wartet auf die Antwort,\nund hofft auf einen Platz.\nOh, oh, die Zukunft ruft,\nsein Traum wird langsam wahr.\n[Chorus]\nOh, oh, mein Traumberuf,\noh, oh, ich gebe nicht auf.\nIch lerne für die Zukunft,\nund glaube fest daran.\nOh, oh, mein Traumberuf,\noh, oh, die Zeit ist da.\nMit Mut und neuen Ideen,\nwird mein großer Traum bald wahr.\n[Outro]\nOh, oh, mein Traumberuf,\ndie Zukunft wartet schon.\nMit Falowen lerne ich,\nüber meinen Beruf zu sprechen.",
     "genre": "Soft Pop-Rock"
   },
   {

@@ -154,10 +154,10 @@ export const MUSIC_QUESTION_SEEDS_B1 = Object.freeze([
   ],
   [
     "B1-6.20",
-    "Welche Erfahrung bestärkt den Bruder in seinem Berufswunsch?",
-    "Ein Praktikum im Krankenhaus.",
-    "Wie informiert er sich über die Ausbildung?",
-    "Er besucht einen Informationstag und spricht mit einer Pflegerin.",
+    "Welchen Beruf möchte der Bruder ausüben?",
+    "Er möchte Krankenpfleger werden.",
+    "Was schickt er mit seiner Bewerbung raus?",
+    "Seine Unterlagen.",
     "Welche Fragen würdest du jemandem stellen, der deinen Traumberuf ausübt?"
   ],
   [
