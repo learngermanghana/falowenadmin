@@ -4,6 +4,22 @@ import { computeObjectiveScore } from "./objectiveMarking.js";
 // Student-pasted speaking scores must never be accepted here.
 const SPEAKING_ASSIGNMENTS = new Set(["A1-2", "A1-4", "A1-11"]);
 
+
+// A zero speaking mark is valid when supported by a usable recording. When the
+// saved, authenticated receipt explicitly reports an unreliable transcript,
+// preserve the objective marks but do not publish a speculative final score.
+// No new transcription or AI request is made here.
+export function speakingEvidenceNeedsReview(speaking = {}) {
+  const status = String(speaking.transcriptionStatus || speaking.transcriptStatus || "").trim().toLowerCase();
+  const unreliable = new Set(["failed", "error", "empty", "unavailable", "incomplete", "low_confidence", "needs_review"]);
+  const confidence = speaking.transcriptConfidence ?? speaking.transcriptionConfidence;
+  return speaking.needsTranscriptReview === true
+    || speaking.transcriptionNeedsReview === true
+    || unreliable.has(status)
+    || (confidence !== null && confidence !== undefined && confidence !== ""
+      && Number.isFinite(Number(confidence)) && Number(confidence) < 0.5);
+}
+
 // A missing entire objective section is an incomplete assignment, not five
 // incorrect answers and not a publishable pass or fail.
 export function missingVerifiedSpeakingObjectiveParts(referenceEntry = {}, objective = {}) {
@@ -50,6 +66,19 @@ export function markVerifiedSpeakingSubmission({ referenceEntry, submissionText,
         speaking: { earned: speaking.score, available: speaking.maxScore }, incomplete: true },
       feedback: `${speakingNote} ${answered.length}/${objective.totalCount} objective responses submitted; ${objective.correctCount} correct. ${message}`,
       reviewReasons: [{ code: "missing_required_objective_part", message, source: "verified_speaking_marking" }],
+    };
+  }
+
+  if (speakingEvidenceNeedsReview(speaking)) {
+    const message = "Speaking transcription or recording evidence needs tutor verification before a final score can be published.";
+    return {
+      ...common, status: "needs_review", score: null, finalScore: null, passed: false,
+      shouldSendAutomatically: false, incompleteAssessment: true,
+      speakingEvidenceReviewRequired: true,
+      scoreBreakdown: { objective: { earned: objective.correctCount, available: objective.totalCount },
+        speaking: { earned: speaking.score, available: speaking.maxScore, provisional: true } },
+      feedback: `Objective answers: ${objective.correctCount}/${objective.totalCount} correct. Speaking mark ${speaking.score}/${speaking.maxScore} is provisional pending audio/transcript verification.`,
+      reviewReasons: [{ code: "speaking_evidence_review", message, source: "verified_speaking_marking" }],
     };
   }
 
