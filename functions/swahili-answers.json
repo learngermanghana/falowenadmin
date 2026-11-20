@@ -279,23 +279,53 @@
     }
   },
   "swahili-day-2": {
-    "version": 1,
+    "version": 2,
     "title": "Salamu",
     "writing": {
       "Kuandika": "Habari za asubuhi? — Nzuri, asante. Habari yako? — Njema, asante. Kwaheri! — Kwaheri!"
     },
     "reading": {
       "read-1": {
-        "prompt": "Asha anamsalimu nani?",
-        "answer": "Juma."
+        "prompt": "Unasema nini unapomsalimia mtu mzima au mzee kwa heshima?",
+        "answer": "Shikamoo"
       },
       "read-2": {
-        "prompt": "Asha anasema nini?",
-        "answer": "Habari za asubuhi?"
+        "prompt": "Mtu akikuambia “Hujambo?”, unajibu vipi?",
+        "answer": "Sijambo"
       },
       "read-3": {
-        "prompt": "Juma anajibu nini?",
-        "answer": "Nzuri, asante."
+        "prompt": "Salamu gani hutumiwa sana na marafiki au vijana mtaani?",
+        "answer": "Mambo?"
+      },
+      "read-4": {
+        "prompt": "Mtu akikuambia “Shikamoo”, jibu sahihi ni lipi?",
+        "answer": "Marahaba"
+      },
+      "read-5": {
+        "prompt": "Unasema nini unapoaga?",
+        "answer": "Kwa heri"
+      }
+    },
+    "listening": {
+      "listen-name": {
+        "prompt": "Mtu wa pili anaitwa nani?",
+        "answer": "Juma"
+      },
+      "listen-juma-country": {
+        "prompt": "Juma anatoka nchi gani?",
+        "answer": "Tanzania"
+      },
+      "listen-amina-country": {
+        "prompt": "Amina anatoka wapi?",
+        "answer": "Kenya"
+      },
+      "listen-amina-city": {
+        "prompt": "Amina anaishi wapi sasa?",
+        "answer": "Nairobi"
+      },
+      "listen-juma-city": {
+        "prompt": "Juma anaishi katika mji gani?",
+        "answer": "Dar es Salaam"
       }
     }
   },
