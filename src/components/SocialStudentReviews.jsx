@@ -246,18 +246,35 @@ export default function SocialStudentReviews() {
         <div>
           <span className="social-studio-kicker">Consistent, branded testimonials</span>
           <h2>Student Reviews</h2>
-          <p>Select a student with a shared review, edit the exact wording if needed, and export a ready-to-post PNG.</p>
+          <p>Choose a reviewer, use a consistent design, then export the PNG and copy a ready-to-share caption.</p>
         </div>
-        <span className="social-reviews-mark">Falowen blue · Gold accents</span>
+        <span className="social-reviews-mark">Falowen Reviews · Share Studio</span>
       </header>
       <div className="social-reviews-grid">
         <section className="social-reviews-editor">
           <h3>Review details</h3>
+          <p role="status" className="social-reviews-hint">{sharedInfo}</p>
+          <label htmlFor="social-review-search">Search student reviews</label>
+          <input id="social-review-search" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Student, level or review text" />
+          <div className="social-reviews-small-grid">
+            <div>
+              <label htmlFor="social-review-level-filter">Course level</label>
+              <select id="social-review-level-filter" value={level} onChange={(event) => setLevel(event.target.value)}>
+                {["all", "A1", "A2", "B1", "B2", "C1", "C2"].map((value) => <option key={value} value={value}>{value === "all" ? "All levels" : value}</option>)}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="social-review-status-filter">Publication status</label>
+              <select id="social-review-status-filter" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                {["all", "Draft", "Approved", "Published"].map((value) => <option key={value} value={value}>{value === "all" ? "All statuses" : value}</option>)}
+              </select>
+            </div>
+          </div>
           <label htmlFor="social-review-student">Select student review</label>
           <div className="social-reviews-select-row">
             <select id="social-review-student" value={selectedId} onChange={(event) => chooseReview(event.target.value)}>
               <option value="">New review</option>
-              {reviews.map((item) => <option key={item.id} value={item.id}>{item.studentName} · {item.course || "Student"}</option>)}
+              {visibleReviews.map((item) => <option key={item.id} value={item.id}>{item.studentName} · {item.course || "Student"}</option>)}
             </select>
             <button type="button" className="social-reviews-secondary" onClick={startNew}>+ Add</button>
           </div>
@@ -280,6 +297,10 @@ export default function SocialStudentReviews() {
             <option value="Google Review">Google Review</option>
             <option value="Student feedback">Student feedback</option>
           </select>
+          <label htmlFor="social-review-status">Publication status</label>
+          <select id="social-review-status" value={draft.status || "Draft"} onChange={(event) => edit("status", event.target.value)}>
+            <option>Draft</option><option>Approved</option><option>Published</option>
+          </select>
           <label htmlFor="social-review-text">Student's exact review</label>
           <textarea id="social-review-text" rows={9} maxLength={MAX_REVIEW_LENGTH} value={draft.review} onChange={(event) => edit("review", event.target.value)} placeholder="Paste the student's own words here" />
           <p className="social-reviews-hint">Keep the original wording. Only use feedback the student has agreed to share publicly. No student photo is needed.</p>
@@ -287,7 +308,7 @@ export default function SocialStudentReviews() {
             <button className="social-reviews-primary" type="button" onClick={saveReview}>Save review</button>
             {selectedId && !SOCIAL_STUDENT_REVIEWS.some((review) => review.id === selectedId) ? <button className="social-reviews-secondary" type="button" onClick={removeReview}>Delete saved review</button> : null}
           </div>
-          <p className="social-reviews-hint">New or edited reviews are saved in this browser only; the starter review is included with Falowen Admin.</p>
+          <p className="social-reviews-hint">Published-sheet reviews are loaded on opening this tab. Locally saved edits are not automatically written back to the Google Sheet.</p>
           {message ? <p role="status" className="social-reviews-success">{message}</p> : null}
           {error ? <p role="alert" className="social-reviews-error">{error}</p> : null}
         </section>
@@ -299,6 +320,10 @@ export default function SocialStudentReviews() {
             </div>
             <span>1080px · PNG</span>
           </div>
+          <label className="social-reviews-control-label" htmlFor="social-review-theme">Poster template</label>
+          <select className="social-reviews-template-select" id="social-review-theme" value={themeId} onChange={(event) => setThemeId(event.target.value)}>
+            {REVIEW_POSTER_THEMES.map((theme) => <option key={theme.id} value={theme.id}>{theme.label}</option>)}
+          </select>
           <div className="social-reviews-formats" aria-label="Review poster format">
             {STUDENT_REVIEW_FORMATS.map((format) => (
               <button key={format.id} type="button" aria-pressed={formatId === format.id} onClick={() => setFormatId(format.id)}>
@@ -306,13 +331,44 @@ export default function SocialStudentReviews() {
               </button>
             ))}
           </div>
+          {pages.length > 1 ? <div className="social-reviews-pagination">
+            <button type="button" className="social-reviews-secondary" disabled={pageIndex === 0} onClick={() => setPageIndex((value) => value - 1)}>Previous</button>
+            <strong>Slide {pageIndex + 1} of {pages.length}</strong>
+            <button type="button" className="social-reviews-secondary" disabled={pageIndex >= pages.length - 1} onClick={() => setPageIndex((value) => value + 1)}>Next</button>
+          </div> : null}
           <div className="social-reviews-canvas-frame">
             <canvas ref={canvasRef} aria-label="Preview of the student testimonial poster" role="img" />
           </div>
-          {!fits ? <p role="alert" className="social-reviews-error">This review will not fit fully in this size. Select a taller format or shorten it before exporting.</p> : null}
-          <button type="button" className="social-reviews-export" onClick={exportPng} disabled={savingImage || !fits || !draft.studentName.trim() || !draft.review.trim()}>
-            {savingImage ? "Preparing PNG..." : "Export PNG"}
+          {!fits ? <p role="alert" className="social-reviews-error">This quote cannot fit in this format. Try a taller layout.</p> : null}
+          <button type="button" className="social-reviews-export" onClick={() => exportPng(false)} disabled={savingImage || !fits || !pages.length || !draft.studentName.trim() || !draft.review.trim()}>
+            {savingImage ? "Preparing PNG..." : pages.length > 1 ? "Export this slide PNG" : "Export PNG"}
           </button>
+          {pages.length > 1 ? <button type="button" className="social-reviews-primary social-reviews-wide" onClick={() => exportPng(true)} disabled={savingImage || !fits}>Export all {pages.length} slides (ZIP)</button> : null}
+          <div className="social-reviews-caption-box">
+            <h3>Falowen Reviews · Share caption</h3>
+            <p className="social-reviews-hint">Copy this caption into Instagram, Facebook, LinkedIn or WhatsApp. No AI required.</p>
+            <div className="social-reviews-small-grid">
+              <div>
+                <label htmlFor="social-review-caption-template">Caption template</label>
+                <select id="social-review-caption-template" value={captionStyle} onChange={(event) => { setCaptionStyle(event.target.value); setCaptionEdit(null); }}>
+                  {REVIEW_CAPTION_STYLES.map((style) => <option key={style.id} value={style.id}>{style.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="social-review-caption-platform">Platform</label>
+                <select id="social-review-caption-platform" value={captionPlatform} onChange={(event) => { setCaptionPlatform(event.target.value); setCaptionEdit(null); }}>
+                  <option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="linkedin">LinkedIn</option><option value="whatsapp">WhatsApp</option>
+                </select>
+              </div>
+            </div>
+            <textarea aria-label="Editable Falowen Reviews social caption" value={caption} rows={12} onChange={(event) => setCaptionEdit(event.target.value)} />
+            <div className="social-reviews-actions">
+              <button className="social-reviews-primary" type="button" onClick={copyCaption}>Copy caption</button>
+              <button className="social-reviews-secondary" type="button" onClick={sharePost}>Share post</button>
+              {captionEdit !== null ? <button className="social-reviews-secondary" type="button" onClick={() => setCaptionEdit(null)}>Reset template</button> : null}
+            </div>
+            {(draft.status || "Draft") === "Draft" ? <p className="social-reviews-hint">Draft review: confirm permission and approve before posting publicly.</p> : null}
+          </div>
         </section>
       </div>
     </section>
