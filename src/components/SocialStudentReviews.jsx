@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { SOCIAL_STUDENT_REVIEWS, STUDENT_REVIEW_FORMATS } from "../data/socialStudentReviews.js";
-import { drawStudentReviewPoster, reviewImageFileName } from "../utils/socialStudentReviewRender.js";
+import { drawStudentReviewPoster, reviewImageFileName, splitReviewIntoSlides } from "../utils/socialStudentReviewRender.js";
+import { makeCampaignZip } from "../utils/socialClassCampaign.js";
+import { buildReviewCaption, mergeReviewSources, parseReviewCsv, PUBLIC_REVIEW_SHEET_CSV, REVIEW_CAPTION_STYLES, REVIEW_POSTER_THEMES, searchReviews } from "../utils/socialReviewSharing.js";
 import "./SocialStudentReviews.css";
 
 const STORAGE_KEY = "falowen-social-student-reviews-v1";
 const MAX_REVIEW_LENGTH = 1800;
-const starterReview = () => ({ id: "", studentName: "", course: "", source: "Google Review", rating: 5, date: "", review: "" });
+const starterReview = () => ({ id: "", studentName: "", course: "", source: "Google Review", rating: 5, date: "", review: "", status: "Draft" });
 
 function readReviews() {
   try {
@@ -23,6 +25,7 @@ function readReviews() {
         rating: Math.max(1, Math.min(5, Number(item.rating) || 5)),
         date: String(item.date || "").slice(0, 10),
         review: item.review.slice(0, MAX_REVIEW_LENGTH),
+        status: ["Draft", "Approved", "Published"].includes(item.status) ? item.status : "Draft",
       });
     }
     return [...byId.values()];
@@ -47,6 +50,18 @@ export default function SocialStudentReviews() {
   const [selectedId, setSelectedId] = useState(SOCIAL_STUDENT_REVIEWS[0]?.id || "");
   const [draft, setDraft] = useState(() => ({ ...(readReviews()[0] || starterReview()) }));
   const [formatId, setFormatId] = useState("portrait");
+  const [themeId, setThemeId] = useState("blue");
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pages, setPages] = useState([SOCIAL_STUDENT_REVIEWS[0]?.review || ""]);
+  const [search, setSearch] = useState("");
+  const [level, setLevel] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sharedInfo, setSharedInfo] = useState("Loading published reviews...");
+  const [captionStyle, setCaptionStyle] = useState("falowen");
+  const [captionPlatform, setCaptionPlatform] = useState("instagram");
+  const [captionEdit, setCaptionEdit] = useState(null);
+  const visibleReviews = searchReviews(reviews, search, level, statusFilter);
+  const caption = captionEdit === null ? buildReviewCaption(draft, captionStyle, captionPlatform) : captionEdit;
   const [fits, setFits] = useState(true);
   const [savingImage, setSavingImage] = useState(false);
   const [message, setMessage] = useState("");
@@ -54,10 +69,34 @@ export default function SocialStudentReviews() {
   const canvasRef = useRef(null);
 
   useEffect(() => {
-    // Keep the preview and PNG export on the same renderer and 1080-pixel design.
-    const output = drawStudentReviewPoster(canvasRef.current, draft, formatId);
-    setFits(output.fits);
-  }, [draft, formatId]);
+    const context = canvasRef.current?.getContext("2d");
+    setPages(context ? splitReviewIntoSlides(context, draft.review, formatId) : []);
+    setPageIndex(0);
+  }, [draft.review, formatId]);
+
+  useEffect(() => {
+    const part = pages[pageIndex] || "";
+    const output = drawStudentReviewPoster(canvasRef.current, { ...draft, review: part }, formatId, { themeId, pageIndex, pageCount: pages.length });
+    setFits(Boolean(pages.length) && output.fits);
+  }, [draft, formatId, themeId, pageIndex, pages]);
+
+  useEffect(() => {
+    // Read the public, already-published reviews only when this tab opens.
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const response = await fetch(PUBLIC_REVIEW_SHEET_CSV, { signal: controller.signal, cache: "no-store" });
+        if (!response.ok) throw new Error("Shared review feed unavailable");
+        const imported = parseReviewCsv(await response.text());
+        if (controller.signal.aborted) return;
+        setReviews((previous) => mergeReviewSources(SOCIAL_STUDENT_REVIEWS, imported, previous));
+        setSharedInfo(imported.length ? imported.length + " shared reviews loaded from the published sheet." : "Published sheet returned no compatible reviews.");
+      } catch {
+        if (!controller.signal.aborted) setSharedInfo("Could not load the published sheet in this browser; locally saved reviews remain available.");
+      }
+    })();
+    return () => controller.abort();
+  }, []);
 
   const edit = (key, value) => {
     setDraft((current) => ({ ...current, [key]: value }));
@@ -68,6 +107,7 @@ export default function SocialStudentReviews() {
   const chooseReview = (id) => {
     const found = reviews.find((review) => review.id === id);
     setSelectedId(id);
+    setCaptionEdit(null);
     setDraft(found ? { ...found } : starterReview());
     setError("");
     setMessage("");
@@ -75,6 +115,7 @@ export default function SocialStudentReviews() {
 
   const startNew = () => {
     setSelectedId("");
+    setCaptionEdit(null);
     setDraft(starterReview());
     setMessage("");
     setError("");
@@ -99,6 +140,7 @@ export default function SocialStudentReviews() {
       course: draft.course.trim(),
       source: draft.source === "Google Review" ? "Google Review" : "Student feedback",
       rating: Math.max(1, Math.min(5, Number(draft.rating) || 5)),
+      status: ["Draft", "Approved", "Published"].includes(draft.status) ? draft.status : "Draft",
     };
     const next = reviews.some((item) => item.id === record.id)
       ? reviews.map((item) => item.id === record.id ? record : item)
