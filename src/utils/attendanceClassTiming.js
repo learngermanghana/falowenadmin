@@ -1,4 +1,5 @@
 import { generateSessionOccurrences, getSchedulingSchoolClosureDates, normalizeScheduleRules, toSessionDate } from "./liveClassScheduling.js";
+import { isAppAssessment } from "./appAssessment.js";
 
 const CANCELLED_STATUSES = new Set(["cancelled", "canceled", "completed", "complete", "done"]);
 
@@ -24,11 +25,17 @@ function timeLabel(value, timezone) {
   }).format(date);
 }
 
-function futureSessions(sessions = [], now = new Date()) {
+function futureSessions(sessions = [], now = new Date(), klass = {}) {
+  const timezone = String(klass.timezone || "Africa/Accra").trim() || "Africa/Accra";
+  const endDate = /^\\d{4}-\\d{2}-\\d{2}$/.test(String(klass.endDate || ""))
+    ? String(klass.endDate) : dateKey(klass.endDate, timezone);
   return sessions
-    .filter((session) => !CANCELLED_STATUSES.has(String(session.status || "").trim().toLowerCase()))
+    .filter((session) => !isAppAssessment(session)
+      && session.superseded !== true
+      && !CANCELLED_STATUSES.has(String(session.status || "").trim().toLowerCase()))
     .map((session) => ({ session, startsAt: toSessionDate(session.startsAt), endsAt: toSessionDate(session.endsAt) }))
-    .filter(({ startsAt, endsAt }) => startsAt && (endsAt ? endsAt > now : startsAt >= now))
+    .filter(({ startsAt, endsAt }) => startsAt && (endsAt ? endsAt > now : startsAt >= now)
+      && (!endDate || dateKey(startsAt, timezone) <= endDate))
     .sort((left, right) => left.startsAt - right.startsAt);
 }
 
@@ -63,7 +70,7 @@ function nextTimetableSession(klass, sessions, now, timezone) {
 
 export function classTimingSummary(klass = {}, sessions = [], now = new Date()) {
   const timezone = String(klass.timezone || "Africa/Accra").trim() || "Africa/Accra";
-  const savedNext = futureSessions(sessions, now)[0];
+  const savedNext = futureSessions(sessions, now, klass)[0];
   const next = savedNext || nextTimetableSession(klass, sessions, now, timezone);
   const source = savedNext ? "session" : "timetable";
   if (!next) return { label: "No upcoming class", tone: "muted", sortTime: Number.POSITIVE_INFINITY };
