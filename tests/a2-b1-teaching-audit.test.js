@@ -22,11 +22,11 @@ test("A2 scenario challenges genuinely replace focused practice in the same teac
   assert.ok(challengeIds.length >= 10, "A2 interactive challenges should not be classified as missing practice");
 });
 
-test("A2 restaurant roleplay is a valid checked speaking task, not a missing question-support stage", () => {
+test("A2 restaurant lesson includes a one-sentence closing task", () => {
   const slide = getSlidesByCourse("A2").find((row) => row.assignmentId === "A2-3.8");
   const stage = buildTeachingPresenterStages(slide, slide.topic).find((row) => row.id === "questions");
-  assert.equal(stage.type, "flow");
-  assert.ok(stage.items.length >= 2);
+  assert.equal(stage.type, "list");
+  assert.equal(stage.items.length, 1);
 });
 
 test("lesson-by-lesson A2 teaching audit accepts substantive challenges and roleplay", () => {

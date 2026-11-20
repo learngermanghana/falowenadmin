@@ -27,7 +27,7 @@ test("B1 music openings preserve the underlying follow-up material", () => {
    followups.push(followup);
   });
   assert.equal(new Set(followups).size,followups.length,slide.assignmentId);
-  assert.deepEqual(stages.slice(-4).map(x=>x.id),["questions","workbook-presentation","workbook","lesson-summary"],slide.assignmentId);
+  assert.deepEqual(stages.slice(-4).map(x=>x.id),["workbook-presentation","questions","workbook","lesson-summary"],slide.assignmentId);
  }
 });
 

@@ -1,10 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
-import { getSpeakingDifficultySelection } from "../src/data/presenterSpeakingDifficulty.js";
-import { buildTeachingPresenterStages, getSpeakingQuestionModel } from "../src/utils/teachingPresenter.js";
+import { getSpeakingQuestionModel } from "../src/utils/teachingPresenter.js";
 
-test("all 141 A2 source speaking questions keep models while Presenter selects three levels", () => {
+test("all 141 A2 source speaking questions keep models", () => {
   const slides = getSlidesByCourse("A2");
   assert.equal(slides.length, 28);
   assert.deepEqual(slides.map(s => s.dayNumber), Array.from({length: 28}, (_, i) => i + 1));
@@ -23,39 +22,11 @@ test("all 141 A2 source speaking questions keep models while Presenter selects t
       answers.add(model.modelAnswerDe);
     }
 
-    const stage = buildTeachingPresenterStages(slide).find(s => s.id === "questions");
-    const difficulty = getSpeakingDifficultySelection(slide.assignmentId);
-    assert.ok(difficulty, `${slide.assignmentId} needs curated speaking difficulty`);
-    if (Array.isArray(slide.presenterSpeakingRounds) && slide.presenterSpeakingRounds.length) {
-      // Day 8 intentionally uses three progressive restaurant role-play rounds.
-      // All five source questions and their full models remain on the slide.
-      assert.equal(slide.assignmentId, "A2-3.8");
-      assert.equal(stage.type, "flow");
-      assert.equal(stage.items.length, slide.presenterSpeakingRounds.length);
-      assert.equal(stage.items.length, 3);
-      assert.deepEqual(stage.items, slide.presenterSpeakingRounds);
-      continue;
+    const source = { questionModels: slide.speakingModels };
+    for (const model of slide.speakingModels) {
+      assert.deepEqual(getSpeakingQuestionModel(source, model.questionDe), model);
     }
-    assert.equal(stage.requiresQuestionModel, true);
-    assert.deepEqual(stage.questionLevels, ["Easy", "Neutral", "Difficult"]);
-    assert.equal(stage.difficultySource, "curated");
-    assert.deepEqual(stage.difficultyIndexes, difficulty.indexes);
-    assert.deepEqual(stage.items, difficulty.indexes.map((index) => slide.studentQuestionsDe[index]));
-    assert.equal(stage.questionModels.length, 3);
-    assert.deepEqual(stage.questionModels.map(m => m.questionDe), stage.items);
-
-    for (const question of stage.items) {
-      const model = getSpeakingQuestionModel(stage, question);
-      assert.ok(model.modelAnswerDe.length > 50, `${slide.assignmentId}: ${question}`);
-      assert.ok(!stage.supportItems.includes(model.modelAnswerDe));
-    }
-
-    const reordered = {...stage, questionModels: [...stage.questionModels].reverse()};
-    for (const index of [0, 2, 1, 0]) {
-      assert.deepEqual(getSpeakingQuestionModel(reordered, stage.items[index]), stage.questionModels[index]);
-    }
-    assert.equal(getSpeakingQuestionModel(stage, "A new question"), null);
-    assert.equal(getSpeakingQuestionModel({...stage, questionModels: []}, stage.items[0]), null);
+    assert.equal(getSpeakingQuestionModel(source, "A new question"), null);
   }
 
   assert.equal(answers.size, 141);

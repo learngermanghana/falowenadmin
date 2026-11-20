@@ -30,9 +30,8 @@ test("B1 Day 1-6 keep Presenter 2.0 stages after the full B1 rollout", () => {
     assert.equal(grammarStage.items.length, 3);
 
     const questionStage = stages.find((stage) => stage.id === "questions");
-    assert.equal(questionStage.type, "question-reveal");
-    assert.ok(questionStage.items.length >= 1);
-    assert.ok(questionStage.supportItems.length >= 1);
+    assert.equal(questionStage.type, "list");
+    assert.equal(questionStage.items.length, 1);
 
     const practiceStage = stages.find((stage) => stage.id === "practice");
     const challengeStage = stages.find((stage) => stage.id === "scenario-challenge");

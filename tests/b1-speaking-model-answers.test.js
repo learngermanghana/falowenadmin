@@ -1,10 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
-import { getSpeakingDifficultySelection } from "../src/data/presenterSpeakingDifficulty.js";
 import { buildTeachingPresenterStages, getSpeakingQuestionModel } from "../src/utils/teachingPresenter.js";
 
-test("all 140 B1 source speaking questions keep complete models while Presenter selects three levels", () => {
+test("all 140 B1 source speaking questions keep complete models", () => {
   const slides = getSlidesByCourse("B1");
   assert.equal(slides.length, 28);
   const answers = new Set();
@@ -21,29 +20,11 @@ test("all 140 B1 source speaking questions keep complete models while Presenter 
       answers.add(model.modelAnswerDe);
     }
 
-    const stage = buildTeachingPresenterStages(slide).find((item) => item.id === "questions");
-    const difficulty = getSpeakingDifficultySelection(slide.assignmentId);
-    assert.ok(difficulty, `${slide.assignmentId} needs curated speaking difficulty`);
-    assert.equal(stage.requiresQuestionModel, true);
-    assert.deepEqual(stage.questionLevels, ["Easy", "Neutral", "Difficult"]);
-    assert.equal(stage.difficultySource, "curated");
-    assert.deepEqual(stage.difficultyIndexes, difficulty.indexes);
-    assert.deepEqual(stage.items, difficulty.indexes.map((index) => slide.studentQuestionsDe[index]));
-    assert.equal(stage.questionModels.length, 3);
-    assert.deepEqual(stage.questionModels.map((item) => item.questionDe), stage.items);
-
-    for (const question of stage.items) {
-      const model = getSpeakingQuestionModel(stage, question);
-      assert.ok(model?.modelAnswerDe.length > 70, `${slide.assignmentId}: ${question}`);
-      assert.ok(!stage.supportItems.includes(model.modelAnswerDe));
+    const source = { questionModels: slide.speakingModels };
+    for (const model of slide.speakingModels) {
+      assert.deepEqual(getSpeakingQuestionModel(source, model.questionDe), model);
     }
-
-    const reordered = { ...stage, questionModels: [...stage.questionModels].reverse() };
-    for (const index of [0, 2, 1, 0]) {
-      assert.deepEqual(getSpeakingQuestionModel(reordered, stage.items[index]), stage.questionModels[index]);
-    }
-    assert.equal(getSpeakingQuestionModel(stage, "A newly added question"), null);
-    assert.equal(getSpeakingQuestionModel({ ...stage, questionModels: [] }, stage.items[0]), null);
+    assert.equal(getSpeakingQuestionModel(source, "A new question"), null);
   }
 
   assert.equal(answers.size, 140);

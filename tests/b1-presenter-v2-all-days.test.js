@@ -5,7 +5,6 @@ import assert from "node:assert/strict";
 
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { B1_PRESENTER_KNOWLEDGE_ASSIGNMENTS, getB1PresenterKnowledge } from "../src/data/b1PresenterKnowledge.js";
-import { getSpeakingDifficultySelection } from "../src/data/presenterSpeakingDifficulty.js";
 import {
   buildTeachingPresenterStages,
   isB1PresenterV2Slide,
@@ -18,8 +17,8 @@ const REQUIRED_STAGES = [
   "reading",
   "grammar-check",
   "practice",
-  "questions",
   "workbook-presentation",
+  "questions",
   "workbook",
   "lesson-summary",
 ];
@@ -73,15 +72,11 @@ test("all 28 B1 lessons use the reading and correction Presenter spine", () => {
     assert.equal(stageIds.includes("mistakes"), false, `${slide.assignmentId} should fold correction into the grammar diagnostic`);
 
     const questions = stages.find((stage) => stage.id === "questions");
-    assert.equal(questions.type, "question-reveal");
-    assert.equal(questions.items.length, 3, `${slide.assignmentId} should use three progressive speaking questions`);
-    assert.equal(questions.questionModels.length, 3, `${slide.assignmentId} should preserve models for the three selected questions`);
-    assert.deepEqual(questions.questionLevels, ["Easy", "Neutral", "Difficult"]);
-    const difficulty = getSpeakingDifficultySelection(slide.assignmentId);
-    assert.ok(difficulty, `${slide.assignmentId} needs an explicit difficulty map`);
-    assert.equal(questions.difficultySource, "curated");
-    assert.deepEqual(questions.difficultyIndexes, difficulty.indexes);
-    assert.deepEqual(questions.items, difficulty.indexes.map((index) => slide.studentQuestionsDe[index]));
+    assert.equal(questions.type, "list");
+    assert.equal(questions.title, "Ein Satz zum Schluss");
+    assert.equal(questions.suggestedMinutes, 1);
+    assert.equal(questions.items.length, 1);
+    assert.match(questions.items[0], /…/);
 
     const workbook = stages.find((stage) => stage.id === "workbook");
     assert.equal(workbook.type, "clarification");

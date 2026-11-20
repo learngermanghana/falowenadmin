@@ -44,7 +44,7 @@ test("A2 Day 18 slide 2 is real Falowen R2 music with original questions, slide 
   assert.equal(remainingIds.length, 9);
   assert.deepEqual(remainingIds.slice(0, 4), ["workbook-grammar", "common-mistakes", "reading", "grammar-check"]);
   assert.equal(remainingIds[4], "scenario-challenge");
-  assert.deepEqual(remainingIds.slice(5), ["questions", "workbook-presentation", "workbook", "lesson-summary"]);
+  assert.deepEqual(remainingIds.slice(5), ["workbook-presentation", "questions", "workbook", "lesson-summary"]);
 });
 
 test("Music stage uses signed R2 music, lyrics and 3 canonical questions without breaking B1 YouTube lessons",()=>{
