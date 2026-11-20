@@ -117,6 +117,14 @@ function RecordingLyrics({ track, lessonQuestions }) {
     </div>
 
     {view === "listen" && <div className="published-song-lesson__section">
+      {pack?.story && <details>
+        <summary>Kuhusu wimbo · <span lang="en">Behind the Song</span></summary>
+        <p>{pack.story.sw}</p>
+        <p lang="en">{pack.story.en}</p>
+        <h4>Utakachojifunza · <span lang="en">What you’ll practise</span></h4>
+        <p>{pack.story.focusSw}</p>
+        <p lang="en">{pack.story.focusEn}</p>
+      </details>}
       <h3>Sikiliza kwanza.</h3>
       <p>{isB1Day28 ? "Wimbo unataja njia gani za kutunza mazingira?" :
         "Sikiliza wimbo. Ni maneno gani unayosikia?"}</p>
