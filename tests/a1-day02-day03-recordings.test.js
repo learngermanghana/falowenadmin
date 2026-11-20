@@ -43,8 +43,8 @@ test('Day 22 completion uses Arzttermin playback, the ten o’clock appointment 
 });
 
 test('superseded PR 1292 keeps the full Day 21 replacement and Day 22 recording-specific review gate',()=>{
- const weather=getReusableSongDraft('A1-13');assert.equal(weather.title,'Heute kann ich leider nicht');
- assert.equal(lyricLines(weather.lyrics).length,36);assert.match(weather.lyrics,/Ich treffe Mia um drei im Park/);
+ const weather=getReusableSongDraft('A1-13');assert.equal(weather.title,'Bina, tut mir leid');
+ assert.equal(lyricLines(weather.lyrics).length,26);assert.match(weather.lyrics,/Heute treffe ich Bina/);
  const recording=A1_DAY22_FINAL_RECORDING,lines=lyricLines(getReusableSongDraft('A1-14.1').lyrics);
  assert.equal(recording.objectKey,A1_DAY22_MUSIC.audioKey);
  assert.equal(recording.sha256,'2ec00cb7004809e6b34e103e943ac1a6fe29d9bab4d410f4febe0d00412a349b');

@@ -8,6 +8,7 @@ import { A1_DAY8_FINAL_RECORDING } from "../src/data/a1Day8FinalRecording.js";
 import { A1_DAY10_FINAL_RECORDING } from "../src/data/a1Day10FinalRecording.js";
 import { A1_DAY17_FINAL_RECORDING } from "../src/data/a1Day17FinalRecording.js";
 import { A1_DAY18_FINAL_RECORDING } from "../src/data/a1Day18FinalRecording.js";
+import { recordingTimingDrafts } from "../src/data/recordingTimingDrafts.js";
 import { A1_DAY22_FINAL_RECORDING } from "../src/data/a1Day22FinalRecording.js";
 import { A2_DAY21_FINAL_RECORDING } from "../src/data/a2Day21FinalRecording.js";
 import { A2_DAY22_FINAL_RECORDING } from "../src/data/a2Day22FinalRecording.js";
@@ -477,7 +478,7 @@ test("A1 Day 11 keeps approved Tagesablauf lyrics and never invents unverified t
   const studio=readFileSync(new URL("../src/components/MusicLyricsVideoStudio.jsx",import.meta.url),"utf8");
   assert.match(studio,/music\/a1\/day-11\/Mein Tag – Von morgens bis\.mp3/);
   assert.match(studio,/"music\/a1\/day-11\/Mein Tag – Von morgens bis\.mp3":"A1-7"/);
-  assert.match(studio,/No unverified timestamps have been inserted/);
+  assert.ok(!recordingTimingDrafts.some(recording=>recording.assignmentKey==="A1-7"));
   const page=readFileSync(new URL("../src/pages/MusicStudioPage.jsx",import.meta.url),"utf8");
   assert.match(page,/obsoleteA1Day11Draft/);
   const questions=readFileSync(new URL("../src/data/musicQuestionSeedsA1.js",import.meta.url),"utf8");
@@ -485,31 +486,22 @@ test("A1 Day 11 keeps approved Tagesablauf lyrics and never invents unverified t
   assert.match(questions,/Sie liest ein Buch/);
 });
 
-test("A1 Day 12 Zeit und Datum keeps the user-supplied 44 lyric lines, correct lesson and R2 key", () => {
-  const song=getReusableSongDraft("A1-8");
-  assert.equal(song.title,"Zeit und Datum – Das ganze Jahr");
-  assert.match(song.musicStyle,/96 BPM/);
-  assert.match(song.lyrics,/Mein Handy zeigt vierzehn Uhr/);
-  assert.match(song.lyrics,/Um sechzehn Uhr treffe ich Freunde/);
-  assert.match(song.lyrics,/Um zweiundzwanzig Uhr gehe ich schlafen/);
-  assert.match(song.lyrics,/Januar, Februar, März und April/);
-  assert.match(song.lyrics,/Im Mai habe ich Geburtstag/);
-  assert.match(song.lyrics,/Im Dezember feiern wir zusammen/);
-  assert.match(song.lyrics,/Heute ist der dritte Mai/);
-  assert.doesNotMatch(song.lyrics,/Mia fragt: Wann treffen wir uns/);
-  const lines=videoLyricLines(song.lyrics);
-  assert.equal(lines.length,44);
-  const studio=readFileSync(new URL("../src/components/MusicLyricsVideoStudio.jsx",import.meta.url),"utf8");
-  assert.match(studio,/"music\/a1\/day-12\/Zeit und Datum\.mp3":"A1-8"/);
-  assert.match(studio,/setCues\(\[\]\)/);
-  assert.match(studio,/No unverified timestamps have been inserted/);
-  const page=readFileSync(new URL("../src/pages/MusicStudioPage.jsx",import.meta.url),"utf8");
-  assert.match(page,/obsoleteA1Day12Draft/);
-  const questions=readFileSync(new URL("../src/data/musicQuestionSeedsA1.js",import.meta.url),"utf8");
-  assert.match(questions,/In welchem Monat hat die Person Geburtstag/);
-  assert.match(questions,/Im Mai/);
+test("missing public timings have recording-specific lyrics and ordered review cues", () => {
+  for (const [key, count, filename] of [
+    ["A1-8",18,"music/a1/day-12/Samstag um zehn.mp3"],
+    ["A1-13",44,"music/a1/day-21/Bina, tut mir leid.mp3"],
+    ["B1-2.4",17,"music/b1/day-04/Ort zum Leben.mp3"],
+  ]) {
+    const recording=recordingTimingDrafts.find(row=>row.assignmentKey===key);
+    const lines=videoLyricLines(recording.lyrics);
+    assert.equal(recording.objectKey,filename);
+    assert.match(recording.sha256,/^[a-f0-9]{64}$/);
+    assert.equal(lines.length,count);
+    assert.equal(recording.cueStarts.length,count);
+    assert.ok(recording.cueStarts.every((start,i)=>start>=0 && start<recording.duration &&
+      (!i || start>recording.cueStarts[i-1])));
+  }
 });
-
 test("A1 Day 17 Wo ist der Bahnhof keeps full directions and timing for its exact MP3",()=>{
   const song=getReusableSongDraft("A1-11");
   const reference=A1_DAY17_FINAL_RECORDING;
@@ -586,28 +578,11 @@ test("A1 Day 17–18 load recording-specific cues without replacing teacher-revi
   assert.match(questionSeeds,/Wo findet Mia den Schlüssel/);
 });
 
-test("A1 Day 21 weather cancellation uses the new approved full song with no invented audio timing",()=>{
-  const song=getReusableSongDraft("A1-13");
-  assert.equal(song.title,"Heute kann ich leider nicht");
-  assert.match(song.musicStyle,/Gentle Afrobeat/);
-  for(const line of [
-    "Heute ist das Wetter schlecht",
-    "Ich möchte Mia im Park treffen",
-    "Heute kann ich leider nicht",
-    "Heute muss ich leider absagen",
-    "Am Nachmittag kommt ein Gewitter",
-    "Mia schreibt: „Morgen um drei?“",
-    "Ich treffe Mia um drei im Park",
-  ]) assert.ok(song.lyrics.includes(line),line);
-  assert.doesNotMatch(song.lyrics,/Mia fragt: Wie ist das Wetter/);
-  assert.equal(videoLyricLines(song.lyrics).length,36);
-  const studio=readFileSync(new URL("../src/components/MusicLyricsVideoStudio.jsx",import.meta.url),"utf8");
-  assert.match(studio,/"music\/a1\/day-21\/Heute kann ich leider nicht\.mp3":"A1-13"/);
-  const page=readFileSync(new URL("../src/pages/MusicStudioPage.jsx",import.meta.url),"utf8");
-  assert.match(page,/obsoleteA1Day21Draft/);
-  const seeds=readFileSync(new URL("../src/data/musicQuestionSeedsA1.js",import.meta.url),"utf8");
-  assert.match(seeds,/Warum sagt die Person das Treffen mit Mia ab/);
-  assert.match(seeds,/Morgen um drei Uhr/);
+test("Day 21 recording contains both sung sections of Bina's song",()=>{
+  const {lyrics}=recordingTimingDrafts.find(row=>row.assignmentKey==="A1-13");
+  assert.equal((lyrics.match(/Heute treffe ich Bina/g)||[]).length,2);
+  assert.match(lyrics,/vielleicht bei Sonnenlicht/);
+  assert.match(lyrics,/Wir treffen uns am Freitag/);
 });
 test("A1 Day 22 Arzttermin lyrics and reviewed-file gate match the uploaded MP3",()=>{
   const song=getReusableSongDraft("A1-14.1");

@@ -9,6 +9,7 @@ import { A1_DAY8_FINAL_RECORDING } from "../data/a1Day8FinalRecording.js";
 import { A1_DAY10_FINAL_RECORDING } from "../data/a1Day10FinalRecording.js";
 import { A1_DAY17_FINAL_RECORDING } from "../data/a1Day17FinalRecording.js";
 import { A1_DAY18_FINAL_RECORDING } from "../data/a1Day18FinalRecording.js";
+import { recordingTimingDrafts } from "../data/recordingTimingDrafts.js";
 import { A1_DAY22_FINAL_RECORDING } from "../data/a1Day22FinalRecording.js";
 import { A2_DAY21_FINAL_RECORDING } from "../data/a2Day21FinalRecording.js";
 import { A2_DAY22_FINAL_RECORDING } from "../data/a2Day22FinalRecording.js";
@@ -18,6 +19,7 @@ import { readSongCues, validateLyricCues } from "../utils/songLyrics.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { videoLyricLines, lyricScenes, findLyricScene, videoRecorderFormat, drawMusicVideoFrame, isRealMp4Blob, timedLyricsPack, verifiedPublishedVideoTiming, musicVideoSocialCopy, resolveMusicVideoGenre, MUSIC_VIDEO_GENRE_SUGGESTIONS, videoEnglishLines, publishedVideoEnglish, musicVideoAudioUrl, VIDEO_EXPORT_PRESETS } from "../utils/musicLyricsVideo.js";
 
+const recordingReferences=[A1_DAY5_FINAL_RECORDING,A1_DAY6_FINAL_RECORDING,A1_DAY7_FINAL_RECORDING,A1_DAY8_FINAL_RECORDING,A1_DAY10_FINAL_RECORDING,A1_DAY17_FINAL_RECORDING,A1_DAY18_FINAL_RECORDING,...recordingTimingDrafts,A1_DAY22_FINAL_RECORDING,A2_DAY21_FINAL_RECORDING,A2_DAY22_FINAL_RECORDING];
 const frameStyle = {width:"min(100%,440px)",borderRadius:14,background:"#102f34",boxShadow:"0 6px 20px #102f3426"};
 const fieldStyle = {width:"100%",maxWidth:520,padding:"8px",borderRadius:8,border:"1px solid #cbd5e1",boxSizing:"border-box"};
 function saveBlob(blob, name) {
@@ -193,7 +195,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
 
   // Record-specific provisional timing is never applied to a different MP3 take.
   useEffect(()=>{
-    const reference=[A1_DAY5_FINAL_RECORDING,A1_DAY6_FINAL_RECORDING,A1_DAY7_FINAL_RECORDING,A1_DAY8_FINAL_RECORDING,A1_DAY10_FINAL_RECORDING,A1_DAY17_FINAL_RECORDING,A1_DAY18_FINAL_RECORDING,A1_DAY22_FINAL_RECORDING,A2_DAY21_FINAL_RECORDING,A2_DAY22_FINAL_RECORDING].find(x=>x.assignmentKey===assignmentKey);
+    const reference=recordingReferences.find(x=>x.assignmentKey===assignmentKey);
     if(!file||!reference)return undefined;
     let cancelled=false;
     async function loadRecordedTiming(){
@@ -203,7 +205,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
         if(cancelled)return;
         const hash=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,"0")).join("");
         if(hash!==reference.sha256)return;
-        const recordedLyrics=getReusableSongDraft(reference.assignmentKey)?.lyrics || "";
+        const recordedLyrics=reference.lyrics || getReusableSongDraft(reference.assignmentKey)?.lyrics || "";
         const recordedLines=videoLyricLines(recordedLyrics);
         if(recordedLines.length!==reference.cueStarts.length)throw Error("Recorded lyrics and draft timestamp counts do not match.");
         const estimated=recordedLines.map((text,i)=>({text,start:reference.cueStarts[i]}));
@@ -214,7 +216,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
           const checked=validateLyricCues(stored?.cues,recordedLines);
           reviewed=stored?.recordingHash===hash && stored?.reviewed===true &&
             stored?.lyrics===recordedLyrics && checked.length===recordedLines.length;
-          if(reviewed)selected=checked;
+          if(stored?.recordingHash===hash && stored?.lyrics===recordedLyrics && checked.length)selected=checked;
           else localStorage.setItem(key,JSON.stringify({lyrics:recordedLyrics,cues:estimated,recordingHash:hash,reviewed:false}));
         }catch{}
         if(cancelled)return;
@@ -249,12 +251,12 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   const timingKey="falowen-video-timing:"+(publishedTrack?.objectKey || assignmentKey || objectKey || "custom");
   useEffect(()=>{
     // The published recording's verified timings are hydrated separately below.
-    if (publishedTrack?.objectKey) return;
+    if (publishedTrack?.objectKey || (file && recordingFingerprint)) return;
     try {
       const saved=JSON.parse(localStorage.getItem(timingKey)||"null");
       setCues(saved?.lyrics===lyricText ? validateLyricCues(saved.cues,lines) : []);
     } catch { setCues([]); }
-  },[timingKey,lyricText,lines,publishedTrack?.objectKey]);
+  },[timingKey,lyricText,lines,publishedTrack?.objectKey,file,recordingFingerprint]);
   useEffect(()=>{
     if (!active || catalogRequested) return;
     setCatalogRequested(true);
@@ -276,7 +278,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       try {
         const response=await fetch("https://www.falowen.app/api/music-lyrics?key="+encodeURIComponent(key),
           {cache:"no-cache",signal:controller.signal});
-        if (!response.ok) throw Error("Shared timing unavailable");
+        if (!response.ok && response.status!==404) throw Error("Shared timing unavailable");
         responseData=await response.json();
       } catch (cause) {
         if (controller.signal.aborted) return;
@@ -288,13 +290,6 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       // Use the recorded text only for this exact R2 object. Never borrow a different lesson's draft.
       const recordedLyrics=published?.lyrics || (responseData?.objectKey===key && typeof responseData?.lyrics==="string"
         ? responseData.lyrics : publishedTrack?.lyrics || "");
-      const local=readSongCues({id:publishedTrack?.id || "",objectKey:key,lyrics:recordedLyrics});
-      const lineCount=videoLyricLines(recordedLyrics).length;
-      const localComplete=lineCount>0 && local.length===lineCount;
-      const restored=localComplete ? local : published?.cues || [];
-      // These approved songbook lyrics supersede the older short published
-      // catalog metadata. We have not received their MP3 bytes, so the
-      // owner's timing editor must remain blank until real audio is marked.
       const approvedUnreviewedSong={
         "music/a1/day-02/Ich heiße Bina.mp3":"A1-0.2",
         "music/a1/day-03/Wer bist du_ Sag es mir!.mp3":"A1-1.1",
@@ -306,19 +301,20 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
         "music/a1/day-21/Bina, tut mir leid.mp3":"A1-13",
       };
       const approvedAssignment=approvedUnreviewedSong[key];
-      if(approvedAssignment){
-        const approvedLyrics=getReusableSongDraft(approvedAssignment)?.lyrics||"";
-        if(approvedLyrics && recordedLyrics!==approvedLyrics){
-          currentLyricText.current=approvedLyrics;
-          setLyricText(approvedLyrics);
-          setCues([]);
-          setTimingStatus("missing");
-          setMessage("Approved lesson lyrics loaded for the R2 song. No unverified timestamps have been inserted. Play the published MP3 and mark each line before saving the shared timing.");
-          return;
-        }
-      }
+      const approvedLyrics=approvedAssignment ? getReusableSongDraft(approvedAssignment)?.lyrics : "";
+      // The exact recording's timed lyrics can differ from the lesson's writing draft.
+      const selectedLyrics=published?.lyrics || approvedLyrics || recordedLyrics;
+      const local=readSongCues({id:publishedTrack?.id || "",objectKey:key,lyrics:selectedLyrics});
+      const lineCount=videoLyricLines(selectedLyrics).length;
+      const localComplete=lineCount>0 && local.length===lineCount;
+      let savedVideo=null;
+      try { savedVideo=JSON.parse(localStorage.getItem("falowen-video-timing:"+key)||"null"); } catch {}
+      const matchesPublished=published && savedVideo?.lyrics===published.lyrics &&
+        (savedVideo.recordingHash || "")===(published.recordingSha256 || "");
+      const videoEdits=matchesPublished ? validateLyricCues(savedVideo.cues,videoLyricLines(selectedLyrics)) : [];
+      const restored=videoEdits.length ? videoEdits : localComplete ? local : published?.cues || local;
       // Only hydrate draft timing when the exact published MP3 bytes match a teacher recording.
-      const draftReference=[A1_DAY5_FINAL_RECORDING,A1_DAY6_FINAL_RECORDING,A1_DAY7_FINAL_RECORDING,A1_DAY8_FINAL_RECORDING,A1_DAY10_FINAL_RECORDING,A1_DAY17_FINAL_RECORDING,A1_DAY18_FINAL_RECORDING,A1_DAY22_FINAL_RECORDING,A2_DAY21_FINAL_RECORDING,A2_DAY22_FINAL_RECORDING]
+      const draftReference=recordingReferences
         .find(x=>x.objectKey===key || (!x.objectKey && x.level===publishedTrack?.level && Number(x.day)===Number(publishedTrack?.day)));
       // Day 22 replaced a previously published short song. Check the new MP3
       // even when an old sidecar is present, so stale lyrics/cues cannot win.
@@ -326,24 +322,26 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
         recordedLyrics!==getReusableSongDraft("A1-14.1")?.lyrics;
       if(((!published&&!localComplete)||day22Replacement)&&draftReference&&window.crypto?.subtle){
         try{
-          const remote=await fetch(publishedTrack.audioUrl,{signal:controller.signal});
+          const remote=await fetch(musicVideoAudioUrl(publishedTrack.audioUrl,publishedTrack),{signal:controller.signal});
           if(!remote.ok)throw Error("Audio unavailable");
           const digest=await window.crypto.subtle.digest("SHA-256",await remote.arrayBuffer());
           if(controller.signal.aborted)return;
           const hash=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,"0")).join("");
           if(hash===draftReference.sha256){
-            const draftLyrics=getReusableSongDraft(draftReference.assignmentKey)?.lyrics||"";
+            const draftLyrics=draftReference.lyrics || getReusableSongDraft(draftReference.assignmentKey)?.lyrics||"";
             const draftLines=videoLyricLines(draftLyrics);
             if(draftLines.length!==draftReference.cueStarts.length)throw Error("Recorded song lyric count has changed.");
             const estimated=draftLines.map((text,i)=>({text,start:draftReference.cueStarts[i]}));
             const localKey="falowen-video-timing:"+key;
-            const stored=JSON.parse(localStorage.getItem(localKey)||"null");
+            let stored=null;
+            try { stored=JSON.parse(localStorage.getItem(localKey)||"null"); } catch {}
             const checked=validateLyricCues(stored?.cues,draftLines);
             const reviewed=stored?.recordingHash===hash&&stored?.reviewed===true&&stored?.lyrics===draftLyrics&&checked.length===draftLines.length;
-            if(!reviewed)localStorage.setItem(localKey,JSON.stringify({lyrics:draftLyrics,cues:estimated,recordingHash:hash,reviewed:false}));
+            const sameDraft=stored?.recordingHash===hash && stored?.lyrics===draftLyrics;
+            const selected=sameDraft && checked.length ? checked : estimated;
             currentLyricText.current=draftLyrics;
             setLyricText(draftLyrics);
-            setCues(reviewed?checked:estimated);
+            setCues(selected);
             setRecordingFingerprint(hash);
             setTimingReview(!reviewed);
             setTimingStatus(reviewed?"local":"estimated");
@@ -366,13 +364,13 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
           return;
         }
       }
-      currentLyricText.current=recordedLyrics;
-      setLyricText(recordedLyrics);
+      currentLyricText.current=selectedLyrics;
+      setLyricText(selectedLyrics);
       setCues(restored);
-      const estimated = !localComplete && published?.timingStatus === "estimated";
+      const estimated = videoEdits.length ? savedVideo.reviewed!==true : !localComplete && published?.timingStatus === "estimated";
       setTimingReview(estimated);
       setRecordingFingerprint(published?.recordingSha256 || "");
-      setTimingStatus(localComplete ? "local" : estimated ? "estimated" : published ? "published" : failed ? "unavailable" : "missing");
+      setTimingStatus(estimated ? "estimated" : localComplete || videoEdits.length ? "local" : published ? "published" : restored.length ? "edited" : failed ? "unavailable" : "missing");
     }
     restorePublishedTiming();
     return ()=>controller.abort();
@@ -381,7 +379,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     const checked=validateLyricCues(next,lines);
     if(checked.length!==next.length)return false;
     setCues(checked);
-    if (publishedTrack?.objectKey || timingStatus==="estimated") setTimingStatus(checked.length===lines.length ? "local" : "edited");
+    if (publishedTrack?.objectKey || timingStatus==="estimated") setTimingStatus(timingReview ? "estimated" : checked.length===lines.length ? "local" : "edited");
     try {
       localStorage.setItem(timingKey,JSON.stringify({lyrics:lyricText,cues:checked,recordingHash:recordingFingerprint || undefined,reviewed:!timingReview}));
       if(allowedMusicKey(objectKey) && !timingReview){
@@ -621,6 +619,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
         completeCues ? "Timing ready: "+cues.length+"/"+lines.length+" lines from "+(timingStatus==="local" ? "saved corrections" : "the published recording")+". No new marking needed." :
         timingStatus==="unavailable" ? "Could not reach the published lyrics file. You can import saved timings or retry selecting the song." :
         timingStatus==="missing" ? "No matching verified timing found for this recording. Add or import line timings before exporting." :
+        cues.length ? cues.length+" of "+lines.length+" line starts saved. Resume marking at line "+(cues.length+1)+"." :
         "Lyrics have changed. Review or re-import timing before exporting."}
     </p>}
     <p style={{margin:0,fontSize:13,color:"#765616"}}>Check every lyric against the actual finished audio. A course-song draft may differ from what the singer recorded. Existing published timing is reused only when the recording and every lyric line match.</p>
@@ -684,7 +683,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
         }catch{}
         setMessage("Timing review confirmed. Click Save Timing to Falowen to publish it directly to the matching R2 song.");
       }}>I reviewed and confirmed all lyric time marks</button>
-    </div>}}
+    </div>}
     <p role="status">Shared line timing: {cues.length}/{lines.length} marked. {timingReview ? "Estimated timing for this exact MP3 — not yet verified. Listen, adjust and save the marks below." : completeCues ? "Ready to use in the video." : "Mark missing lines or import a matching timing file."}</p>
     <div style={{display:"grid",gap:6,border:"1px solid #b5d7ba",borderRadius:12,padding:12}}>
       <strong>Save timing to Falowen Music</strong>
