@@ -1,0 +1,38 @@
+name: Social student reviews
+
+on:
+  push:
+    paths:
+      - "src/components/SocialStudentReviews.jsx"
+      - "src/components/SocialStudentReviews.css"
+      - "src/data/socialStudentReviews.js"
+      - "src/utils/socialStudentReviewRender.js"
+      - "src/pages/SocialMediaPage.jsx"
+      - "src/pages/SocialMediaPage.css"
+      - "tests/social-student-reviews.test.js"
+      - ".github/workflows/social-student-reviews.yml"
+  pull_request:
+    paths:
+      - "src/components/SocialStudentReviews.jsx"
+      - "src/components/SocialStudentReviews.css"
+      - "src/data/socialStudentReviews.js"
+      - "src/utils/socialStudentReviewRender.js"
+      - "src/pages/SocialMediaPage.jsx"
+      - "src/pages/SocialMediaPage.css"
+      - "tests/social-student-reviews.test.js"
+      - ".github/workflows/social-student-reviews.yml"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Test student review renderer and tab
+        run: node --test tests/social-student-reviews.test.js
+      - name: Install dependencies
+        run: npm ci
+      - name: Build Admin UI
+        run: npm run build

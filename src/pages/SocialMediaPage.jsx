@@ -5,6 +5,7 @@ import { useToast } from "../context/ToastContext";
 import SocialBookPromotions from "../components/SocialBookPromotions.jsx";
 import SocialAdsDictionary from "../components/SocialAdsDictionary.jsx";
 import SocialGermanChallenges from "../components/SocialGermanChallenges.jsx";
+import SocialStudentReviews from "../components/SocialStudentReviews.jsx";
 import SocialPhotoGallery from "../components/SocialPhotoGallery.jsx";
 import { SOCIAL_PHOTO_GALLERY } from "../data/socialPhotoGallery.js";
 import SocialMusicPicker, { EMPTY_SOCIAL_MUSIC } from "../components/SocialMusicPicker.jsx";
@@ -806,7 +807,7 @@ export default function SocialMediaPage() {
         <div>
           <span className="social-studio-kicker">Falowen Admin</span>
           <h1>Social Media Studio</h1>
-          <p>Create ready-to-share campaigns for classes, books, and Falowen promotions.</p>
+          <p>Create ready-to-share campaigns for classes, books, student reviews, and Falowen promotions.</p>
         </div>
       </header>
       <nav className="social-studio-tabs" aria-label="Social media tools">
@@ -814,8 +815,9 @@ export default function SocialMediaPage() {
         <button type="button" className="social-studio-tab" aria-pressed={activeTab === "books"} onClick={() => setActiveTab("books")}>Book Promotions</button>
         <button type="button" className="social-studio-tab" aria-pressed={activeTab === "challenges"} onClick={() => setActiveTab("challenges")}>German Challenges</button>
         <button type="button" className="social-studio-tab" aria-pressed={activeTab === "ads"} onClick={() => setActiveTab("ads")}>Ads & Motivation</button>
+        <button type="button" className="social-studio-tab" aria-pressed={activeTab === "reviews"} onClick={() => setActiveTab("reviews")}>Student Reviews</button>
       </nav>
-      {activeTab === "books" ? <SocialBookPromotions /> : activeTab === "challenges" ? <SocialGermanChallenges /> : activeTab === "ads" ? <SocialAdsDictionary /> : (
+      {activeTab === "books" ? <SocialBookPromotions /> : activeTab === "challenges" ? <SocialGermanChallenges /> : activeTab === "ads" ? <SocialAdsDictionary /> : activeTab === "reviews" ? <SocialStudentReviews /> : (
         <div className="social-poster-workspace">
           <section className="social-poster-header">
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between" }}>
