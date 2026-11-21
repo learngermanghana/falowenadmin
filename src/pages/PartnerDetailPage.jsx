@@ -5,7 +5,7 @@ import { auth } from "../firebase.js";
 import { partnerAuth } from "../utils/organisationPartnerAccount.js";
 import { organisationEnrolmentRequest } from "../utils/organisationEnrolmentRequest.js";
 import { loadPartnerSubmissionFallback } from "../utils/partnerSubmissionFallback.js";
-import { buildPartnerPaymentDeadlineReminder } from "../utils/partnerPaymentDeadlineReminder.js";
+import { buildPartnerPaymentDeadlineReminder, partnerPaymentDeadline, partnerDeadlineLabel } from "../utils/partnerPaymentDeadlineReminder.js";
 import "./OrganisationEnrolmentPage.css";
 import "./PartnerDetailPage.css";
 
@@ -33,7 +33,7 @@ function reminderLinks(org, ledger) {
   const message = buildPartnerPaymentDeadlineReminder(org, ledger);
   const base = contactLinks(org);
   return {
-    email: base.email ? base.email + "?subject=" + encodeURIComponent("Falowen · Upcoming tuition payment deadline") + "&body=" + encodeURIComponent(message) : "",
+    email: base.email ? base.email + "?subject=" + encodeURIComponent("Falowen · Tuition payment deadline reminder") + "&body=" + encodeURIComponent(message) : "",
     whatsapp: base.whatsapp ? base.whatsapp + "?text=" + encodeURIComponent(message) : "",
   };
 }
@@ -223,13 +223,14 @@ export default function PartnerDetailPage() {
             {fallbackError && <p role="alert">Some student names could not be retrieved from submission history: {fallbackError}</p>}
             {fallbackMissingIds.length > 0 && <p role="alert">{fallbackMissingIds.length} referenced submission(s) were not found in available history. Student names may be incomplete; check the submission records.</p>}
             {roster.length ? <div className="org-scroll"><table>
-              <thead><tr><th>Student</th><th>Level</th><th>Tuition</th><th>Paid</th><th>Balance due</th><th>Status</th><th></th></tr></thead>
+              <thead><tr><th>Student</th><th>Level</th><th>Tuition</th><th>Paid</th><th>Balance due</th><th>Payment / access deadline</th><th>Status</th><th></th></tr></thead>
               <tbody>{roster.map((student, index) => <tr key={student.id || student.email || index}>
                 <td><strong>{student.name || "Name unavailable"}</strong><small>{student.studentCode || student.email}</small></td>
                 <td>{student.level || "—"}</td>
                 <td>{money(student.tuitionFee)}</td>
                 <td>{money(student.paid)}</td>
                 <td className={student.balanceDue > 0 ? "partner-amount-owing" : ""}>{ledger && student.balanceDue !== null ? money(student.balanceDue) : "Not verified"}</td>
+                <td>{ledger && student.balanceDue > 0 ? partnerDeadlineLabel(partnerPaymentDeadline(student), new Date().toISOString().slice(0, 10)) : "—"}</td>
                 <td>{student.paymentStatus || student.submissionStatus || "—"}</td>
                 <td><Link to={"/students?search=" + encodeURIComponent(student.email || student.studentCode || student.name)}>Open student</Link></td>
               </tr>)}</tbody>
