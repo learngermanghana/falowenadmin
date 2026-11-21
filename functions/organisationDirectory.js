@@ -48,7 +48,6 @@ function organisationDirectoryRows(agreements, submissions, profiles = []) {
       id: batch.id, createdAt: batch.createdAt || null, agreementReference: batch.agreementReference || "",
       studentCount: students.length, approvedCount: students.filter(s => s.status === "approved").length,
       studentIds: students.filter(s => s.studentId).map(s => s.studentId),
-      students: students.map(s => ({ studentId: asString(s.studentId), name: asString(s.name || s.fullName), email: asString(s.email), level: asString(s.level), status: asString(s.status || "pending") })),
     });
     entry.studentCount += students.length;
     entry.approvedCount += students.filter(s => s.status === "approved").length;
