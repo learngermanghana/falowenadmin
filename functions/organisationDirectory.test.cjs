@@ -131,3 +131,32 @@ test("partner balances query only selected organisation on demand and cap result
   assert.equal(result.truncated, true);
   await assert.rejects(loadOrganisationStudents(db, "../students"), { status: 400 });
 });
+
+test("partner profile includes each submitted student's identity and review status", () => {
+  const rows = organisationDirectoryRows([], [{
+    id: "submission-one",
+    organisation: { email: "school@example.org", name: "School" },
+    students: [
+      { studentId: "stu-1", name: "Learner One", email: "learner@example.org", level: "A1", status: "approved" },
+      { name: "Learner Two", email: "learner2@example.org", level: "A2", status: "pending" },
+    ],
+  }]);
+  assert.equal(rows[0].approvedCount, 1);
+  assert.deepEqual(rows[0].submissions[0].students, [
+    { studentId: "stu-1", name: "Learner One", email: "learner@example.org", level: "A1", status: "approved" },
+    { studentId: "", name: "Learner Two", email: "learner2@example.org", level: "A2", status: "pending" },
+  ]);
+  assert.equal(rows[0].submissions[0].students[0].phone, undefined);
+});
+
+test("partner profile distinguishes configured paid totals from missing payment figures", () => {
+  const ledger = organisationStudentLedger([
+    { id: "one", paid: 100, balanceDue: 400, tuitionFee: 500 },
+    { id: "two", initialPaymentAmount: 250, tuitionFee: 250 },
+    { id: "three", paidAmount: 80, balanceDue: 0, tuitionFee: 80 },
+  ]);
+  assert.equal(ledger.confirmedPaidTotal, 180);
+  assert.equal(ledger.unknownPaidCount, 1);
+  assert.equal(ledger.outstandingTotal, 650);
+  assert.equal(ledger.owingCount, 2);
+});
