@@ -72,7 +72,7 @@ test("Live class retains ten verified prompts, teacher reveals and student marki
   assert.deepEqual(stages[9].items,verified.slice(0,10));
   assert.equal(new Set(stages[9].items.map(q=>q.questionDe)).size,10);
   assert.match(visualSource,/Correct \/ Needs review/);
-  assert.match(visualSource,/aria-expanded=\{show\}/);
+  assert.match(visualSource,/aria-expanded=\{expanded\}/);
   assert.match(presenterSource,/<PresenterStudentPicker/);
   assert.match(presenterSource,/<PresenterSessionTimer/);
   assert.match(presenterSource,/questionContext=\{participationCheckMode \? stage.id : "class-participation"\}/);
