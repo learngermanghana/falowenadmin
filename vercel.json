@@ -123,10 +123,7 @@
     }
   ],
   "git": {
-    "deploymentEnabled": {
-      "main": true,
-      "*": false
-    }
+    "deploymentEnabled": false
   },
   "crons": [
     {
