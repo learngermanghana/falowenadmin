@@ -98,3 +98,10 @@ The workbook rules and model sentences in `a1WorkbookGrammarTeaching.js` are key
 ### Course discount links
 
 Invitations → Discount Links manages program, level, original tuition, expiry, and maximum uses. Admin uses the Campus `/api/course-discounts/admin` API, which owns offers and use counts. Allocated uses include students who have not paid yet. Redeemed uses are recorded when Paystack confirms a payment. Revocation closes the link to new allocations.
+
+
+## Dual-language placement monitoring — 21 November 2026
+
+Public German and Kiswahili A1–B1 placement attempts remain stored in the learner platform's existing encrypted Sheets placement event log and are fetched **only when staff open or explicitly refresh** the placement tab. `src/pages/TimedAssignmentAttemptsPage.jsx` uses the learner API's `language` marker (missing values default to legacy German) to show a German/Kiswahili language filter, a per-attempt language label, and language-correct manual follow-up drafts and registration URLs. No additional API calls, polling, credentials, result stores, or background jobs are required. The confidential Kiswahili answer key remains exclusively in the learner Vercel server environment, never in Admin.
+
+See learner PR for `web/src/components/swahiliPlacementTestData.js`, `api/placement-attempts.js`, and the teacher source PDF. Release after the learner API exposes language markers so Admin can read them. Validate with `node --test tests/placement-attempt-monitoring.test.js` and `node scripts/checkAiDocumentation.mjs`.
