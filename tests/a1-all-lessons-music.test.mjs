@@ -137,6 +137,16 @@ test('actual A1 presenter orders workbook grammar, Lesen and speaking for every 
    assert.equal(stages[11].items.length,5);
    continue;
   }
+  if (slide.assignmentId === 'A1-3') {
+   assert.equal(stages.length,12);
+   assert.equal(stages[9].id,'grammar-check');
+   assert.equal(stages[10].day7CombinedReading,true);
+   assert.equal(stages[10].reading?.checks.length,3);
+   assert.equal(stages[10].hasMusic,Boolean(getA1PresenterMusicStage('A1-3',7)));
+   assert.equal(stages[11].activityKind,'tutor-marked');
+   assert.equal(stages[11].items.filter(p=>/^Teil\\s/.test(p.label)).length,3);
+   continue;
+  }
   assert.equal(stages[0].id, 'intro', slide.assignmentId);
   assert.equal(stages[1].grammarTeaching, true, slide.assignmentId);
   const grammar = stages.filter(stage => stage.grammarTeaching);
