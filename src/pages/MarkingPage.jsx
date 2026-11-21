@@ -903,7 +903,7 @@ function TutorMarkingWorkspace() {
               </div>
               <span className="marking-count-badge">{queueRows.length}</span>
             </div>
-            <AdminRefreshStatus {...queueRefresh} label="submission queue" />
+            <AdminRefreshStatus {...queueRefresh} label="submission queue" autoRefreshEvery="6 hours" />
             <input
               aria-label="Search submissions"
               value={attemptSearch}

@@ -2,9 +2,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { startVisiblePolling } from "../utils/visiblePolling.js";
 import { createAdminRefreshRequest } from "../utils/adminRefreshRequest.js";
 
-// Ordinary Admin views refresh only every five minutes while visible.
- // Explicit refresh buttons bypass this interval and remain immediate.
-export function useAdminRefresh(load, onSuccess, { pollIntervalMs = 5 * 60 * 1000 } = {}) {
+// Ordinary Admin lists refresh every six hours while visible. Each panel loads
+// immediately on opening; Refresh now always bypasses the automatic cadence.
+// Time-sensitive actions and realtime subscriptions use their own data flows.
+export const DEFAULT_ADMIN_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
+
+export function useAdminRefresh(load, onSuccess, { pollIntervalMs = DEFAULT_ADMIN_REFRESH_INTERVAL_MS } = {}) {
   const onSuccessRef = useRef(onSuccess);
   onSuccessRef.current = onSuccess;
   const refreshRef = useRef(null);
@@ -29,7 +32,8 @@ export function useAdminRefresh(load, onSuccess, { pollIntervalMs = 5 * 60 * 100
     const run = () => controller.run();
     refreshRef.current = run;
     const stop = startVisiblePolling(run, pollIntervalMs, {
-      minimumGapMs: 60 * 1000,
+      // A tab focus must not quietly turn a six-hour schedule into minute polling.
+      minimumGapMs: pollIntervalMs,
       refreshOnFocus: pollIntervalMs > 0,
     });
     return () => {
