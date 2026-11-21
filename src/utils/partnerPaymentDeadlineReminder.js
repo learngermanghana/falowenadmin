@@ -35,7 +35,7 @@ export function partnerPaymentDeadline(student) {
   return null;
 }
 
-function deadlineLabel(deadline, today) {
+export function partnerDeadlineLabel(deadline, today) {
   if (!deadline || !isDate(deadline.date)) return "Payment deadline not recorded — please confirm with Falowen";
   const days = dayNumber(deadline.date) - dayNumber(today);
   const formatted = new Intl.DateTimeFormat("en-GB", {
@@ -54,14 +54,14 @@ export function buildPartnerPaymentDeadlineReminder(org, ledger, today = new Dat
   const header = org.contactName ? "Hello " + org.contactName + "," : "Hello,";
   const list = owing.flatMap(student => [
     "• " + (student.name || student.studentCode || "Student") + " (" + (student.level || "level unconfirmed") + "): " + currency(student.balanceDue) + " outstanding",
-    "  " + deadlineLabel(partnerPaymentDeadline(student), today),
+    "  " + partnerDeadlineLabel(partnerPaymentDeadline(student), today),
   ]);
   const note = datesAvailable
-    ? "We are sharing this reminder ahead of the indicated deadline(s) so payment can be arranged in time and the students' Falowen access can continue without interruption."
+    ? "Please arrange payment before the indicated dates (or promptly if a date has passed) to help prevent interruption to the students' Falowen account access."
     : "The payment deadline is not recorded for these students. Please confirm the due date with Falowen and arrange payment to help avoid interruption of their account access.";
   return [
     header, "",
-    "This is a friendly reminder of the upcoming tuition payment deadline for students enrolled through " + org.name + ".",
+    "This is a reminder of the tuition payment deadlines for students enrolled through " + org.name + ".",
     "",
     ...list,
     "",
