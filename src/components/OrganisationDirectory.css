@@ -31,3 +31,6 @@
 .partner-ledger-metrics{margin:10px 0}
 @media(max-width:850px){.partner-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.partner-directory-filters{display:grid;grid-template-columns:1fr}.partner-directory-filters input{min-width:0}}
 @media(max-width:480px){.partner-metrics{gap:7px}.partner-metrics>div{padding:10px}.partner-metrics strong{font-size:17px}.org-enrol .partner-entry{padding:12px}}
+
+.org-enrol .partner-profile-link{display:inline-flex;align-items:center;justify-content:center;padding:11px 14px;background:#204f99;border:1px solid #204f99;color:#fff;border-radius:9px;text-decoration:none;font-weight:700;font-size:13px;white-space:nowrap}
+.org-enrol .partner-profile-link:hover{background:#173d7a}
