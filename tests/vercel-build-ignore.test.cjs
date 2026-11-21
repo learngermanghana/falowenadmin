@@ -1,6 +1,10 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { needsBuild, changedFiles } = require("../scripts/vercelIgnoreBuild.cjs");
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
+const { execFileSync } = require("node:child_process");
 
 const deployed = "a".repeat(40);
 const latest = "b".repeat(40);
@@ -61,4 +65,28 @@ test("skip only documentation/test/CI paths and reject malformed names", () => {
   }
   assert.equal(needsBuild([]), true);
   assert.equal(needsBuild(null), true);
+});
+
+test("actual git two-commit range includes an undeployed application change", () => {
+  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "falowen-git-"));
+  const git = (args) => execFileSync("git", args, { cwd, encoding: "utf8" });
+  const commit = (message) => {
+    git(["add", "-A"]);
+    git(["-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-qm", message]);
+    return git(["rev-parse", "HEAD"]).trim();
+  };
+  try {
+    git(["init", "-q"]);
+    fs.writeFileSync(path.join(cwd, "README.md"), "start");
+    const deployed = commit("deployed");
+    fs.mkdirSync(path.join(cwd, "src"));
+    fs.writeFileSync(path.join(cwd, "src", "App.jsx"), "export const live = true;");
+    commit("app not yet deployed");
+    fs.mkdirSync(path.join(cwd, "docs"));
+    fs.writeFileSync(path.join(cwd, "docs", "notes.md"), "docs");
+    const head = commit("docs only");
+    const files = changedFiles({ previousSha: deployed, currentSha: head, runGit: git });
+    assert.deepEqual(files.sort(), ["docs/notes.md", "src/App.jsx"]);
+    assert.equal(needsBuild(files), true);
+  } finally { fs.rmSync(cwd, { recursive: true, force: true }); }
 });
