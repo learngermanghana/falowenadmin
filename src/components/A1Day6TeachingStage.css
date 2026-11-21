@@ -1,0 +1,86 @@
+/* Projector-friendly A1 Day 6 design. Scoped; does not alter shared
+   timers, participation controls, reading, music or workbook behaviour. */
+.a1-day6-page,.a1-day6-media{width:min(100%,1120px);margin:0 auto;display:grid;gap:clamp(12px,1.9vh,20px);color:#173857;min-width:0}
+.a1-day6-page h1,.a1-day6-reading h1{color:#103c74;font-size:clamp(27px,3.1vw,45px);line-height:1.12;margin:0}
+.a1-day6-page h2,.a1-day6-recap h2{font-size:clamp(21px,2.2vw,30px);color:#103c74;margin:0}
+.a1-day6-page p,.a1-day6-reading p{font-size:clamp(15px,1.3vw,20px);line-height:1.5;margin:0}
+.a1-day6-eyebrow{font-size:clamp(12px,1.1vw,15px);font-weight:850;letter-spacing:.045em;color:#266b9f;text-transform:uppercase}
+.a1-day6-lead{color:#4d6881}
+.a1-day6-note{font-size:clamp(13px,1.1vw,16px);color:#57718a;line-height:1.35}
+.a1-day6-page button,.a1-day6-media button{font:inherit;cursor:pointer}
+.a1-day6-page button:focus-visible,.a1-day6-media button:focus-visible,.a1-day6-media summary:focus-visible{outline:3px solid #f2b54a;outline-offset:3px}
+.a1-day6-topics,.a1-day6-card-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(10px,1.5vw,18px)}
+.a1-day6-topics article{min-height:174px;border:1px solid #bfd5f0;border-radius:18px;padding:17px 14px;display:grid;justify-items:center;align-content:center;text-align:center;gap:12px}
+.a1-day6-topics article b{font-size:clamp(32px,3.4vw,49px);line-height:1}
+.a1-day6-topics article strong{font-size:clamp(21px,2.3vw,32px)}
+.a1-day6-topics article span{font-size:clamp(14px,1.2vw,18px)}
+.a1-day6-blue{background:#eaf2ff;color:#1557a3;border-color:#bed4f0!important}
+.a1-day6-teal{background:#e8f8f4;color:#147d70;border-color:#b5e2d6!important}
+.a1-day6-violet{background:#f3efff;color:#7350a9;border-color:#d7c9f0!important}
+.a1-day6-family-card{min-width:0;min-height:126px;border:1px solid #bfd5f0;border-radius:16px;display:grid;gap:7px;align-content:center;padding:18px;text-align:center}
+.a1-day6-family-card small{font-size:13px;color:#58728c}
+.a1-day6-family-card strong{font-size:clamp(20px,2.1vw,31px);line-height:1.12}
+.a1-day6-family-card span{font-size:clamp(15px,1.25vw,19px);font-weight:650}
+.a1-day6-drill,.a1-day6-reading-text{min-width:0;background:#f1f6ff;border:1px solid #c3d5ed;border-radius:18px;padding:clamp(15px,2.3vw,27px);display:grid;gap:clamp(11px,1.6vh,17px)}
+.a1-day6-target,.a1-day6-statement{font-size:clamp(32px,4.1vw,60px);font-weight:850;text-align:center;color:#103c74}
+.a1-day6-target span{color:#1557a3}
+.a1-day6-choices,.a1-day6-buttons{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:11px}
+.a1-day6-choices button,.a1-day6-language-grid button{border:1px solid #b8d0ef;border-radius:13px;background:white;color:#1557a3;font-size:clamp(20px,2.2vw,31px);font-weight:850;padding:12px 23px}
+.a1-day6-choices button.is-picked,.a1-day6-language-grid button.is-picked,.a1-day6-hobbies button.is-picked{background:#1557a3;color:#fff;border-color:#1557a3}
+.a1-day6-buttons button,.a1-day6-drill>button,.a1-day6-reveal button{border:1px solid #1557a3;border-radius:10px;background:#1557a3;color:white;font-weight:750;font-size:clamp(15px,1.2vw,18px);padding:10px 17px}
+.a1-day6-buttons button:disabled{opacity:.5;cursor:not-allowed}
+.a1-day6-buttons .a1-day6-secondary{background:white;color:#1557a3}
+.a1-day6-feedback{display:grid;gap:6px;border-radius:12px;padding:14px 18px;font-size:clamp(17px,1.5vw,22px)}
+.a1-day6-feedback strong{font-size:clamp(21px,1.8vw,28px)}
+.a1-day6-feedback span,.a1-day6-feedback small{font-size:clamp(13px,1.1vw,16px)}
+.a1-day6-good{background:#e8f7ee;color:#226441;border-left:4px solid #32945d}
+.a1-day6-try{background:#fff0df;color:#805018;border-left:4px solid #d18a25}
+.a1-day6-rule,.a1-day6-example{display:grid;gap:8px;background:#e9f2ff;color:#103c74;border-left:4px solid #1557a3;border-radius:11px;padding:13px 18px;font-size:clamp(17px,1.5vw,23px);line-height:1.45}
+.a1-day6-rule s{color:#a43847}
+.a1-day6-writing-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.a1-day6-writing-grid article{min-width:0;display:grid;grid-template-columns:33px 1fr auto;align-items:center;gap:10px;border-radius:13px;border:1px solid #c3d5ed;background:#f3f7ff;padding:12px}
+.a1-day6-writing-grid article strong{font-size:clamp(15px,1.3vw,18px)}
+.a1-day6-writing-grid article p{font-size:clamp(13px,1.1vw,16px);color:#4c617c}
+.a1-day6-writing-grid article button{background:white;color:#1557a3;border:1px solid #1557a3;border-radius:9px;font-weight:700;padding:8px}
+.a1-day6-count{width:31px;height:31px;display:grid;place-items:center;background:#dcecff;color:#1557a3;border-radius:9px;font-weight:850}
+.a1-day6-language-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.a1-day6-language-grid button{min-width:0;padding:20px 10px;font-size:clamp(16px,1.5vw,23px)}
+.a1-day6-example{font-size:clamp(20px,2.2vw,31px);font-weight:750;text-align:center;justify-items:center}
+.a1-day6-formula{display:flex;align-items:center;justify-content:center;gap:clamp(7px,1.1vw,15px);flex-wrap:wrap;background:#f3f7ff;border:1px solid #c3d5ed;border-radius:16px;padding:clamp(16px,2.3vw,28px)}
+.a1-day6-formula>span{font-size:clamp(18px,2vw,29px);font-weight:800;border:1px solid #c3d5ed;background:white;border-radius:11px;padding:11px 15px}
+.a1-day6-formula b{font-size:clamp(19px,2vw,26px);color:#5e80a3}
+.a1-day6-formula>.a1-day6-emphasis{color:#147d70;background:#e7f8f3;border-color:#b5e2d6}
+.a1-day6-example-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.a1-day6-example-pair article{min-width:0;display:grid;gap:12px;border:1px solid #c2d6f1;border-radius:15px;background:#f1f6ff;padding:19px}
+.a1-day6-example-pair article:last-child{background:#e8f8f4;border-color:#b3e2d7}
+.a1-day6-example-pair small{font-weight:800;color:#517395}
+.a1-day6-example-pair strong{color:#103c74;font-size:clamp(18px,2vw,29px)}
+.a1-day6-example-pair mark{background:#c9eee5;color:#147d70;border-radius:6px;padding:2px}
+.a1-day6-drill>small{text-align:center;font-weight:750;color:#567594}
+.a1-day6-word-tiles{display:flex;flex-wrap:wrap;justify-content:center;gap:11px}
+.a1-day6-word-tiles span{border:2px solid #c3d5ed;border-radius:12px;background:white;color:#103c74;font-weight:850;font-size:clamp(20px,2.4vw,33px);padding:12px 18px}
+.a1-day6-hobbies{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:11px}
+.a1-day6-hobbies button{min-width:0;border:1px solid #c3d5ed;border-radius:16px;background:#f1f6ff;color:#1557a3;display:grid;align-content:center;justify-items:center;gap:12px;padding:14px 7px}
+.a1-day6-hobbies button span{font-size:clamp(30px,3.6vw,49px)}
+.a1-day6-hobbies button strong{font-size:clamp(14px,1.2vw,18px);line-height:1.25}
+.a1-day6-reveal{display:grid;gap:8px;justify-items:center}
+.a1-day6-reveal p{font-size:clamp(18px,1.8vw,25px);font-weight:800}
+.a1-day6-live .a1-day6-drill{justify-items:start}
+.a1-day6-live .a1-day6-drill h2{font-size:clamp(22px,2.3vw,32px)}
+.a1-day6-live .a1-day6-empty{border-style:dashed}
+.a1-day6-recap{gap:10px}
+.a1-day6-recap p{font-size:clamp(15px,1.2vw,18px)}
+.a1-day6-media-tabs{display:flex;gap:10px;flex-wrap:wrap}
+.a1-day6-media-tabs button{border:1px solid #b9d1ef;background:#eef5ff;color:#1557a3;border-radius:11px;font-weight:800;padding:10px 16px}
+.a1-day6-media-tabs button.is-selected{color:white;background:#1557a3;border-color:#1557a3}
+.a1-day6-media [role=tabpanel]{min-width:0}
+.a1-day6-reading{display:grid;gap:14px}
+.a1-day6-reading-text{font-size:clamp(18px,1.7vw,24px);line-height:1.75}
+.a1-day6-reading-checks{padding-left:25px;display:grid;gap:10px;font-size:clamp(16px,1.3vw,20px)}
+.a1-day6-reading-checks details{background:#f1f6ff;border:1px solid #c3d5ed;border-radius:10px;padding:10px 14px}
+.a1-day6-reading-checks summary{cursor:pointer;font-weight:750}
+.a1-day6-reading-checks details p{font-size:clamp(14px,1.2vw,18px);margin-top:9px}
+@media(max-width:850px){.a1-day6-hobbies{grid-template-columns:repeat(3,minmax(0,1fr))}.a1-day6-language-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.a1-day6-writing-grid{grid-template-columns:1fr}}
+@media(max-width:570px){.a1-day6-topics,.a1-day6-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.a1-day6-topics article{min-height:130px}.a1-day6-example-pair{grid-template-columns:1fr}.a1-day6-hobbies{grid-template-columns:repeat(2,minmax(0,1fr))}.a1-day6-writing-grid article{grid-template-columns:27px 1fr auto}.a1-day6-target,.a1-day6-statement{font-size:31px}}
+@media(max-width:390px){.a1-day6-topics{grid-template-columns:1fr}.a1-day6-writing-grid article{grid-template-columns:27px 1fr}.a1-day6-writing-grid article button{grid-column:2;justify-self:start}.a1-day6-choices button{padding:10px 13px}.a1-day6-card-grid{gap:7px}.a1-day6-family-card{padding:10px}}
+@media(prefers-reduced-motion:reduce){.a1-day6-page *,.a1-day6-media *{animation:none!important;transition:none!important}}
