@@ -107,7 +107,7 @@ export default function SocialStudentReviews() {
       if (controller.signal.aborted) return;
       const publicReviews = publicResult.status === "fulfilled" ? publicResult.value : [];
       const sheetReviews = sheetResult.status === "fulfilled" ? sheetResult.value : [];
-      setReviews((previous) => mergeReviewSources(SOCIAL_STUDENT_REVIEWS, [...publicReviews, ...sheetReviews], previous));
+      setReviews((previous) => mergeReviewSources(SOCIAL_STUDENT_REVIEWS, [...sheetReviews, ...previous], publicReviews));
       setSharedInfo(
         publicResult.status === "fulfilled"
           ? publicReviews.length + " Google reviews loaded from Falowen's public reviews.json. Save local drafts or submit an approved Google review to GitHub."
