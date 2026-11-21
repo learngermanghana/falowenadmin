@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { calculatePaystackGrossAmount } from "../src/utils/paystackCharges.js";
+import { PENDING_PAYMENT_MIN_AGE_MS, planPendingPaymentRecheck } from "../src/utils/pendingPaymentRecheck.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -61,7 +62,10 @@ test("ordinary student payment links expose webhook fallback reconciliation", ()
 
   assert.match(component, /reconcileStudentPayments/);
   assert.match(component, /Recheck Paystack payment/);
-  assert.match(component, /90 \* 1000/);
+  assert.match(component, /planPendingPaymentRecheck/);
+  assert.equal(PENDING_PAYMENT_MIN_AGE_MS, 90 * 1000);
+  const result = planPendingPaymentRecheck([{ status: "pending", reference: "pay-1", createdAt: new Date(1000).toISOString() }], new Set(), 91000);
+  assert.deepEqual(result.dueReferences, ["pay-1"]);
   assert.match(component, /automatic Paystack reconciliation/i);
   assert.match(lifecyclePatch, /schedule: "0 7,19 \* \* \*"/);
   assert.match(lifecyclePatch, /reconcilePaymentReference/);

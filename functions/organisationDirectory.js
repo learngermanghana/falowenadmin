@@ -103,9 +103,10 @@ function firstAmount(student, keys) {
 // Use canonical paid/balance fields, never initialPaymentAmount (an intention, not a receipt).
 // Missing tuition configuration is UNKNOWN, not zero owed.
 function organisationStudentLedger(rows) {
-  let outstandingTotal = 0, owingCount = 0, unverifiedCount = 0;
+  let outstandingTotal = 0, owingCount = 0, unverifiedCount = 0, confirmedPaidTotal = 0, knownPaidCount = 0;
   const students = rows.map(({ id, ...student }) => {
     const paid = firstAmount(student, ["paid", "amountPaid", "paidAmount", "amount_paid", "totalPaid"]);
+    if (paid !== null) { confirmedPaidTotal += paid; knownPaidCount += 1; }
     const fee = firstAmount(student, ["tuitionFee"]);
     const discount = firstAmount(student, ["tuitionDiscount"]) ?? 0;
     let balance = firstAmount(student, ["balanceDue", "balance", "outstandingBalance", "amountDue"]);
@@ -119,7 +120,8 @@ function organisationStudentLedger(rows) {
       tuitionFee: fee, paid, balanceDue: balance,
     };
   });
-  return { students, outstandingTotal: Math.round(outstandingTotal * 100) / 100, owingCount, unverifiedCount };
+  return { students, outstandingTotal: Math.round(outstandingTotal * 100) / 100, owingCount, unverifiedCount,
+    confirmedPaidTotal: Math.round(confirmedPaidTotal * 100) / 100, unknownPaidCount: rows.length - knownPaidCount };
 }
 async function loadOrganisationStudents(db, id, limit = 100) {
   if (!/^[a-f0-9]{64}$/.test(id)) {

@@ -131,3 +131,16 @@ test("partner balances query only selected organisation on demand and cap result
   assert.equal(result.truncated, true);
   await assert.rejects(loadOrganisationStudents(db, "../students"), { status: 400 });
 });
+
+
+test("partner profile distinguishes configured paid totals from missing payment figures", () => {
+  const ledger = organisationStudentLedger([
+    { id: "one", paid: 100, balanceDue: 400, tuitionFee: 500 },
+    { id: "two", initialPaymentAmount: 250, tuitionFee: 250 },
+    { id: "three", paidAmount: 80, balanceDue: 0, tuitionFee: 80 },
+  ]);
+  assert.equal(ledger.confirmedPaidTotal, 180);
+  assert.equal(ledger.unknownPaidCount, 1);
+  assert.equal(ledger.outstandingTotal, 650);
+  assert.equal(ledger.owingCount, 2);
+});

@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import StudentDirectoryPage from "./StudentDirectoryPage";
 
 export default function StudentHubPage() {
@@ -25,7 +24,6 @@ export default function StudentHubPage() {
         </div>
       </section>
 
-      <p><Link to="/paystack">Paystack payment links</Link> · <Link to="/partners?tab=students">Partner student submissions</Link> · <a href="https://www.falowen.app/organisation-enrolment">Public organisation enrolment form</a> · <Link to="/partners">Partner management</Link></p>
       <StudentDirectoryPage />
     </div>
   );

@@ -14,6 +14,7 @@ const AppointmentBookingPage = lazy(() => import("./pages/AppointmentBookingPage
 const PartnershipPage = lazy(() => import("./pages/PartnershipPage.jsx"));
 const ReferralReviewPage = lazy(() => import("./pages/ReferralReviewPage.jsx"));
 const OrganisationEnrolmentPage = lazy(() => import("./pages/OrganisationEnrolmentPage.jsx"));
+const PartnerDetailPage = lazy(() => import("./pages/PartnerDetailPage.jsx"));
 const ADMIN_BUILD_SHA = String(import.meta.env.VITE_FALOWEN_BUILD_SHA || "dev");
 const ADMIN_BUILD_ENV = String(import.meta.env.VITE_FALOWEN_BUILD_ENV || "local");
 const ADMIN_BUILD_LABEL = ADMIN_BUILD_SHA === "dev" ? "dev" : ADMIN_BUILD_SHA.slice(0, 8);
@@ -306,6 +307,7 @@ export default function App() {
           <Route path="/organisation-enrolment" element={<OrganisationEnrolmentPage />} />
           <Route path="/organisation-submissions" element={<ProtectedRoute><OrganisationEnrolmentPage review /></ProtectedRoute>} />
           <Route path="/partners" element={<ProtectedRoute><OrganisationEnrolmentPage review /></ProtectedRoute>} />
+          <Route path="/partners/:organisationId" element={<ProtectedRoute><PartnerDetailPage /></ProtectedRoute>} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/checkin" element={<CheckinPage />} />
           <Route path="/checkin/display" element={<CheckinDisplayPage />} />
