@@ -1,6 +1,6 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { organisationId, organisationDirectoryRows } = require("./organisationDirectory");
+const { organisationId, organisationDirectoryRows, organisationStudentLedger, loadOrganisationStudents } = require("./organisationDirectory");
 const { organisationStudentConfirmation, sendOrganisationStudentConfirmation } = require("./organisationConfirmations");
 const { _test: payment } = require("./studentPaymentUpdateEmails");
 
@@ -90,4 +90,44 @@ test('prepared profile overlays contact changes without splitting historical gro
 test('same company name across different emails warns without merging identities', () => {
  const rows=organisationDirectoryRows([], [{id:'one',organisation:{email:'one@example.test',name:'School!'},students:[]},{id:'two',organisation:{email:'two@example.test',name:'SCHOOL'},students:[]}]);
  assert.equal(rows.length,2);assert.ok(rows.every(row=>row.possibleDuplicate));assert.notEqual(rows[0].id,rows[1].id);
+});
+
+test("partner ledger uses confirmed paid and balance fields and never treats intentions as receipts", () => {
+  const data = organisationStudentLedger([
+    { id: "A", name: "Sandra", level: "A1", paid: 1000, balanceDue: 2000, tuitionFee: 3000 },
+    { id: "B", name: "Kofi", tuitionFee: 3000, initialPaymentAmount: 3000 },
+    { id: "C", name: "Esi", paid: 2000, balanceDue: 0, paymentStatus: "Paid" },
+    { id: "D", name: "No tuition entered", paymentStatus: "pending" },
+    { id: "E", name: "Partial", tuitionFee: 3000, paid: 1000, tuitionDiscount: 300 },
+  ]);
+  assert.equal(data.outstandingTotal, 6700);
+  assert.equal(data.owingCount, 3);
+  assert.equal(data.unverifiedCount, 1);
+  assert.equal(data.students[1].paid, null);
+  assert.equal(data.students[1].balanceDue, 3000);
+  assert.equal(data.students[2].balanceDue, 0);
+  assert.equal(data.students[3].balanceDue, null);
+  assert.equal(data.students[4].balanceDue, 1700);
+});
+
+test("partner balances query only selected organisation on demand and cap results", async () => {
+  const id = organisationId("company@example.org");
+  const calls = [];
+  const docs = Array.from({ length: 101 }, (_, index) => ({
+    id: "student-" + index,
+    data: () => ({ organisationId: id, tuitionFee: 3000, paid: 1000, balanceDue: 2000 }),
+  }));
+  const db = { collection(name) {
+    assert.equal(name, "students");
+    return { where(field, operator, value) {
+      calls.push([field, operator, value]);
+      return { limit(count) { assert.equal(count, 101); return { get: async () => ({ docs }) }; } };
+    } };
+  } };
+  const result = await loadOrganisationStudents(db, id);
+  assert.deepEqual(calls, [["organisationId", "==", id]]);
+  assert.equal(result.students.length, 100);
+  assert.equal(result.outstandingTotal, 200000);
+  assert.equal(result.truncated, true);
+  await assert.rejects(loadOrganisationStudents(db, "../students"), { status: 400 });
 });
