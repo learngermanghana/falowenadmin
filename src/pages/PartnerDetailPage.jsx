@@ -54,6 +54,7 @@ export default function PartnerDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [ledger, setLedger] = useState(null);
+  const [fallbackSubmissions, setFallbackSubmissions] = useState([]);
   const [ledgerError, setLedgerError] = useState("");
   const [ledgerLoading, setLedgerLoading] = useState(false);
   const [notice, setNotice] = useState("");
@@ -78,12 +79,23 @@ export default function PartnerDetailPage() {
     setError("");
     setPartner(null);
     setLedger(null);
+    setFallbackSubmissions([]);
     setLedgerError("");
     request("admin/organisations").then(result => {
       if (cancelled) return;
       const match = (result.organisations || []).find(row => row.id === organisationId);
       if (!match) { setError("This partner is not in the current directory. Try refreshing the partner list."); return; }
       setPartner(match);
+      // Older production directory payloads only include submission counts, not student names.
+      // Reuse the existing owner-only submission endpoint as a roster fallback.
+      if ((match.submissions || []).some(batch => !Array.isArray(batch.students))) {
+        void request("admin/organisation-enrolments").then(data => {
+          if (!cancelled) {
+            const ids = new Set((match.submissions || []).map(batch => batch.id));
+            setFallbackSubmissions((data.submissions || []).filter(batch => ids.has(batch.id)));
+          }
+        }).catch(() => {});
+      }
       // A financial query is only made when the individual profile opens, never for every directory row.
       void loadLedger(match.id);
     }).catch(e => { if (!cancelled) setError(e.message); })
@@ -94,7 +106,8 @@ export default function PartnerDetailPage() {
   const roster = useMemo(() => {
     const rows = new Map();
     for (const batch of partner?.submissions || []) {
-      (batch.students || []).forEach((student, index) => {
+      const submission = fallbackSubmissions.find(row => row.id === batch.id);
+      (batch.students || submission?.students || []).forEach((student, index) => {
         const key = student.studentId || clean(student.email).toLowerCase() || batch.id + ":" + index;
         rows.set(key, {
           id: student.studentId || "",
@@ -113,7 +126,7 @@ export default function PartnerDetailPage() {
       rows.set(key, { ...prior, ...student, submissionStatus: prior.submissionStatus || "Linked" });
     }
     return [...rows.values()];
-  }, [partner, ledger]);
+  }, [partner, ledger, fallbackSubmissions]);
 
   const contact = partner ? contactLinks(partner) : {};
   const reminders = partner ? reminderLinks(partner, ledger) : null;
