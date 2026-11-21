@@ -14,6 +14,9 @@ before(async () => {
     name: "referral-test-auth", enforce: "pre",
     load(id) {
       if (id.endsWith("/src/firebase.js")) return 'export const auth = { currentUser: { getIdToken: async () => "test-owner" } };';
+      // Public partnership tests cover the page, not the real Firebase session.
+      if (id.endsWith("/src/utils/organisationPartnerAccount.js")) return 'export const partnerAuth = {}; export async function partnerRequest() { throw new Error("Test partner session unavailable"); } export async function downloadPartnerAgreement() {}';
+      if (id.endsWith("/src/components/PartnerAccount.jsx")) return 'import React from "react"; export default function PartnerAccount(){return React.createElement("section",{className:"partner-account"},React.createElement("h2",null,"Your organisation partner account"),React.createElement("p",null,"Sign in to register an organisation."));}';
     },
   }], optimizeDeps: { noDiscovery: true, include: [] }, server: { middlewareMode: true, hmr: false, watch: null }, appType: "custom" });
   PublicPage = (await server.ssrLoadModule("/src/pages/PartnershipPage.jsx")).default;
@@ -39,30 +42,22 @@ async function render(Page, path) {
   await act(() => root.render(React.createElement(MemoryRouter, { initialEntries: [path] }, React.createElement(Page))));
   return () => act(() => root.unmount());
 }
-test("one organisation application has signing but no bank or referral choices", async () => {
-  const requests = [];
-  global.fetch = async (path, opts) => {
-    if (path.includes("agreement-terms")) return Response.json({ ok: true, version: "org-v3", partnerShareRate: 0.1, shareSettlement: "invoice_deduction", tuitionRefundable: false, classDurationWeeks: 10, accessMonths: 6, accessStartsAt: "account_activation", terms: ["Organisation agreement"] });
-    if (path.endsWith("agreement-copy")) return new Response("PDF", { headers: { "Content-Type": "application/pdf" } });
-    requests.push({ path, body: JSON.parse(opts.body) }); return Response.json({ ok: true, reference: "a".repeat(64) });
+test("public partnership explains the agreement and requires an organisation account", async () => {
+  global.fetch = async path => {
+    if (path.includes("agreement-terms")) return Response.json({ ok: true, version: "org-v3", terms: ["Organisation agreement"] });
+    throw new Error("Unexpected request: " + path);
   };
   const unmount = await render(PublicPage, "/partnerships");
   try {
-    assert.equal(document.querySelectorAll('[role="tab"]').length,3);
+    assert.equal(document.querySelectorAll('[role="tab"]').length, 3);
     assert.match(document.body.textContent, /Grow your offering/);
-    assert.doesNotMatch(document.body.textContent, /Clients paying for themselves|Normal student signup|Already submitted your organisation/);
+    assert.doesNotMatch(document.body.textContent, /Clients paying for themselves|Normal student signup/);
     await act(() => document.getElementById("partner-tab-1").click());
+    assert.match(document.body.textContent, /Organisation agreement/);
     await act(() => document.getElementById("partner-tab-2").click());
-    const form = document.querySelector("form");
-    assert.equal(document.querySelectorAll("form").length, 1);
-    assert.equal(form.elements.accountNumber, undefined);
-    for (const [key, value] of Object.entries({ name: "Example agency", email: "agency@example.org", phone: "0200000000", address: "Accra", signerName: "Example Director", signerRole: "Director" })) form.elements[key].value = value;
-    for (const key of ["consent", "signatureConsent"]) form.elements[key].checked = true;
-    await act(() => form.dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true })));
-    assert.equal(requests[0].body.kind, "institutional");assert.equal(requests[0].body.billingResponsibility, "organisation");assert.equal(requests[0].body.termsVersion,"org-v3");
-    assert.match(document.body.textContent, /Your organisation is registered for review/);
-    assert.equal(document.querySelector('a[href*="signup"]'),null);
-    assert.ok(document.querySelector('a[href="/organisation-enrolment"]'));
+    assert.match(document.body.textContent, /Your organisation partner account/);
+    assert.equal(document.querySelector('input[name="accountNumber"]'), null);
+    assert.equal(document.querySelector('a[href*="signup"]'), null);
   } finally { await unmount(); }
 });
 test("query parameters cannot expose an individual signup or a second programme", async () => {
@@ -70,17 +65,21 @@ test("query parameters cannot expose an individual signup or a second programme"
   const unmount=await render(PublicPage,"/partnerships?ref="+"a".repeat(32));
   try {assert.equal(document.querySelector('a[href*="signup"]'),null);assert.equal(document.querySelectorAll('[role="tab"]').length,3);assert.equal(calls,0);} finally {await unmount();}
 });
-test("tabs preserve registration details and support keyboard navigation", async () => {
-  global.fetch=async()=>Response.json({ok:true,version:"org-v4",partnerShareRate:0.1,shareSettlement:"invoice_deduction",tuitionRefundable:false,classDurationWeeks:10,accessMonths:6,accessStartsAt:"account_activation",terms:["Your 10% organisation share — Deducted from the invoice."]});
-  const unmount=await render(PublicPage,"/partnerships");
+test("partnership tabs support keyboard navigation without skipping account verification", async () => {
+  global.fetch = async path => {
+    if (path.includes("agreement-terms")) return Response.json({ ok: true, version: "org-v4", terms: ["Organisation agreement"] });
+    throw new Error("Unexpected request: " + path);
+  };
+  const unmount = await render(PublicPage, "/partnerships");
   try {
-    await act(()=>document.getElementById("partner-tab-2").click());
-    const input=document.querySelector('input[name="name"]');input.value="Agency draft";
-    await act(()=>document.getElementById("partner-tab-1").click());
-    await act(()=>document.getElementById("partner-tab-2").click());assert.equal(document.querySelector('input[name="name"]').value,"Agency draft");
-    await act(()=>document.getElementById("partner-tab-2").dispatchEvent(new window.KeyboardEvent("keydown",{key:"ArrowLeft",bubbles:true})));
-    assert.equal(document.activeElement.id,"partner-tab-1");assert.equal(document.getElementById("partner-tab-1").getAttribute("aria-selected"),"true");
-  }finally{await unmount();}
+    await act(() => document.getElementById("partner-tab-2").click());
+    assert.match(document.body.textContent, /Your organisation partner account/);
+    await act(() => document.getElementById("partner-tab-2").dispatchEvent(new window.KeyboardEvent("keydown",{key:"ArrowLeft",bubbles:true})));
+    assert.equal(document.activeElement.id, "partner-tab-1");
+    assert.equal(document.getElementById("partner-tab-1").getAttribute("aria-selected"), "true");
+    await act(() => document.getElementById("partner-tab-1").dispatchEvent(new window.KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true})));
+    assert.equal(document.getElementById("partner-tab-2").getAttribute("aria-selected"), "true");
+  } finally { await unmount(); }
 });
 test("owner sees organisation applications and no commission queue", async () => {
   let calls=0;global.fetch=async path=>{calls++;assert.equal(path,"/api/admin/referrals/signature");return Response.json({ok:true,installed:true});};const unmount=await render(ReviewPage,"/referral-review");
