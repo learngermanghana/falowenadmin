@@ -5,7 +5,7 @@ const {VERSION,ORGANISATION_VERSION,TERMS,validateApplication,encryptBank,decryp
 const body={kind:'institutional',billingResponsibility:'organisation',name:'Example partner',email:'partner@example.test',phone:'0200000000',address:'Accra',signerName:'Ama Ési',signerRole:'Director',termsVersion:ORGANISATION_VERSION,receiptToken:'a'.repeat(64),consent:true,signatureConsent:true,payoutConsent:true,payoutType:'ghipss',bankCode:'123',accountNumber:'0123456789',accountName:'Example partner'};
 test('organisation agreement explains the 10% invoice share and keeps legacy terms separate',()=>{
  assert.equal(TERMS.referral.length,1);assert.match(TERMS.referral[0],/10%/);assert.match(TERMS.referral[0],/A refund cancels the commission\.$/);
- assert.match(TERMS.institutional.join(' '),/10%/);assert.match(TERMS.institutional.join(' '),/first tuition payment/);assert.match(TERMS.institutional.join(' '),/deducted/);assert.ok(!TERMS.institutional.join(' ').includes('normal student signup'));
+ assert.match(TERMS.institutional.join(' '),/10%/);assert.match(TERMS.institutional.join(' '),/Kiswahili/);assert.match(TERMS.institutional.join(' '),/Free and sponsored places/);assert.match(TERMS.institutional.join(' '),/first tuition payment/);assert.match(TERMS.institutional.join(' '),/deducted/);assert.ok(!TERMS.institutional.join(' ').includes('normal student signup'));
 });
 test('organisation consent, current terms, payer choice and typed signature are required',()=>{
  assert.equal(validateApplication(body).bank,null);
@@ -40,7 +40,7 @@ test('organisation agreement states non-refundable tuition and distinct class/ac
  const terms=TERMS.institutional.join(" ");
  assert.match(terms,/Tuition payments are non-refundable/);
  assert.doesNotMatch(terms,/GHS\\s+[\\d,]+/);
- assert.match(ORGANISATION_VERSION,/v7$/);
+ assert.match(ORGANISATION_VERSION,/v8$/);
  assert.match(terms,/Each class lasts 10 weeks/);
  assert.match(terms,/six months of Falowen access from account activation/);
  assert.match(terms,/does not restart or extend/);

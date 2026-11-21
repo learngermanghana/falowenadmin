@@ -15,8 +15,11 @@ function validateSubmission(body = {}) {
   if (!Array.isArray(body.students) || !body.students.length || body.students.length > 50) fail(400, "Submit between 1 and 50 students.");
   const seen = new Set();
   const students = body.students.map((row, i) => {
-    const student = Object.fromEntries(["name", "email", "phone", "level", "location", "emergencyContactPhone", "requestedClassId", "requestedClassName", "requestedClassStartDate"].map(k => [k, clean(row?.[k]).slice(0, 254)]));
+    const student = Object.fromEntries(["name", "email", "phone", "level", "location", "emergencyContactPhone", "requestedClassId", "requestedClassName", "requestedClassStartDate", "language"].map(k => [k, clean(row?.[k]).slice(0, 254)]));
     student.email = email(student.email); student.level = student.level.toUpperCase();
+    // Existing German-only submissions predate the language selector.
+    student.language = student.language || "German";
+    if (!["German", "Swahili"].includes(student.language)) fail(400, `Row ${i + 1}: choose German or Kiswahili.`);
     if (!student.name || !validEmail(student.email) || !student.phone || !["A1", "A2", "B1", "B2", "C1", "C2"].includes(student.level)) fail(400, `Row ${i + 1}: name, valid email, phone and level are required.`);
     if (body.schemaVersion === 2 && (!student.requestedClassId || !student.requestedClassName || !/^\d{4}-\d{2}-\d{2}$/.test(student.requestedClassStartDate))) fail(400, `Row ${i + 1}: select a class and start date.`);
     if (seen.has(student.email)) fail(400, `Row ${i + 1}: duplicate email in this submission.`);
@@ -49,9 +52,10 @@ async function confirmedRequestedClass(tx, db, row) {
   const name = clean(klass.name || klass.title || klass.className);
   const level = clean(klass.levelId || klass.level).toUpperCase();
   const startDate = dateOnly(klass.startDate);
+  const language = clean(klass.language || "German").toLowerCase() === "swahili" ? "Swahili" : "German";
   // The request came from the public form, so always revalidate it against
   // the server-owned class before accepting it as an actual assignment.
-  if (!name || !startDate || level !== clean(row.level).toUpperCase()
+  if (!name || !startDate || language !== clean(row.language || "German") || level !== clean(row.level).toUpperCase()
     || name.toLowerCase() !== clean(row.requestedClassName).toLowerCase()
     || startDate !== dateOnly(row.requestedClassStartDate)) return null;
   return { classId: id, className: name, classStartDate: startDate };
@@ -96,8 +100,8 @@ async function reviewRow({ db, admin, batchId, index, decision, actor }) {
       tx.create(studentRef, {
         name: row.name, fullName: row.name, email: row.email, phone: row.phone,
         requestedClassId: row.requestedClassId || "", requestedClassName: row.requestedClassName || "", requestedClassStartDate: row.requestedClassStartDate || "",
-        level: row.level, location: row.location, emergencyContactPhone: row.emergencyContactPhone,
-        role: "student", studentCode: publicCode, studentcode: publicCode, program: "german",
+        level: row.level, language: row.language || "German", location: row.location, emergencyContactPhone: row.emergencyContactPhone,
+        role: "student", studentCode: publicCode, studentcode: publicCode, program: row.language === "Swahili" ? "swahili" : "german",
         organisationName: batch.organisation.name, organisationContactEmail: batch.organisation.email,
         organisationSubmissionId: batchId, organisationId: batch.organisationId || organisationId(batch.organisation.email), enrolmentSource: "organisation", billingResponsibility: "organisation",
         status: "pending", paymentStatus: "pending",

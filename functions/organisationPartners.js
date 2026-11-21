@@ -100,7 +100,7 @@ function registerOrganisationPartnerRoutes(app, { db, admin }) {
     // Exact verified profile email also finds pre-profile submissions. Never accept
     // a client-provided company ID, company name or student email as authority.
     const snapshot = await db.collection('organisationEnrolments').where('organisation.email', '==', profile.loginEmail).limit(50).get();
-    return { ok: true, truncated: snapshot.docs.length === 50, submissions: snapshot.docs.filter(doc => !doc.data().deleted && (!doc.data().organisationId || doc.data().organisationId === profile.id)).map(doc => ({ id: doc.id, students: (doc.data().students || []).map(row => ({ name: row.name, level: row.level, status: row.status })) })) };
+    return { ok: true, truncated: snapshot.docs.length === 50, submissions: snapshot.docs.filter(doc => !doc.data().deleted && (!doc.data().organisationId || doc.data().organisationId === profile.id)).map(doc => ({ id: doc.id, students: (doc.data().students || []).map(row => ({ name: row.name, language: row.language || "German", level: row.level, status: row.status })) })) };
   }));
   app.post('/organisation-partners/contact', handle(async req => {
     const { profile } = await partnerProfile(req, { db, admin });

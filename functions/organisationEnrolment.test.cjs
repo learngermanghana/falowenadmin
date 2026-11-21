@@ -3,8 +3,24 @@ const assert = require('node:assert/strict');
 const { validateSubmission, owner, reviewRow, repairOrganisationStudentCode, organisationStudentCode, registerOrganisationEnrolmentRoutes } = require('./organisationEnrolment.js');
 const body = () => ({ organisation: { name:'Example school',contactName:'Coordinator',email:'Coordinator@example.org',phone:'0200000000' }, consent:true,students:[{name:'Example Student',email:'STUDENT@example.org',phone:'0200000001',level:'a1'}] });
 test('validates and normalizes a table submission, ignoring privileged fields',()=>{const b=body();b.students[0].status='approved';b.students[0].uid='injected';const r=validateSubmission(b);assert.equal(r.students[0].email,'student@example.org');assert.equal(r.students[0].status,'pending');assert.equal(r.students[0].uid,undefined);assert.equal(r.organisation.email,'coordinator@example.org');});
+test('organisation submissions retain explicit Kiswahili and default older German entries safely',()=>{
+  const german = validateSubmission(body());
+  assert.equal(german.students[0].language,'German');
+  const swahili = body(); swahili.students[0].language = 'Swahili';
+  assert.equal(validateSubmission(swahili).students[0].language,'Swahili');
+  swahili.students[0].language = 'French';
+  assert.throws(()=>validateSubmission(swahili),{status:400});
+});
 test('rejects duplicate rows, missing consent, invalid level and oversized batches',()=>{for(const mutate of [b=>b.students.push({...b.students[0]}),b=>b.consent=false,b=>b.students[0].level='X',b=>b.students=Array(51).fill(b.students[0]),b=>b.website='spam']){const b=body();mutate(b);assert.throws(()=>validateSubmission(b),{status:400});}});
 test('review requires a verified owner, including token revocation check',async()=>{await assert.rejects(owner({headers:{}},{}),{status:401});let checked=false;const admin={auth:()=>({verifyIdToken:async(token,revoke)=>{checked=revoke;return{email:'other@example.org',email_verified:true};}})};await assert.rejects(owner({headers:{authorization:'Bearer token'}},admin),{status:403});assert.equal(checked,true);});
+test('approving Kiswahili student keeps the Swahili programme separate',async()=>{
+  const f = fixture();
+  f.records.get('organisationEnrolments/batch1').students[0].language = 'Swahili';
+  const result = await reviewRow({...f, decision:'approve'});
+  const student = f.records.get('students/'+result.studentId);
+  assert.equal(student.language,'Swahili');
+  assert.equal(student.program,'swahili');
+});
 function fixture({ duplicate=false }={}){const records=new Map([['organisationEnrolments/batch1',{...validateSubmission(body())}]]);const ref=(collection,id)=>({key:`${collection}/${id}`});const db={collection:collection=>({doc:id=>ref(collection,id),where:()=>({limit:()=>({query:true})})}),runTransaction:async fn=>fn({get:async r=>r.query?{empty:!duplicate}:{exists:records.has(r.key),data:()=>structuredClone(records.get(r.key))},create:(r,v)=>{assert.ok(!records.has(r.key));records.set(r.key,v);},update:(r,v)=>records.set(r.key,{...records.get(r.key),...v})})};return{records,db,admin:{firestore:{FieldValue:{serverTimestamp:()=>null}}},batchId:'batch1',index:0,actor:{email:'owner@example.org'}};}
 test('approval creates one pending organisation-funded student and marks it for sheet sync',async()=>{const f=fixture();const r=await reviewRow({...f,decision:'approve'});const s=f.records.get(`students/${r.studentId}`);assert.equal(s.billingResponsibility,'organisation');assert.equal(s.status,'pending');assert.equal(s.syncedToSheets,false);assert.equal(s.uid,undefined);assert.match(s.studentCode, /^ExampleStudent[0-9]{3}$/);assert.notEqual(s.studentCode,r.studentId);assert.equal(s.studentcode,s.studentCode);const again=await reviewRow({...f,decision:'approve'});assert.equal(again.studentId,r.studentId);assert.equal(f.records.size,2);});
 test('normal organisation student codes are deterministic and use the standard three-digit name suffix',()=>{
