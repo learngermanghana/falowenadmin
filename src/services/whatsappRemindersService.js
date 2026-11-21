@@ -1,4 +1,4 @@
-const DAY_MS = 24 * 60 * 60 * 1000;
+import { paymentDueDateFromContractStart, daysUntilCalendarDate } from "../utils/tuitionPaymentCountdown.js";
 const DEFAULT_REMINDERS_CSV_URL =
   "https://docs.google.com/spreadsheets/d/12NXf5FeVHr7JJT47mRHh7Jp-TC1yhPS7ZG6nzZVTt1U/export?format=csv";
 
@@ -63,14 +63,6 @@ function parseBalance(value) {
   return numericValue;
 }
 
-function daysBetween(from, to) {
-  const fromDay = new Date(from);
-  const toDay = new Date(to);
-  fromDay.setHours(0, 0, 0, 0);
-  toDay.setHours(0, 0, 0, 0);
-  return Math.ceil((toDay - fromDay) / DAY_MS);
-}
-
 function readPaidStatus(row) {
   return String(row.paid || "").trim().toLowerCase();
 }
@@ -86,7 +78,8 @@ function shouldSendUnpaidReminder(row) {
 function buildReminderRow(row, today) {
   const contractStart = parseDate(row.contractstart);
   const contractEnd = parseDate(row.contractend);
-  const paymentDueDate = contractStart ? new Date(contractStart.getTime() + 30 * DAY_MS) : null;
+  const paymentDueDay = paymentDueDateFromContractStart(contractStart);
+  const paymentDueDate = paymentDueDay ? new Date(paymentDueDay + "T00:00:00Z") : null;
 
   return {
     name: row.name || "Unknown",
@@ -99,8 +92,8 @@ function buildReminderRow(row, today) {
     contractStart,
     contractEnd,
     paymentDueDate,
-    daysUntilPaymentDue: paymentDueDate ? daysBetween(today, paymentDueDate) : null,
-    daysUntilContractEnd: contractEnd ? daysBetween(today, contractEnd) : null,
+    daysUntilPaymentDue: paymentDueDay ? daysUntilCalendarDate(paymentDueDay, today) : null,
+    daysUntilContractEnd: contractEnd ? daysUntilCalendarDate(contractEnd, today) : null,
   };
 }
 
