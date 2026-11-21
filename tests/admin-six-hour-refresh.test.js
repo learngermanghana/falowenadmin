@@ -22,7 +22,9 @@ test("Admin queue checks on opening and at six hours, not on frequent tab focus"
   };
 
   let calls = 0;
-  const controller = createAdminRefreshRequest(async () => ++calls);
+  const controller = createAdminRefreshRequest(async () => ++calls, {
+    onStart() {}, onSuccess() {}, onError() {}, onFinish() {},
+  });
   const stop = startVisiblePolling(() => controller.run(), SIX_HOURS_MS, {
     documentTarget: doc, windowTarget: win, minimumGapMs: SIX_HOURS_MS, now: () => time,
   });
