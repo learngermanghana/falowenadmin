@@ -35,6 +35,8 @@ on:
       - 'src/utils/partnerSubmissionFallback.js'
       - 'tests/partner-submission-fallback.test.js'
       - 'src/utils/partnerPaymentDeadlineReminder.js'
+      - 'src/utils/tuitionPaymentCountdown.js'
+      - 'src/services/whatsappRemindersService.js'
       - 'tests/partner-payment-deadline-reminder.test.js'
       - 'src/pages/StudentDirectoryPage.jsx'
       - 'src/pages/StudentHubPage.jsx'
@@ -77,6 +79,8 @@ on:
       - 'src/utils/partnerSubmissionFallback.js'
       - 'tests/partner-submission-fallback.test.js'
       - 'src/utils/partnerPaymentDeadlineReminder.js'
+      - 'src/utils/tuitionPaymentCountdown.js'
+      - 'src/services/whatsappRemindersService.js'
       - 'tests/partner-payment-deadline-reminder.test.js'
 permissions:
   contents: read
