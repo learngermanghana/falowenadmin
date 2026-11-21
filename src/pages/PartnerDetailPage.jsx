@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { auth } from "../firebase.js";
 import { partnerAuth } from "../utils/organisationPartnerAccount.js";
 import { organisationEnrolmentRequest } from "../utils/organisationEnrolmentRequest.js";
+import { loadPartnerSubmissionFallback } from "../utils/partnerSubmissionFallback.js";
 import "./OrganisationEnrolmentPage.css";
 import "./PartnerDetailPage.css";
 
@@ -55,6 +56,9 @@ export default function PartnerDetailPage() {
   const [error, setError] = useState("");
   const [ledger, setLedger] = useState(null);
   const [fallbackSubmissions, setFallbackSubmissions] = useState([]);
+  const [fallbackLoading, setFallbackLoading] = useState(false);
+  const [fallbackError, setFallbackError] = useState("");
+  const [fallbackMissingIds, setFallbackMissingIds] = useState([]);
   const [ledgerError, setLedgerError] = useState("");
   const [ledgerLoading, setLedgerLoading] = useState(false);
   const [notice, setNotice] = useState("");
@@ -83,21 +87,36 @@ export default function PartnerDetailPage() {
     setPartner(null);
     setLedger(null);
     setFallbackSubmissions([]);
+    setFallbackLoading(false);
+    setFallbackError("");
+    setFallbackMissingIds([]);
     setLedgerError("");
     request("admin/organisations").then(result => {
       if (cancelled) return;
       const match = (result.organisations || []).find(row => row.id === organisationId);
       if (!match) { setError("This partner is not in the current directory. Try refreshing the partner list."); return; }
       setPartner(match);
-      // Older production directory payloads only include submission counts, not student names.
-      // Reuse the existing owner-only submission endpoint as a roster fallback.
+      // Load only the matching submission rosters when this profile opens. History is
+      // paginated globally in 50-record pages, so older partner batches may be later.
       if ((match.submissions || []).some(batch => !Array.isArray(batch.students))) {
-        void request("admin/organisation-enrolments").then(data => {
-          if (!cancelled) {
-            const ids = new Set((match.submissions || []).map(batch => batch.id));
-            setFallbackSubmissions((data.submissions || []).filter(batch => ids.has(batch.id)));
-          }
-        }).catch(() => {});
+        setFallbackLoading(true);
+        void loadPartnerSubmissionFallback(match.submissions, request, {
+          isCancelled: () => cancelled,
+          onPage: batches => {
+            if (cancelled) return;
+            setFallbackSubmissions(old => {
+              const byId = new Map(old.map(batch => [batch.id, batch]));
+              batches.forEach(batch => byId.set(batch.id, batch));
+              return [...byId.values()];
+            });
+          },
+        }).then(({ missingIds }) => {
+          if (!cancelled) setFallbackMissingIds(missingIds);
+        }).catch(e => {
+          if (!cancelled) setFallbackError(e.message);
+        }).finally(() => {
+          if (!cancelled) setFallbackLoading(false);
+        });
       }
       // A financial query is only made when the individual profile opens, never for every directory row.
       void loadLedger(match.id);
@@ -211,6 +230,9 @@ export default function PartnerDetailPage() {
               <div><h2>Students and outstanding fees</h2><p>Approved students, course levels, tuition and balances linked to this organisation.</p></div>
               <button type="button" disabled={ledgerLoading} onClick={() => loadLedger(partner.id)}>{ledgerLoading ? "Loading…" : "Refresh student balances"}</button>
             </div>
+            {fallbackLoading && <p role="status">Loading older organisation submissions to complete the student list…</p>}
+            {fallbackError && <p role="alert">Some student names could not be retrieved from submission history: {fallbackError}</p>}
+            {fallbackMissingIds.length > 0 && <p role="alert">{fallbackMissingIds.length} referenced submission(s) were not found in available history. Student names may be incomplete; check the submission records.</p>}
             {roster.length ? <div className="org-scroll"><table>
               <thead><tr><th>Student</th><th>Level</th><th>Tuition</th><th>Paid</th><th>Balance due</th><th>Status</th><th></th></tr></thead>
               <tbody>{roster.map((student, index) => <tr key={student.id || student.email || index}>
