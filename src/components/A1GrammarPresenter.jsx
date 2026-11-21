@@ -159,7 +159,7 @@ export function stageList(slide, topicLabel) {
         reading, items: reading.checks,
       }] : []),
       {
-        id: "workbook", type: "workbook", kicker: "Abschluss · Workbook",
+        id: "a1-day4-workbook", type: "workbook", kicker: "Abschluss · Workbook",
         title: "Abschluss und Workbook",
         items: Array.isArray(workbook.parts) ? workbook.parts : [],
         grammarUrl: workbook.grammarUrl || "",
