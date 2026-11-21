@@ -48,6 +48,7 @@ function organisationDirectoryRows(agreements, submissions, profiles = []) {
       id: batch.id, createdAt: batch.createdAt || null, agreementReference: batch.agreementReference || "",
       studentCount: students.length, approvedCount: students.filter(s => s.status === "approved").length,
       studentIds: students.filter(s => s.studentId).map(s => s.studentId),
+      students: students.map(s => ({ studentId: asString(s.studentId), name: asString(s.name || s.fullName), email: asString(s.email), level: asString(s.level), status: asString(s.status || "pending") })),
     });
     entry.studentCount += students.length;
     entry.approvedCount += students.filter(s => s.status === "approved").length;
@@ -103,9 +104,10 @@ function firstAmount(student, keys) {
 // Use canonical paid/balance fields, never initialPaymentAmount (an intention, not a receipt).
 // Missing tuition configuration is UNKNOWN, not zero owed.
 function organisationStudentLedger(rows) {
-  let outstandingTotal = 0, owingCount = 0, unverifiedCount = 0;
+  let outstandingTotal = 0, owingCount = 0, unverifiedCount = 0, confirmedPaidTotal = 0, knownPaidCount = 0;
   const students = rows.map(({ id, ...student }) => {
     const paid = firstAmount(student, ["paid", "amountPaid", "paidAmount", "amount_paid", "totalPaid"]);
+    if (paid !== null) { confirmedPaidTotal += paid; knownPaidCount += 1; }
     const fee = firstAmount(student, ["tuitionFee"]);
     const discount = firstAmount(student, ["tuitionDiscount"]) ?? 0;
     let balance = firstAmount(student, ["balanceDue", "balance", "outstandingBalance", "amountDue"]);
@@ -119,7 +121,8 @@ function organisationStudentLedger(rows) {
       tuitionFee: fee, paid, balanceDue: balance,
     };
   });
-  return { students, outstandingTotal: Math.round(outstandingTotal * 100) / 100, owingCount, unverifiedCount };
+  return { students, outstandingTotal: Math.round(outstandingTotal * 100) / 100, owingCount, unverifiedCount,
+    confirmedPaidTotal: Math.round(confirmedPaidTotal * 100) / 100, unknownPaidCount: rows.length - knownPaidCount };
 }
 async function loadOrganisationStudents(db, id, limit = 100) {
   if (!/^[a-f0-9]{64}$/.test(id)) {
