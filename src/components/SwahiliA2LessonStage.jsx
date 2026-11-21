@@ -73,6 +73,11 @@ function Menu({ content, cards = [], drinks = [] }) {
 
 export default function SwahiliA2LessonStage({ stage, grammar, isDaySix, level = "A1" }) {
   const lines=Lines({text:stage.content});
+  if (stage.type === "media-pending") return (
+    <section className="swahili-a2-presenter__media-stage" aria-label={stage.title}>
+      <p className="swahili-a2-presenter__support-note">{stage.content}</p>
+    </section>
+  );
   if(stage.type==="teacher-lecture") return (
     <section className="swahili-a2-presenter__media-stage" aria-label="AI lesson video">
       <p>{stage.content}</p>
