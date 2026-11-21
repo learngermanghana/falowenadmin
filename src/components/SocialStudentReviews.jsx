@@ -8,7 +8,7 @@ import { normalizePublicReviewRecords } from "../utils/publicReviewRecords.js";
 import "./SocialStudentReviews.css";
 
 const STORAGE_KEY = "falowen-social-student-reviews-v1";
-const MAX_REVIEW_LENGTH = 1800;
+const MAX_REVIEW_LENGTH = 6000;
 const starterReview = () => ({ id: "", studentName: "", course: "", source: "Google Review", sourceUrl: "", rating: null, date: "", review: "", status: "Draft" });
 
 function readReviews() {
