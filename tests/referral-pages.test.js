@@ -44,7 +44,7 @@ async function render(Page, path) {
 }
 test("public partnership explains the agreement and requires an organisation account", async () => {
   global.fetch = async path => {
-    if (path.includes("agreement-terms")) return Response.json({ ok: true, version: "org-v3", terms: ["Organisation agreement"] });
+    if (path.includes("agreement-terms")) return Response.json({ ok: true, version: "org-v3", partnerShareRate: 0.1, shareSettlement: "invoice_deduction", tuitionRefundable: false, classDurationWeeks: 10, accessMonths: 6, accessStartsAt: "account_activation", terms: ["Organisation agreement"] });
     throw new Error("Unexpected request: " + path);
   };
   const unmount = await render(PublicPage, "/partnerships");
@@ -67,7 +67,7 @@ test("query parameters cannot expose an individual signup or a second programme"
 });
 test("partnership tabs support keyboard navigation without skipping account verification", async () => {
   global.fetch = async path => {
-    if (path.includes("agreement-terms")) return Response.json({ ok: true, version: "org-v4", terms: ["Organisation agreement"] });
+    if (path.includes("agreement-terms")) return Response.json({ ok: true, version: "org-v4", partnerShareRate: 0.1, shareSettlement: "invoice_deduction", tuitionRefundable: false, classDurationWeeks: 10, accessMonths: 6, accessStartsAt: "account_activation", terms: ["Organisation agreement"] });
     throw new Error("Unexpected request: " + path);
   };
   const unmount = await render(PublicPage, "/partnerships");
