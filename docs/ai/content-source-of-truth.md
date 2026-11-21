@@ -98,3 +98,9 @@ The workbook rules and model sentences in `a1WorkbookGrammarTeaching.js` are key
 ### Course discount links
 
 Invitations → Discount Links manages program, level, original tuition, expiry, and maximum uses. Admin uses the Campus `/api/course-discounts/admin` API, which owns offers and use counts. Allocated uses include students who have not paid yet. Redeemed uses are recorded when Paystack confirms a payment. Revocation closes the link to new allocations.
+
+## Bilingual public placement monitoring (21 November 2026)
+
+The private **Admin → Timed Attempts → Placement tests** tab monitors both German and Kiswahili A1–B1 placement attempts via the existing authenticated `https://www.falowen.app/api/placement-attempts` endpoint. The public test links are `https://www.falowen.app/placement-test` (German) and `https://www.falowen.app/placement-test?language=swahili` (Kiswahili). Staff may open either without changing the monitored data. The placement API supplies each event's `language` marker; missing markers on legacy attempts are treated as German. Admin now offers a local language filter, language labels, and language-specific manual follow-up drafts; Kiswahili signup links explicitly preserve `program=swahili`.
+
+No new paid API, Firestore subscription, scheduled task, or background polling is added. Placement records are fetched only when the staff member opens the placement tab or clicks **Refresh placements**. Review `tests/placement-attempt-monitoring.test.js` and ensure the learner deployment with language-aware events is live before publishing this Admin change.

@@ -89,3 +89,28 @@ test("placement page retains staff-accessible actions and explicitly shows parti
   assert.match(source,/attempt\.consent&&!isStaff&&<a href="\/leads"/);
   assert.match(source,/countRegisteredOrPaidPlacements\(placementRows, Array\.isArray\(placementLeads\)\)/);
 });
+
+
+test("German and Kiswahili tests have direct links and distinct attempt filtering",()=>{
+  const source=readFileSync(new URL("../src/pages/TimedAssignmentAttemptsPage.jsx",import.meta.url),"utf8");
+  assert.match(source,/Public placement tests · German and Kiswahili/);
+  assert.match(source,/https:\/\/www\.falowen\.app\/placement-test"/);
+  assert.match(source,/https:\/\/www\.falowen\.app\/placement-test\?language=swahili/);
+  assert.match(source,/Open Kiswahili test/);
+  assert.match(source,/Filter placement language/);
+  assert.match(source,/placementLanguageFilter!=="all"/);
+  assert.match(source,/row\.language\|\|"german"/);
+  assert.match(source,/setPlacementLanguageFilter\("all"\)/);
+  assert.match(source,/languageName=isSwahili\?"Kiswahili":"German"/);
+  assert.match(source,/isSwahili\?"&program=swahili":""/);
+  assert.match(source,/"Your Falowen "\+languageName\+" placement result/);
+  assert.match(source,/target="_blank" rel="noopener noreferrer"/);
+  const rows=normalizePlacementResults([
+    {id:"g",language:"german",score:{level:"A2"}},
+    {id:"s",language:"swahili",score:{level:"B1"}},
+    {id:"legacy",score:{level:"A1"}}
+  ],[]);
+  const filter=language=>rows.filter(row=>(row.language||"german")===language);
+  assert.deepEqual(filter("swahili").map(row=>row.id),["s"]);
+  assert.deepEqual(filter("german").map(row=>row.id),["g","legacy"]);
+});

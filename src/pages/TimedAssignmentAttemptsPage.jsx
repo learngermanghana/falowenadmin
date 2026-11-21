@@ -81,6 +81,7 @@ export default function TimedAssignmentAttemptsPage() {
   const [placementError, setPlacementError] = useState("");
   const [placementLeadError, setPlacementLeadError] = useState("");
   const [placementFilter, setPlacementFilter] = useState("all");
+  const [placementLanguageFilter, setPlacementLanguageFilter] = useState("all");
   const [lastChecked, setLastChecked] = useState("");
   const [partial, setPartial] = useState(false);
   const [query, setQuery] = useState("");
@@ -304,10 +305,11 @@ export default function TimedAssignmentAttemptsPage() {
   }, [filteredTimed, recoveredTimed, query, timedStatus]);
   const placementRows = useMemo(()=>normalizePlacementResults(placementRecords,placementLeads),[placementRecords,placementLeads]);
   const filteredPlacement = useMemo(()=>placementRows.filter(row=>{
+    if(placementLanguageFilter!=="all" && (row.language||"german")!==placementLanguageFilter)return false;
     if(placementFilter!=="all" && (placementFilter==="contacted" ? !row.consent : placementStatus(row,now)!==placementFilter))return false;
     const needle=query.trim().toLowerCase();
-    return !needle || [row.id,row.name,row.email,row.phone,row.score?.level,row.conversionStage].some(v=>String(v||"").toLowerCase().includes(needle));
-  }),[placementRows,placementFilter,query,now]);
+    return !needle || [row.id,row.name,row.email,row.phone,row.language,row.score?.level,row.conversionStage].some(v=>String(v||"").toLowerCase().includes(needle));
+  }),[placementRows,placementFilter,placementLanguageFilter,query,now]);
   const mockInProgress = mocks.filter(row => row.status === "in_progress").length;
   const mockCompleted = mocks.filter(row => row.status === "completed").length;
   const timedInProgress = attempts.filter(row => timedAttemptStatus(row) === "in_progress").length;
@@ -325,6 +327,7 @@ export default function TimedAssignmentAttemptsPage() {
     setMockLevel("all");
     setTimedStatus("all");
     setPlacementFilter("all");
+    setPlacementLanguageFilter("all");
     setWritingReviewId("");
     setWritingReview(null);
   };
@@ -722,20 +725,40 @@ export default function TimedAssignmentAttemptsPage() {
       {showPlacement && <section id="placement-attempts" role="tabpanel" aria-labelledby="monitor-placement-tab" className="monitor-content" data-testid="placement-monitoring">
         <div style={{ display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap",alignItems:"center" }}>
           <div>
-            <h2 style={{margin:0}}>Public German placement test</h2>
+            <h2 style={{margin:0}}>Public placement tests · German and Kiswahili</h2>
             <p style={{color:"#64748b",margin:"5px 0 0",fontSize:13}}>
               Last checked: {placementLoadedAt ? formatDate(placementLoadedAt) : "not yet"} · No continuous polling · {placementRegistered === null ? "Conversion counts unavailable" : `${placementRegistered} registered or paid leads`}
             </p>
           </div>
-          <button type="button" onClick={loadPlacement} disabled={placementLoading} style={{padding:"10px 15px",border:"1px solid #2563eb",borderRadius:10,background:"#fff",color:"#1d4ed8",fontWeight:800,cursor:"pointer"}}>
-            {placementLoading?"Refreshing…":"Refresh placements"}
-          </button>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+            <a href="https://www.falowen.app/placement-test" target="_blank" rel="noopener noreferrer"
+              style={{padding:"10px 12px",border:"1px solid #cbd5e1",borderRadius:10,background:"#fff",color:"#1e40af",fontSize:13,fontWeight:800,textDecoration:"none"}}>
+              Open German test ↗
+            </a>
+            <a href="https://www.falowen.app/placement-test?language=swahili" target="_blank" rel="noopener noreferrer"
+              style={{padding:"10px 12px",border:"1px solid #cbd5e1",borderRadius:10,background:"#fff",color:"#1e40af",fontSize:13,fontWeight:800,textDecoration:"none"}}>
+              Open Kiswahili test ↗
+            </a>
+            <button type="button" onClick={loadPlacement} disabled={placementLoading} style={{padding:"10px 15px",border:"1px solid #2563eb",borderRadius:10,background:"#fff",color:"#1d4ed8",fontWeight:800,cursor:"pointer"}}>
+              {placementLoading?"Refreshing…":"Refresh placements"}
+            </button>
+          </div>
         </div>
         <p style={{margin:0,color:"#475569",fontSize:13}}>Scores are available to staff only. A visitor can finish without saving their name or email, so their result appears without contact details. The suggested level is not an official certificate. “Draft follow-up” opens your email app; it does not send anything automatically.</p>
         <div className="monitor-status-filters" role="group" aria-label="Filter placement status">
           {[["all","All"],["in_progress","In progress"],["completed","Completed"],["expired","Expired"],["contacted","Contact saved"]].map(([value,label])=>
             <button key={value} className="monitor-status-button" type="button" aria-pressed={placementFilter===value} onClick={()=>setPlacementFilter(value)}>{label}</button>
           )}
+          <label style={{display:"inline-flex",gap:7,alignItems:"center",fontSize:13,fontWeight:700}}>
+            Language
+            <select aria-label="Filter placement language" value={placementLanguageFilter}
+              onChange={event=>setPlacementLanguageFilter(event.target.value)}
+              style={{padding:"8px 10px",borderRadius:8,border:"1px solid #bfdbfe",background:"#fff"}}>
+              <option value="all">All languages</option>
+              <option value="german">German</option>
+              <option value="swahili">Kiswahili</option>
+            </select>
+          </label>
           <span className="monitor-filter-count">{filteredPlacement.length} shown</span>
         </div>
         {placementError && <div role="alert" style={{...card,borderColor:"#fecaca",color:"#991b1b"}}>{placementError}{placementLoadedAt?" · Showing previously loaded data.":""}</div>}
@@ -744,16 +767,20 @@ export default function TimedAssignmentAttemptsPage() {
         {!placementLoading && !filteredPlacement.length && <div style={card}>{placementError?"Placement monitoring could not be loaded.":"No placement records match these filters."}</div>}
         {filteredPlacement.map(attempt=>{
           const status=placementStatus(attempt,now);
+          const isSwahili=attempt.language==="swahili";
+          const languageName=isSwahili?"Kiswahili":"German";
           const score=attempt.score;
           const email=attempt.email||"";
           const phone=String(attempt.phone||"").replace(/\D/g,"").replace(/^0(?=\d{9}$)/,"233");
           const followup=[
             "Hello "+(attempt.name||"learner")+",",
-            "Thank you for completing the Falowen German placement test.",
+            "Thank you for completing the Falowen "+languageName+" placement test.",
             "Your recommended starting level is "+(score?.level||"being reviewed")+".",
             score?"Your scores: A1 "+score.a1+"/10 · A2 "+score.a2+"/10 · B1 "+score.b1+"/10 · Total "+score.total+"/30.":"",
-            "This is a preliminary class-placement recommendation, not an official Goethe or CEFR certificate.",
-            "Explore classes and register: https://www.falowen.app/signup?level="+encodeURIComponent(score?.level||"A1")+"&source=placement-test",
+            isSwahili
+              ? "This is a preliminary placement recommendation, not an official CEFR certificate."
+              : "This is a preliminary class-placement recommendation, not an official Goethe or CEFR certificate.",
+            (isSwahili?"Continue Kiswahili learning: ":"Explore classes and register: ")+"https://www.falowen.app/signup?level="+encodeURIComponent(score?.level||"A1")+"&source=placement-test"+(isSwahili?"&program=swahili":""),
             "If you need guidance, just reply to this email.",
             "Best regards,\nFalowen Admissions\nwww.falowen.app"
           ].filter(Boolean).join("\n\n");
@@ -761,6 +788,7 @@ export default function TimedAssignmentAttemptsPage() {
             <div style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
               <div style={{display:"grid",gap:4}}>
                 <strong style={{fontSize:16}}>{attempt.name || (email ? "Placement learner" : "") || (attempt.completedAt ? "Result saved · no contact details" : "Visitor · no contact details")}</strong>
+                <small style={{color:"#1e40af",fontWeight:800}}>{languageName} · A1–B1 placement</small>
                 <small style={{color:"#64748b",overflowWrap:"anywhere"}}>{attempt.email||attempt.phone||attempt.id}</small>
                 {attempt.emailSentAt && <small style={{color:"#166534",fontWeight:700}}>Result email sent · {formatDate(attempt.emailSentAt)}</small>}
                 {typeof attempt.classEmails === "boolean" && <small>Class emails: {attempt.classEmails ? "Opted in" : "Not requested"}</small>}
@@ -785,7 +813,7 @@ export default function TimedAssignmentAttemptsPage() {
                 {attempt.conversionStage}
               </strong>
               <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                {attempt.consent&&email&&<a href={"mailto:"+encodeURIComponent(email)+"?subject="+encodeURIComponent("Your Falowen German placement result — "+(score?.level||"recommendation"))+"&body="+encodeURIComponent(followup)} style={{color:"#1d4ed8",fontWeight:700}}>Draft follow-up</a>}
+                {attempt.consent&&email&&<a href={"mailto:"+encodeURIComponent(email)+"?subject="+encodeURIComponent("Your Falowen "+languageName+" placement result — "+(score?.level||"recommendation"))+"&body="+encodeURIComponent(followup)} style={{color:"#1d4ed8",fontWeight:700}}>Draft follow-up</a>}
                 {attempt.consent&&phone&&<a target="_blank" rel="noopener noreferrer" href={"https://wa.me/"+phone+"?text="+encodeURIComponent(followup)} style={{color:"#166534",fontWeight:700}}>WhatsApp</a>}
                 {attempt.consent&&!isStaff&&<a href="/leads" style={{color:"#1d4ed8",fontWeight:700}}>Open Leads</a>}
               </div>
