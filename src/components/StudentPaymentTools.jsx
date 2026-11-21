@@ -5,6 +5,7 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { createStudentPaymentLink, listStudentPayments } from "../services/studentPaymentService.js";
 import { reconcileStudentPayments } from "../services/studentContractService.js";
+import { planPendingPaymentRecheck } from "../utils/pendingPaymentRecheck.js";
 import { calculatePaystackCharge, calculatePaystackGrossAmount, parseMoneyValue } from "../utils/paystackCharges.js";
 
 function displayValue(...values) {
@@ -164,24 +165,34 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
   };
 
   useEffect(() => {
-    if (!studentId || reconciling) return;
-    const eligible = payments.filter((payment) => {
-      if (String(payment?.status || "").trim().toLowerCase() !== "pending") return false;
-      const reference = String(payment?.reference || payment?.id || "").trim();
-      if (!reference || autoReconciledReferencesRef.current.has(reference)) return false;
-      const createdAtMs = timestampMillis(payment?.createdAt);
-      return createdAtMs > 0 && Date.now() - createdAtMs >= 90 * 1000;
-    });
-    if (!eligible.length) return;
+    if (!studentId || reconciling) return undefined;
 
-    eligible.forEach((payment) => {
-      const reference = String(payment?.reference || payment?.id || "").trim();
-      if (reference) autoReconciledReferencesRef.current.add(reference);
-    });
+    const runDueCheck = () => {
+      const { dueReferences } = planPendingPaymentRecheck(
+        payments, autoReconciledReferencesRef.current, Date.now(), timestampMillis,
+      );
+      if (!dueReferences.length) return;
+      dueReferences.forEach((reference) => autoReconciledReferencesRef.current.add(reference));
+      // Only pending links that have reached 90 seconds trigger verification.
+      // This preserves missed-webhook recovery without any periodic history polling.
+      reconcilePendingPayments({ silent: true }).catch((error) => {
+        console.warn("Automatic Paystack reconciliation failed.", error);
+      });
+    };
 
-    reconcilePendingPayments({ silent: true }).catch((error) => {
-      console.warn("Automatic Paystack reconciliation failed.", error);
-    });
+    const { dueReferences, nextDelayMs } = planPendingPaymentRecheck(
+      payments, autoReconciledReferencesRef.current, Date.now(), timestampMillis,
+    );
+    if (dueReferences.length) {
+      runDueCheck();
+      return undefined;
+    }
+    if (nextDelayMs === null) return undefined;
+
+    // A newly generated or loaded link may not yet be 90 seconds old.
+    // Schedule one check at the first pending deadline and cancel on change/unmount.
+    const timer = window.setTimeout(runDueCheck, nextDelayMs);
+    return () => window.clearTimeout(timer);
   }, [studentId, payments, reconciling]);
 
   const numericAmount = parseMoneyValue(amount);

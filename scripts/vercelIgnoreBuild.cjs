@@ -1,7 +1,11 @@
-// Vercel: skip only commits containing documentation / CI / test changes.
-// Never skip an application, API, build script, dependency or configuration change.
-// Exit 0 = skip; exit 1 = build. Fail open if Git comparison is unavailable.
+// Vercel ignored-build step: exit 0 to skip, exit 1 to build.
+// Compare *all* changes since the last successful deployment of this branch.
+// Vercel supplies VERCEL_GIT_PREVIOUS_SHA only for ignored-build steps.
+// Never use HEAD^: a code commit followed by docs-only can otherwise be skipped.
+// If the baseline is missing, shallow, invalid, divergent or inaccessible, build.
 const { execFileSync } = require("node:child_process");
+
+const SHA_PATTERN = /^[a-f0-9]{40}$/i;
 
 function needsBuild(files) {
   if (!Array.isArray(files) || files.length === 0) return true;
@@ -13,16 +17,26 @@ function needsBuild(files) {
   return files.some((file) => !safe(file));
 }
 
-function changedFiles() {
+function changedFiles({
+  previousSha = process.env.VERCEL_GIT_PREVIOUS_SHA,
+  currentSha = process.env.VERCEL_GIT_COMMIT_SHA,
+  runGit = (args) => execFileSync("git", args, {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+    timeout: 5000,
+  }),
+} = {}) {
+  if (!SHA_PATTERN.test(previousSha || "")) return null;
   try {
-    const output = execFileSync("git", ["diff", "--name-only", "HEAD^", "HEAD"], {
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"],
-      timeout: 5000,
-    });
-    return output.split(/\r?\n/).map((value) => value.trim()).filter(Boolean);
+    const head = runGit(["rev-parse", "HEAD"]).trim();
+    if (!SHA_PATTERN.test(head) || (currentSha && head !== currentSha)) return null;
+    // Do not diff two unrelated branches or a stale/future baseline.
+    runGit(["merge-base", "--is-ancestor", previousSha, head]);
+    // NUL-separated paths support whitespace and do not mistake newlines as files.
+    const output = runGit(["diff", "--name-only", "-z", previousSha, head]);
+    return output.split("\0").filter(Boolean);
   } catch {
-    // Shallow checkouts and first commits still build normally.
+    // Vercel clones can be shallow. Never skip a needed production deployment.
     return null;
   }
 }
@@ -31,8 +45,8 @@ if (require.main === module) {
   const files = changedFiles();
   const build = needsBuild(files);
   console.log(build
-    ? "Falowen build required: app/config changed or Git comparison unavailable."
-    : "Falowen build skipped: documentation, CI, or root notes only.");
+    ? "Falowen build required: app changes or previous successful deployment could not be verified."
+    : "Falowen build skipped: only documentation, tests or CI changed since last successful deployment.");
   process.exitCode = build ? 1 : 0;
 }
 
