@@ -57,14 +57,13 @@ const compare = (value) => clean(value, 10000).toLowerCase().replace(/\s+/g, " "
 export function mergePublishedReview(existing, input) {
   if (!existing || !Array.isArray(existing.reviews)) throw error(502, "GitHub reviews.json format is invalid.");
   const reviews = [...existing.reviews];
-  const duplicate = reviews.find(item =>
-    compare(item?.reviewer?.displayName) === compare(input.studentName)
-    && compare(item?.comment) === compare(input.review));
-  if (duplicate) throw error(409, "This Google review is already in the Falowen website JSON.");
-
   const priorIndex = input.publicId
     ? reviews.findIndex(item => (item.name || item.importId) === input.publicId)
     : -1;
+  const duplicateIndex = reviews.findIndex(item =>
+    compare(item?.reviewer?.displayName) === compare(input.studentName)
+    && compare(item?.comment) === compare(input.review));
+  if (duplicateIndex >= 0 && duplicateIndex !== priorIndex) throw error(409, "This Google review is already in the Falowen website JSON.");
   if (input.publicId && priorIndex === -1) throw error(409, "This review has changed. Reload the public review list before editing it.");
 
   const original = priorIndex >= 0 ? reviews[priorIndex] : {};
