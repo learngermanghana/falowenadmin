@@ -24,8 +24,11 @@ import A1Day13ClassroomStage from "./A1Day13ClassroomStage.jsx";
 import A1Day22ClassroomStage from "./A1Day22ClassroomStage.jsx";
 import A1Day2TeachingStage from "./A1Day2TeachingStage.jsx";
 import A1Day3TeachingStage from "./A1Day3TeachingStage.jsx";
+import A1Day4TeachingStage from "./A1Day4TeachingStage.jsx";
 import { A1_DAY2_LESSON_ID, A1_DAY2_CLASSROOM_STAGES } from "../data/a1Day2Classroom.js";
 import { A1_DAY3_ASSIGNMENT, A1_DAY3_MUSIC_ASSIGNMENT, A1_DAY3_CLASSROOM_STAGES } from "../data/a1Day3Classroom.js";
+import { A1_DAY4_CLASSROOM_STAGES } from "../data/a1Day4Classroom.js";
+import { getA1Days1To5UnderstandingChecks } from "../data/a1Days1To5Understanding.js";
 import { A1_DAY12_STAGES } from "../data/a1Day12Classroom.js";
 import { A1_DAY13_STAGES } from "../data/a1Day13Classroom.js";
 import { A1_DAY22_STAGES } from "../data/a1Day22Classroom.js";
@@ -141,6 +144,33 @@ export function stageList(slide, topicLabel) {
   if (String(slide?.assignmentId || "").trim().toUpperCase() === A1_DAY3_ASSIGNMENT) {
     const musicStage = getA1PresenterMusicStage(A1_DAY3_MUSIC_ASSIGNMENT, slide.dayNumber);
     return [...A1_DAY3_CLASSROOM_STAGES, ...(musicStage ? [{ ...musicStage, musicAssignmentKey:A1_DAY3_MUSIC_ASSIGNMENT }] : [])];
+  }
+  if (String(slide?.assignmentId || "").trim().toUpperCase() === "A1-2") {
+    // Twelve approved Day 4 pages: nine interactive teaching pages, the unchanged
+    // published music player, the verified reading stage, and a workbook bridge.
+    const song = getA1PresenterMusicStage("A1-2", slide.dayNumber);
+    const reading = getA1PresenterReadingLesson("A1-2");
+    const workbook = slide.workbookConnection || {};
+    return [
+      ...A1_DAY4_CLASSROOM_STAGES,
+      ...(song ? [song] : []),
+      ...(reading ? [{
+        id: "reading", type: "reading", kicker: "Lesen", title: reading.title,
+        reading, items: reading.checks,
+      }] : []),
+      {
+        id: "a1-day4-workbook", type: "workbook", kicker: "Abschluss · Workbook",
+        title: "Abschluss und Workbook",
+        items: Array.isArray(workbook.parts) ? workbook.parts : [],
+        grammarUrl: workbook.grammarUrl || "",
+        workbookUrl: workbook.workbookUrl || "",
+        activityKind: "tutor-marked",
+        activityInstruction: "Schreibe die fünf Zahlen im Abschlusscheck. Danach: Teil 1 (Zahlen schreiben) und Teil 2 (Fragen) im vorhandenen Workbook bearbeiten.",
+        reviewTitle: "Zahlen verstehen · kurze Kontrolle",
+        reviewChecks: buildA1SlideReviewChecks(getA1Days1To5UnderstandingChecks("A1-2"), 3),
+        day4FinalChallenge: true,
+      },
+    ];
   }
   if (String(slide?.assignmentId || "").trim().toUpperCase() === "A1-8") return A1_DAY12_STAGES;
   if (String(slide?.assignmentId || "").trim().toUpperCase() === "A1-3.5") return A1_DAY13_STAGES;
@@ -756,6 +786,9 @@ export default function A1GrammarPresenter({
             <A1Day2TeachingStage key={stage.id} step={stage.step} />
           ) : stage.type === "a1-day3" ? (
             <A1Day3TeachingStage key={stage.id} step={stage.step} />
+          ) : stage.type === "a1-day4" ? (
+            <A1Day4TeachingStage key={stage.id} step={stage.step}
+              question={stage.id === "grammar-check" ? activeCheck : null} questions={stage.items} />
           ) : stage.type === "a1-day12" ? (
             <A1Day12ClassroomStage key={stage.id} step={stage.step} />
           ) : stage.type === "a1-day13" ? (
@@ -922,6 +955,7 @@ export default function A1GrammarPresenter({
           ) : stage.type === "workbook" ? (
             <>
               <h1>{stage.title}</h1>
+              {stage.day4FinalChallenge ? <A1Day4TeachingStage step="wrapup" /> : null}
               {stage.activityInstruction ? (
                 <div className="presenter-a1-learning-route" data-a1-learning-mode={stage.activityKind}>
                   <strong>{stage.activityKind === "self-practice" ? "Self-practice · no marking" :

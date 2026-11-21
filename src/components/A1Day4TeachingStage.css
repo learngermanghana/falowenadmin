@@ -1,0 +1,81 @@
+/* Day 4 uses the same A1 projector palette and typography as Day 2/3.
+   Scoped styles: the shared presenter and other courses are unchanged. */
+.a1-day4-lesson { width:min(100%,1120px);margin:0 auto;display:grid;gap:clamp(12px,1.7vh,18px);color:#133458;font-family:inherit }
+.a1-day4-lesson h1 { font-size:clamp(27px,3vw,44px);line-height:1.13;margin:0;color:#103b73 }
+.a1-day4-lesson h2 { font-size:clamp(18px,2vw,28px);line-height:1.22;margin:0 }
+.a1-day4-lesson p { margin:0;font-size:clamp(15px,1.35vw,20px);line-height:1.4 }
+.a1-day4-eyebrow,.a1-day4-micro { font-size:clamp(12px,1.1vw,15px);font-weight:800;color:#32669e;text-transform:uppercase;letter-spacing:.055em }
+.a1-day4-lead { color:#385b7c }
+.a1-day4-grid,.a1-day4-hero,.a1-day4-reveal-grid { display:grid;gap:clamp(8px,1.2vw,14px) }
+.a1-day4-hero { grid-template-columns:repeat(4,minmax(0,1fr)) }
+.a1-day4-grid { grid-template-columns:repeat(4,minmax(0,1fr)) }
+.a1-day4-basic-grid { grid-template-columns:repeat(6,minmax(0,1fr)) }
+.a1-day4-teen-grid { grid-template-columns:repeat(5,minmax(0,1fr)) }
+.a1-day4-tens-grid { grid-template-columns:repeat(4,minmax(0,1fr)) }
+.a1-day4-card { min-width:0;min-height:106px;padding:clamp(10px,1.4vw,17px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;border:1px solid #c6d9f5;background:#f4f8ff;border-radius:16px;box-shadow:0 5px 16px #17365d0a }
+.a1-day4-card-value { font-size:clamp(27px,3vw,42px);line-height:1.1;font-weight:850;color:#1557a3 }
+.a1-day4-card strong { font-size:clamp(15px,1.55vw,22px);overflow-wrap:anywhere;line-height:1.2 }
+.a1-day4-card small { font-size:12px;color:#58708c }
+.a1-day4-highlight { background:#e9f8f4;border-color:#b5e2d6 }
+.a1-day4-highlight .a1-day4-card-value { color:#167b6c }
+.a1-day4-objectives { display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px;padding:13px;border-radius:14px;background:#eaf2ff }
+.a1-day4-objectives strong { color:#103b73 }
+.a1-day4-objectives span { padding:7px 11px;background:#fff;border:1px solid #c6d9f5;border-radius:9px;font-weight:650 }
+.a1-day4-rule { display:flex;gap:8px 18px;align-items:center;flex-wrap:wrap;background:#eaf2ff;border-left:4px solid #1557a3;padding:12px 16px;border-radius:10px;font-size:clamp(15px,1.3vw,19px) }
+.a1-day4-rule strong { color:#1557a3 }
+.a1-day4-tip { font-size:clamp(13px,1.1vw,16px)!important;color:#58708c;line-height:1.4 }
+.a1-day4-lesson button { font:inherit;cursor:pointer }
+.a1-day4-number-tabs { display:flex;flex-wrap:wrap;justify-content:center;gap:9px }
+.a1-day4-number-tabs button,.a1-day4-buttons button,.a1-day4-formula>button,.a1-day4-reveal-card button { border:1px solid #1557a3;border-radius:10px;background:#1557a3;color:white;padding:10px 14px;font-weight:700 }
+.a1-day4-number-tabs button { min-width:66px;background:white;color:#1557a3 }
+.a1-day4-number-tabs button.is-selected { background:#1557a3;color:white }
+.a1-day4-number-tabs button:focus-visible,.a1-day4-buttons button:focus-visible,.a1-day4-formula>button:focus-visible,.a1-day4-reveal-card button:focus-visible,.a1-day4-choices button:focus-visible { outline:3px solid #f5b749;outline-offset:3px }
+.a1-day4-formula { display:grid;justify-items:center;gap:12px;background:#eaf2ff;padding:clamp(15px,2vw,24px);border:1px solid #c6d9f5;border-radius:18px }
+.a1-day4-formula-number { font-size:clamp(44px,6vw,80px);font-weight:850;line-height:1;color:#103b73 }
+.a1-day4-formula-words { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;width:100% }
+.a1-day4-formula-words .a1-day4-card { min-height:100px;background:white }
+.a1-day4-formula-words .a1-day4-card-value { font-size:clamp(19px,2.5vw,32px) }
+.a1-day4-revealed-word { font-size:clamp(17px,2.3vw,27px);font-weight:850;color:#1557a3;overflow-wrap:anywhere;text-align:center;line-height:1.3 }
+.a1-day4-reveal-grid { grid-template-columns:repeat(2,minmax(0,1fr)) }
+.a1-day4-reveal-card { min-width:0;display:grid;justify-items:center;align-content:center;gap:8px;min-height:154px;padding:15px;background:#f4f8ff;border:1px solid #c6d9f5;border-radius:16px }
+.a1-day4-large-number { font-size:clamp(32px,4.3vw,60px);line-height:1.05;color:#103b73;letter-spacing:.02em }
+.a1-day4-placeholder { font-size:13px;color:#687c96 }
+.a1-day4-contact-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px }
+.a1-day4-contact-card { background:#f4f8ff;border:1px solid #c6d9f5;border-radius:16px;display:grid;justify-items:center;gap:9px;text-align:center;padding:clamp(13px,2vw,22px) }
+.a1-day4-contact-symbol { font-size:46px;line-height:1;color:#1557a3 }
+.a1-day4-contact-card strong { font-size:clamp(24px,3vw,39px);color:#103b73;overflow-wrap:anywhere }
+.a1-day4-contact-card p { font-size:clamp(15px,1.4vw,19px);overflow-wrap:anywhere }
+.a1-day4-quiz-panel { padding:clamp(15px,2.2vw,26px);display:grid;gap:15px;background:#f4f8ff;border:1px solid #c6d9f5;border-radius:18px }
+.a1-day4-quiz-panel h2 { font-size:clamp(22px,2.3vw,31px) }
+.a1-day4-choices { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px }
+.a1-day4-choices button { min-width:0;min-height:72px;display:flex;gap:10px;align-items:center;justify-content:flex-start;text-align:left;overflow-wrap:anywhere;padding:12px;border:1px solid #b7cbe5;border-radius:12px;background:#fff;color:#133458;font-weight:650 }
+.a1-day4-choices button span { flex:0 0 32px;width:32px;height:32px;display:grid;place-items:center;background:#eaf2ff;border-radius:9px;color:#1557a3 }
+.a1-day4-choices button.is-selected { background:#1557a3;color:#fff;border-color:#1557a3 }
+.a1-day4-choices button.is-selected span { background:#fff;color:#1557a3 }
+.a1-day4-buttons { display:flex;flex-wrap:wrap;gap:10px }
+.a1-day4-buttons button:disabled { opacity:.45;cursor:not-allowed }
+.a1-day4-buttons .a1-day4-secondary { background:white;color:#1557a3 }
+.a1-day4-correct,.a1-day4-try-again { padding:10px 13px;border-radius:9px;display:grid;gap:5px }
+.a1-day4-correct { background:#e7f6ed;color:#1b6546 }
+.a1-day4-try-again { background:#fff3e5;color:#79501f }
+.a1-day4-correct small,.a1-day4-try-again small { color:#506781 }
+.a1-day4-wrapup { width:100%;padding:0;margin:0 }
+.a1-day4-wrapup h2 { font-size:clamp(20px,2vw,28px) }
+.a1-day4-final-card { display:grid;justify-items:center;gap:10px;background:#eaf2ff;border:1px solid #c6d9f5;border-radius:14px;padding:16px }
+@media (max-width:870px) {
+ .a1-day4-basic-grid { grid-template-columns:repeat(4,minmax(0,1fr)) }
+ .a1-day4-teen-grid { grid-template-columns:repeat(3,minmax(0,1fr)) }
+ .a1-day4-choices { grid-template-columns:1fr }
+ .a1-day4-choices button { min-height:54px }
+}
+@media (max-width:620px) {
+ .a1-day4-grid,.a1-day4-hero { grid-template-columns:repeat(2,minmax(0,1fr)) }
+ .a1-day4-formula-words { gap:6px }
+ .a1-day4-formula-words .a1-day4-card { min-height:86px;padding:7px }
+ .a1-day4-formula-words .a1-day4-card-value { font-size:clamp(14px,3.5vw,20px) }
+ .a1-day4-reveal-grid,.a1-day4-contact-grid { grid-template-columns:1fr }
+ .a1-day4-teen-grid,.a1-day4-tens-grid { grid-template-columns:repeat(2,minmax(0,1fr)) }
+ .a1-day4-card { min-height:88px }
+ .a1-day4-lesson h1 { font-size:clamp(26px,6vw,33px) }
+}
+@media (prefers-reduced-motion:reduce) { .a1-day4-lesson * { scroll-behavior:auto!important;animation:none!important;transition:none!important } }
