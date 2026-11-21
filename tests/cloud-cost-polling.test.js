@@ -41,3 +41,33 @@ test("hidden tabs pause polling, focus events coalesce, cleanup stops requests",
   assert.equal(cleared, true);
   assert.equal(listeners.size, 0);
 });
+
+test("zero interval makes no timer and a minimum gap coalesces focus and visibility", async () => {
+  let ms = 0;
+  const listeners = new Map();
+  const doc = {
+    visibilityState: "visible",
+    addEventListener(name, handler) { listeners.set(name, handler); },
+    removeEventListener(name) { listeners.delete(name); },
+  };
+  let intervals = 0;
+  const win = {
+    setInterval() { intervals++; return 1; },
+    clearInterval() { throw Error("no timer should exist"); },
+    addEventListener: doc.addEventListener,
+    removeEventListener: doc.removeEventListener,
+  };
+  let calls = 0;
+  const stop = startVisiblePolling(async () => { calls++; }, 0,
+    { documentTarget: doc, windowTarget: win, minimumGapMs: 60_000, now: () => ms });
+  await Promise.resolve();
+  assert.equal(calls, 1);
+  assert.equal(intervals, 0);
+  await listeners.get("focus")();
+  assert.equal(calls, 1, "rapid refocus does not issue another request");
+  ms = 60_001;
+  await listeners.get("focus")();
+  assert.equal(calls, 2);
+  stop();
+  assert.equal(listeners.size, 0);
+});

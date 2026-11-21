@@ -21,7 +21,7 @@ test("Cloudflare music catalog only accepts published music API tracks", async (
   };
   try {
     const songs = await loadSocialCloudflareTracks();
-    assert.equal(queried, "/api/attendance-music-library");
+    assert.equal(queried, "https://www.falowen.app/api/music-library");
     assert.equal(songs.length, 1);
     assert.equal(songs[0].id, row.id);
   } finally { globalThis.fetch = before; }

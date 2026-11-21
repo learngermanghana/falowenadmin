@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { startVisiblePolling } from "../utils/visiblePolling.js";
 import { createAdminRefreshRequest } from "../utils/adminRefreshRequest.js";
 
-export function useAdminRefresh(load, onSuccess) {
+// Ordinary Admin views refresh only every five minutes while visible.
+ // Explicit refresh buttons bypass this interval and remain immediate.
+export function useAdminRefresh(load, onSuccess, { pollIntervalMs = 5 * 60 * 1000 } = {}) {
   const onSuccessRef = useRef(onSuccess);
   onSuccessRef.current = onSuccess;
   const refreshRef = useRef(null);
@@ -26,13 +28,16 @@ export function useAdminRefresh(load, onSuccess) {
     });
     const run = () => controller.run();
     refreshRef.current = run;
-    const stop = startVisiblePolling(run, 60000);
+    const stop = startVisiblePolling(run, pollIntervalMs, {
+      minimumGapMs: 60 * 1000,
+      refreshOnFocus: pollIntervalMs > 0,
+    });
     return () => {
       controller.dispose();
       refreshRef.current = null;
       stop();
     };
-  }, [load]);
+  }, [load, pollIntervalMs]);
 
   const refresh = useCallback(() => refreshRef.current?.() || Promise.resolve(null), []);
   return { refresh, lastUpdated, refreshing, refreshError };

@@ -1,4 +1,3 @@
-import { startVisiblePolling } from "../utils/visiblePolling.js";
 import { useEffect, useMemo, useState } from "react";
 import { loadShareablePublicClasses } from "../services/publicBrochureClassService.js";
 import {
@@ -112,16 +111,10 @@ export default function BrochureWhatsappPanel({ pushToast }) {
       setEngagementError("");
       return undefined;
     }
-    let active = true;
-    const refresh = async () => {
-      if (!active) return;
-      await refreshEngagementStatus(engagementRef);
-    };
-    const stopPolling = startVisiblePolling(refresh, 60000);
-    return () => {
-      active = false;
-      stopPolling();
-    };
+    // Read once when the lead is selected. Subsequent status checks are manual:
+    // these are private engagement events, not a public live score.
+    void refreshEngagementStatus(engagementRef);
+    return undefined;
   }, [engagementRef]);
 
   const selectClass = (klass) => {
@@ -276,7 +269,7 @@ export default function BrochureWhatsappPanel({ pushToast }) {
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               <div>
                 <strong>Client engagement</strong>
-                <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>This reference contains no student name or phone number.</div>
+                <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>This reference contains no student name or phone number. Click Refresh status to check updates.</div>
               </div>
               <button type="button" onClick={() => refreshEngagementStatus()} style={{ background: "#fff", color: "#1a2233", border: "1px solid #cbd5e1" }}>
                 Refresh status

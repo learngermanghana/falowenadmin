@@ -133,7 +133,9 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
   }, [studentId]);
 
   const loadPaymentHistory = useCallback(() => studentId ? listStudentPayments(studentId) : Promise.resolve([]), [studentId]);
-  const historyRefresh = useAdminRefresh(loadPaymentHistory, setPayments);
+  // Payment history is loaded when the panel opens and after explicit actions.
+  // The student Firestore subscription already keeps account state current.
+  const historyRefresh = useAdminRefresh(loadPaymentHistory, setPayments, { pollIntervalMs: 0 });
   useEffect(() => { setPayments([]); }, [studentId]);
   const refreshPaymentHistory = historyRefresh.refresh;
 
