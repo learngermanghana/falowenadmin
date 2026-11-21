@@ -116,7 +116,7 @@ async function requireOwner(req) {
   if (pieces.length !== 3) throw error(401, "Invalid Firebase session token.");
   const header = parseJwtSegment(pieces[0]);
   const claims = parseJwtSegment(pieces[1]);
-  const project = clean(process.env.FIREBASE_PROJECT_ID, 200);
+  const project = clean(process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID, 200);
   const now = Math.floor(Date.now() / 1000);
 
   if (!project) throw error(503, "Firebase project configuration is missing.");
