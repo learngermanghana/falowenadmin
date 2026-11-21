@@ -17,7 +17,19 @@ export function validCloudflareSocialTrack(row) {
 }
 
 export async function loadSocialCloudflareTracks({ signal } = {}) {
-  const response = await fetch("/api/attendance-music-library", { cache: "no-cache", signal });
+  // Read-only public catalog already sends Access-Control-Allow-Origin: *.
+  // Prefer a direct request: avoid a second CDN hop through admin.falowen.app.
+  // Keep the previous proxy as a fallback for connectivity/CORS regressions.
+  let response;
+  try {
+    response = await fetch(PUBLIC_MUSIC_ORIGIN + "/api/music-library", {
+      cache: "default", credentials: "omit", signal,
+    });
+    if (!response.ok) throw new Error("Public music catalog unavailable");
+  } catch (cause) {
+    if (signal?.aborted) throw cause;
+    response = await fetch("/api/attendance-music-library", { cache: "no-cache", signal });
+  }
   if (!response.ok) throw new Error("Falowen music library is unavailable (" + response.status + ").");
   const data = await response.json();
   if (data?.ok === false || !Array.isArray(data?.tracks)) throw new Error("Invalid Falowen music catalog.");
