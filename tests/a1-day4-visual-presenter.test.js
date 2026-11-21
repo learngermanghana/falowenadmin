@@ -25,7 +25,7 @@ test("A1 Day 4 keeps exactly 12 approved pages in sequence, reusing real music a
   assert.ok(Array.isArray(reading?.checks) && reading.checks.length > 0);
   assert.match(source, /A1_DAY4_CLASSROOM_STAGES/);
   assert.match(source, /id: "reading", type: "reading"/);
-  assert.match(source, /id: "workbook", type: "workbook"/);
+  assert.match(source, /id: "a1-day4-workbook", type: "workbook"/);
   assert.match(source, /day4FinalChallenge: true/);
   assert.match(source, /step="wrapup"/);
 });
