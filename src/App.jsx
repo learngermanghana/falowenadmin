@@ -174,6 +174,7 @@ function TopBar() {
               <>
                 <Link to="/" onClick={() => setMenuOpen(false)}>Dashboard</Link>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
+                <Link to="/partners" onClick={() => setMenuOpen(false)}>Partnerships</Link>
                 <Link to="/staff" onClick={() => setMenuOpen(false)}>Staff Workspace</Link>
                 <Link to="/shared-dictionary" onClick={() => setMenuOpen(false)}>Shared Notes</Link>
                 {role === "admin" && <Link to="/invitations" onClick={() => setMenuOpen(false)}>Invitations</Link>}
@@ -304,6 +305,7 @@ export default function App() {
           <Route path="/referral-review" element={<ProtectedRoute><ReferralReviewPage /></ProtectedRoute>} />
           <Route path="/organisation-enrolment" element={<OrganisationEnrolmentPage />} />
           <Route path="/organisation-submissions" element={<ProtectedRoute><OrganisationEnrolmentPage review /></ProtectedRoute>} />
+          <Route path="/partners" element={<ProtectedRoute><OrganisationEnrolmentPage review /></ProtectedRoute>} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/checkin" element={<CheckinPage />} />
           <Route path="/checkin/display" element={<CheckinDisplayPage />} />

@@ -1126,7 +1126,7 @@ async function proxyToFalowenFunction(req, res, path, url) {
       const deterministic = path === "marking/ai" ? buildDeterministicObjectiveResult(req.body || {}, baseResult) : null;
       return res.json(mergeDeterministicMarkingResponse(parsed, deterministic));
     } catch {
-      if (path.startsWith("organisation-partners/") || path.startsWith("admin/organisation-partners/") || path.startsWith("referrals/") || path.startsWith("admin/referrals/") || path === "organisation-enrolments" || path === "admin/organisations" || path.startsWith("admin/organisation-enrolments")) {
+      if (path.startsWith("organisation-partners/") || path.startsWith("admin/organisation-partners/") || path.startsWith("referrals/") || path.startsWith("admin/referrals/") || path === "organisation-enrolments" || (path === "admin/organisations" || path.startsWith("admin/organisations/")) || path.startsWith("admin/organisation-enrolments")) {
         return res.status(502).json({ ok: false, error: "The enrolment service is temporarily unavailable. Please retry shortly; your entries have been kept." });
       }
       return res.send(text);
@@ -1339,7 +1339,7 @@ export default async function handler(req, res) {
     res.setHeader("Cache-Control", "private, no-store");
     return proxyToFalowenFunction(req, res, path, url);
   }
-  if (path === "admin/organisations") {
+  if (path === "admin/organisations" || path.startsWith("admin/organisations/")) {
     if (!methodAllowed(req, res, ["GET"])) return undefined;
     res.setHeader("Cache-Control", "private, no-store");
     return proxyToFalowenFunction(req, res, path, url);
