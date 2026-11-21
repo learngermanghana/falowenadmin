@@ -28,7 +28,7 @@ test("Admin queue checks on opening and at six hours, not on frequent tab focus"
   const stop = startVisiblePolling(() => controller.run(), SIX_HOURS_MS, {
     documentTarget: doc, windowTarget: win, minimumGapMs: SIX_HOURS_MS, now: () => time,
   });
-  await Promise.resolve();
+  await new Promise(resolve => setImmediate(resolve));
   assert.equal(calls, 1, "initial load happens immediately");
 
   time += 60 * 60 * 1000;
