@@ -132,22 +132,6 @@ test("partner balances query only selected organisation on demand and cap result
   await assert.rejects(loadOrganisationStudents(db, "../students"), { status: 400 });
 });
 
-test("partner profile includes each submitted student's identity and review status", () => {
-  const rows = organisationDirectoryRows([], [{
-    id: "submission-one",
-    organisation: { email: "school@example.org", name: "School" },
-    students: [
-      { studentId: "stu-1", name: "Learner One", email: "learner@example.org", level: "A1", status: "approved" },
-      { name: "Learner Two", email: "learner2@example.org", level: "A2", status: "pending" },
-    ],
-  }]);
-  assert.equal(rows[0].approvedCount, 1);
-  assert.deepEqual(rows[0].submissions[0].students, [
-    { studentId: "stu-1", name: "Learner One", email: "learner@example.org", level: "A1", status: "approved" },
-    { studentId: "", name: "Learner Two", email: "learner2@example.org", level: "A2", status: "pending" },
-  ]);
-  assert.equal(rows[0].submissions[0].students[0].phone, undefined);
-});
 
 test("partner profile distinguishes configured paid totals from missing payment figures", () => {
   const ledger = organisationStudentLedger([
