@@ -9,18 +9,30 @@ export function startVisiblePolling(load, intervalMs, {
   let stopped = false;
   let running = false;
   let lastStartedAt = Number.NEGATIVE_INFINITY;
+  let timer = null;
+  const hasInterval = Number.isFinite(intervalMs) && intervalMs > 0;
+
+  // Keep the next tick anchored to the last automatic request, not page open.
+  // Otherwise, a visibility refresh at hour 7 can cause the hour-12 tick to
+  // be rejected by the six-hour minimum gap and delay the next check to hour 18.
+  const scheduleNext = () => {
+    if (!hasInterval || stopped) return;
+    if (timer !== null) windowTarget.clearInterval(timer);
+    timer = windowTarget.setInterval(() => { void refresh(); }, intervalMs);
+  };
   const refresh = async () => {
     if (stopped || running || documentTarget.visibilityState === "hidden") return;
     const time = now();
     if (time - lastStartedAt < minimumGapMs) return;
     running = true;
     lastStartedAt = time;
+    scheduleNext();
     try { await load(); } finally { running = false; }
   };
   void refresh();
-  const timer = Number.isFinite(intervalMs) && intervalMs > 0
-    ? windowTarget.setInterval(() => { void refresh(); }, intervalMs)
-    : null;
+  // A hidden tab has no initial request; retain a paused interval so returning
+  // to a visible tab still schedules its following check relative to that return.
+  if (timer === null) scheduleNext();
   if (refreshOnFocus) {
     documentTarget.addEventListener("visibilitychange", refresh);
     windowTarget.addEventListener("focus", refresh);
