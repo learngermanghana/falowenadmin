@@ -144,3 +144,20 @@ test("partner profile distinguishes configured paid totals from missing payment 
   assert.equal(ledger.outstandingTotal, 650);
   assert.equal(ledger.owingCount, 2);
 });
+
+test("owner-only partner ledger includes verified contract and payment dates without exposing the entire student record", () => {
+  const ledger = organisationStudentLedger([
+    { id: "one", name: "Learner", paid: 100, balanceDue: 1000,
+      contractStart: "2026-11-01",
+      contractEnd: new Date("2026-12-01T00:00:00Z"),
+      paymentDueDate: { toDate: () => new Date("2026-11-30T00:00:00Z") },
+      privateNote: "must not appear" },
+    { id: "two", balanceDue: 200, contractStart: { seconds: Date.UTC(2026, 10, 21) / 1000 }, contractEnd: "invalid" },
+  ]);
+  assert.equal(ledger.students[0].paymentDueDate, "2026-11-30");
+  assert.equal(ledger.students[0].contractStartDate, "2026-11-01");
+  assert.equal(ledger.students[0].accessEndDate, "2026-12-01");
+  assert.equal(ledger.students[0].privateNote, undefined);
+  assert.equal(ledger.students[1].contractStartDate, "2026-11-21");
+  assert.equal(ledger.students[1].accessEndDate, "");
+});
