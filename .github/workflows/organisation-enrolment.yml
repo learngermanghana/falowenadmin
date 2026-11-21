@@ -31,6 +31,9 @@ on:
       - 'tests/referral-pages.test.js'
       - 'functions/index.js'
       - 'src/pages/OrganisationEnrolment*'
+      - 'src/pages/PartnerDetailPage.jsx'
+      - 'src/utils/partnerSubmissionFallback.js'
+      - 'tests/partner-submission-fallback.test.js'
       - 'src/pages/StudentDirectoryPage.jsx'
       - 'src/pages/StudentHubPage.jsx'
       - 'src/App.jsx'
@@ -68,6 +71,9 @@ on:
       - 'src/pages/ReferralReviewPage.jsx'
       - 'tests/referral-pages.test.js'
       - 'src/pages/OrganisationEnrolment*'
+      - 'src/pages/PartnerDetailPage.jsx'
+      - 'src/utils/partnerSubmissionFallback.js'
+      - 'tests/partner-submission-fallback.test.js'
 permissions:
   contents: read
 jobs:
@@ -86,4 +92,5 @@ jobs:
       - name: Verify approved class and Orientation auto-sync safeguards
         run: node --test tests/automatic-orientation-sync.test.js functions/organisationEnrolment.test.cjs
       - run: node --test functions/partnershipAgreements.test.cjs functions/referralPayouts.test.cjs functions/organisationPayments.test.cjs functions/organisationDirectory.test.cjs tests/referral-pages.test.js functions/referralProgramme.test.cjs tests/organisation-enrolment-request.test.js functions/organisationEnrolment.test.cjs functions/studentAccountActivation.test.cjs tests/student-emergency-contact.test.js
+      - run: node --test tests/partner-submission-fallback.test.js
       - run: npm run build
