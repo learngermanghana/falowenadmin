@@ -1,0 +1,36 @@
+name: A1 Day 6 visual presenter
+
+on:
+  pull_request:
+    paths:
+      - "src/data/a1Day6Classroom.js"
+      - "src/components/A1Day6TeachingStage.jsx"
+      - "src/components/A1Day6TeachingStage.css"
+      - "src/components/A1Day6MusicReadingStage.jsx"
+      - "src/components/A1GrammarPresenter.jsx"
+      - "tests/a1-day6-visual-presenter.test.js"
+      - "tests/a1-all-lessons-music.test.mjs"
+      - ".github/workflows/a1-day6-visual-presenter.yml"
+
+jobs:
+  day6-visual-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Verify presenter and Day 6 JSX compile
+        run: |
+          node --input-type=module -e "import { transformWithEsbuild } from 'vite'; import { readFileSync } from 'node:fs'; for (const file of ['src/components/A1GrammarPresenter.jsx', 'src/components/A1Day6TeachingStage.jsx', 'src/components/A1Day6MusicReadingStage.jsx']) { await transformWithEsbuild(readFileSync(file,'utf8'), file, { loader:'jsx',jsx:'automatic' }); console.log(file+' compiled'); }"
+      - name: Verify 12-page Day 6, workbook, and published course checks
+        run: >
+          node --test
+          tests/a1-day6-visual-presenter.test.js
+          tests/a1-workbook-aligned-slides-days6-10.test.js
+          tests/a1-days6-to10-understanding.test.js
+      - name: Verify A1 build-time presenter scope contract
+        run: node scripts/patchA1LanguageFirstFlow.mjs
