@@ -1,5 +1,5 @@
 import { sendPasswordResetEmail } from "firebase/auth";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { auth } from "../firebase.js";
 import { partnerAuth } from "../utils/organisationPartnerAccount.js";
@@ -62,19 +62,22 @@ export default function PartnerDetailPage() {
   const [inviting, setInviting] = useState(false);
   const [allocations, setAllocations] = useState({});
   const [allocationLoading, setAllocationLoading] = useState("");
+  const ledgerRequestId = useRef(0);
 
   async function loadLedger(id) {
+    const requestId = ++ledgerRequestId.current;
     setLedgerLoading(true);
     setLedgerError("");
     try {
       const result = await request("admin/organisations/" + encodeURIComponent(id) + "/students");
-      setLedger(result);
+      if (requestId === ledgerRequestId.current) setLedger(result);
     } catch (e) {
-      setLedgerError(e.message);
-    } finally { setLedgerLoading(false); }
+      if (requestId === ledgerRequestId.current) setLedgerError(e.message);
+    } finally { if (requestId === ledgerRequestId.current) setLedgerLoading(false); }
   }
   useEffect(() => {
     let cancelled = false;
+    ledgerRequestId.current += 1;
     setLoading(true);
     setError("");
     setPartner(null);
@@ -100,7 +103,7 @@ export default function PartnerDetailPage() {
       void loadLedger(match.id);
     }).catch(e => { if (!cancelled) setError(e.message); })
       .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+    return () => { cancelled = true; ledgerRequestId.current += 1; };
   }, [organisationId]);
 
   const roster = useMemo(() => {
