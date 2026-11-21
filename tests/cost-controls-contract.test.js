@@ -4,10 +4,14 @@ import { readFileSync } from "node:fs";
 
 const read = (name) => readFileSync(new URL("../" + name, import.meta.url), "utf8");
 
-test("Admin automatically refreshes ordinary views at most every five minutes", () => {
+test("Admin automatically refreshes ordinary views every six hours, without focus-driven extra polling", () => {
   const hook = read("src/hooks/useAdminRefresh.js");
-  assert.match(hook, /pollIntervalMs = 5 \* 60 \* 1000/);
-  assert.match(hook, /minimumGapMs: 60 \* 1000/);
+  assert.match(hook, /DEFAULT_ADMIN_REFRESH_INTERVAL_MS = 6 \* 60 \* 60 \* 1000/);
+  assert.match(hook, /pollIntervalMs = DEFAULT_ADMIN_REFRESH_INTERVAL_MS/);
+  assert.match(hook, /minimumGapMs: pollIntervalMs/);
+  const marking = read("src/pages/MarkingPage.jsx");
+  assert.match(marking, /autoRefreshEvery="6 hours"/);
+  assert.match(read("src/components/AdminRefreshStatus.jsx"), /Refresh now/);
   const payment = read("src/components/StudentPaymentTools.jsx");
   assert.match(payment, /useAdminRefresh\(loadPaymentHistory, setPayments, \{ pollIntervalMs: 0 \}\)/);
   assert.match(payment, /reconcileStudentPayments/);
