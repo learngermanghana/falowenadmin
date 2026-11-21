@@ -8,6 +8,10 @@ on:
       - "src/data/socialStudentReviews.js"
       - "src/utils/socialStudentReviewRender.js"
       - "src/utils/socialReviewSharing.js"
+      - "src/utils/publicReviewRecords.js"
+      - "api/public-student-reviews.js"
+      - "api/router.js"
+      - "tests/public-review-json-publishing.test.js"
       - "src/pages/SocialMediaPage.jsx"
       - "src/pages/SocialMediaPage.css"
       - "tests/social-student-reviews.test.js"
@@ -19,6 +23,10 @@ on:
       - "src/data/socialStudentReviews.js"
       - "src/utils/socialStudentReviewRender.js"
       - "src/utils/socialReviewSharing.js"
+      - "src/utils/publicReviewRecords.js"
+      - "api/public-student-reviews.js"
+      - "api/router.js"
+      - "tests/public-review-json-publishing.test.js"
       - "src/pages/SocialMediaPage.jsx"
       - "src/pages/SocialMediaPage.css"
       - "tests/social-student-reviews.test.js"
@@ -33,7 +41,7 @@ jobs:
         with:
           node-version: "22"
       - name: Test student review renderer and tab
-        run: node --test tests/social-student-reviews.test.js
+        run: node --test tests/social-student-reviews.test.js tests/public-review-json-publishing.test.js
       - name: Install dependencies
         run: npm ci
       - name: Build Admin UI
