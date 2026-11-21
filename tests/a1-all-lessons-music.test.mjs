@@ -57,7 +57,11 @@ test('A1 presenter uses one music stage for each lesson with complete authored s
  }
  const day5=slides.find(s=>s.id==='a1-day-5-introducing-yourself-articles');
  const day5Stages=stagesFor(day5,day5.topic);
- assert.equal(day5Stages.findIndex(s=>s.type==='published-music'),day5Stages.findIndex(s=>s.id==='mistakes')+1);
+ assert.equal(day5Stages.length,12,'Day 5 now uses the approved 12-page visual sequence');
+ assert.equal(day5Stages[10].type,'published-music');
+ assert.equal(day5Stages[10].day5CombinedReading,true);
+ assert.equal(day5Stages[10].reading?.title,'Sich vorstellen');
+ assert.equal(day5Stages[11].activityKind,'self-practice');
  assert.equal(getA1PresenterMusicStage('A1-Tutorial',0),null);
 });
 
@@ -113,6 +117,14 @@ test('actual A1 presenter orders workbook grammar, Lesen and speaking for every 
    const music = stages.findIndex(stage => stage.step === 'music');
    assert.ok(grammar > 0 && music > grammar, slide.assignmentId);
    assert.ok(!stages.some(stage => stage.step === 'warmup'), slide.assignmentId);
+   continue;
+  }
+  if (slide.assignmentId === 'A1-1.3') {
+   assert.equal(stages.length,12);
+   assert.equal(stages[9].id,'grammar-check');
+   assert.equal(stages[10].type,'published-music');
+   assert.equal(stages[10].reading?.checks.length,3);
+   assert.equal(stages[11].activityKind,'self-practice');
    continue;
   }
   assert.equal(stages[0].id, 'intro', slide.assignmentId);
