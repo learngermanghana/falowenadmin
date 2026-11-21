@@ -15,7 +15,7 @@ test('Day 11 is selectable in A1 and follows the Day 10 core teaching flow', () 
 });
 
 test('pending media have no recordings or borrowed Day 10 links', () => {
-  for (const id of ['ai-video', 'music', 'radio']) {
+  for (const id of ['ai-video', 'radio']) {
     const stage = lesson.stages.find(s => s.id === id);
     assert.equal(stage.type, 'media-pending');
     for (const field of ['audio', 'videoId', 'radioVideoId', 'radioUrl']) assert.equal(stage[field], undefined);
@@ -23,6 +23,14 @@ test('pending media have no recordings or borrowed Day 10 links', () => {
   const renderer = fs.readFileSync(new URL('../src/components/SwahiliA2LessonStage.jsx', import.meta.url), 'utf8');
   assert.match(renderer, /stage.type === "media-pending"/);
   assert.doesNotMatch(JSON.stringify(lesson), /4_ygEiW5QjI|xLN5QX669JA|swahili-a1-day-10/);
+});
+
+test('Day 11 Music opens the Dukani recording and its own classroom questions', () => {
+  const music = lesson.stages.find(stage => stage.id === 'music');
+  assert.equal(music.type, 'music');
+  assert.equal(music.audio.objectKey, 'swahili/music/A1/day-11/Dukani.mp3');
+  assert.equal(music.audio.id, 'swahili-a1-day-11');
+  assert.ok(music.questions.some(question => question.answer.includes('elfu kumi na moja')));
 });
 
 test('teacher listening and separate dialogue use the source quantities and prices', () => {

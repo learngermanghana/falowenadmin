@@ -1,5 +1,13 @@
 export const SWAHILI_MUSIC_TRACKS = [
   {
+    id: "swahili-a1-day-11",
+    level: "A1",
+    day: 11,
+    title: "Tunaenda Dukani!",
+    objectKey: "swahili/music/A1/day-11/Dukani.mp3",
+    audioUrl: "https://www.falowen.app/api/music?track=swahili-a1-day-11",
+  },
+  {
     id: "swahili-b1-day-28",
     level: "B1",
     day: 28,

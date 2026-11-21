@@ -1,5 +1,6 @@
+import { SWAHILI_MUSIC_TRACKS } from "./swahiliMusicTracks.js";
+
 // Adapted from the teacher-supplied Buying from the Shop+Numbers.pdf.
-// Uses the Day 10 classroom flow; Day 11 recordings will be linked when supplied.
 export const SWAHILI_DAY_ELEVEN_ADMIN_LESSON = Object.freeze({
   "id": "swahili-day-11",
   "course": "SWAHILI",
@@ -89,11 +90,27 @@ export const SWAHILI_DAY_ELEVEN_ADMIN_LESSON = Object.freeze({
     },
     {
       "id": "music",
-      "type": "media-pending",
-      "title": "Muziki · Dukani",
-      "content": "Wimbo wa somo utaongezwa baadaye.",
-      "english": "The Day 11 song will be added later. Continue to the next stage.",
-      "kicker": "Muziki · Music"
+      "type": "music",
+      "title": "Tunaenda Dukani!",
+      "kicker": "Muziki · Music",
+      "audio": SWAHILI_MUSIC_TRACKS.find(track => track.id === "swahili-a1-day-11"),
+      "questions": [
+        {
+          "prompt": "Mnunuzi anataka vikombe vingapi?",
+          "english": "How many cups does the shopper want?",
+          "answer": "Anataka vikombe vitatu."
+        },
+        {
+          "prompt": "Kitabu ni shilingi ngapi?",
+          "english": "How much does the book cost?",
+          "answer": "Ni shilingi elfu tano."
+        },
+        {
+          "prompt": "Jumla ni shilingi ngapi?",
+          "english": "What is the total price?",
+          "answer": "Ni shilingi elfu kumi na moja."
+        }
+      ]
     },
     {
       "id": "radio",
