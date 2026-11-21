@@ -58,7 +58,8 @@ export function mergePublishedReview(existing, input) {
   if (!existing || !Array.isArray(existing.reviews)) throw error(502, "GitHub reviews.json format is invalid.");
   const reviews = [...existing.reviews];
   const priorIndex = input.publicId
-    ? reviews.findIndex(item => (item.name || item.importId) === input.publicId)
+    ? reviews.findIndex(item => (item.name || item.importId) === input.publicId
+      || (input.publicId.startsWith("source:") && item.sourceUrl === input.publicId.slice(7)))
     : -1;
   const duplicateIndex = reviews.findIndex(item =>
     compare(item?.reviewer?.displayName) === compare(input.studentName)
