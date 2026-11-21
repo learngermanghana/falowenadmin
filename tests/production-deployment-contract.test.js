@@ -14,13 +14,12 @@ test("admin production release gates and stamps SHA while Vercel build stays mut
   assert.match(workflow, /npx vite build/);
 });
 
-test("admin build identity is uncached and main is the only automatic Git deployment", () => {
+test("admin build identity is uncached and Git deployments are manual", () => {
   const config = JSON.parse(fs.readFileSync("vercel.json", "utf8"));
   const identity = config.headers.find((entry) => entry.source === "/__falowen-admin-build.json");
   assert.ok(identity);
   assert.ok(identity.headers.some((header) => header.key === "Cache-Control" && /no-store/.test(header.value)));
-  assert.equal(config.git.deploymentEnabled.main, true);
-  assert.equal(config.git.deploymentEnabled["*"], false);
+  assert.equal(config.git.deploymentEnabled, false);
 });
 
 test("admin production health workflow checks the live commit SHA", () => {
@@ -29,6 +28,9 @@ test("admin production health workflow checks the live commit SHA", () => {
   assert.match(workflow, /npm run gate:production/);
   assert.match(workflow, /vercel@latest deploy --prebuilt --prod/);
   assert.match(workflow, /api\/deployment-status/);
+  assert.match(workflow, /verify-production:\n\s+if: github\.event_name == 'workflow_dispatch' && github\.ref == 'refs\/heads\/main'/);
+  assert.doesNotMatch(workflow, /^\s+schedule:/m);
+  assert.doesNotMatch(workflow, /scheduled-rate-limit-retry:/);
 });
 
 
