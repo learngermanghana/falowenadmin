@@ -5,7 +5,7 @@ import { auth } from "../firebase.js";
 import { partnerAuth } from "../utils/organisationPartnerAccount.js";
 import { organisationEnrolmentRequest } from "../utils/organisationEnrolmentRequest.js";
 import { loadPartnerSubmissionFallback } from "../utils/partnerSubmissionFallback.js";
-import { buildPartnerPaymentDeadlineReminder, partnerPaymentDeadline, partnerDeadlineLabel } from "../utils/partnerPaymentDeadlineReminder.js";
+import { buildPartnerPaymentDeadlineReminder, partnerPaymentDeadline, partnerAccessDeadline, partnerDeadlineLabel } from "../utils/partnerPaymentDeadlineReminder.js";
 import "./OrganisationEnrolmentPage.css";
 import "./PartnerDetailPage.css";
 
@@ -230,7 +230,12 @@ export default function PartnerDetailPage() {
                 <td>{money(student.tuitionFee)}</td>
                 <td>{money(student.paid)}</td>
                 <td className={student.balanceDue > 0 ? "partner-amount-owing" : ""}>{ledger && student.balanceDue !== null ? money(student.balanceDue) : "Not verified"}</td>
-                <td>{ledger && student.balanceDue > 0 ? partnerDeadlineLabel(partnerPaymentDeadline(student), new Date().toISOString().slice(0, 10)) : "—"}</td>
+                <td>{ledger && student.balanceDue > 0 ? <>
+                  <div>{partnerDeadlineLabel(partnerPaymentDeadline(student), new Date().toISOString().slice(0, 10))}</div>
+                  {partnerPaymentDeadline(student)?.type === "payment" && partnerAccessDeadline(student) && (
+                    <div>{partnerDeadlineLabel(partnerAccessDeadline(student), new Date().toISOString().slice(0, 10))}</div>
+                  )}
+                </> : "—"}</td>
                 <td>{student.paymentStatus || student.submissionStatus || "—"}</td>
                 <td><Link to={"/students?search=" + encodeURIComponent(student.email || student.studentCode || student.name)}>Open student</Link></td>
               </tr>)}</tbody>
