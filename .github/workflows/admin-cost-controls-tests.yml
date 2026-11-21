@@ -15,6 +15,8 @@ on:
       - 'src/utils/adminRefreshRequest.js'
       - 'src/components/AdminRefreshStatus.jsx'
       - 'src/components/StudentPaymentTools.jsx'
+      - 'src/utils/pendingPaymentRecheck.js'
+      - 'tests/pending-payment-recheck.test.js'
       - 'src/pages/MarkingPage.jsx'
       - 'tests/firebase-deploy-selection.test.js'
       - 'tests/admin-refresh-request.test.js'
@@ -29,4 +31,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test tests/firebase-deploy-selection.test.js tests/admin-refresh-request.test.js tests/student-payment-listener-stability.test.js tests/cloud-cost-polling.test.js tests/cost-controls-contract.test.js tests/admin-six-hour-refresh.test.js tests/vercel-build-ignore.test.cjs
+      - run: node --test tests/firebase-deploy-selection.test.js tests/admin-refresh-request.test.js tests/student-payment-listener-stability.test.js tests/cloud-cost-polling.test.js tests/cost-controls-contract.test.js tests/admin-six-hour-refresh.test.js tests/pending-payment-recheck.test.js tests/vercel-build-ignore.test.cjs
