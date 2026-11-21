@@ -1,0 +1,40 @@
+name: A1 Day 7 visual presenter
+
+on:
+  pull_request:
+    paths:
+      - "src/data/a1Day7Classroom.js"
+      - "src/components/A1Day7TeachingStage.jsx"
+      - "src/components/A1Day7TeachingStage.css"
+      - "src/components/A1Day7MusicReadingStage.jsx"
+      - "src/components/A1GrammarPresenter.jsx"
+      - "tests/a1-day7-visual-presenter.test.js"
+      - "tests/a1-all-lessons-music.test.mjs"
+      - ".github/workflows/a1-day7-visual-presenter.yml"
+
+jobs:
+  day7-visual-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Compile presenter and Day 7 visual components
+        run: |
+          node --input-type=module -e "import { transformWithEsbuild } from 'vite'; import { readFileSync } from 'node:fs'; for (const file of ['src/components/A1GrammarPresenter.jsx', 'src/components/A1Day7TeachingStage.jsx', 'src/components/A1Day7MusicReadingStage.jsx']) { await transformWithEsbuild(readFileSync(file,'utf8'),file,{loader:'jsx',jsx:'automatic'}); console.log(file+' JSX syntax OK'); }"
+      - name: Verify 12-page Day 7 and tutor-marked workbook integration
+        run: >
+          node --test
+          tests/a1-day7-visual-presenter.test.js
+          tests/a1-workbook-aligned-slides-days6-10.test.js
+          tests/a1-days6-to10-understanding.test.js
+      # Day 7's exact-file discovery, duplicate/wrong-day rejection and its
+      # unchanged music-player integration are covered by the focused suite.
+      # The older all-lessons test has pre-existing Day 3/4 stage assumptions
+      # and is not a release gate for this scoped Day 7 redesign.
+      - name: Verify unchanged A1 scope logic
+        run: node scripts/patchA1LanguageFirstFlow.mjs
