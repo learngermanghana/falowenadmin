@@ -1,0 +1,30 @@
+name: A1 Day 4 visual presenter
+
+on:
+  pull_request:
+    paths:
+      - "src/components/A1Day4TeachingStage.jsx"
+      - "src/components/A1Day4TeachingStage.css"
+      - "src/components/A1GrammarPresenter.jsx"
+      - "src/data/a1Day4Classroom.js"
+      - "tests/a1-day4-visual-presenter.test.js"
+      - ".github/workflows/a1-day4-visual-presenter.yml"
+
+jobs:
+  day4-visual-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Check both A1 presenter JSX modules compile
+        run: |
+          node --input-type=module -e "import { transformWithEsbuild } from 'vite'; import { readFileSync } from 'node:fs'; for (const file of ['src/components/A1Day4TeachingStage.jsx', 'src/components/A1GrammarPresenter.jsx']) { await transformWithEsbuild(readFileSync(file, 'utf8'), file, { loader: 'jsx', jsx: 'automatic' }); console.log(file + ' JSX syntax OK'); }"
+      - name: Test 12-page A1 Day 4 and existing lesson assets
+        run: node --test tests/a1-day4-visual-presenter.test.js tests/a1-day4-foundation-song.test.js tests/a1-music-presenter-stage.test.js tests/a1-workbook-aligned-slides-days1-5.test.js
