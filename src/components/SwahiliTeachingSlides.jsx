@@ -1,3 +1,4 @@
+import { SWAHILI_DAY_ELEVEN_ADMIN_LESSON } from "../data/swahiliDayElevenTeachingSlides.js";
 import SwahiliRestaurantSong from "./SwahiliRestaurantSong.jsx";
 import { SWAHILI_DAY_FIVE_ADMIN_LESSON } from "../data/swahiliDayFiveTeachingSlides.js";
 import SwahiliSlideMusic from "./SwahiliSlideMusic.jsx";
@@ -101,6 +102,12 @@ const dayTenPresenterSlide = Object.freeze({
   workbookConnection: { workbookUrl: dayTenWorkbook, subtitle: "Continue Kiswahili Day 10 in Campus." },
 });
 
+const dayElevenPresenterSlide = Object.freeze({
+  ...SWAHILI_DAY_ELEVEN_ADMIN_LESSON,
+  assignmentId: "SWAHILI-DAY-11",
+  workbookConnection: { workbookUrl: "https://www.falowen.app/campus/course/swahili/day-11", subtitle: "Continue Kiswahili Day 11 in Campus." },
+});
+
 export default function SwahiliTeachingSlides({ slideId, present = false }) {
   const navigate = useNavigate();
   const { search } = useLocation();
@@ -113,7 +120,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
   const isDayTen = slideId === SWAHILI_DAY_TEN_ADMIN_LESSON.id;
   const isB1Day28 = slideId === swahiliB1Day28.id;
   const existingPresenterSlide = isDaySix ? daySixPresenterSlide : presenterSlide;
-  const selectedPresenterSlide = isB1Day28 ? b1Day28PresenterSlide : isDayTen ? dayTenPresenterSlide : isDayFive ? dayFivePresenterSlide : existingPresenterSlide;
+  const selectedPresenterSlide = slideId === SWAHILI_DAY_ELEVEN_ADMIN_LESSON.id ? dayElevenPresenterSlide : isB1Day28 ? b1Day28PresenterSlide : isDayTen ? dayTenPresenterSlide : isDayFive ? dayFivePresenterSlide : existingPresenterSlide;
   const lesson = selectedPresenterSlide;
   const selectedWorkbook = selectedPresenterSlide.workbookConnection.workbookUrl;
   const stages = lesson.stages;
