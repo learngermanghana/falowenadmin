@@ -13,6 +13,7 @@ import { getA1Days6To10UnderstandingChecks } from "../src/data/a1Days6To10Unders
 import { getA1PresenterReadingLesson } from "../src/data/a1PresenterReadingLessons.js";
 import { getA1PresenterMusicStage, getA1PresenterRecording } from "../src/data/a1PresenterMusicStage.js";
 import { getCuratedMusicByAssignment } from "../src/data/curatedLessonMusic.js";
+import { waitingRoomDiscoveredMusicTrack } from "../src/utils/waitingRoomDayMusic.js";
 
 const presenterUrl=new URL("../src/components/A1GrammarPresenter.jsx",import.meta.url);
 const presenterSource=readFileSync(presenterUrl,"utf8");
@@ -98,6 +99,22 @@ test("Original Mila reading and discovery-backed song are retained on page 11",a
   assert.match(mediaSource,/reading\.answers\[index\]/);
   assert.match(mediaSource,/role="tablist"/);
   assert.match(mediaSource,/active==="music" && hasMusic/);
+});
+
+test("Day 7 audio discovery accepts only one exact public day-seven recording",()=>{
+  const recording=getA1PresenterRecording("A1-3",7);
+  const id="r2-a1-day-07-test";
+  const track={
+    id,level:"A1",day:7,title:"Was kostet das?",
+    objectKey:"music/a1/day-07/Was kostet das_.mp3",
+    audioUrl:`https://www.falowen.app/api/music?track=${id}`,
+    autoDiscovered:true,coursebook:true,
+  };
+  const context={level:recording.level,day:recording.day,assignmentKey:"A1-3"};
+  assert.equal(waitingRoomDiscoveredMusicTrack({tracks:[track]},context)?.objectKey,track.objectKey);
+  for(const tracks of [[],[track,track],[{...track,day:8}],[{...track,objectKey:"private/audio.mp3"}]]){
+    assert.equal(waitingRoomDiscoveredMusicTrack({tracks},context),null);
+  }
 });
 
 test("Day 7 keeps three tutor-marked workbook sections and original grammar route",async()=>{
