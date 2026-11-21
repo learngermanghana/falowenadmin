@@ -29,11 +29,14 @@ import A1Day5TeachingStage from "./A1Day5TeachingStage.jsx";
 import A1Day5MusicReadingStage from "./A1Day5MusicReadingStage.jsx";
 import A1Day6TeachingStage from "./A1Day6TeachingStage.jsx";
 import A1Day6MusicReadingStage from "./A1Day6MusicReadingStage.jsx";
+import A1Day7TeachingStage from "./A1Day7TeachingStage.jsx";
+import A1Day7MusicReadingStage from "./A1Day7MusicReadingStage.jsx";
 import { A1_DAY2_LESSON_ID, A1_DAY2_CLASSROOM_STAGES } from "../data/a1Day2Classroom.js";
 import { A1_DAY3_ASSIGNMENT, A1_DAY3_MUSIC_ASSIGNMENT, A1_DAY3_CLASSROOM_STAGES } from "../data/a1Day3Classroom.js";
 import { A1_DAY4_CLASSROOM_STAGES } from "../data/a1Day4Classroom.js";
 import { A1_DAY5_ASSIGNMENT, A1_DAY5_CLASSROOM_STAGES } from "../data/a1Day5Classroom.js";
 import { A1_DAY6_ASSIGNMENT, A1_DAY6_CLASSROOM_STAGES } from "../data/a1Day6Classroom.js";
+import { A1_DAY7_ASSIGNMENT, A1_DAY7_CLASSROOM_STAGES } from "../data/a1Day7Classroom.js";
 import { getA1Days1To5UnderstandingChecks } from "../data/a1Days1To5Understanding.js";
 import { A1_DAY12_STAGES } from "../data/a1Day12Classroom.js";
 import { A1_DAY13_STAGES } from "../data/a1Day13Classroom.js";
@@ -235,6 +238,36 @@ export function stageList(slide, topicLabel) {
         activityKind:"self-practice",
         activityInstruction:"Bearbeite die fünf Teile des vorhandenen Workbooks: Familie, 6–8 Sätze, Sprachen, Ja/Nein-Fragen und Hobbys. Dein Text gehört zur Gruppendiskussion, nicht zu einer benoteten Tutor-Abgabe.",
         actionLabel:"Open five-part self-practice workbook",
+      },
+    ];
+  }
+  if (String(slide?.assignmentId || "").trim().toUpperCase() === A1_DAY7_ASSIGNMENT) {
+    // Twelve approved Day 7 pages. Live marking stays with the existing
+    // participation picker and the three-part graded workbook is untouched.
+    const song = getA1PresenterMusicStage(A1_DAY7_ASSIGNMENT, slide.dayNumber);
+    const reading = getA1PresenterReadingLesson(A1_DAY7_ASSIGNMENT);
+    const workbook = slide.workbookConnection || {};
+    return [
+      ...A1_DAY7_CLASSROOM_STAGES,
+      {
+        ...(song || { id:"a1-day7-reading", type:"a1-day7-media", items:[] }),
+        kicker:"Falowen Music · Lesen",
+        title:"Preise und Vorlieben · Musik und Lesen",
+        reading,
+        day7CombinedReading:true,
+        hasMusic:Boolean(song),
+      },
+      {
+        id:"a1-day7-workbook", type:"workbook", kicker:"Abschluss · Workbook",
+        title:"Abschluss und Workbook",
+        day7FinalChallenge:true,
+        items:(Array.isArray(workbook.parts)?workbook.parts:[])
+          .map(item=>({label:item.label,detail:item.detailEn || item.detail || ""})),
+        grammarUrl:workbook.grammarUrl || "",
+        workbookUrl:workbook.workbookUrl || "",
+        activityKind:"tutor-marked",
+        activityInstruction:"Bearbeite die drei bestehenden Teile: Preise und Kosten (mit Pronomen), Writing About Family und Hobbys. Reiche die Antworten wie gewohnt im Falowen Workbook zur Tutor-Bewertung ein. Es gibt keine zusätzliche Hören-Abgabe.",
+        actionLabel:"Open tutor-marked Day 7 workbook",
       },
     ];
   }
@@ -861,6 +894,9 @@ export default function A1GrammarPresenter({
           ) : stage.type === "a1-day6" ? (
             <A1Day6TeachingStage key={stage.id} step={stage.step}
               question={stage.id === "grammar-check" ? activeCheck : null} />
+          ) : stage.type === "a1-day7" ? (
+            <A1Day7TeachingStage key={stage.id} step={stage.step}
+              question={stage.id === "grammar-check" ? activeCheck : null} />
           ) : stage.type === "a1-day12" ? (
             <A1Day12ClassroomStage key={stage.id} step={stage.step} />
           ) : stage.type === "a1-day13" ? (
@@ -870,8 +906,14 @@ export default function A1GrammarPresenter({
           ) : stage.type === "a1-day6-media" ? (
             <A1Day6MusicReadingStage reading={stage.reading} assignmentKey={slide.assignmentId}
               courseDay={slide.dayNumber} hasMusic={false}/>
+          ) : stage.type === "a1-day7-media" ? (
+            <A1Day7MusicReadingStage reading={stage.reading} assignmentKey={slide.assignmentId}
+              courseDay={slide.dayNumber} hasMusic={false}/>
           ) : stage.type === "published-music" ? (
-            stage.day6CombinedReading
+            stage.day7CombinedReading
+              ? <A1Day7MusicReadingStage reading={stage.reading} assignmentKey={slide.assignmentId}
+                  courseDay={slide.dayNumber} hasMusic={stage.hasMusic}/>
+              : stage.day6CombinedReading
               ? <A1Day6MusicReadingStage reading={stage.reading} assignmentKey={slide.assignmentId}
                   courseDay={slide.dayNumber} hasMusic={stage.hasMusic}/>
               : stage.day5CombinedReading
@@ -881,6 +923,8 @@ export default function A1GrammarPresenter({
             <A1Day5TeachingStage key={stage.id} step="intro" />
           ) : stage.type === "intro" && stage.day6VisualIntro ? (
             <A1Day6TeachingStage key={stage.id} step="intro" />
+          ) : stage.type === "intro" && stage.day7VisualIntro ? (
+            <A1Day7TeachingStage key={stage.id} step="intro" />
           ) : stage.type === "intro" ? (
             <>
               <h1>{stage.title}</h1>
@@ -1042,6 +1086,7 @@ export default function A1GrammarPresenter({
               {stage.day4FinalChallenge ? <A1Day4TeachingStage step="wrapup" /> : null}
               {stage.day5FinalChallenge ? <A1Day5TeachingStage step="wrapup" /> : null}
               {stage.day6FinalChallenge ? <A1Day6TeachingStage step="wrapup" /> : null}
+              {stage.day7FinalChallenge ? <A1Day7TeachingStage step="wrapup" /> : null}
               {stage.activityInstruction ? (
                 <div className="presenter-a1-learning-route" data-a1-learning-mode={stage.activityKind}>
                   <strong>{stage.activityKind === "self-practice" ? "Self-practice · no marking" :
