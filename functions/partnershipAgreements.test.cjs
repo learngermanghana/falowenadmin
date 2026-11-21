@@ -40,7 +40,7 @@ test('organisation agreement states non-refundable tuition and distinct class/ac
  const terms=TERMS.institutional.join(" ");
  assert.match(terms,/Tuition payments are non-refundable/);
  assert.doesNotMatch(terms,/GHS\\s+[\\d,]+/);
- assert.match(ORGANISATION_VERSION,/v7$/);
+ assert.match(ORGANISATION_VERSION,/v8$/);
  assert.match(terms,/Each class lasts 10 weeks/);
  assert.match(terms,/six months of Falowen access from account activation/);
  assert.match(terms,/does not restart or extend/);
