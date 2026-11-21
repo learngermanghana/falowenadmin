@@ -87,4 +87,49 @@ async function loadOrganisationDirectory(db, limit = 100) {
   );
   return { organisations: rows, truncated: agreements.docs.length === limit || submissions.docs.length === limit || profiles.docs.length === limit };
 }
-module.exports = { organisationId, organisationDirectoryRows, loadOrganisationDirectory };
+
+function amount(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = Number(String(value).replace(/,/g, "").trim());
+  return Number.isFinite(parsed) && parsed >= 0 ? Math.round(parsed * 100) / 100 : null;
+}
+function firstAmount(student, keys) {
+  for (const key of keys) {
+    const value = amount(student[key]);
+    if (value !== null) return value;
+  }
+  return null;
+}
+// Use canonical paid/balance fields, never initialPaymentAmount (an intention, not a receipt).
+// Missing tuition configuration is UNKNOWN, not zero owed.
+function organisationStudentLedger(rows) {
+  let outstandingTotal = 0, owingCount = 0, unverifiedCount = 0;
+  const students = rows.map(({ id, ...student }) => {
+    const paid = firstAmount(student, ["paid", "amountPaid", "paidAmount", "amount_paid", "totalPaid"]);
+    const fee = firstAmount(student, ["tuitionFee"]);
+    const discount = firstAmount(student, ["tuitionDiscount"]) ?? 0;
+    let balance = firstAmount(student, ["balanceDue", "balance", "outstandingBalance", "amountDue"]);
+    if (balance === null && fee !== null) balance = Math.max(0, Math.round((fee - (paid ?? 0) - discount) * 100) / 100);
+    if (balance === null) unverifiedCount += 1;
+    else if (balance > 0) { outstandingTotal += balance; owingCount += 1; }
+    return {
+      id, name: asString(student.name || student.fullName), email: asString(student.email),
+      level: asString(student.level), studentCode: asString(student.studentCode || student.studentcode),
+      paymentStatus: asString(student.paymentStatus || "Not set"),
+      tuitionFee: fee, paid, balanceDue: balance,
+    };
+  });
+  return { students, outstandingTotal: Math.round(outstandingTotal * 100) / 100, owingCount, unverifiedCount };
+}
+async function loadOrganisationStudents(db, id, limit = 100) {
+  if (!/^[a-f0-9]{64}$/.test(id)) {
+    throw Object.assign(new Error("Invalid organisation reference."), { status: 400 });
+  }
+  // One indexed, owner-only query on demand. Never scan every student on page load.
+  const snapshot = await db.collection("students").where("organisationId", "==", id).limit(limit + 1).get();
+  const truncated = snapshot.docs.length > limit;
+  const rows = snapshot.docs.slice(0, limit).map(doc => ({ id: doc.id, ...doc.data() }));
+  return { ...organisationStudentLedger(rows), truncated };
+}
+
+module.exports = { organisationId, organisationDirectoryRows, loadOrganisationDirectory, organisationStudentLedger, loadOrganisationStudents };
