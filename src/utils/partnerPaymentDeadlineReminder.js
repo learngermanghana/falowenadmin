@@ -1,3 +1,4 @@
+import { paymentDueDateFromContractStart, daysUntilCalendarDate } from "./tuitionPaymentCountdown.js";
 // Business copy for human-reviewed partner email and WhatsApp reminder drafts.
 // Ghana follows UTC and both payment date and access date are civil calendar days.
 const clean = value => String(value ?? "").trim();
@@ -10,34 +11,34 @@ const isDate = value => {
   const time = Date.parse(string + "T00:00:00Z");
   return Number.isFinite(time) && new Date(time).toISOString().slice(0, 10) === string;
 };
-const dayNumber = value => Math.floor(Date.parse(value + "T00:00:00Z") / 86400000);
+
+export function partnerAccessDeadline(student) {
+  if (!student || !(Number(student.balanceDue) > 0)) return null;
+  const partial = (
+    (student.paid !== null && student.paid !== undefined && Number(student.paid) > 0) ||
+    clean(student.paymentStatus).toLowerCase().includes("partial")
+  );
+  const accessEnd = clean(student.accessEndDate);
+  return partial && isDate(accessEnd) ? { date: accessEnd, type: "access" } : null;
+}
 
 export function partnerPaymentDeadline(student) {
   const explicit = clean(student.paymentDueDate);
   if (isDate(explicit)) return { date: explicit, type: "payment" };
-  // A confirmed partial payment grants one month of access (contractEnd).
-  // This date is an ACCESS deadline, not an invented payment-due date.
-  const partial = student.balanceDue > 0 && (
-    (student.paid !== null && Number(student.paid) > 0) ||
-    clean(student.paymentStatus).toLowerCase().includes("partial")
-  );
-  const accessEnd = clean(student.accessEndDate);
-  if (partial && isDate(accessEnd)) return { date: accessEnd, type: "access" };
 
-  // Keep consistent with the existing WhatsApp reminders: first
-  // payment due at contract start + 30 days, when a start is recorded.
-  const start = clean(student.contractStartDate);
-  if (isDate(start)) {
-    const due = new Date((dayNumber(start) + 30) * 86400000).toISOString().slice(0, 10);
-    return { date: due, type: "payment" };
-  }
-  if (isDate(accessEnd)) return { date: accessEnd, type: "access" };
-  return null;
+  // Follow the same payment countdown as /whatsapp-reminders, including
+  // partially paid students: contract start + 30 calendar days.
+  const due = paymentDueDateFromContractStart(student.contractStartDate);
+  if (due) return { date: due, type: "payment" };
+
+  // When contract start is unavailable, don't invent a payment due date.
+  // A confirmed access end can still be shown, clearly labelled as such.
+  return partnerAccessDeadline(student);
 }
 
 export function partnerDeadlineLabel(deadline, today) {
   if (!deadline || !isDate(deadline.date)) return "Payment deadline not recorded — please confirm with Falowen";
-  const days = dayNumber(deadline.date) - dayNumber(today);
+  const days = daysUntilCalendarDate(deadline.date, today);
   const formatted = new Intl.DateTimeFormat("en-GB", {
     day: "numeric", month: "long", year: "numeric", timeZone: "UTC",
   }).format(new Date(deadline.date + "T12:00:00Z"));
@@ -52,10 +53,15 @@ export function buildPartnerPaymentDeadlineReminder(org, ledger, today = new Dat
   if (!owing.length || !isDate(today)) return "";
   const datesAvailable = owing.some(student => partnerPaymentDeadline(student) !== null);
   const header = org.contactName ? "Hello " + org.contactName + "," : "Hello,";
-  const list = owing.flatMap(student => [
-    "• " + (student.name || student.studentCode || "Student") + " (" + (student.level || "level unconfirmed") + "): " + currency(student.balanceDue) + " outstanding",
-    "  " + partnerDeadlineLabel(partnerPaymentDeadline(student), today),
-  ]);
+  const list = owing.flatMap(student => {
+    const payment = partnerPaymentDeadline(student);
+    const access = partnerAccessDeadline(student);
+    return [
+      "• " + (student.name || student.studentCode || "Student") + " (" + (student.level || "level unconfirmed") + "): " + currency(student.balanceDue) + " outstanding",
+      "  " + partnerDeadlineLabel(payment, today),
+      ...(access && payment?.type === "payment" ? ["  " + partnerDeadlineLabel(access, today)] : []),
+    ];
+  });
   const note = datesAvailable
     ? "Please arrange payment before the indicated dates (or promptly if a date has passed) to help prevent interruption to the students' Falowen account access."
     : "The payment deadline is not recorded for these students. Please confirm the due date with Falowen and arrange payment to help avoid interruption of their account access.";
