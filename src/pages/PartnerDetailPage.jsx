@@ -5,6 +5,7 @@ import { auth } from "../firebase.js";
 import { partnerAuth } from "../utils/organisationPartnerAccount.js";
 import { organisationEnrolmentRequest } from "../utils/organisationEnrolmentRequest.js";
 import { loadPartnerSubmissionFallback } from "../utils/partnerSubmissionFallback.js";
+import { buildPartnerPaymentDeadlineReminder } from "../utils/partnerPaymentDeadlineReminder.js";
 import "./OrganisationEnrolmentPage.css";
 import "./PartnerDetailPage.css";
 
@@ -19,18 +20,6 @@ function whatsappNumber(value) {
   if (/^0[235][0-9]{8}$/.test(digits)) return "233" + digits.slice(1);
   return /^233[235][0-9]{8}$/.test(digits) ? digits : "";
 }
-function reminderText(org, ledger) {
-  const owing = ledger.students.filter(s => s.balanceDue !== null && s.balanceDue > 0);
-  return [
-    org.contactName ? "Hello " + org.contactName + "," : "Hello,",
-    "", "We are following up on outstanding tuition for students enrolled by " + org.name + ".",
-    ...owing.map(s => "- " + (s.name || s.studentCode || "Student") + " (" + (s.level || "level unconfirmed") + "): " + money(s.balanceDue)),
-    "", "Confirmed outstanding total: " + money(ledger.outstandingTotal) + ".",
-    ...(ledger.unverifiedCount ? ["Other student balances are not yet verified and are excluded from this total."] : []),
-    "Please confirm when payment can be arranged, or share the payment reference if payment has already been made.",
-    "", "Thank you,", "Falowen · Learn Language Education Academy",
-  ].join("\n");
-}
 function contactLinks(org) {
   const email = clean(org.billingEmail || org.contactEmail);
   const phone = whatsappNumber(org.phone);
@@ -41,10 +30,10 @@ function contactLinks(org) {
 }
 function reminderLinks(org, ledger) {
   if (!ledger || ledger.truncated || ledger.owingCount === 0) return null;
-  const message = reminderText(org, ledger);
+  const message = buildPartnerPaymentDeadlineReminder(org, ledger);
   const base = contactLinks(org);
   return {
-    email: base.email ? base.email + "?subject=" + encodeURIComponent("Falowen · Tuition payment follow-up") + "&body=" + encodeURIComponent(message) : "",
+    email: base.email ? base.email + "?subject=" + encodeURIComponent("Falowen · Upcoming tuition payment deadline") + "&body=" + encodeURIComponent(message) : "",
     whatsapp: base.whatsapp ? base.whatsapp + "?text=" + encodeURIComponent(message) : "",
   };
 }
@@ -285,7 +274,8 @@ export default function PartnerDetailPage() {
             <h2>Payment follow-up</h2>
             {ledger?.owingCount > 0 && !ledger.truncated ? <>
               <p>{ledger.owingCount} student(s) with confirmed outstanding tuition totalling <strong>{money(ledger.outstandingTotal)}</strong>.</p>
-              <p>Drafts include verified amounts only. Check the message before sending.</p>
+              <p>The reminder shows the recorded payment deadline or paid-access end date and days remaining. Check the details before sending.</p>
+              <details className="partner-reminder-preview"><summary>Preview payment deadline message</summary><pre>{buildPartnerPaymentDeadlineReminder(partner, ledger)}</pre></details>
               <div className="partner-profile-contact-actions">
                 {reminders?.email ? <a href={reminders.email}>Email payment reminder</a> : <span>Email unavailable</span>}
                 {reminders?.whatsapp ? <a href={reminders.whatsapp} target="_blank" rel="noopener noreferrer">WhatsApp reminder</a> : <span>WhatsApp unavailable</span>}
