@@ -8,7 +8,7 @@ export function normalizePublicReviewRecords(records) {
     const studentName = String(row?.reviewer?.displayName || "").trim();
     const review = String(row?.comment || "").trim();
     if (!studentName || !review) return null;
-    const publicId = String(row.name || row.importId || "");
+    const publicId = String(row.name || row.importId || (row.sourceUrl ? "source:" + row.sourceUrl : ""));
     const rating = STAR_VALUES[row.starRating] || null;
     return {
       id: publicId || "public-review-" + index,
