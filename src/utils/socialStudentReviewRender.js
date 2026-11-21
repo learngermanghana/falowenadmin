@@ -166,7 +166,10 @@ export function drawStudentReviewPoster(canvas, review, formatId = "portrait", o
   ctx.fillStyle = palette.accent;
   ctx.textAlign = "right";
   ctx.font = "bold 39px Arial, sans-serif";
-  ctx.fillText("★".repeat(Math.max(1, Math.min(5, Number(review?.rating) || 5))), innerRight, card.y + 89);
+  const safeRating = Number(review?.rating);
+  const hasRating = Number.isInteger(safeRating) && safeRating >= 1 && safeRating <= 5;
+  if (!hasRating) ctx.font = "bold 21px Arial, sans-serif";
+  ctx.fillText(hasRating ? "★".repeat(safeRating) : "RATING NOT VERIFIED", innerRight, card.y + 89);
   ctx.textAlign = "left";
 
   ctx.fillStyle = "#bad3f5";

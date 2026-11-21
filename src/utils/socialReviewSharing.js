@@ -29,7 +29,8 @@ export function buildReviewCaption(review = {}, styleId = "falowen", platform = 
   const level = safe(review.course);
   const source = safe(review.source);
   const quote = safe(review.review);
-  const rating = Math.max(1, Math.min(5, Number(review.rating) || 5));
+  const rawRating = Number(review.rating);
+  const rating = Number.isInteger(rawRating) && rawRating >= 1 && rawRating <= 5 ? rawRating : null;
   const credit = [name, level, source].filter(Boolean).join(" · ");
   const header = styleId === "milestone" ? "🎓 A FALOWEN LEARNING JOURNEY"
     : styleId === "short" ? "💬 FALOWEN REVIEWS"
@@ -46,7 +47,7 @@ export function buildReviewCaption(review = {}, styleId = "falowen", platform = 
     "",
     lead,
     "",
-    "⭐".repeat(rating),
+    ...(rating ? ["⭐".repeat(rating)] : []),
     "“" + quote + "”",
     "— " + credit,
     "",
@@ -95,7 +96,7 @@ export function parseReviewCsv(csv) {
     const review = safe(row[quoteCol] || "");
     if (!review || !studentName) return null;
     const rawRating = safe(row[ratingCol] || "");
-    const rating = /^[1-5](?:\.0)?$/.test(rawRating) ? Number(rawRating) : 5;
+    const rating = /^[1-5](?:\.0)?$/.test(rawRating) ? Number(rawRating) : null;
     const sourceRaw = safe(row[sourceCol]).toLowerCase();
     const source = sourceRaw.includes("google") ? "Google Review" : "Student feedback";
     return {

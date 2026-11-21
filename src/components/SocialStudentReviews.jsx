@@ -3,11 +3,13 @@ import { SOCIAL_STUDENT_REVIEWS, STUDENT_REVIEW_FORMATS } from "../data/socialSt
 import { drawStudentReviewPoster, reviewImageFileName, splitReviewIntoSlides } from "../utils/socialStudentReviewRender.js";
 import { makeCampaignZip } from "../utils/socialClassCampaign.js";
 import { buildReviewCaption, mergeReviewSources, parseReviewCsv, PUBLIC_REVIEW_SHEET_CSV, REVIEW_CAPTION_STYLES, REVIEW_POSTER_THEMES, searchReviews } from "../utils/socialReviewSharing.js";
+import { auth } from "../firebase.js";
+import { normalizePublicReviewRecords } from "../utils/publicReviewRecords.js";
 import "./SocialStudentReviews.css";
 
 const STORAGE_KEY = "falowen-social-student-reviews-v1";
-const MAX_REVIEW_LENGTH = 1800;
-const starterReview = () => ({ id: "", studentName: "", course: "", source: "Student feedback", rating: 5, date: "", review: "", status: "Draft" });
+const MAX_REVIEW_LENGTH = 6000;
+const starterReview = () => ({ id: "", studentName: "", course: "", source: "Google Review", sourceUrl: "", rating: null, date: "", review: "", status: "Draft" });
 
 function readReviews() {
   try {
@@ -22,7 +24,9 @@ function readReviews() {
         studentName: item.studentName.slice(0, 100),
         course: String(item.course || "").slice(0, 80),
         source: item.source === "Google Review" ? "Google Review" : "Student feedback",
-        rating: Math.max(1, Math.min(5, Number(item.rating) || 5)),
+        rating: Number.isInteger(Number(item.rating)) && Number(item.rating) >= 1 && Number(item.rating) <= 5 ? Number(item.rating) : null,
+        sourceUrl: String(item.sourceUrl || "").slice(0, 2000),
+        publicId: String(item.publicId || "").slice(0, 400),
         date: String(item.date || "").slice(0, 10),
         review: item.review.slice(0, MAX_REVIEW_LENGTH),
         status: ["Draft", "Approved", "Published"].includes(item.status) ? item.status : "Draft",
@@ -66,6 +70,9 @@ export default function SocialStudentReviews() {
   const [savingImage, setSavingImage] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [publishing, setPublishing] = useState(false);
+  const [publishUrl, setPublishUrl] = useState("");
+  const isOwner = auth.currentUser?.emailVerified === true && String(auth.currentUser.email || "").toLowerCase() === "moxflex@gmail.com";
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -81,19 +88,31 @@ export default function SocialStudentReviews() {
   }, [draft, formatId, themeId, pageIndex, pages]);
 
   useEffect(() => {
-    // Read the public, already-published reviews only when this tab opens.
+    // Only fetch once when the Student Reviews tab opens, never in a background poll.
     const controller = new AbortController();
     (async () => {
-      try {
-        const response = await fetch(PUBLIC_REVIEW_SHEET_CSV, { signal: controller.signal, cache: "no-store" });
-        if (!response.ok) throw new Error("Shared review feed unavailable");
-        const imported = parseReviewCsv(await response.text());
-        if (controller.signal.aborted) return;
-        setReviews((previous) => mergeReviewSources(SOCIAL_STUDENT_REVIEWS, imported, previous));
-        setSharedInfo(imported.length ? imported.length + " shared reviews loaded from the published sheet." : "Published sheet returned no compatible reviews.");
-      } catch {
-        if (!controller.signal.aborted) setSharedInfo("Could not load the published sheet in this browser; locally saved reviews remain available.");
-      }
+      const [publicResult, sheetResult] = await Promise.allSettled([
+        fetch("/api/public-student-reviews", { signal: controller.signal, cache: "no-store" })
+          .then(async (response) => {
+            if (!response.ok) throw new Error("Website reviews unavailable");
+            const body = await response.json();
+            return normalizePublicReviewRecords(body.reviews);
+          }),
+        fetch(PUBLIC_REVIEW_SHEET_CSV, { signal: controller.signal, cache: "no-store" })
+          .then(async (response) => {
+            if (!response.ok) throw new Error("Sheet unavailable");
+            return parseReviewCsv(await response.text());
+          }),
+      ]);
+      if (controller.signal.aborted) return;
+      const publicReviews = publicResult.status === "fulfilled" ? publicResult.value : [];
+      const sheetReviews = sheetResult.status === "fulfilled" ? sheetResult.value : [];
+      setReviews((previous) => mergeReviewSources(SOCIAL_STUDENT_REVIEWS, [...sheetReviews, ...previous], publicReviews));
+      setSharedInfo(
+        publicResult.status === "fulfilled"
+          ? publicReviews.length + " Google reviews loaded from Falowen's public reviews.json. Save local drafts or submit an approved Google review to GitHub."
+          : "Could not load website reviews. Saved entries and " + sheetReviews.length + " sheet reviews are available; website publishing can still be attempted."
+      );
     })();
     return () => controller.abort();
   }, []);
@@ -111,6 +130,7 @@ export default function SocialStudentReviews() {
     setDraft(found ? { ...found } : starterReview());
     setError("");
     setMessage("");
+    setPublishUrl("");
   };
 
   const startNew = () => {
@@ -119,6 +139,7 @@ export default function SocialStudentReviews() {
     setDraft(starterReview());
     setMessage("");
     setError("");
+    setPublishUrl("");
   };
 
   const saveReview = () => {
@@ -139,7 +160,8 @@ export default function SocialStudentReviews() {
       review,
       course: draft.course.trim(),
       source: draft.source === "Google Review" ? "Google Review" : "Student feedback",
-      rating: Math.max(1, Math.min(5, Number(draft.rating) || 5)),
+      rating: Number(draft.rating) >= 1 && Number(draft.rating) <= 5 ? Number(draft.rating) : null,
+      sourceUrl: String(draft.sourceUrl || "").trim(),
       status: ["Draft", "Approved", "Published"].includes(draft.status) ? draft.status : "Draft",
     };
     const next = reviews.some((item) => item.id === record.id)
@@ -155,7 +177,36 @@ export default function SocialStudentReviews() {
     setSelectedId(record.id);
     setDraft({ ...record });
     setError("");
-    setMessage("Review saved in this browser. Select it again from the student list.");
+    setMessage("Review saved in this browser. To update the public website JSON, approve the review and submit it to GitHub separately.");
+  };
+
+  const publishToGitHub = async () => {
+    if (publishing) return;
+    setError(""); setMessage(""); setPublishUrl("");
+    if (!isOwner) { setError("Only the Falowen owner can submit public reviews."); return; }
+    if (draft.source !== "Google Review") { setError("Only publicly posted Google reviews can go into the website reviews.json."); return; }
+    if (!draft.sourceUrl?.trim()) { setError("Paste the public Google Maps review link first."); return; }
+    if (!["Approved", "Published"].includes(draft.status)) { setError("Set publication status to Approved before submitting."); return; }
+    if (!draft.studentName?.trim() || !draft.review?.trim()) { setError("A reviewer name and exact quote are required."); return; }
+    setPublishing(true);
+    try {
+      const idToken = await auth.currentUser.getIdToken();
+      const response = await fetch("/api/public-student-reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + idToken },
+        body: JSON.stringify({
+          studentName: draft.studentName.trim(), review: draft.review.trim(),
+          sourceUrl: draft.sourceUrl.trim(), source: draft.source, rating: draft.rating,
+          date: draft.date, status: draft.status, publicId: draft.publicId || "",
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.ok) throw new Error(payload.error || "Review could not be submitted to GitHub.");
+      setPublishUrl(payload.url || "");
+      setMessage("Review proposal created in GitHub (PR #" + payload.number + "). The website JSON changes only when its tests pass and the pull request is merged and deployed.");
+    } catch (cause) {
+      setError(cause.message || "Unable to submit the review to GitHub.");
+    } finally { setPublishing(false); }
   };
 
   const removeReview = () => {
@@ -286,8 +337,9 @@ export default function SocialStudentReviews() {
               <input id="social-review-course" maxLength={80} value={draft.course} onChange={(event) => edit("course", event.target.value)} placeholder="German A2" />
             </div>
             <div>
-              <label htmlFor="social-review-stars">Rating</label>
-              <select id="social-review-stars" value={draft.rating} onChange={(event) => edit("rating", Number(event.target.value))}>
+              <label htmlFor="social-review-stars">Google star rating</label>
+              <select id="social-review-stars" value={draft.rating ?? ""} onChange={(event) => edit("rating", event.target.value ? Number(event.target.value) : null)}>
+                <option value="">Not verified / unknown</option>
                 {[5, 4, 3, 2, 1].map((value) => <option key={value} value={value}>{value} star{value === 1 ? "" : "s"}</option>)}
               </select>
             </div>
@@ -297,6 +349,8 @@ export default function SocialStudentReviews() {
             <option value="Google Review">Google Review</option>
             <option value="Student feedback">Student feedback</option>
           </select>
+          <label htmlFor="social-review-public-source">Public Google Maps review link (required for website publishing)</label>
+          <input id="social-review-public-source" type="url" maxLength={2000} value={draft.sourceUrl || ""} onChange={(event) => edit("sourceUrl", event.target.value)} placeholder="https://www.google.com/maps/contrib/.../reviews" />
           <label htmlFor="social-review-status">Publication status</label>
           <select id="social-review-status" value={draft.status || "Draft"} onChange={(event) => edit("status", event.target.value)}>
             <option>Draft</option><option>Approved</option><option>Published</option>
@@ -305,10 +359,12 @@ export default function SocialStudentReviews() {
           <textarea id="social-review-text" rows={9} maxLength={MAX_REVIEW_LENGTH} value={draft.review} onChange={(event) => edit("review", event.target.value)} placeholder="Paste the student's own words here" />
           <p className="social-reviews-hint">Keep the original wording. Only use feedback the student has agreed to share publicly. No student photo is needed.</p>
           <div className="social-reviews-actions">
-            <button className="social-reviews-primary" type="button" onClick={saveReview}>Save review</button>
+            <button className="social-reviews-primary" type="button" onClick={saveReview}>Save review locally</button>
+            {isOwner ? <button className="social-reviews-primary" type="button" onClick={publishToGitHub} disabled={publishing}>{publishing ? "Submitting review..." : "Submit to Falowen website JSON"}</button> : null}
             {selectedId && !SOCIAL_STUDENT_REVIEWS.some((review) => review.id === selectedId) ? <button className="social-reviews-secondary" type="button" onClick={removeReview}>Delete saved review</button> : null}
           </div>
-          <p className="social-reviews-hint">Published-sheet reviews are loaded on opening this tab. Locally saved edits are not automatically written back to the Google Sheet.</p>
+          <p className="social-reviews-hint">The public JSON is loaded when you open this tab. Local drafts do not publish automatically. Website submissions create a GitHub pull request; tests and merging are required before the public site updates. No background jobs or GitHub keys in your browser.</p>
+          {publishUrl ? <p className="social-reviews-success"><a href={publishUrl} target="_blank" rel="noopener noreferrer">Review the GitHub pull request</a></p> : null}
           {message ? <p role="status" className="social-reviews-success">{message}</p> : null}
           {error ? <p role="alert" className="social-reviews-error">{error}</p> : null}
         </section>

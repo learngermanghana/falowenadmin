@@ -2,6 +2,7 @@ import { parseSubmissionSections } from "../src/utils/submissionSections.js";
 import { extractNamedChoiceAnswer } from "../src/utils/namedChoiceAnswer.js";
 import { Buffer } from "node:buffer";
 import socialMetricsHandler from "./social-metrics.js";
+import publicStudentReviewsHandler from "./public-student-reviews.js";
 import studentResultsSheetUpsertHandler from "./student-results-sheet-upsert.js";
 import integrationHubHandler from "./integration-hub.js";
 import checkinInvitationsHandler from "./checkin-invitations.js";
@@ -1312,6 +1313,8 @@ export default async function handler(req, res) {
   if (path === "deployment-status") return deploymentStatusHandler(req, res);
 
   if (path === "social-metrics") return socialMetricsHandler(req, res);
+
+  if (path === "public-student-reviews") return publicStudentReviewsHandler(req, res);
 
   if (path === "staff-management") return staffManagementHandler(req, res);
 
