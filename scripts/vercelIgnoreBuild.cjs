@@ -5,9 +5,11 @@ const { execFileSync } = require("node:child_process");
 
 function needsBuild(files) {
   if (!Array.isArray(files) || files.length === 0) return true;
-  const safe = (file) =>
-    /^(docs\/|tests\/|\.github\/)/.test(file)
-    || /^(README|CONTRIBUTING|CHANGELOG)\.md$/i.test(file);
+  const safe = (file) => typeof file === "string"
+    && !/[\r\n\0]/.test(file)
+    && !file.split("/").includes("..")
+    && (/^(docs\/|tests\/|\.github\/)/.test(file)
+      || /^(README|CONTRIBUTING|CHANGELOG)\.md$/i.test(file));
   return files.some((file) => !safe(file));
 }
 
