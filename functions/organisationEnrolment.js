@@ -1,6 +1,6 @@
 "use strict";
 const crypto = require("node:crypto");
-const { organisationId, loadOrganisationDirectory } = require("./organisationDirectory");
+const { organisationId, loadOrganisationDirectory, loadOrganisationStudents } = require("./organisationDirectory");
 const clean = v => String(v ?? "").trim();
 const email = v => clean(v).toLowerCase();
 const validEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
@@ -206,6 +206,10 @@ function registerOrganisationEnrolmentRoutes(app, { db, admin }) {
   app.get("/admin/organisations", handle(async req => {
     await owner(req, admin);
     return { ok: true, ...await loadOrganisationDirectory(db) };
+  }));
+  app.get("/admin/organisations/:organisationId/students", handle(async req => {
+    await owner(req, admin);
+    return { ok: true, ...await loadOrganisationStudents(db, req.params.organisationId) };
   }));
   app.get("/admin/organisation-enrolments", handle(async req => {
     await owner(req, admin);
