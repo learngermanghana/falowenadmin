@@ -4,7 +4,7 @@ import { loadOrganisationClasses } from "../utils/organisationClasses.js";
 import OrganisationDirectory from "../components/OrganisationDirectory.jsx";
 import { organisationEnrolmentRequest } from "../utils/organisationEnrolmentRequest.js";
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { auth } from "../firebase.js";
 import "./OrganisationEnrolmentPage.css";
 
@@ -18,6 +18,8 @@ export default function OrganisationEnrolmentPage({ review = false }) {
   return <PartnerAccount enrolment>{({ profile }) => <OrganisationEnrolmentForm key={profile.id} profile={profile} />}</PartnerAccount>;
 }
 function OrganisationEnrolmentForm({ review = false, profile }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const reviewTab = searchParams.get("tab") === "students" ? "students" : "partners";
   const [classes, setClasses] = useState([]), [classLoading, setClassLoading] = useState(false), [classError, setClassError] = useState("");
   const loadClasses = useCallback(async () => { setClassLoading(true); setClassError(""); try { setClasses(await loadOrganisationClasses()); } catch (e) { setClassError(e.message); } finally { setClassLoading(false); } }, []);
   useEffect(() => { if (!review) void loadClasses(); }, [loadClasses, review]);
@@ -57,7 +59,15 @@ function OrganisationEnrolmentForm({ review = false, profile }) {
       setSubmissions(old => old.filter(item => item.id !== batch.id));
     });
   };
-  if (review) return <section className="org-enrol"><h1>Organisation management</h1><OrganisationDirectory /><h2>Student submissions for review</h2>
+  if (review) return <section className="org-enrol"><div className="partner-review-heading"><div><h1>Partnerships</h1><p>Manage partner accounts, agreements, students, tuition and payment follow-ups in one place.</p></div><a href="https://www.falowen.app/partnerships" target="_blank" rel="noopener noreferrer">Public partner programme</a></div>
+    <nav className="partner-review-tabs" aria-label="Partnership sections">
+      <button type="button" className={reviewTab === "partners" ? "active" : ""} aria-current={reviewTab === "partners" ? "page" : undefined} onClick={() => setSearchParams({})}>Partner directory</button>
+      <button type="button" className={reviewTab === "students" ? "active" : ""} aria-current={reviewTab === "students" ? "page" : undefined} onClick={() => setSearchParams({ tab: "students" })}>Student submissions</button>
+      <Link to="/paystack">Organisation payments</Link>
+      <Link to="/referral-review">Agreement approvals</Link>
+    </nav>
+    {reviewTab === "partners" && <OrganisationDirectory />}
+    {reviewTab === "students" && <div className="partner-review-submissions"><h2>Student submissions for review</h2>
     <p>Verify the organisation agreement and payment arrangement before approving. Approval creates a pending student; confirm their requested class and configure their contract in Students before inviting them. Requests do not automatically assign a class.</p>
     <p><a href="https://www.falowen.app/organisation-enrolment">Open public submission page</a> · <Link to="/students">Student directory and activation emails</Link></p>
     <button disabled={busy} onClick={() => run(() => load())}>Load / refresh submissions</button>
@@ -71,6 +81,7 @@ function OrganisationEnrolmentForm({ review = false, profile }) {
           <td>{student.status === "pending" ? <div className="org-actions">{["approve", "reject"].map(decision => <button key={decision} disabled={busy} onClick={() => run(async () => { await request(`admin/organisation-enrolments/${batch.id}/review`, { index, decision }, true); await load(); })}>{decision === "approve" ? "Approve" : "Reject"}</button>)}</div> : student.studentId ? <div className="org-actions"><Link to={`/students?search=${encodeURIComponent(student.email)}`}>Manage {student.displayStudentCode || student.studentId} / send invitation</Link>{student.studentId.startsWith("ORG-") && !student.displayStudentCode && <button type="button" disabled={busy} onClick={() => run(async () => { await request(`admin/organisation-enrolments/${batch.id}/repair-student-code`, { index }, true); await load(); })}>Fix student code</button>}</div> : "—"}</td></tr>)}</tbody></table></div>
     </article>)}
     {nextCursor && <button disabled={busy} onClick={() => run(() => load(nextCursor))}>Load older submissions</button>}
+    </div>}
   </section>;
   return <section className="org-enrol"><div className="org-intro"><a href="https://www.falowen.app/partnerships">Organisation Partnerships</a><h1>Add your organisation’s students</h1><p>Fill one row for each student. Falowen reviews your list, deducts your agreed partner share from the invoice and sends one payment link. Students are enrolled after payment is verified.</p><p>Each class lasts 10 weeks. Falowen access lasts six months from account activation, even if the class is completed earlier. Students can request a class change within that contract, subject to approval and availability; changes do not extend access. Tuition payments are non-refundable.</p><p><a href="https://www.falowen.app/classes" target="_blank" rel="noopener noreferrer">View upcoming classes and current prices</a>. Check the fee for each student’s selected level and class before enrolment.</p></div>
     {reference ? <div role="status"><h2>Submission received</h2><p>Your reference is <strong>{reference}</strong>. Falowen will contact your organisation after review. Students do not have accounts yet.</p><button onClick={() => { setReference(""); setRows([emptyRow()]); setRequestId(crypto.randomUUID()); setConsent(false); }}>Add another group of students</button></div> : <form onSubmit={event => { event.preventDefault(); run(async () => {
