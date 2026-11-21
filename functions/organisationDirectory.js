@@ -93,6 +93,14 @@ function amount(value) {
   const parsed = Number(String(value).replace(/,/g, "").trim());
   return Number.isFinite(parsed) && parsed >= 0 ? Math.round(parsed * 100) / 100 : null;
 }
+// Dates are supplied as YYYY-MM-DD strings only, never Firestore Timestamp objects.
+function dateOnly(value) {
+  if (!value) return "";
+  const date = typeof value?.toDate === "function" ? value.toDate()
+    : Number.isFinite(value?.seconds) ? new Date(value.seconds * 1000)
+    : value instanceof Date ? value : new Date(value);
+  return date instanceof Date && Number.isFinite(date.getTime()) ? date.toISOString().slice(0, 10) : "";
+}
 function firstAmount(student, keys) {
   for (const key of keys) {
     const value = amount(student[key]);
@@ -118,6 +126,9 @@ function organisationStudentLedger(rows) {
       level: asString(student.level), studentCode: asString(student.studentCode || student.studentcode),
       paymentStatus: asString(student.paymentStatus || "Not set"),
       tuitionFee: fee, paid, balanceDue: balance,
+      paymentDueDate: dateOnly(student.paymentDueDate || student.tuitionDueDate || student.balanceDueDate),
+      contractStartDate: dateOnly(student.contractStart),
+      accessEndDate: dateOnly(student.contractEnd),
     };
   });
   return { students, outstandingTotal: Math.round(outstandingTotal * 100) / 100, owingCount, unverifiedCount,

@@ -48,3 +48,7 @@
 .partner-profile-actions button{width:100%;text-align:left}
 @media(max-width:990px){.partner-profile-layout{grid-template-columns:minmax(0,1fr)}.partner-profile-aside{grid-template-columns:repeat(2,minmax(0,1fr))}.partner-profile-aside>section:last-child{grid-column:span 2}}
 @media(max-width:700px){.partner-profile{padding:17px 14px}.partner-profile-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.partner-profile-metrics>div{padding:13px}.partner-profile-metrics strong{font-size:22px}.partner-profile-metrics .partner-profile-money strong{font-size:19px}.partner-profile-aside{grid-template-columns:minmax(0,1fr)}.partner-profile-aside>section:last-child{grid-column:auto}.partner-profile-panel{padding:14px}}
+
+.partner-reminder-preview{width:100%;padding:9px 11px;border:1px solid #d6e2f1;border-radius:9px;background:#f8fbff}
+.partner-reminder-preview summary{font-weight:750;font-size:13px;color:#194983;cursor:pointer}
+.partner-reminder-preview pre{margin:12px 0 0;padding:12px;border-radius:8px;background:#fff;white-space:pre-wrap;overflow-wrap:anywhere;color:#2a4766;font-size:13px;line-height:1.55;font-family:inherit}
