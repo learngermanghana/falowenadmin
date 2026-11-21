@@ -89,3 +89,15 @@ test("placement page retains staff-accessible actions and explicitly shows parti
   assert.match(source,/attempt\.consent&&!isStaff&&<a href="\/leads"/);
   assert.match(source,/countRegisteredOrPaidPlacements\(placementRows, Array\.isArray\(placementLeads\)\)/);
 });
+
+
+test("staff placement monitoring distinguishes German and Kiswahili without polling",()=>{
+  const source=readFileSync(new URL("../src/pages/TimedAssignmentAttemptsPage.jsx",import.meta.url),"utf8");
+  assert.match(source,/Public placement tests · German and Kiswahili/);
+  assert.match(source,/aria-label="Filter placement language"/);
+  assert.match(source,/row\.language\|\|"german"/);
+  assert.match(source,/program=swahili/);
+  assert.match(source,/languageName\+" placement result/);
+  const rows=normalizePlacementResults([{id:"g",language:"german"},{id:"s",language:"swahili"}],[]);
+  assert.deepEqual(rows.map(row=>row.language),["german","swahili"]);
+});
