@@ -16,14 +16,14 @@ test("dashboard regression workflow mirrors build-badge paths on pull_request an
   assert.match(afterPush, /vite\.config\.js/);
 });
 
-test("production release workflow gates, verifies and retries Vercel production", () => {
+test("production release tests pushes but only deploys on manual dispatch", () => {
   const workflow = read(".github/workflows/production-release.yml");
 
   assert.match(workflow, /branches: \[main\]/);
   assert.match(workflow, /release-gate:/);
   assert.match(workflow, /config-regression:[\s\S]*Validate source sync on clean checkout[\s\S]*npm run sync:build/);
   assert.match(workflow, /release-gate:[\s\S]*github\.ref == 'refs\/heads\/main'/);
-  assert.match(workflow, /verify-production:[\s\S]*github\.ref == 'refs\/heads\/main'/);
+  assert.match(workflow, /verify-production:\n\s+if: github\.event_name == 'workflow_dispatch' && github\.ref == 'refs\/heads\/main'/);
   assert.match(workflow, /compare\/\$TARGET_SHA\.\.\.\$deployed/);
   assert.match(workflow, /relation" = "ahead"/);
   assert.match(workflow, /newer descendant/);
@@ -32,11 +32,12 @@ test("production release workflow gates, verifies and retries Vercel production"
   assert.match(workflow, /Build production bundle without rerunning source sync[\s\S]*npx vite build/);
   assert.match(workflow, /tests\/student-leads-hub\.test\.js/);
   assert.doesNotMatch(workflow, /Build production bundle without rerunning source sync[\s\S]{0,120}npm run build/);
-  assert.match(workflow, /Wait for Vercel Git deployment/);
+  assert.match(workflow, /Deploy manually to Vercel production/);
+  assert.doesNotMatch(workflow, /Wait for Vercel Git deployment/);
   assert.match(workflow, /Verify production contains this main commit/);
-  assert.match(workflow, /scheduled-rate-limit-retry:/);
-  assert.match(workflow, /rate limited/);
-  assert.match(workflow, /\.vercel-production-retry\.txt/);
+  assert.doesNotMatch(workflow, /^\s+schedule:/m);
+  assert.doesNotMatch(workflow, /scheduled-rate-limit-retry:/);
+  assert.doesNotMatch(workflow, /\.vercel-production-retry\.txt/);
   assert.match(workflow, /VERCEL_PROJECT_ID: "prj_LPtknLn9PLUo0TXQEPPKAMGbMsvQ"/);
   assert.match(workflow, /VERCEL_ORG_ID: "team_vYAAqPf7zycxvsCSqqPFo5qc"/);
 });
