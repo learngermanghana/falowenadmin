@@ -5,6 +5,13 @@ on:
       - 'scripts/selectFirebaseDeployTargets.mjs'
       - '.github/workflows/deploy-firebase.yml'
       - 'src/hooks/useAdminRefresh.js'
+      - 'src/utils/visiblePolling.js'
+      - 'src/components/BrochureWhatsappPanel.jsx'
+      - 'src/utils/socialMusicLibrary.js'
+      - 'vercel.json'
+      - 'scripts/vercelIgnoreBuild.cjs'
+      - 'tests/vercel-build-ignore.test.cjs'
+      - 'tests/cost-controls-contract.test.js'
       - 'src/utils/adminRefreshRequest.js'
       - 'src/components/AdminRefreshStatus.jsx'
       - 'src/components/StudentPaymentTools.jsx'
@@ -21,4 +28,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test tests/firebase-deploy-selection.test.js tests/admin-refresh-request.test.js tests/student-payment-listener-stability.test.js tests/cloud-cost-polling.test.js
+      - run: node --test tests/firebase-deploy-selection.test.js tests/admin-refresh-request.test.js tests/student-payment-listener-stability.test.js tests/cloud-cost-polling.test.js tests/cost-controls-contract.test.js tests/vercel-build-ignore.test.cjs
