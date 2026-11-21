@@ -1,4 +1,5 @@
-// Grammar adapted from the teacher-supplied Buying from the Shop+Numbers.pdf.
+// Adapted from the teacher-supplied Buying from the Shop+Numbers.pdf.
+// Uses the Day 10 classroom flow; Day 11 recordings will be linked when supplied.
 export const SWAHILI_DAY_ELEVEN_ADMIN_LESSON = Object.freeze({
   "id": "swahili-day-11",
   "course": "SWAHILI",
@@ -15,7 +16,17 @@ export const SWAHILI_DAY_ELEVEN_ADMIN_LESSON = Object.freeze({
       "title": "Somo la 11 · Dukani",
       "heading": "Buying from the Shop + Numbers",
       "content": "Salamu · Bidhaa · Idadi · Bei · Kulipa",
-      "english": "Greet, choose items and quantities, ask the price, bargain and pay."
+      "english": "Greet, choose items and quantities, ask the price, bargain and pay.",
+      "kicker": "Utangulizi · Introduction",
+      "notes": "Show a pen, hat, phone or plate. Ask learners to name and count the items."
+    },
+    {
+      "id": "ai-video",
+      "type": "media-pending",
+      "title": "Video ya somo · Dukani",
+      "content": "Video ya somo itaongezwa baadaye.",
+      "english": "The Day 11 lesson video will be added later.",
+      "kicker": "Video ya somo · AI"
     },
     {
       "id": "grammar",
@@ -61,22 +72,95 @@ export const SWAHILI_DAY_ELEVEN_ADMIN_LESSON = Object.freeze({
           "english": "Please lower the price. · Okay, pay 400 shillings.",
           "question": "Muuzaji anakubali shilingi ngapi?",
           "answer": "Shilingi mia nne."
-        },
-        {
-          "title": "Mazungumzo dukani · Shop dialogue",
-          "rule": "Mteja is the customer and muuzaji is the seller. Greet, name the item and quantity, ask the price, bargain, then thank the seller and say goodbye.",
-          "body": "Mteja: Habari?\nMuuzaji: Nzuri. Karibu.\nMteja: Asante. Nitanunua kalamu kumi. Ni shilingi ngapi?\nMuuzaji: Kalamu kumi ni shilingi mia tano.\nMteja: Tafadhali punguza bei.\nMuuzaji: Sawa, lipa shilingi mia nne.\nMteja: Asante sana.\nMuuzaji: Karibu tena.\nMteja: Asante. Kwaheri.",
-          "english": "Customer: How are you? · Seller: Fine. Welcome. · Customer: Thank you. I will buy ten pens. How much is it? · Seller: Ten pens cost 500 shillings. · Customer: Please lower the price. · Seller: Okay, pay 400 shillings. · Customer: Thank you very much. · Seller: Come again. · Customer: Thank you. Goodbye.",
-          "question": "Fanya mazungumzo na mwenzako.",
-          "answer": "Greet → item and quantity → price → bargain → pay → thanks and goodbye."
         }
-      ]
+      ],
+      "kicker": "Sarufi · Grammar",
+      "notes": "Teach one rule at a time. Ask the classroom question before revealing the answer. Use the separate dialogue stage for paired reading."
+    },
+    {
+      "id": "vocabulary",
+      "type": "reading",
+      "title": "Bidhaa dukani",
+      "content": "sahani · plate\nsaa · clock / watch\nkofia · hat\nsimu · phone\nkalamu · pen\nredio · radio\nnyanya · tomato",
+      "english": "Name each item, then say its quantity.",
+      "kicker": "Msamiati · Vocabulary",
+      "prompt": "Unasemaje “three phones” na “four pens”?",
+      "answer": "Simu tatu na kalamu nne."
+    },
+    {
+      "id": "music",
+      "type": "media-pending",
+      "title": "Muziki · Dukani",
+      "content": "Wimbo wa somo utaongezwa baadaye.",
+      "english": "The Day 11 song will be added later. Continue to the next stage.",
+      "kicker": "Muziki · Music"
+    },
+    {
+      "id": "radio",
+      "type": "media-pending",
+      "title": "Falowen Radio · Dukani",
+      "content": "Kipindi cha Falowen Radio kitaongezwa baadaye.",
+      "english": "The Day 11 Falowen Radio episode will be added later. Continue with teacher-led listening.",
+      "kicker": "Kusikiliza · Falowen Radio"
+    },
+    {
+      "id": "listening",
+      "type": "teacher-listening",
+      "title": "Sikiliza idadi na bei",
+      "content": "Sikiliza mwalimu mara mbili.\nAndika idadi ya kalamu.\nAndika bei ya kwanza na bei ya mwisho.",
+      "english": "Listen as your teacher reads the source dialogue twice. Identify the quantity, original total and final amount.",
+      "kicker": "Kusikiliza · Teacher-led listening",
+      "prompt": "Mteja atanunua kalamu ngapi? Atalipa shilingi ngapi?",
+      "answer": "Kalamu kumi. Atalipa shilingi mia nne; bei ya kwanza ni mia tano.",
+      "notes": "Read the following source dialogue aloud twice before showing the dialogue stage. No recording is linked.\nMteja: Habari?\nMuuzaji: Nzuri. Karibu.\nMteja: Asante. Nitanunua kalamu kumi. Ni shilingi ngapi?\nMuuzaji: Kalamu kumi ni shilingi mia tano.\nMteja: Tafadhali punguza bei.\nMuuzaji: Sawa, lipa shilingi mia nne.\nMteja: Asante sana.\nMuuzaji: Karibu tena.\nMteja: Asante. Kwaheri."
+    },
+    {
+      "id": "reading",
+      "type": "reading",
+      "title": "Soma bidhaa na idadi",
+      "content": "sahani tatu\nsaa moja\nkofia tatu\nsimu tatu\nkalamu nne\nredio moja\nnyanya nne",
+      "english": "Read the handout’s item quantities aloud. The number follows the noun.",
+      "kicker": "Kusoma · Reading",
+      "prompt": "Kuna sahani ngapi? Kuna redio ngapi?",
+      "answer": "Sahani tatu. Redio moja."
+    },
+    {
+      "id": "dialogue",
+      "type": "dialogue",
+      "title": "Mteja na muuzaji",
+      "content": "Mteja: Habari?\nMuuzaji: Nzuri. Karibu.\nMteja: Asante. Nitanunua kalamu kumi. Ni shilingi ngapi?\nMuuzaji: Kalamu kumi ni shilingi mia tano.\nMteja: Tafadhali punguza bei.\nMuuzaji: Sawa, lipa shilingi mia nne.\nMteja: Asante sana.\nMuuzaji: Karibu tena.\nMteja: Asante. Kwaheri.",
+      "english": "Read the source dialogue in pairs, then switch roles.",
+      "kicker": "Kuzungumza · Model dialogue",
+      "prompt": "Muuzaji amepunguza shilingi ngapi?",
+      "answer": "Shilingi mia moja (100). Bei imetoka 500 hadi 400."
+    },
+    {
+      "id": "scenario",
+      "type": "scenario",
+      "title": "Nunua dukani",
+      "content": "Uko Afrika Mashariki. Ingia dukani.\nMsalimie muuzaji.\nTaja bidhaa na idadi unayotaka kununua.\nUliza bei na omba punguzo.\nLipa, shukuru na uage.",
+      "english": "Work in pairs as customer and shopkeeper. Use the source dialogue, then swap the item and quantity. Agree your own classroom practice prices.",
+      "kicker": "Kuzungumza · Scenario",
+      "prompt": "Unaombaje punguzo kwa adabu?",
+      "answer": "Tafadhali punguza bei."
+    },
+    {
+      "id": "writing",
+      "type": "writing",
+      "title": "Andika mazungumzo mafupi",
+      "content": "Andika salamu.\nSema utanunua kalamu kumi.\nUliza bei.\nOmba punguzo.\nMalizia kwa kushukuru na kuaga.",
+      "english": "Write a short shop conversation using the source phrases. This is classroom practice.",
+      "kicker": "Kuandika · Writing",
+      "prompt": "Onyesha mfano.",
+      "answer": "Mteja: Habari?\nMuuzaji: Nzuri. Karibu.\nMteja: Asante. Nitanunua kalamu kumi. Ni shilingi ngapi?\nMuuzaji: Kalamu kumi ni shilingi mia tano.\nMteja: Tafadhali punguza bei.\nMuuzaji: Sawa, lipa shilingi mia nne.\nMteja: Asante sana.\nMuuzaji: Karibu tena.\nMteja: Asante. Kwaheri."
     },
     {
       "id": "presentation",
       "type": "presentation",
-      "title": "Dukani · Shop role-play",
-      "content": "You are in East Africa. Go to a shop and greet the shopkeeper. Say the item and quantity you want, ask the price, bargain and pay. Swap roles."
+      "title": "Onyesha jinsi unavyonunua dukani",
+      "content": "Salimiana.\nTaja bidhaa na idadi.\nUliza bei.\nOmba punguzo na ulipe.\nShukuru na uage.",
+      "english": "Present a short shop role-play. Classmates listen for the item, quantity, original price and final price.",
+      "kicker": "Uwasilishaji · Class presentation"
     }
   ]
 });
