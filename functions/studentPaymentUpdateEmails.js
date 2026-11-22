@@ -405,6 +405,19 @@ async function processStudentPaymentUpdate({
     return { sent: false, reason: "missing_new_payment_reference_or_amount" };
   }
   if (isImplausibleCourseTotal(after, change)) {
+    // Leave an actionable audit state instead of silently dropping an
+    // impossible course-total receipt. Never rewrite historical paid values
+    // or send a misleading email from a Firestore trigger.
+    await db.collection("studentPaymentUpdateEmailStates").doc(stateId(studentId)).set({
+      studentId,
+      status: "reconciliation_required",
+      reason: "tuition_total_exceeds_fee",
+      pendingPaid: change.totalPaid,
+      pendingBalance: change.balance,
+      pendingAmount: change.amount,
+      pendingReference: change.reference,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
     console.warn("student_payment_total_exceeds_tuition", { studentId, totalPaid: change.totalPaid });
     return { sent: false, reason: "tuition_total_exceeds_fee_reconcile_required" };
   }
