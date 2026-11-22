@@ -7,69 +7,62 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 
-test("communication hub exposes one workflow at a time", () => {
+test("Communication route is rebuilt with exactly four focused workflow tabs", () => {
   const hub = read("src/pages/CommunicationHubPage.jsx");
-  assert.match(hub, />\s*Messages\s*</);
-  assert.match(hub, />\s*Email Automations\s*</);
-  assert.match(hub, />\s*System Health\s*</);
-  assert.match(hub, />\s*Send message\s*</);
-  assert.match(hub, />\s*Class change\s*</);
-  assert.match(hub, /messageMode === "send" \? <CommunicationMessagesPage \/> : <CommunicationLiveClassActions \/>/);
-  assert.doesNotMatch(hub, /<TargetedCommunicationPanel/);
-  assert.doesNotMatch(hub, /<CommunicationPage/);
+  const workspace = read("src/pages/CommunicationWorkspacePage.jsx");
+  assert.match(hub, /<CommunicationWorkspacePage\s*\/>/);
+  assert.doesNotMatch(hub, /CommunicationMessagesPage|CommunicationLiveClassActions|messageMode/);
+  assert.match(workspace, /id: "bulk", label: "Bulk messages"/);
+  assert.match(workspace, /id: "student", label: "One student"/);
+  assert.match(workspace, /id: "documents", label: "Documents"/);
+  assert.match(workspace, /id: "promotions", label: "Class promotions"/);
+  assert.equal((workspace.match(/id: "(bulk|student|documents|promotions)", label:/g) || []).length, 4);
+  assert.match(workspace, /<Link to="\/live-classes"/);
+  assert.doesNotMatch(workspace, /label: "Cancel class"|label: "Class change"/);
 });
 
-test("send-message page has one audience chooser and shared history", () => {
-  const messages = read("src/pages/CommunicationMessagesPage.jsx");
-  assert.match(messages, /Who should receive it\?/);
-  assert.match(messages, /Everyone, a level, one class, or one student/);
-  assert.match(messages, /Students matching a condition/);
-  assert.match(messages, /<TargetedCommunicationPanel embedded showHistory=\{false\} \/>/);
-  assert.match(messages, /<CommunicationPage embedded \/>/);
-  assert.match(messages, /<CommunicationHistoryPanel \/>/);
+test("broadcasts preserve the existing announcement worker and its audience contract", () => {
+  const workspace = read("src/pages/CommunicationWorkspacePage.jsx");
+  const service = read("src/services/communicationService.js");
+  assert.match(workspace, /saveAnnouncementRow/);
+  assert.match(workspace, /className: audience === "all" && language === "all" \? "all"/);
+  assert.match(workspace, /Promise\.allSettled\(rows\.map/);
+  assert.match(workspace, /rows\.length \+ " class broadcasts accepted/);
+  assert.match(workspace, /notifyHistory\(\)/);
+  assert.match(service, /dispatchIntegrationEvent/);
 });
 
-test("legacy send engines can render inside the unified composer", () => {
-  const broadcast = read("src/pages/CommunicationPage.jsx");
-  const targeted = read("src/components/TargetedCommunicationPanel.jsx");
-  assert.match(broadcast, /CommunicationPage\(\{ embedded = false \}\)/);
-  assert.match(targeted, /TargetedCommunicationPanel\(\{ embedded = false, showHistory = true \}\)/);
-  assert.match(targeted, /\{showHistory \? \(/);
+test("personal message resolves an actual student email, not a bulk audience", () => {
+  const workspace = read("src/pages/CommunicationWorkspacePage.jsx");
+  assert.match(workspace, /listAllStudents/);
+  assert.match(workspace, /studentEmail\(selectedStudent\)/);
+  assert.match(workspace, /deliveryMode: row\.email \? "individual" : "auto"/);
+  assert.match(workspace, /Send to this student/);
 });
 
-
-test("shared communication history refreshes after failed persisted send attempts", () => {
-  const broadcast = read("src/pages/CommunicationPage.jsx");
-  const targeted = read("src/components/TargetedCommunicationPanel.jsx");
-
-  assert.match(broadcast, /let historyMayHaveChanged = false/);
-  assert.match(broadcast, /historyMayHaveChanged = true;[\s\S]*saveAnnouncementRow/);
-  assert.match(
-    broadcast,
-    /finally \{[\s\S]*historyMayHaveChanged[\s\S]*falowen:communication-sent/,
-  );
-
-  assert.match(targeted, /let historyMayHaveChanged = false/);
-  assert.match(targeted, /historyMayHaveChanged = true;[\s\S]*saveAnnouncementBatch/);
-  assert.match(
-    targeted,
-    /finally \{[\s\S]*historyMayHaveChanged[\s\S]*falowen:communication-sent/,
-  );
+test("documents are user-reviewed downloads, not fabricated course certificates", () => {
+  const workspace = read("src/pages/CommunicationWorkspacePage.jsx");
+  assert.match(workspace, /function downloadWord\(\)/);
+  assert.match(workspace, /function printDocument\(\)/);
+  assert.match(workspace, /escapeHtml/);
+  assert.match(workspace, /before official use/);
+  assert.doesNotMatch(workspace, /attachCertificate: true/);
 });
 
+test("promotion uses only future classes with scoped recipients and explicit confirmation", () => {
+  const workspace = read("src/pages/CommunicationWorkspacePage.jsx");
+  assert.match(workspace, /const isUpcoming/);
+  assert.match(workspace, /upcomingClasses\.find/);
+  assert.match(workspace, /languageOf\(klass\) === languageOf\(upcomingClass\)/);
+  assert.match(workspace, /Confirm & send/);
+});
 
-test("level broadcasts wait for every class attempt before refreshing shared history", () => {
-  const broadcast = read("src/pages/CommunicationPage.jsx");
-  const submitStart = broadcast.indexOf("async function onSubmit");
-  const submitEnd = broadcast.indexOf("return (", submitStart);
-  const submitBlock = broadcast.slice(submitStart, submitEnd);
-
-  assert.match(submitBlock, /Promise\.allSettled\(targetClasses\.map/);
-  assert.doesNotMatch(submitBlock, /Promise\.all\(targetClasses\.map/);
-  assert.match(submitBlock, /failedSettlements = settlements\.filter/);
-  assert.match(submitBlock, /finally \{[\s\S]*falowen:communication-sent/);
-  assert.ok(
-    submitBlock.indexOf("Promise.allSettled") < submitBlock.indexOf("falowen:communication-sent"),
-    "history refresh event must happen only after all level sends settle",
-  );
+test("attendance settings and integration health remain accessible outside the four tabs", () => {
+  const hub = read("src/pages/CommunicationHubPage.jsx");
+  assert.match(hub, /<details>/);
+  assert.match(hub, /Email Automations/);
+  assert.match(hub, /AttendanceConfirmationAutomationPanel/);
+  assert.match(hub, /AttendanceFailedDeliveryRetryPanel/);
+  assert.match(hub, /System Health/);
+  assert.match(hub, /IntegrationEventPanel/);
 });
