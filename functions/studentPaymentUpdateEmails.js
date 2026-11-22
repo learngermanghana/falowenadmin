@@ -209,6 +209,11 @@ function buildPaymentMessage({ student = {}, change = {} } = {}) {
 
 function rowForPaymentUpdate({ student = {}, change = {}, now = new Date() } = {}) {
   const snapshot = paymentSnapshot(student);
+  // The payment date is independent of when the webhook processes or retries.
+  const recordedPaymentDate = asDate(student.lastPaymentAt);
+  const receiptDate = recordedPaymentDate && Number.isFinite(recordedPaymentDate.getTime())
+    ? recordedPaymentDate
+    : now;
   return {
     announcement: buildPaymentMessage({ student, change }),
     class: snapshot.className,
@@ -235,7 +240,7 @@ function rowForPaymentUpdate({ student = {}, change = {}, now = new Date() } = {
         ? `${snapshot.level} ${String(student.program || "").toLowerCase() === "swahili" ? "Kiswahili" : "German"} Language Course`
         : "Language course",
       paymentMethod: String(student.lastPaymentProvider || "Verified payment"),
-      receivedDate: isoDate(now),
+      receivedDate: isoDate(receiptDate),
       amountReceived: change.amount,
       totalPaid: change.totalPaid,
       balanceRemaining: change.current?.balancePresent === false ? null : (Number.isFinite(Number(change.balance)) ? change.balance : null),
