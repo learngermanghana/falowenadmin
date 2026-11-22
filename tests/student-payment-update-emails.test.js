@@ -126,6 +126,7 @@ test("announcement row targets only the student's email", () => {
   assert.equal(row.allow_bcc_fallback, "FALSE");
   assert.equal(row.email_type, "payment_update");
   assert.equal(row.cert_level, "A1");
+  assert.equal(JSON.parse(row.receipt_payload_json).balanceRemaining, 1300);
 });
 
 
@@ -148,6 +149,35 @@ test("individual verified receipt payload uses the current transaction, not cumu
   assert.equal(receipt.balanceRemaining, 0);
   assert.equal(receipt.studentCode, "RASHID-198");
   assert.equal(receipt.paymentMethod, "Paystack");
+});
+
+
+test("receipt uses the recorded Firestore payment time instead of a later delivery time", () => {
+  const row = rowForPaymentUpdate({
+    student: {
+      name: "Ama",
+      email: "ama@example.com",
+      lastPaymentAt: { toDate: () => new Date("2026-11-20T23:30:00Z") },
+    },
+    change: { amount: 500, totalPaid: 1500, balance: 1300 },
+    now: new Date("2026-11-22T12:00:00Z"),
+  });
+  assert.equal(JSON.parse(row.receipt_payload_json).receivedDate, "2026-11-20");
+  assert.equal(row.date, "2026-11-22"); // Announcement delivery date remains separate.
+});
+
+test("receipt date handles timestamp seconds and unavailable or invalid payment times", () => {
+  const now = new Date("2026-11-22T12:00:00Z");
+  const change = { amount: 500, totalPaid: 1500, balance: 1300 };
+  const getReceivedDate = (lastPaymentAt) => JSON.parse(rowForPaymentUpdate({
+    student: { name: "Ama", email: "ama@example.com", lastPaymentAt },
+    change,
+    now,
+  }).receipt_payload_json).receivedDate;
+
+  assert.equal(getReceivedDate({ seconds: Date.parse("2026-11-21T23:30:00Z") / 1000, nanoseconds: 0 }), "2026-11-21");
+  assert.equal(getReceivedDate(undefined), "2026-11-22");
+  assert.equal(getReceivedDate("not-a-date"), "2026-11-22");
 });
 
 test("receipt does not invent a zero balance when the student's balance is missing", () => {
