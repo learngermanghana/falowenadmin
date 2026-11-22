@@ -9,6 +9,7 @@ export const WORKER_TARGETS = {
   // Avoid redeploying unrelated Cloud Run workers for an editor feature.
   "functions/musicStudioLyrics.js": ["api"],
   "functions/automaticMarkingPipeline.cjs": ["api", "markCourseSubmissionAutomatically"],
+  "functions/studentPaymentUpdateEmails.js": ["sendStudentPaymentUpdateEmail"],
   "functions/automaticCourseMarking.js": ["markCourseSubmissionAutomatically", "syncAutomaticCourseScore"],
   "functions/resultAnswerReference.cjs": ["markCourseSubmissionAutomatically"],
   "functions/automaticCourseMarking.test.cjs": [],

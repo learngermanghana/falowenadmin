@@ -5,6 +5,14 @@ import os from "node:os";
 import path from "node:path";
 import { selectFirebaseDeployTargets, writeDeployPlan, WORKER_TARGETS } from "../scripts/selectFirebaseDeployTargets.mjs";
 
+test("payment receipt changes deploy the dedicated email trigger", () => {
+  const plan = selectFirebaseDeployTargets({ changedPaths: ["functions/studentPaymentUpdateEmails.js"] });
+  assert.equal(plan.mode, "targeted");
+  assert.deepEqual(plan.targets, ["sendStudentPaymentUpdateEmail"]);
+  const workflow = fs.readFileSync(".github/workflows/deploy-firebase.yml", "utf8");
+  assert.match(workflow, /functions:falowenadmin:sendStudentPaymentUpdateEmail/);
+});
+
 test("trial email edits deploy both trial workers without unrelated attendance workers", () => {
   const plan = selectFirebaseDeployTargets({ changedPaths: ["functions/trialAccessEmails.js"] });
   assert.equal(plan.mode, "targeted");
