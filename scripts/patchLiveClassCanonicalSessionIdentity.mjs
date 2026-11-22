@@ -25,6 +25,12 @@ function preferFirestoreDocumentId(source) {
 }
 
 patchFile(new URL("../src/pages/LiveClassesPageV2.jsx", import.meta.url), (source) => {
+  // The redesigned workspace delegates reschedules to LiveClassSessionEditor,
+  // which already selects klass.id before legacy session identities.
+  // Do not require retired sessionChange payload anchors in that layout.
+  if (source.includes("<LiveClassSessionEditor") && source.includes("function openSessionChange")) {
+    return source;
+  }
   source = replaceOnce(
     source,
     "      classId: session.classId || session.classRecordId || dashboard?.klass?.id || selectedClassId,",
