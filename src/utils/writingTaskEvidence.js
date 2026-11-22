@@ -33,6 +33,20 @@ function ruleForPoint(label = "", assignmentKey = "") {
   const value = clean(label).toLowerCase();
   const normalizedAssignmentKey = String(assignmentKey || "").trim().toUpperCase();
 
+  if (normalizedAssignmentKey === "A2-8.21" && /bring|can expect|mitbringen|erwarten/.test(value)) {
+    // The published task allows either a bring-along request OR a concrete
+    // expectation. Assess the message separately from A2 word-order errors.
+    return (source) => sentences(source).some((sentence) => {
+      if (/\b(?:nicht|kein\w*)\b/i.test(sentence)) return false;
+      const bringRequest = /\b(?:bring\w*|mitbring\w*)\b/i.test(sentence)
+        && /\b(?:du|ihr|bitte)\b/i.test(sentence)
+        && /\b(?:kamera|wasser|essen|getr[aä]nke|kleidung|jacke|schuhe|geld|ticket\w*|etwas)\b/i.test(sentence);
+      const expectation = !/\?/.test(sentence) && /\b(?:es\s+gibt|gibt\s+es|dort\s+(?:gibt|sind)|du\s+kannst|wir\s+k[oö]nnen|dich\s+erwartet)\b/i.test(sentence)
+        && /\b(?:ausstellungen?|kunstwerke?|konzerte?|musik|essen|spa[ßs]|tiere|bilder|f[uü]hrung\w*|sehen|erleben|genie[ßs]en)\b/i.test(sentence);
+      return bringRequest || expectation;
+    });
+  }
+
   if (normalizedAssignmentKey === "A2-5.12") {
     if (/ask whether there are open positions|fragen sie.*offene stellen/i.test(value)) {
       // Mentioning "eine offene Stelle" is not the same as asking the
