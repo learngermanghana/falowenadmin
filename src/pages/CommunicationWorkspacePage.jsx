@@ -65,7 +65,7 @@ const studentId = (s) => clean(s?.id || s?.studentCode || s?.student_code || s?.
 const studentName = (s) => clean(s?.name || s?.studentName || s?.fullName || "Student");
 const studentEmail = (s) => clean(s?.email || s?.contactEmail);
 const studentClass = (s) => clean(s?.className || s?.class || s?.classId);
-const money = (value, currency = "GHS") => value === undefined || value === null || value === "" ? "" : (currency === "GHS" ? "GH₵" : currency + " ") + String(value);
+const money = (value, currency = "GHS") => value === undefined || value === null || value === "" ? "" : (/^(GH₵|GHS|₵)/i.test(String(value).trim()) ? "" : (currency === "GHS" ? "GH₵" : currency + " ")) + String(value);
 const scheduleText = (klass) => Array.isArray(klass?.scheduleRules) ? klass.scheduleRules.map((item) =>
   [clean(item.day || item.weekday), clean(item.time || item.startTime)].filter(Boolean).join(" ")
 ).filter(Boolean).join(", ") : "";
@@ -158,7 +158,7 @@ export default function CommunicationWorkspacePage() {
   const [documentRecipient, setDocumentRecipient] = useState("");
   const [documentReference, setDocumentReference] = useState("");
   const [documentHeading, setDocumentHeading] = useState("Official Letter");
-  const [documentBody, setDocumentBody] = useState("");
+  const [documentBody, setDocumentBody] = useState("To whom it may concern,\n\n[Write the purpose of this letter and verified details here.]\n\nYours faithfully,");
   const [documentSignatory, setDocumentSignatory] = useState("Falowen Administration");
 
   const [promoClassId, setPromoClassId] = useState("");
@@ -323,7 +323,7 @@ export default function CommunicationWorkspacePage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url; a.download = "falowen-" + documentKind + "-" + TODAY() + ".doc"; a.click();
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   function printDocument() {
     if (!documentHeading.trim() || !documentBody.trim()) { toast.error("Add a document title and body."); return; }
@@ -370,7 +370,7 @@ export default function CommunicationWorkspacePage() {
           <span className="cw-step">02 / Compose</span><h2>Your announcement</h2>
           <MessageFields value={bulk} onChange={patchBulk} />
           <ReceiptNote result={receipt} />
-          {!bulkReview ? <button type="button" className="cw-primary" onClick={() => { if (validateMessage(bulk)) setBulkReview(true); }} disabled={busy || loading}>Review broadcast <span aria-hidden="true">→</span></button>
+          {!bulkReview ? <button type="button" className="cw-primary" onClick={() => { if (validateMessage(bulk) && !loadError && (audience === "all" && language === "all" || bulkTargets.length > 0)) setBulkReview(true); else if (!bulkTargets.length && !(audience === "all" && language === "all")) toast.error("Choose a class or level with a matching audience."); }} disabled={busy || loading}>Review broadcast <span aria-hidden="true">→</span></button>
             : <div className="cw-review-actions"><p><strong>Ready to submit:</strong> {bulkAudienceLabel}. {audience === "level" ? bulkTargets.length + " class records." : "One announcement."} Delivery is accepted by the worker before the individual email status is known.</p>
               <button type="button" onClick={() => setBulkReview(false)} className="cw-secondary">Edit</button><button type="button" className="cw-primary" onClick={sendBulk} disabled={busy}>{busy ? "Submitting…" : "Confirm & send"}</button></div>}
         </>}
@@ -430,7 +430,7 @@ export default function CommunicationWorkspacePage() {
       <div className="cw-panel"><span className="cw-step">01 / Upcoming class</span><h2>Promote an upcoming class</h2><p>Choose a scheduled future class. Falowen fills the announcement with available course details.</p>
         <ClassSelector label="Class to advertise" classes={upcomingClasses} value={promoClassId} onChange={selectUpcomingClass} />
         {upcomingClass ? <div className="cw-promo-facts"><strong>{className(upcomingClass)}</strong><span>{languageOf(upcomingClass) === "swahili" ? "Kiswahili" : "German"} · {levelOf(upcomingClass)}</span>
-          <span>Starts {formatDate(upcomingClass.startDate || upcomingClass.startsAt || upcomingClass.date)}</span>
+          <span>{clean(upcomingClass.startDate || upcomingClass.startsAt || upcomingClass.date) ? "Starts " + formatDate(upcomingClass.startDate || upcomingClass.startsAt || upcomingClass.date) : "Start date to be confirmed"}</span>
           {scheduleText(upcomingClass) ? <span>{scheduleText(upcomingClass)}</span> : null}</div> : <div className="cw-audience-summary">Only upcoming, non-archived classes are eligible. If none appear, check their start dates and statuses in Live Classes.</div>}
         <div className="cw-section-rule" /><span className="cw-step">02 / Recipients</span><h2>Who is this promotion for?</h2>
         <div className="cw-radio-grid cw-radio-grid-three">{[["level", "Previous level"], ["class", "One class"], ["all", "All active in language"]].map(([id, label]) => <label key={id} className={"cw-radio " + (promoAudience === id ? "checked" : "")}>
