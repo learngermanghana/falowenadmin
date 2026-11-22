@@ -205,9 +205,18 @@ function doPost(e) {
 
     // A manual Admin request never accepts Paid, Balance, or Status values
     // from the browser. Only the canonical students sheet authorizes a pack.
-    const result = action === "requestEnrollmentPackFromSheet"
-      ? requestEnrollmentPackFromSheet_(payload)
-      : processRegistrationLifecycleEvent_(payload);
+    // Reuse the same script lock as the timer-driven Student Docs scanner.
+    // A concurrent on-edit/scan/webhook must not issue two enrollment packs.
+    const lock = LockService.getScriptLock();
+    if (!lock.tryLock(30000)) throw new Error("Student Docs worker is busy; retry later.");
+    let result;
+    try {
+      result = action === "requestEnrollmentPackFromSheet"
+        ? requestEnrollmentPackFromSheet_(payload)
+        : processRegistrationLifecycleEvent_(payload);
+    } finally {
+      lock.releaseLock();
+    }
     return registrationJson_({
       ok: true,
       action,
