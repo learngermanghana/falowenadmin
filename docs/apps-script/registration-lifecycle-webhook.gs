@@ -112,6 +112,8 @@ function processEnrollmentConfirmedWebhook_(match) {
     throw new Error("The student is present, but no payment is recorded yet.");
   }
 
+  if (isOrganisationFundedRow_(row, idx)) return "ORGANISATION_MANAGED";
+
   const key = getRowKey_(row, idx, rowNum);
   const result = sendEnrollmentPacketToStudent_(row, idx, key, rowNum);
 
@@ -162,6 +164,25 @@ function processRegistrationLifecycleEvent_(payload) {
   return processEnrollmentConfirmedWebhook_(match);
 }
 
+
+// Admin Documents tab: request an already verified enrollment pack by identity.
+// This action has no write access to Paid/Balance, and duplicate packets are
+// blocked by the existing enrollment reference/send log.
+function requestEnrollmentPackFromSheet_(payload) {
+  const row = payload.row || {};
+  const lookup = registrationLifecycleLookup_(row);
+  if (!lookup) throw new Error("Select a student with a student code or email.");
+  const match = findStudentByLookup_(lookup);
+  if (!match) throw new Error("Student not found in the canonical students sheet.");
+  const idx = indexMap_(match.studentHeaders);
+  const registeredEmail = String(match.studentRow[idx["Email"]] || "").trim().toLowerCase();
+  const requestedEmail = String(row.email || "").trim().toLowerCase();
+  if (requestedEmail && requestedEmail !== registeredEmail) {
+    throw new Error("Selected student code and email do not match the students sheet.");
+  }
+  return processEnrollmentConfirmedWebhook_(match);
+}
+
 function doPost(e) {
   try {
     const raw = e && e.postData && e.postData.contents
@@ -176,20 +197,20 @@ function doPost(e) {
       });
     }
 
-    if (
-      String(payload.action || "").trim() !==
-      "processRegistrationLifecycleEvent"
-    ) {
-      return registrationJson_({
-        ok: false,
-        error: "Unknown action"
-      });
+    const action = String(payload.action || "").trim();
+    if (action !== "processRegistrationLifecycleEvent" &&
+        action !== "requestEnrollmentPackFromSheet") {
+      return registrationJson_({ ok: false, error: "Unknown action" });
     }
 
-    const result = processRegistrationLifecycleEvent_(payload);
+    // A manual Admin request never accepts Paid, Balance, or Status values
+    // from the browser. Only the canonical students sheet authorizes a pack.
+    const result = action === "requestEnrollmentPackFromSheet"
+      ? requestEnrollmentPackFromSheet_(payload)
+      : processRegistrationLifecycleEvent_(payload);
     return registrationJson_({
       ok: true,
-      action: "processRegistrationLifecycleEvent",
+      action,
       event_id: String(payload.event_id || ""),
       type: String(payload.type || ""),
       result: result || "PROCESSED",
