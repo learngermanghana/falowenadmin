@@ -526,7 +526,9 @@ test("A2-4.9 recognizes Victoria's hotel booking, stay details, price and servic
   assert.equal(result.missingTaskPoints.length, 0);
   assert.ok(result.writingScore >= 70);
   assert.doesNotMatch(result.feedback, /requested formal register|Still missing:/i);
-  assert.ok(!(result.corrections || []).some(item =>
+  // A formal salutation remains a valid optional style correction, but the
+  // consistent Sie/Ihnen body does not justify a register-mismatch penalty.
+  assert.ok((result.corrections || []).some(item =>
     item.from === "Lieber Herr Felix" && item.to === "Sehr geehrter Herr Felix"));
 });
 
