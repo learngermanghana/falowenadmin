@@ -183,6 +183,47 @@ function requestEnrollmentPackFromSheet_(payload) {
   return processEnrollmentConfirmedWebhook_(match);
 }
 
+// Same template and signature as the existing Student Docs PDFs; no email sent,
+// no issuance flags written. Data is taken exclusively from the students sheet.
+function exportEnrollmentDocumentFromSheet_(payload) {
+  const requested = payload.row || {};
+  const kind = String(payload.document_type || "").trim().toLowerCase();
+  if (kind !== "enrollment" && kind !== "agreement") {
+    throw new Error("Choose enrollment or agreement PDF.");
+  }
+  const lookup = registrationLifecycleLookup_(requested);
+  if (!lookup) throw new Error("Select a student code or email.");
+  const match = findStudentByLookup_(lookup);
+  if (!match) throw new Error("Student not found in the canonical students sheet.");
+  const idx = indexMap_(match.studentHeaders);
+  const row = match.studentRow;
+  const email = String(row[idx["Email"]] || "").trim().toLowerCase();
+  const code = String(row[idx["StudentCode"]] || "").trim().toLowerCase();
+  if (requested.email && String(requested.email).trim().toLowerCase() !== email) {
+    throw new Error("Student code and email do not match the students sheet.");
+  }
+  if (requested.student_code && String(requested.student_code).trim().toLowerCase() !== code) {
+    throw new Error("Student code and email do not match the students sheet.");
+  }
+  if (num_(row[idx["Paid"]]) <= 0) {
+    throw new Error("No recorded payment. A verified enrollment PDF cannot be exported.");
+  }
+  if (isOrganisationFundedRow_(row, idx)) {
+    throw new Error("Organisation-funded enrollment documents must use the organisation workflow.");
+  }
+  const key = getRowKey_(row, idx, match.studentRowNum);
+  const blob = kind === "enrollment"
+    ? buildEnrollmentPdf_(row, idx, key)
+    : buildAgreementPdf_(row, idx, key);
+  const bytes = blob.getBytes();
+  if (bytes.length > 2750000) throw new Error("PDF is too large for direct export.");
+  return {
+    file_name: blob.getName(),
+    mime_type: "application/pdf",
+    data_base64: Utilities.base64Encode(bytes),
+  };
+}
+
 function doPost(e) {
   try {
     const raw = e && e.postData && e.postData.contents
@@ -199,7 +240,8 @@ function doPost(e) {
 
     const action = String(payload.action || "").trim();
     if (action !== "processRegistrationLifecycleEvent" &&
-        action !== "requestEnrollmentPackFromSheet") {
+        action !== "requestEnrollmentPackFromSheet" &&
+        action !== "exportEnrollmentDocumentFromSheet") {
       return registrationJson_({ ok: false, error: "Unknown action" });
     }
 
@@ -213,9 +255,14 @@ function doPost(e) {
     try {
       result = action === "requestEnrollmentPackFromSheet"
         ? requestEnrollmentPackFromSheet_(payload)
-        : processRegistrationLifecycleEvent_(payload);
+        : action === "exportEnrollmentDocumentFromSheet"
+          ? exportEnrollmentDocumentFromSheet_(payload)
+          : processRegistrationLifecycleEvent_(payload);
     } finally {
       lock.releaseLock();
+    }
+    if (action === "exportEnrollmentDocumentFromSheet") {
+      return registrationJson_({ ok: true, action, result: "EXPORTED", ...result });
     }
     return registrationJson_({
       ok: true,
