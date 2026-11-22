@@ -290,25 +290,32 @@ async function dispatchRegistrationRows({ rows, eventId, user, type }) {
 // Read-only, on-demand document export. Never copy PDF bytes to Firestore logs.
 async function exportRegistrationPdf({ request, user }) {
   const kind = String(request?.document_type || "").trim().toLowerCase();
-  if (kind !== "enrollment" && kind !== "agreement") {
-    throw Object.assign(new Error("Choose enrollment or agreement PDF."), { statusCode: 400 });
+  if (!["enrollment", "agreement", "certificate"].includes(kind)) {
+    throw Object.assign(new Error("Choose enrollment, agreement or certificate PDF."), { statusCode: 400 });
   }
   const code = String(request?.student_code || "").trim();
   const email = String(request?.email || "").trim();
   if (!code && !email) {
     throw Object.assign(new Error("Select a student with a student code or email."), { statusCode: 400 });
   }
-  const config = registrationConfig();
+  const isCertificate = kind === "certificate";
+  const level = String(request?.level || "").trim().toUpperCase();
+  if (isCertificate && !["A1", "A2", "B1"].includes(level)) {
+    throw Object.assign(new Error("Choose a supported German course level: A1, A2 or B1."), { statusCode: 400 });
+  }
+  const config = isCertificate ? communicationConfig() : registrationConfig();
   if (!config.url || !config.token) {
-    throw Object.assign(new Error("The Student Docs connection is not configured."), { statusCode: 503 });
+    throw Object.assign(new Error(isCertificate
+      ? "The certificate/Announcements connection is not configured."
+      : "The Student Docs connection is not configured."), { statusCode: 503 });
   }
   const upstream = await postAppsScript(config.url, {
     token: config.token,
-    action: "exportEnrollmentDocumentFromSheet",
-    type: "enrollment.export",
+    action: isCertificate ? "exportVerifiedCertificateFromScores" : "exportEnrollmentDocumentFromSheet",
+    type: isCertificate ? "certificate.export" : "enrollment.export",
     source: "falowen-admin",
     requested_by: user.email,
-    document_type: kind,
+    ...(isCertificate ? { level } : { document_type: kind }),
     row: { student_code: code, email },
   });
   const result = upstream.body || {};
