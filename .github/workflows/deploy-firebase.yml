@@ -47,6 +47,8 @@ jobs:
       GCLOUD_PROJECT: falowen-examiner-trainer
       CLOUD_RUNTIME_CONFIG: ${{ secrets.FALOWEN_ADMIN_CLOUD_RUNTIME_CONFIG || '{}' }}
       SWAHILI_RESULT_BCC: ${{ secrets.SWAHILI_RESULT_BCC }}
+      # Authenticate cross-repository coursebook sync to avoid anonymous GitHub API 403/rate limits.
+      GITHUB_TOKEN: ${{ github.token }}
 
     steps:
       - name: Checkout repo
