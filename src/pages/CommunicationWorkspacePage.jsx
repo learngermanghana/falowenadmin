@@ -185,7 +185,7 @@ export default function CommunicationWorkspacePage() {
   const eligibleClasses = useMemo(() => classes.filter(isAvailable), [classes]);
   const audienceClasses = useMemo(() => eligibleClasses.filter((klass) => language === "all" || languageOf(klass) === language), [eligibleClasses, language]);
   const levelClasses = useMemo(() => audienceClasses.filter((klass) => levelOf(klass) === targetLevel), [audienceClasses, targetLevel]);
-  const selectedClass = eligibleClasses.find((klass) => classKey(klass) === targetClass);
+  const selectedClass = audienceClasses.find((klass) => classKey(klass) === targetClass);
   const selectedStudent = students.find((s) => studentId(s) === selectedStudentId);
   const filteredStudents = useMemo(() => {
     const term = studentSearch.toLowerCase().trim();
@@ -272,7 +272,7 @@ export default function CommunicationWorkspacePage() {
     const languageName = languageOf(klass) === "swahili" ? "Kiswahili" : "German";
     const details = [
       "Our next " + languageName + " " + (levelOf(klass) || "") + " class is coming up: " + className(klass) + ".",
-      clean(klass.startDate) ? "Start date: " + formatDate(klass.startDate) + "." : "",
+      clean(klass.startDate || klass.startsAt || klass.date) ? "Start date: " + formatDate(klass.startDate || klass.startsAt || klass.date) + "." : "",
       scheduleText(klass) ? "Schedule: " + scheduleText(klass) + "." : "",
       clean(klass.tuitionGhs || klass.price || klass.fee || klass.tuition) ? "Tuition: " + money(klass.tuitionGhs || klass.price || klass.fee || klass.tuition, klass.currency || "GHS") + "." : "",
       "You can register or upgrade through your Falowen account. We look forward to learning with you."
@@ -358,7 +358,7 @@ export default function CommunicationWorkspacePage() {
         </div>
         {audience === "conditions" ? <div className="cw-targeted"><TargetedCommunicationPanel embedded showHistory={false} /></div> : <>
           <div className="cw-two-fields">
-            <Field label="Course language"><select value={language} onChange={(e) => { setLanguage(e.target.value); setBulkReview(false); }}>
+            <Field label="Course language"><select value={language} onChange={(e) => { setLanguage(e.target.value); setTargetClass(""); setBulkReview(false); }}>
               <option value="all">German and Kiswahili</option><option value="german">German only</option><option value="swahili">Kiswahili only</option>
             </select></Field>
             {audience === "class" ? <ClassSelector classes={audienceClasses} value={targetClass} onChange={(id) => { setTargetClass(id); setBulkReview(false); }} /> : null}
