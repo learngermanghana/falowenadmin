@@ -1,29 +1,20 @@
-// Restaurant items are from Ruth's FOOD&DRINKS=LIKE&DISLIKES and
-// Odering Food lesson PDFs. These photographs are representative illustrations
-// from Wikimedia Commons, NOT the source PDF photos or certified menu items.
-// Commons links are intentionally visible for attribution and replacement.
-// The teaching pack can later replace each external image with approved
-// local media without changing the card or scenario components.
+// Wali kuku and Ugali nyama use the lesson PDF photos (pages 4 and 7).
 const commons = (name) => "https://commons.wikimedia.org/wiki/Special:FilePath/" + encodeURIComponent(name) + "?width=640";
 const credit = (name) => "https://commons.wikimedia.org/wiki/File:" + encodeURIComponent(name);
 
 const PHOTO_CREDITS = Object.freeze({
-  "Plate of rice and chicken.jpg": "Halima Waziri",
   "Ugali and Samaki with some side of Sukumawiki.jpg": "Mvuli-Girl",
-  "African meal(ugali nyama).jpg": "Wikimedia Commons contributor",
   "Pilau Rice (Mixed Spiced Rice) & Beef.jpg": "Jordan808",
 });
 
 export const SWAHILI_DAY_SIX_FOOD_CARDS = Object.freeze([
   { id:"wali-kuku", sw:"Wali kuku", en:"Rice with chicken", category:"food",
-    image:commons("Plate of rice and chicken.jpg"),
-    credit:credit("Plate of rice and chicken.jpg"), author:PHOTO_CREDITS["Plate of rice and chicken.jpg"] },
+    image:"/images/swahili/day-6/wali-kuku.jpg" },
   { id:"ugali-samaki", sw:"Ugali samaki", en:"Ugali with fish", category:"food",
     image:commons("Ugali and Samaki with some side of Sukumawiki.jpg"),
     credit:credit("Ugali and Samaki with some side of Sukumawiki.jpg"),author:PHOTO_CREDITS["Ugali and Samaki with some side of Sukumawiki.jpg"] },
   { id:"ugali-nyama", sw:"Ugali nyama", en:"Ugali with meat", category:"food",
-    image:commons("African meal(ugali nyama).jpg"),
-    credit:credit("African meal(ugali nyama).jpg"),author:PHOTO_CREDITS["African meal(ugali nyama).jpg"] },
+    image:"/images/swahili/day-6/ugali-nyama.jpg" },
   { id:"pilau-nyama", sw:"Pilau nyama", en:"Pilau with meat",category:"food",
     image:commons("Pilau Rice (Mixed Spiced Rice) & Beef.jpg"),
     credit:credit("Pilau Rice (Mixed Spiced Rice) & Beef.jpg"),author:PHOTO_CREDITS["Pilau Rice (Mixed Spiced Rice) & Beef.jpg"] },
