@@ -61,3 +61,25 @@ test("export endpoint is owner-only and avoids storing PDF data in integration a
   assert.match(page, /Download payment agreement PDF/);
   assert.match(page, /Download PDF/);
 });
+
+
+test("certificate download uses the original signed PDF generator only for verified completion", () => {
+  const script = source("docs/apps-script/certificate-direct-export.gs");
+  const hub = source("api/integration-hub.js");
+  const browser = source("src/services/studentDocumentsService.js");
+  const page = source("src/pages/CommunicationWorkspacePage.jsx");
+
+  assert.match(script, /loadStudents_\(\).*loadScores_\(\)/s);
+  assert.match(script, /findCompletionFromRows_\(rows, resolvedCode, level\)/);
+  assert.match(script, /completion\.completed && completion\.passedAll/);
+  assert.match(script, /status\.passedAllRequired/);
+  assert.match(script, /generateCertificatePdf_\(/);
+  assert.match(script, /certificate\.getBytes\(\)/);
+  assert.match(script, /Student code and email do not match/);
+  assert.doesNotMatch(script, /MailApp\.sendEmail\(|sendOrQueueEmail_\(|PROCESSED_CERTS.*setProperty/);
+  assert.match(hub, /isCertificate \? communicationConfig\(\) : registrationConfig\(\)/);
+  assert.match(hub, /exportVerifiedCertificateFromScores/);
+  assert.match(browser, /"certificate"/);
+  assert.match(page, /Download certificate PDF/);
+  assert.match(page, /setCertificateLevel/);
+});
