@@ -37,6 +37,9 @@ const emailMessages = {
 
 function SubmissionReview({ submission, day, onReviewSaved }) {
   const reference = answerKeys[submission.lessonId];
+  const isLegacyDayFour = submission.lessonId === "swahili-day-4" && Number(submission.readingVersion || 1) < 2;
+  const readingReference = isLegacyDayFour ? reference.legacyReading : reference.reading;
+  const listeningReference = isLegacyDayFour ? null : reference.listening;
   const [review, setReview] = useState(null);
   const [status, setStatus] = useState("reviewed");
   const [score, setScore] = useState("");
@@ -119,14 +122,14 @@ function SubmissionReview({ submission, day, onReviewSaved }) {
       <section>
         <h4>Teil 3 · Kusoma</h4>
         <ol>
-          {Object.entries(reference.reading).map(([key, { prompt, answer }]) => (
+          {Object.entries(readingReference).map(([key, { prompt, answer }]) => (
             <li key={key}><strong>{prompt}</strong> {String(submission.readingAnswers?.[key] ?? "—")}<br /><small>Expected: {answer}</small></li>
           ))}
         </ol>
       </section>
-      {reference.listening && <section>
+      {listeningReference && <section>
         <h4>Teil 4 · Kusikiliza</h4>
-        <ol>{Object.entries(reference.listening).map(([key, { prompt, answer }]) => (
+        <ol>{Object.entries(listeningReference).map(([key, { prompt, answer }]) => (
           <li key={key}><strong>{prompt}</strong> {String(submission.listeningAnswers?.[key] ?? "—")}<br /><small>Expected: {answer}</small></li>
         ))}</ol>
       </section>}
