@@ -11,6 +11,7 @@ import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterActivityTimer, { usePresenterActivityTimer } from "./PresenterActivityTimer.jsx";
 import { SWAHILI_DAY_ONE_ADMIN_LESSON } from "../data/swahiliTeachingSlides.js";
+import { SWAHILI_DAY_TWO_ADMIN_LESSON } from "../data/swahiliDayTwoTeachingSlides.js";
 import { SWAHILI_DAY_SIX_ADMIN_LESSON } from "../data/swahiliDaySixTeachingSlides.js";
 import { SWAHILI_DAY_TEN_ADMIN_LESSON } from "../data/swahiliDayTenTeachingSlides.js";
 import "./TeachingSlidePresenter.css";
@@ -37,6 +38,11 @@ const daySixPresenterSlide = Object.freeze({
 });
 
 const dayFiveWorkbook = "https://www.falowen.app/swahili/day-5";
+const dayTwoPresenterSlide = Object.freeze({
+  ...SWAHILI_DAY_TWO_ADMIN_LESSON,
+  assignmentId: "SWAHILI-DAY-2",
+  workbookConnection: { workbookUrl: "https://www.falowen.app/campus/course/swahili/day-2", subtitle: "Continue Kiswahili Day 2 in Campus." },
+});
 const dayFivePresenterSlide = Object.freeze({
   ...SWAHILI_DAY_FIVE_ADMIN_LESSON,
   assignmentId: "SWAHILI-DAY-5",
@@ -116,11 +122,12 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
   const lessonLevel = groups.find(([, lessons]) => lessons.some(entry => entry.id === slideId))?.[0];
   const backToPack = lessonLevel ? courseRoot + "?level=" + lessonLevel : courseRoot;
   const isDayFive = slideId === SWAHILI_DAY_FIVE_ADMIN_LESSON.id;
+  const isDayTwo = slideId === SWAHILI_DAY_TWO_ADMIN_LESSON.id;
   const isDaySix = slideId === SWAHILI_DAY_SIX_ADMIN_LESSON.id;
   const isDayTen = slideId === SWAHILI_DAY_TEN_ADMIN_LESSON.id;
   const isB1Day28 = slideId === swahiliB1Day28.id;
   const existingPresenterSlide = isDaySix ? daySixPresenterSlide : presenterSlide;
-  const selectedPresenterSlide = slideId === SWAHILI_DAY_ELEVEN_ADMIN_LESSON.id ? dayElevenPresenterSlide : isB1Day28 ? b1Day28PresenterSlide : isDayTen ? dayTenPresenterSlide : isDayFive ? dayFivePresenterSlide : existingPresenterSlide;
+  const selectedPresenterSlide = slideId === SWAHILI_DAY_ELEVEN_ADMIN_LESSON.id ? dayElevenPresenterSlide : isB1Day28 ? b1Day28PresenterSlide : isDayTen ? dayTenPresenterSlide : isDayFive ? dayFivePresenterSlide : isDayTwo ? dayTwoPresenterSlide : existingPresenterSlide;
   const lesson = selectedPresenterSlide;
   const selectedWorkbook = selectedPresenterSlide.workbookConnection.workbookUrl;
   const stages = lesson.stages;
@@ -313,7 +320,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
       />
       {!focusMode && <footer className="swahili-a2-presenter__foot no-print">
         <a href={selectedWorkbook} target="_blank" rel="noreferrer">Open {lesson.day} learner workbook</a>
-        <span>{isB1Day28 ? "B1 · Kutunza Mazingira" : isDayTen ? "A1 · Sokoni" : isDayFive ? "A1 · Day 5 practice" : isDaySix ? "Restaurant lesson · Falowen Music and Radio" : "Music and recorded Hören will be linked after upload."}</span>
+        <span>{isB1Day28 ? "B1 · Kutunza Mazingira" : isDayTen ? "A1 · Sokoni" : isDayTwo ? "A1 · Salamu" : isDayFive ? "A1 · Day 5 practice" : isDaySix ? "Restaurant lesson · Falowen Music and Radio" : "Music and recorded Hören will be linked after upload."}</span>
       </footer>}
     </main>
     </div>

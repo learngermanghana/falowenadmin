@@ -7,11 +7,11 @@ export const SWAHILI_SONG_DRAFTS = Object.freeze([
     "level": "A1",
     "day": 2,
     "topic": "Salamu",
-    "title": "Salamu",
-    "lyrics": "[Verse 1]\nAsubuhi Asha anamwona Juma\nAnasema: Habari za asubuhi?\nJuma anajibu: Nzuri, asante\nWanasalimiana kwa furaha\n\n[Chorus]\nHabari yako, rafiki yangu?\nSikiza, sema tena\nHabari yako, rafiki yangu?\nLeo tunajifunza pamoja\n\n[Verse 2]\nAnasema: Habari za asubuhi?\nJuma anajibu: Nzuri, asante\nWanasalimiana kwa furaha\nAsubuhi Asha anamwona Juma\n\n[Final Chorus]\nHabari yako, rafiki yangu?\nSikiza, sema tena\nHabari yako, rafiki yangu?\nLeo tunajifunza pamoja\n\n[Outro]\nHabari yako, rafiki yangu?\nTutaonana tena",
+    "title": "Salamu, Salamu",
+    "lyrics": "[Intro]\nSalamu, salamu, salamu!\nTunasalimiana kila siku!\nSalamu, salamu, salamu!\nTunasalimiana kwa furaha!\n\n[Verse 1]\nHabari za asubuhi? Njema sana!\nUmeamkaje? Nimeamka salama!\nUmelalaje? Salama kabisa!\nHabari za asubuhi? Nzuri tu!\nHabari za mchana? Salama!\nUmeshindaje? Salama kabisa!\nHabari za jioni? Nzuri sana!\nSiku yako ilikuwaje? Njema kabisa!\n\n[Chorus]\nHabari yako? Nzuri!\nHabari zenu? Salama!\nHabari za leo? Njema!\nHabari za sasa? Nzuri tu!\nNzuri, salama, njema,\nSalama kabisa, njema sana!\nTunasalimiana kila siku,\nKwa heshima na furaha!\n\n[Verse 2]\nHujambo? Sijambo!\nHamjambo? Hatujambo!\nYeye hajambo? Hajambo!\nWao hawajambo? Hawajambo!\nHabari gani? Nzuri sana!\nNa wewe je? Salama!\nHabari za nyumbani? Njema!\nWote wazima? Wazima!\n\n[Verse 3]\nShikamoo mama! Marahaba!\nShikamoo baba! Marahaba!\nShikamoo mwalimu! Marahaba!\nShikamoo bibi! Marahaba!\nMambo? Poa!\nVipi? Safi!\nSasa? Freshi!\nNiaje? Shwari!\n\n[Final Chorus]\nHabari za asubuhi? Njema!\nHabari za mchana? Salama!\nHabari za jioni? Nzuri!\nHabari za leo? Salama kabisa!\nHujambo? Sijambo!\nHamjambo? Hatujambo!\nShikamoo! Marahaba!\nMambo? Poa!\nTunasalimiana kila siku,\nKwa heshima na furaha!\n\n[Outro]\nKiswahili, Kiswahili,\nTunajifunza kila siku!\nAsante sana, kwa heri!\nKwa heri, tutaonana!\nAsante sana, karibu tena!\nTutaonana tena!",
     "musicStyle": "Light East African acoustic Afro-pop, relaxed pulse, very clear Kiswahili pronunciation",
-    "status": "draft",
-    "existingAudio": false
+    "status": "published",
+    "existingAudio": true
   },
   {
     "id": "swahili-a1-day-03",
