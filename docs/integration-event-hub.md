@@ -80,3 +80,25 @@ The automatic Firestore lifecycle trigger needs only the Registration Docs web-a
 ```
 
 Falowen now defaults to the deployed Registration Docs web app at `https://script.google.com/macros/s/AKfycbxWsVmzNdDMXtUd0CwChFXR_Iy6lbb7oVVt8ao_6_8oYYFI9Te9Y7pD0FgIJTjAozYOQg/exec` in both Firebase and the Vercel Integration Hub. `REGISTRATION_DOCS_WEBHOOK_URL` remains available only as an override if the Apps Script is redeployed under a different URL. `REGISTRATION_DOCS_WEBHOOK_TOKEN` is optional; when absent, the existing `ANNOUNCEMENT_WEBHOOK_TOKEN` is used.
+
+## Exams Room Send to tutor — 4 November 2026
+
+The student explicitly clicks Send to tutor after AI marking. The learner's
+same-origin `/api/exam-writing/send-tutor` route forwards to the existing Admin
+Firebase `api` export. Its dedicated handler verifies the Firebase ID token
+(without granting staff access), saves the complete original letter and full
+AI response in `examTutorReviewQueue`, and submits one individual email to
+`learngermanghana@gmail.com` through the existing Announcement webhook.
+Student identity comes from the verified token; the client cannot select a
+recipient. AI feedback is practice feedback, not an official tutor mark.
+
+The handler requires the existing server-only Announcement URL and token.
+Stable content IDs, a delivery lease and per-user 20-request daily cap prevent
+ordinary repeated clicks from sending duplicate mail. Failed delivery remains
+saved and can be retried by clicking the button again. The same event ID is
+forwarded upstream; a network failure after upstream acceptance can still require
+provider-side deduplication. There is no scheduler, new function or automatic email
+on AI marking. Existing tutor questions, replies and review records remain.
+
+Deploy the Admin Firebase `api` and learner frontend/routing together. Verify
+one real delivery before retiring the review queue from staff navigation.
