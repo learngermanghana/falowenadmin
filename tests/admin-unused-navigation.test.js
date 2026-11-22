@@ -17,8 +17,7 @@ test('Admin navigation hides unused Lesson Video Studio and Exam Review', () => 
 
 test('Admin dashboard no longer promotes unused Exam Review shortcut', () => {
   assert.doesNotMatch(dashboard, /to="\/examTutorReviewQueue"/);
-  assert.match(dashboard, /label="Open Marking"/);
-  assert.match(dashboard, /label="Open Grammar Issues"/);
+  assert.doesNotMatch(dashboard, /label="Open Marking"|label="Open Grammar Issues"|title="Today’s teaching"/);
 });
 
 test('direct pages, permissions, data and review workflow routes remain intact', () => {
