@@ -209,17 +209,46 @@ ${reopenAction}      if (action === "complete") {
   }
 
   if (!source.includes("Automatic completion paused")) {
-    source = source.replace(
-      '{status === "scheduled" && session.rescheduleReason ? <small style={{ display: "block", marginTop: 6, color: "#475569" }}>Moved: {session.rescheduleReason}</small> : null}',
-      '{status === "scheduled" && session.rescheduleReason ? <small style={{ display: "block", marginTop: 6, color: "#475569" }}>Moved: {session.rescheduleReason}</small> : null}\n                    {status === "completed" && session.completionSource ? <small style={{ display: "block", marginTop: 6, color: "#166534" }}>Completed: {session.completionSource === "automatic" ? "automatically" : "manually"}</small> : null}\n                    {status !== "completed" && session.autoCompletionSuppressed ? <small style={{ display: "block", marginTop: 6, color: "#9a3412" }}>Automatic completion paused</small> : null}',
-    );
+    const modernMenu = '<details className="live-workspace-menu"><summary>More actions</summary>';
+    if (source.includes(modernMenu)) {
+      source = source.replace(modernMenu,
+        '{status === "completed" && session.completionSource ? <small style={{ color: "#166534" }}>Completed: {session.completionSource === "automatic" ? "automatically" : "manually"}</small> : null}\n                      {status !== "completed" && session.autoCompletionSuppressed ? <small style={{ color: "#9a3412" }}>Automatic completion paused</small> : null}\n                      ' + modernMenu);
+    } else {
+      source = source.replace(
+        '{status === "scheduled" && session.rescheduleReason ? <small style={{ display: "block", marginTop: 6, color: "#475569" }}>Moved: {session.rescheduleReason}</small> : null}',
+        '{status === "scheduled" && session.rescheduleReason ? <small style={{ display: "block", marginTop: 6, color: "#475569" }}>Moved: {session.rescheduleReason}</small> : null}\n                    {status === "completed" && session.completionSource ? <small style={{ display: "block", marginTop: 6, color: "#166534" }}>Completed: {session.completionSource === "automatic" ? "automatically" : "manually"}</small> : null}\n                    {status !== "completed" && session.autoCompletionSuppressed ? <small style={{ display: "block", marginTop: 6, color: "#9a3412" }}>Automatic completion paused</small> : null}',
+      );
+    }
   }
 
   if (!source.includes('handleSessionAction(session, "undo-completion")')) {
-    source = source.replace(
-      '<button type="button" disabled={busy || contentLocked} onClick={() => handleSessionAction(session, "complete")}>Complete</button>',
-      '{status === "completed" ? (\n                      <button type="button" disabled={busy} onClick={() => handleSessionAction(session, "undo-completion")}>Undo completion</button>\n                    ) : (\n                      <>\n                        <button type="button" disabled={busy || contentLocked} onClick={() => handleSessionAction(session, "complete")}>Complete now</button>\n                        {session.autoCompletionSuppressed ? <button type="button" disabled={busy} onClick={() => handleSessionAction(session, "allow-auto-completion")}>Allow auto-complete</button> : null}\n                      </>\n                    )}',
-    );
+    const modernActions = [
+      '                      {status === "completed"',
+      '                        ? <button type="button" disabled={busy} onClick={() => handleSessionAction(session, "reopen")}>Reopen session</button>',
+      '                        : <button type="button" disabled={busy || contentLocked} onClick={() => handleSessionAction(session, "complete")}>Mark completed</button>}',
+    ].join("\n");
+    const updatedActions = [
+      '                      {status === "completed" ? (',
+      '                        <>',
+      '                          <button type="button" disabled={busy} onClick={() => handleSessionAction(session, "reopen")}>Reopen session</button>',
+      '                          <button type="button" disabled={busy} onClick={() => handleSessionAction(session, "undo-completion")}>Undo completion</button>',
+      '                        </>',
+      '                      ) : (',
+      '                        <>',
+      '                          <button type="button" disabled={busy || contentLocked} onClick={() => handleSessionAction(session, "complete")}>Mark completed</button>',
+      '                          {session.autoCompletionSuppressed ? <button type="button" disabled={busy} onClick={() => handleSessionAction(session, "allow-auto-completion")}>Allow auto-complete</button> : null}',
+      '                        </>',
+      '                      )}',
+    ].join("\n");
+    if (source.includes(modernActions)) {
+      source = source.replace(modernActions, updatedActions);
+    } else {
+      // The classic presenter keeps its own actions and layout.
+      source = source.replace(
+        '<button type="button" disabled={busy || contentLocked} onClick={() => handleSessionAction(session, "complete")}>Complete</button>',
+        '{status === "completed" ? (\n                      <button type="button" disabled={busy} onClick={() => handleSessionAction(session, "undo-completion")}>Undo completion</button>\n                    ) : (\n                      <>\n                        <button type="button" disabled={busy || contentLocked} onClick={() => handleSessionAction(session, "complete")}>Complete now</button>\n                        {session.autoCompletionSuppressed ? <button type="button" disabled={busy} onClick={() => handleSessionAction(session, "allow-auto-completion")}>Allow auto-complete</button> : null}\n                      </>\n                    )}',
+      );
+    }
   }
 
   const curriculumSyncFeedback = `        const curriculumSyncError = String(next.curriculumSync?.error || "").trim();
