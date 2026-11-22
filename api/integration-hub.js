@@ -215,9 +215,11 @@ async function dispatchScoreRows({ rows, eventId, user }) {
 
 async function dispatchCommunicationRows({ rows, eventId, user }) {
   const config = communicationConfig();
-  const safeRows = validateCommunicationRows(rows).map((row) => ({
+  // A batch has one audit event but each sheet row needs its own stable
+  // deduplication key. Replays must not append or mail rows twice.
+  const safeRows = validateCommunicationRows(rows).map((row, index) => ({
     ...row,
-    event_id: eventId,
+    event_id: rows.length === 1 ? eventId : `${eventId}:row_${index + 1}`,
   }));
   const payload = {
     ...(config.token ? { token: config.token } : {}),
@@ -243,13 +245,23 @@ async function dispatchCommunicationRows({ rows, eventId, user }) {
 
 async function dispatchRegistrationRows({ rows, eventId, user, type }) {
   const config = registrationConfig();
-  const safeRows = validateRegistrationRows(rows).map((row) => ({
+  const isSheetBackedRequest = type === "enrollment.request";
+  if (isSheetBackedRequest && rows.length !== 1) {
+    throw Object.assign(new Error("Select exactly one student for a document request."), { statusCode: 400 });
+  }
+  const safeRows = validateRegistrationRows(rows).map((row) => isSheetBackedRequest ? {
+    // Manual document requests are read-only with respect to payment values.
+    // The Student Docs script must validate the canonical students sheet.
+    student_code: String(row.student_code || row.studentCode || row.studentcode || "").trim(),
+    email: String(row.email || row.studentEmail || "").trim(),
+    event_id: eventId,
+  } : {
     ...row,
     event_id: eventId,
-  }));
+  });
   const payload = {
     ...(config.token ? { token: config.token } : {}),
-    action: "processRegistrationLifecycleEvent",
+    action: isSheetBackedRequest ? "requestEnrollmentPackFromSheet" : "processRegistrationLifecycleEvent",
     event_id: eventId,
     type,
     source: "falowen-admin",

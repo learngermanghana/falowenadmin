@@ -311,6 +311,16 @@ export function buildAnnouncementRow(input = {}) {
     email: normalize(input.email),
     attach_certificate: boolToSheetValue(Boolean(input.attachCertificate)),
     cert_level: inferCertificateLevel(input),
+    // The Announcements Apps Script owns the branded HTML/email layout.
+    // Ordinary Admin messages must not inherit unrelated progress/review cards.
+    email_type: normalize(input.emailType || input.email_type) || "general",
+    subject: normalize(input.subject || input.topic),
+    show_progress: boolToSheetValue(input.showProgress === true),
+    show_review: boolToSheetValue(input.showReview === true),
+    show_app_button: boolToSheetValue(input.showAppButton !== false),
+    show_class: boolToSheetValue(input.showClass !== false),
+    show_date: boolToSheetValue(input.showDate !== false),
+    link_label: normalize(input.linkLabel || input.link_label),
     delivery_mode: deliveryMode,
     allow_bcc_fallback: boolToSheetValue(deliveryMode !== "individual" && canUseBccFallback(input)),
   };
@@ -428,6 +438,44 @@ export async function saveAnnouncementRow(input = {}) {
   }
 
   return receipt;
+}
+
+// One verified webhook request for a multi-class broadcast. Sending each
+// class in parallel can contend on the single Apps Script lock and retry
+// individual classes after only part of the audience was accepted.
+export async function saveAnnouncementRows(inputs = []) {
+  if (!Array.isArray(inputs) || !inputs.length) {
+    throw new Error("Select at least one announcement audience.");
+  }
+  if (inputs.length === 1) {
+    const receipt = await saveAnnouncementRow(inputs[0]);
+    return { acceptedRows: 1, requestedRows: 1, receipts: [receipt] };
+  }
+
+  const rows = inputs.map(buildAnnouncementRow);
+  for (let index = 0; index < inputs.length; index += 1) {
+    await assertNotRecentDuplicate(inputs[index], rows[index]);
+  }
+  const result = await dispatchIntegrationEvent({
+    type: "communication.send",
+    rows,
+    metadata: { source: "communication", audienceGroups: rows.length },
+  });
+  const upstream = result.receipt || {};
+  const receivedCount = Number(upstream.count);
+  const acceptedRows = Number.isFinite(receivedCount) ? receivedCount : rows.length;
+  if (acceptedRows < rows.length && !upstream.duplicate) {
+    throw new Error(`The announcement sheet accepted only ${acceptedRows} of ${rows.length} class rows. Review System Events before retrying.`);
+  }
+
+  // A history failure does not turn an already accepted webhook into a
+  // resendable failure. Per-class records remain useful for duplicate checks.
+  await Promise.allSettled(inputs.map((input, index) =>
+    writeCommunicationHistory(input, rows[index], {
+      sheet: { success: true, unverified: false },
+    }, { status: "queued" })
+  ));
+  return { acceptedRows: rows.length, requestedRows: rows.length, integrationEventId: result.event?.id || "" };
 }
 
 export async function saveAnnouncementBatch({ input = {}, recipients = [], recipientFilter = "all", session = null } = {}) {

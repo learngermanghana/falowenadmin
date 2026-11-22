@@ -444,7 +444,7 @@ test("maintained Announcement Apps Script enforces event-level idempotency", () 
   assert.match(script, /body\.event_id/);
   assert.match(script, /idempotency_key/);
   assert.match(script, /announcementEventExists_/);
-  assert.match(script, /duplicate: true/);
+  assert.match(script, /duplicate: inserted === 0 && duplicates > 0/);
   assert.match(script, /event_id/);
 });
 

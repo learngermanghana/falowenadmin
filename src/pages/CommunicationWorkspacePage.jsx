@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { listClasses } from "../services/classesService.js";
 import { listAllStudents } from "../services/studentsService.js";
-import { saveAnnouncementRow } from "../services/communicationService.js";
+import { saveAnnouncementRows } from "../services/communicationService.js";
+import { dispatchIntegrationEvent } from "../services/integrationEventService.js";
 import { useToast } from "../context/ToastContext.jsx";
 import TargetedCommunicationPanel from "../components/TargetedCommunicationPanel.jsx";
 import CommunicationHistoryPanel from "../components/CommunicationHistoryPanel.jsx";
@@ -77,9 +78,6 @@ const formatDate = (value) => {
   const date = new Date((clean(value).slice(0, 10) || TODAY()) + "T12:00:00Z");
   return Number.isNaN(date.getTime()) ? clean(value) : date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Accra" });
 };
-function announcementAccepted(receipt) {
-  return Boolean(receipt?.sheet?.success);
-}
 function newMessage() {
   return { subject: "", body: "", link: "", date: TODAY() };
 }
@@ -217,14 +215,18 @@ export default function CommunicationWorkspacePage() {
     setBusy(true);
     setReceipt(null);
     try {
-      const results = await Promise.allSettled(rows.map((row) => saveAnnouncementRow({
-        announcement: row.body, topic: row.subject, date: row.date, link: row.link,
-        className: row.className, email: row.email || "", studentId: row.studentId || "",
+      const result = await saveAnnouncementRows(rows.map((row) => ({
+        announcement: row.body, topic: row.subject, subject: row.subject,
+        date: row.date, link: row.link, className: row.className,
+        email: row.email || "", studentId: row.studentId || "",
         studentName: row.studentName || "", deliveryMode: row.email ? "individual" : "auto",
+        emailType: "general", showProgress: false, showReview: false,
+        showAppButton: true,
       })));
-      const succeeded = results.filter((entry) => entry.status === "fulfilled" && announcementAccepted(entry.value)).length;
-      const failed = results.length - succeeded;
-      const resultText = failed ? succeeded + " accepted; " + failed + " failed. Check Communication history before retrying." : successText;
+      const failed = result.requestedRows - result.acceptedRows;
+      const resultText = failed
+        ? result.acceptedRows + " accepted; " + failed + " need review in System Events."
+        : successText;
       setReceipt({ error: failed > 0, text: resultText });
       if (failed) toast.error(resultText);
       else toast.success(resultText);
@@ -294,6 +296,38 @@ export default function CommunicationWorkspacePage() {
   }
 
   const docStudent = students.find((s) => studentId(s) === documentStudentId);
+  async function requestOfficialEnrollmentPack() {
+    if (!docStudent) { toast.error("Select a student from the roster."); return; }
+    const code = clean(docStudent.studentCode || docStudent.student_code || docStudent.studentcode);
+    const email = studentEmail(docStudent);
+    if (!code && !email) { toast.error("The student needs a student code or email."); return; }
+    if (!window.confirm("Request the official enrollment pack for " + studentName(docStudent) + "? The Student Docs worker will verify payment in the students sheet and will not resend an already issued pack.")) return;
+
+    setBusy(true);
+    setReceipt(null);
+    try {
+      const response = await dispatchIntegrationEvent({
+        type: "enrollment.request",
+        row: { student_code: code, email },
+        metadata: { source: "communication-documents", studentId: studentId(docStudent) },
+      });
+      const outcome = clean(response.receipt?.result || "PROCESSED").toUpperCase();
+      const message = outcome === "ALREADY_SENT"
+        ? "This enrollment pack was already issued; no duplicate was sent."
+        : outcome === "ORGANISATION_MANAGED"
+          ? "Organisation-funded enrollment is managed separately by Falowen Admin; no document was sent."
+          : "Student Docs accepted the request for " + studentName(docStudent) + ". Check System Events and the Student Docs log for the final delivery status.";
+      setReceipt({ text: message });
+      toast.success(message);
+    } catch (error) {
+      const message = error.message || "The Student Docs request failed.";
+      setReceipt({ error: true, text: message });
+      toast.error(message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function chooseDocumentKind(kind, student = docStudent) {
     setDocumentKind(kind);
     const name = student ? studentName(student) : "[Student name]";
@@ -403,7 +437,7 @@ export default function CommunicationWorkspacePage() {
     {tab === "documents" ? <div className="cw-grid">
       <div className="cw-panel"><span className="cw-step">01 / Document</span><h2>Create a school document</h2><p>Prepare a Falowen letterhead document. All official claims require your review before signing.</p>
         <div className="cw-two-fields"><Field label="Document type"><select value={documentKind} onChange={(e) => chooseDocumentKind(e.target.value)}>
-          <option value="general">Official letter</option><option value="enrollment">Student enrollment letter</option><option value="progress">Course progress letter</option><option value="invitation">Student invitation</option>
+          <option value="general">Official letter</option><option value="enrollment">Enrollment letter draft</option><option value="progress">Course progress letter</option><option value="invitation">Student invitation</option>
         </select></Field>
           <Field label="Student (optional)"><select value={documentStudentId} onChange={(e) => {
             setDocumentStudentId(e.target.value);
@@ -417,7 +451,15 @@ export default function CommunicationWorkspacePage() {
         <Field label="Signatory / office"><input value={documentSignatory} onChange={(e) => setDocumentSignatory(e.target.value)} /></Field>
         <div className="cw-document-actions"><button type="button" className="cw-primary" onClick={downloadWord}>Download Word (.doc)</button>
           <button type="button" className="cw-secondary" onClick={printDocument}>Print / Save PDF</button></div>
-        <small className="cw-muted">These files are generated in your browser and are not emailed or recorded as issued certificates. Verify enrolment, scores, dates and signatures before official use.</small>
+        {documentKind === "enrollment" ? <div className="cw-section-rule">
+          <h3>Official enrollment pack from the students sheet</h3>
+          <p className="cw-muted">The Student Docs Apps Script uses the authoritative students sheet to verify recorded payment and generate the signed enrollment documents. It does not use the editable draft above. Requests for unpaid students are rejected; already issued packs are not emailed again.</p>
+          <button type="button" className="cw-secondary" disabled={busy || !docStudent} onClick={requestOfficialEnrollmentPack}>
+            {busy ? "Requesting…" : "Request official enrollment pack"}
+          </button>
+        </div> : null}
+        <ReceiptNote result={receipt} />
+        <small className="cw-muted">Word/PDF drafts are generated in your browser and are not emailed or recorded as issued certificates. Verify enrolment, scores, dates and signatures before official use.</small>
       </div>
       <aside className="cw-sidebar"><div className="cw-document-preview"><div className="cw-letter-brand">Falowen</div><small>Learn Language Education Academy</small><hr />
         <div className="cw-letter-meta">{formatDate(TODAY())}{documentReference ? " · " + documentReference : ""}</div>

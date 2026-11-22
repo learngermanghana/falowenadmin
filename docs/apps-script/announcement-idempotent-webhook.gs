@@ -1,10 +1,11 @@
 /**
  * Falowen Announcement webhook with event-level idempotency.
  *
- * Add this as the deployed Apps Script Web App behind ANNOUNCEMENT_WEBHOOK_URL.
- * It keeps the existing announcement columns and adds event_id when needed.
+ * Reference webhook adapter for the full Announcements/Certificates worker.
+ * Do NOT replace the production 5-minute runner, certificate functions or
+ * branded templates with this abbreviated example.
  *
- * Required Script Property (optional):
+ * Required Script Property:
  *   ANNOUNCEMENT_WEBHOOK_TOKEN
  */
 function doPost(e) {
@@ -16,7 +17,7 @@ function doPost(e) {
     const configuredToken = String(
       PropertiesService.getScriptProperties().getProperty("ANNOUNCEMENT_WEBHOOK_TOKEN") || ""
     ).trim();
-    if (configuredToken && String(body.token || "") !== configuredToken) {
+    if (!configuredToken || String(body.token || "") !== configuredToken) {
       return announcementJson_({ ok: false, error: "Unauthorized" });
     }
 
@@ -44,25 +45,21 @@ function doPost(e) {
       "email",
       "attach_certificate",
       "cert_level",
-      "event_id",
+      "event_id", "email_type", "subject", "show_progress",
+      "show_review", "show_app_button", "show_class", "show_date",
+      "attendance_json", "link_label",
     ]);
 
-    if (eventId && announcementEventExists_(sheet, headerMap.event_id, eventId)) {
-      return announcementJson_({
-        ok: true,
-        count: 0,
-        duplicate: true,
-        event_id: eventId,
-      });
-    }
-
     let inserted = 0;
-    rows.forEach(function(row) {
-      const rowEventId = String(row.event_id || row.idempotency_key || eventId || "").trim();
+    let duplicates = 0;
+    rows.forEach(function(row, index) {
+      const rowEventId = String(row.event_id || row.idempotency_key ||
+        (eventId && (rows.length === 1 ? eventId : eventId + ":row_" + (index + 1))) || "").trim();
 
       // A batch may contain repeated rows with the same stable event. Skip any
       // event that is already present, including one inserted earlier in this batch.
       if (rowEventId && announcementEventExists_(sheet, headerMap.event_id, rowEventId)) {
+        duplicates += 1;
         return;
       }
 
@@ -76,6 +73,15 @@ function doPost(e) {
       values[headerMap.attach_certificate - 1] = row.attach_certificate || "FALSE";
       values[headerMap.cert_level - 1] = row.cert_level || "";
       values[headerMap.event_id - 1] = rowEventId;
+      values[headerMap.email_type - 1] = row.email_type || "general";
+      values[headerMap.subject - 1] = row.subject || row.topic || "";
+      values[headerMap.show_progress - 1] = row.show_progress ?? "FALSE";
+      values[headerMap.show_review - 1] = row.show_review ?? "FALSE";
+      values[headerMap.show_app_button - 1] = row.show_app_button ?? "TRUE";
+      values[headerMap.show_class - 1] = row.show_class ?? "TRUE";
+      values[headerMap.show_date - 1] = row.show_date ?? "TRUE";
+      values[headerMap.attendance_json - 1] = row.attendance_json || "";
+      values[headerMap.link_label - 1] = row.link_label || "";
 
       sheet.appendRow(values);
       inserted += 1;
@@ -84,7 +90,8 @@ function doPost(e) {
     return announcementJson_({
       ok: true,
       count: inserted,
-      duplicate: inserted === 0 && Boolean(eventId),
+      duplicate: inserted === 0 && duplicates > 0,
+      duplicates: duplicates,
       event_id: eventId,
     });
   } catch (error) {
@@ -103,7 +110,7 @@ function announcementTargetSheet_(spreadsheet, body) {
     }) || null;
   }
   if (body.sheet_name) return spreadsheet.getSheetByName(String(body.sheet_name));
-  return spreadsheet.getActiveSheet();
+  return spreadsheet.getSheetByName("Announcements");
 }
 
 function announcementEnsureHeaders_(sheet, requiredHeaders) {
