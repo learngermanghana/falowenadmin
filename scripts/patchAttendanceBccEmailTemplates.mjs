@@ -8,8 +8,10 @@ const importAnchor = 'import { buildManualDateOverridePatch } from "../utils/att
 const importLine = 'import AttendanceBccEmailPanel from "../components/AttendanceBccEmailPanel.jsx";\n';
 
 if (!source.includes(importLine)) {
-  if (!source.includes(importAnchor)) throw new Error("Could not find attendance import anchor");
-  source = source.replace(importAnchor, `${importAnchor}${importLine}`);
+  const modernAnchor = 'import { useAuth } from "../context/AuthContext";\n';
+  const availableAnchor = source.includes(importAnchor) ? importAnchor : modernAnchor;
+  if (!source.includes(availableAnchor)) throw new Error("Could not find attendance import anchor");
+  source = source.replace(availableAnchor, availableAnchor + importLine);
   changed = true;
 }
 
@@ -29,8 +31,12 @@ const panelMarkup = `        <AttendanceBccEmailPanel
 `;
 
 if (!source.includes("<AttendanceBccEmailPanel")) {
-  if (!source.includes(studentsCardAnchor)) throw new Error("Could not find Students card anchor in attendance page");
-  source = source.replace(studentsCardAnchor, `${panelMarkup}${studentsCardAnchor}`);
+  // The attendance redesign moved the roster to a styled session-attendance card.
+  // Keep the BCC backup tool inside the selected-session branch in either layout.
+  const modernStudentsCard = '        <article className="card session-attendance__card">\n          <div className="session-attendance__header"><h2>Students</h2>';
+  const anchor = source.includes(studentsCardAnchor) ? studentsCardAnchor : modernStudentsCard;
+  if (!source.includes(anchor)) throw new Error("Could not find Students card anchor in attendance page");
+  source = source.replace(anchor, `${panelMarkup}${anchor}`);
   changed = true;
 }
 
