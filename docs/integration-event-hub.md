@@ -100,3 +100,19 @@ The Apps Script projects are not stored or deployed by Vercel/GitHub. When apply
 - Confirm the health panel shows both integration endpoints configured. A 200 response from the gateway or a merged PR alone does **not** verify a deployed Apps Script or delivered email.
 
 This change does not add timers or polls, and it keeps receipts under the verified Admin payment ledger instead of the Student Docs sheet.
+
+
+## Direct PDF downloads in Communication → Documents
+
+- **Download PDF** creates a genuine, multi-page A4 PDF locally from the editable letter fields without a browser print dialog or new package dependency. It carries a conspicuous draft/review notice. It does **not** verify payment, log issuance or email anyone.
+- **Download enrollment PDF** and **Download payment agreement PDF** (shown for the enrollment document type after choosing a student) call authenticated `POST /api/integrations/export`. Vercel verifies the signed-in Falowen administrator, passes only the student code/email and chosen document type to Student Docs, and returns the generated PDF bytes directly to the browser. Neither the file nor its data is copied to Firestore event logs. No email is sent and no `EnrollmentSent` flag is changed.
+- Student Docs **must first be upgraded and redeployed** using the *full* Student Docs Apps Script (`Falowen_Student_Docs_Direct_PDF_Export.gs.txt` in the handoff), not by replacing the existing project with the short `docs/apps-script/registration-lifecycle-webhook.gs` reference. The export action is `exportEnrollmentDocumentFromSheet`, returning `mime_type`, `file_name` and `data_base64`. It reuses the existing `buildEnrollmentPdf_` and `buildAgreementPdf_` templates, image assets, and signature/retention blocks.
+- Payment must be positive on the canonical `students` sheet, and the provided student code/email must match the row. Organisation-funded enrollments still use their separate workflow. Unpaid and mismatched records are rejected.
+- The server and Apps Script cap PDF sizes to protect response limits. Do not log the private token or PDF payload, or use this endpoint for bulk exports. For larger files, use the Student Docs Drive/export workflow instead.
+
+### Safe acceptance checks
+
+1. Download a two-page general letter: it should be an A4 `.pdf` opened by a normal PDF reader, with a draft label and no print dialog.
+2. After the Student Docs script is deployed, select a **paid** test student and download both official PDFs. Compare logo, content, dates, reference and signature with the existing Student Docs output. Verify that no emails or send-log entries were created.
+3. Verify rejection for an unpaid student, an organisation-funded student, a code/email mismatch and an unauthorized admin login.
+4. Confirm the pre-existing **Request official enrollment pack** button still uses its separate send/dedupe flow.
