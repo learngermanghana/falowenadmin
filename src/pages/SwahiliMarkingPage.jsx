@@ -37,6 +37,8 @@ const emailMessages = {
 
 function SubmissionReview({ submission, day, onReviewSaved }) {
   const reference = answerKeys[submission.lessonId];
+  const readingReference = submission.lessonId === "swahili-day-7" && Number(submission.readingVersion || 1) < 2
+    ? reference.legacyReading : reference.reading;
   const [review, setReview] = useState(null);
   const [status, setStatus] = useState("reviewed");
   const [score, setScore] = useState("");
@@ -119,7 +121,7 @@ function SubmissionReview({ submission, day, onReviewSaved }) {
       <section>
         <h4>Teil 3 · Kusoma</h4>
         <ol>
-          {Object.entries(reference.reading).map(([key, { prompt, answer }]) => (
+          {Object.entries(readingReference).map(([key, { prompt, answer }]) => (
             <li key={key}><strong>{prompt}</strong> {String(submission.readingAnswers?.[key] ?? "—")}<br /><small>Expected: {answer}</small></li>
           ))}
         </ol>

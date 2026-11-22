@@ -3,6 +3,17 @@ const answerKeys = require("./swahili-answers.json");
 const { createHash } = require("node:crypto");
 const { resolveAnnouncementConfig, postAnnouncementRow } = require("./finalMockResultEmails");
 
+function answerReferenceForSwahiliSubmission(lessonId, readingVersion) {
+  const entry = answerKeys[lessonId];
+  if (!entry) return null;
+  // Day 7 was updated from a three-question picnic passage to a five-question
+  // shopping dialogue. Preserve the earlier tutor key for older submissions.
+  const { legacyReading, ...reference } = entry;
+  return legacyReading && Number(readingVersion || 1) < 2
+    ? { ...reference, version: 1, reading: legacyReading }
+    : reference;
+}
+
 const PASS_MARK = 60;
 const lessonTitles = { ...Object.fromEntries(Object.entries(answerKeys).filter(([, key]) => key.title).map(([id, key]) => [id, key.title])), "swahili-day-11": "Dukani", "swahili-b1-day-28": "Kutunza Mazingira katika Maisha ya Kila Siku", "swahili-day-1": "Alfabeti, sauti na matamshi", "swahili-day-6": "Mgahawani" };
 
@@ -56,7 +67,7 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
           return null;
         }
         if (delivery.exists) return delivery.data();
-        tx.set(snapshot.ref, { ...(b1 ? {} : { answerReference: answerKeys[review.lessonId] }), sheetDelivery: "pending", emailDelivery: "pending" }, { merge: true });
+        tx.set(snapshot.ref, { ...(b1 ? {} : { answerReference: answerReferenceForSwahiliSubmission(review.lessonId, submission.data()?.readingVersion) }), sheetDelivery: "pending", emailDelivery: "pending" }, { merge: true });
         tx.set(scoreRef, {
           program: "swahili", language: "swahili", studentId: uid, studentCode, studentcode: studentCode,
           name: student.name || "", assignment, assignmentId: review.lessonId,
@@ -117,4 +128,4 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
   };
 }
 
-module.exports = { createSwahiliResultWorker };
+module.exports = { createSwahiliResultWorker, answerReferenceForSwahiliSubmission };
