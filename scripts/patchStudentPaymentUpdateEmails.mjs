@@ -146,7 +146,6 @@ paymentSource = replaceOnce(
     PAID_FIELDS,`,
   `    ACCOUNT_URL,
     PAID_FIELDS,
-    applyStoredPaymentBaseline,
     loadStudentClass,
     resolveClassWebhookConfig,
     resolveStudentWebhookConfig,`,
