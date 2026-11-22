@@ -433,7 +433,11 @@ async function processStudentPaymentUpdate({
     // Leave an actionable audit state instead of silently dropping an
     // impossible course-total receipt. Never rewrite historical paid values
     // or send a misleading email from a Firestore trigger.
-    await db.collection("studentPaymentUpdateEmailStates").doc(stateId(studentId)).set({
+    // Reconciliation is an audit concern, not an email-delivery state. Never
+    // replace a previously sent receipt's status/reference/totals: retries must
+    // continue to dedupe against that durable delivered payment.
+    const reconciliationId = stateId([studentId, change.reference || `${change.totalPaid}:${change.amount}`].join("::"));
+    await db.collection("studentPaymentUpdateEmailReconciliations").doc(reconciliationId).set({
       studentId,
       status: "reconciliation_required",
       reason: "tuition_total_exceeds_fee",

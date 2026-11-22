@@ -211,6 +211,78 @@ test("second half of a two-step paid/balance sync is suppressed", () => {
   assert.equal(isLikelySecondHalfOfSameSync(state, change, now), true);
 });
 
+test("reconciliation preserves sent receipt deduplication and stays visible after delayed replay", async () => {
+  const docs = new Map();
+  const reference = (collectionName, id) => {
+    const key = `${collectionName}/${id}`;
+    return {
+      get: async () => ({ exists: docs.has(key), data: () => docs.get(key) }),
+      set: async (value, options = {}) => {
+        docs.set(key, options.merge ? { ...(docs.get(key) || {}), ...value } : value);
+      },
+    };
+  };
+  const db = {
+    collection: name => ({ doc: id => reference(name, id) }),
+    runTransaction: async work => work({
+      get: ref => ref.get(),
+      set: (ref, value, options) => ref.set(value, options),
+    }),
+  };
+  const admin = { firestore: { FieldValue: { serverTimestamp: () => "2026-11-22T12:00:00Z" } } };
+  const before = { paid: 0, balanceDue: 3000 };
+  const first = {
+    name: "Ama", email: "ama@example.com", tuitionFee: 3000,
+    paid: 2000, balanceDue: 1000, lastPaymentReference: "FAL-first",
+    lastPaymentAmount: 2000, lastPaymentProvider: "Verified manual",
+  };
+  const overcredit = {
+    ...first, paid: 5020, balanceDue: 0,
+    lastPaymentReference: "FAL-over", lastPaymentAmount: 3020,
+  };
+  const event = (previous, current, id) => ({
+    id, params: { studentId: "learner-1" },
+    data: { before: { data: () => previous }, after: { data: () => current } },
+  });
+  const sent = [];
+  const options = {
+    db, admin,
+    runtimeConfig: { communication: { announcement_webhook_url: "https://example.com/mail" } },
+    fetchImpl: async (_url, request) => {
+      sent.push(JSON.parse(request.body).row);
+      return { ok: true, json: async () => ({ ok: true, count: 1 }) };
+    },
+  };
+  const { processStudentPaymentUpdate } = require("../functions/studentPaymentUpdateEmails.js");
+  assert.equal((await processStudentPaymentUpdate({
+    ...options, event: event(before, first, "first"), now: new Date("2026-11-20T12:00:00Z"),
+  })).sent, true);
+  const delivery = [...docs.entries()].find(([key]) => key.startsWith("studentPaymentUpdateEmailStates/"));
+  assert.ok(delivery);
+  assert.equal(delivery[1].status, "sent");
+  assert.equal(delivery[1].lastReference, "FAL-first");
+
+  const reconciliation = await processStudentPaymentUpdate({
+    ...options, event: event(first, overcredit, "over"), now: new Date("2026-11-21T12:00:00Z"),
+  });
+  assert.equal(reconciliation.sent, false);
+  assert.equal(reconciliation.reason, "tuition_total_exceeds_fee_reconcile_required");
+  assert.equal(docs.get(delivery[0]).status, "sent");
+  assert.equal(docs.get(delivery[0]).lastReference, "FAL-first");
+  const audit = [...docs.entries()].find(([key]) => key.startsWith("studentPaymentUpdateEmailReconciliations/"));
+  assert.ok(audit);
+  assert.equal(audit[1].status, "reconciliation_required");
+  assert.equal(audit[1].pendingReference, "FAL-over");
+
+  const replay = await processStudentPaymentUpdate({
+    ...options, event: event(before, first, "first-retry"), now: new Date("2026-11-22T12:00:00Z"),
+  });
+  assert.equal(replay.sent, false);
+  assert.equal(replay.reason, "duplicate_reference");
+  assert.equal(sent.length, 1);
+  assert.equal(docs.get(audit[0]).pendingReference, "FAL-over");
+});
+
 test("webhook config uses the shared announcement webhook as fallback", () => {
   const config = resolveWebhookConfig({
     communication: {
