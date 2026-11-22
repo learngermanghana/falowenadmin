@@ -371,6 +371,7 @@ async function reservePaymentEmail({ db, admin, studentId, change, eventId = "",
       pendingBalance: change.balance,
       pendingAmount: change.amount,
       pendingReference: change.reference,
+      expectedTuitionFee: money(after.tuitionFee),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       ...(snap.exists ? {} : { createdAt: admin.firestore.FieldValue.serverTimestamp() }),
     }, { merge: true });
