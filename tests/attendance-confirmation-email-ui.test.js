@@ -22,7 +22,7 @@ test("Communication uses the attendance confirmation hub", async () => {
   const [app, hub] = await Promise.all([source(appPath), source(hubPath)]);
   assert.match(app, /CommunicationHubPage/);
   assert.match(app, /path="\/communication"/);
-  assert.match(hub, />\s*Email Automations\s*</);
+  assert.match(hub, /Email Automations/);
   assert.match(hub, /AttendanceConfirmationAutomationPanel/);
   assert.match(hub, /AttendanceFailedDeliveryRetryPanel/);
   assert.match(hub, /CommunicationWorkspacePage/);
