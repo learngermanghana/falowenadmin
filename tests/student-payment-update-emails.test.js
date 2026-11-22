@@ -128,6 +128,40 @@ test("announcement row targets only the student's email", () => {
   assert.equal(row.cert_level, "A1");
 });
 
+
+test("individual verified receipt payload uses the current transaction, not cumulative paid", () => {
+  const before = { paid: 2000, balanceDue: 1000, lastPaymentReference: "FAL-first" };
+  const after = {
+    name: "Rashid", studentCode: "RASHID-198", email: "rashid@example.com",
+    level: "A1", className: "A1 Berlin Klasse", tuitionFee: 3000,
+    paid: 3000, balanceDue: 0, lastPaymentAmount: 1000,
+    lastPaymentProvider: "Paystack", lastPaymentReference: "FAL-final",
+  };
+  const change = detectPaymentChange(before, after);
+  const row = rowForPaymentUpdate({ student: after, change, now: new Date("2026-11-22T12:00:00Z") });
+  const receipt = JSON.parse(row.receipt_payload_json);
+  assert.equal(row.email_type, "payment_update");
+  assert.match(row.subject, /payment receipt/i);
+  assert.equal(receipt.reference, "FAL-final");
+  assert.equal(receipt.amountReceived, 1000);
+  assert.equal(receipt.totalPaid, 3000);
+  assert.equal(receipt.balanceRemaining, 0);
+  assert.equal(receipt.studentCode, "RASHID-198");
+  assert.equal(receipt.paymentMethod, "Paystack");
+});
+
+test("receipt does not invent a zero balance when the student's balance is missing", () => {
+  const before = { paid: 0, lastPaymentReference: "before" };
+  const after = {
+    name: "Ama", studentCode: "AMA-001", email: "ama@example.com",
+    paid: 500, lastPaymentReference: "current", lastPaymentAmount: 500,
+  };
+  const change = detectPaymentChange(before, after);
+  const receipt = JSON.parse(rowForPaymentUpdate({ student: after, change }).receipt_payload_json);
+  assert.equal(receipt.amountReceived, 500);
+  assert.equal(receipt.balanceRemaining, null);
+});
+
 test("second half of a two-step paid/balance sync is suppressed", () => {
   const now = new Date("2026-08-01T12:05:00Z");
   const state = {

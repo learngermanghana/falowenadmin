@@ -221,6 +221,25 @@ function rowForPaymentUpdate({ student = {}, change = {}, now = new Date() } = {
     delivery_mode: "individual",
     allow_bcc_fallback: "FALSE",
     email_type: "payment_update",
+    subject: `Falowen payment receipt — ${snapshot.name}`,
+    // Only trusted, already credited payment evidence reaches this function.
+    // A receipt is for THIS transaction, not the lifetime tuition total.
+    receipt_payload_json: JSON.stringify({
+      version: 1,
+      reference: change.reference,
+      studentName: snapshot.name,
+      studentCode: snapshot.studentCode,
+      billingEmail: snapshot.email,
+      className: snapshot.className,
+      course: snapshot.level
+        ? `${snapshot.level} ${String(student.program || "").toLowerCase() === "swahili" ? "Kiswahili" : "German"} Language Course`
+        : "Language course",
+      paymentMethod: String(student.lastPaymentProvider || "Verified payment"),
+      receivedDate: isoDate(now),
+      amountReceived: change.amount,
+      totalPaid: change.totalPaid,
+      balanceRemaining: change.current?.balancePresent === false ? null : (Number.isFinite(Number(change.balance)) ? change.balance : null),
+    }),
     show_progress: "FALSE",
     show_review: "FALSE",
     show_app_button: "TRUE",
@@ -321,7 +340,7 @@ function isLikelySecondHalfOfSameSync(state = {}, change = {}, now = new Date())
   return paidCaughtUp || balanceCaughtUp;
 }
 
-async function reservePaymentEmail({ db, admin, studentId, change, eventId = "", now = new Date() }) {
+async function reservePaymentEmail({ db, admin, studentId, change, expectedTuitionFee = null, eventId = "", now = new Date() }) {
   const ref = db.collection("studentPaymentUpdateEmailStates").doc(stateId(studentId));
   let result = { reserved: false, ref, reason: "" };
 
@@ -371,7 +390,7 @@ async function reservePaymentEmail({ db, admin, studentId, change, eventId = "",
       pendingBalance: change.balance,
       pendingAmount: change.amount,
       pendingReference: change.reference,
-      expectedTuitionFee: money(after.tuitionFee),
+      expectedTuitionFee,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       ...(snap.exists ? {} : { createdAt: admin.firestore.FieldValue.serverTimestamp() }),
     }, { merge: true });
@@ -431,6 +450,7 @@ async function processStudentPaymentUpdate({
     admin,
     studentId,
     change,
+    expectedTuitionFee: money(after.tuitionFee),
     eventId: event?.id || "",
     now,
   });
