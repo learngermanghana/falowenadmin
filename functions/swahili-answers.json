@@ -402,23 +402,31 @@
     }
   },
   "swahili-day-7": {
-    "version": 1,
+    "version": 2,
     "title": "Chakula na Vinywaji",
     "writing": {
       "Kuandika": "Ninapenda chapati na matunda. Sitaki soda, asante. Nitaleta chapati na maji."
     },
     "reading": {
       "read-1": {
-        "prompt": "Hassan anapenda kinywaji gani?",
-        "answer": "Chai."
+        "prompt": "Je, mteja anatumia muundo gani kuuliza kama duka lina maziwa na sukari? (Which structure does the customer use to ask if the store has milk and sugar?)",
+        "answer": "B) Mna maziwa na sukari leo?"
       },
       "read-2": {
-        "prompt": "Amina anapenda juisi gani?",
-        "answer": "Juisi ya embe."
+        "prompt": "Mteja aliagiza kiasi gani cha maziwa na sukari? (How much milk and sugar did the customer order?)",
+        "answer": "B) Lita moja ya maziwa na nusu kilo ya sukari."
       },
       "read-3": {
-        "prompt": "Nani ataleta chapati?",
-        "answer": "Hassan."
+        "prompt": "Jumla ya gharama ya bidhaa zote ilikuwa shilingi ngapi? (How much was the total cost of all items?)",
+        "answer": "C) Shilingi elfu nne na mia tano (4,500 TSh)."
+      },
+      "read-4": {
+        "prompt": "Mteja aliuliza vipi kuhusu njia ya kulipa? (How did the customer ask about the payment method?)",
+        "answer": "C) Naweza kulipa kwa pesa taslimu?"
+      },
+      "read-5": {
+        "prompt": "Mteja alisema nini ili kuomba uthibitisho wa malipo baada ya kulipa? (What did the customer say to request proof of payment after paying?)",
+        "answer": "C) Risiti, tafadhali."
       }
     },
     "listening": {
@@ -441,6 +449,20 @@
       "bill": {
         "prompt": "Bili ni shilingi ngapi?",
         "answer": "Shilingi elfu tano"
+      }
+    },
+    "legacyReading": {
+      "read-1": {
+        "prompt": "Hassan anapenda kinywaji gani?",
+        "answer": "Chai."
+      },
+      "read-2": {
+        "prompt": "Amina anapenda juisi gani?",
+        "answer": "Juisi ya embe."
+      },
+      "read-3": {
+        "prompt": "Nani ataleta chapati?",
+        "answer": "Hassan."
       }
     }
   },
