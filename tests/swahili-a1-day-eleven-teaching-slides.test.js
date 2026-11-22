@@ -14,14 +14,12 @@ test('Day 11 is selectable in A1 and follows the Day 10 core teaching flow', () 
   assert.match(presenter, /campus\/course\/swahili\/day-11/);
 });
 
-test('pending media have no recordings or borrowed Day 10 links', () => {
-  for (const id of ['ai-video', 'radio']) {
-    const stage = lesson.stages.find(s => s.id === id);
-    assert.equal(stage.type, 'media-pending');
-    for (const field of ['audio', 'videoId', 'radioVideoId', 'radioUrl']) assert.equal(stage[field], undefined);
-  }
-  const renderer = fs.readFileSync(new URL('../src/components/SwahiliA2LessonStage.jsx', import.meta.url), 'utf8');
-  assert.match(renderer, /stage.type === "media-pending"/);
+test('Day 11 uses its own AI lesson and Falowen Radio videos', () => {
+  const video = lesson.stages.find(s => s.id === 'ai-video');
+  const radio = lesson.stages.find(s => s.id === 'radio');
+  assert.equal(video.type, 'teacher-lecture');
+  assert.equal(video.videoId, '4DpZGme4Bu4');
+  assert.equal(radio.radioVideoId, '_eSAXWecsgY');
   assert.doesNotMatch(JSON.stringify(lesson), /4_ygEiW5QjI|xLN5QX669JA|swahili-a1-day-10/);
 });
 

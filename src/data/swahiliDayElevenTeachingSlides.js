@@ -23,10 +23,11 @@ export const SWAHILI_DAY_ELEVEN_ADMIN_LESSON = Object.freeze({
     },
     {
       "id": "ai-video",
-      "type": "media-pending",
+      "type": "teacher-lecture",
       "title": "Video ya somo · Dukani",
-      "content": "Video ya somo itaongezwa baadaye.",
-      "english": "The Day 11 lesson video will be added later.",
+      "videoId": "4DpZGme4Bu4",
+      "content": "Tazama video ya somo kuhusu kununua dukani.",
+      "english": "Watch the Day 11 AI lesson about shopping.",
       "kicker": "Video ya somo · AI"
     },
     {
@@ -114,10 +115,11 @@ export const SWAHILI_DAY_ELEVEN_ADMIN_LESSON = Object.freeze({
     },
     {
       "id": "radio",
-      "type": "media-pending",
+      "type": "radio-questions",
+      "radioVideoId": "_eSAXWecsgY",
       "title": "Falowen Radio · Dukani",
-      "content": "Kipindi cha Falowen Radio kitaongezwa baadaye.",
-      "english": "The Day 11 Falowen Radio episode will be added later. Continue with teacher-led listening.",
+      "content": "Sikiliza kipindi cha Falowen Radio kuhusu dukani.",
+      "english": "Listen to the Day 11 Falowen Radio episode about shopping.",
       "kicker": "Kusikiliza · Falowen Radio"
     },
     {
