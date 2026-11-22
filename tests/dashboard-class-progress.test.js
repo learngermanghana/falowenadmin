@@ -5,6 +5,7 @@ const source=fs.readFileSync(new URL('../src/pages/DashboardPage.jsx',import.met
 test('homepage removes requested panels and their marking/grammar readers',()=>{
  assert.doesNotMatch(source,/Top active class groups|Tutor review workflow|title="Student records"|Learning attention|Incoming work|<h2>Issue reports/);
  assert.doesNotMatch(source,/loadSubmissions|loadPendingTutorReviews|loadGrammarIssueReports|summarizeStudentAttention|groupTopClasses/);
- assert.match(source,/<DashboardPartnershipRequests user=\{user\}/);
- assert.match(source,/to="\/marking"/);assert.match(source,/to="\/grammar-issues"/);
+ assert.match(source, /<AdminActionInbox user=\{user\} classes=\{liveClasses\}/);
+ assert.doesNotMatch(source, /label="Open Marking"|label="Open Grammar Issues"|title="Today’s teaching"|title="Marking workspace"|title="Grammar workspace"/);
+ assert.doesNotMatch(source, /Paid \/ active|Balance due|Payment focus|Largest balances/);
 });
