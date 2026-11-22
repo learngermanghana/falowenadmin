@@ -100,3 +100,38 @@ The Apps Script projects are not stored or deployed by Vercel/GitHub. When apply
 - Confirm the health panel shows both integration endpoints configured. A 200 response from the gateway or a merged PR alone does **not** verify a deployed Apps Script or delivered email.
 
 This change does not add timers or polls, and it keeps receipts under the verified Admin payment ledger instead of the Student Docs sheet.
+
+
+## Direct PDF downloads in Communication → Documents
+
+- **Download PDF** creates a genuine, multi-page A4 PDF locally from the editable letter fields without a browser print dialog or new package dependency. It carries a conspicuous draft/review notice. It does **not** verify payment, log issuance or email anyone.
+- **Download enrollment PDF** and **Download payment agreement PDF** (shown for the enrollment document type after choosing a student) call authenticated `POST /api/integrations/export`. Vercel verifies the signed-in Falowen administrator, passes only the student code/email and chosen document type to Student Docs, and returns the generated PDF bytes directly to the browser. Neither the file nor its data is copied to Firestore event logs. No email is sent and no `EnrollmentSent` flag is changed.
+- Student Docs **must first be upgraded and redeployed** using the *full* Student Docs Apps Script (`Falowen_Student_Docs_Direct_PDF_Export.gs.txt` in the handoff), not by replacing the existing project with the short `docs/apps-script/registration-lifecycle-webhook.gs` reference. The export action is `exportEnrollmentDocumentFromSheet`, returning `mime_type`, `file_name` and `data_base64`. It reuses the existing `buildEnrollmentPdf_` and `buildAgreementPdf_` templates, image assets, and signature/retention blocks.
+- Payment must be positive on the canonical `students` sheet, and the provided student code/email must match the row. Organisation-funded enrollments still use their separate workflow. Unpaid and mismatched records are rejected.
+- The server and Apps Script cap PDF sizes to protect response limits. Do not log the private token or PDF payload, or use this endpoint for bulk exports. For larger files, use the Student Docs Drive/export workflow instead.
+
+### Safe acceptance checks
+
+1. Download a two-page general letter: it should be an A4 `.pdf` opened by a normal PDF reader, with a draft label and no print dialog.
+2. After the Student Docs script is deployed, select a **paid** test student and download both official PDFs. Compare logo, content, dates, reference and signature with the existing Student Docs output. Verify that no emails or send-log entries were created.
+3. Verify rejection for an unpaid student, an organisation-funded student, a code/email mismatch and an unauthorized admin login.
+4. Confirm the pre-existing **Request official enrollment pack** button still uses its separate send/dedupe flow.
+
+
+## Download a verified student certificate directly in Admin
+
+In **Communication → Documents**, select **Certificate of completion**, choose the student and
+their **German A1, A2 or B1** level, then click **Download certificate PDF**.
+
+- The authenticated Admin API routes this export to the existing **Announcements + Certificates** Apps Script using its configured `ANNOUNCEMENT_WEBHOOK_URL` and private token. It does not route certificates through Student Docs.
+- The Apps Script action `exportVerifiedCertificateFromScores` loads **fresh** canonical Students and Scores CSV data (not the four-minute mail cache), matches student code and email, and calls the **same** `findCompletionFromRows_`/required-assignment rules used by the automatic certificate sender. German A1 needs all 19 required passes including the verified final mock; A2/B1 use the existing 28-assignment and final-completion checks.
+- On successful verification, the existing `generateCertificatePdf_` creates the **landscape A4 PDF** with the same school branding, completion date and Director's Drive signature. An unsigned certificate fails; a failing or incomplete learner is never exported. It is downloaded into the Admin browser; **no email is sent**, no `PROCESSED_CERTS` or issuance log is changed and the PDF bytes never enter Firestore audit logs.
+- No Kiswahili certificate should be issued with the German certificate template. The UI limits certificate levels to German A1–B1 until a verified Kiswahili certificate generator exists.
+- **Install and redeploy the full Announcements + Certificates Apps Script from the handoff file `Falowen_Announcements_Certificate_Direct_Export.gs.txt`**. It preserves the original 4,000-line system and introduces the read-only action after existing webhook token verification. Do **not** replace the real project with the short `docs/apps-script/certificate-direct-export.gs` reference module. GitHub/Vercel deployment alone does not update this separate Google Apps Script web app.
+
+### Certificate acceptance tests
+
+1. Select a learner who has passed all 19 A1 workbooks/final mock, download, and visually compare with the pre-existing signed certificate.
+2. Attempt download for a learner missing the final mock, a failing workbook, or below 28 required A2/B1 passes: no PDF should be returned.
+3. Try an invalid code/email pair and a non-admin login; both must be denied.
+4. Verify the student receives **no email**, the certificate processed map is unchanged, and a second download works without altering issuance state.

@@ -5,6 +5,8 @@ import { listAllStudents } from "../services/studentsService.js";
 import { saveAnnouncementRows } from "../services/communicationService.js";
 import { dispatchIntegrationEvent } from "../services/integrationEventService.js";
 import { useToast } from "../context/ToastContext.jsx";
+import { createLetterPdfBlob } from "../utils/letterPdf.js";
+import { downloadStudentDocumentPdf } from "../services/studentDocumentsService.js";
 import TargetedCommunicationPanel from "../components/TargetedCommunicationPanel.jsx";
 import CommunicationHistoryPanel from "../components/CommunicationHistoryPanel.jsx";
 import "./CommunicationWorkspace.css";
@@ -15,7 +17,7 @@ const ACCOUNT_URL = "https://www.falowen.app/campus/account";
 const TABS = [
   { id: "bulk", label: "Bulk messages", number: "01", description: "One announcement for a class, level, or all active learners." },
   { id: "student", label: "One student", number: "02", description: "A personal email to one verified student account." },
-  { id: "documents", label: "Documents", number: "03", description: "Prepare a branded school letter as Word or print-ready PDF." },
+  { id: "documents", label: "Documents", number: "03", description: "Download school letter PDFs and verified enrollment documents." },
   { id: "promotions", label: "Class promotions", number: "04", description: "Promote upcoming classes using their actual schedule." },
 ];
 
@@ -152,6 +154,7 @@ export default function CommunicationWorkspacePage() {
   const [personal, setPersonal] = useState(newMessage);
 
   const [documentKind, setDocumentKind] = useState("general");
+  const [certificateLevel, setCertificateLevel] = useState("A1");
   const [documentStudentId, setDocumentStudentId] = useState("");
   const [documentRecipient, setDocumentRecipient] = useState("");
   const [documentReference, setDocumentReference] = useState("");
@@ -333,6 +336,7 @@ export default function CommunicationWorkspacePage() {
     const name = student ? studentName(student) : "[Student name]";
     const klass = student ? studentClass(student) || "[Class name]" : "[Class name]";
     const templates = {
+      certificate: { heading: "Certificate of Completion", body: "This certificate is generated only after Falowen verifies the required course assessments in the Scores sheet." },
       general: { heading: "Official Letter", body: "To whom it may concern,\n\n[Write the purpose of this letter and the verified details here.]\n\nYours faithfully," },
       enrollment: { heading: "Student Enrollment Letter", body: "To whom it may concern,\n\nThis letter concerns " + name + ", whose Falowen student record lists the class " + klass + ". Please verify the student's current enrollment status and dates before issuing this letter.\n\nYours faithfully," },
       progress: { heading: "Course Progress Letter", body: "To whom it may concern,\n\nThis letter concerns " + name + " in " + klass + ". [Insert verified assessment results and course progress. Do not state a pass or completion unless confirmed.]\n\nYours faithfully," },
@@ -358,6 +362,49 @@ export default function CommunicationWorkspacePage() {
     const a = document.createElement("a");
     a.href = url; a.download = "falowen-" + documentKind + "-" + TODAY() + ".doc"; a.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function downloadPdf() {
+    if (!documentHeading.trim() || !documentBody.trim()) { toast.error("Add a document title and body."); return; }
+    try {
+      const blob = createLetterPdfBlob({
+        heading: documentHeading,
+        body: documentBody,
+        recipient: documentRecipient,
+        reference: documentReference,
+        signatory: documentSignatory,
+        date: formatDate(TODAY()),
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "falowen-" + documentKind + "-" + TODAY() + ".pdf";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast.success("Your draft PDF has been downloaded.");
+    } catch (error) {
+      toast.error(error.message || "The PDF could not be created.");
+    }
+  }
+  async function downloadOfficialPdf(kind) {
+    if (!docStudent) { toast.error("Select a student first."); return; }
+    const studentCode = clean(docStudent.studentCode || docStudent.student_code || docStudent.studentcode);
+    const email = studentEmail(docStudent);
+    if (!studentCode && !email) { toast.error("The selected student needs a code or email."); return; }
+    setBusy(true);
+    setReceipt(null);
+    try {
+      const fileName = await downloadStudentDocumentPdf({ studentCode, email, kind, level: kind === "certificate" ? certificateLevel : "" });
+      setReceipt({ text: fileName + " downloaded from the verified students sheet. No email was sent." });
+      toast.success("Verified PDF downloaded.");
+    } catch (error) {
+      const message = error.message || "Could not export the verified PDF.";
+      setReceipt({ error: true, text: message });
+      toast.error(message);
+    } finally {
+      setBusy(false);
+    }
   }
   function printDocument() {
     if (!documentHeading.trim() || !documentBody.trim()) { toast.error("Add a document title and body."); return; }
@@ -437,34 +484,59 @@ export default function CommunicationWorkspacePage() {
     {tab === "documents" ? <div className="cw-grid">
       <div className="cw-panel"><span className="cw-step">01 / Document</span><h2>Create a school document</h2><p>Prepare a Falowen letterhead document. All official claims require your review before signing.</p>
         <div className="cw-two-fields"><Field label="Document type"><select value={documentKind} onChange={(e) => chooseDocumentKind(e.target.value)}>
-          <option value="general">Official letter</option><option value="enrollment">Enrollment letter draft</option><option value="progress">Course progress letter</option><option value="invitation">Student invitation</option>
+          <option value="general">Official letter</option><option value="certificate">Certificate of completion</option><option value="enrollment">Enrollment letter draft</option><option value="progress">Course progress letter</option><option value="invitation">Student invitation</option>
         </select></Field>
           <Field label="Student (optional)"><select value={documentStudentId} onChange={(e) => {
             setDocumentStudentId(e.target.value);
             chooseDocumentKind(documentKind, students.find((s) => studentId(s) === e.target.value));
           }}><option value="">No student selected</option>{students.map((s) => <option key={studentId(s)} value={studentId(s)}>{studentName(s)}</option>)}</select></Field>
         </div>
+        {documentKind === "certificate" ? <div className="cw-section-rule">
+          <h3>Verified course certificate</h3>
+          <p className="cw-muted">Choose a student and the German course level. Falowen verifies the required tutor-marked results and final assessment, then exports the existing landscape A4 certificate with its director signature. This action does not email the student or issue a new certificate.</p>
+          <Field label="Certificate level"><select value={certificateLevel} onChange={(e) => setCertificateLevel(e.target.value)}>
+            <option value="A1">German A1</option><option value="A2">German A2</option><option value="B1">German B1</option>
+          </select></Field>
+          <button type="button" className="cw-primary" disabled={busy || !docStudent} onClick={() => downloadOfficialPdf("certificate")}>
+            {busy ? "Verifying scores…" : "Download certificate PDF"}
+          </button>
+          <small className="cw-muted">The matching Announcements + Certificates Apps Script must be updated and redeployed for direct export. Ineligible students cannot download an award. Swahili certificate templates are not yet enabled.</small>
+        </div> : null}
+        {documentKind !== "certificate" ? <>
         <div className="cw-two-fields"><Field label="To / Recipient"><input value={documentRecipient} onChange={(e) => setDocumentRecipient(e.target.value)} placeholder="To whom it may concern" /></Field>
           <Field label="Reference number (optional)"><input value={documentReference} onChange={(e) => setDocumentReference(e.target.value)} placeholder="e.g. LLEA/2026/..." /></Field></div>
         <Field label="Document heading"><input value={documentHeading} onChange={(e) => setDocumentHeading(e.target.value)} /></Field>
         <Field label="Letter body"><textarea rows={12} value={documentBody} onChange={(e) => setDocumentBody(e.target.value)} placeholder="Choose a type or write your letter..." /></Field>
         <Field label="Signatory / office"><input value={documentSignatory} onChange={(e) => setDocumentSignatory(e.target.value)} /></Field>
-        <div className="cw-document-actions"><button type="button" className="cw-primary" onClick={downloadWord}>Download Word (.doc)</button>
-          <button type="button" className="cw-secondary" onClick={printDocument}>Print / Save PDF</button></div>
+        <div className="cw-document-actions"><button type="button" className="cw-primary" onClick={downloadPdf}>Download PDF</button>
+          <button type="button" className="cw-secondary" onClick={downloadWord}>Download Word (.doc)</button>
+          <button type="button" className="cw-secondary" onClick={printDocument}>Print</button></div>
+        </> : null}
         {documentKind === "enrollment" ? <div className="cw-section-rule">
           <h3>Official enrollment pack from the students sheet</h3>
-          <p className="cw-muted">The Student Docs Apps Script uses the authoritative students sheet to verify recorded payment and generate the signed enrollment documents. It does not use the editable draft above. Requests for unpaid students are rejected; already issued packs are not emailed again.</p>
+          <p className="cw-muted">Download the original Student Docs PDF design directly, without sending an email. Student Docs checks the canonical students sheet and recorded payment. Draft contents above are not used for verified exports.</p>
+          <div className="cw-document-actions">
+            <button type="button" className="cw-primary" disabled={busy || !docStudent} onClick={() => downloadOfficialPdf("enrollment")}>{busy ? "Preparing…" : "Download enrollment PDF"}</button>
+            <button type="button" className="cw-secondary" disabled={busy || !docStudent} onClick={() => downloadOfficialPdf("agreement")}>{busy ? "Preparing…" : "Download payment agreement PDF"}</button>
+          </div>
+          <small className="cw-muted">Verified downloads need the updated Student Docs Apps Script web app deployed. They do not email the learner or mark a pack as sent.</small>
           <button type="button" className="cw-secondary" disabled={busy || !docStudent} onClick={requestOfficialEnrollmentPack}>
             {busy ? "Requesting…" : "Request official enrollment pack"}
           </button>
         </div> : null}
         <ReceiptNote result={receipt} />
-        <small className="cw-muted">Word/PDF drafts are generated in your browser and are not emailed or recorded as issued certificates. Verify enrolment, scores, dates and signatures before official use.</small>
+        {documentKind !== "certificate" ? <small className="cw-muted">The instant PDF and Word letter buttons produce clearly labelled drafts in your browser. These are not issued certificates or verified enrollment packs. Verify enrolment, scores, dates and signatures before official use.</small> : null}
       </div>
-      <aside className="cw-sidebar"><div className="cw-document-preview"><div className="cw-letter-brand">Falowen</div><small>Learn Language Education Academy</small><hr />
+      <aside className="cw-sidebar">{documentKind === "certificate" ? <div className="cw-document-preview">
+        <div className="cw-letter-brand">Falowen</div><small>Learn Language Education Academy</small><hr />
+        <h3>Certificate of Completion</h3>
+        <div className="cw-letter-body">{docStudent ? studentName(docStudent) : "Select a student"} · German {certificateLevel}</div>
+        <p className="cw-muted">The official certificate is generated directly by the original Apps Script template after score verification. Its director signature and completion date are taken from the verified sources, not this preview.</p>
+        <footer>Issued documents are not modified by downloading.</footer>
+      </div> : <div className="cw-document-preview"><div className="cw-letter-brand">Falowen</div><small>Learn Language Education Academy</small><hr />
         <div className="cw-letter-meta">{formatDate(TODAY())}{documentReference ? " · " + documentReference : ""}</div>
         <h3>{documentHeading || "Official Letter"}</h3><div className="cw-letter-body">{documentBody || "Select a document type to prepare your letter."}</div>
-        <strong>{documentSignatory}</strong><footer>Falowen · Learn Language Education Academy</footer></div>
+        <strong>{documentSignatory}</strong><footer>Falowen · Learn Language Education Academy</footer></div>}
         <div className="cw-help">Certificate eligibility and academic scores continue to use the verified Falowen assessment and certificate workflows.</div></aside>
     </div> : null}
 

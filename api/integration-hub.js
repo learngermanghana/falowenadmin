@@ -287,6 +287,47 @@ async function dispatchRegistrationRows({ rows, eventId, user, type }) {
   };
 }
 
+// Read-only, on-demand document export. Never copy PDF bytes to Firestore logs.
+async function exportRegistrationPdf({ request, user }) {
+  const kind = String(request?.document_type || "").trim().toLowerCase();
+  if (!["enrollment", "agreement", "certificate"].includes(kind)) {
+    throw Object.assign(new Error("Choose enrollment, agreement or certificate PDF."), { statusCode: 400 });
+  }
+  const code = String(request?.student_code || "").trim();
+  const email = String(request?.email || "").trim();
+  if (!code && !email) {
+    throw Object.assign(new Error("Select a student with a student code or email."), { statusCode: 400 });
+  }
+  const isCertificate = kind === "certificate";
+  const level = String(request?.level || "").trim().toUpperCase();
+  if (isCertificate && !["A1", "A2", "B1"].includes(level)) {
+    throw Object.assign(new Error("Choose a supported German course level: A1, A2 or B1."), { statusCode: 400 });
+  }
+  const config = isCertificate ? communicationConfig() : registrationConfig();
+  if (!config.url || !config.token) {
+    throw Object.assign(new Error(isCertificate
+      ? "The certificate/Announcements connection is not configured."
+      : "The Student Docs connection is not configured."), { statusCode: 503 });
+  }
+  const upstream = await postAppsScript(config.url, {
+    token: config.token,
+    action: isCertificate ? "exportVerifiedCertificateFromScores" : "exportEnrollmentDocumentFromSheet",
+    type: isCertificate ? "certificate.export" : "enrollment.export",
+    source: "falowen-admin",
+    requested_by: user.email,
+    ...(isCertificate ? { level } : { document_type: kind }),
+    row: { student_code: code, email },
+  });
+  const result = upstream.body || {};
+  const encoded = String(result.data_base64 || "");
+  const fileName = String(result.file_name || "").trim().replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 150);
+  if (result.ok !== true || result.mime_type !== "application/pdf" || !/^[a-zA-Z0-9+/]+={0,2}$/.test(encoded) ||
+      encoded.length > 4_000_000 || !fileName.endsWith(".pdf")) {
+    throw Object.assign(new Error("Student Docs returned an invalid or oversized PDF. Verify its deployed script version."), { statusCode: 502 });
+  }
+  return { ok: true, mime_type: "application/pdf", file_name: fileName, data_base64: encoded };
+}
+
 function healthPayload() {
   const scores = scoreConfig();
   const communication = communicationConfig();
@@ -336,6 +377,11 @@ export default async function integrationHubHandler(req, res) {
     }
 
     const body = await readJsonBody(req);
+    if (path === "integrations/export") {
+      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      return res.status(200).json(await exportRegistrationPdf({ request: body, user }));
+    }
     eventId = eventIdFrom(body.event_id || body.eventId);
     type = eventTypeFrom(body.type || body.event_type || body.eventType);
     destination = destinationForType(type);
