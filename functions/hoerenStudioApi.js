@@ -140,12 +140,36 @@ function buildSwahiliConversationPrompt(body = {}) {
 }
 
 function validateSwahiliTranscript(script) {
-  const lines = script.trim().split(/\r?\n/).filter(line => line.trim());
-  if (lines.length < 2 || lines.length > 24 || !lines.every(line => /^[AB]:\s*\S.{0,319}$/u.test(line.trim()))
-      || !lines.some(line => /^A:/.test(line.trim())) || !lines.some(line => /^B:/.test(line.trim()))) {
+  // Gemini sometimes adds harmless Markdown, numbered turns, or wraps a spoken
+  // sentence. Normalize those formats before checking the two-speaker contract.
+  const rawLines = String(script || "").replace(/^\uFEFF/u, "").trim().split(/\r?\n/u);
+  const lines = [];
+  for (const raw of rawLines) {
+    let line = raw.trim();
+    if (!line || /^\x60\x60\x60/u.test(line) || /^#{1,4}\s/u.test(line)) continue;
+    line = line.replace(/^([-*•]\s*|\d+[.)]\s*)/u, "").trim()
+      .replace(/^\*\*([AB]):\*\*\s*/iu, "$1: ")
+      .replace(/^\*\*(.*?)\*\*\s*:\s*/u, "$1: ")
+      .replace(/^(?:speaker|mzungumzaji)\s*([AB])\s*:/iu, "$1:")
+      .replace(/^([AB])\s*[):.\-]\s*/iu, "$1: ")
+      .replace(/^([AB]):\s*\*\*/iu, "$1: **")
+      .trim();
+    const match = /^([AB]):\s*(.+)$/iu.exec(line);
+    if (match) {
+      lines.push({ speaker: match[1].toUpperCase(), text: match[2].replace(/\*\*/gu, "").trim() });
+    } else if (lines.length && !/^(?:[A-Z][\w ]{1,24}:)/u.test(line)) {
+      // Wrapped speech belongs to the preceding speaker, not a new voice.
+      lines[lines.length - 1].text += " " + line;
+    } else {
+      throw Object.assign(new Error("Google returned an incomplete two-speaker conversation."), { status: 502 });
+    }
+  }
+  if (lines.length < 2 || lines.length > 24 || !lines.some(x => x.speaker === "A")
+      || !lines.some(x => x.speaker === "B")
+      || lines.some(x => !x.text || x.text.length > 320)) {
     throw Object.assign(new Error("Google returned an incomplete two-speaker conversation."), { status: 502 });
   }
-  return lines.map(line => line.trim()).join("\n");
+  return lines.map(x => x.speaker + ": " + x.text).join("\n");
 }
 
 function validateGrammarScriptRequest(body = {}) {

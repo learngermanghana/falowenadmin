@@ -550,6 +550,14 @@ test("Swahili conversation generation and speech stay in the Kiswahili workflow"
   assert.throws(() => buildSwahiliConversationPrompt({ topic: "Sokoni", format: "goethe" }), /Choose a format/);
   assert.throws(() => validateSwahiliTranscript("A: Habari?\nC: Nzuri."), /two-speaker/);
   assert.equal(validateSwahiliTranscript("A: Habari?\nB: Nzuri."), "A: Habari?\nB: Nzuri.");
+  assert.equal(validateSwahiliTranscript("1. **A:** Habari yako?\n2. **B:** Nzuri sana."),
+    "A: Habari yako?\nB: Nzuri sana.");
+  assert.equal(validateSwahiliTranscript("Speaker A: Habari yako?\nSpeaker B: Nzuri."),
+    "A: Habari yako?\nB: Nzuri.");
+  assert.equal(validateSwahiliTranscript("A: Habari yako?\nLeo uko aje?\nB: Nzuri."),
+    "A: Habari yako? Leo uko aje?\nB: Nzuri.");
+  assert.throws(() => validateSwahiliTranscript("A: Habari?\nA: Salama."), /two-speaker/);
+  assert.throws(() => validateSwahiliTranscript("A: " + "a".repeat(321) + "\nB: Nzuri."), /two-speaker/);
   const source = readFileSync(new URL("../functions/hoerenStudioApi.js", import.meta.url), "utf8");
   assert.match(source, /const \[minimumWords\] = SWAHILI_SCRIPT_WORD_RANGES\[level\]/);
   assert.doesNotMatch(source, /const \[minimumWords\] = COURSE_SCRIPT_WORD_RANGES\[level\]/);
