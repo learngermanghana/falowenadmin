@@ -25,7 +25,7 @@ test("Communication uses the attendance confirmation hub", async () => {
   assert.match(hub, />\s*Email Automations\s*</);
   assert.match(hub, /AttendanceConfirmationAutomationPanel/);
   assert.match(hub, /AttendanceFailedDeliveryRetryPanel/);
-  assert.match(hub, /CommunicationMessagesPage/);
+  assert.match(hub, /CommunicationWorkspacePage/);
 });
 
 test("attendance automation UI exposes modes, recovery and job status", async () => {
