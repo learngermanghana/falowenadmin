@@ -11,10 +11,12 @@ test('A2 Day 28 shows the classroom Hören after music, separately from graded w
   const slide = getTeachingSlideById('a2-day-28-zukunft');
   assert.equal(slide.assignmentId, 'A2-10.28');
   const stages = buildTeachingPresenterStages(slide, slide.topic);
-  assert.equal(stages[1].variant, 'interactive-music-video');
-  assert.equal(stages[2].variant, 'interactive-listening');
-  assert.equal(stages[2].audioKey, A2_DAY28_AUDIO_KEY);
-  assert.equal(stages[2].listeningItems.length, 5);
+  assert.equal(stages[1].type, 'teacher-lecture');
+  assert.equal(stages[1].videoId, 'sXdXv5dreN0');
+  assert.equal(stages[2].variant, 'interactive-music-video');
+  assert.equal(stages[3].variant, 'interactive-listening');
+  assert.equal(stages[3].audioKey, A2_DAY28_AUDIO_KEY);
+  assert.equal(stages[3].listeningItems.length, 5);
   assert.equal(getInteractiveLessonOpening('A2-10.28')?.listening, A2_DAY28_CLASSROOM_LISTENING);
 });
 

@@ -311,6 +311,7 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
     day: "Day 28",
     dayNumber: 28,
     assignmentId: "A2-10.28",
+    teacherLectureVideoId: "sXdXv5dreN0",
     title: "A2 Day 28 · Über die Zukunft sprechen",
     topic: "10.28 Über die Zukunft sprechen",
     objective: "Students express concrete future plans with Futur I and familiar intention phrases, organize career, education, family, travel, health and personal goals into a clear final A2 mini-presentation, and transfer those goals into the workbook email.",
