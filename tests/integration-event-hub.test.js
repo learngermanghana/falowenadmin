@@ -23,6 +23,7 @@ test("integration event types route to the correct worker", () => {
   assert.equal(destinationForType("attendance.summary"), "communication");
   assert.equal(destinationForType("registration.received"), "registration");
   assert.equal(destinationForType("enrollment.confirmed"), "registration");
+  assert.equal(destinationForType("enrollment.request"), "registration");
   assert.equal(destinationForType("unknown.event"), "");
 });
 
@@ -96,6 +97,29 @@ test("registration document worker reuses the Announcement token", () => {
     if (previousAnnouncementToken === undefined) delete process.env.ANNOUNCEMENT_WEBHOOK_TOKEN;
     else process.env.ANNOUNCEMENT_WEBHOOK_TOKEN = previousAnnouncementToken;
   }
+});
+
+test("sheet-backed enrollment requests never use browser payment totals", () => {
+  const server = read("api/integration-hub.js");
+  const worker = read("docs/apps-script/registration-lifecycle-webhook.gs");
+  const ui = read("src/pages/CommunicationWorkspacePage.jsx");
+  assert.match(server, /isSheetBackedRequest/);
+  assert.match(server, /requestEnrollmentPackFromSheet/);
+  assert.match(server, /student_code: String/);
+  assert.match(worker, /function requestEnrollmentPackFromSheet_/);
+  assert.match(worker, /processEnrollmentConfirmedWebhook_\(match\)/);
+  assert.match(ui, /Request official enrollment pack/);
+});
+
+test("communication composer batches class announcements with Apps Script layout options", () => {
+  const service = read("src/services/communicationService.js");
+  const ui = read("src/pages/CommunicationWorkspacePage.jsx");
+  const hub = read("api/integration-hub.js");
+  assert.match(service, /export async function saveAnnouncementRows/);
+  assert.match(service, /show_progress: boolToSheetValue/);
+  assert.match(service, /show_review: boolToSheetValue/);
+  assert.match(ui, /await saveAnnouncementRows\(/);
+  assert.match(hub, /row_\$\{index \+ 1\}/);
 });
 
 test("browser services contain no Apps Script secrets or direct webhook URLs", () => {
