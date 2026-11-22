@@ -68,8 +68,8 @@ if (!source.includes(optionAfter) && !source.includes(modernOptionAfter)) {
   else throw new Error("Attendance lesson option anchor changed; update patchA1AttendanceDayLabels.mjs");
 }
 
-const headingBefore = `{assignmentId ? \`${"${assignmentId} — "}` : ""}{selected.topic || "Lesson details to be confirmed"}`;
-const modernHeadingBefore = `{assignmentId ? \`${"${assignmentId} · "}` : ""}{selected.topic || "Lesson details to be confirmed"}`;
+const headingBefore = '{assignmentId ? `${assignmentId} — ` : ""}{selected.topic || "Lesson details to be confirmed"}';
+const modernHeadingBefore = '{assignmentId ? `${assignmentId} · ` : ""}{selected.topic || "Lesson details to be confirmed"}';
 const headingAfter = `{attendanceLessonTitle(selected, klass?.levelId || klass?.level)}`;
 if (!source.includes(headingAfter)) {
   if (source.includes(headingBefore)) source = source.replace(headingBefore, headingAfter);
