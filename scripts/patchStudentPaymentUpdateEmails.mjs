@@ -51,62 +51,9 @@ fs.writeFileSync(indexTarget, source);
 const paymentTarget = new URL("../functions/studentPaymentUpdateEmails.js", import.meta.url);
 let paymentSource = fs.readFileSync(paymentTarget, "utf8");
 
-paymentSource = replaceOnce(
-  paymentSource,
-  `  const totalPaid = current.paidPresent
-    ? current.paid
-    : roundMoney((previous.paidPresent ? previous.paid : 0) + amount);`,
-  `  const totalPaid = source === "balance_decrease" && paidIncrease <= MONEY_EPSILON
-    ? roundMoney((previous.paidPresent ? previous.paid : 0) + amount)
-    : current.paidPresent
-      ? current.paid
-      : roundMoney((previous.paidPresent ? previous.paid : 0) + amount);`,
-  "manual balance total paid calculation",
-);
-
-paymentSource = replaceOnce(
-  paymentSource,
-  `function sameStoredTotals(state = {}, change = {}) {
-  return approximatelyEqual(state.lastPaid, change.totalPaid)
-    && approximatelyEqual(state.lastBalance, change.balance);
-}
-`,
-  `function sameStoredTotals(state = {}, change = {}) {
-  return approximatelyEqual(state.lastPaid, change.totalPaid)
-    && approximatelyEqual(state.lastBalance, change.balance);
-}
-
-function applyStoredPaymentBaseline(state = {}, change = {}) {
-  if (change.source !== "balance_decrease" || change.paidIncrease > MONEY_EPSILON) return change;
-  const storedPaid = money(state.lastPaid);
-  if (storedPaid === null) return change;
-  return {
-    ...change,
-    totalPaid: roundMoney(Math.max(change.totalPaid, storedPaid + change.amount)),
-  };
-}
-`,
-  "stored manual payment baseline helper",
-);
-
-paymentSource = replaceOnce(
-  paymentSource,
-  `    if (processingFresh) {
-      result = { reserved: false, ref, reason: "processing" };
-      return;
-    }
-
-    const token = crypto.createHash("sha256").update([`,
-  `    if (processingFresh) {
-      result = { reserved: false, ref, reason: "processing" };
-      return;
-    }
-
-    Object.assign(change, applyStoredPaymentBaseline(state, change));
-
-    const token = crypto.createHash("sha256").update([`,
-  "stored manual payment baseline application",
-);
+// The base notification module now accepts only a newly credited paid amount.
+// Do not reintroduce balance-decrease receipts or cumulative paid baselines
+// in generated deployment output.
 
 paymentSource = replaceOnce(
   paymentSource,
