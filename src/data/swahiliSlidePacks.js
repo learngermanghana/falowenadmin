@@ -1,5 +1,6 @@
 import { SWAHILI_DAY_ELEVEN_ADMIN_LESSON } from "./swahiliDayElevenTeachingSlides.js";
 import { SWAHILI_DAY_ONE_ADMIN_LESSON } from "./swahiliTeachingSlides.js";
+import { SWAHILI_DAY_TWO_ADMIN_LESSON } from "./swahiliDayTwoTeachingSlides.js";
 import { SWAHILI_DAY_FIVE_ADMIN_LESSON } from "./swahiliDayFiveTeachingSlides.js";
 import { SWAHILI_DAY_SIX_ADMIN_LESSON } from "./swahiliDaySixTeachingSlides.js";
 import { SWAHILI_DAY_TEN_ADMIN_LESSON } from "./swahiliDayTenTeachingSlides.js";
@@ -9,6 +10,7 @@ export const swahiliCourseRoot = "/teaching-slides/course/SWAHILI";
 export const swahiliSlidePacks = {
   A1: [
     SWAHILI_DAY_ONE_ADMIN_LESSON,
+    SWAHILI_DAY_TWO_ADMIN_LESSON,
     SWAHILI_DAY_FIVE_ADMIN_LESSON,
     SWAHILI_DAY_SIX_ADMIN_LESSON,
     SWAHILI_DAY_TEN_ADMIN_LESSON,

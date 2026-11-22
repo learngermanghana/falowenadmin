@@ -1,5 +1,13 @@
 export const SWAHILI_MUSIC_TRACKS = [
   {
+    id: "swahili-a1-day-02",
+    level: "A1",
+    day: 2,
+    title: "Salamu, Salamu",
+    objectKey: "swahili/music/A1/day-02/Salamu, Salamu.mp3",
+    audioUrl: "https://www.falowen.app/api/music?track=swahili-a1-day-02",
+  },
+  {
     id: "swahili-a1-day-11",
     level: "A1",
     day: 11,
