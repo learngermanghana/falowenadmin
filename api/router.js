@@ -1325,7 +1325,7 @@ export default async function handler(req, res) {
 
   if (path === "student-results/sheet-upsert") return studentResultsSheetUpsertHandler(req, res);
 
-  if (path === "integrations/dispatch" || path === "integrations/health") return integrationHubHandler(req, res);
+  if (path === "integrations/dispatch" || path === "integrations/health" || path === "integrations/export") return integrationHubHandler(req, res);
 
   if (FALOWEN_PROXY_ROUTES.has(path) || FALOWEN_PROXY_ROUTES.has(firstSegment)) {
     return proxyToFalowenFunction(req, res, path, url);
