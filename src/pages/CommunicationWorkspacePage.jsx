@@ -435,7 +435,7 @@ export default function CommunicationWorkspacePage() {
           <p>Choose a school-wide broadcast, level, class, or students matching an attendance or payment condition.</p></div>
         <div className="cw-radio-grid">
           {[["class", "One class"], ["level", "Level broadcast"], ["all", "All active"], ["conditions", "Advanced filters"]].map(([key, text]) =>
-            <label key={key} className={"cw-radio " + (audience === key ? "checked" : "")}><input type="radio" name="cw-audience" value={key} checked={audience === key} onChange={() => { setAudience(key); setBulkReview(false); }} />{text}</label>)}
+            <label key={key} className={"cw-radio " + (audience === key ? "checked" : "")}><input type="radio" name="cw-audience" value={key} checked={audience === key} onChange={() => { setAudience(key); setBulkReview(false); }} /><span>{text}</span></label>)}
         </div>
         {audience === "conditions" ? <div className="cw-targeted"><TargetedCommunicationPanel embedded showHistory={false} /></div> : <>
           <div className="cw-two-fields">
@@ -548,7 +548,7 @@ export default function CommunicationWorkspacePage() {
           {scheduleText(upcomingClass) ? <span>{scheduleText(upcomingClass)}</span> : null}</div> : <div className="cw-audience-summary">Only upcoming, non-archived classes are eligible. If none appear, check their start dates and statuses in Live Classes.</div>}
         <div className="cw-section-rule" /><span className="cw-step">02 / Recipients</span><h2>Who is this promotion for?</h2>
         <div className="cw-radio-grid cw-radio-grid-three">{[["level", "Previous level"], ["class", "One class"], ["all", "All active in language"]].map(([id, label]) => <label key={id} className={"cw-radio " + (promoAudience === id ? "checked" : "")}>
-          <input type="radio" checked={promoAudience === id} onChange={() => { setPromoAudience(id); setPromoReview(false); }} />{label}</label>)}</div>
+          <input type="radio" checked={promoAudience === id} onChange={() => { setPromoAudience(id); setPromoReview(false); }} /><span>{label}</span></label>)}</div>
         {promoAudience === "level" ? <Field label="Current student level"><select value={promoLevel} onChange={(e) => { setPromoLevel(e.target.value); setPromoReview(false); }}>{LEVELS.map((l) => <option key={l}>{l}</option>)}</select></Field> : null}
         {promoAudience === "class" ? <ClassSelector classes={promotionCandidates} value={promoSourceClass} onChange={(id) => { setPromoSourceClass(id); setPromoReview(false); }} /> : null}
         {upcomingClass ? <div className="cw-audience-summary"><strong>{promoAudienceLabel}</strong><span>{promotedAudienceClasses.length} class(es) matched in {languageOf(upcomingClass)}</span></div> : null}
