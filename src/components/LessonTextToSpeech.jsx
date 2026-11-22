@@ -79,6 +79,20 @@ export default function LessonTextToSpeech({ slides, fullScript, title, disabled
   const [providerBlocked, setProviderBlocked] = useState(false);
   const canGenerate = !disabled && !busy && cacheReady && status?.ready && !!plan.value &&
     required <= remaining && !providerBlocked;
+  // Explain the exact readiness condition instead of showing an inert grey button.
+  // A disabled button must not silently send new quota-consuming requests.
+  const blockedReason = busy ? "Audio is currently being generated."
+    : disabled ? "Slide preparation or video export is still running."
+      : !plan.value ? (plan.error || "A valid narration script is required.")
+        : !cacheReady ? "Checking the saved voice clips for this script."
+          : providerBlocked ? "Google declined a voice request (429). Check the provider quota before re-enabling requests below."
+            : !status ? (serverError ? "Cannot check the Hören Studio service: " + serverError
+              : "Checking the Hören Studio connection and daily allowance.")
+              : !status.ready ? "The Hören Studio speech service is not configured. Check the Gemini API key."
+                : required > remaining ? "This script needs " + required + " new voice request(s), but only "
+                  + remaining + " remain in today's shared 72-request Hören Studio allowance."
+                  : "";
+
 
   async function generate() {
     if (!canGenerate) return;
@@ -172,6 +186,9 @@ export default function LessonTextToSpeech({ slides, fullScript, title, disabled
     <button type="button" className="lvs-primary" disabled={!canGenerate} onClick={generate}>
       {busy ? "Generating audio…" : required ? "Generate audio from text" : "Assemble saved narration · no new calls"}
     </button>
+    {blockedReason ? <p role="status" className="lvs-tts-progress">
+      Generate audio unavailable: {blockedReason}
+    </p> : null}
     {progress ? <p role="status" className="lvs-tts-progress">{progress}</p> : null}
     {notice ? <p role="status" className="lvs-tts-progress">{notice}</p> : null}
     {serverError ? <p role="alert" className="lvs-tts-error">{serverError}</p> : null}
