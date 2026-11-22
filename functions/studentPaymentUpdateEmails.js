@@ -238,7 +238,7 @@ function rowForPaymentUpdate({ student = {}, change = {}, now = new Date() } = {
       receivedDate: isoDate(now),
       amountReceived: change.amount,
       totalPaid: change.totalPaid,
-      balanceRemaining: change.current.balancePresent ? change.balance : null,
+      balanceRemaining: change.current?.balancePresent === false ? null : (Number.isFinite(Number(change.balance)) ? change.balance : null),
     }),
     show_progress: "FALSE",
     show_review: "FALSE",
