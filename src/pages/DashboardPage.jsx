@@ -11,12 +11,6 @@ import { summarizeLeadNotifications } from "../services/leadNotificationService.
 import { fetchStudentLeads } from "../services/studentLeadService.js";
 import "./DashboardPage.css";
 
-const moneyFormatter = new Intl.NumberFormat("en-GH", {
-  style: "currency",
-  currency: "GHS",
-  maximumFractionDigits: 0,
-});
-
 const DASHBOARD_CACHE_KEY = "falowen-admin-dashboard-core-v1";
 const DASHBOARD_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
 
@@ -51,12 +45,6 @@ function updateDashboardCache(partial) {
   }
 }
 
-function toNumber(value) {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  const parsed = Number(String(value ?? "").replace(/[^0-9.-]/g, ""));
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
 function text(value) {
   return String(value ?? "").trim();
 }
@@ -65,31 +53,9 @@ function normalize(value) {
   return text(value).toLowerCase();
 }
 
-function isPaidStudent(student) {
-  const status = normalize(student.paymentStatus || student.status);
-  return ["paid", "active", "enrolled", "completed"].some((token) => status.includes(token));
-}
-
 function isActiveStudent(student) {
   const status = normalize(student.status || student.paymentStatus);
   return !["inactive", "suspended", "cancelled", "canceled", "withdrawn", "trial_expired"].some((token) => status.includes(token));
-}
-
-function studentBalance(student) {
-  return toNumber(student.balanceDue || student.balance || student.outstandingBalance || student.amountDue);
-}
-
-function classLabel(student) {
-  return text(student.className || student.level || student.program || student.location || "Unassigned");
-}
-
-function initials(name) {
-  return text(name)
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("") || "ST";
 }
 
 function pct(value, total) {
@@ -160,18 +126,6 @@ function StatCard({ label, value, helper, tone = "blue", icon, to }) {
   }
 
   return <article className={className}>{content}</article>;
-}
-
-function ActionCard({ title, body, to, label, tone = "indigo" }) {
-  return (
-    <article className={`action-card action-card-${tone}`}>
-      <div>
-        <h3>{title}</h3>
-        <p>{body}</p>
-      </div>
-      <Link to={to}>{label}</Link>
-    </article>
-  );
 }
 
 function MiniList({ items, emptyText, renderItem }) {
@@ -258,18 +212,7 @@ export default function DashboardPage() {
   const analytics = useMemo(() => {
     const totalStudents = students.length;
     const activeStudents = students.filter(isActiveStudent).length;
-    const paidStudents = students.filter(isPaidStudent).length;
-    const studentsWithBalance = students.filter((student) => studentBalance(student) > 0);
-    const totalBalance = studentsWithBalance.reduce((sum, student) => sum + studentBalance(student), 0);
-    return {
-      totalStudents,
-      activeStudents,
-      paidStudents,
-      studentsWithBalance,
-      totalBalance,
-      paymentRate: pct(paidStudents, totalStudents),
-      activeRate: pct(activeStudents, totalStudents),
-    };
+    return { totalStudents, activeRate: pct(activeStudents, totalStudents) };
   }, [students]);
 
   const contractEndingSoonPreview = useMemo(() => contractEndingSoon.slice(0, 6), [contractEndingSoon]);
@@ -291,14 +234,6 @@ export default function DashboardPage() {
     [studentLeads, user],
   );
 
-  const balancePreview = useMemo(
-    () => analytics.studentsWithBalance
-      .slice()
-      .sort((a, b) => studentBalance(b) - studentBalance(a))
-      .slice(0, 6),
-    [analytics.studentsWithBalance],
-  );
-
   return (
     <div className="analytics-shell">
       {error ? <p className="analytics-error">{error}</p> : null}
@@ -309,54 +244,19 @@ export default function DashboardPage() {
           <p className="analytics-eyebrow">Falowen Admin Analytics</p>
           <h1>School operations dashboard</h1>
           <p>
-            Track students, partnerships, balances, reminders and holiday planning.
-            Open Marking or Grammar Issues when you need to review that work.
+            View students, class communications, reminders, upcoming holidays,
+            leads and partnership requests. Open other workspaces from the main menu.
           </p>
         </div>
       </section>
 
-      <section className="analytics-grid five">
+      <section className="analytics-grid three">
         <StatCard label="Total students" value={loading ? "—" : analytics.totalStudents} helper={loading ? "Loading student records…" : `${analytics.activeRate}% active records`} tone="blue" icon="🎓" />
-        <StatCard label="Paid / active" value={loading ? "—" : analytics.paidStudents} helper={loading ? "Loading payment status…" : `${analytics.paymentRate}% marked paid or active`} tone="green" icon="✅" />
-        <StatCard label="Balance due" value={loading ? "—" : moneyFormatter.format(analytics.totalBalance)} helper={loading ? "Loading balances…" : `${analytics.studentsWithBalance.length} student(s) with balances`} tone="amber" icon="💳" />
         <StatCard label="Upcoming holidays" value={upcomingHolidays.length} helper={`${affectedHolidayClassCount} affected class${affectedHolidayClassCount === 1 ? "" : "es"}`} tone="purple" icon="📅" />
         <StatCard label="Leads needing attention" value={leadNotificationSummary.unresolvedCount} helper={`${leadNotificationSummary.unseenCount} new unseen lead${leadNotificationSummary.unseenCount === 1 ? "" : "s"}`} tone="rose" icon="🔔" to="/leads" />
       </section>
 
-      <section className="quick-actions-grid">
-        <ActionCard title="Today’s teaching" body="Choose your class, open its next lesson, launch slides and QR attendance, then mark it completed." to="/lesson-dashboard" label="Open teaching dashboard" tone="indigo" />
-        <ActionCard
-          title="Marking workspace"
-          body="Load assignments when you open Marking. Review work, AI audits and answer keys there."
-          to="/marking"
-          label="Open Marking"
-          tone="indigo"
-        />
-        <ActionCard title="Grammar workspace" body="Load grammar issue reports only when you open the workspace." to="/grammar-issues" label="Open Grammar Issues" tone="violet" />
-      </section>
-
       <AdminActionInbox user={user} classes={liveClasses} />
-
-      <section className="analytics-grid">
-        <article className="analytics-panel focus-panel">
-          <p className="analytics-eyebrow">Payment focus</p>
-          <h2>Largest balances</h2>
-          <MiniList
-            items={balancePreview}
-            emptyText="No balances found in student records."
-            renderItem={(student) => (
-              <li key={student.id || student.studentCode || student.email}>
-                <span className="avatar-chip">{initials(student.name)}</span>
-                <span>
-                  <strong>{student.name || student.studentCode || "Unnamed student"}</strong>
-                  <small>{classLabel(student)}</small>
-                </span>
-                <em>{moneyFormatter.format(studentBalance(student))}</em>
-              </li>
-            )}
-          />
-        </article>
-      </section>
 
       <section className="analytics-grid">
         <article className="analytics-panel">
