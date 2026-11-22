@@ -381,12 +381,34 @@
     }
   },
   "swahili-day-4": {
-    "version": 1,
+    "version": 2,
     "title": "Nchi na Lugha",
     "writing": {
       "Kuandika": "Ninatoka Ghana. Ninazungumza Kiingereza na Kiswahili. Unazungumza lugha gani?"
     },
     "reading": {
+      "read-1": {
+        "prompt": "John anatoka nchi gani? (Which country does John come from?)",
+        "answer": "B) Uingereza"
+      },
+      "read-2": {
+        "prompt": "John anasema lugha gani vizuri na lugha gani kidogo? (What language does John speak well and which one a little?)",
+        "answer": "B) Anasema Kiingereza na Kifaransa kidogo."
+      },
+      "read-3": {
+        "prompt": "Kiambishi gani kinatumiwa mwanzo wa jina la nchi kuonyesha lugha (k.m. Ufaransa → Kifaransa)? (Which prefix is added to a country's name to indicate language?)",
+        "answer": "C) Ki-"
+      },
+      "read-4": {
+        "prompt": "Kama mtu anatoka nchi ya Kenya, utaifa wake ni gani katika uwingi (plural)? (If people come from Kenya, what is their nationality in the plural form?)",
+        "answer": "B) Wakenya"
+      },
+      "read-5": {
+        "prompt": "Swali gani linatumiwa kuuliza lugha anayozungumza mtu? (Which question is used to ask which language someone speaks?)",
+        "answer": "C) Unasema lugha gani?"
+      }
+    },
+    "legacyReading": {
       "read-1": {
         "prompt": "Fatuma anatoka wapi?",
         "answer": "Tanzania."
@@ -398,6 +420,28 @@
       "read-3": {
         "prompt": "David anazungumza lugha gani?",
         "answer": "Kiswahili na Kiingereza."
+      }
+    },
+    "listening": {
+      "listen-origin-b": {
+        "prompt": "Mtu B anatoka nchi gani? (Which country does speaker B come from?)",
+        "answer": "B) Kenya"
+      },
+      "listen-origin-a": {
+        "prompt": "Mtu A anatoka nchi gani? (Which country does speaker A come from?)",
+        "answer": "C) Tanzania"
+      },
+      "listen-languages-b": {
+        "prompt": "Mtu B anaongea lugha gani? (Which languages does speaker B speak?)",
+        "answer": "A) Kiswahili na Kiingereza"
+      },
+      "listen-learning": {
+        "prompt": "Mtu B anasoma lugha gani kidogo? (Which language is speaker B studying a little?)",
+        "answer": "B) Kifaransa"
+      },
+      "listen-likes-a": {
+        "prompt": "Mtu A anapenda lugha gani? (Which languages does speaker A like?)",
+        "answer": "D) Kiswahili na Kiarabu"
       }
     }
   },
