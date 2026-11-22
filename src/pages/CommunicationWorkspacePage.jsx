@@ -5,6 +5,8 @@ import { listAllStudents } from "../services/studentsService.js";
 import { saveAnnouncementRows } from "../services/communicationService.js";
 import { dispatchIntegrationEvent } from "../services/integrationEventService.js";
 import { useToast } from "../context/ToastContext.jsx";
+import { createLetterPdfBlob } from "../utils/letterPdf.js";
+import { downloadStudentDocumentPdf } from "../services/studentDocumentsService.js";
 import TargetedCommunicationPanel from "../components/TargetedCommunicationPanel.jsx";
 import CommunicationHistoryPanel from "../components/CommunicationHistoryPanel.jsx";
 import "./CommunicationWorkspace.css";
@@ -15,7 +17,7 @@ const ACCOUNT_URL = "https://www.falowen.app/campus/account";
 const TABS = [
   { id: "bulk", label: "Bulk messages", number: "01", description: "One announcement for a class, level, or all active learners." },
   { id: "student", label: "One student", number: "02", description: "A personal email to one verified student account." },
-  { id: "documents", label: "Documents", number: "03", description: "Prepare a branded school letter as Word or print-ready PDF." },
+  { id: "documents", label: "Documents", number: "03", description: "Download school letter PDFs and verified enrollment documents." },
   { id: "promotions", label: "Class promotions", number: "04", description: "Promote upcoming classes using their actual schedule." },
 ];
 
@@ -359,6 +361,49 @@ export default function CommunicationWorkspacePage() {
     a.href = url; a.download = "falowen-" + documentKind + "-" + TODAY() + ".doc"; a.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
+  function downloadPdf() {
+    if (!documentHeading.trim() || !documentBody.trim()) { toast.error("Add a document title and body."); return; }
+    try {
+      const blob = createLetterPdfBlob({
+        heading: documentHeading,
+        body: documentBody,
+        recipient: documentRecipient,
+        reference: documentReference,
+        signatory: documentSignatory,
+        date: formatDate(TODAY()),
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "falowen-" + documentKind + "-" + TODAY() + ".pdf";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast.success("Your draft PDF has been downloaded.");
+    } catch (error) {
+      toast.error(error.message || "The PDF could not be created.");
+    }
+  }
+  async function downloadOfficialPdf(kind) {
+    if (!docStudent) { toast.error("Select a student first."); return; }
+    const studentCode = clean(docStudent.studentCode || docStudent.student_code || docStudent.studentcode);
+    const email = studentEmail(docStudent);
+    if (!studentCode && !email) { toast.error("The selected student needs a code or email."); return; }
+    setBusy(true);
+    setReceipt(null);
+    try {
+      const fileName = await downloadStudentDocumentPdf({ studentCode, email, kind });
+      setReceipt({ text: fileName + " downloaded from the verified students sheet. No email was sent." });
+      toast.success("Verified PDF downloaded.");
+    } catch (error) {
+      const message = error.message || "Could not export the verified PDF.";
+      setReceipt({ error: true, text: message });
+      toast.error(message);
+    } finally {
+      setBusy(false);
+    }
+  }
   function printDocument() {
     if (!documentHeading.trim() || !documentBody.trim()) { toast.error("Add a document title and body."); return; }
     const frame = window.open("", "_blank");
@@ -449,17 +494,23 @@ export default function CommunicationWorkspacePage() {
         <Field label="Document heading"><input value={documentHeading} onChange={(e) => setDocumentHeading(e.target.value)} /></Field>
         <Field label="Letter body"><textarea rows={12} value={documentBody} onChange={(e) => setDocumentBody(e.target.value)} placeholder="Choose a type or write your letter..." /></Field>
         <Field label="Signatory / office"><input value={documentSignatory} onChange={(e) => setDocumentSignatory(e.target.value)} /></Field>
-        <div className="cw-document-actions"><button type="button" className="cw-primary" onClick={downloadWord}>Download Word (.doc)</button>
-          <button type="button" className="cw-secondary" onClick={printDocument}>Print / Save PDF</button></div>
+        <div className="cw-document-actions"><button type="button" className="cw-primary" onClick={downloadPdf}>Download PDF</button>
+          <button type="button" className="cw-secondary" onClick={downloadWord}>Download Word (.doc)</button>
+          <button type="button" className="cw-secondary" onClick={printDocument}>Print</button></div>
         {documentKind === "enrollment" ? <div className="cw-section-rule">
           <h3>Official enrollment pack from the students sheet</h3>
-          <p className="cw-muted">The Student Docs Apps Script uses the authoritative students sheet to verify recorded payment and generate the signed enrollment documents. It does not use the editable draft above. Requests for unpaid students are rejected; already issued packs are not emailed again.</p>
+          <p className="cw-muted">Download the original Student Docs PDF design directly, without sending an email. Student Docs checks the canonical students sheet and recorded payment. Draft contents above are not used for verified exports.</p>
+          <div className="cw-document-actions">
+            <button type="button" className="cw-primary" disabled={busy || !docStudent} onClick={() => downloadOfficialPdf("enrollment")}>{busy ? "Preparing…" : "Download enrollment PDF"}</button>
+            <button type="button" className="cw-secondary" disabled={busy || !docStudent} onClick={() => downloadOfficialPdf("agreement")}>{busy ? "Preparing…" : "Download payment agreement PDF"}</button>
+          </div>
+          <small className="cw-muted">Verified downloads need the updated Student Docs Apps Script web app deployed. They do not email the learner or mark a pack as sent.</small>
           <button type="button" className="cw-secondary" disabled={busy || !docStudent} onClick={requestOfficialEnrollmentPack}>
             {busy ? "Requesting…" : "Request official enrollment pack"}
           </button>
         </div> : null}
         <ReceiptNote result={receipt} />
-        <small className="cw-muted">Word/PDF drafts are generated in your browser and are not emailed or recorded as issued certificates. Verify enrolment, scores, dates and signatures before official use.</small>
+        <small className="cw-muted">The instant PDF and Word letter buttons produce clearly labelled drafts in your browser. These are not issued certificates or verified enrollment packs. Verify enrolment, scores, dates and signatures before official use.</small>
       </div>
       <aside className="cw-sidebar"><div className="cw-document-preview"><div className="cw-letter-brand">Falowen</div><small>Learn Language Education Academy</small><hr />
         <div className="cw-letter-meta">{formatDate(TODAY())}{documentReference ? " · " + documentReference : ""}</div>
