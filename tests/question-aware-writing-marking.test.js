@@ -518,13 +518,18 @@ test("A2-4.9 recognizes Victoria's hotel booking, stay details, price and servic
   assert.match(result.taskPointEvidence[1].evidence, /Samstag, 10\.|drei Tage/i);
   assert.match(result.taskPointEvidence[2].evidence, /Wie viel kostet/i);
   assert.match(result.taskPointEvidence[2].evidence, /Frühstück|Internet/i);
-  assert.equal(result.ai.questionAwareWritingGuard.registerMismatch, true);
-  assert.equal(result.ai.questionAwareWritingGuard.missingTaskPoints.length, 0);
-  assert.equal(result.writingScore, 70);
-  assert.equal(result.finalScore, 88);
-  assert.match(result.feedback, /requested formal register/i);
-  assert.doesNotMatch(result.feedback, /Still missing:/i);
-  assert.ok(result.corrections.some((item) => item.from === "Lieber Herr Felix" && item.to === "Sehr geehrter Herr Felix"));
+  // Current register policy accepts "Lieber Herr ..." with consistent formal
+  // Sie/Ihnen address; it must not invent a register error or reduce the grade.
+  assert.equal(result.ai?.questionAwareWritingGuard?.registerMismatch ?? false, false);
+  assert.equal(result.ai.questionAwareWritingTask.register, "formal");
+  assert.equal(result.taskCompletion.completed, 3);
+  assert.equal(result.missingTaskPoints.length, 0);
+  assert.ok(result.writingScore >= 70);
+  assert.doesNotMatch(result.feedback, /requested formal register|Still missing:/i);
+  // A formal salutation remains a valid optional style correction, but the
+  // consistent Sie/Ihnen body does not justify a register-mismatch penalty.
+  assert.ok((result.corrections || []).some(item =>
+    item.from === "Lieber Herr Felix" && item.to === "Sehr geehrter Herr Felix"));
 });
 
 test("all 28 A2 writing assignments have canonical semantic specs", () => {

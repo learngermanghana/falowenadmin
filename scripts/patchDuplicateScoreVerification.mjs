@@ -22,6 +22,27 @@ function replacePatternRequired(source, pattern, replacement, label) {
 
 let source = await readFile(servicePath, "utf8");
 
+// Current source has canonical per-student answer-reference publishing via a
+// Firestore batch. The older atomic-reservation generator predates that
+// contract and would replace the reference publication with a score-only write.
+// Do not apply that obsolete rewrite to the modern service: preserving grade
+// references takes precedence over generating an incompatible implementation.
+const usesCanonicalReferencePublication = [
+  "publicationReference = null",
+  'collection(db, "publishedAnswerReferences")',
+  "batch.set(referenceRef",
+  "batch.set(scoreRef",
+  "writeBatch(db)",
+  "requireAllTargets = false",
+  "hasSavedScoreForAssignment(existingScore)",
+].every(marker => source.includes(marker));
+
+if (usesCanonicalReferencePublication) {
+  // This is not a claim that the new service uses atomic reservations. It
+  // already provides sequential duplicate protection; a transactional upgrade
+  // must separately preserve the published answer-reference batch.
+  console.log("Canonical score answer-reference batch detected; skipped incompatible legacy duplicate-reservation generator.");
+} else {
 source = replaceRequired(
   source,
   'import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";',
@@ -238,3 +259,5 @@ for (const marker of [
 
 await writeFile(servicePath, source);
 console.log("Patched duplicate score verification persistence and atomic reservation.");
+}
+

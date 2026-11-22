@@ -27,7 +27,10 @@ test('all 56 lessons have one existing reading and a distinct topic correction p
     const mistakes = stages.find(s => s.id === 'common-mistakes');
     assert.ok(mistakes.items.length >= 2 && mistakes.items.length <= 3);
     assert.equal(ids.indexOf('common-mistakes') + 1, ids.indexOf('reading'));
-    assert.equal(ids.indexOf('reading') + 1, ids.indexOf('grammar-check'));
+    // Some A2 lessons now include additional speaking and application stages between
+    // the authored reading and the grammar diagnostic. Retain their order without
+    // assuming that the two stages must be adjacent.
+    assert.ok(ids.indexOf('grammar-check') > ids.indexOf('reading'), slide.assignmentId);
     for (const item of mistakes.items) {
       assert.notEqual(item.prompt, item.answer);
       assert.ok(item.note.length > 20);
@@ -101,13 +104,16 @@ test('A2 Day 19 and Day 20 use the real Day 18 player design, lyrics and MCQs', 
     assert.ok(day18.includes(selector), selector);
   }
   assert.match(player, /<audio key=\{track\.objectKey\}/);
-  assert.match(player, /<LessonSongLyrics song=\{song\} cues=\{synchronized \? pack\.cues : \[\]\}/);
+  assert.match(player, /<LessonSongLyrics key=\{track\?\.objectKey\} audioRef=\{audio\} song=\{song\} cues=\{synchronized \? pack\.cues : \[\]\}/);
   assert.match(player, /recordedSongQuestions\(displayText,day,level\)/);
   assert.match(player, /music-lyrics\?key=/);
   assert.match(player, /Referenztext · noch nicht mit dieser MP3 abgeglichen/);
-  assert.match(player, /originalen Liedtextentwurf/);
+  // A local songbook fallback is shown as an *unverified* text, never timed to audio.
+  assert.match(player, /getReusableSongDraft\(assignmentKey\)/);
+  assert.match(player, /reference=\{lyrics:draft\.lyrics,objectKey:track\.objectKey,draftOnly:true\}/);
+  assert.match(player, /Liedtextentwurf · Noch nicht mit der veröffentlichten MP3 geprüft/);
   assert.match(player, /referenceKey=referenceKeys\[level\+'-'\+day\]/);
-  assert.doesNotMatch(player, /<iframe|&embedded=1|getReusableSongDraft|SongTimingEditor/);
+  assert.doesNotMatch(player, /<iframe|&embedded=1|SongTimingEditor/);
   assert.match(player, /Das separate Hören-Gespräch bleibt auf der nächsten Folie/);
 });
 
@@ -119,14 +125,17 @@ test('all 56 A2/B1 presenters use the standard music and reading layout',()=>{
     const stages=buildTeachingPresenterStages(slide,slide.topic);
     const ids=stages.map(x=>x.id);
     assert.equal(ids[0],'intro',slide.assignmentId);
-    assert.equal(ids[1],'warmup',slide.assignmentId);
+    const hasTeacherLecture = /^[A-Za-z0-9_-]{11}$/.test(String(slide.teacherLectureVideoId || '').trim());
+    // Approved lecture videos precede the normal music warm-up without replacing it.
+    assert.equal(ids[1], hasTeacherLecture ? 'teacher-lecture' : 'warmup', slide.assignmentId);
+    assert.equal(ids.indexOf('warmup'), hasTeacherLecture ? 2 : 1, slide.assignmentId);
     assert.equal(ids.indexOf('reading'),ids.indexOf('common-mistakes')+1,slide.assignmentId);
-    assert.equal(ids.indexOf('grammar-check'),ids.indexOf('reading')+1,slide.assignmentId);
+    assert.ok(ids.indexOf('grammar-check') > ids.indexOf('reading'),slide.assignmentId);
     assert.deepEqual(ids.slice(-4),["workbook-presentation", "questions", "workbook", "lesson-summary"],slide.assignmentId);
     assert.equal(stages.filter(x=>x.id==='reading').length,1,slide.assignmentId);
     assert.equal(stages.filter(x=>x.id==='common-mistakes').length,1,slide.assignmentId);
     const expected=getInteractiveLessonOpening(slide.assignmentId)?.musicIntro;
-    const musicStage=stages[1];
+    const musicStage=stages.find(x=>x.id==='warmup');
     if(expected){
       assert.equal(musicStage?.variant,'interactive-music-video',slide.assignmentId);
       assert.equal(musicStage.musicVideo.day,expected.day,slide.assignmentId);

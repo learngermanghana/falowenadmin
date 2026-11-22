@@ -117,3 +117,52 @@ test("updated patch migrates an older generated completion handler", async () =>
     await rm(root, { recursive: true, force: true });
   }
 });
+
+
+test("completion generator supports the unified session editor and preserves Reopen", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "falowen-unified-completion-"));
+  try {
+    await mkdir(path.join(root, "scripts"), { recursive: true });
+    await mkdir(path.join(root, "src/services"), { recursive: true });
+    await mkdir(path.join(root, "src/pages"), { recursive: true });
+    await writeFile(path.join(root, "scripts/patchAutomaticSessionCompletionUi.mjs"), await readFile(patchScript, "utf8"));
+    await writeFile(path.join(root, "src/services/liveClassServiceBase.js"), oldService);
+    const modern = oldPage
+      .replace(
+        '  allowAutomaticSessionCompletion,\n  undoSessionCompletion,',
+        '  listClassCohorts,\n  markSessionCompleted,\n  updateSession,',
+      )
+      .replace(
+        '      if (action === "complete") {',
+        '      if (action === "reopen") {\n        await reopenSession(session.id, { reason: "test", adminId });\n      }\n      if (action === "complete") {',
+      )
+      .replace(
+        '  function renderSessionChangeForm(session) {\n    return session;\n  }',
+        '  function openSessionChange(session) {\n    return session;\n  }\n\n' +
+        '  <details className="live-workspace-menu"><summary>More actions</summary>\n' +
+        '                      {status === "completed"\n' +
+        '                        ? <button type="button" disabled={busy} onClick={() => handleSessionAction(session, "reopen")}>Reopen session</button>\n' +
+        '                        : <button type="button" disabled={busy || contentLocked} onClick={() => handleSessionAction(session, "complete")}>Mark completed</button>}\n' +
+        '  </details>',
+      )
+      .replace('  // Automatic completion paused\n  // handleSessionAction(session, "undo-completion")\n', '');
+    await writeFile(path.join(root, "src/pages/LiveClassesPageV2.jsx"), modern);
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const result = spawnSync(process.execPath, [path.join(root, "scripts/patchAutomaticSessionCompletionUi.mjs")], {
+        cwd: root, encoding: "utf8",
+      });
+      assert.equal(result.status, 0, result.stderr || result.stdout);
+    }
+    const page = await readFile(path.join(root, "src/pages/LiveClassesPageV2.jsx"), "utf8");
+    assert.match(page, /allowAutomaticSessionCompletion,/);
+    assert.match(page, /undoSessionCompletion,/);
+    assert.match(page, /markSessionCompleted\(session\.id, adminId, canonicalClassId\)/);
+    assert.match(page, /reopenSession\(session\.id, \{ reason, adminId \}\)/);
+    assert.match(page, /handleSessionAction\(session, "undo-completion"\)/);
+    assert.match(page, /handleSessionAction\(session, "allow-auto-completion"\)/);
+    assert.match(page, /Automatic completion paused/);
+    assert.equal(page.match(/function openSessionChange\(/g).length, 1);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});

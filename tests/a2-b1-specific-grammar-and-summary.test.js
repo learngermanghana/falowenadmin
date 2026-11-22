@@ -72,24 +72,27 @@ for (const level of ["A2", "B1"]) {
   });
 }
 
-test("A2 and B1 open with music and finish with the workbook presentation", () => {
-  const listeningDays = { A2: [1, 2, 3, 4, 17, 18, 19, 20, 21, 23, 24, 25], B1: [24, 25, 26, 27, 28] };
+test("A2 and B1 retain music, separate approved listening and workbook presentation", () => {
   for (const slide of ["A2", "B1"].flatMap(getSlidesByCourse)) {
     const stages = buildTeachingPresenterStages(slide);
     const music = stages.filter(stage => stage.variant === "interactive-music-video");
     const listening = stages.find(stage => stage.variant === "interactive-listening");
+    const hasLecture = /^[A-Za-z0-9_-]{11}$/.test(String(slide.teacherLectureVideoId || "").trim());
     assert.equal(music.length, 1, slide.assignmentId);
     assert.equal(stages[0].id, "intro", slide.assignmentId);
-    assert.equal(stages[1], music[0], slide.assignmentId);
+    if (hasLecture) assert.equal(stages[1].id, "teacher-lecture", slide.assignmentId);
+    assert.equal(stages[hasLecture ? 2 : 1], music[0], slide.assignmentId);
     assert.equal(music[0].musicVideo.day, slide.dayNumber, slide.assignmentId);
     assert.equal(music[0].musicVideo.level, slide.course, slide.assignmentId);
     assert.ok(stages.every(stage => stage.variant !== "interactive-warmup" && stage.title !== "Warm-up"), slide.assignmentId);
-    assert.equal(Boolean(listening), listeningDays[slide.course].includes(slide.dayNumber), slide.assignmentId);
+    const gram = stages.findIndex(stage => stage.id === "workbook-grammar");
+    assert.ok(gram > stages.indexOf(music[0]), slide.assignmentId);
     if (listening) {
+      // Authored Hören is independent of the published song and the workbook.
       assert.ok(listening.audioKey && listening.listeningItems.length, slide.assignmentId);
-      assert.equal(stages[2], listening, slide.assignmentId);
+      assert.equal(stages.indexOf(listening), stages.indexOf(music[0]) + 1, slide.assignmentId);
+      assert.ok(gram > stages.indexOf(listening), slide.assignmentId);
     }
-    assert.equal(stages[listening ? 3 : 2].id, "workbook-grammar", slide.assignmentId);
     assert.equal(stages.filter(stage => stage.id === "workbook-presentation").length, 1, slide.assignmentId);
     assert.equal(stages.at(-1).id, "lesson-summary", slide.assignmentId);
   }

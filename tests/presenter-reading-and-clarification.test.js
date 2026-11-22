@@ -23,7 +23,11 @@ test("all 56 reading passages have exactly three checks and valid numbered evide
       assert.ok(numbers.every(n => n >= 1 && n <= sentences.length), `${slide.assignmentId}: ${reference}`);
     }
     const stages = buildTeachingPresenterStages(slide, slide.topic);
-    assert.equal(stages[1].id, "warmup");
+    const hasTeacherLecture = /^[A-Za-z0-9_-]{11}$/.test(String(slide.teacherLectureVideoId || "").trim());
+    // The optional teacher lecture is a separate resource before music; it
+    // must not replace either the regular warm-up or the authored Lesen task.
+    assert.equal(stages[1].id, hasTeacherLecture ? "teacher-lecture" : "warmup");
+    assert.equal(stages[hasTeacherLecture ? 2 : 1].id, "warmup");
     const restored = stages.find(stage => stage.id === "reading");
     assert.equal(restored.instruction, reading.readingPurpose);
     assert.deepEqual(restored.answerItems, reading.answers);

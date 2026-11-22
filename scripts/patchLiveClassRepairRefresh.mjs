@@ -26,7 +26,17 @@ let sessionsSource = await readFile(sessionsPath, "utf8");
 const listenerAnchor = "\n  const levelId = useMemo(() => resolveLevel(dashboard?.klass || {}), [dashboard?.klass]);";
 const listenerBlock = `\n  useEffect(() => {\n    let active = true;\n\n    async function handleRepairedSchedule(event) {\n      const changedClassId = String(event?.detail?.classId || \"\").trim();\n      if (!changedClassId || changedClassId !== selectedClassId) return;\n      setLoading(true);\n      try {\n        const next = await getCompatibleClassDashboard(changedClassId);\n        if (!active) return;\n        setDashboard(next);\n        setMessage(next.curriculumSync?.error || \"Timetable repaired. Sessions refreshed.\");\n      } catch (error) {\n        if (active) setMessage(error?.message || \"Could not refresh the repaired timetable\");\n      } finally {\n        if (active) setLoading(false);\n      }\n    }\n\n    window.addEventListener("${eventName}", handleRepairedSchedule);\n    return () => {\n      active = false;\n      window.removeEventListener("${eventName}", handleRepairedSchedule);\n    };\n  }, [selectedClassId]);\n\n  const levelId = useMemo(() => resolveLevel(dashboard?.klass || {}), [dashboard?.klass]);`;
 
-sessionsSource = replaceRequired(sessionsSource, listenerAnchor, listenerBlock, "Live Classes repaired-schedule refresh listener");
+const modernListenerAnchor = "\n  const levelId = useMemo(() => resolveCourseDictionaryLevel(dashboard?.klass || {}), [dashboard?.klass]);";
+const activeAnchor = sessionsSource.includes(listenerAnchor) ? listenerAnchor : modernListenerAnchor;
+const activeBlock = activeAnchor === listenerAnchor ? listenerBlock
+  : listenerBlock.replace(
+      "const levelId = useMemo(() => resolveLevel(dashboard?.klass || {}), [dashboard?.klass]);",
+      "const levelId = useMemo(() => resolveCourseDictionaryLevel(dashboard?.klass || {}), [dashboard?.klass]);",
+    );
+if (!sessionsSource.includes('window.addEventListener("' + eventName + '"')) {
+  sessionsSource = replaceRequired(sessionsSource, activeAnchor, activeBlock,
+    "Live Classes repaired-schedule refresh listener");
+}
 await writeFile(sessionsPath, sessionsSource);
 
 console.log("Live Classes now refreshes the Sessions table immediately after timetable repair.");

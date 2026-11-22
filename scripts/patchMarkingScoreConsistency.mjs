@@ -44,12 +44,16 @@ const servicePath = new URL("../src/services/markingServiceBase.js", import.meta
 let serviceSource = fs.readFileSync(servicePath, "utf8");
 let serviceChanged = false;
 
-({ source: serviceSource, changed: serviceChanged } = replaceOnce(
-  serviceSource,
-  `  forceSheetDedupeId = false,\n}) {`,
-  `  forceSheetDedupeId = false,\n  requireAllTargets = false,\n}) {`,
-  "saveScoreRow requireAllTargets parameter",
-));
+// Current markingServiceBase already has the strict target flag, even if a
+// newer source layout reordered the optional parameters.
+if (!serviceSource.includes("  requireAllTargets = false,")) {
+  ({ source: serviceSource, changed: serviceChanged } = replaceOnce(
+    serviceSource,
+    `  forceSheetDedupeId = false,\n}) {`,
+    `  forceSheetDedupeId = false,\n  requireAllTargets = false,\n}) {`,
+    "saveScoreRow requireAllTargets parameter",
+  ));
+}
 
 const requireAllTargetsBlock = `\n  if (requireAllTargets) {\n    const failedTargets = [];\n    if (receipt.sheet.attempted && !receipt.sheet.success) {\n      failedTargets.push(\`Google Sheets: \${receipt.sheet.message || "failed"}\`);\n    }\n    if (receipt.firestore.attempted && !receipt.firestore.success) {\n      failedTargets.push(\`Firestore: \${receipt.firestore.message || "failed"}\`);\n    }\n    if (failedTargets.length) {\n      const saveError = new Error(\`Final score was not saved to all required targets. \${failedTargets.join(" | ")}\`);\n      saveError.receipt = receipt;\n      throw saveError;\n    }\n  }\n`;
 

@@ -19,6 +19,19 @@ function replaceOnce(search, replacement, label, acceptedPatterns = []) {
   changed = true;
 }
 
+// Newer Live Classes screens delegate rescheduling to LiveClassSessionEditor.
+// The legacy page text substitutions must not run against that delegated UI.
+const editorPath = new URL("../src/components/LiveClassSessionEditor.jsx", import.meta.url);
+const editorSource = fs.existsSync(editorPath) ? fs.readFileSync(editorPath, "utf8") : "";
+const delegatedSessionChange = source.includes("<LiveClassSessionEditor")
+  && editorSource.includes('label: "Wrong date"')
+  && editorSource.includes("classId: klass.id")
+  && editorSource.includes("rescheduleSession(sessionChange.sessionId")
+  && editorSource.includes("localDate: parts.localDate");
+
+if (delegatedSessionChange) {
+  console.log("Live Classes reschedule UI already uses the dedicated editor; legacy page substitutions skipped.");
+} else {
 if (!source.includes('label: "Wrong date"')) {
   replaceOnce(
     'const SESSION_CHANGE_REASONS = [\n  { label: "Raining / light out", value: "Class cannot hold because it is raining and the lights are out." },',
@@ -69,4 +82,6 @@ if (changed) {
   console.log("Live Classes V2 reschedule UI patched.");
 } else {
   console.log("Live Classes V2 reschedule UI already patched.");
+}
+
 }
