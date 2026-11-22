@@ -3,6 +3,18 @@ const answerKeys = require("./swahili-answers.json");
 const { createHash } = require("node:crypto");
 const { resolveAnnouncementConfig, postAnnouncementRow } = require("./finalMockResultEmails");
 
+function resolveDayFourAnswerReference(lessonId, readingVersion) {
+  const reference = answerKeys[lessonId];
+  if (!reference || lessonId !== "swahili-day-4") return reference;
+  const { legacyReading, listening, ...base } = reference;
+  // Older Day 4 students completed three short-answer questions without Hören.
+  // They must not be marked against the revised five-question assessment.
+  if (Number(readingVersion || 1) < 2) {
+    return { ...base, version: 1, reading: legacyReading };
+  }
+  return { ...base, listening };
+}
+
 const PASS_MARK = 60;
 const lessonTitles = { ...Object.fromEntries(Object.entries(answerKeys).filter(([, key]) => key.title).map(([id, key]) => [id, key.title])), "swahili-day-11": "Dukani", "swahili-b1-day-28": "Kutunza Mazingira katika Maisha ya Kila Siku", "swahili-day-1": "Alfabeti, sauti na matamshi", "swahili-day-6": "Mgahawani" };
 
@@ -56,7 +68,7 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
           return null;
         }
         if (delivery.exists) return delivery.data();
-        tx.set(snapshot.ref, { ...(b1 ? {} : { answerReference: answerKeys[review.lessonId] }), sheetDelivery: "pending", emailDelivery: "pending" }, { merge: true });
+        tx.set(snapshot.ref, { ...(b1 ? {} : { answerReference: resolveDayFourAnswerReference(review.lessonId, submission.data()?.readingVersion) }), sheetDelivery: "pending", emailDelivery: "pending" }, { merge: true });
         tx.set(scoreRef, {
           program: "swahili", language: "swahili", studentId: uid, studentCode, studentcode: studentCode,
           name: student.name || "", assignment, assignmentId: review.lessonId,
@@ -117,4 +129,4 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
   };
 }
 
-module.exports = { createSwahiliResultWorker };
+module.exports = { createSwahiliResultWorker, resolveDayFourAnswerReference };
