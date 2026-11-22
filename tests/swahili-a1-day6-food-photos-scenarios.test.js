@@ -32,15 +32,20 @@ test("A1 Day 6 reuses the existing stages and puts scenario directly before summ
   assert.equal(SWAHILI_DAY_ONE_ADMIN_LESSON.stages.at(-2).type,"presentation");
 });
 
-test("Food photo cards are source-aligned, representative images with visible Commons attribution",()=>{
+test("Food photo cards are matched to the lesson PDF or credited Commons images",()=>{
   assert.deepEqual(SWAHILI_DAY_SIX_FOOD_CARDS.map(c=>c.sw),[
     "Wali kuku","Ugali samaki","Ugali nyama","Pilau nyama"
   ]);
   for(const item of SWAHILI_DAY_SIX_FOOD_CARDS){
+    assert.ok(item.en);
+    if (["wali-kuku", "ugali-nyama"].includes(item.id)) {
+      assert.equal(item.image, `/images/swahili/day-6/${item.id}.jpg`);
+      assert.equal(readFileSync(new URL(`../public${item.image}`, import.meta.url)).readUInt16BE(), 0xffd8);
+      continue;
+    }
     assert.match(item.image,/^https:\/\/commons\.wikimedia\.org\/wiki\/Special:FilePath\//);
     assert.match(item.credit,/^https:\/\/commons\.wikimedia\.org\/wiki\/File:/);
     assert.ok(item.author);
-    assert.ok(item.en);
   }
   assert.deepEqual(SWAHILI_DAY_SIX_DRINK_CARDS.map(c=>c.sw),["Maji","Juisi","Soda"]);
   assert.match(stage,/className="swahili-a2-presenter__food-photo-card"/);

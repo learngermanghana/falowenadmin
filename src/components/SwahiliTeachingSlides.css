@@ -268,6 +268,7 @@
 .swahili-a2-presenter__food-photo-frame img{
   display:block;width:100%;height:100%;object-fit:cover;
 }
+.swahili-a2-presenter__food-photo-frame img[src^="/images/swahili/day-6/"]{object-fit:contain}
 .swahili-a2-presenter__food-photo-frame [hidden]{display:none!important}
 .swahili-a2-presenter__photo-fallback{
   display:grid;place-items:center;position:absolute;inset:0;
