@@ -11,7 +11,7 @@ const PAID_FIELDS = [
   "amountPaid",
   "amount_paid",
   "totalPaid",
-  "initialPaymentAmount",
+  "paidAmount",
 ];
 
 const BALANCE_FIELDS = [
@@ -95,44 +95,63 @@ function paymentSnapshot(student = {}) {
 function detectPaymentChange(before = {}, after = {}) {
   const previous = paymentSnapshot(before);
   const current = paymentSnapshot(after);
+  // Changing a balance is not evidence of receiving money. Only a new
+  // cumulative paid credit is eligible for a payment notification.
+  if (!current.paidPresent) return null;
+  const paidIncrease = roundMoney(current.paid - (previous.paidPresent ? previous.paid : 0));
+  if (paidIncrease <= MONEY_EPSILON) return null;
 
-  const paidIncrease = previous.paidPresent && current.paidPresent
-    ? roundMoney(current.paid - previous.paid)
-    : 0;
   const balanceDecrease = previous.balancePresent && current.balancePresent
     ? roundMoney(previous.balance - current.balance)
     : 0;
-
-  let amount = 0;
-  let source = "";
-  if (paidIncrease > MONEY_EPSILON) {
-    amount = paidIncrease;
-    source = "paid_increase";
-  } else if (balanceDecrease > MONEY_EPSILON) {
-    amount = balanceDecrease;
-    source = "balance_decrease";
-  }
-
-  if (amount <= MONEY_EPSILON) return null;
-
-  const totalPaid = current.paidPresent
-    ? current.paid
-    : roundMoney((previous.paidPresent ? previous.paid : 0) + amount);
   const balance = current.balancePresent
     ? Math.max(0, current.balance)
-    : Math.max(0, roundMoney((previous.balancePresent ? previous.balance : 0) - amount));
+    : Math.max(0, roundMoney((previous.balancePresent ? previous.balance : 0) - paidIncrease));
 
   return {
-    amount: roundMoney(amount),
-    source,
-    paidIncrease: Math.max(0, paidIncrease),
+    amount: paidIncrease,
+    source: "paid_increase",
+    paidIncrease,
     balanceDecrease: Math.max(0, balanceDecrease),
-    totalPaid: roundMoney(totalPaid),
+    totalPaid: current.paid,
     balance: roundMoney(balance),
     previous,
     current,
     reference: current.reference || previous.reference,
   };
+}
+
+// A Firestore field edit or an old webhook replay must not become a receipt.
+// Each newly credited payment must have a new reference and matching
+// lastPaymentAmount written together with the tuition credit.
+function hasNewPaymentEvidence(before = {}, after = {}, change = {}) {
+  const reference = paymentReference(after);
+  const amount = money(after.lastPaymentAmount);
+  return Boolean(reference)
+    && reference !== paymentReference(before)
+    && amount !== null
+    && approximatelyEqual(amount, change.amount);
+}
+
+async function hasVerifiedPaystackCredit({ db, studentId, student, change }) {
+  if (text(student.lastPaymentProvider).toLowerCase() !== "paystack") return true;
+  if (!change.reference || !db?.collection) return false;
+  const snap = await db.collection("payments").doc(change.reference).get();
+  if (!snap.exists) return false;
+  const payment = snap.data() || {};
+  return text(payment.studentId) === text(studentId)
+    && text(payment.status).toLowerCase() === "paid"
+    && approximatelyEqual(money(payment.tuitionCredit), change.amount);
+}
+
+function isImplausibleCourseTotal(student = {}, change = {}) {
+  const tuition = money(student.tuitionFee);
+  if (tuition === null || tuition <= MONEY_EPSILON) return false;
+  const upgrade = text(student.upgradeStatus).toLowerCase();
+  // Upgrades and renewals may have a cumulative lifetime paid amount.
+  if (["pending", "expired", "completed"].includes(upgrade)
+    || text(student.lastPaymentPurpose).toLowerCase() === "renewal") return false;
+  return change.totalPaid > tuition + MONEY_EPSILON;
 }
 
 function asDate(value) {
@@ -382,6 +401,16 @@ async function processStudentPaymentUpdate({
   const change = detectPaymentChange(before, after);
   if (!change) return { sent: false, reason: "no_payment_change" };
   if (!change.current.email) return { sent: false, reason: "missing_email" };
+  if (!hasNewPaymentEvidence(before, after, change)) {
+    return { sent: false, reason: "missing_new_payment_reference_or_amount" };
+  }
+  if (isImplausibleCourseTotal(after, change)) {
+    console.warn("student_payment_total_exceeds_tuition", { studentId, totalPaid: change.totalPaid });
+    return { sent: false, reason: "tuition_total_exceeds_fee_reconcile_required" };
+  }
+  if (!await hasVerifiedPaystackCredit({ db, studentId, student: after, change })) {
+    return { sent: false, reason: "paystack_reference_not_verified" };
+  }
 
   const reservation = await reservePaymentEmail({
     db,
@@ -456,6 +485,9 @@ module.exports = {
     approximatelyEqual,
     buildPaymentMessage,
     detectPaymentChange,
+    hasNewPaymentEvidence,
+    hasVerifiedPaystackCredit,
+    isImplausibleCourseTotal,
     formatMoney,
     isLikelySecondHalfOfSameSync,
     money,

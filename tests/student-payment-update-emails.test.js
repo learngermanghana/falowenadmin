@@ -6,9 +6,11 @@ const require = createRequire(import.meta.url);
 const { _test } = require("../functions/studentPaymentUpdateEmails.js");
 
 const {
-  applyStoredPaymentBaseline,
   buildPaymentMessage,
   detectPaymentChange,
+  hasNewPaymentEvidence,
+  hasVerifiedPaystackCredit,
+  isImplausibleCourseTotal,
   isLikelySecondHalfOfSameSync,
   resolveClassWebhookConfig,
   resolveStudentWebhookConfig,
@@ -16,39 +18,61 @@ const {
   rowForPaymentUpdate,
 } = _test;
 
-test("manual balance reduction is detected as a payment", () => {
-  const change = detectPaymentChange(
-    { paid: 1000, balanceDue: 1800 },
-    { paid: 1000, balanceDue: 1300 },
-  );
-
-  assert.equal(change.amount, 500);
-  assert.equal(change.source, "balance_decrease");
-  assert.equal(change.totalPaid, 1500);
-  assert.equal(change.balance, 1300);
+test("changing only a balance never creates a payment receipt", () => {
+  assert.equal(detectPaymentChange(
+    { paid: 2000, balanceDue: 1000 },
+    { paid: 2000, balanceDue: 0 },
+  ), null);
 });
 
-test("Ruth test balance reduction from 3000 to zero is detected", () => {
-  const change = detectPaymentChange(
-    { initialPaymentAmount: 3000, balanceDue: 3000, email: "ruth@example.com" },
-    { initialPaymentAmount: 3000, balanceDue: 0, email: "ruth@example.com" },
-  );
-
-  assert.equal(change.amount, 3000);
-  assert.equal(change.source, "balance_decrease");
-  assert.equal(change.balance, 0);
+test("a planned initial payment is not a confirmed paid credit", () => {
+  assert.equal(detectPaymentChange(
+    { initialPaymentAmount: 2000, balanceDue: 3000 },
+    { initialPaymentAmount: 3000, balanceDue: 2000 },
+  ), null);
+  assert.ok(!_test.PAID_FIELDS.includes("initialPaymentAmount"));
 });
 
-test("stored payment state keeps successive manual balance payments cumulative", () => {
-  const rawChange = detectPaymentChange(
-    { paid: 1000, balanceDue: 1300 },
-    { paid: 1000, balanceDue: 800 },
+test("Rashid's two Paystack tuition credits produce a 3000 total, not 5020", () => {
+  const initial = detectPaymentChange(
+    { paid: 0, balanceDue: 3000 },
+    { paid: 2000, balanceDue: 1000, lastPaymentAmount: 2000, lastPaymentReference: "FAL-first" },
   );
-  const adjusted = applyStoredPaymentBaseline({ lastPaid: 1500 }, rawChange);
+  const final = detectPaymentChange(
+    { paid: 2000, balanceDue: 1000, lastPaymentReference: "FAL-first" },
+    { paid: 3000, balanceDue: 0, lastPaymentAmount: 1000, lastPaymentReference: "FAL-final" },
+  );
+  assert.equal(initial.amount, 2000);
+  assert.equal(initial.totalPaid, 2000);
+  assert.equal(final.amount, 1000);
+  assert.equal(final.totalPaid, 3000);
+  assert.equal(final.balance, 0);
+});
 
-  assert.equal(adjusted.amount, 500);
-  assert.equal(adjusted.totalPaid, 2000);
-  assert.equal(adjusted.balance, 800);
+test("payment changes need a new reference and matching credited amount", () => {
+  const before = { paid: 2000, balanceDue: 1000, lastPaymentReference: "FAL-first" };
+  const after = { paid: 3000, balanceDue: 0, lastPaymentReference: "FAL-final", lastPaymentAmount: 1000 };
+  const change = detectPaymentChange(before, after);
+  assert.equal(hasNewPaymentEvidence(before, after, change), true);
+  assert.equal(hasNewPaymentEvidence(before, { ...after, lastPaymentReference: "FAL-first" }, change), false);
+  assert.equal(hasNewPaymentEvidence(before, { ...after, lastPaymentAmount: 1010 }, change), false);
+  assert.equal(hasNewPaymentEvidence(before, { ...after, lastPaymentReference: "" }, change), false);
+});
+
+test("Paystack receipt verifies paid reference, student and tuition credit (not checkout gross)", async () => {
+  const payment = { studentId: "rashid-id", status: "paid", tuitionCredit: 1000, checkoutAmount: 1010 };
+  const db = { collection: () => ({ doc: () => ({ get: async () => ({ exists: true, data: () => payment }) }) }) };
+  const candidate = { db, studentId: "rashid-id", student: { lastPaymentProvider: "Paystack" }, change: { amount: 1000, reference: "FAL-final" } };
+  assert.equal(await hasVerifiedPaystackCredit(candidate), true);
+  assert.equal(await hasVerifiedPaystackCredit({ ...candidate, change: { ...candidate.change, amount: 1010 } }), false);
+  assert.equal(await hasVerifiedPaystackCredit({ ...candidate, studentId: "wrong-student" }), false);
+  assert.equal(await hasVerifiedPaystackCredit({ ...candidate, db: { collection: () => ({ doc: () => ({ get: async () => ({ exists: false }) }) }) } }), false);
+});
+
+test("an overstated ordinary-course paid total suppresses misleading emails", () => {
+  assert.equal(isImplausibleCourseTotal({ tuitionFee: 3000 }, { totalPaid: 5020 }), true);
+  assert.equal(isImplausibleCourseTotal({ tuitionFee: 3000 }, { totalPaid: 3000 }), false);
+  assert.equal(isImplausibleCourseTotal({ tuitionFee: 3000, upgradeStatus: "completed" }, { totalPaid: 5020 }), false);
 });
 
 test("student payment changing paid and balance is counted once from the paid increase", () => {
