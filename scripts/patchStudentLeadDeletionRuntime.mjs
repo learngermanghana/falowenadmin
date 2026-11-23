@@ -10,19 +10,8 @@ if (!source.includes('app.post("/student-leads/delete"')) {
   }
 
   const leadDeletionRuntime = `async function deleteLeadRowFromSheet({ leadId, email, phone, lead }) {
-  const studentDeleteConfig = runtimeConfig.student_delete || runtimeConfig.studentDelete || {};
-  const appsScriptUrl = String(
-    studentDeleteConfig.apps_script_url ||
-    studentDeleteConfig.appsScriptUrl ||
-    process.env.STUDENT_DELETE_APPS_SCRIPT_URL ||
-    ""
-  ).trim();
-  const syncSecret = String(
-    studentDeleteConfig.sync_secret ||
-    studentDeleteConfig.syncSecret ||
-    process.env.STUDENT_DELETE_SYNC_SECRET ||
-    ""
-  ).trim();
+  const appsScriptUrl = String(studentDeleteAppsScriptUrlSecret.value() || process.env.STUDENT_DELETE_APPS_SCRIPT_URL || "").trim();
+  const syncSecret = String(studentDeleteSyncSecret.value() || process.env.STUDENT_DELETE_SYNC_SECRET || "").trim();
   if (!appsScriptUrl || !syncSecret) {
     return { attempted: false, success: false, message: "Lead deletion Google Sheets webhook is not configured." };
   }
@@ -43,14 +32,17 @@ if (!source.includes('app.post("/student-leads/delete"')) {
   return {
     attempted: true,
     success: response.ok && data?.ok !== false,
-    message: data?.message || (response.ok ? "Lead row deleted." : "Lead row deletion failed."),
+    message: data?.error || data?.message || (response.ok ? "Lead row deleted." : "Lead row deletion failed."),
     details: data,
   };
 }
 
 app.post("/student-leads/delete", async (req, res) => {
   try {
-    await requireAuth(req);
+    const account = await requireAuth(req);
+    const isAdmin = account.admin === true || account.role === "admin" ||
+      (account.email_verified === true && String(account.email || "").toLowerCase() === "moxflex@gmail.com");
+    if (!isAdmin) return res.status(403).json({ error: "Administrator access is required to delete leads." });
     const body = req.body || {};
     const lead = body.lead || {};
     const leadId = cleanIdentifier(body.leadId || lead.leadId || lead.id);
