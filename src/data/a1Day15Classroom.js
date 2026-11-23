@@ -25,6 +25,34 @@ export const A1_DAY15_SENTENCE_TASKS = Object.freeze({
   ],
 });
 
+// Recognise meaningful German alternatives without relaxing the verb-position
+// exercises. All Day 15 tasks use Verb + Sie at the start; the polite particle
+// "bitte" may come after Sie or later in the clause, before the final
+// verb/prefix or punctuated sentence-ending phrase.
+export function isA1Day15SentenceOrderCorrect(item, selectedIndices) {
+  if (!item || !Array.isArray(item.words) || !Array.isArray(item.order) ||
+      !Array.isArray(selectedIndices) ||
+      selectedIndices.length !== item.order.length ||
+      new Set(selectedIndices).size !== selectedIndices.length) return false;
+
+  const bitteIndex = item.words.findIndex(word => word.trim().toLowerCase() === "bitte");
+  if (bitteIndex === -1) {
+    return item.order.every((expected, position) => selectedIndices[position] === expected);
+  }
+
+  // Moving bitte must not mask a misplaced conjugated verb, subject,
+  // object, infinitive, or separable prefix.
+  const requiredCore = item.order.filter(index => index !== bitteIndex);
+  const suppliedCore = selectedIndices.filter(index => index !== bitteIndex);
+  if (requiredCore.length !== suppliedCore.length ||
+      requiredCore.some((expected, position) => suppliedCore[position] !== expected)) return false;
+
+  const bittePosition = selectedIndices.indexOf(bitteIndex);
+  // In these exercises both the finite verb and Sie must precede bitte,
+  // and punctuation belongs to the last phrase, so bitte cannot end a sentence.
+  return bittePosition >= 2 && bittePosition < selectedIndices.length - 1;
+}
+
 export const A1_DAY15_REACTIONS = Object.freeze([
   { request: "Können Sie mir bitte den Stift geben?", response: "Ja, gern. Hier bitte.", tip: "Agree and hand over the object." },
   { request: "Machen Sie bitte das Radio aus.", response: "Natürlich, gern.", tip: "A short, relevant positive answer is enough." },

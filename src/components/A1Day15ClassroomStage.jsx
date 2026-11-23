@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { A1_TEIL3_OBJECT_CARDS } from "../data/a1Teil3ObjectCards.js";
-import { A1_DAY15_SENTENCE_TASKS, A1_DAY15_REACTIONS, A1_DAY15_MISTAKES } from "../data/a1Day15Classroom.js";
+import { A1_DAY15_SENTENCE_TASKS, A1_DAY15_REACTIONS, A1_DAY15_MISTAKES, isA1Day15SentenceOrderCorrect } from "../data/a1Day15Classroom.js";
 import "./A1Day15ClassroomStage.css";
 
 function Panel({ children, className = "" }) {
@@ -22,7 +22,7 @@ function SentenceBuilder({ exercises, instruction }) {
   const [checked, setChecked] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const item = exercises[index];
-  const solved = chosen.length === item.order.length && item.order.every((expected, i) => chosen[i] === expected);
+  const solved = isA1Day15SentenceOrderCorrect(item, chosen);
   const reset = () => { setChosen([]); setChecked(false); setRevealed(false); };
   const moveNext = () => { setIndex(i => (i + 1) % exercises.length); reset(); };
   return <Panel className="a1d15-builder">
