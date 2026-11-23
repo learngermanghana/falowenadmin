@@ -1,3 +1,5 @@
+import { getA1Days11To15UnderstandingChecks } from "./a1Days11To15Understanding.js";
+
 // A1 Day 14 · Chapter 3.6: a dedicated 12-page train/hotel modal-verbs lesson.
 // Pages 1–10 are taught here; page 11 uses the existing published song;
 // page 12 is the independent speaking and workbook transfer.
@@ -18,10 +20,12 @@ const pages = [
 
 export const A1_DAY14_CLASSROOM_STAGES = Object.freeze(pages.map(([step, kicker, title, suggestedMinutes]) =>
   Object.freeze({
-    id: "a1-day14-" + step,
+    id: step === "train-build" ? "grammar-check" : "a1-day14-" + step,
     type: "a1-day14",
     step, kicker, title, suggestedMinutes,
-    items: [{ label: title, detail: "Guided A1 speaking and sentence building" }],
+    items: step === "train-build"
+      ? getA1Days11To15UnderstandingChecks(A1_DAY14_ASSIGNMENT)
+      : [{ label: title, detail: "Guided A1 speaking and sentence building" }],
     teacherPurpose: {
       student: "Lies die Situation. Sage zuerst einen eigenen vollständigen Satz; dann erst die Lösung ansehen.",
       teacher: "Vor der Lösung jede Person sprechen lassen. Prüfe Bedeutung, Verbposition 2 und den Infinitiv am Ende. Keine automatische Benotung.",
