@@ -21,6 +21,7 @@ import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import PublishedSongLessonStage from "./PublishedSongLessonStage.jsx";
 import A1Day12ClassroomStage from "./A1Day12ClassroomStage.jsx";
 import A1Day13ClassroomStage from "./A1Day13ClassroomStage.jsx";
+import A1Day14ClassroomStage from "./A1Day14ClassroomStage.jsx";
 import A1Day22ClassroomStage from "./A1Day22ClassroomStage.jsx";
 import A1Day2TeachingStage from "./A1Day2TeachingStage.jsx";
 import A1Day3TeachingStage from "./A1Day3TeachingStage.jsx";
@@ -40,6 +41,7 @@ import { A1_DAY7_ASSIGNMENT, A1_DAY7_CLASSROOM_STAGES } from "../data/a1Day7Clas
 import { getA1Days1To5UnderstandingChecks } from "../data/a1Days1To5Understanding.js";
 import { A1_DAY12_STAGES } from "../data/a1Day12Classroom.js";
 import { A1_DAY13_STAGES } from "../data/a1Day13Classroom.js";
+import { A1_DAY14_CLASSROOM_STAGES, A1_DAY14_EXIT_STAGE, A1_DAY14_ASSIGNMENT } from "../data/a1Day14Classroom.js";
 import { A1_DAY22_STAGES } from "../data/a1Day22Classroom.js";
 import { getCuratedMusicByAssignment } from "../data/curatedLessonMusic.js";
 import { getA1PresenterMusicStage } from "../data/a1PresenterMusicStage.js";
@@ -273,6 +275,33 @@ export function stageList(slide, topicLabel) {
   }
   if (String(slide?.assignmentId || "").trim().toUpperCase() === "A1-8") return A1_DAY12_STAGES;
   if (String(slide?.assignmentId || "").trim().toUpperCase() === "A1-3.5") return A1_DAY13_STAGES;
+  if (String(slide?.assignmentId || "").trim().toUpperCase() === A1_DAY14_ASSIGNMENT) {
+    // Approved Day 14 structure: ten interactive travel/hotel teaching pages,
+    // one existing published "Einsteigen" music page, and a fresh speaking
+    // challenge with a link to the original workbook. No new scored sections.
+    const song = getA1PresenterMusicStage(A1_DAY14_ASSIGNMENT, slide.dayNumber);
+    const musicPage = song || {
+      id: "a1-day14-music",
+      type: "published-music",
+      kicker: "11 · Falowen Music",
+      title: "Einsteigen – Wir fahren los!",
+      items: [{}],
+    };
+    return [
+      ...A1_DAY14_CLASSROOM_STAGES,
+      {
+        ...musicPage,
+        id: "a1-day14-music",
+        kicker: "11 · Falowen Music",
+        title: "Einsteigen – Wir fahren los!",
+      },
+      {
+        ...A1_DAY14_EXIT_STAGE,
+        workbookUrl: slide.workbookConnection?.workbookUrl || "/campus/course/modal-verbs-day-14-3-6",
+      },
+    ];
+  }
+
   if (String(slide?.assignmentId || "").trim().toUpperCase() === "A1-14.1") return A1_DAY22_STAGES;
   const isSpeakingReadiness = String(slide?.assignmentId || "").trim().toUpperCase() === "A1-5.9";
   const isDay15ObjectLesson = String(slide?.assignmentId || "").trim().toUpperCase() === "A1-4.7";
@@ -901,6 +930,10 @@ export default function A1GrammarPresenter({
             <A1Day12ClassroomStage key={stage.id} step={stage.step} />
           ) : stage.type === "a1-day13" ? (
             <A1Day13ClassroomStage key={stage.id} step={stage.step} />
+          ) : stage.type === "a1-day14" ? (
+            <A1Day14ClassroomStage key={stage.id} step={stage.step}
+              question={stage.id === "grammar-check" ? activeCheck : null}
+              workbookUrl={stage.workbookUrl ? lessonUrl(stage.workbookUrl) : ""} />
           ) : stage.type === "a1-day22" ? (
             <A1Day22ClassroomStage key={stage.id} step={stage.step} />
           ) : stage.type === "a1-day6-media" ? (

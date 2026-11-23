@@ -48,20 +48,18 @@ export const A1_DAYS11_TO15_UNDERSTANDING = Object.freeze({
     check("Exit-Check: Schreibe „32“, „halb neun“ und „Die Bücher ___ 24 Euro“ korrekt.", "zweiunddreißig · 8:30 Uhr · Die Bücher kosten 24 Euro.", "Review number order, the next-hour halb rule and plural kosten together."),
   ],
   "A1-3.6": [
-    check("Welches Modalverb zeigt eine Fähigkeit: können, müssen oder möchten?", "können.", "können says what somebody is able to do."),
-    check("Welches Modalverb zeigt eine Notwendigkeit?", "müssen.", "müssen expresses obligation or necessity, not a polite wish."),
-    check("Welches Modalverb zeigt einen höflichen Wunsch?", "möchten.", "möchten expresses what somebody would like."),
-    check("Ergänze: „Ich ___ Deutsch sprechen.“ (können)", "Ich kann Deutsch sprechen.", "ich takes kann; the second verb sprechen stays at the end."),
-    check("Ergänze: „Wir ___ heute lernen.“ (müssen)", "Wir müssen heute lernen.", "wir takes müssen; lernen remains an infinitive at the end."),
-    check("Ergänze: „Ich ___ einen Tee trinken.“ (möchten)", "Ich möchte einen Tee trinken.", "ich takes möchte and the second verb trinken is final."),
-    check("Was ist richtig: „Ich kann Deutsch sprechen“ oder „Ich kann sprechen Deutsch“?", "Ich kann Deutsch sprechen.", "The infinitive goes at the end of a simple clause with a modal verb."),
-    check("Wo steht das konjugierte Modalverb im Hauptsatz „Ich muss heute lernen“?", "Position 2.", "Ich is position one; muss is the conjugated verb in second position."),
-    check("Korrigiere: „Ich kann spreche Deutsch.“", "Ich kann Deutsch sprechen.", "Do not conjugate the second verb; use infinitive sprechen last."),
-    check("Korrigiere: „Er müssen morgen arbeiten.“", "Er muss morgen arbeiten.", "With er, müssen becomes muss, while arbeiten remains the final infinitive."),
-    check("Exit-Check: Ergänze „Ich ___ Deutsch sprechen; wir ___ lernen; ich ___ Tee trinken“ mit können, müssen und möchten.", "Ich kann Deutsch sprechen. Wir müssen lernen. Ich möchte Tee trinken.", "One sentence for ability, necessity and a polite wish, with the infinitive at the end."),
+    check("Welches Modalverb passt zu einer Fähigkeit: können, möchten, wollen oder müssen?", "können.", "können expresses something that a person is able to do."),
+    check("Du hast Durst. Welches Modalverb macht deinen Wunsch höflich?", "möchten: Ich möchte Wasser trinken.", "möchten is an especially useful polite A1 way to express a wish."),
+    check("Welches Modalverb drückt einen direkten Plan oder eine Absicht aus?", "wollen: Ich will nach Hause gehen.", "wollen expresses a direct intention; möchten is usually softer and more polite."),
+    check("Du hast heute Hausaufgaben. Wähle das Modalverb und sage einen Satz.", "Ich muss heute Hausaufgaben machen.", "müssen conveys a duty or necessity and machen stays in infinitive."),
+    check("Ergänze: „Ich ___ Deutsch sprechen.“ (können)", "Ich kann Deutsch sprechen.", "The ich form is kann, and sprechen stays at the end."),
+    check("Ergänze: „Du ___ einen Tee trinken.“ (möchten)", "Du möchtest einen Tee trinken.", "The du form is möchtest; the main action trinken remains final."),
+    check("Ordne: „am Samstag / will / Fußball / spielen / er“.", "Er will am Samstag Fußball spielen.", "Place the conjugated modal in second position and spielen at the end."),
+    check("Bilde einen Satz mit Heute am Anfang: „ich / muss / Deutsch / lernen“.", "Heute muss ich Deutsch lernen.", "The initial time phrase counts as position one, so muss comes before ich."),
+    check("Korrigiere: „Ich kann spreche Deutsch.“", "Ich kann Deutsch sprechen.", "After kann, the main verb is the infinitive sprechen, placed at the end."),
+    check("Bilde eine Ja-/Nein-Frage aus „Du kannst morgen kommen.“", "Kannst du morgen kommen?", "A yes/no question starts with the conjugated modal and ends with the main verb."),
+    check("Exit-Check: Sage einen neuen Satz mit wollen oder möchten und einen Satz mit können oder müssen.", "Zum Beispiel: Ich möchte Tee trinken. Ich kann Deutsch sprechen.", "Accept two different correct A1 statements with an appropriate modal in position two and a final infinitive."),
   ],
-  // Day 15: perform the actual Goethe-A1 Teil-3 task. Every student sees an
-  // object card and must invent an appropriate request and partner reaction.
   "A1-4.7": [
     ...A1_TEIL3_OBJECT_CARDS.slice(0, 10).map((card) => a1Teil3ObjectCheck(card)),
     a1Teil3ObjectCheck(A1_TEIL3_OBJECT_CARDS[10], { exit: true }),
@@ -82,8 +80,8 @@ export const A1_DAYS11_TO15_QUICK_CHECKS = Object.freeze({
     check("Was bedeutet „kostet“: eine Sache oder mehrere Sachen?", "eine Sache.", "The verb ending -t is used with a singular item."),
   ],
   "A1-3.6": [
-    check("Was bedeutet „ich kann“?", "I can / ich habe die Fähigkeit.", "kann is the ich form of können."),
-    check("Welches Verb steht am Ende: „Ich muss heute ___“ (lernen)?", "lernen.", "The action verb remains in the infinitive at the end."),
+    check("Was ist richtig: „Ich möchte Wasser trinken“ oder „Ich möchte trinken Wasser“?", "Ich möchte Wasser trinken.", "In a simple modal clause the second verb is a final infinitive."),
+    check("Du sprichst Deutsch. Ergänze: „Ich ___ Deutsch sprechen.“", "Ich kann Deutsch sprechen.", "The ich form of können is kann, followed by the infinitive sprechen."),
   ],
   "A1-4.7": [
     check("Was ist in Teil 3 wichtig: nur den Gegenstand nennen oder eine höfliche Bitte bilden?", "Eine höfliche Bitte bilden und passend auf die Bitte des Partners reagieren.", "The goal is a spoken request and reaction, not naming the picture or explaining the format."),
@@ -105,8 +103,8 @@ export const A1_DAYS11_TO15_APPLICATION_CHECKS = Object.freeze({
     check("Korrigiere: „halb neun = 9:30“.", "halb neun = 8:30.", "Half an hour before nine is 8:30."),
   ],
   "A1-3.6": [
-    check("Korrigiere: „Ich muss lernen heute.“", "Ich muss heute lernen.", "In the simple modal structure the infinitive lernen follows the time phrase at the end."),
-    check("Ordne die Wörter: „möchte / Kaffee / trinken / ich“.", "Ich möchte Kaffee trinken.", "The finite modal is in position two and the infinitive last."),
+    check("Korrigiere: „Heute ich muss arbeiten.“", "Heute muss ich arbeiten.", "When a time phrase opens the clause, the finite modal still takes position two."),
+    check("Ordne: „möchte / heute / lernen / ich / Deutsch“.", "Ich möchte heute Deutsch lernen.", "The finite modal is in second position and the action verb stays last."),
   ],
   "A1-4.7": [
     check("Korrigiere eine Bitte zur Bildkarte „Stift“: „Geben bitte Sie mir den Stift.“", "Geben Sie mir bitte den Stift.", "The polite imperative starts with the action verb, followed immediately by Sie; bitte may follow mir."),
