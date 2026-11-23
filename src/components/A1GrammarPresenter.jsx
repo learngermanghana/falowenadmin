@@ -932,6 +932,7 @@ export default function A1GrammarPresenter({
             <A1Day13ClassroomStage key={stage.id} step={stage.step} />
           ) : stage.type === "a1-day14" ? (
             <A1Day14ClassroomStage key={stage.id} step={stage.step}
+              question={stage.id === "grammar-check" ? activeCheck : null}
               workbookUrl={stage.workbookUrl ? lessonUrl(stage.workbookUrl) : ""} />
           ) : stage.type === "a1-day22" ? (
             <A1Day22ClassroomStage key={stage.id} step={stage.step} />
