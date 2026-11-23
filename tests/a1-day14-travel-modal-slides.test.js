@@ -90,8 +90,8 @@ test("Day 14 hotel dialogue reveals each response under the correct speaker", ()
   assert.equal(countTurn("Gast", "Gern geschehen."), 0);
   assert.equal(countTurn("Gast", "Kann ich hier zwei Nächte übernachten?"), 1);
   const presenter = readFileSync(new URL("../src/components/A1Day14ClassroomStage.jsx", import.meta.url), "utf8");
-  assert.match(presenter, /map\\(\\(\\{ speaker, prompt, answer \\}, i\\)/);
-  assert.doesNotMatch(presenter, /prompt\\.replace\\("___", answer\\)/);
+  assert.ok(presenter.includes("map(({ speaker, prompt, answer }, i)"));
+  assert.ok(!presenter.includes('prompt.replace("___", answer)'));
 });
 
 test("Published Day 14 workbook remains unchanged; extra classroom practice is unscored", () => {
