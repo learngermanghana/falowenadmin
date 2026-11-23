@@ -39,3 +39,7 @@
 .personal-empty { padding:26px; text-align:center; color:#667c72; }
 @media(max-width:960px){.personal-lead-stats{grid-template-columns:repeat(2,minmax(0,1fr));}.personal-lead-row{grid-template-columns:1fr;}.personal-lead-actions{justify-content:flex-start;max-width:none;}}
 @media(max-width:620px){.personal-lead-card{padding:14px;}.personal-lead-filters{grid-template-columns:1fr;}.personal-lead-stats{gap:8px;}.personal-lead-stats > div{padding:13px;}.personal-lead-stats strong{font-size:24px;}}
+
+.personal-leads .personal-danger { color: #a42323; border-color: #efc3c3; background: #fff6f6; font-weight: 700; }
+.personal-leads .personal-danger:hover:not(:disabled) { background: #fee9e9; }
+.personal-status.status-done { background: #e8edf0; color: #354d5b; }

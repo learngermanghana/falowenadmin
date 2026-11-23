@@ -533,7 +533,7 @@ service cloud.firestore {
           'name', 'phone', 'location', 'email', 'language', 'level', 'source',
           'notes', 'status', 'assignedToUid', 'assignedToName', 'nextFollowUpAt',
           'createdBy', 'createdAt', 'updatedAt', 'lastFollowUpAt',
-          'lastContactNote', 'followUpCount'
+          'lastContactNote', 'followUpCount', 'deleting'
         ]) &&
         request.resource.data.keys().hasAll([
           'name', 'phone', 'location', 'email', 'language', 'level', 'source',
@@ -552,7 +552,7 @@ service cloud.firestore {
         request.resource.data.level in ['', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'] &&
         request.resource.data.source in ['Phone call', 'WhatsApp', 'Walk-in', 'Referral', 'Other'] &&
         request.resource.data.notes is string && request.resource.data.notes.size() <= 2000 &&
-        request.resource.data.status in ['new', 'contacted', 'interested', 'follow_up', 'registered', 'not_interested'] &&
+        request.resource.data.status in ['new', 'contacted', 'interested', 'follow_up', 'registered', 'not_interested', 'done'] &&
         request.resource.data.assignedToUid is string && request.resource.data.assignedToUid.size() <= 128 &&
         request.resource.data.assignedToName is string && request.resource.data.assignedToName.size() <= 160 &&
         request.resource.data.nextFollowUpAt is string && request.resource.data.nextFollowUpAt.size() <= 10 &&
@@ -562,7 +562,8 @@ service cloud.firestore {
         (request.resource.data.lastFollowUpAt == null || request.resource.data.lastFollowUpAt is timestamp) &&
         request.resource.data.lastContactNote is string && request.resource.data.lastContactNote.size() <= 1000 &&
         request.resource.data.followUpCount is int &&
-        request.resource.data.followUpCount >= 0 && request.resource.data.followUpCount <= 100000;
+        request.resource.data.followUpCount >= 0 && request.resource.data.followUpCount <= 100000 &&
+        request.resource.data.get('deleting', false) is bool;
     }
 
     match /falowenManualLeads/{leadId} {
@@ -572,17 +573,33 @@ service cloud.firestore {
         request.resource.data.createdAt == request.time &&
         request.resource.data.updatedAt == request.time &&
         request.resource.data.followUpCount == 0 &&
-        request.resource.data.lastFollowUpAt == null;
+        request.resource.data.lastFollowUpAt == null &&
+        request.resource.data.get('deleting', false) == false;
       allow update: if canAccessManualLeadLanguage(resource.data.language) && validManualLead() &&
         request.resource.data.createdBy == resource.data.createdBy &&
         request.resource.data.createdAt == resource.data.createdAt &&
         request.resource.data.updatedAt == request.time &&
-        (isManualLeadsAdmin() ||
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'status', 'notes', 'nextFollowUpAt', 'lastFollowUpAt',
-            'lastContactNote', 'followUpCount', 'updatedAt'
-          ]));
-      allow delete: if false;
+        // Once the lock is committed, no further updates may race with cleanup.
+        resource.data.get('deleting', false) == false &&
+        (
+          (request.resource.data.get('deleting', false) == true &&
+            isManualLeadsAdmin() &&
+            resource.data.status in ['not_interested', 'done'] &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'deleting', 'updatedAt'
+            ]))
+          ||
+          (request.resource.data.get('deleting', false) == false &&
+            (isManualLeadsAdmin() ||
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                'status', 'notes', 'nextFollowUpAt', 'lastFollowUpAt',
+                'lastContactNote', 'followUpCount', 'updatedAt'
+              ])))
+        );
+      // Only administrators may permanently delete contacts closed as done or not interested.
+      allow delete: if isManualLeadsAdmin() &&
+        resource.data.get('deleting', false) == true &&
+        resource.data.status in ['not_interested', 'done'];
 
       match /activities/{activityId} {
         allow read: if canAccessManualLeadLanguage(
@@ -591,6 +608,7 @@ service cloud.firestore {
         allow create: if canAccessManualLeadLanguage(
           get(/databases/$(database)/documents/falowenManualLeads/$(leadId)).data.language
         ) &&
+          get(/databases/$(database)/documents/falowenManualLeads/$(leadId)).data.get('deleting', false) == false &&
           request.resource.data.keys().hasOnly([
             'channel', 'status', 'note', 'nextFollowUpAt',
             'recordedByUid', 'recordedByName', 'createdAt'
@@ -600,7 +618,7 @@ service cloud.firestore {
             'recordedByUid', 'recordedByName', 'createdAt'
           ]) &&
           request.resource.data.channel in ['call', 'whatsapp', 'other'] &&
-          request.resource.data.status in ['new', 'contacted', 'interested', 'follow_up', 'registered', 'not_interested'] &&
+          request.resource.data.status in ['new', 'contacted', 'interested', 'follow_up', 'registered', 'not_interested', 'done'] &&
           request.resource.data.note is string &&
           request.resource.data.note.size() > 0 && request.resource.data.note.size() <= 1000 &&
           request.resource.data.nextFollowUpAt is string &&
@@ -609,7 +627,9 @@ service cloud.firestore {
           request.resource.data.recordedByName is string &&
           request.resource.data.recordedByName.size() <= 254 &&
           request.resource.data.createdAt == request.time;
-        allow update, delete: if false;
+        allow update: if false;
+        // Owner-only deletion is used when removing the contact and its complete history.
+        allow delete: if isManualLeadsAdmin();
       }
     }
 
