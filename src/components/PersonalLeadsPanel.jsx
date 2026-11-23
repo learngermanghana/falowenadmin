@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { addDoc, collection, doc, getDocs, increment, limit, orderBy, query, serverTimestamp, updateDoc, writeBatch } from "firebase/firestore";
+import { addDoc, collection, doc, getDocs, increment, limit, orderBy, query, serverTimestamp, updateDoc, where, writeBatch } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { normalizeLeadPhone } from "../services/studentLeadService.js";
@@ -39,7 +39,7 @@ function whatsappLink(value) {
 function blankForm() { return { ...INITIAL }; }
 
 export default function PersonalLeadsPanel() {
-  const { user, role } = useAuth();
+  const { user, role, staffLanguages } = useAuth();
   const owner = role === "admin";
   const [contacts, setContacts] = useState([]);
   const [staff, setStaff] = useState([]);
@@ -62,13 +62,21 @@ export default function PersonalLeadsPanel() {
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const snap = await getDocs(query(collection(db, CONTACTS), orderBy("createdAt", "desc"), limit(250)));
-      setContacts(snap.docs.map((entry) => ({ id: entry.id, ...entry.data() })));
+      if (!owner && (!Array.isArray(staffLanguages) || !staffLanguages.length)) {
+        throw new Error("No course language is assigned to your staff account.");
+      }
+      const contactsQuery = owner
+        ? query(collection(db, CONTACTS), orderBy("createdAt", "desc"), limit(250))
+        : query(collection(db, CONTACTS), where("language", "in", staffLanguages), limit(250));
+      const snap = await getDocs(contactsQuery);
+      setContacts(snap.docs.map((entry) => ({ id: entry.id, ...entry.data() })).sort(
+        (a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)
+      ));
       setError("");
     } catch (err) {
       setError("Personal contacts could not be loaded. " + errText(err));
     } finally { setLoading(false); }
-  }, []);
+  }, [owner, staffLanguages]);
 
   useEffect(() => { refresh(); }, [refresh]);
   useEffect(() => {
@@ -123,13 +131,15 @@ export default function PersonalLeadsPanel() {
     }
     if (!owner) { setError("Only an administrator can add or edit contact details."); return; }
     setBusy(true); setError(""); setNotice("");
-    const assigned = staff.find((member) => member.uid === form.assignedToUid);
+    const assigned = staff.find((member) => member.uid === form.assignedToUid && member.languages?.includes(form.language));
+    const previous = contacts.find((item) => item.id === editing);
+    const preservedName = previous?.assignedToUid === form.assignedToUid && previous?.language === form.language ? previous.assignedToName : "";
     const payload = {
       name: name.slice(0, 120), phone: phone.slice(0, 24), location: location.slice(0, 120),
       email: trimmed(form.email).toLowerCase().slice(0, 254),
       language: form.language, level: form.level, source: form.source,
       notes: trimmed(form.notes).slice(0, 2000), status: form.status,
-      assignedToUid: assigned?.uid || "", assignedToName: assigned?.name || assigned?.email || "",
+      assignedToUid: assigned?.uid || (preservedName ? form.assignedToUid : ""), assignedToName: assigned?.name || assigned?.email || preservedName || "",
       nextFollowUpAt: form.nextFollowUpAt || "", updatedAt: serverTimestamp(),
     };
     try {
@@ -212,12 +222,12 @@ export default function PersonalLeadsPanel() {
           <label>Phone / WhatsApp *<input required type="tel" maxLength={24} value={form.phone} onChange={(e) => change("phone", e.target.value)} placeholder="+233..." /></label>
           <label>Location *<input required maxLength={120} value={form.location} onChange={(e) => change("location", e.target.value)} placeholder="City or area" /></label>
           <label>Email (optional)<input type="email" maxLength={254} value={form.email} onChange={(e) => change("email", e.target.value)} /></label>
-          <label>Course language<select value={form.language} onChange={(e) => change("language", e.target.value)}><option value="german">German</option><option value="swahili">Swahili</option></select></label>
+          <label>Course language<select value={form.language} onChange={(e) => setForm((current) => ({ ...current, language: e.target.value, assignedToUid: "", assignedToName: "" }))}><option value="german">German</option><option value="swahili">Swahili</option></select></label>
           <label>Level<select value={form.level} onChange={(e) => change("level", e.target.value)}>{LEVELS.map((x) => <option key={x} value={x}>{x || "Not decided"}</option>)}</select></label>
           <label>How did they contact us?<select value={form.source} onChange={(e) => change("source", e.target.value)}>{SOURCES.map((x) => <option key={x}>{x}</option>)}</select></label>
           <label>Status<select value={form.status} onChange={(e) => change("status", e.target.value)}>{STATUSES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
           <label>Assigned staff<select value={form.assignedToUid} onChange={(e) => change("assignedToUid", e.target.value)}>
-            <option value="">Unassigned</option>{staff.map((member) => <option value={member.uid} key={member.uid}>{member.name || member.email}</option>)}
+            <option value="">Unassigned</option>{staff.filter((member) => member.languages?.includes(form.language)).map((member) => <option value={member.uid} key={member.uid}>{member.name || member.email}</option>)}
           </select></label>
           <label>Next follow-up date<input type="date" value={form.nextFollowUpAt} onChange={(e) => change("nextFollowUpAt", e.target.value)} /></label>
         </div>
