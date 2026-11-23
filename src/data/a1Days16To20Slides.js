@@ -6,12 +6,16 @@ import { A1_PUBLISHED_WORKBOOK_BY_ASSIGNMENT } from "./a1PublishedWorkbookRoutes
 // Preserve A1-5.9: that day runs its OWN Goethe exam-readiness experience.
 const plans = Object.freeze({
   "A1-9": {
-    subtitle: "A1 Day 16 · food and negation Course Book assignment; existing answer-key marking applies.",
-    parts: [{ label: "Food and negation exercises", detailEn: "Choose kein, keine, keinen or nicht in familiar food/drink sentences. The answer key is for the published task, not new slide marks." }],
+    subtitle: "A1 Day 16 · Essen und Verneinung (kein/nicht). The existing published Course Book exercises and answer-key marking remain unchanged.",
+    parts: [{ label: "Food and negation exercises", detailEn: "Choose kein, keine, keinen or nicht in familiar food/drink sentences. This is the existing answer-key assignment, not a new slide mark." }],
     notes: [
-      "This is one of two separate Day 16 lessons; the second is A1-10 on daily routines.",
-      "Teach kein/keine/keinen for noun negation and nicht for verb/adjective negation.",
-      "The published objective assignment uses an answer key. Do not represent it as a tutor-marked submission without further evidence.",
+      "The new projector lesson has exactly twelve pages: eight visual grammar/vocabulary pages, one live student check, error correction, a combined Falowen Music and Lesen page, and the original Course Book bridge.",
+      "A1-9 (negation) is the first of two Day 16 blocks. A1-10 (daily routines) stays separate, with its own learner route and score rules.",
+      "Start with positive/negative food sentences. Compare kein/keine/keinen for nouns to nicht for actions, adjectives and definite noun phrases.",
+      "Use Nominativ and Akkusativ with clear food examples; pay particular attention to der Käse / keinen Käse, die Milch / keine Milch and das Brot / kein Brot.",
+      "Use the existing ten student questions with teacher-controlled answer reveals and the independent final check; never reveal the answer before the response.",
+      "The original published Day 16 song is reused via its approved recording configuration, not a newly invented audio source. The verified Lesen passage is accessible independently on the same page.",
+      "The published A1-9 assessment remains answer-key-backed. Do not create tutor marks, a second workbook, or new score submissions.",
     ],
     questions: [
       "Ergänze: „Ich habe ___ Milch.“",
@@ -20,13 +24,15 @@ const plans = Object.freeze({
       "Was ist der Unterschied zwischen kein und nicht?",
     ],
     flow: [
-      ["Wortschatz erkennen", "7 min: identify food nouns, their articles and the adjective warm."],
-      ["Kein oder nicht?", "9 min: sort whether an example negates a noun, a verb or an adjective."],
-      ["Endungen prüfen", "9 min: choose kein/keine/keinen in short nominative/accusative food examples."],
-      ["Fehler korrigieren", "10 min: correct two authentic-looking wrong kein/nicht sentences and reveal the lesson rule."],
-      ["Course Book übertragen", "10 min: preview the exact published A1-9 food-negation assignment without inventing additional sections."],
+      ["Essen und Artikel", "8 min: recognise positive/negative food sentences and the articles der, die, das."],
+      ["Kein oder nicht", "9 min: compare noun negation with action and adjective negation."],
+      ["Kein-Endungen", "10 min: compare nominative and accusative kein, keine and keinen using food objects."],
+      ["Satzbau", "9 min: choose the correct form in controlled, interactive A1 sentences."],
+      ["Individuell prüfen", "10 min: existing student picker, one distinct negation question per learner."],
+      ["Fehler, Musik und Lesen", "12 min: correct real-looking mistakes and switch between the existing published song and verified reading activity."],
+      ["Abschluss", "3 min: independent negation exit check, then open the existing Course Book assignment."],
     ],
-    exit: "Ergänze: „Ich habe ___ Milch, ich esse ___ Käse und die Suppe ist ___ warm.“",
+    exit: "Ergänze ohne Hilfe: „Ich habe ___ Milch, ich esse ___ Käse und die Suppe ist ___ warm.“",
   },
   "A1-10": {
     subtitle: "A1 Day 16 · food and daily routine Course Book assignment; existing answer-key marking applies.",
