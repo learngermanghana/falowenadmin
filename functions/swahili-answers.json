@@ -633,10 +633,10 @@
     }
   },
   "swahili-day-13": {
-    "version": 1,
+    "version": 2,
     "title": "Nyumbani",
     "writing": {
-      "Kuandika": "Ninaishi hapa. Nyumba ina vyumba viwili. Bafu liko karibu na jiko. Bustani iko nyuma ya nyumba."
+      "Kuandika": "Mfano: Nyumba yangu ina vyumba viwili vya kulala. Hiki ni chumba cha wageni. Meza iko karibu na dirisha. Bafu liko karibu na jiko. Ninapenda nyumba yangu. Kubali maelezo mengine sahihi kuhusu nyumba ya kufikirika."
     },
     "reading": {
       "read-1": {
@@ -650,6 +650,28 @@
       "read-3": {
         "prompt": "Bustani iko wapi?",
         "answer": "Mbele ya nyumba."
+      }
+    },
+    "listening": {
+      "listen-room": {
+        "prompt": "A anamwonyesha B chumba gani kwanza?",
+        "answer": "Chumba cha wageni"
+      },
+      "listen-table": {
+        "prompt": "Meza iko wapi?",
+        "answer": "Karibu na dirisha"
+      },
+      "listen-kitchen": {
+        "prompt": "Jikoni iko upande gani?",
+        "answer": "Upande wa kulia"
+      },
+      "listen-bedrooms": {
+        "prompt": "Nyumba ina vyumba vingapi vya kulala?",
+        "answer": "Vitatu"
+      },
+      "listen-bathroom": {
+        "prompt": "Bafu liko wapi?",
+        "answer": "Karibu na mlango mkuu"
       }
     }
   },
