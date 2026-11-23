@@ -199,11 +199,12 @@ function HotelDialogue() {
     <h1>Im Hotel: Ein Zimmer reservieren</h1>
     <p className="a1day14-lead">Rollenspiel: Eine Person ist Gast, die andere arbeitet an der Rezeption.</p>
     <div className="a1day14-dialogue">
-      {A1_DAY14_HOTEL_DIALOGUE.map(([speaker, prompt, answer], i) => <Panel key={i}>
+      {A1_DAY14_HOTEL_DIALOGUE.map(({ speaker, prompt, answer }, i) => <Panel key={i}>
         <span className="a1day14-overline">{speaker}</span>
         <p lang="de">{prompt}</p>
-        {visible ? <strong className="a1day14-example">{prompt.includes("___")
-          ? prompt.replace("___", answer) : answer}</strong> : null}
+        {visible && prompt !== answer
+          ? <strong className="a1day14-example" lang="de">{answer}</strong>
+          : null}
       </Panel>)}
     </div>
     <div className="a1day14-actions"><button type="button" aria-expanded={visible}
