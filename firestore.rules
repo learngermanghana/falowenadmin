@@ -498,7 +498,7 @@ service cloud.firestore {
           resource.data.language in request.auth.token.get('staffLanguages', [])));
     }
 
-
+    /* BEGIN_ADMIN_RULES_EXTENSION */
     // Private CRM contacts. The published Google Sheet is intentionally separate.
     // A staff account must have BOTH the Leads custom claim and an active staff
     // record granting Leads access; a stale token alone is never sufficient.
@@ -633,7 +633,6 @@ service cloud.firestore {
       }
     }
 
-    /* BEGIN_ADMIN_RULES_EXTENSION */
     // Preserve the Admin marking monitor's legacy nested submission layout.
     match /submissions/{level}/{studentId}/{attemptId} {
       allow read, write: if isStaff();
