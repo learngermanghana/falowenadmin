@@ -8,6 +8,7 @@ import { A2_DAY23_CLASSROOM_LISTENING } from './a2Day23ClassroomListening.js';
 import { A2_DAY24_CLASSROOM_LISTENING } from './a2Day24ClassroomListening.js';
 import { A2_DAY5_CLASSROOM_LISTENING } from './a2Day5ClassroomListening.js';
 import { A2_DAY7_LISTENING } from './a2Day7ClassroomListening.js';
+import { A2_DAY8_RESTAURANT_LISTENING } from './a2Day8RestaurantListening.js';
 import { A2_DAY4_CLASSROOM_LISTENING } from './a2Day4ClassroomListening.js';
 import { A2_DAY1_LISTENING } from './a2Day1Listening.js';
 import { A2_DAY2_LISTENING } from './a2Day2Listening.js';
@@ -158,7 +159,8 @@ const ENTRIES = {
         "teacherHint": "Drei Rollen verteilen, nach zwei Minuten die Rollen wechseln.",
         "explanation": ""
       }
-    ]
+    ],
+    listening: A2_DAY8_RESTAURANT_LISTENING,
   },
   "A2-6.17":   {
     "assignmentId": "A2-6.17",
