@@ -1,0 +1,34 @@
+{
+  "mode": "course",
+  "level": "A2",
+  "examPart": "",
+  "title": "Im Restaurant – bestellen und reagieren",
+  "kind": "richtig-falsch",
+  "questions": [
+    {
+      "question": "Der Gast möchte zuerst eine Tomatensuppe essen.",
+      "evidence": "Ja, ich möchte bitte die Tomatensuppe als Vorspeise.",
+      "answer": "Richtig"
+    },
+    {
+      "question": "Als Hauptgericht bestellt der Gast Fisch mit Reis.",
+      "evidence": "Ich nehme das Schnitzel mit Pommes und einen großen Salat, bitte.",
+      "answer": "Falsch"
+    },
+    {
+      "question": "Der Gast trinkt zum Essen ein großes Apfelschorle.",
+      "evidence": "Ja, ein großes Apfelschorle, bitte sehr.",
+      "answer": "Richtig"
+    },
+    {
+      "question": "Die Gäste möchten am Ende getrennt bezahlen.",
+      "evidence": "Zusammen, bitte. Mit Karte.",
+      "answer": "Falsch"
+    },
+    {
+      "question": "Die Rechnung kostet insgesamt vierundzwanzig Euro fünfzig.",
+      "evidence": "Macht zusammen vierundzwanzig Euro fünfzig.",
+      "answer": "Richtig"
+    }
+  ]
+}
