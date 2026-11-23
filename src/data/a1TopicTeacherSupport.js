@@ -110,7 +110,7 @@ export const A1_TOPIC_TEACHER_SUPPORT = {
       "Confusing Könnten Sie (polite) with konnten Sie (past tense).",
       "Naming the object without making a request, or not reacting to the partner's request.",
     ],
-  }
+  },
   "A1-9": {
     grammarFocusEn: [
       "Use kein to negate an indefinite or article-less noun phrase.",
