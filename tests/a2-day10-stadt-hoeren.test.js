@@ -12,16 +12,16 @@ const slide = getTeachingSlideById('a2-day-10-stadt-entdecken');
 const stages = buildTeachingPresenterStages(slide, slide.topic);
 const listening = getInteractiveLessonOpening('A2-4.10').listening;
 
-test('A2 Day 10 keeps lesson music and adds ungraded Urlaub Hören as slide 3', () => {
+test('A2 Day 10 keeps lesson music and adds ungraded city Hören as slide 3', () => {
   assert.equal(slide.assignmentId, 'A2-4.10');
-  assert.equal(slide.dayNumber, 9);
+  assert.equal(slide.dayNumber, 10);
   assert.equal(stages[1].id, 'warmup');
   assert.equal(stages[1].variant, 'interactive-music-video');
   assert.equal(stages[2].id, 'knowledge');
   assert.equal(stages[2].variant, 'interactive-listening');
   assert.equal(stages[2].audioKey, A2_DAY10_STADT_AUDIO_KEY);
   assert.equal(stages[2].audioLevel, 'A2');
-  assert.equal(stages[2].audioDay, 9);
+  assert.equal(stages[2].audioDay, 10);
   assert.equal(stages[2].listeningItems.length, 5);
   assert.equal(isInteractiveOpeningStage('A2-4.10', 'knowledge'), true);
   assert.ok(stages.some(stage => stage.id === 'reading'));
