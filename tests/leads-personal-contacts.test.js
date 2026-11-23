@@ -34,6 +34,7 @@ test("Manual contacts use authenticated Firestore, not published Google Sheets o
   assert.match(panel, /nextFollowUpAt/);
   assert.match(panel, /assignedToUid/);
   assert.match(panel, /normalizeLeadPhone/);
+  assert.match(panel, /where\("language", "in", staffLanguages\)/);
   assert.doesNotMatch(panel, /localStorage|sessionStorage|STUDENT_LEADS_PUBLISHED_URL/);
 });
 
@@ -42,6 +43,8 @@ test("Firestore rules require current permission and keep staff from creating le
   assert.match(rules, /function canAccessManualLeads\(\)/);
   assert.match(rules, /'leads' in request\.auth\.token\.get\('staffPages', \[\]\)/);
   assert.match(rules, /falowenStaffAccess/);
+  assert.match(rules, /function canAccessManualLeadLanguage\(language\)/);
+  assert.match(rules, /language in request\.auth\.token\.get\(\x27staffLanguages\x27, \[\]\)/);
   assert.match(rules, /allow create: if isManualLeadsAdmin\(\)/);
   assert.match(rules, /allow delete: if false/);
   assert.match(rules, /match \/activities\/\{activityId\}/);
