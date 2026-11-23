@@ -498,6 +498,110 @@ service cloud.firestore {
           resource.data.language in request.auth.token.get('staffLanguages', [])));
     }
 
+
+    // Private CRM contacts. The published Google Sheet is intentionally separate.
+    // A staff account must have BOTH the Leads custom claim and an active staff
+    // record granting Leads access; a stale token alone is never sufficient.
+    function isManualLeadsAdmin() {
+      return signedIn() && (
+        request.auth.token.get('admin', false) == true ||
+        request.auth.token.get('role', '') == 'admin' ||
+        (request.auth.token.get('email_verified', false) == true &&
+          request.auth.token.get('email', '') == 'moxflex@gmail.com')
+      );
+    }
+
+    function canAccessManualLeads() {
+      return isManualLeadsAdmin() || (signedIn() &&
+        request.auth.token.get('staff', false) == true &&
+        'leads' in request.auth.token.get('staffPages', []) &&
+        exists(/databases/$(database)/documents/falowenStaffAccess/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/falowenStaffAccess/$(request.auth.uid)).data.get('active', false) == true &&
+        'leads' in get(/databases/$(database)/documents/falowenStaffAccess/$(request.auth.uid)).data.get('pages', [])
+      );
+    }
+
+    function validManualLead() {
+      return request.resource.data.keys().hasOnly([
+          'name', 'phone', 'location', 'email', 'language', 'level', 'source',
+          'notes', 'status', 'assignedToUid', 'assignedToName', 'nextFollowUpAt',
+          'createdBy', 'createdAt', 'updatedAt', 'lastFollowUpAt',
+          'lastContactNote', 'followUpCount'
+        ]) &&
+        request.resource.data.keys().hasAll([
+          'name', 'phone', 'location', 'email', 'language', 'level', 'source',
+          'notes', 'status', 'assignedToUid', 'assignedToName', 'nextFollowUpAt',
+          'createdBy', 'createdAt', 'updatedAt', 'lastFollowUpAt',
+          'lastContactNote', 'followUpCount'
+        ]) &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 120 &&
+        request.resource.data.phone is string &&
+        request.resource.data.phone.size() >= 9 && request.resource.data.phone.size() <= 24 &&
+        request.resource.data.location is string &&
+        request.resource.data.location.size() > 0 && request.resource.data.location.size() <= 120 &&
+        request.resource.data.email is string && request.resource.data.email.size() <= 254 &&
+        request.resource.data.language in ['german', 'swahili'] &&
+        request.resource.data.level in ['', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'] &&
+        request.resource.data.source in ['Phone call', 'WhatsApp', 'Walk-in', 'Referral', 'Other'] &&
+        request.resource.data.notes is string && request.resource.data.notes.size() <= 2000 &&
+        request.resource.data.status in ['new', 'contacted', 'interested', 'follow_up', 'registered', 'not_interested'] &&
+        request.resource.data.assignedToUid is string && request.resource.data.assignedToUid.size() <= 128 &&
+        request.resource.data.assignedToName is string && request.resource.data.assignedToName.size() <= 160 &&
+        request.resource.data.nextFollowUpAt is string && request.resource.data.nextFollowUpAt.size() <= 10 &&
+        request.resource.data.createdBy is string && request.resource.data.createdBy.size() <= 128 &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.updatedAt is timestamp &&
+        (request.resource.data.lastFollowUpAt == null || request.resource.data.lastFollowUpAt is timestamp) &&
+        request.resource.data.lastContactNote is string && request.resource.data.lastContactNote.size() <= 1000 &&
+        request.resource.data.followUpCount is int &&
+        request.resource.data.followUpCount >= 0 && request.resource.data.followUpCount <= 100000;
+    }
+
+    match /falowenManualLeads/{leadId} {
+      allow read: if canAccessManualLeads();
+      allow create: if isManualLeadsAdmin() && validManualLead() &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.updatedAt == request.time &&
+        request.resource.data.followUpCount == 0 &&
+        request.resource.data.lastFollowUpAt == null;
+      allow update: if canAccessManualLeads() && validManualLead() &&
+        request.resource.data.createdBy == resource.data.createdBy &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.updatedAt == request.time &&
+        (isManualLeadsAdmin() ||
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'status', 'notes', 'nextFollowUpAt', 'lastFollowUpAt',
+            'lastContactNote', 'followUpCount', 'updatedAt'
+          ]));
+      allow delete: if false;
+
+      match /activities/{activityId} {
+        allow read: if canAccessManualLeads();
+        allow create: if canAccessManualLeads() &&
+          request.resource.data.keys().hasOnly([
+            'channel', 'status', 'note', 'nextFollowUpAt',
+            'recordedByUid', 'recordedByName', 'createdAt'
+          ]) &&
+          request.resource.data.keys().hasAll([
+            'channel', 'status', 'note', 'nextFollowUpAt',
+            'recordedByUid', 'recordedByName', 'createdAt'
+          ]) &&
+          request.resource.data.channel in ['call', 'whatsapp', 'other'] &&
+          request.resource.data.status in ['new', 'contacted', 'interested', 'follow_up', 'registered', 'not_interested'] &&
+          request.resource.data.note is string &&
+          request.resource.data.note.size() > 0 && request.resource.data.note.size() <= 1000 &&
+          request.resource.data.nextFollowUpAt is string &&
+          request.resource.data.nextFollowUpAt.size() <= 10 &&
+          request.resource.data.recordedByUid == request.auth.uid &&
+          request.resource.data.recordedByName is string &&
+          request.resource.data.recordedByName.size() <= 254 &&
+          request.resource.data.createdAt == request.time;
+        allow update, delete: if false;
+      }
+    }
+
     /* BEGIN_ADMIN_RULES_EXTENSION */
     // Preserve the Admin marking monitor's legacy nested submission layout.
     match /submissions/{level}/{studentId}/{attemptId} {
