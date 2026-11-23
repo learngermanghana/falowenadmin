@@ -456,30 +456,33 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
   "A1-3.6": {
     "words": [
       "können",
-      "müssen",
-      "dürfen",
       "möchten",
-      "lernen"
+      "wollen",
+      "müssen",
+      "sprechen",
+      "trinken",
+      "lernen",
+      "gehen"
     ],
     "mission": {
-      "title": "Was kannst du heute?",
-      "situation": "Dein Partner fragt, was du nach der Schule machst.",
-      "prompt": "Sage mit „müssen“ und „lernen“, was du heute tun musst.",
-      "model": "Ich muss heute Deutsch lernen.",
-      "hint": "Modalverb muss an Position 2, lernen ans Satzende.",
-      "secondRound": "Zweite Runde: „Ich möchte Wasser trinken.“"
+      "title": "Vier Sätze aus deinem Alltag",
+      "situation": "Du sprichst über deine Fähigkeiten, Wünsche, Pläne und Pflichten.",
+      "prompt": "Sage vier eigene Sätze: Ich kann ..., ich möchte ..., ich will ..., ich muss ... . Benutze jedes Mal ein zweites Verb am Ende.",
+      "model": "Ich kann Deutsch sprechen. Ich möchte Wasser trinken. Ich will ins Kino gehen. Ich muss heute lernen.",
+      "hint": "Subjekt + Modalverb in Position 2 + Informationen + Infinitiv am Ende.",
+      "secondRound": "Zweite Runde ohne Vorlage: Sage vier neue Sätze über dein Leben. Benutze die vier Modalverben."
     },
     "reaction": {
-      "title": "Heute Abend",
-      "situation": "Du hast noch Hausaufgaben.",
-      "prompt": "Die Lehrkraft fragt: „Kannst du heute ins Kino gehen?“ Antworte mit „müssen“.",
-      "model": "Nein, ich muss Deutsch lernen.",
-      "note": "Das Vollverb lernen steht am Ende.",
+      "title": "Fragen und Antworten mit Modalverben",
+      "situation": "Eine Freundin fragt dich nach deinen Plänen und Fähigkeiten.",
+      "prompt": "Die Lehrkraft fragt: „Kannst du morgen kommen?“ Antworte mit einem vollständigen Satz.",
+      "model": "Ja, ich kann morgen kommen.",
+      "note": "Use a complete answer; the conjugated modal is in position two, with kommen last.",
       "second": {
-        "situation": "Deine Freundin fragt nach deinen Hausaufgaben.",
-        "prompt": "Die Lehrkraft fragt: „Musst du heute Deutsch lernen?“ Antworte.",
-        "model": "Ja, ich muss heute Deutsch lernen.",
-        "note": "Das Vollverb lernen steht am Ende."
+        "situation": "Ein Freund fragt dich: „Was möchtest du am Wochenende machen?“",
+        "prompt": "Antworte mit einem eigenen vollständigen Satz, zum Beispiel mit lesen, lernen, spielen oder gehen.",
+        "model": "Ich möchte am Wochenende ein Buch lesen.",
+        "note": "Accept a different meaningful A1 sentence with möchte and a final infinitive."
       }
     }
   },
