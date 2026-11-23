@@ -1,0 +1,45 @@
+name: A1 Day 16 negation teaching slides
+
+on:
+  pull_request:
+    paths:
+      - "src/components/A1GrammarPresenter.jsx"
+      - "src/components/A1Day16NegationStage.jsx"
+      - "src/components/A1Day16NegationStage.css"
+      - "src/data/a1Day16NegationClassroom.js"
+      - "src/data/a1Days16To20Slides.js"
+      - "tests/a1-day16-negation-slides.test.js"
+      - ".github/workflows/a1-day16-negation-slides.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/components/A1GrammarPresenter.jsx"
+      - "src/components/A1Day16NegationStage.jsx"
+      - "src/data/a1Day16NegationClassroom.js"
+      - "tests/a1-day16-negation-slides.test.js"
+      - ".github/workflows/a1-day16-negation-slides.yml"
+  workflow_dispatch:
+
+jobs:
+  a1-day16:
+    name: Day 16 12-slide negation quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Verify dedicated slides and presenter compile
+        run: |
+          node --input-type=module -e "import { transformWithEsbuild } from 'vite'; import { readFileSync } from 'node:fs'; for (const file of ['src/components/A1Day16NegationStage.jsx', 'src/components/A1GrammarPresenter.jsx']) { await transformWithEsbuild(readFileSync(file, 'utf8'), file, { loader: 'jsx', jsx: 'automatic' }); console.log(file + ' JSX syntax OK'); }"
+      - name: Verify Day 16 slides, teacher checks and published materials
+        run: >
+          node --test
+          tests/a1-day16-negation-slides.test.js
+          tests/a1-days16-to20-understanding.test.js
+          tests/a1-lesson9-topic-clarity.test.js
+          tests/a1-music-presenter-stage.test.js
+          tests/a1-presenter-topic-integrity.test.js

@@ -23,6 +23,7 @@ import A1Day12ClassroomStage from "./A1Day12ClassroomStage.jsx";
 import A1Day13ClassroomStage from "./A1Day13ClassroomStage.jsx";
 import A1Day14ClassroomStage from "./A1Day14ClassroomStage.jsx";
 import A1Day15ClassroomStage from "./A1Day15ClassroomStage.jsx";
+import A1Day16NegationStage from "./A1Day16NegationStage.jsx";
 import A1Day22ClassroomStage from "./A1Day22ClassroomStage.jsx";
 import A1Day2TeachingStage from "./A1Day2TeachingStage.jsx";
 import A1Day3TeachingStage from "./A1Day3TeachingStage.jsx";
@@ -44,6 +45,7 @@ import { A1_DAY12_STAGES } from "../data/a1Day12Classroom.js";
 import { A1_DAY13_STAGES } from "../data/a1Day13Classroom.js";
 import { A1_DAY14_CLASSROOM_STAGES, A1_DAY14_EXIT_STAGE, A1_DAY14_ASSIGNMENT } from "../data/a1Day14Classroom.js";
 import { A1_DAY15_ASSIGNMENT, A1_DAY15_WORKBOOK, buildA1Day15ClassroomStages } from "../data/a1Day15Classroom.js";
+import { A1_DAY16_NEGATION_ASSIGNMENT, A1_DAY16_NEGATION_WORKBOOK, buildA1Day16NegationStages } from "../data/a1Day16NegationClassroom.js";
 import { A1_DAY22_STAGES } from "../data/a1Day22Classroom.js";
 import { getCuratedMusicByAssignment } from "../data/curatedLessonMusic.js";
 import { getA1PresenterMusicStage } from "../data/a1PresenterMusicStage.js";
@@ -74,6 +76,7 @@ function formatFocusTime(totalSeconds = 0) {
 }
 
 function a1TeacherPurpose(stage = {}) {
+  if (stage.teacherPurpose?.student && stage.teacherPurpose?.teacher) return stage.teacherPurpose;
   const id = String(stage?.id || "");
 
   if (stage.teil3ObjectCards) return {
@@ -311,6 +314,17 @@ export function stageList(slide, topicLabel) {
     const song = getA1PresenterMusicStage(A1_DAY15_ASSIGNMENT, slide.dayNumber);
     return buildA1Day15ClassroomStages({
       song, workbookUrl: slide.workbookConnection?.workbookUrl || A1_DAY15_WORKBOOK,
+    });
+  }
+
+  if (String(slide?.assignmentId || "").trim().toUpperCase() === A1_DAY16_NEGATION_ASSIGNMENT) {
+    // A1-9: exactly twelve food/negation pages including existing published
+    // music, evidence-based Lesen, per-student understanding and workbook.
+    // A1-10 is the separate daily-routine block and stays unchanged.
+    return buildA1Day16NegationStages({
+      song: getA1PresenterMusicStage(A1_DAY16_NEGATION_ASSIGNMENT, slide.dayNumber),
+      reading: getA1PresenterReadingLesson(A1_DAY16_NEGATION_ASSIGNMENT),
+      workbookUrl: slide.workbookConnection?.workbookUrl || A1_DAY16_NEGATION_WORKBOOK,
     });
   }
 
@@ -574,7 +588,7 @@ export default function A1GrammarPresenter({
     expired: false,
   });
   const stage = stages[stageIndex] || stages[0];
-  const isMusicStage = stage?.type === "published-music";
+  const isMusicStage = stage?.type === "published-music" || stage?.id === "a1-day16-negation-music-reading";
   const stagePhoto = getPresenterSlidePhoto(slide, stage);
   const teacherPurpose = a1TeacherPurpose(stage);
 
@@ -948,6 +962,9 @@ export default function A1GrammarPresenter({
               workbookUrl={stage.workbookUrl ? lessonUrl(stage.workbookUrl) : ""} />
           ) : stage.type === "a1-day15" ? (
             <A1Day15ClassroomStage key={stage.id} step={stage.step} />
+          ) : stage.type === "a1-day16-negation" ? (
+            <A1Day16NegationStage key={stage.id} step={stage.step}
+              assignmentKey={slide.assignmentId} courseDay={slide.dayNumber} reading={stage.reading} />
           ) : stage.type === "a1-day22" ? (
             <A1Day22ClassroomStage key={stage.id} step={stage.step} />
           ) : stage.type === "a1-day6-media" ? (
@@ -1007,6 +1024,11 @@ export default function A1GrammarPresenter({
                     Danach das bestehende Day-15-Workbook öffnen
                   </a></p> : null}
                 </>
+              ) : null}
+              {stage.exitCheck && stage.workbookUrl && !stage.teil3ObjectCards ? (
+                <p><a href={lessonUrl(stage.workbookUrl)} target="_blank" rel="noreferrer">
+                  Nach dem Abschlusscheck das bestehende Course Book öffnen
+                </a></p>
               ) : null}
               {participationCheckMode && !activeCheck ? (
                 <div className="presenter-model-support">
