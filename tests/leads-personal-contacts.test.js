@@ -46,7 +46,7 @@ test("Firestore rules require current permission and keep staff from creating le
   assert.match(rules, /function canAccessManualLeadLanguage\(language\)/);
   assert.match(rules, /language in request\.auth\.token\.get\(\x27staffLanguages\x27, \[\]\)/);
   assert.match(rules, /allow create: if isManualLeadsAdmin\(\)/);
-  assert.match(rules, /allow delete: if isManualLeadsAdmin\(\) && resource\.data\.status in \['not_interested', 'done'\]/);
+  assert.match(rules, /allow delete: if isManualLeadsAdmin\(\) &&\s+resource\.data\.get\('deleting', false\) == true/);
   assert.match(rules, /allow delete: if isManualLeadsAdmin\(\);/);
   assert.match(rules, /match \/activities\/\{activityId\}/);
   assert.match(rules, /recordedByUid == request\.auth\.uid/);
@@ -69,6 +69,53 @@ test("Closed personal contacts can be marked done, filtered out, or deleted by t
   assert.match(panel, /deleteClosedContact\(contact\)/);
   assert.match(panel, /owner && DELETABLE_STATUSES\.includes\(contact\.status\)/);
   assert.match(panel, /histories\.docs\.forEach/);
-  assert.match(panel, /batch\.delete\(ref\)/);
+  assert.match(panel, /updateDoc\(ref, \{ deleting: true, updatedAt: serverTimestamp\(\) \}\)/);
+  assert.match(panel, /while \(true\)/);
+  assert.match(panel, /await deleteDoc\(ref\)/);
   assert.match(rules, /'not_interested', 'done'/);
+});
+
+test("Deleting a personal contact obtains a server-enforced lock before reading history", () => {
+  const panel = read("src/components/PersonalLeadsPanel.jsx");
+  const rules = read("firestore.rules");
+  const lock = panel.indexOf("await updateDoc(ref, { deleting: true");
+  const queryHistory = panel.indexOf('collection(ref, "activities"), limit(HISTORY_DELETE_PAGE_SIZE)');
+  const deleteParent = panel.indexOf("await deleteDoc(ref)");
+  assert.ok(lock !== -1 && queryHistory > lock && deleteParent > queryHistory);
+  assert.match(rules, /resource\.data\.get\('deleting', false\) == false/);
+  assert.match(rules, /get\(\/databases\/\$\(database\)\/documents\/falowenManualLeads\/\$\(leadId\)\)\.data\.get\('deleting', false\) == false/);
+  assert.match(rules, /allow delete: if isManualLeadsAdmin\(\) &&\s+resource\.data\.get\('deleting', false\) == true/);
+  assert.match(panel, /Resume deletion/);
+});
+
+test("Staff directory outages preserve existing assignments unless explicitly changed", () => {
+  const panel = read("src/components/PersonalLeadsPanel.jsx");
+  assert.match(panel, /sameAssignment/);
+  assert.match(panel, /previous\.assignedToUid/);
+  assert.match(panel, /resolvedUid = sameAssignment/);
+  assert.match(panel, /resolvedName = sameAssignment/);
+  assert.match(panel, /staffDirectoryState !== "ready"/);
+  assert.match(panel, /Directory unavailable; existing assignment is preserved/);
+});
+
+test("Contact paging remains on demand with a stable Firestore cursor and supporting index", () => {
+  const panel = read("src/components/PersonalLeadsPanel.jsx");
+  const indexes = JSON.parse(read("firestore.indexes.json"));
+  assert.match(panel, /PAGE_SIZE = 100/);
+  assert.match(panel, /startAfter\(after\)/);
+  assert.match(panel, /setHasMore\(snap\.size === PAGE_SIZE\)/);
+  assert.match(panel, /Load more contacts/);
+  assert.match(panel, /Among loaded contacts/);
+  assert.ok(indexes.indexes.some(index =>
+    index.collectionGroup === "falowenManualLeads" &&
+    index.fields.some(field => field.fieldPath === "language") &&
+    index.fields.some(field => field.fieldPath === "createdAt")));
+});
+
+test("History requests cannot overwrite another contact's selected history", () => {
+  const panel = read("src/components/PersonalLeadsPanel.jsx");
+  assert.match(panel, /historyRequestRef = useRef\(0\)/);
+  assert.match(panel, /requestId = \+\+historyRequestRef\.current/);
+  assert.match(panel, /if \(requestId === historyRequestRef\.current\)/);
+  assert.match(panel, /setActivities\(snap\.docs\.map/);
 });
