@@ -6,6 +6,7 @@ import {
   STUDENT_LEADS_SHEET_NAME,
 } from "../services/studentLeadService.js";
 import { deleteStudentLead } from "../services/studentLeadDeletionService.js";
+import { useAuth } from "../context/AuthContext.jsx";
 
 const REGISTRATION_URL = "https://www.falowen.app/signup";
 
@@ -261,6 +262,7 @@ async function copyToClipboard(value) {
 }
 
 export default function StudentLeadsPanel() {
+  const { role } = useAuth();
   const [leads, setLeads] = useState([]);
   const [duplicateCount, setDuplicateCount] = useState(0);
   const [totalRows, setTotalRows] = useState(0);
@@ -419,7 +421,7 @@ export default function StudentLeadsPanel() {
                     const phoneLink = callUrl(lead.number);
                     const emailLink = mailUrl(lead.email, lead);
                     const whatsappLink = whatsappUrl(lead.number, lead);
-                    const canDelete = isCompletedLead(lead);
+                    const canDelete = role === "admin" && isCompletedLead(lead);
 
                     return (
                       <tr key={`${lead.id}-${index}`} style={{ borderTop: "1px solid #e5e7eb" }}>
