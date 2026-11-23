@@ -1,0 +1,59 @@
+{
+  "mode": "course",
+  "level": "A2",
+  "examPart": "",
+  "title": "Urlaub",
+  "kind": "multiple-choice",
+  "questions": [
+    {
+      "question": "Wohin reist Ben im Urlaub?",
+      "evidence": "Ich fahre im Juli für zwei Wochen nach Spanien.",
+      "options": [
+        "Nach Spanien",
+        "Nach Italien",
+        "Nach Frankreich"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "Wie reist Ben dorthin?",
+      "evidence": "Ich fliege mit meiner Familie von München nach Madrid.",
+      "options": [
+        "Mit dem Bus",
+        "Mit dem Flugzeug",
+        "Mit dem Zug"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "question": "Wie lange bleibt die Familie zuerst in der Stadt?",
+      "evidence": "Zuerst bleiben wir vier Tage in der Stadt.",
+      "options": [
+        "Drei Tage",
+        "Vier Tage",
+        "Zwei Wochen"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "question": "Wo liegt das gebuchte Hotel?",
+      "evidence": "Ja, direkt am Strand.",
+      "options": [
+        "In den Bergen",
+        "Direkt am Strand",
+        "In der Altstadt"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "question": "Wann kommt Ben zurück nach Deutschland?",
+      "evidence": "Am zwanzigsten Juli landen wir wieder in Deutschland.",
+      "options": [
+        "Am zwanzigsten Juli",
+        "Am zehnten Juli",
+        "Ende August"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
