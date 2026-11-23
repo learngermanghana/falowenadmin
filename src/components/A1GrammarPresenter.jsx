@@ -76,6 +76,7 @@ function formatFocusTime(totalSeconds = 0) {
 }
 
 function a1TeacherPurpose(stage = {}) {
+  if (stage.teacherPurpose?.student && stage.teacherPurpose?.teacher) return stage.teacherPurpose;
   const id = String(stage?.id || "");
 
   if (stage.teil3ObjectCards) return {
@@ -587,7 +588,7 @@ export default function A1GrammarPresenter({
     expired: false,
   });
   const stage = stages[stageIndex] || stages[0];
-  const isMusicStage = stage?.type === "published-music";
+  const isMusicStage = stage?.type === "published-music" || stage?.id === "a1-day16-negation-music-reading";
   const stagePhoto = getPresenterSlidePhoto(slide, stage);
   const teacherPurpose = a1TeacherPurpose(stage);
 
