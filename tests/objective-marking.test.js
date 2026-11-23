@@ -12,6 +12,57 @@ import {
   normalizeAnswer,
 } from "../src/utils/objectiveMarking.js";
 
+test("A1-2 accepts a correct age with a misspelled optional unit, but still requires a street name", () => {
+  const submission = `TEIL 1
+1. 26 Jaher
+2. 87
+3. 0171335590
+4. 3
+5. 240
+
+TEIL 2
+1. Zwolf
+2. Sechzehn
+3. Zweihundartzweiundzwanzig
+4. DreitausendvierhundratfunfdreiBig
+5. Siebzig
+
+TEIL 3
+A1_NUMBERS_PHONE_SPEAKING_V1
+Speaking task: phone number
+Score: 4/10
+Verified speaking assessment: example-receipt`;
+  const result = computeObjectiveScore("A1-2", submission);
+  assert.equal(result.totalCount, 10);
+  assert.equal(result.correctCount, 7);
+  assert.equal(result.details["teil1.1"].correct, true);
+  assert.equal(result.details["teil1.2"].correct, false);
+  assert.equal(result.details["teil1.3"].correct, true);
+  assert.equal(result.details["teil2.1"].correct, true);
+  assert.equal(result.details["teil2.3"].correct, false);
+  assert.equal(result.details["teil2.4"].correct, false);
+});
+
+test("A1-2 retains strict address and number-word expectations", () => {
+  const submission = `TEIL 1
+1. 27 Jaher
+2. Müllerstraße 87
+3. 0171 33 55 90
+4. 3
+5. 240
+
+TEIL 2
+1. zwölf
+2. sechzehn
+3. zweihunderteinundzwanzig
+4. dreitausendvierhundertfünfunddreißig
+5. siebzig`;
+  const result = computeObjectiveScore("A1-2", submission);
+  assert.equal(result.correctCount, 9);
+  assert.equal(result.details["teil1.1"].correct, false);
+  assert.equal(result.details["teil1.2"].correct, true);
+});
+
 test("normalizes case, accents, German sharp-s, and punctuation", () => {
   assert.equal(normalizeAnswer(" Füße! "), "fusse");
   assert.equal(normalizeAnswer("Ärztin-Kopf"), "arztin kopf");
