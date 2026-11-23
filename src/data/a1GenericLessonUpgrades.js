@@ -81,7 +81,7 @@ const A1_LESSON_CONTENT_UPGRADES = Object.freeze({
       { phase: "Musik und Abschluss", detailEn: "10 min: published song and a fresh unaided Teil 3 picture card." },
     ],
     wrapUpTaskDe: "Formuliere eine Bitte im Imperativ oder mit Können Sie / Könnten Sie zu einer Bildkarte. Reagiere danach passend auf eine andere Bitte.",
-  }
+  },
   "A1-7": {
     title: "A1 Day 11 · Die Uhrzeit und der Tagesablauf",
     topic: "7 Die Uhrzeit und der Tagesablauf",
