@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import {
   A1_DAY15_ASSIGNMENT, A1_DAY15_WORKBOOK, A1_DAY15_SENTENCE_TASKS,
   A1_DAY15_MISTAKES, A1_DAY15_REACTIONS, buildA1Day15ClassroomStages,
+  isA1Day15SentenceOrderCorrect,
 } from "../src/data/a1Day15Classroom.js";
 import { A1_TEIL3_OBJECT_CARDS } from "../src/data/a1Teil3ObjectCards.js";
 import { getA1PresenterMusicStage } from "../src/data/a1PresenterMusicStage.js";
@@ -56,6 +57,56 @@ test("every teaching sentence builder contains a correct German sentence order",
   assert.equal(A1_DAY15_REACTIONS.length, 3);
 });
 
+test("Day 15 accepts grammatically valid alternative bitte placements", () => {
+  // These are the real learner answers reported in PR #1705 review.
+  const radio = A1_DAY15_SENTENCE_TASKS.separable[0];
+  assert.equal([1, 2, 0, 4, 3].map(index => radio.words[index]).join(" "),
+    "Machen Sie das Radio bitte aus.");
+  assert.equal(isA1Day15SentenceOrderCorrect(radio, [1, 2, 0, 4, 3]), true);
+
+  const closeDoor = A1_DAY15_SENTENCE_TASKS.koennen[0];
+  assert.equal([4, 2, 1, 0, 3].map(index => closeDoor.words[index]).join(" "),
+    "Können Sie die Tür bitte schließen?");
+  assert.equal(isA1Day15SentenceOrderCorrect(closeDoor, [4, 2, 1, 0, 3]), true);
+
+  for (const [topic, examples] of Object.entries(A1_DAY15_SENTENCE_TASKS)) {
+    for (const item of examples) {
+      assert.equal(isA1Day15SentenceOrderCorrect(item, item.order), true, topic + ": original model");
+      const bitte = item.words.indexOf("bitte");
+      const orderedCore = item.order.filter(index => index !== bitte);
+
+      // Every insertion after Sie and before the final punctuated phrase works.
+      for (let position = 2; position < item.order.length - 1; position += 1) {
+        const alternative = [...orderedCore];
+        alternative.splice(position, 0, bitte);
+        assert.equal(isA1Day15SentenceOrderCorrect(item, alternative), true,
+          topic + ": bitte at position " + position);
+      }
+      // Incorrect forms must NOT be accepted by ignoring all grammar constraints.
+      for (const position of [0, 1, item.order.length - 1]) {
+        const invalid = [...orderedCore];
+        invalid.splice(position, 0, bitte);
+        assert.equal(isA1Day15SentenceOrderCorrect(item, invalid), false,
+          topic + ": incorrectly placed bitte at " + position);
+      }
+      assert.equal(isA1Day15SentenceOrderCorrect(item, item.order.slice(0, -1)), false,
+        topic + ": incomplete sentence");
+      const wrongVerb = [...item.order];
+      [wrongVerb[0], wrongVerb[1]] = [wrongVerb[1], wrongVerb[0]];
+      assert.equal(isA1Day15SentenceOrderCorrect(item, wrongVerb), false,
+        topic + ": verb and Sie swapped");
+      const duplicate = [...item.order];
+      duplicate[2] = duplicate[1];
+      assert.equal(isA1Day15SentenceOrderCorrect(item, duplicate), false,
+        topic + ": duplicate token");
+    }
+  }
+  assert.equal(isA1Day15SentenceOrderCorrect(
+    { words: ["Öffnen", "Sie", "die Tür."], order: [0, 1, 2] }, [0, 1, 2]), true);
+  assert.equal(isA1Day15SentenceOrderCorrect(
+    { words: ["Öffnen", "Sie", "die Tür."], order: [0, 1, 2] }, [1, 0, 2]), false);
+});
+
 test("ten classroom object checks keep the 11th fresh exit picture hidden", () => {
   const checks = getA1Days11To15UnderstandingChecks(A1_DAY15_ASSIGNMENT);
   const pages = stages();
@@ -78,6 +129,7 @@ test("presenter routes Day 15 to new visual pages while keeping student picker a
   assert.ok(presenter.includes('getA1Teil3ObjectCard(activeCheck?.sourceQuestion'));
   assert.ok(presenter.includes("stage.workbookUrl"));
   assert.ok(classroom.includes("A1_DAY15_SENTENCE_TASKS.koennen"));
+  assert.ok(classroom.includes("isA1Day15SentenceOrderCorrect(item, chosen)"));
   assert.ok(classroom.includes("A1_DAY15_SENTENCE_TASKS.koennten"));
   assert.ok(classroom.includes("A1_TEIL3_OBJECT_CARDS.slice(0, 10)"));
   assert.ok(classroom.includes('aria-expanded={revealed.includes(card.id)}'));
