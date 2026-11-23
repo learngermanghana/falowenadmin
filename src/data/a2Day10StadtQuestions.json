@@ -1,0 +1,59 @@
+{
+  "mode": "course",
+  "level": "A2",
+  "examPart": "",
+  "title": "Eine Stadt entdecken und etwas erleben",
+  "kind": "multiple-choice",
+  "questions": [
+    {
+      "question": "Was möchte Ben als Erstes sehen?",
+      "evidence": "Ich möchte gerne den alten Marktplatz sehen",
+      "options": [
+        "Den alten Marktplatz",
+        "Das Stadtmuseum",
+        "Den Bahnhof"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "Wann öffnet das Stadtmuseum?",
+      "evidence": "Es öffnet um zehn Uhr.",
+      "options": [
+        "Um neun Uhr",
+        "Um zehn Uhr",
+        "Um zwölf Uhr"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "question": "Wie viel kostet der Eintritt für Studenten?",
+      "evidence": "Der Eintritt kostet nur vier Euro pro Person.",
+      "options": [
+        "Drei Euro",
+        "Vier Euro",
+        "Fünf Euro"
+      ],
+      "correctIndex": 1
+    },
+    {
+      "question": "Was möchten die Freunde am Nachmittag machen?",
+      "evidence": "Danach machen wir eine kleine Bootstour auf dem Fluss",
+      "options": [
+        "Eine Bootstour auf dem Fluss",
+        "Ins Kino gehen",
+        "Einen Kuchen backen"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "Wo ist der Treffpunkt?",
+      "evidence": "Treffpunkt ist jetzt hier am Bahnhof.",
+      "options": [
+        "Am Marktplatz",
+        "Am Museum",
+        "Am Bahnhof"
+      ],
+      "correctIndex": 2
+    }
+  ]
+}

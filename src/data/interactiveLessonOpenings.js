@@ -10,6 +10,7 @@ import { A2_DAY5_CLASSROOM_LISTENING } from './a2Day5ClassroomListening.js';
 import { A2_DAY7_LISTENING } from './a2Day7ClassroomListening.js';
 import { A2_DAY8_RESTAURANT_LISTENING } from './a2Day8RestaurantListening.js';
 import { A2_DAY9_URLAUB_LISTENING } from './a2Day9UrlaubListening.js';
+import { A2_DAY10_STADT_LISTENING } from './a2Day10StadtListening.js';
 import { A2_DAY4_CLASSROOM_LISTENING } from './a2Day4ClassroomListening.js';
 import { A2_DAY1_LISTENING } from './a2Day1Listening.js';
 import { A2_DAY2_LISTENING } from './a2Day2Listening.js';
@@ -168,6 +169,12 @@ const ENTRIES = {
     title: "Urlaub",
     warmup: [],
     listening: A2_DAY9_URLAUB_LISTENING,
+  },
+  "A2-4.10": {
+    assignmentId: "A2-4.10",
+    title: "Eine Stadt entdecken und etwas erleben",
+    warmup: [],
+    listening: A2_DAY10_STADT_LISTENING,
   },
   "A2-6.17":   {
     "assignmentId": "A2-6.17",
