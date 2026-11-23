@@ -18,7 +18,7 @@ export const courseDictionary = {
     "A1-8": { assignment_id: "A1-8", chapter: "8", de: "Die 24-Stunden-Uhr und Datum", en: "The 24 Hour Clock and Dates" },
     "A1-3.5": { assignment_id: "A1-3.5", chapter: "3.5", de: "Einfache Aussagesätze bilden", en: "Forming Simple German Statements" },
     "A1-3.6": { assignment_id: "A1-3.6", chapter: "3.6", de: "Modalverben", en: "Modal Verbs" },
-    "A1-4.7": { assignment_id: "A1-4.7", chapter: "4.7", de: "Aufbau der Goethe-A1-Sprechprüfung", en: "Goethe A1 Speaking Exam Structure" },
+    "A1-4.7": { assignment_id: "A1-4.7", chapter: "4.7", de: "Imperativ und höfliche Bitten · Goethe A1 Teil 3", en: "Imperative and Polite Requests · Goethe A1 Part 3" },
     "A1-9": { assignment_id: "A1-9", chapter: "9", de: "Essen und Verneinung", en: "Food and Negation" },
     "A1-10": { assignment_id: "A1-10", chapter: "10", de: "Essen und Alltag", en: "Food and Daily Life" },
     "A1-11": { assignment_id: "A1-11", chapter: "11", de: "Anweisungen und Wegbeschreibung – Imperativ mit Sie", en: "Instructions and Directions – Polite Sie Imperative" },

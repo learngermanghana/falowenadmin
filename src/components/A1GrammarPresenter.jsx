@@ -22,6 +22,7 @@ import PublishedSongLessonStage from "./PublishedSongLessonStage.jsx";
 import A1Day12ClassroomStage from "./A1Day12ClassroomStage.jsx";
 import A1Day13ClassroomStage from "./A1Day13ClassroomStage.jsx";
 import A1Day14ClassroomStage from "./A1Day14ClassroomStage.jsx";
+import A1Day15ClassroomStage from "./A1Day15ClassroomStage.jsx";
 import A1Day22ClassroomStage from "./A1Day22ClassroomStage.jsx";
 import A1Day2TeachingStage from "./A1Day2TeachingStage.jsx";
 import A1Day3TeachingStage from "./A1Day3TeachingStage.jsx";
@@ -42,6 +43,7 @@ import { getA1Days1To5UnderstandingChecks } from "../data/a1Days1To5Understandin
 import { A1_DAY12_STAGES } from "../data/a1Day12Classroom.js";
 import { A1_DAY13_STAGES } from "../data/a1Day13Classroom.js";
 import { A1_DAY14_CLASSROOM_STAGES, A1_DAY14_EXIT_STAGE, A1_DAY14_ASSIGNMENT } from "../data/a1Day14Classroom.js";
+import { A1_DAY15_ASSIGNMENT, A1_DAY15_WORKBOOK, buildA1Day15ClassroomStages } from "../data/a1Day15Classroom.js";
 import { A1_DAY22_STAGES } from "../data/a1Day22Classroom.js";
 import { getCuratedMusicByAssignment } from "../data/curatedLessonMusic.js";
 import { getA1PresenterMusicStage } from "../data/a1PresenterMusicStage.js";
@@ -300,6 +302,16 @@ export function stageList(slide, topicLabel) {
         workbookUrl: slide.workbookConnection?.workbookUrl || "/campus/course/modal-verbs-day-14-3-6",
       },
     ];
+  }
+
+  if (String(slide?.assignmentId || "").trim().toUpperCase() === A1_DAY15_ASSIGNMENT) {
+    // Twelve purpose-built pages: brief exam map, imperative with Sie,
+    // polite requests with können/könnten, ten hidden-answer object checks,
+    // reactions, approved music and an independent fresh picture card.
+    const song = getA1PresenterMusicStage(A1_DAY15_ASSIGNMENT, slide.dayNumber);
+    return buildA1Day15ClassroomStages({
+      song, workbookUrl: slide.workbookConnection?.workbookUrl || A1_DAY15_WORKBOOK,
+    });
   }
 
   if (String(slide?.assignmentId || "").trim().toUpperCase() === "A1-14.1") return A1_DAY22_STAGES;
@@ -934,6 +946,8 @@ export default function A1GrammarPresenter({
             <A1Day14ClassroomStage key={stage.id} step={stage.step}
               question={stage.id === "grammar-check" ? activeCheck : null}
               workbookUrl={stage.workbookUrl ? lessonUrl(stage.workbookUrl) : ""} />
+          ) : stage.type === "a1-day15" ? (
+            <A1Day15ClassroomStage key={stage.id} step={stage.step} />
           ) : stage.type === "a1-day22" ? (
             <A1Day22ClassroomStage key={stage.id} step={stage.step} />
           ) : stage.type === "a1-day6-media" ? (
@@ -985,6 +999,15 @@ export default function A1GrammarPresenter({
                   : `Aufgabe ${itemIndex + 1} von ${stage.items.length}`}
               </div>
               <h1>{stage.title}</h1>
+              {stage.exitCheck && stage.teil3ObjectCards ? (
+                <>
+                  <p>Mini-Prüfung: Bilde eine höfliche Bitte im Imperativ oder mit Können Sie / Könnten Sie.
+                    Reagiere danach auf die Bitte deines Partners – ohne Hilfe.</p>
+                  {stage.workbookUrl ? <p><a href={lessonUrl(stage.workbookUrl)} target="_blank" rel="noreferrer">
+                    Danach das bestehende Day-15-Workbook öffnen
+                  </a></p> : null}
+                </>
+              ) : null}
               {participationCheckMode && !activeCheck ? (
                 <div className="presenter-model-support">
                   <strong>Pick the first student above</strong>
@@ -1005,7 +1028,7 @@ export default function A1GrammarPresenter({
                       <strong>{activeTeil3Card.objectDe}</strong>
                       <span className="presenter-a1-teil3-object-translation">{activeTeil3Card.objectEn}</span>
                       <p>Welche höfliche Bitte passt zu diesem Gegenstand?</p>
-                      <small>1. Bilde eine Bitte. 2. Reagiere auf die Bitte deines Partners.</small>
+                      <small>1. Imperativ oder Können Sie / Könnten Sie? 2. Bilde eine Bitte. 3. Reagiere auf die Bitte deines Partners.</small>
                     </div>
                   ) : <p className="presenter-question">{activeCheck?.questionDe}</p>}
                   <div className="presenter-question-actions">

@@ -294,28 +294,31 @@ const CONTENT = Object.freeze({
   },
   "A1-4.7": {
     assignmentKind: "unverified",
-    subtitle: "Goethe A1 exam-format introduction. This page teaches the three speaking parts, then practises Teil 3 with concrete object cards; the full A1-5.9 mock comes later.",
+    subtitle: "Imperativ und höfliche Bitten: a short introduction to Teil 1 and 2, then focused Goethe A1 Sprechen Teil 3 picture-card practice. The full mock stays at A1-5.9.",
     parts: [
-      { label: "Teil 1 · Sich vorstellen", detailEn: "Recognise the brief personal introduction expected in the A1 exam." },
-      { label: "Teil 2 · Fragen und Antworten", detailEn: "Ask one simple topic question and give a relevant short answer." },
-      { label: "Teil 3 · Bitten und reagieren", detailEn: "See an everyday object, choose a useful verb, say a complete polite request and react to a partner's request." },
+      { label: "Teil 1 · Sich vorstellen", detailEn: "Briefly recognise the self-introduction format; not assessed in depth today." },
+      { label: "Teil 2 · Fragen und Antworten", detailEn: "Briefly recognise simple topic questions and answers; not assessed in depth today." },
+      { label: "Teil 3 · Bitten und reagieren", detailEn: "Use the Sie imperative and Können Sie / Könnten Sie for polite requests, then react to a partner." },
     ],
     teacherNotesEn: [
-      "Day 15 introduces all three Goethe A1 speaking parts; the practical classroom focus is Teil 3 object cards.",
-      "Show the object without the sample sentence. Invite the student to choose a verb (öffnen, schließen, geben, bringen, zeigen, leihen, anmachen, ausmachen, holen or unterschreiben), make a polite request, then react naturally.",
-      "Accept different suitable short polite requests, not only the model. Mark Correct only after hearing a complete request and an appropriate reaction.",
-      "Keep the existing published music activity. The later A1-5.9 lesson remains the full speaking-readiness mock, and this introduction does not create new graded submissions.",
+      "Day 15 teaches the imperative first and applies it to Goethe A1 Sprechen Teil 3. Teil 1 and Teil 2 each receive only a brief orientation on page 1.",
+      "Contrast a statement with a polite Sie imperative: Sie öffnen die Tür → Öffnen Sie bitte die Tür. Show du and ihr briefly; use Sie for main practice.",
+      "For separable verbs, teach Machen Sie das Radio aus. Then transform to Können Sie bitte das Radio ausmachen? The infinitive stays together at the end after können.",
+      "Present Könnten Sie as a memorisable polite request formula, not a full Konjunktiv II lesson. Distinguish it from past-tense konnten.",
+      "On page 9, the existing student picker must show only an object card until the learner says a full request and a matching reaction. Accept both imperative and können/könnten requests, not just the model.",
+      "Keep the existing published music activity: page 11 plays Ich bin bereit zu sprechen. Page 12 uses the eleventh unseen Fenster card as an independent Teil 3 check and links to the existing unscored workbook. The full A1-5.9 mock stays separate.",
     ],
     studentQuestionsDe: A1_TEIL3_OBJECT_CARDS.slice(0, 10).map((card) => `Bildkarte: ${card.objectDe}. Formuliere eine höfliche Bitte und reagiere passend.`),
     flow: [
-      { phase: "Prüfungsteile erkennen", detailEn: "6 min: briefly distinguish Teil 1, Teil 2 and Teil 3. Do not make this a memorisation quiz." },
-      { phase: "Bitte bauen", detailEn: "6 min: demonstrate Können Sie (mir) bitte + object + infinitive and one formal Sie imperative. Choose verbs that match real object cards." },
-      { phase: "Bildkarten ohne Lösung", detailEn: "12 min: select one student at a time. Project only the object. Learner chooses an action and makes a full polite request before the teacher reveals the model." },
-      { phase: "Bitten und reagieren", detailEn: "8 min: ask partners to reply Ja, gern / Natürlich / Tut mir leid, das geht leider nicht. Check both sides of the exchange." },
-      { phase: "Musik und Abschluss", detailEn: "Keep the existing published Day 15 music stage. Finish with a fresh object-card request and reaction; the full A1-5.9 mock is separate." },
+      { phase: "Prüfung kurz vorstellen", detailEn: "3 min: name Teil 1/2 and centre Teil 3." },
+      { phase: "Imperativ lernen", detailEn: "15 min: polite Sie imperative, a short du/ihr comparison and separable commands." },
+      { phase: "Höfliche Fragen", detailEn: "11 min: turn commands into Können Sie and Könnten Sie requests; make sentences independently." },
+      { phase: "Bildkarten", detailEn: "15 min: object/verb associations; one hidden-answer request and reaction per selected student." },
+      { phase: "Reaktionen und Fehler", detailEn: "6 min: positive and negative responses; fix word order and separable-verb mistakes." },
+      { phase: "Musik und Abschluss", detailEn: "10 min: approved song, then fresh picture-card request and partner reaction with no model first." },
     ],
-    wrapUpTaskDe: "Bildkarte ohne Hilfe: Bilde eine höfliche Bitte zu einem Gegenstand und reagiere passend auf die Bitte deines Partners.",
-  },
+    wrapUpTaskDe: "Teil 3: Bilde zu einer neuen Bildkarte eine höfliche Bitte im Imperativ oder mit Können Sie / Könnten Sie. Reagiere anschließend passend auf eine andere Bitte.",
+  }
 });
 
 export const A1_DAYS11_TO15_SLIDE_IDS = Object.freeze(Object.keys(CONTENT));

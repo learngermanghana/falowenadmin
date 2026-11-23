@@ -80,16 +80,16 @@ test("Days 13–15 use Course Book links without inventing scored sections", () 
   }
 });
 
-test("Days 11–14 are comprehension-first, while Day 15 preserves the real Goethe exam-format lesson", () => {
+test("Days 11–14 preserve A1 practice and Day 15 teaches imperative requests for Goethe Teil 3", () => {
   const slides = getSlidesByCourse("A1");
   for (const id of ["A1-7", "A1-8", "A1-3.5", "A1-3.6"]) {
     const slide = slides.find((s) => s.assignmentId === id);
     assert.ok(slide.interactionFlow.every((step) => !/role.play|pair interview|mini dialogue|speaking round/i.test(step.phase)),
       id + ": generic speaking activity reintroduced");
-    assert.match(slide.wrapUpTaskDe, /Schreibe|Ergänze|Unterstreiche|Erkläre|Lies/);
+    assert.match(slide.wrapUpTaskDe, /Schreibe|Ergänze|Unterstreiche|Erkläre|Lies|Bilde/);
   }
   const day15 = slides.find((s) => s.assignmentId === "A1-4.7");
-  assert.match(day15.workbookConnection.subtitle, /Goethe A1 exam-format/);
+  assert.match(day15.workbookConnection.subtitle, /Imperativ und höfliche Bitten/);
   assert.match(day15.interactionFlow.map((x) => x.detailEn).join(" "), /Teil 1|Teil 2|Teil 3/);
   assert.match(day15.teacherNotesEn.join(" "), /A1-5\.9/);
   const questions = getA1Days11To15UnderstandingChecks("A1-4.7");
