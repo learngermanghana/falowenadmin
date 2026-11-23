@@ -249,7 +249,7 @@ function ExitChallenge({ workbookUrl = "" }) {
   </>;
 }
 
-export default function A1Day14ClassroomStage({ step, workbookUrl = "" }) {
+export default function A1Day14ClassroomStage({ step, question = null, workbookUrl = "" }) {
   return <section className="a1day14" lang="de">
     {step === "review" ? <>
       <h1>Aussagesätze bilden</h1>
@@ -274,6 +274,12 @@ export default function A1Day14ClassroomStage({ step, workbookUrl = "" }) {
     {step === "train-build" ? <>
       <h1>Mit dem Zug fahren</h1>
       <p className="a1day14-lead">Kombiniere Modalverben und trennbare Verben zu einem ganzen Satz.</p>
+      {question?.questionDe ? <Panel className="a1day14-student-check">
+        <span className="a1day14-overline">Individuelle Studentenfrage · Lehrkraft markiert oben</span>
+        <h2>{question.questionDe}</h2>
+        <p>Sage zuerst die ganze Antwort. Erst danach zeigt die Lehrkraft die Lösung und markiert Correct oder Needs review.</p>
+        <ShowAnswer answer={question.answerDe} tip={question.noteEn || ""} />
+      </Panel> : <p className="a1day14-tip">Wähle oben einen Studenten für eine eigene Frage. Die Wortkarten unten sind eine zusätzliche Übung.</p>}
       <Practice key="train-build" exercises={A1_DAY14_BUILD["train-build"]} instruction="Baue den Satz mit dem Infinitiv am Ende." />
       <Corrections />
     </> : null}
