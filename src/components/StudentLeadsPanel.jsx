@@ -269,6 +269,8 @@ export default function StudentLeadsPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [levelFilter, setLevelFilter] = useState("all");
   const [copyNotice, setCopyNotice] = useState("");
   const [deletingId, setDeletingId] = useState("");
 
@@ -328,29 +330,48 @@ export default function StudentLeadsPanel() {
     loadLeads();
   }, []);
 
+  const leadStats = useMemo(() => {
+    const paidLeads = leads.filter((lead) => {
+      const status = String(lead.paymentStatus || "").trim().toLowerCase().replace(/[_-]/g, " ");
+      return ["paid", "registered paid", "success", "successful", "completed", "complete"].includes(status);
+    });
+    const totalReceived = leads.reduce((sum, lead) => {
+      const amount = Number(String(lead.amountPaid || "").replace(/GHS|₵|,/gi, "").trim());
+      return sum + (Number.isFinite(amount) && amount > 0 ? amount : 0);
+    }, 0);
+    return { paid: paidLeads.length, totalReceived };
+  }, [leads]);
+
+  const statusOptions = useMemo(() => [...new Set(leads.map((lead) => lead.status).filter(Boolean))].sort(), [leads]);
+  const levelOptions = useMemo(() => [...new Set(leads.map((lead) => lead.level).filter(Boolean))].sort(), [leads]);
+
   const filteredLeads = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    if (!needle) return leads;
-
-    return leads.filter((lead) => [
-      lead.name,
-      lead.email,
-      lead.number,
-      lead.level,
-      lead.className,
-      lead.status,
-      lead.paymentStatus,
-      lead.studentCode,
-      lead.source,
-    ]
-      .map((value) => String(value || "").toLowerCase())
-      .join(" ")
-      .includes(needle));
-  }, [leads, query]);
+    return leads.filter((lead) => {
+      if (statusFilter !== "all" && lead.status !== statusFilter) return false;
+      if (levelFilter !== "all" && lead.level !== levelFilter) return false;
+      return !needle || [
+        lead.name, lead.email, lead.number, lead.level, lead.className,
+        lead.status, lead.paymentStatus, lead.studentCode, lead.source,
+      ].some((value) => String(value || "").toLowerCase().includes(needle));
+    });
+  }, [leads, query, statusFilter, levelFilter]);
 
   return (
     <div className="student-leads-panel" style={{ display: "grid", gap: 14 }}>
       <style>{responsiveLeadStyles}</style>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 215px), 1fr))", gap: 14 }}>
+        {[
+          { label: "Total leads", value: leads.length, helper: "Unique online enquiries" },
+          { label: "Registered & paid", value: leadStats.paid, helper: leads.length ? Math.round(leadStats.paid / leads.length * 100) + "% of leads" : "No leads yet" },
+          { label: "Payments received", value: formatMoney(leadStats.totalReceived), helper: "Sum of recorded amounts paid" },
+        ].map((card) => <div key={card.label} style={{ background: "#fff", border: "1px solid #dce7e2", borderRadius: 12, padding: "18px 20px" }}>
+          <div style={{ fontSize: 13, color: "#657970" }}>{card.label}</div>
+          <strong style={{ display: "block", fontSize: 28, margin: "9px 0", color: "#16372c" }}>{loading ? "—" : card.value}</strong>
+          <small style={{ color: "#73877c" }}>{card.helper}</small>
+        </div>)}
+      </div>
 
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
         <div>
@@ -366,16 +387,30 @@ export default function StudentLeadsPanel() {
         Source: <a href={STUDENT_LEADS_PUBLISHED_URL} target="_blank" rel="noreferrer">published Google Sheet</a> · Sheet tab: <strong>{STUDENT_LEADS_SHEET_NAME}</strong>
       </div>
 
-      <label className="student-leads-search" style={{ display: "grid", gap: 6, maxWidth: 560 }}>
-        <span style={{ fontWeight: 700 }}>Search leads</span>
-        <input
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search by name, contact, class, status, payment, student code, or source..."
-          style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid #ccd4e2" }}
-        />
-      </label>
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(210px, 2.4fr) minmax(155px, 1fr) minmax(135px, 1fr)", gap: 10, alignItems: "end", maxWidth: 1000 }}>
+        <label className="student-leads-search" style={{ display: "grid", gap: 6 }}>
+          <span style={{ fontSize: 13, fontWeight: 700 }}>Search leads</span>
+          <input type="search" value={query} onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search by name, contact, class, status or student code..."
+            style={{ minHeight: 40, padding: "8px 10px", borderRadius: 8, border: "1px solid #ccd4e2" }} />
+        </label>
+        <label style={{ display: "grid", gap: 6 }}>
+          <span style={{ fontSize: 13, fontWeight: 700 }}>Status</span>
+          <select aria-label="Filter online lead status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}
+            style={{ minHeight: 40, borderRadius: 8, padding: 8, border: "1px solid #ccd4e2", minWidth: 0 }}>
+            <option value="all">All statuses</option>
+            {statusOptions.map((status) => <option key={status} value={status}>{readableLabel(status)}</option>)}
+          </select>
+        </label>
+        <label style={{ display: "grid", gap: 6 }}>
+          <span style={{ fontSize: 13, fontWeight: 700 }}>Level</span>
+          <select aria-label="Filter online lead level" value={levelFilter} onChange={(event) => setLevelFilter(event.target.value)}
+            style={{ minHeight: 40, borderRadius: 8, padding: 8, border: "1px solid #ccd4e2", minWidth: 0 }}>
+            <option value="all">All levels</option>
+            {levelOptions.map((level) => <option key={level} value={level}>{level}</option>)}
+          </select>
+        </label>
+      </div>
 
       {copyNotice ? (
         <div role="status" style={{ padding: "8px 10px", borderRadius: 8, background: "#ecfdf5", color: "#166534", width: "fit-content" }}>
