@@ -1,0 +1,44 @@
+name: A1 Day 15 imperative and Teil 3 slides
+
+on:
+  pull_request:
+    paths:
+      - "src/components/A1GrammarPresenter.jsx"
+      - "src/components/A1Day15ClassroomStage.jsx"
+      - "src/components/A1Day15ClassroomStage.css"
+      - "src/data/a1Day15Classroom.js"
+      - "src/data/a1Days11To15Slides.js"
+      - "src/data/a1Days11To15Understanding.js"
+      - "src/data/a1GenericLessonUpgrades.js"
+      - "src/data/a1TopicTeacherSupport.js"
+      - "src/data/courseDictionary.js"
+      - "tests/a1-day15-imperative-teil3.test.js"
+      - "tests/a1-day15-object-cards.test.js"
+      - ".github/workflows/a1-day15-imperative-teil3.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/components/A1GrammarPresenter.jsx"
+      - "src/components/A1Day15ClassroomStage.jsx"
+      - "src/data/a1Day15Classroom.js"
+      - "tests/a1-day15-imperative-teil3.test.js"
+      - ".github/workflows/a1-day15-imperative-teil3.yml"
+  workflow_dispatch:
+
+jobs:
+  day15:
+    name: A1 Day 15 lesson and teacher controls
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Verify presenter and dedicated pages compile
+        run: |
+          node --input-type=module -e "import { transformWithEsbuild } from 'vite'; import { readFileSync } from 'node:fs'; for (const file of ['src/components/A1Day15ClassroomStage.jsx', 'src/components/A1GrammarPresenter.jsx']) { await transformWithEsbuild(readFileSync(file, 'utf8'), file, { loader: 'jsx', jsx: 'automatic' }); console.log(file + ' JSX syntax OK'); }"
+      - name: Verify Day 15 flow, picture cards, music and existing checks
+        run: node --test tests/a1-day15-imperative-teil3.test.js tests/a1-day15-object-cards.test.js tests/a1-day15-published-music-slide.test.js tests/a1-days11-to15-understanding.test.js tests/a1-presenter-topic-integrity.test.js
