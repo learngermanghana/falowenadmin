@@ -25,7 +25,9 @@ test('A2 Day 9 keeps lesson music and adds ungraded Urlaub Hören as slide 3', (
   assert.equal(stages[2].listeningItems.length, 5);
   assert.equal(isInteractiveOpeningStage('A2-4.9', 'knowledge'), true);
   assert.ok(stages.some(stage => stage.id === 'reading'));
-  assert.ok(stages.some(stage => stage.id === 'writing'));
+  assert.ok(stages.some(stage => stage.id === 'workbook-presentation'));
+  assert.ok(stages.some(stage => stage.id === 'workbook'));
+  assert.ok(slide.workbookConnection.parts.some(part => part.label.includes('Schreiben')));
   assert.match(slide.workbookConnection.parts.find(part => part.label.includes('Hören')).detailEn, /Anna.s last summer holiday/i);
 });
 
