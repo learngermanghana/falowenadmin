@@ -44,6 +44,9 @@ const responsiveLeadStyles = `
     width: 100%;
     box-sizing: border-box;
   }
+  @media (max-width: 720px) {
+    .student-leads-filters { grid-template-columns: 1fr !important; }
+  }
 
   @media (max-width: 720px) {
     .student-leads-panel {
@@ -387,7 +390,7 @@ export default function StudentLeadsPanel() {
         Source: <a href={STUDENT_LEADS_PUBLISHED_URL} target="_blank" rel="noreferrer">published Google Sheet</a> · Sheet tab: <strong>{STUDENT_LEADS_SHEET_NAME}</strong>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(210px, 2.4fr) minmax(155px, 1fr) minmax(135px, 1fr)", gap: 10, alignItems: "end", maxWidth: 1000 }}>
+      <div className="student-leads-filters" style={{ display: "grid", gridTemplateColumns: "minmax(210px, 2.4fr) minmax(155px, 1fr) minmax(135px, 1fr)", gap: 10, alignItems: "end", maxWidth: 1000 }}>
         <label className="student-leads-search" style={{ display: "grid", gap: 6 }}>
           <span style={{ fontSize: 13, fontWeight: 700 }}>Search leads</span>
           <input type="search" value={query} onChange={(event) => setQuery(event.target.value)}
