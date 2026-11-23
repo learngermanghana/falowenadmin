@@ -25,6 +25,9 @@ test("A1 Day 14 has exactly 12 approved pages with the original music at page 11
     "conjugation", "sentence-frame", "train-build", "reservation", "questions",
   ]);
   assert.equal(A1_DAY14_CLASSROOM_STAGES.length + 1 + Number(Boolean(A1_DAY14_EXIT_STAGE)), 12);
+  const studentCheckPage = A1_DAY14_CLASSROOM_STAGES.find(stage => stage.step === "train-build");
+  assert.equal(studentCheckPage.id, "grammar-check");
+  assert.equal(studentCheckPage.items.length, 11);
   assert.equal(A1_DAY14_EXIT_STAGE.step, "exit");
   const presenter = readFileSync(new URL("../src/components/A1GrammarPresenter.jsx", import.meta.url), "utf8");
   assert.match(presenter, /A1_DAY14_ASSIGNMENT/);
