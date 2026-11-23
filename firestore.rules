@@ -521,6 +521,13 @@ service cloud.firestore {
       );
     }
 
+    function canAccessManualLeadLanguage(language) {
+      return canAccessManualLeads() && (isManualLeadsAdmin() ||
+        (language in request.auth.token.get('staffLanguages', []) &&
+          language in get(/databases/$(database)/documents/falowenStaffAccess/$(request.auth.uid)).data.get('languages', []))
+      );
+    }
+
     function validManualLead() {
       return request.resource.data.keys().hasOnly([
           'name', 'phone', 'location', 'email', 'language', 'level', 'source',
@@ -559,14 +566,14 @@ service cloud.firestore {
     }
 
     match /falowenManualLeads/{leadId} {
-      allow read: if canAccessManualLeads();
+      allow read: if canAccessManualLeadLanguage(resource.data.language);
       allow create: if isManualLeadsAdmin() && validManualLead() &&
         request.resource.data.createdBy == request.auth.uid &&
         request.resource.data.createdAt == request.time &&
         request.resource.data.updatedAt == request.time &&
         request.resource.data.followUpCount == 0 &&
         request.resource.data.lastFollowUpAt == null;
-      allow update: if canAccessManualLeads() && validManualLead() &&
+      allow update: if canAccessManualLeadLanguage(resource.data.language) && validManualLead() &&
         request.resource.data.createdBy == resource.data.createdBy &&
         request.resource.data.createdAt == resource.data.createdAt &&
         request.resource.data.updatedAt == request.time &&
@@ -578,8 +585,12 @@ service cloud.firestore {
       allow delete: if false;
 
       match /activities/{activityId} {
-        allow read: if canAccessManualLeads();
-        allow create: if canAccessManualLeads() &&
+        allow read: if canAccessManualLeadLanguage(
+          get(/databases/$(database)/documents/falowenManualLeads/$(leadId)).data.language
+        );
+        allow create: if canAccessManualLeadLanguage(
+          get(/databases/$(database)/documents/falowenManualLeads/$(leadId)).data.language
+        ) &&
           request.resource.data.keys().hasOnly([
             'channel', 'status', 'note', 'nextFollowUpAt',
             'recordedByUid', 'recordedByName', 'createdAt'
