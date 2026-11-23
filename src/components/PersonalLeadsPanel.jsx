@@ -13,7 +13,10 @@ const STATUSES = [
   ["follow_up", "Follow-up needed"],
   ["registered", "Registered"],
   ["not_interested", "Not interested"],
+  ["done", "Done"],
 ];
+const CLOSED_STATUSES = ["registered", "not_interested", "done"];
+const DELETABLE_STATUSES = ["not_interested", "done"];
 const SOURCES = ["Phone call", "WhatsApp", "Walk-in", "Referral", "Other"];
 const LEVELS = ["", "A1", "A2", "B1", "B2", "C1", "C2"];
 const INITIAL = { name: "", phone: "", location: "", email: "", language: "german", level: "", source: "Phone call", notes: "", assignedToUid: "", assignedToName: "", nextFollowUpAt: "", status: "new" };
@@ -45,13 +48,14 @@ export default function PersonalLeadsPanel() {
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [deletingId, setDeletingId] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [formVisible, setFormVisible] = useState(false);
   const [editing, setEditing] = useState("");
   const [form, setForm] = useState(blankForm);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState("active");
   const [assignment, setAssignment] = useState("all");
   const [followId, setFollowId] = useState("");
   const [followForm, setFollowForm] = useState({ channel: "call", status: "contacted", note: "", nextFollowUpAt: "" });
@@ -94,7 +98,9 @@ export default function PersonalLeadsPanel() {
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
     return contacts.filter((c) => {
-      if (filter !== "all" && c.status !== filter) return false;
+      if (filter === "active" && CLOSED_STATUSES.includes(c.status)) return false;
+      if (filter === "closed" && !CLOSED_STATUSES.includes(c.status)) return false;
+      if (!["all", "active", "closed"].includes(filter) && c.status !== filter) return false;
       if (assignment === "mine" && c.assignedToUid !== user?.uid) return false;
       if (assignment === "unassigned" && c.assignedToUid) return false;
       return !needle || [c.name, c.phone, c.location, c.email, c.language, c.level, c.source, c.assignedToName]
@@ -103,7 +109,7 @@ export default function PersonalLeadsPanel() {
   }, [contacts, search, filter, assignment, user]);
 
   const due = contacts.filter((c) => c.nextFollowUpAt && c.nextFollowUpAt <= today()
-    && !["registered", "not_interested"].includes(c.status)).length;
+    && !CLOSED_STATUSES.includes(c.status)).length;
   const registered = contacts.filter((c) => c.status === "registered").length;
 
   function openAdd() {
@@ -174,13 +180,13 @@ export default function PersonalLeadsPanel() {
       const ref = doc(db, CONTACTS, contact.id);
       const batch = writeBatch(db);
       batch.update(ref, {
-        status: followForm.status, nextFollowUpAt: followForm.nextFollowUpAt || "",
+        status: followForm.status, nextFollowUpAt: CLOSED_STATUSES.includes(followForm.status) ? "" : followForm.nextFollowUpAt || "",
         lastFollowUpAt: serverTimestamp(), lastContactNote: note.slice(0, 1000),
         followUpCount: increment(1), updatedAt: serverTimestamp(),
       });
       batch.set(doc(collection(ref, "activities")), {
         channel: followForm.channel, status: followForm.status,
-        note: note.slice(0, 1000), nextFollowUpAt: followForm.nextFollowUpAt || "",
+        note: note.slice(0, 1000), nextFollowUpAt: CLOSED_STATUSES.includes(followForm.status) ? "" : followForm.nextFollowUpAt || "",
         recordedByUid: user.uid, recordedByName: user.email || "Staff", createdAt: serverTimestamp(),
       });
       await batch.commit();
@@ -188,6 +194,56 @@ export default function PersonalLeadsPanel() {
     } catch (err) { setError(errText(err)); }
     finally { setBusy(false); }
   }
+  async function markDone(contact) {
+    if (busy || deletingId || CLOSED_STATUSES.includes(contact.status)) return;
+    setBusy(true); setError(""); setNotice("");
+    try {
+      const ref = doc(db, CONTACTS, contact.id);
+      const batch = writeBatch(db);
+      batch.update(ref, {
+        status: "done", nextFollowUpAt: "", updatedAt: serverTimestamp(),
+        followUpCount: increment(1),
+      });
+      batch.set(doc(collection(ref, "activities")), {
+        channel: "other", status: "done",
+        note: "Marked as done. No further follow-up required.",
+        nextFollowUpAt: "", recordedByUid: user.uid,
+        recordedByName: user.email || "Staff", createdAt: serverTimestamp(),
+      });
+      await batch.commit();
+      setFollowId(""); setHistoryId("");
+      setNotice(contact.name + " marked as done. Follow-ups stopped; history retained.");
+      await refresh();
+    } catch (err) { setError(errText(err)); }
+    finally { setBusy(false); }
+  }
+
+  async function deleteClosedContact(contact) {
+    if (!owner || !DELETABLE_STATUSES.includes(contact.status) || busy || deletingId) return;
+    const confirmed = window.confirm(
+      'Permanently delete "' + contact.name + '" and all recorded follow-up history? This cannot be undone.'
+    );
+    if (!confirmed) return;
+    setDeletingId(contact.id); setError(""); setNotice("");
+    try {
+      const ref = doc(db, CONTACTS, contact.id);
+      // Delete contact and its history in one atomic batch; Firestore does not
+      // automatically delete subcollections when the parent is removed.
+      const histories = await getDocs(query(collection(ref, "activities"), limit(450)));
+      if (histories.size >= 450) {
+        throw new Error("This contact has too many history entries to delete safely in one operation.");
+      }
+      const batch = writeBatch(db);
+      histories.docs.forEach((entry) => batch.delete(entry.ref));
+      batch.delete(ref);
+      await batch.commit();
+      setFollowId(""); setHistoryId("");
+      setContacts((current) => current.filter((item) => item.id !== contact.id));
+      setNotice(contact.name + " and their follow-up history were deleted.");
+    } catch (err) { setError("Contact was not deleted. " + errText(err)); }
+    finally { setDeletingId(""); }
+  }
+
   async function openHistory(contact) {
     if (historyId === contact.id) { setHistoryId(""); return; }
     setHistoryId(contact.id); setActivities([]); setHistoryLoading(true);
@@ -237,7 +293,7 @@ export default function PersonalLeadsPanel() {
       <div className="personal-lead-filters">
         <input type="search" aria-label="Search personal contacts" placeholder="Search by name, phone or location..." value={search} onChange={(e) => setSearch(e.target.value)} />
         <select aria-label="Filter by status" value={filter} onChange={(e) => setFilter(e.target.value)}>
-          <option value="all">All statuses</option>{STATUSES.map(([v, label]) => <option value={v} key={v}>{label}</option>)}
+          <option value="active">Active contacts</option><option value="closed">Closed contacts</option><option value="all">All statuses</option>{STATUSES.map(([v, label]) => <option value={v} key={v}>{label}</option>)}
         </select>
         <select aria-label="Filter by assignment" value={assignment} onChange={(e) => setAssignment(e.target.value)}>
           <option value="all">All assignments</option><option value="mine">Assigned to me</option><option value="unassigned">Unassigned</option>
@@ -247,7 +303,7 @@ export default function PersonalLeadsPanel() {
       {!loading && !filtered.length && <div className="personal-empty">No contacts match these filters. {owner ? "Add the first personal contact above." : ""}</div>}
       <div className="personal-lead-list">
         {filtered.map((contact) => {
-          const overdue = contact.nextFollowUpAt && contact.nextFollowUpAt <= today() && !["registered", "not_interested"].includes(contact.status);
+          const overdue = contact.nextFollowUpAt && contact.nextFollowUpAt <= today() && !CLOSED_STATUSES.includes(contact.status);
           return <article className="personal-lead-row" key={contact.id}>
             <div className="personal-lead-main">
               <div className="personal-lead-name">{contact.name} <span className={"personal-status status-" + contact.status}>{badgeStatus(contact.status)}</span></div>
@@ -259,9 +315,11 @@ export default function PersonalLeadsPanel() {
             <div className="personal-lead-actions">
               {safeTel(contact.phone) && <a href={"tel:" + safeTel(contact.phone)}>Call</a>}
               {whatsappLink(contact.phone) && <a href={whatsappLink(contact.phone)} target="_blank" rel="noopener noreferrer">WhatsApp</a>}
-              <button type="button" onClick={() => openFollow(contact)}>Record follow-up</button>
+              <button type="button" onClick={() => openFollow(contact)} disabled={busy || Boolean(deletingId)}>Record follow-up</button>
+              {!CLOSED_STATUSES.includes(contact.status) && <button type="button" onClick={() => markDone(contact)} disabled={busy || Boolean(deletingId)}>Mark done</button>}
               <button type="button" onClick={() => openHistory(contact)}>History ({contact.followUpCount || 0})</button>
-              {owner && <button type="button" onClick={() => openEdit(contact)}>Edit</button>}
+              {owner && <button type="button" onClick={() => openEdit(contact)} disabled={busy || Boolean(deletingId)}>Edit</button>}
+              {owner && DELETABLE_STATUSES.includes(contact.status) && <button type="button" className="personal-danger" onClick={() => deleteClosedContact(contact)} disabled={busy || Boolean(deletingId)}>{deletingId === contact.id ? "Deleting..." : "Delete"}</button>}
             </div>
             {followId === contact.id && <form className="personal-follow-form" onSubmit={saveFollow}>
               <h3>Record contact with {contact.name}</h3>
