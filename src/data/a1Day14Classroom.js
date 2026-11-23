@@ -111,10 +111,14 @@ export const A1_DAY14_QUESTIONS = Object.freeze([
   ["Sie möchte im Hotel übernachten.", "Wo möchte sie übernachten?"],
 ]);
 
+// A dialogue is a sequence of SPEAKER-OWNED turns. A reply must never be
+// attached as the answer to another speaker's utterance.
 export const A1_DAY14_HOTEL_DIALOGUE = Object.freeze([
-  ["Gast", "Guten Tag. Ich ___ ein Einzelzimmer buchen.", "möchte"],
-  ["Rezeption", "Für wie viele Nächte?", "Für zwei Nächte."],
-  ["Gast", "___ ich hier zwei Nächte übernachten?", "Kann"],
-  ["Rezeption", "Ja, wir haben ein Zimmer frei.", "Ja, das ist möglich."],
-  ["Gast", "Vielen Dank!", "Gern geschehen."],
+  { speaker: "Gast", prompt: "Guten Tag. Ich ___ ein Einzelzimmer buchen.", answer: "Guten Tag. Ich möchte ein Einzelzimmer buchen." },
+  { speaker: "Rezeption", prompt: "Für wie viele Nächte?", answer: "Für wie viele Nächte?" },
+  { speaker: "Gast", prompt: "Für ___ Nächte, bitte.", answer: "Für zwei Nächte, bitte." },
+  { speaker: "Gast", prompt: "___ ich hier zwei Nächte übernachten?", answer: "Kann ich hier zwei Nächte übernachten?" },
+  { speaker: "Rezeption", prompt: "Ja, wir haben ein Zimmer frei.", answer: "Ja, wir haben ein Zimmer frei." },
+  { speaker: "Gast", prompt: "Vielen Dank!", answer: "Vielen Dank!" },
+  { speaker: "Rezeption", prompt: "Gern geschehen.", answer: "Gern geschehen." },
 ]);

@@ -73,8 +73,25 @@ test("Four modal verbs, station language, reservations, and correct A1 forms", (
   assert.ok(A1_DAY14_CORRECTIONS.some(([bad, good]) =>
     bad === "Ich kann steige ein." && good === "Ich kann einsteigen."));
   assert.ok(A1_DAY14_QUESTIONS.some(([, question]) => question === "Kannst du morgen fahren?"));
-  assert.ok(A1_DAY14_HOTEL_DIALOGUE.some(([, prompt]) => prompt.includes("Einzelzimmer")));
-  assert.ok(A1_DAY14_HOTEL_DIALOGUE.some(([, prompt]) => prompt.includes("übernachten")));
+  assert.ok(A1_DAY14_HOTEL_DIALOGUE.some(({ prompt }) => prompt.includes("Einzelzimmer")));
+  assert.ok(A1_DAY14_HOTEL_DIALOGUE.some(({ prompt }) => prompt.includes("übernachten")));
+});
+
+test("Day 14 hotel dialogue reveals each response under the correct speaker", () => {
+  const turns = A1_DAY14_HOTEL_DIALOGUE;
+  assert.deepEqual(turns.map(({ speaker }) => speaker), [
+    "Gast", "Rezeption", "Gast", "Gast", "Rezeption", "Gast", "Rezeption",
+  ]);
+  const countTurn = (speaker, fragment) => turns.filter(turn =>
+    turn.speaker === speaker && turn.answer.includes(fragment)).length;
+  assert.equal(countTurn("Gast", "Für zwei Nächte, bitte."), 1);
+  assert.equal(countTurn("Rezeption", "Für zwei Nächte, bitte."), 0);
+  assert.equal(countTurn("Rezeption", "Gern geschehen."), 1);
+  assert.equal(countTurn("Gast", "Gern geschehen."), 0);
+  assert.equal(countTurn("Gast", "Kann ich hier zwei Nächte übernachten?"), 1);
+  const presenter = readFileSync(new URL("../src/components/A1Day14ClassroomStage.jsx", import.meta.url), "utf8");
+  assert.ok(presenter.includes("map(({ speaker, prompt, answer }, i)"));
+  assert.ok(!presenter.includes('prompt.replace("___", answer)'));
 });
 
 test("Published Day 14 workbook remains unchanged; extra classroom practice is unscored", () => {
