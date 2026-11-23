@@ -552,7 +552,7 @@ service cloud.firestore {
         request.resource.data.level in ['', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'] &&
         request.resource.data.source in ['Phone call', 'WhatsApp', 'Walk-in', 'Referral', 'Other'] &&
         request.resource.data.notes is string && request.resource.data.notes.size() <= 2000 &&
-        request.resource.data.status in ['new', 'contacted', 'interested', 'follow_up', 'registered', 'not_interested'] &&
+        request.resource.data.status in ['new', 'contacted', 'interested', 'follow_up', 'registered', 'not_interested', 'done'] &&
         request.resource.data.assignedToUid is string && request.resource.data.assignedToUid.size() <= 128 &&
         request.resource.data.assignedToName is string && request.resource.data.assignedToName.size() <= 160 &&
         request.resource.data.nextFollowUpAt is string && request.resource.data.nextFollowUpAt.size() <= 10 &&
@@ -582,7 +582,8 @@ service cloud.firestore {
             'status', 'notes', 'nextFollowUpAt', 'lastFollowUpAt',
             'lastContactNote', 'followUpCount', 'updatedAt'
           ]));
-      allow delete: if false;
+      // Only administrators may permanently delete contacts closed as done or not interested.
+      allow delete: if isManualLeadsAdmin() && resource.data.status in ['not_interested', 'done'];
 
       match /activities/{activityId} {
         allow read: if canAccessManualLeadLanguage(
@@ -600,7 +601,7 @@ service cloud.firestore {
             'recordedByUid', 'recordedByName', 'createdAt'
           ]) &&
           request.resource.data.channel in ['call', 'whatsapp', 'other'] &&
-          request.resource.data.status in ['new', 'contacted', 'interested', 'follow_up', 'registered', 'not_interested'] &&
+          request.resource.data.status in ['new', 'contacted', 'interested', 'follow_up', 'registered', 'not_interested', 'done'] &&
           request.resource.data.note is string &&
           request.resource.data.note.size() > 0 && request.resource.data.note.size() <= 1000 &&
           request.resource.data.nextFollowUpAt is string &&
@@ -609,7 +610,9 @@ service cloud.firestore {
           request.resource.data.recordedByName is string &&
           request.resource.data.recordedByName.size() <= 254 &&
           request.resource.data.createdAt == request.time;
-        allow update, delete: if false;
+        allow update: if false;
+        // Owner-only deletion is used when removing the contact and its complete history.
+        allow delete: if isManualLeadsAdmin();
       }
     }
 
