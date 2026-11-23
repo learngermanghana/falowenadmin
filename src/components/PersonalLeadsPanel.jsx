@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { addDoc, collection, doc, getDocs, increment, limit, orderBy, query, serverTimestamp, updateDoc, where, writeBatch } from "firebase/firestore";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { addDoc, collection, deleteDoc, doc, getDocs, increment, limit, orderBy, query, serverTimestamp, startAfter, updateDoc, where, writeBatch } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { normalizeLeadPhone } from "../services/studentLeadService.js";
 import "./PersonalLeadsPanel.css";
 
 const CONTACTS = "falowenManualLeads";
+const PAGE_SIZE = 100;
+const HISTORY_DELETE_PAGE_SIZE = 200;
 const STATUSES = [
   ["new", "New"],
   ["contacted", "Contacted"],
@@ -46,7 +48,13 @@ export default function PersonalLeadsPanel() {
   const owner = role === "admin";
   const [contacts, setContacts] = useState([]);
   const [staff, setStaff] = useState([]);
+  const [staffDirectoryState, setStaffDirectoryState] = useState("loading");
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [lastDocument, setLastDocument] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
+  const pageRequestRef = useRef(0);
+  const historyRequestRef = useRef(0);
   const [busy, setBusy] = useState(false);
   const [deletingId, setDeletingId] = useState("");
   const [error, setError] = useState("");
@@ -63,26 +71,51 @@ export default function PersonalLeadsPanel() {
   const [activities, setActivities] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
+  const loadPage = useCallback(async (after = null, append = false) => {
+    const requestId = ++pageRequestRef.current;
+    if (append) setLoadingMore(true);
+    else setLoading(true);
     try {
       if (!owner && (!Array.isArray(staffLanguages) || !staffLanguages.length)) {
         throw new Error("No course language is assigned to your staff account.");
       }
-      const contactsQuery = owner
-        ? query(collection(db, CONTACTS), orderBy("createdAt", "desc"), limit(250))
-        : query(collection(db, CONTACTS), where("language", "in", staffLanguages), limit(250));
-      const snap = await getDocs(contactsQuery);
-      setContacts(snap.docs.map((entry) => ({ id: entry.id, ...entry.data() })).sort(
-        (a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)
-      ));
+      const constraints = [
+        ...(!owner ? [where("language", "in", staffLanguages)] : []),
+        orderBy("createdAt", "desc"),
+        ...(after ? [startAfter(after)] : []),
+        limit(PAGE_SIZE),
+      ];
+      const snap = await getDocs(query(collection(db, CONTACTS), ...constraints));
+      if (requestId !== pageRequestRef.current) return;
+      const page = snap.docs.map((entry) => ({ id: entry.id, ...entry.data() }));
+      setContacts((current) => {
+        if (!append) return page;
+        const byId = new Map([...current, ...page].map((contact) => [contact.id, contact]));
+        return [...byId.values()].sort((a, b) =>
+          (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)
+        );
+      });
+      setLastDocument(snap.docs.at(-1) || null);
+      setHasMore(snap.size === PAGE_SIZE);
       setError("");
     } catch (err) {
-      setError("Personal contacts could not be loaded. " + errText(err));
-    } finally { setLoading(false); }
+      if (requestId === pageRequestRef.current) {
+        setError("Personal contacts could not be loaded. " + errText(err));
+      }
+    } finally {
+      if (requestId === pageRequestRef.current) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    }
   }, [owner, staffLanguages]);
 
+  const refresh = useCallback(() => loadPage(), [loadPage]);
   useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => () => {
+    pageRequestRef.current += 1;
+    historyRequestRef.current += 1;
+  }, []);
   useEffect(() => {
     if (!owner || !user) return;
     let active = true;
@@ -90,8 +123,16 @@ export default function PersonalLeadsPanel() {
       headers: { Authorization: "Bearer " + token },
     })).then(async (response) => response.ok ? response.json() : null)
       .then((data) => {
-        if (active && data?.ok) setStaff((data.staff || []).filter((item) => item.active && item.pages?.includes("leads")));
-      }).catch(() => { /* Contact collection still works when the staff directory is unavailable. */ });
+        if (!active) return;
+        if (data?.ok) {
+          setStaff((data.staff || []).filter((item) => item.active && item.pages?.includes("leads")));
+          setStaffDirectoryState("ready");
+        } else {
+          setStaffDirectoryState("unavailable");
+        }
+      }).catch(() => {
+        if (active) setStaffDirectoryState("unavailable");
+      });
     return () => { active = false; };
   }, [owner, user]);
 
@@ -136,16 +177,27 @@ export default function PersonalLeadsPanel() {
       return;
     }
     if (!owner) { setError("Only an administrator can add or edit contact details."); return; }
-    setBusy(true); setError(""); setNotice("");
-    const assigned = staff.find((member) => member.uid === form.assignedToUid && member.languages?.includes(form.language));
+    // Saving a name, number, or note must never silently clear an existing
+    // assignment merely because the staff-directory request failed.
     const previous = contacts.find((item) => item.id === editing);
-    const preservedName = previous?.assignedToUid === form.assignedToUid && previous?.language === form.language ? previous.assignedToName : "";
+    const sameAssignment = Boolean(previous &&
+      previous.assignedToUid === form.assignedToUid &&
+      previous.language === form.language);
+    const assigned = staff.find((member) =>
+      member.uid === form.assignedToUid && member.languages?.includes(form.language));
+    if (form.assignedToUid && !sameAssignment && !assigned) {
+      setError("Cannot verify the selected staff member. Refresh the staff directory before changing assignment.");
+      return;
+    }
+    const resolvedUid = sameAssignment ? previous.assignedToUid || "" : assigned?.uid || "";
+    const resolvedName = sameAssignment ? previous.assignedToName || "" : assigned?.name || assigned?.email || "";
+    setBusy(true); setError(""); setNotice("");
     const payload = {
       name: name.slice(0, 120), phone: phone.slice(0, 24), location: location.slice(0, 120),
       email: trimmed(form.email).toLowerCase().slice(0, 254),
       language: form.language, level: form.level, source: form.source,
       notes: trimmed(form.notes).slice(0, 2000), status: form.status,
-      assignedToUid: assigned?.uid || (preservedName ? form.assignedToUid : ""), assignedToName: assigned?.name || assigned?.email || preservedName || "",
+      assignedToUid: resolvedUid, assignedToName: resolvedName,
       nextFollowUpAt: form.nextFollowUpAt || "", updatedAt: serverTimestamp(),
     };
     try {
@@ -167,14 +219,15 @@ export default function PersonalLeadsPanel() {
     setFollowId(contact.id);
     setFollowForm({ channel: "call", status: contact.status === "registered" ? "registered" : "contacted",
       note: "", nextFollowUpAt: contact.nextFollowUpAt || "" });
-    setHistoryId(""); setNotice(""); setError("");
+    historyRequestRef.current += 1;
+    setHistoryId(""); setActivities([]); setNotice(""); setError("");
   }
   async function saveFollow(event) {
     event.preventDefault();
     const note = trimmed(followForm.note);
     if (!note) { setError("Describe the call or follow-up before saving."); return; }
     const contact = contacts.find((c) => c.id === followId);
-    if (!contact) return;
+    if (!contact || contact.deleting) { setError("Contact is being deleted."); return; }
     setBusy(true); setError(""); setNotice("");
     try {
       const ref = doc(db, CONTACTS, contact.id);
@@ -195,7 +248,7 @@ export default function PersonalLeadsPanel() {
     finally { setBusy(false); }
   }
   async function markDone(contact) {
-    if (busy || deletingId || CLOSED_STATUSES.includes(contact.status)) return;
+    if (busy || deletingId || contact.deleting || CLOSED_STATUSES.includes(contact.status)) return;
     setBusy(true); setError(""); setNotice("");
     try {
       const ref = doc(db, CONTACTS, contact.id);
@@ -225,39 +278,73 @@ export default function PersonalLeadsPanel() {
     );
     if (!confirmed) return;
     setDeletingId(contact.id); setError(""); setNotice("");
+    let locked = Boolean(contact.deleting);
     try {
       const ref = doc(db, CONTACTS, contact.id);
-      // Delete contact and its history in one atomic batch; Firestore does not
-      // automatically delete subcollections when the parent is removed.
-      const histories = await getDocs(query(collection(ref, "activities"), limit(450)));
-      if (histories.size >= 450) {
-        throw new Error("This contact has too many history entries to delete safely in one operation.");
+      // First commit a durable deletion lock. Rules reject any concurrent
+      // activity creation and staff follow-up update after this point.
+      if (!locked) {
+        await updateDoc(ref, { deleting: true, updatedAt: serverTimestamp() });
+        locked = true;
       }
-      const batch = writeBatch(db);
-      histories.docs.forEach((entry) => batch.delete(entry.ref));
-      batch.delete(ref);
-      await batch.commit();
-      setFollowId(""); setHistoryId("");
+      // The lock makes history finite and stable. Read and delete it in bounded
+      // pages to avoid Firestore's 500-write batch limit.
+      while (true) {
+        const histories = await getDocs(query(
+          collection(ref, "activities"), limit(HISTORY_DELETE_PAGE_SIZE)
+        ));
+        if (histories.empty) break;
+        const batch = writeBatch(db);
+        histories.docs.forEach((entry) => batch.delete(entry.ref));
+        await batch.commit();
+      }
+      await deleteDoc(ref);
+      historyRequestRef.current += 1;
+      setFollowId(""); setHistoryId(""); setActivities([]);
       setContacts((current) => current.filter((item) => item.id !== contact.id));
       setNotice(contact.name + " and their follow-up history were deleted.");
-    } catch (err) { setError("Contact was not deleted. " + errText(err)); }
-    finally { setDeletingId(""); }
+    } catch (err) {
+      setError("Contact was not fully deleted. " + errText(err) +
+        (locked ? " The contact is locked; use Delete again to complete the cleanup." : ""));
+      if (locked) setContacts((current) => current.map((item) =>
+        item.id === contact.id ? { ...item, deleting: true } : item));
+    } finally { setDeletingId(""); }
+
   }
 
   async function openHistory(contact) {
-    if (historyId === contact.id) { setHistoryId(""); return; }
-    setHistoryId(contact.id); setActivities([]); setHistoryLoading(true);
+    const requestId = ++historyRequestRef.current;
+    if (historyId === contact.id) {
+      setHistoryId("");
+      setActivities([]);
+      setHistoryLoading(false);
+      return;
+    }
+    setHistoryId(contact.id);
+    setActivities([]);
+    setHistoryLoading(true);
     try {
-      const snap = await getDocs(query(collection(db, CONTACTS, contact.id, "activities"), orderBy("createdAt", "desc"), limit(30)));
-      setActivities(snap.docs.map((item) => ({ id: item.id, ...item.data() })));
-    } catch (err) { setError("Could not load follow-up history. " + errText(err)); }
-    finally { setHistoryLoading(false); }
+      const snap = await getDocs(query(
+        collection(db, CONTACTS, contact.id, "activities"),
+        orderBy("createdAt", "desc"), limit(30)
+      ));
+      // A slow response from contact A must not overwrite contact B's history.
+      if (requestId === historyRequestRef.current) {
+        setActivities(snap.docs.map((item) => ({ id: item.id, ...item.data() })));
+      }
+    } catch (err) {
+      if (requestId === historyRequestRef.current) {
+        setError("Could not load follow-up history. " + errText(err));
+      }
+    } finally {
+      if (requestId === historyRequestRef.current) setHistoryLoading(false);
+    }
   }
 
   return <section className="personal-leads">
     <div className="personal-lead-stats">
-      <div><span>Total personal contacts</span><strong>{contacts.length}</strong><small>Saved directly by the school</small></div>
-      <div><span>Follow-ups due</span><strong>{due}</strong><small>Due today or overdue</small></div>
+      <div><span>Contacts loaded</span><strong>{contacts.length}</strong><small>{hasMore ? "More contacts available" : "All available contacts loaded"}</small></div>
+      <div><span>Follow-ups due</span><strong>{due}</strong><small>{hasMore ? "Among loaded contacts" : "Due today or overdue"}</small></div>
       <div><span>Registered</span><strong>{registered}</strong><small>Converted to students</small></div>
       <div><span>Unassigned</span><strong>{contacts.filter((c) => !c.assignedToUid).length}</strong><small>Not assigned to a staff member</small></div>
     </div>
@@ -282,9 +369,12 @@ export default function PersonalLeadsPanel() {
           <label>Level<select value={form.level} onChange={(e) => change("level", e.target.value)}>{LEVELS.map((x) => <option key={x} value={x}>{x || "Not decided"}</option>)}</select></label>
           <label>How did they contact us?<select value={form.source} onChange={(e) => change("source", e.target.value)}>{SOURCES.map((x) => <option key={x}>{x}</option>)}</select></label>
           <label>Status<select value={form.status} onChange={(e) => change("status", e.target.value)}>{STATUSES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-          <label>Assigned staff<select value={form.assignedToUid} onChange={(e) => change("assignedToUid", e.target.value)}>
-            <option value="">Unassigned</option>{staff.filter((member) => member.languages?.includes(form.language)).map((member) => <option value={member.uid} key={member.uid}>{member.name || member.email}</option>)}
-          </select></label>
+          <label>Assigned staff<select value={form.assignedToUid} disabled={staffDirectoryState !== "ready"} onChange={(e) => change("assignedToUid", e.target.value)}>
+            <option value="">Unassigned</option>
+            {form.assignedToUid && !staff.some((member) => member.uid === form.assignedToUid && member.languages?.includes(form.language)) &&
+              <option value={form.assignedToUid}>{form.assignedToName || "Previously assigned staff member"} (saved assignment)</option>}
+            {staff.filter((member) => member.languages?.includes(form.language)).map((member) => <option value={member.uid} key={member.uid}>{member.name || member.email}</option>)}
+          </select><small>{staffDirectoryState === "unavailable" ? "Directory unavailable; existing assignment is preserved." : staffDirectoryState === "loading" ? "Loading staff directory..." : "Assignments only change when you select another staff member."}</small></label>
           <label>Next follow-up date<input type="date" value={form.nextFollowUpAt} onChange={(e) => change("nextFollowUpAt", e.target.value)} /></label>
         </div>
         <label>Notes<textarea rows={3} maxLength={2000} value={form.notes} onChange={(e) => change("notes", e.target.value)} placeholder="Course interest, questions, preferred call time..." /></label>
@@ -299,29 +389,29 @@ export default function PersonalLeadsPanel() {
           <option value="all">All assignments</option><option value="mine">Assigned to me</option><option value="unassigned">Unassigned</option>
         </select>
       </div>
-      {loading ? <p>Loading personal contacts...</p> : <p className="personal-lead-count">Showing {filtered.length} contact(s) · Latest 250 contacts loaded</p>}
+      {loading ? <p>Loading personal contacts...</p> : <p className="personal-lead-count">Showing {filtered.length} of {contacts.length} loaded contact(s){hasMore ? " · More contacts available; load another page to search older enquiries" : ""}</p>}
       {!loading && !filtered.length && <div className="personal-empty">No contacts match these filters. {owner ? "Add the first personal contact above." : ""}</div>}
       <div className="personal-lead-list">
         {filtered.map((contact) => {
           const overdue = contact.nextFollowUpAt && contact.nextFollowUpAt <= today() && !CLOSED_STATUSES.includes(contact.status);
           return <article className="personal-lead-row" key={contact.id}>
             <div className="personal-lead-main">
-              <div className="personal-lead-name">{contact.name} <span className={"personal-status status-" + contact.status}>{badgeStatus(contact.status)}</span></div>
+              <div className="personal-lead-name">{contact.name} <span className={"personal-status status-" + contact.status}>{badgeStatus(contact.status)}</span>{contact.deleting ? <span className="personal-status status-done">Deletion in progress</span> : null}</div>
               <div>{contact.phone} · {contact.location} · {contact.language === "swahili" ? "Swahili" : "German"} {contact.level || ""}</div>
               <div className="personal-lead-meta">{contact.source || "Phone call"} · Assigned: {contact.assignedToName || "Unassigned"} · Last contacted: {dateText(contact.lastFollowUpAt)}</div>
               {contact.notes && <div className="personal-lead-meta">Note: {contact.notes}</div>}
               <div className={"personal-lead-next" + (overdue ? " is-overdue" : "")}>Next follow-up: {contact.nextFollowUpAt ? dateText(contact.nextFollowUpAt) : "Not scheduled"} {overdue ? "· Due" : ""}</div>
             </div>
             <div className="personal-lead-actions">
-              {safeTel(contact.phone) && <a href={"tel:" + safeTel(contact.phone)}>Call</a>}
-              {whatsappLink(contact.phone) && <a href={whatsappLink(contact.phone)} target="_blank" rel="noopener noreferrer">WhatsApp</a>}
-              <button type="button" onClick={() => openFollow(contact)} disabled={busy || Boolean(deletingId)}>Record follow-up</button>
-              {!CLOSED_STATUSES.includes(contact.status) && <button type="button" onClick={() => markDone(contact)} disabled={busy || Boolean(deletingId)}>Mark done</button>}
+              {!contact.deleting && safeTel(contact.phone) && <a href={"tel:" + safeTel(contact.phone)}>Call</a>}
+              {!contact.deleting && whatsappLink(contact.phone) && <a href={whatsappLink(contact.phone)} target="_blank" rel="noopener noreferrer">WhatsApp</a>}
+              {!contact.deleting && <button type="button" onClick={() => openFollow(contact)} disabled={busy || Boolean(deletingId)}>Record follow-up</button>}
+              {!contact.deleting && !CLOSED_STATUSES.includes(contact.status) && <button type="button" onClick={() => markDone(contact)} disabled={busy || Boolean(deletingId)}>Mark done</button>}
               <button type="button" onClick={() => openHistory(contact)}>History ({contact.followUpCount || 0})</button>
-              {owner && <button type="button" onClick={() => openEdit(contact)} disabled={busy || Boolean(deletingId)}>Edit</button>}
-              {owner && DELETABLE_STATUSES.includes(contact.status) && <button type="button" className="personal-danger" onClick={() => deleteClosedContact(contact)} disabled={busy || Boolean(deletingId)}>{deletingId === contact.id ? "Deleting..." : "Delete"}</button>}
+              {owner && !contact.deleting && <button type="button" onClick={() => openEdit(contact)} disabled={busy || Boolean(deletingId)}>Edit</button>}
+              {owner && DELETABLE_STATUSES.includes(contact.status) && <button type="button" className="personal-danger" onClick={() => deleteClosedContact(contact)} disabled={busy || Boolean(deletingId)}>{deletingId === contact.id ? "Deleting..." : contact.deleting ? "Resume deletion" : "Delete"}</button>}
             </div>
-            {followId === contact.id && <form className="personal-follow-form" onSubmit={saveFollow}>
+            {!contact.deleting && followId === contact.id && <form className="personal-follow-form" onSubmit={saveFollow}>
               <h3>Record contact with {contact.name}</h3>
               <div className="personal-field-grid">
                 <label>Channel<select value={followForm.channel} onChange={(e) => setFollowForm((f) => ({ ...f, channel: e.target.value }))}>
@@ -345,6 +435,11 @@ export default function PersonalLeadsPanel() {
           </article>;
         })}
       </div>
+      {hasMore && !loading && <div className="personal-load-more">
+        <button type="button" onClick={() => loadPage(lastDocument, true)} disabled={loadingMore || Boolean(deletingId) || busy}>
+          {loadingMore ? "Loading..." : "Load more contacts"}
+        </button>
+      </div>}
     </div>
   </section>;
 }
