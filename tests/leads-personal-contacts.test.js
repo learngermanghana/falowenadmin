@@ -46,7 +46,8 @@ test("Firestore rules require current permission and keep staff from creating le
   assert.match(rules, /function canAccessManualLeadLanguage\(language\)/);
   assert.match(rules, /language in request\.auth\.token\.get\(\x27staffLanguages\x27, \[\]\)/);
   assert.match(rules, /allow create: if isManualLeadsAdmin\(\)/);
-  assert.match(rules, /allow delete: if false/);
+  assert.match(rules, /allow delete: if isManualLeadsAdmin\(\) && resource\.data\.status in \['not_interested', 'done'\]/);
+  assert.match(rules, /allow delete: if isManualLeadsAdmin\(\);/);
   assert.match(rules, /match \/activities\/\{activityId\}/);
   assert.match(rules, /recordedByUid == request\.auth\.uid/);
 });
@@ -56,4 +57,18 @@ test("Existing online lead data source and admin deletion remain intact", () => 
   assert.match(online, /fetchStudentLeads\(\)/);
   assert.match(online, /role === "admin" && isCompletedLead/);
   assert.match(online, /Payments received/);
+});
+
+test("Closed personal contacts can be marked done, filtered out, or deleted by the owner", () => {
+  const panel = read("src/components/PersonalLeadsPanel.jsx");
+  const rules = read("firestore.rules");
+  assert.match(panel, /\["done", "Done"\]/);
+  assert.match(panel, /Active contacts/);
+  assert.match(panel, /Closed contacts/);
+  assert.match(panel, /markDone\(contact\)/);
+  assert.match(panel, /deleteClosedContact\(contact\)/);
+  assert.match(panel, /owner && DELETABLE_STATUSES\.includes\(contact\.status\)/);
+  assert.match(panel, /histories\.docs\.forEach/);
+  assert.match(panel, /batch\.delete\(ref\)/);
+  assert.match(rules, /'not_interested', 'done'/);
 });
