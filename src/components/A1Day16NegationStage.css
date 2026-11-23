@@ -1,0 +1,81 @@
+.a1n {
+  --a1n-ink:#173453; --a1n-blue:#2462bb; --a1n-green:#146849;
+  width:100%; display:grid; gap:clamp(14px,1.6vw,23px);
+  font-size:clamp(17px,1.48vw,23px); color:var(--a1n-ink);
+}
+.a1n h1 {font-size:clamp(29px,3vw,48px);line-height:1.12;margin:0;font-weight:850;}
+.a1n h2 {font-size:clamp(19px,1.85vw,29px);line-height:1.3;margin:0;overflow-wrap:anywhere;}
+.a1n p {margin:0;line-height:1.5;}
+.a1n small {font-size:clamp(13px,1.05vw,17px);line-height:1.45;color:#4f6478;}
+.a1n-lead {font-size:clamp(18px,1.7vw,26px);}
+.a1n-panel {
+  display:grid; gap:12px; align-content:start; min-width:0;
+  padding:clamp(15px,1.8vw,26px);border:1px solid #d7e3f0;
+  border-radius:20px;background:#fff;box-shadow:0 6px 20px rgb(20 52 90 / 5%);
+}
+.a1n-highlight {background:#eaf5ff;border:2px solid #97beea;}
+.a1n-kicker {font-size:clamp(13px,1.05vw,17px);font-weight:850;color:#285d9b;letter-spacing:.03em;}
+.a1n-emoji {font-family:"Apple Color Emoji","Segoe UI Emoji",sans-serif;font-size:clamp(48px,4.2vw,74px);line-height:1.25;}
+.a1n-compare {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;}
+.a1n-three {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
+.a1n-vocab {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}
+.a1n-vocab-card {justify-items:center;text-align:center;gap:10px;padding:16px 10px;}
+.a1n-vocab-card .a1n-answer {text-align:left;font-size:clamp(14px,1.2vw,18px);}
+.a1n-vocab-card h2 {font-size:clamp(18px,1.5vw,23px);}
+.a1n-note {background:#eaf3ff;padding:15px 18px;border-radius:14px;border-left:5px solid #5d93d3;color:#244970;}
+.a1n button {
+  font:inherit;font-size:clamp(14px,1.18vw,18px);font-weight:750;
+  background:var(--a1n-blue);border:2px solid transparent;
+  border-radius:11px;color:white;padding:11px 16px;
+  cursor:pointer;transition:background .15s ease;
+}
+.a1n button:hover:not(:disabled) {background:#164689;}
+.a1n button:focus-visible {outline:3px solid #eab43b;outline-offset:3px;}
+.a1n button:disabled {opacity:.45;cursor:not-allowed;}
+.a1n button.a1n-secondary {background:#edf4fc;border-color:#bcd2ec;color:#174a80;}
+.a1n button.a1n-secondary:hover:not(:disabled) {background:#dbe9fa;}
+.a1n button.a1n-picked {background:#156b4a;border-color:#156b4a;}
+.a1n-actions {display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.a1n-reveal {display:grid;gap:11px;justify-items:start;}
+.a1n-answer {
+  padding:13px 16px;border-left:5px solid #33aa7c;border-radius:10px;
+  background:#e4f7ef;color:#13593e;display:grid;gap:7px;
+  font-size:clamp(18px,1.4vw,24px);line-height:1.4;overflow-wrap:anywhere;
+  width:100%;min-width:0;
+}
+.a1n-answer small {color:#285c44;}
+.a1n-table-wrap {overflow-x:auto;}
+.a1n-table {width:100%;border-collapse:collapse;font-size:clamp(16px,1.55vw,24px);}
+.a1n-table th,.a1n-table td {border:1px solid #d7e4f1;padding:13px 16px;text-align:center;}
+.a1n-table thead th {background:#e9f2ff;color:#1d4e86;}
+.a1n-table tbody th {background:#f4f8fc;}
+.a1n-builder {gap:19px;}
+.a1n-build-sentence {
+  padding:18px;background:#f3f8ff;border:2px dashed #9ab9de;border-radius:14px;
+  font-size:clamp(22px,2.15vw,34px)!important;
+}
+.a1n-build-sentence span {color:#115ea2;background:#dcecff;border-radius:8px;padding:4px 10px;white-space:nowrap;}
+.a1n-correct {color:#146a49;font-weight:800;}
+.a1n-error {color:#985119;font-weight:800;}
+.a1n-error-panel {gap:18px;}
+.a1n-wrong-sentence {color:#a43b32;text-decoration-line:underline;text-decoration-style:wavy;text-decoration-color:#d89787;text-underline-offset:8px;}
+.a1n-media {display:grid;gap:15px;}
+.a1n-media-tabs {display:flex;flex-wrap:wrap;gap:10px;}
+.a1n-media-tabs button {min-width:180px;}
+.a1n-reading-text {
+  background:#f3f8ff;border-radius:14px;padding:18px;
+  font-size:clamp(20px,1.85vw,29px);line-height:1.7;
+}
+.a1n-reading-questions {display:grid;gap:13px;margin:0;padding-left:24px;}
+.a1n-reading-questions li {padding:12px;border-bottom:1px solid #d6e4ef;}
+.a1n-reading-questions li button {margin-top:10px;}
+@media (max-width:950px) {
+  .a1n-vocab {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .a1n-three {grid-template-columns:1fr;}
+}
+@media (max-width:700px) {
+  .a1n-compare {grid-template-columns:1fr;}
+  .a1n-panel {border-radius:14px;}
+  .a1n-table th,.a1n-table td {padding:10px 7px;}
+}
+@media (prefers-reduced-motion: reduce) {.a1n button{transition:none;}}
