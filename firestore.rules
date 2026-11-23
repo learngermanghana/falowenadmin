@@ -579,13 +579,23 @@ service cloud.firestore {
         request.resource.data.createdBy == resource.data.createdBy &&
         request.resource.data.createdAt == resource.data.createdAt &&
         request.resource.data.updatedAt == request.time &&
-        (isManualLeadsAdmin() ||
-          (resource.data.get('deleting', false) == false &&
-          request.resource.data.get('deleting', false) == false &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'status', 'notes', 'nextFollowUpAt', 'lastFollowUpAt',
-            'lastContactNote', 'followUpCount', 'updatedAt'
-          ])));
+        // Once the lock is committed, no further updates may race with cleanup.
+        resource.data.get('deleting', false) == false &&
+        (
+          (request.resource.data.get('deleting', false) == true &&
+            isManualLeadsAdmin() &&
+            resource.data.status in ['not_interested', 'done'] &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'deleting', 'updatedAt'
+            ]))
+          ||
+          (request.resource.data.get('deleting', false) == false &&
+            (isManualLeadsAdmin() ||
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                'status', 'notes', 'nextFollowUpAt', 'lastFollowUpAt',
+                'lastContactNote', 'followUpCount', 'updatedAt'
+              ])))
+        );
       // Only administrators may permanently delete contacts closed as done or not interested.
       allow delete: if isManualLeadsAdmin() &&
         resource.data.get('deleting', false) == true &&
