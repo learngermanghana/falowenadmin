@@ -1,7 +1,7 @@
 const { test, before, after } = require('node:test');
 const fs = require('node:fs');
 const { initializeTestEnvironment, assertSucceeds, assertFails } = require('@firebase/rules-unit-testing');
-const { collection, collectionGroup, doc, getDoc, getDocs, setDoc, deleteDoc } = require('firebase/firestore');
+const { collection, collectionGroup, doc, getDoc, getDocs, setDoc, deleteDoc, updateDoc, serverTimestamp, Timestamp } = require('firebase/firestore');
 let env;
 before(async () => {
   env = await initializeTestEnvironment({
@@ -110,4 +110,48 @@ test('Swahili feedback is written by verified teaching staff and read only by it
   await assertSucceeds(setDoc(doc(staff, 'swahiliTeacherReviews', id), review));
   await assertSucceeds(getDoc(doc(student, 'swahiliTeacherReviews', id)));
   await assertFails(getDoc(doc(other, 'swahiliTeacherReviews', id)));
+});
+
+
+test('manual lead deletion lock stops concurrent staff follow-ups and limits owner deletion to closed records', async () => {
+  const leadId = 'lock-test-closed';
+  const leadPath = 'falowenManualLeads/' + leadId;
+  await env.withSecurityRulesDisabled(async context => {
+    const db = context.firestore();
+    await setDoc(doc(db, 'falowenStaffAccess/staff-lead-test'), {
+      active: true, pages: ['leads'], languages: ['german'],
+    });
+    await setDoc(doc(db, leadPath), {
+      name: 'Lead Test', phone: '0244000000', location: 'Accra',
+      email: '', language: 'german', level: 'A1', source: 'Phone call',
+      notes: '', status: 'not_interested', assignedToUid: '',
+      assignedToName: '', nextFollowUpAt: '',
+      createdBy: 'lead-admin-test', createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(), lastFollowUpAt: null,
+      lastContactNote: '', followUpCount: 0, deleting: false,
+    });
+  });
+  const ownerDb = env.authenticatedContext('lead-admin-test', { admin: true }).firestore();
+  const staffDb = env.authenticatedContext('staff-lead-test', {
+    staff: true, staffPages: ['leads'], staffLanguages: ['german']
+  }).firestore();
+  const ownerRef = doc(ownerDb, leadPath);
+  const staffRef = doc(staffDb, leadPath);
+  const beforeActivity = {
+    channel: 'call', status: 'not_interested',
+    note: 'Declined to enroll', nextFollowUpAt: '',
+    recordedByUid: 'staff-lead-test', recordedByName: 'Staff member',
+    createdAt: serverTimestamp(),
+  };
+  await assertSucceeds(getDoc(staffRef));
+  await assertFails(deleteDoc(staffRef));
+  await assertFails(deleteDoc(ownerRef)); // cannot delete without a lock
+  await assertSucceeds(setDoc(doc(staffDb, leadPath, 'activities', 'before-lock'), beforeActivity));
+  await assertSucceeds(updateDoc(ownerRef, { deleting: true, updatedAt: serverTimestamp() }));
+  await assertFails(updateDoc(staffRef, { status: 'contacted', updatedAt: serverTimestamp() }));
+  await assertFails(setDoc(doc(staffDb, leadPath, 'activities', 'after-lock'), beforeActivity));
+  await assertFails(updateDoc(ownerRef, { status: 'new', updatedAt: serverTimestamp() }));
+  await assertSucceeds(deleteDoc(doc(ownerDb, leadPath, 'activities', 'before-lock')));
+  await assertSucceeds(deleteDoc(ownerRef));
+  await assertFails(getDoc(staffRef));
 });
