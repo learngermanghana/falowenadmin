@@ -1,0 +1,41 @@
+.personal-leads { display: grid; gap: 20px; font-family: inherit; color: #17352d; }
+.personal-lead-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
+.personal-lead-stats > div { background:#fff; padding:20px; border:1px solid #dce7e2; border-radius:13px; display:grid; gap:7px; }
+.personal-lead-stats span,.personal-lead-stats small { color:#63786f; font-size:13px; }
+.personal-lead-stats strong { font-size:29px; }
+.personal-lead-card { background:#fff; border:1px solid #dce7e2; border-radius:15px; padding:24px; min-width:0; }
+.personal-lead-heading,.personal-form-title { display:flex; gap:12px; justify-content:space-between; align-items:center; flex-wrap:wrap; }
+.personal-lead-heading h2 { margin:0 0 4px; font-size:21px; }
+.personal-lead-heading p { margin:0; color:#657b72; }
+.personal-lead-buttons,.personal-lead-actions { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.personal-leads button,.personal-lead-actions a { border:1px solid #d6e4dd; border-radius:8px; padding:8px 12px; background:#fff; color:#245648; font:inherit; font-size:13px; text-decoration:none; cursor:pointer; }
+.personal-leads .personal-primary { background:#116148; color:white; border-color:#116148; font-weight:700; }
+.personal-leads button:disabled { opacity:.55; cursor:not-allowed; }
+.personal-lead-form,.personal-follow-form { display:grid; gap:14px; padding:20px; border:1px solid #d9e6df; background:#f6faf8; border-radius:12px; margin-top:18px; }
+.personal-lead-form h3,.personal-follow-form h3,.personal-history h3 { margin:0; font-size:17px; }
+.personal-field-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,205px),1fr)); gap:12px; }
+.personal-lead-form label,.personal-follow-form label { display:grid; gap:5px; font-size:13px; font-weight:600; }
+.personal-lead-form input,.personal-lead-form select,.personal-lead-form textarea,.personal-follow-form input,.personal-follow-form select,.personal-follow-form textarea,.personal-lead-filters input,.personal-lead-filters select { box-sizing:border-box; width:100%; min-height:39px; border:1px solid #d1dfd9; border-radius:8px; background:#fff; color:#17352d; padding:8px 11px; font:inherit; }
+.personal-lead-filters { display:grid; grid-template-columns:minmax(180px,2fr) minmax(140px,1fr) minmax(140px,1fr); gap:12px; margin-top:22px; }
+.personal-lead-count { color:#63786f; font-size:13px; }
+.personal-lead-list { display:grid; gap:0; }
+.personal-lead-row { border-top:1px solid #e5ede9; padding:19px 0; display:grid; grid-template-columns:minmax(200px,1fr) auto; gap:14px; }
+.personal-lead-main { display:grid; gap:5px; font-size:14px; min-width:0; overflow-wrap:anywhere; }
+.personal-lead-name { font-size:16px; font-weight:800; display:flex; flex-wrap:wrap; gap:9px; align-items:center; }
+.personal-lead-meta { color:#72847c; font-size:13px; }
+.personal-lead-next { color:#32614f; font-size:13px; }
+.personal-lead-next.is-overdue { color:#a84b17; font-weight:700; }
+.personal-status { font-size:11px; border-radius:999px; padding:4px 9px; font-weight:700; background:#e8f3eb; color:#166044; }
+.personal-status.status-not_interested { background:#fce8e8; color:#9f2828; }
+.personal-status.status-follow_up { background:#fff1d9; color:#8e570d; }
+.personal-lead-actions { justify-content:flex-end; align-content:start; max-width:315px; }
+.personal-follow-form,.personal-history { grid-column:1/-1; margin-top:0; }
+.personal-history { background:#f7faf9; padding:14px 18px; border-radius:10px; display:grid; gap:10px; }
+.personal-history > div { border-top:1px solid #dbe9e2; padding-top:9px; font-size:13px; }
+.personal-history p { margin:6px 0; }
+.personal-notice,.personal-error { padding:10px 12px; border-radius:9px; }
+.personal-notice { background:#e7f6ed; color:#155a3d; }
+.personal-error { background:#fff0ee; color:#9b291e; }
+.personal-empty { padding:26px; text-align:center; color:#667c72; }
+@media(max-width:960px){.personal-lead-stats{grid-template-columns:repeat(2,minmax(0,1fr));}.personal-lead-row{grid-template-columns:1fr;}.personal-lead-actions{justify-content:flex-start;max-width:none;}}
+@media(max-width:620px){.personal-lead-card{padding:14px;}.personal-lead-filters{grid-template-columns:1fr;}.personal-lead-stats{gap:8px;}.personal-lead-stats > div{padding:13px;}.personal-lead-stats strong{font-size:24px;}}

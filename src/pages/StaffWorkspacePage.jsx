@@ -117,7 +117,7 @@ export default function StaffWorkspacePage() {
   if (role !== "admin") return <section><h1>Staff Workspace</h1><p>Only administrators can manage staff accounts.</p></section>;
 
   return <section style={{ maxWidth: 920, margin: "0 auto", padding: "1rem" }}>
-    <header><h1>Staff Workspace</h1><p>Manage teaching staff for German and Swahili. Assign Shared Dictionary access to let staff save and review shared course notes. Existing Falowen accounts keep their password and student history.</p></header>
+    <header><h1>Staff Workspace</h1><p>Manage staff access to German and Swahili resources. You can grant Leads access for viewing enquiries and recording follow-ups without giving staff full administrator permissions. Existing accounts keep their password and student history.</p></header>
     {error && <p role="alert" style={{ color: "#b42318" }}>{error}</p>}
     {notice && <p role="status" style={{ color: "#067647" }}>{notice}</p>}
     <div style={{ display: "grid", gap: 24, gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))" }}>
@@ -130,6 +130,7 @@ export default function StaffWorkspacePage() {
           <legend>Page access</legend>
           {STAFF_PAGES.map(page => <label key={page.id} style={{ display: "block", margin: "8px 0" }}>
             <input type="checkbox" checked={pages.includes(page.id)} onChange={() => togglePage(page.id)} /> {page.label}
+            {page.id === "leads" && <small style={{ display: "block", marginLeft: 24 }}>View online leads and assigned or unassigned personal contacts; record calls and follow-ups. Only administrators add and edit contact details.</small>}
             {page.id === "music-studio" && <small style={{ display: "block", marginLeft: 24 }}>Includes Music Generator, Lyrics Video Studio and export for assigned languages only.</small>}
             {page.id === "music-analytics" && <small style={{ display: "block", marginLeft: 24 }}>Includes identifiable student music practice activity (names and email addresses).</small>}
           </label>)}
