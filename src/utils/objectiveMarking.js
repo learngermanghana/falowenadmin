@@ -1144,7 +1144,14 @@ function a1Day4FormValueMatches(expectedRaw, studentRaw) {
     "3": "drei",
     "240": "zweihundertvierzig",
   };
-  if (wordValues[expected]) return student === wordValues[expected];
+  if (wordValues[expected]) {
+    if (student === wordValues[expected]) return true;
+    // Alter is a numeric form field: accept the correct age even when the
+    // optional unit is misspelled (e.g. "26 Jaher"). Do not apply this
+    // leniency to the street field or Teil 2's German number-word spelling.
+    if (expected === "26" && /^26\\s*(?:jahr(?:e)?|jaher)$/.test(student)) return true;
+    return false;
+  }
 
   if (expected === "mullerstrasse 87") {
     return student === "mullerstrasse siebenundachtzig";
