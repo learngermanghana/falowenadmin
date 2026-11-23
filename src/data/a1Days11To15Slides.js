@@ -306,7 +306,7 @@ const CONTENT = Object.freeze({
       "For separable verbs, teach Machen Sie das Radio aus. Then transform to Können Sie bitte das Radio ausmachen? The infinitive stays together at the end after können.",
       "Present Könnten Sie as a memorisable polite request formula, not a full Konjunktiv II lesson. Distinguish it from past-tense konnten.",
       "On page 9, the existing student picker must show only an object card until the learner says a full request and a matching reaction. Accept both imperative and können/könnten requests, not just the model.",
-      "Page 11 retains the published song Ich bin bereit zu sprechen; page 12 uses the eleventh unseen Fenster card as an independent Teil 3 check and links to the existing unscored workbook. The full A1-5.9 mock stays separate.",
+      "Keep the existing published music activity: page 11 plays Ich bin bereit zu sprechen. Page 12 uses the eleventh unseen Fenster card as an independent Teil 3 check and links to the existing unscored workbook. The full A1-5.9 mock stays separate.",
     ],
     studentQuestionsDe: A1_TEIL3_OBJECT_CARDS.slice(0, 10).map((card) => `Bildkarte: ${card.objectDe}. Formuliere eine höfliche Bitte und reagiere passend.`),
     flow: [
