@@ -2,6 +2,7 @@ export const STUDENT_DETAIL_TABS = [
   { id: "profile", label: "Profile", fields: ["name", "email", "phone", "emergencyContactPhoneNumber", "studentCode", "location", "status"] },
   { id: "payments", label: "Payments", fields: ["tuitionFee", "initialPaymentAmount", "paymentIntentAmount", "balanceDue", "paymentStatus"] },
   { id: "class", label: "Class", fields: ["level", "program", "contractStart", "contractEnd", "contractTermMonths"] },
+  { id: "access", label: "Access", fields: [] },
   { id: "support", label: "Support", fields: [] },
   { id: "documents", label: "Documents", fields: [] },
 ];
