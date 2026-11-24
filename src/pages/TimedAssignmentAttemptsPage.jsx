@@ -629,6 +629,8 @@ export default function TimedAssignmentAttemptsPage() {
             <div style={{ display: "flex", gap: 8, justifyContent: "space-between", flexWrap: "wrap" }}>
               <div style={{ display: "grid", gap: 4 }}>
                 <strong>{attempt.level} · {attempt.mockId} · Attempt {attempt.attemptNumber}</strong>
+                {attempt.level === "A2" && attempt.mockId === "a2-mock-01" && attempt.status !== "completed" && attempt.progressSource !== "browser_reported" &&
+                  <a href={"/marking?view=mock&attempt="+encodeURIComponent(attempt.id)}>Recover saved writing in Marking</a>}
                 <strong style={{ fontSize: 16 }}>{attempt.studentName || attempt.studentEmail || attempt.uid || "Student not identified"}</strong>
                 {attempt.studentName && attempt.studentEmail ? <span style={{ color: "#64748b", fontSize: 13 }}>{attempt.studentEmail}</span> : null}
               </div>
