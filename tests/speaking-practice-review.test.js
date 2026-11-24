@@ -1,12 +1,18 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
+import { STAFF_PAGES, canOpenStaffPage } from "../src/utils/staffPageAccess.js";
 const page=readFileSync(new URL("../src/pages/SpeakingPracticeReviewPage.jsx",import.meta.url),"utf8");
 const client=readFileSync(new URL("../src/services/speakingPracticeReviewService.js",import.meta.url),"utf8");
 const app=readFileSync(new URL("../src/App.jsx",import.meta.url),"utf8");
 test("Speaking usage dashboard is a protected Admin route",()=>{
   assert.match(app,/Route path="\/speaking-review" element=\{<ProtectedRoute><SpeakingPracticeReviewPage\s*\/><\/ProtectedRoute>\}/);
-  assert.equal((app.match(/to="\/exam-tracking"/g)||[]).length,2);
+  assert.ok(app.split("\n").some(line => line.includes('to="/exam-tracking"') && line.includes("Exam Tracking</Link>")));
+  assert.match(app, /Route path="\/exam-tracking" element=\{<ProtectedRoute><ExamTrackingPage\s*\/><\/ProtectedRoute>\}/);
+  assert.equal(STAFF_PAGES.some(page => ["/exam-tracking","/speaking-review"].includes(page.path)), false);
+  for (const path of ["/exam-tracking","/speaking-review"]) {
+    assert.equal(canOpenStaffPage(path, STAFF_PAGES.map(page => page.id)), false, "restricted staff cannot open admin monitoring");
+  }
 });
 test("Activity is fetched only on staff button click; no periodic checks",()=>{
   assert.match(page,/onClick=\{\(\)=>check\("activity"\)\}/);

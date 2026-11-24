@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import { STAFF_PAGES, canOpenStaffPage } from "../src/utils/staffPageAccess.js";
 import { mockSectionProgress, remainingSeconds, clockLabel, mockActivityLabel, filterMockAttempts, filterTimedAttempts, timedAttemptStatus, timedAttemptStatusLabel } from "../src/utils/mockAttemptMonitoring.js";
 
 test("mock monitor shows four-section progress and true section remaining time", () => {
@@ -28,7 +29,11 @@ test("stale in-progress progress never pretends the student is online", () => {
 test("navigation restores mock monitoring and preserves timed attempt resets", () => {
   const app=fs.readFileSync("src/App.jsx","utf8");
   const page=fs.readFileSync("src/pages/TimedAssignmentAttemptsPage.jsx","utf8");
-  assert.equal(app.split("\n").filter(line => line.includes('to="/timed-attempts"') && line.includes("Mock Monitoring & Timers</Link>")).length, 2, "both staff and administrator navigation must include the monitoring link");
+  assert.ok(app.split("\n").some(line => line.includes('to="/timed-attempts"') && line.includes("Mock Monitoring & Timers</Link>")), "administrator navigation includes monitoring");
+  assert.match(app, /Route path="\/timed-attempts" element=\{<ProtectedRoute><TimedAssignmentAttemptsPage\s*\/><\/ProtectedRoute>\}/);
+  assert.match(app, /STAFF_PAGES\.filter\(page => staffPages\.includes\(page\.id\)\)/);
+  assert.equal(STAFF_PAGES.some(page => page.path === "/timed-attempts"), false, "monitoring is not in the restricted staff menu");
+  assert.equal(canOpenStaffPage("/timed-attempts", STAFF_PAGES.map(page => page.id)), false);
   assert.match(page,/data-testid="mock-monitoring"/);
   assert.match(page, /key=\{receipt\.path\}/, "multi-layout receipt cards need unique full-path keys");
   assert.match(page,/data-testid="timed-assignments"/);
