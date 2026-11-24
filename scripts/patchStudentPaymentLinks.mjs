@@ -48,6 +48,8 @@ function removeGeneratedBlocks(content, beginMarker, endMarker, label) {
 function patchStudentDirectory() {
   const file = "src/pages/StudentDirectoryPage.jsx";
   let content = read(file);
+  // The workspace owns its own payment tabs; do not inject the old panels.
+  if (content.includes("StudentLevelEnrollments")) return;
 
   content = insertAfter(
     content,
