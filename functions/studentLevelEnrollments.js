@@ -72,3 +72,48 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
 
 }
 module.exports={normalizeEnrollment,paymentPatch,paymentDate,registerStudentLevelEnrollments};
+
+function registerEnrollmentCheckout({app,db,admin,requirePaymentAdmin,initializePaystackPayment,calculateStudentCheckoutAmount,createPaymentReference}){
+ app.post("/payments/enrollment-link",async(req,res)=>{try{
+ const user=await requirePaymentAdmin(req);
+ const {studentId,enrollmentId,amount}=req.body||{};
+ if(typeof studentId!=="string"||!studentId||studentId.includes("/")||! /^(german|swahili)-(A1|A2|B1|B2|C1|C2)$/.test(enrollmentId||""))fail("Select an enrollment");
+ const parent=db.collection("students").doc(studentId),ref=parent.collection("levelEnrollments").doc(enrollmentId);
+ const [student,enrollment]=await Promise.all([parent.get(),ref.get()]);
+ if(!student.exists||!enrollment.exists)fail("Enrollment not found",404);
+ const credit=moneyCents(amount)/100;paymentPatch(enrollment.data(),credit);
+ const email=String(req.body.email||student.data().email||"").trim();if(!email.includes("@"))fail("Student email required");
+ const reference=createPaymentReference(studentId),checkoutAmount=calculateStudentCheckoutAmount(credit);
+ const metadata={studentId,enrollmentId,purpose:"level_enrollment",tuitionCredit:credit};
+ const payment={...metadata,reference,email,provider:"Paystack",currency:"GHS",checkoutAmount,status:"initializing",createdBy:user.uid,createdAt:admin.firestore.FieldValue.serverTimestamp()};
+ const paymentRef=db.collection("payments").doc(reference);
+ await paymentRef.create(payment);
+ const gateway=await initializePaystackPayment({email,checkoutAmount,reference,metadata});
+ await paymentRef.update({authorizationUrl:gateway.authorization_url,accessCode:gateway.access_code||""});
+ return res.json({ok:true,payment:{reference,authorizationUrl:gateway.authorization_url,tuitionCredit:credit,checkoutAmount}});
+ }catch(e){return res.status(e.statusCode||500).json({ok:false,error:e.message});}});
+}
+async function applyEnrollmentCheckout({transaction:tx,paymentRef,payment,eventData,db,admin}){
+ const {studentId,enrollmentId,reference}=payment;
+ if(String(payment.status).toLowerCase()==="paid"||payment.status==="paid_unallocated")return {duplicate:true,studentId,reference};
+ if(eventData.status!=="success"||eventData.currency!=="GHS"||Number(eventData.amount)!==moneyCents(payment.checkoutAmount))fail("Paystack verification mismatch");
+ const parent=db.collection("students").doc(studentId),ref=parent.collection("levelEnrollments").doc(enrollmentId);
+ const key=crypto.createHash("sha256").update(reference.toLowerCase()).digest("hex"),unique=db.collection("levelPaymentReferences").doc(key);
+ const [student,enrollment,duplicate]=await Promise.all([tx.get(parent),tx.get(ref),tx.get(unique)]);
+ if(duplicate.exists)fail("Reference already allocated",409);
+ const stamp=admin.firestore.FieldValue.serverTimestamp(),date=paymentDate(String(eventData.paid_at||eventData.paidAt||new Date().toISOString()).slice(0,10));
+ const amount=moneyCents(payment.tuitionCredit)/100;
+ const record={studentId,enrollmentId,reference,amount,receivedDate:date,method:"paystack",source:"enrollment_checkout"};
+ let patch;
+ try{if(!student.exists||!enrollment.exists)fail("Enrollment unavailable",409);patch=paymentPatch(enrollment.data(),amount);}catch(e){
+ tx.update(paymentRef,{status:"paid_unallocated",allocationError:e.message,paidAt:stamp,paystackTransactionId:eventData.id||null});
+ tx.set(db.collection("auditLogs").doc(),{...record,type:"student.levelPaymentNeedsAllocation",reason:e.message,createdAt:stamp});
+ return {duplicate:false,studentId,reference,requiresAllocation:true};
+ }
+ tx.set(unique,{...record,createdAt:stamp});tx.set(ref.collection("payments").doc(key),{...record,createdAt:stamp});
+ tx.update(ref,{...patch,updatedAt:stamp});tx.update(paymentRef,{status:"paid",paidAt:stamp,levelEnrollmentAllocation:enrollmentId,paystackTransactionId:eventData.id||null});
+ tx.set(db.collection("auditLogs").doc(),{...record,type:"student.levelPaymentRecorded",after:patch,createdAt:stamp});
+ return {duplicate:false,studentId,reference,nextBalance:patch.balanceDue,paymentStatus:patch.paymentStatus};
+}
+module.exports.registerEnrollmentCheckout=registerEnrollmentCheckout;
+module.exports.applyEnrollmentCheckout=applyEnrollmentCheckout;
