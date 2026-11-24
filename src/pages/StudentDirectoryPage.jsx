@@ -14,6 +14,7 @@ import StudentUpgradeTools from "../components/StudentUpgradeTools";
 import CompletionPackPanel from "../components/CompletionPackPanel.jsx";
 import BrochureWhatsappPanel from "../components/BrochureWhatsappPanel.jsx";
 import StudentClassTransferPanel from "../components/StudentClassTransferPanel.jsx";
+import StudentAccessOverview from "../components/StudentAccessOverview.jsx";
 import StudentCourseTypePanel, { resolveCourseType } from "../components/StudentCourseTypePanel.jsx";
 import StudentLearningStatusPanel from "../components/StudentLearningStatusPanel.jsx";
 import StudentEmergencyContact from "../components/StudentEmergencyContact.jsx";
@@ -918,6 +919,7 @@ export default function StudentDirectoryPage() {
             ))}
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button type="button" onClick={()=>setActiveTab("subscriptions")}>Subscription overview</button>
             <button
               type="button"
               onClick={() => setActiveTab("add")}
@@ -1197,7 +1199,7 @@ export default function StudentDirectoryPage() {
                               </div>
                             )}
                             {tab.id === "profile" && <StudentLearningStatusPanel student={selectedStudent} />}
-                            {tab.id === "profile" && !isHamburgCohortStudent(selectedStudent) && <StudentCourseTypePanel key={selectedStudent.id} student={selectedStudent} onStudentUpdated={handleSupportStudentUpdated} />}
+
                             {tab.id === "profile" && !isHamburgCohortStudent(selectedStudent) && ![selectedStudent.paymentStatus, selectedStudent.status].some(value => ["paid", "partially paid", "partial", "completed", "success"].includes(String(value || "").toLowerCase().replace(/[_-]+/g, " "))) && !["paid", "paidAmount", "amountPaid", "initialPaymentAmount", "tuitionPaid", "totalPaid"].some(field => Number(String(selectedStudent[field] ?? "0").replace(/[^0-9.-]/g, "")) > 0) && (
                               <div className="student-trial-activation" style={{marginBottom:14,padding:12,border:"1px solid #c7d2fe",borderRadius:10}}>
                                 <strong>Trial access</strong>
@@ -1302,6 +1304,13 @@ export default function StudentDirectoryPage() {
                           </section>
                         ))}
 
+                        <section id="student-panel-access" role="tabpanel" aria-labelledby="student-tab-access" hidden={detailTab !== "access"} className="student-detail-panel">
+                          {detailTab === "access" && <>
+                            <StudentAccessOverview key={selectedStudent.id} student={selectedStudent} onManage={setDetailTab} />
+                            {!isHamburgCohortStudent(selectedStudent) && <StudentCourseTypePanel key={selectedStudent.id} student={selectedStudent} onStudentUpdated={handleSupportStudentUpdated} />}
+                            <button type="button" onClick={()=>setDetailTab("profile")}>Manage trial and login</button>
+                          </>}
+                        </section>
                         <section id="student-panel-support" role="tabpanel"
                           aria-labelledby="student-tab-support" hidden={detailTab !== "support"}
                           className="student-detail-panel">
@@ -1424,6 +1433,7 @@ export default function StudentDirectoryPage() {
           </>
         )}
 
+        {activeTab === "subscriptions" && <StudentAccessOverview key="subscriptions" students={students} />}
         {activeTab === "add" && (
           <div>
             <h2 style={{ marginTop: 0, marginBottom: 8 }}>Add student</h2>
