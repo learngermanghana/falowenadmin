@@ -9,6 +9,7 @@ const LESSONS = {
     .map(([id, key]) => [id.split("-").at(-1), { title: key.title, writing: { response: "Kuandika" } }])),
   11: { title: "Dukani", writing: { dialogue: "Mazungumzo" } },
   26: { title: "B1 · Matatizo ya safari na suluhisho zake", writing: { essay: "Insha au ripoti" } },
+  27: { title: "B1 · Kutunza mazingira katika maisha ya kila siku", writing: {} },
   28: { title: "B1 · Kutunza Mazingira katika Maisha ya Kila Siku", writing: { email: "Barua pepe" } },
   1: { title: "Alfabeti, sauti na matamshi", writing: { vowels: "Vokali", syllables: "Silabi", words: "Maneno" } },
   6: { title: "Mgahawani", writing: { likes: "Ninapenda", dislikes: "Sipendi", order: "Agizo" } },
@@ -121,14 +122,14 @@ function SubmissionReview({ submission, day, onReviewSaved }) {
           <p key={key}><strong>{label}</strong> {String(submission.writing?.[key] ?? "—")}<br /><small>{day === 6 ? "Model response (accept suitable alternatives)" : "Example answer"}: {reference.writing[label]}</small></p>
         ))}
       </section>}
-      <section>
+      {Object.keys(readingReference || {}).length > 0 && <section>
         <h4>Teil 3 · Kusoma</h4>
         <ol>
           {Object.entries(readingReference).map(([key, { prompt, answer }]) => (
             <li key={key}><strong>{prompt}</strong> {String(submission.readingAnswers?.[key] ?? "—")}<br /><small>Expected: {answer}</small></li>
           ))}
         </ol>
-      </section>
+      </section>}
       {listeningReference && <section>
         <h4>Teil 4 · Kusikiliza</h4>
         <ol>{Object.entries(listeningReference).map(([key, { prompt, answer }]) => (
