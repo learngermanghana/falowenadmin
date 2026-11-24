@@ -92,7 +92,7 @@ function buildWhatsappMessage(student = {}, payment = {}) {
   return `Hello ${name}, here is your secure Falowen payment link for ${formatGhs(tuitionCredit)}.${feeNote}\n\n${payment.authorizationUrl}\n\nYour student record will update automatically after Paystack confirms the payment. Thank you.`;
 }
 
-export default function StudentPaymentTools({ student, draft = {}, onStudentUpdated, pushToast }) {
+export default function StudentPaymentTools({ student, draft = {}, onStudentUpdated, pushToast, mode = "all" }) {
   const [amount, setAmount] = useState("");
   const [paymentEmail, setPaymentEmail] = useState("");
   const [purpose, setPurpose] = useState("balance");
@@ -267,6 +267,7 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
         </div>
       ) : null}
 
+      {mode !== "history" && <>
       <div>
         <h3 style={{ margin: "0 0 4px" }}>Student payment link</h3>
         <p style={{ margin: 0, color: "#64748b" }}>
@@ -326,7 +327,8 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
         </div>
       )}
 
-      <div>
+      </>}
+      {mode !== "links" && <div>
         <div style={{ marginBottom: 8, padding: 9, borderRadius: 9, background: "#f8fafc", border: "1px solid #e2e8f0", fontSize: 12, color: "#475569" }}>
           Falowen uses the Paystack webhook first. If that callback is missed, pending links are also verified automatically after 90 seconds while this student page is open, or you can use <strong>Recheck Paystack payment</strong> above.
         </div>
@@ -350,7 +352,7 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
             ))}
           </div>
         )}
-      </div>
+      </div>}
     </section>
   );
 }
