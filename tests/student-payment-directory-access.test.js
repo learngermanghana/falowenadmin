@@ -14,22 +14,27 @@ test("Students page restores a discoverable Generate payment link shortcut", () 
   assert.match(source, /student-tab-payment-links/);
 });
 
-test("payment history, link generation and upgrade tools have independent, lazy mounted panels", () => {
-  const source = read("src/pages/StudentDirectoryPage.jsx");
-  assert.match(source, /tab\.id === "payments" && !isHamburgCohortStudent\(selectedStudent\) && <StudentPaymentTools mode="history"/);
-  const links = source.slice(source.indexOf('{detailTab === "payment-links" &&'),source.indexOf('{detailTab === "contracts" &&'));
-  assert.match(links, /<StudentPaymentTools mode="links"/);
-  assert.match(links, /onStudentUpdated=\{handleSupportStudentUpdated\}/);
-  const contracts = source.slice(source.indexOf('{detailTab === "contracts" &&'),source.indexOf('id="student-panel-access"'));
-  assert.match(contracts, /<StudentUpgradeTools/);
-  assert.match(contracts, /onStudentUpdated=\{handleSupportStudentUpdated\}/);
-  assert.equal((source.match(/<StudentPaymentTools/g) || []).length, 2);
-  assert.equal((source.match(/<StudentUpgradeTools/g) || []).length, 1);
-  const support = source.slice(source.indexOf('id="student-panel-support"'), source.indexOf('id="student-panel-documents"'));
-  assert.doesNotMatch(support, /<StudentPaymentTools|<StudentUpgradeTools/);
-  const tools = read("src/components/StudentPaymentTools.jsx");
-  assert.match(tools, /mode !== "history"/);
-  assert.match(tools, /mode !== "links"/);
+test("payment and link tabs use the same level records, with legacy fallback only when there are no records", () => {
+ const source=read("src/pages/StudentDirectoryPage.jsx");
+ const component=read("src/components/StudentLevelEnrollments.jsx");
+ assert.match(source,/mode="payments" student=\{selectedStudent\}/);
+ assert.match(source,/mode="links" student=\{selectedStudent\}/);
+ assert.match(source,/mode="overview" student=\{selectedStudent\}/);
+ assert.match(component,/rows\.length===0\)return legacyFallback/);
+ assert.match(component,/loadedId!==id/);
+ assert.match(component,/amountLabel\(row\.balanceDue\)/);
+ assert.match(component,/\/api\/payments\/enrollment-link/);
+ assert.match(component,/enrollmentId:selected/);
+ assert.match(source,/legacyHistory=\{<StudentPaymentTools mode="history" readOnly/);
+ const contracts=source.slice(source.indexOf('{detailTab === "contracts" &&'),source.indexOf('id="student-panel-access"'));
+ assert.match(contracts,/<StudentUpgradeTools/);
+ assert.equal((source.match(/<StudentUpgradeTools/g)||[]).length,1);
+ const support=source.slice(source.indexOf('id="student-panel-support"'),source.indexOf('id="student-panel-documents"'));
+ assert.doesNotMatch(support,/<StudentPaymentTools|<StudentUpgradeTools/);
+ const tools=read("src/components/StudentPaymentTools.jsx");
+ assert.match(tools,/mode !== "history"/);
+ assert.match(tools,/mode !== "links"/);
+ assert.match(tools,/reconciling \|\| readOnly/);
 });
 
 test("the restored payment UI still exposes generation, copying, WhatsApp and reconciliation", () => {

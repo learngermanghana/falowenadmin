@@ -1169,7 +1169,7 @@ export default function StudentDirectoryPage() {
                           ))}
                         </div>
 
-                        {STUDENT_DETAIL_TABS.filter((tab) => tab.fields.length > 0 && tab.id === detailTab).map((tab) => (
+                        {STUDENT_DETAIL_TABS.filter((tab) => tab.fields.length > 0 && tab.id !== "payments" && tab.id === detailTab).map((tab) => (
                           <section key={tab.id} id={`student-panel-${tab.id}`} role="tabpanel"
                             aria-labelledby={`student-tab-${tab.id}`} hidden={detailTab !== tab.id}
                             className="student-detail-panel">
@@ -1276,17 +1276,23 @@ export default function StudentDirectoryPage() {
                             {/* STUDENT_EMERGENCY_CONTACT_FIELD: Emergency contact stays in the staff-only Profile tab. */}
                             {tab.id === "profile" && <StudentAccountActivationPanel student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast} />}
                             {tab.id === "profile" && <StudentEmergencyContact student={selectedStudent} />}
-                            {tab.id === "payments" && !isHamburgCohortStudent(selectedStudent) && <StudentPaymentTools mode="history" student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast} />}
                           </section>
                         ))}
 
+                        {detailTab === "payments" && !isHamburgCohortStudent(selectedStudent) && <section className="student-detail-panel" role="tabpanel" id="student-panel-payments" aria-labelledby="student-tab-payments">
+                          <StudentLevelEnrollments key={selectedStudent.id+":payments"} mode="payments" student={selectedStudent} pushToast={pushToast}
+                            legacyFallback={<><h3>Payments — existing account</h3>{renderEditableFields(STUDENT_DETAIL_TABS.find(tab=>tab.id==="payments").fields)}<StudentPaymentTools mode="history" student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast}/><button type="button" disabled={savingId===selectedStudent.id} onClick={()=>saveStudent(selectedStudent)}>Save student</button></>}
+                            legacyHistory={<StudentPaymentTools mode="history" readOnly student={selectedStudent} pushToast={pushToast}/>} />
+                          <button type="button" onClick={()=>setDetailTab("enrollments")}>Edit level balances</button>
+                        </section>}
                         {detailTab === "overview" && <section className="student-detail-panel" role="tabpanel" id="student-panel-overview" aria-labelledby="student-tab-overview">
                           <h3>Student overview</h3>
                           <div className="student-detail-fields">
                             <label>Current level<input readOnly value={selectedStudent.level || "Not set"} /></label>
                             <label>Class<input readOnly value={selectedStudent.className || "Not assigned"} /></label>
-                            <label>Recorded balance<input readOnly value={formatGhs(selectedStudent.balanceDue ?? selectedStudent.balance ?? 0)} /></label>
-                            <label>Payment status<input readOnly value={selectedStudent.paymentStatus || "Not set"} /></label>
+                            </div>
+                          {!isHamburgCohortStudent(selectedStudent)&&<StudentLevelEnrollments key={selectedStudent.id+":overview"} mode="overview" student={selectedStudent} pushToast={pushToast} legacyFallback={<div className="student-detail-fields"><label>Recorded balance<input readOnly value={formatGhs(selectedStudent.balanceDue ?? selectedStudent.balance ?? 0)} /></label><label>Payment status<input readOnly value={selectedStudent.paymentStatus || "Not set"} /></label></div>} />}
+                          <div>
                           </div>
                           {!isHamburgCohortStudent(selectedStudent) && <button type="button" onClick={()=>setDetailTab("enrollments")}>Manage enrollments</button>}
                         </section>}
@@ -1294,7 +1300,7 @@ export default function StudentDirectoryPage() {
                           <StudentLevelEnrollments student={selectedStudent} pushToast={pushToast} />
                         </section>}
                         {detailTab === "payment-links" && !isHamburgCohortStudent(selectedStudent) && <section className="student-detail-panel" role="tabpanel" id="student-panel-payment-links" aria-labelledby="student-tab-payment-links">
-                          <StudentPaymentTools mode="links" student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast} />
+                          <StudentLevelEnrollments key={selectedStudent.id+":links"} mode="links" student={selectedStudent} pushToast={pushToast} legacyFallback={<StudentPaymentTools mode="links" student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast}/>} />
                         </section>}
                         {detailTab === "contracts" && !isHamburgCohortStudent(selectedStudent) && <section className="student-detail-panel" role="tabpanel" id="student-panel-contracts" aria-labelledby="student-tab-contracts">
                           <StudentUpgradeTools student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast} />
@@ -1411,7 +1417,7 @@ export default function StudentDirectoryPage() {
                         />}
 
                         </section>
-                        {["profile","payments","class"].includes(detailTab) && <div style={{ marginTop: 14 }}>
+                        {["profile","class"].includes(detailTab) && <div style={{ marginTop: 14 }}>
                           <button
                             type="button"
                             onClick={() => saveStudent(selectedStudent)}
