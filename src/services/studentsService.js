@@ -395,3 +395,13 @@ export async function changeStudentCourseType(studentId, { courseType, expectedC
   });
   return parseStudentProfileUpdateResponse(response, await response.text());
 }
+
+export async function loadAccessSubscriptions({studentId="",cursor=""}={}) {
+  const params = new URLSearchParams();
+  if (studentId) params.set("studentId",studentId);
+  if (cursor) params.set("cursor",cursor);
+  const response = await fetch("/api/students/access-subscriptions?"+params.toString(),{headers:await authHeaders(),cache:"no-store"});
+  const result = await response.json().catch(()=>({}));
+  if (!response.ok || result.ok !== true || !Array.isArray(result.subscriptions)) throw new Error(result.error || "Subscription lookup unavailable. Verify API deployment.");
+  return result;
+}
