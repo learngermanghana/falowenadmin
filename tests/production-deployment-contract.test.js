@@ -44,7 +44,10 @@ test("mobile startup keeps Firestore and Storage out of the auth bootstrap", () 
   assert.doesNotMatch(app, /import LoginPage from/);
   assert.match(authContext, /from "\.\.\/firebaseAuth"/);
   assert.doesNotMatch(authContext, /from "\.\.\/firebase"/);
-  assert.match(loginPage, /from "\.\.\/firebaseAuth"/);
+  assert.match(loginPage, /from "\.\.\/context\/AuthContext"/);
+  assert.doesNotMatch(loginPage, /from "\.\.\/firebase(?:\.js)?"/);
+  assert.doesNotMatch(loginPage, /firebase\/firestore|firebase\/storage/);
+  assert.match(authContext, /signInWithEmailAndPassword\(auth, email, password\)/);
   assert.doesNotMatch(firebaseAuth, /firebase\/firestore|firebase\/storage/);
 });
 
