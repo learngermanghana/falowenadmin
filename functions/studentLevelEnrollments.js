@@ -28,6 +28,24 @@ function paymentDate(value){
  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(Date.parse(date))||new Date(date).toISOString().slice(0,10)!==date||date>new Date().toISOString().slice(0,10)) fail("Enter actual payment date");
  return date;
 }
+function legacyOpeningEnrollment(student){
+ const program=String(student.program||student.language||"").toLowerCase();
+ const level=String(student.level||"").toUpperCase();
+ if(!["german","swahili"].includes(program)||!levels.has(level)||student.upgradeId||student.upgradeStatus||student.upgradeFromLevel||student.upgradeToLevel||(student.paidLevel&&String(student.paidLevel).toUpperCase()!==level))fail("Historical or upgraded account needs level-by-level allocation",409);
+ const fee=moneyCents(student.tuitionFee),paid=moneyCents(student.paid),balance=moneyCents(student.balanceDue??student.balance);
+ if(fee<=0||paid+balance!==fee)fail("Legacy tuition does not reconcile; review payment history",409);
+ const {isoDate}=require("./studentContractLifecycle");
+ const data=normalizeEnrollment({program,level,tuitionFee:fee/100,className:student.className,contractStart:isoDate(student.contractStart),contractEnd:isoDate(student.contractEnd),paymentDeadline:isoDate(student.paymentDeadline)});
+ return {...data,paid:paid/100,balanceDue:balance/100,paymentStatus:balance?(paid?"Partially Paid":"Unpaid"):"Paid",status:"planned",openingBalanceImported:true,accountingMode:"independent_pending_integration",sheetVersion:1,sheetSyncStatus:"pending"};
+}
+function contractPatch(record,input){
+ const allowed=["planned","active","completed","expired","cancelled"];
+ const status=String(input.status||record.status);
+ if(!allowed.includes(status))fail("Invalid enrollment status");
+ const data=normalizeEnrollment({...record,contractStart:input.contractStart??record.contractStart,contractEnd:input.contractEnd??record.contractEnd,paymentDeadline:input.paymentDeadline??record.paymentDeadline,className:input.className??record.className});
+ if(status==="active"&&(!data.contractStart||!data.contractEnd||!data.paymentDeadline||Number(record.paid)<=0&&Number(record.tuitionFee)>0))fail("Active enrollment needs dates and recorded tuition",409);
+ return {contractStart:data.contractStart,contractEnd:data.contractEnd,paymentDeadline:data.paymentDeadline,className:data.className,status,sheetVersion:Number(record.sheetVersion||1)+1,sheetSyncStatus:"pending"};
+}
 function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  const route="/students/:studentId/level-enrollments";
  const authorize=async req=>{const user=await requireAuth(req);if(!isEditor(user))fail("Staff authorization required",403);return user;};
@@ -39,11 +57,27 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  const enrollment={...data,studentId,studentCode:parent.data().studentCode||studentId,paid:0,balanceDue:data.tuitionFee,paymentStatus:data.tuitionFee?"Unpaid":"Paid",status:"planned",accountingMode:"independent_pending_integration",sheetVersion:1,sheetSyncStatus:"pending"};
  const stamp=admin.firestore.FieldValue.serverTimestamp();tx.set(ref,{...enrollment,createdAt:stamp,createdBy:user.uid});tx.set(db.collection("auditLogs").doc(),{type:"student.levelEnrollmentCreated",studentId,enrollmentId:id,actorId:user.uid,createdAt:stamp});return {id,...enrollment};});return res.json({ok:true,enrollment:result});}catch(e){return error(res,e);}});
  app.post(route+"/:enrollmentId/sync-sheet",async(req,res)=>{try{
- await authorize(req);const {studentId,collection}=refs(req);const ref=enrollmentRef(req,collection);const snap=await ref.get();if(!snap.exists)fail("Enrollment not found",404);
- const record=snap.data();
- await require("./levelEnrollmentSheetSync").syncEnrollmentSheet({id:ref.id,studentId,record,url:process.env.LEVEL_ENROLLMENT_SYNC_URL,secret:process.env.LEVEL_ENROLLMENT_SYNC_SECRET});
- await db.runTransaction(async tx=>{const current=await tx.get(ref);if(current.exists&&current.data().sheetVersion===record.sheetVersion)tx.update(ref,{sheetSyncStatus:"synced",sheetSyncedAt:admin.firestore.FieldValue.serverTimestamp()});});
+ await authorize(req);const {studentId,collection}=refs(req);const ref=enrollmentRef(req,collection);const result=await require("./levelEnrollmentSheetSync").syncEnrollmentRef({ref,db,admin});
+ if(result.status!=="synced")fail(result.error||"Enrollment not found",503);
  return res.json({ok:true});
+ }catch(e){return error(res,e);}});
+ app.post(route+"/import-legacy",async(req,res)=>{try{
+ const user=await authorize(req);const {studentId,student,collection}=refs(req);
+ const result=await db.runTransaction(async tx=>{
+ const parent=await tx.get(student);if(!parent.exists)fail("Student not found",404);
+ const data=legacyOpeningEnrollment(parent.data());const id=data.program+"-"+data.level;
+ const existing=await tx.get(collection);if(!existing.empty)fail("Import only before creating independent records",409);
+ const ref=collection.doc(id),record={...data,studentId,studentCode:parent.data().studentCode||studentId};
+ const stamp=admin.firestore.FieldValue.serverTimestamp();
+ tx.set(ref,{...record,createdAt:stamp,createdBy:user.uid});tx.set(db.collection("auditLogs").doc(),{type:"student.levelOpeningBalanceImported",studentId,enrollmentId:id,actorId:user.uid,openingPaid:data.paid,openingBalance:data.balanceDue,createdAt:stamp});return {id,...record};
+ });return res.json({ok:true,enrollment:result});
+ }catch(e){return error(res,e);}});
+ app.post(route+"/:enrollmentId/contract",async(req,res)=>{try{
+ const user=await authorize(req);const {studentId,collection}=refs(req);const ref=enrollmentRef(req,collection);
+ const result=await db.runTransaction(async tx=>{const snap=await tx.get(ref);if(!snap.exists)fail("Enrollment not found",404);
+ const record=snap.data(),patch=contractPatch(record,req.body||{}),stamp=admin.firestore.FieldValue.serverTimestamp();
+ tx.update(ref,{...patch,updatedAt:stamp});tx.set(db.collection("auditLogs").doc(),{type:"student.levelContractUpdated",studentId,enrollmentId:ref.id,actorId:user.uid,after:patch,createdAt:stamp});return {id:ref.id,...record,...patch};});
+ return res.json({ok:true,enrollment:result});
  }catch(e){return error(res,e);}});
  const paymentRoute=route+"/:enrollmentId/payments";
  const enrollmentRef=(req,collection)=>{const id=String(req.params.enrollmentId||"");if(!/^(german|swahili)-(A1|A2|B1|B2|C1|C2)$/.test(id))fail("Invalid enrollment");return collection.doc(id);};
@@ -62,6 +96,7 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  if(!parent.exists||!enrollment.exists)fail("Enrollment not found",404);
  if(duplicate.exists||old.exists||oldMethod.exists)fail("Payment reference already allocated",409);
  const data=existing.data()||{};
+ if(existing.exists&&enrollment.data().openingBalanceImported)fail("Historical credit may already be in the opening balance; review before allocating",409);
  if(existing.exists&&(data.studentId!==studentId||String(data.status).toLowerCase()!=="paid"||data.manualUpgradeAllocation||data.levelEnrollmentAllocation||data.purpose!=="balance"))fail("Payment is not an eligible unallocated balance payment",409);
  if(!existing.exists&&(method==="paystack"||/^FAL-/i.test(raw)))fail("Existing Paystack payment not found",404);
  const credit=existing.exists?moneyCents(data.tuitionCredit)/100:moneyCents(amount)/100;
@@ -78,7 +113,7 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  }catch(e){return error(res,e);}});
 
 }
-module.exports={normalizeEnrollment,paymentPatch,paymentDate,registerStudentLevelEnrollments};
+module.exports={normalizeEnrollment,paymentPatch,paymentDate,legacyOpeningEnrollment,contractPatch,registerStudentLevelEnrollments};
 
 function registerEnrollmentCheckout({app,db,admin,requirePaymentAdmin,initializePaystackPayment,calculateStudentCheckoutAmount,createPaymentReference}){
  app.post("/payments/enrollment-link",async(req,res)=>{try{
