@@ -581,6 +581,34 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
     }
   });
 
+  // Owner-only read of actual exam subscription records, with bounded pagination.
+  app.get("/students/access-subscriptions", async (req, res) => {
+    try {
+      const user = await requireAuth(req);
+      if (user?.email_verified !== true || normalizeEmail(user.email) !== "moxflex@gmail.com") return res.status(403).json({error:"Verified owner access required."});
+      const studentId = cleanStudentId(req.query?.studentId);
+      const cursor = String(req.query?.cursor || "");
+      if ((studentId && (studentId.includes("/") || studentId.length > 200)) || cursor.includes("/") || cursor.length > 250) return res.status(400).json({error:"Invalid filter."});
+      let query = db.collection("mockSubscriptions");
+      if (studentId) {
+        const student = (await db.collection("students").doc(studentId).get()).data();
+        if (!student?.uid) return res.json({ok:true,subscriptions:[],nextCursor:null,identityUnavailable:true});
+        query = query.where("uid","==",student.uid);
+      }
+      query = query.orderBy(admin.firestore.FieldPath.documentId());
+      if (cursor) query = query.startAfter(cursor);
+      const snap = await query.limit(51).get();
+      const subscriptions = snap.docs.slice(0,50).map(doc => {
+        const data = doc.data();
+        return {id:doc.id,uid:data.uid,level:data.level,scope:data.scope,status:data.status,expiresAtMs:data.expiresAtMs};
+      });
+      res.set("Cache-Control","private, no-store");
+      return res.json({ok:true,subscriptions,nextCursor:snap.docs.length>50?snap.docs[49].id:null});
+    } catch (error) {
+      return res.status(statusCodeForError(error)).json({ok:false,error:"Could not read subscriptions."});
+    }
+  });
+
   app.get("/students/:studentId/class-transfers", async (req, res) => {
     try {
       const user = await requireAuth(req);
