@@ -1,3 +1,4 @@
+import { SWAHILI_DAY_TWELVE_ADMIN_LESSON, SWAHILI_DAY_THIRTEEN_ADMIN_LESSON } from "./swahiliDayTwelveThirteenTeachingSlides.js";
 import { SWAHILI_DAY_ELEVEN_ADMIN_LESSON } from "./swahiliDayElevenTeachingSlides.js";
 import { SWAHILI_DAY_ONE_ADMIN_LESSON } from "./swahiliTeachingSlides.js";
 import { SWAHILI_DAY_TWO_ADMIN_LESSON } from "./swahiliDayTwoTeachingSlides.js";
@@ -15,6 +16,8 @@ export const swahiliSlidePacks = {
     SWAHILI_DAY_SIX_ADMIN_LESSON,
     SWAHILI_DAY_TEN_ADMIN_LESSON,
     SWAHILI_DAY_ELEVEN_ADMIN_LESSON,
+    SWAHILI_DAY_TWELVE_ADMIN_LESSON,
+    SWAHILI_DAY_THIRTEEN_ADMIN_LESSON,
   ],
   B1: [swahiliB1Day28],
 };
