@@ -38,6 +38,15 @@ function legacyOpeningEnrollment(student){
  const data=normalizeEnrollment({program,level,tuitionFee:fee/100,className:student.className,contractStart:isoDate(student.contractStart),contractEnd:isoDate(student.contractEnd),paymentDeadline:isoDate(student.paymentDeadline)});
  return {...data,paid:paid/100,balanceDue:balance/100,paymentStatus:balance?(paid?"Partially Paid":"Unpaid"):"Paid",status:"planned",openingBalanceImported:true,accountingMode:"independent_pending_integration",sheetVersion:1,sheetSyncStatus:"pending"};
 }
+function legacyUpgradeEnrollment(student){
+ const program=String(student.program||student.language||"").toLowerCase(),level=String(student.upgradeToLevel||"").toUpperCase();
+ if(!student.upgradeId||!["awaiting_payment","pending","expired","completed"].includes(String(student.upgradeStatus||"").toLowerCase()))fail("No recorded upgrade to import",409);
+ const fee=moneyCents(student.upgradeTuitionFee),paid=moneyCents(student.upgradePaid??0),balance=moneyCents(student.upgradeBalanceDue);
+ if(fee<=0||paid+balance!==fee)fail("Upgrade ledger does not reconcile",409);
+ const {isoDate}=require("./studentContractLifecycle");
+ const data=normalizeEnrollment({program,level,tuitionFee:fee/100,className:student.upgradeTargetClassName||"",contractStart:isoDate(student.upgradeStartedAt),contractEnd:"",paymentDeadline:isoDate(student.upgradeGraceEnd)});
+ return {...data,paid:paid/100,balanceDue:balance/100,paymentStatus:balance?(paid?"Partially Paid":"Unpaid"):"Paid",status:"planned",openingBalanceImported:paid>0,legacyUpgradeId:student.upgradeId,accountingMode:"independent_pending_integration",sheetVersion:1,sheetSyncStatus:"pending"};
+}
 function contractPatch(record,input){
  const allowed=["planned","active","completed","expired","cancelled"];
  const status=String(input.status||record.status);
@@ -65,8 +74,10 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  const user=await authorize(req);const {studentId,student,collection}=refs(req);
  const result=await db.runTransaction(async tx=>{
  const parent=await tx.get(student);if(!parent.exists)fail("Student not found",404);
- const data=legacyOpeningEnrollment(parent.data());const id=data.program+"-"+data.level;
- const existing=await tx.get(collection);if(!existing.empty)fail("Import only before creating independent records",409);
+ const importingUpgrade=req.body?.kind==="upgrade";
+ const data=importingUpgrade?legacyUpgradeEnrollment(parent.data()):legacyOpeningEnrollment(parent.data());const id=data.program+"-"+data.level;
+ const existing=await tx.get(collection);if(!importingUpgrade&&!existing.empty)fail("Import only before creating independent records",409);
+ if(existing.docs.some(doc=>doc.id===id))fail("Level already exists",409);
  const ref=collection.doc(id),record={...data,studentId,studentCode:parent.data().studentCode||studentId};
  const stamp=admin.firestore.FieldValue.serverTimestamp();
  tx.set(ref,{...record,createdAt:stamp,createdBy:user.uid});tx.set(db.collection("auditLogs").doc(),{type:"student.levelOpeningBalanceImported",studentId,enrollmentId:id,actorId:user.uid,openingPaid:data.paid,openingBalance:data.balanceDue,createdAt:stamp});return {id,...record};
@@ -113,7 +124,7 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  }catch(e){return error(res,e);}});
 
 }
-module.exports={normalizeEnrollment,paymentPatch,paymentDate,legacyOpeningEnrollment,contractPatch,registerStudentLevelEnrollments};
+module.exports={normalizeEnrollment,paymentPatch,paymentDate,legacyOpeningEnrollment,legacyUpgradeEnrollment,contractPatch,registerStudentLevelEnrollments};
 
 function registerEnrollmentCheckout({app,db,admin,requirePaymentAdmin,initializePaystackPayment,calculateStudentCheckoutAmount,createPaymentReference}){
  app.post("/payments/enrollment-link",async(req,res)=>{try{
