@@ -19,8 +19,8 @@ test("payment generator and upgrade flow each render only inside the Payments ta
   const start = source.indexOf('{tab.id === "payments" && !isHamburgCohortStudent(selectedStudent) && (') >= 0
     ? source.indexOf('{tab.id === "payments" && !isHamburgCohortStudent(selectedStudent) && (')
     : source.indexOf('{tab.id === "payments" && (');
-  const end = source.indexOf('{tab.id === "class" &&', start);
-  assert.ok(start > -1 && end > start, "payment tab must contain the tools ahead of the Class panel");
+  const end = source.indexOf("</section>", start);
+  assert.ok(start > -1 && end > start, "payment tools must remain within the tab panel");
   const paymentPanel = source.slice(start, end);
   assert.match(paymentPanel, /<StudentPaymentTools/);
   assert.match(paymentPanel, /<StudentUpgradeTools/);
