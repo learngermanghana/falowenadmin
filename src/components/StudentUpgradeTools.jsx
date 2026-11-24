@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createStudentPaymentLink } from "../services/studentPaymentService.js";
-import { reconcileStudentPayments, restoreStudentPaidContract, startStudentUpgrade } from "../services/studentContractService.js";
+import { recordManualUpgradePayment, reconcileStudentPayments, restoreStudentPaidContract, startStudentUpgrade } from "../services/studentContractService.js";
 import { parseMoneyValue } from "../utils/paystackCharges.js";
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1"];
@@ -72,6 +72,9 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
   const [tuitionFee, setTuitionFee] = useState("");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [busy, setBusy] = useState("");
+  const [manual, setManual] = useState({amount:"",receivedDate:"",method:"momo",reference:"",alreadyIncluded:false,existingPaymentReference:"",verified:false});
+  const [showManual,setShowManual] = useState(false);
+  useEffect(()=>{setShowManual(false);setManual({amount:"",receivedDate:"",method:"momo",reference:"",alreadyIncluded:false,existingPaymentReference:"",verified:false});},[studentId,student?.upgradeId]);
   const [generatedPayment, setGeneratedPayment] = useState(null);
 
   useEffect(() => {
@@ -134,7 +137,7 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
       setPaymentAmount(String(numericFee));
       pushToast?.({
         type: "success",
-        message: `${targetLevel || suggestedTarget} upgrade prepared. No new-level access is granted until Paystack confirms payment.`,
+        message: `${targetLevel || suggestedTarget} upgrade prepared. No new-level access is granted until payment is verified.`,
       });
     } catch (error) {
       pushToast?.({ type: "error", message: error?.message || "Could not prepare the level upgrade." });
@@ -230,6 +233,20 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
     }
   };
 
+  const saveManual = async () => {
+    if (!manual.verified || !manual.reference.trim() || !manual.receivedDate || Number(manual.amount)<=0 || Number(manual.amount)>remainingUpgradeBalance || (manual.alreadyIncluded && !manual.existingPaymentReference.trim())) return;
+    if (!window.confirm("Record verified " + effectiveTarget + " tuition of " + formatGhs(manual.amount) + "? This does not charge the student.")) return;
+    setBusy("manual");
+    try {
+      const result = await recordManualUpgradePayment({...manual,studentId,upgradeId:student.upgradeId});
+      onStudentUpdated?.(studentId,result.studentUpdate);
+      setShowManual(false);
+      setManual({amount:"",receivedDate:"",method:"momo",reference:"",alreadyIncluded:false,existingPaymentReference:"",verified:false});
+      pushToast?.({type:"success",message:"Verified manual upgrade payment recorded."});
+    } catch(error) { pushToast?.({type:"error",message:error.message || "Manual payment failed"}); }
+    finally {setBusy("");}
+  };
+
   const reconcileNow = async () => {
     setBusy("reconcile");
     try {
@@ -290,7 +307,7 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
             {busy === "start" ? "Preparing..." : `Prepare ${suggestedTarget} upgrade payment`}
           </button>
           <span style={{ fontSize: 12, color: "#64748b" }}>
-            Preparing an upgrade does not change access. Access changes only after Paystack confirms a payment.
+            Preparing an upgrade does not change access. Access changes only after a payment is verified.
           </span>
         </div>
       )}
@@ -321,6 +338,20 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
         </div>
       )}
 
+      {canGenerateUpgradePayment && <div style={{display:"grid",gap:8,borderTop:"1px solid #e2e8f0",paddingTop:10}}>
+        <button type="button" disabled={Boolean(busy)} onClick={()=>setShowManual(!showManual)}>Record manual upgrade payment</button>
+        {showManual && <>
+          <p style={{margin:0,fontSize:13}}>Only record money already received and independently verified. If the money is already in payment history, reallocate it rather than adding it twice. This does not charge the student.</p>
+          <label>Amount (GHS)<input type="number" min="0.01" max={remainingUpgradeBalance} step="0.01" value={manual.amount} onChange={e=>setManual({...manual,amount:e.target.value})}/></label>
+          <label>Actual payment date<input type="date" max={new Date().toISOString().slice(0,10)} value={manual.receivedDate} onChange={e=>setManual({...manual,receivedDate:e.target.value})}/></label>
+          <label>Method<select value={manual.method} onChange={e=>setManual({...manual,method:e.target.value})}><option value="momo">MoMo</option><option value="bank">Bank transfer</option><option value="cash">Cash</option></select></label>
+          <label>Unique transaction or cash receipt reference<input value={manual.reference} onChange={e=>setManual({...manual,reference:e.target.value})}/></label>
+          <label><input type="checkbox" checked={manual.alreadyIncluded} onChange={e=>setManual({...manual,alreadyIncluded:e.target.checked,existingPaymentReference:""})}/> Already included in recorded paid total</label>
+          {manual.alreadyIncluded && <label>Existing paid record reference<input value={manual.existingPaymentReference} onChange={e=>setManual({...manual,existingPaymentReference:e.target.value})}/></label>}
+          <label><input type="checkbox" checked={manual.verified} onChange={e=>setManual({...manual,verified:e.target.checked})}/> I verified the payment, date and whether it has already been recorded.</label>
+          <button type="button" disabled={Boolean(busy)||!manual.verified||!manual.receivedDate||!manual.reference.trim()||!(Number(manual.amount)>0)||Number(manual.amount)>remainingUpgradeBalance||(manual.alreadyIncluded&&!manual.existingPaymentReference.trim())} onClick={saveManual}>{busy==="manual"?"Recording…":"Confirm manual payment"}</button>
+        </>}
+      </div>}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
         <button type="button" onClick={reconcileNow} disabled={busy === "reconcile"}>
           {busy === "reconcile" ? "Checking Paystack..." : "Recheck pending Paystack payments"}
