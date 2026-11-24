@@ -3,12 +3,8 @@ const answerKeys = require("./swahili-answers.json");
 const { createHash } = require("node:crypto");
 const { resolveAnnouncementConfig, postAnnouncementRow } = require("./finalMockResultEmails");
 
-function resolveDayFourAnswerReference(lessonId, readingVersion, contentVersion) {
+function resolveDayFourAnswerReference(lessonId, readingVersion) {
   const reference = answerKeys[lessonId];
-  if (reference?.legacyTopic) {
-    const { legacyTopic, ...current } = reference;
-    return contentVersion === 3 ? current : legacyTopic;
-  }
   if (!reference || lessonId !== "swahili-day-4") return reference;
   const { legacyReading, listening, ...base } = reference;
   // Older Day 4 students completed three short-answer questions without Hören.
@@ -59,7 +55,7 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
       const syncId = createHash("sha256").update(`${publicationId}:${reviewVersion}`).digest("hex");
       const deliveryRef = db.collection("automaticScoreSync").doc(syncId);
       const scoreRef = db.collection("scores").doc(resultId);
-
+      const assignment = `Swahili ${level} Day ${day} · ${lessonTitles[review.lessonId]}`;
       const result = await db.runTransaction(async (tx) => {
         const [latest, submission, delivery] = await Promise.all([
           tx.get(snapshot.ref), tx.get(submissionRef), tx.get(deliveryRef),
@@ -71,9 +67,8 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
           tx.set(snapshot.ref, { sheetDelivery: "outdated", emailDelivery: "outdated" }, { merge: true });
           return null;
         }
-        const assignment = `Swahili ${level} Day ${day} · ${resolveDayFourAnswerReference(review.lessonId, submission.data()?.readingVersion, submission.data()?.contentVersion)?.title || lessonTitles[review.lessonId]}`;
-        if (delivery.exists) return { ...delivery.data(), assignment };
-        tx.set(snapshot.ref, { ...(review.lessonId === "swahili-b1-day-28" ? {} : { answerReference: resolveDayFourAnswerReference(review.lessonId, submission.data()?.readingVersion, submission.data()?.contentVersion) }), sheetDelivery: "pending", emailDelivery: "pending" }, { merge: true });
+        if (delivery.exists) return delivery.data();
+        tx.set(snapshot.ref, { ...(review.lessonId === "swahili-b1-day-28" ? {} : { answerReference: resolveDayFourAnswerReference(review.lessonId, submission.data()?.readingVersion) }), sheetDelivery: "pending", emailDelivery: "pending" }, { merge: true });
         tx.set(scoreRef, {
           program: "swahili", language: "swahili", studentId: uid, studentCode, studentcode: studentCode,
           name: student.name || "", assignment, assignmentId: review.lessonId,
@@ -82,7 +77,7 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
           passMark: PASS_MARK, outcome: passed ? "passed" : "failed", source: "swahili_tutor",
           date: review.reviewedAt.toDate().toISOString(), sheetSaved: false,
         });
-        const job = { assignment, scorePath: scoreRef.path, status: "pending", attempts: 0, source: "swahili_tutor", reviewPath: snapshot.ref.path, reviewedAt: review.reviewedAt };
+        const job = { scorePath: scoreRef.path, status: "pending", attempts: 0, source: "swahili_tutor", reviewPath: snapshot.ref.path, reviewedAt: review.reviewedAt };
         tx.create(deliveryRef, job);
         return job;
       });
@@ -108,7 +103,7 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
         announcement: review.status === "needs_revision"
           ? "Your tutor reviewed your Swahili workbook and requested a revision. Open Campus Results for feedback."
           : "Your Swahili workbook result is available. Open Campus Results to read your tutor’s feedback.",
-        topic: `${result.assignment} result`,
+        topic: `${assignment} result`,
         link: `https://www.falowen.app/campus/results#${review.lessonId}`,
         link_label: b1 ? "Open score and feedback" : "Open score, feedback and reference answers",
         button_label: "Open Falowen Results",
