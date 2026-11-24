@@ -48,13 +48,26 @@ export const A1_DAY5_SELF_INTRO = Object.freeze([
   ["Freizeit", "In meiner Freizeit höre ich gern Musik."],
 ]);
 
+export const A1_DAY5_PERSONAL_INFO = Object.freeze([
+  ["Familienname","Surname / family name","Mein Familienname ist …","My surname is …","Wie ist dein Familienname?","Mein Familienname ist Müller."],
+  ["Vorname","First name","Mein Vorname ist …","My first name is …","Wie ist dein Vorname?","Mein Vorname ist Anna."],
+  ["Herkunft","Country of origin","Ich komme aus …","I come from …","Woher kommst du?","Ich komme aus Ghana."],
+  ["Geburtsort","Place of birth","Ich bin in … geboren.","I was born in …","Wo bist du geboren?","Ich bin in Accra geboren."],
+  ["Adresse","Address","Meine Adresse ist …","My address is …","Wie ist deine Adresse?","Meine Adresse ist Gartenstraße 10."],
+  ["Postleitzahl","Postal code","Meine Postleitzahl ist …","My postal code is …","Wie ist deine Postleitzahl?","Meine Postleitzahl ist 10115."],
+  ["Telefonnummer","Telephone number","Meine Telefonnummer ist …","My telephone number is …","Wie ist deine Telefonnummer?","Meine Telefonnummer ist 123456789."],
+  ["Familienstand","Marital status","Ich bin ledig / verheiratet / geschieden / verwitwet.","I am single / married / divorced / widowed.","Wie ist dein Familienstand?","Ich bin ledig."],
+  ["Kinder","Children","Ich habe … Kinder. / Ich habe keine Kinder.","I have … children. / I have no children.","Hast du Kinder?","Ich habe keine Kinder."],
+  ["Alter","Age","Ich bin … Jahre alt.","I am … years old.","Wie alt bist du?","Ich bin 25 Jahre alt."],
+]);
+
 const pages = [
   ["intro", "Einführung", "Sich vorstellen, Artikel und W-Fragen", 3],
   ["articles", "Artikel", "der · die · das", 5],
   ["article-quiz", "Artikel-Quiz", "Welcher Artikel passt?", 4],
   ["adjectives", "Adjektive", "Gegensätze verstehen", 4],
-  ["self-intro", "Sich vorstellen", "So stelle ich mich vor", 4],
-  ["intro-builder", "Meine Vorstellung", "Eine kurze Vorstellung bauen", 5],
+  ["self-intro", "Persönliche Informationen", "English meaning and German sentence starters", 7],
+  ["intro-builder", "Sprechen", "Fragen und Antworten", 8],
   ["w-questions", "W-Fragen", "Wie · Wo · Woher · Wer · Was", 5],
   ["word-order", "Teil 5 · Satzbau", "Ordne die Wörter – 11 Workbook-Aufgaben", 12],
 ];
