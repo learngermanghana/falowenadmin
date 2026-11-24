@@ -98,6 +98,42 @@ function IntroBuilder() {
   </section>;
 }
 
+const workbookWQuestions = [
+  ["___ heißt du?", "Wie", "Wie heißt du? – Ich heiße Ama."],
+  ["___ ist das Buch?", "Wo", "Wo ist das Buch? – Das Buch ist hier."],
+  ["___ kommst du?", "Woher", "Woher kommst du? – Ich komme aus Ghana."],
+  ["___ ist dein Lehrer?", "Wer", "Wer ist dein Lehrer? – Herr Müller."],
+  ["___ machst du am Wochenende?", "Was", "Was machst du am Wochenende? – Ich höre Musik."],
+];
+
+function WQuestionPractice() {
+  const [index,setIndex]=useState(0);
+  const [chosen,setChosen]=useState("");
+  const [shown,setShown]=useState(false);
+  const [prompt,correct,model]=workbookWQuestions[index];
+  return <section className="a1-day5-page" lang="de">
+    <Tag>Teil 4 · W-Fragen</Tag>
+    <h1>Wie · Wo · Woher · Wer · Was</h1>
+    <p className="a1-day5-lead">W-Wort + Verb + Subjekt. Wähle das Fragewort, sage die ganze Frage und antworte.</p>
+    <div className="a1-day5-question-grid">
+      {A1_DAY5_QUESTIONS.map(({word,purpose})=><article key={word}><b>{word}</b><small>{purpose}</small></article>)}
+    </div>
+    <div className="a1-day5-quiz-box">
+      <span className="a1-day5-micro">{index+1} / {workbookWQuestions.length}</span>
+      <h2>{prompt}</h2>
+      <div className="a1-day5-choice-group" role="group" aria-label="Fragewort wählen">
+        {A1_DAY5_QUESTIONS.map(({word})=><button type="button" key={word} aria-pressed={chosen===word}
+          className={chosen===word?"is-selected":""} onClick={()=>{setChosen(word);setShown(false);}}>{word}</button>)}
+      </div>
+      <div className="a1-day5-actions">
+        <button type="button" disabled={!chosen} aria-expanded={shown} onClick={()=>setShown(v=>!v)}>{shown?"Antwort verbergen":"Antwort zeigen"}</button>
+        <button type="button" className="a1-day5-secondary" onClick={()=>{setIndex(v=>(v+1)%workbookWQuestions.length);setChosen("");setShown(false);}}>Nächste Frage</button>
+      </div>
+      {shown?<p role="status" className={chosen===correct?"a1-day5-correct":"a1-day5-review"}>{chosen===correct?"Richtig!":"Noch nicht."} {model}</p>:null}
+    </div>
+  </section>;
+}
+
 function WordOrder() {
   const [index,setIndex]=useState(0);
   const [revealed,setRevealed]=useState(false);
@@ -185,17 +221,7 @@ export default function A1Day5TeachingStage({ step }) {
     <p className="a1-day5-footnote">Das ist eine erfundene Beispielperson, keine Studentin.</p>
   </section>;
   if(step==="intro-builder") return <IntroBuilder/>;
-  if(step==="w-questions") return <section className="a1-day5-page" lang="de">
-    <Tag>W-Fragen</Tag>
-    <h1>Wie · Wo · Woher · Wer · Was</h1>
-    <p className="a1-day5-lead">Jedes Fragewort hat eine Aufgabe.</p>
-    <div className="a1-day5-question-grid">
-      {A1_DAY5_QUESTIONS.map(({word,purpose,question:prompt,answer})=><article key={word}>
-        <b>{word}</b><small>{purpose}</small><strong>{prompt}</strong>
-        <details><summary>Antwort zeigen</summary><p>{answer}</p></details>
-      </article>)}
-    </div>
-  </section>;
+  if(step==="w-questions") return <WQuestionPractice/>;
   if(step==="word-order") return <WordOrder/>;
   if(step==="wrapup") return <Recap/>;
   return null;
