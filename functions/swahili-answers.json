@@ -823,9 +823,11 @@
     }
   },
   "swahili-b1-day-26": {
-    "version": 1,
+    "version": 2,
     "title": "Matatizo ya safari na suluhisho zake",
-    "writing": {},
+    "writing": {
+      "Insha au ripoti": "Mfano (128 maneno): Mwezi uliopita nilisafiri kutoka Dar es Salaam kwenda Morogoro kwa basi pamoja na dada yangu. Tulikuwa tunaenda kumtembelea shangazi yetu ambaye alikuwa anaishi huko. Tuliondoka nyumbani mapema kwa sababu tulitaka kufika kabla ya mchana. Hata hivyo, tulipofika kituoni, tuligundua kwamba basi letu lilikuwa limeharibika. Kwa sababu hiyo, safari yetu ilichelewa kwa saa tatu. Kwanza, tuliwasiliana na mfanyakazi wa kampuni ya usafiri ili tupate taarifa kuhusu safari yetu. Pili, tuliomba tiketi za basi jingine bila kulipa malipo ya ziada. Mfanyakazi huyo alitusaidia kupata nafasi katika basi lililoondoka baadaye. Wakati tulipokuwa tukisubiri, nilimpigia simu shangazi yangu ili nimweleze hali yetu. Mwishowe, tulifika Morogoro salama, ingawa tulikuwa tumechoka sana. Kutokana na uzoefu huo, ninawashauri wasafiri wakague ratiba mapema, wawe na mpango mbadala na wahifadhi nambari za simu za kampuni za usafiri.\nMwongozo wa kutathmini: Kubali insha au ripoti nyingine inayokidhi maelekezo. Hakikisha (1) utangulizi unataja mahali, aina ya usafiri na mtu aliyesafiri naye au kwamba alisafiri peke yake; (2) tatizo limeelezwa kwa kina; (3) hatua za suluhisho na matokeo zimeelezwa; (4) angalau viunganishi vitatu tofauti kati ya Hata hivyo, Kwa sababu hiyo, Kwanza, Pili, Mwishowe na Ili vimetumiwa kwa usahihi; (5) hitimisho linatoa ushauri unaofaa. Zingatia urefu wa maneno 120–160, mpangilio, msamiati, sarufi na uelewekaji wa kiwango cha B1. Usilazimishe mwanafunzi kutumia maneno sawa na mfano."
+    },
     "reading": {
       "read-purpose": {
         "prompt": "Ni kwa nini watu wengi husafiri katika maisha ya kila siku kulingana na insha?",
