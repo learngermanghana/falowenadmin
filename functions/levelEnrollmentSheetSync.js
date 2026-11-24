@@ -14,6 +14,8 @@ module.exports={HEADERS,sheetRow,syncEnrollmentSheet};
 async function syncEnrollmentRef({ref,db,admin,url=process.env.LEVEL_ENROLLMENT_SYNC_URL,secret=process.env.LEVEL_ENROLLMENT_SYNC_SECRET}){
  const snap=await ref.get();if(!snap.exists)return {status:"missing"};
  const record=snap.data(),version=Number(record.sheetVersion||1);
+ // Missing configuration leaves the record pending, without an outbound call or extra write.
+ if(!url||!secret)return {status:"not_configured",error:"Enrollment sheet integration not configured"};
  if(record.sheetSyncStatus==="synced")return {status:"synced"};
  try {
   await syncEnrollmentSheet({id:ref.id,studentId:ref.parent.parent.id,record,url,secret});
