@@ -17,6 +17,13 @@ function moneyCents(value){
  if(!/^\d+(\.\d{1,2})?$/.test(raw)||!Number.isSafeInteger(Math.round(Number(raw)*100))) fail("Invalid amount");
  return Math.round(Number(raw)*100);
 }
+// Staff-entered historical totals are not new transactions or payment receipts.
+function manualTotals(input){
+ const fee=moneyCents(input.tuitionFee),paid=moneyCents(input.paid??0);
+ if(paid>fee)fail("Amount paid cannot exceed the fee. Enter the agreed fee for this level.");
+ const balance=fee-paid;
+ return {tuitionFee:fee/100,paid:paid/100,balanceDue:balance/100,paymentStatus:balance?(paid?"Partially Paid":"Unpaid"):"Paid"};
+}
 function paymentPatch(enrollment,amount){
  const fee=moneyCents(enrollment.tuitionFee),paid=moneyCents(enrollment.paid),balance=moneyCents(enrollment.balanceDue),credit=moneyCents(amount);
  if(paid+balance!==fee||!credit||credit>balance) fail("Payment exceeds remaining tuition or ledger requires review",409);
@@ -61,10 +68,10 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  const refs=req=>{const studentId=String(req.params.studentId||"");if(!studentId||studentId.includes("/"))fail("Invalid student");const student=db.collection("students").doc(studentId);return {studentId,student,collection:student.collection("levelEnrollments")};};
  const error=(res,e)=>res.status(e.statusCode||500).json({ok:false,error:e.message});
  app.get(route,async(req,res)=>{try{await authorize(req);const {student,collection}=refs(req);if(!(await student.get()).exists)fail("Student not found",404);const snap=await collection.get();return res.json({ok:true,enrollments:snap.docs.map(d=>({id:d.id,...d.data()}))});}catch(e){return error(res,e);}});
- app.post(route,async(req,res)=>{try{const user=await authorize(req);const {studentId,student,collection}=refs(req);const data=normalizeEnrollment(req.body);const id=data.program+"-"+data.level;const ref=collection.doc(id);
+ app.post(route,async(req,res)=>{try{const user=await authorize(req);const {studentId,student,collection}=refs(req);const data=normalizeEnrollment(req.body);const totals=manualTotals(req.body||{});const id=data.program+"-"+data.level;const ref=collection.doc(id);
  const result=await db.runTransaction(async tx=>{const [parent,existing]=await Promise.all([tx.get(student),tx.get(ref)]);if(!parent.exists)fail("Student not found",404);if(existing.exists)fail("Level already exists",409);
- const enrollment={...data,studentId,studentCode:parent.data().studentCode||studentId,paid:0,balanceDue:data.tuitionFee,paymentStatus:data.tuitionFee?"Unpaid":"Paid",status:"planned",accountingMode:"independent_pending_integration",sheetVersion:1,sheetSyncStatus:"pending"};
- const stamp=admin.firestore.FieldValue.serverTimestamp();tx.set(ref,{...enrollment,createdAt:stamp,createdBy:user.uid});tx.set(db.collection("auditLogs").doc(),{type:"student.levelEnrollmentCreated",studentId,enrollmentId:id,actorId:user.uid,createdAt:stamp});return {id,...enrollment};});return res.json({ok:true,enrollment:result});}catch(e){return error(res,e);}});
+ const enrollment={...data,studentId,studentCode:parent.data().studentCode||parent.data().studentcode||studentId,...totals,openingBalanceImported:totals.paid>0,manualOpeningPaid:totals.paid,status:"planned",accountingMode:"independent_pending_integration",sheetVersion:1,sheetSyncStatus:"pending"};
+ const stamp=admin.firestore.FieldValue.serverTimestamp();tx.set(ref,{...enrollment,createdAt:stamp,createdBy:user.uid});tx.set(db.collection("auditLogs").doc(),{type:"student.levelEnrollmentCreated",studentId,enrollmentId:id,actorId:user.uid,openingTotals:totals,createdAt:stamp});return {id,...enrollment};});return res.json({ok:true,enrollment:result});}catch(e){return error(res,e);}});
  app.post(route+"/:enrollmentId/sync-sheet",async(req,res)=>{try{
  await authorize(req);const {studentId,collection}=refs(req);const ref=enrollmentRef(req,collection);const result=await require("./levelEnrollmentSheetSync").syncEnrollmentRef({ref,db,admin});
  if(result.status!=="synced")fail(result.error||"Enrollment not found",503);
@@ -86,8 +93,12 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  app.post(route+"/:enrollmentId/contract",async(req,res)=>{try{
  const user=await authorize(req);const {studentId,collection}=refs(req);const ref=enrollmentRef(req,collection);
  const result=await db.runTransaction(async tx=>{const snap=await tx.get(ref);if(!snap.exists)fail("Enrollment not found",404);
- const record=snap.data(),patch=contractPatch(record,req.body||{}),stamp=admin.firestore.FieldValue.serverTimestamp();
- tx.update(ref,{...patch,updatedAt:stamp});tx.set(db.collection("auditLogs").doc(),{type:"student.levelContractUpdated",studentId,enrollmentId:ref.id,actorId:user.uid,after:patch,createdAt:stamp});return {id:ref.id,...record,...patch};});
+ const record=snap.data(),input=req.body||{},stamp=admin.firestore.FieldValue.serverTimestamp();
+ const hasTotals=input.tuitionFee!==undefined||input.paid!==undefined;
+ const totals=hasTotals?manualTotals({tuitionFee:input.tuitionFee??record.tuitionFee,paid:input.paid??record.paid}):{};
+ const changed=hasTotals&&(totals.tuitionFee!==record.tuitionFee||totals.paid!==record.paid);
+ const patch={...contractPatch({...record,...totals},input),...totals,...(changed?{openingBalanceImported:record.openingBalanceImported===true||totals.paid>0,manualTotalsAdjustedAt:stamp,manualTotalsAdjustedBy:user.uid}:{})};
+ tx.update(ref,{...patch,updatedAt:stamp});tx.set(db.collection("auditLogs").doc(),{type:changed?"student.levelTotalsAdjusted":"student.levelContractUpdated",studentId,enrollmentId:ref.id,actorId:user.uid,before:{tuitionFee:record.tuitionFee,paid:record.paid,balanceDue:record.balanceDue},after:patch,createdAt:stamp});return {id:ref.id,...record,...patch};});
  return res.json({ok:true,enrollment:result});
  }catch(e){return error(res,e);}});
  const paymentRoute=route+"/:enrollmentId/payments";
@@ -124,7 +135,7 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  }catch(e){return error(res,e);}});
 
 }
-module.exports={normalizeEnrollment,paymentPatch,paymentDate,legacyOpeningEnrollment,legacyUpgradeEnrollment,contractPatch,registerStudentLevelEnrollments};
+module.exports={normalizeEnrollment,manualTotals,paymentPatch,paymentDate,legacyOpeningEnrollment,legacyUpgradeEnrollment,contractPatch,registerStudentLevelEnrollments};
 
 function registerEnrollmentCheckout({app,db,admin,requirePaymentAdmin,initializePaystackPayment,calculateStudentCheckoutAmount,createPaymentReference}){
  app.post("/payments/enrollment-link",async(req,res)=>{try{

@@ -1,6 +1,6 @@
 const test=require("node:test");
 const assert=require("node:assert/strict");
-const {normalizeEnrollment,paymentPatch,legacyOpeningEnrollment,contractPatch}=require("../functions/studentLevelEnrollments");
+const {normalizeEnrollment,manualTotals,paymentPatch,legacyOpeningEnrollment,contractPatch}=require("../functions/studentLevelEnrollments");
 const {sheetRow,syncEnrollmentSheet}=require("../functions/levelEnrollmentSheetSync");
 const base={program:"german",level:"A2",tuitionFee:3000,paid:0,balanceDue:3000,status:"planned",sheetVersion:1};
 test("separate level payment updates balance without changing original",()=>{
@@ -32,4 +32,14 @@ test("missing sheet credentials leave core enrollment API deployable",async()=>{
  const {syncEnrollmentRef}=require("../functions/levelEnrollmentSheetSync");
  const result=await syncEnrollmentRef({ref:{get:async()=>({exists:true,data:()=>({sheetVersion:1,sheetSyncStatus:"pending"})})},url:"",secret:""});
  assert.equal(result.status,"not_configured");
+});
+
+test("manual historical totals do not require legacy reconciliation or reference",()=>{
+ assert.deepEqual(manualTotals({tuitionFee:"3000",paid:"2000"}),{tuitionFee:3000,paid:2000,balanceDue:1000,paymentStatus:"Partially Paid"});
+ assert.equal(manualTotals({tuitionFee:3000,paid:3000}).paymentStatus,"Paid");
+ assert.equal(manualTotals({tuitionFee:3000}).balanceDue,3000);
+ assert.throws(()=>manualTotals({tuitionFee:3000,paid:3100}),/cannot exceed/);
+ assert.throws(()=>manualTotals({tuitionFee:3000,paid:-1}));
+ const next=paymentPatch({...base,...manualTotals({tuitionFee:3000,paid:2000})},1000);
+ assert.equal(next.paid,3000);assert.equal(next.balanceDue,0);
 });
