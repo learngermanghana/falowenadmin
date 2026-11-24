@@ -30,7 +30,7 @@ function responseStub() {
   };
 }
 
-function buildTransferHarness() {
+function buildTransferHarness(options = {}) {
   const routes = { patch: new Map(), post: new Map(), get: new Map() };
   const touchedCollections = [];
   const batchWrites = [];
@@ -44,10 +44,12 @@ function buildTransferHarness() {
     classRecordId: "old-class",
     className: "A1 Berlin Klasse",
     level: "A1",
+    ...options.student,
   };
   const classData = {
     name: "A1 Dortmund Klasse",
     levelId: "A1",
+    ...options.klass,
   };
 
   const makeRef = (collectionName, id) => ({
@@ -277,4 +279,16 @@ test("student directory exposes Transfer class and stops treating className as a
   assert.match(panel, /Historical attendance, class participation and scores remain attached to the original class and lesson/);
   assert.match(panel, /Class history/);
   assert.match(panel, /Previous attendance and participation were preserved/);
+});
+
+test("secondary transfer changes only nested placement and preserves root class",async()=>{
+ const {routes,batchWrites}=buildTransferHarness({student:{program:"german",secondaryProgram:"swahili",coursePlacements:{swahili:{level:"A1",className:"Old Kiswahili",contractEnd:"2027-04-01"}}},klass:{language:"Swahili",name:"New Kiswahili"}});
+ const res=responseStub();
+ await routes.post.get("/students/:studentId/transfer-class")({params:{studentId:"student-1"},body:{program:"swahili",targetClassRecordId:"new-class",effectiveDate:"2026-09-23"}},res);
+ assert.equal(res.statusCode,200);
+ const patch=batchWrites.find(row=>row.type==="update").payload;
+ assert.equal(patch.className,undefined);
+ assert.equal(patch["coursePlacements.swahili.className"],"New Kiswahili");
+ assert.equal(res.body.student.coursePlacements.swahili.contractEnd,"2027-04-01");
+ assert.equal(res.body.transfer.program,"swahili");
 });

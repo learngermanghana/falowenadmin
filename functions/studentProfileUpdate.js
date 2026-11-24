@@ -491,7 +491,16 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
       if (!targetSnap.exists) return res.status(404).json({ ok: false, error: "Target class not found" });
 
       const student = { id: studentSnap.id, ...studentSnap.data() };
-      const previous = studentClassIdentity(student);
+      const primary = String(student.program || "german").toLowerCase();
+      const program = String(req.body?.program || primary).toLowerCase();
+      const secondary = program !== primary;
+      if (!["german","swahili"].includes(program) || (secondary && student.secondaryProgram !== program)) return res.status(400).json({ok:false,error:"Student is not enrolled in this language"});
+      const targetData = targetSnap.data() || {};
+      const language = String(targetData.language || targetData.program || "german").toLowerCase().replace("kiswahili","swahili");
+      if (language !== program) return res.status(400).json({ok:false,error:"Select a class in the same language"});
+      if (["archived","graduated","inactive"].includes(String(targetData.status || "").toLowerCase())) return res.status(400).json({ok:false,error:"Target class is inactive"});
+      const placement = secondary ? student.coursePlacements?.[program] || {} : student;
+      const previous = studentClassIdentity(placement);
       const target = targetClassIdentity(targetSnap, targetClassRecordId);
       if (
         (previous.classRecordId && previous.classRecordId === target.classRecordId)
@@ -505,6 +514,7 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
       const transferRef = db.collection("studentClassTransfers").doc();
       const transferSummary = {
         id: transferRef.id,
+        program,
         effectiveDate,
         fromClassId: previous.classRecordId || previous.classId,
         fromClassName: previous.className,
@@ -536,10 +546,14 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
       studentPatch.updatedBy = actor;
 
       const batch = db.batch();
-      batch.update(studentRef, studentPatch);
+      if (secondary) {
+        const nested = Object.fromEntries(Object.entries(studentPatch).filter(([key])=> !["updatedAt","updatedBy"].includes(key)).map(([key,value])=>["coursePlacements."+program+"."+key,value]));
+        batch.update(studentRef,{...nested,updatedAt:studentPatch.updatedAt,updatedBy:actor});
+      } else batch.update(studentRef, studentPatch);
       batch.set(transferRef, transferRecord);
       batch.set(db.collection("auditLogs").doc(), {
         type: "student.class_transferred",
+        program,
         studentId,
         studentCode: transferRecord.studentCode,
         fromClassId: transferSummary.fromClassId,
@@ -555,11 +569,7 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
       });
       await batch.commit();
 
-      return res.json({
-        ok: true,
-        studentId,
-        transfer: transferSummary,
-        student: {
+      const responsePlacement = {
           classId: target.classRecordId,
           classRecordId: target.classRecordId,
           assignedClassId: target.classRecordId,
@@ -569,10 +579,10 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
           classTransferEffectiveDate: effectiveDate,
           previousClassId: transferSummary.fromClassId,
           previousClassName: transferSummary.fromClassName,
-          classTransfers: [...(Array.isArray(student.classTransfers) ? student.classTransfers : []), transferSummary]
+          classTransfers: [...(Array.isArray(placement.classTransfers) ? placement.classTransfers : []), transferSummary]
             .sort((a, b) => classTransferSortValue(a).localeCompare(classTransferSortValue(b))),
-        },
-      });
+      };
+      return res.json({ok:true,studentId,transfer:transferSummary,student:secondary ? {coursePlacements:{...student.coursePlacements,[program]:{...placement,...responsePlacement}}} : responsePlacement});
     } catch (error) {
       return res.status(statusCodeForError(error)).json({
         ok: false,

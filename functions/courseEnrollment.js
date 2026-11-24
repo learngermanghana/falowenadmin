@@ -5,12 +5,14 @@ const classFields = ["classId", "classRecordId", "assignedClassId", "groupId", "
 const invalid = message => Object.assign(new Error(message), { statusCode: 400 });
 
 function courseEnrollmentPatch(student, request, now = new Date()) {
-  const { mode, secondaryLevel, secondaryClassName, expectedPrimary, secondaryAccessEnd, grantSecondaryAccess } = request || {};
+  const { mode, secondaryLevel, secondaryClassName, expectedPrimary, secondaryAccessEnd, grantSecondaryAccess, secondaryAccessType, secondaryContractStart, secondaryContractTermMonths } = request || {};
   const primary = String(student.program || "german").toLowerCase();
   if (!languages.includes(primary) || ![...languages, "both"].includes(mode)) throw invalid("Invalid course language");
   if (expectedPrimary !== primary) throw Object.assign(new Error("The primary course changed. Reload the student."), { statusCode: 409 });
   const other = languages.find(language => language !== primary);
   const placements = { ...student.coursePlacements };
+  // Root billing belongs to the original primary language. Do not silently move it.
+  if (mode === other && (student.contractStart || student.contractEnd || Number(student.paid || student.paidAmount || 0) > 0 || student.paymentStatus === "paid" || student.institutionId)) throw invalid("Keep the original billing language. Review primary-language changes with admissions.");
   const saved = placements[other] || { level: "A1", className: "" };
   if (mode === "both" || (mode === other && (secondaryLevel !== undefined || secondaryClassName !== undefined))) {
     const level = secondaryLevel ?? saved.level ?? "A1";
@@ -20,26 +22,37 @@ function courseEnrollmentPatch(student, request, now = new Date()) {
     if (className.trim() !== (saved.className || "")) {
       for (const key of classFields.filter(key => !["level", "levelId", "className"].includes(key))) delete placements[other][key];
     }
-    if (mode === "both" && primary === "german" && (grantSecondaryAccess === true || secondaryAccessEnd !== undefined)) {
-      const paid = String(student.paymentStatus || "").trim().toLowerCase() === "paid" ||
-        ["paid", "paidAmount", "initialPaymentAmount", "amountPaid"].some(field => Number(String(student[field] || "0").replace(/,/g, "")) > 0);
-      if (!paid || student.accountType === "exam_only") throw invalid("Complimentary Swahili access requires an existing paid German course.");
-      const existing = placements.swahili;
-      if (existing.accessType && existing.accessType !== "complimentary") throw invalid("Review the existing Swahili enrollment before replacing its access.");
-      if (existing.accessType !== "complimentary" && (Number(existing.paid || existing.paidAmount || 0) > 0 || existing.contractEnd)) throw invalid("Existing Swahili billing or contract must be reviewed separately.");
-      const start = asDate(existing.contractStart) || now;
-      let end;
-      if (secondaryAccessEnd !== undefined) {
-        if (typeof secondaryAccessEnd !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(secondaryAccessEnd)) throw invalid("Enter a valid Swahili access end date.");
-        end = new Date(secondaryAccessEnd + "T23:59:59.999Z");
-        if (!Number.isFinite(end.getTime()) || end.toISOString().slice(0,10) !== secondaryAccessEnd || end <= start) throw invalid("Swahili expiry must follow its start date.");
-      } else {
-        end = asDate(existing.contractEnd) || addCalendarMonths(start, 3);
-      }
-      placements.swahili = { ...existing, accessType: "complimentary", contractStart: start.toISOString(),
-        contractEnd: end.toISOString(), contractTermMonths: 3 };
-    } else if (secondaryAccessEnd !== undefined || grantSecondaryAccess === true) {
-      throw invalid("This access grant is only for German + Swahili enrollment.");
+    const existing = placements[other];
+    const paid = String(student.paymentStatus || "").trim().toLowerCase() === "paid" ||
+      ["paid", "paidAmount", "initialPaymentAmount", "amountPaid"].some(field => Number(String(student[field] || "0").replace(/,/g, "")) > 0);
+    const grantRequested = grantSecondaryAccess === true || secondaryAccessType === "complimentary";
+    const edits = secondaryAccessEnd !== undefined || secondaryContractStart !== undefined || secondaryContractTermMonths !== undefined;
+    if ((grantRequested || edits || secondaryAccessType !== undefined) && (mode !== "both" || student.accountType === "exam_only")) throw invalid("Manage secondary access on an eligible dual-course enrollment.");
+    if (grantRequested) {
+      if (primary === "german" && !paid) throw invalid("Complimentary Swahili access requires an existing paid German course.");
+      if (existing.accessType && !["complimentary","pending"].includes(existing.accessType)) throw invalid("Review the existing secondary enrollment before replacing its access.");
+      if (existing.accessType !== "complimentary" && (Number(existing.paid || existing.paidAmount || 0) > 0 || existing.contractEnd)) throw invalid("Existing secondary billing or contract must be reviewed separately.");
+      if (other === "german" && existing.accessType !== "complimentary" && !secondaryAccessEnd) throw invalid("An explicit German access end date is required.");
+      existing.accessType = "complimentary";
+    } else if (secondaryAccessType !== undefined) {
+      if (secondaryAccessType !== "pending" || (existing.accessType && existing.accessType !== "pending") || existing.contractEnd || Number(existing.paid || existing.paidAmount || 0)>0) throw invalid("Review existing access separately.");
+      existing.accessType = "pending";
+    }
+    if (grantRequested || edits) {
+      if (existing.accessType === "pending" || existing.accessType === "invitation_pending") throw invalid("Approve access explicitly before setting a contract.");
+      if (!existing.accessType && !existing.contractEnd && !existing.contractStart && !grantRequested) throw invalid("Confirm secondary access before editing dates.");
+      const parseDate = (value, end) => {
+        if (typeof value !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) throw invalid("Enter a valid contract date.");
+        const date = new Date(value + (end ? "T23:59:59.999Z" : "T00:00:00.000Z"));
+        if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0,10)!==value) throw invalid("Enter a valid contract date.");
+        return date;
+      };
+      const start = secondaryContractStart !== undefined ? parseDate(secondaryContractStart,false) : asDate(existing.contractStart) || now;
+      const term = secondaryContractTermMonths !== undefined ? Number(secondaryContractTermMonths) : Number(existing.contractTermMonths || 3);
+      if (!Number.isInteger(term) || term < 1 || term > 36) throw invalid("Contract term must be 1–36 months.");
+      const end = secondaryAccessEnd !== undefined ? parseDate(secondaryAccessEnd,true) : asDate(existing.contractEnd) || (grantRequested ? addCalendarMonths(start,term) : null);
+      if (!end || end <= start) throw invalid("Contract expiry must follow its start date.");
+      placements[other] = {...existing,contractStart:start.toISOString(),contractEnd:end.toISOString(),contractTermMonths:term};
     }
     if (mode === "both") return { program: primary, secondaryProgram: other, coursePlacements: placements };
   }

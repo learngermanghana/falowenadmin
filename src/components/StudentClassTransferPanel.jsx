@@ -39,11 +39,15 @@ function localHistory(student = {}) {
 }
 
 export default function StudentClassTransferPanel({
-  student,
+  student: account,
+  program = String(account?.program || "german").toLowerCase(),
+  expanded = true,
   classes = [],
   onTransferred,
   pushToast,
 }) {
+  const primary = String(account?.program || "german").toLowerCase();
+  const student = program === primary ? account : {...account.coursePlacements?.[program],id:account.id,name:account.name,studentCode:account.studentCode,program};
   const [targetClassRecordId, setTargetClassRecordId] = useState("");
   const [effectiveDate, setEffectiveDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [reason, setReason] = useState("");
@@ -58,12 +62,13 @@ export default function StudentClassTransferPanel({
       .filter((klass) => {
         const id = clean(klass.id || klass.classRecordId || klass.classId);
         const name = classLabel(klass).toLowerCase();
-        if (!id) return false;
+        const language = clean(klass.language || klass.program || "german").toLowerCase().replace("kiswahili","swahili");
+        if (!id || language !== program) return false;
         if (id === currentId || (!currentId && currentName && name === currentName)) return false;
         return !["archived", "graduated", "inactive"].includes(clean(klass.status).toLowerCase());
       })
       .sort((a, b) => classLabel(a).localeCompare(classLabel(b)));
-  }, [classes, student]);
+  }, [classes, student, program]);
 
   const targetClass = availableClasses.find((klass) =>
     clean(klass.id || klass.classRecordId || klass.classId) === targetClassRecordId
@@ -75,12 +80,12 @@ export default function StudentClassTransferPanel({
     setReason("");
     setEffectiveDate(new Date().toISOString().slice(0, 10));
     setHistory(localHistory(student));
-    if (!student?.id) return () => { active = false; };
+    if (!student?.id || !expanded) return () => { active = false; };
 
     setHistoryLoading(true);
     listStudentClassTransfers(student.id)
       .then((rows) => {
-        if (active && Array.isArray(rows)) setHistory(rows);
+        if (active && Array.isArray(rows)) setHistory(rows.filter(row=>row.program ? row.program===program : program===primary));
       })
       .catch(() => {
         if (active) setHistory(localHistory(student));
@@ -92,7 +97,7 @@ export default function StudentClassTransferPanel({
     return () => {
       active = false;
     };
-  }, [student?.id]);
+  }, [student?.id, program, primary, expanded]);
 
   const runTransfer = async () => {
     if (!student?.id) return;
@@ -112,6 +117,7 @@ export default function StudentClassTransferPanel({
     try {
       const result = await transferStudentClass(student.id, {
         targetClassRecordId,
+        program,
         effectiveDate,
         reason,
       });
@@ -250,4 +256,13 @@ export default function StudentClassTransferPanel({
       </div>
     </section>
   );
+}
+
+export function StudentClassTransferDisclosure(props) {
+  const [open, setOpen] = useState(false);
+  const label = props.program === "swahili" ? "Swahili" : "German";
+  return <details open={open} onToggle={event=>setOpen(event.currentTarget.open)}>
+    <summary style={{cursor:"pointer",fontWeight:600}}>Transfer {label} class &amp; history</summary>
+    {open && <StudentClassTransferPanel {...props} />}
+  </details>;
 }

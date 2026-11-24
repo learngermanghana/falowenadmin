@@ -48,3 +48,20 @@ test("paid German learner receives independent three calendar months and editabl
 test("unpaid German learners cannot use the complimentary grant", () => {
   assert.throws(() => courseEnrollmentPatch({program:"german",paid:0},{mode:"both",expectedPrimary:"german",grantSecondaryAccess:true}),/paid German course/);
 });
+
+test("Swahili primary can explicitly grant a separate German contract without changing primary billing", () => {
+  const student={program:"swahili",level:"B1",paymentStatus:"paid",paid:3000,contractEnd:"2027-01-31"};
+  const request={mode:"both",expectedPrimary:"swahili",grantSecondaryAccess:true,secondaryAccessEnd:"2027-03-31"};
+  const patch=courseEnrollmentPatch(student,request,new Date("2026-11-24T10:00:00Z"));
+  assert.equal(patch.program,"swahili");
+  assert.equal(patch.coursePlacements.german.accessType,"complimentary");
+  assert.equal(patch.coursePlacements.german.contractEnd,"2027-03-31T23:59:59.999Z");
+  assert.equal(patch.contractEnd,undefined);
+  assert.throws(()=>courseEnrollmentPatch(student,{...request,secondaryAccessEnd:undefined}),/explicit German access end date/);
+  assert.throws(()=>courseEnrollmentPatch(student,{mode:"german",expectedPrimary:"swahili"}),/original billing language/);
+});
+test("a new secondary enrollment can remain pending without a complimentary grant",()=>{
+  const patch=courseEnrollmentPatch({program:"swahili"},{mode:"both",expectedPrimary:"swahili",secondaryAccessType:"pending"});
+  assert.equal(patch.coursePlacements.german.accessType,"pending");
+  assert.equal(patch.coursePlacements.german.contractEnd,undefined);
+});
