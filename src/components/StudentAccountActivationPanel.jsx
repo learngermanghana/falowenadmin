@@ -3,6 +3,7 @@ import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../firebase.js";
 import { emergencyContactEditedFields } from "../utils/studentEmergencyContact.js";
 import {
+  changeStudentLoginEmail,
   getStudentAccountStatus,
   lookupExistingStudentLogin,
   linkExistingStudentLogin,
@@ -27,6 +28,9 @@ function statusLabel(state) {
 
 export default function StudentAccountActivationPanel({ student, draft = {}, onStudentUpdated, pushToast }) {
   const [busy, setBusy] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [emailReason, setEmailReason] = useState("");
+  const [changingEmail, setChangingEmail] = useState(false);
   const [status, setStatus] = useState(null);
   const [candidate, setCandidate] = useState(null);
   const [error, setError] = useState("");
@@ -156,6 +160,21 @@ export default function StudentAccountActivationPanel({ student, draft = {}, onS
     }
   };
 
+
+  const changeEmail = async () => {
+    const expectedEmail = clean(status?.email || student.authEmail || student.email).toLowerCase();
+    const nextEmail = clean(newEmail).toLowerCase();
+    if (busy || unsavedProfileChanges || !validEmail(nextEmail) || nextEmail === expectedEmail || !emailReason.trim()) return;
+    if (!window.confirm("Change the student's login AND contact email to " + nextEmail + "? The existing UID stays the same, and email verification will be required again. No password or account will be recreated.")) return;
+    setBusy("change-email"); setError(""); setNotice("");
+    try {
+      const result = await changeStudentLoginEmail(studentId, { newEmail: nextEmail, expectedEmail, reason: emailReason.trim() });
+      onStudentUpdated?.(studentId, result.updates);
+      setStatus(null); setChangingEmail(false); setNewEmail(""); setEmailReason("");
+      setNotice("Login and contact email updated. Existing UID preserved. Ask the student to verify the new email. Sheet synchronization is queued.");
+    } catch (err) { setError(err?.message || "Could not change login email."); }
+    finally { setBusy(""); }
+  };
   const orgFunded = String(student.billingResponsibility || "").toLowerCase() === "organisation";
   const sendOrgNotice = async () => {
     setBusy("org-confirmation"); setError(""); setNotice("");
@@ -210,6 +229,14 @@ export default function StudentAccountActivationPanel({ student, draft = {}, onS
           {busy === "check" ? "Checking..." : "Check activation status"}
         </button>
       </div>
+      {student.uid && <button type="button" disabled={Boolean(busy) || unsavedProfileChanges} onClick={() => setChangingEmail(value => !value)}>{changingEmail ? "Cancel email change" : "Change login email"}</button>}
+      {changingEmail && <div style={{ display: "grid", gap: 8, borderTop: "1px solid #cbd5e1", paddingTop: 10 }}>
+        <p style={{ margin: 0 }}>Current login: <strong>{status?.email || student.authEmail || student.email}</strong></p>
+        <label>New login and contact email <input type="email" value={newEmail} onChange={event => setNewEmail(event.target.value)} disabled={Boolean(busy)} /></label>
+        <label>Reason <textarea value={emailReason} maxLength={500} onChange={event => setEmailReason(event.target.value)} disabled={Boolean(busy)} /></label>
+        <small>Existing UID and payment records stay unchanged. Email/password accounts only. No automatic email is sent.</small>
+        <button type="button" onClick={changeEmail} disabled={Boolean(busy) || unsavedProfileChanges || !validEmail(newEmail) || !emailReason.trim()}>{busy === "change-email" ? "Saving…" : "Confirm login email change"}</button>
+      </div>}
       {unsavedProfileChanges ? <small style={{ color: "#92400e" }}>Unsaved profile changes detected. Save the student before sending an invitation.</small> : null}
       <small style={{ color: "#64748b" }}>
         Firebase currently sends its configured password-reset email as the secure account-setup invitation.
