@@ -1,9 +1,9 @@
 import {useEffect,useState} from "react";
 import {auth} from "../firebase.js";
 const initial={program:"german",level:"A1",tuitionFee:"3000",className:"",contractStart:"",contractEnd:"",paymentDeadline:""};
-async function request(id,body){
+async function request(id,body,suffix=""){
  const token=await auth.currentUser?.getIdToken();
- const response=await fetch("/api/students/"+encodeURIComponent(id)+"/level-enrollments",{method:body?"POST":"GET",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},...(body?{body:JSON.stringify(body)}:{})});
+ const response=await fetch("/api/students/"+encodeURIComponent(id)+"/level-enrollments"+suffix,{method:body?"POST":"GET",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},...(body?{body:JSON.stringify(body)}:{})});
  const result=await response.json().catch(()=>({}));
  if(!response.ok||!result.ok)throw new Error(result.error||"Enrollment API unavailable ("+response.status+")");
  return result;
@@ -11,15 +11,18 @@ async function request(id,body){
 export default function StudentLevelEnrollments({student,pushToast}){
  const [rows,setRows]=useState([]),[draft,setDraft]=useState(initial),[open,setOpen]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState("");
  const id=student.id;
+ const [selected,setSelected]=useState(""),[payments,setPayments]=useState([]),[payment,setPayment]=useState({method:"momo",reference:"",amount:"",receivedDate:""}),[paymentBusy,setPaymentBusy]=useState(false),[paymentError,setPaymentError]=useState("");
+ useEffect(()=>{let live=true;setPayments([]);setPaymentError("");if(!selected)return;setPaymentBusy(true);request(id,null,"/"+encodeURIComponent(selected)+"/payments").then(r=>{if(live)setPayments(r.payments)}).catch(e=>{if(live)setPaymentError(e.message)}).finally(()=>{if(live)setPaymentBusy(false)});return()=>{live=false};},[id,selected]);
+ const record=async()=>{setPaymentBusy(true);setPaymentError("");try{const r=await request(id,payment,"/"+encodeURIComponent(selected)+"/payments");setRows(old=>old.map(row=>row.id===selected?r.enrollment:row));setPayments(old=>[r.payment,...old]);setPayment({method:"momo",reference:"",amount:"",receivedDate:""});pushToast?.({type:"success",message:"Payment allocated to selected level"});}catch(e){setPaymentError(e.message);}finally{setPaymentBusy(false);}};
  useEffect(()=>{let live=true;setRows([]);setError("");setOpen(false);setBusy(true);request(id).then(r=>{if(live)setRows(r.enrollments)}).catch(e=>{if(live)setError(e.message)}).finally(()=>{if(live)setBusy(false)});return()=>{live=false};},[id]);
  const save=async()=>{setBusy(true);try{const r=await request(id,draft);setRows(old=>[...old,r.enrollment]);setOpen(false);setDraft(initial);pushToast?.({type:"success",message:"Level enrollment created"});}catch(e){pushToast?.({type:"error",message:e.message});}finally{setBusy(false);}};
  const change=(key,value)=>setDraft(old=>({...old,[key]:value}));
  return <div style={{display:"grid",gap:12}}>
  <h3>Level enrollments</h3>
- <p style={{margin:0}}>One student, separate records for each language and level. New records are planned enrollments until payment, access and sheet integration is enabled.</p>
+ <p style={{margin:0}}>One student, separate records for each language and level. Payments below belong to the selected level only. Access, legacy balances and sheet synchronization are not yet connected.</p>
  <div style={{border:"1px solid #e2e8f0",padding:12,borderRadius:10}}><strong>Existing account (legacy)</strong><div>{student.paidLevel||student.level||"Unknown level"} · {student.className||"No class"}</div><small>Historical payments remain on the original account. No automatic allocation has been made.</small></div>
  {busy&&<p>Loading…</p>}{error&&<p role="alert">{error}</p>}
- {rows.map(row=><div key={row.id} style={{border:"1px solid #e2e8f0",borderRadius:10,padding:12}}><strong>{row.program} · {row.level}</strong><div>{row.className||"No class"} · {row.status}</div><div>Tuition: GH₵{row.tuitionFee} · Paid: GH₵{row.paid} · Balance: GH₵{row.balanceDue}</div><small>Payment deadline: {row.paymentDeadline||"Not set"}</small></div>)}
+ {rows.map(row=><div key={row.id} style={{border:"1px solid #e2e8f0",borderRadius:10,padding:12}}><strong>{row.program} · {row.level}</strong><div>{row.className||"No class"} · {row.status}</div><div>Tuition: GH₵{row.tuitionFee} · Paid: GH₵{row.paid} · Balance: GH₵{row.balanceDue}</div><small>Payment deadline: {row.paymentDeadline||"Not set"}</small><div><button type="button" onClick={()=>setSelected(selected===row.id?"":row.id)}>{selected===row.id?"Close payments":"Manage level payments"}</button></div>{selected===row.id&&<div style={{display:"grid",gap:8,marginTop:10}}><h4>Payment history</h4>{payments.map(p=><div key={p.id}>{p.receivedDate} · GH₵{p.amount} · {p.method} · {p.reference}</div>)}{paymentError&&<p role="alert">{paymentError}</p>}{row.balanceDue>0&&<><label>Method<select value={payment.method} onChange={e=>setPayment({...payment,method:e.target.value})}><option value="momo">MoMo</option><option value="bank">Bank transfer</option><option value="cash">Cash</option><option value="paystack">Existing Paystack payment</option></select></label><label>Reference<input value={payment.reference} onChange={e=>setPayment({...payment,reference:e.target.value})}/></label>{payment.method!=="paystack"&&<><label>Amount<input type="number" min="0.01" step="0.01" value={payment.amount} onChange={e=>setPayment({...payment,amount:e.target.value})}/></label><label>Payment date<input type="date" value={payment.receivedDate} onChange={e=>setPayment({...payment,receivedDate:e.target.value})}/></label></>}<button type="button" disabled={paymentBusy||!payment.reference.trim()||(payment.method!=="paystack"&&(!payment.receivedDate||!(Number(payment.amount)>0)))} onClick={record}>Record level payment</button></>}</div>}</div>)}
  <button type="button" disabled={busy||Boolean(error)} onClick={()=>setOpen(!open)}>{open?"Cancel":"+ Add level"}</button>
  {open&&<div className="student-detail-fields">
  <label>Language<select value={draft.program} onChange={e=>change("program",e.target.value)}><option value="german">German</option><option value="swahili">Kiswahili</option></select></label>
