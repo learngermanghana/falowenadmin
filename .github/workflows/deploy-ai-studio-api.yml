@@ -17,6 +17,8 @@ jobs:
       GCLOUD_PROJECT: falowen-examiner-trainer
       GH_TOKEN: ${{ github.token }}
       CLOUD_RUNTIME_CONFIG: ${{ secrets.FALOWEN_ADMIN_CLOUD_RUNTIME_CONFIG || '{}' }}
+      LEVEL_ENROLLMENT_SYNC_URL: ${{ secrets.LEVEL_ENROLLMENT_SYNC_URL }}
+      LEVEL_ENROLLMENT_SYNC_SECRET: ${{ secrets.LEVEL_ENROLLMENT_SYNC_SECRET }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -40,7 +42,10 @@ jobs:
         run: |
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
-          const value = Buffer.from(process.env.CLOUD_RUNTIME_CONFIG || '{}').toString('base64');
+          const config = JSON.parse(process.env.CLOUD_RUNTIME_CONFIG || '{}');
+          if(process.env.LEVEL_ENROLLMENT_SYNC_URL&&process.env.LEVEL_ENROLLMENT_SYNC_SECRET) config.level_enrollment={url:process.env.LEVEL_ENROLLMENT_SYNC_URL,secret:process.env.LEVEL_ENROLLMENT_SYNC_SECRET};
+          const value = Buffer.from(JSON.stringify(config)).toString('base64');
+          console.log('::add-mask::'+value);
           fs.writeFileSync(`functions/.env.${process.env.FIREBASE_PROJECT_ID}`, `CLOUD_RUNTIME_CONFIG_B64=${value}\n`);
           NODE
           node scripts/ensureScoreWebhookSecrets.mjs

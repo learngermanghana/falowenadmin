@@ -24,6 +24,10 @@ on:
       - '.github/workflows/deploy-firebase.yml'
   workflow_dispatch:
     inputs:
+      enrollment_sync_only:
+        description: "Deploy only the enrollment API and sheet sync worker after setting credentials"
+        type: boolean
+        default: false
       full_deploy:
         description: "Deploy all existing function groups (for recovery or runtime configuration changes)"
         type: boolean
@@ -46,6 +50,8 @@ jobs:
       GOOGLE_CLOUD_PROJECT: falowen-examiner-trainer
       GCLOUD_PROJECT: falowen-examiner-trainer
       CLOUD_RUNTIME_CONFIG: ${{ secrets.FALOWEN_ADMIN_CLOUD_RUNTIME_CONFIG || '{}' }}
+      LEVEL_ENROLLMENT_SYNC_URL: ${{ secrets.LEVEL_ENROLLMENT_SYNC_URL }}
+      LEVEL_ENROLLMENT_SYNC_SECRET: ${{ secrets.LEVEL_ENROLLMENT_SYNC_SECRET }}
       SWAHILI_RESULT_BCC: ${{ secrets.SWAHILI_RESULT_BCC }}
       # Authenticate cross-repository coursebook sync to avoid anonymous GitHub API 403/rate limits.
       GITHUB_TOKEN: ${{ github.token }}
@@ -95,6 +101,7 @@ jobs:
           FIREBASE_DEPLOY_BASE_SHA: ${{ steps.baseline.outputs.sha }}
           FIREBASE_TRIGGER_BASE_SHA: ${{ github.event.before }}
           FIREBASE_FULL_DEPLOY: ${{ github.event_name == 'workflow_dispatch' && inputs.full_deploy }}
+          FIREBASE_ENROLLMENT_SYNC_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.enrollment_sync_only }}
         run: node scripts/selectFirebaseDeployTargets.mjs
 
       - name: Validate Firebase predeploy patches
@@ -291,7 +298,8 @@ jobs:
             # its dotenv/parameter configuration. The GitHub Actions environment
             # itself is not copied into the deployed function. Persist the existing
             # runtime-config secret as base64 so webhook URLs/tokens reach workers.
-            runtime_config_b64="$(printf '%s' "$CLOUD_RUNTIME_CONFIG" | base64 -w0)"
+            runtime_config_b64="$(node -e 'const c=JSON.parse(process.env.CLOUD_RUNTIME_CONFIG||"{}"); const url=process.env.LEVEL_ENROLLMENT_SYNC_URL,secret=process.env.LEVEL_ENROLLMENT_SYNC_SECRET;if(url&&secret)c.level_enrollment={url,secret};process.stdout.write(Buffer.from(JSON.stringify(c)).toString("base64"));')"
+            echo "::add-mask::$runtime_config_b64"
             printf 'CLOUD_RUNTIME_CONFIG_B64=%s\n' "$runtime_config_b64" > "functions/.env.$FIREBASE_PROJECT_ID"
             if [[ -n "$SWAHILI_RESULT_BCC" ]]; then
               if [[ ! "$SWAHILI_RESULT_BCC" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
@@ -314,6 +322,9 @@ jobs:
 
           deploy_group "Falowen API" \
             "functions:falowenadmin:api"
+
+          deploy_group "level enrollment sheet sync worker" \
+            "functions:falowenadmin:syncLevelEnrollmentSheet"
 
           # Make consumers available before producers create automatic jobs.
           deploy_group "automatic course score Sheet sync worker" \
