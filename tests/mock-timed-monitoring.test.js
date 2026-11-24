@@ -29,7 +29,7 @@ test("stale in-progress progress never pretends the student is online", () => {
 test("navigation restores mock monitoring and preserves timed attempt resets", () => {
   const app=fs.readFileSync("src/App.jsx","utf8");
   const page=fs.readFileSync("src/pages/TimedAssignmentAttemptsPage.jsx","utf8");
-  assert.match(app, /to="\/timed-attempts"[^>]*>Mock Monitoring & Timers<\/Link>/, "administrator navigation includes monitoring");
+  assert.ok(app.split("\n").some(line => line.includes('to="/timed-attempts"') && line.includes("Mock Monitoring & Timers</Link>")), "administrator navigation includes monitoring");
   assert.match(app, /Route path="\/timed-attempts" element=\{<ProtectedRoute><TimedAssignmentAttemptsPage\s*\/><\/ProtectedRoute>\}/);
   assert.match(app, /STAFF_PAGES\.filter\(page => staffPages\.includes\(page\.id\)\)/);
   assert.equal(STAFF_PAGES.some(page => page.path === "/timed-attempts"), false, "monitoring is not in the restricted staff menu");
