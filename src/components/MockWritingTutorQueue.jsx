@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { auth } from "../firebase";
 const endpoint = String(import.meta.env.VITE_MOCK_MONITOR_URL || "https://www.falowen.app/api/internal/mock-attempts").replace(/\/internal\/mock-attempts(?:\?.*)?$/, "/internal/mock-writing-tutor");
 async function request(path, body) {
@@ -11,8 +12,9 @@ async function request(path, body) {
   return data;
 }
 export default function MockWritingTutorQueue() {
+  const [params]=useSearchParams();
   const [rows,setRows]=useState(null), [selected,setSelected]=useState(null), [busy,setBusy]=useState(false), [notice,setNotice]=useState(""), [error,setError]=useState("");
-  const [sms,setSms]=useState(""), [email,setEmail]=useState(""), [feedback,setFeedback]=useState(""), [attempt,setAttempt]=useState("");
+  const [sms,setSms]=useState(""), [email,setEmail]=useState(""), [feedback,setFeedback]=useState(""), [attempt,setAttempt]=useState(params.get("attempt") || "");
   const run=async fn=>{setBusy(true);setError("");setNotice("");try{await fn()}catch(e){setError(e.message)}finally{setBusy(false)}};
   const load=async()=>{const data=await request("-queue");setRows(data.rows);if(data.partial)setNotice("Showing up to 50 pending reviews. Refresh after marking.");};
   const open= id=>run(async()=>{setSelected(await request("-item?id="+encodeURIComponent(id)));setSms("");setEmail("");setFeedback("");});
@@ -26,7 +28,7 @@ export default function MockWritingTutorQueue() {
     {error&&<p role="alert">{error}</p>}{notice&&<p role="status">{notice}</p>}
     {rows!==null&&<>
       {rows.length===0?<p>No pending mock reviews.</p>:rows.map(row=><button key={row.id} type="button" disabled={busy} onClick={()=>open(row.id)} style={{textAlign:"left"}}>{row.studentEmail} · {row.mockId} · Schreiben pending</button>)}
-      <details><summary>Recover an earlier failed mock</summary><label>Attempt identifier from mock monitoring <input value={attempt} onChange={e=>setAttempt(e.target.value)} placeholder="A2:uid:attemptId"/></label><button type="button" disabled={busy||!attempt.trim()} onClick={recover}>Send saved work to marking</button></details>
+      <details open={Boolean(attempt)}><summary>Recover an earlier failed mock</summary><label>Attempt identifier from mock monitoring <input value={attempt} onChange={e=>setAttempt(e.target.value)} placeholder="A2:uid:attemptId"/></label><button type="button" disabled={busy||!attempt.trim()} onClick={recover}>Send saved work to marking</button></details>
     </>}
     {selected&&<div style={{display:"grid",gap:12}}>
       <h3>{selected.studentEmail} · {selected.mockId}</h3>
