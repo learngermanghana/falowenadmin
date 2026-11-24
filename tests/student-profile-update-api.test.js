@@ -97,6 +97,7 @@ test("authorized staff route atomically updates ordinary student profile fields"
   let routePath = "";
   let routeHandler = null;
   const writes = [];
+  const audits = [];
   const authCalls = [];
   const app = {
     patch(path, handler) {
@@ -111,7 +112,9 @@ test("authorized staff route atomically updates ordinary student profile fields"
   };
   const db = {
     batch: () => ({}),
+    runTransaction: async work => work({ get: async () => ({exists:true,data:()=>({level:"A2",paid:0})}), update: async (_ref,payload)=>writes.push(payload), set: (_ref,payload)=>audits.push(payload) }),
     collection(name) {
+      if (name === "auditLogs") return {doc:()=>({})};
       assert.equal(name, "students");
       return {
         doc(id) {
@@ -164,6 +167,9 @@ test("authorized staff route atomically updates ordinary student profile fields"
     updates: { level: "B1", program: "German" },
   });
   assert.equal(writes.length, 1);
+  assert.equal(audits.length, 1);
+  assert.deepEqual(audits[0].before, {level:"A2"});
+  assert.deepEqual(audits[0].after, {level:"B1"});
   assert.deepEqual(writes[0], {
     level: "B1",
     program: "German",
@@ -178,6 +184,7 @@ test("atomic update does not recreate a concurrently deleted student", async () 
   const app = { patch: (_path, handler) => { routeHandler = handler; }, post: () => {}, get: () => {} };
   const db = {
     batch: () => ({}),
+    runTransaction: async work => work({get: async () => ({exists:false}), update: () => {updateCalls += 1;}}),
     collection: () => ({
       doc: () => ({
         update: async () => {
@@ -200,7 +207,7 @@ test("atomic update does not recreate a concurrently deleted student", async () 
   const response = createResponse();
   await routeHandler({ params: { studentId: "missing" }, body: { updates: { level: "A2" } } }, response);
 
-  assert.equal(updateCalls, 1);
+  assert.equal(updateCalls, 0);
   assert.equal(response.statusCode, 404);
   assert.equal(response.body.error, "Student not found");
 });
@@ -372,4 +379,16 @@ test("manual trial route edits existing student only and writes audit on success
   assert.equal(writes.length,2);
   assert.equal(writes[0].payload.paymentStatus,"Pending");
   assert.equal(writes[1].payload.type,"student.manual_trial_activation");
+});
+
+// Financial regression tests run in this existing CI workflow.
+const {reconcileManualPaymentPatch: reconcile} = studentProfileUpdateModule;
+test("manual financial corrections keep historical payments and synchronize balance aliases",()=>{
+ const student={level:"A2",tuitionFee:3000,paid:5000,balance:0,status:"Paid",paymentStatus:"Paid"};
+ assert.deepEqual(reconcile(student,{balanceDue:"1,000.00"}),{balanceDue:1000,balance:1000,paymentStatus:"Partially Paid",status:"Active"});
+ assert.throws(()=>reconcile(student,{level:"B1"}),/Upgrade Tools/);
+ for(const balanceDue of [-1,3001,"abc",""]) assert.throws(()=>reconcile(student,{balanceDue}));
+ assert.throws(()=>reconcile(student,{balanceDue:1000,paymentStatus:"Paid"}));
+ assert.throws(()=>reconcile(student,{tuitionFee:3500}));
+ assert.throws(()=>reconcile({...student,upgradeStatus:"pending"},{balanceDue:1000}));
 });
