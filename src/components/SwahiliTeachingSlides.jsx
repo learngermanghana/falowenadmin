@@ -1,3 +1,4 @@
+import { SWAHILI_DAY_TWELVE_ADMIN_LESSON, SWAHILI_DAY_THIRTEEN_ADMIN_LESSON } from "../data/swahiliDayTwelveThirteenTeachingSlides.js";
 import { SWAHILI_DAY_ELEVEN_ADMIN_LESSON } from "../data/swahiliDayElevenTeachingSlides.js";
 import SwahiliRestaurantSong from "./SwahiliRestaurantSong.jsx";
 import { SWAHILI_DAY_FIVE_ADMIN_LESSON } from "../data/swahiliDayFiveTeachingSlides.js";
@@ -114,6 +115,20 @@ const dayElevenPresenterSlide = Object.freeze({
   workbookConnection: { workbookUrl: "https://www.falowen.app/campus/course/swahili/day-11", subtitle: "Continue Kiswahili Day 11 in Campus." },
 });
 
+const calendarRoutinePresenters = Object.freeze(Object.fromEntries(
+  [SWAHILI_DAY_TWELVE_ADMIN_LESSON, SWAHILI_DAY_THIRTEEN_ADMIN_LESSON].map(lesson => [
+    lesson.id,
+    Object.freeze({
+      ...lesson,
+      assignmentId: `SWAHILI-DAY-${lesson.dayNumber}`,
+      workbookConnection: {
+        workbookUrl: `https://www.falowen.app/campus/course/swahili/day-${lesson.dayNumber}`,
+        subtitle: `Continue Kiswahili Day ${lesson.dayNumber} in Campus.`,
+      },
+    }),
+  ]),
+));
+
 export default function SwahiliTeachingSlides({ slideId, present = false }) {
   const navigate = useNavigate();
   const { search } = useLocation();
@@ -127,7 +142,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
   const isDayTen = slideId === SWAHILI_DAY_TEN_ADMIN_LESSON.id;
   const isB1Day28 = slideId === swahiliB1Day28.id;
   const existingPresenterSlide = isDaySix ? daySixPresenterSlide : presenterSlide;
-  const selectedPresenterSlide = slideId === SWAHILI_DAY_ELEVEN_ADMIN_LESSON.id ? dayElevenPresenterSlide : isB1Day28 ? b1Day28PresenterSlide : isDayTen ? dayTenPresenterSlide : isDayFive ? dayFivePresenterSlide : isDayTwo ? dayTwoPresenterSlide : existingPresenterSlide;
+  const selectedPresenterSlide = calendarRoutinePresenters[slideId] || (slideId === SWAHILI_DAY_ELEVEN_ADMIN_LESSON.id ? dayElevenPresenterSlide : isB1Day28 ? b1Day28PresenterSlide : isDayTen ? dayTenPresenterSlide : isDayFive ? dayFivePresenterSlide : isDayTwo ? dayTwoPresenterSlide : existingPresenterSlide);
   const lesson = selectedPresenterSlide;
   const selectedWorkbook = selectedPresenterSlide.workbookConnection.workbookUrl;
   const stages = lesson.stages;

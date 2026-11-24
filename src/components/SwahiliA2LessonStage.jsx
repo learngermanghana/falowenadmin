@@ -10,10 +10,10 @@ function Lines({ text }) {
 }
 
 function SpeakerLine({ line }) {
-  const match = String(line).match(/^(Mhudumu|Mteja|Muuzaji|Mnunuzi):\s*(.+)$/);
+  const match = String(line).match(/^(Mhudumu|Mteja|Muuzaji|Mnunuzi|Amina|Juma|Neema|Asha|Baraka|Mwalimu):\s*(.+)$/);
   if (!match) return <p className="swahili-a2-presenter__line">{line}</p>;
   return <div className="swahili-a2-presenter__dialogue-turn">
-    <span className={["Mhudumu", "Muuzaji"].includes(match[1]) ? "is-server" : "is-customer"}>{match[1]}</span>
+    <span className={["Mhudumu", "Muuzaji", "Amina", "Neema", "Mwalimu"].includes(match[1]) ? "is-server" : "is-customer"}>{match[1]}</span>
     <p>{match[2]}</p>
   </div>;
 }
@@ -134,7 +134,7 @@ export default function SwahiliA2LessonStage({ stage, grammar, isDaySix, level =
 
   if(stage.type==="reading" && isDaySix) return <Menu content={stage.content} cards={stage.foodCards} drinks={stage.drinkCards} />;
 
-  if(stage.type==="dialogue" || (stage.type==="speaking" && isDaySix)) return <section className="swahili-a2-presenter__dialogue" aria-label={isDaySix ? "Server and customer dialogue" : "Seller and buyer dialogue"}>
+  if(stage.type==="dialogue" || (stage.type==="speaking" && isDaySix)) return <section className="swahili-a2-presenter__dialogue" aria-label={isDaySix ? "Server and customer dialogue" : "Model dialogue"}>
     <p className="presenter-kicker">Model the conversation · Switch roles</p>
     {lines.map((line,i)=><SpeakerLine key={i} line={line}/>)}
   </section>;
