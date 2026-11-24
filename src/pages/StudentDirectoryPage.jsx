@@ -13,7 +13,7 @@ import StudentPaymentTools from "../components/StudentPaymentTools";
 import StudentUpgradeTools from "../components/StudentUpgradeTools";
 import CompletionPackPanel from "../components/CompletionPackPanel.jsx";
 import BrochureWhatsappPanel from "../components/BrochureWhatsappPanel.jsx";
-import StudentClassTransferPanel from "../components/StudentClassTransferPanel.jsx";
+import { StudentClassTransferDisclosure } from "../components/StudentClassTransferPanel.jsx";
 import StudentAccessOverview from "../components/StudentAccessOverview.jsx";
 import StudentCourseTypePanel, { resolveCourseType } from "../components/StudentCourseTypePanel.jsx";
 import StudentLearningStatusPanel from "../components/StudentLearningStatusPanel.jsx";
@@ -1263,9 +1263,7 @@ export default function StudentDirectoryPage() {
                                           catch(error){pushToast({type:"error",message:error.message});}
                                         }}>+{months} {months === 1 ? "month" : "months"}</button>)}
                                       </div>
-                                      {persisted && detailTab === "class" ? <details><summary style={{cursor:"pointer",fontWeight:600}}>Transfer {label} class &amp; history</summary>
-                                        <StudentClassTransferPanel key={selectedStudent.id+":"+program} student={selectedStudent} program={program} classes={classes} onTransferred={handleStudentTransferred} pushToast={pushToast} />
-                                      </details> : <small>Save the enrollment before assigning a class.</small>}
+                                      {persisted && detailTab === "class" ? <StudentClassTransferDisclosure key={selectedStudent.id+":"+program} student={selectedStudent} program={program} classes={classes} onTransferred={handleStudentTransferred} pushToast={pushToast} /> : <small>Save the enrollment before assigning a class.</small>}
                                     </section>;
                                   })}
                                 </div>
