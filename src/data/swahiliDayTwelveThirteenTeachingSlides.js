@@ -36,51 +36,51 @@ export const SWAHILI_DAY_TWELVE_ADMIN_LESSON = Object.freeze({
       "details": [
         {
           "title": "Siku za wiki · Days of the week",
-          "rule": "Traditional weekday names begin with Jumamosi (Saturday). Alhamisi and Ijumaa reflect Arabic influence.",
+          "rule": "Taja siku za wiki kwa mpangilio.",
           "body": "Jumamosi · Jumapili · Jumatatu\nJumanne · Jumatano · Alhamisi · Ijumaa",
           "english": "Saturday · Sunday · Monday · Tuesday · Wednesday · Thursday · Friday",
-          "question": "Baada ya Jumatatu ni siku gani?",
-          "answer": "Jumanne."
+          "question": "1. Baada ya Jumatatu ni siku gani?\n2. Kabla ya Ijumaa ni siku gani?\n3. Baada ya Jumamosi ni siku gani?",
+          "answer": "1. Jumanne.\n2. Alhamisi.\n3. Jumapili."
         },
         {
           "title": "Miezi ya mwaka · January–June",
-          "rule": "Use the month name or mwezi wa followed by its number.",
+          "rule": "Taja jina la mwezi au tumia mwezi wa + nambari.",
           "body": "Januari · mwezi wa kwanza\nFebruari · mwezi wa pili\nMachi · mwezi wa tatu\nAprili · mwezi wa nne\nMei · mwezi wa tano\nJuni · mwezi wa sita",
           "english": "January · February · March · April · May · June",
-          "question": "Mwezi wa tatu ni mwezi gani?",
-          "answer": "Machi."
+          "question": "1. Mwezi wa tatu ni mwezi gani?\n2. Mwezi wa kwanza ni upi?\n3. Mei ni mwezi wa ngapi?",
+          "answer": "1. Machi.\n2. Januari.\n3. Mwezi wa tano."
         },
         {
           "title": "Miezi ya mwaka · July–December",
-          "rule": "Continue using the month name or mwezi wa followed by its number.",
+          "rule": "Tumia mwezi wa + nambari.",
           "body": "Julai · mwezi wa saba\nAgosti · mwezi wa nane\nSeptemba · mwezi wa tisa\nOktoba · mwezi wa kumi\nNovemba · mwezi wa kumi na moja\nDesemba · mwezi wa kumi na mbili",
           "english": "July · August · September · October · November · December",
-          "question": "Mwezi wa kumi na mbili ni mwezi gani?",
-          "answer": "Desemba."
+          "question": "1. Mwezi wa kumi na mbili ni mwezi gani?\n2. Agosti ni mwezi wa ngapi?\n3. Baada ya Oktoba ni mwezi gani?",
+          "answer": "1. Desemba.\n2. Mwezi wa nane.\n3. Novemba."
         },
         {
-          "title": "Tarehe · Dates",
-          "rule": "Say the date first, then the month, and optionally mwaka + year. Ask Leo ni tarehe ngapi? or Leo ni siku gani?",
+          "title": "Kalenda · Calendar",
+          "rule": "Tarehe + nambari + mwezi + mwaka (ikihitajika).",
           "body": "Leo ni tarehe tano Machi.\nTarehe ishirini na moja Julai.\nTarehe 5/10/1997: tarehe tano Oktoba mwaka elfu moja mia tisa tisini na saba.",
           "english": "Today is 5 March. · 21 July. · 5 October 1997.",
-          "question": "Sema 10 Mei kwa Kiswahili.",
-          "answer": "Tarehe kumi Mei."
+          "question": "1. Sema 10 Mei kwa Kiswahili.\n2. Sema 15 Juni kwa Kiswahili.\n3. Andika tarehe saba Agosti kwa nambari.",
+          "answer": "1. Tarehe kumi Mei.\n2. Tarehe kumi na tano Juni.\n3. 7/8."
         },
         {
-          "title": "Wakati · Time expressions",
-          "rule": "Use jana for yesterday, leo for today, kesho for tomorrow, juzi for the day before yesterday and keshokutwa for the day after tomorrow.",
+          "title": "Marejeo ya siku · Referring to days",
+          "rule": "Juzi → jana → leo → kesho → keshokutwa.",
           "body": "Juzi · Jana · Leo · Kesho · Keshokutwa\nJana ilikuwa Jumapili.\nLeo ni Jumatatu.\nKesho ni Jumanne.",
           "english": "The day before yesterday · yesterday · today · tomorrow · the day after tomorrow.",
-          "question": "Leo ni Jumatatu. Keshokutwa ni siku gani?",
-          "answer": "Jumatano."
+          "question": "1. Leo ni Jumatatu. Keshokutwa ni siku gani?\n2. Leo ni Jumatatu. Jana ilikuwa siku gani?\n3. Juzi ilikuwa siku gani?",
+          "answer": "1. Jumatano.\n2. Jumapili.\n3. Jumamosi."
         },
         {
           "title": "Siku ya kuzaliwa na miadi · Birthdays and appointments",
-          "rule": "Ulizaliwa lini? asks when someone was born. Use tarehe and a month in your answer. Use miadi for an appointment.",
+          "rule": "Ulizaliwa lini? Miadi yako ni lini?",
           "body": "Ulizaliwa lini?\nNilizaliwa tarehe kumi Mei.\nMiadi yetu ni tarehe tano Juni.",
           "english": "When were you born? · I was born on 10 May. · Our appointment is on 5 June.",
-          "question": "Ulizaliwa lini? Toa jibu lako.",
-          "answer": "Mfano: Nilizaliwa tarehe kumi Mei."
+          "question": "1. Ulizaliwa lini? Toa jibu lako.\n2. Miadi yako ni lini? (5 Juni)\n3. Siku yako ya kuzaliwa ni lini? (8 Julai)",
+          "answer": "1. Mfano: Nilizaliwa tarehe kumi Mei.\n2. Miadi yangu ni tarehe tano Juni.\n3. Siku yangu ya kuzaliwa ni tarehe nane Julai."
         }
       ],
       "notes": "Show one rule at a time, ask learners to try the question before revealing the answer."
@@ -218,51 +218,51 @@ export const SWAHILI_DAY_THIRTEEN_ADMIN_LESSON = Object.freeze({
       "details": [
         {
           "title": "Kutaja saa · The Swahili clock",
-          "rule": "Count from 6 a.m./p.m. The conventional 12-hour clock is six hours different. Say the part of day to avoid ambiguity.",
+          "rule": "Hesabu saa kuanzia saa 6:00 asubuhi au jioni kwa mfumo wa kawaida.",
           "body": "Saa kumi na mbili asubuhi = 6:00 AM\nSaa moja asubuhi = 7:00 AM\nSaa mbili asubuhi = 8:00 AM\nSaa sita mchana = 12:00 PM",
           "english": "Count from 6 a.m. and 6 p.m., not midnight and noon.",
-          "question": "Saa tatu asubuhi ni saa ngapi kwa mfumo wa kawaida?",
-          "answer": "9:00 AM."
+          "question": "1. Saa tatu asubuhi ni saa ngapi kwa mfumo wa kawaida?\n2. Saa mbili asubuhi ni saa ngapi kwa mfumo wa kawaida?\n3. Sema 10:00 AM kwa Kiswahili.",
+          "answer": "1. 9:00 AM.\n2. 8:00 AM.\n3. Saa nne asubuhi."
         },
         {
           "title": "Saa za mchana na usiku · Afternoon and night",
-          "rule": "The same Swahili hour number occurs twice daily. Add the part of the day to distinguish them.",
+          "rule": "Taja sehemu ya siku: asubuhi, mchana, alasiri, jioni au usiku.",
           "body": "Saa tisa alasiri = 3:00 PM\nSaa kumi na mbili jioni = 6:00 PM\nSaa moja usiku = 7:00 PM\nSaa sita usiku = 12:00 AM",
           "english": "Afternoon · evening · night · midnight",
-          "question": "Saa nne usiku ni saa ngapi?",
-          "answer": "10:00 PM."
+          "question": "1. Saa nne usiku ni saa ngapi?\n2. Sema 8:00 PM kwa Kiswahili.\n3. Saa sita mchana ni saa ngapi?",
+          "answer": "1. 10:00 PM.\n2. Saa mbili usiku.\n3. 12:00 PM."
         },
         {
           "title": "Dakika · Minutes",
-          "rule": "Use na robo for quarter past, na nusu for half past, kasoro robo for quarter to the named hour, and na dakika for minutes past.",
+          "rule": "Tumia na robo, na nusu, kasoro robo au na dakika.",
           "body": "Saa nane na robo mchana = 2:15 PM\nSaa tisa na nusu alasiri = 3:30 PM\nSaa kumi na moja kasoro robo jioni = 4:45 PM\nSaa tatu na dakika kumi na mbili asubuhi = 9:12 AM",
           "english": "Quarter past · half past · quarter to · minutes past",
-          "question": "Unasemaje 3:30 PM kwa Kiswahili?",
-          "answer": "Saa tisa na nusu alasiri."
+          "question": "1. Unasemaje 3:30 PM kwa Kiswahili?\n2. Sema 2:15 PM kwa Kiswahili.\n3. Sema 4:45 PM kwa Kiswahili.",
+          "answer": "1. Saa tisa na nusu alasiri.\n2. Saa nane na robo mchana.\n3. Saa kumi na moja kasoro robo jioni."
         },
         {
           "title": "Wakati uliopo · Present -na-",
-          "rule": "Use subject prefix + na + verb stem: ni-, u-, a-, tu-, m-, wa-. Short verbs such as kula and kunywa retain ku- after -na-.",
+          "rule": "Kiambishi cha nafsi + -na- + kitenzi. Mfano: ninakula, ninakunywa.",
           "body": "Mimi: ni-na-amka → ninaamka\nWewe: u-na-oga → unaoga\nYeye: a-na-soma → anasoma\nSisi: tu-na-fanya kazi → tunafanya kazi\nNyinyi: m-na-kula → mnakula\nWao: wa-na-rudi → wanarudi",
           "english": "I · you · he/she · we · you (plural) · they",
-          "question": "Jaza pengo: Sisi __nafanya kazi.",
-          "answer": "tu- → tunafanya kazi."
+          "question": "1. Jaza pengo: Sisi __nafanya kazi.\n2. Jaza pengo: Mimi __nasoma.\n3. Jaza pengo: Wao __narudi.",
+          "answer": "1. tu- → tunafanya kazi.\n2. ni- → ninasoma.\n3. wa- → wanarudi."
         },
         {
           "title": "Wakati wa mazoea · Habitual hu-",
-          "rule": "Use hu- directly before the stem, without a subject prefix. Use a pronoun or noun to clarify who. Short verbs drop ku-: kula → hula, kunywa → hunywa.",
+          "rule": "hu- + mzizi wa kitenzi. Mfano: hula, hunywa. Taja nafsi inapohitajika.",
           "body": "Mimi huamka kila siku.\nYeye hula kifungua kinywa.\nSisi husoma kila siku.\nWewe hunywa chai.",
           "english": "I usually wake up. · He/she usually eats breakfast. · We usually study. · You usually drink tea.",
-          "question": "Badili: Yeye anakula kila siku. Tumia hu-.",
-          "answer": "Yeye hula kila siku."
+          "question": "1. Badili: Yeye anakula kila siku. Tumia hu-.\n2. Badili: Mimi ninaamka kila siku. Tumia hu-.\n3. Badili: Sisi tunakunywa chai kila siku.",
+          "answer": "1. Yeye hula kila siku.\n2. Mimi huamka kila siku.\n3. Sisi hunywa chai kila siku."
         },
         {
           "title": "Mpangilio · Sequencing",
-          "rule": "Use kwanza, halafu, kisha and mwishowe to describe activities in order.",
+          "rule": "Tumia kwanza, halafu, kisha na mwishowe.",
           "body": "Kwanza, ninaamka.\nHalafu, ninaoga.\nKisha, ninakwenda kazini.\nMwishowe, ninalala.",
           "english": "First · then · after that · finally",
-          "question": "Ni neno gani linaonyesha tendo la mwisho?",
-          "answer": "Mwishowe."
+          "question": "1. Ni neno gani linaonyesha tendo la mwisho?\n2. Jaza pengo: __, ninaamka. Halafu, ninaoga.\n3. Kamilisha: Kwanza ninaamka. __, ninaoga.",
+          "answer": "1. Mwishowe.\n2. Kwanza.\n3. Halafu au kisha."
         }
       ],
       "notes": "Show one rule at a time, ask learners to try the question before revealing the answer."
