@@ -460,11 +460,15 @@ function deterministicLanguageCorrections(source = "", partId = "teil2", task = 
     if (informalFormalGreeting?.[1]) {
       const from = informalFormalGreeting[1];
       const surname = from.replace(/^Lieber\s+Herr\s+/i, "").trim();
+      const rentalEnquiry = String(task.assignmentKey || "").toUpperCase() === "A2-3.7";
+      const unknownLandlord = rentalEnquiry && /^Vermieter$/i.test(surname);
       corrections.push({
         partId,
         from,
-        to: `Sehr geehrter Herr ${surname}`,
-        reason: "Use a formal salutation for a formal hotel or business email.",
+        to: unknownLandlord ? "Sehr geehrte Damen und Herren" : `Sehr geehrter Herr ${surname}`,
+        reason: rentalEnquiry
+          ? "Use a formal salutation for a rental enquiry. If the landlord’s name is unknown, use a neutral formal greeting."
+          : "Use a formal salutation for a formal hotel or business email.",
       });
     }
   }
@@ -1165,7 +1169,10 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
   const rejectedCorrections = (Array.isArray(result.corrections) ? result.corrections : [])
     .filter((correction) => isSemanticTaskRewrite(correction, task));
   const acceptedCorrections = (Array.isArray(result.corrections) ? result.corrections : [])
-    .filter((correction) => !isSemanticTaskRewrite(correction, task));
+    .filter((correction) => !isSemanticTaskRewrite(correction, task))
+    .filter((correction) => !(task.assignmentKey === "A2-3.7"
+      && /^lieber\s+herr\s+vermieter,?$/i.test(clean(correction?.from))
+      && /^sehr\s+geehrter\s+herr\s+vermieter,?$/i.test(clean(correction?.to))));
   const safeCorrections = mergeCorrections(acceptedCorrections, deterministicCorrections);
   const structured = readStructuredTask(result);
   const currentA1123 = task.level === "A1" && task.assignmentKey === "A1-12.3"
