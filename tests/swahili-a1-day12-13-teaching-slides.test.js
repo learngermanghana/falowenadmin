@@ -28,6 +28,7 @@ for (const lesson of [day12,day13]) {
    for(const q of Object.values(ref[section])) assert.ok(s.notes.includes(q.prompt)&&s.notes.includes(q.answer));
   }
   assert.ok(lesson.stages.find(s=>s.id==="listening").notes.includes(lesson.stages.find(s=>s.id==="dialogue").content));
+  assert.match(lesson.stages.find(s=>s.id==="listening").kicker,/Recorded listening/);
   assert.equal(lesson.stages.find(s=>s.id==="writing").answer,ref.writing.Kuandika);
  });
 }

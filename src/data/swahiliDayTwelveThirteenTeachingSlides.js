@@ -116,13 +116,13 @@ export const SWAHILI_DAY_TWELVE_ADMIN_LESSON = Object.freeze({
     {
       "id": "listening",
       "type": "teacher-listening",
-      "kicker": "Kusikiliza · Teacher-led listening",
-      "title": "Sikiliza siku na tarehe",
-      "content": "Sikiliza mwalimu mara mbili.\n1. Leo ni siku gani?\n2. Leo ni tarehe ngapi?\n3. Kesho Neema ana miadi na nani?\n4. Neema alizaliwa lini?\n5. Jana ilikuwa siku gani?",
-      "english": "Listen twice. Answer the questions orally or in the Campus workbook.",
-      "prompt": "Leo ni siku gani?",
-      "answer": "Jumatano",
-      "notes": "Read aloud twice before showing the dialogue stage.\nJuma: Habari, Neema! Leo ni siku gani?\nNeema: Leo ni Jumatano, tarehe saba Agosti.\nJuma: Kesho ni Alhamisi, sivyo?\nNeema: Ndiyo. Kesho nina miadi na daktari.\nJuma: Siku yako ya kuzaliwa ni lini?\nNeema: Tarehe kumi Desemba.\nJuma: Asante. Jana ilikuwa Jumanne.\nNeema: Ndiyo, kwa heri!\n\nTutor references:\n1. Leo ni siku gani?\nJumatano\n2. Leo ni tarehe ngapi?\nTarehe saba Agosti\n3. Kesho Neema ana miadi na nani?\nDaktari\n4. Neema alizaliwa lini?\nTarehe kumi Desemba\n5. Jana ilikuwa siku gani?\nJumanne",
+      "kicker": "Kusikiliza · Recorded listening",
+      "title": "Sikiliza siku, tarehe, mwezi na mwaka",
+      "content": "Sikiliza mazungumzo mara mbili.\n1. B anajibu nini baada ya salamu?\n2. Leo ni siku gani ya juma?\n3. Tarehe ya leo ni ngapi?\n4. Mwezi huu ni upi?\n5. Mwaka gani sasa hivi?",
+      "english": "Open the related Campus listening exercise to play the recording twice. Answer the five questions.",
+      "prompt": "B anajibu nini baada ya salamu?",
+      "answer": "Habari nzuri sana.",
+      "notes": "Play the linked Campus recording before showing the dialogue. Transcript:\nA: Jambo, habari za asubuhi?\nB: Jambo, habari nzuri sana.\nA: Leo ni siku gani ya juma?\nB: Leo ni Jumatatu.\nA: Je, tarehe ya leo ni ngapi?\nB: Leo ni tarehe kumi na mbili.\nA: Mwezi huu ni upi?\nB: Mwezi huu ni Machi.\nA: Mwaka gani sasa hivi?\nB: Mwaka ni elfu mbili na ishirini na nne.\nA: Asante sana kwa habari hii.\nB: Karibu sana rafiki yangu.\n\nTutor references:\n1. B anajibu nini baada ya salamu?\nHabari nzuri sana.\n2. Leo ni siku gani ya juma?\nJumatatu.\n3. Tarehe ya leo ni ngapi?\nTarehe kumi na mbili.\n4. Mwezi huu ni upi?\nMachi.\n5. Mwaka gani sasa hivi?\nElfu mbili na ishirini na nne.",
       "listeningWorkbookUrl": "https://www.falowen.app/campus/course/swahili/day-12?view=hoeren"
     },
     {
@@ -141,11 +141,11 @@ export const SWAHILI_DAY_TWELVE_ADMIN_LESSON = Object.freeze({
       "id": "dialogue",
       "type": "dialogue",
       "kicker": "Kuzungumza · Model dialogue",
-      "title": "Juma na Neema",
-      "content": "Juma: Habari, Neema! Leo ni siku gani?\nNeema: Leo ni Jumatano, tarehe saba Agosti.\nJuma: Kesho ni Alhamisi, sivyo?\nNeema: Ndiyo. Kesho nina miadi na daktari.\nJuma: Siku yako ya kuzaliwa ni lini?\nNeema: Tarehe kumi Desemba.\nJuma: Asante. Jana ilikuwa Jumanne.\nNeema: Ndiyo, kwa heri!",
+      "title": "Mazungumzo · Siku na tarehe",
+      "content": "A: Jambo, habari za asubuhi?\nB: Jambo, habari nzuri sana.\nA: Leo ni siku gani ya juma?\nB: Leo ni Jumatatu.\nA: Je, tarehe ya leo ni ngapi?\nB: Leo ni tarehe kumi na mbili.\nA: Mwezi huu ni upi?\nB: Mwezi huu ni Machi.\nA: Mwaka gani sasa hivi?\nB: Mwaka ni elfu mbili na ishirini na nne.\nA: Asante sana kwa habari hii.\nB: Karibu sana rafiki yangu.",
       "english": "Read in pairs and switch roles. Change the details and repeat.",
-      "prompt": "Kesho Neema ana miadi na nani?",
-      "answer": "Daktari"
+      "prompt": "Tarehe ya leo ni ngapi?",
+      "answer": "Tarehe kumi na mbili."
     },
     {
       "id": "scenario",
@@ -298,13 +298,13 @@ export const SWAHILI_DAY_THIRTEEN_ADMIN_LESSON = Object.freeze({
     {
       "id": "listening",
       "type": "teacher-listening",
-      "kicker": "Kusikiliza · Teacher-led listening",
-      "title": "Sikiliza ratiba ya Juma",
-      "content": "Sikiliza mwalimu mara mbili.\n1. Juma huamka saa ngapi?\n2. Juma anafanya nini kabla ya kwenda kazini?\n3. Juma anaenda kazini saa ngapi?\n4. Juma hula chakula cha mchana saa ngapi?\n5. Juma hufanya nini kabla ya kulala?",
-      "english": "Listen twice. Answer the questions orally or in the Campus workbook.",
-      "prompt": "Juma huamka saa ngapi?",
-      "answer": "Saa kumi na mbili asubuhi",
-      "notes": "Read aloud twice before showing the dialogue stage.\nAmina: Hujambo, Juma? Unaamka saa ngapi kila siku?\nJuma: Sijambo. Huamka saa kumi na mbili asubuhi.\nAmina: Hufanya nini ukiamka?\nJuma: Ninaoga na kula kifungua kinywa. Ninaenda kazini saa mbili asubuhi.\nAmina: Hula chakula cha mchana saa ngapi?\nJuma: Saa saba mchana. Hurudi nyumbani saa kumi na moja jioni.\nAmina: Hufanya nini usiku?\nJuma: Hutazama televisheni, kisha hulala saa nne usiku.\n\nTutor references:\n1. Juma huamka saa ngapi?\nSaa kumi na mbili asubuhi\n2. Juma anafanya nini kabla ya kwenda kazini?\nAnaoga na kula kifungua kinywa\n3. Juma anaenda kazini saa ngapi?\nSaa mbili asubuhi\n4. Juma hula chakula cha mchana saa ngapi?\nSaa saba mchana\n5. Juma hufanya nini kabla ya kulala?\nHutazama televisheni",
+      "kicker": "Kusikiliza · Recorded listening",
+      "title": "Sikiliza ratiba ya kazi",
+      "content": "Sikiliza mazungumzo mara mbili.\n1. Saa ngapi sasa?\n2. B anafanya kazi gani?\n3. B anaanza kazi saa ngapi?\n4. B anamaliza kazi saa ngapi?\n5. B anafika nyumbani saa ngapi?",
+      "english": "Open the related Campus listening exercise to play the recording twice. Answer the five questions.",
+      "prompt": "Saa ngapi sasa?",
+      "answer": "Saa tatu asubuhi.",
+      "notes": "Play the linked Campus recording before showing the dialogue. Transcript:\nA: Hujambo jirani.\nB: Sijambo hujambo.\nA: Saa ngapi sasa?\nB: Saa tatu asubuhi.\nA: Unakwenda wapi sasa hivi?\nB: Ninakwenda kazini mjini.\nA: Unafanya kazi gani?\nB: Mimi ni mwalimu wa shule.\nA: Unaanza kazi saa ngapi?\nB: Ninaanza saa nne kamili.\nA: Unamaliza kazi saa ngapi?\nB: Ninamaliza saa kumi jioni.\nA: Unarudi nyumbani saa ngapi?\nB: Ninafika nyumbani saa kumi na moja.\nA: Unafanya nini usiku?\nB: Ninapika chakula na kulala.\nA: Safari njema kazini leo.\nB: Asante sana kwaheri.\n\nTutor references:\n1. Saa ngapi sasa?\nSaa tatu asubuhi.\n2. B anafanya kazi gani?\nNi mwalimu wa shule.\n3. B anaanza kazi saa ngapi?\nSaa nne kamili.\n4. B anamaliza kazi saa ngapi?\nSaa kumi jioni.\n5. B anafika nyumbani saa ngapi?\nSaa kumi na moja.",
       "listeningWorkbookUrl": "https://www.falowen.app/campus/course/swahili/day-13?view=hoeren"
     },
     {
@@ -323,11 +323,11 @@ export const SWAHILI_DAY_THIRTEEN_ADMIN_LESSON = Object.freeze({
       "id": "dialogue",
       "type": "dialogue",
       "kicker": "Kuzungumza · Model dialogue",
-      "title": "Amina na Juma",
-      "content": "Amina: Hujambo, Juma? Unaamka saa ngapi kila siku?\nJuma: Sijambo. Huamka saa kumi na mbili asubuhi.\nAmina: Hufanya nini ukiamka?\nJuma: Ninaoga na kula kifungua kinywa. Ninaenda kazini saa mbili asubuhi.\nAmina: Hula chakula cha mchana saa ngapi?\nJuma: Saa saba mchana. Hurudi nyumbani saa kumi na moja jioni.\nAmina: Hufanya nini usiku?\nJuma: Hutazama televisheni, kisha hulala saa nne usiku.",
+      "title": "Mazungumzo · Saa na kazi",
+      "content": "A: Hujambo jirani.\nB: Sijambo hujambo.\nA: Saa ngapi sasa?\nB: Saa tatu asubuhi.\nA: Unakwenda wapi sasa hivi?\nB: Ninakwenda kazini mjini.\nA: Unafanya kazi gani?\nB: Mimi ni mwalimu wa shule.\nA: Unaanza kazi saa ngapi?\nB: Ninaanza saa nne kamili.\nA: Unamaliza kazi saa ngapi?\nB: Ninamaliza saa kumi jioni.\nA: Unarudi nyumbani saa ngapi?\nB: Ninafika nyumbani saa kumi na moja.\nA: Unafanya nini usiku?\nB: Ninapika chakula na kulala.\nA: Safari njema kazini leo.\nB: Asante sana kwaheri.",
       "english": "Read in pairs and switch roles. Change the details and repeat.",
-      "prompt": "Juma anaenda kazini saa ngapi?",
-      "answer": "Saa mbili asubuhi"
+      "prompt": "B anaanza kazi saa ngapi?",
+      "answer": "Saa nne kamili."
     },
     {
       "id": "scenario",

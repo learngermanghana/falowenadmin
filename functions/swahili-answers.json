@@ -611,24 +611,24 @@
     },
     "listening": {
       "calendar-listen-1": {
-        "prompt": "Leo ni siku gani?",
-        "answer": "Jumatano"
+        "prompt": "B anajibu nini baada ya salamu?",
+        "answer": "Habari nzuri sana."
       },
       "calendar-listen-2": {
-        "prompt": "Leo ni tarehe ngapi?",
-        "answer": "Tarehe saba Agosti"
+        "prompt": "Leo ni siku gani ya juma?",
+        "answer": "Jumatatu."
       },
       "calendar-listen-3": {
-        "prompt": "Kesho Neema ana miadi na nani?",
-        "answer": "Daktari"
+        "prompt": "Tarehe ya leo ni ngapi?",
+        "answer": "Tarehe kumi na mbili."
       },
       "calendar-listen-4": {
-        "prompt": "Neema alizaliwa lini?",
-        "answer": "Tarehe kumi Desemba"
+        "prompt": "Mwezi huu ni upi?",
+        "answer": "Machi."
       },
       "calendar-listen-5": {
-        "prompt": "Jana ilikuwa siku gani?",
-        "answer": "Jumanne"
+        "prompt": "Mwaka gani sasa hivi?",
+        "answer": "Elfu mbili na ishirini na nne."
       }
     }
   },
@@ -662,24 +662,24 @@
     },
     "listening": {
       "routine-listen-1": {
-        "prompt": "Juma huamka saa ngapi?",
-        "answer": "Saa kumi na mbili asubuhi"
+        "prompt": "Saa ngapi sasa?",
+        "answer": "Saa tatu asubuhi."
       },
       "routine-listen-2": {
-        "prompt": "Juma anafanya nini kabla ya kwenda kazini?",
-        "answer": "Anaoga na kula kifungua kinywa"
+        "prompt": "B anafanya kazi gani?",
+        "answer": "Ni mwalimu wa shule."
       },
       "routine-listen-3": {
-        "prompt": "Juma anaenda kazini saa ngapi?",
-        "answer": "Saa mbili asubuhi"
+        "prompt": "B anaanza kazi saa ngapi?",
+        "answer": "Saa nne kamili."
       },
       "routine-listen-4": {
-        "prompt": "Juma hula chakula cha mchana saa ngapi?",
-        "answer": "Saa saba mchana"
+        "prompt": "B anamaliza kazi saa ngapi?",
+        "answer": "Saa kumi jioni."
       },
       "routine-listen-5": {
-        "prompt": "Juma hufanya nini kabla ya kulala?",
-        "answer": "Hutazama televisheni"
+        "prompt": "B anafika nyumbani saa ngapi?",
+        "answer": "Saa kumi na moja."
       }
     }
   },
