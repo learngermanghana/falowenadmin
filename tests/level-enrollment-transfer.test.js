@@ -1,0 +1,10 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {createRequire} from "node:module";
+const {planEnrollmentTransfer}=createRequire(import.meta.url)("../functions/levelEnrollmentTransfer.js");
+const a1={id:"german-A1",status:"active",paid:3000,balanceDue:0,contractEnd:"2027-03-01",className:"A1 Berlin",sheetVersion:2};
+const a2={id:"german-A2",status:"active",paid:2000,balanceDue:1000,contractEnd:"2027-05-24",className:"A2 Dortmund",sheetVersion:4};
+const base={program:"german",studentId:"s",studentCode:"S",previous:{level:"A1"},target:{level:"A2",className:"A2 Dortmund"},rows:[a1]};
+test("upgrade preserves A1 and creates an independent blank active record",()=>{const changes=planEnrollmentTransfer(base);assert.equal(changes.length,1);assert.equal(changes[0].id,"german-A2");assert.equal(changes[0].patch.tuitionFee,null);assert.equal(changes[0].patch.contractEnd,"");assert.equal(a1.contractEnd,"2027-03-01");});
+test("downgrade retains or stops reminders without changing either ledger",()=>{const input={...base,previous:{level:"A2"},target:{level:"A1",className:"A1 Berlin"},rows:[a1,a2]};assert.throws(()=>planEnrollmentTransfer(input),/Choose/);assert.throws(()=>planEnrollmentTransfer({...input,rows:[a2],disposition:"retain"}),/original/);for(const [disposition,status] of [["retain","expired"],["cancel","cancelled"]]){const [from,to]=planEnrollmentTransfer({...input,disposition});assert.deepEqual(from.patch,{status,sheetVersion:5,sheetSyncStatus:"pending"});assert.equal(to.patch.status,"active");assert.equal(to.patch.contractEnd,undefined);assert.equal(a2.balanceDue,1000);}});
+test("missing original records require review and same-level class changes sync existing records",()=>{assert.throws(()=>planEnrollmentTransfer({...base,rows:[]}),/verified A1/);const change=planEnrollmentTransfer({...base,target:{level:"A1",className:"A1 Hamburg"}});assert.deepEqual(change,[{id:"german-A1",patch:{className:"A1 Hamburg",sheetVersion:3,sheetSyncStatus:"pending"}}]);});

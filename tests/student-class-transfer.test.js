@@ -55,6 +55,7 @@ function buildTransferHarness(options = {}) {
   const makeRef = (collectionName, id) => ({
     id,
     path: `${collectionName}/${id}`,
+    collection(name){return {path:`${collectionName}/${id}/${name}`,doc:child=>makeRef(`${collectionName}/${id}/${name}`,child)};},
     async get() {
       if (collectionName === "students" && id === "student-1") {
         return { id, exists: true, data: () => studentData };
@@ -104,6 +105,7 @@ function buildTransferHarness(options = {}) {
         },
       };
     },
+    async runTransaction(callback){const batch=this.batch();await callback({...batch,get:async ref=>ref.path?.endsWith("/levelEnrollments")?{docs:[]}:ref.get()});await batch.commit();},
     batch() {
       return {
         update(ref, payload) {

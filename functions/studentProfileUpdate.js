@@ -1,4 +1,5 @@
 const { courseEnrollmentPatch } = require("./courseEnrollment");
+const { planEnrollmentTransfer } = require("./levelEnrollmentTransfer");
 const { CONTRACT_TERM_MONTHS, addCalendarMonths, asDate, isoDate, normalizeLevel } = require("./studentContractLifecycle");
 const EDITABLE_STUDENT_FIELDS = new Set([
   "name",
@@ -596,7 +597,17 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
       });
       studentPatch.updatedBy = actor;
 
-      const batch = db.batch();
+      await db.runTransaction(async batch => {
+      const latest=await batch.get(studentRef);
+      if(!latest.exists)throw Object.assign(new Error("Student not found"),{statusCode:404});
+      const latestData=latest.data();
+      const latestPlacement=secondary?latestData.coursePlacements?.[program]||{}:latestData;
+      const current=studentClassIdentity(latestPlacement);
+      if(current.level!==previous.level||current.className!==previous.className||current.classRecordId!==previous.classRecordId)throw Object.assign(new Error("Student class changed. Refresh and try again."),{statusCode:409});
+      const enrollmentCollection=studentRef.collection("levelEnrollments");
+      const enrollmentSnap=await batch.get(enrollmentCollection);
+      const changes=planEnrollmentTransfer({program,previous,target,rows:enrollmentSnap.docs.map(d=>({...d.data(),id:d.id})),studentId,studentCode:transferRecord.studentCode||studentId,disposition:req.body?.enrollmentDisposition});
+      for(const change of changes){const ref=enrollmentCollection.doc(change.id);const stamp=admin.firestore.FieldValue.serverTimestamp();if(change.create)batch.set(ref,{...change.patch,createdAt:stamp,createdBy:user.uid});else batch.update(ref,{...change.patch,updatedAt:stamp});}
       if (secondary) {
         const nested = Object.fromEntries(Object.entries(studentPatch).filter(([key])=> !["updatedAt","updatedBy"].includes(key)).map(([key,value])=>["coursePlacements."+program+"."+key,value]));
         batch.update(studentRef,{...nested,updatedAt:studentPatch.updatedAt,updatedBy:actor});
@@ -616,9 +627,11 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
         actorId: actor,
         historicalAttendancePreserved: true,
         historicalParticipationPreserved: true,
+        enrollmentDisposition:req.body?.enrollmentDisposition||"",
+        enrollmentChanges:changes.map(change=>({id:change.id,status:change.patch.status||"",created:!!change.create})),
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
-      await batch.commit();
+      });
 
       const responsePlacement = {
           classId: target.classRecordId,
