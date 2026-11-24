@@ -31,7 +31,12 @@ export const A1_DAY5_WORD_ORDER = Object.freeze([
   { words:["kommen", "woher", "Sie"], answer:"Woher kommen Sie?", tip:"W-Frage: W-Wort + Verb + Subjekt", kind:"W-Frage" },
   { words:["bin", "ich", "Jahre alt", "25"], answer:"Ich bin 25 Jahre alt.", tip:"Aussage: Subjekt + Verb + Rest", kind:"Aussage" },
   { words:["aus", "komme", "ich", "Deutschland"], answer:"Ich komme aus Deutschland.", tip:"Aussage: Subjekt + Verb + Rest", kind:"Aussage" },
+  { words:["ist", "meine", "Telefonnummer", "123456789"], answer:"Meine Telefonnummer ist 123456789.", tip:"Aussage: Subjekt + Verb + Rest", kind:"Aussage" },
+  { words:["Entschuldigung", "heißen", "Sie", "wie"], answer:"Entschuldigung, wie heißen Sie?", tip:"W-Frage: W-Wort + Verb + Subjekt", kind:"W-Frage" },
   { words:["wie", "dir", "es", "geht"], answer:"Wie geht es dir?", tip:"W-Frage: W-Wort + Verb + Subjekt + Rest", kind:"W-Frage" },
+  { words:["wie", "Ihnen", "es", "geht"], answer:"Wie geht es Ihnen?", tip:"W-Frage: W-Wort + Verb + Subjekt + Rest", kind:"W-Frage" },
+  { words:["mir", "gut", "es", "geht"], answer:"Es geht mir gut.", alternative:"Mir geht es gut.", tip:"Aussage: Das konjugierte Verb steht an Position 2.", kind:"Aussage" },
+  { words:["geht", "mir", "gut", "es"], answer:"Mir geht es gut.", alternative:"Es geht mir gut.", tip:"Aussage: Das konjugierte Verb steht an Position 2.", kind:"Aussage" },
   { words:["du", "wohnst", "wo"], answer:"Wo wohnst du?", tip:"W-Frage: W-Wort + Verb + Subjekt", kind:"W-Frage" },
 ]);
 export const A1_DAY5_SELF_INTRO = Object.freeze([
@@ -48,11 +53,10 @@ const pages = [
   ["articles", "Artikel", "der · die · das", 5],
   ["article-quiz", "Artikel-Quiz", "Welcher Artikel passt?", 4],
   ["adjectives", "Adjektive", "Gegensätze verstehen", 4],
-  ["ist-adjective", "Satzbau", "Aus Wörtern Sätze und Fragen bilden", 7],
   ["self-intro", "Sich vorstellen", "So stelle ich mich vor", 4],
   ["intro-builder", "Meine Vorstellung", "Eine kurze Vorstellung bauen", 5],
   ["w-questions", "W-Fragen", "Wie · Wo · Woher · Wer · Was", 5],
-  ["word-order", "Satzbau", "Aussagen und W-Fragen richtig ordnen", 7],
+  ["word-order", "Teil 5 · Satzbau", "Ordne die Wörter – 11 Workbook-Aufgaben", 12],
 ];
 
 export const A1_DAY5_CLASSROOM_STAGES = Object.freeze(
@@ -62,7 +66,7 @@ export const A1_DAY5_CLASSROOM_STAGES = Object.freeze(
     day5VisualIntro:step==="intro",
     step,kicker,title,suggestedMinutes,
     items:[],
-    grammarTeaching:step==="articles" || step==="ist-adjective",
+    grammarTeaching:step==="articles",
     teacherPurpose: {
       student:"Sieh dir das Beispiel an, antworte zuerst selbst und erkläre die Wahl mit einfachem Deutsch.",
       teacher:"Erst die eigene Schülerantwort hören, dann die Lösung zeigen. Die Übungsseiten sind nicht benotet.",
