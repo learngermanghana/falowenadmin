@@ -10,3 +10,19 @@ async function syncEnrollmentSheet({id,studentId,record,url,secret,fetchImpl=fet
  return body;
 }
 module.exports={HEADERS,sheetRow,syncEnrollmentSheet};
+
+async function syncEnrollmentRef({ref,db,admin,url=process.env.LEVEL_ENROLLMENT_SYNC_URL,secret=process.env.LEVEL_ENROLLMENT_SYNC_SECRET}){
+ const snap=await ref.get();if(!snap.exists)return {status:"missing"};
+ const record=snap.data(),version=Number(record.sheetVersion||1);
+ if(record.sheetSyncStatus==="synced")return {status:"synced"};
+ try {
+  await syncEnrollmentSheet({id:ref.id,studentId:ref.parent.parent.id,record,url,secret});
+  await db.runTransaction(async tx=>{const current=await tx.get(ref);if(current.exists&&Number(current.data().sheetVersion||1)===version)tx.update(ref,{sheetSyncStatus:"synced",sheetSyncedAt:admin.firestore.FieldValue.serverTimestamp(),sheetSyncError:""});});
+  return {status:"synced"};
+ } catch(e){
+  const message=String(e.message||"Sheet sync failed").slice(0,250);
+  await db.runTransaction(async tx=>{const current=await tx.get(ref);if(current.exists&&Number(current.data().sheetVersion||1)===version&&current.data().sheetSyncStatus!=="synced")tx.update(ref,{sheetSyncStatus:"failed",sheetSyncError:message});});
+  return {status:"failed",error:message};
+ }
+}
+module.exports.syncEnrollmentRef=syncEnrollmentRef;
