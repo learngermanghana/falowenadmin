@@ -140,7 +140,7 @@ const addStudentDefaultDraft = {
   paymentStatus: "Pending",
   contractStart: "",
   contractEnd: "",
-  contractTermMonths: "2",
+  contractTermMonths: "6",
   enrollDate: "",
   dailyLimit: "0",
 };
@@ -247,7 +247,10 @@ function resolveStudentPhone(student, draft = {}) {
 }
 
 function resolveStudentClass(student, draft = {}) {
-  return displayValue(draft.className, draft.level, draft.program, student?.className, student?.level, student?.program, student?.location) || "your German class";
+  const upgradeLevel = String(student?.upgradeStatus || "").toLowerCase() === "pending"
+    ? displayValue(student?.paymentReminderLevel, student?.upgradeToLevel)
+    : "";
+  return displayValue(upgradeLevel, draft.className, draft.level, draft.program, student?.className, student?.level, student?.program, student?.location) || "your German class";
 }
 
 function resolveBalance(student, draft = {}) {
