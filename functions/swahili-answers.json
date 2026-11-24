@@ -872,5 +872,33 @@
         "answer": "Ili asipoteze tena miadi yake muhimu mjini."
       }
     }
+  },
+  "swahili-b1-day-27": {
+    "version": 1,
+    "title": "Kutunza mazingira katika maisha ya kila siku",
+    "writing": {},
+    "reading": {},
+    "listening": {
+      "listen-plastic": {
+        "prompt": "Kwa nini Juma anataka kupunguza matumizi ya mifuko ya nailoni?",
+        "answer": "Kwa sababu mifuko ya nailoni inachafua mazingira."
+      },
+      "listen-baskets": {
+        "prompt": "Juma anataja faida gani mbili za vikapu vya kusuka?",
+        "answer": "Ni imara na vinaweza kudumu kwa miaka mingi bila kuchanika."
+      },
+      "listen-ready": {
+        "prompt": "Juma anapendekeza Amina aweke kikapu kidogo wapi ili kiwe tayari kila wakati?",
+        "answer": "Kwenye mkoba wake au gari. Kubali mojawapo au zote mbili."
+      },
+      "listen-bottles": {
+        "prompt": "Kwa nini kununua chupa ya chuma kunaweza kuwa nafuu kwa muda mrefu?",
+        "answer": "Kwa sababu inaweza kujazwa tena badala ya kununua maji kila siku, hivyo kuokoa pesa kwa mwezi mzima."
+      },
+      "listen-change": {
+        "prompt": "Amina anaamua kubadili tabia gani kuanzia kesho?",
+        "answer": "Atabadilisha tabia yake ya ununuzi na kuanza kutumia chupa yake ya chuma."
+      }
+    }
   }
 }

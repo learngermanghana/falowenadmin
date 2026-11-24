@@ -30,7 +30,7 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
     const passed = review.score >= PASS_MARK;
     if (event.data?.before?.data()?.reviewedAt?.isEqual?.(review.reviewedAt)) return;
     const day = review.lessonId.split("-").at(-1);
-    const b1 = ["swahili-b1-day-26", "swahili-b1-day-28"].includes(review.lessonId);
+    const b1 = ["swahili-b1-day-26", "swahili-b1-day-27", "swahili-b1-day-28"].includes(review.lessonId);
     const lessonDoc = b1 ? `b1-day-${day}` : `day-${day}`;
     const level = b1 ? "B1" : "A1";
     const uid = review.studentId;
