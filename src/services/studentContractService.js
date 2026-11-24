@@ -69,5 +69,7 @@ export async function reconcileStudentPayments(studentId) {
 }
 
 export async function recordManualUpgradePayment(payload) {
-  return parseResponse(await fetch("/api/payments/manual-upgrade", {method:"POST",headers:await authHeaders(),body:JSON.stringify(payload)}));
+  const response = await fetch("/api/payments/manual-upgrade", {method:"POST",headers:await authHeaders(),body:JSON.stringify(payload)});
+  if (response.status === 404 && !(response.headers.get("content-type") || "").includes("application/json")) throw new Error("Manual upgrade payment API is not deployed yet. No payment was recorded.");
+  return parseResponse(response);
 }
