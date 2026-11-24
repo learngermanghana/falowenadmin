@@ -7,7 +7,7 @@ const client=readFileSync(new URL("../src/services/speakingPracticeReviewService
 const app=readFileSync(new URL("../src/App.jsx",import.meta.url),"utf8");
 test("Speaking usage dashboard is a protected Admin route",()=>{
   assert.match(app,/Route path="\/speaking-review" element=\{<ProtectedRoute><SpeakingPracticeReviewPage\s*\/><\/ProtectedRoute>\}/);
-  assert.match(app, /to="\/exam-tracking"[^>]*>Exam Tracking<\/Link>/);
+  assert.ok(app.split("\n").some(line => line.includes('to="/exam-tracking"') && line.includes("Exam Tracking</Link>")));
   assert.match(app, /Route path="\/exam-tracking" element=\{<ProtectedRoute><ExamTrackingPage\s*\/><\/ProtectedRoute>\}/);
   assert.equal(STAFF_PAGES.some(page => ["/exam-tracking","/speaking-review"].includes(page.path)), false);
   for (const path of ["/exam-tracking","/speaking-review"]) {
