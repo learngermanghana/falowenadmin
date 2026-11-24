@@ -257,3 +257,12 @@ export default function StudentClassTransferPanel({
     </section>
   );
 }
+
+export function StudentClassTransferDisclosure(props) {
+  const [open, setOpen] = useState(false);
+  const label = props.program === "swahili" ? "Swahili" : "German";
+  return <details open={open} onToggle={event=>setOpen(event.currentTarget.open)}>
+    <summary style={{cursor:"pointer",fontWeight:600}}>Transfer {label} class &amp; history</summary>
+    {open && <StudentClassTransferPanel {...props} />}
+  </details>;
+}
