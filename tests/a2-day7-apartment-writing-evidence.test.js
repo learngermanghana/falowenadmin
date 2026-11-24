@@ -107,3 +107,68 @@ test("Second examiner's small numeric delta is not mislabelled as a score-thresh
   assert.equal(comparison.scoreDelta < comparison.scoreDeltaThreshold, true);
   assert.equal(comparison.writingScoreDelta < comparison.writingDeltaThreshold, true);
 });
+
+
+const contextualEnquiry = [
+  "TEIL 2",
+  "Lieber Herr Vermieter,",
+  "ich schreibe, weil ich mich für Ihre Wohnung interessiere. Ist sie noch verfügbar?",
+  "Ich suche eine Wohnung mit zwei Zimmern und einer Küche. Sie soll in der Nähe meiner Arbeit sein. Die Miete darf höchstens 500 Euro pro Monat kosten.",
+  "Könnten Sie mir bitte die Mietbedingungen sagen? Und ist ein Besichtigungstermin möglich? Ich habe nächste Woche Zeit.",
+  "Vielen Dank für Ihre Antwort.",
+  "Mit freundlichen Grüßen",
+  "Max",
+  "TEIL 3",
+  "1. A 2. B 3. C 4. D 5. A",
+  "TEIL 4",
+  "1. B 2. A 3. A 4. B 5. A",
+].join("\n");
+
+test("A2-3.7 credits contextual pronoun availability enquiries and retains exact evidence", () => {
+  const evidence = evaluateWritingTaskEvidence(task, contextualEnquiry);
+  assert.deepEqual(evidence.map(({ status }) => status), ["met", "met", "met"]);
+  assert.equal(evidence[0].evidence, "Ist sie noch verfügbar?");
+  assert.deepEqual(missingTaskPointsFromEvidence(evidence), []);
+  for (const source of [
+    "Ich interessiere mich für Ihre Wohnung. Ist sie noch frei?",
+    "Ich interessiere mich für Ihre Wohnung. Ich möchte wissen, ob sie noch verfügbar ist.",
+    "Ich suche eine Wohnung. Ist diese noch zu mieten?",
+  ]) {
+    assert.equal(evaluateWritingTaskEvidence(task, source)[0].status, "met", source);
+  }
+  for (const source of [
+    "Ist sie noch verfügbar?",
+    "Ich interessiere mich für Ihre Wohnung. Sie ist noch verfügbar.",
+    "Ich suche eine Wohnung. Haben Sie nächste Woche Zeit?",
+    "Die Wohnung hat eine Garage. Ist sie noch frei?",
+    "Ich suche eine Wohnung. Ich habe eine Frage zur Besichtigung. Ist sie noch verfügbar?",
+  ]) {
+    assert.equal(evaluateWritingTaskEvidence(task, source)[0].status, "missing", source);
+  }
+});
+
+test("A2-3.7 guard clears false missing-point claims and corrects an unknown landlord greeting", () => {
+  const missing = "Ask whether an apartment is available";
+  const result = applyQuestionAwareWritingGuard({
+    assignmentKey: "A2-3.7", level: "A2",
+    objectiveScore: 80, objectiveCorrect: 8, objectiveTotal: 10,
+    writingScore: 80, writingScorePercent: 80, score: 80, finalScore: 80,
+    confidence: 0.98,
+    taskCompletion: { completed: 2, total: 3, missing: [missing] },
+    missingTaskPoints: [missing],
+    feedback: "Still missing: Ask whether an apartment is available.",
+    reviewReasons: [{ code: "missing_task_points", message: "Required writing points are missing: " + missing + ".", source: "question_aware_writing" }],
+    corrections: [{ partId: "teil2", from: "Lieber Herr Vermieter", to: "Sehr geehrter Herr Vermieter", reason: "Use a formal salutation for a formal hotel or business email." }],
+    status: "marked", shouldSendAutomatically: true,
+  }, {
+    referenceEntry: { assignmentKey: "A2-3.7", level: "A2", writingParts: ["teil2"], aiGradedParts: ["teil2"] },
+    submission: { assignmentKey: "A2-3.7", level: "A2" },
+  }, contextualEnquiry);
+  assert.deepEqual(result.taskPointEvidence.map(({ status }) => status), ["met", "met", "met"]);
+  assert.deepEqual(result.missingTaskPoints, []);
+  assert.equal(result.taskCompletion.completed, 3);
+  assert.equal(result.reviewReasons.some(({ code }) => code === "missing_task_points"), false);
+  assert.doesNotMatch(result.feedback, /Still missing:|Required writing points are missing/i);
+  assert.ok(result.corrections.some(({ to, reason }) => to === "Sehr geehrte Damen und Herren" && /rental enquiry/.test(reason)));
+  assert.ok(!result.corrections.some(({ to }) => /Sehr geehrter Herr Vermieter/i.test(to || "")));
+});
