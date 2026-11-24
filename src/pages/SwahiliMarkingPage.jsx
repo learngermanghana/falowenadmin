@@ -9,7 +9,7 @@ const LESSONS = {
     .map(([id, key]) => [id.split("-").at(-1), { title: key.title, writing: { response: "Kuandika" } }])),
   11: { title: "Dukani", writing: { dialogue: "Mazungumzo" } },
   26: { title: "B1 · Matatizo ya safari na suluhisho zake", writing: { essay: "Insha au ripoti" } },
-  27: { title: "B1 · Kutunza mazingira katika maisha ya kila siku", writing: {} },
+  27: { title: "B1 · Kutunza mazingira katika maisha ya kila siku", writing: { essay: "Insha au ripoti" } },
   28: { title: "B1 · Kutunza Mazingira katika Maisha ya Kila Siku", writing: { email: "Barua pepe" } },
   1: { title: "Alfabeti, sauti na matamshi", writing: { vowels: "Vokali", syllables: "Silabi", words: "Maneno" } },
   6: { title: "Mgahawani", writing: { likes: "Ninapenda", dislikes: "Sipendi", order: "Agizo" } },
@@ -117,6 +117,7 @@ function SubmissionReview({ submission, day, onReviewSaved }) {
       <p>{loading ? "Loading feedback…" : { awaiting_review: "Awaiting review", reviewed: "Reviewed", needs_revision: "Needs revision" }[reviewState]}</p>
       {Object.keys(LESSONS[day].writing).length > 0 && <section>
         <h4>Teil 2 · Kuandika</h4>
+        {day === 27 && !submission.writing?.essay && <p>Hakuna insha iliyowasilishwa. Kazi za awali za Somo la 27 zinaweza kuwa za kusikiliza pekee.</p>}
         {day === 26 && !submission.writing?.essay && <p>Hakuna insha iliyowasilishwa. Kazi za awali za Somo la 26 zinaweza kuwa za kusoma na kusikiliza pekee.</p>}
         {Object.entries(LESSONS[day].writing).map(([key, label]) => (
           <p key={key}><strong>{label}</strong> {String(submission.writing?.[key] ?? "—")}<br /><small>{day === 6 ? "Model response (accept suitable alternatives)" : "Example answer"}: {reference.writing[label]}</small></p>
@@ -124,6 +125,7 @@ function SubmissionReview({ submission, day, onReviewSaved }) {
       </section>}
       {Object.keys(readingReference || {}).length > 0 && <section>
         <h4>Teil 3 · Kusoma</h4>
+        {day === 27 && !Object.values(submission.readingAnswers || {}).some(value => String(value || "").trim()) && <p>Kazi za awali za Somo la 27 zinaweza kuwa za kusikiliza pekee.</p>}
         <ol>
           {Object.entries(readingReference).map(([key, { prompt, answer }]) => (
             <li key={key}><strong>{prompt}</strong> {String(submission.readingAnswers?.[key] ?? "—")}<br /><small>Expected: {answer}</small></li>
