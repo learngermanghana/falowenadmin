@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   A1_DAY5_ADJECTIVE_PAIRS,
   A1_DAY5_ARTICLES,
-  A1_DAY5_DESCRIPTIONS,
   A1_DAY5_QUESTIONS,
   A1_DAY5_SELF_INTRO,
   A1_DAY5_WORD_ORDER,
@@ -49,32 +48,6 @@ function ArticleQuiz() {
       </p>:null}
     </div>
     <p className="a1-day5-footnote">Dies ist eine Übung. Es wird kein Score gespeichert.</p>
-  </section>;
-}
-
-function SentenceCards() {
-  const [selected, setSelected] = useState(0);
-  const [revealed, setRevealed] = useState(false);
-  const active = A1_DAY5_DESCRIPTIONS[selected];
-  return <section className="a1-day5-page" lang="de">
-    <Tag>Satzbau · Adjektive</Tag>
-    <h1>Aus Wörtern Sätze und Fragen bilden</h1>
-    <p className="a1-day5-lead">Teil 2 im Workbook · Bilde zuerst eine Aussage und dann eine Ja/Nein-Frage. Nach <b>ist</b> bleibt das Adjektiv in der Grundform.</p>
-    <div className="a1-day5-pills">
-      {A1_DAY5_DESCRIPTIONS.map((item,i)=><button type="button" key={item.subject}
-        className={selected===i?"is-selected":""} aria-pressed={selected===i}
-        onClick={()=>{setSelected(i);setRevealed(false);}}>{item.subject}</button>)}
-    </div>
-    <div className="a1-day5-formula">
-      {active.words.map((word,i)=><span key={i}>{word}</span>)}
-    </div>
-    <div className="a1-day5-actions">
-      <button type="button" onClick={()=>setRevealed(v=>!v)} aria-expanded={revealed}>
-        {revealed?"Satz verbergen":"Ganzen Satz zeigen"}
-      </button>
-    </div>
-    {revealed?<div className="a1-day5-answer" role="status"><p>Aussage: {active.sentence}</p><p>Frage: Ist {active.subject.charAt(0).toLowerCase()+active.subject.slice(1)} {active.word}?</p><p>Ja, {active.subject.charAt(0).toLowerCase()+active.subject.slice(1)} ist {active.word}.</p></div>:null}
-    <div className="a1-day5-rule"><span><b>Aussage:</b> Subjekt + Verb + Rest · Der Baum ist groß.</span><span><b>Ja/Nein-Frage:</b> Verb + Subjekt + Rest · Ist der Baum groß?</span><span><b>W-Frage:</b> W-Wort + Verb + Subjekt · Wie heißt du?</span></div>
   </section>;
 }
 
@@ -141,7 +114,8 @@ function WordOrder() {
   return <section className="a1-day5-page" lang="de">
     <Tag>Teil 5 · Satzbau · {index+1} / {A1_DAY5_WORD_ORDER.length}</Tag>
     <h1>Ordne die Wörter</h1>
-    <p className="a1-day5-lead">Ordne die Wörter zu einer Aussage oder W-Frage. Sage den ganzen Satz und entscheide: Aussage oder Frage?</p>
+    <p className="a1-day5-lead">Bilde aus den Wörtern einen vollständigen Satz. Achte auf das Verb, die Großschreibung und das Satzzeichen.</p>
+    <p className="a1-day5-micro">{current.kind === "Aussage" ? "Aussage · Statement" : "W-Frage · Question"}</p>
     <div className="a1-day5-scramble" aria-label="Ungeordnete Wörter">
       {current.words.map((word,i)=><span key={i}>{word}</span>)}
     </div>
@@ -149,11 +123,10 @@ function WordOrder() {
       <button type="button" aria-expanded={revealed} onClick={()=>setRevealed(v=>!v)}>
         {revealed?"Antwort verbergen":"Antwort zeigen"}
       </button>
-      <button type="button" className="a1-day5-secondary" onClick={()=>{
-        setIndex(v=>(v+1)%A1_DAY5_WORD_ORDER.length);setRevealed(false);
-      }}>Nächster Satz</button>
+      <button type="button" className="a1-day5-secondary" disabled={index===0} onClick={()=>{setIndex(v=>v-1);setRevealed(false);}}>Vorheriger Satz</button>
+      <button type="button" className="a1-day5-secondary" disabled={index===A1_DAY5_WORD_ORDER.length-1} onClick={()=>{setIndex(v=>v+1);setRevealed(false);}}>Nächster Satz</button>
     </div>
-    {revealed?<div className="a1-day5-rule" role="status"><b>{current.answer}</b><span>{current.kind} · {current.tip}</span></div>:null}
+    {revealed?<div className="a1-day5-rule" role="status"><b>{current.answer}</b>{current.alternative?<span>Auch richtig: {current.alternative}</span>:null}<span>{current.tip}</span></div>:null}
     <p className="a1-day5-footnote">Aussage: Verb auf Position 2. W-Frage: W-Wort + konjugiertes Verb + Subjekt. Achte auf Großschreibung und Satzzeichen.</p>
   </section>;
 }
@@ -208,7 +181,6 @@ export default function A1Day5TeachingStage({ step }) {
     </div>
     <p className="a1-day5-footnote">Weitere Gegensatzpaare stehen in Teil 2 des Workbooks. Beschreibe Dinge mit passenden Adjektiven.</p>
   </section>;
-  if(step==="ist-adjective") return <SentenceCards/>;
   if(step==="self-intro") return <section className="a1-day5-page" lang="de">
     <Tag>Sich vorstellen</Tag>
     <h1>Hallo, ich heiße Lara.</h1>
