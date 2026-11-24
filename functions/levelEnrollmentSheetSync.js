@@ -11,7 +11,12 @@ async function syncEnrollmentSheet({id,studentId,record,url,secret,fetchImpl=fet
 }
 module.exports={HEADERS,sheetRow,syncEnrollmentSheet};
 
-async function syncEnrollmentRef({ref,db,admin,url=process.env.LEVEL_ENROLLMENT_SYNC_URL,secret=process.env.LEVEL_ENROLLMENT_SYNC_SECRET}){
+function resolveEnrollmentSyncConfig(env=process.env){
+ let config={};
+ try {config=JSON.parse(env.CLOUD_RUNTIME_CONFIG_B64?Buffer.from(env.CLOUD_RUNTIME_CONFIG_B64,"base64").toString("utf8"):env.CLOUD_RUNTIME_CONFIG||"{}").level_enrollment||{};}catch{}
+ return {url:env.LEVEL_ENROLLMENT_SYNC_URL||config.url||"",secret:env.LEVEL_ENROLLMENT_SYNC_SECRET||config.secret||""};
+}
+async function syncEnrollmentRef({ref,db,admin,url=resolveEnrollmentSyncConfig().url,secret=resolveEnrollmentSyncConfig().secret}){
  const snap=await ref.get();if(!snap.exists)return {status:"missing"};
  const record=snap.data(),version=Number(record.sheetVersion||1);
  // Missing configuration leaves the record pending, without an outbound call or extra write.
@@ -28,3 +33,4 @@ async function syncEnrollmentRef({ref,db,admin,url=process.env.LEVEL_ENROLLMENT_
  }
 }
 module.exports.syncEnrollmentRef=syncEnrollmentRef;
+module.exports.resolveEnrollmentSyncConfig=resolveEnrollmentSyncConfig;

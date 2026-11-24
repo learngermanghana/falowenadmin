@@ -5,6 +5,8 @@ import { pathToFileURL } from "node:url";
 // Shared modules and unrecognised files deliberately fall back to every existing
 // deployment group. Keep targeted mappings small and explicit.
 export const WORKER_TARGETS = {
+  "functions/levelEnrollmentSheetSync.js": ["api","syncLevelEnrollmentSheet"],
+  "functions/studentLevelEnrollments.js": ["api","syncLevelEnrollmentSheet"],
   // This change only adds owner/public lyric endpoints to the existing API.
   // Avoid redeploying unrelated Cloud Run workers for an editor feature.
   "functions/musicStudioLyrics.js": ["api"],
@@ -129,7 +131,12 @@ export function writeDeployPlan({ before, triggerBefore, head, full, outputPath,
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  writeDeployPlan({
+  if(process.env.FIREBASE_ENROLLMENT_SYNC_ONLY==="true"){
+    const plan={mode:"targeted",targets:["api","syncLevelEnrollmentSheet"],reason:"Explicit enrollment configuration deployment"};
+    fs.writeFileSync(process.env.FIREBASE_DEPLOY_PLAN||"/tmp/falowen-firebase-deploy-plan.json",JSON.stringify(plan,null,2));
+    if(process.env.GITHUB_OUTPUT)fs.appendFileSync(process.env.GITHUB_OUTPUT,"mode=targeted\n");
+    console.log(JSON.stringify(plan));
+  }else writeDeployPlan({
     before: process.env.FIREBASE_DEPLOY_BASE_SHA,
     triggerBefore: process.env.FIREBASE_TRIGGER_BASE_SHA,
     head: process.env.GITHUB_SHA || "HEAD",

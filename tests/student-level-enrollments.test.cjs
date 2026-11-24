@@ -57,3 +57,10 @@ test("manual historical totals do not require legacy reconciliation or reference
  const next=paymentPatch({...base,...manualTotals({tuitionFee:3000,paid:2000})},1000);
  assert.equal(next.paid,3000);assert.equal(next.balanceDue,0);
 });
+
+test("enrollment sync configuration can use existing Firebase runtime configuration",()=>{
+ const {resolveEnrollmentSyncConfig}=require("../functions/levelEnrollmentSheetSync");
+ const env={CLOUD_RUNTIME_CONFIG_B64:Buffer.from(JSON.stringify({level_enrollment:{url:"https://example.com",secret:"test"}})).toString("base64")};
+ assert.deepEqual(resolveEnrollmentSyncConfig(env),{url:"https://example.com",secret:"test"});
+ assert.deepEqual(resolveEnrollmentSyncConfig({}),{url:"",secret:""});
+});
