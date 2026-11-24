@@ -1,5 +1,13 @@
 export const SWAHILI_MUSIC_TRACKS = [
   {
+    id: "swahili-a1-day-12",
+    level: "A1",
+    day: 12,
+    title: "Angalia Kalenda",
+    objectKey: "swahili/music/A1/day-12/Angalia Kalenda.mp3.mpeg",
+    audioUrl: "https://www.falowen.app/api/music?track=swahili-a1-day-12",
+  },
+  {
     id: "swahili-a1-day-02",
     level: "A1",
     day: 2,
