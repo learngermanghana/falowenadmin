@@ -560,10 +560,11 @@ export const a1WorkbookAlignedSlidesDays1To5 = [
       subtitle: "Interactive self-practice. No formal tutor-marked submission is required for A1-1.3.",
       parts: [
         { label: "Shared Grammar", detailEn: "The linked Kapitel 1.2 notes review subject pronouns, present-tense conjugation and self-introduction patterns used again on Day 5." },
-        { label: "Teil 1 · Articles", detailEn: "Choose masculine, feminine or neuter for familiar nouns using der, die and das." },
+        { label: "Teil 1 · Articles", detailEn: "Choose masculine, feminine or neuter for five nouns: Tisch, Auto, Lampe, Apfel and Buch." },
         { label: "Teil 2 · Adjectives", detailEn: "Learn useful adjective pairs and produce simple predicative descriptions such as Der Baum ist groß." },
         { label: "Teil 3 · Personal Information", detailEn: "Write a 6–8 sentence personal introduction; the contribution is saved to the class profile/discussion." },
-        { label: "Teil 4 · Mini Dialogue / W-Fragen", detailEn: "Practise W-word + verb + subject with Wie, Wo, Woher, Was and Wer, then continue with interactive W-word and sentence-order practice." },
+        { label: "Teil 4 · Mini Dialogue / W-Fragen", detailEn: "Practise W-word + verb + subject with Wie, Wo, Woher, Was and Wer using the model dialogue and W-word exercises." },
+        { label: "Teil 5 · Scrambled Sentences", detailEn: "Rearrange short statements and W-questions and identify their sentence type." },
       ],
     }),
     teacherSupport: {
