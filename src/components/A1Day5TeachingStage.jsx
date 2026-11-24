@@ -25,16 +25,16 @@ function ArticleQuiz() {
   const card = A1_DAY5_ARTICLES[index];
   return <section className="a1-day5-page" lang="de">
     <Tag>Artikel-Quiz · {index+1} / {A1_DAY5_ARTICLES.length}</Tag>
-    <h1>Welcher Artikel passt?</h1>
-    <p className="a1-day5-lead">Wähle einen Artikel und sage das ganze Wort.</p>
+    <h1>Maskulin, feminin oder neutral?</h1>
+    <p className="a1-day5-lead">Teil 1 im Workbook · Wähle das Genus und sage das ganze Wort.</p>
     <div className="a1-day5-quiz-box">
       <span className="a1-day5-micro">Wort</span>
-      <strong className="a1-day5-quiz-word">{card.noun}</strong>
-      <div className="a1-day5-choice-group" role="group" aria-label="Artikel wählen">
+      <strong className="a1-day5-quiz-word">{card.article} {card.noun}</strong>
+      <div className="a1-day5-choice-group" role="group" aria-label="Genus wählen">
         {["der","die","das"].map(article=><button type="button" key={article}
           aria-pressed={chosen===article}
           className={chosen===article?"is-selected":""}
-          onClick={()=>{setChosen(article);setRevealed(false);}}>{article}</button>)}
+          onClick={()=>{setChosen(article);setRevealed(false);}}>{{der:"maskulin",die:"feminin",das:"neutral"}[article]}</button>)}
       </div>
       <div className="a1-day5-actions">
         <button type="button" disabled={!chosen} onClick={()=>setRevealed(v=>!v)}>
@@ -58,23 +58,23 @@ function SentenceCards() {
   const active = A1_DAY5_DESCRIPTIONS[selected];
   return <section className="a1-day5-page" lang="de">
     <Tag>Satzbau · Adjektive</Tag>
-    <h1>Subjekt + ist + Adjektiv</h1>
-    <p className="a1-day5-lead">Nach <b>ist</b> bleibt das Adjektiv in der Grundform.</p>
+    <h1>Aus Wörtern Sätze und Fragen bilden</h1>
+    <p className="a1-day5-lead">Teil 2 im Workbook · Bilde zuerst eine Aussage und dann eine Ja/Nein-Frage. Nach <b>ist</b> bleibt das Adjektiv in der Grundform.</p>
     <div className="a1-day5-pills">
       {A1_DAY5_DESCRIPTIONS.map((item,i)=><button type="button" key={item.subject}
         className={selected===i?"is-selected":""} aria-pressed={selected===i}
         onClick={()=>{setSelected(i);setRevealed(false);}}>{item.subject}</button>)}
     </div>
     <div className="a1-day5-formula">
-      <span>{active.subject}</span><b>+</b><span className="a1-day5-ist">ist</span><b>+</b><span>{active.word}</span>
+      {active.words.map((word,i)=><span key={i}>{word}</span>)}
     </div>
     <div className="a1-day5-actions">
       <button type="button" onClick={()=>setRevealed(v=>!v)} aria-expanded={revealed}>
         {revealed?"Satz verbergen":"Ganzen Satz zeigen"}
       </button>
     </div>
-    {revealed?<p className="a1-day5-answer" role="status">{active.sentence}</p>:null}
-    <div className="a1-day5-rule"><b>Merke:</b> Das Haus ist <strong>klein</strong>. Nicht: <s>Das Haus ist kleines.</s></div>
+    {revealed?<div className="a1-day5-answer" role="status"><p>Aussage: {active.sentence}</p><p>Frage: Ist {active.subject.charAt(0).toLowerCase()+active.subject.slice(1)} {active.word}?</p><p>Ja, {active.subject.charAt(0).toLowerCase()+active.subject.slice(1)} ist {active.word}.</p></div>:null}
+    <div className="a1-day5-rule"><span><b>Aussage:</b> Subjekt + Verb + Rest · Der Baum ist groß.</span><span><b>Ja/Nein-Frage:</b> Verb + Subjekt + Rest · Ist der Baum groß?</span><span><b>W-Frage:</b> W-Wort + Verb + Subjekt · Wie heißt du?</span></div>
   </section>;
 }
 
@@ -103,9 +103,9 @@ function WordOrder() {
   const [revealed,setRevealed]=useState(false);
   const current=A1_DAY5_WORD_ORDER[index];
   return <section className="a1-day5-page" lang="de">
-    <Tag>Fragesätze · {index+1} / {A1_DAY5_WORD_ORDER.length}</Tag>
+    <Tag>Teil 5 · Satzbau · {index+1} / {A1_DAY5_WORD_ORDER.length}</Tag>
     <h1>Ordne die Wörter</h1>
-    <p className="a1-day5-lead">Bilde eine richtige W-Frage.</p>
+    <p className="a1-day5-lead">Ordne die Wörter zu einer Aussage oder W-Frage. Sage den ganzen Satz und entscheide: Aussage oder Frage?</p>
     <div className="a1-day5-scramble" aria-label="Ungeordnete Wörter">
       {current.words.map((word,i)=><span key={i}>{word}</span>)}
     </div>
@@ -115,35 +115,10 @@ function WordOrder() {
       </button>
       <button type="button" className="a1-day5-secondary" onClick={()=>{
         setIndex(v=>(v+1)%A1_DAY5_WORD_ORDER.length);setRevealed(false);
-      }}>Nächste Frage</button>
+      }}>Nächster Satz</button>
     </div>
-    {revealed?<div className="a1-day5-rule" role="status"><b>{current.answer}</b><span>{current.tip}</span></div>:null}
-    <p className="a1-day5-footnote">In einer W-Frage steht das konjugierte Verb direkt nach dem Fragewort.</p>
-  </section>;
-}
-
-function LiveCheck({ question }) {
-  const [revealed,setRevealed]=useState(false);
-  const questionId=question?.id||question?.questionDe||"";
-  // A new student must not inherit the previous student's exposed answer.
-  return <section className="a1-day5-page a1-day5-live" lang="de">
-    <Tag>Live-Quiz · eine Frage pro Student</Tag>
-    <h1>Was kannst du schon?</h1>
-    <p className="a1-day5-lead">Wähle einen Studenten oben. Die Antwort wird erst nach dem Versuch gezeigt.</p>
-    {question?<div key={questionId} className="a1-day5-quiz-box">
-      <h2>{question.questionDe}</h2>
-      <button type="button" onClick={()=>setRevealed(v=>!v)}>
-        {revealed?"Antwort verbergen":"Antwort zeigen"}
-      </button>
-      {revealed?<div className="a1-day5-answer" role="status">
-        <strong>{question.answerDe}</strong>
-        {question.noteEn?<p>{question.noteEn}</p>:null}
-      </div>:null}
-    </div>:<div className="a1-day5-empty" role="status">
-      <strong>Student auswählen</strong>
-      <p>Die erste Frage erscheint nach der Auswahl im bestehenden Teilnahmebereich.</p>
-    </div>}
-    <p className="a1-day5-footnote">Correct / Needs review wird ausschließlich im bestehenden Teilnahmebereich erfasst. Keine automatische Bewertung.</p>
+    {revealed?<div className="a1-day5-rule" role="status"><b>{current.answer}</b><span>{current.kind} · {current.tip}</span></div>:null}
+    <p className="a1-day5-footnote">Aussage: Verb auf Position 2. W-Frage: W-Wort + konjugiertes Verb + Subjekt. Achte auf Großschreibung und Satzzeichen.</p>
   </section>;
 }
 
@@ -165,13 +140,13 @@ function Recap() {
   </section>;
 }
 
-export default function A1Day5TeachingStage({ step, question=null }) {
+export default function A1Day5TeachingStage({ step }) {
   if(step==="intro") return <section className="a1-day5-page" lang="de">
     <Tag>A1 · Day 5</Tag>
     <h1>Sich vorstellen, Artikel und W-Fragen</h1>
     <p className="a1-day5-lead">Heute sprechen wir über Personen, Dinge und einfache Fragen.</p>
     <div className="a1-day5-intro-cards">
-      <article><span className="a1-day5-icon">der · die · das</span><strong>Artikel</strong><small>der Tisch · die Lampe · das Auto</small></article>
+      <article><span className="a1-day5-icon">der · die · das</span><strong>Artikel</strong><small>der Tisch · das Auto · die Lampe</small></article>
       <article><span className="a1-day5-icon">ist + groß</span><strong>Adjektive</strong><small>Das Haus ist groß.</small></article>
       <article><span className="a1-day5-icon">Wie?</span><strong>W-Fragen</strong><small>Wie heißt du?</small></article>
     </div>
@@ -191,11 +166,11 @@ export default function A1Day5TeachingStage({ step, question=null }) {
     <h1>Gegensätze verstehen</h1>
     <p className="a1-day5-lead">Sprich die beiden Wörter laut. Was bedeuten sie?</p>
     <div className="a1-day5-opposites">
-      {A1_DAY5_ADJECTIVE_PAIRS.map(([left,right],i)=><div className="a1-day5-opposite-row" key={left}>
+      {A1_DAY5_ADJECTIVE_PAIRS.slice(0,5).map(([left,right])=><div className="a1-day5-opposite-row" key={left}>
         <span>{left}</span><b aria-hidden="true">↔</b><span>{right}</span>
       </div>)}
     </div>
-    <p className="a1-day5-footnote">Beschreibe Dinge freundlich und sachlich mit passenden Adjektiven.</p>
+    <p className="a1-day5-footnote">Weitere Gegensatzpaare stehen in Teil 2 des Workbooks. Beschreibe Dinge mit passenden Adjektiven.</p>
   </section>;
   if(step==="ist-adjective") return <SentenceCards/>;
   if(step==="self-intro") return <section className="a1-day5-page" lang="de">
@@ -222,7 +197,6 @@ export default function A1Day5TeachingStage({ step, question=null }) {
     </div>
   </section>;
   if(step==="word-order") return <WordOrder/>;
-  if(step==="live-quiz") return <LiveCheck key={question?.id||question?.questionDe||"no-student"} question={question}/>;
   if(step==="wrapup") return <Recap/>;
   return null;
 }
