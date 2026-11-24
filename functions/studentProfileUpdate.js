@@ -278,6 +278,38 @@ function makeManualTrialPatch(student = {}, now = new Date(), fieldValue = {}) {
   return patch;
 }
 
+
+function reconcileManualPaymentPatch(student, updates) {
+  const patch = { ...updates };
+  const fail = message => { throw Object.assign(new Error(message), { statusCode: 409 }); };
+  const money = (value, field) => {
+    const raw = String(value ?? "").trim().replace(/,/g, "");
+    if (!/^\d+(?:\.\d{1,2})?$/.test(raw) || !Number.isSafeInteger(Math.round(Number(raw)*100))) fail("Invalid " + field);
+    return Math.round(Number(raw)*100)/100;
+  };
+  const oldLevel = normalizeLevel(student.level || student.levelId);
+  const newLevel = normalizeLevel(patch.level || oldLevel);
+  if (oldLevel && newLevel && oldLevel !== newLevel && isStudentAlreadyPaid(student)) fail("Use Student Upgrade Tools to change paid course levels.");
+  const hasBalance = Object.hasOwn(patch, "balanceDue");
+  const hasFee = Object.hasOwn(patch, "tuitionFee");
+  if (Object.hasOwn(patch, "initialPaymentAmount")) patch.initialPaymentAmount = money(patch.initialPaymentAmount, "initial payment amount");
+  if (hasBalance || hasFee) {
+    if (!hasBalance) fail("Confirm the current-level balance when changing tuition.");
+    const balance = money(patch.balanceDue, "balance due");
+    const fee = money(patch.tuitionFee ?? student.tuitionFee, "current-level tuition fee");
+    if (balance > fee) fail("Balance cannot exceed current-level tuition.");
+    if (["pending","awaiting_payment","expired"].includes(String(student.upgradeStatus || "").toLowerCase())) fail("Reconcile this student's upgrade through payment tools first.");
+    const status = balance === 0 ? "Paid" : balance === fee ? "Unpaid" : "Partially Paid";
+    if (patch.paymentStatus && String(patch.paymentStatus).toLowerCase() !== status.toLowerCase()) fail("Payment status disagrees with balance.");
+    Object.assign(patch, { balanceDue: balance, balance, paymentStatus: status });
+    if (hasFee) patch.tuitionFee = fee;
+    if (String(patch.status || student.status).toLowerCase() === "paid" && balance > 0) patch.status = "Active";
+  } else if (String(patch.paymentStatus || patch.status || "").toLowerCase() === "paid") {
+    if (money(student.balanceDue ?? student.balance, "balance due") !== 0) fail("Cannot mark a student paid with outstanding balance.");
+  }
+  return patch;
+}
+
 function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffEmails = [], now = () => new Date() }) {
   if (!app?.patch || !app?.post || !app?.get || !db?.collection || !db?.batch || !admin?.firestore?.FieldValue?.serverTimestamp || typeof requireAuth !== "function") {
     throw new Error("Student profile update route dependencies are incomplete");
@@ -318,6 +350,23 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
           const { program: ignoredProgram, ...ordinary } = updates;
           const patch = { ...ordinary, ...courseEnrollmentPatch({ ...snapshot.data(), ...ordinary }, input.courseEnrollment) };
           tx.update(studentRef, { ...patch, ...audit });
+          return patch;
+        });
+      } else if (["level","tuitionFee","balanceDue","paymentStatus","initialPaymentAmount","contractStart","status"].some(field => Object.hasOwn(updates, field))) {
+        updates = await db.runTransaction(async tx => {
+          const snapshot = await tx.get(studentRef);
+          if (!snapshot.exists) throw Object.assign(new Error("Student not found"), { statusCode: 404 });
+          const previous = snapshot.data() || {};
+          const patch = reconcileManualPaymentPatch(previous, updates);
+          const keys = ["level","tuitionFee","balanceDue","balance","paymentStatus","initialPaymentAmount","contractStart","status"];
+          const changed = keys.filter(key => Object.hasOwn(patch,key) && previous[key] !== patch[key]);
+          tx.update(studentRef, { ...patch, ...audit });
+          if (changed.length) tx.set(db.collection("auditLogs").doc(), {
+            type: "student.manual_payment_edit", studentId, actor: audit.updatedBy,
+            before: Object.fromEntries(changed.map(key => [key, previous[key] ?? null])),
+            after: Object.fromEntries(changed.map(key => [key, patch[key] ?? null])),
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
           return patch;
         });
       } else {
@@ -658,4 +707,5 @@ module.exports = {
   registerStudentProfileUpdateRoute,
   isStudentAlreadyPaid,
   makeManualTrialPatch,
+  reconcileManualPaymentPatch,
 };
