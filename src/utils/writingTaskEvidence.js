@@ -410,9 +410,20 @@ function a2ApartmentEvidence(assignmentKey = "", label = "", source = "", index 
   const enquiry = (sentence) => /\?/.test(sentence)
     || /\b(?:ich\s+m[oö]chte\s+(?:wissen|fragen|erfahren)|ich\s+w[uü]rde\s+gern\s+wissen|k[oö]nnen\s+sie\s+mir\s+(?:sagen|mitteilen)|bitte\s+teilen\s+sie\s+mir\s+mit)\b/i.test(sentence);
   if (/ask whether an apartment is available/.test(point)) {
-    const evidence = lines.find((sentence) => {
-      if (!/\b(?:wohnung(?:en)?|apartment(?:s)?|zimmer)\b/i.test(sentence)) return false;
+    const apartment = /\b(?:wohnung(?:en)?|apartment(?:s)?|zimmer)\b/i;
+    const evidence = lines.find((sentence, sentenceIndex) => {
       const available = /\b(?:frei|verf[uü]gbar|zu\s+(?:haben|mieten|vermieten)|noch\s+da)\b/i.test(sentence);
+      if (!apartment.test(sentence)) {
+        // A valid follow-up question can refer back to the apartment with a pronoun.
+        // Require a nearby explicit antecedent and an actual availability enquiry,
+        // not merely a description or an unrelated question about free time.
+        const previous = lines[sentenceIndex - 1] || "";
+        const antecedent = /\bwohnung\b([^.!?]*)[.!?]?$/i.exec(previous);
+        const competingReferent = antecedent && /\b(?:k[uü]che|garage|person|vermieterin|mitbewohnerin|arbeit|stelle|besichtigung|zeit|termin)\b/i.test(antecedent[1]);
+        const direct = /^(?:und\s+)?(?:ist|w[aä]re|bleibt)\s+(?:sie|diese)\b/i.test(sentence) && /\?/.test(sentence);
+        const indirect = /\bob\s+(?:sie|diese)\b/i.test(sentence) && enquiry(sentence);
+        return Boolean(antecedent && !competingReferent && available && (direct || indirect));
+      }
       const question = /\b(?:haben\s+sie|gibt\s+es|vermieten\s+sie)\b/i.test(sentence) && /\?/.test(sentence);
       // Learners often phrase availability as an embedded question:
       // "Ich möchte fragen, ob Sie noch eine Wohnung frei haben."
