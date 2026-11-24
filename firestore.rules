@@ -94,7 +94,7 @@ service cloud.firestore {
 
     match /swahiliTeacherReviews/{reviewId} {
       allow get: if canReviewSwahili() || (signedIn() &&
-        (reviewId == request.auth.uid || reviewId.replace('_day-([2-9]|1[0-9]|20)$', '') == request.auth.uid || reviewId == request.auth.uid + '_b1-day-28') &&
+        (reviewId == request.auth.uid || reviewId.replace('_day-([2-9]|1[0-9]|20)$', '') == request.auth.uid || (reviewId == request.auth.uid + '_b1-day-28' || reviewId == request.auth.uid + '_b1-day-26')) &&
         (resource == null || resource.data.studentId == request.auth.uid));
       allow list: if canReviewSwahili();
       allow create, update: if canReviewSwahili() &&
@@ -108,7 +108,7 @@ service cloud.firestore {
         ((request.resource.data.lessonId == 'swahili-day-1' && reviewId == request.resource.data.studentId) ||
           (request.resource.data.lessonId.matches('swahili-day-([2-9]|1[0-9]|20)') &&
             reviewId == request.resource.data.studentId + '_' + request.resource.data.lessonId.replace('^swahili-', '')) ||
-          (request.resource.data.lessonId == 'swahili-b1-day-28' && reviewId == request.resource.data.studentId + '_b1-day-28'));
+          (request.resource.data.lessonId.matches('swahili-b1-day-(26|28)') && reviewId == request.resource.data.studentId + '_' + request.resource.data.lessonId.replace('^swahili-', '')));
     }
 
     match /writingProgress/{progressId} {

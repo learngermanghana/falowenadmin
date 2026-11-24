@@ -8,6 +8,7 @@ const LESSONS = {
   ...Object.fromEntries(Object.entries(answerKeys).filter(([, key]) => key.title)
     .map(([id, key]) => [id.split("-").at(-1), { title: key.title, writing: { response: "Kuandika" } }])),
   11: { title: "Dukani", writing: { dialogue: "Mazungumzo" } },
+  26: { title: "B1 · Matatizo ya safari na suluhisho zake", writing: {} },
   28: { title: "B1 · Kutunza Mazingira katika Maisha ya Kila Siku", writing: { email: "Barua pepe" } },
   1: { title: "Alfabeti, sauti na matamshi", writing: { vowels: "Vokali", syllables: "Silabi", words: "Maneno" } },
   6: { title: "Mgahawani", writing: { likes: "Ninapenda", dislikes: "Sipendi", order: "Agizo" } },
@@ -113,12 +114,12 @@ function SubmissionReview({ submission, day, onReviewSaved }) {
     <form className="marking-card swahili-marking-form" onSubmit={submit}>
       <h3>{submission.studentName || submission.studentEmail || submission.studentId}</h3>
       <p>{loading ? "Loading feedback…" : { awaiting_review: "Awaiting review", reviewed: "Reviewed", needs_revision: "Needs revision" }[reviewState]}</p>
-      <section>
+      {Object.keys(LESSONS[day].writing).length > 0 && <section>
         <h4>Teil 2 · Kuandika</h4>
         {Object.entries(LESSONS[day].writing).map(([key, label]) => (
           <p key={key}><strong>{label}</strong> {String(submission.writing?.[key] ?? "—")}<br /><small>{day === 6 ? "Model response (accept suitable alternatives)" : "Example answer"}: {reference.writing[label]}</small></p>
         ))}
-      </section>
+      </section>}
       <section>
         <h4>Teil 3 · Kusoma</h4>
         <ol>

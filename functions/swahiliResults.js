@@ -30,8 +30,8 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
     const passed = review.score >= PASS_MARK;
     if (event.data?.before?.data()?.reviewedAt?.isEqual?.(review.reviewedAt)) return;
     const day = review.lessonId.split("-").at(-1);
-    const b1 = review.lessonId === "swahili-b1-day-28";
-    const lessonDoc = b1 ? "b1-day-28" : `day-${day}`;
+    const b1 = ["swahili-b1-day-26", "swahili-b1-day-28"].includes(review.lessonId);
+    const lessonDoc = b1 ? `b1-day-${day}` : `day-${day}`;
     const level = b1 ? "B1" : "A1";
     const uid = review.studentId;
     if (snapshot.id !== (day === "1" ? uid : `${uid}_${lessonDoc}`) || !review.submissionVersion) return;
@@ -68,7 +68,7 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
           return null;
         }
         if (delivery.exists) return delivery.data();
-        tx.set(snapshot.ref, { ...(b1 ? {} : { answerReference: resolveDayFourAnswerReference(review.lessonId, submission.data()?.readingVersion) }), sheetDelivery: "pending", emailDelivery: "pending" }, { merge: true });
+        tx.set(snapshot.ref, { ...(review.lessonId === "swahili-b1-day-28" ? {} : { answerReference: resolveDayFourAnswerReference(review.lessonId, submission.data()?.readingVersion) }), sheetDelivery: "pending", emailDelivery: "pending" }, { merge: true });
         tx.set(scoreRef, {
           program: "swahili", language: "swahili", studentId: uid, studentCode, studentcode: studentCode,
           name: student.name || "", assignment, assignmentId: review.lessonId,
