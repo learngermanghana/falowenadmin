@@ -10,6 +10,7 @@ import {
   A1_DAY5_DESCRIPTIONS,
   A1_DAY5_WORD_ORDER,
   A1_DAY5_SELF_INTRO,
+  A1_DAY5_PERSONAL_INFO,
   A1_DAY5_QUESTIONS,
 } from "../src/data/a1Day5Classroom.js";
 import { getA1WorkbookAlignedSlideDay1To5 } from "../src/data/a1WorkbookAlignedSlidesDays1To5.js";
@@ -129,4 +130,14 @@ test("Day 5 retains original unscored practice routes and five workbook sections
   assert.match(source,/<PresenterSessionTimer/);
   assert.match(source,/<PresenterStudentPicker/);
   assert.match(source,/stage\.day5FinalChallenge \? <A1Day5TeachingStage step="wrapup"/);
+});
+
+test("personal information teaches the approved ten terms with bilingual starters and partner questions",()=>{
+  assert.deepEqual(A1_DAY5_PERSONAL_INFO.map(x=>x[0]),["Familienname","Vorname","Herkunft","Geburtsort","Adresse","Postleitzahl","Telefonnummer","Familienstand","Kinder","Alter"]);
+  assert.ok(A1_DAY5_PERSONAL_INFO.every(x=>x.length===6 && x.every(Boolean) && x[4].endsWith("?")));
+  assert.match(uiSource,/function PersonalInformation/);
+  assert.match(uiSource,/function PersonalQuestions/);
+  assert.match(uiSource,/Satzhilfe/);
+  assert.match(uiSource,/Dein Satz/);
+  assert.match(uiSource,/selected\.includes\(i\)/);
 });
