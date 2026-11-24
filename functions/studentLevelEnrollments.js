@@ -21,7 +21,7 @@ function paymentPatch(enrollment,amount){
  const fee=moneyCents(enrollment.tuitionFee),paid=moneyCents(enrollment.paid),balance=moneyCents(enrollment.balanceDue),credit=moneyCents(amount);
  if(paid+balance!==fee||!credit||credit>balance) fail("Payment exceeds remaining tuition or ledger requires review",409);
  const due=balance-credit;
- return {paid:(paid+credit)/100,balanceDue:due/100,paymentStatus:due?"Partially Paid":"Paid"};
+ return {paid:(paid+credit)/100,balanceDue:due/100,paymentStatus:due?"Partially Paid":"Paid",sheetVersion:Number(enrollment.sheetVersion||1)+1,sheetSyncStatus:"pending"};
 }
 function paymentDate(value){
  const date=String(value||"");
@@ -36,8 +36,15 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  app.get(route,async(req,res)=>{try{await authorize(req);const {student,collection}=refs(req);if(!(await student.get()).exists)fail("Student not found",404);const snap=await collection.get();return res.json({ok:true,enrollments:snap.docs.map(d=>({id:d.id,...d.data()}))});}catch(e){return error(res,e);}});
  app.post(route,async(req,res)=>{try{const user=await authorize(req);const {studentId,student,collection}=refs(req);const data=normalizeEnrollment(req.body);const id=data.program+"-"+data.level;const ref=collection.doc(id);
  const result=await db.runTransaction(async tx=>{const [parent,existing]=await Promise.all([tx.get(student),tx.get(ref)]);if(!parent.exists)fail("Student not found",404);if(existing.exists)fail("Level already exists",409);
- const enrollment={...data,studentId,studentCode:parent.data().studentCode||studentId,paid:0,balanceDue:data.tuitionFee,paymentStatus:data.tuitionFee?"Unpaid":"Paid",status:"planned",accountingMode:"independent_pending_integration"};
+ const enrollment={...data,studentId,studentCode:parent.data().studentCode||studentId,paid:0,balanceDue:data.tuitionFee,paymentStatus:data.tuitionFee?"Unpaid":"Paid",status:"planned",accountingMode:"independent_pending_integration",sheetVersion:1,sheetSyncStatus:"pending"};
  const stamp=admin.firestore.FieldValue.serverTimestamp();tx.set(ref,{...enrollment,createdAt:stamp,createdBy:user.uid});tx.set(db.collection("auditLogs").doc(),{type:"student.levelEnrollmentCreated",studentId,enrollmentId:id,actorId:user.uid,createdAt:stamp});return {id,...enrollment};});return res.json({ok:true,enrollment:result});}catch(e){return error(res,e);}});
+ app.post(route+"/:enrollmentId/sync-sheet",async(req,res)=>{try{
+ await authorize(req);const {studentId,collection}=refs(req);const ref=enrollmentRef(req,collection);const snap=await ref.get();if(!snap.exists)fail("Enrollment not found",404);
+ const record=snap.data();
+ await require("./levelEnrollmentSheetSync").syncEnrollmentSheet({id:ref.id,studentId,record,url:process.env.LEVEL_ENROLLMENT_SYNC_URL,secret:process.env.LEVEL_ENROLLMENT_SYNC_SECRET});
+ await db.runTransaction(async tx=>{const current=await tx.get(ref);if(current.exists&&current.data().sheetVersion===record.sheetVersion)tx.update(ref,{sheetSyncStatus:"synced",sheetSyncedAt:admin.firestore.FieldValue.serverTimestamp()});});
+ return res.json({ok:true});
+ }catch(e){return error(res,e);}});
  const paymentRoute=route+"/:enrollmentId/payments";
  const enrollmentRef=(req,collection)=>{const id=String(req.params.enrollmentId||"");if(!/^(german|swahili)-(A1|A2|B1|B2|C1|C2)$/.test(id))fail("Invalid enrollment");return collection.doc(id);};
  app.get(paymentRoute,async(req,res)=>{try{await authorize(req);const {collection}=refs(req);const ref=enrollmentRef(req,collection);if(!(await ref.get()).exists)fail("Enrollment not found",404);const snap=await ref.collection("payments").get();return res.json({ok:true,payments:snap.docs.map(d=>({id:d.id,...d.data()}))});}catch(e){return error(res,e);}});
@@ -85,7 +92,7 @@ function registerEnrollmentCheckout({app,db,admin,requirePaymentAdmin,initialize
  const email=String(req.body.email||student.data().email||"").trim();if(!email.includes("@"))fail("Student email required");
  const reference=createPaymentReference(studentId),checkoutAmount=calculateStudentCheckoutAmount(credit);
  const metadata={studentId,enrollmentId,purpose:"level_enrollment",tuitionCredit:credit};
- const payment={...metadata,reference,email,provider:"Paystack",currency:"GHS",checkoutAmount,status:"initializing",createdBy:user.uid,createdAt:admin.firestore.FieldValue.serverTimestamp()};
+ const payment={...metadata,reference,email,provider:"Paystack",currency:"GHS",checkoutAmount,status:"pending",createdBy:user.uid,createdAt:admin.firestore.FieldValue.serverTimestamp()};
  const paymentRef=db.collection("payments").doc(reference);
  await paymentRef.create(payment);
  const gateway=await initializePaystackPayment({email,checkoutAmount,reference,metadata});
