@@ -563,8 +563,8 @@ export default function StudentDirectoryPage() {
       if (field === "program") {
         const primary = String(student.program || "german").toLowerCase();
         const mode = draft.program || primary;
-        if (mode !== (student.secondaryProgram ? "both" : primary) || draft.secondaryLevel !== undefined || draft.secondaryClassName !== undefined || draft.grantSecondaryAccess === true || draft.secondaryAccessEnd !== undefined) {
-          payload.courseEnrollment = { mode, expectedPrimary: primary, secondaryLevel: draft.secondaryLevel, secondaryClassName: draft.secondaryClassName, grantSecondaryAccess: draft.grantSecondaryAccess, secondaryAccessEnd: draft.secondaryAccessEnd };
+        if (mode !== (student.secondaryProgram ? "both" : primary) || draft.secondaryLevel !== undefined || draft.secondaryClassName !== undefined || draft.grantSecondaryAccess === true || draft.secondaryAccessEnd !== undefined || draft.secondaryContractStart !== undefined || draft.secondaryContractTermMonths !== undefined || draft.secondaryAccessType !== undefined) {
+          payload.courseEnrollment = { mode, expectedPrimary: primary, secondaryLevel: draft.secondaryLevel, secondaryClassName: draft.secondaryClassName, grantSecondaryAccess: draft.grantSecondaryAccess, secondaryAccessEnd: draft.secondaryAccessEnd, secondaryContractStart: draft.secondaryContractStart, secondaryContractTermMonths: draft.secondaryContractTermMonths, secondaryAccessType: draft.secondaryAccessType ?? (!student.secondaryProgram && !student.coursePlacements?.[primary === "german" ? "swahili" : "german"] && mode === "both" && !draft.grantSecondaryAccess ? "pending" : undefined) };
         }
         continue;
       }
@@ -1217,52 +1217,58 @@ export default function StudentDirectoryPage() {
                               const primary = String(selectedStudent.program || "german").toLowerCase();
                               const secondary = primary === "german" ? "swahili" : "german";
                               const mode = draft.program || primary;
-                              const programs = mode === "both" ? [primary, secondary] : [mode];
+                              const programs = mode === "both" ? ["german", "swahili"] : [mode];
                               const saved = selectedStudent.coursePlacements?.[secondary];
                               const disabled = savingId === selectedStudent.id;
+                              const change = (field,value) => updateDraftField(selectedStudent.id,field,value,selectedStudent);
                               return <>
                                 {renderEditableFields(["program"])}
-                                <div className="student-detail-fields">
+                                <div style={{display:"grid",gap:14,marginTop:12}}>
                                   {programs.map(program => {
                                     const isPrimary = program === primary;
                                     const level = isPrimary ? draft.level : draft.secondaryLevel ?? saved?.level ?? "A1";
                                     const label = languageName(program);
-                                    return <fieldset key={program}>
-                                      <legend>{label}</legend>
-                                      <label>{label} level
-                                        <select value={level || ""} disabled={disabled}
-                                          onChange={event => updateDraftField(selectedStudent.id, isPrimary ? "level" : "secondaryLevel", event.target.value, selectedStudent)}>
+                                    const type = isPrimary ? selectedStudent.accessType || selectedStudent.paymentStatus || "Unconfirmed" : draft.secondaryAccessType ?? saved?.accessType ?? (saved && selectedStudent.secondaryProgram ? "Legacy enrollment" : "pending");
+                                    const granting = !isPrimary && (draft.grantSecondaryAccess || type === "complimentary");
+                                    const start = isPrimary ? draft.contractStart : draft.secondaryContractStart ?? normalizeDateValue(saved?.contractStart);
+                                    const end = isPrimary ? draft.contractEnd : draft.secondaryAccessEnd ?? normalizeDateValue(saved?.contractEnd);
+                                    const term = isPrimary ? draft.contractTermMonths : draft.secondaryContractTermMonths ?? saved?.contractTermMonths ?? (granting ? 3 : "");
+                                    const persisted = isPrimary || selectedStudent.secondaryProgram === program;
+                                    const field = key => isPrimary ? key : ({contractStart:"secondaryContractStart",contractEnd:"secondaryAccessEnd",contractTermMonths:"secondaryContractTermMonths"}[key]);
+                                    return <section key={program} style={{border:"1px solid #dbe4ee",borderRadius:12,padding:14,display:"grid",gap:12,minWidth:0}}>
+                                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                                        <h3 style={{margin:0}}>{label}</h3><small>{isPrimary ? "Primary · original billing" : "Secondary · separate access"}</small>
+                                      </div>
+                                      <div className="student-detail-fields">
+                                        <label>{label} level<select value={level || ""} disabled={disabled} onChange={event=>change(isPrimary?"level":"secondaryLevel",event.target.value)}>
                                           {!courseLevels.includes(level) && <option value={level || ""}>{level || "Select level"}</option>}
-                                          {courseLevels.map(value => <option key={value}>{value}</option>)}
-                                        </select>
-                                      </label>
-                                      {!isPrimary && program === "swahili" && mode === "both" && primary === "german" && (
-                                        <div style={{display:"grid",gap:8,marginTop:10}}>
-                                          <strong>Complimentary Swahili access</strong>
-                                          <small>For paid German learners. Separate from German billing and contract dates.</small>
-                                          {saved?.accessType !== "complimentary" && <label>
-                                            <input type="checkbox" checked={draft.grantSecondaryAccess === true} disabled={disabled}
-                                              onChange={event => updateDraftField(selectedStudent.id, "grantSecondaryAccess", event.target.checked, selectedStudent)} />
-                                            Unlock Swahili for 3 months
-                                          </label>}
-                                          {(saved?.accessType === "complimentary" || draft.grantSecondaryAccess) && <>
-                                            <small>Starts: {normalizeDateValue(saved?.contractStart) || "On save"}</small>
-                                            <label>Swahili access end date
-                                              <input type="date" value={draft.secondaryAccessEnd ?? normalizeDateValue(saved?.contractEnd)} disabled={disabled}
-                                                onChange={event => updateDraftField(selectedStudent.id, "secondaryAccessEnd", event.target.value, selectedStudent)} />
-                                            </label>
-                                            <small>Leave the date unchanged for the default three calendar months. Edit the expiry to extend or shorten access; saving other details does not renew it.</small>
-                                          </>}
-                                        </div>
-                                      )}
-                                      {!isPrimary && <label>{label} class name
-                                        <input value={draft.secondaryClassName ?? saved?.className ?? ""} maxLength={160} disabled={disabled}
-                                          onChange={event => updateDraftField(selectedStudent.id, "secondaryClassName", event.target.value, selectedStudent)} />
+                                          {courseLevels.map(value=><option key={value}>{value}</option>)}
+                                        </select></label>
+                                        <label>{label} class<input readOnly value={(isPrimary ? selectedStudent.className : saved?.className) || "Not assigned"} /></label>
+                                        <label>Access type<input readOnly value={granting ? "Complimentary" : type} /></label>
+                                      </div>
+                                      {!isPrimary && !saved?.accessType?.match(/^(complimentary|invitation_pending)$/) && !saved?.contractEnd && !Number(saved?.paid || saved?.paidAmount || 0) && <label style={{display:"flex",alignItems:"center",gap:8}}>
+                                        <input type="checkbox" checked={Boolean(draft.grantSecondaryAccess)} disabled={disabled} onChange={event=>change("grantSecondaryAccess",event.target.checked)} />
+                                        {program === "swahili" ? "Grant complimentary Swahili access (default 3 months for paid German learners)" : "Explicitly approve complimentary German access (set expiry)"}
                                       </label>}
-                                    </fieldset>;
+                                      <div className="student-detail-fields">
+                                        <label>Contract start<input type="date" value={start || ""} disabled={disabled || (!isPrimary && !granting && !saved?.contractStart)} onChange={event=>change(field("contractStart"),event.target.value)} /></label>
+                                        <label>Contract end<input type="date" value={end || ""} disabled={disabled || (!isPrimary && !granting && !saved?.contractEnd)} onChange={event=>change(field("contractEnd"),event.target.value)} /></label>
+                                        <label>Contract term months<input type="number" min="1" max="36" value={term} disabled={disabled || (!isPrimary && !granting && !saved?.contractEnd)} onChange={event=>change(field("contractTermMonths"),event.target.value)} /></label>
+                                      </div>
+                                      <small>{isPrimary ? "Original billing and trial records stay attached to this language." : granting ? "Dates are independent of the primary contract. Saving other details does not renew access." : "No automatic complimentary grant. Existing access is preserved."}</small>
+                                      <div className="student-contract-extension-actions">
+                                        {[1,3,6].map(months=><button key={months} type="button" disabled={disabled || !end} onClick={()=>{
+                                          try {change(field("contractEnd"),extendContractDate(end,months));}
+                                          catch(error){pushToast({type:"error",message:error.message});}
+                                        }}>+{months} {months === 1 ? "month" : "months"}</button>)}
+                                      </div>
+                                      {persisted && detailTab === "class" ? <details><summary style={{cursor:"pointer",fontWeight:600}}>Transfer {label} class &amp; history</summary>
+                                        <StudentClassTransferPanel key={selectedStudent.id+":"+program} student={selectedStudent} program={program} classes={classes} onTransferred={handleStudentTransferred} pushToast={pushToast} />
+                                      </details> : <small>Save the enrollment before assigning a class.</small>}
+                                    </section>;
                                   })}
                                 </div>
-                                {renderEditableFields(tab.fields.filter(field => field !== "program" && field !== "level"))}
                               </>;
                             })() : renderEditableFields(tab.fields)}
                             {/* STUDENT_EMERGENCY_CONTACT_FIELD: Emergency contact stays in the staff-only Profile tab. */}
@@ -1285,22 +1291,6 @@ export default function StudentDirectoryPage() {
                         />
                               </>
                             )}
-                            {tab.id === "class" && <div className="student-contract-extension">
-                              <strong>Extend contract</strong>
-                              <p>Add calendar months to the contract end date above, then save the student.</p>
-                              <div className="student-contract-extension-actions">
-                                {[1, 3, 6].map((months) => <button key={months} type="button" disabled={savingId === selectedStudent.id || !getDraft(selectedStudent).contractEnd} onClick={() => {
-                                  try {
-                                    const nextEnd = extendContractDate(getDraft(selectedStudent).contractEnd, months);
-                                    updateDraftField(selectedStudent.id, "contractEnd", nextEnd, selectedStudent);
-                                  } catch (err) { pushToast({ type: "error", message: err.message }); }
-                                }}>+{months} {months === 1 ? "month" : "months"}</button>)}
-                              </div>
-                              {!getDraft(selectedStudent).contractEnd && <p>Set the contract end date to enable extensions.</p>}
-                            </div>}
-                            {tab.id === "class" && <StudentClassTransferPanel
-                              key={selectedStudent.id} student={selectedStudent} classes={classes}
-                              onTransferred={handleStudentTransferred} pushToast={pushToast} />}
                           </section>
                         ))}
 
