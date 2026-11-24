@@ -1291,7 +1291,7 @@ export default function StudentDirectoryPage() {
                           {!isHamburgCohortStudent(selectedStudent) && <button type="button" onClick={()=>setDetailTab("enrollments")}>Manage enrollments</button>}
                         </section>}
                         {detailTab === "enrollments" && !isHamburgCohortStudent(selectedStudent) && <section className="student-detail-panel" role="tabpanel" id="student-panel-enrollments" aria-labelledby="student-tab-enrollments">
-                          <StudentLevelEnrollments student={selectedStudent} pushToast={pushToast} />
+                          <StudentLevelEnrollments student={selectedStudent} pushToast={pushToast} classes={classes} />
                         </section>}
                         {detailTab === "payment-links" && !isHamburgCohortStudent(selectedStudent) && <section className="student-detail-panel" role="tabpanel" id="student-panel-payment-links" aria-labelledby="student-tab-payment-links">
                           <StudentPaymentTools mode="links" student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast} />
