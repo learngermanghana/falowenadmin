@@ -71,8 +71,8 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
           tx.set(snapshot.ref, { sheetDelivery: "outdated", emailDelivery: "outdated" }, { merge: true });
           return null;
         }
-        if (delivery.exists) return delivery.data();
         const assignment = `Swahili ${level} Day ${day} · ${resolveDayFourAnswerReference(review.lessonId, submission.data()?.readingVersion, submission.data()?.contentVersion)?.title || lessonTitles[review.lessonId]}`;
+        if (delivery.exists) return { ...delivery.data(), assignment };
         tx.set(snapshot.ref, { ...(review.lessonId === "swahili-b1-day-28" ? {} : { answerReference: resolveDayFourAnswerReference(review.lessonId, submission.data()?.readingVersion, submission.data()?.contentVersion) }), sheetDelivery: "pending", emailDelivery: "pending" }, { merge: true });
         tx.set(scoreRef, {
           program: "swahili", language: "swahili", studentId: uid, studentCode, studentcode: studentCode,
@@ -82,7 +82,7 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
           passMark: PASS_MARK, outcome: passed ? "passed" : "failed", source: "swahili_tutor",
           date: review.reviewedAt.toDate().toISOString(), sheetSaved: false,
         });
-        const job = { scorePath: scoreRef.path, status: "pending", attempts: 0, source: "swahili_tutor", reviewPath: snapshot.ref.path, reviewedAt: review.reviewedAt };
+        const job = { assignment, scorePath: scoreRef.path, status: "pending", attempts: 0, source: "swahili_tutor", reviewPath: snapshot.ref.path, reviewedAt: review.reviewedAt };
         tx.create(deliveryRef, job);
         return job;
       });
@@ -108,7 +108,7 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
         announcement: review.status === "needs_revision"
           ? "Your tutor reviewed your Swahili workbook and requested a revision. Open Campus Results for feedback."
           : "Your Swahili workbook result is available. Open Campus Results to read your tutor’s feedback.",
-        topic: `${assignment} result`,
+        topic: `${result.assignment} result`,
         link: `https://www.falowen.app/campus/results#${review.lessonId}`,
         link_label: b1 ? "Open score and feedback" : "Open score, feedback and reference answers",
         button_label: "Open Falowen Results",
