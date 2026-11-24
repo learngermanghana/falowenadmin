@@ -72,9 +72,9 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
   const [tuitionFee, setTuitionFee] = useState("");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [busy, setBusy] = useState("");
-  const [manual, setManual] = useState({amount:"",receivedDate:"",method:"momo",reference:"",alreadyIncluded:false,existingPaymentReference:"",verified:false});
+  const [manual, setManual] = useState({amount:"",receivedDate:"",method:"momo",reference:""});
   const [showManual,setShowManual] = useState(false);
-  useEffect(()=>{setShowManual(false);setManual({amount:"",receivedDate:"",method:"momo",reference:"",alreadyIncluded:false,existingPaymentReference:"",verified:false});},[studentId,student?.upgradeId]);
+  useEffect(()=>{setShowManual(false);setManual({amount:"",receivedDate:"",method:"momo",reference:""});},[studentId,student?.upgradeId]);
   const [generatedPayment, setGeneratedPayment] = useState(null);
 
   useEffect(() => {
@@ -234,14 +234,14 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
   };
 
   const saveManual = async () => {
-    if (!manual.verified || !manual.reference.trim() || !manual.receivedDate || Number(manual.amount)<=0 || Number(manual.amount)>remainingUpgradeBalance || (manual.alreadyIncluded && !manual.existingPaymentReference.trim())) return;
-    if (!window.confirm("Record verified " + effectiveTarget + " tuition of " + formatGhs(manual.amount) + "? This does not charge the student.")) return;
+    if (!manual.reference.trim() || (manual.method!=="paystack" && (!manual.receivedDate || !(Number(manual.amount)>0) || Number(manual.amount)>remainingUpgradeBalance))) return;
+    
     setBusy("manual");
     try {
       const result = await recordManualUpgradePayment({...manual,studentId,upgradeId:student.upgradeId});
       onStudentUpdated?.(studentId,result.studentUpdate);
       setShowManual(false);
-      setManual({amount:"",receivedDate:"",method:"momo",reference:"",alreadyIncluded:false,existingPaymentReference:"",verified:false});
+      setManual({amount:"",receivedDate:"",method:"momo",reference:""});
       pushToast?.({type:"success",message:"Verified manual upgrade payment recorded."});
     } catch(error) { pushToast?.({type:"error",message:error.message || "Manual payment failed"}); }
     finally {setBusy("");}
@@ -341,15 +341,12 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
       {canGenerateUpgradePayment && <div style={{display:"grid",gap:8,borderTop:"1px solid #e2e8f0",paddingTop:10}}>
         <button type="button" disabled={Boolean(busy)} onClick={()=>setShowManual(!showManual)}>Record manual upgrade payment</button>
         {showManual && <>
-          <p style={{margin:0,fontSize:13}}>Only record money already received and independently verified. If the money is already in payment history, reallocate it rather than adding it twice. This does not charge the student.</p>
-          <label>Amount (GHS)<input type="number" min="0.01" max={remainingUpgradeBalance} step="0.01" value={manual.amount} onChange={e=>setManual({...manual,amount:e.target.value})}/></label>
-          <label>Actual payment date<input type="date" max={new Date().toISOString().slice(0,10)} value={manual.receivedDate} onChange={e=>setManual({...manual,receivedDate:e.target.value})}/></label>
-          <label>Method<select value={manual.method} onChange={e=>setManual({...manual,method:e.target.value})}><option value="momo">MoMo</option><option value="bank">Bank transfer</option><option value="cash">Cash</option></select></label>
+          <p style={{margin:0,fontSize:13}}>Enter the reference of an existing payment or record money received offline. Falowen automatically detects existing paid records and uses their original amount and date. No new charge is made.</p>
+          {manual.method!=="paystack" && <><label>Amount (GHS)<input type="number" min="0.01" max={remainingUpgradeBalance} step="0.01" value={manual.amount} onChange={e=>setManual({...manual,amount:e.target.value})}/></label>
+          <label>Actual payment date<input type="date" max={new Date().toISOString().slice(0,10)} value={manual.receivedDate} onChange={e=>setManual({...manual,receivedDate:e.target.value})}/></label></>}
+          <label>Method<select value={manual.method} onChange={e=>setManual({...manual,method:e.target.value})}><option value="paystack">Existing Paystack payment</option><option value="momo">MoMo</option><option value="bank">Bank transfer</option><option value="cash">Cash</option></select></label>
           <label>Unique transaction or cash receipt reference<input value={manual.reference} onChange={e=>setManual({...manual,reference:e.target.value})}/></label>
-          <label><input type="checkbox" checked={manual.alreadyIncluded} onChange={e=>setManual({...manual,alreadyIncluded:e.target.checked,existingPaymentReference:""})}/> Already included in recorded paid total</label>
-          {manual.alreadyIncluded && <label>Existing paid record reference<input value={manual.existingPaymentReference} onChange={e=>setManual({...manual,existingPaymentReference:e.target.value})}/></label>}
-          <label><input type="checkbox" checked={manual.verified} onChange={e=>setManual({...manual,verified:e.target.checked})}/> I verified the payment, date and whether it has already been recorded.</label>
-          <button type="button" disabled={Boolean(busy)||!manual.verified||!manual.receivedDate||!manual.reference.trim()||!(Number(manual.amount)>0)||Number(manual.amount)>remainingUpgradeBalance||(manual.alreadyIncluded&&!manual.existingPaymentReference.trim())} onClick={saveManual}>{busy==="manual"?"Recording…":"Confirm manual payment"}</button>
+          <button type="button" disabled={Boolean(busy)||!manual.reference.trim()||(manual.method!=="paystack"&&(!manual.receivedDate||!(Number(manual.amount)>0)||Number(manual.amount)>remainingUpgradeBalance))} onClick={saveManual}>{busy==="manual"?"Recording…":"Confirm manual payment"}</button>
         </>}
       </div>}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
