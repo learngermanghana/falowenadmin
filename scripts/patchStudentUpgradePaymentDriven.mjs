@@ -290,6 +290,13 @@ app.post("/payments/restore-paid-contract", async (req, res) => {
 `;
   content = replaceBetween(content, routeStart, routeEnd, routeReplacement, "start-upgrade route");
 
+  // Register outside the generated lifecycle block so repeated patch runs remain idempotent.
+  const manualRoute = 'require("./manualUpgradePayment").registerManualUpgradePayment({ app, db, admin, requirePaymentAdmin, studentsCollection: STUDENTS_COLLECTION });';
+  if (!content.includes(manualRoute)) {
+    const marker = 'app.post("/payments/reconcile-student/:studentId", async (req, res) => {';
+    if (!content.includes(marker)) throw new Error("Manual upgrade route anchor missing");
+    content = content.replace(marker, manualRoute + "\n" + marker);
+  }
   write(file, content);
 }
 
