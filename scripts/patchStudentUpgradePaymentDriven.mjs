@@ -311,6 +311,20 @@ app.post("/payments/restore-paid-contract", async (req, res) => {
     if (!content.includes(marker)) throw new Error("Enrollment checkout route anchor missing");
     content = content.replace(marker,enrollmentRoute+"\n"+marker);
   }
+  const syncSecretDeclaration = 'const levelEnrollmentSyncSecret = defineSecret("LEVEL_ENROLLMENT_SYNC_SECRET");';
+  if (!content.includes(syncSecretDeclaration)) {
+    const marker = 'const paystackSecretKeySecret = defineSecret("PAYSTACK_SECRET");';
+    if (!content.includes(marker)) throw new Error("Enrollment sync secret anchor missing");
+    content = content.replace(marker,marker+"\n"+syncSecretDeclaration);
+  }
+  if (!content.includes('    levelEnrollmentSyncSecret,\n')) {
+    const marker = '    paystackSecretKeySecret,\n';
+    if (!content.includes(marker)) throw new Error("Enrollment sync API secret anchor missing");
+    content = content.replace(marker,marker+'    levelEnrollmentSyncSecret,\n');
+  }
+  if (!content.includes('exports.syncLevelEnrollmentSheet =')) {
+    content += '\nexports.syncLevelEnrollmentSheet = require("firebase-functions/v2/firestore").onDocumentWritten({document:"students/{studentId}/levelEnrollments/{enrollmentId}",secrets:[levelEnrollmentSyncSecret]}, async event => { const after=event.data?.after; if (!after?.exists) return; const before=event.data?.before; const next=after.data(); if (before?.exists && before.data().sheetVersion===next.sheetVersion) return; if(next.sheetSyncStatus!=="pending") return; return require("./levelEnrollmentSheetSync").syncEnrollmentRef({ref:after.ref,db,admin,secret:levelEnrollmentSyncSecret.value()}); });\n';
+  }
   write(file, content);
 }
 
