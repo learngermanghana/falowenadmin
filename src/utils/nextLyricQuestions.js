@@ -74,29 +74,29 @@ export function threeVerifiedNextLyricQuestions(pack, recording) {
 
 // Listening comprehension: the correct option MUST be audible in the excerpt.
 // This is intentionally different from guessing the next, unheard lyric.
-export function threeVerifiedHeardLyricQuestions(pack, recording, {minSeconds = 4.5, maxSeconds = 11, targetSeconds = 10} = {}) {
+export function threeVerifiedHeardLyricQuestions(pack, recording, {minSeconds = 4.5, maxSeconds = 11, targetSeconds = 10, allowFewer = false, ignoreLegacyEndings = false} = {}) {
   if (!pack || !recording || pack.objectKey !== recording.objectKey ||
       typeof pack.lyrics !== 'string' || pack.referenceOnly === true ||
       pack.transcriptionStatus === 'automatic' || pack.timingStatus === 'estimated') return [];
   if (![minSeconds,maxSeconds,targetSeconds].every(Number.isFinite) || minSeconds < 4.5 || maxSeconds > 15 || minSeconds > targetSeconds || targetSeconds > maxSeconds) return [];
   const lines = lyricLines(pack.lyrics);
   const cues = validateLyricCues(pack.cues, lines);
-  if (lines.length < 4 || cues.length !== lines.length) return [];
+  if (lines.length < (allowFewer ? 3 : 4) || cues.length !== lines.length) return [];
   const normalize = line => String(line).toLocaleLowerCase('de').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
   const counts = new Map();
   for (const line of lines) counts.set(normalize(line), (counts.get(normalize(line)) || 0) + 1);
   const candidates = [];
-  for (let i = 1; i < lines.length; i++) {
+  for (let i = ignoreLegacyEndings ? 0 : 1; i < lines.length; i++) {
     // The previous line may be a legacy questionEnding, but today's answer is
     // the line AFTER it, which must be played in its entirety.
-    if (pack.questionEndings && !pack.questionEndings.includes(lines[i - 1])) continue;
+    if (!ignoreLegacyEndings && pack.questionEndings && !pack.questionEndings.includes(lines[i - 1])) continue;
     const end = cues[i].end ?? cues[i + 1]?.start;
     if (!Number.isFinite(end) || end <= cues[i].start) continue;
     const start = Math.max(cues[0].start, end - targetSeconds);
     const duration = end - start;
     if (duration < minSeconds || duration > maxSeconds ||
-        cues[i].start < start || lines[i].length < 8 ||
-        counts.get(normalize(lines[i])) !== 1) continue;
+        cues[i].start < start || lines[i].length < (allowFewer ? 3 : 8) ||
+        (!allowFewer && counts.get(normalize(lines[i])) !== 1)) continue;
     const heard = new Set();
     for (let j = 0; j < cues.length; j++) {
       const cueEnd = cues[j].end ?? cues[j + 1]?.start ?? Infinity;
@@ -106,7 +106,7 @@ export function threeVerifiedHeardLyricQuestions(pack, recording, {minSeconds = 
     const used = new Set([normalize(lines[i])]);
     for (const line of lines) {
       const key = normalize(line);
-      if (line.length >= 8 && !heard.has(key) && !used.has(key)) {
+      if (line.length >= (allowFewer ? 3 : 8) && key && !heard.has(key) && !used.has(key)) {
         wrong.push(line);
         used.add(key);
       }
@@ -123,11 +123,11 @@ export function threeVerifiedHeardLyricQuestions(pack, recording, {minSeconds = 
       heardLyric: true,
     });
   }
-  if (candidates.length < 3) return [];
-  const selected = pack.questionEndings
+  if (!candidates.length || (!allowFewer && candidates.length < 3)) return [];
+  const selected = !ignoreLegacyEndings && pack.questionEndings
     ? pack.questionEndings.map(line => candidates.find(candidate =>
         candidate.id === 'heard-lyric-' + (lines.indexOf(line) + 1)))
-    : [candidates[0], candidates[Math.floor((candidates.length - 1) / 2)], candidates.at(-1)];
+    : candidates.length <= 3 ? candidates : [candidates[0], candidates[Math.floor((candidates.length - 1) / 2)], candidates.at(-1)];
   if (selected.some(candidate => !candidate)) return [];
   return selected.map((candidate, correctIndex) => {
     const options = [...candidate.options];

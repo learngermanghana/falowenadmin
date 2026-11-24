@@ -67,3 +67,35 @@ test('Day 22 uses longer verified clips without weakening recording safeguards',
    {...pack,timingStatus:'estimated'},
  ])assert.deepEqual(threeVerifiedHeardLyricQuestions(unverified,recording,{minSeconds:10,maxSeconds:15,targetSeconds:12}),[]);
 });
+
+test('short repeated A1 lines and fewer than three safe excerpts do not disable synchronized listening',()=>{
+ const lines=['Hallo!','Hallo!','Guten Tag!','Tschüss!'];
+ const pack={objectKey:'music/a1/day-05/test.mp3',lyrics:lines.join('\n'),
+   cues:lines.map((text,i)=>({text,start:i*10,end:i*10+5}))};
+ const recording={objectKey:pack.objectKey};
+ const questions=threeVerifiedHeardLyricQuestions(pack,recording,{allowFewer:true,ignoreLegacyEndings:true});
+ assert.ok(questions.length>=1);
+ for(const q of questions){
+  assert.equal(q.options.length,3);
+  assert.equal(q.options[q.correctIndex],q.answer);
+  assert.equal(new Set(q.options).size,3);
+  assert.ok(pack.cues.some(c=>c.text===q.answer&&q.previewRange.start<=c.start&&q.previewRange.end>=c.end));
+ }
+});
+test('all A1 question entry points use current lyric cues and no typed seconds',()=>{
+ const ui=readFileSync(new URL('../src/components/PublishedSongLessonStage.jsx',import.meta.url),'utf8');
+ assert.match(ui,/nextLyricOnly = \/\^A1-\/i/);
+ assert.match(ui,/const synchronized=hasCompleteSongTiming\(cues,recordedLyrics\)/);
+ assert.match(ui,/lyrics: recordedLyrics,\s*cues,/);
+ assert.match(ui,/allowFewer:true, ignoreLegacyEndings:true/);
+ assert.doesNotMatch(ui,/Startzeit in Sekunden|teacherClipStart|type="number"/);
+ assert.match(ui,/12 Sekunden abspielen/);
+ assert.match(ui,/Ausschnitt wiederholen/);
+ assert.match(ui,/Nächster Ausschnitt/);
+ const day5=readFileSync(new URL('../src/components/A1Day5MusicReadingStage.jsx',import.meta.url),'utf8');
+ const presenter=readFileSync(new URL('../src/components/A1GrammarPresenter.jsx',import.meta.url),'utf8');
+ const linked=readFileSync(new URL('../src/components/LinkedPublishedSongLessonStage.jsx',import.meta.url),'utf8');
+ assert.match(day5,/PublishedSongLessonStage.*nextLyricOnly/);
+ assert.match(presenter,/PublishedSongLessonStage.*nextLyricOnly/);
+ assert.match(linked,/PublishedSongLessonStage.*nextLyricOnly/);
+});

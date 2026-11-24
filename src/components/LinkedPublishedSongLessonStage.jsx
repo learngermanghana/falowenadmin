@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import LessonSongLyrics from './LessonSongLyrics.jsx';
+import PublishedSongLessonStage from './PublishedSongLessonStage.jsx';
 import { getCuratedMusicByAssignment } from '../data/curatedLessonMusic.js';
 import { getReusableSongDraft } from '../data/reusableMusicSongbook.js';
 import { recordedEvidenceRange, recordedSongQuestions, selectRecordedLessonTrack, verifiedRecordedLyrics } from '../utils/recordedLessonMusic.js';
@@ -10,6 +11,14 @@ import './LessonSongStage.css';
 // The real public MP3 and its recorded lyrics are resolved by objectKey;
 // never embed the music website inside the slide or use draft lyrics.
 export default function LinkedPublishedSongLessonStage({ music }) {
+  // A1 Day 22 previously bypassed the standard A1 listening question player.
+  // Route it through the same no-typing flow while preserving its pinned MP3.
+  if (String(music?.level || '').toUpperCase() === 'A1' && music?.assignmentKey === 'A1-14.1') {
+    return <PublishedSongLessonStage assignmentKey={music.assignmentKey} courseDay={music.day} compact nextLyricOnly />;
+  }
+  return <LinkedRecordedSongLessonStage music={music} />;
+}
+function LinkedRecordedSongLessonStage({ music }) {
   const day = Number(music?.day);
   const level = String(music?.level || '').toUpperCase();
   const supported = (['A2', 'B1'].includes(level) && Number.isInteger(day) && day >= 1 && day <= 28)
