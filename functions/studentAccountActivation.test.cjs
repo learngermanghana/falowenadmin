@@ -4,7 +4,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
   accountStatus, prepareAccount, recordInvitation, registerStudentAccountActivationRoutes,
-  findExistingLogin, linkExistingLogin,
+  findExistingLogin, linkExistingLogin, changeLoginEmail,
 } = require("./studentAccountActivation.js");
 
 function fixture(initial = { name: "Test Learner", email: "student@example.org" }, existingUsers = []) {
@@ -29,6 +29,14 @@ function fixture(initial = { name: "Test Learner", email: "student@example.org" 
       if (!byUid.has(uid)) throw Object.assign(new Error("Not found"), { code: "auth/user-not-found" });
       return byUid.get(uid);
     },
+    async updateUser(uid, updates) {
+      const user = byUid.get(uid);
+      byEmail.delete(user.email);
+      Object.assign(user, updates);
+      byEmail.set(user.email, user);
+      return user;
+    },
+    async revokeRefreshTokens() {},
     async createUser(options) {
       createCalls += 1;
       assert.ok(options.password.length >= 40, "long random bootstrap password");
@@ -51,7 +59,7 @@ function fixture(initial = { name: "Test Learner", email: "student@example.org" 
               }) }),
             }),
           }
-        : { doc: uid => ({
+        : { doc: (uid = "audit") => ({
             uid,
             get: async () => ({ exists: locks.has(uid), data: () => locks.get(uid) }),
           }) },
@@ -154,4 +162,27 @@ test("existing UID is never overwritten during explicit link", async () => {
   await assert.rejects(findExistingLogin({ ...f, studentId: "test-123" }), err => err.status === 409);
   await assert.rejects(linkExistingLogin({ ...f, studentId: "test-123" }), err => err.status === 409);
   assert.equal(f.getStudent().uid, "another-uid");
+});
+
+test("owner changes login and contact email without replacing UID or billing", async () => {
+  const f = fixture({ name: "Learner", email: "student@example.org", uid: "existing", paid: 100, trialEndsAt: "original" }, [
+    { uid: "existing", email: "student@example.org", providerData: [{ providerId: "password" }], metadata: {} },
+  ]);
+  const result = await changeLoginEmail({ ...f, studentId: "test-123", expectedEmail: "student@example.org", newEmail: "correct@example.org", reason: "Typo" });
+  assert.equal(result.uid, "existing");
+  assert.equal(f.getStudent().email, "correct@example.org");
+  assert.equal(f.getStudent().uid, "existing");
+  assert.equal(f.getStudent().paid, 100);
+  assert.equal(f.getStudent().trialEndsAt, "original");
+  assert.equal(f.getUser("correct@example.org").emailVerified, false);
+  assert.equal(f.getCreatedCount(), 0);
+});
+
+test("duplicate destination Firebase email is rejected", async () => {
+  const f = fixture({ email: "student@example.org", uid: "existing" }, [
+    { uid: "existing", email: "student@example.org", providerData: [{ providerId: "password" }] },
+    { uid: "other", email: "taken@example.org" },
+  ]);
+  await assert.rejects(changeLoginEmail({ ...f, studentId: "test-123", expectedEmail: "student@example.org", newEmail: "taken@example.org", reason: "Typo" }), err => err.status === 409);
+  assert.equal(f.getStudent().email, "student@example.org");
 });
