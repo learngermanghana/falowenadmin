@@ -383,3 +383,15 @@ export async function deleteStudentAccount(student = {}) {
 export async function createStudent(studentId, payload) {
   return createStudentWithFirestore(studentId, payload);
 }
+
+export async function changeStudentCourseType(studentId, { courseType, expectedCourseType, reason } = {}, { fetchImpl = globalThis.fetch, headersLoader = authHeaders } = {}) {
+  const id = normalize(studentId);
+  if (!id || !["full_course", "exam_preparation"].includes(courseType) || !["full_course", "exam_preparation"].includes(expectedCourseType) || courseType === expectedCourseType || !normalize(reason) || normalize(reason).length > 500) {
+    throw new Error("A student, different course type, and reason are required.");
+  }
+  const response = await fetchImpl(`/api/students/${encodeURIComponent(id)}/course-type`, {
+    method: "POST", headers: await headersLoader(),
+    body: JSON.stringify({ courseType, expectedCourseType, reason: normalize(reason) }),
+  });
+  return parseStudentProfileUpdateResponse(response, await response.text());
+}
