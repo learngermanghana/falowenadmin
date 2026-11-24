@@ -1,3 +1,5 @@
+import { SWAHILI_MUSIC_TRACKS } from "./swahiliMusicTracks.js";
+
 // Calendar, time and daily routines: adapted from Dr. Ruth’s recommended A1 sequence and the published Campus workbooks.
 export const SWAHILI_DAY_TWELVE_ADMIN_LESSON = Object.freeze({
   "id": "swahili-day-12",
@@ -97,12 +99,16 @@ export const SWAHILI_DAY_TWELVE_ADMIN_LESSON = Object.freeze({
     },
     {
       "id": "music",
-      "type": "media-pending",
+      "type": "music",
       "kicker": "Muziki · Music",
-      "title": "Muziki · Siku, Miezi na Tarehe",
-      "content": "Wimbo utaongezwa baadaye.",
-      "english": "Song, lyrics and song-specific questions will be connected when supplied.",
-      "status": "pending-media"
+      "title": "Angalia Kalenda",
+      "audio": SWAHILI_MUSIC_TRACKS.find(track => track.id === "swahili-a1-day-12"),
+      "questions": [
+        { "prompt": "Wiki ina siku ngapi?", "answer": "Wiki ina siku saba." },
+        { "prompt": "Mwaka una miezi mingapi?", "answer": "Mwaka una miezi kumi na miwili." },
+        { "prompt": "Mei ni mwezi wa ngapi?", "answer": "Mei ni mwezi wa tano." },
+        { "prompt": "Miadi ni lini?", "answer": "Miadi ni Alhamisi, tarehe ishirini Agosti." }
+      ]
     },
     {
       "id": "radio",
