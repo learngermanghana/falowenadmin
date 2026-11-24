@@ -16,10 +16,11 @@ export default function StudentCourseTypePanel({ student, onStudentUpdated }) {
   const [notice, setNotice] = useState("");
   const owner = auth?.currentUser?.emailVerified === true &&
     auth.currentUser.email?.toLowerCase() === "moxflex@gmail.com";
-  if (!owner || String(student.program || "german").toLowerCase() !== "german" || student.secondaryProgram === "swahili") return null;
+  if (!owner) return null;
+  const restricted = String(student.program || "german").toLowerCase() !== "german" || String(student.secondaryProgram || "").toLowerCase() === "swahili" || student.institutionVerification === "approved";
   async function save(event) {
     event.preventDefault();
-    if (busy || target === current || !reason.trim() || !student.uid) return;
+    if (restricted || busy || target === current || !reason.trim() || !student.uid) return;
     if (!window.confirm("Change course type for " + (student.name || student.studentCode) + "? Existing payments and trial dates must be preserved.")) return;
     setBusy(true); setError(""); setNotice("");
     try {
@@ -37,7 +38,7 @@ export default function StudentCourseTypePanel({ student, onStudentUpdated }) {
     <h3 style={{ margin: 0, fontSize: 16 }}>Course type management</h3>
     <div>Current course: <strong>{current === "exam_preparation" ? "Exam Preparation" : "Full Course"}</strong></div>
     <div>Account access: <strong>{student.accountType === "exam_only" ? "Exam only" : "Course"}</strong></div>
-    <form onSubmit={save} style={{ display: "grid", gap: 10 }}>
+    {restricted ? <p role="status" style={{ margin: 0 }}>This student has Kiswahili or a protected institutional enrollment. German-only account switching is unavailable until language-specific access can be changed safely. Existing enrollments remain intact.</p> : <form onSubmit={save} style={{ display: "grid", gap: 10 }}>
       <label style={{ display: "grid", gap: 4 }}>New course type
         <select value={target} onChange={event => { setTarget(event.target.value); setError(""); setNotice(""); }} disabled={busy}>
           <option value="full_course">Full Course</option>
@@ -50,7 +51,7 @@ export default function StudentCourseTypePanel({ student, onStudentUpdated }) {
       </label>
       {!student.uid && <p role="alert">Link the existing Firebase login before changing course type.</p>}
       <button type="submit" disabled={busy || !student.uid || target === current || !reason.trim()}>{busy ? "Saving…" : "Confirm course type change"}</button>
-    </form>
+    </form>}
     {notice && <p role="status">{notice}</p>}
     {error && <p role="alert">{error}</p>}
   </section>;
