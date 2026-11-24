@@ -189,9 +189,8 @@ export function stageList(slide, topicLabel) {
     ];
   }
   if (String(slide?.assignmentId || "").trim().toUpperCase() === A1_DAY5_ASSIGNMENT) {
-    // Twelve Day 5 visual pages. Music and verified Lesen share page 11, with
-    // independently accessible tabs; the original self-practice route stays
-    // unscored on page 12, using the existing workbook links.
+    // Day 5 uses a single workbook-aligned 11-item sentence-order activity.
+    // Music and verified Lesen share a page; the final workbook stays unscored.
     const song = getA1PresenterMusicStage(A1_DAY5_ASSIGNMENT, slide.dayNumber);
     const reading = getA1PresenterReadingLesson(A1_DAY5_ASSIGNMENT);
     const workbook = slide.workbookConnection || {};
@@ -213,7 +212,7 @@ export function stageList(slide, topicLabel) {
         grammarUrl: workbook.grammarUrl || "",
         workbookUrl: workbook.workbookUrl || "",
         activityKind: "self-practice",
-        activityInstruction: "Bearbeite die vier Teile im bestehenden Workbook: Artikel, Adjektive, persönliche Vorstellung und W-Fragen. Das ist Selbstübung, keine tutorbenotete Abgabe.",
+        activityInstruction: "Bearbeite die fünf Teile im bestehenden Workbook: Artikel, Adjektive, persönliche Vorstellung, W-Fragen und Satzbau. Das ist Selbstübung, keine tutorbenotete Abgabe.",
         actionLabel: "Open self-practice workbook",
       },
     ];
@@ -944,8 +943,7 @@ export default function A1GrammarPresenter({
             <A1Day4TeachingStage key={stage.id} step={stage.step}
               question={stage.id === "grammar-check" ? activeCheck : null} questions={stage.items} />
           ) : stage.type === "a1-day5" ? (
-            <A1Day5TeachingStage key={stage.id} step={stage.step}
-              question={stage.id === "grammar-check" ? activeCheck : null} />
+            <A1Day5TeachingStage key={stage.id} step={stage.step} />
           ) : stage.type === "a1-day6" ? (
             <A1Day6TeachingStage key={stage.id} step={stage.step}
               question={stage.id === "grammar-check" ? activeCheck : null} />
