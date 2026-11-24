@@ -10,28 +10,26 @@ const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 test("Students page restores a discoverable Generate payment link shortcut", () => {
   const source = read("src/pages/StudentDirectoryPage.jsx");
   assert.match(source, /Generate payment link for selected student/);
-  assert.match(source, /onClick=\{\(\) => \{\s*setDetailTab\("payments"\)/);
-  assert.match(source, /student-tab-payments/);
+  assert.match(source, /onClick=\{\(\) => \{\s*setDetailTab\("payment-links"\)/);
+  assert.match(source, /student-tab-payment-links/);
 });
 
-test("payment generator and upgrade flow each render only inside the Payments tab", () => {
+test("payment history, link generation and upgrade tools have independent, lazy mounted panels", () => {
   const source = read("src/pages/StudentDirectoryPage.jsx");
-  const start = source.indexOf('{tab.id === "payments" && !isHamburgCohortStudent(selectedStudent) && (') >= 0
-    ? source.indexOf('{tab.id === "payments" && !isHamburgCohortStudent(selectedStudent) && (')
-    : source.indexOf('{tab.id === "payments" && (');
-  const end = source.indexOf("</section>", start);
-  assert.ok(start > -1 && end > start, "payment tools must remain within the tab panel");
-  const paymentPanel = source.slice(start, end);
-  assert.match(paymentPanel, /<StudentPaymentTools/);
-  assert.match(paymentPanel, /<StudentUpgradeTools/);
-  assert.match(paymentPanel, /onStudentUpdated=\{handleSupportStudentUpdated\}/);
-  assert.equal((source.match(/<StudentPaymentTools/g) || []).length, 1);
+  assert.match(source, /tab\.id === "payments" && !isHamburgCohortStudent\(selectedStudent\) && <StudentPaymentTools mode="history"/);
+  const links = source.slice(source.indexOf('{detailTab === "payment-links" &&'),source.indexOf('{detailTab === "contracts" &&'));
+  assert.match(links, /<StudentPaymentTools mode="links"/);
+  assert.match(links, /onStudentUpdated=\{handleSupportStudentUpdated\}/);
+  const contracts = source.slice(source.indexOf('{detailTab === "contracts" &&'),source.indexOf('id="student-panel-access"'));
+  assert.match(contracts, /<StudentUpgradeTools/);
+  assert.match(contracts, /onStudentUpdated=\{handleSupportStudentUpdated\}/);
+  assert.equal((source.match(/<StudentPaymentTools/g) || []).length, 2);
   assert.equal((source.match(/<StudentUpgradeTools/g) || []).length, 1);
-  const supportPanel = source.slice(
-    source.indexOf('id="student-panel-support"'),
-    source.indexOf('id="student-panel-documents"'),
-  );
-  assert.doesNotMatch(supportPanel, /<StudentPaymentTools|<StudentUpgradeTools/);
+  const support = source.slice(source.indexOf('id="student-panel-support"'), source.indexOf('id="student-panel-documents"'));
+  assert.doesNotMatch(support, /<StudentPaymentTools|<StudentUpgradeTools/);
+  const tools = read("src/components/StudentPaymentTools.jsx");
+  assert.match(tools, /mode !== "history"/);
+  assert.match(tools, /mode !== "links"/);
 });
 
 test("the restored payment UI still exposes generation, copying, WhatsApp and reconciliation", () => {
