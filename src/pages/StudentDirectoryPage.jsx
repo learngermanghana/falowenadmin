@@ -562,8 +562,8 @@ export default function StudentDirectoryPage() {
       if (field === "program") {
         const primary = String(student.program || "german").toLowerCase();
         const mode = draft.program || primary;
-        if (mode !== (student.secondaryProgram ? "both" : primary) || draft.secondaryLevel !== undefined || draft.secondaryClassName !== undefined) {
-          payload.courseEnrollment = { mode, expectedPrimary: primary, secondaryLevel: draft.secondaryLevel, secondaryClassName: draft.secondaryClassName };
+        if (mode !== (student.secondaryProgram ? "both" : primary) || draft.secondaryLevel !== undefined || draft.secondaryClassName !== undefined || draft.grantSecondaryAccess === true || draft.secondaryAccessEnd !== undefined) {
+          payload.courseEnrollment = { mode, expectedPrimary: primary, secondaryLevel: draft.secondaryLevel, secondaryClassName: draft.secondaryClassName, grantSecondaryAccess: draft.grantSecondaryAccess, secondaryAccessEnd: draft.secondaryAccessEnd };
         }
         continue;
       }
@@ -1234,6 +1234,25 @@ export default function StudentDirectoryPage() {
                                           {courseLevels.map(value => <option key={value}>{value}</option>)}
                                         </select>
                                       </label>
+                                      {!isPrimary && program === "swahili" && mode === "both" && primary === "german" && (
+                                        <div style={{display:"grid",gap:8,marginTop:10}}>
+                                          <strong>Complimentary Swahili access</strong>
+                                          <small>For paid German learners. Separate from German billing and contract dates.</small>
+                                          {saved?.accessType !== "complimentary" && <label>
+                                            <input type="checkbox" checked={draft.grantSecondaryAccess === true} disabled={disabled}
+                                              onChange={event => updateDraftField(selectedStudent.id, "grantSecondaryAccess", event.target.checked, selectedStudent)} />
+                                            Unlock Swahili for 3 months
+                                          </label>}
+                                          {(saved?.accessType === "complimentary" || draft.grantSecondaryAccess) && <>
+                                            <small>Starts: {normalizeDateValue(saved?.contractStart) || "On save"}</small>
+                                            <label>Swahili access end date
+                                              <input type="date" value={draft.secondaryAccessEnd ?? normalizeDateValue(saved?.contractEnd)} disabled={disabled}
+                                                onChange={event => updateDraftField(selectedStudent.id, "secondaryAccessEnd", event.target.value, selectedStudent)} />
+                                            </label>
+                                            <small>Leave the date unchanged for the default three calendar months. Edit the expiry to extend or shorten access; saving other details does not renew it.</small>
+                                          </>}
+                                        </div>
+                                      )}
                                       {!isPrimary && <label>{label} class name
                                         <input value={draft.secondaryClassName ?? saved?.className ?? ""} maxLength={160} disabled={disabled}
                                           onChange={event => updateDraftField(selectedStudent.id, "secondaryClassName", event.target.value, selectedStudent)} />
