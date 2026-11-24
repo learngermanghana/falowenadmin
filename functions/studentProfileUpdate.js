@@ -388,6 +388,8 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
   });
 
   // Staff-only approval: knowing the shared invitation URL must never grant free access.
+  require("./studentLevelEnrollments").registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor:user=>isStudentProfileEditor(user,staffEmails)});
+
   app.post("/students/:studentId/university-approval", async (req, res) => {
     try {
       const user = await requireAuth(req);

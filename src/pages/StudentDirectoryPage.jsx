@@ -10,6 +10,7 @@ import StudentSupportTools from "../components/StudentSupportTools";
 import StudentAccountActivationPanel from "../components/StudentAccountActivationPanel.jsx";
 import SignupAccountLookup from "../components/SignupAccountLookup.jsx";
 import StudentPaymentTools from "../components/StudentPaymentTools";
+import StudentLevelEnrollments from "../components/StudentLevelEnrollments";
 import StudentUpgradeTools from "../components/StudentUpgradeTools";
 import CompletionPackPanel from "../components/CompletionPackPanel.jsx";
 import BrochureWhatsappPanel from "../components/BrochureWhatsappPanel.jsx";
@@ -404,7 +405,7 @@ export default function StudentDirectoryPage() {
   const [courseTypeFilter, setCourseTypeFilter] = useState("");
   const [signupDays, setSignupDays] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState("");
-  const [detailTab, setDetailTab] = useState("profile");
+  const [detailTab, setDetailTab] = useState("overview");
   const [mobileDetails, setMobileDetails] = useState(false);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState("");
@@ -497,7 +498,7 @@ export default function StudentDirectoryPage() {
     const hasSelected = filteredStudents.some((student) => student.id === selectedStudentId);
     if (!hasSelected) {
       setSelectedStudentId(filteredStudents[0].id);
-      setDetailTab("profile");
+      setDetailTab("overview");
       setMobileDetails(false);
     }
   }, [filteredStudents, selectedStudentId]);
@@ -522,8 +523,8 @@ export default function StudentDirectoryPage() {
   );
 
   useEffect(() => {
-    if (selectedStudent && isHamburgCohortStudent(selectedStudent) && detailTab === "payments") {
-      setDetailTab("profile");
+    if (selectedStudent && isHamburgCohortStudent(selectedStudent) && ["payments","payment-links","contracts","enrollments"].includes(detailTab)) {
+      setDetailTab("overview");
     }
   }, [selectedStudent, detailTab]);
 
@@ -1020,8 +1021,8 @@ export default function StudentDirectoryPage() {
                 {filteredStudents.length === 0 && <p>No student records match your search and filters.</p>}
 
                 {filteredStudents.length > 0 && (
-                  <div className={`student-workspace ${mobileDetails ? "is-detail-view" : "is-list-view"}`}>
-                    <aside className="student-sidebar" aria-label="Student list">
+                  <div className={`student-workspace ${mobileDetails ? "is-detail-view" : "is-list-view"}`} style={{display:"block"}}>
+                    {!mobileDetails && <aside className="student-sidebar" aria-label="Student list">
                       {filteredStudents.map((student) => {
                         const isSelected = student.id === selectedStudentId;
                         const phone = resolveStudentPhone(student, getDraft(student));
@@ -1047,9 +1048,9 @@ export default function StudentDirectoryPage() {
                               id={`student-list-${student.id}`}
                               onClick={() => {
                                 setSelectedStudentId(student.id);
-                                setDetailTab("profile");
+                                setDetailTab("overview");
                                 setMobileDetails(true);
-                                requestAnimationFrame(() => document.getElementById("student-tab-profile")?.focus());
+                                requestAnimationFrame(() => document.getElementById("student-tab-overview")?.focus());
                               }}
                               style={{
                                 width: "100%",
@@ -1115,11 +1116,11 @@ export default function StudentDirectoryPage() {
                           </div>
                         );
                       })}
-                    </aside>
+                    </aside>}
 
-                    {selectedStudent && (
+                    {selectedStudent && mobileDetails && (
                       <div className="student-details" key={selectedStudent.id}>
-                        <button type="button" className="student-back-button" onClick={() => {
+                        <button type="button" className="student-back-button" style={{display:"inline-flex"}} onClick={() => {
                           setMobileDetails(false);
                           requestAnimationFrame(() => document.getElementById(`student-list-${selectedStudent.id}`)?.focus());
                         }}>← Back to students</button>
@@ -1128,8 +1129,8 @@ export default function StudentDirectoryPage() {
                           {!isHamburgCohortStudent(selectedStudent) && <button
                             type="button"
                             onClick={() => {
-                              setDetailTab("payments");
-                              requestAnimationFrame(() => document.getElementById("student-tab-payments")?.focus());
+                              setDetailTab("payment-links");
+                              requestAnimationFrame(() => document.getElementById("student-tab-payment-links")?.focus());
                             }}
                             aria-label="Generate payment link for selected student"
                             style={{
@@ -1150,7 +1151,7 @@ export default function StudentDirectoryPage() {
                         </p>
 
                         <div className="student-detail-tabs" role="tablist" aria-label="Student details">
-                          {STUDENT_DETAIL_TABS.filter((tab) => !isHamburgCohortStudent(selectedStudent) || tab.id !== "payments").map((tab) => (
+                          {STUDENT_DETAIL_TABS.filter((tab) => !isHamburgCohortStudent(selectedStudent) || !["payments","payment-links","contracts","enrollments"].includes(tab.id)).map((tab) => (
                             <button key={tab.id} id={`student-tab-${tab.id}`} type="button" role="tab"
                               aria-selected={detailTab === tab.id} aria-controls={`student-panel-${tab.id}`}
                               tabIndex={detailTab === tab.id ? 0 : -1}
@@ -1165,7 +1166,7 @@ export default function StudentDirectoryPage() {
                           ))}
                         </div>
 
-                        {STUDENT_DETAIL_TABS.filter((tab) => tab.fields.length > 0).map((tab) => (
+                        {STUDENT_DETAIL_TABS.filter((tab) => tab.fields.length > 0 && tab.id === detailTab).map((tab) => (
                           <section key={tab.id} id={`student-panel-${tab.id}`} role="tabpanel"
                             aria-labelledby={`student-tab-${tab.id}`} hidden={detailTab !== tab.id}
                             className="student-detail-panel">
@@ -1272,26 +1273,29 @@ export default function StudentDirectoryPage() {
                             {/* STUDENT_EMERGENCY_CONTACT_FIELD: Emergency contact stays in the staff-only Profile tab. */}
                             {tab.id === "profile" && <StudentAccountActivationPanel student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast} />}
                             {tab.id === "profile" && <StudentEmergencyContact student={selectedStudent} />}
-                            {tab.id === "payments" && !isHamburgCohortStudent(selectedStudent) && (
-                              <>
-                        <StudentPaymentTools
-                          student={selectedStudent}
-                          draft={getDraft(selectedStudent)}
-                          onStudentUpdated={handleSupportStudentUpdated}
-                          pushToast={pushToast}
-                        />
-
-                        <StudentUpgradeTools
-                          student={selectedStudent}
-                          draft={getDraft(selectedStudent)}
-                          onStudentUpdated={handleSupportStudentUpdated}
-                          pushToast={pushToast}
-                        />
-                              </>
-                            )}
+                            {tab.id === "payments" && !isHamburgCohortStudent(selectedStudent) && <StudentPaymentTools mode="history" student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast} />}
                           </section>
                         ))}
 
+                        {detailTab === "overview" && <section className="student-detail-panel" role="tabpanel" id="student-panel-overview" aria-labelledby="student-tab-overview">
+                          <h3>Student overview</h3>
+                          <div className="student-detail-fields">
+                            <label>Current level<input readOnly value={selectedStudent.level || "Not set"} /></label>
+                            <label>Class<input readOnly value={selectedStudent.className || "Not assigned"} /></label>
+                            <label>Recorded balance<input readOnly value={formatGhs(selectedStudent.balanceDue ?? selectedStudent.balance ?? 0)} /></label>
+                            <label>Payment status<input readOnly value={selectedStudent.paymentStatus || "Not set"} /></label>
+                          </div>
+                          {!isHamburgCohortStudent(selectedStudent) && <button type="button" onClick={()=>setDetailTab("enrollments")}>Manage enrollments</button>}
+                        </section>}
+                        {detailTab === "enrollments" && !isHamburgCohortStudent(selectedStudent) && <section className="student-detail-panel" role="tabpanel" id="student-panel-enrollments" aria-labelledby="student-tab-enrollments">
+                          <StudentLevelEnrollments student={selectedStudent} pushToast={pushToast} />
+                        </section>}
+                        {detailTab === "payment-links" && !isHamburgCohortStudent(selectedStudent) && <section className="student-detail-panel" role="tabpanel" id="student-panel-payment-links" aria-labelledby="student-tab-payment-links">
+                          <StudentPaymentTools mode="links" student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast} />
+                        </section>}
+                        {detailTab === "contracts" && !isHamburgCohortStudent(selectedStudent) && <section className="student-detail-panel" role="tabpanel" id="student-panel-contracts" aria-labelledby="student-tab-contracts">
+                          <StudentUpgradeTools student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast} />
+                        </section>}
                         <section id="student-panel-access" role="tabpanel" aria-labelledby="student-tab-access" hidden={detailTab !== "access"} className="student-detail-panel">
                           {detailTab === "access" && <>
                             <StudentAccessOverview key={selectedStudent.id} student={selectedStudent} onManage={setDetailTab} />
@@ -1302,6 +1306,7 @@ export default function StudentDirectoryPage() {
                         <section id="student-panel-support" role="tabpanel"
                           aria-labelledby="student-tab-support" hidden={detailTab !== "support"}
                           className="student-detail-panel">
+                        {detailTab === "support" && <>
                         <StudentSupportTools
                           student={selectedStudent}
                           draft={getDraft(selectedStudent)}
@@ -1391,18 +1396,19 @@ export default function StudentDirectoryPage() {
                             Phone used: <strong>{resolveStudentPhone(selectedStudent, getDraft(selectedStudent)) || "No phone number found"}</strong>
                           </p>
                         </section>
+                        </>}
                         </section>
                         <section id="student-panel-documents" role="tabpanel"
                           aria-labelledby="student-tab-documents" hidden={detailTab !== "documents"}
                           className="student-detail-panel">
-                        <CompletionPackPanel
+                        {detailTab === "documents" && <CompletionPackPanel
                           student={selectedStudent}
                           draft={getDraft(selectedStudent)}
                           pushToast={pushToast}
-                        />
+                        />}
 
                         </section>
-                        <div style={{ marginTop: 14 }}>
+                        {["profile","payments","class"].includes(detailTab) && <div style={{ marginTop: 14 }}>
                           <button
                             type="button"
                             onClick={() => saveStudent(selectedStudent)}
@@ -1410,7 +1416,7 @@ export default function StudentDirectoryPage() {
                           >
                             {savingId === selectedStudent.id ? "Saving..." : "Save student"}
                           </button>
-                        </div>
+                        </div>}
 
                       </div>
                     )}
