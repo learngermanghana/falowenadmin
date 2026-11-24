@@ -1,11 +1,11 @@
-export const submissionDocId = day => day === 28 ? "b1-day-28" : `day-${day}`;
+export const submissionDocId = day => [26, 28].includes(day) ? `b1-day-${day}` : `day-${day}`;
 export const submissionLessonId = day => "swahili-" + submissionDocId(day);
 
 // Firestore user-owned lesson documents may contain learner-controlled fields.
 // The canonical path determines ownership; never derive review recipient IDs
 // from a submitted studentId, userId or display name.
 export function canonicalSwahiliSubmission(entry, day = 1) {
-  if (!Number.isInteger(day) || (!(day >= 1 && day <= 20) && day !== 28)) return null;
+  if (!Number.isInteger(day) || (!(day >= 1 && day <= 20) && ![26, 28].includes(day))) return null;
   const path = String(entry?.ref?.path || "");
   const parts = path.split("/");
   if (parts.length !== 4 || parts[0] !== "users" || !parts[1] || parts[2] !== "swahiliLessons" || parts[3] !== submissionDocId(day)) return null;

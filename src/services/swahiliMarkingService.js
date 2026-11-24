@@ -43,7 +43,7 @@ export async function loadSwahiliMarkingPage(day, cursor) {
   const constraints = [
     where("program", "==", "swahili"),
     day ? where("lessonId", "==", submissionLessonId(day)) : where("lessonId", "in",
-      [...Array.from({ length: 20 }, (_, i) => i + 1), 28].map(submissionLessonId)),
+      [...Array.from({ length: 20 }, (_, i) => i + 1), 26, 28].map(submissionLessonId)),
     where("status", "==", "submitted"),
     orderBy("submittedAt", "desc"),
   ];

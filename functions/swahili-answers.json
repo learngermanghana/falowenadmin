@@ -821,5 +821,54 @@
         "answer": "Tafadhali, subiri hapa."
       }
     }
+  },
+  "swahili-b1-day-26": {
+    "version": 1,
+    "title": "Matatizo ya safari na suluhisho zake",
+    "writing": {},
+    "reading": {
+      "read-purpose": {
+        "prompt": "Ni kwa nini watu wengi husafiri katika maisha ya kila siku kulingana na insha?",
+        "answer": "Watu husafiri kwa ajili ya kazi, masomo, au mapumziko."
+      },
+      "read-delays": {
+        "prompt": "Ni mambo gani yanayoweza kusababisha kuchelewa au kufutwa kwa usafiri?",
+        "answer": "Hali mbaya ya hewa, matatizo ya kiufundi, na msongamano wa magari."
+      },
+      "read-documents": {
+        "prompt": "Insha inapendekeza kufanya nini ili kujilinda dhidi ya tatizo la kupoteza nyaraka muhimu kama pasipoti?",
+        "answer": "Kutengeneza nakala za nyaraka zote muhimu (katika karatasi na kwenye simu/barua pepe) na kuweka vitu vya thamani kwenye begi la mkononi."
+      },
+      "read-label": {
+        "prompt": "Kwa nini ni muhimu kuweka lebo yenye jina na nambari ya simu kwenye kila begi?",
+        "answer": "Inasaidia kupata mizigo haraka ikiwa imepotea."
+      },
+      "read-message": {
+        "prompt": "Ni ujumbe gani mkuu unaotolewa katika hitimisho la insha hii?",
+        "answer": "Kujiandaa vizuri mapema na kupanga safari kwa umakini ndiyo ufunguo wa kutatua matatizo na kuzuia msongo wa mawazo."
+      }
+    },
+    "listening": {
+      "listen-delay": {
+        "prompt": "Basi la Amina lilipata tatizo gani, na walichelewa kwa muda gani?",
+        "answer": "Basi lilipata pancha na walichelewa kwa saa mbili."
+      },
+      "listen-repair": {
+        "prompt": "Kwa nini dereva alichukua muda mrefu kutafuta vifaa vya kukarabati gurudumu?",
+        "answer": "Kwa sababu gari lilikuwa limejaa sana mizigo."
+      },
+      "listen-alternative": {
+        "prompt": "Juma alipendekeza chaguo gani lingine la usafiri, na kwa nini Amina hakulitumia?",
+        "answer": "Kupanda basi la kampuni tofauti lililokuwa nyuma yao; tiketi yake haikuruhusu kuhamia gari lingine bila malipo ya ziada."
+      },
+      "listen-advice": {
+        "prompt": "Juma alimshauri Amina afanye nini wakati ujao ili kupata usafiri wa kuaminika?",
+        "answer": "Alimshauri alipe kidogo zaidi kwa ajili ya usafiri wa kuaminika."
+      },
+      "listen-next": {
+        "prompt": "Kwa nini Amina anataka kujiandaa mapema katika safari yake ijayo?",
+        "answer": "Ili asipoteze tena miadi yake muhimu mjini."
+      }
+    }
   }
 }
