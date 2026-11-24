@@ -1,6 +1,6 @@
 import { auth } from "../firebase.js";
 
-async function requestStudentAccount(studentId, method = "GET", path = "") {
+async function requestStudentAccount(studentId, method = "GET", path = "", payload = {}) {
   const id = String(studentId || "").trim();
   if (!id) throw new Error("Select a saved student first.");
   if (!auth?.currentUser) throw new Error("Sign in to Falowen Admin first.");
@@ -14,7 +14,7 @@ async function requestStudentAccount(studentId, method = "GET", path = "") {
         Authorization: `Bearer ${token}`,
         ...(method === "POST" ? { "Content-Type": "application/json" } : {}),
       },
-      ...(method === "POST" ? { body: "{}" } : {}),
+      ...(method === "POST" ? { body: JSON.stringify(payload) } : {}),
       cache: "no-store",
     },
   );
@@ -49,4 +49,8 @@ export function lookupExistingStudentLogin(studentId) {
 
 export function linkExistingStudentLogin(studentId) {
   return requestStudentAccount(studentId, "POST", "/link");
+}
+
+export function changeStudentLoginEmail(studentId, payload) {
+  return requestStudentAccount(studentId, "POST", "/change-email", payload);
 }
