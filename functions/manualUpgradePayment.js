@@ -38,13 +38,10 @@ function registerManualUpgradePayment({app,db,admin,requirePaymentAdmin,students
   app.post("/payments/manual-upgrade",async(req,res)=>{
     try {
       const user=await requirePaymentAdmin(req);
-      const {studentId,upgradeId,amount,receivedDate,method,reference,verified,alreadyIncluded,existingPaymentReference}=req.body || {};
+      const {studentId,upgradeId,amount,receivedDate,method,reference}=req.body || {};
       const ref=String(reference || "").trim();
-      if(typeof studentId!=="string" || !studentId || studentId.includes("/") || !upgradeId || verified!==true || typeof alreadyIncluded!=="boolean" || !["momo","bank","cash"].includes(method) || ref.length<3 || ref.length>150) fail("Verified payment, method, reference and upgrade are required",400);
-      const existingRef=String(existingPaymentReference || "").trim();
-      if(existingRef.includes("/") || existingRef.length>200 || (alreadyIncluded && !existingRef)) fail("Select the existing payment reference when reallocating recorded money",400);
-      if(!alreadyIncluded && existingRef) fail("Existing payment requires reallocation mode",400);
-      const key=crypto.createHash("sha256").update(method+":"+ref.toLowerCase().replace(/\s+/g,"")).digest("hex");
+      if(typeof studentId!=="string" || !studentId || studentId.includes("/") || !upgradeId || !["momo","bank","cash","paystack"].includes(method) || ref.includes("/") || ref.length<3 || ref.length>150) fail("Payment method, reference and upgrade are required",400);
+      const key=crypto.createHash("sha256").update(ref.toLowerCase().replace(/\s+/g,"")).digest("hex");
       const paymentRef=db.collection("manualUpgradePayments").doc(key);
       const studentRef=db.collection(studentsCollection).doc(studentId);
       const result=await db.runTransaction(async tx=>{
@@ -53,18 +50,19 @@ function registerManualUpgradePayment({app,db,admin,requirePaymentAdmin,students
         if(duplicate.exists) fail("This manual payment reference has already been recorded");
         const student=snap.data();
         if(student.upgradeId!==upgradeId) fail("Upgrade changed. Reload the student.");
-        let source=null;
-        if(alreadyIncluded){
-          source=db.collection("payments").doc(existingRef);
-          const old=await tx.get(source);
-          const record=old.data() || {};
-          if(!old.exists || record.studentId!==studentId || String(record.status).toLowerCase()!=="paid" || String(record.purpose).toLowerCase()==="level_upgrade" || record.manualUpgradeAllocation || cents(record.tuitionCredit ?? record.amount)!==cents(amount)) fail("Existing verified payment cannot be safely reallocated");
-        }
-        const patch=buildManualUpgradePatch(student,amount,receivedDate,alreadyIncluded);
+        const source=db.collection("payments").doc(ref);
+        const old=await tx.get(source);
+        const existing=old.data() || {};
+        const alreadyIncluded=old.exists;
+        if(alreadyIncluded && (existing.studentId!==studentId || String(existing.status).toLowerCase()!=="paid" || String(existing.purpose).toLowerCase()==="level_upgrade" || existing.manualUpgradeAllocation)) fail("Payment reference is not an eligible paid balance payment");
+        if(!alreadyIncluded && (method==="paystack" || /^FAL-/i.test(ref))) fail("Existing Paystack payment not found; check its reference");
+        const credit=alreadyIncluded ? cents(existing.tuitionCredit ?? existing.amount)/100 : amount;
+        const date=alreadyIncluded ? isoDate(existing.paidAt) : receivedDate;
+        const patch=buildManualUpgradePatch(student,credit,date,alreadyIncluded);
         const timestamp=admin.firestore.FieldValue.serverTimestamp();
-        const record={studentId,upgradeId,targetLevel:student.upgradeToLevel,amount:cents(amount)/100,receivedDate,method,reference:ref,alreadyIncluded,existingPaymentReference:existingRef,actorId:user.uid,createdAt:timestamp};
+        const record={studentId,upgradeId,targetLevel:student.upgradeToLevel,amount:cents(credit)/100,receivedDate:date,method:alreadyIncluded ? "paystack" : method,reference:ref,alreadyIncluded,existingPaymentReference:alreadyIncluded?ref:"",actorId:user.uid,createdAt:timestamp};
         tx.set(paymentRef,record);
-        if(source) tx.update(source,{manualUpgradeAllocation:key});
+        if(alreadyIncluded) tx.update(source,{manualUpgradeAllocation:key});
         tx.update(studentRef,{...patch,updated_at:timestamp});
         tx.set(db.collection("auditLogs").doc(),{...record,type:"studentUpgrade.manualPayment",before:{paid:student.paid ?? null,upgradePaid:student.upgradePaid ?? null,upgradeBalanceDue:student.upgradeBalanceDue,upgradeStatus:student.upgradeStatus},after:patch});
         return patch;
