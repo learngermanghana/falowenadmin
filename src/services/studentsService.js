@@ -287,6 +287,7 @@ export async function transferStudentClass(
     program,
     effectiveDate,
     reason = "",
+    enrollmentDisposition,
   } = {},
   {
     fetchImpl = globalThis.fetch,
@@ -307,6 +308,7 @@ export async function transferStudentClass(
       ...(program ? {program: normalize(program)} : {}),
       effectiveDate: normalize(effectiveDate),
       reason: normalize(reason),
+      ...(enrollmentDisposition?{enrollmentDisposition:normalize(enrollmentDisposition)}:{}),
     }),
   });
   const responseText = await response.text();

@@ -51,6 +51,7 @@ export default function StudentClassTransferPanel({
   const [targetClassRecordId, setTargetClassRecordId] = useState("");
   const [effectiveDate, setEffectiveDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [reason, setReason] = useState("");
+  const [enrollmentDisposition,setEnrollmentDisposition]=useState("");
   const [transferring, setTransferring] = useState(false);
   const [history, setHistory] = useState(() => localHistory(student));
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -78,6 +79,7 @@ export default function StudentClassTransferPanel({
     let active = true;
     setTargetClassRecordId("");
     setReason("");
+    setEnrollmentDisposition("");
     setEffectiveDate(new Date().toISOString().slice(0, 10));
     setHistory(localHistory(student));
     if (!student?.id || !expanded) return () => { active = false; };
@@ -120,6 +122,7 @@ export default function StudentClassTransferPanel({
         program,
         effectiveDate,
         reason,
+        ...(downgrade?{enrollmentDisposition}:{}),
       });
       const patch = result?.student || {};
       const transfer = result?.transfer || null;
@@ -143,6 +146,8 @@ export default function StudentClassTransferPanel({
   const currentLevel = clean(student?.level || student?.levelId).toUpperCase();
   const nextLevel = targetClass ? classLevel(targetClass) : "";
   const crossLevel = Boolean(currentLevel && nextLevel && currentLevel !== nextLevel);
+  const levels=["A1","A2","B1","B2","C1","C2"];
+  const downgrade=crossLevel&&levels.indexOf(nextLevel)>=0&&levels.indexOf(nextLevel)<levels.indexOf(currentLevel);
 
   return (
     <section
@@ -224,8 +229,10 @@ export default function StudentClassTransferPanel({
         </div>
       ) : null}
 
+      {crossLevel&&<small>Record the verified current level contract first. A new higher level gets its own record; enter its agreed fee and dates in Level enrollments. For a downgrade, record the original destination contract before transferring.</small>}
+      {downgrade&&<label>Previous level tuition reminders<select value={enrollmentDisposition} onChange={event=>setEnrollmentDisposition(event.target.value)}><option value="">Choose an option</option><option value="retain">Keep outstanding balance and payment reminders; end previous access</option><option value="cancel">Cancel previous enrollment and stop reminders; retain financial history</option></select><small>Neither choice erases payments or adjusts the agreed tuition. Edit the previous level separately if a fee adjustment was agreed.</small></label>}
       <div>
-        <button type="button" onClick={runTransfer} disabled={transferring || !targetClassRecordId}>
+        <button type="button" onClick={runTransfer} disabled={transferring || !targetClassRecordId || (downgrade&&!enrollmentDisposition)}>
           {transferring ? "Transferring..." : "Transfer class"}
         </button>
       </div>
