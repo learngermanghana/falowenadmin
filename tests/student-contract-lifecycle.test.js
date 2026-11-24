@@ -108,3 +108,40 @@ test("upgrade UI explains partial versus full payment behavior", () => {
   assert.match(paymentService, /\/api\/payments\/create-link/);
   assert.match(packageJson, /patchStudentUpgradePaymentDriven\.mjs/);
 });
+
+const {buildManualUpgradePatch} = require("../functions/manualUpgradePayment.js");
+const prepared = {level:"A1",paidLevel:"A1",paid:2828,upgradeId:"u1",upgradeToLevel:"A2",upgradeStatus:"awaiting_payment",upgradePaid:0,upgradeBalanceDue:3000,upgradeTuitionFee:3000,contractEnd:"2027-01-28"};
+const now = new Date("2026-11-24T12:00:00Z");
+test("manual upgrade starts grace from actual payment date",()=>{
+  const patch=buildManualUpgradePatch(prepared,2000,"2026-11-02",false,now);
+  assert.equal(patch.upgradeBalanceDue,1000);
+  assert.equal(patch.balance,1000);
+  assert.equal(patch.paymentStatus,"Partially Paid");
+  assert.equal(patch.upgradeGraceEnd,"2026-12-02");
+  assert.equal(patch.paid,4828);
+  assert.equal(patch.paymentReminderLevel,"A2");
+});
+test("reallocation never adds the historical payment a second time",()=>{
+  const patch=buildManualUpgradePatch({...prepared,paid:4828},2000,"2026-11-02",true,now);
+  assert.equal(patch.paid,4828);
+  assert.equal(patch.upgradePaid,2000);
+});
+test("later partial payment does not restart grace; full payment extends once",()=>{
+  const first=buildManualUpgradePatch(prepared,2000,"2026-11-02",false,now);
+  const partial=buildManualUpgradePatch({...prepared,...first},500,"2026-11-20",false,now);
+  assert.equal(partial.upgradeGraceEnd,"2026-12-02");
+  const full=buildManualUpgradePatch({...prepared,...first,...partial},500,"2026-11-24",false,now);
+  assert.equal(full.upgradeStatus,"completed");
+  assert.equal(full.contractEnd,"2027-07-28");
+  assert.equal(full.balanceDue,0);
+});
+test("historical expired partial payment does not grant fresh grace",()=>{
+  const patch=buildManualUpgradePatch(prepared,2000,"2026-10-02",false,now);
+  assert.equal(patch.upgradeStatus,"expired");
+  assert.equal(patch.level,"A1");
+  assert.equal(patch.upgradeBalanceDue,1000);
+});
+test("invalid or excessive credits fail closed",()=>{
+  for(const value of [0,-1,3001,"bad"]) assert.throws(()=>buildManualUpgradePatch(prepared,value,"2026-11-02",false,now));
+  assert.throws(()=>buildManualUpgradePatch(prepared,1000,"2026-11-25",false,now));
+});
