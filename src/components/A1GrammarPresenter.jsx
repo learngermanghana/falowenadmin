@@ -189,9 +189,8 @@ export function stageList(slide, topicLabel) {
     ];
   }
   if (String(slide?.assignmentId || "").trim().toUpperCase() === A1_DAY5_ASSIGNMENT) {
-    // Twelve Day 5 visual pages. Music and verified Lesen share page 11, with
-    // independently accessible tabs; the original self-practice route stays
-    // unscored on page 12, using the existing workbook links.
+    // Day 5 uses a single workbook-aligned 11-item sentence-order activity.
+    // Music and verified Lesen share a page; the final workbook stays unscored.
     const song = getA1PresenterMusicStage(A1_DAY5_ASSIGNMENT, slide.dayNumber);
     const reading = getA1PresenterReadingLesson(A1_DAY5_ASSIGNMENT);
     const workbook = slide.workbookConnection || {};
