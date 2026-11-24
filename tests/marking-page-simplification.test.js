@@ -7,7 +7,10 @@ const hubSource = fs.readFileSync(new URL("../src/pages/MarkingHubPage.jsx", imp
 const css = fs.readFileSync(new URL("../src/pages/MarkingPage.css", import.meta.url), "utf8");
 
 test("marking hub exposes only the marking workspace", () => {
-  assert.match(hubSource, /language === "swahili" \? <SwahiliMarking \/> : <GermanMarking \/>/);
+  assert.match(hubSource, /language === "swahili" \? <SwahiliMarking \/> : mockMarking \? <MockWritingTutorQueue \/> : <GermanMarking \/>/);
+  assert.match(hubSource, /const mockMarking = language === "german" && params\.get\("view"\) === "mock"/);
+  assert.match(hubSource, /permitted\.includes\("german"\) && <Link to="\/marking\?view=mock"/);
+  assert.match(hubSource, /const language = permitted\.includes\(selected\) \? selected : permitted\[0\]/);
   assert.doesNotMatch(hubSource, /Assignment Registry/);
   assert.doesNotMatch(hubSource, /AI Audit/);
   assert.doesNotMatch(hubSource, /Answer Keys/);
