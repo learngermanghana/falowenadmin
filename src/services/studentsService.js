@@ -284,6 +284,7 @@ export async function transferStudentClass(
   studentId,
   {
     targetClassRecordId,
+    program,
     effectiveDate,
     reason = "",
   } = {},
@@ -303,6 +304,7 @@ export async function transferStudentClass(
     headers: await headersLoader(),
     body: JSON.stringify({
       targetClassRecordId: normalize(targetClassRecordId),
+      ...(program ? {program: normalize(program)} : {}),
       effectiveDate: normalize(effectiveDate),
       reason: normalize(reason),
     }),
