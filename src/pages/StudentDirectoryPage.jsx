@@ -14,6 +14,7 @@ import StudentUpgradeTools from "../components/StudentUpgradeTools";
 import CompletionPackPanel from "../components/CompletionPackPanel.jsx";
 import BrochureWhatsappPanel from "../components/BrochureWhatsappPanel.jsx";
 import StudentClassTransferPanel from "../components/StudentClassTransferPanel.jsx";
+import StudentCourseTypePanel, { resolveCourseType } from "../components/StudentCourseTypePanel.jsx";
 import StudentLearningStatusPanel from "../components/StudentLearningStatusPanel.jsx";
 import StudentEmergencyContact from "../components/StudentEmergencyContact.jsx";
 import { matchesStudentDirectorySearch } from "../utils/studentDirectorySearch.js";
@@ -399,6 +400,7 @@ export default function StudentDirectoryPage() {
   const [drafts, setDrafts] = useState({});
   const [query, setQuery] = useState(() => searchParams.get("search") || "");
   const [languageFilter, setLanguageFilter] = useState("");
+  const [courseTypeFilter, setCourseTypeFilter] = useState("");
   const [signupDays, setSignupDays] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState("");
   const [detailTab, setDetailTab] = useState("profile");
@@ -461,6 +463,7 @@ export default function StudentDirectoryPage() {
     const earliestSignup = now - Number(signupDays) * SIGNUP_DAY_MS;
     const matches = viewStudents.filter((student) => {
       const languages = getStudentLanguages(student);
+      if (courseTypeFilter && resolveCourseType(student) !== courseTypeFilter) return false;
       if (languageFilter === "both" ? languages.length !== 2 : languageFilter && !languages.includes(languageFilter)) {
         return false;
       }
@@ -472,7 +475,7 @@ export default function StudentDirectoryPage() {
     });
     if (signupDays) matches.sort((a, b) => signupTimes.get(b.id) - signupTimes.get(a.id));
     return matches;
-  }, [viewStudents, query, languageFilter, signupDays, signupTimes]);
+  }, [viewStudents, query, languageFilter, courseTypeFilter, signupDays, signupTimes]);
 
   const selectDirectoryView = (view) => {
     const nextView = normalizeDirectoryView(view);
@@ -964,6 +967,14 @@ export default function StudentDirectoryPage() {
                 </select>
               </label>
               <label style={{ display: "grid", gap: 6, fontWeight: 600 }}>
+                Course type
+                <select value={courseTypeFilter} onChange={event => setCourseTypeFilter(event.target.value)}>
+                  <option value="">All course types</option>
+                  <option value="full_course">Full Course</option>
+                  <option value="exam_preparation">Exam Preparation</option>
+                </select>
+              </label>
+              <label style={{ display: "grid", gap: 6, fontWeight: 600 }}>
                 Signup date
                 <select value={signupDays} onChange={(event) => setSignupDays(event.target.value)}>
                   <option value="">Any time</option>
@@ -972,9 +983,10 @@ export default function StudentDirectoryPage() {
                   <option value="30">Last 30 days</option>
                 </select>
               </label>
-              {(languageFilter || signupDays) && (
+              {(languageFilter || courseTypeFilter || signupDays) && (
                 <button type="button" onClick={() => {
                   setLanguageFilter("");
+                  setCourseTypeFilter("");
                   setSignupDays("");
                 }}>
                   Clear filters
@@ -1051,6 +1063,7 @@ export default function StudentDirectoryPage() {
                               <div style={{ fontWeight: 600 }}>{student.name || "Unnamed"}</div>
                               <div style={{ fontSize: 12, opacity: 0.8 }}>{student.studentCode || "No student code"}</div>
                               <div style={{ fontSize: 12, opacity: 0.75 }}>{student.className || "No class"}</div>
+                              <div style={{ fontSize: 12 }}>{resolveCourseType(student) === "exam_preparation" ? "Exam Preparation" : "Full Course"}</div>
                               <div style={{ fontSize: 12, opacity: 0.8 }}>
                                 {languages.length ? languages.map(languageName).join(" + ") : "Language unspecified"}
                                 {signupTime !== null && ` · Signed up ${signupDateFormatter.format(signupTime)}`}
@@ -1184,6 +1197,7 @@ export default function StudentDirectoryPage() {
                               </div>
                             )}
                             {tab.id === "profile" && <StudentLearningStatusPanel student={selectedStudent} />}
+                            {tab.id === "profile" && !isHamburgCohortStudent(selectedStudent) && <StudentCourseTypePanel key={selectedStudent.id} student={selectedStudent} onStudentUpdated={handleSupportStudentUpdated} />}
                             {tab.id === "profile" && !isHamburgCohortStudent(selectedStudent) && ![selectedStudent.paymentStatus, selectedStudent.status].some(value => ["paid", "partially paid", "partial", "completed", "success"].includes(String(value || "").toLowerCase().replace(/[_-]+/g, " "))) && !["paid", "paidAmount", "amountPaid", "initialPaymentAmount", "tuitionPaid", "totalPaid"].some(field => Number(String(selectedStudent[field] ?? "0").replace(/[^0-9.-]/g, "")) > 0) && (
                               <div className="student-trial-activation" style={{marginBottom:14,padding:12,border:"1px solid #c7d2fe",borderRadius:10}}>
                                 <strong>Trial access</strong>
