@@ -41,7 +41,12 @@ test("Student Activity stays retired and mock timing monitor is in navigation", 
   const app = read("src/App.jsx");
   const timedAttempts = read("src/pages/TimedAssignmentAttemptsPage.jsx");
 
-  assert.equal(app.split("\n").filter(line => line.includes('to="/timed-attempts"') && line.includes("Mock Monitoring & Timers</Link>")).length, 2, "both staff and administrator navigation must include the monitoring link");
+  assert.match(app, /to="\/timed-attempts"[^\n]*>Mock Monitoring & Timers<\/Link>/);
+  // Staff navigation is now built from explicit per-page grants rather than
+  // duplicating the administrator links. Do not silently widen staff access.
+  assert.match(app, /STAFF_PAGES\.filter\(page => staffPages\.includes\(page\.id\)\)/);
+  const staffAccess = read("src/utils/staffPageAccess.js");
+  assert.doesNotMatch(staffAccess, /path: "\/timed-attempts"/);
   assert.match(app, /TimedAssignmentAttemptsPage = lazy/);
   assert.match(app, /path="\/timed-attempts"[\s\S]{0,160}<TimedAssignmentAttemptsPage/);
   assert.match(app, /path="\/student-activity"[\s\S]{0,160}Navigate to="\/students"/);
