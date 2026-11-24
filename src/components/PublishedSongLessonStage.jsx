@@ -111,27 +111,35 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
 
   if (!song || !bank || !recording) return null;
   const bundledTiming = classroomSongTiming[assignmentKey];
-  const quizPack = bundledTiming && recording.objectKey === bundledTiming.objectKey &&
-    recordedLyrics === bundledTiming.lyrics && recordingMetadata?.timingStatus === 'audio-aligned'
-    ? bundledTiming : recordingMetadata && {
-        ...recordingMetadata, objectKey: recording.objectKey, lyrics: recordedLyrics, cues,
-      };
+  const synchronized=hasCompleteSongTiming(cues,recordedLyrics);
+  // The lyric renderer and the listening quiz must consume the SAME current
+  // cues, including manually saved synchronization. Never replace them with
+  // an old bundled cue array merely to construct the quiz.
+  const quizPack = synchronized && recording.objectKey ? {
+    ...(recordingMetadata || {}),
+    objectKey: recording.objectKey,
+    lyrics: recordedLyrics,
+    cues,
+    ...(bundledTiming?.objectKey === recording.objectKey &&
+      bundledTiming.lyrics === recordedLyrics && recordingMetadata?.timingStatus === 'audio-aligned'
+      ? {questionEndings: bundledTiming.questionEndings} : {}),
+  } : null;
   const heardLyricDuration = assignmentKey === 'A1-14.1' ? {minSeconds: 10, maxSeconds: 15, targetSeconds: 12} : undefined;
-  const verifiedNextQuestions = nextLyricOnly ? threeVerifiedHeardLyricQuestions(quizPack, recording, heardLyricDuration) : [];
-  // Hard-coded Day 3 estimates may describe an older recording. Only a
-  // verified cue sequence for the exact audio can set an MCQ answer.
-  // Estimated cues can suggest a listening question, but never a graded answer.
+  const verifiedNextQuestions = nextLyricOnly && recordingMetadata ? threeVerifiedHeardLyricQuestions(quizPack, recording, heardLyricDuration) : [];
+  const flexibleDuration = {...heardLyricDuration, allowFewer:true, ignoreLegacyEndings:true};
+  const verifiedFlexibleQuestions = nextLyricOnly && recordingMetadata && !verifiedNextQuestions.length
+    ? threeVerifiedHeardLyricQuestions(quizPack, recording, flexibleDuration) : [];
+  // Locally synchronized or estimated cues still provide useful real clips.
+  // They may suggest an answer for classroom discussion, not automatic scoring.
   const suggestedQuestions = nextLyricOnly && !verifiedNextQuestions.length &&
-    quizPack?.timingStatus === 'estimated' && !quizPack.referenceOnly &&
-    quizPack.transcriptionStatus !== 'automatic'
-    ? threeVerifiedHeardLyricQuestions({...quizPack, timingStatus: undefined}, recording, heardLyricDuration)
+    !verifiedFlexibleQuestions.length && quizPack && !quizPack.referenceOnly
+    ? threeVerifiedHeardLyricQuestions({...quizPack, timingStatus:undefined, transcriptionStatus:undefined}, recording, flexibleDuration)
     : [];
   const questions = nextLyricOnly
-    ? (verifiedNextQuestions.length ? verifiedNextQuestions : suggestedQuestions)
+    ? (verifiedNextQuestions.length ? verifiedNextQuestions : verifiedFlexibleQuestions.length ? verifiedFlexibleQuestions : suggestedQuestions)
     : recordedLyrics !== song.lyrics
       ? recordedSongQuestions({objectKey:recording.objectKey,lyrics:recordedLyrics},recording.day,recording.level)
       : bank.questions;
-  const synchronized=hasCompleteSongTiming(cues,recordedLyrics);
   // An untimed or mismatched recording still supports a real oral listening
   // activity. Never manufacture a correct option from unrelated lyric lines.
   const teacherChallenge = nextLyricOnly && !questions.length && !!recording.audioUrl;
@@ -239,13 +247,13 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
             {teacherClip ? '▶ Ausschnitt wiederholen' : '▶ 12 Sekunden abspielen'}
           </button>
           {teacherClip && <button type="button" onClick={()=>playTeacherPreview(true)}>Nächster Ausschnitt →</button>}
-          <p className="published-song-lesson__note">Mündliche Hörübung · Die Lehrkraft bestätigt die Antwort anhand des Audios. Noch keine geprüften Zeitmarken für automatische Antwortmöglichkeiten.</p>
+          <p className="published-song-lesson__note">Mündliche Hörübung · Die Lehrkraft bestätigt die Antwort anhand des Audios. Für diesen Ausschnitt sind keine eindeutigen automatischen Antwortmöglichkeiten verfügbar.</p>
         </div> : null}
       </div> : <div className="published-song-lesson__section published-song-lesson__quiz">
         <div className="published-song-lesson__quizmeta"><strong>FRAGE {questionIndex+1} / {questions.length}</strong><span>{nextLyricOnly?'WAS HAST DU GEHÖRT?':question.type==='speaking'?'SPRECHEN':'HÖRVERSTEHEN'}</span></div>
         <h3 lang="de">{question.prompt}</h3>
         {nextLyricOnly && <p lang="en">Listen to the short clip. Which lyric did you hear?</p>}
-        {suggestedQuestions.length > 0 && <p role="status">Geschätzte Zeitmarken · Bitte die gehörte Zeile gemeinsam prüfen. Keine automatische Bewertung.</p>}
+        {suggestedQuestions.length > 0 && <p role="status">Vorhandene Zeitmarken · Bitte die gehörte Zeile gemeinsam prüfen. Keine automatische Bewertung.</p>}
         {nextLyricOnly && <p lang="de">{assignmentKey === "A1-14.1" ? "Spiele einen 10–15 Sekunden langen Ausschnitt ab. Welche der drei Zeilen hast du wirklich gehört?" : "Spiele etwa zehn Sekunden ab. Welche der drei Zeilen war im Ausschnitt zu hören?"}</p>}
         {evidenceRange && <button type="button" className="published-song-lesson__line-preview"
           onClick={()=>playLinePreview(evidenceRange)}>▶ Ausschnitt abspielen</button>}
