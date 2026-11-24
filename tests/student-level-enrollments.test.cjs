@@ -24,3 +24,12 @@ test("sheet row uses canonical enrollment identity and version",async()=>{
  await assert.rejects(syncEnrollmentSheet({id:"german-A2",studentId:"student1",record,url:"https://example.com",secret:"test",fetchImpl:async()=>({ok:true,json:async()=>({ok:true})})}),/acknowledge/);
  await syncEnrollmentSheet({id:"german-A2",studentId:"student1",record,url:"https://example.com",secret:"test",fetchImpl:async(url,options)=>{assert.deepEqual(JSON.parse(options.body).row,row);return {ok:true,json:async()=>({ok:true,action:"upsertLevelEnrollment"})};}});
 });
+
+test("missing sheet credentials leave core enrollment API deployable",async()=>{
+ const fs=require("node:fs");
+ const patch=fs.readFileSync("scripts/patchStudentUpgradePaymentDriven.mjs","utf8");
+ assert.doesNotMatch(patch,/secrets:\[levelEnrollmentSyncSecret\]/);
+ const {syncEnrollmentRef}=require("../functions/levelEnrollmentSheetSync");
+ const result=await syncEnrollmentRef({ref:{get:async()=>({exists:true,data:()=>({sheetVersion:1,sheetSyncStatus:"pending"})})},url:"",secret:""});
+ assert.equal(result.status,"not_configured");
+});
