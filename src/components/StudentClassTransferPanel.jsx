@@ -41,6 +41,7 @@ function localHistory(student = {}) {
 export default function StudentClassTransferPanel({
   student: account,
   program = String(account?.program || "german").toLowerCase(),
+  expanded = true,
   classes = [],
   onTransferred,
   pushToast,
@@ -79,7 +80,7 @@ export default function StudentClassTransferPanel({
     setReason("");
     setEffectiveDate(new Date().toISOString().slice(0, 10));
     setHistory(localHistory(student));
-    if (!student?.id) return () => { active = false; };
+    if (!student?.id || !expanded) return () => { active = false; };
 
     setHistoryLoading(true);
     listStudentClassTransfers(student.id)
@@ -96,7 +97,7 @@ export default function StudentClassTransferPanel({
     return () => {
       active = false;
     };
-  }, [student?.id, program, primary]);
+  }, [student?.id, program, primary, expanded]);
 
   const runTransfer = async () => {
     if (!student?.id) return;
