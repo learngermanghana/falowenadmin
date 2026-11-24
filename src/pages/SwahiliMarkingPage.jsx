@@ -38,7 +38,8 @@ const emailMessages = {
 };
 
 function SubmissionReview({ submission, day, onReviewSaved }) {
-  const reference = answerKeys[submission.lessonId];
+  const configuredReference = answerKeys[submission.lessonId];
+  const reference = configuredReference?.legacyTopic && submission.contentVersion !== 3 ? configuredReference.legacyTopic : configuredReference;
   const isLegacyDayFour = submission.lessonId === "swahili-day-4" && Number(submission.readingVersion || 1) < 2;
   const readingReference = isLegacyDayFour ? reference.legacyReading : reference.reading;
   const listeningReference = isLegacyDayFour ? null : reference.listening;

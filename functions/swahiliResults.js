@@ -3,8 +3,12 @@ const answerKeys = require("./swahili-answers.json");
 const { createHash } = require("node:crypto");
 const { resolveAnnouncementConfig, postAnnouncementRow } = require("./finalMockResultEmails");
 
-function resolveDayFourAnswerReference(lessonId, readingVersion) {
+function resolveDayFourAnswerReference(lessonId, readingVersion, contentVersion) {
   const reference = answerKeys[lessonId];
+  if (reference?.legacyTopic) {
+    const { legacyTopic, ...current } = reference;
+    return contentVersion === 3 ? current : legacyTopic;
+  }
   if (!reference || lessonId !== "swahili-day-4") return reference;
   const { legacyReading, listening, ...base } = reference;
   // Older Day 4 students completed three short-answer questions without Hören.
@@ -55,7 +59,7 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
       const syncId = createHash("sha256").update(`${publicationId}:${reviewVersion}`).digest("hex");
       const deliveryRef = db.collection("automaticScoreSync").doc(syncId);
       const scoreRef = db.collection("scores").doc(resultId);
-      const assignment = `Swahili ${level} Day ${day} · ${lessonTitles[review.lessonId]}`;
+
       const result = await db.runTransaction(async (tx) => {
         const [latest, submission, delivery] = await Promise.all([
           tx.get(snapshot.ref), tx.get(submissionRef), tx.get(deliveryRef),
@@ -68,7 +72,8 @@ function createSwahiliResultWorker({ db, auth, runtimeConfig, postAnnouncement =
           return null;
         }
         if (delivery.exists) return delivery.data();
-        tx.set(snapshot.ref, { ...(review.lessonId === "swahili-b1-day-28" ? {} : { answerReference: resolveDayFourAnswerReference(review.lessonId, submission.data()?.readingVersion) }), sheetDelivery: "pending", emailDelivery: "pending" }, { merge: true });
+        const assignment = `Swahili ${level} Day ${day} · ${resolveDayFourAnswerReference(review.lessonId, submission.data()?.readingVersion, submission.data()?.contentVersion)?.title || lessonTitles[review.lessonId]}`;
+        tx.set(snapshot.ref, { ...(review.lessonId === "swahili-b1-day-28" ? {} : { answerReference: resolveDayFourAnswerReference(review.lessonId, submission.data()?.readingVersion, submission.data()?.contentVersion) }), sheetDelivery: "pending", emailDelivery: "pending" }, { merge: true });
         tx.set(scoreRef, {
           program: "swahili", language: "swahili", studentId: uid, studentCode, studentcode: studentCode,
           name: student.name || "", assignment, assignmentId: review.lessonId,

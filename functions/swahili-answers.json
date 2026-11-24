@@ -582,96 +582,198 @@
     }
   },
   "swahili-day-12": {
-    "version": 2,
-    "title": "Mapishi ya Kitanzania",
+    "version": 3,
+    "title": "Siku, Miezi na Tarehe",
     "writing": {
-      "Kuandika": "Mfano wa uandishi: Tunahitaji unga wa mahindi na maji. Kwanza, chemsha maji. Kisha, tia unga wa mahindi polepole. Halafu, koroga vizuri mpaka ugali uwe mgumu. Mwishowe, pakua ugali. Kubali maelekezo mengine sahihi yanayoeleza viungo, maji ya moto, kuongeza unga na kukoroga."
+      "Kuandika": "Mfano: Leo ni Jumatatu, tarehe tano Machi. Jana ilikuwa Jumapili. Kesho ni Jumanne. Siku yangu ya kuzaliwa ni tarehe kumi Mei. Miadi yangu ni tarehe sita Machi. Kubali tarehe halisi au za kufikirika zinazolingana na siku zilizotajwa."
     },
     "reading": {
-      "read-1": {
-        "prompt": "Mama yupo wapi leo na anafanya nini?",
-        "answer": "Yupo jikoni anapika chakula cha jioni"
+      "calendar-read-1": {
+        "prompt": "Leo ni siku gani?",
+        "answer": "Jumatatu"
       },
-      "read-2": {
-        "prompt": "Mama anapika chakula gani kikuu leo?",
-        "answer": "Wali wa nazi na samaki"
+      "calendar-read-2": {
+        "prompt": "Leo ni tarehe ngapi?",
+        "answer": "Tarehe tano Machi"
       },
-      "read-3": {
-        "prompt": "Mama anatumia nini kupika wali wa nazi?",
-        "answer": "Tui la nazi"
+      "calendar-read-3": {
+        "prompt": "Amina ana miadi na nani?",
+        "answer": "Mwalimu wake"
       },
-      "read-4": {
-        "prompt": "Watoto wanapenda kula chakula gani kingine cha Kitanzania?",
-        "answer": "Ugali na maharage"
+      "calendar-read-4": {
+        "prompt": "Siku ya kuzaliwa ya Amina ni lini?",
+        "answer": "Tarehe kumi Mei"
       },
-      "read-5": {
-        "prompt": "Baba anasema nini baada ya kuonja chakula mezani?",
-        "answer": "Chakula hiki ni kitamu sana, asante!"
+      "calendar-read-5": {
+        "prompt": "Jana ilikuwa siku gani?",
+        "answer": "Jumapili"
       }
     },
     "listening": {
-      "listen-favorite": {
-        "prompt": "Mzungumzaji A anapenda chakula gani cha Kitanzania?",
-        "answer": "Ugali"
+      "calendar-listen-1": {
+        "prompt": "Leo ni siku gani?",
+        "answer": "Jumatano"
       },
-      "listen-knowledge": {
-        "prompt": "Mzungumzaji B anasema nini kuhusu kupika ugali?",
-        "answer": "Anajua kupika ugali vizuri"
+      "calendar-listen-2": {
+        "prompt": "Leo ni tarehe ngapi?",
+        "answer": "Tarehe saba Agosti"
       },
-      "listen-ingredients": {
-        "prompt": "Wanahitaji nini kupika ugali?",
-        "answer": "Unga wa mahindi na maji"
+      "calendar-listen-3": {
+        "prompt": "Kesho Neema ana miadi na nani?",
+        "answer": "Daktari"
       },
-      "listen-water": {
-        "prompt": "Maji yanapaswa kuwa ya namna gani?",
-        "answer": "Ya moto"
+      "calendar-listen-4": {
+        "prompt": "Neema alizaliwa lini?",
+        "answer": "Tarehe kumi Desemba"
       },
-      "listen-process": {
-        "prompt": "Baada ya kutia unga polepole, wanafanya nini?",
-        "answer": "Wanakoroga mpaka ugali uwe mgumu"
+      "calendar-listen-5": {
+        "prompt": "Jana ilikuwa siku gani?",
+        "answer": "Jumanne"
+      }
+    },
+    "legacyTopic": {
+      "version": 2,
+      "title": "Mapishi ya Kitanzania",
+      "writing": {
+        "Kuandika": "Mfano wa uandishi: Tunahitaji unga wa mahindi na maji. Kwanza, chemsha maji. Kisha, tia unga wa mahindi polepole. Halafu, koroga vizuri mpaka ugali uwe mgumu. Mwishowe, pakua ugali. Kubali maelekezo mengine sahihi yanayoeleza viungo, maji ya moto, kuongeza unga na kukoroga."
+      },
+      "reading": {
+        "read-1": {
+          "prompt": "Mama yupo wapi leo na anafanya nini?",
+          "answer": "Yupo jikoni anapika chakula cha jioni"
+        },
+        "read-2": {
+          "prompt": "Mama anapika chakula gani kikuu leo?",
+          "answer": "Wali wa nazi na samaki"
+        },
+        "read-3": {
+          "prompt": "Mama anatumia nini kupika wali wa nazi?",
+          "answer": "Tui la nazi"
+        },
+        "read-4": {
+          "prompt": "Watoto wanapenda kula chakula gani kingine cha Kitanzania?",
+          "answer": "Ugali na maharage"
+        },
+        "read-5": {
+          "prompt": "Baba anasema nini baada ya kuonja chakula mezani?",
+          "answer": "Chakula hiki ni kitamu sana, asante!"
+        }
+      },
+      "listening": {
+        "listen-favorite": {
+          "prompt": "Mzungumzaji A anapenda chakula gani cha Kitanzania?",
+          "answer": "Ugali"
+        },
+        "listen-knowledge": {
+          "prompt": "Mzungumzaji B anasema nini kuhusu kupika ugali?",
+          "answer": "Anajua kupika ugali vizuri"
+        },
+        "listen-ingredients": {
+          "prompt": "Wanahitaji nini kupika ugali?",
+          "answer": "Unga wa mahindi na maji"
+        },
+        "listen-water": {
+          "prompt": "Maji yanapaswa kuwa ya namna gani?",
+          "answer": "Ya moto"
+        },
+        "listen-process": {
+          "prompt": "Baada ya kutia unga polepole, wanafanya nini?",
+          "answer": "Wanakoroga mpaka ugali uwe mgumu"
+        }
       }
     }
   },
   "swahili-day-13": {
-    "version": 2,
-    "title": "Nyumbani",
+    "version": 3,
+    "title": "Kutaja Saa na Shughuli za Kila Siku",
     "writing": {
-      "Kuandika": "Mfano: Nyumba yangu ina vyumba viwili vya kulala. Hiki ni chumba cha wageni. Meza iko karibu na dirisha. Bafu liko karibu na jiko. Ninapenda nyumba yangu. Kubali maelezo mengine sahihi kuhusu nyumba ya kufikirika."
+      "Kuandika": "Mfano: Mimi huamka saa kumi na mbili asubuhi. Kwanza, ninaoga na kupiga mswaki. Halafu, hula kifungua kinywa saa moja asubuhi. Ninaenda kazini saa mbili asubuhi. Hula chakula cha mchana saa sita mchana. Kisha, hurudi nyumbani saa kumi na moja jioni. Mwishowe, hulala saa nne usiku. Kubali ratiba nyingine sahihi; angalia angalau saa nne, viunganishi na sentensi 6–8."
     },
     "reading": {
-      "read-1": {
-        "prompt": "Nyumba ina vyumba vingapi?",
-        "answer": "Viwili."
+      "routine-read-1": {
+        "prompt": "Asha huamka saa ngapi?",
+        "answer": "Saa kumi na mbili asubuhi"
       },
-      "read-2": {
-        "prompt": "Bafu liko wapi?",
-        "answer": "Karibu na jiko."
+      "routine-read-2": {
+        "prompt": "Asha hufanya nini kwanza?",
+        "answer": "Huoga na kupiga mswaki"
       },
-      "read-3": {
-        "prompt": "Bustani iko wapi?",
-        "answer": "Mbele ya nyumba."
+      "routine-read-3": {
+        "prompt": "Asha anaenda shuleni saa ngapi?",
+        "answer": "Saa mbili asubuhi"
+      },
+      "routine-read-4": {
+        "prompt": "Asha hula chakula cha mchana saa ngapi?",
+        "answer": "Saa sita mchana"
+      },
+      "routine-read-5": {
+        "prompt": "Asha hulala saa ngapi?",
+        "answer": "Saa nne usiku"
       }
     },
     "listening": {
-      "listen-room": {
-        "prompt": "A anamwonyesha B chumba gani kwanza?",
-        "answer": "Chumba cha wageni"
+      "routine-listen-1": {
+        "prompt": "Juma huamka saa ngapi?",
+        "answer": "Saa kumi na mbili asubuhi"
       },
-      "listen-table": {
-        "prompt": "Meza iko wapi?",
-        "answer": "Karibu na dirisha"
+      "routine-listen-2": {
+        "prompt": "Juma anafanya nini kabla ya kwenda kazini?",
+        "answer": "Anaoga na kula kifungua kinywa"
       },
-      "listen-kitchen": {
-        "prompt": "Jikoni iko upande gani?",
-        "answer": "Upande wa kulia"
+      "routine-listen-3": {
+        "prompt": "Juma anaenda kazini saa ngapi?",
+        "answer": "Saa mbili asubuhi"
       },
-      "listen-bedrooms": {
-        "prompt": "Nyumba ina vyumba vingapi vya kulala?",
-        "answer": "Vitatu"
+      "routine-listen-4": {
+        "prompt": "Juma hula chakula cha mchana saa ngapi?",
+        "answer": "Saa saba mchana"
       },
-      "listen-bathroom": {
-        "prompt": "Bafu liko wapi?",
-        "answer": "Karibu na mlango mkuu"
+      "routine-listen-5": {
+        "prompt": "Juma hufanya nini kabla ya kulala?",
+        "answer": "Hutazama televisheni"
+      }
+    },
+    "legacyTopic": {
+      "version": 2,
+      "title": "Nyumbani",
+      "writing": {
+        "Kuandika": "Mfano: Nyumba yangu ina vyumba viwili vya kulala. Hiki ni chumba cha wageni. Meza iko karibu na dirisha. Bafu liko karibu na jiko. Ninapenda nyumba yangu. Kubali maelezo mengine sahihi kuhusu nyumba ya kufikirika."
+      },
+      "reading": {
+        "read-1": {
+          "prompt": "Nyumba ina vyumba vingapi?",
+          "answer": "Viwili."
+        },
+        "read-2": {
+          "prompt": "Bafu liko wapi?",
+          "answer": "Karibu na jiko."
+        },
+        "read-3": {
+          "prompt": "Bustani iko wapi?",
+          "answer": "Mbele ya nyumba."
+        }
+      },
+      "listening": {
+        "listen-room": {
+          "prompt": "A anamwonyesha B chumba gani kwanza?",
+          "answer": "Chumba cha wageni"
+        },
+        "listen-table": {
+          "prompt": "Meza iko wapi?",
+          "answer": "Karibu na dirisha"
+        },
+        "listen-kitchen": {
+          "prompt": "Jikoni iko upande gani?",
+          "answer": "Upande wa kulia"
+        },
+        "listen-bedrooms": {
+          "prompt": "Nyumba ina vyumba vingapi vya kulala?",
+          "answer": "Vitatu"
+        },
+        "listen-bathroom": {
+          "prompt": "Bafu liko wapi?",
+          "answer": "Karibu na mlango mkuu"
+        }
       }
     }
   },
