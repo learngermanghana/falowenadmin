@@ -1050,7 +1050,7 @@ export default function StudentDirectoryPage() {
                                 setSelectedStudentId(student.id);
                                 setDetailTab("overview");
                                 setMobileDetails(true);
-                                requestAnimationFrame(() => document.getElementById("student-tab-profile")?.focus());
+                                requestAnimationFrame(() => document.getElementById("student-tab-overview")?.focus());
                               }}
                               style={{
                                 width: "100%",
@@ -1408,7 +1408,7 @@ export default function StudentDirectoryPage() {
                         />}
 
                         </section>
-                        <div style={{ marginTop: 14 }}>
+                        {["profile","payments","class"].includes(detailTab) && <div style={{ marginTop: 14 }}>
                           <button
                             type="button"
                             onClick={() => saveStudent(selectedStudent)}
@@ -1416,7 +1416,7 @@ export default function StudentDirectoryPage() {
                           >
                             {savingId === selectedStudent.id ? "Saving..." : "Save student"}
                           </button>
-                        </div>
+                        </div>}
 
                       </div>
                     )}
