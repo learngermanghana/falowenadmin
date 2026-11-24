@@ -213,7 +213,7 @@ export function stageList(slide, topicLabel) {
         grammarUrl: workbook.grammarUrl || "",
         workbookUrl: workbook.workbookUrl || "",
         activityKind: "self-practice",
-        activityInstruction: "Bearbeite die vier Teile im bestehenden Workbook: Artikel, Adjektive, persönliche Vorstellung und W-Fragen. Das ist Selbstübung, keine tutorbenotete Abgabe.",
+        activityInstruction: "Bearbeite die fünf Teile im bestehenden Workbook: Artikel, Adjektive, persönliche Vorstellung, W-Fragen und Satzbau. Das ist Selbstübung, keine tutorbenotete Abgabe.",
         actionLabel: "Open self-practice workbook",
       },
     ];
@@ -944,8 +944,7 @@ export default function A1GrammarPresenter({
             <A1Day4TeachingStage key={stage.id} step={stage.step}
               question={stage.id === "grammar-check" ? activeCheck : null} questions={stage.items} />
           ) : stage.type === "a1-day5" ? (
-            <A1Day5TeachingStage key={stage.id} step={stage.step}
-              question={stage.id === "grammar-check" ? activeCheck : null} />
+            <A1Day5TeachingStage key={stage.id} step={stage.step} />
           ) : stage.type === "a1-day6" ? (
             <A1Day6TeachingStage key={stage.id} step={stage.step}
               question={stage.id === "grammar-check" ? activeCheck : null} />
