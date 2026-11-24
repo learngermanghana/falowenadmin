@@ -297,6 +297,20 @@ app.post("/payments/restore-paid-contract", async (req, res) => {
     if (!content.includes(marker)) throw new Error("Manual upgrade route anchor missing");
     content = content.replace(marker, manualRoute + "\n" + marker);
   }
+  const enrollmentHook = '    if (payment.purpose === "level_enrollment") return require("./studentLevelEnrollments").applyEnrollmentCheckout({transaction, paymentRef, payment, eventData, db, admin});';
+  if (!content.includes(enrollmentHook)) {
+    const marker = '    const payment = paymentSnap.data() || {};';
+    const start = content.indexOf('async function applySuccessfulPaystackPayment(');
+    const index = content.indexOf(marker, start);
+    if (start < 0 || index < 0) throw new Error("Enrollment webhook anchor missing");
+    content = content.slice(0,index) + marker + "\n" + enrollmentHook + content.slice(index+marker.length);
+  }
+  const enrollmentRoute = 'require("./studentLevelEnrollments").registerEnrollmentCheckout({app,db,admin,requirePaymentAdmin,initializePaystackPayment,calculateStudentCheckoutAmount,createPaymentReference});';
+  if (!content.includes(enrollmentRoute)) {
+    const marker = 'app.post("/payments/reconcile-student/:studentId", async (req, res) => {';
+    if (!content.includes(marker)) throw new Error("Enrollment checkout route anchor missing");
+    content = content.replace(marker,enrollmentRoute+"\n"+marker);
+  }
   write(file, content);
 }
 
