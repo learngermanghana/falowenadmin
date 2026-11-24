@@ -67,3 +67,7 @@ export async function reconcileStudentPayments(studentId) {
   });
   return parseResponse(response);
 }
+
+export async function recordManualUpgradePayment(payload) {
+  return parseResponse(await fetch("/api/payments/manual-upgrade", {method:"POST",headers:await authHeaders(),body:JSON.stringify(payload)}));
+}
