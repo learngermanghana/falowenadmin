@@ -13,7 +13,9 @@ function needsBuild(files) {
     && !/[\r\n\0]/.test(file)
     && !file.split("/").includes("..")
     && (/^(docs\/|tests\/|\.github\/)/.test(file)
-      || /^(README|CONTRIBUTING|CHANGELOG)\.md$/i.test(file));
+      || /^(README|CONTRIBUTING|CHANGELOG)\.md$/i.test(file)
+      || /^(src|functions)\/.*\.(test|spec)\.[cm]?[jt]sx?$/.test(file)
+      || /^(src|functions)\/(?:.*\/)?__tests__\/.+\.[cm]?[jt]sx?$/.test(file));
   return files.some((file) => !safe(file));
 }
 
