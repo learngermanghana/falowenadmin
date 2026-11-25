@@ -58,7 +58,7 @@ async function linkedAuthUser(admin, student) {
 function loginState(student, authUser) {
   if (!authUser) return "not_prepared";
   if (authUser.disabled) return "disabled";
-  return authUser.metadata?.lastSignInTime ? "active" : student.activationEmailSentAt ? "invited" : "ready_to_invite";
+  return authUser.metadata?.lastSignInTime || (!student.accountProvisionedAt && !student.accountProvisionedBy && !student.activationEmailSentAt && (student.trialStartedAt || student.trialUsedAt || student.registrationSource === "self_signup")) ? "active" : student.activationEmailSentAt ? "invited" : "ready_to_invite";
 }
 
 async function accountStatus({ db, admin, studentId }) {
