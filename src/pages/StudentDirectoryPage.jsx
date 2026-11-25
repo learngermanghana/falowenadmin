@@ -10,6 +10,7 @@ import { useToast } from "../context/ToastContext";
 import StudentSupportTools from "../components/StudentSupportTools";
 import StudentAccountActivationPanel from "../components/StudentAccountActivationPanel.jsx";
 import SignupAccountLookup from "../components/SignupAccountLookup.jsx";
+import SignupRegistrationReviews from "../components/SignupRegistrationReviews.jsx";
 import StudentPaymentTools from "../components/StudentPaymentTools";
 import StudentLevelEnrollments from "../components/StudentLevelEnrollments";
 import StudentUpgradeTools from "../components/StudentUpgradeTools";
@@ -1025,6 +1026,7 @@ export default function StudentDirectoryPage() {
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 14, background: "#fff" }}>
         {activeTab === "directory" && (
           <>
+            {directoryView === "attention" && <SignupRegistrationReviews />}
             {loading && <p>Loading students...</p>}
             {error && <p style={{ color: "#a00000" }}>❌ {error}</p>}
 
