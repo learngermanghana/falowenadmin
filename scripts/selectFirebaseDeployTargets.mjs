@@ -5,6 +5,10 @@ import { pathToFileURL } from "node:url";
 // Shared modules and unrecognised files deliberately fall back to every existing
 // deployment group. Keep targeted mappings small and explicit.
 export const WORKER_TARGETS = {
+  // Runtime-only configuration of existing orientation and recovery workers.
+  // Avoid rolling out the API, marking workers or unrelated functions.
+  "scripts/patchAutomaticOrientationSync.mjs": ["autoSyncPaidStudentOrientation","autoSyncApprovedStudentOrientation"],
+  "scripts/snippets/operationalSheetAutoSyncJobs.js.txt": ["autoSyncNewStudentToOrientationSheet","autoRemoveIneligibleStudentFromOrientationSheet","autoRemoveDeletedStudentFromOrientationSheet","syncPendingOperationalSheets"],
   "functions/levelEnrollmentSheetSync.js": ["api","syncLevelEnrollmentSheet"],
   "functions/studentLevelEnrollments.js": ["api","syncLevelEnrollmentSheet"],
   "functions/effectiveEnrollmentProfile.js": ["api","reconcileStudentEnrollmentProfile"],

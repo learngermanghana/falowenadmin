@@ -351,6 +351,10 @@ async function syncClassToScheduleSheet(docSnap, options = {}) {
 }
 
 exports.autoSyncNewStudentToOrientationSheet = onDocumentCreated({
+  cpu: "gcf_gen1",
+  memory: "256MiB",
+  concurrency: 1,
+  minInstances: 0,
   document: "students/{studentId}",
   secrets: [orientationAppsScriptUrlSecret, orientationSyncSecret],
 }, async (event) => {
@@ -388,6 +392,10 @@ async function removeStudentFromOrientationSheet(student = {}, studentId = "", s
 }
 
 exports.autoRemoveIneligibleStudentFromOrientationSheet = onDocumentUpdated({
+  cpu: "gcf_gen1",
+  memory: "256MiB",
+  concurrency: 1,
+  minInstances: 0,
   document: "students/{studentId}",
   secrets: [orientationAppsScriptUrlSecret, orientationSyncSecret],
 }, async (event) => {
@@ -417,6 +425,10 @@ exports.autoRemoveIneligibleStudentFromOrientationSheet = onDocumentUpdated({
 });
 
 exports.autoRemoveDeletedStudentFromOrientationSheet = onDocumentDeleted({
+  cpu: "gcf_gen1",
+  memory: "256MiB",
+  concurrency: 1,
+  minInstances: 0,
   document: "students/{studentId}",
   secrets: [orientationAppsScriptUrlSecret, orientationSyncSecret],
 }, async (event) => {
@@ -444,6 +456,10 @@ exports.autoSyncNewLiveClassToScheduleSheet = onDocumentCreated({
 
 exports.syncPendingOperationalSheets = onSchedule({
   schedule: "0 6 * * *",
+  cpu: "gcf_gen1",
+  memory: "256MiB",
+  concurrency: 1,
+  minInstances: 0,
   timeZone: "Africa/Accra",
   secrets: [orientationAppsScriptUrlSecret, orientationSyncSecret, classScheduleAppsScriptUrlSecret, classScheduleSyncSecret],
 }, async () => {

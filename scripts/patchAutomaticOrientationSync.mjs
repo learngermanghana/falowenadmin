@@ -111,6 +111,10 @@ async function automaticPaidPaymentOrientationHandler(event) {
 exports.autoSyncPaidStudentOrientation = onDocumentUpdated(
   {
     region: "europe-west1",
+    cpu: "gcf_gen1",
+    memory: "256MiB",
+    concurrency: 1,
+    minInstances: 0,
     document: "payments/{reference}",
     secrets: [orientationSyncSecret, orientationAppsScriptUrlSecret],
     timeoutSeconds: 60,
@@ -139,6 +143,10 @@ async function automaticApprovedStudentOrientationHandler(event) {
 exports.autoSyncApprovedStudentOrientation = onDocumentUpdated(
   {
     region: "europe-west1",
+    cpu: "gcf_gen1",
+    memory: "256MiB",
+    concurrency: 1,
+    minInstances: 0,
     document: "students/{studentId}",
     secrets: [orientationSyncSecret, orientationAppsScriptUrlSecret],
     timeoutSeconds: 60,
