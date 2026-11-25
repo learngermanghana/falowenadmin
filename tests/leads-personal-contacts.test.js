@@ -119,3 +119,35 @@ test("History requests cannot overwrite another contact's selected history", () 
   assert.match(panel, /if \(requestId === historyRequestRef\.current\)/);
   assert.match(panel, /setActivities\(snap\.docs\.map/);
 });
+
+test("Class interest uses the published upcoming catalogue and stores only the class summary", async () => {
+  const { loadUpcomingLeadClasses, leadClassDetails } = await import("../src/utils/personalLeadClasses.js");
+  const upcoming = { id: "de-a1", title: "A1 Freiburg Klasse", startDate: "2026-12-03",
+    tuitionGhs: 3000, status: "upcoming", publicVisible: true, registrationOpen: true };
+  const payload = {
+    classes: [
+      upcoming,
+      { ...upcoming, id: "previous", startDate: "2026-11-01" },
+      { ...upcoming, id: "private", publicVisible: false },
+      { ...upcoming, id: "closed", registrationOpen: false },
+      { ...upcoming, id: "active", status: "active" },
+      { ...upcoming, id: "self-study", availability: "always" },
+    ],
+    swahiliClasses: [{ ...upcoming, id: "sw-a1", title: "Kiswahili A1", tuitionGhs: 0 }],
+  };
+  const choices = await loadUpcomingLeadClasses("2026-11-25", async (url) => {
+    assert.match(url, /^\/api\/public\/classes\?/);
+    return { ok: true, json: async () => payload };
+  });
+  assert.deepEqual(choices.german, [{
+    id: upcoming.id, title: upcoming.title, startDate: upcoming.startDate, tuitionGhs: 3000,
+  }]);
+  assert.equal(choices.swahili.length, 1);
+  assert.equal(choices.swahili[0].tuitionGhs, null);
+  assert.match(leadClassDetails(choices.swahili[0]), /Price not published/);
+  assert.match(leadClassDetails(choices.german[0]), /3,000/);
+  const panel = read("src/components/PersonalLeadsPanel.jsx");
+  assert.match(panel, /Class interested in/);
+  assert.match(panel, /interestedClass: form\.interestedClass/);
+  assert.match(panel, /leadClassDetails\(contact\.interestedClass\)/);
+});

@@ -2,7 +2,8 @@ const PUBLIC_CLASS_ENDPOINTS = [
   "/api/public/classes",
 ];
 
-async function fetchJson(url, fetchImpl = fetch) {
+export async function loadPublicClassCatalogue(fetchImpl = fetch) {
+  const url = PUBLIC_CLASS_ENDPOINTS[0];
   const separator = url.includes("?") ? "&" : "?";
   const response = await fetchImpl(`${url}${separator}fresh=${Date.now()}`, {
     cache: "no-store",
@@ -15,7 +16,7 @@ async function fetchJson(url, fetchImpl = fetch) {
   if (!Array.isArray(body?.classes)) {
     throw new Error(`${url} did not return a public classes array`);
   }
-  return body.classes;
+  return body;
 }
 
 function startKey(course = {}) {
@@ -23,20 +24,12 @@ function startKey(course = {}) {
 }
 
 export async function loadShareablePublicClasses(fetchImpl = fetch) {
-  const failures = [];
-  for (const endpoint of PUBLIC_CLASS_ENDPOINTS) {
-    try {
-      const classes = await fetchJson(endpoint, fetchImpl);
-      return [...classes].sort((left, right) => {
-        const dateDiff = startKey(left).localeCompare(startKey(right));
-        if (dateDiff !== 0) return dateDiff;
-        return String(left.title || left.name || "").localeCompare(String(right.title || right.name || ""));
-      });
-    } catch (error) {
-      failures.push(error?.message || String(error));
-    }
-  }
-  throw new Error(failures.join(" | ") || "Public class catalogue is unavailable.");
+  const { classes } = await loadPublicClassCatalogue(fetchImpl);
+  return [...classes].sort((left, right) => {
+    const dateDiff = startKey(left).localeCompare(startKey(right));
+    if (dateDiff !== 0) return dateDiff;
+    return String(left.title || left.name || "").localeCompare(String(right.title || right.name || ""));
+  });
 }
 
 export { PUBLIC_CLASS_ENDPOINTS };
