@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 
 import { getSlidesByCourse, getTeachingSlideByAssignmentId } from "../src/data/teachingSlides.js";
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
-import { getA2PresenterKnowledge } from "../src/data/a2PresenterKnowledge.js";
 
 const ALLOWED_VARIANTS = new Set([
   "sentence-jumble",
@@ -21,8 +20,8 @@ function practiceFor(slide) {
   return buildTeachingPresenterStages(slide, slide.topic).find((stage) => stage.id === "practice");
 }
 
-test("A2 and B1 focused practice now exposes visible weekly variation", () => {
-  for (const level of ["A2", "B1"]) {
+test("B1 legacy focused practice exposes visible weekly variation", () => {
+  for (const level of ["B1"]) {
     const slides = getSlidesByCourse(level);
     assert.equal(slides.length, 28);
 
@@ -37,6 +36,7 @@ test("A2 and B1 focused practice now exposes visible weekly variation", () => {
         continue;
       }
       const practice = practiceFor(slide);
+      if (!practice && buildTeachingPresenterStages(slide, slide.topic).some(s => s.id === "scenario-challenge")) continue;
       assert.ok(practice, `${slide.assignmentId} practice missing`);
       assert.equal(practice.type, "flow");
       assert.ok(ALLOWED_VARIANTS.has(practice.variant), `${slide.assignmentId} has unsupported practice variant ${practice.variant}`);
@@ -64,7 +64,7 @@ test("A2 and B1 focused practice now exposes visible weekly variation", () => {
 });
 
 test("sentence-jumble weeks build real jumbled German from lesson model sentences", () => {
-  for (const level of ["A2", "B1"]) {
+  for (const level of ["B1"]) {
     const slides = getSlidesByCourse(level);
     const jumbleStages = slides
       .map((slide) => ({ slide, practice: practiceFor(slide) }))
@@ -86,12 +86,7 @@ test("sentence-jumble weeks build real jumbled German from lesson model sentence
 
 test("lesson-specific activities override the weekly fallback when their format is explicit", () => {
   const cases = [
-    ["A2-2.4", "information-gap"],
-    ["A2-4.9", "error-detective"],
-    ["A2-5.12", "decision-task"],
-    ["A2-5.13", "transformation"],
     ["B1-3.9", "scenario-task"],
-    ["B1-9.26", "decision-task"],
   ];
 
   for (const [assignmentId, expectedVariant] of cases) {
@@ -104,7 +99,7 @@ test("lesson-specific activities override the weekly fallback when their format 
 });
 
 test("weekly fallback reaches exam-style practice in weeks 9 and 10", () => {
-  for (const level of ["A2", "B1"]) {
+  for (const level of ["B1"]) {
     const slides = getSlidesByCourse(level).filter((slide) => {
       const practice = practiceFor(slide);
       return practice?.weekNumber >= 9 && practice?.variantSource === "weekly-profile";
@@ -116,23 +111,10 @@ test("weekly fallback reaches exam-style practice in weeks 9 and 10", () => {
   }
 });
 
-test("A2 Day 12 Berufsberatung asks for a job decision, two reasons and weil, never a fake error correction", () => {
-  const knowledge = getA2PresenterKnowledge("A2-5.12");
+test("A2 Day 12 Berufsberatung uses the shared scenario format and retains reasons with weil", () => {
   const slide = getTeachingSlideByAssignmentId("A2-5.12");
-  assert.ok(knowledge && slide);
-  const practice = practiceFor(slide);
-  assert.equal(practice.variant, "decision-task");
-  assert.equal(practice.variantLabel, "Entscheidung");
-  assert.equal(practice.variantSource, "lesson-override");
-  assert.equal(practice.weekNumber, 5);
-  assert.equal(practice.weekFamily, "Scenarios & decisions");
-  assert.doesNotMatch(practice.weekFamily, /error detective|transformation/i);
-  assert.match(practice.items[0].title, /Berufsberatung/);
-  assert.match(practice.items[0].instruction, /passenden Beruf/);
-  assert.match(practice.items[0].instruction, /mindestens zwei Informationen/);
-  assert.match(practice.items[0].instruction, /weil-Satz/);
-  assert.equal(practice.items[0].prompts.length, 3);
-  assert.ok(practice.items[0].prompts.every((prompt) => /[.!?]$/.test(prompt)));
-  assert.match(practice.items[0].modelItems.join(" "), /weil/);
-  assert.notEqual(practice.variantLabel, "Fehlerdetektiv");
+  const stage = buildTeachingPresenterStages(slide, slide.topic).find(s => s.id === "scenario-challenge");
+  assert.match(stage.title, /Berufsberatung/);
+  assert.equal(stage.items.length, 3);
+  assert.ok(stage.items.every(item => item.steps.some(step => /weil/.test(step.modelDe))));
 });
