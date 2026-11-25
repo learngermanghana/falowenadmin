@@ -1,3 +1,4 @@
+import "./GrammarConjugationCarousel.css";
 import {useState} from "react";
 export const DAY10_PRETERITE = [
  ["sein",["war","warst","war","waren","wart","waren"],"Wir waren gestern in der Altstadt."],
