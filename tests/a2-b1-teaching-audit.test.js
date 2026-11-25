@@ -19,7 +19,7 @@ test("A2 scenario challenges genuinely replace focused practice in the same teac
       assert.ok(practice.teacherPurpose?.student, slide.assignmentId + " has no intended learner output");
     }
   }
-  assert.ok(challengeIds.length >= 10, "A2 interactive challenges should not be classified as missing practice");
+  assert.equal(challengeIds.length, 28, "Every A2 day must use a modern interactive challenge");
 });
 
 test("A2 restaurant lesson includes a one-sentence closing task", () => {
