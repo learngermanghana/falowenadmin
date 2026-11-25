@@ -72,18 +72,13 @@ test("all A2 days use Presenter 2.0 with workbook-aligned classroom support", ()
     assert.equal(stageIds.includes("examples"), false, `${slide.assignmentId} should not keep a separate examples slide`);
     assert.equal(stageIds.includes("mistakes"), false, `${slide.assignmentId} should fold correction into the grammar check`);
 
-    // An interactive scenario challenge replaces the regular focused practice
-    // for selected lessons; it is not a missing activity or an extra slide.
-    assert.equal(Number(Boolean(practice)) + Number(Boolean(challenge)), 1, slide.assignmentId);
-    if (challenge) {
-      assert.equal(challenge.type, "scenario-challenge");
-      assert.ok(challenge.items.length >= 1, slide.assignmentId);
-      assert.ok(challenge.suggestedMinutes > 0, slide.assignmentId);
-    } else {
-      assert.equal(practice.type, slide.assignmentId === "A2-6.15" ? "sport-matchmaker" : "flow");
-      assert.equal(practice.items.length, 1, slide.assignmentId);
-      assert.ok(practice.items[0].minutes > 0, slide.assignmentId);
-    }
+    // Every A2 day uses exactly one modern scenario in the existing practice slot.
+    assert.equal(practice, undefined, slide.assignmentId);
+    assert.ok(challenge, slide.assignmentId);
+    assert.equal(challenge.type, "scenario-challenge");
+    assert.equal(challenge.items.length, 3, slide.assignmentId);
+    assert.ok(challenge.items.every(item => item.steps.length === 3), slide.assignmentId);
+    assert.ok(challenge.suggestedMinutes > 0, slide.assignmentId);
     assert.equal(workbook.type, "clarification");
     assert.equal(workbook.items.length, 3);
     assert.equal(workbook.title, "Was ist noch unklar?");

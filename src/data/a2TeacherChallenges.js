@@ -1,6 +1,864 @@
 // A2 teacher-led oral missions. Each replaces exactly one existing focused-practice page.
 const definitions = [
   {
+  "assignmentId": "A2-2.5",
+  "title": "Freizeit Challenge",
+  "eyebrow": "Freizeit planen",
+  "grammar": "gern · lieber · am liebsten · weil",
+  "goal": "Freizeit planen in drei mündlichen Alltagssituationen üben.",
+  "scenarios": [
+    {
+      "id": "day5-1",
+      "label": "Sport oder Café?",
+      "icon": "💬",
+      "context": "Ihr habt am Samstag drei Stunden frei. Person A möchte Sport machen, Person B möchte lieber in ein Café gehen.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Was machst du am liebsten in deiner Freizeit?",
+          "modelDe": "Ich spiele am liebsten Fußball."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Was schlägst du vor, damit beide zufrieden sind?",
+          "modelDe": "Wir könnten zuerst spazieren gehen und danach Kaffee trinken."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Warum passt der Plan für beide?",
+          "modelDe": "Der Plan passt, weil wir draußen sind und uns danach unterhalten können."
+        }
+      ]
+    },
+    {
+      "id": "day5-2",
+      "label": "Ein Regentag",
+      "icon": "🤝",
+      "context": "Ihr wolltet am Sonntag Rad fahren, aber es regnet den ganzen Tag. Ihr möchtet trotzdem etwas zusammen unternehmen.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Was machst du bei Regen gern?",
+          "modelDe": "Bei Regen gehe ich gern ins Kino."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Welche Alternative schlägst du vor?",
+          "modelDe": "Wollen wir lieber einen Film sehen?"
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Einigt euch und begründet eure Wahl.",
+          "modelDe": "Wir gehen ins Kino, weil es draußen regnet."
+        }
+      ]
+    },
+    {
+      "id": "day5-3",
+      "label": "Nach Feierabend",
+      "icon": "🎯",
+      "context": "Deine Kollegin hört gern Musik, du kochst lieber. Ihr habt am Freitagabend Zeit und möchtet euch besser kennenlernen.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Frag sie nach ihren Hobbys.",
+          "modelDe": "Was machst du gern nach der Arbeit?"
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Mach einen gemeinsamen Vorschlag.",
+          "modelDe": "Wir könnten zusammen kochen und Musik hören."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Bestätige den Plan mit einer Uhrzeit.",
+          "modelDe": "Wir treffen uns am Freitag um 18 Uhr bei mir."
+        }
+      ]
+    }
+  ]
+},
+  {
+  "assignmentId": "A2-3.7",
+  "title": "Wohnungsbesichtigung",
+  "eyebrow": "Eine Wohnung finden",
+  "grammar": "Relativsätze im Nominativ · der / die / das",
+  "goal": "Eine Wohnung finden in drei mündlichen Alltagssituationen üben.",
+  "scenarios": [
+    {
+      "id": "day7-1",
+      "label": "Wohnung in der Nähe",
+      "icon": "💬",
+      "context": "Du suchst zwei Zimmer in der Nähe deiner Arbeit. Eine Maklerin bietet dir eine Wohnung für 650 Euro an.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Beschreibe die Wohnung, die du suchst.",
+          "modelDe": "Ich suche eine Wohnung, die zwei Zimmer hat und in der Nähe meiner Arbeit liegt."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Frag die Maklerin nach den Nebenkosten.",
+          "modelDe": "Sind die Nebenkosten in der Miete enthalten?"
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Vereinbare einen Termin zur Besichtigung.",
+          "modelDe": "Kann ich die Wohnung am Freitag besichtigen?"
+        }
+      ]
+    },
+    {
+      "id": "day7-2",
+      "label": "Ein Zimmer für Studenten",
+      "icon": "🤝",
+      "context": "Du studierst und hast ein Budget von 400 Euro. Ein Vermieter hat ein freies Zimmer in einer WG mit drei anderen Studenten.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Beschreibe das Zimmer mit einem Relativsatz.",
+          "modelDe": "Ich suche ein Zimmer, das nicht mehr als 400 Euro kostet."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Frag den Vermieter nach der Ausstattung.",
+          "modelDe": "Gibt es eine Küche und WLAN in der Wohnung?"
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Frag, ab wann das Zimmer frei ist.",
+          "modelDe": "Ab wann ist das Zimmer frei?"
+        }
+      ]
+    },
+    {
+      "id": "day7-3",
+      "label": "Ein ruhiges Zuhause",
+      "icon": "🎯",
+      "context": "Eine Familie mit einem Kind sucht eine ruhige Wohnung. Der Vermieter bietet eine Wohnung mit Balkon, aber ohne Aufzug an.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Beschreibe die passende Wohnung.",
+          "modelDe": "Wir suchen eine Wohnung, die ruhig liegt und einen Balkon hat."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Frag den Vermieter nach der Umgebung.",
+          "modelDe": "Gibt es einen Kindergarten in der Nähe?"
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Reagiere höflich auf das Angebot.",
+          "modelDe": "Die Wohnung klingt gut. Können wir sie morgen besichtigen?"
+        }
+      ]
+    }
+  ]
+},
+  {
+  "assignmentId": "A2-4.9",
+  "title": "Urlaub Challenge",
+  "eyebrow": "Von einer Reise erzählen",
+  "grammar": "Perfekt · haben / sein · Partizip II",
+  "goal": "Von einer Reise erzählen in drei mündlichen Alltagssituationen üben.",
+  "scenarios": [
+    {
+      "id": "day9-1",
+      "label": "Zurück aus Berlin",
+      "icon": "💬",
+      "context": "Du bist am Wochenende mit dem Zug nach Berlin gefahren. Du hast dort Freunde besucht und viele Fotos gemacht. Ein Kollege fragt nach deiner Reise.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Erzähle, wohin und womit du gefahren bist.",
+          "modelDe": "Ich bin mit dem Zug nach Berlin gefahren."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Erzähle, was du dort gemacht hast.",
+          "modelDe": "Ich habe Freunde besucht und viele Fotos gemacht."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Frag deinen Kollegen nach seinem Wochenende.",
+          "modelDe": "Was hast du am Wochenende gemacht?"
+        }
+      ]
+    },
+    {
+      "id": "day9-2",
+      "label": "Urlaub am Meer",
+      "icon": "🤝",
+      "context": "Du hast drei Tage am Meer verbracht. Am ersten Tag bist du geschwommen, am zweiten Tag hast du in einem Restaurant gegessen.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Erzähle, wo du Urlaub gemacht hast.",
+          "modelDe": "Ich habe drei Tage am Meer verbracht."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Beschreibe zwei Aktivitäten im Perfekt.",
+          "modelDe": "Ich bin geschwommen und habe in einem Restaurant gegessen."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Frag deinen Partner nach seiner Erfahrung am Meer.",
+          "modelDe": "Bist du schon einmal ans Meer gefahren?"
+        }
+      ]
+    },
+    {
+      "id": "day9-3",
+      "label": "Eine Reise mit Problemen",
+      "icon": "🎯",
+      "context": "Du bist gestern nach Hamburg gefahren. Dein Zug ist zu spät angekommen, aber du hast noch ein Hotel gefunden und dort übernachtet.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Beschreibe das Problem im Perfekt.",
+          "modelDe": "Mein Zug ist zu spät angekommen."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Erzähle, was du danach gemacht hast.",
+          "modelDe": "Ich habe ein Hotel gefunden und dort übernachtet."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Frag nach einer ähnlichen Erfahrung.",
+          "modelDe": "Hast du schon einmal so ein Problem auf einer Reise gehabt?"
+        }
+      ]
+    }
+  ]
+},
+  {
+  "assignmentId": "A2-4.10",
+  "title": "Entdeckungstag in der Stadt",
+  "eyebrow": "Über einen Stadttag berichten",
+  "grammar": "Präteritum · Perfekt · zuerst / danach / später",
+  "goal": "Über einen Stadttag berichten in drei mündlichen Alltagssituationen üben.",
+  "scenarios": [
+    {
+      "id": "day10-1",
+      "label": "Samstag in der Altstadt",
+      "icon": "💬",
+      "context": "Du warst am Samstag in der Altstadt. Zuerst hast du den Markt besucht, danach bist du in ein Café gegangen. Dort war es sehr voll.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Erzähle, wo du warst und wie es dort war.",
+          "modelDe": "Ich war am Samstag in der Altstadt. Dort war es sehr voll."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Erzähle zwei Aktivitäten in der richtigen Reihenfolge.",
+          "modelDe": "Zuerst habe ich den Markt besucht. Danach bin ich in ein Café gegangen."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Dein Freund möchte die Stadt besuchen. Was empfiehlst du ihm?",
+          "modelDe": "Du solltest den Markt besuchen. Dort gibt es viele interessante Sachen."
+        }
+      ]
+    },
+    {
+      "id": "day10-2",
+      "label": "Ein Museum und ein Park",
+      "icon": "🤝",
+      "context": "Gestern hattest du frei. Am Vormittag hast du ein Museum besucht, am Nachmittag bist du durch den Park spaziert. Ein Freund fragt nach deinem Tag.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Beginne mit hatte und war im Präteritum.",
+          "modelDe": "Gestern hatte ich frei. Das Museum war sehr interessant."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Erzähle, was du danach gemacht hast.",
+          "modelDe": "Danach bin ich durch den Park spaziert."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Frag deinen Freund nach seinem letzten Stadttag.",
+          "modelDe": "Was hast du bei deinem letzten Stadtbesuch gemacht?"
+        }
+      ]
+    },
+    {
+      "id": "day10-3",
+      "label": "Eine Stadtführung mit Regen",
+      "icon": "🎯",
+      "context": "Du hast gestern an einer Stadtführung teilgenommen. Es war kalt und ihr hattet keinen Regenschirm. Später habt ihr im Restaurant gegessen.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Beschreibe das Wetter und euer Problem.",
+          "modelDe": "Es war kalt und wir hatten keinen Regenschirm."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Erzähle zwei Dinge, die ihr gemacht habt.",
+          "modelDe": "Wir haben an einer Stadtführung teilgenommen. Später haben wir im Restaurant gegessen."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Erzähle den letzten Teil mit ging im Präteritum.",
+          "modelDe": "Nach der Stadtführung ging ich mit meinen Freunden in ein Restaurant."
+        }
+      ]
+    }
+  ]
+},
+  {
+  "assignmentId": "A2-5.12",
+  "title": "Berufsberatung Challenge",
+  "eyebrow": "Einen passenden Beruf empfehlen",
+  "grammar": "möchten · wollen · können · weil · dass",
+  "goal": "Einen passenden Beruf empfehlen in drei mündlichen Alltagssituationen üben.",
+  "scenarios": [
+    {
+      "id": "day12-1",
+      "label": "Arbeit mit Menschen",
+      "icon": "💬",
+      "context": "Ama ist geduldig und organisiert. Sie arbeitet gern mit Menschen und möchte später Verantwortung übernehmen. Du bist Berufsberater.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Frag Ama nach ihrem Berufswunsch.",
+          "modelDe": "Was möchtest du später beruflich machen?"
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Empfiehl einen Beruf mit zwei Gründen.",
+          "modelDe": "Du könntest im Hotel arbeiten, weil du gern mit Menschen arbeitest und organisiert bist."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Sag, was sie als Nächstes tun kann.",
+          "modelDe": "Ich denke, dass du zuerst ein Praktikum machen kannst."
+        }
+      ]
+    },
+    {
+      "id": "day12-2",
+      "label": "Technik und Computer",
+      "icon": "🤝",
+      "context": "Kojo repariert gern Geräte und arbeitet gut mit Computern. Er möchte eine Ausbildung machen und später in einer Firma arbeiten.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Frag Kojo nach seinen Fähigkeiten.",
+          "modelDe": "Was kannst du besonders gut?"
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Empfiehl einen Beruf mit zwei passenden Gründen.",
+          "modelDe": "Du könntest Informatiker werden, weil du Computer magst und technische Probleme lösen kannst."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Erkläre, wo er Informationen finden kann.",
+          "modelDe": "Du kannst dich im Berufsinformationszentrum informieren."
+        }
+      ]
+    },
+    {
+      "id": "day12-3",
+      "label": "Ein Beruf im Krankenhaus",
+      "icon": "🎯",
+      "context": "Sara hilft gern anderen Menschen und interessiert sich für Gesundheit. Sie möchte einen sicheren Beruf und ist bereit, weiter zu lernen.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Frag Sara nach ihrem beruflichen Ziel.",
+          "modelDe": "Welchen Beruf möchtest du lernen?"
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Empfiehl einen Beruf und nenne zwei Gründe.",
+          "modelDe": "Du könntest Pflegefachkraft werden, weil du gern hilfst und dich für Gesundheit interessierst."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Gib einen weiteren Rat mit dass.",
+          "modelDe": "Ich denke, dass ein Praktikum im Krankenhaus sinnvoll ist."
+        }
+      ]
+    }
+  ]
+},
+  {
+  "assignmentId": "A2-5.14",
+  "title": "Karriere-Coach Challenge",
+  "eyebrow": "Berufliche Ziele und Entwicklung",
+  "grammar": "um … zu · Infinitiv · weil",
+  "goal": "Berufliche Ziele und Entwicklung in drei mündlichen Alltagssituationen üben.",
+  "scenarios": [
+    {
+      "id": "day14-1",
+      "label": "Ama möchte ins Büro",
+      "icon": "💬",
+      "context": "Ama möchte in einem Büro arbeiten. Sie kann gut mit Kunden sprechen, aber sie hat wenig Erfahrung mit Tabellen und Computerprogrammen.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Welche Fähigkeit sollte Ama zuerst verbessern?",
+          "modelDe": "Sie sollte lernen, mit Tabellen zu arbeiten."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Erkläre das Ziel mit um … zu.",
+          "modelDe": "Sie macht einen Computerkurs, um Tabellen besser bearbeiten zu können."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Frag Ama nach ihrem eigenen Berufsziel.",
+          "modelDe": "Was möchtest du lernen, um später im Büro zu arbeiten?"
+        }
+      ]
+    },
+    {
+      "id": "day14-2",
+      "label": "Kojo im Kundenservice",
+      "icon": "🤝",
+      "context": "Kojo möchte im Kundenservice arbeiten. Er kennt die Produkte gut, aber er ist bei Telefongesprächen noch unsicher und möchte selbstbewusster werden.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Welche Übung empfiehlst du Kojo?",
+          "modelDe": "Ich empfehle ihm, Kundengespräche zu üben."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Begründe den Rat mit um … zu.",
+          "modelDe": "Er übt Telefongespräche, um sicherer im Kundenkontakt zu werden."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Frag, wie er regelmäßig üben kann.",
+          "modelDe": "Wie kannst du jeden Tag üben, um sicherer zu sprechen?"
+        }
+      ]
+    },
+    {
+      "id": "day14-3",
+      "label": "Sara möchte ein Team leiten",
+      "icon": "🎯",
+      "context": "Sara arbeitet seit zwei Jahren in einer Firma. Sie möchte später ein Team leiten, hat aber wenig Erfahrung mit Planung und Organisation.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Was sollte Sara jetzt lernen?",
+          "modelDe": "Sie sollte lernen, Aufgaben im Team zu organisieren."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Beschreibe ihren Plan mit um … zu.",
+          "modelDe": "Sie übernimmt ein kleines Projekt, um später ein Team zu leiten."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Gib einen weiteren Rat und erkläre das Ziel.",
+          "modelDe": "Sie besucht einen Kurs, um ihre Fähigkeiten zu verbessern."
+        }
+      ]
+    }
+  ]
+},
+  {
+  "assignmentId": "A2-6.15",
+  "title": "Sport-Matchmaker Challenge",
+  "eyebrow": "Sportarten empfehlen",
+  "grammar": "seit + Dativ · Präsens · Häufigkeit · weil",
+  "goal": "Sportarten empfehlen in drei mündlichen Alltagssituationen üben.",
+  "scenarios": [
+    {
+      "id": "day15-1",
+      "label": "Sport nach der Arbeit",
+      "icon": "💬",
+      "context": "Dein Freund möchte nach der Arbeit aktiv sein. Er mag Mannschaftssport, kann zweimal pro Woche trainieren und möchte neue Leute kennenlernen.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Welcher Sport passt zu ihm und warum?",
+          "modelDe": "Fußball passt gut, weil er gern im Team spielt."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Erzähle, seit wann du Sport machst.",
+          "modelDe": "Ich spiele seit zwei Jahren Fußball."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Lade deinen Freund zum Training ein.",
+          "modelDe": "Möchtest du am Samstag mit mir trainieren?"
+        }
+      ]
+    },
+    {
+      "id": "day15-2",
+      "label": "Ein Sport ohne Mannschaft",
+      "icon": "🤝",
+      "context": "Deine Kollegin arbeitet oft zu unterschiedlichen Zeiten. Sie ist gern draußen und möchte allein trainieren, ohne einen festen Termin zu brauchen.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Empfiehl einen passenden Sport mit weil.",
+          "modelDe": "Radfahren passt gut, weil sie allein und flexibel trainieren kann."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Sag, seit wann du diesen Sport machst.",
+          "modelDe": "Ich fahre seit einem Jahr regelmäßig Rad."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Frag nach ihrer Trainingshäufigkeit.",
+          "modelDe": "Wie oft möchtest du pro Woche Sport machen?"
+        }
+      ]
+    },
+    {
+      "id": "day15-3",
+      "label": "Ein Hobby für zwei",
+      "icon": "🎯",
+      "context": "Jan möchte am Samstag etwas mit dir unternehmen. Ihr mögt Wasser und wollt euch regelmäßig bewegen, habt aber wenig Erfahrung mit Sport.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Schlage eine Sportart vor und nenne einen Grund.",
+          "modelDe": "Wir könnten schwimmen gehen, weil wir beide Wasser mögen."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Erzähle von deiner Erfahrung mit seit.",
+          "modelDe": "Ich schwimme seit drei Monaten einmal pro Woche."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Bestätige deine Einladung an Jan.",
+          "modelDe": "Jan, hast du am Samstag Zeit? Wir könnten zusammen schwimmen gehen."
+        }
+      ]
+    }
+  ]
+},
+  {
+  "assignmentId": "A2-6.16",
+  "title": "Wohlbefinden Challenge",
+  "eyebrow": "Gesundheit und Gewohnheiten",
+  "grammar": "Reflexivpronomen · sich fühlen · sich erholen",
+  "goal": "Gesundheit und Gewohnheiten in drei mündlichen Alltagssituationen üben.",
+  "scenarios": [
+    {
+      "id": "day16-1",
+      "label": "Nach einer stressigen Woche",
+      "icon": "💬",
+      "context": "Deine Freundin arbeitet viel und schläft schlecht. Sie fühlt sich müde und möchte sich am Wochenende besser erholen.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Frag sie, wie sie sich heute fühlt.",
+          "modelDe": "Wie fühlst du dich heute?"
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Gib einen Rat mit einem reflexiven Verb.",
+          "modelDe": "Du solltest dich am Wochenende erholen."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Erzähle, wie du dich entspannst.",
+          "modelDe": "Ich entspanne mich am Abend mit Musik."
+        }
+      ]
+    },
+    {
+      "id": "day16-2",
+      "label": "Ein gesunder Morgen",
+      "icon": "🤝",
+      "context": "Dein Kollege hat morgens wenig Zeit. Er möchte sich mehr bewegen und sich besser auf den Arbeitstag vorbereiten.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Frag nach seiner täglichen Morgenroutine.",
+          "modelDe": "Wie bereitest du dich morgens auf die Arbeit vor?"
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Empfiehl ihm eine gesunde Gewohnheit.",
+          "modelDe": "Du kannst dich morgens zehn Minuten bewegen."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Beschreibe, wie du dich danach fühlst.",
+          "modelDe": "Nach dem Sport fühle ich mich besser."
+        }
+      ]
+    },
+    {
+      "id": "day16-3",
+      "label": "Zeit für sich selbst",
+      "icon": "🎯",
+      "context": "Ihr habt am Wochenende keine Termine. Person A möchte sich mit Freunden treffen, Person B möchte sich lieber zu Hause ausruhen.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Erkläre deinem Partner, was du vorhast.",
+          "modelDe": "Ich möchte mich am Samstag zu Hause ausruhen."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Frag deinen Partner nach seinen Plänen.",
+          "modelDe": "Mit wem triffst du dich am Wochenende?"
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Einigt euch auf eine entspannte Aktivität.",
+          "modelDe": "Wir treffen uns am Sonntag und erholen uns im Park."
+        }
+      ]
+    }
+  ]
+},
+  {
+  "assignmentId": "A2-7.19",
+  "title": "Einkaufsentscheidung Challenge",
+  "eyebrow": "Online oder im Geschäft einkaufen",
+  "grammar": "weil · denn · Preise · Vor- und Nachteile",
+  "goal": "Online oder im Geschäft einkaufen in drei mündlichen Alltagssituationen üben.",
+  "scenarios": [
+    {
+      "id": "day19-1",
+      "label": "Schuhe für ein Interview",
+      "icon": "💬",
+      "context": "Du brauchst heute Schuhe für ein Vorstellungsgespräch. Online sind sie 15 Euro günstiger, aber sie kommen erst in drei Tagen an.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Welche Einkaufsform wählst du und warum?",
+          "modelDe": "Ich kaufe im Geschäft, weil ich die Schuhe heute brauche."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Frag im Geschäft nach Größe und Preis.",
+          "modelDe": "Haben Sie diese Schuhe in Größe 42? Wie viel kosten sie?"
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Erkläre deinem Freund einen Vorteil.",
+          "modelDe": "Im Geschäft kann ich sie sofort anprobieren."
+        }
+      ]
+    },
+    {
+      "id": "day19-2",
+      "label": "Ein günstiges Handy",
+      "icon": "🤝",
+      "context": "Du möchtest ein neues Handy kaufen. Online kostet es 200 Euro, im Geschäft 230 Euro. Du hast Zeit und möchtest Geld sparen.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Vergleiche die beiden Handyangebote.",
+          "modelDe": "Online ist das Handy 30 Euro günstiger."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Begründe deine Einkaufsentscheidung mit denn.",
+          "modelDe": "Ich bestelle online, denn ich möchte Geld sparen."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Frag nach Lieferung und Rückgabe.",
+          "modelDe": "Wann kommt das Handy an und kann ich es zurückschicken?"
+        }
+      ]
+    },
+    {
+      "id": "day19-3",
+      "label": "Ein Geschenk für morgen",
+      "icon": "🎯",
+      "context": "Du möchtest morgen deiner Schwester ein Geschenk geben. Online gibt es mehr Auswahl, aber das Geschäft in deiner Nähe hat noch geöffnet.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Welche Möglichkeit passt besser? Begründe mit weil.",
+          "modelDe": "Ich gehe ins Geschäft, weil ich das Geschenk morgen brauche."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Frag höflich nach einer Empfehlung.",
+          "modelDe": "Können Sie mir ein Geschenk für meine Schwester empfehlen?"
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Erkläre einen Nachteil des Onlinekaufs.",
+          "modelDe": "Online muss ich auf die Lieferung warten."
+        }
+      ]
+    }
+  ]
+},
+  {
+  "assignmentId": "A2-8.22",
+  "title": "Wochenplanung Challenge",
+  "eyebrow": "Termine und Verabredungen planen",
+  "grammar": "Präsens mit Zukunftsangaben · Modalverben",
+  "goal": "Termine und Verabredungen planen in drei mündlichen Alltagssituationen üben.",
+  "scenarios": [
+    {
+      "id": "day22-1",
+      "label": "Mittagessen am Dienstag",
+      "icon": "💬",
+      "context": "Du möchtest einen Freund am Dienstag zum Mittagessen einladen. Du hast von 12 bis 13 Uhr Pause, dein Freund muss bis 12:30 Uhr arbeiten.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Lade deinen Freund zum Mittagessen ein.",
+          "modelDe": "Hast du am Dienstag Lust, mit mir Mittag zu essen?"
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Reagiere auf den Terminkonflikt.",
+          "modelDe": "Ich muss bis 12:30 Uhr arbeiten. Können wir uns um 12:35 Uhr treffen?"
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Bestätige den Treffpunkt und die Uhrzeit.",
+          "modelDe": "Wir treffen uns am Dienstag um 12:35 Uhr vor dem Café."
+        }
+      ]
+    },
+    {
+      "id": "day22-2",
+      "label": "Eine volle Woche",
+      "icon": "🤝",
+      "context": "Du hast am Montag einen Arzttermin, am Mittwoch Deutschkurs und am Freitag frei. Deine Freundin möchte diese Woche mit dir einkaufen gehen.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Erkläre, wann du keine Zeit hast.",
+          "modelDe": "Am Montag muss ich zum Arzt und am Mittwoch habe ich Deutschkurs."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Mach einen gemeinsamen Vorschlag mit können.",
+          "modelDe": "Wir können am Freitag zusammen einkaufen gehen."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Bestätige eure gemeinsame Verabredung.",
+          "modelDe": "Wir treffen uns am Freitag um 15 Uhr in der Stadt."
+        }
+      ]
+    },
+    {
+      "id": "day22-3",
+      "label": "Ein gemeinsames Projekt",
+      "icon": "🎯",
+      "context": "Ihr müsst bis Donnerstag ein Kursprojekt fertig machen. Person A hat am Dienstagabend Zeit, Person B kann erst am Mittwoch helfen.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Frag nach der Verfügbarkeit deines Partners.",
+          "modelDe": "Wann kannst du am Projekt arbeiten?"
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Schlage einen neuen gemeinsamen Plan vor.",
+          "modelDe": "Wir können uns am Mittwoch nach der Arbeit treffen."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Erkläre, was ihr bis Donnerstag machen müsst.",
+          "modelDe": "Wir müssen die Präsentation bis Donnerstag fertig machen."
+        }
+      ]
+    }
+  ]
+},
+  {
+  "assignmentId": "A2-10.26",
+  "title": "Gefühle Challenge",
+  "eyebrow": "Gefühle erklären und reagieren",
+  "grammar": "wenn · Verb am Satzende · Gefühle · Dank",
+  "goal": "Gefühle erklären und reagieren in drei mündlichen Alltagssituationen üben.",
+  "scenarios": [
+    {
+      "id": "day26-1",
+      "label": "Vor einer Prüfung",
+      "icon": "💬",
+      "context": "Deine Freundin hat morgen eine wichtige Prüfung. Sie ist nervös und weiß nicht, ob sie genug gelernt hat. Du möchtest ihr helfen.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Frag deine Freundin, wie sie sich fühlt.",
+          "modelDe": "Wie fühlst du dich vor der Prüfung?"
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Beschreibe ein Gefühl mit einem wenn-Satz.",
+          "modelDe": "Wenn ich eine wichtige Prüfung habe, bin ich auch nervös."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Biete deiner Freundin deine Hilfe an.",
+          "modelDe": "Wir können heute zusammen lernen."
+        }
+      ]
+    },
+    {
+      "id": "day26-2",
+      "label": "Eine gute Nachricht",
+      "icon": "🤝",
+      "context": "Dein Freund hat eine Zusage für eine neue Arbeit bekommen. Er ist sehr glücklich und möchte mit dir feiern. Du freust dich für ihn.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Reagiere freundlich auf seine Nachricht.",
+          "modelDe": "Herzlichen Glückwunsch! Ich freue mich für dich."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Beschreibe deine Reaktion mit wenn.",
+          "modelDe": "Wenn ich eine gute Nachricht bekomme, rufe ich meine Familie an."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Mach einen konkreten Vorschlag zum Feiern.",
+          "modelDe": "Wollen wir am Samstag zusammen essen gehen?"
+        }
+      ]
+    },
+    {
+      "id": "day26-3",
+      "label": "Hilfe bei Krankheit",
+      "icon": "🎯",
+      "context": "Du warst letzte Woche krank. Deine Nachbarin hat für dich eingekauft und dir Essen gebracht. Jetzt geht es dir besser und du möchtest dich bedanken.",
+      "steps": [
+        {
+          "actionDe": "Situation beginnen",
+          "questionDe": "Bedanke dich und nenne die konkrete Hilfe.",
+          "modelDe": "Danke, dass du für mich eingekauft und mir Essen gebracht hast."
+        },
+        {
+          "actionDe": "Passend reagieren",
+          "questionDe": "Erkläre, wie du dich gefühlt hast.",
+          "modelDe": "Ich war sehr froh, weil du mir geholfen hast."
+        },
+        {
+          "actionDe": "Gespräch abschließen",
+          "questionDe": "Biete an, dich bei Gelegenheit zu revanchieren.",
+          "modelDe": "Wenn du einmal Hilfe brauchst, helfe ich dir gern."
+        }
+      ]
+    }
+  ]
+},
+  {
     assignmentId: "A2-9.25", title: "Ein neuer Tagesplan", eyebrow: "Den Tagesablauf planen und ändern",
     grammar: "Präsens · trennbare Verben · um / von … bis · zuerst / danach",
     goal: "Agree on a daily plan, respond to a change and confirm the new plan in order.",
