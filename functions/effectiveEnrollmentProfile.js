@@ -17,11 +17,13 @@ function effectiveEnrollmentPatch(student,rows,today){
  const patch={};
  // Existing un-migrated language placements and institutional invitations are preserved.
  if(row&&student.institutionVerification!=="pending"){
-  Object.assign(patch,projection(row),{status:row.balanceDue===0?"Paid":"Active"});
+  Object.assign(patch,projection(row),{status:row.accessType==="complimentary"?"Active":row.balanceDue===0?"Paid":"Active"});
+  if(student.className!==row.className||student.level!==row.level)for(const key of ["classId","classRecordId","assignedClassId","groupId"])if(student[key])patch[key]="";
   if(student.trialStatus||student.trialStartedAt||student.trialEndsAt||["trial_active","trial_expired"].includes(norm(student.status))){
    if(row.paid>0)Object.assign(patch,{trialStatus:"converted",trialRetentionStatus:"converted",trialPurgeAt:"",trialAccessBlockedAt:""});
   }
  }
+ if(!row&&student.effectiveEnrollmentId&&rows.some(r=>r.program===primary)&&student.accessType!=="pending")patch.accessType="pending";
  if(secondary&&student.institutionVerification!=="pending"){
   const previous=student.coursePlacements?.[other]||{},next={...previous,...projection(secondary)};
   if(previous.className!==next.className||previous.level!==next.level)for(const key of ["classId","classRecordId","assignedClassId","groupId","cohortId"])delete next[key];
