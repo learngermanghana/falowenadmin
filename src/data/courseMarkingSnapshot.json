@@ -176,6 +176,13 @@
     },
     "A1 Countries and Languages 4": {
       "answers": {
+        "Teil 1": {
+          "Answer1": "Ich komme aus Deutschland. Ich spreche Deutsch.",
+          "Answer2": "Sie kommt aus Frankreich. Sie spricht Französisch.",
+          "Answer3": "Sie kommen aus Russland. Sie sprechen Russisch.",
+          "Answer4": "Wir kommen aus Japan. Wir sprechen Japanisch.",
+          "Answer5": "Er kommt aus England. Er spricht Englisch."
+        },
         "Teil 3": {
           "Answer1": "A) Aus Spanien",
           "Answer2": "B) In Berlin",
@@ -188,14 +195,18 @@
       "format": "objective",
       "assignment_id": "A1-4",
       "expectedParts": [
+        "teil1",
         "teil2",
         "teil3"
       ],
       "referenceAnswerParts": [
+        "teil1",
         "teil3"
       ],
       "answerLayout": "multipart",
       "partAliases": {
+        "teil1": "Teil 1",
+        "Teil 1": "teil1",
         "teil2": "Teil 2",
         "teil3": "Teil 3",
         "Teil 2": "teil2",
@@ -211,6 +222,13 @@
         "speakingCheckpoint": "GOETHE_A1_TUTOR_SPEAKING_V1"
       },
       "partGrading": {
+        "teil1": {
+          "label": "Schreiben · Übersetzung",
+          "hasReferenceAnswers": true,
+          "gradingMode": "answer_key",
+          "answerMatchingMode": "strict_grammar",
+          "instruction": "One point per complete correct sentence pair. Accept capitalization and punctuation variants; require correct subject, verb, country and language."
+        },
         "teil2": {
           "label": "Sprechen · Sich vorstellen",
           "hasReferenceAnswers": false,

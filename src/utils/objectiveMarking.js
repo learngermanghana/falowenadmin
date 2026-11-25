@@ -667,9 +667,7 @@ export function selectVersionedObjectiveReferenceEntry(referenceEntry = {}, subm
     };
   }
   if (normalizeAssignmentId(resolvedAssignmentId) === "A1-4" && /GOETHE_A1_TUTOR_SPEAKING_V1/i.test(submissionText)) {
-    // New Goethe workbook: speaking is not an objective question. Choose the
-    // five surviving listening questions even if Firestore still contains an
-    // older, pre-migration version of the answer key.
+    // Current workbook includes translation, verified speaking and listening.
     const {
       parts: _staleParts,
       rawAnswers: _staleRawAnswers,
@@ -677,17 +675,18 @@ export function selectVersionedObjectiveReferenceEntry(referenceEntry = {}, subm
       answerKeys: _staleKeys,
       ...baseReference
     } = referenceEntry || {};
-    const listening = Object.values(answersDictionary).find(entry => entry.assignment_id === "A1-4")?.answers?.["Teil 3"];
+    const current = Object.values(answersDictionary).find(entry => entry.assignment_id === "A1-4");
     return {
       ...baseReference,
-      answers: { "Teil 3": listening || A1_4_LISTENING_V2_ANSWERS["Teil 3"] },
-      totalAnswers: 5,
-      expectedParts: ["teil2", "teil3"],
-      referenceAnswerParts: ["teil3"],
+      answers: current.answers,
+      totalAnswers: 10,
+      expectedParts: ["teil1", "teil2", "teil3"],
+      referenceAnswerParts: ["teil1", "teil3"],
       writingParts: [],
       aiGradedParts: [],
       answerLayout: "multipart",
       partGrading: {
+        teil1: current.partGrading.teil1,
         teil2: { label: "Sprechen · Sich vorstellen", hasReferenceAnswers: false, gradingMode: "tutor_verified_speaking" },
         teil3: { label: "Hören", hasReferenceAnswers: true, gradingMode: "answer_key" },
       },
@@ -1175,6 +1174,9 @@ function a1Day4FormValueMatches(expectedRaw, studentRaw) {
 }
 
 function isCorrectAnswer(item, student, assignmentId = "") {
+  if (normalizeAssignmentId(assignmentId) === "A1-4" && item.partId === "teil1") {
+    return (item.accepted || []).some(expected => strictGrammarTextMatches(expected, student));
+  }
   if (normalizeAssignmentId(assignmentId) === "A1-2" && item.partId === "teil1") {
     return a1Day4FormValueMatches(item.expectedRaw || item.expectedDisplay || item.expected, student);
   }

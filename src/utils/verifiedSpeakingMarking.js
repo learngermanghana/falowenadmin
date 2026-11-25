@@ -39,18 +39,31 @@ export function markVerifiedSpeakingSubmission({ referenceEntry, submissionText,
   const { parts, answers, rawAnswers, answerKeys, answer_key, key, ...metadata } = referenceEntry;
   const objective = computeObjectiveScore({ ...metadata, answers: rawAnswers || answers || parts }, submissionText);
   if (!objective.totalCount) throw new Error("Objective answer key unavailable for mixed speaking workbook");
-  const missing = missingVerifiedSpeakingObjectiveParts(referenceEntry, objective);
+  const day8 = speaking.assignmentKey === "A1-4";
+  const missing = missingVerifiedSpeakingObjectiveParts(day8
+    ? { referenceAnswerParts: ["teil1", "teil3"] } : referenceEntry, objective);
+  const section = partId => {
+    const rows = Object.values(objective.details).filter(row => row.partId === partId);
+    return { earned: rows.filter(row => row.correct).length, available: rows.length };
+  };
+  const translation = section("teil1");
+  const listening = section("teil3");
+  if (day8 && (translation.available !== 5 || listening.available !== 5))
+    throw new Error("Day 8 requires five translation and five listening answer keys");
+  const objectiveNote = day8
+    ? `Teil 1 – Schreiben (translation): ${translation.earned}/5. Teil 3 – Hören: ${listening.earned}/5.`
+    : `Objective answers: ${objective.correctCount}/${objective.totalCount} correct.`;
   const scoredDetails = Object.entries(objective.details);
   const corrections = scoredDetails.filter(([, detail]) => !detail.correct && String(detail.student ?? "").trim())
     .map(([question, detail]) => ({ question, submitted: detail.student, expected: detail.expectedDisplay || detail.expected, type: "objective" }));
-  const speakingNote = `Speaking: ${speaking.score}/${speaking.maxScore}. ${speaking.feedback}`;
+  const speakingNote = `${day8 ? "Teil 2 – Sprechen" : "Speaking"}: ${speaking.score}/${speaking.maxScore}. ${speaking.feedback}`;
   const common = {
     confidence: 1,
     objectiveScore: Math.round(100 * objective.correctCount / objective.totalCount),
     objectiveCorrect: objective.correctCount, objectiveTotal: objective.totalCount, objectiveDetails: objective.details,
     writingScore: null, writingScorePercent: null, maxWritingScore: 0,
     speakingScore: speaking.score, maxSpeakingScore: speaking.maxScore, speakingAssessmentId: speaking.assessmentId,
-    markingRubricVersion: "a1-verified-speaking-v1", corrections,
+    markingRubricVersion: day8 ? "a1-day8-translation-speaking-listening-v2" : "a1-verified-speaking-v1", corrections,
     reviewReasons: [], consistencyWarnings: [],
   };
 
@@ -77,7 +90,7 @@ export function markVerifiedSpeakingSubmission({ referenceEntry, submissionText,
       speakingEvidenceReviewRequired: true,
       scoreBreakdown: { objective: { earned: objective.correctCount, available: objective.totalCount },
         speaking: { earned: speaking.score, available: speaking.maxScore, provisional: true } },
-      feedback: `Objective answers: ${objective.correctCount}/${objective.totalCount} correct. Speaking mark ${speaking.score}/${speaking.maxScore} is provisional pending audio/transcript verification.`,
+      feedback: `${objectiveNote} Speaking mark ${speaking.score}/${speaking.maxScore} is provisional pending audio/transcript verification.`,
       reviewReasons: [{ code: "speaking_evidence_review", message, source: "verified_speaking_marking" }],
     };
   }
@@ -87,8 +100,9 @@ export function markVerifiedSpeakingSubmission({ referenceEntry, submissionText,
   return {
     ...common, status: "marked", score: finalScore, finalScore, passed: finalScore >= 60,
     scoreBreakdown: { objective: { earned: objective.correctCount, available: objective.totalCount },
-      speaking: { earned: speaking.score, available: speaking.maxScore }, totalAvailable: total },
-    feedback: `${speakingNote} Objective answers: ${objective.correctCount}/${objective.totalCount} correct.`
+      speaking: { earned: speaking.score, available: speaking.maxScore }, totalAvailable: total,
+      ...(day8 ? { translation, listening } : {}) },
+    feedback: `${speakingNote} ${objectiveNote}`
       + (corrections.length ? " Review: " + corrections.map(item => `${item.question}: your answer ${item.submitted}; correct answer ${item.expected}`).join("; ") + "." : ""),
     shouldSendAutomatically: finalScore >= 60,
   };
