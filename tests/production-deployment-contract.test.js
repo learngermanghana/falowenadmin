@@ -57,3 +57,9 @@ test("dashboard lead consumers share one short-lived lead request", () => {
   assert.match(source, /if \(cached\?\.promise\) return cached\.promise/);
   assert.match(source, /STUDENT_LEADS_CACHE_MS = 30_000/);
 });
+
+test("topbar checks deployed version only on explicit request", () => {
+  const source = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  assert.match(source, /onClick=\{refreshDeploymentStatus\}/);
+  assert.doesNotMatch(source, /startVisiblePolling\(refreshDeploymentStatus/);
+});

@@ -151,3 +151,9 @@ test("Vercel proxies health and retry routes before the generic API router", asy
     "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/attendance-confirmation-emails/health",
   );
 });
+
+test("delivery health loads only when an administrator opens the details panel", async () => {
+  const overview = await source(overviewPath);
+  assert.match(overview, /View email delivery details/);
+  assert.match(overview, /diagnosticsClassId === classRecordKey\(selectedTrackerClass\) && \(/);
+});
