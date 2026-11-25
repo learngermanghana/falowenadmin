@@ -946,6 +946,7 @@ export default function CheckinDisplayPage() {
       lessonId: effectiveAssignmentId,
       classStatus: "waiting",
       classLifecycleStatus: "waiting",
+      attendanceCompletionConfirmed: false,
       sessionTimingAuthority: "attendance",
       classStartSource: "checkin",
       classStartedAtMs: 0,
@@ -1489,6 +1490,7 @@ export default function CheckinDisplayPage() {
         classStartUpdatedAtMs: startMs,
         classLifecycleStatus: "running",
         sessionTimingAuthority: "attendance",
+        attendanceCompletionConfirmed: false,
         attendanceStartRequestId: requestId,
         attendanceStartRequestedAtMs: requestSentAtMs,
         attendanceStartAttempt: requestAttempt,
@@ -1968,7 +1970,8 @@ export default function CheckinDisplayPage() {
     slideSyncStatus.state,
   ]);
 
-  const completionConfirmed = attendanceCompletion.key === linkPresenterSessionKey && attendanceCompletion.state === "confirmed";
+  const completionConfirmed = (attendanceCompletion.key === linkPresenterSessionKey && attendanceCompletion.state === "confirmed")
+    || (presenterLiveState.sessionKey === linkPresenterSessionKey && presenterLiveState.attendanceCompletionConfirmed === true && Boolean(actualEndedAt));
   const completionPending = attendanceCompletion.key === linkPresenterSessionKey && attendanceCompletion.state === "saving";
   const completionError = attendanceCompletion.key === linkPresenterSessionKey ? attendanceCompletion.message : "";
 
@@ -2353,7 +2356,7 @@ export default function CheckinDisplayPage() {
             )} role="status" aria-live="polite">
               <div className="checkin-display-smart-end-heading">
                 <span>{completionConfirmed ? "Attendance saved" : "Class ended"}</span>
-                <h2>{completionConfirmed ? "Class complete" : "Saving class completion"}</h2>
+                <h2>{completionConfirmed ? "Class complete" : completionError ? "Class completion needs attention" : "Saving class completion"}</h2>
                 <p>{completionConfirmed ? "Lesson marked complete · QR check-in closed." : completionError || "Attendance completion has not yet been confirmed."}</p>
                 <p>{slideSyncStatus.message || "Finalizing the shared Presenter session…"}</p>
               </div>
