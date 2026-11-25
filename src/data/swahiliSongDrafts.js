@@ -94,12 +94,12 @@ export const SWAHILI_SONG_DRAFTS = Object.freeze([
     "id": "swahili-a1-day-12",
     "level": "A1",
     "day": 12,
-    "topic": "Mapishi ya Kitanzania",
-    "title": "Mapishi ya Kitanzania",
-    "lyrics": "[Verse 1]\nBibi anapika pilau leo\nHarufu nzuri inatoka jikoni\nTunakata vitunguu na nyanya\nTunapika pamoja kwa makini\n\n[Chorus]\nChakula chetu kiko tayari\nSikiza, sema tena\nChakula chetu kiko tayari\nLeo tunajifunza pamoja\n\n[Verse 2]\nHarufu nzuri inatoka jikoni\nTunakata vitunguu na nyanya\nTunapika pamoja kwa makini\nBibi anapika pilau leo\n\n[Final Chorus]\nChakula chetu kiko tayari\nSikiza, sema tena\nChakula chetu kiko tayari\nLeo tunajifunza pamoja\n\n[Outro]\nChakula chetu kiko tayari\nTutaonana tena",
+    "topic": "Siku, Miezi na Tarehe",
+    "title": "Angalia Kalenda",
+    "lyrics": "",
     "musicStyle": "Light East African acoustic Afro-pop, relaxed pulse, very clear Kiswahili pronunciation",
-    "status": "draft",
-    "existingAudio": false
+    "status": "published",
+    "existingAudio": true
   },
   {
     "id": "swahili-a1-day-13",
