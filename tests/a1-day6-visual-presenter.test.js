@@ -46,9 +46,9 @@ test("Day 6 has exactly the approved twelve presenter pages in order",async()=>{
   ]);
   assert.equal(stages[0].id,"intro");
   assert.equal(stages[0].day6VisualIntro,true);
-  assert.equal(stages[9].id,"grammar-check");
-  assert.equal(stages[9].type,"a1-day6");
-  assert.equal(stages[10].day6CombinedReading,true);
+  assert.equal(stages[9].id,"music-lesson");
+  assert.equal(stages[9].type,"published-music");
+  assert.equal(stages[10].id,"a1-day6-reading");
   assert.equal(stages[11].id,"a1-day6-workbook");
   assert.equal(stages[11].type,"workbook");
   assert.equal(stages[11].day6FinalChallenge,true);
@@ -70,19 +70,13 @@ test("Day 6 article, language, family-writing and verb-first drills match its pu
   assert.match(visualSource,/Verb \+.*gern/);
 });
 
-test("Day 6 keeps distinct verified live questions and the existing student result recorder",async()=>{
-  const build=await stageList();
+test("Day 6 replaces the live quiz with music and keeps presenter controls",async()=>{
   const slide=getA1WorkbookAlignedSlideDay6To10(A1_DAY6_ASSIGNMENT);
-  const stages=build(slide,slide.topic);
-  const verified=getA1Days6To10UnderstandingChecks(A1_DAY6_ASSIGNMENT);
-  assert.equal(verified.length,11);
-  assert.deepEqual(stages[9].items,verified.slice(0,10));
-  assert.equal(new Set(stages[9].items.map(q=>q.questionDe)).size,10);
+  const stages=(await stageList())(slide,slide.topic);
+  assert.equal(stages.some(stage=>stage.step==="live-quiz"),false);
+  assert.equal(stages[9].type,"published-music");
   assert.match(presenterSource,/<PresenterSessionTimer/);
   assert.match(presenterSource,/<PresenterStudentPicker/);
-  assert.match(presenterSource,/questionContext=\{participationCheckMode \? stage.id : "class-participation"\}/);
-  assert.match(presenterSource,/question=\{stage.id === "grammar-check" \? activeCheck : null\}/);
-  assert.match(visualSource,/Correct \/ Needs review/);
 });
 
 test("Day 6 reuses real reading and existing discovery-only music player",async()=>{
@@ -97,8 +91,9 @@ test("Day 6 reuses real reading and existing discovery-only music player",async(
   const recording=getA1PresenterRecording(A1_DAY6_ASSIGNMENT,6);
   assert.equal(recording?.discover,true,"planned Day 6 track must stay on exact recording discovery");
   assert.equal(recording?.audioUrl,undefined,"do not create a fake playback URL");
-  assert.equal(stages[10].hasMusic,Boolean(music));
-  assert.equal(stages[10].type,music?"published-music":"a1-day6-media");
+  assert.ok(music);
+  assert.equal(stages[9].type,"published-music");
+  assert.equal(stages[10].type,"a1-day6-media");
   assert.match(mediaSource,/<InlineReadingTranslations/);
   assert.match(mediaSource,/<PublishedSongLessonStage/);
   assert.match(mediaSource,/reading\.answers\[i\]/);

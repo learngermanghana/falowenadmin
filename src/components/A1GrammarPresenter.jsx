@@ -218,21 +218,19 @@ export function stageList(slide, topicLabel) {
     ];
   }
   if (String(slide?.assignmentId || "").trim().toUpperCase() === A1_DAY6_ASSIGNMENT) {
-    // Twelve approved Day 6 pages: ten visual teaching stages, the original
-    // discovery-backed music player and verified reading sharing page 11,
-    // and the unscored five-section workbook bridge on page 12.
+    // Replace the live-quiz page with the published music activity; keep
+    // the verified reading and unscored workbook as separate stages.
     const song = getA1PresenterMusicStage(A1_DAY6_ASSIGNMENT, slide.dayNumber);
     const reading = getA1PresenterReadingLesson(A1_DAY6_ASSIGNMENT);
     const workbook = slide.workbookConnection || {};
     return [
-      ...A1_DAY6_CLASSROOM_STAGES,
+      ...A1_DAY6_CLASSROOM_STAGES.filter(stage => stage.step !== "live-quiz"),
+      ...(song ? [song] : []),
       {
-        ...(song || { id:"a1-day6-reading", type:"a1-day6-media", items:[] }),
-        kicker:"Lesen · Falowen Music",
-        title:"Familie und Hobbys · Lesen und Musik",
+        id:"a1-day6-reading", type:"a1-day6-media", items:[],
+        kicker:"Lesen",
+        title:"Familie und Hobbys · Lesen",
         reading,
-        day6CombinedReading:true,
-        hasMusic:Boolean(song),
       },
       {
         id:"a1-day6-workbook", type:"workbook", kicker:"Abschluss · Selbstübung",
