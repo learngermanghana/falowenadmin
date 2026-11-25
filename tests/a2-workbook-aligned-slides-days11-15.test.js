@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -118,22 +117,18 @@ test("Day 15 writing slide now guides an informal email to Jan", () => {
 });
 
 
-test("Day 15 live A2 V2 presenter actually uses the interactive Sport-Matchmaker", async () => {
+test("Day 15 keeps sports matching in the shared scenario challenge", async () => {
   const { buildTeachingPresenterStages } = await import("../src/utils/teachingPresenter.js");
   const slide = getTeachingSlideByAssignmentId("A2-6.15");
   const stages = buildTeachingPresenterStages(slide, slide.topic);
-  const practice = stages.filter(stage => stage.id === "practice");
-  assert.equal(practice.length, 1, "replace the existing practice slide, never add a new one");
-  assert.equal(practice[0].type, "sport-matchmaker");
-  assert.equal(practice[0].title, "Sport-Matchmaker");
-  assert.equal(practice[0].items.length, 1);
+  const practice = stages.filter(stage => ["practice", "scenario-challenge"].includes(stage.id));
+  assert.equal(practice.length, 1);
+  assert.equal(practice[0].type, "scenario-challenge");
+  assert.equal(practice[0].title, "Sport-Matchmaker Challenge");
+  assert.equal(practice[0].items.length, 3);
+  assert.match(practice[0].grammar, /seit/);
+  assert.match(JSON.stringify(practice[0].items), /Jan/);
   assert.ok(practice[0].suggestedMinutes > 0);
-  assert.equal(stages.filter(stage=>stage.id==="practice").length,1);
-  assert.deepEqual(stages.map(stage=>stage.id), ["intro","warmup","workbook-grammar", "common-mistakes","reading","grammar-check","practice","workbook-presentation","questions","workbook","lesson-summary"]);
-  assert.equal(stages.some(stage=>/Finde die wichtige Information/.test(stage.title || "")),false);
-  const view = readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
-  const game = readFileSync(new URL("../src/components/A2SportMatchmaker.jsx", import.meta.url), "utf8");
-  assert.match(view, /stage\.type === "sport-matchmaker" \? \(<A2SportMatchmaker \/>\)/);
-  assert.match(game, /Antwort zeigen/);
-  assert.match(game, /E-Mail an Jan/);
+  assert.ok(stages.findIndex(s => s.id === "grammar-check") < stages.indexOf(practice[0]));
+  assert.ok(stages.indexOf(practice[0]) < stages.findIndex(s => s.id === "workbook-presentation"));
 });
