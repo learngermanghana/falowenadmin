@@ -23,6 +23,8 @@ import { getCheckinDisplayClassName, getCheckinLobbyPractice } from "../utils/ch
 import { formatClassCountdown, formatTeachingDuration, sharedClassClock, presenterSessionDurationSeconds } from "../utils/presenterSessionTiming.js";
 import { subscribeSessionCheckins } from "../services/attendanceService.js";
 import { listClasses } from "../services/classesService.js";
+import { auth } from "../firebase.js";
+import { completeAttendanceSession } from "../services/assignedTutorAttendanceService.js";
 import {
   endPresenterLiveSession,
   presenterLocalDateKey,
@@ -328,6 +330,8 @@ export default function CheckinDisplayPage() {
   const [actualEndedAt, setActualEndedAt] = useState(null);
   const [delayUntil, setDelayUntil] = useState(null);
   const [slideSyncStatus, setSlideSyncStatus] = useState({ state: "idle", message: "" });
+  const [attendanceCompletion, setAttendanceCompletion] = useState({ key: "", state: "idle", message: "" });
+  const completionRequestRef = useRef(null);
   const [presenterTarget, setPresenterTarget] = useState({ classRecordId: "", sessionKey: "" });
   const [presenterLiveState, setPresenterLiveState] = useState({});
   const [presenterLiveError, setPresenterLiveError] = useState("");
@@ -942,6 +946,7 @@ export default function CheckinDisplayPage() {
       lessonId: effectiveAssignmentId,
       classStatus: "waiting",
       classLifecycleStatus: "waiting",
+      attendanceCompletionConfirmed: false,
       sessionTimingAuthority: "attendance",
       classStartSource: "checkin",
       classStartedAtMs: 0,
@@ -1161,7 +1166,15 @@ export default function CheckinDisplayPage() {
     };
   }, [actualEndedAt, actualStartedAt, dateLabel, delayUntil, nowMs, startTime, endTime, effectiveAssignmentId, classId, presenterLiveState, linkPresenterSessionKey]);
 
+  const completionConfirmed = (attendanceCompletion.key === linkPresenterSessionKey && attendanceCompletion.state === "confirmed")
+    || (presenterLiveState.sessionKey === linkPresenterSessionKey && presenterLiveState.attendanceCompletionConfirmed === true && Boolean(actualEndedAt));
+  const completionPending = attendanceCompletion.key === linkPresenterSessionKey && attendanceCompletion.state === "saving";
+  const completionError = attendanceCompletion.key === linkPresenterSessionKey ? attendanceCompletion.message : "";
+
   const statusInfo = useMemo(() => {
+    if (actualEndedAt && !completionConfirmed) return {
+      kind: "ended", title: "Class completion pending", detail: completionError || "Saving the lesson and closing check-in.",
+    };
     if (actualEndedAt) {
       return {
         kind: "ended",
@@ -1207,6 +1220,8 @@ export default function CheckinDisplayPage() {
     attendanceError,
     attendanceLive,
     checkedInCount,
+    completionConfirmed,
+    completionError,
     expectedTotal,
     presenterStatus,
     slideSyncStatus.message,
@@ -1485,6 +1500,7 @@ export default function CheckinDisplayPage() {
         classStartUpdatedAtMs: startMs,
         classLifecycleStatus: "running",
         sessionTimingAuthority: "attendance",
+        attendanceCompletionConfirmed: false,
         attendanceStartRequestId: requestId,
         attendanceStartRequestedAtMs: requestSentAtMs,
         attendanceStartAttempt: requestAttempt,
@@ -1973,6 +1989,23 @@ export default function CheckinDisplayPage() {
       const sessionKey = presenterSessionKey({ sessionDate, sessionId, assignmentId: effectiveAssignmentId });
       const shared = await readPresenterLiveSession(classRecordId, sessionKey);
       const current = shared?.state || {};
+      // The presenter timer is not the canonical lesson status. Complete the exact
+      // attendance session first; retries reuse the successful transaction.
+      const completionKey = `${classRecordId}:${sessionKey}`;
+      if (completionRequestRef.current?.key !== completionKey) {
+        setAttendanceCompletion({ key: sessionKey, state: "saving", message: "" });
+        const request = completeAttendanceSession(auth.currentUser, { classId: classRecordId, sessionId, date: sessionDate });
+        completionRequestRef.current = { key: completionKey, request };
+      }
+      const completionRequest = completionRequestRef.current;
+      try {
+        await completionRequest.request;
+        setAttendanceCompletion({ key: sessionKey, state: "confirmed", message: "" });
+      } catch (cause) {
+        if (completionRequestRef.current === completionRequest) completionRequestRef.current = null;
+        setAttendanceCompletion({ key: sessionKey, state: "error", message: cause?.message || "Class completion failed." });
+        throw cause;
+      }
       const currentEndedAt = Math.max(0, Number(current.classEndedAtMs || 0));
       const canonicalEndedAt = currentEndedAt || Number(endedAt);
       const durationSeconds = Math.max(0, Math.round((canonicalEndedAt - Number(actualStartedAt)) / 1000));
@@ -2003,6 +2036,7 @@ export default function CheckinDisplayPage() {
         attendanceEndRequestedAtMs: requestSentAtMs,
         attendanceEndAttempt: requestAttempt,
         attendanceEndSource: recovery ? "attendance-retry" : "attendance",
+        attendanceCompletionConfirmed: true,
         timerRunning: false,
         timerEndAt: 0,
         timerRemaining,
@@ -2022,7 +2056,7 @@ export default function CheckinDisplayPage() {
       console.error("check-in presenter end sync failed", error);
       setSlideSyncStatus({
         state: "end-error",
-        message: "Class ended locally, but the shared Presenter end state could not be saved. Retry end sync.",
+        message: error?.message || "Class end could not be fully saved. Retry end sync.",
       });
     }
   }, [
@@ -2210,7 +2244,10 @@ export default function CheckinDisplayPage() {
             </div>
           ) : actualEndedAt ? (
             <div className="checkin-display-teacher-control-actions">
-              <div className="checkin-display-ended-badge">Class ended</div>
+              <div className="checkin-display-ended-badge">{completionConfirmed ? "Class completed · Check-in closed" : completionPending ? "Saving attendance completion…" : "Class ended · Completion not verified"}</div>
+              {completionError ? <small role="alert">{completionError}</small> : null}
+              {completionConfirmed && presenterTarget.classRecordId ? <a href={`/attendance/session/${encodeURIComponent(presenterTarget.classRecordId)}?session=${encodeURIComponent(sessionId)}`}>Attendance &amp; weekly email ↗</a> : null}
+              {!completionConfirmed && !completionPending && !["end-error", "end-unresponsive", "ended-restored"].includes(slideSyncStatus.state) ? <button type="button" onClick={() => syncPresenterEnd(actualEndedAt, { recovery: true })}>Confirm class completion</button> : null}
               {["end-error", "end-unresponsive"].includes(slideSyncStatus.state) ? (
                 <button type="button" onClick={() => syncPresenterEnd(actualEndedAt, { recovery: true, handshakeAttempt: Math.max(1, Number(presenterLiveState.attendanceEndAttempt || 0) + 1) })}>Retry end sync</button>
               ) : slideSyncStatus.state === "ended-restored" ? (
@@ -2323,8 +2360,9 @@ export default function CheckinDisplayPage() {
                   : ""
             )} role="status" aria-live="polite">
               <div className="checkin-display-smart-end-heading">
-                <span>Class complete</span>
-                <h2>{slideSyncStatus.state === "ended-acknowledged" ? "Class ended · Presenter confirmed" : "Class complete"}</h2>
+                <span>{completionConfirmed ? "Attendance saved" : "Class ended"}</span>
+                <h2>{completionConfirmed ? "Class complete" : completionError ? "Class completion needs attention" : "Saving class completion"}</h2>
+                <p>{completionConfirmed ? "Lesson marked complete · QR check-in closed." : completionError || "Attendance completion has not yet been confirmed."}</p>
                 <p>{slideSyncStatus.message || "Finalizing the shared Presenter session…"}</p>
               </div>
 

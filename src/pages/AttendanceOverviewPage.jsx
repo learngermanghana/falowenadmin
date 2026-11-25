@@ -112,6 +112,7 @@ export default function AttendanceOverviewPage() {
   const [classFilter, setClassFilter] = useState("upcoming");
   const [languageFilter, setLanguageFilter] = useState("all");
   const [diagnosticsClassId, setDiagnosticsClassId] = useState("");
+  const [reportsRefresh, setReportsRefresh] = useState(0);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 60000);
@@ -122,6 +123,8 @@ export default function AttendanceOverviewPage() {
 
   useEffect(() => {
     let active = true;
+    setLoading(true);
+    setError("");
     listClassCohorts()
       .then((rows) => {
         if (!active) return;
@@ -137,7 +140,7 @@ export default function AttendanceOverviewPage() {
       });
 
     return () => { active = false; };
-  }, []);
+  }, [reportsRefresh]);
 
   // Recheck eligibility at the calendar-day boundary, not every minute:
   // finished cohorts leave the active list without repeated Firestore reads.
@@ -220,7 +223,7 @@ export default function AttendanceOverviewPage() {
         </div>
       </div>
 
-      <AttendanceWeeklyEmailOutbox classes={emailClasses} sessionsByClass={sessionsByClass} loading={loading || emailClasses.some(klass=>sessionsByClass[classRecordKey(klass)]===undefined)} />
+      <AttendanceWeeklyEmailOutbox classes={emailClasses} sessionsByClass={sessionsByClass} loading={loading || emailClasses.some(klass=>sessionsByClass[classRecordKey(klass)]===undefined)} onRefresh={() => { setSessionsByClass({}); setReportsRefresh(value => value + 1); }} />
       <OperationsCommunicationPanel context="attendance" />
 
       <nav style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "16px 0" }} aria-label="Attendance sections">

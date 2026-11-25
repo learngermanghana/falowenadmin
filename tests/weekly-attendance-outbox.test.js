@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+import {completeAttendanceSession} from "../src/services/assignedTutorAttendanceService.js";
 import {readyWeeklyPeriods,receiptKey} from "../src/utils/weeklyAttendanceOutbox.js";
 const klass={id:"class-a",name:"A1",attendanceConfirmationEmailMode:"weekly"};
 const session=(day,status="completed")=>({startsAt:day+"T18:00:00Z",endsAt:day+"T19:00:00Z",status});
@@ -20,4 +22,38 @@ test("sent receipt removes only that week, cancelled sessions do not block",()=>
 test("manual end-class timestamp makes final lesson immediately ready and app assessments do not block",()=>{
   const rows=[session("2026-11-23"),{...session("2026-11-27"),completionSource:"manual",completedAt:"2026-11-27T18:30:00Z"},{...session("2026-11-28","scheduled"),sessionType:"app_assessment"}];
   assert.equal(readyWeeklyPeriods(klass,rows,Date.parse("2026-11-27T18:31:00Z")).length,1);
+});
+
+test("lobby completion uses the authenticated exact-session end transaction", async () => {
+  const requests = [];
+  const user = {getIdToken: async () => "test-token"};
+  const identity = {classId:"class-a",sessionId:"lesson-3",date:"2026-11-27"};
+  const result = await completeAttendanceSession(user, identity, {
+    env:{VITE_API_BASE_URL:"https://example.test/api/"},
+    fetchImpl: async (url, options) => {
+      requests.push({url, options});
+      return {ok:true,json:async()=>({ok:true,opened:false,status:"completed"})};
+    },
+  });
+  assert.equal(result.status,"completed");
+  assert.equal(requests.length,1);
+  assert.equal(requests[0].url,"https://example.test/api/openSession");
+  assert.equal(requests[0].options.headers.Authorization,"Bearer test-token");
+  assert.deepEqual(JSON.parse(requests[0].options.body),{...identity,action:"end"});
+  await assert.rejects(completeAttendanceSession(user,identity,{
+    env:{VITE_OPEN_SESSION_API_URL:"https://example.test/open"},
+    fetchImpl:async()=>({ok:true,json:async()=>({ok:true,opened:false})}),
+  }),/did not confirm/);
+  await assert.rejects(completeAttendanceSession(null,identity),/Sign in/);
+});
+test("lobby ends canonical session before publishing the presenter end; weekly email stays in Attendance",()=>{
+  const page=readFileSync(new URL("../src/pages/CheckinDisplayPage.jsx",import.meta.url),"utf8");
+  const end=page.slice(page.indexOf("const syncPresenterEnd"),page.indexOf("const handleEndClass"));
+  assert.ok(end.indexOf("await completionRequest.request") > 0);
+  assert.ok(end.indexOf("await completionRequest.request") < end.indexOf("await endPresenterLiveSession"));
+  assert.match(end,/attendanceCompletionConfirmed: true/);
+  assert.match(page,/Attendance &amp; weekly email/);
+  assert.match(page,/Completion not verified/);
+  const outbox=readFileSync(new URL("../src/components/AttendanceWeeklyEmailOutbox.jsx",import.meta.url),"utf8");
+  assert.match(outbox,/Refresh reports/);
 });
