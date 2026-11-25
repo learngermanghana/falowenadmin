@@ -1105,7 +1105,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
           ) : stage.type === "b1-workbook-presentation" ? (
             <B1WorkbookPresentation key={`${slide.id}:${stage.id}`} stage={stage}/>
           ) : stage.type === "workbook-presentation" ? (
-            <A2WorkbookPresentation key={`${slide.id}:${stage.id}`} stage={stage}/>
+            <A2WorkbookPresentation key={`${slide.id}:${stage.id}`} stage={stage} assignmentId={slide.assignmentId}/>
           ) : (stage.variant === "a2-application-lab" || stage.variant === "b1-application-lab") ? (
             <A2ApplicationLab key={`${slide.assignmentId}:${stage.id}`} lab={stage.lab} level={presenterLevel} />
           ) : (stage.type === "grammar-check" || stage.type === "common-mistakes" || stage.type === "workbook-grammar") ? (
