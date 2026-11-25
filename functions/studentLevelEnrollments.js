@@ -1,4 +1,5 @@
 const crypto=require("node:crypto");
+const {paymentLifecycle,payableStatus,isManagedUpgrade}=require("./levelUpgradeLifecycle");
 const levels=new Set(["A1","A2","B1","B2","C1","C2"]);
 const fail=(message,statusCode=400)=>{throw Object.assign(new Error(message),{statusCode});};
 function normalizeEnrollment(input={}){
@@ -25,12 +26,12 @@ function manualTotals(input){
  const balance=fee-paid;
  return {tuitionFee:fee/100,paid:paid/100,balanceDue:balance/100,paymentStatus:balance?(paid?"Partially Paid":"Unpaid"):"Paid"};
 }
-function paymentPatch(enrollment,amount){
+function paymentPatch(enrollment,amount,date){
  if(enrollment.tuitionFee==null||enrollment.balanceDue==null)fail("Set the tuition fee before recording a new payment",409);
  const fee=moneyCents(enrollment.tuitionFee),paid=moneyCents(enrollment.paid),balance=moneyCents(enrollment.balanceDue),credit=moneyCents(amount);
  if(paid+balance!==fee||!credit||credit>balance) fail("Payment exceeds remaining tuition or ledger requires review",409);
  const due=balance-credit;
- return {paid:(paid+credit)/100,balanceDue:due/100,paymentStatus:due?"Partially Paid":"Paid",sheetVersion:Number(enrollment.sheetVersion||1)+1,sheetSyncStatus:"pending"};
+ return {...(date?paymentLifecycle(enrollment,due/100,date):{}),paid:(paid+credit)/100,balanceDue:due/100,paymentStatus:due?"Partially Paid":"Paid",sheetVersion:Number(enrollment.sheetVersion||1)+1,sheetSyncStatus:"pending"};
 }
 function paymentDate(value){
  const date=String(value||"");
@@ -127,7 +128,7 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  if(!existing.exists&&(method==="paystack"||/^FAL-/i.test(raw)))fail("Existing Paystack payment not found",404);
  const credit=existing.exists?moneyCents(data.tuitionCredit)/100:moneyCents(amount)/100;
  const date=paymentDate(existing.exists?(typeof data.paidAt?.toDate==="function"?data.paidAt.toDate().toISOString().slice(0,10):String(data.paidAt||"").slice(0,10)):receivedDate);
- const patch=paymentPatch(enrollment.data(),credit);
+ const patch=paymentPatch(enrollment.data(),credit,date);
  const stamp=admin.firestore.FieldValue.serverTimestamp();
  const payment={studentId,enrollmentId:ref.id,reference:raw,amount:credit,receivedDate:date,method:existing.exists?"paystack":method,source:existing.exists?"legacy_payment":"manual",createdBy:user.uid};
  tx.set(unique,{...payment,createdAt:stamp});tx.set(ref.collection("payments").doc(key),{...payment,createdAt:stamp});
@@ -149,7 +150,7 @@ function registerEnrollmentCheckout({app,db,admin,requirePaymentAdmin,initialize
  const parent=db.collection("students").doc(studentId),ref=parent.collection("levelEnrollments").doc(enrollmentId);
  const [student,enrollment]=await Promise.all([parent.get(),ref.get()]);
  if(!student.exists||!enrollment.exists)fail("Enrollment not found",404);
- const credit=moneyCents(amount)/100;paymentPatch(enrollment.data(),credit);
+ const credit=moneyCents(amount)/100;if(isManagedUpgrade(enrollment.data())&&!payableStatus(enrollment.data()))fail("Upgrade is not payable",409);paymentPatch(enrollment.data(),credit);
  const email=String(req.body.email||student.data().email||"").trim();if(!email.includes("@"))fail("Student email required");
  const reference=createPaymentReference(studentId),checkoutAmount=calculateStudentCheckoutAmount(credit);
  const metadata={studentId,enrollmentId,purpose:"level_enrollment",tuitionCredit:credit};
@@ -173,7 +174,7 @@ async function applyEnrollmentCheckout({transaction:tx,paymentRef,payment,eventD
  const amount=moneyCents(payment.tuitionCredit)/100;
  const record={studentId,enrollmentId,reference,amount,receivedDate:date,method:"paystack",source:"enrollment_checkout"};
  let patch;
- try{if(!student.exists||!enrollment.exists)fail("Enrollment unavailable",409);patch=paymentPatch(enrollment.data(),amount);}catch(e){
+ try{if(!student.exists||!enrollment.exists)fail("Enrollment unavailable",409);patch=paymentPatch(enrollment.data(),amount,date);}catch(e){
  tx.update(paymentRef,{status:"paid_unallocated",allocationError:e.message,paidAt:stamp,paystackTransactionId:eventData.id||null});
  tx.set(db.collection("auditLogs").doc(),{...record,type:"student.levelPaymentNeedsAllocation",reason:e.message,createdAt:stamp});
  return {duplicate:false,studentId,reference,requiresAllocation:true};
