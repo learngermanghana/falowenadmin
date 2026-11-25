@@ -109,7 +109,7 @@ function legacyCourseRecord(candidate,input){
  const totals=manualTotals({tuitionFee:data.tuitionFee,paid:free?0:candidate.paid});
  if(totals.balanceDue>0&&!data.paymentDeadline)fail("Set the existing payment deadline for outstanding tuition");
  const today=new Date().toISOString().slice(0,10);
- return {...data,...totals,paymentStatus:free?"Complimentary":totals.paymentStatus,status:data.contractEnd<today?"expired":data.contractStart>today?"planned":"active",openingBalanceImported:totals.paid>0,manualOpeningPaid:totals.paid,accountingMode:"independent_pending_integration",sheetVersion:1,sheetSyncStatus:"pending",legacyCourseImported:true};
+ return {...data,...totals,paymentStatus:free?"Complimentary":totals.paymentStatus,status:data.contractEnd<today?"expired":"active",openingBalanceImported:totals.paid>0,manualOpeningPaid:totals.paid,accountingMode:"independent_pending_integration",sheetVersion:1,sheetSyncStatus:"pending",legacyCourseImported:true};
 }
 
 function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
@@ -141,6 +141,12 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
   const enrollment={...data,studentId,studentCode:parent.data().studentCode||parent.data().studentcode||studentId};
   const stamp=admin.firestore.FieldValue.serverTimestamp();
   tx.set(ref,{...enrollment,createdAt:stamp,createdBy:user.uid});
+  // Keep legacy readers current even when the selected contract is expired/future
+  // or the account is staff. Never touch the other language or class IDs.
+  const previous=parent.data(),primary=legacyLanguage(previous.program||previous.language||"german");
+  const projected={contractStart:data.contractStart,contractEnd:data.contractEnd,paymentDeadline:data.paymentDeadline,tuitionFee:data.tuitionFee,paid:data.paid,balanceDue:data.balanceDue,balance:data.balanceDue,paymentStatus:data.accessType==="complimentary"?"complimentary":data.balanceDue===0?"paid":"partial",accessType:data.accessType,effectiveEnrollmentId:ref.id};
+  if(current.program===primary)tx.update(student,projected);
+  else tx.update(student,{coursePlacements:{...previous.coursePlacements,[current.program]:{...previous.coursePlacements?.[current.program],...projected}}});
   tx.set(db.collection("auditLogs").doc(),{type:"student.existingCourseImported",studentId,enrollmentId:ref.id,actorId:user.uid,before:{contractStart:current.contractStart,contractEnd:current.contractEnd,paid:current.paid,balanceDue:current.balanceDue,accessType:current.accessType},after:enrollment,createdAt:stamp});
   return {id:ref.id,...enrollment};
  });
