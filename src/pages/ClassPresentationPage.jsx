@@ -5,7 +5,7 @@ import {presentationRequest} from "../services/classPresentationService.js";
 import "./ClassPresentationPage.css";
 export default function ClassPresentationPage(){
  const {id}=useParams(),{user,loading,login,logout}=useAuth();
- return <main className="class-presentation-student"><header><strong>FALOWEN</strong><span>A2 · Write &amp; Present</span></header>{loading?<p>Loading…</p>:user?<StudentEditor key={id+":"+user.uid} id={id} logout={logout}/>:<SignIn login={login}/>}</main>;
+ return <section className="class-presentation-student"><header><strong>FALOWEN</strong><span>A2 · Write &amp; Present</span></header>{loading?<p>Loading…</p>:user?<StudentEditor key={id+":"+user.uid} id={id} logout={logout}/>:<SignIn login={login}/>}</section>;
 }
 function SignIn({login}){
  const [email,setEmail]=useState(""),[password,setPassword]=useState(""),[busy,setBusy]=useState(false),[error,setError]=useState("");
