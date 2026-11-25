@@ -1150,10 +1150,10 @@ export default function StudentDirectoryPage() {
                           {!isHamburgCohortStudent(selectedStudent) && <button
                             type="button"
                             onClick={() => {
-                              setDetailTab("enrollments");
-                              requestAnimationFrame(() => document.getElementById("student-tab-enrollments")?.focus());
+                              setDetailTab("payment-links");
+                              requestAnimationFrame(() => document.getElementById("student-tab-payment-links")?.focus());
                             }}
-                            aria-label="Manage enrollment payments for selected student"
+                            aria-label="Generate payment link for selected student"
                             style={{
                               minHeight: 42,
                               border: "1px solid #1d4ed8",
@@ -1164,7 +1164,7 @@ export default function StudentDirectoryPage() {
                               fontWeight: 700,
                             }}
                           >
-                            Manage enrollment payments →
+                            Generate payment link →
                           </button>}
                         </div>
                         <p style={{ marginTop: 0, marginBottom: 12, opacity: 0.75 }}>
@@ -1246,14 +1246,16 @@ export default function StudentDirectoryPage() {
                           <StudentCourseTypePanel key={selectedStudent.id} student={selectedStudent} onStudentUpdated={handleSupportStudentUpdated} />
                           <StudentLevelEnrollments student={selectedStudent} pushToast={pushToast} classes={classes} onStudentUpdated={handleSupportStudentUpdated}
                             legacyControls={rows=><>
-                              {!rows.length && <details><summary>Original account billing (legacy)</summary><p>Use only for existing account payments not yet allocated to levels.</p><StudentPaymentTools mode="links" student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast}/></details>}
                               {(!rows.length || ["awaiting_payment","pending","expired"].includes(String(selectedStudent.upgradeStatus||"").toLowerCase())) && <details><summary>Original upgrade workflow (legacy)</summary><StudentUpgradeTools student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast}/></details>}
                               {selectedStudent.secondaryProgram && !rows.some(r=>r.program===selectedStudent.secondaryProgram) && <p>Existing {languageName(selectedStudent.secondaryProgram)} access is preserved. Add its verified contract as a level enrollment if you need to manage it here.</p>}
                             </>} />
                         </section>}
                         {detailTab === "payments" && !isHamburgCohortStudent(selectedStudent) && <section className="student-detail-panel" role="tabpanel" id="student-panel-payments" aria-labelledby="student-tab-payments">
-                          <p>Read-only payment history. Record payments and generate links in Enrollments.</p>
+                          <p>Read-only payment history. Record payments in Enrollments or generate a link in Payment links.</p>
                           <StudentLevelEnrollments key={selectedStudent.id+":payments"} student={selectedStudent} pushToast={pushToast} classes={classes} mode="history" legacyHistory={()=> <StudentPaymentTools mode="history" legacyOnly readOnlyHistory student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast}/>} />
+                        </section>}
+                        {detailTab === "payment-links" && !isHamburgCohortStudent(selectedStudent) && <section className="student-detail-panel" role="tabpanel" id="student-panel-payment-links" aria-labelledby="student-tab-payment-links">
+                          <StudentLevelEnrollments key={selectedStudent.id+":links"} student={selectedStudent} pushToast={pushToast} mode="links" legacyControls={rows=>!rows.length && <StudentPaymentTools mode="links" student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast}/>} />
                         </section>}
                         {detailTab === "class" && <section className="student-detail-panel" role="tabpanel" id="student-panel-class" aria-labelledby="student-tab-class">
                           <h3>Class assignments</h3><p>Change a class within the selected language and current level. Manage levels and contracts in Enrollments.</p>
