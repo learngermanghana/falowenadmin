@@ -93,22 +93,22 @@ function KeinOrNicht() {
 function KeinForms() {
   const [show, setShow] = useState(false);
   const rows = [
-    ["der", "kein", "keinen", "der Apfel · kein Apfel · keinen Apfel"],
-    ["die", "keine", "keine", "die Milch · keine Milch"],
-    ["das", "kein", "kein", "das Brot · kein Brot"],
-    ["die (Plural)", "keine", "keine", "die Äpfel · keine Äpfel"],
+    ["Maskulin", "ein", "kein", "einen", "keinen"],
+    ["Feminin", "eine", "keine", "eine", "keine"],
+    ["Neutrum", "ein", "kein", "ein", "kein"],
+    ["Plural", "—", "keine", "—", "keine"],
   ];
   return <>
-    <h1>kein · keine · keinen</h1>
-    <p className="a1n-lead">Die Form hängt vom <b>Artikel</b> und manchmal vom <b>Fall</b> ab.</p>
+    <h1>ein → kein · eine → keine</h1>
+    <p className="a1n-lead"><b>kein</b> hat im Singular dieselben Endungen wie <b>ein</b>. Vergleiche Nominativ und Akkusativ.</p>
     <div className="a1n-table-wrap"><table className="a1n-table">
-      <thead><tr><th>Artikel</th><th>Nominativ</th><th>Akkusativ</th></tr></thead>
-      <tbody>{rows.map(([article, nominative, accusative]) => <tr key={article}>
-        <th>{article}</th><td>{show ? nominative : "?"}</td><td>{show ? accusative : "?"}</td></tr>)}</tbody>
+      <thead><tr><th>Genus / Zahl</th><th>Nominativ</th><th>Akkusativ</th></tr></thead>
+      <tbody>{rows.map(([gender, positiveNom, negativeNom, positiveAcc, negativeAcc]) => <tr key={gender}>
+        <th scope="row">{gender}</th><td>{positiveNom} → <b>{show ? negativeNom : "?"}</b></td><td>{positiveAcc} → <b>{show ? negativeAcc : "?"}</b></td></tr>)}</tbody>
     </table></div>
     <div className="a1n-actions"><button type="button" aria-expanded={show} onClick={() => setShow(v => !v)}>
       {show ? "Formen verbergen" : "Formen zeigen"}</button></div>
-    <div className="a1n-note"><b>Achte besonders auf:</b> der Kaffee → <b>keinen Kaffee</b>, wenn Kaffee das direkte Objekt ist. Feminine / Plural: <b>keine</b>. Neutrum: <b>kein</b>.</div>
+    <div className="a1n-note"><b>Merke:</b> Im Plural gibt es keinen unbestimmten Artikel: Äpfel → keine Äpfel. Nur Maskulin ändert sich vom Nominativ zum Akkusativ: ein → einen / kein → keinen.</div>
   </>;
 }
 function CaseComparison() {
