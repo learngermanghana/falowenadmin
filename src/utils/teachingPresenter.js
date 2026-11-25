@@ -1593,22 +1593,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
       ] : []),
       buildA2B1GrammarCheckStage(slide, level),
       ...(() => {
-        // Day 15 has its own interactive sport game. The V2 presenter returns
-        // above the generic fallback, so its practice must be replaced HERE.
-        // Preserve the "practice" ID and one-slide layout for saved sessions.
-        if (normalizedAssignmentId(slide) === "A2-6.15") return [{
-          id: "practice",
-          type: "sport-matchmaker",
-          kicker: "Mitmach-Spiel · seit + Dativ",
-          title: "Sport-Matchmaker",
-          instruction: "Höre die Hinweise. Welcher Sport passt? Begründe mit weil und seit + Dativ.",
-          items: [{ ...focusedPractice, title: "Sport-Matchmaker", minutes: 8 }],
-          suggestedMinutes: 8,
-          teacherPurpose: {
-            student: "Erkenne den Sport und bilde einen Satz mit seit, Häufigkeit und weil.",
-            teacher: "Zeige ein Profil, lass erst raten, dann die Lösung aufdecken. Spiele mehrere Runden und führe zur E-Mail an Jan über.",
-          },
-        }];
+        // Every A2 day uses the same teacher-led scenario format in the existing practice slot.
         const challenge = getA2TeacherChallenge(normalizedAssignmentId(slide));
         if (challenge) return [{
           id: "scenario-challenge",
