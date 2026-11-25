@@ -22,7 +22,7 @@ function LiveSession({context,prompt,task,children}){
  async function email(){if(!window.confirm("Send the presentation link to the students in "+session.className+"?"))return;await action("email",async()=>{const {emailPresentationLink}=await import("../services/classPresentationService.js");await emailPresentationLink(session,link);setNotice("Email request accepted by the communication service.");});}
  if(!context)return <>{children}<small>Open this lesson from the class schedule to collect saved presentations.</small></>;
  return <section className="a2-live-presentation">
-  {!session?<><div className="a2-live-toolbar"><strong>Schreiben → Speichern → Präsentieren</strong><button type="button" onClick={open} disabled={!!busy}>{busy==="open"?"Opening…":"Start writing · Link erstellen"}</button></div>{children}</>:
+  {!session?<><div className="a2-live-toolbar"><strong>Live-Schreibaufgabe · Schreiben → Speichern → Präsentieren</strong><button type="button" onClick={open} disabled={!!busy}>{busy==="open"?"Opening…":"Schreibaufgabe starten · QR & Link erstellen"}</button></div>{children}</>:
   <>
    <div className="a2-live-toolbar"><strong>{session.prompt}</strong><div className="a2-live-actions">
     <button type="button" onClick={copy} disabled={!!busy}>Copy Zoom link</button>
