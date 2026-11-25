@@ -144,6 +144,16 @@ test('manual lead deletion lock stops concurrent staff follow-ups and limits own
     createdAt: serverTimestamp(),
   };
   await assertSucceeds(getDoc(staffRef));
+  const interestedClass = {
+    id: 'test-class', title: 'German A1', startDate: '2027-01-12', tuitionGhs: 3000,
+  };
+  await assertFails(updateDoc(staffRef, { interestedClass, updatedAt: serverTimestamp() }));
+  await assertFails(updateDoc(ownerRef, {
+    interestedClass: { ...interestedClass, tuitionGhs: -1 }, updatedAt: serverTimestamp(),
+  }));
+  await assertSucceeds(updateDoc(ownerRef, { interestedClass, updatedAt: serverTimestamp() }));
+  await assertSucceeds(updateDoc(staffRef, { notes: 'Follow-up', updatedAt: serverTimestamp() }));
+  await assertSucceeds(updateDoc(ownerRef, { interestedClass: null, updatedAt: serverTimestamp() }));
   await assertFails(deleteDoc(staffRef));
   await assertFails(deleteDoc(ownerRef)); // cannot delete without a lock
   await assertSucceeds(setDoc(doc(staffDb, leadPath, 'activities', 'before-lock'), beforeActivity));

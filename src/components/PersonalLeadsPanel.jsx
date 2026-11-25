@@ -3,6 +3,7 @@ import { addDoc, collection, deleteDoc, doc, getDocs, increment, limit, orderBy,
 import { db } from "../firebase.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { normalizeLeadPhone } from "../services/studentLeadService.js";
+import { leadClassDetails, loadUpcomingLeadClasses } from "../utils/personalLeadClasses.js";
 import "./PersonalLeadsPanel.css";
 
 const CONTACTS = "falowenManualLeads";
@@ -21,7 +22,7 @@ const CLOSED_STATUSES = ["registered", "not_interested", "done"];
 const DELETABLE_STATUSES = ["not_interested", "done"];
 const SOURCES = ["Phone call", "WhatsApp", "Walk-in", "Referral", "Other"];
 const LEVELS = ["", "A1", "A2", "B1", "B2", "C1", "C2"];
-const INITIAL = { name: "", phone: "", location: "", email: "", language: "german", level: "", source: "Phone call", notes: "", assignedToUid: "", assignedToName: "", nextFollowUpAt: "", status: "new" };
+const INITIAL = { name: "", phone: "", location: "", email: "", language: "german", level: "", source: "Phone call", notes: "", assignedToUid: "", assignedToName: "", nextFollowUpAt: "", status: "new", interestedClass: null };
 const today = () => new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Accra" });
 const trimmed = (v) => String(v || "").trim();
 const errText = (e) => e?.message || "Could not save changes. Try again.";
@@ -60,6 +61,9 @@ export default function PersonalLeadsPanel() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [formVisible, setFormVisible] = useState(false);
+  const [upcomingClasses, setUpcomingClasses] = useState(null);
+  const [classCatalogueError, setClassCatalogueError] = useState(false);
+  const [classChanged, setClassChanged] = useState(false);
   const [editing, setEditing] = useState("");
   const [form, setForm] = useState(blankForm);
   const [search, setSearch] = useState("");
@@ -136,6 +140,23 @@ export default function PersonalLeadsPanel() {
     return () => { active = false; };
   }, [owner, user]);
 
+  useEffect(() => {
+    if (!owner || !formVisible) return;
+    let active = true;
+    setUpcomingClasses(null);
+    setClassCatalogueError(false);
+    loadUpcomingLeadClasses(today()).then((classes) => {
+      if (active) setUpcomingClasses(classes);
+    }).catch(() => {
+      if (active) setClassCatalogueError(true);
+    });
+    return () => { active = false; };
+  }, [owner, formVisible]);
+
+  const classChoices = upcomingClasses?.[form.language] || [];
+  const savedClass = form.interestedClass;
+  const showSavedClass = savedClass && !classChoices.some((course) => course.id === savedClass.id);
+
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
     return contacts.filter((c) => {
@@ -144,7 +165,7 @@ export default function PersonalLeadsPanel() {
       if (!["all", "active", "closed"].includes(filter) && c.status !== filter) return false;
       if (assignment === "mine" && c.assignedToUid !== user?.uid) return false;
       if (assignment === "unassigned" && c.assignedToUid) return false;
-      return !needle || [c.name, c.phone, c.location, c.email, c.language, c.level, c.source, c.assignedToName]
+      return !needle || [c.name, c.phone, c.location, c.email, c.language, c.level, c.source, c.assignedToName, c.interestedClass?.title]
         .some((value) => trimmed(value).toLowerCase().includes(needle));
     });
   }, [contacts, search, filter, assignment, user]);
@@ -154,9 +175,11 @@ export default function PersonalLeadsPanel() {
   const registered = contacts.filter((c) => c.status === "registered").length;
 
   function openAdd() {
+    setClassChanged(false);
     setEditing(""); setForm(blankForm()); setError(""); setNotice(""); setFormVisible(true);
   }
   function openEdit(contact) {
+    setClassChanged(false);
     setEditing(contact.id);
     setForm(Object.keys(INITIAL).reduce((acc, key) => ({ ...acc, [key]: contact[key] ?? INITIAL[key] }), {}));
     setError(""); setNotice(""); setFormVisible(true);
@@ -197,6 +220,7 @@ export default function PersonalLeadsPanel() {
       email: trimmed(form.email).toLowerCase().slice(0, 254),
       language: form.language, level: form.level, source: form.source,
       notes: trimmed(form.notes).slice(0, 2000), status: form.status,
+      ...(!editing || classChanged ? { interestedClass: form.interestedClass } : {}),
       assignedToUid: resolvedUid, assignedToName: resolvedName,
       nextFollowUpAt: form.nextFollowUpAt || "", updatedAt: serverTimestamp(),
     };
@@ -365,8 +389,27 @@ export default function PersonalLeadsPanel() {
           <label>Phone / WhatsApp *<input required type="tel" maxLength={24} value={form.phone} onChange={(e) => change("phone", e.target.value)} placeholder="+233..." /></label>
           <label>Location *<input required maxLength={120} value={form.location} onChange={(e) => change("location", e.target.value)} placeholder="City or area" /></label>
           <label>Email (optional)<input type="email" maxLength={254} value={form.email} onChange={(e) => change("email", e.target.value)} /></label>
-          <label>Course language<select value={form.language} onChange={(e) => setForm((current) => ({ ...current, language: e.target.value, assignedToUid: "", assignedToName: "" }))}><option value="german">German</option><option value="swahili">Swahili</option></select></label>
+          <label>Course language<select value={form.language} onChange={(event) => {
+            setClassChanged(true);
+            setForm((current) => ({ ...current, language: event.target.value, assignedToUid: "", assignedToName: "", interestedClass: null }));
+          }}><option value="german">German</option><option value="swahili">Swahili</option></select></label>
           <label>Level<select value={form.level} onChange={(e) => change("level", e.target.value)}>{LEVELS.map((x) => <option key={x} value={x}>{x || "Not decided"}</option>)}</select></label>
+          <label>Class interested in
+            <select value={savedClass?.id || ""} onChange={(event) => {
+              setClassChanged(true);
+              change("interestedClass", classChoices.find((course) => course.id === event.target.value) || null);
+            }}>
+              <option value="">Not decided</option>
+              {showSavedClass && <option value={savedClass.id}>{savedClass.title} (saved)</option>}
+              {classChoices.map((course) => <option key={course.id} value={course.id}>
+                {course.title} · {leadClassDetails(course)}
+              </option>)}
+            </select>
+            {classCatalogueError ? <small>Upcoming classes could not be loaded.</small>
+              : !upcomingClasses ? <small>Loading published classes…</small>
+              : !classChoices.length && <small>No upcoming published classes for this language.</small>}
+            {savedClass && <small>{leadClassDetails(savedClass)}</small>}
+          </label>
           <label>How did they contact us?<select value={form.source} onChange={(e) => change("source", e.target.value)}>{SOURCES.map((x) => <option key={x}>{x}</option>)}</select></label>
           <label>Status<select value={form.status} onChange={(e) => change("status", e.target.value)}>{STATUSES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
           <label>Assigned staff<select value={form.assignedToUid} disabled={staffDirectoryState !== "ready"} onChange={(e) => change("assignedToUid", e.target.value)}>
@@ -399,6 +442,9 @@ export default function PersonalLeadsPanel() {
               <div className="personal-lead-name">{contact.name} <span className={"personal-status status-" + contact.status}>{badgeStatus(contact.status)}</span>{contact.deleting ? <span className="personal-status status-done">Deletion in progress</span> : null}</div>
               <div>{contact.phone} · {contact.location} · {contact.language === "swahili" ? "Swahili" : "German"} {contact.level || ""}</div>
               <div className="personal-lead-meta">{contact.source || "Phone call"} · Assigned: {contact.assignedToName || "Unassigned"} · Last contacted: {dateText(contact.lastFollowUpAt)}</div>
+              {contact.interestedClass && <div className="personal-lead-meta">
+                <strong>{contact.interestedClass.title}</strong> · {leadClassDetails(contact.interestedClass)}
+              </div>}
               {contact.notes && <div className="personal-lead-meta">Note: {contact.notes}</div>}
               <div className={"personal-lead-next" + (overdue ? " is-overdue" : "")}>Next follow-up: {contact.nextFollowUpAt ? dateText(contact.nextFollowUpAt) : "Not scheduled"} {overdue ? "· Due" : ""}</div>
             </div>
