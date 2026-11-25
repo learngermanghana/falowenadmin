@@ -57,7 +57,7 @@ async function getClass(db,id) {
   if(lower(klass.language)==="swahili" || ![klass.level,klass.levelId,klass.courseLevel,klass.name,klass.className,klass.classId].some(v=>/^a2(?:\b|$)/i.test(clean(v)))) fail(403,"Only German A2 classes are supported.");
   return klass;
 }
-function sessionView(s){return {id:s.id,className:s.className,assignmentId:s.assignmentId,sessionDate:s.sessionDate,prompt:s.prompt,keywords:s.keywords,questions:s.questions,expiresAt:s.expiresAt};}
+function sessionView(s){return {activity:/^grammar-workbook-grammar(?:-\d+)?-\d+$/.test(s.choice||"")?"grammar":"presentation",id:s.id,className:s.className,assignmentId:s.assignmentId,sessionDate:s.sessionDate,prompt:s.prompt,keywords:s.keywords,questions:s.questions,expiresAt:s.expiresAt};}
 function registerClassPresentationRoutes({app,db,admin}) {
   const sessions=db.collection("classPresentationSessions");
   const auth=async req=>{

@@ -1,0 +1,10 @@
+.a2-grammar-table-wrap{overflow-x:auto;margin:.6rem 0}
+.a2-grammar-table{border-collapse:collapse;width:100%;font-size:clamp(1rem,1.65vw,1.35rem);line-height:1.4}
+.a2-grammar-table th,.a2-grammar-table td{padding:.45rem .65rem;text-align:left;border-bottom:1px solid #cbd5e1;overflow-wrap:anywhere}
+.a2-grammar-table th{background:#dbeafe;color:#172554}.a2-grammar-table td{background:#fff;color:#172554}
+.a2-grammar-table td:first-child{font-weight:750}
+.a2-grammar-live{margin-top:.8rem;border-top:1px solid #93c5fd;padding-top:.8rem;display:grid;gap:.65rem}
+.a2-grammar-toggle,.a2-grammar-choice select{border:1px solid #94a3b8;border-radius:8px;padding:.55rem .8rem;background:white;color:#172554;font:inherit}
+.a2-grammar-toggle{justify-self:start;cursor:pointer}
+.a2-grammar-choice{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.a2-grammar-prompt,.a2-grammar-model{margin:0;background:#fff;border-left:3px solid #2563eb;padding:.65rem .8rem;font-weight:600}
