@@ -34,3 +34,24 @@ test("background schedules use fractional CPU and exam marking keeps its own res
   assert.match(eventDrivenPatch, /Retired attendance function/);
   assert.doesNotMatch(index, /exports\.(sendAttendanceConfirmationEmails|queueAttendanceConfirmationFrom\w+)\s*=/);
 });
+
+test("existing lightweight orientation workers use fractional CPU without modifying API or marking defaults", async () => {
+  const patch = read("scripts/patchAutomaticOrientationSync.mjs");
+  const snippet = read("scripts/snippets/operationalSheetAutoSyncJobs.js.txt");
+  const names = ["autoSyncPaidStudentOrientation","autoSyncApprovedStudentOrientation","autoSyncNewStudentToOrientationSheet","autoRemoveIneligibleStudentFromOrientationSheet","autoRemoveDeletedStudentFromOrientationSheet","syncPendingOperationalSheets"];
+  for (const [i,name] of names.entries()) {
+    const source = i < 2 ? patch : snippet;
+    const start = source.indexOf("exports." + name + " = ");
+    assert.ok(start >= 0, name);
+    const end = source.indexOf("secrets:", start);
+    const options = source.slice(start,end);
+    assert.match(options, /cpu: "gcf_gen1"/, name);
+    assert.match(options, /memory: "256MiB"/, name);
+    assert.match(options, /concurrency: 1/, name);
+    assert.match(options, /minInstances: 0/, name);
+  }
+  const { selectFirebaseDeployTargets } = await import("../scripts/selectFirebaseDeployTargets.mjs");
+  const plan = selectFirebaseDeployTargets({changedPaths:["scripts/patchAutomaticOrientationSync.mjs","scripts/snippets/operationalSheetAutoSyncJobs.js.txt","tests/cloud-cost-guards.test.cjs"],predeployPaths:["scripts/patchAutomaticOrientationSync.mjs"]});
+  assert.equal(plan.mode,"targeted");
+  assert.deepEqual(plan.targets,[...names].sort());
+});
