@@ -112,12 +112,85 @@ export const SWAHILI_DAY_TWELVE_ADMIN_LESSON = Object.freeze({
     },
     {
       "id": "radio",
-      "type": "media-pending",
+      "type": "radio-questions",
       "kicker": "Kusikiliza · Falowen Radio",
       "title": "Falowen Radio · Siku, Miezi na Tarehe",
-      "content": "Kipindi cha Falowen Radio kitaongezwa baadaye.",
-      "english": "Podcast and episode-specific activities will be connected when supplied.",
-      "status": "pending-media"
+      "radioVideoId": "QdpRliUlbMA",
+      "content": "Sikiliza kipindi cha Falowen Radio kuhusu siku, miezi na tarehe.",
+      "radioActivities": [
+        {
+          "title": "Kazi ya Mtu Binafsi",
+          "english": "Individual Work",
+          "activities": [
+            {
+              "title": "Sikiliza na ukamilishe taarifa hizi.",
+              "english": "Listen and complete the information.",
+              "prompts": [
+                "Wiki ina siku ________.",
+                "Mwaka una miezi ________.",
+                "Mei ni mwezi wa ________.",
+                "Novemba ni mwezi wa ________."
+              ],
+              "answer": "Wiki ina siku saba.\nMwaka una miezi kumi na miwili.\nMei ni mwezi wa tano.\nNovemba ni mwezi wa kumi na moja."
+            },
+            {
+              "title": "Fikiria na ujibu.",
+              "english": "Think and answer.",
+              "intro": "Leo ni Jumatano, tarehe kumi mwezi wa Julai.",
+              "prompts": [
+                "Jana ilikuwa siku gani?",
+                "Kesho ni siku gani?",
+                "Kesho kutwa ni siku gani?",
+                "Kesho ni tarehe ngapi?"
+              ],
+              "answer": "Jana ilikuwa Jumanne.\nKesho ni Alhamisi.\nKesho kutwa ni Ijumaa.\nKesho ni tarehe kumi na moja mwezi wa Julai."
+            }
+          ]
+        },
+        {
+          "title": "Kazi ya Jozi",
+          "english": "Pair Work",
+          "activities": [
+            {
+              "title": "Ulizaneni kuhusu siku muhimu.",
+              "english": "Interview your partner about important dates.",
+              "intro": "Mwanafunzi A aulize. Mwanafunzi B ajibu kwa sentensi kamili. Kisha badilishaneni nafasi.",
+              "prompts": [
+                "Leo ni siku gani?",
+                "Siku yako ya kuzaliwa ni lini?",
+                "Una miadi lini?",
+                "Tarehe ngapi?",
+                "Mwezi gani?"
+              ],
+              "answer": "A: Leo ni siku gani?\nB: Leo ni Jumatano.\n\nA: Siku yako ya kuzaliwa ni lini?\nB: Siku yangu ya kuzaliwa ni tarehe kumi mwezi wa Juni.\n\nA: Una miadi lini?\nB: Nina miadi Alhamisi.\n\nA: Tarehe ngapi?\nB: Tarehe ishirini.\n\nA: Mwezi gani?\nB: Mwezi wa Agosti."
+            },
+            {
+              "title": "Panga siku kwa mpangilio sahihi.",
+              "english": "Arrange the time words in the correct order.",
+              "intro": "Pangeni maneno haya: Kesho · Jana · Kesho kutwa · Leo · Juzi. Baada ya kupanga maneno, tungieni sentensi kwa kutumia kila neno.",
+              "answer": "Juzi → Jana → Leo → Kesho → Kesho kutwa\n\nJuzi ilikuwa Jumatatu.\nJana ilikuwa Jumanne.\nLeo ni Jumatano.\nKesho ni Alhamisi.\nKesho kutwa ni Ijumaa."
+            }
+          ]
+        },
+        {
+          "title": "Kazi ya Kikundi",
+          "english": "Group Work",
+          "activities": [
+            {
+              "title": "Tengenezeni kalenda ya shughuli za kikundi.",
+              "english": "Create a group activity calendar.",
+              "intro": "Chagueni shughuli tano. Kwa kila shughuli, andikeni jina la shughuli, siku, tarehe na mwezi. Baada ya hapo, kila kikundi kiwasilishe kalenda yake darasani.",
+              "example": [
+                "Somo la Kiswahili",
+                "Jumatatu",
+                "tano",
+                "Mei"
+              ],
+              "answer": "Tuna somo la Kiswahili Jumatatu, tarehe tano mwezi wa Mei. Tuna mkutano Jumatano, tarehe saba mwezi wa Mei. Tuna mchezo Ijumaa, tarehe tisa mwezi wa Mei. Tuna sherehe Jumamosi, tarehe kumi mwezi wa Mei. Tuna miadi Jumatatu, tarehe kumi na mbili mwezi wa Mei."
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "listening",

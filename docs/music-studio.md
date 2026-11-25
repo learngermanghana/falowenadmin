@@ -296,3 +296,7 @@ The Day 12 Music slide opens the lyrics for the public recording *Angalia Kalend
 The Falowen lyrics endpoint serves the same optional practice questions and
 answers to Admin, Falowen Music and the workbook. Classroom Teil 4 uses its
 existing authenticated dialogue recording.
+
+The Music slide follows the estimated line timings served by Falowen Music.
+The separate Falowen Radio slide embeds the Day 12 episode and offers five
+individual, pair and group activities with revealable model answers.
