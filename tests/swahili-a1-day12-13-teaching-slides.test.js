@@ -20,9 +20,14 @@ for (const lesson of [day12,day13]) {
   if (lesson.dayNumber === 12) {
    assert.equal(music.type, "music");
    assert.equal(music.audio.id, "swahili-a1-day-12");
+   const radio = lesson.stages.find(s => s.id === "radio");
+   assert.equal(radio.type, "radio-questions");
+   assert.equal(radio.radioVideoId, "QdpRliUlbMA");
+   assert.deepEqual(radio.radioActivities.map(group => group.activities.length), [2, 2, 1]);
+   assert.ok(radio.radioActivities.flatMap(group => group.activities).every(activity => activity.answer));
    assert.equal(music.audio.objectKey, "swahili/music/A1/day-12/Angalia Kalenda.mp3.mpeg");
   }
-  for(const id of lesson.dayNumber === 12 ? ["ai-video","radio"] : ["ai-video","music","radio"]) {
+  for(const id of lesson.dayNumber === 12 ? ["ai-video"] : ["ai-video","music","radio"]) {
    const s=lesson.stages.find(s=>s.id===id);
    assert.equal(s.type,"media-pending");
    assert.equal(s.status,"pending-media");
