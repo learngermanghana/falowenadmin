@@ -1,6 +1,7 @@
 import { B1_WORKBOOK_PRESENTATIONS } from '../data/b1WorkbookPresentations.js';
 import { A2_WORKBOOK_PRESENTATIONS } from '../data/a2WorkbookPresentations.js';
 import { A2_B1_WORKBOOK_GRAMMAR, A2_WORKBOOK_GRAMMAR_PAGES, B1_WORKBOOK_GRAMMAR_EXTENSIONS } from "../data/a2B1WorkbookGrammar.js";
+import { A2_GRAMMAR_TEACHER_NOTES } from "../data/a2GrammarTeacherNotes.js";
 import { getA2B1CommonMistakes } from '../data/a2B1CommonMistakes.js';
 import { getPresenterReadingLesson } from '../data/presenterReadingLessons.js';
 import { getAdvancedPresenterReadingLesson } from '../data/advancedPresenterReadingLessons.js';
@@ -2009,6 +2010,7 @@ function standardizeA2B1Stages(stages, slide) {
     type: "workbook-grammar",
     kicker: "Grammatik · Workbook",
     title,
+    ...(level === "A2" ? { grammarTeacherNote: A2_GRAMMAR_TEACHER_NOTES[day]?.[index] } : {}),
     items: [
       ...rules.map(([label, prompt, example]) => ({ label, prompt, example })),
       ...checks.map(([prompt, answer], checkIndex) => ({
