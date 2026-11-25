@@ -85,6 +85,7 @@ function legacyCourseCandidates(student,rows=[]){
   const level=String(s.level||s.levelId||"").toUpperCase(),id=program+"-"+level;
   if(!levels.has(level)||rows.some(r=>r.id===id||(r.program===program&&r.level===level)))return [];
   const paid=legacyMoney(s.paid),balance=legacyMoney(s.balanceDue??s.balance),fee=legacyMoney(s.tuitionFee);
+  const malformed=[[s.paid,paid],[s.balanceDue??s.balance,balance],[s.tuitionFee,fee]].some(([raw,n])=>raw!=null&&String(raw).trim()!==""&&n===null);
   const tuitionFee=fee??(paid!==null&&balance!==null?Math.round((paid+balance)*100)/100:null);
   const reconciled=paid!==null&&balance!==null&&tuitionFee!==null&&Math.round((paid+balance)*100)===Math.round(tuitionFee*100);
   const protectedInstitution=Boolean(student.institutionId||student.institutionVerification||student.universityInvitationCode||s.institutionId||s.institutionVerification||s.universityInvitationCode);
@@ -92,7 +93,7 @@ function legacyCourseCandidates(student,rows=[]){
   const status=String(s.status||"").toLowerCase();
   const explicitFree=s.accessType==="complimentary";
   const canFree=(paid===null||paid===0)&&(balance===null||balance===0)&&(tuitionFee===null||tuitionFee===0)&&!(paid===null&&["paid","partial","partially paid","partially_paid"].includes(String(s.paymentStatus||"").toLowerCase()));
-  const record={id,program,level,className:String(s.className||s.classname||""),contractStart:isoDate(s.contractStart)||"",contractEnd:isoDate(s.contractEnd)||"",paymentDeadline:isoDate(s.paymentDeadline)||"",tuitionFee,paid,balanceDue:balance,accessType:explicitFree?"complimentary":"paid",paymentStatus:String(s.paymentStatus||""),canPaid:reconciled&&paid>0,canFree,blockedReason:protectedInstitution?"Institutional access must be managed through its approval workflow.":upgrade?"Historical upgrade payments need separate reconciliation before migration.":["blocked","suspended","cancelled","withdrawn","inactive"].includes(status)?"Inactive or blocked course requires review.":""};
+  const record={id,program,level,className:String(s.className||s.classname||""),contractStart:isoDate(s.contractStart)||"",contractEnd:isoDate(s.contractEnd)||"",paymentDeadline:isoDate(s.paymentDeadline)||"",tuitionFee,paid,balanceDue:balance,accessType:explicitFree?"complimentary":"paid",paymentStatus:String(s.paymentStatus||""),canPaid:reconciled&&paid>0,canFree,blockedReason:malformed?"Invalid historical payment totals require review.":protectedInstitution?"Institutional access must be managed through its approval workflow.":upgrade?"Historical upgrade payments need separate reconciliation before migration.":["blocked","suspended","cancelled","withdrawn","inactive"].includes(status)?"Inactive or blocked course requires review.":""};
   return [{...record,revision:crypto.createHash("sha256").update(JSON.stringify(record)).digest("hex")}];
  });
 }
@@ -166,15 +167,24 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  });return res.json({ok:true,enrollment:result});
  }catch(e){return error(res,e);}});
  app.post(route+"/:enrollmentId/contract",async(req,res)=>{try{
- const user=await authorize(req);const {studentId,collection}=refs(req);const ref=enrollmentRef(req,collection);
- const result=await db.runTransaction(async tx=>{const snap=await tx.get(ref);if(!snap.exists)fail("Enrollment not found",404);
+ const user=await authorize(req);const {studentId,student,collection}=refs(req);const ref=enrollmentRef(req,collection);
+ const result=await db.runTransaction(async tx=>{const [snap,parent]=await Promise.all([tx.get(ref),tx.get(student)]);if(!snap.exists||!parent.exists)fail("Enrollment not found",404);
  const record=snap.data(),input=req.body||{},stamp=admin.firestore.FieldValue.serverTimestamp();
  const hasTotals=input.tuitionFee!==undefined||input.paid!==undefined;
  const totals=hasTotals?manualTotals({tuitionFee:input.tuitionFee===undefined?record.tuitionFee:input.tuitionFee,paid:input.paid===undefined?record.paid:input.paid}):{};
  const changed=hasTotals&&(totals.tuitionFee!==record.tuitionFee||totals.paid!==record.paid);
  const patch={...contractPatch({...record,...totals},input),...totals,...(changed?{openingBalanceImported:record.openingBalanceImported===true||totals.paid>0,manualTotalsAdjustedAt:stamp,manualTotalsAdjustedBy:user.uid}:{})};
  if(patch.accessType==="complimentary"&&(Number(record.paid)>0||Number(patch.paid??record.paid)!==0||Number(patch.tuitionFee??record.tuitionFee)!==0))fail("Paid enrollment history cannot be replaced by complimentary access");
- tx.update(ref,{...patch,updatedAt:stamp});tx.set(db.collection("auditLogs").doc(),{type:changed?"student.levelTotalsAdjusted":"student.levelContractUpdated",studentId,enrollmentId:ref.id,actorId:user.uid,before:{tuitionFee:record.tuitionFee,paid:record.paid,balanceDue:record.balanceDue},after:patch,createdAt:stamp});return {id:ref.id,...record,...patch};});
+ tx.update(ref,{...patch,updatedAt:stamp});
+ // For imported courses, keep their selected legacy profile dates current even
+ // on staff accounts or when reconciliation has no currently active row.
+ if(record.legacyCourseImported===true){
+  const profile=parent.data(),primary=legacyLanguage(profile.program||profile.language||"german");
+  const datePatch={contractStart:patch.contractStart,contractEnd:patch.contractEnd,paymentDeadline:patch.paymentDeadline};
+  if(record.program===primary&&profile.effectiveEnrollmentId===ref.id)tx.update(student,datePatch);
+  else if(record.program!==primary&&profile.coursePlacements?.[record.program]?.effectiveEnrollmentId===ref.id)tx.update(student,{coursePlacements:{...profile.coursePlacements,[record.program]:{...profile.coursePlacements[record.program],...datePatch}}});
+ }
+ tx.set(db.collection("auditLogs").doc(),{type:changed?"student.levelTotalsAdjusted":"student.levelContractUpdated",studentId,enrollmentId:ref.id,actorId:user.uid,before:{tuitionFee:record.tuitionFee,paid:record.paid,balanceDue:record.balanceDue},after:patch,createdAt:stamp});return {id:ref.id,...record,...patch};});
  return res.json({ok:true,enrollment:result});
  }catch(e){return error(res,e);}});
  const paymentRoute=route+"/:enrollmentId/payments";
