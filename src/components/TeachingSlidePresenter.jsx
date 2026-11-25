@@ -1115,6 +1115,13 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                 <h1>{stage.title}</h1>
                 {stage.instruction ? <p>{stage.instruction}</p> : null}
               </div>
+              {stage.grammarTeacherNote && (
+                <details className="presenter-grammar-teacher-note" key={stage.id}>
+                  <summary>Erklärung &amp; Satzbau · {stage.grammarTeacherNote[0]}</summary>
+                  <p>{stage.grammarTeacherNote[1]}</p>
+                  <blockquote>{stage.grammarTeacherNote[2]}</blockquote>
+                </details>
+              )}
               <div className="presenter-grammar-check-grid">
                 {presenterItems.map((item, index) => (
                   <article key={item.id || index} className="presenter-grammar-check-card">

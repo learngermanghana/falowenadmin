@@ -5300,3 +5300,31 @@
   .presenter-reading-translation { padding: 7px 10px; gap: 4px; }
   .presenter-translation-meaning p { font-size: .98rem; }
 }
+
+/* Expanded teacher explanation stays on the current grammar slide. */
+.presenter-grammar-teacher-note {
+  min-width: 0;
+  border: 1px solid #93c5fd;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #172554;
+  padding: .65rem .9rem;
+}
+.presenter-grammar-teacher-note summary {
+  cursor: pointer;
+  font-weight: 750;
+  font-size: clamp(1rem, 1.6vw, 1.25rem);
+  line-height: 1.4;
+}
+.presenter-grammar-teacher-note p,
+.presenter-grammar-teacher-note blockquote {
+  margin: .65rem 0 0;
+  font-size: clamp(1rem, 1.6vw, 1.3rem);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.presenter-grammar-teacher-note blockquote {
+  background: #fff;
+  border-left: 3px solid #2563eb;
+  padding: .55rem .75rem;
+}
