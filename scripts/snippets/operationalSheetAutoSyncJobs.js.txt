@@ -391,6 +391,37 @@ async function removeStudentFromOrientationSheet(student = {}, studentId = "", s
   return { status: "removed", ...responseJson };
 }
 
+// Evaluate eligibility using the same clock for both snapshots. Only a real
+// eligibility/identity/row change should request removal, not activity writes.
+function orientationRemovalFingerprint(student = {}) {
+  return JSON.stringify([
+    operationalOrientationStatus(student.status || student.studentStatus || student.enrollmentStatus),
+    operationalOrientationStatus(student.trialStatus || student.trial_status),
+    operationalHasQualifyingPayment(student),
+    operationalTrialStartedAtMillis(student),
+    operationalTrialExpiredAtMillis(student),
+    String(student.studentCode || student.studentcode || student.code || "").trim(),
+    String(student.email || student.emailAddress || student.contactEmail || "").trim().toLowerCase(),
+    String(student.orientationSheetAutoSyncStatus === "sent"),
+    operationalOrientationMillis(student.orientationSheetAutoSyncedAt),
+    String(student.orientationAutoSync?.status === "success"),
+    String(student.orientationAutoSync?.syncedAt || ""),
+  ]);
+}
+
+function shouldRemoveOperationalOrientationRow(before = {}, after = {}, now = Date.now()) {
+  const previous = operationalOrientationEligibility(before, now);
+  const next = operationalOrientationEligibility(after, now);
+  if (next.eligible) return false;
+  const hadRow = [before, after].some(student => Boolean(
+    student.orientationSheetAutoSyncedAt ||
+    student.orientationSheetAutoSyncStatus === "sent" ||
+    student.orientationAutoSync?.status === "success"
+  ));
+  if (previous.eligible) return true;
+  return hadRow && orientationRemovalFingerprint(before) !== orientationRemovalFingerprint(after);
+}
+
 exports.autoRemoveIneligibleStudentFromOrientationSheet = onDocumentUpdated({
   cpu: "gcf_gen1",
   memory: "256MiB",
@@ -401,17 +432,10 @@ exports.autoRemoveIneligibleStudentFromOrientationSheet = onDocumentUpdated({
 }, async (event) => {
   const before = event.data?.before?.data?.() || {};
   const after = event.data?.after?.data?.() || {};
-  const beforeEligibility = operationalOrientationEligibility(before);
-  const afterEligibility = operationalOrientationEligibility(after);
-
-  const hadOrientationRow = Boolean(
-    after.orientationSheetAutoSyncedAt
-    || after.orientationSheetAutoSyncStatus === "sent"
-    || before.orientationSheetAutoSyncedAt
-    || before.orientationSheetAutoSyncStatus === "sent"
-  );
-  if (afterEligibility.eligible || (!beforeEligibility.eligible && !hadOrientationRow)) {
-    return { skipped: true, reason: afterEligibility.reason || "still_eligible" };
+  const now = Date.now();
+  const afterEligibility = operationalOrientationEligibility(after, now);
+  if (!shouldRemoveOperationalOrientationRow(before, after, now)) {
+    return { skipped: true, reason: afterEligibility.eligible ? "still_eligible" : "orientation_removal_inputs_unchanged" };
   }
 
   const result = await removeStudentFromOrientationSheet(

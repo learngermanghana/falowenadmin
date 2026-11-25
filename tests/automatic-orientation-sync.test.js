@@ -301,3 +301,27 @@ test("deployment patch listens for student payment and confirmed class updates",
   assert.match(workflow, /functions:falowenadmin:autoSyncPaidStudentOrientation/);
   assert.match(workflow, /functions:falowenadmin:autoSyncApprovedStudentOrientation/);
 });
+
+test("orientation removal ignores activity writes and keeps real ineligibility transitions", async () => {
+  const vm = await import("node:vm");
+  const snippet = read("scripts/snippets/operationalSheetAutoSyncJobs.js.txt");
+  const a = snippet.indexOf("function operationalOrientationMoney");
+  const b = snippet.indexOf("async function syncStudentToOrientationSheet",a);
+  const c = snippet.indexOf("function orientationRemovalFingerprint");
+  const d = snippet.indexOf("exports.autoRemoveIneligibleStudentFromOrientationSheet",c);
+  assert.ok(a>=0&&b>a&&c>b&&d>c);
+  const context = vm.createContext({});
+  vm.runInContext(snippet.slice(a,b)+snippet.slice(c,d),context);
+  const now = Date.parse("2026-11-25T12:00:00Z");
+  const active = {studentCode:"S1",email:"student@example.com",status:"active",paid:300,orientationSheetAutoSyncStatus:"sent"};
+  const blocked = {...active,status:"blocked"};
+  const should = context.shouldRemoveOperationalOrientationRow;
+  assert.equal(should(active,blocked,now),true);
+  assert.equal(should(blocked,{...blocked,lastActivityAt:now},now),false);
+  assert.equal(should(blocked,{...blocked,orientationSheetAutoSyncCheckedAt:now},now),false);
+  assert.equal(should(blocked,{...blocked,email:"new@example.com"},now),true);
+  assert.equal(should(blocked,active,now),false);
+  const expired = {status:"trial_active",trialStartedAt:now-8*86400000,orientationSheetAutoSyncStatus:"sent"};
+  assert.equal(should(expired,{...expired,status:"trial_expired"},now),true);
+  assert.equal(should({...active,orientationSheetAutoSyncStatus:undefined,orientationAutoSync:{status:"success"}},{...blocked,orientationSheetAutoSyncStatus:undefined,orientationAutoSync:{status:"success"}},now),true);
+});

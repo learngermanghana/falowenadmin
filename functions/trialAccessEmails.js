@@ -607,6 +607,23 @@ async function runTrialAccessEmailJob({
   };
 }
 
+// A new welcome-eligible state or relevant identity/date change can trigger
+// delivery. Ordinary activity and diagnostic writes are not welcome events.
+// The existing scheduled recovery still checks for missed welcome emails.
+function trialWelcomeFingerprint(student = {}, now = Date.now()) {
+  if (trialEmailStage(student, now) !== "welcome") return "";
+  return JSON.stringify([
+    studentEmail(student), studentName(student), studentClassName(student),
+    studentLevel(student), isGermanCourse(student), pendingStartedAtMillis(student),
+    trialExpiredAtMillis(student), trialPurgeAtMillis(student),
+  ]);
+}
+
+function shouldCheckTrialWelcome(before, after, now = Date.now()) {
+  const next = trialWelcomeFingerprint(after, now);
+  return Boolean(next && (!before || trialWelcomeFingerprint(before, now) !== next));
+}
+
 function createTrialAccessWelcomeEmailTrigger({
   db,
   admin,
@@ -624,7 +641,16 @@ function createTrialAccessWelcomeEmailTrigger({
     const afterSnap = event?.data?.after;
     if (!afterSnap?.exists) return { sent: false, reason: "student_deleted" };
 
+    if (!firebaseTrialEmailDeliveryEnabled(runtimeConfig)) {
+      return { sent: false, reason: "apps_script_native" };
+    }
     const student = afterSnap.data?.() || {};
+    const beforeSnap = event?.data?.before;
+    const before = beforeSnap?.exists ? beforeSnap.data?.() || {} : null;
+    const now = new Date();
+    if (!shouldCheckTrialWelcome(before, student, now.getTime())) {
+      return { sent: false, reason: "welcome_inputs_unchanged_or_not_due" };
+    }
     const studentId = text(event?.params?.studentId || afterSnap.id);
     const result = await processTrialAccessEmail({
       db,
@@ -633,7 +659,7 @@ function createTrialAccessWelcomeEmailTrigger({
       student,
       studentId,
       requestedStage: "welcome",
-      now: new Date(),
+      now,
       fetchImpl,
     });
     console.log("trial_access_welcome_email", result);
@@ -689,6 +715,7 @@ module.exports = {
     resolveTrialEmailConfig,
     trialEmailDeliveryMode,
     firebaseTrialEmailDeliveryEnabled,
+    shouldCheckTrialWelcome,
     rowForTrialAccessEmail,
     stageActionUrl,
     stageButtonLabel,
