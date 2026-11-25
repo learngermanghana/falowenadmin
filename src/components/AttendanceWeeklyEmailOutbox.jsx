@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { auth } from "../firebase.js";
 import { readyWeeklyPeriods } from "../utils/weeklyAttendanceOutbox.js";
 
-export default function AttendanceWeeklyEmailOutbox({ classes = [], sessionsByClass = {}, loading = false }) {
+export default function AttendanceWeeklyEmailOutbox({ classes = [], sessionsByClass = {}, loading = false, onRefresh }) {
   const [sentKeys,setSentKeys]=useState({});
   const [busy,setBusy]=useState("");
   const [message,setMessage]=useState("");
@@ -45,7 +45,10 @@ export default function AttendanceWeeklyEmailOutbox({ classes = [], sessionsByCl
     finally{setBusy("");}
   }
   return <section aria-label="Pending attendance emails" style={{margin:"16px 0",padding:14,border:"1px solid #dbe3ee",borderRadius:12,background:"#fff"}}>
-    <h2 style={{margin:"0 0 6px",fontSize:18}}>Attendance emails to send ({pending.length})</h2>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
+      <h2 style={{margin:"0 0 6px",fontSize:18}}>Attendance emails to send ({pending.length})</h2>
+      {onRefresh ? <button type="button" disabled={loading || Boolean(busy)} onClick={onRefresh}>Refresh reports</button> : null}
+    </div>
     <p style={{margin:"0 0 10px",fontSize:13,color:"#475569"}}>Weekly reports appear after the last scheduled lesson is completed. Send manually via Apps Script; confirmed reports disappear from this list.</p>
     {loading?<p>Checking loaded class schedules…</p>:null}
     {!loading&&!pending.length?<p>{classes.some(klass=>sessionsByClass[klass.id||klass.classRecordId||klass.classId]===null)?"Some schedules could not be loaded. Reopen Attendance to check pending reports.":"No weekly reports ready to send."}</p>:null}
