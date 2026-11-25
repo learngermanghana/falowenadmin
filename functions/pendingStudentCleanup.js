@@ -1,4 +1,4 @@
-const { readCleanupCandidate, hasTrialHistory, hasConversion } = require("./enrollmentCleanupProtection");
+const { readCleanupCandidate, hasConversion } = require("./enrollmentCleanupProtection");
 const TRIAL_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 const TRIAL_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 const DEFAULT_BATCH_LIMIT = 50;
@@ -145,7 +145,8 @@ function expiredPendingReason(student = {}, now = Date.now()) {
   if (role && role !== "student") return "not_student";
   if (hasQualifyingPayment(student) || hasConversion(student)) return "has_payment";
   if (student.accountType === "exam_only" || student.courseEnrollmentPreserved === true) return "protected_account";
-  if (!hasTrialHistory(student)) return "not_explicit_trial";
+  // Legacy unpaid pending/active registrations use their registration date.
+  // The fresh ledger check still protects all managed accounts before mutation.
 
   const status = studentStatus(student);
   const trialStatus = comparable(student.trialStatus || student.trial_status);
@@ -403,7 +404,7 @@ async function deleteExpiredPendingStudent({ admin, db, docSnap, now = Date.now(
 
   // Delete the sheet rows first. If Apps Script is temporarily unavailable,
   // keep the Firestore student so this purge remains retryable.
-  if (!await readCleanupCandidate(docSnap.ref, current => expiredPendingReason(current, Date.now()) === "purge_due")) return { skipped: "protected_or_no_longer_eligible" };
+  if (!await readCleanupCandidate(docSnap.ref, current => expiredPendingReason(current, now) === "purge_due")) return { skipped: "protected_or_no_longer_eligible" };
   const sheet = await deleteStudentRowsFromSheet({
     appsScriptUrl,
     syncSecret,

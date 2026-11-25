@@ -153,3 +153,10 @@ test('marking key and evidence fixes deploy only the API and automatic worker, i
  const plan=selectFirebaseDeployTargets({changedPaths:['src/data/answers_dictionary.json','src/data/courseMarkingSnapshot.json','src/utils/writingTaskEvidence.js','functions/automaticMarkingPipeline.cjs','functions/automaticMarkingPipeline.test.cjs','scripts/selectFirebaseDeployTargets.mjs']});
  assert.equal(plan.mode,'targeted');assert.deepEqual(plan.targets,['api','markCourseSubmissionAutomatically']);
 });
+
+test("enrollment reconciliation deploys API and event worker",()=>{
+ const plan=selectFirebaseDeployTargets({changedPaths:["functions/effectiveEnrollmentProfile.js","functions/pendingStudentCleanup.js"]});
+ assert.equal(plan.mode,"targeted");
+ assert.deepEqual(plan.targets,["api","cleanupExpiredPendingStudents","reconcileStudentEnrollmentProfile"]);
+ assert.match(fs.readFileSync(".github/workflows/deploy-firebase.yml","utf8"),/functions:falowenadmin:reconcileStudentEnrollmentProfile/);
+});

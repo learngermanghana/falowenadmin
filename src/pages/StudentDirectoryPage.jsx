@@ -538,7 +538,7 @@ export default function StudentDirectoryPage() {
         const result = await response.json();
         if (!response.ok || !result.ok) throw Error(result.error || "Enrollment reconciliation unavailable");
         if (live && result.profile?.effectiveEnrollmentId) handleSupportStudentUpdated(selectedStudentId,result.profile);
-      } catch (err) { if (live) console.warn("Enrollment profile reconciliation failed",err.message); }
+      } catch (err) { if (live) { console.warn("Enrollment profile reconciliation failed",err.message); pushToast({type:"error",message:"Could not synchronize level enrollment with student profile. Existing details may be outdated. "+err.message}); } }
     })();
     return () => {live=false;};
   }, [selectedStudentId]);

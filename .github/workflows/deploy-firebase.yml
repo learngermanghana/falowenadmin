@@ -166,7 +166,7 @@ jobs:
           node --test tests/completion-participation-document.test.js tests/completion-pack-admin-ui.test.js
           node --test tests/registration-lifecycle-events.test.js tests/trial-access-emails.test.js tests/brochure-whatsapp.test.js
           node --test functions/classEmailScheduling.test.js functions/attendanceSessionClassIdentity.test.js
-          node --test tests/pending-student-cleanup.test.js
+          node --test tests/pending-student-cleanup.test.js functions/__tests__/enrollmentCleanupProtection.test.cjs functions/effectiveEnrollmentProfile.test.cjs
           node --test tests/student-payment-links.test.js tests/student-payment-listener-stability.test.js tests/student-payment-update-emails.test.js tests/student-contract-lifecycle.test.js tests/automatic-orientation-sync.test.js
           node --test tests/class-reminder-orientation-links.test.js tests/checkin-status-metadata-hydration.test.js
           grep -F 'app.post("/payments/create-link"' functions/index.js
@@ -325,6 +325,9 @@ jobs:
 
           deploy_group "level enrollment sheet sync worker" \
             "functions:falowenadmin:syncLevelEnrollmentSheet"
+
+          deploy_group "level enrollment profile reconciliation worker" \
+            "functions:falowenadmin:reconcileStudentEnrollmentProfile"
 
           # Make consumers available before producers create automatic jobs.
           deploy_group "automatic course score Sheet sync worker" \
