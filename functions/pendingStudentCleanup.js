@@ -1,3 +1,4 @@
+const { readCleanupCandidate, hasTrialHistory, hasConversion } = require("./enrollmentCleanupProtection");
 const TRIAL_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 const TRIAL_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 const DEFAULT_BATCH_LIMIT = 50;
@@ -142,7 +143,9 @@ function expiredPendingReason(student = {}, now = Date.now()) {
       student.institutionId === "university-hamburg") return "institutional_access";
   const role = comparable(student.role);
   if (role && role !== "student") return "not_student";
-  if (hasQualifyingPayment(student)) return "has_payment";
+  if (hasQualifyingPayment(student) || hasConversion(student)) return "has_payment";
+  if (student.accountType === "exam_only" || student.courseEnrollmentPreserved === true) return "protected_account";
+  if (!hasTrialHistory(student)) return "not_explicit_trial";
 
   const status = studentStatus(student);
   const trialStatus = comparable(student.trialStatus || student.trial_status);
@@ -177,6 +180,8 @@ async function blockExpiredTrialStudent({
   appsScriptUrl = "",
   syncSecret = "",
 }) {
+  const protectedCandidate = await readCleanupCandidate(docSnap.ref, current => expiredPendingReason(current, now) === "needs_block");
+  if (!protectedCandidate) return { skipped: "protected_or_no_longer_eligible" };
   const latestSnap = await docSnap.ref.get();
   if (!latestSnap.exists) return { skipped: "already_deleted" };
 
@@ -379,6 +384,8 @@ async function syncTrialStatusToSheet({
 }
 
 async function deleteExpiredPendingStudent({ admin, db, docSnap, now = Date.now(), appsScriptUrl = "", syncSecret = "" }) {
+  const protectedCandidate = await readCleanupCandidate(docSnap.ref, current => expiredPendingReason(current, now) === "purge_due");
+  if (!protectedCandidate) return { skipped: "protected_or_no_longer_eligible" };
   const latestSnap = await docSnap.ref.get();
   if (!latestSnap.exists) return { skipped: "already_deleted" };
   const student = { id: latestSnap.id, ...(latestSnap.data() || {}) };
@@ -396,6 +403,7 @@ async function deleteExpiredPendingStudent({ admin, db, docSnap, now = Date.now(
 
   // Delete the sheet rows first. If Apps Script is temporarily unavailable,
   // keep the Firestore student so this purge remains retryable.
+  if (!await readCleanupCandidate(docSnap.ref, current => expiredPendingReason(current, Date.now()) === "purge_due")) return { skipped: "protected_or_no_longer_eligible" };
   const sheet = await deleteStudentRowsFromSheet({
     appsScriptUrl,
     syncSecret,
