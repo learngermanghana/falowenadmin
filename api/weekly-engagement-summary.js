@@ -77,7 +77,7 @@ function attendanceStatus({session, attendance={}, checkins=[], student, lateMin
 const active = (row) => !["inactive","archived","withdrawn","removed","cancelled","canceled","deleted","blocked","suspended","trial_expired"].includes(norm(row.status||row.studentStatus||row.enrollmentStatus));
 const held = (session,now=Date.now()) => {
   const state=norm(session.status||session.sessionStatus);
-  if(excludedStatuses.has(state)||session.superseded===true||session.isSuperseded===true||session.isAppAssessment===true||isAppAssessment(session)) return false;
+  if(excludedStatuses.has(state)||session.superseded===true||session.isSuperseded===true||session.isAppAssessment===true||session.appAssessment===true||isAppAssessment(session)) return false;
   const actual=session.completionSource==="manual"?asTime(session.completedAt):NaN;
   const end=Number.isFinite(actual)?actual:asTime(session.endsAt||session.endAt);
   if(!Number.isFinite(end)||end>now) return false;
