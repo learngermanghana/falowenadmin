@@ -537,7 +537,7 @@ export default function StudentDirectoryPage() {
         const response = await fetch("/api/students/"+encodeURIComponent(selectedStudentId)+"/level-enrollments/reconcile-profile", {method:"POST",headers:{Authorization:"Bearer "+token}});
         const result = await response.json();
         if (!response.ok || !result.ok) throw Error(result.error || "Enrollment reconciliation unavailable");
-        if (live && result.profile?.effectiveEnrollmentId) handleSupportStudentUpdated(selectedStudentId,result.profile);
+        if (live && (result.profile?.effectiveEnrollmentId || result.profile?.secondaryProgram)) handleSupportStudentUpdated(selectedStudentId,result.profile);
       } catch (err) { if (live) { console.warn("Enrollment profile reconciliation failed",err.message); pushToast({type:"error",message:"Could not synchronize level enrollment with student profile. Existing details may be outdated. "+err.message}); } }
     })();
     return () => {live=false;};
@@ -1153,7 +1153,7 @@ export default function StudentDirectoryPage() {
                               setDetailTab("enrollments");
                               requestAnimationFrame(() => document.getElementById("student-tab-enrollments")?.focus());
                             }}
-                            aria-label="Generate payment link for selected student"
+                            aria-label="Manage enrollment payments for selected student"
                             style={{
                               minHeight: 42,
                               border: "1px solid #1d4ed8",
