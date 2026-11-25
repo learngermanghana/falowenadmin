@@ -125,11 +125,5 @@
   "git": {
     "deploymentEnabled": false
   },
-  "crons": [
-    {
-      "path": "/api/weekly-engagement-summary",
-      "schedule": "0 20 * * 0"
-    }
-  ],
   "ignoreCommand": "node scripts/vercelIgnoreBuild.cjs"
 }

@@ -83,6 +83,8 @@ export default function AttendanceConfirmationAutomationPanel() {
   const [weeklyPreviewError, setWeeklyPreviewError] = useState("");
   const [sendingWeeklyTest, setSendingWeeklyTest] = useState(false);
   const [weeklyTestResult, setWeeklyTestResult] = useState("");
+  const [sendingWeekly, setSendingWeekly] = useState(false);
+  const [weeklySendResult, setWeeklySendResult] = useState("");
 
   async function loadClassesNow() {
     setLoadingClasses(true);
@@ -207,6 +209,31 @@ export default function AttendanceConfirmationAutomationPanel() {
       setWeeklyPreviewError(cause?.message || "Could not preview weekly attendance.");
     } finally {
       setPreviewing(false);
+    }
+  }
+
+  async function sendWeeklyReport() {
+    if (sendingWeekly || !weeklyPreview?.sendEnabled || weeklyPreviewPeriod !== "previous" || !weeklyPreview.eligibleRecipients) return;
+    if (!window.confirm(`Send the completed-week summary to ${weeklyPreview.eligibleRecipients} eligible recipients for ${weeklyPreview.weekStart} to ${weeklyPreview.weekEnd}?`)) return;
+    setSendingWeekly(true);
+    setWeeklySendResult("");
+    try {
+      const user = auth?.currentUser;
+      if (!user) throw new Error("Sign in as the Falowen administrator.");
+      const token = await user.getIdToken();
+      const params = new URLSearchParams({ send: "1", period: "previous", weekStart: weeklyPreview.weekStart, recipients: String(weeklyPreview.eligibleRecipients) });
+      const response = await fetch(`/api/weekly-engagement-summary?${params}`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload.ok !== true) throw new Error(payload.error || "Weekly email delivery failed. Check delivery history before retrying.");
+      const message = `Sent: ${payload.sent || 0}. Already sent/skipped: ${payload.skipped || 0}.`;
+      setWeeklySendResult(message);
+      success(message);
+      setWeeklyPreview(null);
+    } catch (cause) {
+      setWeeklySendResult(cause?.message || "Could not send the weekly report.");
+      setWeeklyPreview(null);
+    } finally {
+      setSendingWeekly(false);
     }
   }
 
@@ -357,17 +384,23 @@ export default function AttendanceConfirmationAutomationPanel() {
 
       <section style={{ border: "1px solid #bfdbfe", background: "#f8fbff", borderRadius: 12, padding: 14, display: "grid", gap: 10 }}>
         <h3 style={{ margin: 0, color: "#1d4ed8" }}>New weekly attendance + participation email</h3>
-        <p style={{ margin: 0, fontSize: 13, color: "#475569" }}>Check last week’s completed sessions against Falowen records, or view the current week. This is read-only and sends no emails. The replacement sender stays off until verified.</p>
-        <label style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><strong>Reporting period</strong><select value={weeklyPreviewPeriod} onChange={(event) => { setWeeklyPreviewPeriod(event.target.value); setWeeklyPreview(null); }} style={inputStyle}><option value="previous">Previous week (completed)</option><option value="current">Current week</option></select></label>
+        <p style={{ margin: 0, fontSize: 13, color: "#475569" }}>Preview the completed week before sending via Apps Script. There is no automatic weekly schedule for this report. Student sending remains disabled until the existing cutover setting is enabled.</p>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><strong>Reporting period</strong><select value={weeklyPreviewPeriod} disabled={sendingWeekly} onChange={(event) => { setWeeklyPreviewPeriod(event.target.value); setWeeklyPreview(null); }} style={inputStyle}><option value="previous">Previous week (completed)</option><option value="current">Current week</option></select></label>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          <button type="button" onClick={previewWeeklyReport} disabled={previewing}>{previewing ? "Checking records…" : "Preview weekly report (no emails)"}</button>
+          <button type="button" onClick={previewWeeklyReport} disabled={previewing || sendingWeekly}>{previewing ? "Checking records…" : "Preview weekly report (no emails)"}</button>
           <button type="button" onClick={sendWeeklyTestToOwner} disabled={sendingWeeklyTest}>{sendingWeeklyTest ? "Sending test…" : "Send test weekly email to administrator"}</button>
         </div>
+        {weeklySendResult ? <p role="status" style={{ margin: 0, fontSize: 13 }}>{weeklySendResult}</p> : null}
         {weeklyTestResult ? <p role="status" style={{ margin: 0, fontSize: 13, overflowWrap: "anywhere" }}>{weeklyTestResult}</p> : null}
         {weeklyPreviewError && <p role="alert" style={{ color: "#b91c1c", margin: 0, overflowWrap: "anywhere" }}>{weeklyPreviewError}</p>}
         {weeklyPreview && <div role="status" style={{ display: "grid", gap: 8 }}>
           <strong>{weeklyPreview.weekStart} to {weeklyPreview.weekEnd} · {weeklyPreview.eligibleRecipients} eligible student summaries</strong>
-          <small>{weeklyPreview.sendEnabled ? "Replacement sending is enabled" : "Replacement sending remains disabled"}</small>
+          <small>{weeklyPreview.sendEnabled ? "Manual sending is enabled" : "Manual sending remains disabled until cutover is verified"}</small>
+          {weeklyPreviewPeriod === "previous" && weeklyPreview.sendEnabled && weeklyPreview.eligibleRecipients > 0 && (
+            <button type="button" onClick={sendWeeklyReport} disabled={sendingWeekly || previewing}>
+              {sendingWeekly ? "Sending…" : "Send weekly report to students"}
+            </button>
+          )}
           <div style={{ display: "grid", gap: 6 }}>
             {(weeklyPreview.classes || []).map((row) => <div key={row.classId} style={{ borderTop: "1px solid #dbeafe", paddingTop: 6, display: "flex", justifyContent: "space-between", gap: 12 }}>
               <span>{row.className}</span>

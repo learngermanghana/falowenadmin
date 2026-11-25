@@ -1,5 +1,5 @@
 // Once-weekly attendance + class participation digest.
-// Owner can preview without sending; Cron can send only after explicit cutover flag.
+// Manual owner preview and explicit send only; no scheduled invocation.
 // Preserve tutor manual overrides, check-in records and class-specific email settings.
 import { verifyFirebaseAdminUser, bearerToken } from "./integration-hub.js";
 import { env, googleAccessToken, firestoreGet, docValue, listStudents, hasClass, norm, timeMs, err } from "./checkin-invitations.js";
@@ -217,16 +217,12 @@ export default async function handler(req,res){
   if(!["GET","POST"].includes(req.method))return res.status(405).json({ok:false,error:"GET or POST required."});
   const preview=req.method==="GET" && req.query?.preview==="1";
   const test=req.method==="POST" && req.query?.test==="1";
-  if(req.method==="POST"&&!test)return res.status(405).json({ok:false,error:"Test action required."});
-  const secret=env("CRON_SECRET");
+  const manualSend=req.method==="POST" && req.query?.send==="1" && !test;
+  if(!preview&&!test&&!manualSend)return res.status(405).json({ok:false,error:"Use the administrator preview, test or manual send action."});
   try{
-    let owner=null;
-    if(preview||test){
-      owner=await verifyFirebaseAdminUser(bearerToken(req));
-    }else{
-      if(!secret||req.headers.authorization!=="Bearer "+secret)return res.status(401).json({ok:false,error:"Unauthorized"});
-      if(env("WEEKLY_ENGAGEMENT_ENABLED")!=="true")return res.status(200).json({ok:true,disabled:true});
-    }
+    const owner=await verifyFirebaseAdminUser(bearerToken(req));
+    if(manualSend && env("WEEKLY_ENGAGEMENT_ENABLED")!=="true")return res.status(409).json({ok:false,error:"Weekly engagement sending is disabled. Verify the Apps Script cutover first."});
+    if(manualSend && req.query?.period!=="previous")return res.status(400).json({ok:false,error:"Only the previous completed week can be sent."});
     if(test){
       // Do not send student names, addresses or individual student results.
       // The test is an aggregate fixture for the verified Falowen owner only.
@@ -240,12 +236,15 @@ export default async function handler(req,res){
     }
 
     const token=await googleAccessToken();
-    const weeksAgo=preview && req.query?.period==="previous" ? 1 : 0;
+    const weeksAgo=manualSend || (preview && req.query?.period==="previous") ? 1 : 0;
     const report=await buildDigest(token,new Date(),weeksAgo);
     if(preview)return res.status(200).json({ok:true,preview:true,
       weekStart:report.weekStart,weekEnd:report.weekEnd,
       eligibleRecipients:report.rows.length,classes:report.classSummaries,
       scanned:report.scanned,sendEnabled:env("WEEKLY_ENGAGEMENT_ENABLED")==="true"});
+    // A stale preview must never silently send a different period or audience size.
+    if(req.query?.weekStart!==report.weekStart || String(req.query?.recipients)!==String(report.rows.length) || !report.rows.length)
+      return res.status(409).json({ok:false,error:"The report changed or has no recipients. Preview it again before sending."});
     const delivery=await dispatch(report.rows,report);
     return res.status(200).json({ok:true,...delivery,weekStart:report.weekStart,
       weekEnd:report.weekEnd,classes:report.classSummaries.length});
