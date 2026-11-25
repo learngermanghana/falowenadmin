@@ -65,7 +65,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: npm run sync:build
       - name: Verify student payment link is discoverable
-        run: node --test tests/student-payment-links.test.js tests/student-payment-directory-access.test.js
+        run: node --test tests/student-payment-links.test.js tests/student-payment-directory-access.test.js tests/level-payment-progress.test.js
       - name: Test deterministic social content templates
         run: node --test tests/social-course-templates.test.js tests/social-course-review-state.test.js tests/social-class-campaign.test.js
       - name: Verify B1 Day 21 housing choice activity

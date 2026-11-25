@@ -16,7 +16,12 @@ test("Students page restores a discoverable Generate payment link shortcut", () 
 
 test("payment history, link generation and upgrade tools have independent, lazy mounted panels", () => {
   const source = read("src/pages/StudentDirectoryPage.jsx");
-  assert.match(source, /tab\.id === "payments" && !isHamburgCohortStudent\(selectedStudent\) && <StudentPaymentTools mode="history"/);
+  assert.match(source, /tab\.id === "payments" && !isHamburgCohortStudent\(selectedStudent\) && <StudentLevelEnrollments/);
+  assert.match(source, /mode="history" legacyHistory=/);
+  assert.match(source, /<StudentPaymentTools mode="history" legacyOnly readOnlyHistory/);
+  const levels = read("src/components/StudentLevelEnrollments.jsx");
+  assert.match(levels, /Payment progress by level/);
+  assert.match(levels, /legacyOpen&&legacyHistory/);
   const links = source.slice(source.indexOf('{detailTab === "payment-links" &&'),source.indexOf('{detailTab === "contracts" &&'));
   assert.match(links, /<StudentPaymentTools mode="links"/);
   assert.match(links, /onStudentUpdated=\{handleSupportStudentUpdated\}/);

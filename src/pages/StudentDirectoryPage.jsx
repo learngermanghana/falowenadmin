@@ -1276,7 +1276,7 @@ export default function StudentDirectoryPage() {
                             {/* STUDENT_EMERGENCY_CONTACT_FIELD: Emergency contact stays in the staff-only Profile tab. */}
                             {tab.id === "profile" && <StudentAccountActivationPanel student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast} />}
                             {tab.id === "profile" && <StudentEmergencyContact student={selectedStudent} />}
-                            {tab.id === "payments" && !isHamburgCohortStudent(selectedStudent) && <StudentLevelEnrollments key={selectedStudent.id+":payments"} student={selectedStudent} pushToast={pushToast} classes={classes} mode="history" legacyHistory={<><div className="student-detail-fields">{renderEditableFields(tab.fields)}</div><StudentPaymentTools mode="history" legacyOnly readOnlyHistory student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast}/></>} />}
+                            {tab.id === "payments" && !isHamburgCohortStudent(selectedStudent) && <StudentLevelEnrollments key={selectedStudent.id+":payments"} student={selectedStudent} pushToast={pushToast} classes={classes} mode="history" legacyHistory={hasLevels=><>{!hasLevels&&<div className="student-detail-fields">{renderEditableFields(tab.fields)}</div>}<StudentPaymentTools mode="history" legacyOnly readOnlyHistory student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast}/></>} />}
                           </section>
                         ))}
 
