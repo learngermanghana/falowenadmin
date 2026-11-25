@@ -89,7 +89,7 @@ function registerClassPresentationRoutes({app,db,admin}) {
       tx.create(ref,value);return {id,...value};
     });
     if(Date.now()>session.expiresAt)fail(410,"This class presentation has expired.");
-    return {session:sessionView(session)};
+    return {session:sessionView(session),canEmail:teacherRole(u)==="admin"};
   }));
   app.get("/class-presentation/student/:id",wrap(async(req,u)=>{
     const {ref,s}=await load(req.params.id);const record=await student(u,s);
