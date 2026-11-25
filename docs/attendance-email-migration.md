@@ -3,7 +3,7 @@
 ## Implemented in this repository
 - Attendance page: **Send check-in invitation emails** appears after opening check-in.
 - Authenticated POST `/api/checkin-invitations` derives class/session and eligible recipients **server-side**, verifies active check-in, and calls the existing Calender Apps Script web app.
-- Weekly GET `/api/weekly-engagement-summary` is scheduled for **Sunday 20:00 UTC (Africa/Accra)** by Vercel Cron and authenticated with `CRON_SECRET`.
+- Weekly `/api/weekly-engagement-summary` is administrator-triggered only; the former Sunday cron is retired. Preview and explicit POST send use the existing Apps Script integration.
 - Weekly scan reads Firestore attendance and `classParticipationRecords` and forwards class/student aggregates to the Calender script.
 - Apps Script must expose `sendCheckinInvitations` and `sendWeeklyEngagementSummaries` actions and keep delivery logs in `===LOGS===`.
 
@@ -35,3 +35,7 @@
 - The owner must check preview totals against Attendance and Class Participation on real classes, especially German and Swahili and students with transfers. If a class is absent or numbers are wrong, do not enable sending.
 - Deploy `Falowen_Calender_Weekly_Attendance_Updated.gs` as a new version of the existing bound Apps Script. It includes Late/Excused/Absent and excludes Excused from the attendance-rate denominator.
 - After the Google Apps Script weekly delivery test, pause Cloud Scheduler `firebase-schedule-sendAttendanceConfirmationEmails-us-central1` (check the actual job name/region), then set Vercel production `WEEKLY_ENGAGEMENT_ENABLED=true` and redeploy. Do not run both systems concurrently. Maintain the attendance checkin tracking job.
+
+## Manual attendance reports (25 November 2026)
+
+In Attendance, choose a class, From week and To week, then Preview report and Send emails. Week 1 is the Monday-based week containing the course start. You may select the current week or previous weeks (up to 16 at once). Each selected week sends its existing weekly summary per eligible student, preserving Apps Script deduplication and sent receipts. A week sent early is considered sent; it is not automatically resent. Cancelled, future and app-only sessions do not count. Past sessions with recorded check-ins or tutor attendance count without a completed status; unverified past lessons are excluded and disclosed in the preview. Existing completed sessions still count. Explicitly disabled class emails are respected. No new scheduled jobs or automated sends are introduced, and the range shares the existing digest data load per request.
