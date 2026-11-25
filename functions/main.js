@@ -67,7 +67,7 @@ Object.assign(module.exports, require("./referralPayouts").registerPayoutTrigger
 // Reconcile on enrollment changes from either Campus or Admin; no scheduled scan.
 module.exports.reconcileStudentEnrollmentProfile = require("firebase-functions/v2/firestore").onDocumentWritten({document:"students/{studentId}/levelEnrollments/{enrollmentId}",retry:true},async event=>{
  const before=event.data?.before?.data()||{},after=event.data?.after?.data()||{};
- const fields=["program","level","status","className","contractStart","contractEnd","paymentDeadline","tuitionFee","paid","balanceDue"];
+ const fields=["program","level","status","className","contractStart","contractEnd","paymentDeadline","tuitionFee","paid","balanceDue","accessType"];
  if(event.data?.before?.exists&&event.data?.after?.exists&&fields.every(k=>before[k]===after[k]))return;
  return require("./effectiveEnrollmentProfile").reconcileEnrollmentProfile({db,admin,studentId:event.params.studentId});
 });
