@@ -83,6 +83,21 @@ const held = (session,now=Date.now()) => {
   if(!Number.isFinite(end)||end>now) return false;
   return ["completed","finished","ended"].includes(state);
 };
+// Manual reports can include past lessons with actual attendance evidence, even if the tutor forgot to click Complete.
+const elapsedManualCandidate = (session, now) => {
+  const state=norm(session.status||session.sessionStatus);
+  if(excludedStatuses.has(state)||session.superseded||session.isSuperseded||session.isAppAssessment||session.appAssessment===true||isAppAssessment(session))return false;
+  const end=asTime(session.endsAt||session.endAt);
+  return Number.isFinite(end)&&end<=now;
+};
+const hasRecordedAttendance = ({attendance={},checkins=[]}={}) => checkins.length>0 || Object.keys(attendance.students||{}).length>0 || Object.keys(attendance.attendance||{}).length>0 || (attendance.records||[]).length>0;
+const manualReportWeekStarts = (from,through,now=new Date()) => {
+  const valid = value => /^\d{4}-\d{2}-\d{2}$/.test(value) && mondayKey(value+"T00:00:00Z")===value;
+  if(!valid(from)||!valid(through)||from>through||through>weekWindow(now).weekStart) return [];
+  const count = Math.round((Date.parse(through)-Date.parse(from))/604800000)+1;
+  if(count<1||count>16)return [];
+  return Array.from({length:count},(_,i)=>stamp(Date.parse(from)+i*604800000));
+};
 const classIds=(klass)=>[klass._id,klass.id,klass.classId,klass.classRecordId,klass.name,klass.className]
   .map(v=>String(v||"").trim()).filter(Boolean);
 const acceptsSession=(s,klass)=>{
@@ -140,34 +155,45 @@ function classEmailMode(klass){
   const mode=norm(klass.attendanceConfirmationEmailMode||"weekly");
   return ["off","weekly","each_class"].includes(mode)?mode:"weekly";
 }
-async function buildDigest(token, now=new Date(), weeksAgo=0, { classId = "", requireReady = false } = {}) {
-  const {weekStart,weekEnd}=weekWindow(now,weeksAgo);
-  const [classes, students, sessions, participation]=await Promise.all([
+async function loadDigestData(token,classId){
+  return Promise.all([
     classId ? firestoreGet("classes/"+encodeURIComponent(classId),token).then(d=>[{...docValue(d),_id:classId}]) : listCollection("classes",token,300),listStudents(token),
     listCollection("classSessions",token,12000),
     listCollection("classParticipationRecords",token,20000),
   ]);
+}
+async function buildDigest(token, now=new Date(), weeksAgo=0, { classId = "", requireReady = false, manual = false, data = null } = {}) {
+  const {weekStart,weekEnd}=weekWindow(now,weeksAgo);
+  const [classes, students, sessions, participation]=data || await loadDigestData(token,classId);
   const rows=[],classSummaries=[];
   for (const klass of classes){
     if(!active(klass))continue;
     const mode=classEmailMode(klass);
-    if(mode!=="weekly"){
+    if(mode==="off" || (!manual && mode!=="weekly")){
       classSummaries.push({classId:klass._id,className:klass.name||klass._id,mode,skipped:true});
+      continue;
+    }
+    if(manual && klass.weeklyEngagementSentWeeks?.[receiptKey(weekStart)]?.status==="sent"){
+      classSummaries.push({classId:klass._id,className:klass.name||klass._id,mode,alreadySent:true,recipients:0});
       continue;
     }
     if(requireReady && !readyWeeklyPeriods(klass,sessions.filter(s=>acceptsSession(s,klass)),now.getTime(),{since:weekStart}).some(p=>p.weekStart===weekStart)){
       classSummaries.push({classId:klass._id,className:klass.name||klass._id,mode,skipped:true});
       continue;
     }
-    const relevant=sessions.filter(s=>acceptsSession(s,klass) &&
+    const candidates=sessions.filter(s=>acceptsSession(s,klass) &&
       dateOf(s.startsAt||s.startAt||s.date)>=weekStart &&
-      dateOf(s.startsAt||s.startAt||s.date)<=weekEnd && held(s,now.getTime()))
+      dateOf(s.startsAt||s.startAt||s.date)<=weekEnd && (held(s,now.getTime()) || (manual && elapsedManualCandidate(s,now.getTime()))))
       .sort((a,b)=>asTime(a.startsAt)-asTime(b.startsAt));
+    const records=await Promise.all(candidates.map(session=>readSessionAttendance(token,klass,session)));
+    const included=candidates.map((session,i)=>({session,record:records[i]})).filter(({session,record})=>held(session,now.getTime()) || (manual && hasRecordedAttendance(record)));
+    const relevant=included.map(x=>x.session);
+    const attendance=included.map(x=>x.record);
+    const unverifiedLessons=candidates.length-relevant.length;
     if(!relevant.length){
-      classSummaries.push({classId:klass._id,className:klass.name||klass._id,mode,lessonsHeld:0,recipients:0});
+      classSummaries.push({classId:klass._id,className:klass.name||klass._id,mode,lessonsHeld:0,recipients:0,unverifiedLessons});
       continue;
     }
-    const attendance=await Promise.all(relevant.map(session=>readSessionAttendance(token,klass,session)));
     const roster=students.filter(student=>active(student)&&hasClass(student,klass,klass._id));
     const seen=new Set();
     let recipients=0;
@@ -198,7 +224,7 @@ async function buildDigest(token, now=new Date(), weeksAgo=0, { classId = "", re
       participationTurns:counts.participationTurns+row.turns,
     }),{attended:0,late:0,excused:0,absent:0,participationTurns:0});
     classSummaries.push({classId:klass._id,className:klass.name||klass._id,mode,
-      lessonsHeld:relevant.length,recipients,...totals});
+      lessonsHeld:relevant.length,recipients,unverifiedLessons,...totals});
   }
   return {weekStart,weekEnd,rows,classSummaries,scanned:{classes:classes.length,students:students.length,sessions:sessions.length,participationRecords:participation.length}};
 }
@@ -265,6 +291,27 @@ export default async function handler(req,res){
 
     const token=await googleAccessToken();
     const now=new Date();
+    // Manual range is owner-directed only; each selected calendar week keeps its existing receipt and Apps Script deduplication key.
+    if(req.query?.manualRange==="1"){
+      const from=String(req.query?.weekStart||"");
+      const through=String(req.query?.throughWeekStart||from);
+      const weeks=manualReportWeekStarts(from,through,now);
+      if(!classId||!weeks.length)return res.status(400).json({ok:false,error:"Select a class and 1–16 reporting weeks up to the current week."});
+      const data=await loadDigestData(token,classId);
+      const reports=[];
+      for(const week of weeks){
+        const ago=Math.round((Date.parse(weekWindow(now).weekStart)-Date.parse(week))/604800000);
+        reports.push(await buildDigest(token,now,ago,{classId,manual:true,data}));
+      }
+      const summaries=reports.map(report=>({weekStart:report.weekStart,weekEnd:report.weekEnd,eligibleRecipients:report.rows.length,...report.classSummaries[0]}));
+      const eligibleRecipients=reports.reduce((sum,report)=>sum+report.rows.length,0);
+      const signature=summaries.map(row=>`${row.weekStart}:${row.eligibleRecipients}:${row.lessonsHeld||0}`).join(",");
+      if(preview)return res.status(200).json({ok:true,preview:true,weekStart:from,weekEnd:reports.at(-1).weekEnd,weeks:summaries,eligibleRecipients,signature,sendEnabled:env("WEEKLY_ENGAGEMENT_ENABLED")==="true"});
+      if(!eligibleRecipients||String(req.query?.signature||"")!==signature||String(req.query?.recipients)!==String(eligibleRecipients))return res.status(409).json({ok:false,error:"The report changed or has no recipients. Preview again before sending."});
+      let sent=0,skipped=0;
+      for(const report of reports){if(!report.rows.length)continue;const result=await dispatchAndRecord(report.rows,report,token);sent+=result.sent;skipped+=result.skipped;}
+      return res.status(200).json({ok:true,sent,skipped,weeks:summaries.filter(row=>row.eligibleRecipients>0)});
+    }
     let weeksAgo=manualSend || (preview && req.query?.period==="previous") ? 1 : 0;
     if(classId){
       const week=String(req.query?.weekStart||"");
@@ -288,4 +335,4 @@ export default async function handler(req,res){
     return res.status(Number(error.status||error.statusCode)||500).json({ok:false,error:error.message||"Weekly report failed"});
   }
 }
-export { dateOf, weekWindow, held, attendanceStatus, participationFor, buildDigest, classEmailMode, enrolledBefore };
+export { dateOf, weekWindow, held, attendanceStatus, participationFor, buildDigest, classEmailMode, enrolledBefore, elapsedManualCandidate, hasRecordedAttendance, manualReportWeekStarts };
