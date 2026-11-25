@@ -3,6 +3,7 @@
 // Preserve tutor manual overrides, check-in records and class-specific email settings.
 import { verifyFirebaseAdminUser, bearerToken } from "./integration-hub.js";
 import { project, env, googleAccessToken, firestoreGet, docValue, listStudents, hasClass, norm, timeMs, err } from "./checkin-invitations.js";
+import { isAppAssessment } from "../src/utils/appAssessment.js";
 import { readyWeeklyPeriods, receiptKey, mondayKey } from "../src/utils/weeklyAttendanceOutbox.js";
 
 const GHS = "Africa/Accra";
@@ -76,8 +77,9 @@ function attendanceStatus({session, attendance={}, checkins=[], student, lateMin
 const active = (row) => !["inactive","archived","withdrawn","removed","cancelled","canceled","deleted","blocked","suspended","trial_expired"].includes(norm(row.status||row.studentStatus||row.enrollmentStatus));
 const held = (session,now=Date.now()) => {
   const state=norm(session.status||session.sessionStatus);
-  if(excludedStatuses.has(state)||session.superseded===true||session.isSuperseded===true||session.isAppAssessment===true) return false;
-  const end=asTime(session.endsAt||session.endAt);
+  if(excludedStatuses.has(state)||session.superseded===true||session.isSuperseded===true||session.isAppAssessment===true||isAppAssessment(session)) return false;
+  const actual=session.completionSource==="manual"?asTime(session.completedAt):NaN;
+  const end=Number.isFinite(actual)?actual:asTime(session.endsAt||session.endAt);
   if(!Number.isFinite(end)||end>now) return false;
   return ["completed","finished","ended"].includes(state);
 };

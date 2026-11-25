@@ -16,3 +16,8 @@ test("sent receipt removes only that week, cancelled sessions do not block",()=>
  assert.deepEqual(readyWeeklyPeriods(sent,rows,Date.parse("2026-12-01T20:00:00Z")).map(r=>r.weekStart),["2026-11-30"]);
  assert.equal(readyWeeklyPeriods({...klass,attendanceConfirmationEmailMode:"off"},rows,now).length,0);
 });
+
+test("manual end-class timestamp makes final lesson immediately ready and app assessments do not block",()=>{
+  const rows=[session("2026-11-23"),{...session("2026-11-27"),completionSource:"manual",completedAt:"2026-11-27T18:30:00Z"},{...session("2026-11-28","scheduled"),sessionType:"app_assessment"}];
+  assert.equal(readyWeeklyPeriods(klass,rows,Date.parse("2026-11-27T18:31:00Z")).length,1);
+});

@@ -356,7 +356,7 @@ export default function CanonicalAttendancePageV3() {
       setSessionOpen(action === "open");
       if (action === "end") {
         const nextSessions = sessions.map((session) => session.id === selected.id
-          ? { ...session, status: "completed" }
+          ? { ...session, status: "completed", completionSource: "manual", completedAt: new Date().toISOString() }
           : session);
         setSessions(nextSessions);
         setSelectedId(chooseAttendanceSession(nextSessions, klass)?.id || "");

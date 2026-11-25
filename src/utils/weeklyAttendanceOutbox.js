@@ -1,4 +1,5 @@
 // Derived from existing class/session records; no queue writes or background jobs.
+import { isAppAssessment } from "./appAssessment.js";
 export const WEEKLY_OUTBOX_START = "2026-11-23";
 const text = value => String(value || "").trim().toLowerCase();
 const ignored = new Set(["cancelled","canceled","deleted","superseded","postponed"]);
@@ -29,7 +30,7 @@ export function readyWeeklyPeriods(klass, sessions, now = Date.now(), { since = 
   if (!klass || klass.attendanceConfirmationEmailEnabled === false || text(klass.attendanceConfirmationEmailMode || "weekly") !== "weekly" || !Array.isArray(sessions)) return [];
   const groups = new Map();
   for (const session of sessions) {
-    if (ignored.has(text(session.status || session.sessionStatus)) || session.superseded || session.isSuperseded || session.isAppAssessment || session.appAssessment === true) continue;
+    if (ignored.has(text(session.status || session.sessionStatus)) || session.superseded || session.isSuperseded || session.isAppAssessment || session.appAssessment === true || isAppAssessment(session)) continue;
     const weekStart = mondayKey(session.startsAt || session.startAt);
     if (!weekStart || weekStart < since) continue;
     if (!groups.has(weekStart)) groups.set(weekStart, []);
@@ -38,11 +39,12 @@ export function readyWeeklyPeriods(klass, sessions, now = Date.now(), { since = 
   return [...groups].filter(([weekStart, rows]) => {
     if (!includeSent && klass.weeklyEngagementSentWeeks?.[receiptKey(weekStart)]?.status === "sent") return false;
     return rows.every(row => {
-      const end = sessionMillis(row.endsAt || row.endAt);
+      const actual = row.completionSource === "manual" ? sessionMillis(row.completedAt) : NaN;
+      const end = Number.isFinite(actual) ? actual : sessionMillis(row.endsAt || row.endAt);
       return completed.has(text(row.status || row.sessionStatus)) && Number.isFinite(end) && end <= now;
     });
   }).map(([weekStart, rows]) => ({
-    classId: String(klass.id || klass._id || klass.classRecordId || ""),
+    classId: String(klass._id || klass.id || klass.classRecordId || ""),
     className: klass.name || klass.className || klass.id,
     weekStart, weekEnd: weekEndKey(weekStart), lessons: rows.length,
   })).filter(row => row.classId).sort((a,b)=>a.weekStart.localeCompare(b.weekStart));
