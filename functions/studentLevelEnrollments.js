@@ -71,13 +71,55 @@ function contractPatch(record,input){
  const data=normalizeEnrollment({...record,contractStart:input.contractStart??record.contractStart,contractEnd:input.contractEnd??record.contractEnd,paymentDeadline:input.paymentDeadline??record.paymentDeadline,className:input.className??record.className,accessType:input.accessType??record.accessType});
  return {contractStart:data.contractStart,contractEnd:data.contractEnd,paymentDeadline:data.paymentDeadline,className:data.className,accessType:data.accessType,status,sheetVersion:Number(record.sheetVersion||1)+1,sheetSyncStatus:"pending"};
 }
+
+const legacyLanguage=v=>String(v||"").trim().toLowerCase().replace(/^kiswahili$/,"swahili");
+function legacyMoney(v){
+ if(v===undefined||v===null||String(v).trim()==="")return null;
+ try{return moneyCents(String(v).replace(/,/g,""))/100;}catch{return null;}
+}
+function legacyCourseCandidates(student,rows=[]){
+ if(student.accountType==="exam_only"||["archived","deleted","purged","withdrawn","suspended","blocked","inactive"].includes(String(student.status||"").toLowerCase()))return [];
+ const primary=legacyLanguage(student.program||student.language||"german"),secondary=legacyLanguage(student.secondaryProgram);
+ const {isoDate}=require("./studentContractLifecycle");
+ return [[primary,student],[secondary,student.coursePlacements?.[secondary]]].filter(([p,s],i)=>s&&["german","swahili"].includes(p)&&(i===0||p!==primary)).flatMap(([program,s])=>{
+  const level=String(s.level||s.levelId||"").toUpperCase(),id=program+"-"+level;
+  if(!levels.has(level)||rows.some(r=>r.id===id||(r.program===program&&r.level===level)))return [];
+  const paid=legacyMoney(s.paid),balance=legacyMoney(s.balanceDue??s.balance),fee=legacyMoney(s.tuitionFee);
+  const malformed=[[s.paid,paid],[s.balanceDue??s.balance,balance],[s.tuitionFee,fee]].some(([raw,n])=>raw!=null&&String(raw).trim()!==""&&n===null);
+  const tuitionFee=fee??(paid!==null&&balance!==null?Math.round((paid+balance)*100)/100:null);
+  const reconciled=paid!==null&&balance!==null&&tuitionFee!==null&&Math.round((paid+balance)*100)===Math.round(tuitionFee*100);
+  const protectedInstitution=Boolean(student.institutionId||student.institutionVerification||student.universityInvitationCode||s.institutionId||s.institutionVerification||s.universityInvitationCode);
+  const upgrade=Boolean(student.upgradeId||student.upgradeFromLevel||student.upgradeToLevel||["awaiting_payment","pending","expired"].includes(String(student.upgradeStatus||"").toLowerCase())||(s.paidLevel&&String(s.paidLevel).toUpperCase()!==level));
+  const status=String(s.status||"").toLowerCase();
+  const explicitFree=s.accessType==="complimentary";
+  const canFree=(paid===null||paid===0)&&(balance===null||balance===0)&&(tuitionFee===null||tuitionFee===0)&&!(paid===null&&["paid","partial","partially paid","partially_paid"].includes(String(s.paymentStatus||"").toLowerCase()));
+  const record={id,program,level,className:String(s.className||s.classname||""),contractStart:isoDate(s.contractStart)||"",contractEnd:isoDate(s.contractEnd)||"",paymentDeadline:isoDate(s.paymentDeadline)||"",tuitionFee,paid,balanceDue:balance,accessType:explicitFree?"complimentary":"paid",paymentStatus:String(s.paymentStatus||""),canPaid:reconciled&&paid>0,canFree,blockedReason:malformed?"Invalid historical payment totals require review.":protectedInstitution?"Institutional access must be managed through its approval workflow.":upgrade?"Historical upgrade payments need separate reconciliation before migration.":["blocked","suspended","cancelled","withdrawn","inactive"].includes(status)?"Inactive or blocked course requires review.":""};
+  return [{...record,revision:crypto.createHash("sha256").update(JSON.stringify(record)).digest("hex")}];
+ });
+}
+function legacyCourseRecord(candidate,input){
+ if(!candidate||candidate.blockedReason)fail(candidate?.blockedReason||"Existing course not found or already managed",409);
+ if(candidate.revision!==input.revision)fail("Existing course changed. Refresh and review before saving.",409);
+ const accessType=input.accessType;
+ if(accessType==="paid"&&!candidate.canPaid)fail("Existing paid totals do not reconcile. Verify the original course payments before importing.",409);
+ if(accessType==="complimentary"&&(!candidate.canFree||input.confirmComplimentary!==true))fail("Confirm complimentary access without replacing existing tuition or payments.",409);
+ if(!["paid","complimentary"].includes(accessType))fail("Select an access type");
+ const free=accessType==="complimentary";
+ const data=normalizeEnrollment({program:candidate.program,level:candidate.level,className:candidate.className,tuitionFee:free?0:candidate.tuitionFee,accessType,contractStart:input.contractStart,contractEnd:input.contractEnd,paymentDeadline:free?"":input.paymentDeadline});
+ if(!data.contractStart||!data.contractEnd)fail("Enter explicit contract start and end dates");
+ const totals=manualTotals({tuitionFee:data.tuitionFee,paid:free?0:candidate.paid});
+ if(totals.balanceDue>0&&!data.paymentDeadline)fail("Set the existing payment deadline for outstanding tuition");
+ const today=new Date().toISOString().slice(0,10);
+ return {...data,...totals,paymentStatus:free?"Complimentary":totals.paymentStatus,status:data.contractEnd<today?"expired":"active",openingBalanceImported:totals.paid>0,manualOpeningPaid:totals.paid,accountingMode:"independent_pending_integration",sheetVersion:1,sheetSyncStatus:"pending",legacyCourseImported:true};
+}
+
 function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  const route="/students/:studentId/level-enrollments";
  const authorize=async req=>{const user=await requireAuth(req);if(!isEditor(user))fail("Staff authorization required",403);return user;};
  const refs=req=>{const studentId=String(req.params.studentId||"");if(!studentId||studentId.includes("/"))fail("Invalid student");const student=db.collection("students").doc(studentId);return {studentId,student,collection:student.collection("levelEnrollments")};};
  const error=(res,e)=>res.status(e.statusCode||500).json({ok:false,error:e.message});
  app.post(route+"/reconcile-profile",async(req,res)=>{try{await authorize(req);const {studentId,student}=refs(req);await require("./effectiveEnrollmentProfile").reconcileEnrollmentProfile({db,admin,studentId});const snap=await student.get();if(!snap.exists)fail("Student not found",404);const p=snap.data();const keys=["level","className","contractStart","contractEnd","paymentDeadline","tuitionFee","paid","balanceDue","balance","paymentStatus","accessType","status","effectiveEnrollmentId","trialStatus","trialRetentionStatus","secondaryProgram","coursePlacements","levelId"];return res.json({ok:true,profile:Object.fromEntries(keys.filter(k=>p[k]!==undefined).map(k=>[k,p[k]]))});}catch(e){return error(res,e);}});
- app.get(route,async(req,res)=>{try{await authorize(req);const {student,collection}=refs(req);if(!(await student.get()).exists)fail("Student not found",404);const snap=await collection.get();return res.json({ok:true,enrollments:snap.docs.map(d=>({id:d.id,...d.data()}))});}catch(e){return error(res,e);}});
+ app.get(route,async(req,res)=>{try{await authorize(req);const {student,collection}=refs(req);const parent=await student.get();if(!parent.exists)fail("Student not found",404);const snap=await collection.get();const enrollments=snap.docs.map(d=>({id:d.id,...d.data()}));return res.json({ok:true,enrollments,legacyCourses:legacyCourseCandidates(parent.data(),enrollments)});}catch(e){return error(res,e);}});
  app.post(route,async(req,res)=>{try{const user=await authorize(req);const {studentId,student,collection}=refs(req);const data=normalizeEnrollment(req.body);const totals=manualTotals(req.body||{});if(data.accessType==="complimentary"&&totals.paid!==0)fail("Complimentary access cannot contain payments");const id=data.program+"-"+data.level;const ref=collection.doc(id);
  const result=await db.runTransaction(async tx=>{const [parent,existing]=await Promise.all([tx.get(student),tx.get(ref)]);if(!parent.exists)fail("Student not found",404);if(existing.exists)fail("Level already exists",409);
  const enrollment={...data,studentId,studentCode:parent.data().studentCode||parent.data().studentcode||studentId,...totals,openingBalanceImported:totals.paid>0,manualOpeningPaid:totals.paid,status:enrollmentStatus(req.body?.status),accountingMode:"independent_pending_integration",sheetVersion:1,sheetSyncStatus:"pending"};
@@ -86,6 +128,30 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  await authorize(req);const {studentId,collection}=refs(req);const ref=enrollmentRef(req,collection);const result=await require("./levelEnrollmentSheetSync").syncEnrollmentRef({ref,db,admin});
  if(result.status!=="synced")fail(result.error||"Enrollment not found",503);
  return res.json({ok:true});
+ }catch(e){return error(res,e);}});
+
+ app.post(route+"/edit-existing-course",async(req,res)=>{try{
+ const user=await authorize(req);
+ if(user.email_verified!==true||String(user.email||"").toLowerCase()!=="moxflex@gmail.com")fail("Verified owner access required for legacy contract migration",403);
+ const {studentId,student,collection}=refs(req);const input=req.body||{};
+ const result=await db.runTransaction(async tx=>{
+  const [parent,ledger]=await Promise.all([tx.get(student),tx.get(collection)]);
+  if(!parent.exists)fail("Student not found",404);
+  const current=legacyCourseCandidates(parent.data(),ledger.docs.map(d=>({id:d.id,...d.data()}))).find(r=>r.id===input.id);
+  const data=legacyCourseRecord(current,input);const ref=collection.doc(current.id);
+  const enrollment={...data,studentId,studentCode:parent.data().studentCode||parent.data().studentcode||studentId};
+  const stamp=admin.firestore.FieldValue.serverTimestamp();
+  tx.set(ref,{...enrollment,createdAt:stamp,createdBy:user.uid});
+  // Keep legacy readers current even when the selected contract is expired/future
+  // or the account is staff. Never touch the other language or class IDs.
+  const previous=parent.data(),primary=legacyLanguage(previous.program||previous.language||"german");
+  const projected={contractStart:data.contractStart,contractEnd:data.contractEnd,paymentDeadline:data.paymentDeadline,tuitionFee:data.tuitionFee,paid:data.paid,balanceDue:data.balanceDue,balance:data.balanceDue,paymentStatus:data.accessType==="complimentary"?"complimentary":data.balanceDue===0?"paid":"partial",accessType:data.accessType,effectiveEnrollmentId:ref.id};
+  if(current.program===primary)tx.update(student,projected);
+  else tx.update(student,{coursePlacements:{...previous.coursePlacements,[current.program]:{...previous.coursePlacements?.[current.program],...projected}}});
+  tx.set(db.collection("auditLogs").doc(),{type:"student.existingCourseImported",studentId,enrollmentId:ref.id,actorId:user.uid,before:{contractStart:current.contractStart,contractEnd:current.contractEnd,paid:current.paid,balanceDue:current.balanceDue,accessType:current.accessType},after:enrollment,createdAt:stamp});
+  return {id:ref.id,...enrollment};
+ });
+ return res.json({ok:true,enrollment:result});
  }catch(e){return error(res,e);}});
  app.post(route+"/import-legacy",async(req,res)=>{try{
  const user=await authorize(req);const {studentId,student,collection}=refs(req);
@@ -101,15 +167,24 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  });return res.json({ok:true,enrollment:result});
  }catch(e){return error(res,e);}});
  app.post(route+"/:enrollmentId/contract",async(req,res)=>{try{
- const user=await authorize(req);const {studentId,collection}=refs(req);const ref=enrollmentRef(req,collection);
- const result=await db.runTransaction(async tx=>{const snap=await tx.get(ref);if(!snap.exists)fail("Enrollment not found",404);
+ const user=await authorize(req);const {studentId,student,collection}=refs(req);const ref=enrollmentRef(req,collection);
+ const result=await db.runTransaction(async tx=>{const [snap,parent]=await Promise.all([tx.get(ref),tx.get(student)]);if(!snap.exists||!parent.exists)fail("Enrollment not found",404);
  const record=snap.data(),input=req.body||{},stamp=admin.firestore.FieldValue.serverTimestamp();
  const hasTotals=input.tuitionFee!==undefined||input.paid!==undefined;
  const totals=hasTotals?manualTotals({tuitionFee:input.tuitionFee===undefined?record.tuitionFee:input.tuitionFee,paid:input.paid===undefined?record.paid:input.paid}):{};
  const changed=hasTotals&&(totals.tuitionFee!==record.tuitionFee||totals.paid!==record.paid);
  const patch={...contractPatch({...record,...totals},input),...totals,...(changed?{openingBalanceImported:record.openingBalanceImported===true||totals.paid>0,manualTotalsAdjustedAt:stamp,manualTotalsAdjustedBy:user.uid}:{})};
  if(patch.accessType==="complimentary"&&(Number(record.paid)>0||Number(patch.paid??record.paid)!==0||Number(patch.tuitionFee??record.tuitionFee)!==0))fail("Paid enrollment history cannot be replaced by complimentary access");
- tx.update(ref,{...patch,updatedAt:stamp});tx.set(db.collection("auditLogs").doc(),{type:changed?"student.levelTotalsAdjusted":"student.levelContractUpdated",studentId,enrollmentId:ref.id,actorId:user.uid,before:{tuitionFee:record.tuitionFee,paid:record.paid,balanceDue:record.balanceDue},after:patch,createdAt:stamp});return {id:ref.id,...record,...patch};});
+ tx.update(ref,{...patch,updatedAt:stamp});
+ // For imported courses, keep their selected legacy profile dates current even
+ // on staff accounts or when reconciliation has no currently active row.
+ if(record.legacyCourseImported===true){
+  const profile=parent.data(),primary=legacyLanguage(profile.program||profile.language||"german");
+  const datePatch={contractStart:patch.contractStart,contractEnd:patch.contractEnd,paymentDeadline:patch.paymentDeadline};
+  if(record.program===primary&&profile.effectiveEnrollmentId===ref.id)tx.update(student,datePatch);
+  else if(record.program!==primary&&profile.coursePlacements?.[record.program]?.effectiveEnrollmentId===ref.id)tx.update(student,{coursePlacements:{...profile.coursePlacements,[record.program]:{...profile.coursePlacements[record.program],...datePatch}}});
+ }
+ tx.set(db.collection("auditLogs").doc(),{type:changed?"student.levelTotalsAdjusted":"student.levelContractUpdated",studentId,enrollmentId:ref.id,actorId:user.uid,before:{tuitionFee:record.tuitionFee,paid:record.paid,balanceDue:record.balanceDue},after:patch,createdAt:stamp});return {id:ref.id,...record,...patch};});
  return res.json({ok:true,enrollment:result});
  }catch(e){return error(res,e);}});
  const paymentRoute=route+"/:enrollmentId/payments";
@@ -146,7 +221,7 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  }catch(e){return error(res,e);}});
 
 }
-module.exports={normalizeEnrollment,manualTotals,enrollmentStatus,paymentPatch,paymentDate,legacyOpeningEnrollment,legacyUpgradeEnrollment,contractPatch,registerStudentLevelEnrollments};
+module.exports={legacyCourseCandidates,legacyCourseRecord,normalizeEnrollment,manualTotals,enrollmentStatus,paymentPatch,paymentDate,legacyOpeningEnrollment,legacyUpgradeEnrollment,contractPatch,registerStudentLevelEnrollments};
 
 function registerEnrollmentCheckout({app,db,admin,requirePaymentAdmin,initializePaystackPayment,calculateStudentCheckoutAmount,createPaymentReference}){
  app.post("/payments/enrollment-link",async(req,res)=>{try{

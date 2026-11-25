@@ -1247,7 +1247,6 @@ export default function StudentDirectoryPage() {
                           <StudentLevelEnrollments student={selectedStudent} pushToast={pushToast} classes={classes} onStudentUpdated={handleSupportStudentUpdated}
                             legacyControls={rows=><>
                               {(!rows.length || ["awaiting_payment","pending","expired"].includes(String(selectedStudent.upgradeStatus||"").toLowerCase())) && <details><summary>Original upgrade workflow (legacy)</summary><StudentUpgradeTools student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast}/></details>}
-                              {selectedStudent.secondaryProgram && !rows.some(r=>r.program===selectedStudent.secondaryProgram) && <p>Existing {languageName(selectedStudent.secondaryProgram)} access is preserved. Add its verified contract as a level enrollment if you need to manage it here.</p>}
                             </>} />
                         </section>}
                         {detailTab === "payments" && !isHamburgCohortStudent(selectedStudent) && <section className="student-detail-panel" role="tabpanel" id="student-panel-payments" aria-labelledby="student-tab-payments">

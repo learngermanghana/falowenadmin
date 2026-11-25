@@ -64,3 +64,38 @@ test("enrollment sync configuration can use existing Firebase runtime configurat
  assert.deepEqual(resolveEnrollmentSyncConfig(env),{url:"https://example.com",secret:"test"});
  assert.deepEqual(resolveEnrollmentSyncConfig({}),{url:"",secret:""});
 });
+
+const {legacyCourseCandidates,legacyCourseRecord}=require("../functions/studentLevelEnrollments");
+const dualLegacy={program:"swahili",level:"B1",className:"B1 Bonn Klasse",paid:3000,balance:0,tuitionFee:3000,contractStart:"2026-08-01",contractEnd:"2027-01-31",secondaryProgram:"german",coursePlacements:{german:{level:"B1",className:"German class"}}};
+const edited=(c,extra={})=>({revision:c.revision,accessType:"paid",contractStart:"2026-08-01",contractEnd:"2099-01-31",paymentDeadline:c.paymentDeadline,...extra});
+test("existing dual courses retain their independent balances and dates",()=>{
+ const [sw,de]=legacyCourseCandidates(dualLegacy);
+ assert.equal(sw.id,"swahili-B1");assert.equal(de.id,"german-B1");assert.equal(de.paid,null);assert.equal(de.contractEnd,"");assert.equal(de.canPaid,false);
+ const result=legacyCourseRecord(sw,edited(sw));
+ assert.equal(result.program,"swahili");assert.equal(result.className,"B1 Bonn Klasse");assert.equal(result.paid,3000);assert.equal(result.contractEnd,"2099-01-31");assert.equal(result.status,"active");
+ assert.equal(dualLegacy.contractEnd,"2027-01-31");
+});
+test("an explicit complimentary choice never borrows or erases other course payments",()=>{
+ const [sw,de]=legacyCourseCandidates(dualLegacy);
+ assert.throws(()=>legacyCourseRecord(sw,edited(sw,{accessType:"complimentary",confirmComplimentary:true})),/Confirm complimentary/);
+ assert.throws(()=>legacyCourseRecord(de,edited(de,{accessType:"complimentary"})),/Confirm complimentary/);
+ const free=legacyCourseRecord(de,edited(de,{accessType:"complimentary",confirmComplimentary:true}));
+ assert.equal(free.program,"german");assert.equal(free.paid,0);assert.equal(free.tuitionFee,0);assert.equal(free.balanceDue,0);assert.equal(free.paymentStatus,"Complimentary");
+});
+test("legacy edits reject duplicate, changed, institutional and ambiguous records",()=>{
+ assert.deepEqual(legacyCourseCandidates(dualLegacy,[{id:"swahili-B1"},{id:"german-B1"}]),[]);
+ const [sw]=legacyCourseCandidates(dualLegacy);
+ assert.throws(()=>legacyCourseRecord(sw,edited(sw,{revision:"old"})),/changed/);
+ const [institution]=legacyCourseCandidates({...dualLegacy,institutionId:"university-hamburg"});
+ assert.throws(()=>legacyCourseRecord(institution,edited(institution)),/Institutional/);
+ const [bad]=legacyCourseCandidates({...dualLegacy,paid:2000});
+ assert.throws(()=>legacyCourseRecord(bad,edited(bad)),/do not reconcile/);
+ assert.deepEqual(legacyCourseCandidates({...dualLegacy,accountType:"exam_only"}),[]);
+});
+test("legacy partial payment requires deadline and keeps original paid total",()=>{
+ const [row]=legacyCourseCandidates({...dualLegacy,paid:1500,balance:1500});
+ assert.throws(()=>legacyCourseRecord(row,edited(row)),/deadline/);
+ const saved=legacyCourseRecord(row,edited(row,{paymentDeadline:"2099-01-01"}));
+ assert.equal(saved.paid,1500);assert.equal(saved.balanceDue,1500);
+ assert.throws(()=>legacyCourseRecord(row,edited(row,{contractStart:"2099-02-01",paymentDeadline:"2099-01-01"})),/precedes/);
+});
