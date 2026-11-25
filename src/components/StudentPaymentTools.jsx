@@ -92,7 +92,7 @@ function buildWhatsappMessage(student = {}, payment = {}) {
   return `Hello ${name}, here is your secure Falowen payment link for ${formatGhs(tuitionCredit)}.${feeNote}\n\n${payment.authorizationUrl}\n\nYour student record will update automatically after Paystack confirms the payment. Thank you.`;
 }
 
-export default function StudentPaymentTools({ student, draft = {}, onStudentUpdated, pushToast, mode = "all" }) {
+export default function StudentPaymentTools({ student, draft = {}, onStudentUpdated, pushToast, mode = "all", legacyOnly = false, readOnlyHistory = false }) {
   const [amount, setAmount] = useState("");
   const [paymentEmail, setPaymentEmail] = useState("");
   const [purpose, setPurpose] = useState("balance");
@@ -165,7 +165,7 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
   };
 
   useEffect(() => {
-    if (!studentId || reconciling) return undefined;
+    if (!studentId || reconciling || readOnlyHistory) return undefined;
 
     const runDueCheck = () => {
       const { dueReferences } = planPendingPaymentRecheck(
@@ -193,7 +193,7 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
     // Schedule one check at the first pending deadline and cancel on change/unmount.
     const timer = window.setTimeout(runDueCheck, nextDelayMs);
     return () => window.clearTimeout(timer);
-  }, [studentId, payments, reconciling]);
+  }, [studentId, payments, reconciling, readOnlyHistory]);
 
   const numericAmount = parseMoneyValue(amount);
   const checkoutAmount = useMemo(() => calculatePaystackGrossAmount(numericAmount), [numericAmount]);
@@ -258,7 +258,7 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
 
   return (
     <section style={{ marginTop: 18, border: "1px solid #bbf7d0", borderRadius: 14, padding: 14, background: "linear-gradient(135deg, #f0fdf4, #ffffff)", display: "grid", gap: 12 }}>
-      {paymentAccessMismatch ? (
+      {paymentAccessMismatch && !readOnlyHistory ? (
         <div style={{ padding: 10, borderRadius: 10, border: "1px solid #f59e0b", background: "#fffbeb", color: "#92400e" }}>
           <strong>Payment/access mismatch</strong>
           <div style={{ marginTop: 3, fontSize: 13 }}>
@@ -329,16 +329,16 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
 
       </>}
       {mode !== "links" && <div>
-        <div style={{ marginBottom: 8, padding: 9, borderRadius: 9, background: "#f8fafc", border: "1px solid #e2e8f0", fontSize: 12, color: "#475569" }}>
+        {!readOnlyHistory&&<div style={{ marginBottom: 8, padding: 9, borderRadius: 9, background: "#f8fafc", border: "1px solid #e2e8f0", fontSize: 12, color: "#475569" }}>
           Falowen uses the Paystack webhook first. If that callback is missed, pending links are also verified automatically after 90 seconds while this student page is open, or you can use <strong>Recheck Paystack payment</strong> above.
-        </div>
-        <h4 style={{ margin: "4px 0 8px" }}>Payment history</h4>
+        </div>}
+        <h4 style={{ margin: "4px 0 8px" }}>{legacyOnly?"Original account payment history":"Payment history"}</h4>
         <AdminRefreshStatus {...historyRefresh} label="payment history" />
-        {payments.length === 0 ? (
+        {(legacyOnly?payments.filter(p=>!p.enrollmentId&&!p.levelEnrollmentAllocation):payments).length === 0 ? (
           <p style={{ margin: 0, color: "#64748b", fontSize: 13 }}>No generated Paystack payments yet.</p>
         ) : (
           <div style={{ display: "grid", gap: 6 }}>
-            {payments.slice(0, 8).map((payment) => (
+            {(legacyOnly?payments.filter(p=>!p.enrollmentId&&!p.levelEnrollmentAllocation):payments).map((payment) => (
               <div key={payment.id || payment.reference} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: 10, padding: "8px 10px", border: "1px solid #e2e8f0", borderRadius: 9, background: "#fff" }}>
                 <div>
                   <strong>{formatGhs(payment.tuitionCredit)}</strong>
