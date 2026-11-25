@@ -5,6 +5,17 @@ import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js"
 import { A2_TEACHER_CHALLENGES, getA2TeacherChallenge } from "../src/data/a2TeacherChallenges.js";
 
 const days = new Map([
+ ["A2-2.5","Freizeit Challenge"],
+ ["A2-3.7","Wohnungsbesichtigung"],
+ ["A2-4.9","Urlaub Challenge"],
+ ["A2-4.10","Entdeckungstag in der Stadt"],
+ ["A2-5.12","Berufsberatung Challenge"],
+ ["A2-5.14","Karriere-Coach Challenge"],
+ ["A2-6.15","Sport-Matchmaker Challenge"],
+ ["A2-6.16","Wohlbefinden Challenge"],
+ ["A2-7.19","Einkaufsentscheidung Challenge"],
+ ["A2-8.22","Wochenplanung Challenge"],
+ ["A2-10.26","Gefühle Challenge"],
  ["A2-1.1", "Small Talk Challenge"], ["A2-1.2", "Personen vorstellen · 3 Rollenspiele"], ["A2-1.3", "Vergleichen · 3 Alltagssituationen"], ["A2-9.23", "Pünktlich ankommen"],
  ["A2-2.4", "Meeting Planner"], ["A2-3.8","Restaurant Challenge"],
  ["A2-6.17","Pharmacy Challenge"], ["A2-7.18","Banking Emergency"],
@@ -35,7 +46,7 @@ test("A2 missions contain three distinct realistic scenarios and nine topic-spec
  }
 });
 
-test("A2 selected days replace one practice page; all 28 retain grammar and workbook with restored reading and corrections", () => {
+test("A2 all 28 days replace one practice page and retain grammar and workbook with restored reading and corrections", () => {
  for (const slide of getSlidesByCourse("A2")) {
   const stages=buildTeachingPresenterStages(slide,slide.topic);
   const ids=stages.map(x=>x.id);
@@ -51,7 +62,8 @@ test("A2 selected days replace one practice page; all 28 retain grammar and work
     previous = position;
   }
   assert.deepEqual(ids.slice(-4), ["workbook-presentation", "questions", "workbook", "lesson-summary"], slide.assignmentId);
-  const expectedId = days.has(slide.assignmentId) ? "scenario-challenge" : "practice";
+  assert.ok(days.has(slide.assignmentId), slide.assignmentId);
+  const expectedId = "scenario-challenge";
   const scenario = stages.find(stage => stage.id === expectedId);
   assert.ok(scenario, slide.assignmentId);
   assert.equal(ids.filter(id => ["practice", "scenario-challenge"].includes(id)).length, 1, slide.assignmentId);
