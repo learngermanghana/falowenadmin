@@ -5,7 +5,6 @@ const {
   runExpiredPendingStudentCleanup,
   resolveLifecycleWebhookConfig,
 } = require("./pendingStudentCleanup.js");
-const { createStudentLearningNudgeJob } = require("./studentLearningInterventionEmails.js");
 
 const db = admin.firestore();
 
@@ -35,12 +34,7 @@ async function cleanupExpiredPendingStudentsNow() {
 
 module.exports = baseExports;
 
-module.exports.sendStudentLearningNudges = createStudentLearningNudgeJob({
-  admin,
-  db,
-  onSchedule,
-  runtimeConfig: parseRuntimeConfig(),
-});
+// Learning nudge emails are no longer scheduled. Existing core email jobs remain.
 
 module.exports.cleanupExpiredPendingStudents = onSchedule({
   cpu: "gcf_gen1",

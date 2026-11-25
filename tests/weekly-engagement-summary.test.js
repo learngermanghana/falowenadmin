@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import handler from "../api/weekly-engagement-summary.js";
 import {dateOf, weekWindow, held, attendanceStatus, participationFor, classEmailMode, enrolledBefore} from "../api/weekly-engagement-summary.js";
 
 const tutor={studentCode:"FLW-123",email:"student@example.com"};
@@ -46,4 +48,22 @@ test("participation respects both class and student and reporting period",()=>{
  {classId:"class-a",studentEmailNormalized:tutor.email,sessionDate:"2026-11-01",classSessionId:"s4",turns:9}
  ];
  assert.deepEqual(participationFor(rows,tutor,{_id:"class-a",name:"A1 Stuttgart Klasse"},"2026-11-16","2026-11-22"),{participatedSessions:1,turns:4,correct:3,needsReview:1});
+});
+
+test("weekly digest has no cron entry and old scheduled requests cannot send",async()=>{
+  const config=JSON.parse(fs.readFileSync(new URL("../vercel.json",import.meta.url),"utf8"));
+  assert.ok(!(config.crons||[]).some(job=>job.path==="/api/weekly-engagement-summary"));
+  const res={code:0,body:null,setHeader(){},status(code){this.code=code;return this;},json(body){this.body=body;return this;}};
+  await handler({method:"GET",query:{},headers:{authorization:"Bearer old-cron"}},res);
+  assert.equal(res.code,405);
+  const source=fs.readFileSync(new URL("../api/weekly-engagement-summary.js",import.meta.url),"utf8");
+  assert.match(source,/verifyFirebaseAdminUser\(bearerToken\(req\)\)/);
+  assert.match(source,/manualSend && req\.query\?\.period!=="previous"/);
+  assert.match(source,/req\.query\?\.weekStart!==report\.weekStart/);
+});
+test("optional learning nudge is no longer exported or deployed",()=>{
+  const main=fs.readFileSync(new URL("../functions/main.js",import.meta.url),"utf8");
+  const workflow=fs.readFileSync(new URL("../.github/workflows/deploy-student-learning-nudge.yml",import.meta.url),"utf8");
+  assert.doesNotMatch(main,/module\.exports\.sendStudentLearningNudges\s*=/);
+  assert.doesNotMatch(workflow,/firebase deploy/);
 });
