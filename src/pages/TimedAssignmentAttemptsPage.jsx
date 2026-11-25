@@ -424,7 +424,7 @@ export default function TimedAssignmentAttemptsPage() {
         <button type="button" role="tab" id="monitor-placement-tab" aria-controls="placement-attempts"
           aria-selected={showPlacement} className="monitor-tab" onClick={() => switchCategory("placement")}>
           <strong>Placement tests</strong>
-          <span>A1–B1 · 30 questions · 20 min</span>
+          <span>German A1–B1 · Kiswahili A1–B2 · 20 min</span>
         </button>
       </nav>
 
@@ -772,17 +772,20 @@ export default function TimedAssignmentAttemptsPage() {
           const isSwahili=attempt.language==="swahili";
           const languageName=isSwahili?"Kiswahili":"German";
           const score=attempt.score;
+          const revisedKiswahili=isSwahili&&(attempt.version==="a1-b2-v2"||Object.prototype.hasOwnProperty.call(score||{},"b2"));
+          const maximum=revisedKiswahili?40:30;
+          const needsTeacher=isSwahili&&score?.level==="B2";
           const email=attempt.email||"";
           const phone=String(attempt.phone||"").replace(/\D/g,"").replace(/^0(?=\d{9}$)/,"233");
           const followup=[
             "Hello "+(attempt.name||"learner")+",",
             "Thank you for completing the Falowen "+languageName+" placement test.",
             "Your recommended starting level is "+(score?.level||"being reviewed")+".",
-            score?"Your scores: A1 "+score.a1+"/10 · A2 "+score.a2+"/10 · B1 "+score.b1+"/10 · Total "+score.total+"/30.":"",
+            score?"Your scores: A1 "+score.a1+"/10 · A2 "+score.a2+"/10 · B1 "+score.b1+"/10"+(revisedKiswahili?" · B2 "+score.b2+"/10":"")+" · Total "+score.total+"/"+maximum+".":"",
             isSwahili
               ? "This is a preliminary placement recommendation, not an official CEFR certificate."
               : "This is a preliminary class-placement recommendation, not an official Goethe or CEFR certificate.",
-            (isSwahili?"Continue Kiswahili learning: ":"Explore classes and register: ")+"https://www.falowen.app/signup?level="+encodeURIComponent(score?.level||"A1")+"&source=placement-test"+(isSwahili?"&program=swahili":""),
+            needsTeacher?"Please contact Falowen admissions to confirm your B2 level with a teacher before enrolling.":(isSwahili?"Continue Kiswahili learning: ":"Explore classes and register: ")+"https://www.falowen.app/signup?level="+encodeURIComponent(score?.level||"A1")+"&source=placement-test"+(isSwahili?"&program=swahili":""),
             "If you need guidance, just reply to this email.",
             "Best regards,\nFalowen Admissions\nwww.falowen.app"
           ].filter(Boolean).join("\n\n");
@@ -790,7 +793,7 @@ export default function TimedAssignmentAttemptsPage() {
             <div style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
               <div style={{display:"grid",gap:4}}>
                 <strong style={{fontSize:16}}>{attempt.name || (email ? "Placement learner" : "") || (attempt.completedAt ? "Result saved · no contact details" : "Visitor · no contact details")}</strong>
-                <small style={{color:"#1e40af",fontWeight:800}}>{languageName} · A1–B1 placement</small>
+                <small style={{color:"#1e40af",fontWeight:800}}>{languageName} · {revisedKiswahili?"A1–B2":"A1–B1"} placement</small>
                 <small style={{color:"#64748b",overflowWrap:"anywhere"}}>{attempt.email||attempt.phone||attempt.id}</small>
                 {attempt.emailSentAt && <small style={{color:"#166534",fontWeight:700}}>Result email sent · {formatDate(attempt.emailSentAt)}</small>}
                 {typeof attempt.classEmails === "boolean" && <small>Class emails: {attempt.classEmails ? "Opted in" : "Not requested"}</small>}
@@ -804,11 +807,12 @@ export default function TimedAssignmentAttemptsPage() {
               <span><b>Started:</b> {formatDate(attempt.startedAt)}</span>
               <span><b>Submitted:</b> {formatDate(attempt.completedAt)}</span>
               <span><b>Suggested level:</b> {score?.level||"—"}</span>
-              <span><b>Overall:</b> {score ? score.total+"/30" : "—"}</span>
+              <span><b>Overall:</b> {score ? score.total+"/"+maximum : "—"}</span>
               <span><b>A1:</b> {score ? score.a1+"/10" : "—"}</span>
               <span><b>A2:</b> {score ? score.a2+"/10" : "—"}</span>
               <span><b>B1:</b> {score ? score.b1+"/10" : "—"}</span>
-              <span><b>Answered:</b> {score ? score.answered+"/30" : "—"}</span>
+              {revisedKiswahili && <span><b>B2:</b> {score ? score.b2+"/10" : "—"}</span>}
+              <span><b>Answered:</b> {score ? score.answered+"/"+maximum : "—"}</span>
             </div>
             <div style={{borderTop:"1px solid #e2e8f0",paddingTop:11,display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap"}}>
               <strong style={{color:attempt.consent?"#14532d":"#64748b",fontSize:13}}>
