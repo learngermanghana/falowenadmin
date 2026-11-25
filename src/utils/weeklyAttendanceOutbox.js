@@ -49,3 +49,20 @@ export function readyWeeklyPeriods(klass, sessions, now = Date.now(), { since = 
     weekStart, weekEnd: weekEndKey(weekStart), lessons: rows.length,
   })).filter(row => row.classId).sort((a,b)=>a.weekStart.localeCompare(b.weekStart));
 }
+
+/** Course-relative week labels; calendar weeks match the existing weekly-email receipts. */
+export function manualAttendanceWeeks(klass, sessions = [], now = Date.now()) {
+  if(!klass)return [];
+  const starts=(Array.isArray(sessions)?sessions:[]).map(s=>mondayKey(s.startsAt||s.startAt)).filter(Boolean).sort();
+  const first=mondayKey(klass.startDate||klass.startsAt)||starts[0]||mondayKey(now);
+  const current=mondayKey(now);
+  const end=mondayKey(klass.endDate||klass.endsAt);
+  const last=end&&end<current?end:current;
+  if(!first||first>last)return [];
+  const result=[];
+  for(let stamp=Date.parse(first),week=1;stamp<=Date.parse(last)&&week<=260;stamp+=604800000,week++){
+    const weekStart=new Date(stamp).toISOString().slice(0,10);
+    result.push({week,weekStart,weekEnd:weekEndKey(weekStart)});
+  }
+  return result;
+}

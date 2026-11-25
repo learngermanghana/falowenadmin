@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import handler from "../api/weekly-engagement-summary.js";
-import {dateOf, weekWindow, held, attendanceStatus, participationFor, classEmailMode, enrolledBefore} from "../api/weekly-engagement-summary.js";
+import {dateOf, weekWindow, held, attendanceStatus, participationFor, classEmailMode, enrolledBefore, elapsedManualCandidate, hasRecordedAttendance, manualReportWeekStarts} from "../api/weekly-engagement-summary.js";
 
 const tutor={studentCode:"FLW-123",email:"student@example.com"};
 const finished={status:"completed",startsAt:"2026-11-16T18:00:00Z",endsAt:"2026-11-16T19:00:00Z"};
@@ -68,4 +68,25 @@ test("optional learning nudge is no longer exported or deployed",()=>{
   const workflow=fs.readFileSync(new URL("../.github/workflows/deploy-student-learning-nudge.yml",import.meta.url),"utf8");
   assert.doesNotMatch(main,/module\.exports\.sendStudentLearningNudges\s*=/);
   assert.doesNotMatch(workflow,/firebase deploy/);
+});
+
+test("manual date selection accepts current or earlier Monday-based weeks, never future or unbounded ranges",()=>{
+  const now=new Date("2026-11-25T21:00:00Z");
+  assert.deepEqual(manualReportWeekStarts("2026-11-02","2026-11-23",now),["2026-11-02","2026-11-09","2026-11-16","2026-11-23"]);
+  assert.deepEqual(manualReportWeekStarts("2026-11-23","2026-11-30",now),[]);
+  assert.deepEqual(manualReportWeekStarts("2026-11-24","2026-11-24",now),[]);
+  assert.deepEqual(manualReportWeekStarts("2026-11-23","2026-11-16",now),[]);
+  assert.deepEqual(manualReportWeekStarts("2026-01-05","2026-11-23",now),[]);
+});
+test("manual reporting can use elapsed sessions with real attendance but not cancelled, future or app assessment lessons",()=>{
+  const now=Date.parse("2026-11-16T19:10:00Z");
+  const scheduled={...finished,status:"scheduled"};
+  assert.equal(held(scheduled,now),false);
+  assert.equal(elapsedManualCandidate(scheduled,now),true);
+  assert.equal(hasRecordedAttendance({checkins:[{studentCode:"test"}]}),true);
+  assert.equal(hasRecordedAttendance({attendance:{students:{test:{present:false}}}}),true);
+  assert.equal(hasRecordedAttendance({attendance:{opened:false},checkins:[]}),false);
+  assert.equal(elapsedManualCandidate({...scheduled,status:"cancelled"},now),false);
+  assert.equal(elapsedManualCandidate({...scheduled,endsAt:"2026-11-16T21:00:00Z"},now),false);
+  assert.equal(elapsedManualCandidate({...scheduled,sessionType:"app_assessment"},now),false);
 });

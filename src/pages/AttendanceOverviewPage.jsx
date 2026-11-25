@@ -223,7 +223,7 @@ export default function AttendanceOverviewPage() {
         </div>
       </div>
 
-      <AttendanceWeeklyEmailOutbox classes={emailClasses} sessionsByClass={sessionsByClass} loading={loading || emailClasses.some(klass=>sessionsByClass[classRecordKey(klass)]===undefined)} onRefresh={() => { setSessionsByClass({}); setReportsRefresh(value => value + 1); }} />
+      <AttendanceWeeklyEmailOutbox classes={emailClasses} sessionsByClass={sessionsByClass} loading={loading} onRefresh={() => { setSessionsByClass({}); setReportsRefresh(value => value + 1); }} />
       <OperationsCommunicationPanel context="attendance" />
 
       <nav style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "16px 0" }} aria-label="Attendance sections">

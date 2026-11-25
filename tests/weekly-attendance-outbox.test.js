@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {completeAttendanceSession} from "../src/services/assignedTutorAttendanceService.js";
-import {readyWeeklyPeriods,receiptKey} from "../src/utils/weeklyAttendanceOutbox.js";
+import {readyWeeklyPeriods,receiptKey,manualAttendanceWeeks} from "../src/utils/weeklyAttendanceOutbox.js";
 const klass={id:"class-a",name:"A1",attendanceConfirmationEmailMode:"weekly"};
 const session=(day,status="completed")=>({startsAt:day+"T18:00:00Z",endsAt:day+"T19:00:00Z",status});
 const now=Date.parse("2026-11-27T20:00:00Z");
@@ -56,4 +56,14 @@ test("lobby ends canonical session before publishing the presenter end; weekly e
   assert.match(page,/Completion not verified/);
   const outbox=readFileSync(new URL("../src/components/AttendanceWeeklyEmailOutbox.jsx",import.meta.url),"utf8");
   assert.match(outbox,/Refresh reports/);
+});
+
+test("course week picker exposes earlier and current weeks without requiring completed sessions",()=>{
+  const course={...klass,startDate:"2026-10-20",endDate:"2026-12-15"};
+  const weeks=manualAttendanceWeeks(course,[],Date.parse("2026-11-25T21:00:00Z"));
+  assert.equal(weeks[0].week,1);
+  assert.equal(weeks[0].weekStart,"2026-10-19");
+  assert.equal(weeks.at(-1).week,6);
+  assert.equal(weeks.at(-1).weekStart,"2026-11-23");
+  assert.deepEqual(manualAttendanceWeeks({...course,startDate:"2026-12-03"},[],Date.parse("2026-11-25T21:00:00Z")),[]);
 });
