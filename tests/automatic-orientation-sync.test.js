@@ -301,3 +301,26 @@ test("deployment patch listens for student payment and confirmed class updates",
   assert.match(workflow, /functions:falowenadmin:autoSyncPaidStudentOrientation/);
   assert.match(workflow, /functions:falowenadmin:autoSyncApprovedStudentOrientation/);
 });
+
+
+test("operational recovery only records a changed skip reason and still respects read-only mode", async () => {
+  const vm = await import("node:vm");
+  const snippet = read("scripts/snippets/operationalSheetAutoSyncJobs.js.txt");
+  const start = snippet.indexOf("async function recordOperationalSheetSkip(");
+  const end = snippet.indexOf("async function syncStudentToOrientationSheet(", start);
+  assert.ok(start >= 0 && end > start);
+  const calls = [];
+  const context = vm.createContext({ admin: { firestore: { FieldValue: { serverTimestamp: () => "timestamp" } } } });
+  vm.runInContext(snippet.slice(start, end), context);
+  const snap = {ref:{set:async (...args)=>calls.push(args)}};
+  for (const prefix of ["orientationSheetAutoSync", "classScheduleSheetAutoSync"]) {
+    const unchanged = { [prefix+"Status"]: "skipped", [prefix+"LastError"]: "missing" };
+    assert.equal(await context.recordOperationalSheetSkip(snap, unchanged, prefix, "missing"), false);
+    assert.equal(await context.recordOperationalSheetSkip(snap, unchanged, prefix, "new reason", {writeStatus:false}), false);
+    assert.equal(await context.recordOperationalSheetSkip(snap, unchanged, prefix, "new reason"), true);
+    assert.equal(calls.at(-1)[0][prefix+"LastError"], "new reason");
+  }
+  assert.equal(calls.length, 2);
+  assert.match(snippet, /recordOperationalSheetSkip\(docSnap, student, "orientationSheetAutoSync", eligibility.reason, options\)/);
+  assert.match(snippet, /recordOperationalSheetSkip\(docSnap, klass, "classScheduleSheetAutoSync", reason, options\)/);
+});
