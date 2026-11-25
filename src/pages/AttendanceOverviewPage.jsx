@@ -3,6 +3,8 @@ import { Link, useSearchParams } from "react-router-dom";
 import OperationsCommunicationPanel from "../components/OperationsCommunicationPanel";
 import ClassAttendanceTracker from "../components/ClassAttendanceTracker.jsx";
 import AttendanceCommunicationHealthPanel from "../components/AttendanceCommunicationHealthPanel.jsx";
+import AttendanceWeeklyEmailOutbox from "../components/AttendanceWeeklyEmailOutbox.jsx";
+import { WEEKLY_OUTBOX_START } from "../utils/weeklyAttendanceOutbox.js";
 import { listClassCohorts, listClassSessions } from "../services/liveClassService.js";
 import { orderAttendanceClasses, weeklyTimetableLabels } from "../utils/attendanceClassTiming.js";
 import { isActiveLiveClass } from "../utils/attendanceClassVisibility.js";
@@ -147,25 +149,26 @@ export default function AttendanceOverviewPage() {
     [classes, todayAnchor],
   );
 
+  const emailClasses = useMemo(() => classes.filter(klass => isActiveLiveClass(klass,todayAnchor) || (parseClassDate(klass.endDate)?.getTime() >= Date.parse(WEEKLY_OUTBOX_START))),[classes,todayAnchor]);
   useEffect(() => {
     let active = true;
-    if (!activeClasses.length) {
+    if (!emailClasses.length) {
       return () => { active = false; };
     }
 
-    Promise.allSettled(activeClasses.map(async (klass) => {
+    Promise.allSettled(emailClasses.map(async (klass) => {
       const classId = classRecordKey(klass);
       return [classId, await listClassSessions(classId)];
     })).then((results) => {
       if (!active) return;
       setSessionsByClass(Object.fromEntries(results.map((result, index) => [
-        classRecordKey(activeClasses[index]),
+        classRecordKey(emailClasses[index]),
         result.status === "fulfilled" ? result.value[1] : null,
       ])));
     });
 
     return () => { active = false; };
-  }, [activeClasses]);
+  }, [emailClasses]);
 
   const languageClasses = useMemo(() => activeClasses.filter((klass) =>
     languageFilter === "all" || (klass.language === "Swahili" ? "swahili" : "german") === languageFilter
@@ -214,6 +217,7 @@ export default function AttendanceOverviewPage() {
         </div>
       </div>
 
+      <AttendanceWeeklyEmailOutbox classes={emailClasses} sessionsByClass={sessionsByClass} loading={loading || emailClasses.some(klass=>sessionsByClass[classRecordKey(klass)]===undefined)} />
       <OperationsCommunicationPanel context="attendance" />
 
       <nav style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "16px 0" }} aria-label="Attendance sections">

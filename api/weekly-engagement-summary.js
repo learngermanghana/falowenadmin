@@ -2,7 +2,9 @@
 // Manual owner preview and explicit send only; no scheduled invocation.
 // Preserve tutor manual overrides, check-in records and class-specific email settings.
 import { verifyFirebaseAdminUser, bearerToken } from "./integration-hub.js";
-import { env, googleAccessToken, firestoreGet, docValue, listStudents, hasClass, norm, timeMs, err } from "./checkin-invitations.js";
+import { project, env, googleAccessToken, firestoreGet, docValue, listStudents, hasClass, norm, timeMs, err } from "./checkin-invitations.js";
+import { isAppAssessment } from "../src/utils/appAssessment.js";
+import { readyWeeklyPeriods, receiptKey, mondayKey } from "../src/utils/weeklyAttendanceOutbox.js";
 
 const GHS = "Africa/Accra";
 const excludedStatuses = new Set(["cancelled","canceled","deleted","superseded","postponed"]);
@@ -75,8 +77,9 @@ function attendanceStatus({session, attendance={}, checkins=[], student, lateMin
 const active = (row) => !["inactive","archived","withdrawn","removed","cancelled","canceled","deleted","blocked","suspended","trial_expired"].includes(norm(row.status||row.studentStatus||row.enrollmentStatus));
 const held = (session,now=Date.now()) => {
   const state=norm(session.status||session.sessionStatus);
-  if(excludedStatuses.has(state)||session.superseded===true||session.isSuperseded===true||session.isAppAssessment===true) return false;
-  const end=asTime(session.endsAt||session.endAt);
+  if(excludedStatuses.has(state)||session.superseded===true||session.isSuperseded===true||session.isAppAssessment===true||isAppAssessment(session)) return false;
+  const actual=session.completionSource==="manual"?asTime(session.completedAt):NaN;
+  const end=Number.isFinite(actual)?actual:asTime(session.endsAt||session.endAt);
   if(!Number.isFinite(end)||end>now) return false;
   return ["completed","finished","ended"].includes(state);
 };
@@ -137,10 +140,10 @@ function classEmailMode(klass){
   const mode=norm(klass.attendanceConfirmationEmailMode||"weekly");
   return ["off","weekly","each_class"].includes(mode)?mode:"weekly";
 }
-async function buildDigest(token, now=new Date(), weeksAgo=0) {
+async function buildDigest(token, now=new Date(), weeksAgo=0, { classId = "", requireReady = false } = {}) {
   const {weekStart,weekEnd}=weekWindow(now,weeksAgo);
   const [classes, students, sessions, participation]=await Promise.all([
-    listCollection("classes",token,300),listStudents(token),
+    classId ? firestoreGet("classes/"+encodeURIComponent(classId),token).then(d=>[{...docValue(d),_id:classId}]) : listCollection("classes",token,300),listStudents(token),
     listCollection("classSessions",token,12000),
     listCollection("classParticipationRecords",token,20000),
   ]);
@@ -149,6 +152,10 @@ async function buildDigest(token, now=new Date(), weeksAgo=0) {
     if(!active(klass))continue;
     const mode=classEmailMode(klass);
     if(mode!=="weekly"){
+      classSummaries.push({classId:klass._id,className:klass.name||klass._id,mode,skipped:true});
+      continue;
+    }
+    if(requireReady && !readyWeeklyPeriods(klass,sessions.filter(s=>acceptsSession(s,klass)),now.getTime(),{since:weekStart}).some(p=>p.weekStart===weekStart)){
       classSummaries.push({classId:klass._id,className:klass.name||klass._id,mode,skipped:true});
       continue;
     }
@@ -212,6 +219,25 @@ async function dispatch(rows,period,fetchImpl=fetch){
   }
   return {sent,skipped};
 }
+async function markWeeklySent(token,classId,period,count) {
+  const field = "weeklyEngagementSentWeeks." + receiptKey(period.weekStart);
+  const url = "https://firestore.googleapis.com/v1/projects/"+encodeURIComponent(project())+"/databases/(default)/documents/classes/"+encodeURIComponent(classId)+"?"+new URLSearchParams({"updateMask.fieldPaths":field,"currentDocument.exists":"true"});
+  const value = {mapValue:{fields:{status:{stringValue:"sent"},weekStart:{stringValue:period.weekStart},sentAt:{timestampValue:new Date().toISOString()},recipients:{integerValue:String(count)}}}};
+  const response = await fetch(url,{method:"PATCH",headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({fields:{weeklyEngagementSentWeeks:{mapValue:{fields:{[receiptKey(period.weekStart)]:value}}}}})});
+  if(!response.ok)err("Emails were processed but the sent receipt could not be saved. Retry using the same week; Apps Script deduplication applies.",502);
+}
+async function dispatchAndRecord(rows,period,token){
+  let sent=0,skipped=0;
+  const groups=new Map();
+  for(const row of rows){if(!groups.has(row.classId))groups.set(row.classId,[]);groups.get(row.classId).push(row);}
+  for(const [id,recipients] of groups){
+    const result=await dispatch(recipients,period);
+    if(result.sent+result.skipped!==recipients.length)err("Not all recipients were confirmed. This class remains pending.",502);
+    await markWeeklySent(token,id,period,recipients.length);
+    sent+=result.sent;skipped+=result.skipped;
+  }
+  return {sent,skipped};
+}
 export default async function handler(req,res){
   res.setHeader("Cache-Control","no-store");
   if(!["GET","POST"].includes(req.method))return res.status(405).json({ok:false,error:"GET or POST required."});
@@ -222,7 +248,9 @@ export default async function handler(req,res){
   try{
     const owner=await verifyFirebaseAdminUser(bearerToken(req));
     if(manualSend && env("WEEKLY_ENGAGEMENT_ENABLED")!=="true")return res.status(409).json({ok:false,error:"Weekly engagement sending is disabled. Verify the Apps Script cutover first."});
-    if(manualSend && req.query?.period!=="previous")return res.status(400).json({ok:false,error:"Only the previous completed week can be sent."});
+    const classId=String(req.query?.classId||"").trim();
+    if(classId && (classId.includes("/")||classId.length>180))return res.status(400).json({ok:false,error:"Invalid class ID."});
+    if(manualSend && !classId && req.query?.period!=="previous")return res.status(400).json({ok:false,error:"Select a completed week."});
     if(test){
       // Do not send student names, addresses or individual student results.
       // The test is an aggregate fixture for the verified Falowen owner only.
@@ -236,8 +264,15 @@ export default async function handler(req,res){
     }
 
     const token=await googleAccessToken();
-    const weeksAgo=manualSend || (preview && req.query?.period==="previous") ? 1 : 0;
-    const report=await buildDigest(token,new Date(),weeksAgo);
+    const now=new Date();
+    let weeksAgo=manualSend || (preview && req.query?.period==="previous") ? 1 : 0;
+    if(classId){
+      const week=String(req.query?.weekStart||"");
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(week)||mondayKey(week+"T00:00:00Z")!==week||week>weekWindow(now).weekStart)
+        return res.status(400).json({ok:false,error:"Select a valid reporting week."});
+      weeksAgo=Math.round((Date.parse(weekWindow(now).weekStart)-Date.parse(week))/604800000);
+    }
+    const report=await buildDigest(token,now,weeksAgo,{classId,requireReady:Boolean(classId)||weeksAgo>0});
     if(preview)return res.status(200).json({ok:true,preview:true,
       weekStart:report.weekStart,weekEnd:report.weekEnd,
       eligibleRecipients:report.rows.length,classes:report.classSummaries,
@@ -245,7 +280,7 @@ export default async function handler(req,res){
     // A stale preview must never silently send a different period or audience size.
     if(req.query?.weekStart!==report.weekStart || String(req.query?.recipients)!==String(report.rows.length) || !report.rows.length)
       return res.status(409).json({ok:false,error:"The report changed or has no recipients. Preview it again before sending."});
-    const delivery=await dispatch(report.rows,report);
+    const delivery=await dispatchAndRecord(report.rows,report,token);
     return res.status(200).json({ok:true,...delivery,weekStart:report.weekStart,
       weekEnd:report.weekEnd,classes:report.classSummaries.length});
   }catch(error){

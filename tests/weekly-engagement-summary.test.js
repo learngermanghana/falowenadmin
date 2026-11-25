@@ -58,8 +58,10 @@ test("weekly digest has no cron entry and old scheduled requests cannot send",as
   assert.equal(res.code,405);
   const source=fs.readFileSync(new URL("../api/weekly-engagement-summary.js",import.meta.url),"utf8");
   assert.match(source,/verifyFirebaseAdminUser\(bearerToken\(req\)\)/);
-  assert.match(source,/manualSend && req\.query\?\.period!=="previous"/);
+  assert.match(source,/manualSend && !classId && req\.query\?\.period!=="previous"/);
   assert.match(source,/req\.query\?\.weekStart!==report\.weekStart/);
+  assert.match(source,/result\.sent\+result\.skipped!==recipients\.length/);
+  assert.match(source,/await markWeeklySent\(token,id,period,recipients\.length\)/);
 });
 test("optional learning nudge is no longer exported or deployed",()=>{
   const main=fs.readFileSync(new URL("../functions/main.js",import.meta.url),"utf8");

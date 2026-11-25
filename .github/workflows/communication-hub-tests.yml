@@ -9,6 +9,13 @@ on:
       - 'src/components/TargetedCommunicationPanel.jsx'
       - 'src/components/CommunicationHistoryPanel.jsx'
       - 'tests/communication-hub-simplification.test.js'
+      - 'tests/weekly-attendance-outbox.test.js'
+      - 'tests/weekly-engagement-summary.test.js'
+      - 'src/utils/weeklyAttendanceOutbox.js'
+      - 'src/components/AttendanceWeeklyEmailOutbox.jsx'
+      - 'src/pages/AttendanceOverviewPage.jsx'
+      - 'src/pages/CanonicalAttendancePageV3.jsx'
+      - 'api/weekly-engagement-summary.js'
       - '.github/workflows/communication-hub-tests.yml'
   push:
     branches:
@@ -20,6 +27,13 @@ on:
       - 'src/components/TargetedCommunicationPanel.jsx'
       - 'src/components/CommunicationHistoryPanel.jsx'
       - 'tests/communication-hub-simplification.test.js'
+      - 'tests/weekly-attendance-outbox.test.js'
+      - 'tests/weekly-engagement-summary.test.js'
+      - 'src/utils/weeklyAttendanceOutbox.js'
+      - 'src/components/AttendanceWeeklyEmailOutbox.jsx'
+      - 'src/pages/AttendanceOverviewPage.jsx'
+      - 'src/pages/CanonicalAttendancePageV3.jsx'
+      - 'api/weekly-engagement-summary.js'
       - '.github/workflows/communication-hub-tests.yml'
   workflow_dispatch:
 
@@ -35,6 +49,6 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Test simplified communication hub
-        run: node --test tests/communication-hub-simplification.test.js
+        run: node --test tests/communication-hub-simplification.test.js tests/weekly-attendance-outbox.test.js tests/weekly-engagement-summary.test.js
       - name: Build dashboard
         run: npm run build
