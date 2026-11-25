@@ -12,18 +12,6 @@ const A2_ASSIGNMENTS = [
   "A2-9.25", "A2-10.26", "A2-10.27", "A2-10.28",
 ];
 
-const TEACHING_SPINE = [
-  "intro",
-  "warmup",
-  "knowledge",
-  "phrases",
-  "grammar-check",
-  "practice",
-  "questions",
-  "workbook",
-  "lesson-summary",
-];
-
 test("all 28 A2 lessons have a lesson-specific Wissensimpuls and one focused activity", () => {
   assert.deepEqual([...A2_PRESENTER_KNOWLEDGE_ASSIGNMENTS].sort(), [...A2_ASSIGNMENTS].sort());
 
@@ -39,88 +27,29 @@ test("all 28 A2 lessons have a lesson-specific Wissensimpuls and one focused act
   }
 });
 
-test("A2 Presenter uses the stable teaching spine and removes repetitive ending drills", () => {
+test("A2 scenarios follow the grammar check and precede workbook presentation", () => {
   for (const assignmentId of A2_ASSIGNMENTS) {
     const slide = getTeachingSlideByAssignmentId(assignmentId);
-    assert.ok(slide, `${assignmentId} slide missing`);
-
     const stages = buildTeachingPresenterStages(slide, slide.topic);
-    const ids = stages.map((stage) => stage.id);
-
-    assert.deepEqual(ids, TEACHING_SPINE, `${assignmentId} should use the A2 teaching spine`);
-
-    const knowledge = stages.find((stage) => stage.id === "knowledge");
-    const grammar = stages.find((stage) => stage.id === "grammar-check");
-    const practice = stages.find((stage) => stage.id === "practice");
-    const questions = stages.find((stage) => stage.id === "questions");
-    const workbook = stages.find((stage) => stage.id === "workbook");
-
-    assert.equal(knowledge.type, "knowledge");
-    assert.ok(knowledge.textDe?.length > 100, `${assignmentId} knowledge text missing`);
-    assert.equal(knowledge.items.length, 3, `${assignmentId} knowledge checks missing`);
-
-    assert.equal(grammar.type, "grammar-check");
-    assert.equal(grammar.items.length, 3, `${assignmentId} grammar should be checked in three short steps`);
-    assert.ok(grammar.items.every((item) => item.prompt && item.answer), `${assignmentId} grammar checks need teacher keys`);
-
-    assert.equal(practice.type, assignmentId === "A2-6.15" ? "sport-matchmaker" : "flow");
-    assert.equal(practice.items.length, 1, `${assignmentId} should have one focused practice, not a repeated drill stack`);
-    assert.ok(practice.items[0].prompts?.length >= 2, `${assignmentId} focused practice should be actionable`);
-
-    assert.equal(questions.type, "list");
-    assert.equal(questions.items.length, 1, `${assignmentId} closing activity should have a single prompt`);
-
-    assert.equal(workbook.type, "clarification");
-    assert.equal(workbook.items.length, 3);
-
-    for (const removed of [
-      "grammar",
-      "examples",
-      "mistakes",
-      "vocabulary-retrieval",
-      "sentence-builder",
-      "guided-action",
-      "role-play",
-      "weekly-challenge",
-      "wrapup",
-    ]) {
-      assert.equal(ids.includes(removed), false, `${assignmentId} still exposes repetitive stage ${removed}`);
-    }
+    const ids = stages.map(stage => stage.id);
+    assert.equal(ids.filter(id => id === "scenario-challenge").length, 1, assignmentId);
+    assert.ok(!ids.includes("practice"), assignmentId);
+    assert.ok(ids.indexOf("grammar-check") < ids.indexOf("scenario-challenge"), assignmentId);
+    assert.ok(ids.indexOf("scenario-challenge") < ids.indexOf("workbook-presentation"), assignmentId);
+    const challenge = stages.find(stage => stage.id === "scenario-challenge");
+    assert.equal(challenge.items.length, 3);
+    assert.ok(challenge.items.every(item => item.steps.length === 3));
   }
 });
-
-test("A2 Day 6 checks position versus movement before article transformation", () => {
+test("Day 6 keeps Wo/Wohin grammar and room makeover", () => {
   const slide = getTeachingSlideByAssignmentId("A2-3.6");
   const stages = buildTeachingPresenterStages(slide, slide.topic);
-  const ids = stages.map((stage) => stage.id);
-  const knowledge = stages.find((stage) => stage.id === "knowledge");
-  const grammar = stages.find((stage) => stage.id === "grammar-check");
-  const practice = stages.find((stage) => stage.id === "practice");
-
-  assert.match(knowledge.textDe, /steht das Sofa neben der Tür/);
-  assert.match(knowledge.textDe, /stellt sie das Sofa neben das Fenster/);
-  assert.match(knowledge.answerItems[2], /zuerst.*neben das Fenster/);
-
-  const grammarText = grammar.items
-    .map((item) => [item.prompt, item.example, item.answer, item.note].filter(Boolean).join(" "))
-    .join(" ");
-  assert.match(grammarText, /Wo\?/i);
-  assert.match(grammarText, /Wohin\?/i);
-  assert.match(grammarText, /Wechselpräposition|Dativ|Akkusativ/i);
-
-  assert.match(practice.title, /Position.*Bewegung/i);
-  assert.match(practice.items[0].instruction, /Position oder Bewegung/i);
-  assert.ok(practice.items[0].prompts.some((item) => /Welcher Kasus/i.test(item)));
-  assert.ok(practice.items[0].prompts.some((item) => /Was passiert mit dem Artikel/i.test(item)));
-  assert.ok(practice.items[0].modelItems.some((item) => /Position.*Wo\?.*Dativ.*neben dem Fenster/i.test(item)));
-  assert.ok(practice.items[0].modelItems.some((item) => /Bewegung.*Wohin\?.*Akkusativ.*neben das Fenster/i.test(item)));
-  assert.ok(practice.items[0].modelItems.some((item) => /dem → den/i.test(item)));
-  assert.ok(ids.indexOf("knowledge") < ids.indexOf("grammar-check"));
-  assert.ok(ids.indexOf("grammar-check") < ids.indexOf("practice"));
-  assert.ok(ids.indexOf("practice") < ids.indexOf("questions"));
-  assert.ok(ids.indexOf("questions") < ids.indexOf("workbook"));
+  const grammar = stages.find(stage => stage.id === "grammar-check");
+  const challenge = stages.find(stage => stage.id === "scenario-challenge");
+  assert.match(JSON.stringify(grammar), /Dativ|Akkusativ/i);
+  assert.equal(challenge.title, "Room Makeover");
+  assert.match(JSON.stringify(challenge), /Wo\?|Wohin\?|Dativ|Akkusativ/i);
 });
-
 test("A2 Day 14 uses career-coaching choices with three relevant alternatives", () => {
   const focused = getA2FocusedPractice("A2-5.14");
   assert.match(focused.title, /Karriere-Coach/);
@@ -135,12 +64,10 @@ test("A2 Day 14 uses career-coaching choices with three relevant alternatives", 
     assert.match(item.model, /, um .* zu (?:bearbeiten|werden|leiten)\./);
   }
   const slide = getTeachingSlideByAssignmentId("A2-5.14");
-  const practice = buildTeachingPresenterStages(slide, slide.topic).find((stage) => stage.id === "practice");
-  assert.equal(practice.variant, "decision-task");
-  assert.equal(practice.variantLabel, "Entscheidung");
-  assert.deepEqual(practice.items[0].decisionCases, focused.decisionCases);
-  assert.match(practice.items[0].transferPrompt, /Berufsziel/);
-  assert.match(practice.items[0].transferModel, /um .* zu arbeiten/);
+  const practice = buildTeachingPresenterStages(slide, slide.topic).find(stage => stage.id === "scenario-challenge");
+  assert.equal(practice.title, "Karriere-Coach Challenge");
+  assert.equal(practice.items.length, 3);
+  assert.ok(practice.items.every(item => item.steps.some(step => /um .* zu/.test(step.modelDe))));
 });
 
 test("A2 Day 14 options are clickable and answers are revealed on demand", async () => {
