@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { auth } from "../firebase.js";
 import { listStudentClassTransfers, transferStudentClass } from "../services/studentsService.js";
 
 function clean(value) {
@@ -52,6 +53,9 @@ export default function StudentClassTransferPanel({
   const [effectiveDate, setEffectiveDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [reason, setReason] = useState("");
   const [enrollmentDisposition,setEnrollmentDisposition]=useState("");
+  const [correcting,setCorrecting]=useState(false);
+  const [correctedLevel,setCorrectedLevel]=useState("");
+  const owner=auth.currentUser?.emailVerified===true&&auth.currentUser.email?.toLowerCase()==="moxflex@gmail.com";
   const [transferring, setTransferring] = useState(false);
   const [history, setHistory] = useState(() => localHistory(student));
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -80,6 +84,7 @@ export default function StudentClassTransferPanel({
     setTargetClassRecordId("");
     setReason("");
     setEnrollmentDisposition("");
+    setCorrecting(false);setCorrectedLevel("");
     setEffectiveDate(new Date().toISOString().slice(0, 10));
     setHistory(localHistory(student));
     if (!student?.id || !expanded) return () => { active = false; };
@@ -103,15 +108,15 @@ export default function StudentClassTransferPanel({
 
   const runTransfer = async () => {
     if (!student?.id) return;
-    if (!targetClassRecordId || !targetClass) {
+    if (correcting ? !correctedLevel || (targetClassRecordId && (!targetClass || classLevel(targetClass)!==correctedLevel)) : !targetClassRecordId || !targetClass) {
       pushToast?.({ type: "error", message: "Select the class the student is moving to." });
       return;
     }
 
     const fromName = currentClassName(student) || "current class";
-    const toName = classLabel(targetClass);
+    const toName = correcting ? `${correctedLevel} · ${targetClass?classLabel(targetClass):"No class assigned"}` : classLabel(targetClass);
     const confirmed = window.confirm(
-      `Transfer ${student.name || student.studentCode || "this student"} from ${fromName} to ${toName} effective ${formatDate(effectiveDate)}?\n\nHistorical attendance, participation and scores will not be moved or deleted.`
+      `${correcting?"Correct existing level for":"Transfer"} ${student.name || student.studentCode || "this student"} from ${fromName} to ${toName} effective ${formatDate(effectiveDate)}?\n\nHistorical attendance, participation and scores will not be moved or deleted.`
     );
     if (!confirmed) return;
 
@@ -122,7 +127,7 @@ export default function StudentClassTransferPanel({
         program,
         effectiveDate,
         reason,
-        ...(downgrade?{enrollmentDisposition}:{}),
+        ...(correcting?{enrollmentDisposition:"correct_existing",correctedLevel}:downgrade?{enrollmentDisposition}:{}),
       });
       const patch = result?.student || {};
       const transfer = result?.transfer || null;
@@ -131,7 +136,7 @@ export default function StudentClassTransferPanel({
       }
       onTransferred?.(student.id, patch, transfer);
       setTargetClassRecordId("");
-      setReason("");
+      setReason("");setCorrecting(false);setCorrectedLevel("");
       pushToast?.({
         type: "success",
         message: `${student.name || "Student"} moved to ${toName}. Previous attendance and participation were preserved.`,
@@ -168,6 +173,8 @@ export default function StudentClassTransferPanel({
         </p>
       </div>
 
+      {owner&&<label>Change type<select value={correcting?"correct":"transfer"} disabled={transferring} onChange={e=>{setCorrecting(e.target.value==="correct");setTargetClassRecordId("");setCorrectedLevel(student.level||student.levelId||"");}}><option value="transfer">Transfer class / separate level enrollment</option><option value="correct">Correct existing level (no new enrollment)</option></select></label>}
+      {correcting&&<><small>For existing courses without separate level records. Keeps current payment and contract data. Choose a matching class or leave unassigned. Managed level records are protected.</small><label>New level<select value={correctedLevel} disabled={transferring} onChange={e=>{setCorrectedLevel(e.target.value);setTargetClassRecordId("");}}><option value="">Select level</option>{levels.map(l=><option key={l}>{l}</option>)}</select></label></>}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 10 }}>
         <label style={{ display: "grid", gap: 6 }}>
           <span style={{ fontSize: 13, fontWeight: 700 }}>Current class</span>
@@ -186,8 +193,8 @@ export default function StudentClassTransferPanel({
             disabled={transferring}
             style={{ padding: "8px 9px", borderRadius: 8, border: "1px solid #cbd5e1", background: "#fff" }}
           >
-            <option value="">Select new class</option>
-            {availableClasses.map((klass) => {
+            <option value="">{correcting?"No class assigned":"Select new class"}</option>
+            {availableClasses.filter(klass=>!correcting||classLevel(klass)===correctedLevel).map((klass) => {
               const id = clean(klass.id || klass.classRecordId || klass.classId);
               const level = classLevel(klass);
               return (
@@ -223,17 +230,17 @@ export default function StudentClassTransferPanel({
         />
       </label>
 
-      {crossLevel ? (
+      {!correcting&&crossLevel ? (
         <div style={{ padding: 10, borderRadius: 10, background: "#fff7ed", border: "1px solid #fdba74", color: "#9a3412" }}>
           This moves the student from <strong>{currentLevel}</strong> to <strong>{nextLevel}</strong>. Old scores and records stay unchanged; new class activity follows the new level.
         </div>
       ) : null}
 
-      {crossLevel&&<small>Record the verified current level contract first. A new higher level gets its own record; enter its agreed fee and dates in Level enrollments. For a downgrade, record the original destination contract before transferring.</small>}
-      {downgrade&&<label>Previous level tuition reminders<select value={enrollmentDisposition} onChange={event=>setEnrollmentDisposition(event.target.value)}><option value="">Choose an option</option><option value="retain">Keep outstanding balance and payment reminders; end previous access</option><option value="cancel">Cancel previous enrollment and stop reminders; retain financial history</option></select><small>Neither choice erases payments or adjusts the agreed tuition. Edit the previous level separately if a fee adjustment was agreed.</small></label>}
+      {!correcting&&crossLevel&&<small>Record the verified current level contract first. A new higher level gets its own record; enter its agreed fee and dates in Level enrollments. For a downgrade, record the original destination contract before transferring.</small>}
+      {!correcting&&downgrade&&<label>Previous level tuition reminders<select value={enrollmentDisposition} onChange={event=>setEnrollmentDisposition(event.target.value)}><option value="">Choose an option</option><option value="retain">Keep outstanding balance and payment reminders; end previous access</option><option value="cancel">Cancel previous enrollment and stop reminders; retain financial history</option></select><small>Neither choice erases payments or adjusts the agreed tuition. Edit the previous level separately if a fee adjustment was agreed.</small></label>}
       <div>
-        <button type="button" onClick={runTransfer} disabled={transferring || !targetClassRecordId || (downgrade&&!enrollmentDisposition)}>
-          {transferring ? "Transferring..." : "Transfer class"}
+        <button type="button" onClick={runTransfer} disabled={transferring || (correcting?!correctedLevel:!targetClassRecordId || (downgrade&&!enrollmentDisposition))}>
+          {transferring ? "Saving..." : correcting?"Save existing level":"Transfer class"}
         </button>
       </div>
 
