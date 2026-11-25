@@ -1,11 +1,2 @@
-import test from "node:test";
-import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-
-const source=readFileSync(new URL("../src/pages/StudentDirectoryPage.jsx",import.meta.url),"utf8");
-
-test("student directory can clear contract dates and save explicit nulls",()=>{
-  assert.ok(source.includes("payload[field] = dateFields.has(field) && !incomingValue ? null : incomingValue;"));
-  assert.ok(source.includes("Clear and save to store a null contract date"));
-  assert.ok(source.includes(`onClick={() => updateDraftField(selectedStudent.id, field, "", selectedStudent)}`));
-});
+import test from "node:test";import assert from "node:assert/strict";import {readFileSync} from "node:fs";
+test("contract dates are editable only through level enrollment",()=>{const source=readFileSync(new URL("../src/pages/StudentDirectoryPage.jsx",import.meta.url),"utf8");const levels=readFileSync(new URL("../src/components/StudentLevelEnrollments.jsx",import.meta.url),"utf8");const section=source.slice(source.indexOf('id="student-panel-class"'),source.indexOf('id="student-panel-support"'));assert.ok(section.includes("StudentClassTransferDisclosure"));assert.ok(!section.includes('type="date"'));assert.ok(levels.includes('/contract'));assert.ok(levels.includes('contractEnd'));});
