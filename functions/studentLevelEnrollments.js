@@ -30,6 +30,7 @@ function manualTotals(input){
  return {tuitionFee:fee/100,paid:paid/100,balanceDue:balance/100,paymentStatus:balance?(paid?"Partially Paid":"Unpaid"):"Paid"};
 }
 function paymentPatch(enrollment,amount,date){
+ if(enrollment.accessType==="complimentary"||enrollment.status==="cancelled")fail("This enrollment does not accept payments",409);
  if(enrollment.tuitionFee==null||enrollment.balanceDue==null)fail("Set the tuition fee before recording a new payment",409);
  const fee=moneyCents(enrollment.tuitionFee),paid=moneyCents(enrollment.paid),balance=moneyCents(enrollment.balanceDue),credit=moneyCents(amount);
  if(paid+balance!==fee||!credit||credit>balance) fail("Payment exceeds remaining tuition or ledger requires review",409);
@@ -107,7 +108,7 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  const totals=hasTotals?manualTotals({tuitionFee:input.tuitionFee===undefined?record.tuitionFee:input.tuitionFee,paid:input.paid===undefined?record.paid:input.paid}):{};
  const changed=hasTotals&&(totals.tuitionFee!==record.tuitionFee||totals.paid!==record.paid);
  const patch={...contractPatch({...record,...totals},input),...totals,...(changed?{openingBalanceImported:record.openingBalanceImported===true||totals.paid>0,manualTotalsAdjustedAt:stamp,manualTotalsAdjustedBy:user.uid}:{})};
- if(patch.accessType==="complimentary"&&(Number(patch.paid??record.paid)!==0||Number(patch.tuitionFee??record.tuitionFee)!==0))fail("Complimentary access cannot contain payments");
+ if(patch.accessType==="complimentary"&&(Number(record.paid)>0||Number(patch.paid??record.paid)!==0||Number(patch.tuitionFee??record.tuitionFee)!==0))fail("Paid enrollment history cannot be replaced by complimentary access");
  tx.update(ref,{...patch,updatedAt:stamp});tx.set(db.collection("auditLogs").doc(),{type:changed?"student.levelTotalsAdjusted":"student.levelContractUpdated",studentId,enrollmentId:ref.id,actorId:user.uid,before:{tuitionFee:record.tuitionFee,paid:record.paid,balanceDue:record.balanceDue},after:patch,createdAt:stamp});return {id:ref.id,...record,...patch};});
  return res.json({ok:true,enrollment:result});
  }catch(e){return error(res,e);}});
