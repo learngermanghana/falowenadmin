@@ -1,4 +1,5 @@
 import "./CanonicalAttendancePage.css";
+import AttendanceWeeklyEmailOutbox from "../components/AttendanceWeeklyEmailOutbox.jsx";
 import { attendanceRequest } from "../services/assignedTutorAttendanceService.js";
 import SessionDictionaryPicker from "../components/SessionDictionaryPicker.jsx";
 import { getCourseSessionDictionary, resolveCourseDictionaryLevel } from "../data/courseSessionGroups.js";
@@ -464,6 +465,7 @@ export default function CanonicalAttendancePageV3() {
           : <Link className="session-attendance__button" to={`/live-classes?classId=${encodeURIComponent(klass.id)}&tab=sessions`}>Full timetable ↗</Link>}
       </header>
 
+      {!isStaff && <AttendanceWeeklyEmailOutbox key={klass.id} classes={[klass]} sessionsByClass={{[klass.id]:sessions}} />}
       <article className="card session-attendance__card">
         <div className="session-attendance__header">
           <div>
