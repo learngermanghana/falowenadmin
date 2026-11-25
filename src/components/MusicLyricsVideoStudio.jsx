@@ -61,7 +61,7 @@ function nameSlug(value) {
 }
 function audioFilenameObjectKey(text) {
   const key=String(text||"").trim();
-  if (/^swahili\/music\/(A1|A2|B1|B2|C1|C2)\/day-(0[1-9]|1[0-9]|2[0-8])\/[^/]{1,150}\.mp3$/.test(key)) return key;
+  if (/^swahili\/music\/(A1|A2|B1|B2|C1|C2)\/day-(0[1-9]|1[0-9]|2[0-8])\/[^/]{1,150}\.mp3(?:\.mpeg)?$/.test(key)) return key;
   return /^music\/(a1|a2|b1|b2|c1|c2)\/day-(0[1-9]|1[0-9]|2[0-8])\/[^/]{1,150}\.mp3$/i.test(key) ? key : "";
 }
 // Never mix German and Swahili catalogs or manual R2 sidecars in the same editor.
@@ -416,7 +416,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     if(!key || !hasLyrics || !completeCues){setError("Enter the exact R2 MP3 key and mark every lyric line before exporting shared timing.");return;}
     const payload=timedLyricsPack(key,lyricText,cues);
     saveBlob(new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}),
-      key.split("/").pop().replace(/\.mp3$/i,".lyrics.json"));
+      key.split("/").pop().replace(/\.mp3(?:\.mpeg)?$/i,".lyrics.json"));
     setMessage("Downloaded the timed lyrics sidecar for music, course book and slides. Upload it alongside the matching MP3 in R2.");
     setError("");
   }

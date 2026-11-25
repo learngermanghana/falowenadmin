@@ -47,3 +47,18 @@ test("music video editor separates German and Swahili song catalogs and sidecars
   assert.match(video, /normalized\.startsWith\("swahili\/music\/"\)/);
   assert.match(video, /if \(language === "german"\)/);
 });
+
+test("every registered Swahili recording passes the studio catalog filter", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { SWAHILI_MUSIC_TRACKS } = await import("../src/data/swahiliMusicTracks.js");
+  const video = readFileSync(new URL("../src/components/MusicLyricsVideoStudio.jsx", import.meta.url), "utf8");
+  const match = video.match(/function audioFilenameObjectKey\(text\) \{[\s\S]*?\n\}/);
+  assert.ok(match);
+  const validate = new Function("return (" + match[0] + ")")();
+  for (const track of SWAHILI_MUSIC_TRACKS) assert.equal(validate(track.objectKey), track.objectKey, track.id);
+  for (const id of ["swahili-a1-day-10", "swahili-a1-day-11", "swahili-a1-day-12", "swahili-b1-day-28"]) {
+    assert.ok(SWAHILI_MUSIC_TRACKS.some(track => track.id === id), id);
+  }
+  assert.equal(validate("swahili/music/A1/day-12/not-a-song.exe"), "");
+  assert.equal(validate("music/a1/day-12/not-approved.mp3.mpeg"), "");
+});
