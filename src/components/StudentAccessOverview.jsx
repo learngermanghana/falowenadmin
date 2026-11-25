@@ -65,7 +65,7 @@ export default function StudentAccessOverview({student,students=[],onManage}) {
       <tbody>{shown.map((row,i)=><tr key={(row.student?.id||id)+row.program+i}>{!student&&<td>{row.student.name||row.student.studentCode||row.student.id}</td>}<td>{label(row.program)} {row.level}</td><td>{row.state}</td><td>{fmt(row.expiry)}</td></tr>)}</tbody></table>
       {!shown.length&&<p>No matching course records.</p>}
     </div>
-    {student && <div style={{display:"flex",gap:8,flexWrap:"wrap"}}><button type="button" onClick={()=>onManage("class")}>Manage language access and contracts</button><button type="button" onClick={()=>onManage("payments")}>Billing records</button></div>}
+    {student && <div style={{display:"flex",gap:8,flexWrap:"wrap"}}><button type="button" onClick={()=>onManage("enrollments")}>Manage language access and contracts</button><button type="button" onClick={()=>onManage("payments")}>Billing records</button></div>}
     <h3>Standalone exam subscriptions</h3>
     {!owner?<p>Verified owner access is required to view subscription records.</p>:state.loading?<p role="status">Loading subscriptions…</p>:<>
       {state.error&&<p role="alert">{state.error}</p>}

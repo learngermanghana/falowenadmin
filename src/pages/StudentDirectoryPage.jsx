@@ -537,8 +537,8 @@ export default function StudentDirectoryPage() {
         const response = await fetch("/api/students/"+encodeURIComponent(selectedStudentId)+"/level-enrollments/reconcile-profile", {method:"POST",headers:{Authorization:"Bearer "+token}});
         const result = await response.json();
         if (!response.ok || !result.ok) throw Error(result.error || "Enrollment reconciliation unavailable");
-        if (live && result.profile?.effectiveEnrollmentId) handleSupportStudentUpdated(selectedStudentId,result.profile);
-      } catch (err) { if (live) console.warn("Enrollment profile reconciliation failed",err.message); }
+        if (live && (result.profile?.effectiveEnrollmentId || result.profile?.secondaryProgram)) handleSupportStudentUpdated(selectedStudentId,result.profile);
+      } catch (err) { if (live) { console.warn("Enrollment profile reconciliation failed",err.message); pushToast({type:"error",message:"Could not synchronize level enrollment with student profile. Existing details may be outdated. "+err.message}); } }
     })();
     return () => {live=false;};
   }, [selectedStudentId]);
@@ -1220,81 +1220,13 @@ export default function StudentDirectoryPage() {
                                 </button>
                               </div>
                             )}
-                            {tab.id === "profile" && <StudentLearningStatusPanel student={selectedStudent} />}
 
-                            {tab.id === "profile" && !isHamburgCohortStudent(selectedStudent) && ![selectedStudent.paymentStatus, selectedStudent.status].some(value => ["paid", "partially paid", "partial", "completed", "success"].includes(String(value || "").toLowerCase().replace(/[_-]+/g, " "))) && !["paid", "paidAmount", "amountPaid", "initialPaymentAmount", "tuitionPaid", "totalPaid"].some(field => Number(String(selectedStudent[field] ?? "0").replace(/[^0-9.-]/g, "")) > 0) && (
-                              <div className="student-trial-activation" style={{marginBottom:14,padding:12,border:"1px solid #c7d2fe",borderRadius:10}}>
-                                <strong>Trial access</strong>
-                                <p style={{margin:"6px 0",fontSize:13}}>Current trial: {selectedStudent.trialStatus || selectedStudent.status || "Not set"}. Start: {selectedStudent.trialStartedAt ? new Date(selectedStudent.trialStartedAt).toLocaleDateString("en-GB") : "missing"} · Ends: {selectedStudent.trialEndsAt ? new Date(selectedStudent.trialEndsAt).toLocaleDateString("en-GB") : "missing"}.</p>
-                                <p style={{margin:"6px 0",fontSize:13}}>A manual trial needs valid dates in Firestore. Editing the Google Sheet alone does not grant account access.</p>
-                                <button type="button" disabled={Boolean(activatingTrialId) || !selectedStudent.uid}
-                                  onClick={() => activateTrialForStudent(selectedStudent)}>
-                                  {activatingTrialId === selectedStudent.id ? "Activating trial…" : "Activate 7-day trial from today"}
-                                </button>
-                                {!selectedStudent.uid && <p role="alert">This record has no Firebase UID. Link the existing sign-in before activating a trial.</p>}
-                              </div>
-                            )}
-                            {tab.id === "class" ? (() => {
-                              const draft = getDraft(selectedStudent);
-                              const primary = String(selectedStudent.program || "german").toLowerCase();
-                              const secondary = primary === "german" ? "swahili" : "german";
-                              const mode = draft.program || primary;
-                              const programs = mode === "both" ? ["german", "swahili"] : [mode];
-                              const saved = selectedStudent.coursePlacements?.[secondary];
-                              const disabled = savingId === selectedStudent.id;
-                              const change = (field,value) => updateDraftField(selectedStudent.id,field,value,selectedStudent);
-                              return <>
-                                {renderEditableFields(["program"])}
-                                <div style={{display:"grid",gap:14,marginTop:12}}>
-                                  {programs.map(program => {
-                                    const isPrimary = program === primary;
-                                    const level = isPrimary ? draft.level : draft.secondaryLevel ?? saved?.level ?? "A1";
-                                    const label = languageName(program);
-                                    const type = isPrimary ? selectedStudent.accessType || selectedStudent.paymentStatus || "Unconfirmed" : draft.secondaryAccessType ?? saved?.accessType ?? (saved && selectedStudent.secondaryProgram ? "Legacy enrollment" : "pending");
-                                    const granting = !isPrimary && (draft.grantSecondaryAccess || type === "complimentary");
-                                    const start = isPrimary ? draft.contractStart : draft.secondaryContractStart ?? normalizeDateValue(saved?.contractStart);
-                                    const end = isPrimary ? draft.contractEnd : draft.secondaryAccessEnd ?? normalizeDateValue(saved?.contractEnd);
-                                    const term = isPrimary ? draft.contractTermMonths : draft.secondaryContractTermMonths ?? saved?.contractTermMonths ?? (granting ? 3 : "");
-                                    const persisted = isPrimary || selectedStudent.secondaryProgram === program;
-                                    const field = key => isPrimary ? key : ({contractStart:"secondaryContractStart",contractEnd:"secondaryAccessEnd",contractTermMonths:"secondaryContractTermMonths"}[key]);
-                                    return <section key={program} style={{border:"1px solid #dbe4ee",borderRadius:12,padding:14,display:"grid",gap:12,minWidth:0}}>
-                                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                                        <h3 style={{margin:0}}>{label}</h3><small>{isPrimary ? "Primary · original billing" : "Secondary · separate access"}</small>
-                                      </div>
-                                      <div className="student-detail-fields">
-                                        <label>{label} level<select value={level || ""} disabled={disabled} onChange={event=>change(isPrimary?"level":"secondaryLevel",event.target.value)}>
-                                          {!courseLevels.includes(level) && <option value={level || ""}>{level || "Select level"}</option>}
-                                          {courseLevels.map(value=><option key={value}>{value}</option>)}
-                                        </select></label>
-                                        <label>{label} class<input readOnly value={(isPrimary ? selectedStudent.className : saved?.className) || "Not assigned"} /></label>
-                                        <label>Access type<input readOnly value={granting ? "Complimentary" : type} /></label>
-                                      </div>
-                                      {!isPrimary && !saved?.accessType?.match(/^(complimentary|invitation_pending)$/) && !saved?.contractEnd && !Number(saved?.paid || saved?.paidAmount || 0) && <label style={{display:"flex",alignItems:"center",gap:8}}>
-                                        <input type="checkbox" checked={Boolean(draft.grantSecondaryAccess)} disabled={disabled} onChange={event=>change("grantSecondaryAccess",event.target.checked)} />
-                                        {program === "swahili" ? "Grant complimentary Swahili access (default 3 months for paid German learners)" : "Explicitly approve complimentary German access (set expiry)"}
-                                      </label>}
-                                      <div className="student-detail-fields">
-                                        <label>Contract start<input type="date" value={start || ""} disabled={disabled || (!isPrimary && !granting && !saved?.contractStart)} onChange={event=>change(field("contractStart"),event.target.value)} /></label>
-                                        <label>Contract end<input type="date" value={end || ""} disabled={disabled || (!isPrimary && !granting && !saved?.contractEnd)} onChange={event=>change(field("contractEnd"),event.target.value)} /></label>
-                                        <label>Contract term months<input type="number" min="1" max="36" value={term} disabled={disabled || (!isPrimary && !granting && !saved?.contractEnd)} onChange={event=>change(field("contractTermMonths"),event.target.value)} /></label>
-                                      </div>
-                                      <small>{isPrimary ? "Original billing and trial records stay attached to this language." : granting ? "Dates are independent of the primary contract. Saving other details does not renew access." : "No automatic complimentary grant. Existing access is preserved."}</small>
-                                      <div className="student-contract-extension-actions">
-                                        {[1,3,6].map(months=><button key={months} type="button" disabled={disabled || !end} onClick={()=>{
-                                          try {change(field("contractEnd"),extendContractDate(end,months));}
-                                          catch(error){pushToast({type:"error",message:error.message});}
-                                        }}>+{months} {months === 1 ? "month" : "months"}</button>)}
-                                      </div>
-                                      {persisted && detailTab === "class" ? <StudentClassTransferDisclosure key={selectedStudent.id+":"+program} student={selectedStudent} program={program} classes={classes} onTransferred={handleStudentTransferred} pushToast={pushToast} /> : <small>Save the enrollment before assigning a class.</small>}
-                                    </section>;
-                                  })}
-                                </div>
-                              </>;
-                            })() : tab.id==="payments" ? null : renderEditableFields(tab.fields)}
+
+                            {renderEditableFields(tab.fields)}
                             {/* STUDENT_EMERGENCY_CONTACT_FIELD: Emergency contact stays in the staff-only Profile tab. */}
-                            {tab.id === "profile" && <StudentAccountActivationPanel student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast} />}
+
                             {tab.id === "profile" && <StudentEmergencyContact student={selectedStudent} />}
-                            {tab.id === "payments" && !isHamburgCohortStudent(selectedStudent) && <StudentLevelEnrollments key={selectedStudent.id+":payments"} student={selectedStudent} pushToast={pushToast} classes={classes} onStudentUpdated={handleSupportStudentUpdated} mode="history" legacyHistory={hasLevels=><>{!hasLevels&&<div className="student-detail-fields">{renderEditableFields(tab.fields)}</div>}<StudentPaymentTools mode="history" legacyOnly readOnlyHistory student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast}/></>} />}
+
                           </section>
                         ))}
 
@@ -1306,28 +1238,49 @@ export default function StudentDirectoryPage() {
                             <label>Recorded balance<input readOnly value={formatGhs(selectedStudent.balanceDue ?? selectedStudent.balance ?? 0)} /></label>
                             <label>Payment status<input readOnly value={selectedStudent.paymentStatus || "Not set"} /></label>
                           </div>
+                          <StudentLearningStatusPanel student={selectedStudent} />
+                          <StudentAccessOverview key={selectedStudent.id} student={selectedStudent} onManage={setDetailTab} />
                           {!isHamburgCohortStudent(selectedStudent) && <button type="button" onClick={()=>setDetailTab("enrollments")}>Manage enrollments</button>}
                         </section>}
                         {detailTab === "enrollments" && !isHamburgCohortStudent(selectedStudent) && <section className="student-detail-panel" role="tabpanel" id="student-panel-enrollments" aria-labelledby="student-tab-enrollments">
-                          <StudentLevelEnrollments student={selectedStudent} pushToast={pushToast} classes={classes} onStudentUpdated={handleSupportStudentUpdated} />
+                          <StudentCourseTypePanel key={selectedStudent.id} student={selectedStudent} onStudentUpdated={handleSupportStudentUpdated} />
+                          <StudentLevelEnrollments student={selectedStudent} pushToast={pushToast} classes={classes} onStudentUpdated={handleSupportStudentUpdated}
+                            legacyControls={rows=><>
+                              {(!rows.length || ["awaiting_payment","pending","expired"].includes(String(selectedStudent.upgradeStatus||"").toLowerCase())) && <details><summary>Original upgrade workflow (legacy)</summary><StudentUpgradeTools student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast}/></details>}
+                              {selectedStudent.secondaryProgram && !rows.some(r=>r.program===selectedStudent.secondaryProgram) && <p>Existing {languageName(selectedStudent.secondaryProgram)} access is preserved. Add its verified contract as a level enrollment if you need to manage it here.</p>}
+                            </>} />
+                        </section>}
+                        {detailTab === "payments" && !isHamburgCohortStudent(selectedStudent) && <section className="student-detail-panel" role="tabpanel" id="student-panel-payments" aria-labelledby="student-tab-payments">
+                          <p>Read-only payment history. Record payments in Enrollments or generate a link in Payment links.</p>
+                          <StudentLevelEnrollments key={selectedStudent.id+":payments"} student={selectedStudent} pushToast={pushToast} classes={classes} mode="history" legacyHistory={()=> <StudentPaymentTools mode="history" legacyOnly readOnlyHistory student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast}/>} />
                         </section>}
                         {detailTab === "payment-links" && !isHamburgCohortStudent(selectedStudent) && <section className="student-detail-panel" role="tabpanel" id="student-panel-payment-links" aria-labelledby="student-tab-payment-links">
-                          <StudentPaymentTools mode="links" student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast} />
+                          <StudentLevelEnrollments key={selectedStudent.id+":links"} student={selectedStudent} pushToast={pushToast} mode="links" legacyControls={rows=>!rows.length && <StudentPaymentTools mode="links" student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast}/>} />
                         </section>}
-                        {detailTab === "contracts" && !isHamburgCohortStudent(selectedStudent) && <section className="student-detail-panel" role="tabpanel" id="student-panel-contracts" aria-labelledby="student-tab-contracts">
-                          <StudentUpgradeTools student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast} />
+                        {detailTab === "class" && <section className="student-detail-panel" role="tabpanel" id="student-panel-class" aria-labelledby="student-tab-class">
+                          <h3>Class assignments</h3><p>Change a class within the selected language and current level. Manage levels and contracts in Enrollments.</p>
+                          {[...new Set([selectedStudent.program||"german",selectedStudent.secondaryProgram].filter(Boolean))].map(program=>{
+                            const placement=program===(selectedStudent.program||"german")?selectedStudent:selectedStudent.coursePlacements?.[program]||{};
+                            return <section key={program} style={{border:"1px solid #dbe4ee",borderRadius:12,padding:14,marginBottom:12}}><h4>{languageName(program)} · {placement.level||"Unassigned"}</h4><p>Class: {placement.className||"Not assigned"}</p><StudentClassTransferDisclosure key={selectedStudent.id+":"+program} student={selectedStudent} program={program} classes={classes.filter(k=>String(k.levelId||k.level||k.courseLevel||k.languageLevel||"").toUpperCase()===String(placement.level||"").toUpperCase())} onTransferred={handleStudentTransferred} pushToast={pushToast}/></section>;
+                          })}
                         </section>}
-                        <section id="student-panel-access" role="tabpanel" aria-labelledby="student-tab-access" hidden={detailTab !== "access"} className="student-detail-panel">
-                          {detailTab === "access" && <>
-                            <StudentAccessOverview key={selectedStudent.id} student={selectedStudent} onManage={setDetailTab} />
-                            {!isHamburgCohortStudent(selectedStudent) && <StudentCourseTypePanel key={selectedStudent.id} student={selectedStudent} onStudentUpdated={handleSupportStudentUpdated} />}
-                            <button type="button" onClick={()=>setDetailTab("profile")}>Manage trial and login</button>
-                          </>}
-                        </section>
                         <section id="student-panel-support" role="tabpanel"
                           aria-labelledby="student-tab-support" hidden={detailTab !== "support"}
                           className="student-detail-panel">
                         {detailTab === "support" && <>
+                            {!isHamburgCohortStudent(selectedStudent) && ![selectedStudent.paymentStatus, selectedStudent.status].some(value => ["paid", "partially paid", "partial", "completed", "success"].includes(String(value || "").toLowerCase().replace(/[_-]+/g, " "))) && !["paid", "paidAmount", "amountPaid", "initialPaymentAmount", "tuitionPaid", "totalPaid"].some(field => Number(String(selectedStudent[field] ?? "0").replace(/[^0-9.-]/g, "")) > 0) && (
+                              <div className="student-trial-activation" style={{marginBottom:14,padding:12,border:"1px solid #c7d2fe",borderRadius:10}}>
+                                <strong>Trial access</strong>
+                                <p style={{margin:"6px 0",fontSize:13}}>Current trial: {selectedStudent.trialStatus || selectedStudent.status || "Not set"}. Start: {selectedStudent.trialStartedAt ? normalizeDateValue(selectedStudent.trialStartedAt) || "Not recorded" : "missing"} · Ends: {selectedStudent.trialEndsAt ? normalizeDateValue(selectedStudent.trialEndsAt) || "Not recorded" : "missing"}.</p>
+                                <p style={{margin:"6px 0",fontSize:13}}>A manual trial needs valid dates in Firestore. Editing the Google Sheet alone does not grant account access.</p>
+                                <button type="button" disabled={Boolean(activatingTrialId) || !selectedStudent.uid}
+                                  onClick={() => activateTrialForStudent(selectedStudent)}>
+                                  {activatingTrialId === selectedStudent.id ? "Activating trial…" : "Activate 7-day trial from today"}
+                                </button>
+                                {!selectedStudent.uid && <p role="alert">This record has no Firebase UID. Link the existing sign-in before activating a trial.</p>}
+                              </div>
+                            )}
+                        <StudentAccountActivationPanel student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast} />
                         <StudentSupportTools
                           student={selectedStudent}
                           draft={getDraft(selectedStudent)}
@@ -1429,7 +1382,7 @@ export default function StudentDirectoryPage() {
                         />}
 
                         </section>
-                        {["profile","payments","class"].includes(detailTab) && <div style={{ marginTop: 14 }}>
+                        {detailTab === "profile" && <div style={{ marginTop: 14 }}>
                           <button
                             type="button"
                             onClick={() => saveStudent(selectedStudent)}
