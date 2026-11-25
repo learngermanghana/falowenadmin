@@ -1166,7 +1166,15 @@ export default function CheckinDisplayPage() {
     };
   }, [actualEndedAt, actualStartedAt, dateLabel, delayUntil, nowMs, startTime, endTime, effectiveAssignmentId, classId, presenterLiveState, linkPresenterSessionKey]);
 
+  const completionConfirmed = (attendanceCompletion.key === linkPresenterSessionKey && attendanceCompletion.state === "confirmed")
+    || (presenterLiveState.sessionKey === linkPresenterSessionKey && presenterLiveState.attendanceCompletionConfirmed === true && Boolean(actualEndedAt));
+  const completionPending = attendanceCompletion.key === linkPresenterSessionKey && attendanceCompletion.state === "saving";
+  const completionError = attendanceCompletion.key === linkPresenterSessionKey ? attendanceCompletion.message : "";
+
   const statusInfo = useMemo(() => {
+    if (actualEndedAt && !completionConfirmed) return {
+      kind: "ended", title: "Class completion pending", detail: completionError || "Saving the lesson and closing check-in.",
+    };
     if (actualEndedAt) {
       return {
         kind: "ended",
@@ -1212,6 +1220,8 @@ export default function CheckinDisplayPage() {
     attendanceError,
     attendanceLive,
     checkedInCount,
+    completionConfirmed,
+    completionError,
     expectedTotal,
     presenterStatus,
     slideSyncStatus.message,
@@ -1969,11 +1979,6 @@ export default function CheckinDisplayPage() {
     slideSyncStatus.message,
     slideSyncStatus.state,
   ]);
-
-  const completionConfirmed = (attendanceCompletion.key === linkPresenterSessionKey && attendanceCompletion.state === "confirmed")
-    || (presenterLiveState.sessionKey === linkPresenterSessionKey && presenterLiveState.attendanceCompletionConfirmed === true && Boolean(actualEndedAt));
-  const completionPending = attendanceCompletion.key === linkPresenterSessionKey && attendanceCompletion.state === "saving";
-  const completionError = attendanceCompletion.key === linkPresenterSessionKey ? attendanceCompletion.message : "";
 
   const syncPresenterEnd = useCallback(async (endedAt, { recovery = false, handshakeAttempt = 1 } = {}) => {
     if (!actualStartedAt || !Number.isFinite(Number(endedAt))) return;
