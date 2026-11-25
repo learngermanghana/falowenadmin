@@ -21,9 +21,7 @@ test("waiting room playlist includes every public MP3 and points only to real fi
     .filter((name) => /\.mp3$/i.test(name))
     .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
 
-  assert.ok(publicMp3Files.length >= 1);
   assert.equal(waitingMusicPlaylist.length, publicMp3Files.length);
-  assert.ok(waitingMusicPlaylist.some((track) => /Gemeinsam schaffen wir das/i.test(track.title)));
   assert.ok(waitingMusicPlaylist.every((track) => track.title?.trim() && track.src?.endsWith(".mp3")));
   assert.ok(!waitingMusicPlaylist.some((track) => /Calm Piano/i.test(track.title)));
 

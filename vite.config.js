@@ -24,7 +24,6 @@ export default defineConfig({
     load(id) {
       if (id !== musicPlaylistPath) return null;
       const playlist = buildWaitingMusicPlaylist(musicPublicDir);
-      if (!playlist.length) throw new Error('No waiting-room MP3 files exist in public/.');
       return waitingMusicModule(playlist);
     },
   }],

@@ -9,15 +9,8 @@ const playlistTarget = path.join(repoRoot, "src", "data", "pianoPlaylist.js");
 
 const generatedPlaylist = buildWaitingMusicPlaylist(publicDir);
 
-if (generatedPlaylist.length) {
-  fs.writeFileSync(
-    playlistTarget,
-    waitingMusicModule(generatedPlaylist),
-    "utf8",
-  );
-} else if (!fs.existsSync(playlistTarget)) {
-  throw new Error("No waiting-room .mp3 files found in public/ and no existing playlist is available.");
-}
+// An empty local playlist is intentional: classroom music is served from R2.
+fs.writeFileSync(playlistTarget, waitingMusicModule(generatedPlaylist), "utf8");
 
 const pageTarget = new URL("../src/pages/CheckinDisplayPage.jsx", import.meta.url);
 let source = fs.readFileSync(pageTarget, "utf8");
@@ -318,5 +311,5 @@ fs.writeFileSync(pageTarget, source, "utf8");
 console.log(
   generatedPlaylist.length
     ? `Check-in display now plays ${generatedPlaylist.length} public waiting-room track(s) sequentially.`
-    : "Check-in waiting-room playlist patch applied using the existing configured playlist.",
+    : "No bundled waiting-room tracks; use configured Cloudflare lesson music.",
 );

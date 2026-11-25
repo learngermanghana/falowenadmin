@@ -1,20 +1,4 @@
 // Generated from the MP3 files currently in public/.
-export const waitingMusicPlaylist = Object.freeze([
-  {
-    "id": "gemeinsam-schaffen-wir-das-1",
-    "title": "Gemeinsam schaffen wir das",
-    "src": "/Gemeinsam%20schaffen%20wir%20das.mp3"
-  },
-  {
-    "id": "schritt-fur-schritt-2",
-    "title": "Schritt für Schritt",
-    "src": "/Schritt%20f%C3%BCr%20Schritt.mp3"
-  },
-  {
-    "id": "svchritt-fur-schritt-3",
-    "title": "Svchritt für Schritt",
-    "src": "/Svchritt%20f%C3%BCr%20Schritt.mp3"
-  }
-]);
+export const waitingMusicPlaylist = Object.freeze([]);
 export const pianoPlaylist = waitingMusicPlaylist;
 export const pianoPieces = waitingMusicPlaylist.map((track) => [track.title, [], []]);
