@@ -71,3 +71,17 @@ module.exports.reconcileStudentEnrollmentProfile = require("firebase-functions/v
  if(event.data?.before?.exists&&event.data?.after?.exists&&fields.every(k=>before[k]===after[k]))return;
  return require("./effectiveEnrollmentProfile").reconcileEnrollmentProfile({db,admin,studentId:event.params.studentId});
 });
+
+// Existing verified exam purchases are immutable paid terms. No scheduled scan.
+module.exports.syncExamSubscriptionSheet = require("firebase-functions/v2/firestore").onDocumentCreated({document:"mockPurchases/{reference}",retry:false,cpu:"gcf_gen1",memory:"256MiB",maxInstances:1}, async event => {
+ // One attempt per paid term. Configuration and provider failures remain
+ // recoverable through the verified owner-only manual sync; do not loop.
+ try {
+  const result=await require("./examSubscriptionSheetSync").syncExamPurchase({db,reference:event.params.reference});
+  if(result.status!=="synced")console.warn("exam_subscription_sheet_needs_review",{reference:event.params.reference,status:result.status});
+  return result;
+ } catch(error){
+  console.error("exam_subscription_sheet_sync_failed",{reference:event.params.reference,message:String(error.message||"Sync failed")});
+  return {status:"failed"};
+ }
+});

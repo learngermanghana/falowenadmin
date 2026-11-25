@@ -384,6 +384,17 @@ async function syncTrialStatusToSheet({
   };
 }
 
+// Alias matches must be resolved by staff, never bulk-deleted with a trial.
+async function hasAmbiguousCleanupIdentity(db, studentId, ids, values) {
+  const students = db.collection("students");
+  const direct = await Promise.all(ids.filter(id=>id!==studentId).map(id=>students.doc(id).get()));
+  if(direct.some(snap=>snap.exists))return true;
+  if(!values.length)return false;
+  const matches=await Promise.all(["studentCode","studentcode","uid","email"].map(field=>
+    students.where(field,"in",values).limit(2).get()));
+  return matches.some(snap=>snap.docs.some(doc=>doc.id!==studentId));
+}
+
 async function deleteExpiredPendingStudent({ admin, db, docSnap, now = Date.now(), appsScriptUrl = "", syncSecret = "" }) {
   const protectedCandidate = await readCleanupCandidate(docSnap.ref, current => expiredPendingReason(current, now) === "purge_due");
   if (!protectedCandidate) return { skipped: "protected_or_no_longer_eligible" };
@@ -402,6 +413,8 @@ async function deleteExpiredPendingStudent({ admin, db, docSnap, now = Date.now(
   const allValues = uniqueNonEmpty([...studentDocIds, ...codeValues, ...emailValues]);
   const summary = { deleted: 0, collections: {}, attendanceSessionMapsUpdated: 0, authUsersDeleted: [] };
 
+  if(await hasAmbiguousCleanupIdentity(db,studentId,studentDocIds,allValues))return {skipped:"ambiguous_student_identity"};
+
   // Delete the sheet rows first. If Apps Script is temporarily unavailable,
   // keep the Firestore student so this purge remains retryable.
   if (!await readCleanupCandidate(docSnap.ref, current => expiredPendingReason(current, now) === "purge_due")) return { skipped: "protected_or_no_longer_eligible" };
@@ -417,17 +430,14 @@ async function deleteExpiredPendingStudent({ admin, db, docSnap, now = Date.now(
     throw new Error(sheet.message || "Google Sheet cleanup failed.");
   }
 
-  for (const docId of studentDocIds) {
-    const ref = db.collection("students").doc(docId);
-    const snap = await ref.get();
-    if (snap.exists) {
-      await db.recursiveDelete(ref);
-      summary.deleted += 1;
-      summary.collections.students = (summary.collections.students || 0) + 1;
-    }
-  }
+  // Recheck after the external sheet operation. Never recursively delete a
+  // second student document simply because an identifier happens to match.
+  if (!await readCleanupCandidate(docSnap.ref,current=>expiredPendingReason(current,now)==="purge_due") ||
+      await hasAmbiguousCleanupIdentity(db,studentId,studentDocIds,allValues))return {skipped:"protected_or_ambiguous_after_sheet"};
+  await db.recursiveDelete(docSnap.ref);
+  summary.deleted += 1;
+  summary.collections.students = 1;
 
-  await deleteMatchingCollectionDocs(db, "students", ["studentCode", "studentcode", "uid", "email"], allValues, summary);
   await deleteMatchingCollectionDocs(db, "submissions", ["studentCode", "studentcode", "studentId", "uid", "email", "studentEmail"], allValues, summary);
   await deleteMatchingCollectionDocs(db, "scores", ["studentCode", "studentcode", "studentId", "studentEmail", "email"], allValues, summary);
   await deleteMatchingCollectionDocs(db, "markingResults", ["studentCode", "studentcode", "studentId", "studentEmail", "email"], allValues, summary);
@@ -545,6 +555,7 @@ module.exports = {
   blockExpiredTrialStudent,
   syncTrialStatusToSheet,
   deleteExpiredPendingStudent,
+  hasAmbiguousCleanupIdentity,
   runExpiredPendingStudentCleanup,
   createExpiredPendingStudentCleanupJob,
 };

@@ -10,6 +10,10 @@ export const WORKER_TARGETS = {
   "functions/effectiveEnrollmentProfile.js": ["api","reconcileStudentEnrollmentProfile"],
   "functions/effectiveEnrollmentProfile.test.cjs": [],
   "functions/pendingStudentCleanup.js": ["cleanupExpiredPendingStudents"],
+  "functions/enrollmentCleanupProtection.js": ["cleanupExpiredPendingStudents"],
+  "functions/__tests__/enrollmentCleanupProtection.test.cjs": [],
+  "functions/examSubscriptionSheetSync.js": ["api","syncExamSubscriptionSheet"],
+  "functions/examSubscriptionSheetSync.test.cjs": [],
   // This change only adds owner/public lyric endpoints to the existing API.
   // Avoid redeploying unrelated Cloud Run workers for an editor feature.
   "functions/musicStudioLyrics.js": ["api"],
@@ -135,7 +139,7 @@ export function writeDeployPlan({ before, triggerBefore, head, full, outputPath,
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   if(process.env.FIREBASE_ENROLLMENT_SYNC_ONLY==="true"){
-    const plan={mode:"targeted",targets:["api","syncLevelEnrollmentSheet","reconcileStudentEnrollmentProfile"],reason:"Explicit enrollment configuration deployment"};
+    const plan={mode:"targeted",targets:["api","syncLevelEnrollmentSheet","reconcileStudentEnrollmentProfile","syncExamSubscriptionSheet"],reason:"Explicit enrollment configuration deployment"};
     fs.writeFileSync(process.env.FIREBASE_DEPLOY_PLAN||"/tmp/falowen-firebase-deploy-plan.json",JSON.stringify(plan,null,2));
     if(process.env.GITHUB_OUTPUT)fs.appendFileSync(process.env.GITHUB_OUTPUT,"mode=targeted\n");
     console.log(JSON.stringify(plan));

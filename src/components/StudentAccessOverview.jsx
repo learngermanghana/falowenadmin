@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { auth } from "../firebase.js";
-import { loadAccessSubscriptions } from "../services/studentsService.js";
+import { loadAccessSubscriptions, syncExamSubscriptionSheet } from "../services/studentsService.js";
 
 function dateMs(value) {
   if (!value) return NaN;
@@ -37,6 +37,9 @@ export default function StudentAccessOverview({student,students=[],onManage}) {
   const [state,setState]=useState({loading:true,rows:[]});
   const [filter,setFilter]=useState("all");
   const [attempt,setAttempt]=useState(0);
+  const [reference,setReference]=useState("");
+  const [syncResult,setSyncResult]=useState(null);
+  const [syncing,setSyncing]=useState(false);
   const id=student?.id||"";
   useEffect(()=>{
     if(!owner) return undefined;
@@ -53,6 +56,11 @@ export default function StudentAccessOverview({student,students=[],onManage}) {
       setState(prev=>({...prev,rows:[...prev.rows,...data.subscriptions.filter(row=>!prev.rows.some(old=>old.id===row.id))],next:data.nextCursor,loadingMore:false}));
     } catch(error){setState(prev=>({...prev,loadingMore:false,error:error.message}));}
   };
+  useEffect(()=>{setReference("");setSyncResult(null);},[id]);
+  const sync=async()=>{setSyncing(true);setSyncResult(null);try{
+    const result=await syncExamSubscriptionSheet(id,reference.trim());
+    setSyncResult({ok:true,message:"Verified exam term synchronized to the sheet."+(result.feeVerified&&result.paymentDateVerified?"":" Unverified historical fee/date fields left blank.")});
+  }catch(e){setSyncResult({ok:false,message:e.message});}finally{setSyncing(false);}};
   const courseRows=student?studentAccessRows(student):students.flatMap(s=>studentAccessRows(s).map(row=>({...row,student:s})));
   const shown=courseRows.filter(row=>filter==="all"||row.state===filter||(filter==="Expiring"&&dateMs(row.expiry)>Date.now()&&dateMs(row.expiry)<=Date.now()+7*86400000));
   const status=row=>row.status==="active" && Number(row.expiresAtMs)>Date.now()?"Active":row.status==="active"?"Expired":row.status||"Unknown";
@@ -74,6 +82,7 @@ export default function StudentAccessOverview({student,students=[],onManage}) {
       {state.rows.map(row=>{const linked=students.find(s=>s.uid===row.uid);return <div key={row.id} style={{border:"1px solid #dbe4ee",borderRadius:8,padding:10}}>{!student&&<strong>{linked?.name||"Unmatched student" } · </strong>}{row.level} · {row.scope==="trial"?"Exam trial":"Monthly exam"} · {status(row)} · Ends {fmt(row.expiresAtMs)}</div>;})}
       {state.next&&<button type="button" onClick={more} disabled={state.loadingMore}>{state.loadingMore?"Loading…":"Load next 50 subscriptions"}</button>}
       <button type="button" onClick={()=>setAttempt(x=>x+1)}>Refresh subscriptions</button>
+      {id&&<details><summary>Sync an existing exam payment to Google Sheets</summary><p>Use the verified Paystack reference. This only updates the sheet; it does not create payments or change access.</p><label>Payment reference<input value={reference} onChange={e=>setReference(e.target.value)} disabled={syncing}/></label><button type="button" disabled={syncing||!reference.trim()} onClick={sync}>{syncing?"Synchronizing…":"Sync verified exam payment"}</button>{syncResult&&<p role={syncResult.ok?"status":"alert"}>{syncResult.message}</p>}</details>}
     </>}
   </section>;
 }

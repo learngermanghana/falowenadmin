@@ -409,3 +409,10 @@ export async function loadAccessSubscriptions({studentId="",cursor=""}={}) {
   if (!response.ok || result.ok !== true || !Array.isArray(result.subscriptions)) throw new Error(result.error || "Subscription lookup unavailable. Verify API deployment.");
   return result;
 }
+
+export async function syncExamSubscriptionSheet(studentId,reference){
+ const response=await fetch("/api/students/"+encodeURIComponent(studentId)+"/exam-subscription-sync",{method:"POST",headers:{...await authHeaders(),"Content-Type":"application/json"},body:JSON.stringify({reference})});
+ const result=await response.json().catch(()=>({}));
+ if(!response.ok||result.ok!==true)throw Error(result.error||"Exam subscription synchronization unavailable.");
+ return result;
+}
