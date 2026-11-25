@@ -111,6 +111,7 @@ export default function AttendanceOverviewPage() {
   const [now, setNow] = useState(() => new Date());
   const [classFilter, setClassFilter] = useState("upcoming");
   const [languageFilter, setLanguageFilter] = useState("all");
+  const [diagnosticsClassId, setDiagnosticsClassId] = useState("");
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 60000);
@@ -190,11 +191,13 @@ export default function AttendanceOverviewPage() {
 
 
   function openClassesTab() {
+    setDiagnosticsClassId("");
     setActiveTab("classes");
     setSearchParams({ tab: "classes" }, { replace: true });
   }
 
   function openTracker(classId = selectedTrackerId) {
+    setDiagnosticsClassId("");
     const nextId = languageClasses.some((klass) => classRecordKey(klass) === classId)
       ? classId : classRecordKey(orderedActiveClasses[0]);
     if (nextId) setSelectedTrackerId(nextId);
@@ -293,10 +296,17 @@ export default function AttendanceOverviewPage() {
 
           {selectedTrackerClass ? (
             <>
-              <AttendanceCommunicationHealthPanel
-                classId={classRecordKey(selectedTrackerClass)}
-                className={selectedTrackerClass.name || selectedTrackerClass.className || selectedTrackerId}
-              />
+              <section style={{ margin: "12px 0" }}>
+                <button type="button" aria-expanded={diagnosticsClassId === classRecordKey(selectedTrackerClass)} onClick={() => setDiagnosticsClassId(current => current === classRecordKey(selectedTrackerClass) ? "" : classRecordKey(selectedTrackerClass))}>
+                  {diagnosticsClassId === classRecordKey(selectedTrackerClass) ? "Hide email delivery details" : "View email delivery details"}
+                </button>
+                {diagnosticsClassId === classRecordKey(selectedTrackerClass) && (
+                  <AttendanceCommunicationHealthPanel
+                    classId={classRecordKey(selectedTrackerClass)}
+                    className={selectedTrackerClass.name || selectedTrackerClass.className || selectedTrackerId}
+                  />
+                )}
+              </section>
 
               <ClassAttendanceTracker
                 classId={classRecordKey(selectedTrackerClass)}

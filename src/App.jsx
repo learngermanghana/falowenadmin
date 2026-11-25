@@ -4,7 +4,6 @@ import { Navigate, Routes, Route, Link, useLocation, useNavigate } from "react-r
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
-import { startVisiblePolling } from "./utils/visiblePolling.js";
 import "./App.css";
 import "./LiveClassesMobile.css";
 
@@ -81,50 +80,26 @@ function TopBar() {
   }, [menuOpen]);
   const [deploymentStatus, setDeploymentStatus] = useState(null);
 
-  useEffect(() => {
-    if (!user || !role) {
-      setDeploymentStatus(null);
-      return undefined;
+  const [checkingDeployment, setCheckingDeployment] = useState(false);
+  const [deploymentCheckError, setDeploymentCheckError] = useState("");
+  // A version badge is static build metadata; a network freshness check is
+  // useful only when an administrator explicitly requests it.
+  async function refreshDeploymentStatus() {
+    if (checkingDeployment || !user || role !== "admin") return;
+    setCheckingDeployment(true);
+    setDeploymentCheckError("");
+    try {
+      const response = await fetch("/api/deployment-status", {
+        headers: { accept: "application/json" },
+      });
+      if (!response.ok) throw new Error("Version check unavailable.");
+      setDeploymentStatus(await response.json());
+    } catch (error) {
+      setDeploymentCheckError(error.message || "Version check unavailable.");
+    } finally {
+      setCheckingDeployment(false);
     }
-
-    let active = true;
-    let stopPolling = null;
-
-    const refreshDeploymentStatus = async () => {
-      try {
-        const response = await fetch("/api/deployment-status", {
-          headers: { accept: "application/json" },
-        });
-        if (!response.ok) return;
-        const payload = await response.json();
-        if (active) setDeploymentStatus(payload);
-      } catch {
-        // Build badge remains usable when the freshness endpoint is unavailable.
-      }
-    };
-
-    let idleId = null;
-    let startupTimerId = null;
-
-    const startPolling = () => {
-      if (active) stopPolling = startVisiblePolling(refreshDeploymentStatus, 5 * 60 * 1000);
-    };
-
-    // Deployment freshness is useful, but it must not compete with the first
-    // route chunk and its data on slower mobile connections.
-    if ("requestIdleCallback" in window) {
-      idleId = window.requestIdleCallback(startPolling, { timeout: 2500 });
-    } else {
-      startupTimerId = window.setTimeout(startPolling, 1200);
-    }
-
-    return () => {
-      active = false;
-      if (idleId != null && "cancelIdleCallback" in window) window.cancelIdleCallback(idleId);
-      if (startupTimerId != null) window.clearTimeout(startupTimerId);
-      stopPolling?.();
-    };
-  }, [user, role]);
+  }
 
   if (!user || !role || location.pathname === "/checkin/display") return null;
 
@@ -146,13 +121,15 @@ function TopBar() {
           <Link to={isStaff ? staffHomePath(staffPages, staffLanguages) : "/"} className="topbar-brand" onClick={() => setMenuOpen(false)}>
             Falowen Dashboard
           </Link>
-          <span
+          <button type="button" onClick={refreshDeploymentStatus} disabled={checkingDeployment || role !== "admin"}
             className="topbar-build-badge"
-            title={`Falowen Admin build ${ADMIN_BUILD_SHA} · ${ADMIN_BUILD_ENV}`}
+            title={`Falowen Admin build ${ADMIN_BUILD_SHA} · ${ADMIN_BUILD_ENV} · Click to check deployment`}
             aria-label={`Falowen Admin build ${ADMIN_BUILD_LABEL}`}
           >
-            Admin · {ADMIN_BUILD_LABEL}
-          </span>
+            Admin · {ADMIN_BUILD_LABEL}{checkingDeployment ? " · Checking…" : ""}
+          </button>
+          {deploymentCheckError && role === "admin" ? <span role="status">{deploymentCheckError}</span> : null}
+          {deploymentStatus?.status === "current" && role === "admin" ? <span role="status">Production up to date</span> : null}
           {deploymentStatus?.status === "behind" || deploymentStatus?.status === "diverged" ? (
             <span
               className="topbar-deployment-warning"
