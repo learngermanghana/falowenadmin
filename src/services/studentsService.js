@@ -288,6 +288,7 @@ export async function transferStudentClass(
     effectiveDate,
     reason = "",
     enrollmentDisposition,
+    correctedLevel,
   } = {},
   {
     fetchImpl = globalThis.fetch,
@@ -296,7 +297,7 @@ export async function transferStudentClass(
 ) {
   const normalizedId = normalize(studentId);
   if (!normalizedId) throw new Error("Student ID is required");
-  if (!normalize(targetClassRecordId)) throw new Error("Select the new class");
+  if (!normalize(targetClassRecordId) && enrollmentDisposition !== "correct_existing") throw new Error("Select the new class");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(normalize(effectiveDate))) throw new Error("Choose a valid effective date");
   if (typeof fetchImpl !== "function") throw new Error("Student transfer transport is unavailable");
 
@@ -309,6 +310,7 @@ export async function transferStudentClass(
       effectiveDate: normalize(effectiveDate),
       reason: normalize(reason),
       ...(enrollmentDisposition?{enrollmentDisposition:normalize(enrollmentDisposition)}:{}),
+      ...(correctedLevel?{correctedLevel:normalize(correctedLevel)}:{}),
     }),
   });
   const responseText = await response.text();

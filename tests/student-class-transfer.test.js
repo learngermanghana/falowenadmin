@@ -105,7 +105,7 @@ function buildTransferHarness(options = {}) {
         },
       };
     },
-    async runTransaction(callback){const batch=this.batch();await callback({...batch,get:async ref=>ref.path?.endsWith("/levelEnrollments")?{docs:[]}:ref.get()});await batch.commit();},
+    async runTransaction(callback){const batch=this.batch();await callback({...batch,get:async ref=>ref.path?.endsWith("/levelEnrollments")?{docs:(options.enrollments||[]).map(row=>({id:row.id,data:()=>row}))}:ref.get()});await batch.commit();},
     batch() {
       return {
         update(ref, payload) {
@@ -139,7 +139,7 @@ function buildTransferHarness(options = {}) {
     app,
     db,
     admin,
-    requireAuth: async () => ({ uid: "admin-1", email: "staff@falowen.app" }),
+    requireAuth: async () => options.user || ({ uid: "admin-1", email: "staff@falowen.app" }),
   });
 
   return { routes, db, batchWrites, touchedCollections };
@@ -293,4 +293,28 @@ test("secondary transfer changes only nested placement and preserves root class"
  assert.equal(patch["coursePlacements.swahili.className"],"New Kiswahili");
  assert.equal(res.body.student.coursePlacements.swahili.contractEnd,"2027-04-01");
  assert.equal(res.body.transfer.program,"swahili");
+});
+
+const correctionOwner={uid:"owner",email:"moxflex@gmail.com",email_verified:true};
+test("owner corrects legacy level in place without creating enrollment or changing payment",async()=>{
+ const {routes,batchWrites}=buildTransferHarness({user:correctionOwner,student:{paid:3000,contractEnd:"2027-04-01"}});
+ const res=responseStub();
+ await routes.post.get("/students/:studentId/transfer-class")({params:{studentId:"student-1"},body:{enrollmentDisposition:"correct_existing",correctedLevel:"B1",effectiveDate:"2026-09-23"}},res);
+ assert.equal(res.statusCode,200);
+ const patch=batchWrites.find(row=>row.type==="update").payload;
+ assert.equal(patch.level,"B1");assert.equal(patch.levelId,"B1");assert.equal(patch.className,"");assert.equal(patch.syncedToSheets,false);
+ assert.equal(patch.paid,undefined);assert.equal(patch.contractEnd,undefined);
+ assert.equal(batchWrites.some(row=>row.ref?.path.includes("/levelEnrollments/")),false);
+});
+test("correction rejects staff and protects managed records",async()=>{
+ for(const [options,status] of [[{},403],[{user:correctionOwner,enrollments:[{id:"german-A1",program:"german",level:"A1"}]},409]]){
+  const {routes,batchWrites}=buildTransferHarness(options);const res=responseStub();
+  await routes.post.get("/students/:studentId/transfer-class")({params:{studentId:"student-1"},body:{enrollmentDisposition:"correct_existing",correctedLevel:"B1",effectiveDate:"2026-09-23"}},res);
+  assert.equal(res.statusCode,status);assert.equal(batchWrites.length,0);
+ }
+});
+test("owner correction rejects a class belonging to another level",async()=>{
+ const {routes,batchWrites}=buildTransferHarness({user:correctionOwner});const res=responseStub();
+ await routes.post.get("/students/:studentId/transfer-class")({params:{studentId:"student-1"},body:{enrollmentDisposition:"correct_existing",correctedLevel:"B1",targetClassRecordId:"new-class",effectiveDate:"2026-09-23"}},res);
+ assert.equal(res.statusCode,400);assert.equal(batchWrites.length,0);
 });

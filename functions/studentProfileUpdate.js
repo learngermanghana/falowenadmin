@@ -111,7 +111,7 @@ function normalizeClassTransferRequest(body = {}) {
   );
   const effectiveDate = cleanStudentId(body.effectiveDate || body.transferDate || todayIso());
   const reason = cleanStudentId(body.reason || body.note || "Class switch");
-  if (!targetClassRecordId) {
+  if (!targetClassRecordId && body.enrollmentDisposition !== "correct_existing") {
     const error = new Error("Select the class the student is moving to");
     error.statusCode = 400;
     throw error;
@@ -535,29 +535,34 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
       const studentId = cleanStudentId(req.params?.studentId);
       if (!studentId) return res.status(400).json({ ok: false, error: "Student ID is required" });
 
+      const correcting = req.body?.enrollmentDisposition === "correct_existing";
+      const correctedLevel = String(req.body?.correctedLevel || "").trim().toUpperCase();
+      if (correcting && (user.email_verified !== true || normalizeEmail(user.email) !== "moxflex@gmail.com")) return res.status(403).json({ok:false,error:"Verified owner access required for level corrections"});
+      if (correcting && !/^(A1|A2|B1|B2|C1|C2)$/.test(correctedLevel)) return res.status(400).json({ok:false,error:"Choose a valid level"});
       const { targetClassRecordId, effectiveDate, reason } = normalizeClassTransferRequest(req.body || {});
       const studentRef = db.collection("students").doc(studentId);
-      const targetRef = db.collection("classes").doc(targetClassRecordId);
-      const [studentSnap, targetSnap] = await Promise.all([studentRef.get(), targetRef.get()]);
+      const targetRef = targetClassRecordId ? db.collection("classes").doc(targetClassRecordId) : null;
+      const [studentSnap, targetSnap] = await Promise.all([studentRef.get(), targetRef ? targetRef.get() : Promise.resolve(null)]);
       if (!studentSnap.exists) return res.status(404).json({ ok: false, error: "Student not found" });
-      if (!targetSnap.exists) return res.status(404).json({ ok: false, error: "Target class not found" });
+      if (targetRef && !targetSnap?.exists) return res.status(404).json({ ok: false, error: "Target class not found" });
 
       const student = { id: studentSnap.id, ...studentSnap.data() };
       const primary = String(student.program || "german").toLowerCase();
       const program = String(req.body?.program || primary).toLowerCase();
       const secondary = program !== primary;
       if (!["german","swahili"].includes(program) || (secondary && student.secondaryProgram !== program)) return res.status(400).json({ok:false,error:"Student is not enrolled in this language"});
-      const targetData = targetSnap.data() || {};
+      const targetData = targetSnap?.data() || {};
       const language = String(targetData.language || targetData.program || "german").toLowerCase().replace("kiswahili","swahili");
-      if (language !== program) return res.status(400).json({ok:false,error:"Select a class in the same language"});
+      if (targetRef && language !== program) return res.status(400).json({ok:false,error:"Select a class in the same language"});
       if (["archived","graduated","inactive"].includes(String(targetData.status || "").toLowerCase())) return res.status(400).json({ok:false,error:"Target class is inactive"});
       const placement = secondary ? student.coursePlacements?.[program] || {} : student;
       const previous = studentClassIdentity(placement);
-      const target = targetClassIdentity(targetSnap, targetClassRecordId);
-      if (
+      const target = targetRef ? targetClassIdentity(targetSnap, targetClassRecordId) : {classRecordId:"",classId:"",className:"",level:correctedLevel};
+      if (correcting && target.level !== correctedLevel) return res.status(400).json({ok:false,error:"The class must match the selected level"});
+      if (!correcting && (
         (previous.classRecordId && previous.classRecordId === target.classRecordId)
         || (!previous.classRecordId && previous.className && previous.className === target.className)
-      ) {
+      )) {
         return res.status(400).json({ ok: false, error: "Student is already in that class" });
       }
 
@@ -596,6 +601,7 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
         admin,
       });
       studentPatch.updatedBy = actor;
+      if (correcting) studentPatch.syncedToSheets = false;
 
       await db.runTransaction(async batch => {
       const latest=await batch.get(studentRef);
@@ -606,20 +612,25 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
       if(current.level!==previous.level||current.className!==previous.className||current.classRecordId!==previous.classRecordId)throw Object.assign(new Error("Student class changed. Refresh and try again."),{statusCode:409});
       const enrollmentCollection=studentRef.collection("levelEnrollments");
       const enrollmentSnap=await batch.get(enrollmentCollection);
-      const changes=planEnrollmentTransfer({program,previous,target,rows:enrollmentSnap.docs.map(d=>({...d.data(),id:d.id})),studentId,studentCode:transferRecord.studentCode||studentId,disposition:req.body?.enrollmentDisposition});
+      const rows=enrollmentSnap.docs.map(d=>({...d.data(),id:d.id}));
+      if (correcting && (rows.some(r=>r.program===program || r.id.startsWith(program+"-")) || latestPlacement.effectiveEnrollmentId)) throw Object.assign(new Error("This course has independent level records. A managed enrollment cannot be relabelled safely until level-keyed access and payment references support it."),{statusCode:409});
+      if (correcting && (latestData.institutionId || latestData.accountType==="exam_only" || latestData.upgradeTargetLevel)) throw Object.assign(new Error("Review institutional, exam-only or pending upgrade access before changing this level."),{statusCode:409});
+      const changes=correcting?[]:planEnrollmentTransfer({program,previous,target,rows,studentId,studentCode:transferRecord.studentCode||studentId,disposition:req.body?.enrollmentDisposition});
       for(const change of changes){const ref=enrollmentCollection.doc(change.id);const stamp=admin.firestore.FieldValue.serverTimestamp();if(change.create)batch.set(ref,{...change.patch,createdAt:stamp,createdBy:user.uid});else batch.update(ref,{...change.patch,updatedAt:stamp});}
       if (secondary) {
-        const nested = Object.fromEntries(Object.entries(studentPatch).filter(([key])=> !["updatedAt","updatedBy"].includes(key)).map(([key,value])=>["coursePlacements."+program+"."+key,value]));
-        batch.update(studentRef,{...nested,updatedAt:studentPatch.updatedAt,updatedBy:actor});
+        const nested = Object.fromEntries(Object.entries(studentPatch).filter(([key])=> !["updatedAt","updatedBy","syncedToSheets"].includes(key)).map(([key,value])=>["coursePlacements."+program+"."+key,value]));
+        batch.update(studentRef,{...nested,updatedAt:studentPatch.updatedAt,updatedBy:actor,...(correcting?{syncedToSheets:false}:{})});
       } else batch.update(studentRef, studentPatch);
       batch.set(transferRef, transferRecord);
       batch.set(db.collection("auditLogs").doc(), {
-        type: "student.class_transferred",
+        type: correcting ? "student.existing_level_corrected" : "student.class_transferred",
         program,
         studentId,
         studentCode: transferRecord.studentCode,
         fromClassId: transferSummary.fromClassId,
         fromClassName: transferSummary.fromClassName,
+        fromLevel: previous.level,
+        toLevel: target.level,
         toClassId: transferSummary.toClassId,
         toClassName: transferSummary.toClassName,
         effectiveDate,
@@ -638,6 +649,7 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
           classRecordId: target.classRecordId,
           assignedClassId: target.classRecordId,
           className: target.className,
+          class: target.className, group: target.className, groupName: target.className, groupId: target.classRecordId, cohort: target.className, cohortName: target.className, cohortId: target.classRecordId,
           level: target.level || previous.level,
           levelId: target.level || previous.level,
           classTransferEffectiveDate: effectiveDate,
