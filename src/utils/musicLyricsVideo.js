@@ -131,7 +131,7 @@ export function resolveMusicVideoGenre({title = "", genre = ""} = {}) {
 // Put song, learning level and specific sound in the title, not an invented
 // genre derived from the language level or an unrelated lesson.
 export function musicVideoSocialCopy({
-  title = "", level = "", day = "", genre = "", topic = "",
+  title = "", level = "", day = "", genre = "", topic = "", language = "German",
 } = {}) {
   const songTitle = String(title || "").trim().replace(/\s+/g, " ") || "Falowen Music";
   const cleanLevel = /^(A1|A2|B1|B2|C1|C2)$/.test(String(level).toUpperCase())
@@ -140,7 +140,7 @@ export function musicVideoSocialCopy({
   const cleanDay = day !== "" && day != null && Number.isInteger(numberDay) &&
     numberDay >= 1 && numberDay <= 28 ? numberDay : null;
   const genreName = resolveMusicVideoGenre({title: songTitle, genre});
-  const subject = cleanLevel ? "German " + cleanLevel + " Song" : "German Lyrics Song";
+  const subject = cleanLevel ? language + " " + cleanLevel + " Song" : language + " Lyrics Song";
   const titleGenre = genreName.slice(0, 38).trim();
   const suffix = " | " + subject + (titleGenre ? " – " + titleGenre : "") + " | Falowen Music";
   // YouTube title max: 100 characters. Preserve the branding and genre
@@ -151,23 +151,23 @@ export function musicVideoSocialCopy({
   const focus = validTopic && !/^(day\s*\d+\s*[·:–-]\s*)?(german learning|learning story|lesson song)$/i.test(validTopic)
     && !/^day\s*\d+\s*[·:–-]\s*german learning$/i.test(validTopic)
     ? validTopic : "";
-  const teaSong = isTeaSong(songTitle);
+  const teaSong = language === "German" && isTeaSong(songTitle);
   const opening = teaSong
     ? "☕ Two teas, four euros — learn everyday German with a relaxed café song!"
-    : "🎶 Learn German through music with \"" + songTitle + "\" by Falowen Music.";
+    : "🎶 Learn " + language + " through music with \"" + songTitle + "\" by Falowen Music.";
   const sound = genreName
     ? (teaSong && /palm.wine/i.test(genreName)
       ? "This German-language song blends West African palm-wine-inspired guitar melodies with a warm Afrobeat groove."
-      : "Musical style: " + genreName + ". German lyrics meet an engaging rhythm for listening and sing-along practice.")
-    : "Sing along with the German lyrics and enjoy the music.";
+      : "Musical style: " + genreName + ". " + language + " lyrics meet an engaging rhythm for listening and sing-along practice.")
+    : "Sing along with the " + language + " lyrics and enjoy the music.";
   const learning = teaSong
     ? "🎯 Practise: ordering tea, everyday prices, numbers and polite café expressions."
-    : focus ? "🎯 German practice topic: " + focus + "."
-      : "🎯 Practise German listening, vocabulary and pronunciation with the song.";
+    : focus ? "🎯 " + language + " practice topic: " + focus + "."
+      : "🎯 Practise " + language + " listening, vocabulary and pronunciation with the song.";
   const lesson = cleanLevel ? "Level: " + cleanLevel + (cleanDay ? " · Day " + cleanDay : "") : "";
   const hashtags = [
-    "#FalowenMusic", "#LearnGerman",
-    cleanLevel ? "#German" + cleanLevel : "#GermanMusic",
+    "#FalowenMusic", "#Learn" + language,
+    cleanLevel ? "#" + language + cleanLevel : "#" + language + "Music",
     /afrobeat/i.test(genreName) ? "#Afrobeat" : "",
     /palm.wine/i.test(genreName) ? "#PalmWineMusic" : "",
     /highlife/i.test(genreName) ? "#Highlife" : "",
@@ -177,12 +177,12 @@ export function musicVideoSocialCopy({
     opening,
     sound,
     learning,
-    "📝 Follow the on-screen German lyrics. English translations are available on supported tracks.",
+    "📝 Follow the on-screen " + language + " lyrics. English translations are available on supported tracks.",
     genreName ? "Genre: " + genreName : "",
     lesson,
     "🎧 Discover more Falowen Music: https://music.falowen.app/",
-    "📚 Learn German with Falowen: https://www.falowen.app/",
-    "Share your favourite German phrase from this song in the comments!",
+    "📚 Learn " + language + " with Falowen: https://www.falowen.app/",
+    "Share your favourite " + language + " phrase from this song in the comments!",
     hashtags,
   ].filter(Boolean).join("\n\n");
   return {title: postingTitle, description, genre: genreName};

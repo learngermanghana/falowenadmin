@@ -73,6 +73,7 @@ export function isMusicKeyForLanguage(key, language) {
   return false;
 }
 export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", title = "Falowen Music", level = "", day = "", onOverwriteLyrics = null, savingLyrics = false, loadingLyrics = false, lyricsSaveNotice = "", assignmentKey = "", active = true, swahili = false }) {
+  const lyricLanguage = swahili ? "Swahili" : "German";
   const assignedLanguage = swahili ? "swahili" : "german";
   const allowedMusicKey = key => isMusicKeyForLanguage(key, assignedLanguage);
   const [file,setFile] = useState(null);
@@ -161,8 +162,8 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
   },[englishStorageKey,lyricText,publishedMetadata,publishedTrack?.objectKey,assignmentKey]);
   const postingDefaults=useMemo(()=>musicVideoSocialCopy({
     title:videoTitle,level:videoLevel,day:videoDay,genre:selectedPostingGenre,
-    topic:publishedTrack?.topic || "",
-  }),[videoTitle,videoLevel,videoDay,selectedPostingGenre,publishedTrack?.topic]);
+    topic:publishedTrack?.topic || "", language:lyricLanguage,
+  }),[videoTitle,videoLevel,videoDay,selectedPostingGenre,publishedTrack?.topic,lyricLanguage]);
   useEffect(()=>{
     // A new recording or deliberate genre edit regenerates the suggested copy.
     // Typing in the title/description itself never replaces a manual wording edit.
@@ -257,11 +258,27 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       setCues(saved?.lyrics===lyricText ? validateLyricCues(saved.cues,lines) : []);
     } catch { setCues([]); }
   },[timingKey,lyricText,lines,publishedTrack?.objectKey,file,recordingFingerprint]);
+  function selectPublishedTrack(track) {
+    if (track?.objectKey === publishedTrack?.objectKey) return;
+    setPublishedTrack(track);
+    setFile(null);
+    setDuration(0);
+    setStarts([]);
+    setCues([]);
+    setTimingReview(false);
+    setRecordingFingerprint("");
+    setObjectKey(track?.objectKey || "");
+    setError("");
+  }
   useEffect(()=>{
     if (!active || catalogRequested) return;
+    if (swahili) {
+      const track = SWAHILI_MUSIC_TRACKS.find(row => row.level === level && row.day === Number(day));
+      if (track) selectPublishedTrack(track);
+    }
     setCatalogRequested(true);
     loadTracks();
-  },[active,catalogRequested]);
+  },[active,catalogRequested,swahili,level,day]);
   useEffect(()=>{
     const key=publishedTrack?.objectKey;
     setPublishedMetadata(null);
@@ -314,7 +331,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       const videoEdits=matchesPublished ? validateLyricCues(savedVideo.cues,videoLyricLines(selectedLyrics)) : [];
       const restored=videoEdits.length ? videoEdits : localComplete ? local : published?.cues || local;
       // Only hydrate draft timing when the exact published MP3 bytes match a teacher recording.
-      const draftReference=recordingReferences
+      const draftReference=!swahili && recordingReferences
         .find(x=>x.objectKey===key || (!x.objectKey && x.level===publishedTrack?.level && Number(x.day)===Number(publishedTrack?.day)));
       // Day 22 replaced a previously published short song. Check the new MP3
       // even when an old sidecar is present, so stale lyrics/cues cannot win.
@@ -559,7 +576,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     ?videoRecorderFormat(mime=>MediaRecorder.isTypeSupported(mime)):null;
   return <section className="music-card" aria-label="Lyrics video studio" style={{marginTop:18,padding:18,display:"grid",gap:14}}>
     <div><h2 style={{margin:"0 0 6px"}}>Lyrics Video Studio</h2>
-      <p style={{margin:0}}>Choose a published recording to load its saved lyrics and verified timing automatically, then preview and export three lyric lines per screen. New tracks can still be marked manually. No extra AI generation or cloud rendering.</p>
+      <p style={{margin:0}}>Choose a published recording to load its saved lyrics and available timing automatically, then preview and export three lyric lines per screen. New tracks can still be marked manually. No extra AI generation or cloud rendering.</p>
     </div>
     <div>
       <button type="button" disabled={exporting||loadingTracks} onClick={loadTracks}>{loadingTracks?"Loading songs…":"Load available Falowen songs"}</button>
@@ -567,8 +584,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       {catalogLoaded && <p role="status">{tracks.length ? tracks.length+" published songs loaded. Choose a recording below to load its lyrics and timing." : "No published songs are available. Retry loading the catalog."}</p>}
       {!!tracks.length && <label>Published recording <select disabled={exporting} value={publishedTrack?.objectKey||""} onChange={event=>{
         const track=tracks.find(row=>row.objectKey===event.target.value)||null;
-        setPublishedTrack(track);setFile(null);setDuration(0);setStarts([]);setCues([]);setTimingReview(false);setRecordingFingerprint("");
-        setObjectKey(track?.objectKey||"");setError("");
+        selectPublishedTrack(track);
       }}><option value="">Choose a recording</option>{tracks.map(track=><option key={track.objectKey} value={track.objectKey}>{track.level} · Day {track.day} · {track.title}</option>)}</select></label>}
     </div>
     <label style={{display:"grid",gap:5,maxWidth:540,fontWeight:700}}>Audio source
@@ -587,11 +603,11 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     <section aria-label="English subtitles" style={{display:"grid",gap:7,border:"1px solid #b5d7ba",borderRadius:12,padding:12}}>
       <label style={{display:"flex",gap:8,alignItems:"center",fontWeight:700}}>
         <input type="checkbox" checked={showEnglish} disabled={exporting} onChange={event=>setShowEnglish(event.target.checked)}/>
-        Show English translation below the highlighted German line
+        Show English translation below the highlighted {lyricLanguage} line
       </label>
-      <label style={{display:"grid",gap:5,fontWeight:600,fontSize:13}}>English translation · one line for each German sung line ({lines.length} lines)
+      <label style={{display:"grid",gap:5,fontWeight:600,fontSize:13}}>English translation · one line for each {lyricLanguage} sung line ({lines.length} lines)
         <textarea rows={5} style={{...fieldStyle,maxWidth:"100%",fontFamily:"inherit",fontSize:13}}
-          disabled={exporting} value={englishText} placeholder="Enter one English translation per German sung line, without verse/chorus headings."
+          disabled={exporting} value={englishText} placeholder={`Enter one English translation per ${lyricLanguage} sung line, without verse/chorus headings.`}
           onChange={event=>{
             const next=event.target.value;
             setEnglishText(next);
@@ -600,8 +616,8 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
       </label>
       <small role="status" style={{color:englishLines.length===lines.length?"#24613a":"#715826"}}>
         {englishLines.length===lines.length
-          ? "English lines match this song. They will appear under the active German line when Show English is checked."
-          : "No complete matching English translation for this recording. You can enter or paste one translation for each German line. No AI or additional cloud cost."}
+          ? `English lines match this song. They will appear under the active ${lyricLanguage} line when Show English is checked.`
+          : `No complete matching English translation for this recording. You can enter or paste one translation for each ${lyricLanguage} line.`}
       </small>
       {publishedMetadata?.englishTranslation?.source==="course-draft" &&
         publishedVideoEnglish(publishedMetadata,publishedTrack?.objectKey,lyricText) &&
@@ -670,7 +686,7 @@ export default function MusicLyricsVideoStudio({ generated = null, lyrics = "", 
     {!exporting && <SongTimingEditor song={{lyrics:lyricText,objectKey:(allowedMusicKey(objectKey) ? audioFilenameObjectKey(objectKey) : "")}} audio={audioRef} cues={cues} onSave={saveCues}/>}
     {timingReview && completeCues && <div role="group" style={{border:"1px solid #e0c88b",padding:12,borderRadius:12,display:"grid",gap:8}}>
       <strong>Time marks still require listening review</strong>
-      <p style={{margin:0,fontSize:13}}>Open the teacher timing editor above, play this uploaded MP3, adjust each sung line and confirm only after you have checked the whole recording. The published R2 timing file stays blocked until then.</p>
+      <p style={{margin:0,fontSize:13}}>Open the teacher timing editor above, play this recording, adjust each sung line and confirm only after you have checked the whole recording. The published R2 timing file stays blocked until then.</p>
       <button type="button" disabled={exporting} onClick={()=>{
         setTimingReview(false);
         setTimingStatus("local");

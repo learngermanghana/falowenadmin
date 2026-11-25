@@ -1,11 +1,19 @@
 import { useEffect, useState } from "react";
+import { SWAHILI_MUSIC_TRACKS } from "../data/swahiliMusicTracks.js";
 import MusicLyricsVideoStudio from "./MusicLyricsVideoStudio.jsx";
 import { SWAHILI_SONG_DRAFTS, getSwahiliSongDraft } from "../data/swahiliSongDrafts.js";
 
 // Curriculum text is editorial material, not a verified recording or R2 sidecar.
 const LOCAL_KEY = "falowen-swahili-song-draft-edits:v1";
 function readEdits() {
-  try { const value=JSON.parse(localStorage.getItem(LOCAL_KEY)||"{}"); return value && typeof value==="object" && !Array.isArray(value) ? value : {}; }
+  try {
+    const value = JSON.parse(localStorage.getItem(LOCAL_KEY) || "{}");
+    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+    for (const track of SWAHILI_MUSIC_TRACKS) {
+      if (typeof value[track.id] === "string" && !value[track.id].trim()) delete value[track.id];
+    }
+    return value;
+  }
   catch { return {}; }
 }
 const dayLabel = day => "Day " + String(day).padStart(2,"0");
@@ -15,10 +23,36 @@ export default function SwahiliSongDraftWorkspace({ active = true }) {
   const [edits,setEdits]=useState(readEdits);
   const [notice,setNotice]=useState("");
   const [workspace,setWorkspace]=useState("library");
+  const [published,setPublished]=useState(null);
   const songs=SWAHILI_SONG_DRAFTS.filter(song=>song.level===level);
   const selected=getSwahiliSongDraft(level,day) || songs[0];
   const id=selected?.id||"";
-  const lyrics=Object.prototype.hasOwnProperty.call(edits,id) ? edits[id] : selected?.lyrics||"";
+  const recording = SWAHILI_MUSIC_TRACKS.find(track => track.id === id);
+  const objectKey = recording?.objectKey;
+  const publishedLyrics = published?.objectKey === objectKey ? published?.lyrics : "";
+  const originalLyrics = publishedLyrics || selected?.lyrics || "";
+  const localLyrics = typeof edits[id] === "string" ? edits[id] : undefined;
+  const lyrics = localLyrics ?? originalLyrics;
+
+  useEffect(() => {
+    if (!active || workspace !== "library" || !objectKey) return;
+    const controller = new AbortController();
+    fetch("https://www.falowen.app/api/music-lyrics?key=" + encodeURIComponent(objectKey), {
+      cache: "no-cache",
+      signal: controller.signal,
+    }).then(response => {
+      if (!response.ok) throw Error("Published lyrics unavailable");
+      return response.json();
+    }).then(data => {
+      if (data?.objectKey !== objectKey || typeof data.lyrics !== "string" || !data.lyrics.trim()) {
+        throw Error("Published lyrics unavailable");
+      }
+      if (!controller.signal.aborted) setPublished(data);
+    }).catch(() => {
+      if (!controller.signal.aborted) setPublished({ objectKey, unavailable: true });
+    });
+    return () => controller.abort();
+  }, [active, workspace, objectKey]);
   const saveEdit=value=>{
     setEdits(previous=>{
       const next={...previous,[id]:value};
@@ -59,8 +93,11 @@ export default function SwahiliSongDraftWorkspace({ active = true }) {
       <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:10}}>
         <button type="button" onClick={async()=>{try{if(!navigator.clipboard?.writeText)throw Error("Clipboard unavailable");await navigator.clipboard.writeText(lyrics);setNotice("Lyrics copied.");}catch{setNotice("Copy was blocked; select and copy the lyrics manually.");}}}>Copy lyrics</button>
         <button type="button" onClick={download}>Download lyrics</button>
-        <button type="button" onClick={()=>saveEdit(selected.lyrics)}>Restore original draft</button>
+        <button type="button" onClick={()=>saveEdit(originalLyrics)}>Restore original lyrics</button>
       </div>
+      {objectKey && !originalLyrics && <p role="status">{published?.objectKey === objectKey && published.unavailable
+        ? "Published lyrics are unavailable. Open the video studio to retry."
+        : "Loading published lyrics…"}</p>}
       {notice&&<p role="status">{notice}</p>}
       <p><small>Draft changes are stored only in this browser. No music is generated or published automatically. Open “Load music & create lyrics video” to select a published recording or use an approved MP3, review timing and export.</small></p>
       <button type="button" onClick={()=>setWorkspace("video")}>Continue to music &amp; video studio</button>
