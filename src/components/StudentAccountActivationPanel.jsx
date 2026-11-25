@@ -42,8 +42,9 @@ export default function StudentAccountActivationPanel({ student, draft = {}, onS
   const unsavedProfileChanges = ["name", "email", "phone"].some((field) =>
     clean(draft[field]) !== clean(student[field]))
     || Object.keys(emergencyContactEditedFields(student, draft)).length > 0;
+  const selfRegistered = Boolean(student.uid && !student.accountProvisionedAt && !student.accountProvisionedBy && !student.activationEmailSentAt && (student.trialStartedAt || student.trialUsedAt || student.registrationSource === "self_signup"));
   const accountState = status?.state
-    || (student.uid ? student.activationEmailSentAt ? "invited" : "ready_to_invite" : "not_prepared");
+    || (selfRegistered ? "active" : student.uid ? student.activationEmailSentAt ? "invited" : "ready_to_invite" : "not_prepared");
 
   const check = async () => {
     setBusy("check");
@@ -173,9 +174,7 @@ export default function StudentAccountActivationPanel({ student, draft = {}, onS
       <div>
         <h3 style={{ margin: 0, fontSize: 16 }}>Login & activation</h3>
         <p style={{ margin: "6px 0 0", fontSize: 13, color: "#475569" }}>
-          First save the student profile. Check for an existing Firebase login before sending an invitation.
-          Firebase creates the UID and emails a secure link for the student to choose a password.
-          Never collect or email passwords.
+          {selfRegistered ? "This learner registered directly and can use the existing login. No account setup invitation is required." : "For staff-created accounts, check for an existing login before inviting the student to choose a password."}
         </p>
       </div>
       <div style={{ display: "grid", gap: 4, fontSize: 13 }}>
@@ -197,10 +196,10 @@ export default function StudentAccountActivationPanel({ student, draft = {}, onS
           disabled={Boolean(busy) || unsavedProfileChanges}>
           {busy === "link" ? "Linking..." : "Link existing Firebase account"}
         </button>}
-        <button type="button" onClick={send}
+        {!selfRegistered && <button type="button" onClick={send}
           disabled={Boolean(busy) || unsavedProfileChanges || !validEmail(savedEmail) || !savedName || accountState === "active" || accountState === "disabled"}>
           {busy === "send" ? "Sending..." : accountState === "invited" ? "Resend activation email" : "Send activation email"}
-        </button>
+        </button>}
         {orgFunded && ["invited", "active"].includes(accountState) && <button type="button" onClick={sendOrgNotice}
           disabled={Boolean(busy) || unsavedProfileChanges || !clean(student.className) || Number(student.paid || student.amountPaid || 0) <= 0}>
           {busy === "org-confirmation" ? "Sending confirmation…" : "Send organisation-paid confirmation"}

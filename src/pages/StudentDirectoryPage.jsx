@@ -1,3 +1,4 @@
+import { auth } from "../firebase.js";
 import { extendContractDate } from "../utils/contractExtension.js";
 import "./StudentDirectoryPage.css";
 import { STUDENT_DETAIL_TABS, nextStudentDetailTab } from "../utils/studentDetailTabs.js";
@@ -524,6 +525,23 @@ export default function StudentDirectoryPage() {
     () => filteredStudents.find((student) => student.id === selectedStudentId) || null,
     [filteredStudents, selectedStudentId],
   );
+
+  // Repair already-created enrollments once when the student detail is opened.
+  useEffect(() => {
+    if (!selectedStudentId) return;
+    let live = true;
+    (async () => {
+      try {
+        const token = await auth.currentUser?.getIdToken();
+        if (!token) return;
+        const response = await fetch("/api/students/"+encodeURIComponent(selectedStudentId)+"/level-enrollments/reconcile-profile", {method:"POST",headers:{Authorization:"Bearer "+token}});
+        const result = await response.json();
+        if (!response.ok || !result.ok) throw Error(result.error || "Enrollment reconciliation unavailable");
+        if (live && result.profile?.effectiveEnrollmentId) handleSupportStudentUpdated(selectedStudentId,result.profile);
+      } catch (err) { if (live) console.warn("Enrollment profile reconciliation failed",err.message); }
+    })();
+    return () => {live=false;};
+  }, [selectedStudentId]);
 
   useEffect(() => {
     if (selectedStudent && isHamburgCohortStudent(selectedStudent) && ["payments","payment-links","contracts","enrollments"].includes(detailTab)) {
@@ -1276,7 +1294,7 @@ export default function StudentDirectoryPage() {
                             {/* STUDENT_EMERGENCY_CONTACT_FIELD: Emergency contact stays in the staff-only Profile tab. */}
                             {tab.id === "profile" && <StudentAccountActivationPanel student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast} />}
                             {tab.id === "profile" && <StudentEmergencyContact student={selectedStudent} />}
-                            {tab.id === "payments" && !isHamburgCohortStudent(selectedStudent) && <StudentLevelEnrollments key={selectedStudent.id+":payments"} student={selectedStudent} pushToast={pushToast} classes={classes} mode="history" legacyHistory={hasLevels=><>{!hasLevels&&<div className="student-detail-fields">{renderEditableFields(tab.fields)}</div>}<StudentPaymentTools mode="history" legacyOnly readOnlyHistory student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast}/></>} />}
+                            {tab.id === "payments" && !isHamburgCohortStudent(selectedStudent) && <StudentLevelEnrollments key={selectedStudent.id+":payments"} student={selectedStudent} pushToast={pushToast} classes={classes} onStudentUpdated={handleSupportStudentUpdated} mode="history" legacyHistory={hasLevels=><>{!hasLevels&&<div className="student-detail-fields">{renderEditableFields(tab.fields)}</div>}<StudentPaymentTools mode="history" legacyOnly readOnlyHistory student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast}/></>} />}
                           </section>
                         ))}
 
@@ -1291,7 +1309,7 @@ export default function StudentDirectoryPage() {
                           {!isHamburgCohortStudent(selectedStudent) && <button type="button" onClick={()=>setDetailTab("enrollments")}>Manage enrollments</button>}
                         </section>}
                         {detailTab === "enrollments" && !isHamburgCohortStudent(selectedStudent) && <section className="student-detail-panel" role="tabpanel" id="student-panel-enrollments" aria-labelledby="student-tab-enrollments">
-                          <StudentLevelEnrollments student={selectedStudent} pushToast={pushToast} classes={classes} />
+                          <StudentLevelEnrollments student={selectedStudent} pushToast={pushToast} classes={classes} onStudentUpdated={handleSupportStudentUpdated} />
                         </section>}
                         {detailTab === "payment-links" && !isHamburgCohortStudent(selectedStudent) && <section className="student-detail-panel" role="tabpanel" id="student-panel-payment-links" aria-labelledby="student-tab-payment-links">
                           <StudentPaymentTools mode="links" student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast} />

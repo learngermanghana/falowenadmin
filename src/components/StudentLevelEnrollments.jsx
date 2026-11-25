@@ -30,14 +30,15 @@ async function request(id,body,suffix=""){
  if(!response.ok||!result.ok)throw new Error(result.error||"Enrollment API unavailable ("+response.status+")");
  return result;
 }
-export default function StudentLevelEnrollments({student,pushToast,classes=[],mode="all",legacyHistory=null}){
+export default function StudentLevelEnrollments({student,pushToast,classes=[],mode="all",legacyHistory=null,onStudentUpdated}){
  const [rows,setRows]=useState([]),[draft,setDraft]=useState(initial),[open,setOpen]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState("");
  const id=student.id;
+ const refreshProfile=async()=>{try{const r=await request(id,{},"/reconcile-profile");if(r.profile?.effectiveEnrollmentId)onStudentUpdated?.(id,r.profile);}catch(e){pushToast?.({type:"error",message:"Enrollment saved, but profile refresh failed: "+e.message});}};
  const [selected,setSelected]=useState(""),[payments,setPayments]=useState([]),[payment,setPayment]=useState({method:"momo",reference:"",amount:"",receivedDate:""}),[paymentBusy,setPaymentBusy]=useState(false),[paymentError,setPaymentError]=useState("");
  useEffect(()=>{let live=true;setPayments([]);setPaymentError("");if(!selected)return;setPaymentBusy(true);request(id,null,"/"+encodeURIComponent(selected)+"/payments").then(r=>{if(live)setPayments([...r.payments].sort((a,b)=>String(b.receivedDate||"").localeCompare(String(a.receivedDate||""))))}).catch(e=>{if(live)setPaymentError(e.message)}).finally(()=>{if(live)setPaymentBusy(false)});return()=>{live=false};},[id,selected]);
- const record=async()=>{setPaymentBusy(true);setPaymentError("");try{const r=await request(id,payment,"/"+encodeURIComponent(selected)+"/payments");setRows(old=>old.map(row=>row.id===selected?r.enrollment:row));setPayments(old=>[r.payment,...old]);setPayment({method:"momo",reference:"",amount:"",receivedDate:""});pushToast?.({type:"success",message:"Payment allocated to selected level"});}catch(e){setPaymentError(e.message);}finally{setPaymentBusy(false);}};
+ const record=async()=>{setPaymentBusy(true);setPaymentError("");try{const r=await request(id,payment,"/"+encodeURIComponent(selected)+"/payments");setRows(old=>old.map(row=>row.id===selected?r.enrollment:row));setPayments(old=>[r.payment,...old]);await refreshProfile();setPayment({method:"momo",reference:"",amount:"",receivedDate:""});pushToast?.({type:"success",message:"Payment allocated to selected level"});}catch(e){setPaymentError(e.message);}finally{setPaymentBusy(false);}};
  useEffect(()=>{let live=true;setRows([]);setSelected("");setContractId("");setError("");setOpen(false);setBusy(true);request(id).then(r=>{if(live)setRows(r.enrollments)}).catch(e=>{if(live)setError(e.message)}).finally(()=>{if(live)setBusy(false)});return()=>{live=false};},[id]);
- const save=async()=>{setBusy(true);try{const r=await request(id,draft);setRows(old=>[...old,r.enrollment]);setOpen(false);setDraft(initial);pushToast?.({type:"success",message:"Level enrollment created"});}catch(e){pushToast?.({type:"error",message:e.message});}finally{setBusy(false);}};
+ const save=async()=>{setBusy(true);try{const r=await request(id,draft);setRows(old=>[...old,r.enrollment]);await refreshProfile();setOpen(false);setDraft(initial);pushToast?.({type:"success",message:"Level enrollment created"});}catch(e){pushToast?.({type:"error",message:e.message});}finally{setBusy(false);}};
  const [checkout,setCheckout]=useState(null),[linkAmount,setLinkAmount]=useState("");
  useEffect(()=>{setCheckout(null);setLinkAmount("");},[selected]);
  const generate=async()=>{setPaymentBusy(true);setPaymentError("");try{
@@ -47,9 +48,9 @@ export default function StudentLevelEnrollments({student,pushToast,classes=[],mo
  }catch(e){setPaymentError(e.message);}finally{setPaymentBusy(false);}};
  const [legacyOpen,setLegacyOpen]=useState(false);
  const [contractId,setContractId]=useState(""),[contract,setContract]=useState({});
- const updateContract=async()=>{setBusy(true);try{const r=await request(id,contract,"/"+encodeURIComponent(contractId)+"/contract");setRows(old=>old.map(row=>row.id===contractId?r.enrollment:row));setContractId("");pushToast?.({type:"success",message:"Level details saved"});}catch(e){pushToast?.({type:"error",message:e.message});}finally{setBusy(false);}};
+ const updateContract=async()=>{setBusy(true);try{const r=await request(id,contract,"/"+encodeURIComponent(contractId)+"/contract");setRows(old=>old.map(row=>row.id===contractId?r.enrollment:row));await refreshProfile();setContractId("");pushToast?.({type:"success",message:"Level details saved"});}catch(e){pushToast?.({type:"error",message:e.message});}finally{setBusy(false);}};
  
- const sync=async(row)=>{setBusy(true);try{await request(id,{},"/"+encodeURIComponent(row.id)+"/sync-sheet");const r=await request(id);setRows(r.enrollments);pushToast?.({type:"success",message:"Enrollment sheet synchronized"});}catch(e){pushToast?.({type:"error",message:e.message});}finally{setBusy(false);}};
+ const sync=async(row)=>{setBusy(true);try{await request(id,{},"/"+encodeURIComponent(row.id)+"/sync-sheet");const r=await request(id);setRows(r.enrollments);await refreshProfile();pushToast?.({type:"success",message:"Enrollment sheet synchronized"});}catch(e){pushToast?.({type:"error",message:e.message});}finally{setBusy(false);}};
  const change=(key,value)=>setDraft(old=>({...old,[key]:value,...(["program","level"].includes(key)&&old[key]!==value?{className:""}:{})}));
  return <div style={{display:"grid",gap:12}}>
  <h3>{mode==="history"?"Payment progress by level":"Level enrollments"}</h3>
