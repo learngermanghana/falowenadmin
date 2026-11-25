@@ -289,3 +289,10 @@ New lyrics are authoring drafts and require new recordings before publication.
 
 To check all 56 topic/chapter mappings against a learner checkout, run
 `node scripts/checkAdvancedMusicCurriculum.mjs /path/to/falowenexamtrainer`.
+
+## Swahili A1 Day 12 classroom music
+
+The Day 12 Music slide opens the lyrics for the public recording *Angalia Kalenda*.
+The Falowen lyrics endpoint serves the same optional practice questions and
+answers to Admin, Falowen Music and the workbook. Classroom Teil 4 uses its
+existing authenticated dialogue recording.
