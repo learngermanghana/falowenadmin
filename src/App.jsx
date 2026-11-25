@@ -26,6 +26,7 @@ const AttendanceOverviewPage = lazy(() => import("./pages/AttendanceOverviewPage
 const AttendancePage = lazy(() => import("./pages/AttendancePage"));
 const CanonicalAttendancePage = lazy(() => import("./pages/CanonicalAttendancePage.jsx"));
 const CheckinPage = lazy(() => import("./pages/CheckinPage"));
+const ClassPresentationPage = lazy(() => import("./pages/ClassPresentationPage.jsx"));
 const CheckinDisplayPage = lazy(() => import("./pages/CheckinDisplayPage"));
 const CourseSchedulePage = lazy(() => import("./pages/CourseSchedulePage"));
 const PublicCourseSchedulePage = lazy(() => import("./pages/PublicCourseSchedulePage"));
@@ -263,13 +264,14 @@ function PublicVisitorGuideRedirect() {
 
 export default function App() {
   const location = useLocation();
-  const isFullscreenRoute = location.pathname === "/checkin/display";
+  const isStudentPresentation = location.pathname.startsWith("/class-presentation/");
+  const isFullscreenRoute = location.pathname === "/checkin/display" || isStudentPresentation;
   const { role } = useAuth();
   const showLeadNotification = location.pathname === "/" && role === "admin";
 
   return (
     <>
-      <TopBar />
+      {!isStudentPresentation && <TopBar />}
       <ToastViewport />
       {showLeadNotification ? <Suspense fallback={null}><LeadHomepageNotification /></Suspense> : null}
 
@@ -287,6 +289,7 @@ export default function App() {
           <Route path="/partners/:organisationId" element={<ProtectedRoute><PartnerDetailPage /></ProtectedRoute>} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/checkin" element={<CheckinPage />} />
+          <Route path="/class-presentation/:id" element={<ClassPresentationPage />} />
           <Route path="/checkin/display" element={<CheckinDisplayPage />} />
 
           <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />

@@ -1,12 +1,13 @@
 import {useState} from 'react';
 import PresentationFollowUpQuestions from './PresentationFollowUpQuestions.jsx';
 import './A2WorkbookPresentation.css';
+import A2LivePresentation from './A2LivePresentation.jsx';
 
-export default function A2WorkbookPresentation({stage}) {
+export default function A2WorkbookPresentation({stage,assignmentId}) {
  const task=stage.presentation;
  const [choice,setChoice]=useState(0);
  const selected=task.choices?.[choice]||task.choices?.[0];
- return <section className="presenter-workbook-presentation" aria-label="Workbook presentation">
+ return <A2LivePresentation task={task} choice={choice} assignmentId={assignmentId}><section className="presenter-workbook-presentation" aria-label="Workbook presentation">
   <header><span>{stage.kicker}</span><h1>{stage.title}</h1></header>
   {selected && <label className="presenter-presentation-choice">Workbook question
    <select value={choice} onChange={event=>setChoice(Number(event.target.value))}>
@@ -34,5 +35,5 @@ export default function A2WorkbookPresentation({stage}) {
   <p className="presenter-presentation-instruction">{task.instruction}</p>
   <PresentationFollowUpQuestions level="A2" day={task.day}/>
   <small>{selected?'Aus dem Workbook-Aufgabenpool · unbewertete Unterrichtsübung':'Workbook · Präsentationsübung zu Goethe A2 Teil 2'}</small>
- </section>;
+ </section></A2LivePresentation>;
 }

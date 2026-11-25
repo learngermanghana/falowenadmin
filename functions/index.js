@@ -2505,6 +2505,7 @@ registerDraftHistoryRoutes(app, { admin, db });
 registerMarkingHealthRoutes(app, { admin, db });
 registerSignupAccountLookup(app, { admin, db });
 registerStudentAccountActivationRoutes(app, { admin, db, runtimeConfig });
+require("./classPresentationApi.js").registerClassPresentationRoutes({app,db,admin});
 require("./referralProgramme.js").registerReferralRoutes(app, { admin, db, runtimeConfig });
 require("./partnershipAgreements.js").registerAgreementRoutes(app, { admin, db });
 require("./referralPayouts.js").registerPayoutRoutes(app, { admin, db });

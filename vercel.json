@@ -90,6 +90,10 @@
       "destination": "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/admin/timed-drafts"
     },
     {
+      "source": "/api/class-presentation/(.*)",
+      "destination": "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/class-presentation/$1"
+    },
+    {
       "source": "/api/class-participation/(.*)",
       "destination": "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/class-participation/$1"
     },
