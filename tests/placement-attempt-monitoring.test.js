@@ -114,3 +114,13 @@ test("German and Kiswahili tests have direct links and distinct attempt filterin
   assert.deepEqual(filter("swahili").map(row=>row.id),["s"]);
   assert.deepEqual(filter("german").map(row=>row.id),["g","legacy"]);
 });
+
+test("placement monitor distinguishes the revised forty-question Kiswahili test from legacy attempts",()=>{
+ const source=readFileSync(new URL("../src/pages/TimedAssignmentAttemptsPage.jsx",import.meta.url),"utf8");
+ assert.match(source,/attempt\.version==="a1-b2-v2"/);
+ assert.match(source,/const maximum=revisedKiswahili\?40:30/);
+ assert.ok(source.includes('score.total+"/"+maximum'));
+ assert.ok(source.includes('score.answered+"/"+maximum'));
+ assert.ok(source.includes("<b>B2:</b>"));
+ assert.match(source,/needsTeacher\?"Please contact Falowen admissions/);
+});
