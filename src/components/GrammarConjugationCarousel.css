@@ -1,0 +1,13 @@
+.presenter-grammar-teacher-example {background:#fff;border-left:3px solid #2563eb;padding:.55rem .75rem}
+.presenter-conjugation-carousel {margin-top:.8rem;padding:.8rem;border:1px solid #93c5fd;border-radius:12px;background:#f8fafc;color:#172554}
+.presenter-conjugation-header,.presenter-conjugation-navigation,.presenter-conjugation-jump {display:flex;align-items:center;gap:.65rem;flex-wrap:wrap}
+.presenter-conjugation-header {justify-content:space-between}
+.presenter-conjugation-header h2 {margin:0;font-size:clamp(1.3rem,2.4vw,2rem)}
+.presenter-conjugation-carousel button {border:1px solid #94a3b8;border-radius:8px;padding:.45rem .7rem;background:white;color:#172554;font:inherit;cursor:pointer}
+.presenter-conjugation-carousel button:disabled {opacity:.45;cursor:default}
+.presenter-conjugation-carousel button[aria-pressed=true] {background:#1d4ed8;color:white;border-color:#1d4ed8}
+.presenter-conjugation-forms {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;margin:.8rem 0;font-size:clamp(1.1rem,2vw,1.6rem)}
+.presenter-conjugation-forms>div {display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap;padding:.45rem .65rem;background:#fff;border-radius:8px}
+.presenter-conjugation-forms dd {margin:0;font-weight:800}
+.presenter-conjugation-example {margin:.5rem 0 .7rem!important}
+@media(max-width:480px){.presenter-conjugation-forms{grid-template-columns:1fr}}

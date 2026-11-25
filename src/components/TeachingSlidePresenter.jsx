@@ -1,3 +1,4 @@
+import GrammarConjugationCarousel from "./GrammarConjugationCarousel.jsx";
 import B1WorkbookPresentation from "./B1WorkbookPresentation.jsx";
 import A2WorkbookPresentation from "./A2WorkbookPresentation.jsx";
 import PresenterReadingTranslation from "./PresenterReadingTranslation.jsx";
@@ -1119,7 +1120,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit, next
                 <details className="presenter-grammar-teacher-note" key={stage.id}>
                   <summary>Erklärung &amp; Satzbau · {stage.grammarTeacherNote[0]}</summary>
                   <p>{stage.grammarTeacherNote[1]}</p>
-                  <blockquote>{stage.grammarTeacherNote[2]}</blockquote>
+                  <p className="presenter-grammar-teacher-example"><strong>Beispiel:</strong> {stage.grammarTeacherNote[2]}</p>
+                  {slide.assignmentId === "A2-4.10" && stage.id === "workbook-grammar-2" && <GrammarConjugationCarousel />}
                 </details>
               )}
               <div className="presenter-grammar-check-grid">
