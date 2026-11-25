@@ -58,6 +58,10 @@
       "destination": "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/attendance-confirmation-emails/retry-failed"
     },
     {
+      "source": "/api/attendance-confirmation-emails/send-due",
+      "destination": "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/attendance-confirmation-emails/send-due"
+    },
+    {
       "source": "/api/admin/organisations/:organisationId/students",
       "destination": "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/admin/organisations/:organisationId/students"
     },

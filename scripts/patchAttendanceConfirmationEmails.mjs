@@ -9,10 +9,10 @@ const workerPath = path.join(repoRoot, "functions", "attendanceConfirmationEmail
 const retryPath = path.join(repoRoot, "functions", "attendanceConfirmationRetry.js");
 
 let indexSource = fs.readFileSync(indexPath, "utf8");
-const requireLine = 'const { createAttendanceConfirmationEmailJob, sendAssignmentAttendanceCreditEmail } = require("./attendanceConfirmationEmails.js");';
+const requireLine = 'const { sendDueAttendanceForClass, sendAssignmentAttendanceCreditEmail } = require("./attendanceConfirmationEmails.js");';
 const legacyRetryRequireLine = 'const { retryFailedAttendanceDeliveries } = require("./attendanceConfirmationRetry.js");';
 const retryRequireLine = 'const { retryFailedAttendanceDeliveries, listAttendanceDeliveryHealth } = require("./attendanceConfirmationRetry.js");';
-const exportLine = "exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob({ admin, db, onSchedule, runtimeConfig });";
+const exportLine = 'app.post("/attendance-confirmation-emails/send-due"';
 const retryRouteMarker = 'app.post("/attendance-confirmation-emails/retry-failed"';
 const healthRouteMarker = 'app.get("/attendance-confirmation-emails/health"';
 const retryRouteBlock = `app.post("/attendance-confirmation-emails/retry-failed", async (req, res) => {
@@ -83,11 +83,7 @@ if (!indexSource.includes(healthRouteMarker)) {
   indexSource = indexSource.replace(anchor, `${healthRouteBlock}${anchor}`);
 }
 
-if (!indexSource.includes(exportLine)) {
-  const anchor = "exports.api = onRequest({";
-  if (!indexSource.includes(anchor)) throw new Error("Attendance confirmation patch could not find the API export anchor.");
-  indexSource = indexSource.replace(anchor, `${exportLine}\n\n${anchor}`);
-}
+if (!indexSource.includes(exportLine)) throw new Error("Manual attendance delivery route missing.");
 
 fs.writeFileSync(indexPath, indexSource);
 
@@ -133,17 +129,6 @@ if (!workerSource.includes(guardedSessionCollection)) {
   workerSource = workerSource.replace(anchor, guardedSessionCollection);
 }
 
-const oldRunBlock = `      if (!config.url) throw new Error("Set communication.announcement_webhook_url in FALOWEN_ADMIN_CLOUD_RUNTIME_CONFIG or ANNOUNCEMENT_WEBHOOK_URL for automatic attendance emails.");
-      const result = await processClass({ admin, db, klass, allStudents, config, now, fetchImpl });`;
-const newRunBlock = `      const classConfig = resolveClassWebhookConfig(klass, config);
-      if (!classConfig.url) throw new Error("Save this class under Communication → Attendance confirmation emails, or set communication.announcement_webhook_url in FALOWEN_ADMIN_CLOUD_RUNTIME_CONFIG.");
-      const result = await processClass({ admin, db, klass, allStudents, config: classConfig, now, fetchImpl });`;
-
-if (!workerSource.includes(newRunBlock)) {
-  if (!workerSource.includes(oldRunBlock)) throw new Error("Attendance confirmation patch could not find the worker configuration block.");
-  workerSource = workerSource.replace(oldRunBlock, newRunBlock);
-}
-
 if (!workerSource.includes("resolveClassWebhookConfig,")) {
   const anchor = "    resolveWebhookConfig,";
   if (!workerSource.includes(anchor)) throw new Error("Attendance confirmation patch could not find the worker test-export anchor.");
@@ -158,7 +143,7 @@ const retrySource = fs.readFileSync(retryPath, "utf8");
 const requiredChecks = [
   [patchedIndex.includes(requireLine), "Firebase attendance worker import is missing after patch."],
   [patchedIndex.includes(retryRequireLine), "Firebase attendance retry import is missing after patch."],
-  [patchedIndex.includes(exportLine), "Firebase attendance scheduler export is missing after patch."],
+  [patchedIndex.includes(exportLine), "Manual attendance delivery route is missing after patch."],
   [patchedIndex.includes(retryRouteMarker), "Protected failed-attendance retry route is missing after patch."],
   [patchedIndex.includes(healthRouteMarker), "Protected attendance delivery health route is missing after patch."],
   [patchedIndex.includes("listAttendanceDeliveryHealth"), "Attendance delivery health handler is missing after patch."],
@@ -169,7 +154,7 @@ const requiredChecks = [
   [patchedWorker.includes(classIdentityRequire), "Attendance worker is missing canonical class identity validation."],
   [patchedWorker.includes('if (!acceptClassNameSessionMatch(session, klass)) return;'), "Attendance worker still accepts conflicting session identity matches."],
   [!patchedWorker.includes('field === "className" && !acceptClassNameSessionMatch(session, klass)'), "Attendance worker still guards only className query results."],
-  [patchedWorker.includes('schedule: "*/30 * * * *"'), "The 30-minute attendance scheduler is missing after patch."],
+  [patchedWorker.includes("async function sendDueAttendanceForClass"), "Manual attendance delivery worker missing."],
   [retrySource.includes('status: "failed"'), "The failed-delivery retry worker is missing failure-state protection."],
   [retrySource.includes('status: "sent"'), "The failed-delivery retry worker is missing success-state updates."],
 ];
@@ -178,4 +163,4 @@ for (const [passed, message] of requiredChecks) {
   if (!passed) throw new Error(message);
 }
 
-console.log("Attendance confirmation email scheduler, class identity guard, protected delivery health route, and failed-delivery retry route verified.");
+console.log("Manual attendance confirmation email delivery, class identity guard, protected delivery health route, and failed-delivery retry route verified.");
