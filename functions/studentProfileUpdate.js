@@ -683,6 +683,20 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
     }
   });
 
+  // Owner-only, read verified records and upsert a sheet row. This does not grant access or alter tuition.
+  app.post("/students/:studentId/exam-subscription-sync", async (req,res)=>{
+    try {
+      const user=await requireAuth(req);
+      if(user?.email_verified!==true||normalizeEmail(user.email)!=="moxflex@gmail.com")return res.status(403).json({ok:false,error:"Verified owner access required."});
+      const studentId=cleanStudentId(req.params.studentId),reference=req.body?.reference;
+      const {validReference,syncExamPurchase}=require("./examSubscriptionSheetSync");
+      if(!studentId||studentId.includes("/")||!validReference(reference))return res.status(400).json({ok:false,error:"Select a valid student and payment reference."});
+      const result=await syncExamPurchase({db,reference,expectedStudentId:studentId});
+      if(result.status!=="synced")return res.status(result.status==="missing"?404:503).json({ok:false,error:result.status==="missing"?"Verified matching purchase and order not found.":"Exam sheet synchronization is not configured."});
+      return res.json({ok:true,...result});
+    }catch(error){console.warn("exam_subscription_sheet_sync_failed",error.message);return res.status(statusCodeForError(error)).json({ok:false,error:"Could not synchronize the verified exam purchase. Check its order, identity and sheet deployment."});}
+  });
+
   app.get("/students/:studentId/class-transfers", async (req, res) => {
     try {
       const user = await requireAuth(req);
