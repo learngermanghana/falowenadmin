@@ -10,7 +10,10 @@ function normalizeEnrollment(input={}){
  const contractStart=String(input.contractStart||""),contractEnd=String(input.contractEnd||""),paymentDeadline=String(input.paymentDeadline||"");
  for(const date of [contractStart,contractEnd,paymentDeadline]) if(date && (!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(Date.parse(date))||new Date(date).toISOString().slice(0,10)!==date)) fail("Invalid date");
  if(contractStart&&contractEnd&&contractEnd<contractStart) fail("Contract end precedes start");
- return {program,level,tuitionFee,contractStart,contractEnd,paymentDeadline,className:String(input.className||"").trim().slice(0,120)};
+ const accessType=String(input.accessType||"paid").toLowerCase();
+ if(!["paid","complimentary"].includes(accessType))fail("Select paid or complimentary access");
+ if(accessType==="complimentary"&&(tuitionFee!==0||!contractStart||!contractEnd))fail("Complimentary access requires zero tuition and explicit dates");
+ return {program,level,tuitionFee,contractStart,contractEnd,paymentDeadline,accessType,className:String(input.className||"").trim().slice(0,120)};
 }
 function moneyCents(value){
  const raw=String(value??"").trim();
@@ -64,17 +67,17 @@ function enrollmentStatus(value="planned"){
 }
 function contractPatch(record,input){
  const status=enrollmentStatus(input.status??record.status);
- const data=normalizeEnrollment({...record,contractStart:input.contractStart??record.contractStart,contractEnd:input.contractEnd??record.contractEnd,paymentDeadline:input.paymentDeadline??record.paymentDeadline,className:input.className??record.className});
- return {contractStart:data.contractStart,contractEnd:data.contractEnd,paymentDeadline:data.paymentDeadline,className:data.className,status,sheetVersion:Number(record.sheetVersion||1)+1,sheetSyncStatus:"pending"};
+ const data=normalizeEnrollment({...record,contractStart:input.contractStart??record.contractStart,contractEnd:input.contractEnd??record.contractEnd,paymentDeadline:input.paymentDeadline??record.paymentDeadline,className:input.className??record.className,accessType:input.accessType??record.accessType});
+ return {contractStart:data.contractStart,contractEnd:data.contractEnd,paymentDeadline:data.paymentDeadline,className:data.className,accessType:data.accessType,status,sheetVersion:Number(record.sheetVersion||1)+1,sheetSyncStatus:"pending"};
 }
 function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  const route="/students/:studentId/level-enrollments";
  const authorize=async req=>{const user=await requireAuth(req);if(!isEditor(user))fail("Staff authorization required",403);return user;};
  const refs=req=>{const studentId=String(req.params.studentId||"");if(!studentId||studentId.includes("/"))fail("Invalid student");const student=db.collection("students").doc(studentId);return {studentId,student,collection:student.collection("levelEnrollments")};};
  const error=(res,e)=>res.status(e.statusCode||500).json({ok:false,error:e.message});
- app.post(route+"/reconcile-profile",async(req,res)=>{try{await authorize(req);const {studentId,student}=refs(req);await require("./effectiveEnrollmentProfile").reconcileEnrollmentProfile({db,admin,studentId});const snap=await student.get();if(!snap.exists)fail("Student not found",404);const p=snap.data();const keys=["level","className","contractStart","contractEnd","paymentDeadline","tuitionFee","paid","balanceDue","balance","paymentStatus","accessType","status","effectiveEnrollmentId","trialStatus","trialRetentionStatus"];return res.json({ok:true,profile:Object.fromEntries(keys.filter(k=>p[k]!==undefined).map(k=>[k,p[k]]))});}catch(e){return error(res,e);}});
+ app.post(route+"/reconcile-profile",async(req,res)=>{try{await authorize(req);const {studentId,student}=refs(req);await require("./effectiveEnrollmentProfile").reconcileEnrollmentProfile({db,admin,studentId});const snap=await student.get();if(!snap.exists)fail("Student not found",404);const p=snap.data();const keys=["level","className","contractStart","contractEnd","paymentDeadline","tuitionFee","paid","balanceDue","balance","paymentStatus","accessType","status","effectiveEnrollmentId","trialStatus","trialRetentionStatus","secondaryProgram","coursePlacements","levelId"];return res.json({ok:true,profile:Object.fromEntries(keys.filter(k=>p[k]!==undefined).map(k=>[k,p[k]]))});}catch(e){return error(res,e);}});
  app.get(route,async(req,res)=>{try{await authorize(req);const {student,collection}=refs(req);if(!(await student.get()).exists)fail("Student not found",404);const snap=await collection.get();return res.json({ok:true,enrollments:snap.docs.map(d=>({id:d.id,...d.data()}))});}catch(e){return error(res,e);}});
- app.post(route,async(req,res)=>{try{const user=await authorize(req);const {studentId,student,collection}=refs(req);const data=normalizeEnrollment(req.body);const totals=manualTotals(req.body||{});const id=data.program+"-"+data.level;const ref=collection.doc(id);
+ app.post(route,async(req,res)=>{try{const user=await authorize(req);const {studentId,student,collection}=refs(req);const data=normalizeEnrollment(req.body);const totals=manualTotals(req.body||{});if(data.accessType==="complimentary"&&totals.paid!==0)fail("Complimentary access cannot contain payments");const id=data.program+"-"+data.level;const ref=collection.doc(id);
  const result=await db.runTransaction(async tx=>{const [parent,existing]=await Promise.all([tx.get(student),tx.get(ref)]);if(!parent.exists)fail("Student not found",404);if(existing.exists)fail("Level already exists",409);
  const enrollment={...data,studentId,studentCode:parent.data().studentCode||parent.data().studentcode||studentId,...totals,openingBalanceImported:totals.paid>0,manualOpeningPaid:totals.paid,status:enrollmentStatus(req.body?.status),accountingMode:"independent_pending_integration",sheetVersion:1,sheetSyncStatus:"pending"};
  const stamp=admin.firestore.FieldValue.serverTimestamp();tx.set(ref,{...enrollment,createdAt:stamp,createdBy:user.uid});tx.set(db.collection("auditLogs").doc(),{type:"student.levelEnrollmentCreated",studentId,enrollmentId:id,actorId:user.uid,openingTotals:totals,createdAt:stamp});return {id,...enrollment};});return res.json({ok:true,enrollment:result});}catch(e){return error(res,e);}});
@@ -104,6 +107,7 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  const totals=hasTotals?manualTotals({tuitionFee:input.tuitionFee===undefined?record.tuitionFee:input.tuitionFee,paid:input.paid===undefined?record.paid:input.paid}):{};
  const changed=hasTotals&&(totals.tuitionFee!==record.tuitionFee||totals.paid!==record.paid);
  const patch={...contractPatch({...record,...totals},input),...totals,...(changed?{openingBalanceImported:record.openingBalanceImported===true||totals.paid>0,manualTotalsAdjustedAt:stamp,manualTotalsAdjustedBy:user.uid}:{})};
+ if(patch.accessType==="complimentary"&&(Number(patch.paid??record.paid)!==0||Number(patch.tuitionFee??record.tuitionFee)!==0))fail("Complimentary access cannot contain payments");
  tx.update(ref,{...patch,updatedAt:stamp});tx.set(db.collection("auditLogs").doc(),{type:changed?"student.levelTotalsAdjusted":"student.levelContractUpdated",studentId,enrollmentId:ref.id,actorId:user.uid,before:{tuitionFee:record.tuitionFee,paid:record.paid,balanceDue:record.balanceDue},after:patch,createdAt:stamp});return {id:ref.id,...record,...patch};});
  return res.json({ok:true,enrollment:result});
  }catch(e){return error(res,e);}});
