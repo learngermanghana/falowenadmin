@@ -447,3 +447,30 @@ test("trial reminders run at noon and 18:00 Ghana time", () => {
   assert.equal(schedule.schedule, "0 12,18 * * *");
   assert.equal(schedule.timeZone, "Africa/Accra");
 });
+
+test("trial welcome skips unrelated changes but preserves eligibility transitions and new students", () => {
+  const eligible = student({createdAt:new Date(NOW)});
+  const { shouldCheckTrialWelcome } = _test;
+  assert.equal(shouldCheckTrialWelcome(null, eligible, NOW), true);
+  assert.equal(shouldCheckTrialWelcome({...eligible,email:""}, eligible, NOW), true);
+  assert.equal(shouldCheckTrialWelcome(eligible, {...eligible,lastActivityAt:NOW,updatedAt:new Date(NOW)}, NOW), false);
+  assert.equal(shouldCheckTrialWelcome(eligible, {...eligible,trialEmailDiagnostic:{status:"checked"}}, NOW), false);
+  assert.equal(shouldCheckTrialWelcome(eligible, {...eligible,email:"changed@example.com"}, NOW), true);
+  assert.equal(shouldCheckTrialWelcome(eligible, {...eligible,paid:100}, NOW), false);
+  assert.equal(shouldCheckTrialWelcome(null, eligible, NOW+4*DAY_MS), false);
+});
+
+test("unrelated student write does not read the welcome delivery ledger", async () => {
+  const now = new Date();
+  const current = student({createdAt:now});
+  const trigger = createTrialAccessWelcomeEmailTrigger({
+    db:{collection(){throw new Error("unexpected ledger access");}},
+    admin:{},runtimeConfig:{trial_emails:{delivery_mode:"firebase"}},
+    onDocumentWritten:(_options,handler)=>handler,
+  });
+  const result=await trigger({data:{
+    before:{exists:true,data:()=>current},
+    after:{exists:true,id:"student",data:()=>({...current,lastActivityAt:now})},
+  }});
+  assert.equal(result.reason,"welcome_inputs_unchanged_or_not_due");
+});
