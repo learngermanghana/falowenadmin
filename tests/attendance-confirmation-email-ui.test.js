@@ -33,7 +33,8 @@ test("attendance automation UI exposes modes, recovery and job status", async ()
   assert.match(panel, /After the final class each week/);
   assert.match(panel, /After every class/);
   assert.match(panel, />Off</);
-  assert.match(panel, /Save automation/);
+  assert.match(panel, /Save settings/);
+  assert.match(panel, /Send due attendance emails/);
   assert.match(panel, /Last job check/);
   assert.match(panel, /Last successful send/);
   assert.match(panel, /Reload classes/);
@@ -63,24 +64,22 @@ test("failed attendance retry calls a protected Admin endpoint", async () => {
   assert.match(worker, /show_progress: "FALSE"/);
 });
 
-test("scheduled attendance delivery keeps deduplication and individual delivery", async () => {
+test("manual attendance delivery keeps deduplication and individual delivery", async () => {
   const worker = await source(workerPath);
   assert.match(worker, /attendanceEmailDeliveries/);
   assert.match(worker, /status: "processing"/);
   assert.match(worker, /status: "sent"/);
   assert.match(worker, /delivery_mode: "individual"/);
   assert.match(worker, /openTo/);
-  assert.match(worker, /schedule: "\*\/30 \* \* \* \*"/);
+  assert.match(worker, /async function sendDueAttendanceForClass/);
+  assert.doesNotMatch(worker, /return onSchedule\(/);
 });
 
-test("partial attendance delivery preserves the event queue for automatic retry", async () => {
+test("partial attendance delivery retains error details without a queue", async () => {
   const [worker, eventPatch] = await Promise.all([source(workerPath), source(eventPatchPath)]);
   assert.match(worker, /error\.code = "ATTENDANCE_PARTIAL_FAILURE"/);
-  assert.match(eventPatch, /Number\(result\.failed \|\| 0\) > 0/);
-  const failureCheck = eventPatch.indexOf("Number(result.failed || 0) > 0");
-  const queueDelete = eventPatch.indexOf("queueItems.map((item) => item.ref.delete())", failureCheck);
-  assert.ok(failureCheck >= 0);
-  assert.ok(queueDelete > failureCheck);
+  assert.match(eventPatch, /Retired attendance function/);
+  assert.doesNotMatch(worker, /attendanceEmailQueue/);
 });
 
 test("attendance retry UI reports all-failed retries as errors", async () => {
@@ -95,16 +94,16 @@ test("attendance retry UI reports all-failed retries as errors", async () => {
 
 test("Firebase predeploy registers and validates scheduler plus protected health and retry routes", async () => {
   const patch = await source(patchPath);
-  assert.match(patch, /createAttendanceConfirmationEmailJob/);
-  assert.match(patch, /sendAttendanceConfirmationEmails/);
+  assert.match(patch, /sendDueAttendanceForClass/);
+  assert.match(patch, /send-due/);
   assert.match(patch, /retryFailedAttendanceDeliveries/);
   assert.match(patch, /listAttendanceDeliveryHealth/);
   assert.match(patch, /attendance-confirmation-emails\/health/);
   assert.match(patch, /attendance-confirmation-emails\/retry-failed/);
   assert.match(patch, /await requireAuth\(req\)/);
   assert.match(patch, /resolveClassWebhookConfig/);
-  assert.match(patch, /config: classConfig/);
-  assert.match(patch, /schedule: "\*\/30 \* \* \* \*"/);
+  assert.match(patch, /Manual attendance delivery worker missing/);
+  assert.match(patch, /Manual attendance delivery route/);
   assert.match(patch, /requiredChecks/);
   assert.match(patch, /protected delivery health route, and failed-delivery retry route verified/);
 });

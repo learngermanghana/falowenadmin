@@ -53,7 +53,8 @@ export const WORKER_TARGETS = {
   "src/utils/markingQuality.js": ["api", "markCourseSubmissionAutomatically"],
   "functions/trialAccessEmails.js": ["sendTrialAccessWelcomeEmail", "sendTrialAccessReminderEmails"],
   "functions/finalMockResultEmails.js": ["sendFinalMockResultEmail"],
-  "functions/studentLearningInterventionEmails.js": ["sendStudentLearningNudges"],
+  "functions/studentLearningInterventionEmails.js": [],
+  "functions/attendanceConfirmationEmails.js": ["api"],
   "functions/classSessionReminderEmails.js": ["api"],
   "functions/autoCompleteClassSessions.js": ["api", "autoCompleteClassSessions"],
 };
