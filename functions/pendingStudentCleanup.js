@@ -327,7 +327,7 @@ async function deleteAuthUserIfPresent({ admin, uid, email }) {
 
 async function deleteStudentRowsFromSheet({ appsScriptUrl = "", syncSecret = "", studentId, studentCode, email, student }) {
   if (!text(appsScriptUrl) || !text(syncSecret)) {
-    return { attempted: false, success: true, message: "Falowen Announcement webhook is not configured." };
+    return { attempted: false, success: false, message: "Falowen Announcement webhook is not configured; retain student for sheet purge retry." };
   }
   const response = await fetch(text(appsScriptUrl), {
     method: "POST",
@@ -344,8 +344,8 @@ async function deleteStudentRowsFromSheet({ appsScriptUrl = "", syncSecret = "",
   const data = await response.json().catch(() => ({}));
   return {
     attempted: true,
-    success: response.ok && data?.ok !== false,
-    message: data?.message || (response.ok ? "Google Sheet cleanup completed." : "Google Sheet cleanup failed."),
+    success: response.ok && data?.ok === true,
+    message: data?.message || (response.ok && data?.ok === true ? "Google Sheet cleanup completed." : "Google Sheet cleanup not explicitly acknowledged."),
     details: data,
   };
 }
@@ -426,7 +426,7 @@ async function deleteExpiredPendingStudent({ admin, db, docSnap, now = Date.now(
     email,
     student,
   });
-  if (sheet.attempted && !sheet.success) {
+  if (!sheet.success) {
     throw new Error(sheet.message || "Google Sheet cleanup failed.");
   }
 
@@ -554,6 +554,7 @@ module.exports = {
   isExpiredPendingStudent,
   blockExpiredTrialStudent,
   syncTrialStatusToSheet,
+  deleteStudentRowsFromSheet,
   deleteExpiredPendingStudent,
   hasAmbiguousCleanupIdentity,
   runExpiredPendingStudentCleanup,

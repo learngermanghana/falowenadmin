@@ -189,3 +189,23 @@ test("Announcement webhook environment variables override runtime config", () =>
     },
   );
 });
+
+
+test("trial sheet deletion requires configuration and explicit acknowledgement", async () => {
+  const { deleteStudentRowsFromSheet } = require("../functions/pendingStudentCleanup.js");
+  const absent = await deleteStudentRowsFromSheet({});
+  assert.equal(absent.success,false);
+  assert.equal(absent.attempted,false);
+  const old = globalThis.fetch;
+  const input = {appsScriptUrl:"https://example.com/exec",syncSecret:"test",studentCode:"T123"};
+  try {
+    for (const payload of [{}, {ok:false}, {message:"Unrecognized action"}]) {
+      globalThis.fetch=async()=>({ok:true,json:async()=>payload});
+      assert.equal((await deleteStudentRowsFromSheet(input)).success,false);
+    }
+    globalThis.fetch=async()=>({ok:true,json:async()=>{throw Error("HTML response");}});
+    assert.equal((await deleteStudentRowsFromSheet(input)).success,false);
+    globalThis.fetch=async()=>({ok:true,json:async()=>({ok:true,deletedRows:0})});
+    assert.equal((await deleteStudentRowsFromSheet(input)).success,true);
+  } finally {globalThis.fetch=old;}
+});
