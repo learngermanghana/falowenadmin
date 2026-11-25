@@ -124,7 +124,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
       bundledTiming.lyrics === recordedLyrics && recordingMetadata?.timingStatus === 'audio-aligned'
       ? {questionEndings: bundledTiming.questionEndings} : {}),
   } : null;
-  const heardLyricDuration = assignmentKey === 'A1-14.1' ? {minSeconds: 10, maxSeconds: 15, targetSeconds: 12} : undefined;
+  const heardLyricDuration = ['A1-14.1', 'A1-2.3'].includes(assignmentKey) ? {minSeconds: 10, maxSeconds: 15, targetSeconds: 15} : undefined;
   const verifiedNextQuestions = nextLyricOnly && recordingMetadata ? threeVerifiedHeardLyricQuestions(quizPack, recording, heardLyricDuration) : [];
   const flexibleDuration = {...heardLyricDuration, allowFewer:true, ignoreLegacyEndings:true};
   const verifiedFlexibleQuestions = nextLyricOnly && recordingMetadata && !verifiedNextQuestions.length
@@ -175,7 +175,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
     const duration = Number.isFinite(player.duration) && player.duration > 0 ? player.duration : Infinity;
     const requested = teacherClip ? (advance ? teacherClip.end : teacherClip.start) : player.currentTime;
     const start = requested >= duration - 0.25 ? 0 : Math.max(0, requested || 0);
-    const range = {start, end: Math.min(duration, start + 12)};
+    const range = {start, end: Math.min(duration, start + (assignmentKey === 'A1-2.3' ? 15 : 12))};
     setTeacherClip(range);
     playLinePreview(range);
   };
@@ -244,7 +244,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
         {teacherChallenge ? <div className="published-song-lesson__quiz">
           <p>Hört den kurzen Ausschnitt. Sagt laut, welche Wörter oder Liedzeile ihr gehört habt.</p>
           <button type="button" className="published-song-lesson__line-preview" onClick={()=>playTeacherPreview()}>
-            {teacherClip ? '▶ Ausschnitt wiederholen' : '▶ 12 Sekunden abspielen'}
+            {teacherClip ? '▶ Ausschnitt wiederholen' : assignmentKey === 'A1-2.3' ? '▶ 15 Sekunden abspielen' : '▶ 12 Sekunden abspielen'}
           </button>
           {teacherClip && <button type="button" onClick={()=>playTeacherPreview(true)}>Nächster Ausschnitt →</button>}
           <p className="published-song-lesson__note">Mündliche Hörübung · Die Lehrkraft bestätigt die Antwort anhand des Audios. Für diesen Ausschnitt sind keine eindeutigen automatischen Antwortmöglichkeiten verfügbar.</p>
@@ -254,7 +254,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
         <h3 lang="de">{question.prompt}</h3>
         {nextLyricOnly && <p lang="en">Listen to the short clip. Which lyric did you hear?</p>}
         {suggestedQuestions.length > 0 && <p role="status">Vorhandene Zeitmarken · Bitte die gehörte Zeile gemeinsam prüfen. Keine automatische Bewertung.</p>}
-        {nextLyricOnly && <p lang="de">{assignmentKey === "A1-14.1" ? "Spiele einen 10–15 Sekunden langen Ausschnitt ab. Welche der drei Zeilen hast du wirklich gehört?" : "Spiele etwa zehn Sekunden ab. Welche der drei Zeilen war im Ausschnitt zu hören?"}</p>}
+        {nextLyricOnly && <p lang="de">{["A1-14.1", "A1-2.3"].includes(assignmentKey) ? "Spiele einen 10–15 Sekunden langen Ausschnitt ab. Welche der drei Zeilen hast du wirklich gehört?" : "Spiele etwa zehn Sekunden ab. Welche der drei Zeilen war im Ausschnitt zu hören?"}</p>}
         {evidenceRange && <button type="button" className="published-song-lesson__line-preview"
           onClick={()=>playLinePreview(evidenceRange)}>▶ Ausschnitt abspielen</button>}
         {question.type==='speaking'
