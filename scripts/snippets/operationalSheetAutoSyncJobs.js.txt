@@ -184,19 +184,27 @@ function operationalOrientationEligibility(student = {}, now = Date.now()) {
   return { eligible: false, reason: "payment_or_active_trial_required" };
 }
 
+// A recovery scan must not update Firestore just to repeat the same skip reason.
+async function recordOperationalSheetSkip(docSnap, record, prefix, reason, options = {}) {
+  if (options.writeStatus === false) return false;
+  const statusField = prefix + "Status";
+  const errorField = prefix + "LastError";
+  if (record[statusField] === "skipped" && record[errorField] === reason) return false;
+  await docSnap.ref.set({
+    [statusField]: "skipped",
+    [errorField]: reason,
+    [prefix + "CheckedAt"]: admin.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true });
+  return true;
+}
+
 async function syncStudentToOrientationSheet(docSnap, options = {}) {
   const student = docSnap.data() || {};
   if (student.orientationSheetAutoSyncStatus === "sent" || student.orientationSheetAutoSyncedAt) return { status: "already_sent" };
 
   const eligibility = operationalOrientationEligibility(student);
   if (!eligibility.eligible) {
-    if (options.writeStatus !== false) {
-      await docSnap.ref.set({
-        orientationSheetAutoSyncStatus: "skipped",
-        orientationSheetAutoSyncLastError: eligibility.reason,
-        orientationSheetAutoSyncCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
-      }, { merge: true });
-    }
+    await recordOperationalSheetSkip(docSnap, student, "orientationSheetAutoSync", eligibility.reason, options);
     return { status: "skipped", reason: eligibility.reason };
   }
 
@@ -218,13 +226,7 @@ async function syncStudentToOrientationSheet(docSnap, options = {}) {
       !level ? "level" : "",
       !startDate ? "startDate" : "",
     ].filter(Boolean).join(", ")}`;
-    if (options.writeStatus !== false) {
-      await docSnap.ref.set({
-        orientationSheetAutoSyncStatus: "skipped",
-        orientationSheetAutoSyncLastError: reason,
-        orientationSheetAutoSyncCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
-      }, { merge: true });
-    }
+    await recordOperationalSheetSkip(docSnap, student, "orientationSheetAutoSync", reason, options);
     return { status: "skipped", reason };
   }
 
@@ -299,13 +301,7 @@ async function syncClassToScheduleSheet(docSnap, options = {}) {
       !time ? "time" : "",
       !meetingDays.length ? "meetingDays" : "",
     ].filter(Boolean).join(", ")}`;
-    if (options.writeStatus !== false) {
-      await docSnap.ref.set({
-        classScheduleSheetAutoSyncStatus: "skipped",
-        classScheduleSheetAutoSyncLastError: reason,
-        classScheduleSheetAutoSyncCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
-      }, { merge: true });
-    }
+    await recordOperationalSheetSkip(docSnap, klass, "classScheduleSheetAutoSync", reason, options);
     return { status: "skipped", reason };
   }
 
