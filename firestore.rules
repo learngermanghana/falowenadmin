@@ -8,8 +8,13 @@ service cloud.firestore {
       );
     }
 
+    function isExamOnly() {
+      let access = /databases/$(database)/documents/courseAccountAccess/$(request.auth.uid);
+      return exists(access) ? get(access).data.examOnly == true : request.auth.token.get('examOnly', false) == true;
+    }
+
     function courseUser() {
-      return signedIn() && request.auth.token.get('examOnly', false) != true && (
+      return signedIn() && !isExamOnly() && (
         isStaff() ||
         !exists(/databases/$(database)/documents/organisationPartnerMembers/$(request.auth.uid)) ||
         get(/databases/$(database)/documents/organisationPartnerMembers/$(request.auth.uid)).data.get('courseAccessAllowed', false) == true
@@ -72,9 +77,15 @@ service cloud.firestore {
       ]);
     }
 
-    match /users/{userId}/{document=**} {
+    match /users/{userId} {
       allow read: if isOwner(userId) || isStaff();
       allow create, update, delete: if isOwner(userId);
+      match /{collectionId}/{document=**} {
+        allow read: if isOwner(userId) || isStaff();
+        // Workbook writes must use the server route, which rechecks the current
+        // enrolled programme and expiry. Keep historic submissions readable.
+        allow create, update, delete: if isOwner(userId) && collectionId != 'swahiliLessons';
+      }
     }
 
     function canReviewSwahili() {
@@ -125,13 +136,63 @@ service cloud.firestore {
       }
     }
 
+    // Server-owned grant records remain private.
+    match /courseSubmissionAccess/{uid} {
+      allow read, write: if false;
+    }
+
+    // Server-issued grants bind the authenticated owner, assignment level, live
+    // profile and independent enrollment version. Expired grants cannot write.
+    function matchingProfile(p, f) {
+      return p.get('status', null) == f.get('status', null) &&
+        p.get('program', null) == f.get('program', null) &&
+        p.get('level', null) == f.get('level', null) &&
+        p.get('paymentStatus', null) == f.get('paymentStatus', null) &&
+        p.get('paid', null) == f.get('paid', null) &&
+        p.get('paidAmount', null) == f.get('paidAmount', null) &&
+        p.get('balanceDue', null) == f.get('balanceDue', null) &&
+        p.get('balance', null) == f.get('balance', null) &&
+        p.get('contractStart', null) == f.get('contractStart', null) &&
+        p.get('contractEnd', null) == f.get('contractEnd', null) &&
+        p.get('trialStatus', null) == f.get('trialStatus', null) &&
+        p.get('trialStartedAt', null) == f.get('trialStartedAt', null) &&
+        p.get('trialEndsAt', null) == f.get('trialEndsAt', null) &&
+        p.get('accountType', null) == f.get('accountType', null) &&
+        p.get('coursePlacements', null) == f.get('coursePlacements', null) &&
+        p.get('secondaryProgram', null) == f.get('secondaryProgram', null);
+    }
+    function enrollmentVersionMatches(g, level) {
+      let id = 'german-' + level;
+      let ref = /databases/$(database)/documents/students/$(g.profileId)/levelEnrollments/$(id);
+      let version = g.get('enrollmentVersions', {}).get(level, 0);
+      return exists(ref) ? get(ref).data.get('sheetVersion', 1) == version : version == 0;
+    }
+    function validWorkGrant(g, data, timed) {
+      let profileRef = /databases/$(database)/documents/students/$(g.profileId);
+      let p = get(profileRef).data;
+      let level = data.get('level', '');
+      let key = data.get('assignmentKey', '');
+      return g.uid == request.auth.uid && g.expiresAtMs > request.time.toMillis() &&
+        p.get('uid', '') == request.auth.uid && matchingProfile(p, g.profileFields) &&
+        level in ['A1','A2','B1','B2','C1','C2'] && level in g.levels &&
+        enrollmentVersionMatches(g, level) &&
+        key is string && key.upper().matches('^' + level + '([-._ ].*)?$') &&
+        data.get('assignmentId', key) == key && data.get('assignment_id', key) == key &&
+        data.get('canonicalAssignmentKey', key) == key &&
+        (g.mode == 'full' || (!timed && g.mode == 'trial' && key in g.day1Keys));
+    }
+    function canWriteCourseWork(data, timed) {
+      let ref = /databases/$(database)/documents/courseSubmissionAccess/$(request.auth.uid);
+      return courseUser() && exists(ref) && validWorkGrant(get(ref).data, data, timed);
+    }
+
     // Assignment submission persistence.
     // Students can save/retrieve their own drafts, submissions, and one-time submission locks.
     // Staff can read/write for support and grading workflows.
     match /submissionDrafts/{draftId} {
-      allow create: if ownsStudentIncoming() || isStaff();
+      allow create: if (canWriteCourseWork(request.resource.data, false) && ownsStudentIncoming()) || isStaff();
       allow read: if ownsStudentResource() || isStaff();
-      allow update: if (ownsStudentResource() && ownsStudentIncoming() && ownershipFieldsUnchanged()) || isStaff();
+      allow update: if (canWriteCourseWork(request.resource.data, false) && ownsStudentResource() && ownsStudentIncoming() && ownershipFieldsUnchanged()) || isStaff();
       allow delete: if ownsStudentResource() || isStaff();
     }
 
@@ -149,14 +210,14 @@ service cloud.firestore {
       ]);
     }
     match /submissions/{submissionId} {
-      allow create: if (ownsStudentIncoming() && hasNoMarkingFields()) || isStaff();
+      allow create: if (canWriteCourseWork(request.resource.data, false) && ownsStudentIncoming() && hasNoMarkingFields()) || isStaff();
       allow read: if ownsStudentResource() || isStaff();
-      allow update: if (ownsStudentResource() && ownsStudentIncoming() && ownershipFieldsUnchanged() && markingFieldsUnchanged()) || isStaff();
+      allow update: if (canWriteCourseWork(request.resource.data, false) && ownsStudentResource() && ownsStudentIncoming() && ownershipFieldsUnchanged() && markingFieldsUnchanged()) || isStaff();
       allow delete: if isStaff();
     }
 
     match /submissionLocks/{lockId} {
-      allow create: if ownsStudentIncoming() || isStaff();
+      allow create: if (canWriteCourseWork(request.resource.data, request.resource.data.get("timerRecord",false)) && ownsStudentIncoming()) || isStaff();
       // The timed-assignment UI listens to a student's deterministic lock ID
       // before the first attempt exists. An absent document has no resource.data
       // for ownsStudentResource() to check; permit only this owner's missing lock.
@@ -165,7 +226,7 @@ service cloud.firestore {
         && resource == null
         && lockId.matches('^timed__' + request.auth.uid.lower() + '__[a-z0-9._-]+$');
       allow read: if ownsStudentResource() || isStaff();
-      allow update: if (ownsStudentResource() && ownsStudentIncoming() && ownershipFieldsUnchanged()) || isStaff();
+      allow update: if (canWriteCourseWork(request.resource.data, request.resource.data.get("timerRecord",false)) && ownsStudentResource() && ownsStudentIncoming() && ownershipFieldsUnchanged()) || isStaff();
       allow delete: if isStaff();
     }
 
@@ -173,7 +234,7 @@ service cloud.firestore {
     // Students may create their own attempt and move it forward only.
     // Staff may delete an attempt to explicitly reset it.
     match /timedAssignmentAttempts/{attemptId} {
-      allow create: if ownsStudentIncoming()
+      allow create: if canWriteCourseWork(request.resource.data, true) && ownsStudentIncoming()
         && request.resource.data.status == 'active'
         && request.resource.data.startedAt == request.time
         && request.resource.data.durationSeconds is int
@@ -187,7 +248,8 @@ service cloud.firestore {
       allow read: if ownsStudentResource() || isStaff();
 
       allow update: if isStaff() || (
-        ownsStudentResource()
+        canWriteCourseWork(request.resource.data, true)
+        && ownsStudentResource()
         && ownsStudentIncoming()
         && ownershipFieldsUnchanged()
         && request.resource.data.assignmentKey == resource.data.assignmentKey
@@ -330,7 +392,16 @@ service cloud.firestore {
       // Recovery may look up a missing UID document before querying the legacy
       // student-code profile. Only the root profile is readable while paused.
       allow read: if courseUser() || (request.auth != null && (studentId == request.auth.uid || resource.data.uid == request.auth.uid || resource.data.email == request.auth.token.email));
-      allow create: if signedIn() && (isStaff() || (request.auth.token.get('examOnly', false) != true && !request.resource.data.keys().hasAny(['accountDeletionStatus', 'notificationsPausedForDeletion', 'systemDeletionTest', 'accountType', 'secondaryProgram', 'coursePlacements', 'courseDiscount', 'courseCheckoutStartedAt'])
+      allow create: if signedIn() && (isStaff() || (!isExamOnly() && request.resource.data.get('courseType', 'full_course') == 'full_course' && !request.resource.data.keys().hasAny(['accountDeletionStatus', 'notificationsPausedForDeletion', 'systemDeletionTest', 'accountType', 'courseEnrollmentPreserved', 'secondaryProgram', 'coursePlacements', 'courseDiscount', 'courseCheckoutStartedAt'])
+        && request.resource.data.get('uid', '') == request.auth.uid
+        && request.resource.data.get('role', 'student') == 'student'
+        && request.resource.data.get('isTutor', false) == false
+        && request.resource.data.get('paymentStatus', 'pending') in ['pending', 'exempt_pending']
+        && request.resource.data.get('paid', 0) == 0
+        && request.resource.data.get('paidAmount', 0) == 0
+        && request.resource.data.get('initialPaymentAmount', 0) == 0
+        && (request.resource.data.get('balanceDue', null) == null || request.resource.data.balanceDue > 0)
+        && (request.resource.data.get('balance', null) == null || request.resource.data.balance > 0)
         && request.resource.data.get('institutionVerification', 'pending') == 'pending'
         && request.resource.data.get('accessType', 'invitation_pending') == 'invitation_pending'
         && (request.resource.data.get('registrationSource', '') != 'university-invite' || (
@@ -354,10 +425,15 @@ service cloud.firestore {
         (resource.data.get('uid', '') == request.auth.uid
           || studentId == request.auth.uid
           || (resource.data.get('uid', '') == '' && resource.data.get('email', '') == request.auth.token.email))
-        && (request.auth.token.get('examOnly', false) != true || resource.data.get('uid', '') == request.auth.uid)
+        && (!isExamOnly() || resource.data.get('uid', '') == request.auth.uid)
         && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['uid', 'role', 'studentCode', 'studentcode', 'program'])
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['accountDeletionStatus', 'notificationsPausedForDeletion', 'systemDeletionTest', 'accountType', 'secondaryProgram', 'coursePlacements',
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['accountDeletionStatus', 'notificationsPausedForDeletion', 'systemDeletionTest', 'accountType', 'courseType', 'courseEnrollmentPreserved', 'secondaryProgram', 'coursePlacements',
           'institutionId', 'institutionName', 'cohortId', 'instructorName', 'registrationSource', 'universityInvitationCode', 'institutionVerification', 'accessType', 'courseDiscount', 'courseCheckoutStartedAt'])
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'status', 'isTutor', 'paymentStatus', 'paid', 'paidAmount', 'initialPaymentAmount', 'balanceDue', 'balance', 'tuitionFee', 'tuitionCurrency',
+          'contractStart', 'contractEnd', 'contractTermMonths', 'trialStatus', 'trialStartedAt', 'trialUsedAt', 'trialEndsAt', 'trialPurgeAt',
+          'joined_at', 'joinedAt', 'level', 'levelId', 'className', 'classId', 'classRecordId', 'assignedClassId', 'paystackReference'
+        ])
         && (resource.data.get('courseDiscount', null) == null || resource.data.get('paymentStatus', '') == 'paid' ||
           !request.resource.data.diff(resource.data).affectedKeys().hasAny([
           'tuitionFee', 'tuitionCurrency', 'balanceDue', 'balance', 'paid', 'paidAmount', 'initialPaymentAmount',
@@ -374,15 +450,22 @@ service cloud.firestore {
         && (resource.data.get('accountType', '') != 'exam_only' || (
           resource.data.uid == request.auth.uid
           && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-            'role', 'uid', 'studentCode', 'className', 'program', 'status', 'paymentStatus',
-            'paid', 'balanceDue', 'tuitionFee', 'contractStart', 'contractEnd',
-            'onboardingCompleted', 'trialStatus', 'trialStartedAt', 'trialEndsAt'
+            'role', 'uid', 'studentCode', 'className', 'program', 'level', 'levelId', 'status', 'paymentStatus',
+            'paid', 'paidAmount', 'initialPaymentAmount', 'balanceDue', 'balance', 'tuitionFee', 'tuitionCurrency',
+            'contractStart', 'contractEnd', 'contractTermMonths', 'paystackReference', 'classId', 'classRecordId', 'assignedClassId',
+            'onboardingCompleted', 'trialStatus', 'trialStartedAt', 'trialEndsAt', 'trialUsedAt', 'trialPurgeAt'
           ])
         ))
       ));
-      allow delete: if isStaff() || (courseUser() && resource.data.uid == request.auth.uid && resource.data.get('accountType', '') != 'exam_only');
+      allow delete: if isStaff();
+      // Financial enrollment records are server-owned. No broader legacy grant may overlap.
+      match /levelEnrollments/{enrollmentId} {
+        allow read: if isStaff() || (signedIn() && get(/databases/$(database)/documents/students/$(studentId)).data.get("uid", "") == request.auth.uid);
+        allow write: if false;
+        match /{nested=**} { allow read: if isStaff(); allow write: if false; }
+      }
       match /{collectionId}/{documentId}/{nested=**} {
-        allow read, write: if courseUser() || (signedIn() && studentId == request.auth.uid);
+        allow read, write: if collectionId != "levelEnrollments" && (courseUser() || (signedIn() && studentId == request.auth.uid));
       }
     }
     // Goethe Speaking practice history is private to the signed-in learner.
