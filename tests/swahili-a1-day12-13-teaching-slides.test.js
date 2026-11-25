@@ -18,6 +18,9 @@ for (const lesson of [day12,day13]) {
  test(`Day ${lesson.dayNumber} uses the correct media slots and tutor references`,()=>{
   const music = lesson.stages.find(s => s.id === "music");
   if (lesson.dayNumber === 12) {
+   const lecture = lesson.stages.find(s => s.id === "ai-video");
+   assert.equal(lecture.type, "teacher-lecture");
+   assert.equal(lecture.videoId, "xYwrJxRhVn8");
    assert.equal(music.type, "music");
    assert.equal(music.audio.id, "swahili-a1-day-12");
    const radio = lesson.stages.find(s => s.id === "radio");
@@ -27,7 +30,7 @@ for (const lesson of [day12,day13]) {
    assert.ok(radio.radioActivities.flatMap(group => group.activities).every(activity => activity.answer));
    assert.equal(music.audio.objectKey, "swahili/music/A1/day-12/Angalia Kalenda.mp3.mpeg");
   }
-  for(const id of lesson.dayNumber === 12 ? ["ai-video"] : ["ai-video","music","radio"]) {
+  for(const id of lesson.dayNumber === 12 ? [] : ["ai-video","music","radio"]) {
    const s=lesson.stages.find(s=>s.id===id);
    assert.equal(s.type,"media-pending");
    assert.equal(s.status,"pending-media");

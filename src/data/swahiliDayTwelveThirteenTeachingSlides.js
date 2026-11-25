@@ -23,12 +23,12 @@ export const SWAHILI_DAY_TWELVE_ADMIN_LESSON = Object.freeze({
     },
     {
       "id": "ai-video",
-      "type": "media-pending",
+      "type": "teacher-lecture",
       "kicker": "Video ya somo · AI",
       "title": "Video ya AI · Siku, Miezi na Tarehe",
-      "content": "Video ya somo itaongezwa baadaye.",
-      "english": "The lesson video is pending. Continue with the classroom activities.",
-      "status": "pending-media"
+      "videoId": "xYwrJxRhVn8",
+      "content": "Tazama video ya somo kuhusu siku, miezi na tarehe.",
+      "english": "Watch the Day 12 AI lesson about days, months and dates."
     },
     {
       "id": "grammar",
