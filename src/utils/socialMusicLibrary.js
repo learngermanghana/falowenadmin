@@ -2,7 +2,6 @@
 // browsers never access R2 credentials, bucket listing, or the Cloudflare dashboard.
 export const SOCIAL_MUSIC_TRACKS = Object.freeze([
   { id: "none", label: "No background music", src: "" },
-  { id: "gemeinsam", label: "Gemeinsam schaffen wir das", src: "/Gemeinsam%20schaffen%20wir%20das.mp3" },
 ]);
 
 const PUBLIC_MUSIC_ORIGIN = "https://www.falowen.app";

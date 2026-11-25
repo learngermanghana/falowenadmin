@@ -41,9 +41,9 @@ uploading it under each matching key. There is no need to edit Admin code.
 
 Only the defined public *music* delivery domain is exposed in the frontend; no
 R2 credentials, account ID, private endpoints, signing keys or Cloudflare
-dashboard links are embedded. If this env var is absent or the class day cannot
-be resolved, the existing bundled playlist plays instead. If an object is
-missing or fails during playback, the player moves on to that playlist.
+dashboard links are embedded. The old bundled MP3 files have been retired.
+If no configured or discovered R2 song can play, attendance continues without
+music and the player reports that no song is available.
 When the day's track is available, it repeats until the teacher starts class or
 manually skips it. Browser autoplay policies still require a user tap.
 

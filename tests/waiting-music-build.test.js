@@ -21,3 +21,15 @@ test("Vite builds the playlist from public files even when saved source is stale
   assert.doesNotMatch(rebuilt, /New%20Piano/);
   fs.rmSync(root, { recursive: true, force: true });
 });
+
+
+test("Vite supports an empty local playlist for R2-only playback", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "music-empty-"));
+  try {
+    const publicDir = path.join(root, "public");
+    fs.mkdirSync(publicDir);
+    const plugin = config.plugins.find(item => item.name === "waiting-music-from-public");
+    plugin.configResolved({root, publicDir});
+    assert.match(plugin.load(path.join(root,"src/data/pianoPlaylist.js")), /Object\.freeze\(\[\]\)/);
+  } finally { fs.rmSync(root,{recursive:true,force:true}); }
+});

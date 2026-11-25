@@ -1322,14 +1322,15 @@ export default function CheckinDisplayPage() {
           if (uploadedDay) {
             throw new Error(error?.message || "Today's uploaded Falowen Music could not be loaded.");
           }
-          // Other days without verified uploads retain their general
-          // waiting-room playlist (including when discovery is unavailable).
+          // Other days may use the configured R2 URL. If none is available,
+          // attendance continues without music; no bundled MP3 is required.
         }
       }
       if (musicStartGenerationRef.current !== startGeneration) {
         if (context.state !== "closed") context.close().catch(() => {});
         return;
       }
+      if (!playlist.length) throw new Error("No waiting-room song is available for this lesson. You can continue attendance without music.");
       await startWaitingMusicPlaylist(context, masterGain, {
         playlist,
         onTimeUpdate: setSongPosition,
