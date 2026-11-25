@@ -114,3 +114,14 @@ test("presenter routes only A1-9, and keeps original Course Book scoring and ind
   assert.ok(presenter.includes('stage.exitCheck && stage.workbookUrl && !stage.teil3ObjectCards'));
   assert.ok(!presenter.includes('const A1_DAY16_NEGATION_ASSIGNMENT = "A1-10"'));
 });
+
+test("A1-9 opening slide exposes the approved lecture without adding a page or replacing music", () => {
+  const src = readFileSync(new URL("../src/components/A1Day16NegationStage.jsx", import.meta.url), "utf8");
+  const intro = src.slice(src.indexOf("function Intro()"), src.indexOf("function Food()"));
+  assert.ok(intro.includes('<MusicVideoEmbed videoId="RriTJiLUXUI"'));
+  assert.ok(intro.includes("Lehrervideo ansehen"));
+  assert.ok(intro.includes("Zurück zum Einstieg"));
+  assert.ok(intro.includes("{showLecture ? <MusicVideoEmbed"));
+  assert.equal(stages().length, 12);
+  assert.equal(stages()[10].hasMusic, true);
+});

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import InlineReadingTranslations from "./InlineReadingTranslations.jsx";
 import PublishedSongLessonStage from "./PublishedSongLessonStage.jsx";
+import MusicVideoEmbed from "./MusicVideoEmbed.jsx";
 import {
   A1_DAY16_FOOD, A1_DAY16_NEGATION_CHOICES, A1_DAY16_NEGATION_FIXES,
 } from "../data/a1Day16NegationClassroom.js";
@@ -22,8 +23,15 @@ function Reveal({ answer, explanation = "", prompt = "Antwort anzeigen" }) {
   </div>;
 }
 function Intro() {
+  const [showLecture, setShowLecture] = useState(false);
   return <>
     <h1>Essen und Verneinung</h1>
+    <div className="a1n-actions">
+      <button type="button" aria-expanded={showLecture} onClick={() => setShowLecture(value => !value)}>
+        {showLecture ? "Zurück zum Einstieg" : "Lehrervideo ansehen"}
+      </button>
+    </div>
+    {showLecture ? <MusicVideoEmbed videoId="RriTJiLUXUI" title="Lehrervideo · Essen und Verneinung" variant="lesson" footerLabel="Falowen · A1 Kapitel 9" /> : <>
     <p className="a1n-lead">Heute sagen wir, was wir <b>haben, essen oder nicht mögen</b> – mit <strong>kein, keine, keinen und nicht</strong>.</p>
     <div className="a1n-compare">
       <Panel><span className="a1n-emoji" role="img" aria-label="milk">🥛</span>
@@ -32,6 +40,7 @@ function Intro() {
         <span className="a1n-kicker">Nein · negativ</span><h2>Ich habe keine Milch.</h2><small>I have no milk.</small></Panel>
     </div>
     <div className="a1n-note"><b>Unser Lernziel:</b> Wir wählen die richtige Negation und können eigene kurze Sätze bilden.</div>
+    </>}
   </>;
 }
 function Food() {
