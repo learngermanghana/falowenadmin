@@ -85,6 +85,8 @@ export default function AttendanceConfirmationAutomationPanel() {
   const [weeklyTestResult, setWeeklyTestResult] = useState("");
   const [sendingWeekly, setSendingWeekly] = useState(false);
   const [weeklySendResult, setWeeklySendResult] = useState("");
+  const [sendingDue, setSendingDue] = useState(false);
+  const [dueResult, setDueResult] = useState("");
 
   async function loadClassesNow() {
     setLoadingClasses(true);
@@ -212,6 +214,30 @@ export default function AttendanceConfirmationAutomationPanel() {
     }
   }
 
+  async function sendDueForSelectedClass() {
+    if (!selectedId || sendingDue || saving || settings.mode !== ATTENDANCE_EMAIL_MODES.EACH_CLASS) return;
+    if (!window.confirm("Send any due, unsent attendance confirmations for " + classLabel(selectedClass) + "? Saved class settings and the lookback window apply.")) return;
+    setSendingDue(true);
+    setDueResult("");
+    try {
+      const user = auth?.currentUser;
+      if (!user) throw new Error("Sign in as administrator.");
+      const token = await user.getIdToken();
+      const response = await fetch("/api/attendance-confirmation-emails/send-due", {
+        method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ classId: selectedId, confirm: true }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.ok) throw new Error(result.error || "Delivery not confirmed. Check delivery history before retrying.");
+      const message = `Sent ${result.sent || 0} due emails. Previously sent emails are not resent.`;
+      setDueResult(message);
+      success(message);
+    } catch (cause) {
+      setDueResult(cause?.message || "Attendance delivery failed.");
+      error(cause?.message || "Attendance delivery failed.");
+    } finally { setSendingDue(false); }
+  }
+
   async function sendWeeklyReport() {
     if (sendingWeekly || !weeklyPreview?.sendEnabled || weeklyPreviewPeriod !== "previous" || !weeklyPreview.eligibleRecipients) return;
     if (!window.confirm(`Send the completed-week summary to ${weeklyPreview.eligibleRecipients} eligible recipients for ${weeklyPreview.weekStart} to ${weeklyPreview.weekEnd}?`)) return;
@@ -240,7 +266,7 @@ export default function AttendanceConfirmationAutomationPanel() {
   if (loadingClasses) {
     return (
       <section style={panelStyle}>
-        <h2 style={{ margin: 0 }}>Automatic attendance confirmation emails</h2>
+        <h2 style={{ margin: 0 }}>Manual attendance confirmation emails</h2>
         <p style={{ margin: 0 }}>Loading your Live Classes…</p>
       </section>
     );
@@ -249,7 +275,7 @@ export default function AttendanceConfirmationAutomationPanel() {
   if (classesError) {
     return (
       <section style={panelStyle}>
-        <h2 style={{ margin: 0 }}>Automatic attendance confirmation emails</h2>
+        <h2 style={{ margin: 0 }}>Manual attendance confirmation emails</h2>
         <div style={{ padding: 12, border: "1px solid #fecaca", background: "#fef2f2", color: "#991b1b", borderRadius: 10 }}>
           <strong>Classes could not be loaded.</strong>
           <div style={{ marginTop: 4 }}>{classesError}</div>
@@ -262,7 +288,7 @@ export default function AttendanceConfirmationAutomationPanel() {
   if (!classes.length) {
     return (
       <section style={panelStyle}>
-        <h2 style={{ margin: 0 }}>Automatic attendance confirmation emails</h2>
+        <h2 style={{ margin: 0 }}>Manual attendance confirmation emails</h2>
         <div style={{ padding: 14, border: "1px solid #bfdbfe", background: "#eff6ff", borderRadius: 10 }}>
           <strong>No usable Live Class record was found.</strong>
           <p style={{ margin: "6px 0 0" }}>
@@ -283,16 +309,16 @@ export default function AttendanceConfirmationAutomationPanel() {
   return (
     <section style={panelStyle}>
       <div>
-        <h2 style={{ margin: 0 }}>Automatic attendance confirmation emails</h2>
+        <h2 style={{ margin: 0 }}>Manual attendance confirmation emails</h2>
         <p style={{ margin: "6px 0 0", color: "#475569" }}>
-          Choose a real Live Class, select how often students should receive attendance confirmation, then save once.
+          Choose a Live Class and save its delivery mode. Emails are sent only when an administrator requests them.
         </p>
       </div>
 
       <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
         <label style={fieldStyle}>
           <strong>Class</strong>
-          <select style={inputStyle} value={selectedId} onChange={(event) => setSelectedId(event.target.value)}>
+          <select style={inputStyle} value={selectedId} disabled={sendingDue} onChange={(event) => setSelectedId(event.target.value)}>
             {classes.map((klass) => {
               const id = classRecordId(klass);
               return <option key={id} value={id}>{classLabel(klass)}</option>;
@@ -361,11 +387,11 @@ export default function AttendanceConfirmationAutomationPanel() {
 
       <div style={{ padding: 12, border: "1px solid #bfdbfe", background: "#eff6ff", borderRadius: 10 }}>
         {settings.mode === ATTENDANCE_EMAIL_MODES.OFF
-          ? "Automatic attendance emails are disabled for this class."
+          ? "Attendance emails are disabled for this class."
           : weekly
-            ? "Each student receives one personalized weekly summary after the final scheduled lesson of the week."
+            ? "Use the manual weekly report below to send the completed-week summary."
             : eachClass
-              ? "Each student receives a personalized Present, Late, Absent or Excused confirmation after every lesson."
+              ? "Send due, unsent per-class confirmations manually using the button below."
               : "Choose a delivery mode."}
       </div>
 
@@ -414,10 +440,12 @@ export default function AttendanceConfirmationAutomationPanel() {
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <button type="button" onClick={save} disabled={!selectedId || saving || loadingSettings || Boolean(settingsError)}>
-          {saving ? "Saving…" : "Save automation"}
+          {saving ? "Saving…" : "Save settings"}
         </button>
-        <button type="button" onClick={loadClassesNow} disabled={saving}>Reload classes</button>
+        <button type="button" onClick={loadClassesNow} disabled={saving || sendingDue}>Reload classes</button>
+        {eachClass && <button type="button" onClick={sendDueForSelectedClass} disabled={sendingDue || saving || loadingSettings || Boolean(settingsError)}>{sendingDue ? "Sending…" : "Send due attendance emails"}</button>}
       </div>
+      {dueResult && <p role="status">{dueResult}</p>}
     </section>
   );
 }

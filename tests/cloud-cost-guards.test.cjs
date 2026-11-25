@@ -31,5 +31,6 @@ test("background schedules use fractional CPU and exam marking keeps its own res
   for (const source of [index, main, read("scripts/patchClassSessionReminderEmails.mjs")]) {
     assert.doesNotMatch(source, /exports\.send(Saturday)?ClassSessionReminderEmails\s*=/);
   }
-  assert.match(eventDrivenPatch, /cpu: "gcf_gen1"/);
+  assert.match(eventDrivenPatch, /Retired attendance function/);
+  assert.doesNotMatch(index, /exports\.(sendAttendanceConfirmationEmails|queueAttendanceConfirmationFrom\w+)\s*=/);
 });

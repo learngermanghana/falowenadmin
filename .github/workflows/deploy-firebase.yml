@@ -196,10 +196,6 @@ jobs:
           fi
           grep -F 'module.exports.cleanupExpiredPendingStudents = onSchedule' functions/main.js
           grep -F 'schedule: "0 3 * * *"' functions/main.js
-          grep -F 'exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob' functions/index.js
-          grep -F 'exports.queueAttendanceConfirmationFromSession = onDocumentWritten' functions/index.js
-          grep -F 'exports.queueAttendanceConfirmationFromCheckin = onDocumentWritten' functions/index.js
-          grep -F 'exports.queueAttendanceConfirmationFromClassSession = onDocumentWritten' functions/index.js
           grep -F 'exports.autoCompleteClassSessions = createAutoCompleteClassSessionsJob' functions/index.js
           grep -F 'exports.sendCourseReviewRequestEmails = createCourseReviewRequestEmailJob' functions/index.js
           if grep -F 'exports.sendDueHolidayNotices = onSchedule' functions/index.js; then echo "Daily holiday emails must stay retired"; exit 1; fi
@@ -208,7 +204,6 @@ jobs:
           grep -F 'exports.sendTrialAccessWelcomeEmail = createTrialAccessWelcomeEmailTrigger' functions/index.js
           grep -F 'exports.sendTrialAccessReminderEmails = createTrialAccessReminderEmailJob' functions/index.js
           grep -F 'exports.sendFinalMockResultEmail = createFinalMockResultEmailTrigger' functions/index.js
-          grep -F 'module.exports.sendStudentLearningNudges = createStudentLearningNudgeJob' functions/main.js
           grep -F 'async function loadReminderSessionWindow' functions/classSessionReminderEmails.js
           grep -F 'async function loadStudentsForDueClasses' functions/classSessionReminderEmails.js
           ! grep -F 'db.collection("classSessions").get(),' functions/classSessionReminderEmails.js
@@ -222,11 +217,9 @@ jobs:
           grep -F 'classStartsAt: startsAt.toISOString()' functions/classSessionAutoCheckin.js
           grep -F 'const resolvedAssignmentId' src/pages/CheckinPage.jsx
           grep -F 'Teacher presentation slides are not shared from the attendance page.' src/pages/CheckinPage.jsx
-          grep -F 'schedule: "0 8 * * *"' functions/attendanceConfirmationEmails.js
-          grep -F 'async function queueAttendanceConfirmationEvent' functions/attendanceConfirmationEmails.js
-          grep -F '.where("nextRunAt", "<=",' functions/attendanceConfirmationEmails.js
           ! grep -F 'const classSnap = await db.collection("classes").get();' functions/attendanceConfirmationEmails.js
-          ! grep -F 'const studentSnap = await db.collection("students").get();' functions/attendanceConfirmationEmails.js
+          node scripts/patchAttendanceConfirmationEventDriven.mjs
+          if grep -Eq 'module\.exports\.sendStudentLearningNudges\s*=' functions/main.js; then exit 1; fi
           grep -F 'acceptClassNameSessionMatch(session, klass)' functions/attendanceConfirmationEmails.js
           grep -F 'schedule: "5 21 * * 1-6"' functions/autoCompleteClassSessions.js
           grep -F 'async function loadRecentCompletionCandidates' functions/autoCompleteClassSessions.js
@@ -354,26 +347,8 @@ jobs:
           deploy_group "final mock result email worker" \
             "functions:falowenadmin:sendFinalMockResultEmail"
 
-          deploy_group "student learning nudge worker" \
-            "functions:falowenadmin:sendStudentLearningNudges"
-
-          # Cloud Run CPU quota is tight in us-central1. Deploy the attendance
-          # worker first, then the other scheduled/event workers one at a time
-          # so concurrent revision rollouts do not exhaust regional CPU quota.
-          deploy_group "attendance confirmation worker" \
-            "functions:falowenadmin:sendAttendanceConfirmationEmails"
-
           deploy_group "automatic class completion worker" \
             "functions:falowenadmin:autoCompleteClassSessions"
-
-          deploy_group "attendance session event worker" \
-            "functions:falowenadmin:queueAttendanceConfirmationFromSession"
-
-          deploy_group "attendance check-in event worker" \
-            "functions:falowenadmin:queueAttendanceConfirmationFromCheckin"
-
-          deploy_group "class-session attendance event worker" \
-            "functions:falowenadmin:queueAttendanceConfirmationFromClassSession"
 
       - name: Upload Firebase failure log
         if: failure()

@@ -90,3 +90,8 @@ test("actual git two-commit range includes an undeployed application change", ()
     assert.equal(needsBuild(files), true);
   } finally { fs.rmSync(cwd, { recursive: true, force: true }); }
 });
+
+test("colocated tests alone do not need a Vercel build", () => {
+  assert.equal(needsBuild(["src/utils/example.test.js", "functions/__tests__/worker.test.cjs"]), false);
+  assert.equal(needsBuild(["src/utils/example.test.js", "src/utils/example.js"]), true);
+});

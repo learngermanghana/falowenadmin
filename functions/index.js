@@ -21,7 +21,7 @@ const { registerDraftHistoryRoutes } = require("./draftHistory.js");
 const { registerMarkingHealthRoutes } = require("./markingHealth.js");
 const { registerSignupAccountLookup } = require("./signupAccountLookup.js");
 const { registerStudentAccountActivationRoutes } = require("./studentAccountActivation.js");
-const { createAttendanceConfirmationEmailJob, sendAssignmentAttendanceCreditEmail } = require("./attendanceConfirmationEmails.js");
+const { sendDueAttendanceForClass, sendAssignmentAttendanceCreditEmail } = require("./attendanceConfirmationEmails.js");
 const { retryFailedAttendanceDeliveries, listAttendanceDeliveryHealth } = require("./attendanceConfirmationRetry.js");
 const { registerCompletionDocumentRoute } = require("./completionParticipationDocument.js");
 const { createRegistrationLifecycleTriggers } = require("./registrationLifecycleEvents.js");
@@ -2663,7 +2663,22 @@ app.post("/attendance-confirmation-emails/retry-failed", async (req, res) => {
 
 registerCompletionDocumentRoute({ app, db, runtimeConfig, requireAuth });
 
-exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob({ admin, db, onSchedule, runtimeConfig });
+app.post("/attendance-confirmation-emails/send-due", async (req, res) => {
+  try {
+    const user = await requireAuth(req);
+    const email = String(user?.email || "").trim().toLowerCase();
+    const role = String(user?.role || user?.user_role || "").trim().toLowerCase();
+    if (!(user?.admin === true || role === "admin" || email === "moxflex@gmail.com")) {
+      return res.status(403).json({ ok: false, error: "Admin access required." });
+    }
+    if (req.body?.confirm !== true) return res.status(400).json({ ok: false, error: "Explicit confirmation required." });
+    const result = await sendDueAttendanceForClass({ admin, db, classId: req.body?.classId, runtimeConfig });
+    return res.json({ ok: true, ...result });
+  } catch (error) {
+    const unauthorized = /Authorization|Not allowed|token/i.test(String(error?.message || ""));
+    return res.status(unauthorized ? 401 : 400).json({ ok: false, sent: Number(error?.sent || 0), failed: Number(error?.failed || 0), error: error?.message || "Attendance delivery failed." });
+  }
+});
 
 registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey: geminiAudioKeySecret, runtimeConfig });
 registerMusicAnalyticsRoutes({ app, db, runtimeConfig, verifyToken: token => admin.auth().verifyIdToken(token) });

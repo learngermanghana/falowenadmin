@@ -825,49 +825,26 @@ async function sendAssignmentAttendanceCreditEmail({
   }
 }
 
-async function runAttendanceConfirmationEmailJob({ admin, db, runtimeConfig = {}, now = new Date(), fetchImpl = fetch }) {
-  const config = resolveWebhookConfig(runtimeConfig);
-  const classSnap = await db.collection("classes").get();
-  const studentSnap = await db.collection("students").get();
-  const allStudents = studentSnap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
-  const results = [];
-
-  for (const classDoc of classSnap.docs) {
-    const klass = { id: classDoc.id, ...classDoc.data() };
-    if (modeForClass(klass) === MODE_OFF) continue;
-    try {
-      const classConfig = resolveClassWebhookConfig(klass, config);
-      if (!classConfig.url) throw new Error("Save this class under Communication → Attendance confirmation emails, or set communication.announcement_webhook_url in FALOWEN_ADMIN_CLOUD_RUNTIME_CONFIG.");
-      const result = await processClass({ admin, db, klass, allStudents, config: classConfig, now, fetchImpl });
-      results.push({ classId: klass.id, ok: true, ...result });
-    } catch (error) {
-      await classDoc.ref.set({
-        attendanceConfirmationEmailLastRunAt: admin.firestore.FieldValue.serverTimestamp(),
-        attendanceConfirmationEmailLastStatus: "failed",
-        attendanceConfirmationEmailLastError: error?.message || "Attendance confirmation email job failed",
-      }, { merge: true });
-      console.error("attendance_confirmation_email_failed", { classId: klass.id, message: error?.message || String(error) });
-      results.push({ classId: klass.id, ok: false, error: error?.message || String(error) });
-    }
-  }
-
-  const sent = results.reduce((sum, result) => sum + Number(result.sent || 0), 0);
-  console.log("attendance_confirmation_email_job_complete", { classes: results.length, sent });
-  return { results, sent };
-}
-
-function createAttendanceConfirmationEmailJob({ admin, db, onSchedule, runtimeConfig = {} }) {
-  return onSchedule({
-    cpu: "gcf_gen1",
-    schedule: "*/30 * * * *",
-    timeZone: ACCRA_TIMEZONE,
-    retryCount: 1,
-  }, async () => runAttendanceConfirmationEmailJob({ admin, db, runtimeConfig }));
+// Only a deliberate administrator action can start delivery for one class.
+async function sendDueAttendanceForClass({ admin, db, classId, runtimeConfig = {}, now = new Date(), fetchImpl = fetch }) {
+  const id = normalize(classId);
+  if (!id || id.includes("/")) throw new Error("Select a valid class.");
+  const snap = await db.collection("classes").doc(id).get();
+  if (!snap.exists) throw new Error("Class not found.");
+  const klass = { ...snap.data(), id: snap.id };
+  // Weekly reports use the separate manual Apps Script digest. Do not send both.
+  if (modeForClass(klass) !== MODE_EACH_CLASS) throw new Error("Save After every class mode first. Weekly reports use the manual weekly report below.");
+  const classConfig = resolveClassWebhookConfig(klass, resolveWebhookConfig(runtimeConfig));
+  if (!classConfig.url) throw new Error("Attendance Apps Script delivery is not configured.");
+  // Historical transfers must remain eligible. Read the roster only on explicit
+  // send, not on every check-in or scheduled tick.
+  const roster = await db.collection("students").get();
+  const allStudents = roster.docs.map(docSnap => ({ ...docSnap.data(), id: docSnap.id }));
+  return processClass({ admin, db, klass, allStudents, config: classConfig, now, fetchImpl });
 }
 
 module.exports = {
-  createAttendanceConfirmationEmailJob,
-  runAttendanceConfirmationEmailJob,
+  sendDueAttendanceForClass,
   sendAssignmentAttendanceCreditEmail,
   _test: {
     MODE_OFF,
