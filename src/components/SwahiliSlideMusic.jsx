@@ -34,7 +34,7 @@ function RecordingLyrics({ track, lessonQuestions }) {
   const [pack, setPack] = useState(null);
   const [loading, setLoading] = useState(true);
   const [time, setTime] = useState(0);
-  const [view, setView] = useState("listen");
+  const [view, setView] = useState(track.id === "swahili-a1-day-12" ? "lyrics" : "listen");
   const [follow, setFollow] = useState(true);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -60,7 +60,8 @@ function RecordingLyrics({ track, lessonQuestions }) {
   const lines = lyricLines(pack?.lyrics);
   const matched = hasCompleteSongTiming(pack?.cues, pack?.lyrics);
   const isB1Day28 = track.id === "swahili-b1-day-28";
-  const questions = Array.isArray(lessonQuestions) ? lessonQuestions : isB1Day28 ? B1_DAY_28_QUESTIONS : [];
+  const questions = pack?.practiceQuestions ??
+    (Array.isArray(lessonQuestions) ? lessonQuestions : isB1Day28 ? B1_DAY_28_QUESTIONS : []);
   const question = questions[questionIndex];
   const openView = next => {
     excerptEnd.current = null;
@@ -103,7 +104,7 @@ function RecordingLyrics({ track, lessonQuestions }) {
         onEnded={() => { excerptEnd.current = null; setTime(-1); }}
         onError={() => setAudioError("Rekodi haipatikani. Angalia kiungo cha MP3 katika Falowen Music.")}/>
       {audioError && <p role="alert">{audioError}</p>}
-      <a href={`https://music.falowen.app/?track=${encodeURIComponent(track.id)}`}
+      <a href={`https://music.falowen.app/song/${encodeURIComponent(track.id)}`}
         target="_blank" rel="noopener noreferrer">Fungua katika Falowen Music</a>
     </div>
 

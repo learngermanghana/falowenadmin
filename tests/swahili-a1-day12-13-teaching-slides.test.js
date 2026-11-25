@@ -15,8 +15,14 @@ for (const lesson of [day12,day13]) {
   assert.match(presenter,/calendarRoutinePresenters\[slideId\]/);
   assert.ok(lesson.stages.find(s=>s.id==="listening").listeningWorkbookUrl.endsWith(`day-${lesson.dayNumber}?view=hoeren`));
  });
- test(`Day ${lesson.dayNumber} preserves empty media slots and uses the new tutor references`,()=>{
-  for(const id of ["ai-video","music","radio"]) {
+ test(`Day ${lesson.dayNumber} uses the correct media slots and tutor references`,()=>{
+  const music = lesson.stages.find(s => s.id === "music");
+  if (lesson.dayNumber === 12) {
+   assert.equal(music.type, "music");
+   assert.equal(music.audio.id, "swahili-a1-day-12");
+   assert.equal(music.audio.objectKey, "swahili/music/A1/day-12/Angalia Kalenda.mp3.mpeg");
+  }
+  for(const id of lesson.dayNumber === 12 ? ["ai-video","radio"] : ["ai-video","music","radio"]) {
    const s=lesson.stages.find(s=>s.id===id);
    assert.equal(s.type,"media-pending");
    assert.equal(s.status,"pending-media");
