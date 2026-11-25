@@ -124,7 +124,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
       bundledTiming.lyrics === recordedLyrics && recordingMetadata?.timingStatus === 'audio-aligned'
       ? {questionEndings: bundledTiming.questionEndings} : {}),
   } : null;
-  const heardLyricDuration = ['A1-14.1', 'A1-2.3'].includes(assignmentKey) ? {minSeconds: 10, maxSeconds: 15, targetSeconds: 15} : undefined;
+  const heardLyricDuration = ['A1-14.1', 'A1-2.3'].includes(assignmentKey) ? {minSeconds: 10, maxSeconds: 15, targetSeconds: assignmentKey === 'A1-2.3' ? 15 : 12} : undefined;
   const verifiedNextQuestions = nextLyricOnly && recordingMetadata ? threeVerifiedHeardLyricQuestions(quizPack, recording, heardLyricDuration) : [];
   const flexibleDuration = {...heardLyricDuration, allowFewer:true, ignoreLegacyEndings:true};
   const verifiedFlexibleQuestions = nextLyricOnly && recordingMetadata && !verifiedNextQuestions.length
