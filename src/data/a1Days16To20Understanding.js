@@ -80,12 +80,12 @@ export const A1_DAYS16_TO20_UNDERSTANDING = Object.freeze({
     q("Welche Anrede passt zu einer Freundin: „Liebe Anna“ oder „Sehr geehrte Damen und Herren“?", "Liebe Anna,", "Use informal register for a familiar friend."),
     q("Welche Anrede passt zu einer Sprachschule?", "Sehr geehrte Damen und Herren,", "A formal recipient takes this standard greeting when no name is given."),
     q("Welche Grußformel passt zu einer formellen E-Mail?", "Mit freundlichen Grüßen", "Use a formal closing consistent with Sie/Ihnen."),
-    q("Was gehört zum Geburtstagsbrief als erster Inhaltspunkt?", "Gratuliere zum Geburtstag: Alles Gute zum Geburtstag!", "Greeting the friend is form; the birthday wish is a content point."),
-    q("Welche Frage fragt nach einer Geburtstagsparty?", "Gibt es eine Party?", "This fulfils the birthday task's party question."),
-    q("Wie fragst du, ob deine Familie mitkommen darf?", "Kann meine Familie mitkommen?", "This covers the birthday task's third content point."),
-    q("Ordne die Wörter: „wann / beginnt / der Kurs“.", "Wann beginnt der Kurs?", "A W-question about starting time uses verb-second order."),
-    q("Wie fragst du nach der Möglichkeit, online zu bezahlen?", "Kann ich online bezahlen?", "Yes/no question starts with the conjugated modal verb."),
-    q("Exit-Check: Nenne die drei Fragen/Inhaltspunkte zur Sprachschule und die erforderliche Briefform.", "Wann beginnt der Kurs? Wie viel kostet der Kurs? Kann ich online bezahlen? Dazu Anrede, Grußformel und Name.", "This matches the three published formal task bullets and separates them from letter structure."),
+    q("Was gehört zu einer Einladung als erster Inhaltspunkt?", "Ich lade dich zu meiner Party ein.", "Invite the recipient explicitly; greeting alone is not an invitation."),
+    q("Welche drei Angaben braucht eine Einladung zur Party?", "Tag, Uhrzeit und Ort.", "All three details belong to the second invitation point."),
+    q("Wie bittest du deine Freundin, Getränke mitzubringen?", "Kannst du bitte Getränke mitbringen?", "This fulfils the bring-food-or-drinks point."),
+    q("Ordne die Wörter: „wann / findet / der Kurs / statt“.", "Wann findet der Kurs statt?", "A W-question has the conjugated verb in second position and the separable prefix at the end."),
+    q("Wie fragst du nach den Kurszeiten und Kosten?", "Wann findet der Kurs statt und wie viel kostet er?", "Both requested details are needed for this point."),
+    q("Exit-Check: Nenne die drei Inhaltspunkte zur Sprachschule und die erforderliche Briefform.", "Anmelden wollen, Kurszeiten und Kosten erfragen, gewünschten Kursbeginn nennen. Dazu Anrede, Grußformel und Name.", "Matches current A1-12.3-V2 formal points; do not require online payment."),
   ],
 });
 
