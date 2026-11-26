@@ -4,6 +4,9 @@ import SwahiliRestaurantSong from "./SwahiliRestaurantSong.jsx";
 import { SWAHILI_DAY_FIVE_ADMIN_LESSON } from "../data/swahiliDayFiveTeachingSlides.js";
 import SwahiliSlideMusic from "./SwahiliSlideMusic.jsx";
 import { useEffect, useState } from "react";
+import InteractiveLessonOpening from "./InteractiveLessonOpening.jsx";
+import { swahiliAudioChapters } from "../data/swahiliAudioChapters.js";
+import { swahiliB1Day27 } from "../data/swahiliB1Day27.js";
 import { swahiliB1Day28 } from "../data/swahiliB1Day28.js";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import PresenterControls, { PresenterActions, PresenterStageJump } from "./PresenterControls.jsx";
@@ -140,9 +143,10 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
   const isDayTwo = slideId === SWAHILI_DAY_TWO_ADMIN_LESSON.id;
   const isDaySix = slideId === SWAHILI_DAY_SIX_ADMIN_LESSON.id;
   const isDayTen = slideId === SWAHILI_DAY_TEN_ADMIN_LESSON.id;
+  const isB1Day27 = slideId === swahiliB1Day27.id;
   const isB1Day28 = slideId === swahiliB1Day28.id;
   const existingPresenterSlide = isDaySix ? daySixPresenterSlide : presenterSlide;
-  const selectedPresenterSlide = calendarRoutinePresenters[slideId] || (slideId === SWAHILI_DAY_ELEVEN_ADMIN_LESSON.id ? dayElevenPresenterSlide : isB1Day28 ? b1Day28PresenterSlide : isDayTen ? dayTenPresenterSlide : isDayFive ? dayFivePresenterSlide : isDayTwo ? dayTwoPresenterSlide : existingPresenterSlide);
+  const selectedPresenterSlide = calendarRoutinePresenters[slideId] || (isB1Day27 ? swahiliB1Day27 : slideId === SWAHILI_DAY_ELEVEN_ADMIN_LESSON.id ? dayElevenPresenterSlide : isB1Day28 ? b1Day28PresenterSlide : isDayTen ? dayTenPresenterSlide : isDayFive ? dayFivePresenterSlide : isDayTwo ? dayTwoPresenterSlide : existingPresenterSlide);
   const lesson = selectedPresenterSlide;
   const selectedWorkbook = selectedPresenterSlide.workbookConnection.workbookUrl;
   const stages = lesson.stages;
@@ -209,17 +213,16 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
       {packs.map(([level, lessons]) => <section key={level}>
         {!selectedLevel && <h2>{level} Teaching Pack</h2>}
         <div className="slide-card-grid">
-          {lessons.map(entry => {
+          {(level === "B1" ? swahiliAudioChapters.B1.map(chapter => lessons.find(entry => entry.id === chapter.assignment_id) || { id: chapter.assignment_id, dayNumber: Number(chapter.assignment_id.split("-").at(-1)), title: chapter.en, unavailable: true }) : lessons).map(entry => {
             const href = courseRoot + "/" + entry.id;
             return <article key={entry.id} className="slide-card slide-card-lesson">
               <div className="slide-card-topline">
                 <p className="slide-meta">Kiswahili · {level}</p>
                 <span className="slide-day-badge">Day {entry.dayNumber}</span>
               </div>
-              <h2>{entry.title}</h2><p>{entry.objective}</p>
+              <h2>{entry.title}</h2><p>{entry.unavailable ? "Teaching slides not yet available." : entry.objective}</p>
               <div className="slide-card-actions">
-                <Link to={href}>Open lesson</Link>
-                <Link to={href + "?present=1"}>Present</Link>
+                {entry.unavailable ? <span>Not yet built</span> : <><Link to={href}>Open lesson</Link><Link to={href + "?present=1"}>Present</Link></>}
               </div>
             </article>;
           })}
@@ -285,7 +288,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
           <span>{stage.kicker}</span>
           <span>{index + 1} / {stages.length}</span>
         </div>
-        <h1>{stage.title}</h1>
+        {stage.type !== "classroom-listening" && <h1>{stage.title}</h1>}
         {stage.type === "grammar" && grammar && (
           <div className="swahili-a2-presenter__grammar-head">
             <span>Sarufi · {grammarPage + 1} / {stage.details.length}</span>
@@ -296,9 +299,9 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
           </div>
         )}
         {"radioVideoId" in stage && <SwahiliRadioMedia stage={stage} />}
-        {isDaySix && stage.type === "music" ? <SwahiliRestaurantSong /> : (stage.audio || (isDayFive && stage.type === "day-five")) ? <section className="swahili-a2-presenter__media-stage">
+        {stage.type === "classroom-listening" ? <InteractiveLessonOpening key={`${lesson.id}-${stage.id}`} stage={stage} slide={lesson} /> : isDaySix && stage.type === "music" ? <SwahiliRestaurantSong /> : (stage.audio || (isDayFive && stage.type === "day-five")) ? <section className="swahili-a2-presenter__media-stage">
           {stage.audio ? <SwahiliSlideMusic track={stage.audio} questions={stage.questions} /> : <p style={{ whiteSpace: "pre-line" }}>{stage.content}</p>}
-        </section> : <SwahiliA2LessonStage stage={stage} grammar={grammar} isDaySix={isDaySix} level={isB1Day28 ? "B1" : "A1"} />}
+        </section> : <SwahiliA2LessonStage stage={stage} grammar={grammar} isDaySix={isDaySix} level={isB1Day27 || isB1Day28 ? "B1" : "A1"} />}
 
         {stage.listeningWorkbookUrl && <a href={stage.listeningWorkbookUrl} target="_blank" rel="noreferrer">Open the related exercise in Campus</a>}
         {stageEnglish && <p className="swahili-a2-presenter__english" lang="en">{stageEnglish}</p>}
@@ -335,7 +338,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
       />
       {!focusMode && <footer className="swahili-a2-presenter__foot no-print">
         <a href={selectedWorkbook} target="_blank" rel="noreferrer">Open {lesson.day} learner workbook</a>
-        <span>{isB1Day28 ? "B1 · Kutunza Mazingira" : isDayTen ? "A1 · Sokoni" : isDayTwo ? "A1 · Salamu" : isDayFive ? "A1 · Day 5 practice" : isDaySix ? "Restaurant lesson · Falowen Music and Radio" : "Music and recorded Hören will be linked after upload."}</span>
+        <span>{isB1Day27 || isB1Day28 ? "B1 · Kutunza Mazingira" : isDayTen ? "A1 · Sokoni" : isDayTwo ? "A1 · Salamu" : isDayFive ? "A1 · Day 5 practice" : isDaySix ? "Restaurant lesson · Falowen Music and Radio" : "Music and recorded Hören will be linked after upload."}</span>
       </footer>}
     </main>
     </div>
