@@ -1165,13 +1165,13 @@ export default function StudentDirectoryPage() {
                           </div>
                           <StudentLearningStatusPanel student={selectedStudent} />
                           <StudentAccessOverview key={selectedStudent.id} student={selectedStudent} onManage={setDetailTab} />
-                          {!isHamburgCohortStudent(selectedStudent) && <button type="button" onClick={()=>setDetailTab("enrollments")}>Manage enrollments</button>}
+                          {!isHamburgCohortStudent(selectedStudent) && <button type="button" onClick={()=>setDetailTab("enrollments")}>Manage course access</button>}
                         </section>}
                         {detailTab === "enrollments" && !isHamburgCohortStudent(selectedStudent) && <section className="student-detail-panel" role="tabpanel" id="student-panel-enrollments" aria-labelledby="student-tab-enrollments">
                           <StudentCourseTypePanel key={selectedStudent.id} student={selectedStudent} onStudentUpdated={handleSupportStudentUpdated} />
-                          <StudentLevelEnrollments student={selectedStudent} pushToast={pushToast} classes={classes} onStudentUpdated={handleSupportStudentUpdated}
+                          <StudentLevelEnrollments student={selectedStudent} pushToast={pushToast} classes={classes} onStudentUpdated={handleSupportStudentUpdated} onRenewTrial={selectedStudent.uid?()=>activateTrialForStudent(selectedStudent):null} trialRenewing={Boolean(activatingTrialId)}
                             legacyControls={rows=><>
-                              {(!rows.length || ["awaiting_payment","pending","expired"].includes(String(selectedStudent.upgradeStatus||"").toLowerCase())) && <details><summary>Original upgrade workflow (legacy)</summary><StudentUpgradeTools student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast}/></details>}
+                              {String(selectedStudent.program||selectedStudent.language||"german").toLowerCase()==="german" && ["awaiting_payment","pending","expired"].includes(String(selectedStudent.upgradeStatus||"").toLowerCase()) && <details><summary>Original upgrade workflow (legacy)</summary><StudentUpgradeTools student={selectedStudent} draft={getDraft(selectedStudent)} onStudentUpdated={handleSupportStudentUpdated} pushToast={pushToast}/></details>}
                             </>} />
                         </section>}
                         {detailTab === "payments" && !isHamburgCohortStudent(selectedStudent) && <section className="student-detail-panel" role="tabpanel" id="student-panel-payments" aria-labelledby="student-tab-payments">
