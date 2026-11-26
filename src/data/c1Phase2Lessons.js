@@ -2250,6 +2250,727 @@ export const C1_PHASE2_LESSONS = [
       "Ergebnis der Diskussion zusammenfassen"
     ]
   }
+,
+
+  {
+    "day": 16,
+    "title": "Künstliche Intelligenz und Urheberrecht",
+    "skill": "Schreiben",
+    "part": 1,
+    "grammar": "Passiv, Zustandspassiv und Passiversatzformen",
+    "rule": "Das Vorgangspassiv beschreibt einen Vorgang (wird geprüft), das Zustandspassiv ein Ergebnis (ist geprüft). sich lassen + Infinitiv und Adjektive auf -bar drücken häufig eine Möglichkeit aus. Im argumentativen Text müssen rechtliche Unsicherheiten als solche gekennzeichnet werden.",
+    "grammarChecks": [
+      [
+        "Die Herkunft der Inhalte kann nicht immer nachvollzogen werden. (sich lassen)",
+        "Die Herkunft der Inhalte lässt sich nicht immer nachvollziehen.",
+        "sich lassen + Infinitiv ersetzt können + Passiv."
+      ],
+      [
+        "Die Nutzung der Bilder wurde genehmigt. Beschreiben Sie den jetzigen Zustand.",
+        "Die Nutzung der Bilder ist genehmigt.",
+        "sein + Partizip II beschreibt das Ergebnis."
+      ],
+      [
+        "Die Entscheidung kann überprüft werden. (Adjektiv auf -bar)",
+        "Die Entscheidung ist überprüfbar.",
+        "-bar kennzeichnet hier eine Möglichkeit."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "das Urheberrecht",
+        "copyright"
+      ],
+      [
+        "die Schutzrechte",
+        "protective rights"
+      ],
+      [
+        "die Nachvollziehbarkeit",
+        "traceability"
+      ],
+      [
+        "Ansprüche geltend machen",
+        "assert claims"
+      ],
+      [
+        "die Einwilligung",
+        "consent"
+      ],
+      [
+        "das Trainingsmaterial",
+        "training material"
+      ],
+      [
+        "die Lizenzierung",
+        "licensing"
+      ],
+      [
+        "die Vergütung",
+        "remuneration"
+      ],
+      [
+        "die Urheberschaft",
+        "authorship"
+      ],
+      [
+        "die Kennzeichnungspflicht",
+        "labeling requirement"
+      ],
+      [
+        "die schöpferische Leistung",
+        "creative achievement"
+      ],
+      [
+        "die Rechtsunsicherheit",
+        "legal uncertainty"
+      ],
+      [
+        "das geistige Eigentum",
+        "intellectual property"
+      ],
+      [
+        "die Verwertung",
+        "exploitation"
+      ],
+      [
+        "die Quellenangabe",
+        "source attribution"
+      ],
+      [
+        "die Haftung",
+        "liability"
+      ],
+      [
+        "Rechte einräumen",
+        "grant rights"
+      ],
+      [
+        "eine Regelung treffen",
+        "establish a rule"
+      ],
+      [
+        "Interessen abwägen",
+        "weigh interests"
+      ],
+      [
+        "nachvollziehbar",
+        "transparent"
+      ]
+    ],
+    "instruction": "In einem Onlineforum wird diskutiert, ob KI-generierte Inhalte grundsätzlich gekennzeichnet werden sollten. Schreiben Sie einen Diskussionsbeitrag von circa 230 Wörtern (Richtwert 50 Minuten). Gehen Sie auf alle vier Punkte ein.",
+    "prompts": [
+      "Erläutern Sie, warum die Herkunft digitaler Inhalte für Nutzende wichtig sein kann.",
+      "Begründen Sie anhand eines Beispiels, in welchen Situationen eine Kennzeichnung sinnvoll wäre.",
+      "Gehen Sie auf Grenzen oder Nachteile einer allgemeinen Kennzeichnungspflicht ein.",
+      "Schlagen Sie eine ergänzende Maßnahme zum Schutz kreativer Leistungen vor."
+    ],
+    "model": "Die zunehmende Verbreitung KI-generierter Inhalte wirft die Frage auf, wie sich deren Herkunft nachvollziehen lässt. Meines Erachtens ist Transparenz insbesondere dann erforderlich, wenn die Entstehungsweise eines Beitrags für dessen Bewertung von Bedeutung ist. Eine Kennzeichnung allein kann jedoch nicht sämtliche urheberrechtlichen Probleme lösen.\nEin anschauliches Beispiel sind täuschend echte Bilder, die im Zusammenhang mit Nachrichten veröffentlicht werden. Ohne einen Hinweis könnten Leserinnen und Leser annehmen, dass ein dargestelltes Ereignis tatsächlich stattgefunden habe. Eine sichtbare Kennzeichnung würde in solchen Fällen die kritische Einordnung erleichtern. Auch bei kommerziellen Angeboten kann die Information über den Herstellungsprozess relevant sein.\nAllerdings erscheint eine ausnahmslose Pflicht wenig praktikabel. Wenn ein Text lediglich mithilfe eines digitalen Werkzeugs sprachlich korrigiert wurde, wäre eine Kennzeichnung womöglich unverhältnismäßig. Zudem sagt ein entsprechender Hinweis noch nichts darüber aus, ob die verwendeten Trainingsmaterialien mit Einwilligung der Rechteinhaber genutzt wurden. Die Rechtmäßigkeit eines Inhalts lässt sich also nicht allein anhand seiner Kennzeichnung beurteilen.\nAls ergänzende Maßnahme halte ich transparente Lizenzierungsverfahren für sinnvoll. Kreativschaffende sollten nachvollziehen können, unter welchen Bedingungen ihre Werke verwendet werden, und verständliche Möglichkeiten erhalten, ihre Ansprüche geltend zu machen. Zugleich wären klare Kriterien erforderlich, anhand derer zwischen geringfügiger technischer Unterstützung und umfangreicher maschineller Generierung unterschieden werden kann. Dadurch ließen sich unnötige bürokratische Belastungen vermeiden. Eine ausgewogene Regelung sollte folglich sowohl die Interessen der Öffentlichkeit als auch die der Kreativschaffenden und der technisch innovativen Unternehmen berücksichtigen.",
+    "rubric": [
+      "Alle vier Inhaltspunkte erkennbar bearbeiten",
+      "Konkretes Beispiel und nachvollziehbare Abwägung",
+      "Differenzierte Aussagen statt unbelegter Rechtsbehauptungen",
+      "Kohärenz, Register, Wortschatz und Grammatik"
+    ]
+  },
+  {
+    "day": 17,
+    "title": "Klimawandel und Biodiversität",
+    "skill": "Lesen",
+    "part": 3,
+    "grammar": "Nominalstil, kausale und konzessive Verknüpfungen",
+    "rule": "in Anbetracht + Genitiv bezeichnet einen berücksichtigten Umstand; infolge + Genitiv eine Ursache mit Folge. Dennoch und folglich verbinden Hauptsätze. Beim Lesen weisen Pronomen, Artikel und Konnektoren auf vorangehende Aussagen zurück.",
+    "grammarChecks": [
+      [
+        "Weil Lebensräume verloren gehen, nimmt die Artenvielfalt ab. (infolge)",
+        "Infolge des Verlusts von Lebensräumen nimmt die Artenvielfalt ab.",
+        "infolge + Genitiv nominalisiert die Ursache."
+      ],
+      [
+        "Angesichts der Trockenheit sind Anpassungen erforderlich. (verbal)",
+        "Da es sehr trocken ist, sind Anpassungen erforderlich.",
+        "Der kausale Nebensatz entfaltet den nominalen Ausdruck."
+      ],
+      [
+        "Die Maßnahme ist teuer. Sie kann langfristig nützlich sein. (dennoch)",
+        "Die Maßnahme ist teuer; dennoch kann sie langfristig nützlich sein.",
+        "dennoch steht an Position 1, das finite Verb folgt."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Artenvielfalt",
+        "biodiversity"
+      ],
+      [
+        "der Artenschutz",
+        "species conservation"
+      ],
+      [
+        "der Lebensraumverlust",
+        "habitat loss"
+      ],
+      [
+        "Schutzmaßnahmen ergreifen",
+        "take conservation measures"
+      ],
+      [
+        "das Ökosystem",
+        "ecosystem"
+      ],
+      [
+        "die Widerstandsfähigkeit",
+        "resilience"
+      ],
+      [
+        "die Renaturierung",
+        "ecological restoration"
+      ],
+      [
+        "die Flächenversiegelung",
+        "soil sealing"
+      ],
+      [
+        "die Bestäubung",
+        "pollination"
+      ],
+      [
+        "die Trockenperiode",
+        "dry spell"
+      ],
+      [
+        "die Anpassungsfähigkeit",
+        "adaptive capacity"
+      ],
+      [
+        "die Artenverdrängung",
+        "species displacement"
+      ],
+      [
+        "der Rückgang",
+        "decline"
+      ],
+      [
+        "die Wechselwirkung",
+        "interaction"
+      ],
+      [
+        "die Klimaanpassung",
+        "climate adaptation"
+      ],
+      [
+        "der Biotopverbund",
+        "habitat network"
+      ],
+      [
+        "Lebensräume vernetzen",
+        "connect habitats"
+      ],
+      [
+        "einen Bestand erfassen",
+        "survey a population"
+      ],
+      [
+        "Folgen abmildern",
+        "mitigate impacts"
+      ],
+      [
+        "ökologisch tragfähig",
+        "ecologically sustainable"
+      ]
+    ],
+    "instruction": "Lesen Sie den Kommentar. Ergänzen Sie die fünf fehlenden Sätze aus A–G. Zwei Sätze bleiben übrig; jeder passende Satz wird nur einmal verwendet.",
+    "text": "Artenschutz braucht vernetzte Lebensräume\nIn der Debatte über Biodiversität richtet sich der Blick oft auf die Ausweisung neuer Schutzgebiete. (1) ___ Denn zwischen räumlich getrennten Lebensräumen können viele Arten nur eingeschränkt wandern.\nEin möglicher Ansatz besteht darin, Hecken, Grünstreifen und andere naturnahe Verbindungen zu erhalten. (2) ___ Solche Korridore sind gerade dann bedeutsam, wenn sich geeignete Lebensbedingungen räumlich verschieben.\nDie Wirkung dieser Maßnahmen hängt allerdings auch von der Qualität der Flächen ab. (3) ___ Eine durchgehende Verbindung ist daher nicht automatisch ein geeigneter Lebensraum.\nDarüber hinaus stellt sich die Frage, wie die Wirksamkeit von Schutzmaßnahmen überprüft werden kann. (4) ___ Auf diese Weise lässt sich feststellen, ob beobachtete Veränderungen mit der Maßnahme zusammenhängen oder andere Ursachen haben könnten.\nNicht zuletzt müssen die Interessen landwirtschaftlicher Betriebe berücksichtigt werden. (5) ___ Ohne deren Mitwirkung lassen sich viele langfristige Maßnahmen außerhalb bestehender Schutzgebiete kaum umsetzen.",
+    "questions": [
+      [
+        "1",
+        [
+          "A. Diese Verbindungen können Wanderungen zwischen geeigneten Flächen erleichtern.",
+          "B. Dazu eignen sich wiederholte Erhebungen auf Vergleichsflächen und den geförderten Flächen.",
+          "C. Die Größe einzelner Gebiete allein reicht jedoch nicht aus.",
+          "D. Deshalb sind verlässliche Vereinbarungen und gegebenenfalls Ausgleichszahlungen sinnvoll.",
+          "E. So können stark belastete Grünstreifen für empfindliche Arten ungeeignet sein.",
+          "F. Die Untersuchung einzelner Arten ist grundsätzlich nicht möglich.",
+          "G. Korridore machen sämtliche anderen Schutzmaßnahmen überflüssig."
+        ],
+        2,
+        "Der folgende Denn-Satz begründet, warum isolierte Gebiete nicht genügen."
+      ],
+      [
+        "2",
+        [
+          "A. Diese Verbindungen können Wanderungen zwischen geeigneten Flächen erleichtern.",
+          "B. Dazu eignen sich wiederholte Erhebungen auf Vergleichsflächen und den geförderten Flächen.",
+          "C. Die Größe einzelner Gebiete allein reicht jedoch nicht aus.",
+          "D. Deshalb sind verlässliche Vereinbarungen und gegebenenfalls Ausgleichszahlungen sinnvoll.",
+          "E. So können stark belastete Grünstreifen für empfindliche Arten ungeeignet sein.",
+          "F. Die Untersuchung einzelner Arten ist grundsätzlich nicht möglich.",
+          "G. Korridore machen sämtliche anderen Schutzmaßnahmen überflüssig."
+        ],
+        0,
+        "Diese Verbindungen bezieht sich auf Hecken und Grünstreifen; solche Korridore greift sie auf."
+      ],
+      [
+        "3",
+        [
+          "A. Diese Verbindungen können Wanderungen zwischen geeigneten Flächen erleichtern.",
+          "B. Dazu eignen sich wiederholte Erhebungen auf Vergleichsflächen und den geförderten Flächen.",
+          "C. Die Größe einzelner Gebiete allein reicht jedoch nicht aus.",
+          "D. Deshalb sind verlässliche Vereinbarungen und gegebenenfalls Ausgleichszahlungen sinnvoll.",
+          "E. So können stark belastete Grünstreifen für empfindliche Arten ungeeignet sein.",
+          "F. Die Untersuchung einzelner Arten ist grundsätzlich nicht möglich.",
+          "G. Korridore machen sämtliche anderen Schutzmaßnahmen überflüssig."
+        ],
+        4,
+        "Das Beispiel erklärt die Bedeutung der Flächenqualität."
+      ],
+      [
+        "4",
+        [
+          "A. Diese Verbindungen können Wanderungen zwischen geeigneten Flächen erleichtern.",
+          "B. Dazu eignen sich wiederholte Erhebungen auf Vergleichsflächen und den geförderten Flächen.",
+          "C. Die Größe einzelner Gebiete allein reicht jedoch nicht aus.",
+          "D. Deshalb sind verlässliche Vereinbarungen und gegebenenfalls Ausgleichszahlungen sinnvoll.",
+          "E. So können stark belastete Grünstreifen für empfindliche Arten ungeeignet sein.",
+          "F. Die Untersuchung einzelner Arten ist grundsätzlich nicht möglich.",
+          "G. Korridore machen sämtliche anderen Schutzmaßnahmen überflüssig."
+        ],
+        1,
+        "Auf diese Weise verweist auf die vorgeschlagenen vergleichenden Erhebungen."
+      ],
+      [
+        "5",
+        [
+          "A. Diese Verbindungen können Wanderungen zwischen geeigneten Flächen erleichtern.",
+          "B. Dazu eignen sich wiederholte Erhebungen auf Vergleichsflächen und den geförderten Flächen.",
+          "C. Die Größe einzelner Gebiete allein reicht jedoch nicht aus.",
+          "D. Deshalb sind verlässliche Vereinbarungen und gegebenenfalls Ausgleichszahlungen sinnvoll.",
+          "E. So können stark belastete Grünstreifen für empfindliche Arten ungeeignet sein.",
+          "F. Die Untersuchung einzelner Arten ist grundsätzlich nicht möglich.",
+          "G. Korridore machen sämtliche anderen Schutzmaßnahmen überflüssig."
+        ],
+        3,
+        "Die Vereinbarungen schaffen einen Rahmen für die danach genannte Mitwirkung der Betriebe."
+      ]
+    ]
+  },
+  {
+    "day": 18,
+    "title": "Armut, Reichtum und soziale Gerechtigkeit",
+    "skill": "Hören",
+    "part": 1,
+    "grammar": "Adversative und konzessive Strukturen",
+    "rule": "einerseits … andererseits stellt zwei Perspektiven gegenüber; zwar … jedoch räumt zunächst einen Sachverhalt ein und schränkt ihn anschließend ein. Wohingegen leitet einen kontrastierenden Nebensatz ein.",
+    "grammarChecks": [
+      [
+        "Transfers können Armut lindern. Ihre Finanzierung ist anspruchsvoll. (einerseits … andererseits)",
+        "Einerseits können Transfers Armut lindern, andererseits ist ihre Finanzierung anspruchsvoll.",
+        "Beide Konnektoren besetzen die erste Satzposition."
+      ],
+      [
+        "Das Einkommen steigt. Die Wohnkosten bleiben hoch. (zwar … jedoch)",
+        "Zwar steigt das Einkommen, jedoch bleiben die Wohnkosten hoch.",
+        "zwar … jedoch signalisiert eine Einschränkung."
+      ],
+      [
+        "Einige Haushalte verfügen über Rücklagen. Andere haben keine. (wohingegen)",
+        "Einige Haushalte verfügen über Rücklagen, wohingegen andere keine haben.",
+        "wohingegen verlangt Verbendstellung."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Vermögensverteilung",
+        "wealth distribution"
+      ],
+      [
+        "die Armutsgefährdung",
+        "risk of poverty"
+      ],
+      [
+        "die Umverteilung",
+        "redistribution"
+      ],
+      [
+        "die soziale Ungleichheit",
+        "social inequality"
+      ],
+      [
+        "das Existenzminimum",
+        "subsistence minimum"
+      ],
+      [
+        "die Kaufkraft",
+        "purchasing power"
+      ],
+      [
+        "die Einkommensschere",
+        "income gap"
+      ],
+      [
+        "die Vermögensbildung",
+        "wealth accumulation"
+      ],
+      [
+        "die soziale Mobilität",
+        "social mobility"
+      ],
+      [
+        "die Transferleistung",
+        "transfer payment"
+      ],
+      [
+        "die Steuerlast",
+        "tax burden"
+      ],
+      [
+        "die Lebenshaltungskosten",
+        "cost of living"
+      ],
+      [
+        "die Überschuldung",
+        "overindebtedness"
+      ],
+      [
+        "die Chancengerechtigkeit",
+        "equality of opportunity"
+      ],
+      [
+        "die Einkommensquelle",
+        "income source"
+      ],
+      [
+        "die soziale Absicherung",
+        "social protection"
+      ],
+      [
+        "Benachteiligung abbauen",
+        "reduce disadvantage"
+      ],
+      [
+        "Rücklagen bilden",
+        "build savings"
+      ],
+      [
+        "eine Belastung ausgleichen",
+        "offset a burden"
+      ],
+      [
+        "bedarfsgerecht",
+        "needs-based"
+      ]
+    ],
+    "instruction": "Sie hören einmal einen fiktiven Bücherpodcast mit drei Buchvorstellungen. Ordnen Sie die Aussagen A, B oder C zu. A: Einkommen im Alltag; B: Vermögen über Generationen; C: Chancen durch Bildung. Mehrfachzuordnungen sind möglich.",
+    "text": "Willkommen zu unserem Bücherpodcast. Heute besprechen wir drei erfundene Bücher über soziale Gerechtigkeit. Buch A, Einkommen im Alltag, untersucht anhand von Haushaltsbeispielen, wie stark sich steigende Wohnkosten auf das verfügbare Einkommen auswirken. Die Autorin zeigt, dass eine Gehaltserhöhung nicht unbedingt zu größerer finanzieller Sicherheit führt. Besonders hilfreich sind ihre Vorschläge, Sozialleistungen verständlicher zu beantragen. Fragen großer Vermögen spielen in diesem Buch nur eine Nebenrolle. Buch B, Vermögen über Generationen, richtet den Blick auf Erbschaften und langfristige Vermögensbildung. Der Autor erklärt, warum zwei Personen mit ähnlichem Einkommen dennoch sehr unterschiedliche Möglichkeiten haben können, eine Wohnung zu erwerben. Er vergleicht verschiedene Vorschläge zur Besteuerung großer Erbschaften, ohne eine einzelne Lösung als eindeutig überlegen darzustellen. Buch C, Chancen durch Bildung, widmet sich den Übergängen zwischen Schule, Ausbildung und Beruf. Die Autorin untersucht, weshalb Kinder aus Familien mit wenig Erfahrung im Bildungssystem vorhandene Förderangebote manchmal nicht nutzen. Sie plädiert dafür, Beratung frühzeitig und unabhängig von den finanziellen Möglichkeiten der Eltern anzubieten. Die finanziellen Auswirkungen von Steuern stehen hier nicht im Mittelpunkt.",
+    "questions": [
+      [
+        "1. Steigende Wohnkosten können den Nutzen einer Gehaltserhöhung vermindern.",
+        [
+          "A",
+          "B",
+          "C"
+        ],
+        0,
+        "Buch A unterscheidet höheres Einkommen und finanzielle Sicherheit."
+      ],
+      [
+        "2. Ähnliches Einkommen bedeutet nicht zwangsläufig ähnliche Vermögenschancen.",
+        [
+          "A",
+          "B",
+          "C"
+        ],
+        1,
+        "Buch B vergleicht Möglichkeiten des Wohnungserwerbs."
+      ],
+      [
+        "3. Beratung soll bereits vor wichtigen Bildungsübergängen ansetzen.",
+        [
+          "A",
+          "B",
+          "C"
+        ],
+        2,
+        "Buch C fordert frühzeitige Beratung."
+      ],
+      [
+        "4. Die Antragstellung für Sozialleistungen sollte verständlicher werden.",
+        [
+          "A",
+          "B",
+          "C"
+        ],
+        0,
+        "Buch A enthält entsprechende Vorschläge."
+      ],
+      [
+        "5. Verschiedene Formen der Erbschaftsbesteuerung werden abgewogen.",
+        [
+          "A",
+          "B",
+          "C"
+        ],
+        1,
+        "Buch B vergleicht Steueransätze."
+      ],
+      [
+        "6. Fehlende Erfahrung mit dem Bildungssystem kann die Nutzung von Förderangeboten erschweren.",
+        [
+          "A",
+          "B",
+          "C"
+        ],
+        2,
+        "Buch C untersucht genau diesen Zusammenhang."
+      ]
+    ]
+  },
+  {
+    "day": 19,
+    "title": "Digitalisierung der Arbeitswelt 4.0",
+    "skill": "Sprechen",
+    "part": 1,
+    "grammar": "Subjektive Modalverben, Futur und Einschränkung",
+    "rule": "dürfte + Infinitiv kennzeichnet eine begründete Vermutung, könnte eine Möglichkeit. Futur I kann eine Prognose ausdrücken, aber keine Gewissheit garantieren. Verwenden Sie einschränkende Formulierungen wie unter bestimmten Bedingungen.",
+    "grammarChecks": [
+      [
+        "Vermutlich verändert die Automatisierung viele Tätigkeiten. (dürfte)",
+        "Die Automatisierung dürfte viele Tätigkeiten verändern.",
+        "dürfte markiert eine Vermutung."
+      ],
+      [
+        "Möglicherweise entstehen neue Aufgaben. (könnte)",
+        "Es könnten neue Aufgaben entstehen.",
+        "könnte drückt eine Möglichkeit aus; Plural könnten."
+      ],
+      [
+        "Die Firma behauptet, sie habe die Produktivität erhöht. (soll)",
+        "Die Firma soll die Produktivität erhöht haben.",
+        "soll + Infinitiv Perfekt kennzeichnet eine fremde Behauptung."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Automatisierung",
+        "automation"
+      ],
+      [
+        "der Strukturwandel",
+        "structural change"
+      ],
+      [
+        "die Beschäftigungssicherheit",
+        "employment security"
+      ],
+      [
+        "Kompetenzen erwerben",
+        "acquire skills"
+      ],
+      [
+        "die Arbeitsverdichtung",
+        "work intensification"
+      ],
+      [
+        "der Tätigkeitsbereich",
+        "area of work"
+      ],
+      [
+        "die Produktivität",
+        "productivity"
+      ],
+      [
+        "die Prozessoptimierung",
+        "process optimization"
+      ],
+      [
+        "die Umschulung",
+        "retraining"
+      ],
+      [
+        "die Mitbestimmung",
+        "co-determination"
+      ],
+      [
+        "die Überwachung",
+        "monitoring"
+      ],
+      [
+        "der Arbeitsplatzabbau",
+        "job cuts"
+      ],
+      [
+        "die Anpassungsfähigkeit",
+        "adaptability"
+      ],
+      [
+        "die Qualifikationsanforderung",
+        "qualification requirement"
+      ],
+      [
+        "die Entlastung",
+        "relief"
+      ],
+      [
+        "die Arbeitsorganisation",
+        "work organization"
+      ],
+      [
+        "Aufgaben delegieren",
+        "delegate tasks"
+      ],
+      [
+        "Verantwortung tragen",
+        "bear responsibility"
+      ],
+      [
+        "einen Wandel gestalten",
+        "shape a transition"
+      ],
+      [
+        "zukunftsfähig",
+        "future-ready"
+      ]
+    ],
+    "instruction": "Halten Sie in einem Seminar zur Arbeitswelt der Zukunft einen Vortrag von circa fünf Minuten. Beantworten Sie anschließend kritische Nachfragen.",
+    "prompts": [
+      "Erläutern Sie, wie Automatisierung berufliche Tätigkeiten verändern kann.",
+      "Nennen Sie ein konkretes Beispiel aus einem Berufsfeld.",
+      "Wägen Sie mögliche Entlastung und Risiken für Beschäftigte ab.",
+      "Schlagen Sie eine Maßnahme vor, um den Wandel fair zu gestalten."
+    ],
+    "followups": [
+      "Woran ließe sich erkennen, ob eine neue Technologie Beschäftigte tatsächlich entlastet?",
+      "Wer sollte die Kosten beruflicher Weiterbildung tragen?"
+    ],
+    "model": "Die Digitalisierung dürfte nicht nur neue Berufe hervorbringen, sondern vor allem bestehende Tätigkeiten verändern. In einer Verwaltung könnten etwa automatisierte Systeme wiederkehrende Anfragen vorsortieren. Dadurch bliebe möglicherweise mehr Zeit für komplexe Beratungsfälle. Allerdings wäre die Entlastung nicht selbstverständlich, wenn gleichzeitig die Zahl der erwarteten bearbeiteten Fälle erhöht würde. Eine faire Gestaltung setzt voraus, dass Beschäftigte frühzeitig einbezogen werden und Zugang zu Weiterbildung erhalten. Außerdem sollten Auswirkungen auf Arbeitsbelastung und Qualität überprüft werden. Entscheidend ist für mich, technische Möglichkeiten nicht mit gesicherten Vorteilen gleichzusetzen.",
+    "rubric": [
+      "Vier Aspekte strukturiert und begründet behandeln",
+      "Konkretes Beispiel und differenzierte Bewertung",
+      "Vermutungen sprachlich von Tatsachen unterscheiden",
+      "Nachfragen verständlich und spontan beantworten"
+    ]
+  },
+  {
+    "day": 20,
+    "title": "KI im Gesundheitswesen und Telemedizin",
+    "skill": "Schreiben",
+    "part": 2,
+    "grammar": "Passiversatz, Nominalisierung und formelle Bitten",
+    "rule": "sein + zu + Infinitiv kann eine Notwendigkeit ausdrücken (Daten sind zu schützen); sich lassen + Infinitiv eine Möglichkeit. aufgrund + Genitiv begründet ein Anliegen. Konjunktiv II ermöglicht eine höfliche Bitte.",
+    "grammarChecks": [
+      [
+        "Die persönlichen Daten müssen geschützt werden. (sein + zu)",
+        "Die persönlichen Daten sind zu schützen.",
+        "Notwendigkeit im Passiversatz."
+      ],
+      [
+        "Nicht jede Untersuchung kann online durchgeführt werden. (sich lassen)",
+        "Nicht jede Untersuchung lässt sich online durchführen.",
+        "sich lassen + Infinitiv drückt Möglichkeit aus."
+      ],
+      [
+        "Formulieren Sie höflicher: Geben Sie mir einen persönlichen Termin.",
+        "Ich wäre Ihnen dankbar, wenn Sie mir einen persönlichen Termin anbieten könnten.",
+        "Konjunktiv II und höfliche Bitte."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Telemedizin",
+        "telemedicine"
+      ],
+      [
+        "die Datensicherheit",
+        "data security"
+      ],
+      [
+        "die Ferndiagnose",
+        "remote diagnosis"
+      ],
+      [
+        "Verantwortung klären",
+        "clarify responsibility"
+      ],
+      [
+        "die Schweigepflicht",
+        "duty of confidentiality"
+      ],
+      [
+        "die Einwilligung",
+        "consent"
+      ],
+      [
+        "die Patientenakte",
+        "patient record"
+      ],
+      [
+        "die Sprechstunde",
+        "consultation"
+      ],
+      [
+        "die Datenverarbeitung",
+        "data processing"
+      ],
+      [
+        "die Befundbesprechung",
+        "discussion of findings"
+      ],
+      [
+        "die ärztliche Einschätzung",
+        "medical assessment"
+      ],
+      [
+        "die Untersuchung",
+        "examination"
+      ],
+      [
+        "die Erreichbarkeit",
+        "accessibility"
+      ],
+      [
+        "die Versorgungsqualität",
+        "quality of care"
+      ],
+      [
+        "die Fehlentscheidung",
+        "erroneous decision"
+      ],
+      [
+        "die Zugriffsberechtigung",
+        "access authorization"
+      ],
+      [
+        "eine Alternative anbieten",
+        "offer an alternative"
+      ],
+      [
+        "Bedenken äußern",
+        "express concerns"
+      ],
+      [
+        "eine Auskunft erteilen",
+        "provide information"
+      ],
+      [
+        "vertraulich",
+        "confidential"
+      ]
+    ],
+    "instruction": "Ihre Arztpraxis bietet künftig digitale Sprechstunden mit technischer KI-Unterstützung an. Sie haben Fragen zur Verarbeitung Ihrer Daten und möchten gegebenenfalls einen persönlichen Termin. Schreiben Sie eine Nachricht an die Praxisleitung (circa 120 Wörter, Richtwert 25 Minuten).",
+    "prompts": [
+      "Zeigen Sie Verständnis für die Einführung digitaler Angebote.",
+      "Erläutern Sie Ihre konkreten Bedenken hinsichtlich der Datenverarbeitung.",
+      "Nennen Sie eine Bedingung, unter der Sie das digitale Angebot nutzen würden.",
+      "Bitten Sie um eine praktikable Alternative."
+    ],
+    "model": "Sehr geehrte Damen und Herren,\nich habe erfahren, dass Ihre Praxis künftig digital unterstützte Sprechstunden anbietet. Mir ist bewusst, dass solche Angebote Wartezeiten verkürzen und den Zugang zur Beratung erleichtern können. Allerdings möchte ich vor der Nutzung wissen, welche persönlichen Daten verarbeitet werden und wer darauf zugreifen darf. Besonders wichtig ist mir, dass vertrauliche Gesundheitsinformationen geschützt und nicht ohne meine Einwilligung für andere Zwecke verwendet werden. Eine digitale Sprechstunde käme für mich infrage, sofern die Datenverarbeitung verständlich erläutert und die ärztliche Verantwortung eindeutig geregelt würde. Andernfalls wäre ich Ihnen dankbar, wenn Sie mir weiterhin einen persönlichen Termin anbieten könnten. Gern würde ich die Möglichkeiten vorab telefonisch mit Ihrem Praxisteam besprechen. Vielen Dank für Ihre Unterstützung und eine kurze Rückmeldung.\nMit freundlichen Grüßen\nAlex",
+    "rubric": [
+      "Alle vier Inhaltspunkte vollständig behandeln",
+      "Höflicher, sachlicher Ton",
+      "Konkrete Bedingung und realistische Bitte",
+      "Verständliche Struktur, Grammatik und Wortschatz"
+    ]
+  }
 
 ];
 export const getC1Phase2Lesson = (day) => C1_PHASE2_LESSONS.find((lesson) => lesson.day === Number(day)) || null;
