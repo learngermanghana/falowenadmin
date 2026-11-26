@@ -1,0 +1,23 @@
+/* Day 21: visual weather cards for projector and mobile. */
+.a1d21 .a1d21-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem;margin:.5rem 0}
+.a1d21 .a1d21-four{grid-template-columns:repeat(2,minmax(0,1fr))}
+.a1d21 .a1d21-intro .a1n-panel{text-align:center}
+.a1d21 .a1d21-icon{display:block;font-size:clamp(2rem,5vw,4.2rem);line-height:1.2;flex-shrink:0}
+.a1d21 .a1d21-vocab{display:flex;align-items:center;gap:.7em;flex-wrap:wrap}
+.a1d21 .a1d21-vocab b{font-size:clamp(1.1rem,2vw,1.7rem)}
+.a1d21 .a1d21-vocab small{display:block;margin-top:.3em}
+.a1d21 .a1d21-temperature{display:flex;justify-content:space-around;gap:.6rem;flex-wrap:wrap;font-size:clamp(1.2rem,3vw,2.5rem);font-weight:700;padding:.6em}
+.a1d21 .a1d21-forecast{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.4rem;margin:.6rem 0}
+.a1d21 .a1d21-forecast .a1n-panel{display:grid;justify-items:center;text-align:center;gap:.35rem;padding:.5rem}
+.a1d21 .a1d21-forecast strong{font-size:clamp(1.2rem,2.5vw,2.2rem);font-variant-numeric:tabular-nums}
+.a1d21 .a1d21-reveal summary{cursor:pointer;text-decoration:underline;font-weight:650;padding:.45em 0}
+.a1d21 .a1d21-verb{border-bottom:.17em solid #2563eb}
+.a1d21 .a1d21-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6rem}
+.a1d21 .a1d21-number{display:inline-grid;place-items:center;background:#dbeafe;color:#1d4ed8;border-radius:50%;width:2em;height:2em;font-weight:800}
+.a1d21 .a1d21-letter{background:#fff;color:#172b4d;border:1px solid #cbd5e1;border-radius:.5rem;padding:.8em;line-height:1.45}
+.a1d21 .a1d21-letter p{margin:.4em 0}
+.a1d21 .a1d21-reading{line-height:1.55;font-size:clamp(1.15rem,2.1vw,1.75rem)}
+.a1d21 .a1d21-checklist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem;margin:.6rem 0}
+.a1d21 .a1d21-checklist label{display:flex;gap:.5em;align-items:center;cursor:pointer}
+.a1d21 .a1d21-checklist input{width:1.3em;height:1.3em;flex-shrink:0;accent-color:#2563eb}
+@media(max-width:720px){.a1d21 .a1d21-grid,.a1d21 .a1d21-forecast{grid-template-columns:repeat(2,minmax(0,1fr))}.a1d21 .a1d21-steps,.a1d21 .a1d21-checklist{grid-template-columns:1fr}}
