@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../firebase.js";
+import { studentPaymentDeadlineReminder } from "../utils/tuitionPaymentCountdown.js";
 import { deleteStudentAccount, updateStudentById } from "../services/studentsService.js";
 
 const REVIEW_LINK = "https://g.page/r/Cdogveq3Hy69EBM/review";
@@ -66,7 +67,10 @@ function resolveStudentPhone(student, draft = {}) {
 }
 
 function resolveStudentClass(student, draft = {}) {
-  return displayValue(draft.className, draft.level, draft.program, student?.className, student?.level, student?.program, student?.location) || "your German class";
+  const upgradeLevel = String(student?.upgradeStatus || "").toLowerCase() === "pending"
+    ? displayValue(student?.paymentReminderLevel, student?.upgradeToLevel)
+    : "";
+  return displayValue(upgradeLevel, draft.className, draft.level, draft.program, student?.className, student?.level, student?.program, student?.location) || "your German class";
 }
 
 function parseMoney(value) {
@@ -84,17 +88,13 @@ function buildPaymentReminderMessage(student, draft = {}) {
   const className = resolveStudentClass(student, draft);
   const balance = displayValue(draft.balanceDue, student?.balanceDue, student?.balance, student?.outstandingBalance, student?.amountDue);
   const balanceText = parseMoney(balance) > 0 ? formatGhs(balance) : "your outstanding balance";
-  const contractEnd = displayValue(draft.contractEnd, student?.contractEnd);
-  const contractDate = formatDate(contractEnd);
   const paymentLink = displayValue(
     student?.paymentLink,
     student?.paystackPaymentLink,
     student?.checkoutUrl,
     student?.paymentUrl,
   );
-  const accessText = contractEnd
-    ? `If the balance is still unpaid, your Falowen access is scheduled to stop on ${contractDate}.`
-    : "Please make payment early so your Falowen access can continue without interruption.";
+  const accessText = studentPaymentDeadlineReminder(student, draft);
   const paymentText = paymentLink
     ? `You can pay here: ${paymentLink}`
     : "Please contact us if you need a payment link.";
