@@ -1,4 +1,5 @@
 import { SWAHILI_CLASSROOM_SUPPORT } from "../data/swahiliClassroomSupport.js";
+import { buildGuidedReading, getSpeakingGuide } from "./swahiliGuidedClassroom.js";
 import { standardizeSwahiliStages } from "./swahiliPresenterSequence.js";
 
 export function isSwahiliRadioStage(stage) {
@@ -20,20 +21,22 @@ export function buildSwahiliClassroomStages(lesson) {
     if (reading) {
       const text = support.text || reading.content || reading.items?.join("\n\n") || "";
       stages = stages.filter(s => !/^reading-/.test(s.id));
-      stages = stages.map(s => s === reading ? {...s,type:"classroom-reading",content:text,glossary:support.glossary,checks,prompt:undefined,answer:undefined,english:undefined}:s);
+      stages = stages.map(s => s === reading ? {...s,type:"classroom-reading",content:text,glossary:support.glossary,checks,...buildGuidedReading(lesson.id,text,support),prompt:undefined,answer:undefined,english:undefined}:s);
     }
     const [title,roleA,roleB,phrase] = support.role;
+    const guide=getSpeakingGuide(lesson.id,support);
     // Preserve the original restaurant scenario engine, and retain its
     // source material on the dedicated presentation stage.
     const existingScenario = stages.find(s => s.id === "scenario" || s.id === "pair-plan");
     if (existingScenario) {
-      stages = stages.map(s => s === existingScenario ? {...s,type:"classroom-roleplay",roleA,roleB,phrase}:s);
+      stages = stages.map(s => s === existingScenario ? {...s,type:"classroom-roleplay",roleA,roleB,phrase,situations:guide.situations}:s);
     } else {
-      stages.push({id:"scenario",type:"classroom-roleplay",kicker:"Kuzungumza · Role-play",title,roleA,roleB,phrase});
+      stages.push({id:"scenario",type:"classroom-roleplay",kicker:"Kuzungumza · Role-play",title,roleA,roleB,phrase,situations:guide.situations});
     }
     if (!stages.some(s => s.id === "presentation")) {
       stages.push({id:"presentation",type:"presentation",kicker:"Uwasilishaji · Presentation",title:"Uwasilishaji",content:support.presentation || "Eleza ulichojifunza. Tumia maneno ya somo."});
     }
+    stages=stages.map(s=>s.id==="presentation"?{...s,type:"classroom-presentation",title:s.title?.replace(/sekunde 60–90/g,"sekunde 90–120"),starters:guide.starters,keywords:support.glossary?.map(([word])=>word)||[],level:lesson.level || (isA1?"A1":"B1")}:s);
   }
   // Role-play comes before the final student presentation, independently
   // of the source array ordering. Writing and workbook follow afterwards.
