@@ -3,6 +3,7 @@ import { auth } from "../firebaseAuth.js";
 import "./A2Day17Activities.css";
 import { getInteractiveLessonOpening } from "../data/interactiveLessonOpenings.js";
 import MusicVideoEmbed from "./MusicVideoEmbed.jsx";
+import { classroomRecordingPath } from "../utils/classroomRecordingPath.js";
 
 // Classroom audio URLs are signed by the current Cloud Run API deployed in
 // europe-west1, not the older us-central1 Cloud Functions endpoint. The
@@ -93,8 +94,9 @@ export default function InteractiveLessonOpening({ stage, slide }) {
         : lesson.listening.level === "A2" && [1, 2, 3, 4, 5, 7, 8, 9, 10, 18, 19, 20, 21, 23, 24, 25, 26, 27, 28].includes(lesson.listening.day)
           ? "https://www.falowen.app/api/course-media/a2/classroom-audio-url"
           : `${AUDIO_API}/course-media/${lesson.listening.level.toLowerCase()}/audio-url`;
-      const requestSignedAudio = async (endpoint) => {
-        const response = await fetch(`${endpoint}?${params}`, {
+      const stablePath = classroomRecordingPath(lesson.listening, swahili);
+      const requestSignedAudio = async (endpoint, fixedPath = false) => {
+        const response = await fetch(fixedPath ? endpoint : `${endpoint}?${params}`, {
           method: "GET",
           headers: { Authorization: `Bearer ${await user.getIdToken()}` },
           cache: "no-store",
@@ -102,7 +104,12 @@ export default function InteractiveLessonOpening({ stage, slide }) {
         const data = await response.json().catch(() => ({}));
         return { response, data };
       };
-      let { response, data } = await requestSignedAudio(audioEndpoint);
+      // Use a fixed server-owned path for Kiswahili; preserve German legacy routes for compatibility.
+      let { response, data } = await requestSignedAudio(swahili && stablePath ? stablePath : audioEndpoint, Boolean(swahili && stablePath));
+      if (!swahili && stablePath && [400,404].includes(response.status)) {
+        const fixed = await requestSignedAudio(stablePath, true);
+        if (fixed.response.ok && fixed.data.url) ({response,data}=fixed);
+      }
       // The Falowen classroom allowlist may lag behind recently uploaded
       // lesson recordings. Try the existing authenticated Cloud Run signer
       // only for a missing/invalid classroom route; never expose the R2 key
@@ -122,7 +129,7 @@ export default function InteractiveLessonOpening({ stage, slide }) {
           : response.status === 404 && !data.error
             ? "Der Audio-Endpunkt ist auf dem Server nicht verfügbar (HTTP 404). Bitte die aktuelle Cloud-Run-API prüfen."
             : data.error || `Audio konnte nicht geladen werden (HTTP ${response.status}).`;
-        throw new Error(swahili ? `Sauti haikupatikana (HTTP ${response.status}). Hakikisha API imewekwa na faili imeruhusiwa.` : reason);
+        throw new Error(swahili ? `Sauti haikupatikana (HTTP ${response.status}): ${data.error || "Hakikisha faili imesajiliwa na API imesasishwa."}` : reason);
       }
       if (requestId !== requestCounter.current) return;
       setAudioUrl(String(data.url));
