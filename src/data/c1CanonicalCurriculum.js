@@ -1,3 +1,5 @@
+import { getC1AcademicDay } from "./c1AcademicCurriculum.js";
+
 // Canonical C1 curriculum mirrored from the learner app.
 // Source: falowenexamtrainer@3cf869444ad03e88cc7a1dcfac10413ca11517aa
 // Topics/foundations: C1TopicIntroduction.jsx
@@ -416,6 +418,7 @@ export function getC1CanonicalLesson(day) {
   if (!profile || !foundation || !title || !grammarTitle) return null;
   return {
     day: numericDay,
+    academic: getC1AcademicDay(numericDay),
     title,
     grammarTitle,
     profile,
