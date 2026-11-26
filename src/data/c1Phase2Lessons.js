@@ -2971,6 +2971,1187 @@ export const C1_PHASE2_LESSONS = [
       "Verständliche Struktur, Grammatik und Wortschatz"
     ]
   }
+,
+
+  {
+    "day": 21,
+    "title": "Globale Migration und Arbeitsmarkt",
+    "skill": "Lesen",
+    "part": 2,
+    "grammar": "Kausale Strukturen und Nominalisierung",
+    "rule": "aufgrund und infolge stehen im formellen Stil mit Genitiv. zumal verstärkt eine Begründung; da leitet einen kausalen Nebensatz ein. Unterscheiden Sie Ursache, beobachteten Zusammenhang und Schlussfolgerung.",
+    "grammarChecks": [
+      [
+        "Weil Qualifikationen nicht anerkannt werden, bleiben Stellen unbesetzt. (aufgrund)",
+        "Aufgrund der fehlenden Anerkennung von Qualifikationen bleiben Stellen unbesetzt.",
+        "aufgrund + Genitiv."
+      ],
+      [
+        "Die Beratung sollte ausgebaut werden. Viele Verfahren sind unübersichtlich. (zumal)",
+        "Die Beratung sollte ausgebaut werden, zumal viele Verfahren unübersichtlich sind.",
+        "zumal ergänzt einen verstärkenden Grund."
+      ],
+      [
+        "Infolge des Fachkräftemangels werden Schulungen angeboten. (verbal)",
+        "Da Fachkräfte fehlen, werden Schulungen angeboten.",
+        "Der kausale Nebensatz entfaltet die Nominalisierung."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Arbeitsmigration",
+        "labor migration"
+      ],
+      [
+        "die Berufsanerkennung",
+        "recognition of qualifications"
+      ],
+      [
+        "die Erwerbstätigkeit",
+        "employment"
+      ],
+      [
+        "den Zugang erleichtern",
+        "facilitate access"
+      ],
+      [
+        "die Aufenthaltsregelung",
+        "residence regulation"
+      ],
+      [
+        "die Qualifikationslücke",
+        "qualification gap"
+      ],
+      [
+        "die Arbeitsmarktintegration",
+        "labor-market integration"
+      ],
+      [
+        "die Abwanderung",
+        "outmigration"
+      ],
+      [
+        "das Herkunftsland",
+        "country of origin"
+      ],
+      [
+        "die Zuwanderung",
+        "immigration"
+      ],
+      [
+        "die Beschäftigungsquote",
+        "employment rate"
+      ],
+      [
+        "die Fachkräftegewinnung",
+        "skilled-worker recruitment"
+      ],
+      [
+        "die Arbeitsbedingungen",
+        "working conditions"
+      ],
+      [
+        "die Beratungskapazität",
+        "advisory capacity"
+      ],
+      [
+        "die Gleichwertigkeit",
+        "equivalence"
+      ],
+      [
+        "die Unterbeschäftigung",
+        "underemployment"
+      ],
+      [
+        "Engpässe abbauen",
+        "reduce shortages"
+      ],
+      [
+        "Kompetenzen nachweisen",
+        "demonstrate skills"
+      ],
+      [
+        "eine Perspektive eröffnen",
+        "open up a prospect"
+      ],
+      [
+        "bedarfsorientiert",
+        "needs-oriented"
+      ]
+    ],
+    "instruction": "Lesen Sie den Fachtext. Wählen Sie jeweils die zutreffende Aussage. Achten Sie auf die Unterscheidung zwischen Befund und Interpretation.",
+    "text": "Arbeitsmigration: Potenziale und Grenzen\nIn Diskussionen über die Gewinnung internationaler Fachkräfte wird häufig vorausgesetzt, dass vorhandene Qualifikationen unmittelbar eingesetzt werden können. Doch selbst wenn ein Berufsabschluss im Herkunftsland anerkannt ist, können im Zielland andere Anforderungen gelten. Eine längere Phase der Unterbeschäftigung ist daher nicht zwangsläufig ein Zeichen fehlender Qualifikation, sondern kann mit institutionellen Hindernissen zusammenhängen.\nBeschleunigte Anerkennungsverfahren wären ein wichtiger Ansatz. Allerdings sollte eine kürzere Bearbeitungsdauer nicht mit einer Absenkung notwendiger beruflicher Standards verwechselt werden. Wo einzelne Kompetenzen fehlen, könnten gezielte Nachqualifizierungen sinnvoller sein als die Wiederholung einer gesamten Ausbildung. Dabei kommt verständlicher Beratung eine besondere Bedeutung zu.\nAuch die Auswirkungen auf Herkunftsländer verdienen Aufmerksamkeit. Wenn Beschäftigte aus Bereichen mit ohnehin knapper Personalversorgung abwandern, können sich dort Engpässe verschärfen. Andererseits können Rücküberweisungen, berufliche Netzwerke und freiwillige Rückkehr positive Entwicklungen fördern. Ob solche Vorteile tatsächlich eintreten, hängt von konkreten Bedingungen ab.\nEine langfristige Strategie muss folglich über die bloße Anwerbung hinausgehen. Unternehmen sollten Arbeitsbedingungen überprüfen und Beschäftigten Entwicklungsmöglichkeiten eröffnen. Öffentliche Einrichtungen können durch nachvollziehbare Verfahren und geeignete Beratungsangebote zur Integration beitragen. Internationale Kooperation sollte zugleich die Interessen der Herkunftsländer berücksichtigen. Eine steigende Zahl angeworbener Personen allein wäre kein ausreichender Erfolgsindikator.",
+    "questions": [
+      [
+        "1. Unterbeschäftigung kann laut Text …",
+        [
+          "auf institutionelle Hindernisse zurückgehen.",
+          "ausschließlich mangelnde Fachkenntnisse beweisen.",
+          "nur durch freiwillige Entscheidungen entstehen."
+        ],
+        0,
+        "Der erste Absatz nennt ausdrücklich institutionelle Hindernisse."
+      ],
+      [
+        "2. Eine beschleunigte Anerkennung sollte …",
+        [
+          "alle beruflichen Standards aufheben.",
+          "notwendige Standards weiterhin sichern.",
+          "jede Nachqualifizierung ausschließen."
+        ],
+        1,
+        "Der Text unterscheidet kürzere Verfahren von niedrigeren Standards."
+      ],
+      [
+        "3. Welche Aussage zu Herkunftsländern trifft zu?",
+        [
+          "Abwanderung hat immer positive Folgen.",
+          "Rücküberweisungen verhindern jeden Engpass.",
+          "Positive und negative Folgen sind möglich."
+        ],
+        2,
+        "Der dritte Absatz beschreibt beide Möglichkeiten und ihre Bedingungen."
+      ],
+      [
+        "4. Welche Rolle spielen Unternehmen?",
+        [
+          "Sie sollten Arbeitsbedingungen und Entwicklungsmöglichkeiten verbessern.",
+          "Sie sind nur für die Anwerbung zuständig.",
+          "Sie sollten Beratung grundsätzlich vermeiden."
+        ],
+        0,
+        "Der Schlussabsatz benennt ihre Verantwortung."
+      ],
+      [
+        "5. Der Autor beurteilt die Zahl angeworbener Personen als …",
+        [
+          "den einzigen relevanten Maßstab.",
+          "einen allein unzureichenden Erfolgsindikator.",
+          "ein grundsätzlich bedeutungsloses Merkmal."
+        ],
+        1,
+        "Allein genügt die Zahl nicht; weitere Kriterien sind erforderlich."
+      ]
+    ]
+  },
+  {
+    "day": 22,
+    "title": "Zukunft des Journalismus und Meinungsfreiheit",
+    "skill": "Hören",
+    "part": 2,
+    "grammar": "Konjunktiv I und indirekte Rede",
+    "rule": "Konjunktiv I kennzeichnet die Wiedergabe fremder Aussagen. Bei formgleichen Formen kann Konjunktiv II die indirekte Rede markieren. Eine wiedergegebene Aussage wird dadurch nicht automatisch bestätigt.",
+    "grammarChecks": [
+      [
+        "Die Journalistin sagt: Die Redaktion arbeitet unabhängig.",
+        "Die Journalistin sagt, die Redaktion arbeite unabhängig.",
+        "Konjunktiv I: arbeite."
+      ],
+      [
+        "Der Redakteur erklärt: Die Quelle ist vertraulich.",
+        "Der Redakteur erklärt, die Quelle sei vertraulich.",
+        "sein → sei."
+      ],
+      [
+        "Die Herausgeber erklären: Wir haben die Regeln geändert.",
+        "Die Herausgeber erklären, sie hätten die Regeln geändert.",
+        "hätten unterscheidet die indirekte Rede vom Indikativ Plural."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Meinungsfreiheit",
+        "freedom of expression"
+      ],
+      [
+        "die Pressefreiheit",
+        "press freedom"
+      ],
+      [
+        "die redaktionelle Unabhängigkeit",
+        "editorial independence"
+      ],
+      [
+        "Quellen offenlegen",
+        "disclose sources"
+      ],
+      [
+        "die Berichterstattung",
+        "reporting"
+      ],
+      [
+        "die Quellensicherung",
+        "source verification"
+      ],
+      [
+        "die Finanzierung",
+        "funding"
+      ],
+      [
+        "die Medienvielfalt",
+        "media diversity"
+      ],
+      [
+        "die Gegendarstellung",
+        "right of reply statement"
+      ],
+      [
+        "die Faktenprüfung",
+        "fact-checking"
+      ],
+      [
+        "der Rechercheaufwand",
+        "research effort"
+      ],
+      [
+        "die Einschaltquote",
+        "audience rating"
+      ],
+      [
+        "das Geschäftsinteresse",
+        "commercial interest"
+      ],
+      [
+        "die Einflussnahme",
+        "interference"
+      ],
+      [
+        "die Selbstzensur",
+        "self-censorship"
+      ],
+      [
+        "die Glaubwürdigkeit",
+        "credibility"
+      ],
+      [
+        "eine Aussage überprüfen",
+        "verify a statement"
+      ],
+      [
+        "Kritik äußern",
+        "express criticism"
+      ],
+      [
+        "Fehler berichtigen",
+        "correct errors"
+      ],
+      [
+        "unabhängig",
+        "independent"
+      ]
+    ],
+    "instruction": "Sie hören ein fiktives Interview mit einer Medienforscherin zweimal. Entscheiden Sie: stimmt, stimmt nicht oder dazu wird nichts gesagt.",
+    "text": "Moderator: Frau Sommer, welche Rolle spielt die wirtschaftliche Lage für die journalistische Unabhängigkeit? Forscherin: Eine Redaktion benötigt ausreichend Zeit und finanzielle Mittel für gründliche Recherche. Das bedeutet allerdings nicht, dass ein bestimmtes Finanzierungsmodell automatisch unabhängigen Journalismus garantiert. Entscheidend sind transparente Regeln und der Schutz redaktioneller Entscheidungen vor sachfremder Einflussnahme. Moderator: Können soziale Medien klassischen Journalismus ersetzen? Forscherin: Sie ermöglichen es vielen Menschen, öffentlich Stellung zu beziehen, und können auf bislang wenig beachtete Themen aufmerksam machen. Dennoch unterscheiden sich spontane Beiträge von systematischer Recherche. Die Stärke einer Redaktion sollte gerade darin liegen, Informationen zu überprüfen und Fehler sichtbar zu korrigieren. Moderator: Muss jede vertrauliche Quelle offengelegt werden? Forscherin: Nein, der Schutz von Informanten kann in bestimmten Situationen unverzichtbar sein. Die Redaktion sollte aber erklären, wie eine Information geprüft wurde, soweit dadurch niemand gefährdet wird. Moderator: Welche Rolle spielt Medienbildung? Forscherin: Sie kann helfen, zwischen Meinung, Tatsachenbehauptung und Werbung zu unterscheiden. Schulen sind dafür ein wichtiger Ort, doch auch Erwachsenen sollten geeignete Angebote offenstehen. Moderator: Was wäre Ihr wichtigstes Anliegen für die Zukunft? Forscherin: Die Vielfalt unabhängiger Informationsangebote zu erhalten, ohne jedes Medium an denselben wirtschaftlichen Erfolgskriterien zu messen.",
+    "questions": [
+      [
+        "1. Ein bestimmtes Finanzierungsmodell garantiert nach Ansicht der Forscherin immer Unabhängigkeit.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        1,
+        "Sie bestreitet ausdrücklich eine automatische Garantie."
+      ],
+      [
+        "2. Soziale Medien können Aufmerksamkeit für vernachlässigte Themen schaffen.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        0,
+        "Diese Möglichkeit nennt sie ausdrücklich."
+      ],
+      [
+        "3. Die Forscherin nennt die Zahl der Zeitungen, die im letzten Jahr eingestellt wurden.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        2,
+        "Es werden keine Zahlen zu eingestellten Zeitungen genannt."
+      ],
+      [
+        "4. Redaktionen sollen eigene Fehler sichtbar korrigieren.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        0,
+        "Dies bezeichnet sie als Stärke professioneller Redaktionen."
+      ],
+      [
+        "5. Jede vertrauliche Quelle muss öffentlich genannt werden.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        1,
+        "Informantenschutz kann unverzichtbar sein."
+      ],
+      [
+        "6. Medienbildung sollte ausschließlich Kindern angeboten werden.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        1,
+        "Sie fordert auch Angebote für Erwachsene."
+      ]
+    ]
+  },
+  {
+    "day": 23,
+    "title": "Bedingungsloses Grundeinkommen und Arbeitszeit",
+    "skill": "Sprechen",
+    "part": 2,
+    "grammar": "Konditionale und konzessive Strukturen",
+    "rule": "sofern und vorausgesetzt, dass drücken Bedingungen aus; es sei denn, dass nennt eine Ausnahme. Wenngleich räumt einen Einwand ein. Prüfen Sie beim Argumentieren, unter welchen Voraussetzungen eine Aussage gilt.",
+    "grammarChecks": [
+      [
+        "Das Modell könnte funktionieren, wenn die Finanzierung gesichert ist. (sofern)",
+        "Das Modell könnte funktionieren, sofern die Finanzierung gesichert ist.",
+        "sofern leitet einen Bedingungssatz ein."
+      ],
+      [
+        "Die Unterstützung bleibt bestehen, außer wenn sich die Voraussetzungen ändern. (es sei denn)",
+        "Die Unterstützung bleibt bestehen, es sei denn, die Voraussetzungen ändern sich.",
+        "Nach es sei denn ist ein Hauptsatz ohne dass möglich."
+      ],
+      [
+        "Die Reform ist teuer. Sie könnte Sicherheit schaffen. (wenngleich)",
+        "Wenngleich die Reform teuer ist, könnte sie Sicherheit schaffen.",
+        "Einräumung eines Gegenarguments."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "das Grundeinkommen",
+        "basic income"
+      ],
+      [
+        "die Existenzsicherung",
+        "income security"
+      ],
+      [
+        "der Arbeitsanreiz",
+        "work incentive"
+      ],
+      [
+        "die Finanzierbarkeit",
+        "affordability"
+      ],
+      [
+        "die Erwerbsarbeit",
+        "paid employment"
+      ],
+      [
+        "die Teilzeit",
+        "part-time work"
+      ],
+      [
+        "die Sozialleistung",
+        "social benefit"
+      ],
+      [
+        "das Steueraufkommen",
+        "tax revenue"
+      ],
+      [
+        "die Arbeitszeitverkürzung",
+        "working-time reduction"
+      ],
+      [
+        "die Einkommenssicherheit",
+        "income security"
+      ],
+      [
+        "die Bedürftigkeitsprüfung",
+        "means testing"
+      ],
+      [
+        "die Bürokratieentlastung",
+        "reduction of bureaucracy"
+      ],
+      [
+        "die Erwerbsbeteiligung",
+        "labor-force participation"
+      ],
+      [
+        "die Sorgearbeit",
+        "care work"
+      ],
+      [
+        "die Verteilungsgerechtigkeit",
+        "distributive justice"
+      ],
+      [
+        "das Pilotprojekt",
+        "pilot project"
+      ],
+      [
+        "Anreize setzen",
+        "set incentives"
+      ],
+      [
+        "Kosten gegenfinanzieren",
+        "offset costs through funding"
+      ],
+      [
+        "eine Grundlage schaffen",
+        "create a basis"
+      ],
+      [
+        "bedingungslos",
+        "unconditional"
+      ]
+    ],
+    "instruction": "Diskutieren Sie zu zweit etwa fünf Minuten: Sollte ein bedingungsloses Grundeinkommen eingeführt werden, um Menschen mehr Freiheit bei ihrer Arbeitszeit zu ermöglichen? Reagieren Sie aufeinander und ziehen Sie ein Fazit.",
+    "prompts": [
+      "Vertreten Sie Ihre Position zur Existenzsicherung und Arbeitszeit.",
+      "Berücksichtigen Sie Arbeitsanreize sowie unbezahlte Sorgearbeit.",
+      "Reagieren Sie auf einen Einwand zur Finanzierung und prüfen Sie eine Alternative.",
+      "Fassen Sie Gemeinsamkeiten und verbleibende Unterschiede zusammen."
+    ],
+    "model": "A: Ein Grundeinkommen könnte Menschen mehr Sicherheit bieten, sofern seine Höhe tatsächlich zur Existenzsicherung beiträgt.\nB: Das ist nachvollziehbar. Allerdings müsste geklärt werden, wie es finanziert wird, ohne andere notwendige Leistungen zu gefährden.\nA: Wenngleich die Kosten erheblich sein könnten, wäre auch der mögliche Nutzen für Menschen mit unbezahlter Sorgearbeit zu berücksichtigen.\nB: Vielleicht wäre ein zeitlich begrenztes Pilotprojekt sinnvoller als eine sofortige flächendeckende Einführung.\nA: Damit könnte ich mich einverstanden erklären, vorausgesetzt, dass die Auswirkungen auf Arbeitszeit, Einkommen und Wohlbefinden unabhängig untersucht werden.",
+    "rubric": [
+      "Position mit nachvollziehbaren Gründen vertreten",
+      "Partnerargumente aufgreifen",
+      "Bedingungen, Finanzierung und Alternativen differenziert abwägen",
+      "Gemeinsames oder differenziertes Fazit"
+    ]
+  },
+  {
+    "day": 24,
+    "title": "Urbane Mobilität und Energiewende",
+    "skill": "Schreiben",
+    "part": 1,
+    "grammar": "Nominalstil und Schlussfolgerung",
+    "rule": "durch + Akkusativ benennt ein Mittel, angesichts + Genitiv einen Umstand. folglich, demzufolge und daher leiten Schlussfolgerungen ein; das finite Verb folgt dem Konnektor im Hauptsatz.",
+    "grammarChecks": [
+      [
+        "Indem die Stadt den Nahverkehr ausbaut, verbessert sie den Zugang. (durch)",
+        "Durch den Ausbau des Nahverkehrs verbessert die Stadt den Zugang.",
+        "durch + Akkusativ nominalisiert das Mittel."
+      ],
+      [
+        "Weil der Energiebedarf steigt, sind Investitionen nötig. (angesichts)",
+        "Angesichts des steigenden Energiebedarfs sind Investitionen nötig.",
+        "angesichts + Genitiv."
+      ],
+      [
+        "Die Verbindungen sind unzuverlässig. Deshalb fahren viele mit dem Auto. (folglich)",
+        "Die Verbindungen sind unzuverlässig; folglich fahren viele mit dem Auto.",
+        "folglich besetzt Position 1."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Verkehrswende",
+        "transport transition"
+      ],
+      [
+        "die Infrastruktur",
+        "infrastructure"
+      ],
+      [
+        "der Energiebedarf",
+        "energy demand"
+      ],
+      [
+        "Emissionen senken",
+        "reduce emissions"
+      ],
+      [
+        "der Nahverkehr",
+        "local public transport"
+      ],
+      [
+        "die Ladeinfrastruktur",
+        "charging infrastructure"
+      ],
+      [
+        "der Verkehrsfluss",
+        "traffic flow"
+      ],
+      [
+        "die Erreichbarkeit",
+        "accessibility"
+      ],
+      [
+        "die Flächennutzung",
+        "land use"
+      ],
+      [
+        "der Berufsverkehr",
+        "commuter traffic"
+      ],
+      [
+        "die Taktfrequenz",
+        "service frequency"
+      ],
+      [
+        "die Netzauslastung",
+        "grid utilization"
+      ],
+      [
+        "die Energieeffizienz",
+        "energy efficiency"
+      ],
+      [
+        "die Verkehrsverlagerung",
+        "modal shift"
+      ],
+      [
+        "die Pendlerstrecke",
+        "commuting route"
+      ],
+      [
+        "der Investitionsbedarf",
+        "investment needs"
+      ],
+      [
+        "Anbindungen verbessern",
+        "improve connections"
+      ],
+      [
+        "Engpässe beseitigen",
+        "remove bottlenecks"
+      ],
+      [
+        "Anreize schaffen",
+        "create incentives"
+      ],
+      [
+        "emissionsarm",
+        "low-emission"
+      ]
+    ],
+    "instruction": "In einem Onlineforum wird diskutiert, ob Städte mehr Geld in öffentliche Verkehrsmittel statt in den Ausbau von Straßen investieren sollten. Schreiben Sie einen Diskussionsbeitrag von circa 230 Wörtern (Richtwert 50 Minuten).",
+    "prompts": [
+      "Erläutern Sie wichtige Kriterien nachhaltiger urbaner Mobilität.",
+      "Begründen Sie anhand eines Beispiels einen möglichen Vorteil des Nahverkehrsausbaus.",
+      "Gehen Sie auf Grenzen oder Nachteile einer solchen Priorisierung ein.",
+      "Schlagen Sie eine ergänzende Maßnahme vor und begründen Sie diese."
+    ],
+    "model": "Angesichts des steigenden Verkehrsaufkommens stellt sich für viele Städte die Frage, wie Mobilität langfristig organisiert werden sollte. Aus meiner Sicht sind nicht allein die Geschwindigkeit einzelner Verkehrsmittel, sondern auch ihre Zugänglichkeit, der Flächenverbrauch und die Umweltbelastung zu berücksichtigen. Ein Ausbau öffentlicher Verkehrsmittel kann einen wichtigen Beitrag leisten, sofern die Angebote tatsächlich den Bedürfnissen der Bevölkerung entsprechen.\nEin Beispiel wäre die Verbesserung der Busverbindungen zwischen Wohngebieten und Arbeitsplätzen. Durch häufigere und verlässlichere Verbindungen könnten mehr Menschen auf das eigene Auto verzichten. Dadurch ließen sich unter geeigneten Bedingungen sowohl Staus als auch der Energieverbrauch pro beförderter Person reduzieren. Voraussetzung dafür sind jedoch bezahlbare Fahrpreise und eine gute Anbindung unterschiedlicher Stadtteile.\nAllerdings wäre es problematisch, sämtliche Straßeninvestitionen zugunsten des Nahverkehrs einzustellen. Lieferdienste, Rettungsfahrzeuge und Menschen mit bestimmten Mobilitätseinschränkungen bleiben auf funktionierende Straßen angewiesen. Zudem erfordert der Ausbau öffentlicher Verkehrsmittel erhebliche finanzielle Mittel. Wenn Fahrzeuge überwiegend leer fahren, ist ihr ökologischer Nutzen ebenfalls begrenzt. Die tatsächliche Nachfrage muss folglich bei der Planung berücksichtigt werden.\nAls ergänzende Maßnahme halte ich den Ausbau sicherer Radwege und leicht erreichbarer Umsteigepunkte für sinnvoll. Dadurch könnten unterschiedliche Verkehrsmittel besser miteinander verbunden werden. Darüber hinaus sollten Städte ihre Investitionen anhand überprüfbarer Kriterien wie Zuverlässigkeit, Erreichbarkeit und Emissionen bewerten. Eine nachhaltige Verkehrspolitik zeichnet sich meines Erachtens nicht durch die pauschale Bevorzugung eines einzelnen Verkehrsmittels aus, sondern durch ein abgestimmtes Angebot, das sowohl ökologischen als auch sozialen Anforderungen gerecht wird.",
+    "rubric": [
+      "Alle vier Inhaltspunkte",
+      "Konkretes Beispiel und differenzierte Einschränkung",
+      "Logische Struktur und angemessener Forumsstil",
+      "Präzise Sprache und korrekte Grammatik"
+    ]
+  },
+  {
+    "day": 25,
+    "title": "Gentechnik und Wissenschaftsethik",
+    "skill": "Lesen",
+    "part": 4,
+    "grammar": "Erweiterte Partizipialattribute und Quellenbezug",
+    "rule": "Bei erweiterten Partizipialattributen stehen Ergänzungen vor dem Partizip. Partizip I bezeichnet meist eine aktive Handlung, Partizip II häufig eine abgeschlossene oder passive Handlung. Die Adjektivendung richtet sich nach Kasus, Genus, Numerus und Artikel.",
+    "grammarChecks": [
+      [
+        "Die Verfahren, die von Forschenden entwickelt wurden, ...",
+        "die von Forschenden entwickelten Verfahren",
+        "Partizip II mit passiver Bedeutung; Plural -en."
+      ],
+      [
+        "Eine Methode, die gezielt in Erbgut eingreift, ...",
+        "eine gezielt in Erbgut eingreifende Methode",
+        "Partizip I mit aktiver Bedeutung."
+      ],
+      [
+        "Korrigieren Sie: mit einem sorgfältig überprüfte Verfahren.",
+        "mit einem sorgfältig überprüften Verfahren",
+        "Dativ Neutrum nach einem: -en."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Forschungsethik",
+        "research ethics"
+      ],
+      [
+        "die Tragweite",
+        "scope of consequences"
+      ],
+      [
+        "die Gentechnik",
+        "genetic engineering"
+      ],
+      [
+        "etwas infrage stellen",
+        "question something"
+      ],
+      [
+        "die Einwilligung",
+        "consent"
+      ],
+      [
+        "das Erbgut",
+        "genetic material"
+      ],
+      [
+        "die Genveränderung",
+        "genetic modification"
+      ],
+      [
+        "die Risikobewertung",
+        "risk assessment"
+      ],
+      [
+        "die Langzeitfolge",
+        "long-term consequence"
+      ],
+      [
+        "die Selbstbestimmung",
+        "self-determination"
+      ],
+      [
+        "die Forschungsfreiheit",
+        "academic freedom"
+      ],
+      [
+        "die Versuchsanordnung",
+        "experimental design"
+      ],
+      [
+        "der Interessenkonflikt",
+        "conflict of interest"
+      ],
+      [
+        "die Ethikkommission",
+        "ethics committee"
+      ],
+      [
+        "die Nachprüfbarkeit",
+        "verifiability"
+      ],
+      [
+        "die Verantwortlichkeit",
+        "accountability"
+      ],
+      [
+        "Grenzen festlegen",
+        "set limits"
+      ],
+      [
+        "Folgen abschätzen",
+        "assess consequences"
+      ],
+      [
+        "eine Zustimmung einholen",
+        "obtain consent"
+      ],
+      [
+        "verantwortbar",
+        "ethically justifiable"
+      ]
+    ],
+    "instruction": "Lesen Sie drei fiktive Fachpositionen. Ordnen Sie jede Aussage A, B, C oder X (keine Person) zu. Zwei Aussagen passen nicht.",
+    "text": "A – Molekularbiologin: Neue gentechnische Verfahren können zur Erforschung bislang schwer behandelbarer Erkrankungen beitragen. Allerdings bedeutet ein erfolgreiches Laborexperiment nicht, dass eine Anwendung am Menschen bereits verantwortbar wäre. Ich halte unabhängige Überprüfungen und schrittweise Erprobung für unverzichtbar. Entscheidend ist, unter welchen Bedingungen ein konkretes Verfahren untersucht wird, nicht ob man Gentechnik grundsätzlich befürwortet oder ablehnt.\n\nB – Medizinethiker: Bei Eingriffen, deren Folgen möglicherweise auch zukünftige Generationen betreffen, reicht die Zustimmung der gegenwärtig Beteiligten nicht aus, um alle ethischen Fragen zu beantworten. Wir sollten insbesondere über die Grenzen individueller Entscheidungsfreiheit diskutieren. Außerdem ist zu berücksichtigen, ob Forschungsprioritäten den Bedürfnissen der Gesellschaft entsprechen oder vor allem zahlungskräftigen Gruppen dienen.\n\nC – Wissenschaftssoziologin: Die öffentliche Debatte konzentriert sich häufig auf besonders spektakuläre Anwendungsbeispiele. Ich plädiere dafür, auch die institutionellen Bedingungen der Forschung zu untersuchen. Wer finanziert ein Projekt, wer entscheidet über die Veröffentlichung von Ergebnissen und wie werden Interessenkonflikte offengelegt? Wissenschaftliche Entscheidungen sollten nachvollziehbar sein. Das verlangt keinen vollständigen Verzicht auf vertrauliche Informationen, wohl aber transparente Regeln.",
+    "questions": [
+      [
+        "1. Positive Laborbefunde allein rechtfertigen noch keine Anwendung am Menschen.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        0,
+        "A unterscheidet Laborerfolg und verantwortbare Anwendung."
+      ],
+      [
+        "2. Die Interessen künftiger Generationen werfen zusätzliche ethische Fragen auf.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        1,
+        "B thematisiert generationenübergreifende Folgen."
+      ],
+      [
+        "3. Finanzierungs- und Veröffentlichungsbedingungen verdienen Aufmerksamkeit.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        2,
+        "C nennt beide institutionellen Faktoren."
+      ],
+      [
+        "4. Alle Forschungsergebnisse müssen ohne jede Ausnahme veröffentlicht werden.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        3,
+        "Keine Person verlangt einen vollständigen Verzicht auf Vertraulichkeit."
+      ],
+      [
+        "5. Die Prioritäten der Forschung sollten auch an gesellschaftlichen Bedürfnissen gemessen werden.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        1,
+        "B fragt, welchen Gruppen die Forschungsprioritäten dienen."
+      ],
+      [
+        "6. Eine Bewertung sollte sich an konkreten Verfahren und Untersuchungsbedingungen orientieren.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        0,
+        "A lehnt pauschale Bewertungen ab."
+      ],
+      [
+        "7. Gentechnische Forschung sollte grundsätzlich verboten werden.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        3,
+        "Niemand fordert ein generelles Verbot."
+      ]
+    ]
+  },
+  {
+    "day": 26,
+    "title": "Kreislaufwirtschaft und Rohstoffmangel",
+    "skill": "Hören",
+    "part": 4,
+    "grammar": "Nomen-Verb-Verbindungen und Nominalstil",
+    "rule": "Feste Verbindungen wie einen Beitrag leisten, Maßnahmen ergreifen und zur Verfügung stehen müssen als Einheit gelernt werden. Nominalisierungen machen Aussagen kompakter, dürfen aber den Handlungsträger nicht unnötig verschleiern.",
+    "grammarChecks": [
+      [
+        "Reparaturen helfen, Ressourcen zu schonen. (einen Beitrag leisten)",
+        "Reparaturen leisten einen Beitrag zur Ressourcenschonung.",
+        "einen Beitrag zu etwas leisten + Dativ."
+      ],
+      [
+        "Die Unternehmen handeln gegen Materialverschwendung. (Maßnahmen ergreifen)",
+        "Die Unternehmen ergreifen Maßnahmen gegen Materialverschwendung.",
+        "Feste Verbindung: Maßnahmen ergreifen."
+      ],
+      [
+        "Ersatzteile sind verfügbar. (zur Verfügung stehen)",
+        "Ersatzteile stehen zur Verfügung.",
+        "Feste Wendung mit stehen."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Kreislaufwirtschaft",
+        "circular economy"
+      ],
+      [
+        "die Rohstoffknappheit",
+        "raw material scarcity"
+      ],
+      [
+        "die Lieferkette",
+        "supply chain"
+      ],
+      [
+        "Ressourcen schonen",
+        "conserve resources"
+      ],
+      [
+        "die Wiederverwertung",
+        "recycling"
+      ],
+      [
+        "die Wiederverwendung",
+        "reuse"
+      ],
+      [
+        "die Materialeffizienz",
+        "material efficiency"
+      ],
+      [
+        "die Wertstoffrückgewinnung",
+        "material recovery"
+      ],
+      [
+        "die Reparierbarkeit",
+        "repairability"
+      ],
+      [
+        "der Produktlebenszyklus",
+        "product life cycle"
+      ],
+      [
+        "das Sekundärmaterial",
+        "secondary material"
+      ],
+      [
+        "die Rohstoffabhängigkeit",
+        "raw material dependence"
+      ],
+      [
+        "das Rücknahmesystem",
+        "take-back system"
+      ],
+      [
+        "die Materialzusammensetzung",
+        "material composition"
+      ],
+      [
+        "die Entsorgung",
+        "disposal"
+      ],
+      [
+        "die Wiederaufbereitung",
+        "refurbishment"
+      ],
+      [
+        "einen Beitrag leisten",
+        "make a contribution"
+      ],
+      [
+        "Materialien zurückgewinnen",
+        "recover materials"
+      ],
+      [
+        "Abfälle vermeiden",
+        "prevent waste"
+      ],
+      [
+        "ressourcenschonend",
+        "resource-efficient"
+      ]
+    ],
+    "instruction": "Sie hören einen fiktiven Fachvortrag über Kreislaufwirtschaft zweimal. Wählen Sie jeweils die richtige Aussage.",
+    "text": "Guten Tag. Kreislaufwirtschaft wird häufig mit Recycling gleichgesetzt. Dabei beginnt ein ressourcenschonender Umgang mit Materialien bereits bei der Gestaltung eines Produkts. Wenn ein Gerät so konstruiert ist, dass einzelne Bauteile ausgetauscht werden können, lässt sich seine Nutzungsdauer unter Umständen erheblich verlängern. Recycling ist dagegen besonders relevant, wenn eine weitere Nutzung oder Reparatur nicht mehr sinnvoll ist. In einem fiktiven Pilotprojekt wurden ausgediente Bürogeräte gesammelt. Zunächst untersuchten Fachkräfte, welche Geräte mit geringem Aufwand wiederaufbereitet werden konnten. Erst die übrigen Geräte wurden zerlegt, um wertvolle Materialien zurückzugewinnen. Das Projekt zeigte jedoch auch Grenzen: Manche Verbundmaterialien ließen sich nur mit hohem Energieaufwand trennen. Deshalb sollte nicht allein die Menge zurückgewonnener Rohstoffe betrachtet werden, sondern auch der dafür erforderliche Aufwand. Ein weiterer Aspekt betrifft wirtschaftliche Anreize. Solange ein neues Produkt deutlich günstiger angeboten wird als eine Reparatur, fällt vielen Betrieben die Entscheidung zugunsten der längeren Nutzung schwer. Transparente Informationen über Lebenszykluskosten können hier helfen. Schließlich ist eine Zusammenarbeit entlang der Lieferkette erforderlich. Hersteller benötigen verlässliche Angaben zur Materialzusammensetzung, während Reparaturbetriebe Zugang zu Ersatzteilen brauchen. Mein Fazit lautet daher: Kreislaufwirtschaft sollte Produktgestaltung, Nutzungsdauer, Reparatur und Rückgewinnung miteinander verbinden. Eine hohe Recyclingquote allein sagt wenig darüber aus, ob insgesamt weniger neue Rohstoffe benötigt werden.",
+    "questions": [
+      [
+        "1. Ressourcenschonung beginnt nach Ansicht der Vortragenden …",
+        [
+          "erst bei der Entsorgung.",
+          "bereits bei der Produktgestaltung.",
+          "ausschließlich bei der Rohstoffgewinnung."
+        ],
+        1,
+        "Die Produktgestaltung wird ausdrücklich als Ausgangspunkt genannt."
+      ],
+      [
+        "2. Im Pilotprojekt wurden die Geräte zuerst …",
+        [
+          "auf Wiederaufbereitung geprüft.",
+          "vollständig zerlegt.",
+          "ohne Prüfung entsorgt."
+        ],
+        0,
+        "Die Fachkräfte prüften zunächst die Wiederaufbereitung."
+      ],
+      [
+        "3. Welches Problem hatten einige Verbundmaterialien?",
+        [
+          "Sie konnten nur im Ausland verwendet werden.",
+          "Sie waren grundsätzlich wertlos.",
+          "Ihre Trennung erforderte viel Energie."
+        ],
+        2,
+        "Hoher Energieaufwand bei der Trennung wird genannt."
+      ],
+      [
+        "4. Welche Information kann Kauf- und Reparaturentscheidungen verbessern?",
+        [
+          "Nur der ursprüngliche Verkaufspreis.",
+          "Die Kosten über den gesamten Lebenszyklus.",
+          "Ausschließlich das Gewicht eines Produkts."
+        ],
+        1,
+        "Der Vortrag nennt transparente Lebenszykluskosten."
+      ],
+      [
+        "5. Reparaturbetriebe benötigen insbesondere …",
+        [
+          "Zugang zu Ersatzteilen.",
+          "ein Verbot gebrauchter Geräte.",
+          "weniger Informationen über Produkte."
+        ],
+        0,
+        "Der Zugang zu Ersatzteilen wird ausdrücklich gefordert."
+      ],
+      [
+        "6. Welche Aussage fasst den Vortrag zusammen?",
+        [
+          "Recycling macht andere Maßnahmen unnötig.",
+          "Eine hohe Recyclingquote beweist immer einen sinkenden Rohstoffbedarf.",
+          "Mehrere Phasen des Produktlebenszyklus müssen gemeinsam betrachtet werden."
+        ],
+        2,
+        "Das Fazit verbindet Gestaltung, Nutzung, Reparatur und Rückgewinnung."
+      ]
+    ]
+  },
+  {
+    "day": 27,
+    "title": "Digitalisierung, Datenschutz und Regulierung",
+    "skill": "Sprechen",
+    "part": 1,
+    "grammar": "Passiversatzformen und modale Präzision",
+    "rule": "sein + zu + Infinitiv kann eine Verpflichtung ausdrücken. sich lassen + Infinitiv und Adjektive auf -bar bezeichnen häufig eine Möglichkeit. Benennen Sie Zuständigkeiten und Bedingungen, statt bloß abstrakte Forderungen zu formulieren.",
+    "grammarChecks": [
+      [
+        "Persönliche Daten müssen geschützt werden. (sein + zu)",
+        "Persönliche Daten sind zu schützen.",
+        "sein + zu + Infinitiv drückt hier eine Verpflichtung aus."
+      ],
+      [
+        "Der Antrag kann online bearbeitet werden. (sich lassen)",
+        "Der Antrag lässt sich online bearbeiten.",
+        "sich lassen + Infinitiv zeigt Möglichkeit."
+      ],
+      [
+        "Die Entscheidung kann nachvollzogen werden. (-bar)",
+        "Die Entscheidung ist nachvollziehbar.",
+        "Das Adjektiv auf -bar drückt die Möglichkeit aus."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Regulierung",
+        "regulation"
+      ],
+      [
+        "die Barrierefreiheit",
+        "accessibility"
+      ],
+      [
+        "die Datensparsamkeit",
+        "data minimization"
+      ],
+      [
+        "Rechte gewährleisten",
+        "safeguard rights"
+      ],
+      [
+        "die Verwaltungsdigitalisierung",
+        "digitalization of public administration"
+      ],
+      [
+        "die Datenverarbeitung",
+        "data processing"
+      ],
+      [
+        "die Zugriffsberechtigung",
+        "access authorization"
+      ],
+      [
+        "die Zweckbindung",
+        "purpose limitation"
+      ],
+      [
+        "die Identitätsprüfung",
+        "identity verification"
+      ],
+      [
+        "die Nachvollziehbarkeit",
+        "traceability"
+      ],
+      [
+        "der Datenschutz",
+        "data protection"
+      ],
+      [
+        "die Beschwerdestelle",
+        "complaints office"
+      ],
+      [
+        "die Rechtsgrundlage",
+        "legal basis"
+      ],
+      [
+        "die Verfahrensdauer",
+        "processing time"
+      ],
+      [
+        "die Kontrollinstanz",
+        "oversight body"
+      ],
+      [
+        "die digitale Teilhabe",
+        "digital participation"
+      ],
+      [
+        "Daten schützen",
+        "protect data"
+      ],
+      [
+        "Zuständigkeiten festlegen",
+        "define responsibilities"
+      ],
+      [
+        "eine Alternative bereitstellen",
+        "provide an alternative"
+      ],
+      [
+        "benutzerfreundlich",
+        "user-friendly"
+      ]
+    ],
+    "instruction": "Halten Sie einen Vortrag von circa fünf Minuten zum Thema digitale Verwaltungsdienste. Gehen Sie auf die vier Punkte ein und beantworten Sie anschließend Nachfragen.",
+    "prompts": [
+      "Erläutern Sie Chancen digitaler Verwaltungsdienste.",
+      "Nennen Sie ein konkretes Beispiel für ein vereinfachtes Verfahren.",
+      "Wägen Sie Risiken für Datenschutz und gesellschaftliche Teilhabe ab.",
+      "Schlagen Sie eine Regelung oder Alternative vor, die den Zugang für alle verbessert."
+    ],
+    "followups": [
+      "Welche Daten sollten bei einem digitalen Antrag tatsächlich erhoben werden?",
+      "Wie könnten Menschen ohne digitale Kenntnisse unterstützt werden?"
+    ],
+    "model": "Digitale Verwaltungsdienste können den Zugang zu öffentlichen Leistungen erleichtern, insbesondere wenn Anträge unabhängig von Öffnungszeiten gestellt werden können. Ein Beispiel wäre die elektronische Beantragung einer Bescheinigung mit nachvollziehbarem Bearbeitungsstatus. Allerdings sind persönliche Daten zweckgebunden zu verarbeiten und Zuständigkeiten klar festzulegen. Nicht jede Person verfügt außerdem über einen geeigneten Internetzugang oder die erforderlichen digitalen Kenntnisse. Deshalb sollten persönliche Beratung und alternative Antragswege erhalten bleiben. Meines Erachtens ist die Digitalisierung dann erfolgreich, wenn Verfahren nicht nur schneller, sondern auch verständlicher und für unterschiedliche Bevölkerungsgruppen zugänglich werden.",
+    "rubric": [
+      "Vier Aspekte logisch verbinden",
+      "Konkretes Beispiel und relevante Einschränkungen",
+      "Datenschutz, Zuständigkeit und Zugang differenziert behandeln",
+      "Auf Nachfragen verständlich und spontan reagieren"
+    ]
+  },
+  {
+    "day": 28,
+    "title": "Rentensysteme und Generationengerechtigkeit",
+    "skill": "Schreiben",
+    "part": 1,
+    "grammar": "Nominalstil, Schlussfolgerung und differenzierte Bewertung",
+    "rule": "angesichts + Genitiv führt einen relevanten Umstand ein; infolge bezeichnet eine Ursache mit Folge. demzufolge und folglich leiten Schlussfolgerungen ein. Bei Reformvorschlägen sollten Voraussetzungen und mögliche Nebenwirkungen deutlich werden.",
+    "grammarChecks": [
+      [
+        "Weil die Bevölkerung altert, muss die Finanzierung geprüft werden. (angesichts)",
+        "Angesichts der Alterung der Bevölkerung muss die Finanzierung geprüft werden.",
+        "angesichts + Genitiv."
+      ],
+      [
+        "Die Zahl der Beitragszahlenden sinkt. Daher entsteht Reformbedarf. (demzufolge)",
+        "Die Zahl der Beitragszahlenden sinkt; demzufolge entsteht Reformbedarf.",
+        "demzufolge steht vor dem finiten Verb."
+      ],
+      [
+        "Wenn die Erwerbsbeteiligung steigt, können mehr Beiträge eingehen. (Nominalstil)",
+        "Bei einer höheren Erwerbsbeteiligung können mehr Beiträge eingehen.",
+        "bei + Dativ bezeichnet hier eine Bedingung."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Rentenfinanzierung",
+        "pension financing"
+      ],
+      [
+        "die Generationengerechtigkeit",
+        "intergenerational equity"
+      ],
+      [
+        "die Beitragslast",
+        "contribution burden"
+      ],
+      [
+        "die demografische Entwicklung",
+        "demographic change"
+      ],
+      [
+        "das Umlageverfahren",
+        "pay-as-you-go system"
+      ],
+      [
+        "die Altersvorsorge",
+        "retirement provision"
+      ],
+      [
+        "die Erwerbsbevölkerung",
+        "working population"
+      ],
+      [
+        "die Lebenserwartung",
+        "life expectancy"
+      ],
+      [
+        "die Altersarmut",
+        "old-age poverty"
+      ],
+      [
+        "das Renteneintrittsalter",
+        "retirement age"
+      ],
+      [
+        "die Beitragsbemessung",
+        "contribution assessment"
+      ],
+      [
+        "die Rentenanpassung",
+        "pension adjustment"
+      ],
+      [
+        "die Erwerbsbeteiligung",
+        "labor-force participation"
+      ],
+      [
+        "die Versorgungslücke",
+        "gap in provision"
+      ],
+      [
+        "die Belastbarkeit",
+        "capacity to bear burdens"
+      ],
+      [
+        "die Übergangsregelung",
+        "transitional provision"
+      ],
+      [
+        "Ansprüche erwerben",
+        "acquire entitlements"
+      ],
+      [
+        "Lasten verteilen",
+        "distribute burdens"
+      ],
+      [
+        "die Finanzierung sichern",
+        "secure financing"
+      ],
+      [
+        "generationenübergreifend",
+        "intergenerational"
+      ]
+    ],
+    "instruction": "In einem Onlineforum wird diskutiert, wie Rentensysteme generationengerecht finanziert werden können. Schreiben Sie einen Diskussionsbeitrag von circa 230 Wörtern (Richtwert 50 Minuten).",
+    "prompts": [
+      "Erläutern Sie zentrale Kriterien eines generationengerechten Rentensystems.",
+      "Begründen Sie anhand eines Beispiels einen möglichen Reformansatz.",
+      "Gehen Sie auf Risiken oder Nachteile dieses Ansatzes ein.",
+      "Schlagen Sie eine ergänzende oder alternative Maßnahme vor und begründen Sie diese."
+    ],
+    "model": "Angesichts der demografischen Entwicklung stehen viele Gesellschaften vor der Herausforderung, eine verlässliche Altersvorsorge zu gewährleisten, ohne jüngere Generationen unverhältnismäßig zu belasten. Ein generationengerechtes Rentensystem sollte meiner Ansicht nach sowohl finanzielle Tragfähigkeit als auch Schutz vor Altersarmut gewährleisten. Dabei müssen unterschiedliche Erwerbsbiografien berücksichtigt werden.\nEin möglicher Reformansatz besteht darin, die Erwerbsbeteiligung zu erhöhen. Wenn beispielsweise Menschen nach längeren Familienphasen leichter in den Beruf zurückkehren können, könnte sich die Zahl der Beitragszahlenden erhöhen. Zugleich würden die Betroffenen zusätzliche eigene Rentenansprüche erwerben. Voraussetzung dafür sind jedoch geeignete Arbeitsplätze, verlässliche Betreuungsangebote und Möglichkeiten zur beruflichen Weiterbildung.\nAllerdings reicht eine höhere Erwerbsbeteiligung allein möglicherweise nicht aus, um langfristige Finanzierungslücken zu schließen. Außerdem könnte eine pauschale Verlängerung der Lebensarbeitszeit Personen benachteiligen, die körperlich besonders belastende Tätigkeiten ausüben. Wer gesundheitlich nicht länger arbeiten kann, darf nicht automatisch mit erheblichen finanziellen Nachteilen rechnen. Reformen sollten demzufolge unterschiedliche berufliche Belastungen und individuelle Voraussetzungen berücksichtigen.\nAls ergänzende Maßnahme halte ich eine transparente Überprüfung der Finanzierung für sinnvoll. Zusätzliche Einnahmen, flexible Übergänge in den Ruhestand und gezielte Unterstützung für Menschen mit niedrigen Renten könnten miteinander verbunden werden. Wichtig wäre dabei, die langfristigen Auswirkungen verschiedener Maßnahmen regelmäßig zu überprüfen und die Ergebnisse öffentlich verständlich zu erläutern. Eine gerechte Reform muss nicht alle Generationen identisch behandeln. Sie sollte vielmehr nachvollziehbar begründen, wie Belastungen verteilt werden und welche Ansprüche dauerhaft gesichert werden können. Nur so lässt sich Vertrauen in die Altersvorsorge auch über längere Zeiträume aufrechterhalten.",
+    "rubric": [
+      "Vier Inhaltspunkte vollständig bearbeiten",
+      "Reformvorschlag begründen und Grenzen aufzeigen",
+      "Zusammenhängende Schlussfolgerung und sachliches Register",
+      "Präziser Wortschatz, Grammatik und angemessene Länge"
+    ]
+  }
 
 ];
 export const getC1Phase2Lesson = (day) => C1_PHASE2_LESSONS.find((lesson) => lesson.day === Number(day)) || null;

@@ -2193,7 +2193,7 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
       id: "academic-practice", type: "knowledge", variant: "lesson-reading",
       kicker: "Lesen · Teil " + academic.part, title: academic.title,
       textDe: academic.text, instruction: academic.instruction,
-      items: academic.questions.map(([prompt, choices]) => prompt + " — " + choices.map((choice, i) => String.fromCharCode(65 + i) + ") " + choice).join(" · ")),
+      items: academic.questions.map(([prompt, choices]) => prompt + " — " + choices.map((choice, i) => /^[A-GX](?:[.)]|$)/.test(choice) ? choice : String.fromCharCode(65 + i) + ") " + choice).join(" · ")),
       answerItems: academic.questions.map(([, choices, correct]) => choices[correct]),
       evidence: academic.questions.map(([, , , reason]) => reason),
       suggestedMinutes: 10,
