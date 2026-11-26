@@ -1,0 +1,44 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+import {A1_DAY21_ASSIGNMENT,A1_DAY21_WORKBOOK,A1_DAY21_WEATHER,A1_DAY21_SEASONS,A1_DAY21_FORECAST,A1_DAY21_FORECAST_CHECKS,A1_DAY21_FORMS,A1_DAY21_REASONS,A1_DAY21_TIMES,A1_DAY21_READING,A1_DAY21_WRITING,A1_DAY21_CHECKS,buildA1Day21ClassroomStages} from "../src/data/a1Day21Classroom.js";
+import {A1_PUBLISHED_WORKBOOK_BY_ASSIGNMENT} from "../src/data/a1PublishedWorkbookRoutes.js";
+import {getTeachingSlideByAssignmentId} from "../src/data/teachingSlides.js";
+import {getA1PresenterMusicStage} from "../src/data/a1PresenterMusicStage.js";
+const read=p=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
+test("Day 21 has twelve distinct stages, sixty minutes and the unchanged workbook route",()=>{
+ const s=buildA1Day21ClassroomStages({song:{}});
+ assert.equal(A1_DAY21_ASSIGNMENT,"A1-13");
+ assert.equal(A1_DAY21_WORKBOOK,A1_PUBLISHED_WORKBOOK_BY_ASSIGNMENT[A1_DAY21_ASSIGNMENT]);
+ assert.equal(s.length,12);assert.equal(new Set(s.map(x=>x.id)).size,12);
+ assert.equal(s.reduce((sum,x)=>sum+x.suggestedMinutes,0),60);
+ assert.deepEqual(s.slice(0,9).map(x=>x.step),["intro","vocab","forms","seasons","forecast","reasons","cancel","times","reading"]);
+ assert.equal(s[9].step,"music");assert.equal(s[9].hasMusic,true);
+ assert.equal(buildA1Day21ClassroomStages()[9].hasMusic,false);
+ assert.equal(s[10].id,"grammar-check");assert.equal(s[10].items.length,10);
+ assert.equal(s[11].workbookUrl,A1_DAY21_WORKBOOK);
+ const slide=getTeachingSlideByAssignmentId(A1_DAY21_ASSIGNMENT);
+ assert.equal(slide.dayNumber,21);assert.equal(slide.workbookConnection.workbookUrl,A1_DAY21_WORKBOOK);
+ assert.deepEqual(slide.workbookConnection.parts.map(p=>p.label),["Teil 1 · Anzeigen","Teil 2 · Nachricht","Teil 3 · Schreiben","Teil 4 · Hören"]);
+});
+test("visual weather, forecast answers and independent writing have complete examples",()=>{
+ assert.equal(A1_DAY21_WEATHER.length,9);assert.equal(A1_DAY21_SEASONS.length,4);
+ assert.equal(A1_DAY21_FORECAST.length,5);assert.equal(A1_DAY21_FORECAST_CHECKS.length,5);
+ const answers=A1_DAY21_FORECAST_CHECKS.map(([,options,index])=>options[index]);
+ assert.deepEqual(answers,["Montag","23 Grad","Mittwoch","Es schneit.","Dienstag"]);
+ for(const list of [A1_DAY21_FORMS,A1_DAY21_TIMES,A1_DAY21_FORECAST_CHECKS])for(const [,options,index] of list)assert.ok(options[index]);
+ assert.equal(A1_DAY21_REASONS.length,5);assert.ok(A1_DAY21_REASONS.every(([,answer])=>answer.includes("weil ")));
+ assert.deepEqual(A1_DAY21_READING.questions.map(([,answer])=>answer),[true,false,true,true,false]);
+ assert.equal(A1_DAY21_WRITING.points.length,3);assert.equal(A1_DAY21_WRITING.body.length,3);
+ assert.match(A1_DAY21_WRITING.body[2],/am Sonntag um 15 Uhr/);
+ assert.equal(new Set(A1_DAY21_CHECKS.map(x=>x.questionDe)).size,10);
+});
+test("native picker, local forecast, existing song and Day 22 route are preserved",()=>{
+ const p=read("src/components/A1GrammarPresenter.jsx"),c=read("src/components/A1Day21ClassroomStage.jsx");
+ assert.match(p,/=== A1_DAY21_ASSIGNMENT/);assert.match(p,/return buildA1Day21ClassroomStages/);
+ assert.match(p,/stage.type === "a1-day21"/);assert.match(p,/stage\?\.id === "grammar-check"/);
+ assert.match(p,/=== "A1-14\.1"\) return A1_DAY22_STAGES/);
+ assert.match(c,/Fiktiver Wetterbericht/);assert.match(c,/nextLyricOnly/);assert.match(c,/type="checkbox"/);
+ assert.doesNotMatch(c,/fetch\(|https?:\/\//);
+ assert.match(getA1PresenterMusicStage("A1-13",21).title,/Bina, tut mir leid/);
+});
