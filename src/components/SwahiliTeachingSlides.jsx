@@ -5,7 +5,8 @@ import { SWAHILI_DAY_FIVE_ADMIN_LESSON } from "../data/swahiliDayFiveTeachingSli
 import SwahiliSlideMusic from "./SwahiliSlideMusic.jsx";
 import { useEffect, useState } from "react";
 import InteractiveLessonOpening from "./InteractiveLessonOpening.jsx";
-import { standardizeSwahiliStages } from "../utils/swahiliPresenterSequence.js";
+import { buildSwahiliClassroomStages } from "../utils/swahiliClassroomStages.js";
+import { SwahiliClassroomReading, SwahiliClassroomRoleplay } from "./SwahiliClassroomActivities.jsx";
 import { swahiliAudioChapters } from "../data/swahiliAudioChapters.js";
 import { swahiliB1Day26 } from "../data/swahiliB1Day26.js";
 import { swahiliB1Day27 } from "../data/swahiliB1Day27.js";
@@ -24,7 +25,6 @@ import "./TeachingSlidePresenter.css";
 import "./SwahiliTeachingSlides.css";
 
 import { swahiliCourseRoot as courseRoot, swahiliSlidePacks } from "../data/swahiliSlidePacks.js";
-import SwahiliRadioMedia from "./SwahiliRadioMedia.jsx";
 const learnerWorkbook = "https://www.falowen.app/swahili/day-1";
 // Keep the shared presenter identity stable across slide navigation, so its
 // roster and class clock never reload due to a new object on every render.
@@ -152,7 +152,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
   const selectedPresenterSlide = calendarRoutinePresenters[slideId] || (isB1Day26 ? swahiliB1Day26 : isB1Day27 ? swahiliB1Day27 : slideId === SWAHILI_DAY_ELEVEN_ADMIN_LESSON.id ? dayElevenPresenterSlide : isB1Day28 ? b1Day28PresenterSlide : isDayTen ? dayTenPresenterSlide : isDayFive ? dayFivePresenterSlide : isDayTwo ? dayTwoPresenterSlide : existingPresenterSlide);
   const lesson = selectedPresenterSlide;
   const selectedWorkbook = selectedPresenterSlide.workbookConnection.workbookUrl;
-  const stages = standardizeSwahiliStages(lesson.stages);
+  const stages = buildSwahiliClassroomStages(lesson);
   const activityTimer = usePresenterActivityTimer(7);
   const [reportOpen, setReportOpen] = useState(false);
   const [index, setIndex] = useState(0);
@@ -301,8 +301,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
             </div>
           </div>
         )}
-        {"radioVideoId" in stage && <SwahiliRadioMedia stage={stage} />}
-        {stage.type === "classroom-listening" ? <InteractiveLessonOpening key={`${lesson.id}-${stage.id}`} stage={stage} slide={lesson} /> : isDaySix && stage.type === "music" ? <SwahiliRestaurantSong /> : (stage.audio || (isDayFive && stage.type === "day-five")) ? <section className="swahili-a2-presenter__media-stage">
+        {stage.type === "classroom-reading" ? <SwahiliClassroomReading key={`${lesson.id}-${stage.id}`} stage={stage}>{isDaySix ? <SwahiliA2LessonStage stage={{...stage,type:"reading"}} isDaySix={true} /> : null}</SwahiliClassroomReading> : stage.type === "classroom-roleplay" ? <SwahiliClassroomRoleplay stage={stage} /> : stage.type === "classroom-listening" ? <InteractiveLessonOpening key={`${lesson.id}-${stage.id}`} stage={stage} slide={lesson} /> : isDaySix && stage.type === "music" ? <SwahiliRestaurantSong /> : (stage.audio || (isDayFive && stage.type === "day-five")) ? <section className="swahili-a2-presenter__media-stage">
           {stage.audio ? <SwahiliSlideMusic track={stage.audio} questions={stage.questions} /> : <p style={{ whiteSpace: "pre-line" }}>{stage.content}</p>}
         </section> : <SwahiliA2LessonStage stage={stage} grammar={grammar} isDaySix={isDaySix} level={isB1Day26 || isB1Day27 || isB1Day28 ? "B1" : "A1"} />}
 
@@ -341,7 +340,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
       />
       {!focusMode && <footer className="swahili-a2-presenter__foot no-print">
         <a href={selectedWorkbook} target="_blank" rel="noreferrer">Open {lesson.day} learner workbook</a>
-        <span>{isB1Day26 ? "B1 · Matatizo ya safari" : isB1Day27 || isB1Day28 ? "B1 · Kutunza Mazingira" : isDayTen ? "A1 · Sokoni" : isDayTwo ? "A1 · Salamu" : isDayFive ? "A1 · Day 5 practice" : isDaySix ? "Restaurant lesson · Falowen Music and Radio" : "Music and recorded Hören will be linked after upload."}</span>
+        <span>{isB1Day26 ? "B1 · Matatizo ya safari" : isB1Day27 || isB1Day28 ? "B1 · Kutunza Mazingira" : isDayTen ? "A1 · Sokoni" : isDayTwo ? "A1 · Salamu" : isDayFive ? "A1 · Day 5 practice" : isDaySix ? "Restaurant lesson · Music and listening" : "Music and recorded Hören will be linked after upload."}</span>
       </footer>}
     </main>
     </div>

@@ -351,3 +351,25 @@
   line-height: 1.5;
   white-space: pre-line;
 }
+
+/* Shared Kiswahili reading and speaking activities — scoped to the presenter. */
+.swahili-classroom-reading,.swahili-classroom-roleplay{display:grid;gap:12px;min-width:0;text-align:left}
+.swahili-classroom-instruction{margin:0;font-size:clamp(.86rem,1.3vw,1rem);color:#466353}
+.swahili-classroom-passage{background:#fff;border:1px solid #cde0d2;border-radius:14px;padding:clamp(12px,2vw,24px);color:#173c2b;font-size:clamp(1rem,1.75vw,1.4rem);line-height:1.65;overflow-wrap:anywhere;max-height:42vh;overflow:auto}
+.swahili-classroom-passage p{margin:0 0 .7em;white-space:pre-wrap}
+.swahili-classroom-passage p:last-child{margin:0}
+.swahili-classroom-passage .swahili-classroom-word{display:inline;padding:0 .15em;border:0;border-bottom:2px solid #a76b12;border-radius:4px;background:#fff0c2;color:#573b0a;font:inherit;font-weight:650;cursor:pointer;white-space:normal}
+.swahili-classroom-word[aria-pressed=true]{outline:2px solid #96600c;outline-offset:2px}
+.swahili-classroom-meaning{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:12px 16px;border:1px solid #cadfd1;background:#eaf6ed;border-radius:12px;color:#153326}
+.swahili-classroom-meaning button{margin-left:auto}
+.swahili-classroom-check{display:grid;gap:10px;background:#fff;border:1px solid #cde0d2;padding:clamp(10px,1.4vw,18px);border-radius:12px;color:#153326}
+.swahili-classroom-check h2,.swahili-classroom-check ol{margin:0}
+.swahili-classroom-check ol{padding-left:1.6em;line-height:1.6}
+.swahili-classroom-check-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.swahili-classroom-check button,.swahili-classroom-meaning button{border:1px solid #26734a;border-radius:8px;background:#fff;color:#174c30;padding:8px 12px;font-weight:650;cursor:pointer}
+.swahili-classroom-check button:disabled{opacity:.5;cursor:default}
+.swahili-classroom-role-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.swahili-classroom-role-grid article{border:1px solid #cde0d2;background:#fff;border-radius:14px;padding:clamp(12px,2vw,24px);color:#173c2b}
+.swahili-classroom-role-grid article strong{display:block;color:#26734a;margin-bottom:8px}
+.swahili-classroom-role-grid article p{font-size:clamp(1rem,1.8vw,1.5rem);line-height:1.5;margin:0}
+@media(max-width:650px){.swahili-classroom-role-grid{grid-template-columns:1fr}.swahili-classroom-passage{max-height:45vh}}
