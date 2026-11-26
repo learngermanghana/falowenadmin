@@ -373,3 +373,18 @@
 .swahili-classroom-role-grid article strong{display:block;color:#26734a;margin-bottom:8px}
 .swahili-classroom-role-grid article p{font-size:clamp(1rem,1.8vw,1.5rem);line-height:1.5;margin:0}
 @media(max-width:650px){.swahili-classroom-role-grid{grid-template-columns:1fr}.swahili-classroom-passage{max-height:45vh}}
+
+/* Guided classroom activities: numbered sentences, assignment and evidence states. */
+.swahili-reading-unit{display:grid;grid-template-columns:2rem minmax(0,1fr);gap:10px;padding:10px 6px;border-radius:8px;border-bottom:1px solid #e5eee8}
+.swahili-reading-unit:last-child{border-bottom:0}
+.swahili-reading-number{font-size:.85rem;font-weight:700;color:#286445;line-height:2;text-align:center}
+.swahili-reading-unit.is-assigned{background:#e9f5ff;box-shadow:inset 3px 0 #2876a7}
+.swahili-reading-unit.is-evidence{background:#e4f3e9;box-shadow:inset 3px 0 #278454}
+.swahili-reading-translation{border:1px solid #b7cec1;background:#fff;color:#28553b;border-radius:6px;padding:4px 8px;font-size:.8rem;cursor:pointer}
+.swahili-reading-english{font-size:.94rem;color:#43614f;margin-top:7px!important}
+.swahili-reading-evidence{border-left:3px solid #278454;background:#eaf6ed;padding:10px 14px;border-radius:6px}
+.swahili-reading-evidence p{margin:6px 0}
+.swahili-classroom-check-head button{border:1px solid #26734a;border-radius:8px;background:#fff;color:#174c30;padding:8px 12px;font-weight:650;cursor:pointer}
+.swahili-classroom-check-head button[aria-pressed=true]{background:#dff3e6;border-color:#248354}
+.swahili-classroom-role-grid article p+p{margin-top:7px}
+@media(max-width:650px){.swahili-reading-unit{grid-template-columns:1.4rem minmax(0,1fr);gap:5px}}
