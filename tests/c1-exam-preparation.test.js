@@ -1,0 +1,7 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {C1_SIMULATION_MODULES,C1_REVISION_SECTIONS,C1_REVISION_GRAMMAR,C1_SIMULATION_WRITING,C1_SIMULATION_SPEAKING,c1SimulationResult} from "../src/data/c1ExamPreparation.js";
+import {c1PresenterSlides} from "../src/data/c1PresenterSlides.js";
+import {buildTeachingPresenterStages} from "../src/utils/teachingPresenter.js";
+test("optional revision and simulation stay separate from schedule",()=>{assert.equal(c1PresenterSlides.length,28);assert.deepEqual(C1_REVISION_SECTIONS.flatMap(x=>x.days).sort((a,b)=>a-b),Array.from({length:28},(_,i)=>i+1));assert.equal(C1_REVISION_GRAMMAR.length,7);assert.deepEqual(C1_SIMULATION_MODULES.map(x=>x.minutes),[65,40,75,20]);assert.deepEqual(C1_SIMULATION_WRITING.map(x=>x.words),[230,120]);assert.equal(C1_SIMULATION_SPEAKING.topics.length,4);for(const slide of c1PresenterSlides){const stages=buildTeachingPresenterStages(slide);assert.equal(stages.some(x=>x.id==="c1-exam-revision"),slide.dayNumber===28);assert.equal(stages.some(x=>x.id==="c1-exam-simulation"),slide.dayNumber===28);}});
+test("all modules must individually reach 60",()=>{assert.equal(c1SimulationResult({Lesen:100,Hören:100,Schreiben:100,Sprechen:59}).passed,false);assert.equal(c1SimulationResult({Lesen:60,Hören:60,Schreiben:60,Sprechen:60}).passed,true);assert.equal(c1SimulationResult({Lesen:60,Hören:60,Schreiben:60}).complete,false);});

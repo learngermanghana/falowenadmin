@@ -55,7 +55,9 @@ test("all C1 days use the stable argumentation teaching spine", () => {
 
     const stages = buildTeachingPresenterStages(slide, slide.topic);
     const stageIds = stages.map((stage) => stage.id);
-    assert.deepEqual(stageIds, REQUIRED_STAGES, slide.assignmentId + " should use the C1 teaching spine");
+    const expectedStages = REQUIRED_STAGES.flatMap(id => id === "grammar" ? [id, "academic-practice"] : [id]);
+    if (slide.dayNumber === 28) expectedStages.push("c1-exam-revision","c1-exam-simulation");
+    assert.deepEqual(stageIds, expectedStages, slide.assignmentId + " should use the C1 teaching spine");
 
     const warmup = stages.find((stage) => stage.id === "warmup");
     const foundation = stages.find((stage) => stage.id === "foundation");
@@ -174,7 +176,8 @@ test("C1 self-check does not ask for another duplicate mini-presentation", () =>
   for (const slide of getSlidesByCourse("C1")) {
     assert.match(slide.wrapUpTaskDe, /^Selbstcheck:/);
     assert.doesNotMatch(slide.wrapUpTaskDe, /60–90 Sekunden lange Stellungnahme/i);
-    const summary = buildTeachingPresenterStages(slide, slide.topic).at(-1);
+    const stages = buildTeachingPresenterStages(slide, slide.topic);
+    const summary = stages.filter(stage => !["c1-exam-revision", "c1-exam-simulation"].includes(stage.id)).at(-1);
     assert.equal(summary.id, "lesson-summary");
     assert.ok(summary.items.some((item) => item.label === "Self-check"));
   }

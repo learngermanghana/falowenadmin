@@ -1,5 +1,6 @@
 import { getC1CanonicalLesson } from "./c1CanonicalCurriculum.js";
 import { getC1TopicCollocations } from "./c1PresenterLanguage.js";
+import { getC1Phase2Lesson } from "./c1Phase2Lessons.js";
 
 const slug = (value) => String(value || "")
   .toLowerCase()
@@ -79,6 +80,7 @@ function makeSlide(day) {
     day: `Day ${day}`,
     dayNumber: day,
     assignmentId: `C1 ${day}`,
+    academicPractice: getC1Phase2Lesson(day),
     title: `C1 Day ${day} · ${topic}`,
     topic: `${day} ${topic}`,
     objective: `Students ${lesson.profile.aim}, develop a nuanced position and transfer the same reasoning into a short C1 written response.`,

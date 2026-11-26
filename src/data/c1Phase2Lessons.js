@@ -1,0 +1,4157 @@
+// Original Falowen practice material, aligned with the current modular Goethe C1 model.
+// Short exercises, not official test items or a scored examination.
+export const C1_PHASE2_LESSONS = [
+  {
+    "day": 1,
+    "title": "Wissenschaftliches Lernen und Lernstrategien",
+    "skill": "Lesen",
+    "part": 1,
+    "grammar": "Relativsätze mit Präpositionen und Nomen-Verb-Verbindungen",
+    "rule": "Bei einem konkreten Bezugsnomen steht die vom Verb verlangte Präposition vor dem Relativpronomen. Bei Nomen-Verb-Verbindungen muss die feste Wortverbindung stimmen: eine Bilanz ziehen, Maßnahmen ergreifen.",
+    "grammarChecks": [
+      [
+        "Ein Lernplan, ___ man sich orientieren kann, erleichtert die Planung. (an)",
+        "an dem",
+        "sich an etwas orientieren + Dativ; Lernplan ist maskulin."
+      ],
+      [
+        "Die Methode, ___ die Studie beruht, ist gut dokumentiert. (auf)",
+        "auf der",
+        "auf etwas beruhen + Dativ; Methode ist feminin."
+      ],
+      [
+        "Formulieren Sie mit einer Nomen-Verb-Verbindung: Die Gruppe bewertet ihren bisherigen Fortschritt.",
+        "Die Gruppe zieht eine Zwischenbilanz.",
+        "Eine Bilanz ziehen bedeutet, Ergebnisse zusammenfassend zu bewerten."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Lernwirksamkeit",
+        "learning effectiveness"
+      ],
+      [
+        "eine Zwischenbilanz ziehen",
+        "take stock"
+      ],
+      [
+        "die Erkenntnis",
+        "finding"
+      ],
+      [
+        "die Selbstreflexion",
+        "self-reflection"
+      ],
+      [
+        "die Abrufübung",
+        "retrieval practice"
+      ],
+      [
+        "der Lernaufwand",
+        "learning effort"
+      ],
+      [
+        "die Behaltensleistung",
+        "retention"
+      ],
+      [
+        "eine Hypothese überprüfen",
+        "test a hypothesis"
+      ],
+      [
+        "evidenzbasiert",
+        "evidence-based"
+      ],
+      [
+        "die Fehlereinschätzung",
+        "misjudgment"
+      ],
+      [
+        "die Rückmeldung",
+        "feedback"
+      ],
+      [
+        "in Betracht ziehen",
+        "consider"
+      ],
+      [
+        "die Aussagekraft",
+        "informative value"
+      ],
+      [
+        "nachhaltig verankern",
+        "embed durably"
+      ],
+      [
+        "die Lernroutine",
+        "study routine"
+      ],
+      [
+        "einen Befund einordnen",
+        "interpret a finding"
+      ],
+      [
+        "die Selbststeuerung",
+        "self-regulation"
+      ],
+      [
+        "die Zielsetzung",
+        "objective"
+      ],
+      [
+        "die Übertragbarkeit",
+        "transferability"
+      ],
+      [
+        "die Konsolidierung",
+        "consolidation"
+      ]
+    ],
+    "instruction": "Wählen Sie für jede Lücke die passende Ergänzung. Achten Sie auf Kollokationen, Präpositionen und den Textzusammenhang. Kurztraining, kein vollständiger Modellsatz.",
+    "text": "Lernen mit System\nWer eine Fremdsprache auf hohem Niveau beherrschen möchte, muss nicht zwangsläufig mehr Zeit investieren. Entscheidend ist vielmehr, wie der Lernaufwand (1) ___ wird. Beim wiederholten Lesen entsteht häufig der Eindruck, einen Text bereits verstanden zu haben. Dieser Eindruck lässt jedoch keine zuverlässigen Rückschlüsse (2) ___ die tatsächliche Behaltensleistung zu. Um Wissenslücken aufzudecken, empfiehlt es sich, zentrale Inhalte ohne Vorlage abzurufen. Wer anschließend eine Zwischenbilanz (3) ___, kann sein Vorgehen anpassen. Eine Methode, (4) ___ der Lernerfolg tatsächlich beruht, lässt sich jedoch nicht ohne Vergleich bestimmen. Daher sollten subjektive Eindrücke durch überprüfbare Ergebnisse ergänzt werden. Die Wahl einer Strategie hängt nicht zuletzt (5) ___ ab, welche Kompetenzen trainiert werden sollen. Für die mündliche Kommunikation ist etwa die aktive Verwendung neuer Ausdrücke von besonderer (6) ___.",
+    "questions": [
+      [
+        "1",
+        [
+          "verzeichnet",
+          "verworfen",
+          "verteilt",
+          "verhindert"
+        ],
+        2,
+        "Lernaufwand über Zeit verteilen ist hier die passende Verbindung."
+      ],
+      [
+        "2",
+        [
+          "über",
+          "auf",
+          "für",
+          "an"
+        ],
+        1,
+        "Rückschlüsse auf etwas ziehen."
+      ],
+      [
+        "3",
+        [
+          "macht",
+          "stellt",
+          "zieht",
+          "nimmt"
+        ],
+        2,
+        "Die feste Verbindung lautet eine Zwischenbilanz ziehen."
+      ],
+      [
+        "4",
+        [
+          "an der",
+          "mit der",
+          "für die",
+          "auf der"
+        ],
+        3,
+        "auf etwas beruhen + Dativ; Methode ist feminin."
+      ],
+      [
+        "5",
+        [
+          "dazu",
+          "davon",
+          "darauf",
+          "darin"
+        ],
+        1,
+        "von etwas abhängen → davon abhängen."
+      ],
+      [
+        "6",
+        [
+          "Bedeutung",
+          "Deutung",
+          "Annahme",
+          "Auffassung"
+        ],
+        0,
+        "von besonderer Bedeutung sein ist eine feste Wendung."
+      ]
+    ]
+  },
+  {
+    "day": 2,
+    "title": "Kulturelle Identität und Globalisierung",
+    "skill": "Hören",
+    "part": 1,
+    "grammar": "Partizip I und II als erweiterte Attribute",
+    "rule": "Partizip I bezeichnet meist eine aktive, gleichzeitig ablaufende Handlung; Partizip II häufig eine abgeschlossene oder passive Handlung. Ergänzungen stehen vor dem Partizip, die Endung richtet sich nach Kasus, Genus und Artikel.",
+    "grammarChecks": [
+      [
+        "Die Menschen, die zwischen zwei Kulturen leben, ... (Partizip I)",
+        "die zwischen zwei Kulturen lebenden Menschen",
+        "lebend + en nach dem bestimmten Artikel im Plural."
+      ],
+      [
+        "Die Identität, die durch Migration geprägt wurde, ...",
+        "die durch Migration geprägte Identität",
+        "Partizip II mit passiver Bedeutung."
+      ],
+      [
+        "Korrigieren Sie: ein von mehreren Sprachen geprägt Selbstbild.",
+        "ein von mehreren Sprachen geprägtes Selbstbild",
+        "Neutrum nach ein: Adjektivendung -es."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Zugehörigkeit",
+        "belonging"
+      ],
+      [
+        "die kulturelle Prägung",
+        "cultural influence"
+      ],
+      [
+        "das Selbstverständnis",
+        "self-image"
+      ],
+      [
+        "der Identitätswandel",
+        "identity change"
+      ],
+      [
+        "die Mehrfachzugehörigkeit",
+        "multiple belonging"
+      ],
+      [
+        "die Herkunftsgesellschaft",
+        "society of origin"
+      ],
+      [
+        "die Zuschreibung",
+        "attribution"
+      ],
+      [
+        "die Ausgrenzung",
+        "exclusion"
+      ],
+      [
+        "die Vielfalt",
+        "diversity"
+      ],
+      [
+        "die Verständigung",
+        "mutual understanding"
+      ],
+      [
+        "die Sozialisation",
+        "socialization"
+      ],
+      [
+        "die Diaspora",
+        "diaspora"
+      ],
+      [
+        "die Anpassung",
+        "adaptation"
+      ],
+      [
+        "die kulturelle Aneignung",
+        "cultural appropriation"
+      ],
+      [
+        "die Entwurzelung",
+        "uprooting"
+      ],
+      [
+        "der Perspektivwechsel",
+        "change of perspective"
+      ],
+      [
+        "eine Identität aushandeln",
+        "negotiate an identity"
+      ],
+      [
+        "Vorurteile abbauen",
+        "reduce prejudice"
+      ],
+      [
+        "die Selbstbestimmung",
+        "self-determination"
+      ],
+      [
+        "mehrschichtig",
+        "multilayered"
+      ]
+    ],
+    "instruction": "Hören Sie die drei Buchvorstellungen einmal. Ordnen Sie jede Aussage dem passenden Buch zu. A: Zwischen zwei Sprachen; B: Zugehörigkeit im Wandel; C: Begegnungen in der Stadt. Mehrfachzuordnungen sind möglich.",
+    "text": "Willkommen in unserem Bücherpodcast. Heute stellen wir drei erfundene Bücher über Identität vor. Buch A, Zwischen zwei Sprachen, begleitet Familien, deren Kinder mit mehreren Sprachen aufwachsen. Die Autorin beobachtet, wie Geschwister ihre Sprachen je nach Gesprächspartner wechseln. Sie widerspricht der Annahme, ein solcher Wechsel sei automatisch Ausdruck sprachlicher Unsicherheit. Stattdessen könne er eine kommunikative Ressource sein. Auf institutionelle Fragen geht sie kaum ein. Buch B, Zugehörigkeit im Wandel, nimmt die Perspektive von Menschen ein, die im Erwachsenenalter ihr Herkunftsland verlassen haben. Es beruht auf wiederholten Interviews über mehrere Jahre. Besonders interessant ist, dass sich die Selbsteinschätzung einiger Befragter veränderte, obwohl ihre Lebensumstände weitgehend gleich blieben. Der Autor warnt davor, Zugehörigkeit als unveränderliche Eigenschaft zu verstehen. Buch C, Begegnungen in der Stadt, untersucht öffentliche Bibliotheken und Nachbarschaftszentren. An konkreten Beispielen wird gezeigt, wie gemeinsame Aktivitäten Begegnungen ermöglichen. Allerdings reicht ein kostenloses Angebot allein nicht aus: Öffnungszeiten und sprachliche Barrieren können den Zugang einschränken. Das Buch enthält praktische Empfehlungen für kommunale Einrichtungen.",
+    "questions": [
+      [
+        "1. Sprachwechsel wird als mögliche Stärke verstanden.",
+        [
+          "A",
+          "B",
+          "C"
+        ],
+        0,
+        "Buch A bezeichnet den Wechsel als kommunikative Ressource."
+      ],
+      [
+        "2. Die Untersuchung begleitet dieselben Personen über längere Zeit.",
+        [
+          "A",
+          "B",
+          "C"
+        ],
+        1,
+        "Buch B beruht auf wiederholten Interviews über mehrere Jahre."
+      ],
+      [
+        "3. Empfehlungen richten sich an öffentliche Einrichtungen.",
+        [
+          "A",
+          "B",
+          "C"
+        ],
+        2,
+        "Buch C enthält Empfehlungen für kommunale Einrichtungen."
+      ],
+      [
+        "4. Ein kostenloses Angebot genügt nicht für gleichberechtigten Zugang.",
+        [
+          "A",
+          "B",
+          "C"
+        ],
+        2,
+        "Öffnungszeiten und sprachliche Barrieren werden in Buch C genannt."
+      ],
+      [
+        "5. Eine veränderte Selbstwahrnehmung ist auch ohne neue Lebensumstände möglich.",
+        [
+          "A",
+          "B",
+          "C"
+        ],
+        1,
+        "Genau das beobachtet Buch B bei einigen Befragten."
+      ],
+      [
+        "6. Die Wahl der Sprache hängt von der Gesprächssituation ab.",
+        [
+          "A",
+          "B",
+          "C"
+        ],
+        0,
+        "Buch A beschreibt den Wechsel je nach Gesprächspartner."
+      ]
+    ]
+  },
+  {
+    "day": 3,
+    "title": "Fake News, Algorithmen und Medienkritik",
+    "skill": "Sprechen",
+    "part": 1,
+    "grammar": "Konjunktiv I und Quellenbezug",
+    "rule": "Konjunktiv I kennzeichnet indirekte Rede. Ist die Form mit dem Indikativ identisch, kann Konjunktiv II die Distanz verdeutlichen. Eine berichtete Aussage ist nicht automatisch belegt.",
+    "grammarChecks": [
+      [
+        "Die Redaktion sagt: Die Quelle ist nicht überprüft. (indirekte Rede)",
+        "Die Redaktion sagt, die Quelle sei nicht überprüft.",
+        "sein → sei."
+      ],
+      [
+        "Der Forscher erklärt: Der Algorithmus beeinflusst die Auswahl.",
+        "Der Forscher erklärt, der Algorithmus beeinflusse die Auswahl.",
+        "Konjunktiv I: beeinflusse."
+      ],
+      [
+        "Die Verantwortlichen sagen: Wir haben keine Daten veröffentlicht.",
+        "Die Verantwortlichen sagen, sie hätten keine Daten veröffentlicht.",
+        "haben im Konjunktiv I Plural ist formgleich; hätten markiert die indirekte Rede."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Quellenkritik",
+        "source criticism"
+      ],
+      [
+        "eine Behauptung überprüfen",
+        "verify a claim"
+      ],
+      [
+        "die Desinformation",
+        "disinformation"
+      ],
+      [
+        "die Reichweite",
+        "reach"
+      ],
+      [
+        "die Glaubwürdigkeit",
+        "credibility"
+      ],
+      [
+        "die Beleglage",
+        "available evidence"
+      ],
+      [
+        "die Echokammer",
+        "echo chamber"
+      ],
+      [
+        "die Empfehlungslogik",
+        "recommendation logic"
+      ],
+      [
+        "die Verzerrung",
+        "bias/distortion"
+      ],
+      [
+        "die Meinungsbildung",
+        "formation of opinion"
+      ],
+      [
+        "die Informationsflut",
+        "information overload"
+      ],
+      [
+        "die Faktenprüfung",
+        "fact-checking"
+      ],
+      [
+        "die Falschmeldung",
+        "false report"
+      ],
+      [
+        "die Medienkompetenz",
+        "media literacy"
+      ],
+      [
+        "die Transparenzpflicht",
+        "transparency obligation"
+      ],
+      [
+        "die redaktionelle Verantwortung",
+        "editorial responsibility"
+      ],
+      [
+        "eine Quelle offenlegen",
+        "disclose a source"
+      ],
+      [
+        "eine Aussage relativieren",
+        "qualify a statement"
+      ],
+      [
+        "einen Sachverhalt einordnen",
+        "contextualize an issue"
+      ],
+      [
+        "unbelegt",
+        "unsubstantiated"
+      ]
+    ],
+    "instruction": "Sie nehmen an einem Seminar zur Medienkompetenz teil. Halten Sie einen Vortrag von ca. fünf Minuten. Gehen Sie auf die vier Punkte ein. Beantworten Sie danach die Nachfragen. Dies ist eine Übung für Teil 1, keine vollständige Paarprüfung.",
+    "prompts": [
+      "Erläutern Sie, wie Empfehlungsalgorithmen die Wahrnehmung von Nachrichten beeinflussen können.",
+      "Nennen Sie ein konkretes Beispiel für eine problematische Falschmeldung.",
+      "Wägen Sie die Verantwortung von Plattformen und Nutzenden gegeneinander ab.",
+      "Schlagen Sie eine Maßnahme vor und bewerten Sie ihre Grenzen."
+    ],
+    "followups": [
+      "Wie unterscheiden Sie eine legitime Meinung von einer überprüfbaren Tatsachenbehauptung?",
+      "Welche Risiken hätte eine zu strenge Kontrolle von Inhalten?"
+    ],
+    "model": "Empfehlungsalgorithmen können die Auswahl der sichtbaren Beiträge beeinflussen, ohne deren Wahrheitsgehalt zu überprüfen. So kann eine unbestätigte Behauptung durch häufiges Teilen glaubwürdig erscheinen. Eine Redaktion könnte erklären, die Quelle sei nicht ausreichend geprüft worden; daraus folgt aber noch nicht, dass die Behauptung falsch ist. Plattformen sollten nachvollziehbare Beschwerdewege anbieten, während Nutzende lernen müssen, Belege zu prüfen. Wenngleich eine stärkere Moderation hilfreich sein kann, darf sie berechtigte Kritik nicht unterdrücken. Entscheidend erscheint mir daher eine transparente Kombination aus Prüfung und Medienbildung.",
+    "rubric": [
+      "Alle vier Aspekte erkennbar und logisch verbunden",
+      "Konkretes Beispiel und ernsthafter Einwand",
+      "Quellenbezug und natürliche Registerwahl",
+      "Freies Sprechen, verständliche Aussprache, Reaktion auf Nachfragen"
+    ]
+  },
+  {
+    "day": 4,
+    "title": "Konfliktmanagement und moderne Arbeitskultur",
+    "skill": "Schreiben",
+    "part": 2,
+    "grammar": "Erweiterte Partizipialattribute",
+    "rule": "Ein erweitertes Attribut bündelt Informationen vor dem Nomen. Das Partizip muss zum Bezugswort passen und die korrekte Endung tragen. Bei langen oder unklaren Attributen ist ein Relativsatz oft verständlicher.",
+    "grammarChecks": [
+      [
+        "Die Bedenken, die von Mitarbeitenden geäußert wurden, ...",
+        "die von Mitarbeitenden geäußerten Bedenken",
+        "Partizip II, Plural nach bestimmtem Artikel: -en."
+      ],
+      [
+        "Ein Team, das unter hohem Zeitdruck arbeitet, ...",
+        "ein unter hohem Zeitdruck arbeitendes Team",
+        "Partizip I, Neutrum nach ein: -es."
+      ],
+      [
+        "Korrigieren Sie: mit den gestern vereinbarte Maßnahmen.",
+        "mit den gestern vereinbarten Maßnahmen",
+        "Dativ Plural, schwache Endung -en."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Konfliktbewältigung",
+        "conflict resolution"
+      ],
+      [
+        "einen Kompromiss aushandeln",
+        "negotiate a compromise"
+      ],
+      [
+        "die Zuständigkeit",
+        "responsibility"
+      ],
+      [
+        "Bedenken äußern",
+        "raise concerns"
+      ],
+      [
+        "die Arbeitsbelastung",
+        "workload"
+      ],
+      [
+        "die Abstimmung",
+        "coordination"
+      ],
+      [
+        "die Aufgabenverteilung",
+        "task allocation"
+      ],
+      [
+        "die Eskalation",
+        "escalation"
+      ],
+      [
+        "die Vermittlung",
+        "mediation"
+      ],
+      [
+        "die Verbindlichkeit",
+        "binding commitment"
+      ],
+      [
+        "die Rücksichtnahme",
+        "consideration"
+      ],
+      [
+        "die Entscheidungsbefugnis",
+        "decision-making authority"
+      ],
+      [
+        "die Überlastung",
+        "overload"
+      ],
+      [
+        "die Gleichbehandlung",
+        "equal treatment"
+      ],
+      [
+        "die Gesprächsbereitschaft",
+        "willingness to talk"
+      ],
+      [
+        "eine Vereinbarung treffen",
+        "reach an agreement"
+      ],
+      [
+        "Verantwortung übernehmen",
+        "take responsibility"
+      ],
+      [
+        "eine Frist einhalten",
+        "meet a deadline"
+      ],
+      [
+        "ein Anliegen vorbringen",
+        "raise an issue"
+      ],
+      [
+        "konstruktiv",
+        "constructive"
+      ]
+    ],
+    "instruction": "Sie arbeiten in einem Projektteam. Wegen kurzfristig geänderter Zuständigkeiten entstehen wiederholt Überstunden. Schreiben Sie eine Nachricht an die Teamleitung (circa 120 Wörter, Richtwert 25 Minuten). Achten Sie auf einen angemessenen Ton.",
+    "prompts": [
+      "Zeigen Sie Verständnis für die aktuelle Projektsituation.",
+      "Erläutern Sie das konkrete Problem und seine Auswirkungen.",
+      "Nennen Sie eine Bedingung, unter der die Aufgabenverteilung für Sie tragbar wäre.",
+      "Schlagen Sie einen konkreten Termin oder eine praktikable Lösung vor."
+    ],
+    "model": "Sehr geehrte Frau Berger,\nmir ist bewusst, dass die bevorstehende Abgabe besondere Flexibilität von unserem Team verlangt. Dennoch möchte ich auf die kurzfristig geänderte Aufgabenverteilung aufmerksam machen. Die in der vergangenen Woche zusätzlich übernommenen Tätigkeiten führen dazu, dass ich meine regulären Aufgaben nur noch mit erheblichen Überstunden erledigen kann. Eine vorübergehende Mehrbelastung wäre für mich vertretbar, sofern die Zuständigkeiten verbindlich geklärt und andere Aufgaben entsprechend verschoben würden. Ich schlage daher vor, dass wir uns am Donnerstag für zwanzig Minuten zusammensetzen und die Prioritäten gemeinsam festlegen. Auf dieser Grundlage könnten wir die verbleibenden Aufgaben fairer verteilen, ohne den Abgabetermin zu gefährden. Für eine kurze Rückmeldung wäre ich Ihnen dankbar.\nMit freundlichen Grüßen\nAlex",
+    "rubric": [
+      "Vier Inhaltspunkte vollständig bearbeiten",
+      "Adressatengerechter Ton und klare Bitte",
+      "Zusammenhängende Struktur und präziser Wortschatz",
+      "Grammatik, Rechtschreibung und angemessene Länge"
+    ]
+  },
+  {
+    "day": 5,
+    "title": "Fachkräftemangel und Weiterbildung",
+    "skill": "Lesen",
+    "part": 2,
+    "grammar": "Konditionale und finale Strukturen",
+    "rule": "sofern, falls und vorausgesetzt, dass leiten Bedingungen ein; damit und um ... zu drücken einen Zweck aus. Bei um ... zu muss das implizite Subjekt zum Handelnden des Hauptsatzes passen.",
+    "grammarChecks": [
+      [
+        "Verbinden Sie: Beschäftigte erhalten Lernzeit. Weiterbildung kann gelingen. (sofern)",
+        "Weiterbildung kann gelingen, sofern Beschäftigte Lernzeit erhalten.",
+        "Nebensatz mit Verb am Ende."
+      ],
+      [
+        "Verbinden Sie: Das Unternehmen finanziert Kurse. Es will Engpässe beheben.",
+        "Das Unternehmen finanziert Kurse, um Engpässe zu beheben.",
+        "Gleiches Subjekt, daher um ... zu."
+      ],
+      [
+        "Das Unternehmen bietet Kurse an. Die Mitarbeitenden sollen neue Kompetenzen erwerben.",
+        "Das Unternehmen bietet Kurse an, damit die Mitarbeitenden neue Kompetenzen erwerben.",
+        "Unterschiedliche Subjekte: damit."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "der Fachkräftebedarf",
+        "demand for skilled workers"
+      ],
+      [
+        "die Qualifizierung",
+        "qualification/training"
+      ],
+      [
+        "Engpässe beheben",
+        "resolve shortages"
+      ],
+      [
+        "der Weiterbildungsbedarf",
+        "training needs"
+      ],
+      [
+        "die Erwerbsbevölkerung",
+        "working population"
+      ],
+      [
+        "die Berufsanerkennung",
+        "recognition of qualifications"
+      ],
+      [
+        "die Umschulung",
+        "retraining"
+      ],
+      [
+        "die Nachwuchsförderung",
+        "development of junior staff"
+      ],
+      [
+        "die Personalbindung",
+        "staff retention"
+      ],
+      [
+        "die Arbeitsbedingungen",
+        "working conditions"
+      ],
+      [
+        "der Strukturwandel",
+        "structural change"
+      ],
+      [
+        "die Kompetenzlücke",
+        "skills gap"
+      ],
+      [
+        "die Teilzeitbeschäftigung",
+        "part-time employment"
+      ],
+      [
+        "die Vereinbarkeit",
+        "compatibility"
+      ],
+      [
+        "die Anwerbung",
+        "recruitment"
+      ],
+      [
+        "die Abwanderung",
+        "outmigration"
+      ],
+      [
+        "die Aufstiegschance",
+        "career advancement opportunity"
+      ],
+      [
+        "eine Maßnahme ergreifen",
+        "take action"
+      ],
+      [
+        "Anreize schaffen",
+        "create incentives"
+      ],
+      [
+        "eine Voraussetzung erfüllen",
+        "meet a requirement"
+      ]
+    ],
+    "instruction": "Lesen Sie den Fachartikel und wählen Sie die jeweils zutreffende Aussage. Achten Sie auf Einschränkungen, indirekte Schlüsse und Belege. Kurztraining im Stil von Lesen Teil 2.",
+    "text": "Fachkräftemangel: ein Problem mit mehreren Ursachen\nWenn Unternehmen über fehlende Fachkräfte klagen, liegt die Annahme nahe, dass schlicht zu wenige qualifizierte Menschen verfügbar seien. Diese Erklärung greift allerdings zu kurz. In manchen Branchen bleiben Stellen unbesetzt, obwohl Bewerberinnen und Bewerber mit verwandten Qualifikationen vorhanden sind. Ausschlaggebend sind unter anderem starre Anforderungsprofile, Arbeitsbedingungen und regionale Unterschiede. Ein einheitliches Rezept wäre daher kaum zielführend.\nWeiterbildung kann dazu beitragen, die Lücke zwischen vorhandenen und benötigten Kompetenzen zu schließen. Das gilt jedoch nur, sofern die Beschäftigten Zeit für die Teilnahme erhalten und die vermittelten Inhalte tatsächlich an ihrem Arbeitsplatz einsetzen können. Ein Betrieb, der Schulungen anbietet, zugleich aber keinerlei Entlastung vorsieht, darf sich über geringe Teilnahme nicht wundern. Die Zahl ausgestellter Zertifikate sagt zudem wenig darüber aus, ob neue Kompetenzen im beruflichen Alltag wirksam werden.\nAuch die Anwerbung qualifizierter Arbeitskräfte aus dem Ausland kann Engpässe entschärfen. Voraussetzung dafür sind zügige Anerkennungsverfahren und verlässliche Unterstützung beim Einstieg. Wer vorhandene Abschlüsse jahrelang nicht anerkennt, lässt wertvolle Kompetenzen ungenutzt. Allerdings wäre es verfehlt, allein auf Zuwanderung zu setzen, solange Beschäftigte aufgrund schlechter Arbeitsbedingungen die Branche verlassen.\nEine nachhaltige Strategie muss daher mehrere Maßnahmen verbinden. Statt lediglich offene Stellen zu zählen, sollten Betriebe untersuchen, weshalb Beschäftigte kündigen, welche Qualifikationen intern aufgebaut werden können und wo tatsächlich externe Fachkräfte benötigt werden. Erst auf dieser Grundlage lassen sich Investitionen gezielt einsetzen.",
+    "questions": [
+      [
+        "1. Die zentrale These des ersten Absatzes lautet:",
+        [
+          "Es fehlt grundsätzlich an qualifizierten Menschen.",
+          "Unbesetzte Stellen lassen sich durch verschiedene Faktoren erklären.",
+          "Regionale Unterschiede sind die einzige Ursache."
+        ],
+        1,
+        "Der Absatz nennt mehrere Ursachen, nicht nur die Zahl der verfügbaren Personen."
+      ],
+      [
+        "2. Weiterbildung ist laut Text besonders wirksam, wenn …",
+        [
+          "sie mit Zeit und Anwendungsmöglichkeiten verbunden ist.",
+          "möglichst viele Zertifikate ausgestellt werden.",
+          "sie ausschließlich in der Freizeit erfolgt."
+        ],
+        0,
+        "Teilnahmezeit und praktische Anwendung werden ausdrücklich als Bedingungen genannt."
+      ],
+      [
+        "3. Was lässt sich über geringe Teilnahme ableiten?",
+        [
+          "Sie beweist fehlende Motivation.",
+          "Sie hängt ausschließlich vom Kursinhalt ab.",
+          "Betriebliche Rahmenbedingungen können dazu beitragen."
+        ],
+        2,
+        "Fehlende Entlastung wird als möglicher Grund für geringe Teilnahme beschrieben."
+      ],
+      [
+        "4. Welche Einschränkung nennt der Autor zur Anwerbung?",
+        [
+          "Sie ist in jedem Fall wirkungslos.",
+          "Sie sollte schlechte Arbeitsbedingungen nicht verdecken.",
+          "Sie macht Anerkennungsverfahren überflüssig."
+        ],
+        1,
+        "Zuwanderung allein reicht nicht, wenn Beschäftigte die Branche verlassen."
+      ],
+      [
+        "5. Welche Strategie befürwortet der Autor?",
+        [
+          "Eine Ursachenanalyse vor der Auswahl von Maßnahmen.",
+          "Eine einheitliche Lösung für alle Branchen.",
+          "Eine ausschließliche Konzentration auf externe Fachkräfte."
+        ],
+        0,
+        "Im Schlussabsatz wird eine differenzierte Analyse vor Investitionen empfohlen."
+      ]
+    ]
+  },
+
+  {
+    "day": 6,
+    "title": "Gesundheitspolitik und Prävention",
+    "skill": "Hören",
+    "part": 2,
+    "grammar": "Passiversatzformen und Ursache–Folge",
+    "rule": "sich lassen + Infinitiv bezeichnet eine Möglichkeit; sein + zu + Infinitiv kann je nach Kontext Möglichkeit oder Notwendigkeit ausdrücken. Aufgrund + Genitiv nennt eine Ursache.",
+    "grammarChecks": [
+      [
+        "Viele Risiken können durch Vorsorge reduziert werden.",
+        "Viele Risiken lassen sich durch Vorsorge reduzieren.",
+        "sich lassen ersetzt können + Passiv."
+      ],
+      [
+        "Die Daten müssen sorgfältig geprüft werden.",
+        "Die Daten sind sorgfältig zu prüfen.",
+        "sein + zu + Infinitiv drückt hier eine Notwendigkeit aus."
+      ],
+      [
+        "Weil die Angebote teuer sind, nehmen wenige Menschen teil. (aufgrund)",
+        "Aufgrund der hohen Kosten nehmen wenige Menschen teil.",
+        "aufgrund + Genitiv nominalisiert die Ursache."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Vorsorge",
+        "prevention"
+      ],
+      [
+        "die Versorgungslücke",
+        "gap in care"
+      ],
+      [
+        "die Gesundheitsförderung",
+        "health promotion"
+      ],
+      [
+        "die Früherkennung",
+        "early detection"
+      ],
+      [
+        "die Lebenserwartung",
+        "life expectancy"
+      ],
+      [
+        "die Risikominderung",
+        "risk reduction"
+      ],
+      [
+        "die Zugangsbarriere",
+        "access barrier"
+      ],
+      [
+        "die Gesundheitskompetenz",
+        "health literacy"
+      ],
+      [
+        "die Eigenverantwortung",
+        "personal responsibility"
+      ],
+      [
+        "die Präventionsmaßnahme",
+        "preventive measure"
+      ],
+      [
+        "die Kostenerstattung",
+        "reimbursement"
+      ],
+      [
+        "die Ungleichheit",
+        "inequality"
+      ],
+      [
+        "die Wirksamkeit",
+        "effectiveness"
+      ],
+      [
+        "die Belastung",
+        "burden"
+      ],
+      [
+        "die Anlaufstelle",
+        "point of contact"
+      ],
+      [
+        "die Teilnahmerate",
+        "participation rate"
+      ],
+      [
+        "Anreize schaffen",
+        "create incentives"
+      ],
+      [
+        "Risiken abschätzen",
+        "assess risks"
+      ],
+      [
+        "eine Lücke schließen",
+        "close a gap"
+      ],
+      [
+        "langfristig wirksam",
+        "effective long term"
+      ]
+    ],
+    "instruction": "Sie hören ein fiktives Radiointerview mit einer Gesundheitsforscherin zweimal. Entscheiden Sie bei jeder Aussage: stimmt, stimmt nicht oder dazu wird nichts gesagt.",
+    "text": "Moderator: Frau Dr. Keller, viele Menschen verbinden Prävention mit persönlicher Disziplin. Greift das zu kurz? Forscherin: Durchaus. Wer im Schichtdienst arbeitet, hat oft Schwierigkeiten, regelmäßige Termine wahrzunehmen. Das ist keine Frage mangelnder Motivation. In einem fiktiven Modellprojekt wurden Vorsorgeangebote deshalb auch abends zugänglich gemacht. Die Teilnahme stieg von 30 auf 45 Prozent. Daraus lässt sich allerdings noch nicht ableiten, dass die Menschen langfristig gesünder leben. Moderator: Sollten solche Angebote grundsätzlich kostenlos sein? Forscherin: Kosten sind eine Hürde, aber nicht die einzige. Verständliche Informationen und gut erreichbare Anlaufstellen sind ebenso wichtig. Ein kostenloser Kurs hilft wenig, wenn er nur während der Arbeitszeit stattfindet. Moderator: Welche Rolle spielen digitale Anwendungen? Forscherin: Sie können an Termine erinnern, sollten aber persönliche Beratung ergänzen, nicht ersetzen. Gerade Menschen, die mit digitalen Diensten wenig vertraut sind, dürfen nicht ausgeschlossen werden. Moderator: Wie wäre der Erfolg zu messen? Forscherin: Neben der Teilnahme müssen langfristige gesundheitliche Ergebnisse und Unterschiede zwischen Bevölkerungsgruppen berücksichtigt werden. Erst dann lässt sich beurteilen, ob eine Maßnahme tatsächlich zur Verringerung gesundheitlicher Ungleichheit beiträgt.",
+    "questions": [
+      [
+        "1. Die Forscherin führt geringe Teilnahme ausschließlich auf fehlende Motivation zurück.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        1,
+        "Sie nennt Schichtarbeit als strukturelle Hürde."
+      ],
+      [
+        "2. Im Modellprojekt stieg die Teilnahme nach einer Änderung der Öffnungszeiten.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        0,
+        "Von 30 auf 45 Prozent nach Abendangeboten."
+      ],
+      [
+        "3. Die Forscherin nennt die genaue Finanzierung des Modellprojekts.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        2,
+        "Die Finanzierung wird nicht genannt."
+      ],
+      [
+        "4. Kostenlose Angebote beseitigen nach ihrer Auffassung sämtliche Zugangsprobleme.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        1,
+        "Auch Informationen, Erreichbarkeit und Zeiten zählen."
+      ],
+      [
+        "5. Digitale Anwendungen sollen persönliche Beratung vollständig ersetzen.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        1,
+        "Sie sollen sie ergänzen."
+      ],
+      [
+        "6. Der Erfolg soll auch anhand langfristiger gesundheitlicher Ergebnisse beurteilt werden.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        0,
+        "Dies nennt sie ausdrücklich."
+      ]
+    ]
+  },
+  {
+    "day": 7,
+    "title": "Nachhaltiger Tourismus und Overtourism",
+    "skill": "Sprechen",
+    "part": 2,
+    "grammar": "Konzessive und vergleichende Strukturen",
+    "rule": "wenngleich und obwohl leiten einen Nebensatz ein; dennoch steht im Hauptsatz. Während kann Gegensätze ausdrücken. Je … desto zeigt eine proportionale Entwicklung.",
+    "grammarChecks": [
+      [
+        "Tourismus schafft Arbeitsplätze. Er belastet die Umwelt. (wenngleich)",
+        "Wenngleich Tourismus Arbeitsplätze schafft, belastet er die Umwelt.",
+        "Verbendstellung im Nebensatz."
+      ],
+      [
+        "Die Besucherzahl wächst. Die Belastung steigt. (je … desto)",
+        "Je stärker die Besucherzahl wächst, desto höher ist die Belastung.",
+        "Je-Satz mit Verb am Ende; desto-Satz mit Verb an Position 2."
+      ],
+      [
+        "Die Stadt braucht Einnahmen. Sie begrenzt Besucherzahlen. (dennoch)",
+        "Die Stadt braucht Einnahmen; dennoch begrenzt sie die Besucherzahlen.",
+        "dennoch besetzt Position 1."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "der Massentourismus",
+        "mass tourism"
+      ],
+      [
+        "die Tragfähigkeit",
+        "carrying capacity"
+      ],
+      [
+        "die Umweltbelastung",
+        "environmental impact"
+      ],
+      [
+        "Interessen abwägen",
+        "weigh interests"
+      ],
+      [
+        "die Besucherobergrenze",
+        "visitor cap"
+      ],
+      [
+        "die Wertschöpfung",
+        "value creation"
+      ],
+      [
+        "die Hauptsaison",
+        "peak season"
+      ],
+      [
+        "die Überlastung",
+        "overcrowding"
+      ],
+      [
+        "die Anwohnerschaft",
+        "local residents"
+      ],
+      [
+        "die Verdrängung",
+        "displacement"
+      ],
+      [
+        "die Besucherlenkung",
+        "visitor management"
+      ],
+      [
+        "die Erholungsqualität",
+        "quality of recreation"
+      ],
+      [
+        "die Abhängigkeit",
+        "dependence"
+      ],
+      [
+        "die Schutzgebühr",
+        "conservation fee"
+      ],
+      [
+        "die Infrastruktur",
+        "infrastructure"
+      ],
+      [
+        "die Auslastung",
+        "occupancy"
+      ],
+      [
+        "einen Ausgleich schaffen",
+        "strike a balance"
+      ],
+      [
+        "eine Regelung umsetzen",
+        "implement a rule"
+      ],
+      [
+        "Folgen abfedern",
+        "mitigate effects"
+      ],
+      [
+        "verhältnismäßig",
+        "proportionate"
+      ]
+    ],
+    "instruction": "Diskutieren Sie zu zweit etwa fünf Minuten: Soll eine beliebte Urlaubsstadt die tägliche Besucherzahl begrenzen? Tauschen Sie Argumente aus, reagieren Sie aufeinander und ziehen Sie ein gemeinsames oder differenziertes Fazit.",
+    "prompts": [
+      "Vertreten Sie zunächst Ihre Position zu einer Besucherobergrenze.",
+      "Berücksichtigen Sie die Interessen von Anwohnenden und Tourismusbetrieben.",
+      "Reagieren Sie auf einen Einwand und prüfen Sie eine Alternative.",
+      "Fassen Sie am Ende Gemeinsamkeiten und verbleibende Unterschiede zusammen."
+    ],
+    "model": "A: Wenngleich der Tourismus Einkommen schafft, halte ich eine Obergrenze in besonders belasteten Vierteln für vertretbar.\nB: Ich verstehe das Anliegen. Eine pauschale Grenze könnte jedoch kleine Betriebe unverhältnismäßig treffen.\nA: Dem Einwand stimme ich teilweise zu. Wie wäre es mit zeitlich begrenzten Reservierungen für besonders überfüllte Sehenswürdigkeiten?\nB: Das erscheint mir sinnvoller, vorausgesetzt, die Einnahmen werden auch für öffentlichen Verkehr verwendet.\nA: Dann sind wir uns zumindest darin einig, dass gezielte Maßnahmen einer pauschalen Sperre vorzuziehen sind.",
+    "rubric": [
+      "Eigenen Standpunkt begründen",
+      "Auf Partnerargumente eingehen",
+      "Vor- und Nachteile konkret abwägen",
+      "Ein nachvollziehbares Fazit formulieren"
+    ]
+  },
+  {
+    "day": 8,
+    "title": "Smart Cities und Wohnraumpolitik",
+    "skill": "Schreiben",
+    "part": 1,
+    "grammar": "Nominalstil und Verbalstil",
+    "rule": "Nominalisierungen verdichten Aussagen; Präposition und Kasus müssen stimmen. angesichts und aufgrund verlangen im formellen Stil Genitiv; durch + Akkusativ bezeichnet häufig ein Mittel.",
+    "grammarChecks": [
+      [
+        "Weil die Mieten steigen, muss die Stadt handeln. (angesichts)",
+        "Angesichts steigender Mieten muss die Stadt handeln.",
+        "angesichts + Genitiv."
+      ],
+      [
+        "Indem die Stadt Buslinien ausbaut, verbessert sie den Zugang.",
+        "Durch den Ausbau der Buslinien verbessert die Stadt den Zugang.",
+        "durch + Akkusativ."
+      ],
+      [
+        "Nach der Einführung des Systems wurden Daten erhoben. (verbal)",
+        "Nachdem das System eingeführt worden war, wurden Daten erhoben.",
+        "Nachdem zeigt die Vorzeitigkeit."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Wohnraumknappheit",
+        "housing shortage"
+      ],
+      [
+        "die Stadtentwicklung",
+        "urban development"
+      ],
+      [
+        "die Verdichtung",
+        "urban densification"
+      ],
+      [
+        "Maßnahmen ergreifen",
+        "take measures"
+      ],
+      [
+        "die Mietbelastung",
+        "rent burden"
+      ],
+      [
+        "die Flächennutzung",
+        "land use"
+      ],
+      [
+        "die Daseinsvorsorge",
+        "public services"
+      ],
+      [
+        "die Verkehrssteuerung",
+        "traffic management"
+      ],
+      [
+        "die Datenerhebung",
+        "data collection"
+      ],
+      [
+        "die soziale Durchmischung",
+        "social mix"
+      ],
+      [
+        "die Verdrängung",
+        "displacement"
+      ],
+      [
+        "die Barrierefreiheit",
+        "accessibility"
+      ],
+      [
+        "der Leerstand",
+        "vacancy"
+      ],
+      [
+        "die Energieeffizienz",
+        "energy efficiency"
+      ],
+      [
+        "die Bürgerbeteiligung",
+        "citizen participation"
+      ],
+      [
+        "die Erschließung",
+        "development of land"
+      ],
+      [
+        "Wohnraum schaffen",
+        "create housing"
+      ],
+      [
+        "Daten zweckgebunden nutzen",
+        "use data for specified purposes"
+      ],
+      [
+        "einer Sache Rechnung tragen",
+        "take into account"
+      ],
+      [
+        "gemeinwohlorientiert",
+        "public-interest oriented"
+      ]
+    ],
+    "instruction": "In einem Onlineforum diskutieren Sie die Frage: Können Smart Cities die Wohnungsnot lindern? Schreiben Sie einen Diskussionsbeitrag von circa 230 Wörtern. Richtwert 50 Minuten.",
+    "prompts": [
+      "Erläutern Sie, welche Probleme moderne Stadtentwicklung lösen sollte.",
+      "Begründen Sie anhand eines Beispiels, welchen Beitrag digitale Technik leisten kann.",
+      "Gehen Sie auf Risiken oder Grenzen digitaler Lösungen ein.",
+      "Schlagen Sie eine ergänzende wohnungspolitische Maßnahme vor und begründen Sie diese."
+    ],
+    "model": "Angesichts steigender Mieten stehen viele Städte vor der Frage, wie sie knappen Wohnraum gerechter verteilen und zugleich ihre Infrastruktur verbessern können. Digitale Technik kann dazu beitragen, bestehende Ressourcen effizienter zu nutzen. Sie sollte jedoch nicht mit einer eigenständigen Wohnungspolitik verwechselt werden.\nEin konkretes Beispiel ist die systematische Erfassung leer stehender Wohnungen. Wenn eine Kommune zuverlässige Informationen über ungenutzten Wohnraum erhält, kann sie gezielter auf Eigentümer zugehen und geeignete Fördermaßnahmen entwickeln. Auch digitale Planungsverfahren könnten dazu beitragen, Bauprojekte transparenter zu gestalten. Voraussetzung dafür ist allerdings, dass die erhobenen Daten aktuell und aussagekräftig sind.\nWenngleich solche Anwendungen Vorteile bieten, bergen sie erhebliche Risiken. Die Sammlung personenbezogener Daten könnte die Privatsphäre beeinträchtigen. Außerdem besteht die Gefahr, dass Menschen ohne ausreichende digitale Kompetenzen von Beteiligungsverfahren ausgeschlossen werden. Vor allem lässt sich durch effizientere Datennutzung allein kein zusätzlicher Wohnraum schaffen. Technischer Fortschritt darf daher nicht als Ersatz für politische Entscheidungen dienen.\nAus meiner Sicht sollten Städte deshalb digitale Instrumente mit dem Ausbau bezahlbarer Wohnungen verbinden. Durch die Bereitstellung kommunaler Grundstücke für gemeinwohlorientierte Bauprojekte ließe sich langfristig mehr Wohnraum sichern. Ergänzend wären analoge Beratungsangebote erforderlich, damit auch weniger digital erfahrene Menschen Zugang zu Informationen erhalten. Solche Maßnahmen sind zwar mit Kosten verbunden, könnten jedoch soziale Verdrängung wirksamer verhindern als reine Technikinvestitionen. Eine intelligente Stadt zeichnet sich folglich nicht allein durch vernetzte Systeme aus, sondern durch den nachweisbaren Nutzen für ihre Bevölkerung.",
+    "rubric": [
+      "Alle vier Inhaltspunkte",
+      "Klarer roter Faden und konkrete Belege",
+      "Differenzierte Argumentation und angemessener Forumsstil",
+      "Präziser Wortschatz, korrekte Grammatik und angemessene Länge"
+    ]
+  },
+  {
+    "day": 9,
+    "title": "Verbraucherschutz und Obsoleszenz",
+    "skill": "Lesen",
+    "part": 3,
+    "grammar": "Konzessive und adversative Konnektoren",
+    "rule": "wohingegen stellt zwei Sachverhalte gegenüber; wenngleich räumt einen Einwand ein; dennoch führt eine unerwartete Folge ein. Achten Sie bei Textlücken auf Pronomen und logische Rückbezüge.",
+    "grammarChecks": [
+      [
+        "Das Gerät ist günstig. Die Reparatur ist teuer. (wohingegen)",
+        "Das Gerät ist günstig, wohingegen die Reparatur teuer ist.",
+        "Gegensatz, Verb am Ende."
+      ],
+      [
+        "Die Reparatur lohnt sich. Viele kaufen neu. (wenngleich)",
+        "Wenngleich sich die Reparatur lohnt, kaufen viele ein neues Gerät.",
+        "Einräumung eines Gegenarguments."
+      ],
+      [
+        "Ersatzteile fehlen. Das Gerät funktioniert noch. (dennoch)",
+        "Ersatzteile fehlen; dennoch funktioniert das Gerät noch.",
+        "Hauptsatz mit Inversion."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Obsoleszenz",
+        "obsolescence"
+      ],
+      [
+        "die Reparierbarkeit",
+        "repairability"
+      ],
+      [
+        "der Verbraucherschutz",
+        "consumer protection"
+      ],
+      [
+        "die Nutzungsdauer",
+        "useful life"
+      ],
+      [
+        "das Ersatzteil",
+        "spare part"
+      ],
+      [
+        "die Gewährleistung",
+        "statutory warranty"
+      ],
+      [
+        "die Materialermüdung",
+        "material fatigue"
+      ],
+      [
+        "die Wegwerfmentalität",
+        "throwaway mentality"
+      ],
+      [
+        "die Lebenszykluskosten",
+        "life-cycle cost"
+      ],
+      [
+        "die Haltbarkeit",
+        "durability"
+      ],
+      [
+        "die Wartung",
+        "maintenance"
+      ],
+      [
+        "die Informationspflicht",
+        "disclosure requirement"
+      ],
+      [
+        "die Kaufentscheidung",
+        "purchase decision"
+      ],
+      [
+        "die Produktkennzeichnung",
+        "product labeling"
+      ],
+      [
+        "die Entsorgung",
+        "disposal"
+      ],
+      [
+        "die Wiederverwendung",
+        "reuse"
+      ],
+      [
+        "Ansprüche geltend machen",
+        "assert claims"
+      ],
+      [
+        "einen Defekt beheben",
+        "repair a defect"
+      ],
+      [
+        "Kosten offenlegen",
+        "disclose costs"
+      ],
+      [
+        "langlebig",
+        "durable"
+      ]
+    ],
+    "instruction": "Welche Sätze passen in die Lücken (1–5)? Zwei Sätze passen nicht. Wählen Sie aus A–G; jeder passende Satz wird nur einmal verwendet.",
+    "text": "Reparieren statt ersetzen\nViele Verbraucher achten beim Kauf vor allem auf den Anschaffungspreis. (1) ___ Ein zunächst günstiges Gerät kann sich deshalb über mehrere Jahre als teuer erweisen.\nAuch die Verfügbarkeit von Ersatzteilen beeinflusst die Nutzungsdauer. (2) ___ Ohne diese Information lässt sich beim Kauf kaum einschätzen, ob eine spätere Reparatur möglich sein wird.\nEin transparenter Reparierbarkeitsindex könnte die Kaufentscheidung erleichtern. (3) ___ Ein solcher Index wäre jedoch nur aussagekräftig, wenn seine Kriterien unabhängig kontrolliert würden.\nNicht jeder Defekt ist Ausdruck absichtlich verkürzter Lebensdauer. (4) ___ Verbraucher sollten daher zwischen nachweisbaren Konstruktionsproblemen und normalem Verschleiß unterscheiden.\nSchließlich kommt es auch auf die Kosten der Reparatur an. (5) ___ Eine wirksame Strategie muss folglich sowohl die Konstruktion als auch die wirtschaftlichen Rahmenbedingungen berücksichtigen.",
+    "questions": [
+      [
+        "1",
+        [
+          "A. Er würde verschiedene Merkmale wie die Verfügbarkeit von Ersatzteilen zusammenfassen.",
+          "B. Die meisten Verbraucher bevorzugen unabhängig vom Preis stets eine Reparatur.",
+          "C. Entscheidend sind jedoch auch die Kosten, die während der gesamten Nutzungsdauer entstehen.",
+          "D. Ist ein Neugerät deutlich billiger als die Instandsetzung, erscheint ein Neukauf finanziell attraktiver.",
+          "E. Eine gesetzliche Regelung würde sämtliche technischen Defekte verhindern.",
+          "F. Manche Hersteller machen allerdings vor dem Kauf keine verlässlichen Angaben darüber.",
+          "G. Bauteile können auch aufgrund gewöhnlicher Materialermüdung ausfallen."
+        ],
+        2,
+        "Der folgende Satz spricht von Kosten über mehrere Jahre."
+      ],
+      [
+        "2",
+        [
+          "A. Er würde verschiedene Merkmale wie die Verfügbarkeit von Ersatzteilen zusammenfassen.",
+          "B. Die meisten Verbraucher bevorzugen unabhängig vom Preis stets eine Reparatur.",
+          "C. Entscheidend sind jedoch auch die Kosten, die während der gesamten Nutzungsdauer entstehen.",
+          "D. Ist ein Neugerät deutlich billiger als die Instandsetzung, erscheint ein Neukauf finanziell attraktiver.",
+          "E. Eine gesetzliche Regelung würde sämtliche technischen Defekte verhindern.",
+          "F. Manche Hersteller machen allerdings vor dem Kauf keine verlässlichen Angaben darüber.",
+          "G. Bauteile können auch aufgrund gewöhnlicher Materialermüdung ausfallen."
+        ],
+        5,
+        "Diese Information verweist auf Angaben zu Ersatzteilen."
+      ],
+      [
+        "3",
+        [
+          "A. Er würde verschiedene Merkmale wie die Verfügbarkeit von Ersatzteilen zusammenfassen.",
+          "B. Die meisten Verbraucher bevorzugen unabhängig vom Preis stets eine Reparatur.",
+          "C. Entscheidend sind jedoch auch die Kosten, die während der gesamten Nutzungsdauer entstehen.",
+          "D. Ist ein Neugerät deutlich billiger als die Instandsetzung, erscheint ein Neukauf finanziell attraktiver.",
+          "E. Eine gesetzliche Regelung würde sämtliche technischen Defekte verhindern.",
+          "F. Manche Hersteller machen allerdings vor dem Kauf keine verlässlichen Angaben darüber.",
+          "G. Bauteile können auch aufgrund gewöhnlicher Materialermüdung ausfallen."
+        ],
+        0,
+        "Ein solcher Index verweist auf die Beschreibung seiner Merkmale."
+      ],
+      [
+        "4",
+        [
+          "A. Er würde verschiedene Merkmale wie die Verfügbarkeit von Ersatzteilen zusammenfassen.",
+          "B. Die meisten Verbraucher bevorzugen unabhängig vom Preis stets eine Reparatur.",
+          "C. Entscheidend sind jedoch auch die Kosten, die während der gesamten Nutzungsdauer entstehen.",
+          "D. Ist ein Neugerät deutlich billiger als die Instandsetzung, erscheint ein Neukauf finanziell attraktiver.",
+          "E. Eine gesetzliche Regelung würde sämtliche technischen Defekte verhindern.",
+          "F. Manche Hersteller machen allerdings vor dem Kauf keine verlässlichen Angaben darüber.",
+          "G. Bauteile können auch aufgrund gewöhnlicher Materialermüdung ausfallen."
+        ],
+        6,
+        "Normaler Verschleiß wird als Alternative zu absichtlicher Verkürzung erläutert."
+      ],
+      [
+        "5",
+        [
+          "A. Er würde verschiedene Merkmale wie die Verfügbarkeit von Ersatzteilen zusammenfassen.",
+          "B. Die meisten Verbraucher bevorzugen unabhängig vom Preis stets eine Reparatur.",
+          "C. Entscheidend sind jedoch auch die Kosten, die während der gesamten Nutzungsdauer entstehen.",
+          "D. Ist ein Neugerät deutlich billiger als die Instandsetzung, erscheint ein Neukauf finanziell attraktiver.",
+          "E. Eine gesetzliche Regelung würde sämtliche technischen Defekte verhindern.",
+          "F. Manche Hersteller machen allerdings vor dem Kauf keine verlässlichen Angaben darüber.",
+          "G. Bauteile können auch aufgrund gewöhnlicher Materialermüdung ausfallen."
+        ],
+        3,
+        "Der Preisvergleich begründet den Zusammenhang mit wirtschaftlichen Bedingungen."
+      ]
+    ]
+  },
+  {
+    "day": 10,
+    "title": "Migration und Chancengleichheit",
+    "skill": "Hören",
+    "part": 3,
+    "grammar": "Modalpassiv und Passiversatzformen",
+    "rule": "Modalpassiv: Modalverb + Partizip II + werden. sein + zu + Infinitiv kann Verpflichtung ausdrücken; sich lassen + Infinitiv beschreibt eine Möglichkeit. Nennen Sie verantwortliche Akteure, wenn sie wichtig sind.",
+    "grammarChecks": [
+      [
+        "Die Behörde muss die Abschlüsse prüfen. (Modalpassiv)",
+        "Die Abschlüsse müssen von der Behörde geprüft werden.",
+        "Modalverb + Partizip II + werden."
+      ],
+      [
+        "Man kann Zugangshürden durch Beratung abbauen.",
+        "Zugangshürden lassen sich durch Beratung abbauen.",
+        "sich lassen + Infinitiv drückt Möglichkeit aus."
+      ],
+      [
+        "Die Kriterien müssen offengelegt werden. (sein + zu)",
+        "Die Kriterien sind offenzulegen.",
+        "Bei trennbaren Verben steht zu zwischen Präfix und Stamm."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Anerkennung",
+        "recognition"
+      ],
+      [
+        "die Zugangsbarriere",
+        "access barrier"
+      ],
+      [
+        "die Chancengleichheit",
+        "equal opportunity"
+      ],
+      [
+        "Benachteiligung abbauen",
+        "reduce disadvantage"
+      ],
+      [
+        "der Berufsabschluss",
+        "professional qualification"
+      ],
+      [
+        "die Nachqualifizierung",
+        "supplementary training"
+      ],
+      [
+        "das Anerkennungsverfahren",
+        "recognition procedure"
+      ],
+      [
+        "die Gleichwertigkeit",
+        "equivalence"
+      ],
+      [
+        "die Erwerbsintegration",
+        "labor-market integration"
+      ],
+      [
+        "die Diskriminierung",
+        "discrimination"
+      ],
+      [
+        "die Sprachförderung",
+        "language support"
+      ],
+      [
+        "die Teilhabe",
+        "participation"
+      ],
+      [
+        "der Rechtsanspruch",
+        "legal entitlement"
+      ],
+      [
+        "die Bearbeitungsdauer",
+        "processing time"
+      ],
+      [
+        "die Beratungsstelle",
+        "advisory center"
+      ],
+      [
+        "die Übergangsregelung",
+        "transitional provision"
+      ],
+      [
+        "Qualifikationen nachweisen",
+        "demonstrate qualifications"
+      ],
+      [
+        "eine Hürde überwinden",
+        "overcome a barrier"
+      ],
+      [
+        "Zuständigkeiten klären",
+        "clarify responsibilities"
+      ],
+      [
+        "nachvollziehbar",
+        "transparent"
+      ]
+    ],
+    "instruction": "Sie hören eine fiktive Diskussion einmal. Ordnen Sie jede Aussage der Person zu, die sie vertritt: A = Beraterin, B = Arbeitgeber, C = Forscherin.",
+    "text": "Moderator: Was erschwert den Einstieg qualifizierter Zugewanderter in den Arbeitsmarkt? Beraterin: Viele Ratsuchende wissen zunächst nicht, welche Behörde zuständig ist. Ich halte eine zentrale Anlaufstelle für notwendig, die Unterlagen prüft und den weiteren Weg erklärt. Arbeitgeber: In unserem Betrieb sind praktische Fähigkeiten besonders wichtig. Bei nicht reglementierten Tätigkeiten könnten wir Bewerbenden häufiger die Möglichkeit geben, ihre Kenntnisse in einer fair vergüteten Arbeitsprobe zu zeigen. Forscherin: Das kann im Einzelfall helfen. Wir sollten aber auch untersuchen, ob Personen mit vergleichbaren Qualifikationen je nach Herkunft unterschiedliche Einladungsquoten haben. Solche Daten fehlen oft. Beraterin: Außerdem braucht es bezahlbare Nachqualifizierung, wenn nur einzelne Inhalte fehlen. Es wäre ineffizient, einen gesamten Ausbildungsgang wiederholen zu lassen. Arbeitgeber: Dafür benötigen Betriebe Unterstützung bei der Einarbeitung. Gerade kleine Firmen können nicht ohne Weiteres zusätzliche Betreuung finanzieren. Forscherin: Neben solchen Maßnahmen müssen Auswahlkriterien transparent sein. Sonst besteht die Gefahr, dass vermeintlich neutrale Verfahren bestimmte Gruppen benachteiligen. Moderator: Was wäre also ein sinnvoller erster Schritt? Beraterin: Zuständigkeiten verständlich machen. Arbeitgeber: Praktische Fähigkeiten stärker berücksichtigen. Forscherin: Vergleichbare Bewerbungsverläufe systematisch auswerten.",
+    "questions": [
+      [
+        "1. Eine zentrale Beratungsstelle sollte Zuständigkeiten erklären.",
+        [
+          "A – Beraterin",
+          "B – Arbeitgeber",
+          "C – Forscherin"
+        ],
+        0,
+        "Die Beraterin fordert eine zentrale Anlaufstelle."
+      ],
+      [
+        "2. Praktische Fähigkeiten sollten bei geeigneten Tätigkeiten erprobt werden.",
+        [
+          "A – Beraterin",
+          "B – Arbeitgeber",
+          "C – Forscherin"
+        ],
+        1,
+        "Der Arbeitgeber schlägt vergütete Arbeitsproben vor."
+      ],
+      [
+        "3. Einladungsquoten vergleichbar qualifizierter Personen sollten untersucht werden.",
+        [
+          "A – Beraterin",
+          "B – Arbeitgeber",
+          "C – Forscherin"
+        ],
+        2,
+        "Die Forscherin fordert vergleichende Daten."
+      ],
+      [
+        "4. Einzelne fehlende Inhalte sollten gezielt nachgeholt werden.",
+        [
+          "A – Beraterin",
+          "B – Arbeitgeber",
+          "C – Forscherin"
+        ],
+        0,
+        "Sie fordert bezahlbare Nachqualifizierung statt kompletter Wiederholung."
+      ],
+      [
+        "5. Kleinere Betriebe benötigen Unterstützung bei der Einarbeitung.",
+        [
+          "A – Beraterin",
+          "B – Arbeitgeber",
+          "C – Forscherin"
+        ],
+        1,
+        "Der Arbeitgeber nennt die Betreuungskosten."
+      ],
+      [
+        "6. Auch scheinbar neutrale Verfahren können benachteiligen.",
+        [
+          "A – Beraterin",
+          "B – Arbeitgeber",
+          "C – Forscherin"
+        ],
+        2,
+        "Die Forscherin warnt davor."
+      ]
+    ]
+  }
+,
+
+  {
+    "day": 11,
+    "title": "Zivilcourage und gesellschaftliche Verantwortung",
+    "skill": "Sprechen",
+    "part": 1,
+    "grammar": "Funktionsverbgefüge und finale Strukturen",
+    "rule": "Funktionsverbgefüge wie Stellung beziehen und Verantwortung übernehmen sind feste Verbindungen. um ... zu bezeichnet einen Zweck bei gleichem Handlungsträger; damit ermöglicht verschiedene Subjekte.",
+    "grammarChecks": [
+      [
+        "Viele Menschen wollen helfen. Sie übernehmen Verantwortung. (um ... zu)",
+        "Viele Menschen übernehmen Verantwortung, um anderen zu helfen.",
+        "Gleicher Handlungsträger."
+      ],
+      [
+        "Die Stadt organisiert Schulungen. Die Bürger sollen Konflikte erkennen.",
+        "Die Stadt organisiert Schulungen, damit die Bürger Konflikte erkennen.",
+        "Verschiedene Subjekte erfordern damit."
+      ],
+      [
+        "Formulieren Sie mit Stellung beziehen: Sie äußert öffentlich ihre Haltung gegen Ausgrenzung.",
+        "Sie bezieht öffentlich Stellung gegen Ausgrenzung.",
+        "Stellung beziehen gegen + Akkusativ."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Zivilcourage",
+        "civil courage"
+      ],
+      [
+        "Verantwortung übernehmen",
+        "take responsibility"
+      ],
+      [
+        "die Solidarität",
+        "solidarity"
+      ],
+      [
+        "Stellung beziehen",
+        "take a stand"
+      ],
+      [
+        "die Hemmschwelle",
+        "inhibition threshold"
+      ],
+      [
+        "die Gleichgültigkeit",
+        "indifference"
+      ],
+      [
+        "die Ausgrenzung",
+        "exclusion"
+      ],
+      [
+        "die Einschüchterung",
+        "intimidation"
+      ],
+      [
+        "der Handlungsspielraum",
+        "scope for action"
+      ],
+      [
+        "die Selbstgefährdung",
+        "risk to oneself"
+      ],
+      [
+        "die Rücksichtnahme",
+        "consideration"
+      ],
+      [
+        "die Verpflichtung",
+        "obligation"
+      ],
+      [
+        "die Konfliktsituation",
+        "conflict situation"
+      ],
+      [
+        "der Zusammenhalt",
+        "cohesion"
+      ],
+      [
+        "die Unterstützung",
+        "support"
+      ],
+      [
+        "das Eingreifen",
+        "intervention"
+      ],
+      [
+        "Hilfe leisten",
+        "provide assistance"
+      ],
+      [
+        "einen Beitrag leisten",
+        "make a contribution"
+      ],
+      [
+        "Vertrauen schaffen",
+        "build trust"
+      ],
+      [
+        "verhältnismäßig",
+        "proportionate"
+      ]
+    ],
+    "instruction": "Sie halten in einem Seminar einen Vortrag von circa fünf Minuten zum Thema Zivilcourage. Gehen Sie auf die vier Aspekte ein und beantworten Sie anschließend Nachfragen.",
+    "prompts": [
+      "Erläutern Sie, welche Bedeutung Zivilcourage für den gesellschaftlichen Zusammenhalt hat.",
+      "Beschreiben Sie eine Alltagssituation, in der Eingreifen sinnvoll sein kann.",
+      "Wägen Sie die Grenzen persönlicher Verantwortung und die eigene Sicherheit ab.",
+      "Schlagen Sie eine Maßnahme vor, mit der Institutionen Zivilcourage fördern können."
+    ],
+    "followups": [
+      "Welche Möglichkeiten hat eine Person, die nicht direkt eingreifen kann?",
+      "Wie lässt sich solidarisches Verhalten langfristig fördern?"
+    ],
+    "model": "Zivilcourage bedeutet für mich, nicht gleichgültig zu bleiben, wenn andere benachteiligt werden. Beispielsweise kann jemand in einer öffentlichen Einrichtung ruhig Stellung beziehen, wenn eine andere Person beleidigt wird. Allerdings sollte niemand sich unnötig gefährden. Je nach Situation kann es sinnvoller sein, Unterstützung zu organisieren oder verantwortliche Mitarbeitende anzusprechen. Institutionen sollten klare Anlaufstellen schaffen, damit Betroffene und Beobachtende wissen, an wen sie sich wenden können. Auf diese Weise lässt sich Verantwortung übernehmen, ohne sie allein dem Einzelnen aufzubürden.",
+    "rubric": [
+      "Vier Aspekte nachvollziehbar behandeln",
+      "Beispiel und Grenzen erläutern",
+      "Feste Wendungen und logische Übergänge natürlich nutzen",
+      "Auf Nachfragen spontan eingehen"
+    ]
+  },
+  {
+    "day": 12,
+    "title": "Kunstmarkt und staatliche Kulturförderung",
+    "skill": "Schreiben",
+    "part": 2,
+    "grammar": "Vergleich, Konzessivität und formelles Register",
+    "rule": "wenngleich leitet einen Nebensatz ein, ungeachtet steht mit Genitiv. Im formellen Schreiben werden Anliegen konkret und höflich formuliert, etwa mit wäre es möglich oder ich wäre Ihnen dankbar.",
+    "grammarChecks": [
+      [
+        "Die Mittel sind begrenzt. Kulturangebote bleiben wichtig. (wenngleich)",
+        "Wenngleich die Mittel begrenzt sind, bleiben Kulturangebote wichtig.",
+        "Verbendstellung nach wenngleich."
+      ],
+      [
+        "Trotz der Kürzungen bleibt der Kurs bestehen. (ungeachtet)",
+        "Ungeachtet der Kürzungen bleibt der Kurs bestehen.",
+        "ungeachtet + Genitiv."
+      ],
+      [
+        "Formulieren Sie höflicher: Schicken Sie mir einen anderen Termin.",
+        "Ich wäre Ihnen dankbar, wenn Sie mir einen anderen Termin anbieten könnten.",
+        "Konjunktiv II und konditionale Bitte."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Kulturförderung",
+        "cultural funding"
+      ],
+      [
+        "die Subvention",
+        "subsidy"
+      ],
+      [
+        "die kulturelle Teilhabe",
+        "cultural participation"
+      ],
+      [
+        "Mittel bereitstellen",
+        "allocate funds"
+      ],
+      [
+        "die Förderung",
+        "support"
+      ],
+      [
+        "die Zugänglichkeit",
+        "accessibility"
+      ],
+      [
+        "das Kulturerbe",
+        "cultural heritage"
+      ],
+      [
+        "die Ausstellung",
+        "exhibition"
+      ],
+      [
+        "die Kunstfreiheit",
+        "artistic freedom"
+      ],
+      [
+        "die Eintrittsgebühr",
+        "admission fee"
+      ],
+      [
+        "die öffentliche Hand",
+        "public authorities"
+      ],
+      [
+        "die Eigenfinanzierung",
+        "self-financing"
+      ],
+      [
+        "die Haushaltskürzung",
+        "budget cut"
+      ],
+      [
+        "das Förderkriterium",
+        "funding criterion"
+      ],
+      [
+        "die Nachfrage",
+        "demand"
+      ],
+      [
+        "die Vermittlungsarbeit",
+        "outreach"
+      ],
+      [
+        "einen Antrag stellen",
+        "submit an application"
+      ],
+      [
+        "eine Ausnahme gewähren",
+        "grant an exception"
+      ],
+      [
+        "Zugang ermöglichen",
+        "enable access"
+      ],
+      [
+        "kostendeckend",
+        "covering costs"
+      ]
+    ],
+    "instruction": "Sie besuchen regelmäßig ein kommunales Kulturzentrum. Ein geförderter Abendkurs wurde wegen finanzieller Schwierigkeiten auf den Vormittag verlegt. Schreiben Sie der Leitung eine formelle Nachricht von circa 120 Wörtern (Richtwert 25 Minuten).",
+    "prompts": [
+      "Zeigen Sie Verständnis für die finanziellen Schwierigkeiten.",
+      "Erläutern Sie, warum die neue Kurszeit für Sie problematisch ist.",
+      "Beschreiben Sie, welchen Nutzen das bisherige Angebot für Berufstätige hatte.",
+      "Schlagen Sie eine realistische Alternative vor."
+    ],
+    "model": "Sehr geehrte Frau Klein,\nmit Bedauern habe ich erfahren, dass der bisher am Abend angebotene Kunstkurs künftig vormittags stattfinden soll. Mir ist bewusst, dass die gegenwärtige Haushaltslage eine Anpassung des Programms erforderlich macht. Allerdings kann ich aufgrund meiner Arbeitszeiten an dem neuen Termin nicht teilnehmen. Der Abendkurs hat bislang insbesondere Berufstätigen ermöglicht, sich künstlerisch weiterzubilden und mit anderen Teilnehmenden auszutauschen. Ungeachtet der finanziellen Einschränkungen wäre es daher wünschenswert, zumindest einen Abendtermin im Monat beizubehalten. Denkbar wäre auch eine geringfügige Erhöhung der Teilnahmegebühr, sofern dadurch die zusätzlichen Kosten gedeckt werden könnten. Ich wäre Ihnen dankbar, wenn Sie diese Möglichkeiten bei der nächsten Programmplanung in Betracht ziehen würden. Gern beteilige ich mich an einer gemeinsamen Befragung der bisherigen Teilnehmenden.\nMit freundlichen Grüßen\nAlex",
+    "rubric": [
+      "Vier Inhaltspunkte vollständig bearbeiten",
+      "Höflicher, adressatengerechter Ton",
+      "Konkrete, praktikable Alternative",
+      "Kohärenz, Grammatik und Wortschatz"
+    ]
+  },
+  {
+    "day": 13,
+    "title": "Sprachwandel, Anglizismen und Bilingualismus",
+    "skill": "Lesen",
+    "part": 4,
+    "grammar": "Nominalstil, Genitiv und Quellenbezug",
+    "rule": "Nominalisierung verdichtet Aussagen: weil sich die Sprache verändert → aufgrund des Sprachwandels. Der Genitiv kann Zugehörigkeit oder inhaltliche Beziehungen ausdrücken. Positionen müssen eindeutig ihren Verfassenden zugeordnet werden.",
+    "grammarChecks": [
+      [
+        "Weil sich die Sprache verändert, entstehen neue Wörter. (aufgrund)",
+        "Aufgrund des Sprachwandels entstehen neue Wörter.",
+        "aufgrund + Genitiv."
+      ],
+      [
+        "Die Schule fördert mehrere Sprachen. (Nominalisierung)",
+        "die Förderung der Mehrsprachigkeit durch die Schule",
+        "Genitiv bezeichnet den Gegenstand der Förderung."
+      ],
+      [
+        "Die Linguistin sagt: Anglizismen sind nicht grundsätzlich problematisch.",
+        "Die Linguistin erklärt, Anglizismen seien nicht grundsätzlich problematisch.",
+        "Konjunktiv I kennzeichnet die fremde Position."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "der Sprachwandel",
+        "language change"
+      ],
+      [
+        "die Sprachkompetenz",
+        "language competence"
+      ],
+      [
+        "die Mehrsprachigkeit",
+        "multilingualism"
+      ],
+      [
+        "der Sprachgebrauch",
+        "language use"
+      ],
+      [
+        "die Entlehnung",
+        "borrowing"
+      ],
+      [
+        "der Anglizismus",
+        "Anglicism"
+      ],
+      [
+        "die Verständlichkeit",
+        "comprehensibility"
+      ],
+      [
+        "die Sprachpflege",
+        "language cultivation"
+      ],
+      [
+        "die Sprachgemeinschaft",
+        "speech community"
+      ],
+      [
+        "die Erstsprache",
+        "first language"
+      ],
+      [
+        "die Zweitsprache",
+        "second language"
+      ],
+      [
+        "die Sprachvarietät",
+        "language variety"
+      ],
+      [
+        "die Ausdrucksfähigkeit",
+        "expressiveness"
+      ],
+      [
+        "das Sprachbewusstsein",
+        "language awareness"
+      ],
+      [
+        "die Bildungssprache",
+        "academic language"
+      ],
+      [
+        "der Bedeutungswandel",
+        "semantic change"
+      ],
+      [
+        "Begriffe übernehmen",
+        "adopt terms"
+      ],
+      [
+        "eine Unterscheidung treffen",
+        "make a distinction"
+      ],
+      [
+        "sprachliche Vielfalt fördern",
+        "promote linguistic diversity"
+      ],
+      [
+        "kontextabhängig",
+        "context-dependent"
+      ]
+    ],
+    "instruction": "Lesen Sie die drei fiktiven Fachpositionen. Wer äußert die jeweilige Aussage? A, B, C oder X (keine Person). Mehrere Aussagen können derselben Person zugeordnet werden; zwei Aussagen passen nicht.",
+    "text": "A – Sprachwissenschaftlerin Mara König: Entlehnungen sind keineswegs ein neues Phänomen. Ob ein englischer Ausdruck langfristig übernommen wird, hängt davon ab, welche Funktion er erfüllt. Entscheidend ist nicht seine Herkunft, sondern seine Verwendung. In der Alltagssprache sehe ich keinen Anlass für pauschale Verbote. In amtlichen Texten sollte dagegen die Verständlichkeit für alle Adressaten Vorrang haben.\n\nB – Bildungsforscher Karim Weber: Mehrsprachige Kinder verfügen häufig über Erfahrungen, die im Unterricht produktiv genutzt werden können. Allerdings ergibt sich ein schulischer Vorteil nicht automatisch aus der Anzahl gesprochener Sprachen. Lehrkräfte brauchen geeignete Materialien, und Kinder benötigen Möglichkeiten, ihre bildungssprachlichen Fähigkeiten gezielt auszubauen. Ich plädiere für Fortbildungen, in denen Lehrkräfte solche Ressourcen erkennen lernen.\n\nC – Medienredakteurin Eva Braun: In unserer Redaktion beobachten wir, dass bestimmte englische Begriffe Fachwissen signalisieren sollen, selbst wenn eine verständliche deutsche Bezeichnung existiert. Ich rate dazu, beim Schreiben die Zielgruppe zu berücksichtigen. In spezialisierten Fachmedien können internationale Begriffe sinnvoll sein; in allgemeinen Nachrichten erklären wir sie oder wählen eine geläufigere Formulierung. Es geht mir nicht um eine starre Liste verbotener Wörter, sondern um nachvollziehbare redaktionelle Entscheidungen.",
+    "questions": [
+      [
+        "1. Ein möglicher Bildungsvorteil hängt von weiteren Lernbedingungen ab.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        1,
+        "B betont Materialien und bildungssprachliche Förderung."
+      ],
+      [
+        "2. Englische Begriffe können als Statussignal eingesetzt werden.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        2,
+        "C nennt das Signalisieren von Fachwissen."
+      ],
+      [
+        "3. Die Geschichte der Sprache zeigt, dass Entlehnungen nicht neu sind.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        0,
+        "A erklärt dies ausdrücklich."
+      ],
+      [
+        "4. Mehrsprachige Kinder sollten nur in ihrer Erstsprache unterrichtet werden.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        3,
+        "Keine Person fordert ausschließlichen Erstsprachenunterricht."
+      ],
+      [
+        "5. Lehrkräfte sollten gezielt lernen, vorhandene Sprachressourcen zu erkennen.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        1,
+        "B fordert entsprechende Fortbildungen."
+      ],
+      [
+        "6. Internationale Fachbegriffe können je nach Publikation angemessen sein.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        2,
+        "C unterscheidet Fachmedien und allgemeine Nachrichten."
+      ],
+      [
+        "7. Neue Anglizismen sollten jährlich in einer amtlichen Liste genehmigt werden.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        3,
+        "Niemand schlägt ein Genehmigungsverfahren vor."
+      ]
+    ]
+  },
+  {
+    "day": 14,
+    "title": "Start-ups und Technologiefolgen",
+    "skill": "Hören",
+    "part": 4,
+    "grammar": "Subjektive Modalverben und Prognosen",
+    "rule": "dürfte drückt eine begründete Vermutung aus; könnte eine Möglichkeit. soll + Infinitiv Perfekt gibt eine fremde, nicht bestätigte Behauptung wieder. Unterscheiden Sie Prognosen von gesicherten Befunden.",
+    "grammarChecks": [
+      [
+        "Vermutlich wird das Verfahren günstiger. (dürfte)",
+        "Das Verfahren dürfte günstiger werden.",
+        "dürfte kennzeichnet eine Vermutung."
+      ],
+      [
+        "Man behauptet, das Unternehmen habe neue Investoren gewonnen. (soll)",
+        "Das Unternehmen soll neue Investoren gewonnen haben.",
+        "soll + Infinitiv Perfekt markiert eine fremde Behauptung über Vergangenes."
+      ],
+      [
+        "Es ist möglich, dass die Nachfrage sinkt. (könnte)",
+        "Die Nachfrage könnte sinken.",
+        "könnte bezeichnet eine Möglichkeit."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "das Wagniskapital",
+        "venture capital"
+      ],
+      [
+        "die Technologiefolgen",
+        "technology impacts"
+      ],
+      [
+        "die Markteinführung",
+        "market launch"
+      ],
+      [
+        "Risiken abschätzen",
+        "assess risks"
+      ],
+      [
+        "das Geschäftsmodell",
+        "business model"
+      ],
+      [
+        "die Skalierbarkeit",
+        "scalability"
+      ],
+      [
+        "die Finanzierungslücke",
+        "funding gap"
+      ],
+      [
+        "der Prototyp",
+        "prototype"
+      ],
+      [
+        "die Machbarkeit",
+        "feasibility"
+      ],
+      [
+        "die Wirtschaftlichkeit",
+        "economic viability"
+      ],
+      [
+        "die Investitionsbereitschaft",
+        "willingness to invest"
+      ],
+      [
+        "die Marktnische",
+        "market niche"
+      ],
+      [
+        "die Kapitalrendite",
+        "return on capital"
+      ],
+      [
+        "die Innovationsförderung",
+        "innovation support"
+      ],
+      [
+        "der Wettbewerbsvorteil",
+        "competitive advantage"
+      ],
+      [
+        "die Folgekosten",
+        "downstream costs"
+      ],
+      [
+        "eine Hypothese prüfen",
+        "test a hypothesis"
+      ],
+      [
+        "Kapital beschaffen",
+        "raise capital"
+      ],
+      [
+        "Verantwortung zuweisen",
+        "assign responsibility"
+      ],
+      [
+        "tragfähig",
+        "viable"
+      ]
+    ],
+    "instruction": "Sie hören einen fiktiven Vortrag über Technologiefolgen zweimal. Wählen Sie für jede Aufgabe die richtige Aussage.",
+    "text": "Guten Tag. Ich möchte heute erläutern, weshalb erfolgreiche Innovation nicht mit einer möglichst schnellen Markteinführung gleichgesetzt werden sollte. Start-ups benötigen zwar Kapital, um Ideen zu erproben, doch eine hohe Investitionssumme ist kein Nachweis für gesellschaftlichen Nutzen. Investoren bewerten häufig Wachstumsaussichten; öffentliche Förderstellen können dagegen auch Ziele verfolgen, die sich nicht unmittelbar in Einnahmen ausdrücken. In einem erfundenen Pilotprojekt entwickelte ein junges Unternehmen Sensoren zur Verringerung des Wasserverbrauchs. Die Messungen deuteten zunächst darauf hin, dass der Verbrauch sinken könnte. Allerdings wurden die Geräte nur in Gebäuden mit besonders moderner Infrastruktur getestet. Ob sich die Ergebnisse auf ältere Anlagen übertragen lassen, blieb offen. Eine zweite Frage betrifft die langfristige Wirtschaftlichkeit. Die Herstellungskosten waren überschaubar, doch Wartung und Austausch der Sensoren erwiesen sich als aufwendiger als erwartet. Daher sollte die Bewertung den gesamten Lebenszyklus berücksichtigen. Schließlich stellt sich die Frage nach Verantwortung. Wenn ein automatisiertes System falsche Empfehlungen liefert, reicht es nicht, allein auf die technische Leistungsfähigkeit zu verweisen. Zuständigkeiten müssen vor dem Einsatz geklärt werden. Mein Fazit lautet: Pilotprojekte sollten frühzeitig überprüfbare Ziele formulieren, unterschiedliche Einsatzbedingungen berücksichtigen und ihre Annahmen transparent machen. Damit wird Innovation nicht verhindert, sondern die Grundlage für eine verantwortbare Ausweitung geschaffen.",
+    "questions": [
+      [
+        "1. Eine hohe Investitionssumme …",
+        [
+          "beweist den Nutzen.",
+          "ist kein Beleg für gesellschaftlichen Nutzen.",
+          "ersetzt die Erprobung."
+        ],
+        1,
+        "Kapitalhöhe und gesellschaftlicher Nutzen werden ausdrücklich unterschieden."
+      ],
+      [
+        "2. Öffentliche Förderstellen …",
+        [
+          "dürfen nur Gewinne fördern.",
+          "verfolgen immer dieselben Ziele wie Investoren.",
+          "können auch Ziele ohne unmittelbare Einnahmen verfolgen."
+        ],
+        2,
+        "Gemeint sind Ziele, die sich nicht direkt in Einnahmen ausdrücken."
+      ],
+      [
+        "3. Welche Einschränkung hatte das Pilotprojekt?",
+        [
+          "Es umfasste nur moderne Gebäude.",
+          "Die Sensoren wurden nie getestet.",
+          "Die Messwerte wurden absichtlich verändert."
+        ],
+        0,
+        "Die Ergebnisse für ältere Anlagen blieben offen."
+      ],
+      [
+        "4. Was war teurer bzw. aufwendiger als erwartet?",
+        [
+          "Die Entwicklung der Grundidee.",
+          "Wartung und Austausch.",
+          "Die erste Herstellung."
+        ],
+        1,
+        "Der Vortrag nennt Wartung und Austausch."
+      ],
+      [
+        "5. Bei falschen Systemempfehlungen sollen …",
+        [
+          "allein Nutzende verantwortlich sein.",
+          "technische Daten verschwiegen werden.",
+          "Zuständigkeiten zuvor geklärt werden."
+        ],
+        2,
+        "Verantwortung muss vor dem Einsatz festgelegt werden."
+      ],
+      [
+        "6. Der Vortrag befürwortet …",
+        [
+          "überprüfbare Ziele und transparente Annahmen.",
+          "eine möglichst schnelle Einführung ohne Prüfung.",
+          "ein generelles Innovationsverbot."
+        ],
+        0,
+        "Dies fasst das Fazit ausdrücklich zusammen."
+      ]
+    ]
+  },
+  {
+    "day": 15,
+    "title": "Bildungsungleichheit und Inklusion",
+    "skill": "Sprechen",
+    "part": 2,
+    "grammar": "Konzessive, kausale und konditionale Strukturen",
+    "rule": "wenngleich markiert einen Einwand; zumal ergänzt einen besonders wichtigen Grund; vorausgesetzt, dass leitet eine Bedingung ein. Präzise Konnektoren machen die Abwägung nachvollziehbar.",
+    "grammarChecks": [
+      [
+        "Digitale Geräte helfen. Nicht alle Familien haben Internet. (wenngleich)",
+        "Wenngleich digitale Geräte helfen können, haben nicht alle Familien Internet.",
+        "Konzessiver Nebensatz."
+      ],
+      [
+        "Die Schule sollte Beratung anbieten. Viele Eltern kennen das System nicht. (zumal)",
+        "Die Schule sollte Beratung anbieten, zumal viele Eltern das System nicht kennen.",
+        "zumal ergänzt einen verstärkenden Grund."
+      ],
+      [
+        "Die Reform kann gelingen. Es gibt ausreichend Personal. (vorausgesetzt, dass)",
+        "Die Reform kann gelingen, vorausgesetzt, dass ausreichend Personal vorhanden ist.",
+        "Bedingung mit Verb am Satzende."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Bildungsungleichheit",
+        "educational inequality"
+      ],
+      [
+        "die Inklusion",
+        "inclusion"
+      ],
+      [
+        "der Bildungszugang",
+        "access to education"
+      ],
+      [
+        "Hürden abbauen",
+        "remove barriers"
+      ],
+      [
+        "die Bildungsgerechtigkeit",
+        "educational equity"
+      ],
+      [
+        "die Lernvoraussetzung",
+        "learning prerequisite"
+      ],
+      [
+        "die Förderung",
+        "support"
+      ],
+      [
+        "die Benachteiligung",
+        "disadvantage"
+      ],
+      [
+        "die Durchlässigkeit",
+        "permeability"
+      ],
+      [
+        "die Lernumgebung",
+        "learning environment"
+      ],
+      [
+        "die Barrierefreiheit",
+        "accessibility"
+      ],
+      [
+        "die Schulsozialarbeit",
+        "school social work"
+      ],
+      [
+        "die Ausstattung",
+        "equipment"
+      ],
+      [
+        "der Förderbedarf",
+        "support needs"
+      ],
+      [
+        "die Leistungsbewertung",
+        "performance assessment"
+      ],
+      [
+        "die Ressourcenverteilung",
+        "resource allocation"
+      ],
+      [
+        "Chancen eröffnen",
+        "create opportunities"
+      ],
+      [
+        "Teilhabe ermöglichen",
+        "enable participation"
+      ],
+      [
+        "einen Ausgleich schaffen",
+        "create balance"
+      ],
+      [
+        "bedarfsgerecht",
+        "needs-based"
+      ]
+    ],
+    "instruction": "Diskutieren Sie zu zweit etwa fünf Minuten: Sollen Schulen mit besonders schwierigen sozialen Bedingungen mehr finanzielle Mittel erhalten als andere Schulen? Reagieren Sie aufeinander und fassen Sie Ihr Ergebnis zusammen.",
+    "prompts": [
+      "Nehmen Sie begründet Stellung zur bedarfsgerechten Mittelverteilung.",
+      "Vergleichen Sie mögliche Folgen für unterschiedlich ausgestattete Schulen.",
+      "Reagieren Sie auf ein Gegenargument und entwickeln Sie ein überprüfbares Kriterium.",
+      "Formulieren Sie ein gemeinsames Fazit oder benennen Sie den verbleibenden Dissens."
+    ],
+    "model": "A: Ich halte eine bedarfsgerechte Finanzierung für sinnvoll, zumal gleiche Mittel bei unterschiedlichen Voraussetzungen nicht zwangsläufig gleiche Chancen schaffen.\nB: Das leuchtet mir ein. Allerdings könnte eine solche Regelung Schulen benachteiligen, deren Probleme weniger sichtbar sind.\nA: Deshalb sollten mehrere Kriterien berücksichtigt werden, etwa der tatsächliche Förderbedarf und die personelle Ausstattung.\nB: Vorausgesetzt, dass diese Kriterien transparent sind und regelmäßig überprüft werden, könnte ich dem Vorschlag zustimmen.\nA: Dann sind wir uns darin einig, dass zusätzliche Förderung möglich sein sollte, ohne die Grundausstattung anderer Schulen zu gefährden.",
+    "rubric": [
+      "Eigene Position mit Gründen vertreten",
+      "Partnerargumente aufgreifen und konkret beantworten",
+      "Kriterien und Zielkonflikte differenziert darstellen",
+      "Ergebnis der Diskussion zusammenfassen"
+    ]
+  }
+,
+
+  {
+    "day": 16,
+    "title": "Künstliche Intelligenz und Urheberrecht",
+    "skill": "Schreiben",
+    "part": 1,
+    "grammar": "Passiv, Zustandspassiv und Passiversatzformen",
+    "rule": "Das Vorgangspassiv beschreibt einen Vorgang (wird geprüft), das Zustandspassiv ein Ergebnis (ist geprüft). sich lassen + Infinitiv und Adjektive auf -bar drücken häufig eine Möglichkeit aus. Im argumentativen Text müssen rechtliche Unsicherheiten als solche gekennzeichnet werden.",
+    "grammarChecks": [
+      [
+        "Die Herkunft der Inhalte kann nicht immer nachvollzogen werden. (sich lassen)",
+        "Die Herkunft der Inhalte lässt sich nicht immer nachvollziehen.",
+        "sich lassen + Infinitiv ersetzt können + Passiv."
+      ],
+      [
+        "Die Nutzung der Bilder wurde genehmigt. Beschreiben Sie den jetzigen Zustand.",
+        "Die Nutzung der Bilder ist genehmigt.",
+        "sein + Partizip II beschreibt das Ergebnis."
+      ],
+      [
+        "Die Entscheidung kann überprüft werden. (Adjektiv auf -bar)",
+        "Die Entscheidung ist überprüfbar.",
+        "-bar kennzeichnet hier eine Möglichkeit."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "das Urheberrecht",
+        "copyright"
+      ],
+      [
+        "die Schutzrechte",
+        "protective rights"
+      ],
+      [
+        "die Nachvollziehbarkeit",
+        "traceability"
+      ],
+      [
+        "Ansprüche geltend machen",
+        "assert claims"
+      ],
+      [
+        "die Einwilligung",
+        "consent"
+      ],
+      [
+        "das Trainingsmaterial",
+        "training material"
+      ],
+      [
+        "die Lizenzierung",
+        "licensing"
+      ],
+      [
+        "die Vergütung",
+        "remuneration"
+      ],
+      [
+        "die Urheberschaft",
+        "authorship"
+      ],
+      [
+        "die Kennzeichnungspflicht",
+        "labeling requirement"
+      ],
+      [
+        "die schöpferische Leistung",
+        "creative achievement"
+      ],
+      [
+        "die Rechtsunsicherheit",
+        "legal uncertainty"
+      ],
+      [
+        "das geistige Eigentum",
+        "intellectual property"
+      ],
+      [
+        "die Verwertung",
+        "exploitation"
+      ],
+      [
+        "die Quellenangabe",
+        "source attribution"
+      ],
+      [
+        "die Haftung",
+        "liability"
+      ],
+      [
+        "Rechte einräumen",
+        "grant rights"
+      ],
+      [
+        "eine Regelung treffen",
+        "establish a rule"
+      ],
+      [
+        "Interessen abwägen",
+        "weigh interests"
+      ],
+      [
+        "nachvollziehbar",
+        "transparent"
+      ]
+    ],
+    "instruction": "In einem Onlineforum wird diskutiert, ob KI-generierte Inhalte grundsätzlich gekennzeichnet werden sollten. Schreiben Sie einen Diskussionsbeitrag von circa 230 Wörtern (Richtwert 50 Minuten). Gehen Sie auf alle vier Punkte ein.",
+    "prompts": [
+      "Erläutern Sie, warum die Herkunft digitaler Inhalte für Nutzende wichtig sein kann.",
+      "Begründen Sie anhand eines Beispiels, in welchen Situationen eine Kennzeichnung sinnvoll wäre.",
+      "Gehen Sie auf Grenzen oder Nachteile einer allgemeinen Kennzeichnungspflicht ein.",
+      "Schlagen Sie eine ergänzende Maßnahme zum Schutz kreativer Leistungen vor."
+    ],
+    "model": "Die zunehmende Verbreitung KI-generierter Inhalte wirft die Frage auf, wie sich deren Herkunft nachvollziehen lässt. Meines Erachtens ist Transparenz insbesondere dann erforderlich, wenn die Entstehungsweise eines Beitrags für dessen Bewertung von Bedeutung ist. Eine Kennzeichnung allein kann jedoch nicht sämtliche urheberrechtlichen Probleme lösen.\nEin anschauliches Beispiel sind täuschend echte Bilder, die im Zusammenhang mit Nachrichten veröffentlicht werden. Ohne einen Hinweis könnten Leserinnen und Leser annehmen, dass ein dargestelltes Ereignis tatsächlich stattgefunden habe. Eine sichtbare Kennzeichnung würde in solchen Fällen die kritische Einordnung erleichtern. Auch bei kommerziellen Angeboten kann die Information über den Herstellungsprozess relevant sein.\nAllerdings erscheint eine ausnahmslose Pflicht wenig praktikabel. Wenn ein Text lediglich mithilfe eines digitalen Werkzeugs sprachlich korrigiert wurde, wäre eine Kennzeichnung womöglich unverhältnismäßig. Zudem sagt ein entsprechender Hinweis noch nichts darüber aus, ob die verwendeten Trainingsmaterialien mit Einwilligung der Rechteinhaber genutzt wurden. Die Rechtmäßigkeit eines Inhalts lässt sich also nicht allein anhand seiner Kennzeichnung beurteilen.\nAls ergänzende Maßnahme halte ich transparente Lizenzierungsverfahren für sinnvoll. Kreativschaffende sollten nachvollziehen können, unter welchen Bedingungen ihre Werke verwendet werden, und verständliche Möglichkeiten erhalten, ihre Ansprüche geltend zu machen. Zugleich wären klare Kriterien erforderlich, anhand derer zwischen geringfügiger technischer Unterstützung und umfangreicher maschineller Generierung unterschieden werden kann. Dadurch ließen sich unnötige bürokratische Belastungen vermeiden. Eine ausgewogene Regelung sollte folglich sowohl die Interessen der Öffentlichkeit als auch die der Kreativschaffenden und der technisch innovativen Unternehmen berücksichtigen.",
+    "rubric": [
+      "Alle vier Inhaltspunkte erkennbar bearbeiten",
+      "Konkretes Beispiel und nachvollziehbare Abwägung",
+      "Differenzierte Aussagen statt unbelegter Rechtsbehauptungen",
+      "Kohärenz, Register, Wortschatz und Grammatik"
+    ]
+  },
+  {
+    "day": 17,
+    "title": "Klimawandel und Biodiversität",
+    "skill": "Lesen",
+    "part": 3,
+    "grammar": "Nominalstil, kausale und konzessive Verknüpfungen",
+    "rule": "in Anbetracht + Genitiv bezeichnet einen berücksichtigten Umstand; infolge + Genitiv eine Ursache mit Folge. Dennoch und folglich verbinden Hauptsätze. Beim Lesen weisen Pronomen, Artikel und Konnektoren auf vorangehende Aussagen zurück.",
+    "grammarChecks": [
+      [
+        "Weil Lebensräume verloren gehen, nimmt die Artenvielfalt ab. (infolge)",
+        "Infolge des Verlusts von Lebensräumen nimmt die Artenvielfalt ab.",
+        "infolge + Genitiv nominalisiert die Ursache."
+      ],
+      [
+        "Angesichts der Trockenheit sind Anpassungen erforderlich. (verbal)",
+        "Da es sehr trocken ist, sind Anpassungen erforderlich.",
+        "Der kausale Nebensatz entfaltet den nominalen Ausdruck."
+      ],
+      [
+        "Die Maßnahme ist teuer. Sie kann langfristig nützlich sein. (dennoch)",
+        "Die Maßnahme ist teuer; dennoch kann sie langfristig nützlich sein.",
+        "dennoch steht an Position 1, das finite Verb folgt."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Artenvielfalt",
+        "biodiversity"
+      ],
+      [
+        "der Artenschutz",
+        "species conservation"
+      ],
+      [
+        "der Lebensraumverlust",
+        "habitat loss"
+      ],
+      [
+        "Schutzmaßnahmen ergreifen",
+        "take conservation measures"
+      ],
+      [
+        "das Ökosystem",
+        "ecosystem"
+      ],
+      [
+        "die Widerstandsfähigkeit",
+        "resilience"
+      ],
+      [
+        "die Renaturierung",
+        "ecological restoration"
+      ],
+      [
+        "die Flächenversiegelung",
+        "soil sealing"
+      ],
+      [
+        "die Bestäubung",
+        "pollination"
+      ],
+      [
+        "die Trockenperiode",
+        "dry spell"
+      ],
+      [
+        "die Anpassungsfähigkeit",
+        "adaptive capacity"
+      ],
+      [
+        "die Artenverdrängung",
+        "species displacement"
+      ],
+      [
+        "der Rückgang",
+        "decline"
+      ],
+      [
+        "die Wechselwirkung",
+        "interaction"
+      ],
+      [
+        "die Klimaanpassung",
+        "climate adaptation"
+      ],
+      [
+        "der Biotopverbund",
+        "habitat network"
+      ],
+      [
+        "Lebensräume vernetzen",
+        "connect habitats"
+      ],
+      [
+        "einen Bestand erfassen",
+        "survey a population"
+      ],
+      [
+        "Folgen abmildern",
+        "mitigate impacts"
+      ],
+      [
+        "ökologisch tragfähig",
+        "ecologically sustainable"
+      ]
+    ],
+    "instruction": "Lesen Sie den Kommentar. Ergänzen Sie die fünf fehlenden Sätze aus A–G. Zwei Sätze bleiben übrig; jeder passende Satz wird nur einmal verwendet.",
+    "text": "Artenschutz braucht vernetzte Lebensräume\nIn der Debatte über Biodiversität richtet sich der Blick oft auf die Ausweisung neuer Schutzgebiete. (1) ___ Denn zwischen räumlich getrennten Lebensräumen können viele Arten nur eingeschränkt wandern.\nEin möglicher Ansatz besteht darin, Hecken, Grünstreifen und andere naturnahe Verbindungen zu erhalten. (2) ___ Solche Korridore sind gerade dann bedeutsam, wenn sich geeignete Lebensbedingungen räumlich verschieben.\nDie Wirkung dieser Maßnahmen hängt allerdings auch von der Qualität der Flächen ab. (3) ___ Eine durchgehende Verbindung ist daher nicht automatisch ein geeigneter Lebensraum.\nDarüber hinaus stellt sich die Frage, wie die Wirksamkeit von Schutzmaßnahmen überprüft werden kann. (4) ___ Auf diese Weise lässt sich feststellen, ob beobachtete Veränderungen mit der Maßnahme zusammenhängen oder andere Ursachen haben könnten.\nNicht zuletzt müssen die Interessen landwirtschaftlicher Betriebe berücksichtigt werden. (5) ___ Ohne deren Mitwirkung lassen sich viele langfristige Maßnahmen außerhalb bestehender Schutzgebiete kaum umsetzen.",
+    "questions": [
+      [
+        "1",
+        [
+          "A. Diese Verbindungen können Wanderungen zwischen geeigneten Flächen erleichtern.",
+          "B. Dazu eignen sich wiederholte Erhebungen auf Vergleichsflächen und den geförderten Flächen.",
+          "C. Die Größe einzelner Gebiete allein reicht jedoch nicht aus.",
+          "D. Deshalb sind verlässliche Vereinbarungen und gegebenenfalls Ausgleichszahlungen sinnvoll.",
+          "E. So können stark belastete Grünstreifen für empfindliche Arten ungeeignet sein.",
+          "F. Die Untersuchung einzelner Arten ist grundsätzlich nicht möglich.",
+          "G. Korridore machen sämtliche anderen Schutzmaßnahmen überflüssig."
+        ],
+        2,
+        "Der folgende Denn-Satz begründet, warum isolierte Gebiete nicht genügen."
+      ],
+      [
+        "2",
+        [
+          "A. Diese Verbindungen können Wanderungen zwischen geeigneten Flächen erleichtern.",
+          "B. Dazu eignen sich wiederholte Erhebungen auf Vergleichsflächen und den geförderten Flächen.",
+          "C. Die Größe einzelner Gebiete allein reicht jedoch nicht aus.",
+          "D. Deshalb sind verlässliche Vereinbarungen und gegebenenfalls Ausgleichszahlungen sinnvoll.",
+          "E. So können stark belastete Grünstreifen für empfindliche Arten ungeeignet sein.",
+          "F. Die Untersuchung einzelner Arten ist grundsätzlich nicht möglich.",
+          "G. Korridore machen sämtliche anderen Schutzmaßnahmen überflüssig."
+        ],
+        0,
+        "Diese Verbindungen bezieht sich auf Hecken und Grünstreifen; solche Korridore greift sie auf."
+      ],
+      [
+        "3",
+        [
+          "A. Diese Verbindungen können Wanderungen zwischen geeigneten Flächen erleichtern.",
+          "B. Dazu eignen sich wiederholte Erhebungen auf Vergleichsflächen und den geförderten Flächen.",
+          "C. Die Größe einzelner Gebiete allein reicht jedoch nicht aus.",
+          "D. Deshalb sind verlässliche Vereinbarungen und gegebenenfalls Ausgleichszahlungen sinnvoll.",
+          "E. So können stark belastete Grünstreifen für empfindliche Arten ungeeignet sein.",
+          "F. Die Untersuchung einzelner Arten ist grundsätzlich nicht möglich.",
+          "G. Korridore machen sämtliche anderen Schutzmaßnahmen überflüssig."
+        ],
+        4,
+        "Das Beispiel erklärt die Bedeutung der Flächenqualität."
+      ],
+      [
+        "4",
+        [
+          "A. Diese Verbindungen können Wanderungen zwischen geeigneten Flächen erleichtern.",
+          "B. Dazu eignen sich wiederholte Erhebungen auf Vergleichsflächen und den geförderten Flächen.",
+          "C. Die Größe einzelner Gebiete allein reicht jedoch nicht aus.",
+          "D. Deshalb sind verlässliche Vereinbarungen und gegebenenfalls Ausgleichszahlungen sinnvoll.",
+          "E. So können stark belastete Grünstreifen für empfindliche Arten ungeeignet sein.",
+          "F. Die Untersuchung einzelner Arten ist grundsätzlich nicht möglich.",
+          "G. Korridore machen sämtliche anderen Schutzmaßnahmen überflüssig."
+        ],
+        1,
+        "Auf diese Weise verweist auf die vorgeschlagenen vergleichenden Erhebungen."
+      ],
+      [
+        "5",
+        [
+          "A. Diese Verbindungen können Wanderungen zwischen geeigneten Flächen erleichtern.",
+          "B. Dazu eignen sich wiederholte Erhebungen auf Vergleichsflächen und den geförderten Flächen.",
+          "C. Die Größe einzelner Gebiete allein reicht jedoch nicht aus.",
+          "D. Deshalb sind verlässliche Vereinbarungen und gegebenenfalls Ausgleichszahlungen sinnvoll.",
+          "E. So können stark belastete Grünstreifen für empfindliche Arten ungeeignet sein.",
+          "F. Die Untersuchung einzelner Arten ist grundsätzlich nicht möglich.",
+          "G. Korridore machen sämtliche anderen Schutzmaßnahmen überflüssig."
+        ],
+        3,
+        "Die Vereinbarungen schaffen einen Rahmen für die danach genannte Mitwirkung der Betriebe."
+      ]
+    ]
+  },
+  {
+    "day": 18,
+    "title": "Armut, Reichtum und soziale Gerechtigkeit",
+    "skill": "Hören",
+    "part": 1,
+    "grammar": "Adversative und konzessive Strukturen",
+    "rule": "einerseits … andererseits stellt zwei Perspektiven gegenüber; zwar … jedoch räumt zunächst einen Sachverhalt ein und schränkt ihn anschließend ein. Wohingegen leitet einen kontrastierenden Nebensatz ein.",
+    "grammarChecks": [
+      [
+        "Transfers können Armut lindern. Ihre Finanzierung ist anspruchsvoll. (einerseits … andererseits)",
+        "Einerseits können Transfers Armut lindern, andererseits ist ihre Finanzierung anspruchsvoll.",
+        "Beide Konnektoren besetzen die erste Satzposition."
+      ],
+      [
+        "Das Einkommen steigt. Die Wohnkosten bleiben hoch. (zwar … jedoch)",
+        "Zwar steigt das Einkommen, jedoch bleiben die Wohnkosten hoch.",
+        "zwar … jedoch signalisiert eine Einschränkung."
+      ],
+      [
+        "Einige Haushalte verfügen über Rücklagen. Andere haben keine. (wohingegen)",
+        "Einige Haushalte verfügen über Rücklagen, wohingegen andere keine haben.",
+        "wohingegen verlangt Verbendstellung."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Vermögensverteilung",
+        "wealth distribution"
+      ],
+      [
+        "die Armutsgefährdung",
+        "risk of poverty"
+      ],
+      [
+        "die Umverteilung",
+        "redistribution"
+      ],
+      [
+        "die soziale Ungleichheit",
+        "social inequality"
+      ],
+      [
+        "das Existenzminimum",
+        "subsistence minimum"
+      ],
+      [
+        "die Kaufkraft",
+        "purchasing power"
+      ],
+      [
+        "die Einkommensschere",
+        "income gap"
+      ],
+      [
+        "die Vermögensbildung",
+        "wealth accumulation"
+      ],
+      [
+        "die soziale Mobilität",
+        "social mobility"
+      ],
+      [
+        "die Transferleistung",
+        "transfer payment"
+      ],
+      [
+        "die Steuerlast",
+        "tax burden"
+      ],
+      [
+        "die Lebenshaltungskosten",
+        "cost of living"
+      ],
+      [
+        "die Überschuldung",
+        "overindebtedness"
+      ],
+      [
+        "die Chancengerechtigkeit",
+        "equality of opportunity"
+      ],
+      [
+        "die Einkommensquelle",
+        "income source"
+      ],
+      [
+        "die soziale Absicherung",
+        "social protection"
+      ],
+      [
+        "Benachteiligung abbauen",
+        "reduce disadvantage"
+      ],
+      [
+        "Rücklagen bilden",
+        "build savings"
+      ],
+      [
+        "eine Belastung ausgleichen",
+        "offset a burden"
+      ],
+      [
+        "bedarfsgerecht",
+        "needs-based"
+      ]
+    ],
+    "instruction": "Sie hören einmal einen fiktiven Bücherpodcast mit drei Buchvorstellungen. Ordnen Sie die Aussagen A, B oder C zu. A: Einkommen im Alltag; B: Vermögen über Generationen; C: Chancen durch Bildung. Mehrfachzuordnungen sind möglich.",
+    "text": "Willkommen zu unserem Bücherpodcast. Heute besprechen wir drei erfundene Bücher über soziale Gerechtigkeit. Buch A, Einkommen im Alltag, untersucht anhand von Haushaltsbeispielen, wie stark sich steigende Wohnkosten auf das verfügbare Einkommen auswirken. Die Autorin zeigt, dass eine Gehaltserhöhung nicht unbedingt zu größerer finanzieller Sicherheit führt. Besonders hilfreich sind ihre Vorschläge, Sozialleistungen verständlicher zu beantragen. Fragen großer Vermögen spielen in diesem Buch nur eine Nebenrolle. Buch B, Vermögen über Generationen, richtet den Blick auf Erbschaften und langfristige Vermögensbildung. Der Autor erklärt, warum zwei Personen mit ähnlichem Einkommen dennoch sehr unterschiedliche Möglichkeiten haben können, eine Wohnung zu erwerben. Er vergleicht verschiedene Vorschläge zur Besteuerung großer Erbschaften, ohne eine einzelne Lösung als eindeutig überlegen darzustellen. Buch C, Chancen durch Bildung, widmet sich den Übergängen zwischen Schule, Ausbildung und Beruf. Die Autorin untersucht, weshalb Kinder aus Familien mit wenig Erfahrung im Bildungssystem vorhandene Förderangebote manchmal nicht nutzen. Sie plädiert dafür, Beratung frühzeitig und unabhängig von den finanziellen Möglichkeiten der Eltern anzubieten. Die finanziellen Auswirkungen von Steuern stehen hier nicht im Mittelpunkt.",
+    "questions": [
+      [
+        "1. Steigende Wohnkosten können den Nutzen einer Gehaltserhöhung vermindern.",
+        [
+          "A",
+          "B",
+          "C"
+        ],
+        0,
+        "Buch A unterscheidet höheres Einkommen und finanzielle Sicherheit."
+      ],
+      [
+        "2. Ähnliches Einkommen bedeutet nicht zwangsläufig ähnliche Vermögenschancen.",
+        [
+          "A",
+          "B",
+          "C"
+        ],
+        1,
+        "Buch B vergleicht Möglichkeiten des Wohnungserwerbs."
+      ],
+      [
+        "3. Beratung soll bereits vor wichtigen Bildungsübergängen ansetzen.",
+        [
+          "A",
+          "B",
+          "C"
+        ],
+        2,
+        "Buch C fordert frühzeitige Beratung."
+      ],
+      [
+        "4. Die Antragstellung für Sozialleistungen sollte verständlicher werden.",
+        [
+          "A",
+          "B",
+          "C"
+        ],
+        0,
+        "Buch A enthält entsprechende Vorschläge."
+      ],
+      [
+        "5. Verschiedene Formen der Erbschaftsbesteuerung werden abgewogen.",
+        [
+          "A",
+          "B",
+          "C"
+        ],
+        1,
+        "Buch B vergleicht Steueransätze."
+      ],
+      [
+        "6. Fehlende Erfahrung mit dem Bildungssystem kann die Nutzung von Förderangeboten erschweren.",
+        [
+          "A",
+          "B",
+          "C"
+        ],
+        2,
+        "Buch C untersucht genau diesen Zusammenhang."
+      ]
+    ]
+  },
+  {
+    "day": 19,
+    "title": "Digitalisierung der Arbeitswelt 4.0",
+    "skill": "Sprechen",
+    "part": 1,
+    "grammar": "Subjektive Modalverben, Futur und Einschränkung",
+    "rule": "dürfte + Infinitiv kennzeichnet eine begründete Vermutung, könnte eine Möglichkeit. Futur I kann eine Prognose ausdrücken, aber keine Gewissheit garantieren. Verwenden Sie einschränkende Formulierungen wie unter bestimmten Bedingungen.",
+    "grammarChecks": [
+      [
+        "Vermutlich verändert die Automatisierung viele Tätigkeiten. (dürfte)",
+        "Die Automatisierung dürfte viele Tätigkeiten verändern.",
+        "dürfte markiert eine Vermutung."
+      ],
+      [
+        "Möglicherweise entstehen neue Aufgaben. (könnte)",
+        "Es könnten neue Aufgaben entstehen.",
+        "könnte drückt eine Möglichkeit aus; Plural könnten."
+      ],
+      [
+        "Die Firma behauptet, sie habe die Produktivität erhöht. (soll)",
+        "Die Firma soll die Produktivität erhöht haben.",
+        "soll + Infinitiv Perfekt kennzeichnet eine fremde Behauptung."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Automatisierung",
+        "automation"
+      ],
+      [
+        "der Strukturwandel",
+        "structural change"
+      ],
+      [
+        "die Beschäftigungssicherheit",
+        "employment security"
+      ],
+      [
+        "Kompetenzen erwerben",
+        "acquire skills"
+      ],
+      [
+        "die Arbeitsverdichtung",
+        "work intensification"
+      ],
+      [
+        "der Tätigkeitsbereich",
+        "area of work"
+      ],
+      [
+        "die Produktivität",
+        "productivity"
+      ],
+      [
+        "die Prozessoptimierung",
+        "process optimization"
+      ],
+      [
+        "die Umschulung",
+        "retraining"
+      ],
+      [
+        "die Mitbestimmung",
+        "co-determination"
+      ],
+      [
+        "die Überwachung",
+        "monitoring"
+      ],
+      [
+        "der Arbeitsplatzabbau",
+        "job cuts"
+      ],
+      [
+        "die Anpassungsfähigkeit",
+        "adaptability"
+      ],
+      [
+        "die Qualifikationsanforderung",
+        "qualification requirement"
+      ],
+      [
+        "die Entlastung",
+        "relief"
+      ],
+      [
+        "die Arbeitsorganisation",
+        "work organization"
+      ],
+      [
+        "Aufgaben delegieren",
+        "delegate tasks"
+      ],
+      [
+        "Verantwortung tragen",
+        "bear responsibility"
+      ],
+      [
+        "einen Wandel gestalten",
+        "shape a transition"
+      ],
+      [
+        "zukunftsfähig",
+        "future-ready"
+      ]
+    ],
+    "instruction": "Halten Sie in einem Seminar zur Arbeitswelt der Zukunft einen Vortrag von circa fünf Minuten. Beantworten Sie anschließend kritische Nachfragen.",
+    "prompts": [
+      "Erläutern Sie, wie Automatisierung berufliche Tätigkeiten verändern kann.",
+      "Nennen Sie ein konkretes Beispiel aus einem Berufsfeld.",
+      "Wägen Sie mögliche Entlastung und Risiken für Beschäftigte ab.",
+      "Schlagen Sie eine Maßnahme vor, um den Wandel fair zu gestalten."
+    ],
+    "followups": [
+      "Woran ließe sich erkennen, ob eine neue Technologie Beschäftigte tatsächlich entlastet?",
+      "Wer sollte die Kosten beruflicher Weiterbildung tragen?"
+    ],
+    "model": "Die Digitalisierung dürfte nicht nur neue Berufe hervorbringen, sondern vor allem bestehende Tätigkeiten verändern. In einer Verwaltung könnten etwa automatisierte Systeme wiederkehrende Anfragen vorsortieren. Dadurch bliebe möglicherweise mehr Zeit für komplexe Beratungsfälle. Allerdings wäre die Entlastung nicht selbstverständlich, wenn gleichzeitig die Zahl der erwarteten bearbeiteten Fälle erhöht würde. Eine faire Gestaltung setzt voraus, dass Beschäftigte frühzeitig einbezogen werden und Zugang zu Weiterbildung erhalten. Außerdem sollten Auswirkungen auf Arbeitsbelastung und Qualität überprüft werden. Entscheidend ist für mich, technische Möglichkeiten nicht mit gesicherten Vorteilen gleichzusetzen.",
+    "rubric": [
+      "Vier Aspekte strukturiert und begründet behandeln",
+      "Konkretes Beispiel und differenzierte Bewertung",
+      "Vermutungen sprachlich von Tatsachen unterscheiden",
+      "Nachfragen verständlich und spontan beantworten"
+    ]
+  },
+  {
+    "day": 20,
+    "title": "KI im Gesundheitswesen und Telemedizin",
+    "skill": "Schreiben",
+    "part": 2,
+    "grammar": "Passiversatz, Nominalisierung und formelle Bitten",
+    "rule": "sein + zu + Infinitiv kann eine Notwendigkeit ausdrücken (Daten sind zu schützen); sich lassen + Infinitiv eine Möglichkeit. aufgrund + Genitiv begründet ein Anliegen. Konjunktiv II ermöglicht eine höfliche Bitte.",
+    "grammarChecks": [
+      [
+        "Die persönlichen Daten müssen geschützt werden. (sein + zu)",
+        "Die persönlichen Daten sind zu schützen.",
+        "Notwendigkeit im Passiversatz."
+      ],
+      [
+        "Nicht jede Untersuchung kann online durchgeführt werden. (sich lassen)",
+        "Nicht jede Untersuchung lässt sich online durchführen.",
+        "sich lassen + Infinitiv drückt Möglichkeit aus."
+      ],
+      [
+        "Formulieren Sie höflicher: Geben Sie mir einen persönlichen Termin.",
+        "Ich wäre Ihnen dankbar, wenn Sie mir einen persönlichen Termin anbieten könnten.",
+        "Konjunktiv II und höfliche Bitte."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Telemedizin",
+        "telemedicine"
+      ],
+      [
+        "die Datensicherheit",
+        "data security"
+      ],
+      [
+        "die Ferndiagnose",
+        "remote diagnosis"
+      ],
+      [
+        "Verantwortung klären",
+        "clarify responsibility"
+      ],
+      [
+        "die Schweigepflicht",
+        "duty of confidentiality"
+      ],
+      [
+        "die Einwilligung",
+        "consent"
+      ],
+      [
+        "die Patientenakte",
+        "patient record"
+      ],
+      [
+        "die Sprechstunde",
+        "consultation"
+      ],
+      [
+        "die Datenverarbeitung",
+        "data processing"
+      ],
+      [
+        "die Befundbesprechung",
+        "discussion of findings"
+      ],
+      [
+        "die ärztliche Einschätzung",
+        "medical assessment"
+      ],
+      [
+        "die Untersuchung",
+        "examination"
+      ],
+      [
+        "die Erreichbarkeit",
+        "accessibility"
+      ],
+      [
+        "die Versorgungsqualität",
+        "quality of care"
+      ],
+      [
+        "die Fehlentscheidung",
+        "erroneous decision"
+      ],
+      [
+        "die Zugriffsberechtigung",
+        "access authorization"
+      ],
+      [
+        "eine Alternative anbieten",
+        "offer an alternative"
+      ],
+      [
+        "Bedenken äußern",
+        "express concerns"
+      ],
+      [
+        "eine Auskunft erteilen",
+        "provide information"
+      ],
+      [
+        "vertraulich",
+        "confidential"
+      ]
+    ],
+    "instruction": "Ihre Arztpraxis bietet künftig digitale Sprechstunden mit technischer KI-Unterstützung an. Sie haben Fragen zur Verarbeitung Ihrer Daten und möchten gegebenenfalls einen persönlichen Termin. Schreiben Sie eine Nachricht an die Praxisleitung (circa 120 Wörter, Richtwert 25 Minuten).",
+    "prompts": [
+      "Zeigen Sie Verständnis für die Einführung digitaler Angebote.",
+      "Erläutern Sie Ihre konkreten Bedenken hinsichtlich der Datenverarbeitung.",
+      "Nennen Sie eine Bedingung, unter der Sie das digitale Angebot nutzen würden.",
+      "Bitten Sie um eine praktikable Alternative."
+    ],
+    "model": "Sehr geehrte Damen und Herren,\nich habe erfahren, dass Ihre Praxis künftig digital unterstützte Sprechstunden anbietet. Mir ist bewusst, dass solche Angebote Wartezeiten verkürzen und den Zugang zur Beratung erleichtern können. Allerdings möchte ich vor der Nutzung wissen, welche persönlichen Daten verarbeitet werden und wer darauf zugreifen darf. Besonders wichtig ist mir, dass vertrauliche Gesundheitsinformationen geschützt und nicht ohne meine Einwilligung für andere Zwecke verwendet werden. Eine digitale Sprechstunde käme für mich infrage, sofern die Datenverarbeitung verständlich erläutert und die ärztliche Verantwortung eindeutig geregelt würde. Andernfalls wäre ich Ihnen dankbar, wenn Sie mir weiterhin einen persönlichen Termin anbieten könnten. Gern würde ich die Möglichkeiten vorab telefonisch mit Ihrem Praxisteam besprechen. Vielen Dank für Ihre Unterstützung und eine kurze Rückmeldung.\nMit freundlichen Grüßen\nAlex",
+    "rubric": [
+      "Alle vier Inhaltspunkte vollständig behandeln",
+      "Höflicher, sachlicher Ton",
+      "Konkrete Bedingung und realistische Bitte",
+      "Verständliche Struktur, Grammatik und Wortschatz"
+    ]
+  }
+,
+
+  {
+    "day": 21,
+    "title": "Globale Migration und Arbeitsmarkt",
+    "skill": "Lesen",
+    "part": 2,
+    "grammar": "Kausale Strukturen und Nominalisierung",
+    "rule": "aufgrund und infolge stehen im formellen Stil mit Genitiv. zumal verstärkt eine Begründung; da leitet einen kausalen Nebensatz ein. Unterscheiden Sie Ursache, beobachteten Zusammenhang und Schlussfolgerung.",
+    "grammarChecks": [
+      [
+        "Weil Qualifikationen nicht anerkannt werden, bleiben Stellen unbesetzt. (aufgrund)",
+        "Aufgrund der fehlenden Anerkennung von Qualifikationen bleiben Stellen unbesetzt.",
+        "aufgrund + Genitiv."
+      ],
+      [
+        "Die Beratung sollte ausgebaut werden. Viele Verfahren sind unübersichtlich. (zumal)",
+        "Die Beratung sollte ausgebaut werden, zumal viele Verfahren unübersichtlich sind.",
+        "zumal ergänzt einen verstärkenden Grund."
+      ],
+      [
+        "Infolge des Fachkräftemangels werden Schulungen angeboten. (verbal)",
+        "Da Fachkräfte fehlen, werden Schulungen angeboten.",
+        "Der kausale Nebensatz entfaltet die Nominalisierung."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Arbeitsmigration",
+        "labor migration"
+      ],
+      [
+        "die Berufsanerkennung",
+        "recognition of qualifications"
+      ],
+      [
+        "die Erwerbstätigkeit",
+        "employment"
+      ],
+      [
+        "den Zugang erleichtern",
+        "facilitate access"
+      ],
+      [
+        "die Aufenthaltsregelung",
+        "residence regulation"
+      ],
+      [
+        "die Qualifikationslücke",
+        "qualification gap"
+      ],
+      [
+        "die Arbeitsmarktintegration",
+        "labor-market integration"
+      ],
+      [
+        "die Abwanderung",
+        "outmigration"
+      ],
+      [
+        "das Herkunftsland",
+        "country of origin"
+      ],
+      [
+        "die Zuwanderung",
+        "immigration"
+      ],
+      [
+        "die Beschäftigungsquote",
+        "employment rate"
+      ],
+      [
+        "die Fachkräftegewinnung",
+        "skilled-worker recruitment"
+      ],
+      [
+        "die Arbeitsbedingungen",
+        "working conditions"
+      ],
+      [
+        "die Beratungskapazität",
+        "advisory capacity"
+      ],
+      [
+        "die Gleichwertigkeit",
+        "equivalence"
+      ],
+      [
+        "die Unterbeschäftigung",
+        "underemployment"
+      ],
+      [
+        "Engpässe abbauen",
+        "reduce shortages"
+      ],
+      [
+        "Kompetenzen nachweisen",
+        "demonstrate skills"
+      ],
+      [
+        "eine Perspektive eröffnen",
+        "open up a prospect"
+      ],
+      [
+        "bedarfsorientiert",
+        "needs-oriented"
+      ]
+    ],
+    "instruction": "Lesen Sie den Fachtext. Wählen Sie jeweils die zutreffende Aussage. Achten Sie auf die Unterscheidung zwischen Befund und Interpretation.",
+    "text": "Arbeitsmigration: Potenziale und Grenzen\nIn Diskussionen über die Gewinnung internationaler Fachkräfte wird häufig vorausgesetzt, dass vorhandene Qualifikationen unmittelbar eingesetzt werden können. Doch selbst wenn ein Berufsabschluss im Herkunftsland anerkannt ist, können im Zielland andere Anforderungen gelten. Eine längere Phase der Unterbeschäftigung ist daher nicht zwangsläufig ein Zeichen fehlender Qualifikation, sondern kann mit institutionellen Hindernissen zusammenhängen.\nBeschleunigte Anerkennungsverfahren wären ein wichtiger Ansatz. Allerdings sollte eine kürzere Bearbeitungsdauer nicht mit einer Absenkung notwendiger beruflicher Standards verwechselt werden. Wo einzelne Kompetenzen fehlen, könnten gezielte Nachqualifizierungen sinnvoller sein als die Wiederholung einer gesamten Ausbildung. Dabei kommt verständlicher Beratung eine besondere Bedeutung zu.\nAuch die Auswirkungen auf Herkunftsländer verdienen Aufmerksamkeit. Wenn Beschäftigte aus Bereichen mit ohnehin knapper Personalversorgung abwandern, können sich dort Engpässe verschärfen. Andererseits können Rücküberweisungen, berufliche Netzwerke und freiwillige Rückkehr positive Entwicklungen fördern. Ob solche Vorteile tatsächlich eintreten, hängt von konkreten Bedingungen ab.\nEine langfristige Strategie muss folglich über die bloße Anwerbung hinausgehen. Unternehmen sollten Arbeitsbedingungen überprüfen und Beschäftigten Entwicklungsmöglichkeiten eröffnen. Öffentliche Einrichtungen können durch nachvollziehbare Verfahren und geeignete Beratungsangebote zur Integration beitragen. Internationale Kooperation sollte zugleich die Interessen der Herkunftsländer berücksichtigen. Eine steigende Zahl angeworbener Personen allein wäre kein ausreichender Erfolgsindikator.",
+    "questions": [
+      [
+        "1. Unterbeschäftigung kann laut Text …",
+        [
+          "auf institutionelle Hindernisse zurückgehen.",
+          "ausschließlich mangelnde Fachkenntnisse beweisen.",
+          "nur durch freiwillige Entscheidungen entstehen."
+        ],
+        0,
+        "Der erste Absatz nennt ausdrücklich institutionelle Hindernisse."
+      ],
+      [
+        "2. Eine beschleunigte Anerkennung sollte …",
+        [
+          "alle beruflichen Standards aufheben.",
+          "notwendige Standards weiterhin sichern.",
+          "jede Nachqualifizierung ausschließen."
+        ],
+        1,
+        "Der Text unterscheidet kürzere Verfahren von niedrigeren Standards."
+      ],
+      [
+        "3. Welche Aussage zu Herkunftsländern trifft zu?",
+        [
+          "Abwanderung hat immer positive Folgen.",
+          "Rücküberweisungen verhindern jeden Engpass.",
+          "Positive und negative Folgen sind möglich."
+        ],
+        2,
+        "Der dritte Absatz beschreibt beide Möglichkeiten und ihre Bedingungen."
+      ],
+      [
+        "4. Welche Rolle spielen Unternehmen?",
+        [
+          "Sie sollten Arbeitsbedingungen und Entwicklungsmöglichkeiten verbessern.",
+          "Sie sind nur für die Anwerbung zuständig.",
+          "Sie sollten Beratung grundsätzlich vermeiden."
+        ],
+        0,
+        "Der Schlussabsatz benennt ihre Verantwortung."
+      ],
+      [
+        "5. Der Autor beurteilt die Zahl angeworbener Personen als …",
+        [
+          "den einzigen relevanten Maßstab.",
+          "einen allein unzureichenden Erfolgsindikator.",
+          "ein grundsätzlich bedeutungsloses Merkmal."
+        ],
+        1,
+        "Allein genügt die Zahl nicht; weitere Kriterien sind erforderlich."
+      ]
+    ]
+  },
+  {
+    "day": 22,
+    "title": "Zukunft des Journalismus und Meinungsfreiheit",
+    "skill": "Hören",
+    "part": 2,
+    "grammar": "Konjunktiv I und indirekte Rede",
+    "rule": "Konjunktiv I kennzeichnet die Wiedergabe fremder Aussagen. Bei formgleichen Formen kann Konjunktiv II die indirekte Rede markieren. Eine wiedergegebene Aussage wird dadurch nicht automatisch bestätigt.",
+    "grammarChecks": [
+      [
+        "Die Journalistin sagt: Die Redaktion arbeitet unabhängig.",
+        "Die Journalistin sagt, die Redaktion arbeite unabhängig.",
+        "Konjunktiv I: arbeite."
+      ],
+      [
+        "Der Redakteur erklärt: Die Quelle ist vertraulich.",
+        "Der Redakteur erklärt, die Quelle sei vertraulich.",
+        "sein → sei."
+      ],
+      [
+        "Die Herausgeber erklären: Wir haben die Regeln geändert.",
+        "Die Herausgeber erklären, sie hätten die Regeln geändert.",
+        "hätten unterscheidet die indirekte Rede vom Indikativ Plural."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Meinungsfreiheit",
+        "freedom of expression"
+      ],
+      [
+        "die Pressefreiheit",
+        "press freedom"
+      ],
+      [
+        "die redaktionelle Unabhängigkeit",
+        "editorial independence"
+      ],
+      [
+        "Quellen offenlegen",
+        "disclose sources"
+      ],
+      [
+        "die Berichterstattung",
+        "reporting"
+      ],
+      [
+        "die Quellensicherung",
+        "source verification"
+      ],
+      [
+        "die Finanzierung",
+        "funding"
+      ],
+      [
+        "die Medienvielfalt",
+        "media diversity"
+      ],
+      [
+        "die Gegendarstellung",
+        "right of reply statement"
+      ],
+      [
+        "die Faktenprüfung",
+        "fact-checking"
+      ],
+      [
+        "der Rechercheaufwand",
+        "research effort"
+      ],
+      [
+        "die Einschaltquote",
+        "audience rating"
+      ],
+      [
+        "das Geschäftsinteresse",
+        "commercial interest"
+      ],
+      [
+        "die Einflussnahme",
+        "interference"
+      ],
+      [
+        "die Selbstzensur",
+        "self-censorship"
+      ],
+      [
+        "die Glaubwürdigkeit",
+        "credibility"
+      ],
+      [
+        "eine Aussage überprüfen",
+        "verify a statement"
+      ],
+      [
+        "Kritik äußern",
+        "express criticism"
+      ],
+      [
+        "Fehler berichtigen",
+        "correct errors"
+      ],
+      [
+        "unabhängig",
+        "independent"
+      ]
+    ],
+    "instruction": "Sie hören ein fiktives Interview mit einer Medienforscherin zweimal. Entscheiden Sie: stimmt, stimmt nicht oder dazu wird nichts gesagt.",
+    "text": "Moderator: Frau Sommer, welche Rolle spielt die wirtschaftliche Lage für die journalistische Unabhängigkeit? Forscherin: Eine Redaktion benötigt ausreichend Zeit und finanzielle Mittel für gründliche Recherche. Das bedeutet allerdings nicht, dass ein bestimmtes Finanzierungsmodell automatisch unabhängigen Journalismus garantiert. Entscheidend sind transparente Regeln und der Schutz redaktioneller Entscheidungen vor sachfremder Einflussnahme. Moderator: Können soziale Medien klassischen Journalismus ersetzen? Forscherin: Sie ermöglichen es vielen Menschen, öffentlich Stellung zu beziehen, und können auf bislang wenig beachtete Themen aufmerksam machen. Dennoch unterscheiden sich spontane Beiträge von systematischer Recherche. Die Stärke einer Redaktion sollte gerade darin liegen, Informationen zu überprüfen und Fehler sichtbar zu korrigieren. Moderator: Muss jede vertrauliche Quelle offengelegt werden? Forscherin: Nein, der Schutz von Informanten kann in bestimmten Situationen unverzichtbar sein. Die Redaktion sollte aber erklären, wie eine Information geprüft wurde, soweit dadurch niemand gefährdet wird. Moderator: Welche Rolle spielt Medienbildung? Forscherin: Sie kann helfen, zwischen Meinung, Tatsachenbehauptung und Werbung zu unterscheiden. Schulen sind dafür ein wichtiger Ort, doch auch Erwachsenen sollten geeignete Angebote offenstehen. Moderator: Was wäre Ihr wichtigstes Anliegen für die Zukunft? Forscherin: Die Vielfalt unabhängiger Informationsangebote zu erhalten, ohne jedes Medium an denselben wirtschaftlichen Erfolgskriterien zu messen.",
+    "questions": [
+      [
+        "1. Ein bestimmtes Finanzierungsmodell garantiert nach Ansicht der Forscherin immer Unabhängigkeit.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        1,
+        "Sie bestreitet ausdrücklich eine automatische Garantie."
+      ],
+      [
+        "2. Soziale Medien können Aufmerksamkeit für vernachlässigte Themen schaffen.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        0,
+        "Diese Möglichkeit nennt sie ausdrücklich."
+      ],
+      [
+        "3. Die Forscherin nennt die Zahl der Zeitungen, die im letzten Jahr eingestellt wurden.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        2,
+        "Es werden keine Zahlen zu eingestellten Zeitungen genannt."
+      ],
+      [
+        "4. Redaktionen sollen eigene Fehler sichtbar korrigieren.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        0,
+        "Dies bezeichnet sie als Stärke professioneller Redaktionen."
+      ],
+      [
+        "5. Jede vertrauliche Quelle muss öffentlich genannt werden.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        1,
+        "Informantenschutz kann unverzichtbar sein."
+      ],
+      [
+        "6. Medienbildung sollte ausschließlich Kindern angeboten werden.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        1,
+        "Sie fordert auch Angebote für Erwachsene."
+      ]
+    ]
+  },
+  {
+    "day": 23,
+    "title": "Bedingungsloses Grundeinkommen und Arbeitszeit",
+    "skill": "Sprechen",
+    "part": 2,
+    "grammar": "Konditionale und konzessive Strukturen",
+    "rule": "sofern und vorausgesetzt, dass drücken Bedingungen aus; es sei denn, dass nennt eine Ausnahme. Wenngleich räumt einen Einwand ein. Prüfen Sie beim Argumentieren, unter welchen Voraussetzungen eine Aussage gilt.",
+    "grammarChecks": [
+      [
+        "Das Modell könnte funktionieren, wenn die Finanzierung gesichert ist. (sofern)",
+        "Das Modell könnte funktionieren, sofern die Finanzierung gesichert ist.",
+        "sofern leitet einen Bedingungssatz ein."
+      ],
+      [
+        "Die Unterstützung bleibt bestehen, außer wenn sich die Voraussetzungen ändern. (es sei denn)",
+        "Die Unterstützung bleibt bestehen, es sei denn, die Voraussetzungen ändern sich.",
+        "Nach es sei denn ist ein Hauptsatz ohne dass möglich."
+      ],
+      [
+        "Die Reform ist teuer. Sie könnte Sicherheit schaffen. (wenngleich)",
+        "Wenngleich die Reform teuer ist, könnte sie Sicherheit schaffen.",
+        "Einräumung eines Gegenarguments."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "das Grundeinkommen",
+        "basic income"
+      ],
+      [
+        "die Existenzsicherung",
+        "income security"
+      ],
+      [
+        "der Arbeitsanreiz",
+        "work incentive"
+      ],
+      [
+        "die Finanzierbarkeit",
+        "affordability"
+      ],
+      [
+        "die Erwerbsarbeit",
+        "paid employment"
+      ],
+      [
+        "die Teilzeit",
+        "part-time work"
+      ],
+      [
+        "die Sozialleistung",
+        "social benefit"
+      ],
+      [
+        "das Steueraufkommen",
+        "tax revenue"
+      ],
+      [
+        "die Arbeitszeitverkürzung",
+        "working-time reduction"
+      ],
+      [
+        "die Einkommenssicherheit",
+        "income security"
+      ],
+      [
+        "die Bedürftigkeitsprüfung",
+        "means testing"
+      ],
+      [
+        "die Bürokratieentlastung",
+        "reduction of bureaucracy"
+      ],
+      [
+        "die Erwerbsbeteiligung",
+        "labor-force participation"
+      ],
+      [
+        "die Sorgearbeit",
+        "care work"
+      ],
+      [
+        "die Verteilungsgerechtigkeit",
+        "distributive justice"
+      ],
+      [
+        "das Pilotprojekt",
+        "pilot project"
+      ],
+      [
+        "Anreize setzen",
+        "set incentives"
+      ],
+      [
+        "Kosten gegenfinanzieren",
+        "offset costs through funding"
+      ],
+      [
+        "eine Grundlage schaffen",
+        "create a basis"
+      ],
+      [
+        "bedingungslos",
+        "unconditional"
+      ]
+    ],
+    "instruction": "Diskutieren Sie zu zweit etwa fünf Minuten: Sollte ein bedingungsloses Grundeinkommen eingeführt werden, um Menschen mehr Freiheit bei ihrer Arbeitszeit zu ermöglichen? Reagieren Sie aufeinander und ziehen Sie ein Fazit.",
+    "prompts": [
+      "Vertreten Sie Ihre Position zur Existenzsicherung und Arbeitszeit.",
+      "Berücksichtigen Sie Arbeitsanreize sowie unbezahlte Sorgearbeit.",
+      "Reagieren Sie auf einen Einwand zur Finanzierung und prüfen Sie eine Alternative.",
+      "Fassen Sie Gemeinsamkeiten und verbleibende Unterschiede zusammen."
+    ],
+    "model": "A: Ein Grundeinkommen könnte Menschen mehr Sicherheit bieten, sofern seine Höhe tatsächlich zur Existenzsicherung beiträgt.\nB: Das ist nachvollziehbar. Allerdings müsste geklärt werden, wie es finanziert wird, ohne andere notwendige Leistungen zu gefährden.\nA: Wenngleich die Kosten erheblich sein könnten, wäre auch der mögliche Nutzen für Menschen mit unbezahlter Sorgearbeit zu berücksichtigen.\nB: Vielleicht wäre ein zeitlich begrenztes Pilotprojekt sinnvoller als eine sofortige flächendeckende Einführung.\nA: Damit könnte ich mich einverstanden erklären, vorausgesetzt, dass die Auswirkungen auf Arbeitszeit, Einkommen und Wohlbefinden unabhängig untersucht werden.",
+    "rubric": [
+      "Position mit nachvollziehbaren Gründen vertreten",
+      "Partnerargumente aufgreifen",
+      "Bedingungen, Finanzierung und Alternativen differenziert abwägen",
+      "Gemeinsames oder differenziertes Fazit"
+    ]
+  },
+  {
+    "day": 24,
+    "title": "Urbane Mobilität und Energiewende",
+    "skill": "Schreiben",
+    "part": 1,
+    "grammar": "Nominalstil und Schlussfolgerung",
+    "rule": "durch + Akkusativ benennt ein Mittel, angesichts + Genitiv einen Umstand. folglich, demzufolge und daher leiten Schlussfolgerungen ein; das finite Verb folgt dem Konnektor im Hauptsatz.",
+    "grammarChecks": [
+      [
+        "Indem die Stadt den Nahverkehr ausbaut, verbessert sie den Zugang. (durch)",
+        "Durch den Ausbau des Nahverkehrs verbessert die Stadt den Zugang.",
+        "durch + Akkusativ nominalisiert das Mittel."
+      ],
+      [
+        "Weil der Energiebedarf steigt, sind Investitionen nötig. (angesichts)",
+        "Angesichts des steigenden Energiebedarfs sind Investitionen nötig.",
+        "angesichts + Genitiv."
+      ],
+      [
+        "Die Verbindungen sind unzuverlässig. Deshalb fahren viele mit dem Auto. (folglich)",
+        "Die Verbindungen sind unzuverlässig; folglich fahren viele mit dem Auto.",
+        "folglich besetzt Position 1."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Verkehrswende",
+        "transport transition"
+      ],
+      [
+        "die Infrastruktur",
+        "infrastructure"
+      ],
+      [
+        "der Energiebedarf",
+        "energy demand"
+      ],
+      [
+        "Emissionen senken",
+        "reduce emissions"
+      ],
+      [
+        "der Nahverkehr",
+        "local public transport"
+      ],
+      [
+        "die Ladeinfrastruktur",
+        "charging infrastructure"
+      ],
+      [
+        "der Verkehrsfluss",
+        "traffic flow"
+      ],
+      [
+        "die Erreichbarkeit",
+        "accessibility"
+      ],
+      [
+        "die Flächennutzung",
+        "land use"
+      ],
+      [
+        "der Berufsverkehr",
+        "commuter traffic"
+      ],
+      [
+        "die Taktfrequenz",
+        "service frequency"
+      ],
+      [
+        "die Netzauslastung",
+        "grid utilization"
+      ],
+      [
+        "die Energieeffizienz",
+        "energy efficiency"
+      ],
+      [
+        "die Verkehrsverlagerung",
+        "modal shift"
+      ],
+      [
+        "die Pendlerstrecke",
+        "commuting route"
+      ],
+      [
+        "der Investitionsbedarf",
+        "investment needs"
+      ],
+      [
+        "Anbindungen verbessern",
+        "improve connections"
+      ],
+      [
+        "Engpässe beseitigen",
+        "remove bottlenecks"
+      ],
+      [
+        "Anreize schaffen",
+        "create incentives"
+      ],
+      [
+        "emissionsarm",
+        "low-emission"
+      ]
+    ],
+    "instruction": "In einem Onlineforum wird diskutiert, ob Städte mehr Geld in öffentliche Verkehrsmittel statt in den Ausbau von Straßen investieren sollten. Schreiben Sie einen Diskussionsbeitrag von circa 230 Wörtern (Richtwert 50 Minuten).",
+    "prompts": [
+      "Erläutern Sie wichtige Kriterien nachhaltiger urbaner Mobilität.",
+      "Begründen Sie anhand eines Beispiels einen möglichen Vorteil des Nahverkehrsausbaus.",
+      "Gehen Sie auf Grenzen oder Nachteile einer solchen Priorisierung ein.",
+      "Schlagen Sie eine ergänzende Maßnahme vor und begründen Sie diese."
+    ],
+    "model": "Angesichts des steigenden Verkehrsaufkommens stellt sich für viele Städte die Frage, wie Mobilität langfristig organisiert werden sollte. Aus meiner Sicht sind nicht allein die Geschwindigkeit einzelner Verkehrsmittel, sondern auch ihre Zugänglichkeit, der Flächenverbrauch und die Umweltbelastung zu berücksichtigen. Ein Ausbau öffentlicher Verkehrsmittel kann einen wichtigen Beitrag leisten, sofern die Angebote tatsächlich den Bedürfnissen der Bevölkerung entsprechen.\nEin Beispiel wäre die Verbesserung der Busverbindungen zwischen Wohngebieten und Arbeitsplätzen. Durch häufigere und verlässlichere Verbindungen könnten mehr Menschen auf das eigene Auto verzichten. Dadurch ließen sich unter geeigneten Bedingungen sowohl Staus als auch der Energieverbrauch pro beförderter Person reduzieren. Voraussetzung dafür sind jedoch bezahlbare Fahrpreise und eine gute Anbindung unterschiedlicher Stadtteile.\nAllerdings wäre es problematisch, sämtliche Straßeninvestitionen zugunsten des Nahverkehrs einzustellen. Lieferdienste, Rettungsfahrzeuge und Menschen mit bestimmten Mobilitätseinschränkungen bleiben auf funktionierende Straßen angewiesen. Zudem erfordert der Ausbau öffentlicher Verkehrsmittel erhebliche finanzielle Mittel. Wenn Fahrzeuge überwiegend leer fahren, ist ihr ökologischer Nutzen ebenfalls begrenzt. Die tatsächliche Nachfrage muss folglich bei der Planung berücksichtigt werden.\nAls ergänzende Maßnahme halte ich den Ausbau sicherer Radwege und leicht erreichbarer Umsteigepunkte für sinnvoll. Dadurch könnten unterschiedliche Verkehrsmittel besser miteinander verbunden werden. Darüber hinaus sollten Städte ihre Investitionen anhand überprüfbarer Kriterien wie Zuverlässigkeit, Erreichbarkeit und Emissionen bewerten. Eine nachhaltige Verkehrspolitik zeichnet sich meines Erachtens nicht durch die pauschale Bevorzugung eines einzelnen Verkehrsmittels aus, sondern durch ein abgestimmtes Angebot, das sowohl ökologischen als auch sozialen Anforderungen gerecht wird.",
+    "rubric": [
+      "Alle vier Inhaltspunkte",
+      "Konkretes Beispiel und differenzierte Einschränkung",
+      "Logische Struktur und angemessener Forumsstil",
+      "Präzise Sprache und korrekte Grammatik"
+    ]
+  },
+  {
+    "day": 25,
+    "title": "Gentechnik und Wissenschaftsethik",
+    "skill": "Lesen",
+    "part": 4,
+    "grammar": "Erweiterte Partizipialattribute und Quellenbezug",
+    "rule": "Bei erweiterten Partizipialattributen stehen Ergänzungen vor dem Partizip. Partizip I bezeichnet meist eine aktive Handlung, Partizip II häufig eine abgeschlossene oder passive Handlung. Die Adjektivendung richtet sich nach Kasus, Genus, Numerus und Artikel.",
+    "grammarChecks": [
+      [
+        "Die Verfahren, die von Forschenden entwickelt wurden, ...",
+        "die von Forschenden entwickelten Verfahren",
+        "Partizip II mit passiver Bedeutung; Plural -en."
+      ],
+      [
+        "Eine Methode, die gezielt in Erbgut eingreift, ...",
+        "eine gezielt in Erbgut eingreifende Methode",
+        "Partizip I mit aktiver Bedeutung."
+      ],
+      [
+        "Korrigieren Sie: mit einem sorgfältig überprüfte Verfahren.",
+        "mit einem sorgfältig überprüften Verfahren",
+        "Dativ Neutrum nach einem: -en."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Forschungsethik",
+        "research ethics"
+      ],
+      [
+        "die Tragweite",
+        "scope of consequences"
+      ],
+      [
+        "die Gentechnik",
+        "genetic engineering"
+      ],
+      [
+        "etwas infrage stellen",
+        "question something"
+      ],
+      [
+        "die Einwilligung",
+        "consent"
+      ],
+      [
+        "das Erbgut",
+        "genetic material"
+      ],
+      [
+        "die Genveränderung",
+        "genetic modification"
+      ],
+      [
+        "die Risikobewertung",
+        "risk assessment"
+      ],
+      [
+        "die Langzeitfolge",
+        "long-term consequence"
+      ],
+      [
+        "die Selbstbestimmung",
+        "self-determination"
+      ],
+      [
+        "die Forschungsfreiheit",
+        "academic freedom"
+      ],
+      [
+        "die Versuchsanordnung",
+        "experimental design"
+      ],
+      [
+        "der Interessenkonflikt",
+        "conflict of interest"
+      ],
+      [
+        "die Ethikkommission",
+        "ethics committee"
+      ],
+      [
+        "die Nachprüfbarkeit",
+        "verifiability"
+      ],
+      [
+        "die Verantwortlichkeit",
+        "accountability"
+      ],
+      [
+        "Grenzen festlegen",
+        "set limits"
+      ],
+      [
+        "Folgen abschätzen",
+        "assess consequences"
+      ],
+      [
+        "eine Zustimmung einholen",
+        "obtain consent"
+      ],
+      [
+        "verantwortbar",
+        "ethically justifiable"
+      ]
+    ],
+    "instruction": "Lesen Sie drei fiktive Fachpositionen. Ordnen Sie jede Aussage A, B, C oder X (keine Person) zu. Zwei Aussagen passen nicht.",
+    "text": "A – Molekularbiologin: Neue gentechnische Verfahren können zur Erforschung bislang schwer behandelbarer Erkrankungen beitragen. Allerdings bedeutet ein erfolgreiches Laborexperiment nicht, dass eine Anwendung am Menschen bereits verantwortbar wäre. Ich halte unabhängige Überprüfungen und schrittweise Erprobung für unverzichtbar. Entscheidend ist, unter welchen Bedingungen ein konkretes Verfahren untersucht wird, nicht ob man Gentechnik grundsätzlich befürwortet oder ablehnt.\n\nB – Medizinethiker: Bei Eingriffen, deren Folgen möglicherweise auch zukünftige Generationen betreffen, reicht die Zustimmung der gegenwärtig Beteiligten nicht aus, um alle ethischen Fragen zu beantworten. Wir sollten insbesondere über die Grenzen individueller Entscheidungsfreiheit diskutieren. Außerdem ist zu berücksichtigen, ob Forschungsprioritäten den Bedürfnissen der Gesellschaft entsprechen oder vor allem zahlungskräftigen Gruppen dienen.\n\nC – Wissenschaftssoziologin: Die öffentliche Debatte konzentriert sich häufig auf besonders spektakuläre Anwendungsbeispiele. Ich plädiere dafür, auch die institutionellen Bedingungen der Forschung zu untersuchen. Wer finanziert ein Projekt, wer entscheidet über die Veröffentlichung von Ergebnissen und wie werden Interessenkonflikte offengelegt? Wissenschaftliche Entscheidungen sollten nachvollziehbar sein. Das verlangt keinen vollständigen Verzicht auf vertrauliche Informationen, wohl aber transparente Regeln.",
+    "questions": [
+      [
+        "1. Positive Laborbefunde allein rechtfertigen noch keine Anwendung am Menschen.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        0,
+        "A unterscheidet Laborerfolg und verantwortbare Anwendung."
+      ],
+      [
+        "2. Die Interessen künftiger Generationen werfen zusätzliche ethische Fragen auf.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        1,
+        "B thematisiert generationenübergreifende Folgen."
+      ],
+      [
+        "3. Finanzierungs- und Veröffentlichungsbedingungen verdienen Aufmerksamkeit.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        2,
+        "C nennt beide institutionellen Faktoren."
+      ],
+      [
+        "4. Alle Forschungsergebnisse müssen ohne jede Ausnahme veröffentlicht werden.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        3,
+        "Keine Person verlangt einen vollständigen Verzicht auf Vertraulichkeit."
+      ],
+      [
+        "5. Die Prioritäten der Forschung sollten auch an gesellschaftlichen Bedürfnissen gemessen werden.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        1,
+        "B fragt, welchen Gruppen die Forschungsprioritäten dienen."
+      ],
+      [
+        "6. Eine Bewertung sollte sich an konkreten Verfahren und Untersuchungsbedingungen orientieren.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        0,
+        "A lehnt pauschale Bewertungen ab."
+      ],
+      [
+        "7. Gentechnische Forschung sollte grundsätzlich verboten werden.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        3,
+        "Niemand fordert ein generelles Verbot."
+      ]
+    ]
+  },
+  {
+    "day": 26,
+    "title": "Kreislaufwirtschaft und Rohstoffmangel",
+    "skill": "Hören",
+    "part": 4,
+    "grammar": "Nomen-Verb-Verbindungen und Nominalstil",
+    "rule": "Feste Verbindungen wie einen Beitrag leisten, Maßnahmen ergreifen und zur Verfügung stehen müssen als Einheit gelernt werden. Nominalisierungen machen Aussagen kompakter, dürfen aber den Handlungsträger nicht unnötig verschleiern.",
+    "grammarChecks": [
+      [
+        "Reparaturen helfen, Ressourcen zu schonen. (einen Beitrag leisten)",
+        "Reparaturen leisten einen Beitrag zur Ressourcenschonung.",
+        "einen Beitrag zu etwas leisten + Dativ."
+      ],
+      [
+        "Die Unternehmen handeln gegen Materialverschwendung. (Maßnahmen ergreifen)",
+        "Die Unternehmen ergreifen Maßnahmen gegen Materialverschwendung.",
+        "Feste Verbindung: Maßnahmen ergreifen."
+      ],
+      [
+        "Ersatzteile sind verfügbar. (zur Verfügung stehen)",
+        "Ersatzteile stehen zur Verfügung.",
+        "Feste Wendung mit stehen."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Kreislaufwirtschaft",
+        "circular economy"
+      ],
+      [
+        "die Rohstoffknappheit",
+        "raw material scarcity"
+      ],
+      [
+        "die Lieferkette",
+        "supply chain"
+      ],
+      [
+        "Ressourcen schonen",
+        "conserve resources"
+      ],
+      [
+        "die Wiederverwertung",
+        "recycling"
+      ],
+      [
+        "die Wiederverwendung",
+        "reuse"
+      ],
+      [
+        "die Materialeffizienz",
+        "material efficiency"
+      ],
+      [
+        "die Wertstoffrückgewinnung",
+        "material recovery"
+      ],
+      [
+        "die Reparierbarkeit",
+        "repairability"
+      ],
+      [
+        "der Produktlebenszyklus",
+        "product life cycle"
+      ],
+      [
+        "das Sekundärmaterial",
+        "secondary material"
+      ],
+      [
+        "die Rohstoffabhängigkeit",
+        "raw material dependence"
+      ],
+      [
+        "das Rücknahmesystem",
+        "take-back system"
+      ],
+      [
+        "die Materialzusammensetzung",
+        "material composition"
+      ],
+      [
+        "die Entsorgung",
+        "disposal"
+      ],
+      [
+        "die Wiederaufbereitung",
+        "refurbishment"
+      ],
+      [
+        "einen Beitrag leisten",
+        "make a contribution"
+      ],
+      [
+        "Materialien zurückgewinnen",
+        "recover materials"
+      ],
+      [
+        "Abfälle vermeiden",
+        "prevent waste"
+      ],
+      [
+        "ressourcenschonend",
+        "resource-efficient"
+      ]
+    ],
+    "instruction": "Sie hören einen fiktiven Fachvortrag über Kreislaufwirtschaft zweimal. Wählen Sie jeweils die richtige Aussage.",
+    "text": "Guten Tag. Kreislaufwirtschaft wird häufig mit Recycling gleichgesetzt. Dabei beginnt ein ressourcenschonender Umgang mit Materialien bereits bei der Gestaltung eines Produkts. Wenn ein Gerät so konstruiert ist, dass einzelne Bauteile ausgetauscht werden können, lässt sich seine Nutzungsdauer unter Umständen erheblich verlängern. Recycling ist dagegen besonders relevant, wenn eine weitere Nutzung oder Reparatur nicht mehr sinnvoll ist. In einem fiktiven Pilotprojekt wurden ausgediente Bürogeräte gesammelt. Zunächst untersuchten Fachkräfte, welche Geräte mit geringem Aufwand wiederaufbereitet werden konnten. Erst die übrigen Geräte wurden zerlegt, um wertvolle Materialien zurückzugewinnen. Das Projekt zeigte jedoch auch Grenzen: Manche Verbundmaterialien ließen sich nur mit hohem Energieaufwand trennen. Deshalb sollte nicht allein die Menge zurückgewonnener Rohstoffe betrachtet werden, sondern auch der dafür erforderliche Aufwand. Ein weiterer Aspekt betrifft wirtschaftliche Anreize. Solange ein neues Produkt deutlich günstiger angeboten wird als eine Reparatur, fällt vielen Betrieben die Entscheidung zugunsten der längeren Nutzung schwer. Transparente Informationen über Lebenszykluskosten können hier helfen. Schließlich ist eine Zusammenarbeit entlang der Lieferkette erforderlich. Hersteller benötigen verlässliche Angaben zur Materialzusammensetzung, während Reparaturbetriebe Zugang zu Ersatzteilen brauchen. Mein Fazit lautet daher: Kreislaufwirtschaft sollte Produktgestaltung, Nutzungsdauer, Reparatur und Rückgewinnung miteinander verbinden. Eine hohe Recyclingquote allein sagt wenig darüber aus, ob insgesamt weniger neue Rohstoffe benötigt werden.",
+    "questions": [
+      [
+        "1. Ressourcenschonung beginnt nach Ansicht der Vortragenden …",
+        [
+          "erst bei der Entsorgung.",
+          "bereits bei der Produktgestaltung.",
+          "ausschließlich bei der Rohstoffgewinnung."
+        ],
+        1,
+        "Die Produktgestaltung wird ausdrücklich als Ausgangspunkt genannt."
+      ],
+      [
+        "2. Im Pilotprojekt wurden die Geräte zuerst …",
+        [
+          "auf Wiederaufbereitung geprüft.",
+          "vollständig zerlegt.",
+          "ohne Prüfung entsorgt."
+        ],
+        0,
+        "Die Fachkräfte prüften zunächst die Wiederaufbereitung."
+      ],
+      [
+        "3. Welches Problem hatten einige Verbundmaterialien?",
+        [
+          "Sie konnten nur im Ausland verwendet werden.",
+          "Sie waren grundsätzlich wertlos.",
+          "Ihre Trennung erforderte viel Energie."
+        ],
+        2,
+        "Hoher Energieaufwand bei der Trennung wird genannt."
+      ],
+      [
+        "4. Welche Information kann Kauf- und Reparaturentscheidungen verbessern?",
+        [
+          "Nur der ursprüngliche Verkaufspreis.",
+          "Die Kosten über den gesamten Lebenszyklus.",
+          "Ausschließlich das Gewicht eines Produkts."
+        ],
+        1,
+        "Der Vortrag nennt transparente Lebenszykluskosten."
+      ],
+      [
+        "5. Reparaturbetriebe benötigen insbesondere …",
+        [
+          "Zugang zu Ersatzteilen.",
+          "ein Verbot gebrauchter Geräte.",
+          "weniger Informationen über Produkte."
+        ],
+        0,
+        "Der Zugang zu Ersatzteilen wird ausdrücklich gefordert."
+      ],
+      [
+        "6. Welche Aussage fasst den Vortrag zusammen?",
+        [
+          "Recycling macht andere Maßnahmen unnötig.",
+          "Eine hohe Recyclingquote beweist immer einen sinkenden Rohstoffbedarf.",
+          "Mehrere Phasen des Produktlebenszyklus müssen gemeinsam betrachtet werden."
+        ],
+        2,
+        "Das Fazit verbindet Gestaltung, Nutzung, Reparatur und Rückgewinnung."
+      ]
+    ]
+  },
+  {
+    "day": 27,
+    "title": "Digitalisierung, Datenschutz und Regulierung",
+    "skill": "Sprechen",
+    "part": 1,
+    "grammar": "Passiversatzformen und modale Präzision",
+    "rule": "sein + zu + Infinitiv kann eine Verpflichtung ausdrücken. sich lassen + Infinitiv und Adjektive auf -bar bezeichnen häufig eine Möglichkeit. Benennen Sie Zuständigkeiten und Bedingungen, statt bloß abstrakte Forderungen zu formulieren.",
+    "grammarChecks": [
+      [
+        "Persönliche Daten müssen geschützt werden. (sein + zu)",
+        "Persönliche Daten sind zu schützen.",
+        "sein + zu + Infinitiv drückt hier eine Verpflichtung aus."
+      ],
+      [
+        "Der Antrag kann online bearbeitet werden. (sich lassen)",
+        "Der Antrag lässt sich online bearbeiten.",
+        "sich lassen + Infinitiv zeigt Möglichkeit."
+      ],
+      [
+        "Die Entscheidung kann nachvollzogen werden. (-bar)",
+        "Die Entscheidung ist nachvollziehbar.",
+        "Das Adjektiv auf -bar drückt die Möglichkeit aus."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Regulierung",
+        "regulation"
+      ],
+      [
+        "die Barrierefreiheit",
+        "accessibility"
+      ],
+      [
+        "die Datensparsamkeit",
+        "data minimization"
+      ],
+      [
+        "Rechte gewährleisten",
+        "safeguard rights"
+      ],
+      [
+        "die Verwaltungsdigitalisierung",
+        "digitalization of public administration"
+      ],
+      [
+        "die Datenverarbeitung",
+        "data processing"
+      ],
+      [
+        "die Zugriffsberechtigung",
+        "access authorization"
+      ],
+      [
+        "die Zweckbindung",
+        "purpose limitation"
+      ],
+      [
+        "die Identitätsprüfung",
+        "identity verification"
+      ],
+      [
+        "die Nachvollziehbarkeit",
+        "traceability"
+      ],
+      [
+        "der Datenschutz",
+        "data protection"
+      ],
+      [
+        "die Beschwerdestelle",
+        "complaints office"
+      ],
+      [
+        "die Rechtsgrundlage",
+        "legal basis"
+      ],
+      [
+        "die Verfahrensdauer",
+        "processing time"
+      ],
+      [
+        "die Kontrollinstanz",
+        "oversight body"
+      ],
+      [
+        "die digitale Teilhabe",
+        "digital participation"
+      ],
+      [
+        "Daten schützen",
+        "protect data"
+      ],
+      [
+        "Zuständigkeiten festlegen",
+        "define responsibilities"
+      ],
+      [
+        "eine Alternative bereitstellen",
+        "provide an alternative"
+      ],
+      [
+        "benutzerfreundlich",
+        "user-friendly"
+      ]
+    ],
+    "instruction": "Halten Sie einen Vortrag von circa fünf Minuten zum Thema digitale Verwaltungsdienste. Gehen Sie auf die vier Punkte ein und beantworten Sie anschließend Nachfragen.",
+    "prompts": [
+      "Erläutern Sie Chancen digitaler Verwaltungsdienste.",
+      "Nennen Sie ein konkretes Beispiel für ein vereinfachtes Verfahren.",
+      "Wägen Sie Risiken für Datenschutz und gesellschaftliche Teilhabe ab.",
+      "Schlagen Sie eine Regelung oder Alternative vor, die den Zugang für alle verbessert."
+    ],
+    "followups": [
+      "Welche Daten sollten bei einem digitalen Antrag tatsächlich erhoben werden?",
+      "Wie könnten Menschen ohne digitale Kenntnisse unterstützt werden?"
+    ],
+    "model": "Digitale Verwaltungsdienste können den Zugang zu öffentlichen Leistungen erleichtern, insbesondere wenn Anträge unabhängig von Öffnungszeiten gestellt werden können. Ein Beispiel wäre die elektronische Beantragung einer Bescheinigung mit nachvollziehbarem Bearbeitungsstatus. Allerdings sind persönliche Daten zweckgebunden zu verarbeiten und Zuständigkeiten klar festzulegen. Nicht jede Person verfügt außerdem über einen geeigneten Internetzugang oder die erforderlichen digitalen Kenntnisse. Deshalb sollten persönliche Beratung und alternative Antragswege erhalten bleiben. Meines Erachtens ist die Digitalisierung dann erfolgreich, wenn Verfahren nicht nur schneller, sondern auch verständlicher und für unterschiedliche Bevölkerungsgruppen zugänglich werden.",
+    "rubric": [
+      "Vier Aspekte logisch verbinden",
+      "Konkretes Beispiel und relevante Einschränkungen",
+      "Datenschutz, Zuständigkeit und Zugang differenziert behandeln",
+      "Auf Nachfragen verständlich und spontan reagieren"
+    ]
+  },
+  {
+    "day": 28,
+    "title": "Rentensysteme und Generationengerechtigkeit",
+    "skill": "Schreiben",
+    "part": 1,
+    "grammar": "Nominalstil, Schlussfolgerung und differenzierte Bewertung",
+    "rule": "angesichts + Genitiv führt einen relevanten Umstand ein; infolge bezeichnet eine Ursache mit Folge. demzufolge und folglich leiten Schlussfolgerungen ein. Bei Reformvorschlägen sollten Voraussetzungen und mögliche Nebenwirkungen deutlich werden.",
+    "grammarChecks": [
+      [
+        "Weil die Bevölkerung altert, muss die Finanzierung geprüft werden. (angesichts)",
+        "Angesichts der Alterung der Bevölkerung muss die Finanzierung geprüft werden.",
+        "angesichts + Genitiv."
+      ],
+      [
+        "Die Zahl der Beitragszahlenden sinkt. Daher entsteht Reformbedarf. (demzufolge)",
+        "Die Zahl der Beitragszahlenden sinkt; demzufolge entsteht Reformbedarf.",
+        "demzufolge steht vor dem finiten Verb."
+      ],
+      [
+        "Wenn die Erwerbsbeteiligung steigt, können mehr Beiträge eingehen. (Nominalstil)",
+        "Bei einer höheren Erwerbsbeteiligung können mehr Beiträge eingehen.",
+        "bei + Dativ bezeichnet hier eine Bedingung."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Rentenfinanzierung",
+        "pension financing"
+      ],
+      [
+        "die Generationengerechtigkeit",
+        "intergenerational equity"
+      ],
+      [
+        "die Beitragslast",
+        "contribution burden"
+      ],
+      [
+        "die demografische Entwicklung",
+        "demographic change"
+      ],
+      [
+        "das Umlageverfahren",
+        "pay-as-you-go system"
+      ],
+      [
+        "die Altersvorsorge",
+        "retirement provision"
+      ],
+      [
+        "die Erwerbsbevölkerung",
+        "working population"
+      ],
+      [
+        "die Lebenserwartung",
+        "life expectancy"
+      ],
+      [
+        "die Altersarmut",
+        "old-age poverty"
+      ],
+      [
+        "das Renteneintrittsalter",
+        "retirement age"
+      ],
+      [
+        "die Beitragsbemessung",
+        "contribution assessment"
+      ],
+      [
+        "die Rentenanpassung",
+        "pension adjustment"
+      ],
+      [
+        "die Erwerbsbeteiligung",
+        "labor-force participation"
+      ],
+      [
+        "die Versorgungslücke",
+        "gap in provision"
+      ],
+      [
+        "die Belastbarkeit",
+        "capacity to bear burdens"
+      ],
+      [
+        "die Übergangsregelung",
+        "transitional provision"
+      ],
+      [
+        "Ansprüche erwerben",
+        "acquire entitlements"
+      ],
+      [
+        "Lasten verteilen",
+        "distribute burdens"
+      ],
+      [
+        "die Finanzierung sichern",
+        "secure financing"
+      ],
+      [
+        "generationenübergreifend",
+        "intergenerational"
+      ]
+    ],
+    "instruction": "In einem Onlineforum wird diskutiert, wie Rentensysteme generationengerecht finanziert werden können. Schreiben Sie einen Diskussionsbeitrag von circa 230 Wörtern (Richtwert 50 Minuten).",
+    "prompts": [
+      "Erläutern Sie zentrale Kriterien eines generationengerechten Rentensystems.",
+      "Begründen Sie anhand eines Beispiels einen möglichen Reformansatz.",
+      "Gehen Sie auf Risiken oder Nachteile dieses Ansatzes ein.",
+      "Schlagen Sie eine ergänzende oder alternative Maßnahme vor und begründen Sie diese."
+    ],
+    "model": "Angesichts der demografischen Entwicklung stehen viele Gesellschaften vor der Herausforderung, eine verlässliche Altersvorsorge zu gewährleisten, ohne jüngere Generationen unverhältnismäßig zu belasten. Ein generationengerechtes Rentensystem sollte meiner Ansicht nach sowohl finanzielle Tragfähigkeit als auch Schutz vor Altersarmut gewährleisten. Dabei müssen unterschiedliche Erwerbsbiografien berücksichtigt werden.\nEin möglicher Reformansatz besteht darin, die Erwerbsbeteiligung zu erhöhen. Wenn beispielsweise Menschen nach längeren Familienphasen leichter in den Beruf zurückkehren können, könnte sich die Zahl der Beitragszahlenden erhöhen. Zugleich würden die Betroffenen zusätzliche eigene Rentenansprüche erwerben. Voraussetzung dafür sind jedoch geeignete Arbeitsplätze, verlässliche Betreuungsangebote und Möglichkeiten zur beruflichen Weiterbildung.\nAllerdings reicht eine höhere Erwerbsbeteiligung allein möglicherweise nicht aus, um langfristige Finanzierungslücken zu schließen. Außerdem könnte eine pauschale Verlängerung der Lebensarbeitszeit Personen benachteiligen, die körperlich besonders belastende Tätigkeiten ausüben. Wer gesundheitlich nicht länger arbeiten kann, darf nicht automatisch mit erheblichen finanziellen Nachteilen rechnen. Reformen sollten demzufolge unterschiedliche berufliche Belastungen und individuelle Voraussetzungen berücksichtigen.\nAls ergänzende Maßnahme halte ich eine transparente Überprüfung der Finanzierung für sinnvoll. Zusätzliche Einnahmen, flexible Übergänge in den Ruhestand und gezielte Unterstützung für Menschen mit niedrigen Renten könnten miteinander verbunden werden. Wichtig wäre dabei, die langfristigen Auswirkungen verschiedener Maßnahmen regelmäßig zu überprüfen und die Ergebnisse öffentlich verständlich zu erläutern. Eine gerechte Reform muss nicht alle Generationen identisch behandeln. Sie sollte vielmehr nachvollziehbar begründen, wie Belastungen verteilt werden und welche Ansprüche dauerhaft gesichert werden können. Nur so lässt sich Vertrauen in die Altersvorsorge auch über längere Zeiträume aufrechterhalten.",
+    "rubric": [
+      "Vier Inhaltspunkte vollständig bearbeiten",
+      "Reformvorschlag begründen und Grenzen aufzeigen",
+      "Zusammenhängende Schlussfolgerung und sachliches Register",
+      "Präziser Wortschatz, Grammatik und angemessene Länge"
+    ]
+  }
+
+];
+export const getC1Phase2Lesson = (day) => C1_PHASE2_LESSONS.find((lesson) => lesson.day === Number(day)) || null;
