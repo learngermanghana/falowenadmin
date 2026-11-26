@@ -146,13 +146,13 @@ export const C1_PHASE2_LESSONS = [
       [
         "4",
         [
-          "an",
-          "mit",
-          "für",
-          "auf"
+          "an der",
+          "mit der",
+          "für die",
+          "auf der"
         ],
         3,
-        "auf etwas beruhen + Dativ."
+        "auf etwas beruhen + Dativ; Methode ist feminin."
       ],
       [
         "5",
@@ -755,6 +755,773 @@ export const C1_PHASE2_LESSONS = [
         "Im Schlussabsatz wird eine differenzierte Analyse vor Investitionen empfohlen."
       ]
     ]
+  },
+
+  {
+    "day": 6,
+    "title": "Gesundheitspolitik und Prävention",
+    "skill": "Hören",
+    "part": 2,
+    "grammar": "Passiversatzformen und Ursache–Folge",
+    "rule": "sich lassen + Infinitiv bezeichnet eine Möglichkeit; sein + zu + Infinitiv kann je nach Kontext Möglichkeit oder Notwendigkeit ausdrücken. Aufgrund + Genitiv nennt eine Ursache.",
+    "grammarChecks": [
+      [
+        "Viele Risiken können durch Vorsorge reduziert werden.",
+        "Viele Risiken lassen sich durch Vorsorge reduzieren.",
+        "sich lassen ersetzt können + Passiv."
+      ],
+      [
+        "Die Daten müssen sorgfältig geprüft werden.",
+        "Die Daten sind sorgfältig zu prüfen.",
+        "sein + zu + Infinitiv drückt hier eine Notwendigkeit aus."
+      ],
+      [
+        "Weil die Angebote teuer sind, nehmen wenige Menschen teil. (aufgrund)",
+        "Aufgrund der hohen Kosten nehmen wenige Menschen teil.",
+        "aufgrund + Genitiv nominalisiert die Ursache."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Vorsorge",
+        "prevention"
+      ],
+      [
+        "die Versorgungslücke",
+        "gap in care"
+      ],
+      [
+        "die Gesundheitsförderung",
+        "health promotion"
+      ],
+      [
+        "die Früherkennung",
+        "early detection"
+      ],
+      [
+        "die Lebenserwartung",
+        "life expectancy"
+      ],
+      [
+        "die Risikominderung",
+        "risk reduction"
+      ],
+      [
+        "die Zugangsbarriere",
+        "access barrier"
+      ],
+      [
+        "die Gesundheitskompetenz",
+        "health literacy"
+      ],
+      [
+        "die Eigenverantwortung",
+        "personal responsibility"
+      ],
+      [
+        "die Präventionsmaßnahme",
+        "preventive measure"
+      ],
+      [
+        "die Kostenerstattung",
+        "reimbursement"
+      ],
+      [
+        "die Ungleichheit",
+        "inequality"
+      ],
+      [
+        "die Wirksamkeit",
+        "effectiveness"
+      ],
+      [
+        "die Belastung",
+        "burden"
+      ],
+      [
+        "die Anlaufstelle",
+        "point of contact"
+      ],
+      [
+        "die Teilnahmerate",
+        "participation rate"
+      ],
+      [
+        "Anreize schaffen",
+        "create incentives"
+      ],
+      [
+        "Risiken abschätzen",
+        "assess risks"
+      ],
+      [
+        "eine Lücke schließen",
+        "close a gap"
+      ],
+      [
+        "langfristig wirksam",
+        "effective long term"
+      ]
+    ],
+    "instruction": "Sie hören ein fiktives Radiointerview mit einer Gesundheitsforscherin zweimal. Entscheiden Sie bei jeder Aussage: stimmt, stimmt nicht oder dazu wird nichts gesagt.",
+    "text": "Moderator: Frau Dr. Keller, viele Menschen verbinden Prävention mit persönlicher Disziplin. Greift das zu kurz? Forscherin: Durchaus. Wer im Schichtdienst arbeitet, hat oft Schwierigkeiten, regelmäßige Termine wahrzunehmen. Das ist keine Frage mangelnder Motivation. In einem fiktiven Modellprojekt wurden Vorsorgeangebote deshalb auch abends zugänglich gemacht. Die Teilnahme stieg von 30 auf 45 Prozent. Daraus lässt sich allerdings noch nicht ableiten, dass die Menschen langfristig gesünder leben. Moderator: Sollten solche Angebote grundsätzlich kostenlos sein? Forscherin: Kosten sind eine Hürde, aber nicht die einzige. Verständliche Informationen und gut erreichbare Anlaufstellen sind ebenso wichtig. Ein kostenloser Kurs hilft wenig, wenn er nur während der Arbeitszeit stattfindet. Moderator: Welche Rolle spielen digitale Anwendungen? Forscherin: Sie können an Termine erinnern, sollten aber persönliche Beratung ergänzen, nicht ersetzen. Gerade Menschen, die mit digitalen Diensten wenig vertraut sind, dürfen nicht ausgeschlossen werden. Moderator: Wie wäre der Erfolg zu messen? Forscherin: Neben der Teilnahme müssen langfristige gesundheitliche Ergebnisse und Unterschiede zwischen Bevölkerungsgruppen berücksichtigt werden. Erst dann lässt sich beurteilen, ob eine Maßnahme tatsächlich zur Verringerung gesundheitlicher Ungleichheit beiträgt.",
+    "questions": [
+      [
+        "1. Die Forscherin führt geringe Teilnahme ausschließlich auf fehlende Motivation zurück.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        1,
+        "Sie nennt Schichtarbeit als strukturelle Hürde."
+      ],
+      [
+        "2. Im Modellprojekt stieg die Teilnahme nach einer Änderung der Öffnungszeiten.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        0,
+        "Von 30 auf 45 Prozent nach Abendangeboten."
+      ],
+      [
+        "3. Die Forscherin nennt die genaue Finanzierung des Modellprojekts.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        2,
+        "Die Finanzierung wird nicht genannt."
+      ],
+      [
+        "4. Kostenlose Angebote beseitigen nach ihrer Auffassung sämtliche Zugangsprobleme.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        1,
+        "Auch Informationen, Erreichbarkeit und Zeiten zählen."
+      ],
+      [
+        "5. Digitale Anwendungen sollen persönliche Beratung vollständig ersetzen.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        1,
+        "Sie sollen sie ergänzen."
+      ],
+      [
+        "6. Der Erfolg soll auch anhand langfristiger gesundheitlicher Ergebnisse beurteilt werden.",
+        [
+          "stimmt",
+          "stimmt nicht",
+          "dazu wird nichts gesagt"
+        ],
+        0,
+        "Dies nennt sie ausdrücklich."
+      ]
+    ]
+  },
+  {
+    "day": 7,
+    "title": "Nachhaltiger Tourismus und Overtourism",
+    "skill": "Sprechen",
+    "part": 2,
+    "grammar": "Konzessive und vergleichende Strukturen",
+    "rule": "wenngleich und obwohl leiten einen Nebensatz ein; dennoch steht im Hauptsatz. Während kann Gegensätze ausdrücken. Je … desto zeigt eine proportionale Entwicklung.",
+    "grammarChecks": [
+      [
+        "Tourismus schafft Arbeitsplätze. Er belastet die Umwelt. (wenngleich)",
+        "Wenngleich Tourismus Arbeitsplätze schafft, belastet er die Umwelt.",
+        "Verbendstellung im Nebensatz."
+      ],
+      [
+        "Die Besucherzahl wächst. Die Belastung steigt. (je … desto)",
+        "Je stärker die Besucherzahl wächst, desto höher ist die Belastung.",
+        "Je-Satz mit Verb am Ende; desto-Satz mit Verb an Position 2."
+      ],
+      [
+        "Die Stadt braucht Einnahmen. Sie begrenzt Besucherzahlen. (dennoch)",
+        "Die Stadt braucht Einnahmen; dennoch begrenzt sie die Besucherzahlen.",
+        "dennoch besetzt Position 1."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "der Massentourismus",
+        "mass tourism"
+      ],
+      [
+        "die Tragfähigkeit",
+        "carrying capacity"
+      ],
+      [
+        "die Umweltbelastung",
+        "environmental impact"
+      ],
+      [
+        "Interessen abwägen",
+        "weigh interests"
+      ],
+      [
+        "die Besucherobergrenze",
+        "visitor cap"
+      ],
+      [
+        "die Wertschöpfung",
+        "value creation"
+      ],
+      [
+        "die Hauptsaison",
+        "peak season"
+      ],
+      [
+        "die Überlastung",
+        "overcrowding"
+      ],
+      [
+        "die Anwohnerschaft",
+        "local residents"
+      ],
+      [
+        "die Verdrängung",
+        "displacement"
+      ],
+      [
+        "die Besucherlenkung",
+        "visitor management"
+      ],
+      [
+        "die Erholungsqualität",
+        "quality of recreation"
+      ],
+      [
+        "die Abhängigkeit",
+        "dependence"
+      ],
+      [
+        "die Schutzgebühr",
+        "conservation fee"
+      ],
+      [
+        "die Infrastruktur",
+        "infrastructure"
+      ],
+      [
+        "die Auslastung",
+        "occupancy"
+      ],
+      [
+        "einen Ausgleich schaffen",
+        "strike a balance"
+      ],
+      [
+        "eine Regelung umsetzen",
+        "implement a rule"
+      ],
+      [
+        "Folgen abfedern",
+        "mitigate effects"
+      ],
+      [
+        "verhältnismäßig",
+        "proportionate"
+      ]
+    ],
+    "instruction": "Diskutieren Sie zu zweit etwa fünf Minuten: Soll eine beliebte Urlaubsstadt die tägliche Besucherzahl begrenzen? Tauschen Sie Argumente aus, reagieren Sie aufeinander und ziehen Sie ein gemeinsames oder differenziertes Fazit.",
+    "prompts": [
+      "Vertreten Sie zunächst Ihre Position zu einer Besucherobergrenze.",
+      "Berücksichtigen Sie die Interessen von Anwohnenden und Tourismusbetrieben.",
+      "Reagieren Sie auf einen Einwand und prüfen Sie eine Alternative.",
+      "Fassen Sie am Ende Gemeinsamkeiten und verbleibende Unterschiede zusammen."
+    ],
+    "model": "A: Wenngleich der Tourismus Einkommen schafft, halte ich eine Obergrenze in besonders belasteten Vierteln für vertretbar.\nB: Ich verstehe das Anliegen. Eine pauschale Grenze könnte jedoch kleine Betriebe unverhältnismäßig treffen.\nA: Dem Einwand stimme ich teilweise zu. Wie wäre es mit zeitlich begrenzten Reservierungen für besonders überfüllte Sehenswürdigkeiten?\nB: Das erscheint mir sinnvoller, vorausgesetzt, die Einnahmen werden auch für öffentlichen Verkehr verwendet.\nA: Dann sind wir uns zumindest darin einig, dass gezielte Maßnahmen einer pauschalen Sperre vorzuziehen sind.",
+    "rubric": [
+      "Eigenen Standpunkt begründen",
+      "Auf Partnerargumente eingehen",
+      "Vor- und Nachteile konkret abwägen",
+      "Ein nachvollziehbares Fazit formulieren"
+    ]
+  },
+  {
+    "day": 8,
+    "title": "Smart Cities und Wohnraumpolitik",
+    "skill": "Schreiben",
+    "part": 1,
+    "grammar": "Nominalstil und Verbalstil",
+    "rule": "Nominalisierungen verdichten Aussagen; Präposition und Kasus müssen stimmen. angesichts und aufgrund verlangen im formellen Stil Genitiv; durch + Akkusativ bezeichnet häufig ein Mittel.",
+    "grammarChecks": [
+      [
+        "Weil die Mieten steigen, muss die Stadt handeln. (angesichts)",
+        "Angesichts steigender Mieten muss die Stadt handeln.",
+        "angesichts + Genitiv."
+      ],
+      [
+        "Indem die Stadt Buslinien ausbaut, verbessert sie den Zugang.",
+        "Durch den Ausbau der Buslinien verbessert die Stadt den Zugang.",
+        "durch + Akkusativ."
+      ],
+      [
+        "Nach der Einführung des Systems wurden Daten erhoben. (verbal)",
+        "Nachdem das System eingeführt worden war, wurden Daten erhoben.",
+        "Nachdem zeigt die Vorzeitigkeit."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Wohnraumknappheit",
+        "housing shortage"
+      ],
+      [
+        "die Stadtentwicklung",
+        "urban development"
+      ],
+      [
+        "die Verdichtung",
+        "urban densification"
+      ],
+      [
+        "Maßnahmen ergreifen",
+        "take measures"
+      ],
+      [
+        "die Mietbelastung",
+        "rent burden"
+      ],
+      [
+        "die Flächennutzung",
+        "land use"
+      ],
+      [
+        "die Daseinsvorsorge",
+        "public services"
+      ],
+      [
+        "die Verkehrssteuerung",
+        "traffic management"
+      ],
+      [
+        "die Datenerhebung",
+        "data collection"
+      ],
+      [
+        "die soziale Durchmischung",
+        "social mix"
+      ],
+      [
+        "die Verdrängung",
+        "displacement"
+      ],
+      [
+        "die Barrierefreiheit",
+        "accessibility"
+      ],
+      [
+        "der Leerstand",
+        "vacancy"
+      ],
+      [
+        "die Energieeffizienz",
+        "energy efficiency"
+      ],
+      [
+        "die Bürgerbeteiligung",
+        "citizen participation"
+      ],
+      [
+        "die Erschließung",
+        "development of land"
+      ],
+      [
+        "Wohnraum schaffen",
+        "create housing"
+      ],
+      [
+        "Daten zweckgebunden nutzen",
+        "use data for specified purposes"
+      ],
+      [
+        "einer Sache Rechnung tragen",
+        "take into account"
+      ],
+      [
+        "gemeinwohlorientiert",
+        "public-interest oriented"
+      ]
+    ],
+    "instruction": "In einem Onlineforum diskutieren Sie die Frage: Können Smart Cities die Wohnungsnot lindern? Schreiben Sie einen Diskussionsbeitrag von circa 230 Wörtern. Richtwert 50 Minuten.",
+    "prompts": [
+      "Erläutern Sie, welche Probleme moderne Stadtentwicklung lösen sollte.",
+      "Begründen Sie anhand eines Beispiels, welchen Beitrag digitale Technik leisten kann.",
+      "Gehen Sie auf Risiken oder Grenzen digitaler Lösungen ein.",
+      "Schlagen Sie eine ergänzende wohnungspolitische Maßnahme vor und begründen Sie diese."
+    ],
+    "model": "Angesichts steigender Mieten stehen viele Städte vor der Frage, wie sie knappen Wohnraum gerechter verteilen und zugleich ihre Infrastruktur verbessern können. Digitale Technik kann dazu beitragen, bestehende Ressourcen effizienter zu nutzen. Sie sollte jedoch nicht mit einer eigenständigen Wohnungspolitik verwechselt werden.\nEin konkretes Beispiel ist die systematische Erfassung leer stehender Wohnungen. Wenn eine Kommune zuverlässige Informationen über ungenutzten Wohnraum erhält, kann sie gezielter auf Eigentümer zugehen und geeignete Fördermaßnahmen entwickeln. Auch digitale Planungsverfahren könnten dazu beitragen, Bauprojekte transparenter zu gestalten. Voraussetzung dafür ist allerdings, dass die erhobenen Daten aktuell und aussagekräftig sind.\nWenngleich solche Anwendungen Vorteile bieten, bergen sie erhebliche Risiken. Die Sammlung personenbezogener Daten könnte die Privatsphäre beeinträchtigen. Außerdem besteht die Gefahr, dass Menschen ohne ausreichende digitale Kompetenzen von Beteiligungsverfahren ausgeschlossen werden. Vor allem lässt sich durch effizientere Datennutzung allein kein zusätzlicher Wohnraum schaffen. Technischer Fortschritt darf daher nicht als Ersatz für politische Entscheidungen dienen.\nAus meiner Sicht sollten Städte deshalb digitale Instrumente mit dem Ausbau bezahlbarer Wohnungen verbinden. Durch die Bereitstellung kommunaler Grundstücke für gemeinwohlorientierte Bauprojekte ließe sich langfristig mehr Wohnraum sichern. Ergänzend wären analoge Beratungsangebote erforderlich, damit auch weniger digital erfahrene Menschen Zugang zu Informationen erhalten. Solche Maßnahmen sind zwar mit Kosten verbunden, könnten jedoch soziale Verdrängung wirksamer verhindern als reine Technikinvestitionen. Eine intelligente Stadt zeichnet sich folglich nicht allein durch vernetzte Systeme aus, sondern durch den nachweisbaren Nutzen für ihre Bevölkerung.",
+    "rubric": [
+      "Alle vier Inhaltspunkte",
+      "Klarer roter Faden und konkrete Belege",
+      "Differenzierte Argumentation und angemessener Forumsstil",
+      "Präziser Wortschatz, korrekte Grammatik und angemessene Länge"
+    ]
+  },
+  {
+    "day": 9,
+    "title": "Verbraucherschutz und Obsoleszenz",
+    "skill": "Lesen",
+    "part": 3,
+    "grammar": "Konzessive und adversative Konnektoren",
+    "rule": "wohingegen stellt zwei Sachverhalte gegenüber; wenngleich räumt einen Einwand ein; dennoch führt eine unerwartete Folge ein. Achten Sie bei Textlücken auf Pronomen und logische Rückbezüge.",
+    "grammarChecks": [
+      [
+        "Das Gerät ist günstig. Die Reparatur ist teuer. (wohingegen)",
+        "Das Gerät ist günstig, wohingegen die Reparatur teuer ist.",
+        "Gegensatz, Verb am Ende."
+      ],
+      [
+        "Die Reparatur lohnt sich. Viele kaufen neu. (wenngleich)",
+        "Wenngleich sich die Reparatur lohnt, kaufen viele ein neues Gerät.",
+        "Einräumung eines Gegenarguments."
+      ],
+      [
+        "Ersatzteile fehlen. Das Gerät funktioniert noch. (dennoch)",
+        "Ersatzteile fehlen; dennoch funktioniert das Gerät noch.",
+        "Hauptsatz mit Inversion."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Obsoleszenz",
+        "obsolescence"
+      ],
+      [
+        "die Reparierbarkeit",
+        "repairability"
+      ],
+      [
+        "der Verbraucherschutz",
+        "consumer protection"
+      ],
+      [
+        "die Nutzungsdauer",
+        "useful life"
+      ],
+      [
+        "das Ersatzteil",
+        "spare part"
+      ],
+      [
+        "die Gewährleistung",
+        "statutory warranty"
+      ],
+      [
+        "die Materialermüdung",
+        "material fatigue"
+      ],
+      [
+        "die Wegwerfmentalität",
+        "throwaway mentality"
+      ],
+      [
+        "die Lebenszykluskosten",
+        "life-cycle cost"
+      ],
+      [
+        "die Haltbarkeit",
+        "durability"
+      ],
+      [
+        "die Wartung",
+        "maintenance"
+      ],
+      [
+        "die Informationspflicht",
+        "disclosure requirement"
+      ],
+      [
+        "die Kaufentscheidung",
+        "purchase decision"
+      ],
+      [
+        "die Produktkennzeichnung",
+        "product labeling"
+      ],
+      [
+        "die Entsorgung",
+        "disposal"
+      ],
+      [
+        "die Wiederverwendung",
+        "reuse"
+      ],
+      [
+        "Ansprüche geltend machen",
+        "assert claims"
+      ],
+      [
+        "einen Defekt beheben",
+        "repair a defect"
+      ],
+      [
+        "Kosten offenlegen",
+        "disclose costs"
+      ],
+      [
+        "langlebig",
+        "durable"
+      ]
+    ],
+    "instruction": "Welche Sätze passen in die Lücken (1–5)? Zwei Sätze passen nicht. Wählen Sie aus A–G; jeder passende Satz wird nur einmal verwendet.",
+    "text": "Reparieren statt ersetzen\nViele Verbraucher achten beim Kauf vor allem auf den Anschaffungspreis. (1) ___ Ein zunächst günstiges Gerät kann sich deshalb über mehrere Jahre als teuer erweisen.\nAuch die Verfügbarkeit von Ersatzteilen beeinflusst die Nutzungsdauer. (2) ___ Ohne diese Information lässt sich beim Kauf kaum einschätzen, ob eine spätere Reparatur möglich sein wird.\nEin transparenter Reparierbarkeitsindex könnte die Kaufentscheidung erleichtern. (3) ___ Ein solcher Index wäre jedoch nur aussagekräftig, wenn seine Kriterien unabhängig kontrolliert würden.\nNicht jeder Defekt ist Ausdruck absichtlich verkürzter Lebensdauer. (4) ___ Verbraucher sollten daher zwischen nachweisbaren Konstruktionsproblemen und normalem Verschleiß unterscheiden.\nSchließlich kommt es auch auf die Kosten der Reparatur an. (5) ___ Eine wirksame Strategie muss folglich sowohl die Konstruktion als auch die wirtschaftlichen Rahmenbedingungen berücksichtigen.",
+    "questions": [
+      [
+        "1",
+        [
+          "A. Er würde verschiedene Merkmale wie die Verfügbarkeit von Ersatzteilen zusammenfassen.",
+          "B. Die meisten Verbraucher bevorzugen unabhängig vom Preis stets eine Reparatur.",
+          "C. Entscheidend sind jedoch auch die Kosten, die während der gesamten Nutzungsdauer entstehen.",
+          "D. Ist ein Neugerät deutlich billiger als die Instandsetzung, erscheint ein Neukauf finanziell attraktiver.",
+          "E. Eine gesetzliche Regelung würde sämtliche technischen Defekte verhindern.",
+          "F. Manche Hersteller machen allerdings vor dem Kauf keine verlässlichen Angaben darüber.",
+          "G. Bauteile können auch aufgrund gewöhnlicher Materialermüdung ausfallen."
+        ],
+        2,
+        "Der folgende Satz spricht von Kosten über mehrere Jahre."
+      ],
+      [
+        "2",
+        [
+          "A. Er würde verschiedene Merkmale wie die Verfügbarkeit von Ersatzteilen zusammenfassen.",
+          "B. Die meisten Verbraucher bevorzugen unabhängig vom Preis stets eine Reparatur.",
+          "C. Entscheidend sind jedoch auch die Kosten, die während der gesamten Nutzungsdauer entstehen.",
+          "D. Ist ein Neugerät deutlich billiger als die Instandsetzung, erscheint ein Neukauf finanziell attraktiver.",
+          "E. Eine gesetzliche Regelung würde sämtliche technischen Defekte verhindern.",
+          "F. Manche Hersteller machen allerdings vor dem Kauf keine verlässlichen Angaben darüber.",
+          "G. Bauteile können auch aufgrund gewöhnlicher Materialermüdung ausfallen."
+        ],
+        5,
+        "Diese Information verweist auf Angaben zu Ersatzteilen."
+      ],
+      [
+        "3",
+        [
+          "A. Er würde verschiedene Merkmale wie die Verfügbarkeit von Ersatzteilen zusammenfassen.",
+          "B. Die meisten Verbraucher bevorzugen unabhängig vom Preis stets eine Reparatur.",
+          "C. Entscheidend sind jedoch auch die Kosten, die während der gesamten Nutzungsdauer entstehen.",
+          "D. Ist ein Neugerät deutlich billiger als die Instandsetzung, erscheint ein Neukauf finanziell attraktiver.",
+          "E. Eine gesetzliche Regelung würde sämtliche technischen Defekte verhindern.",
+          "F. Manche Hersteller machen allerdings vor dem Kauf keine verlässlichen Angaben darüber.",
+          "G. Bauteile können auch aufgrund gewöhnlicher Materialermüdung ausfallen."
+        ],
+        0,
+        "Ein solcher Index verweist auf die Beschreibung seiner Merkmale."
+      ],
+      [
+        "4",
+        [
+          "A. Er würde verschiedene Merkmale wie die Verfügbarkeit von Ersatzteilen zusammenfassen.",
+          "B. Die meisten Verbraucher bevorzugen unabhängig vom Preis stets eine Reparatur.",
+          "C. Entscheidend sind jedoch auch die Kosten, die während der gesamten Nutzungsdauer entstehen.",
+          "D. Ist ein Neugerät deutlich billiger als die Instandsetzung, erscheint ein Neukauf finanziell attraktiver.",
+          "E. Eine gesetzliche Regelung würde sämtliche technischen Defekte verhindern.",
+          "F. Manche Hersteller machen allerdings vor dem Kauf keine verlässlichen Angaben darüber.",
+          "G. Bauteile können auch aufgrund gewöhnlicher Materialermüdung ausfallen."
+        ],
+        6,
+        "Normaler Verschleiß wird als Alternative zu absichtlicher Verkürzung erläutert."
+      ],
+      [
+        "5",
+        [
+          "A. Er würde verschiedene Merkmale wie die Verfügbarkeit von Ersatzteilen zusammenfassen.",
+          "B. Die meisten Verbraucher bevorzugen unabhängig vom Preis stets eine Reparatur.",
+          "C. Entscheidend sind jedoch auch die Kosten, die während der gesamten Nutzungsdauer entstehen.",
+          "D. Ist ein Neugerät deutlich billiger als die Instandsetzung, erscheint ein Neukauf finanziell attraktiver.",
+          "E. Eine gesetzliche Regelung würde sämtliche technischen Defekte verhindern.",
+          "F. Manche Hersteller machen allerdings vor dem Kauf keine verlässlichen Angaben darüber.",
+          "G. Bauteile können auch aufgrund gewöhnlicher Materialermüdung ausfallen."
+        ],
+        3,
+        "Der Preisvergleich begründet den Zusammenhang mit wirtschaftlichen Bedingungen."
+      ]
+    ]
+  },
+  {
+    "day": 10,
+    "title": "Migration und Chancengleichheit",
+    "skill": "Hören",
+    "part": 3,
+    "grammar": "Modalpassiv und Passiversatzformen",
+    "rule": "Modalpassiv: Modalverb + Partizip II + werden. sein + zu + Infinitiv kann Verpflichtung ausdrücken; sich lassen + Infinitiv beschreibt eine Möglichkeit. Nennen Sie verantwortliche Akteure, wenn sie wichtig sind.",
+    "grammarChecks": [
+      [
+        "Die Behörde muss die Abschlüsse prüfen. (Modalpassiv)",
+        "Die Abschlüsse müssen von der Behörde geprüft werden.",
+        "Modalverb + Partizip II + werden."
+      ],
+      [
+        "Man kann Zugangshürden durch Beratung abbauen.",
+        "Zugangshürden lassen sich durch Beratung abbauen.",
+        "sich lassen + Infinitiv drückt Möglichkeit aus."
+      ],
+      [
+        "Die Kriterien müssen offengelegt werden. (sein + zu)",
+        "Die Kriterien sind offenzulegen.",
+        "Bei trennbaren Verben steht zu zwischen Präfix und Stamm."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Anerkennung",
+        "recognition"
+      ],
+      [
+        "die Zugangsbarriere",
+        "access barrier"
+      ],
+      [
+        "die Chancengleichheit",
+        "equal opportunity"
+      ],
+      [
+        "Benachteiligung abbauen",
+        "reduce disadvantage"
+      ],
+      [
+        "der Berufsabschluss",
+        "professional qualification"
+      ],
+      [
+        "die Nachqualifizierung",
+        "supplementary training"
+      ],
+      [
+        "das Anerkennungsverfahren",
+        "recognition procedure"
+      ],
+      [
+        "die Gleichwertigkeit",
+        "equivalence"
+      ],
+      [
+        "die Erwerbsintegration",
+        "labor-market integration"
+      ],
+      [
+        "die Diskriminierung",
+        "discrimination"
+      ],
+      [
+        "die Sprachförderung",
+        "language support"
+      ],
+      [
+        "die Teilhabe",
+        "participation"
+      ],
+      [
+        "der Rechtsanspruch",
+        "legal entitlement"
+      ],
+      [
+        "die Bearbeitungsdauer",
+        "processing time"
+      ],
+      [
+        "die Beratungsstelle",
+        "advisory center"
+      ],
+      [
+        "die Übergangsregelung",
+        "transitional provision"
+      ],
+      [
+        "Qualifikationen nachweisen",
+        "demonstrate qualifications"
+      ],
+      [
+        "eine Hürde überwinden",
+        "overcome a barrier"
+      ],
+      [
+        "Zuständigkeiten klären",
+        "clarify responsibilities"
+      ],
+      [
+        "nachvollziehbar",
+        "transparent"
+      ]
+    ],
+    "instruction": "Sie hören eine fiktive Diskussion einmal. Ordnen Sie jede Aussage der Person zu, die sie vertritt: A = Beraterin, B = Arbeitgeber, C = Forscherin.",
+    "text": "Moderator: Was erschwert den Einstieg qualifizierter Zugewanderter in den Arbeitsmarkt? Beraterin: Viele Ratsuchende wissen zunächst nicht, welche Behörde zuständig ist. Ich halte eine zentrale Anlaufstelle für notwendig, die Unterlagen prüft und den weiteren Weg erklärt. Arbeitgeber: In unserem Betrieb sind praktische Fähigkeiten besonders wichtig. Bei nicht reglementierten Tätigkeiten könnten wir Bewerbenden häufiger die Möglichkeit geben, ihre Kenntnisse in einer fair vergüteten Arbeitsprobe zu zeigen. Forscherin: Das kann im Einzelfall helfen. Wir sollten aber auch untersuchen, ob Personen mit vergleichbaren Qualifikationen je nach Herkunft unterschiedliche Einladungsquoten haben. Solche Daten fehlen oft. Beraterin: Außerdem braucht es bezahlbare Nachqualifizierung, wenn nur einzelne Inhalte fehlen. Es wäre ineffizient, einen gesamten Ausbildungsgang wiederholen zu lassen. Arbeitgeber: Dafür benötigen Betriebe Unterstützung bei der Einarbeitung. Gerade kleine Firmen können nicht ohne Weiteres zusätzliche Betreuung finanzieren. Forscherin: Neben solchen Maßnahmen müssen Auswahlkriterien transparent sein. Sonst besteht die Gefahr, dass vermeintlich neutrale Verfahren bestimmte Gruppen benachteiligen. Moderator: Was wäre also ein sinnvoller erster Schritt? Beraterin: Zuständigkeiten verständlich machen. Arbeitgeber: Praktische Fähigkeiten stärker berücksichtigen. Forscherin: Vergleichbare Bewerbungsverläufe systematisch auswerten.",
+    "questions": [
+      [
+        "1. Eine zentrale Beratungsstelle sollte Zuständigkeiten erklären.",
+        [
+          "A – Beraterin",
+          "B – Arbeitgeber",
+          "C – Forscherin"
+        ],
+        0,
+        "Die Beraterin fordert eine zentrale Anlaufstelle."
+      ],
+      [
+        "2. Praktische Fähigkeiten sollten bei geeigneten Tätigkeiten erprobt werden.",
+        [
+          "A – Beraterin",
+          "B – Arbeitgeber",
+          "C – Forscherin"
+        ],
+        1,
+        "Der Arbeitgeber schlägt vergütete Arbeitsproben vor."
+      ],
+      [
+        "3. Einladungsquoten vergleichbar qualifizierter Personen sollten untersucht werden.",
+        [
+          "A – Beraterin",
+          "B – Arbeitgeber",
+          "C – Forscherin"
+        ],
+        2,
+        "Die Forscherin fordert vergleichende Daten."
+      ],
+      [
+        "4. Einzelne fehlende Inhalte sollten gezielt nachgeholt werden.",
+        [
+          "A – Beraterin",
+          "B – Arbeitgeber",
+          "C – Forscherin"
+        ],
+        0,
+        "Sie fordert bezahlbare Nachqualifizierung statt kompletter Wiederholung."
+      ],
+      [
+        "5. Kleinere Betriebe benötigen Unterstützung bei der Einarbeitung.",
+        [
+          "A – Beraterin",
+          "B – Arbeitgeber",
+          "C – Forscherin"
+        ],
+        1,
+        "Der Arbeitgeber nennt die Betreuungskosten."
+      ],
+      [
+        "6. Auch scheinbar neutrale Verfahren können benachteiligen.",
+        [
+          "A – Beraterin",
+          "B – Arbeitgeber",
+          "C – Forscherin"
+        ],
+        2,
+        "Die Forscherin warnt davor."
+      ]
+    ]
   }
+
 ];
 export const getC1Phase2Lesson = (day) => C1_PHASE2_LESSONS.find((lesson) => lesson.day === Number(day)) || null;

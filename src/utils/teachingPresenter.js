@@ -2199,17 +2199,17 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
       suggestedMinutes: 10,
       teacherPurpose: { student: academic.instruction, teacher: "Antworten erst nach dem Versuch aufdecken. Unbewertetes Kurztraining." },
     } : academic.skill === "Hören" ? {
-      id: "academic-practice", type: "question-reveal", kicker: "Hören · Teil 1", title: academic.title,
+      id: "academic-practice", type: "question-reveal", kicker: "Hören · Teil " + academic.part, title: academic.title,
       instruction: academic.instruction,
       items: academic.questions.map(([prompt]) => prompt),
       questionModels: academic.questions.map(([prompt, choices, correct, reason]) => ({ questionDe: prompt, modelAnswerDe: choices[correct] + " — " + reason })),
       suggestedMinutes: 10,
-      teacherPurpose: { student: academic.instruction, teacher: "Vorlesen (einmal), nicht auf dem geteilten Bildschirm zeigen: " + academic.text },
+      teacherPurpose: { student: academic.instruction, teacher: "Vorlesen (" + ([2, 4].includes(academic.part) ? "zweimal" : "einmal") + "), nicht auf dem geteilten Bildschirm zeigen: " + academic.text },
     } : {
       id: "academic-practice", type: "question-reveal", kicker: academic.skill + " · Teil " + academic.part, title: academic.title,
       instruction: academic.instruction,
       items: [...academic.prompts, ...(academic.followups || []), "Muster und Selbstcheck"],
-      questionModels: [{ questionDe: "Muster und Selbstcheck", modelAnswerDe: academic.model + "\\n" + academic.rubric.join(" · ") }],
+      questionModels: [{ questionDe: "Muster und Selbstcheck", modelAnswerDe: academic.model + "\n" + academic.rubric.join(" · ") }],
       suggestedMinutes: 10,
       teacherPurpose: { student: academic.instruction, teacher: "Bearbeiten lassen, anschließend Muster und Selbstcheck aufdecken. Keine neue Bewertung." },
     };
