@@ -188,6 +188,9 @@ export function enhanceA1Days16To20Slide(slide = {}) {
     ...slide,
     ...(id === "A1-12.1" ? { title: "A1 Day 18 · Wechselpräpositionen – Wo? oder Wohin?", topic: "12.1 Wechselpräpositionen – Wo? oder Wohin?" } : {}),
     ...(id === "A1-12.1" ? {
+      objective: "Students transform location statements into destination statements and back, choosing the correct verb and case article with all nine Wechselpräpositionen.",
+      keyPhrasesDe: ["Das Buch liegt auf dem Tisch.", "Ich lege das Buch auf den Tisch.", "Das Bild hängt an der Wand.", "Ich hänge das Bild an die Wand.", "Ich laufe im Park.", "Ich gehe in den Park."],
+      estimatedDuration: "60 minutes",
       teacherSupport: {
         ...(slide.teacherSupport || {}),
         grammarFocusEn: ["Nine two-way prepositions: Wo? + dative, destination Wohin? + accusative.", "Transform the verb, subject/object and article; movement within a location can still be dative."],
