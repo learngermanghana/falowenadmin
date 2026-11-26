@@ -93,7 +93,12 @@ function legacyCourseCandidates(student,rows=[]){
   const status=String(s.status||"").toLowerCase();
   const explicitFree=s.accessType==="complimentary";
   const canFree=(paid===null||paid===0)&&(balance===null||balance===0)&&(tuitionFee===null||tuitionFee===0)&&!(paid===null&&["paid","partial","partially paid","partially_paid"].includes(String(s.paymentStatus||"").toLowerCase()));
-  const record={id,program,level,className:String(s.className||s.classname||""),contractStart:isoDate(s.contractStart)||"",contractEnd:isoDate(s.contractEnd)||"",paymentDeadline:isoDate(s.paymentDeadline)||"",tuitionFee,paid,balanceDue:balance,accessType:explicitFree?"complimentary":"paid",paymentStatus:String(s.paymentStatus||""),canPaid:reconciled&&paid>0,canFree,blockedReason:malformed?"Invalid historical payment totals require review.":protectedInstitution?"Institutional access must be managed through its approval workflow.":upgrade?"Historical upgrade payments need separate reconciliation before migration.":["blocked","suspended","cancelled","withdrawn","inactive"].includes(status)?"Inactive or blocked course requires review.":""};
+  // Only a known unpaid primary trial can be prepared for paid enrollment.
+  const trialHistory=Boolean(s.trialStartedAt||s.trialEndsAt||s.trialExpiredAt||["active","expired"].includes(String(s.trialStatus||"").toLowerCase())||["trial_active","trial_expired"].includes(status));
+  const paidStatus=String(s.paymentStatus||"").trim().toLowerCase().replace(/[_-]+/g," ");
+  const historicalCredit=["paid","paidAmount","amountPaid","tuitionPaid","totalPaid","initialPaymentAmount"].some(k=>Number(String(s[k]??0).replace(/,/g,""))>0);
+  const canConvertTrial=program===primary&&trialHistory&&!explicitFree&&!malformed&&!protectedInstitution&&!upgrade&&!historicalCredit&&!s.trialConvertedAt&&["","pending","unpaid","expired"].includes(paidStatus)&&["pending","trial_active","trial_expired"].includes(status)&&(!tuitionFee||balance===null||balance===tuitionFee);
+  const record={id,program,level,canConvertTrial,className:String(s.className||s.classname||""),contractStart:isoDate(s.contractStart)||"",contractEnd:isoDate(s.contractEnd)||"",paymentDeadline:isoDate(s.paymentDeadline)||"",tuitionFee,paid,balanceDue:balance,accessType:explicitFree?"complimentary":"paid",paymentStatus:String(s.paymentStatus||""),canPaid:reconciled&&paid>0,canFree,blockedReason:malformed?"Invalid historical payment totals require review.":protectedInstitution?"Institutional access must be managed through its approval workflow.":upgrade?"Historical upgrade payments need separate reconciliation before migration.":["blocked","suspended","cancelled","withdrawn","inactive"].includes(status)?"Inactive or blocked course requires review.":""};
   return [{...record,revision:crypto.createHash("sha256").update(JSON.stringify(record)).digest("hex")}];
  });
 }
@@ -101,6 +106,14 @@ function legacyCourseRecord(candidate,input){
  if(!candidate||candidate.blockedReason)fail(candidate?.blockedReason||"Existing course not found or already managed",409);
  if(candidate.revision!==input.revision)fail("Existing course changed. Refresh and review before saving.",409);
  const accessType=input.accessType;
+ if(input.convertTrial===true){
+  if(!candidate.canConvertTrial||accessType!=="paid")fail("Only a verified unpaid trial can use this conversion",409);
+  const data=normalizeEnrollment({program:candidate.program,level:candidate.level,className:input.className??candidate.className,tuitionFee:input.tuitionFee,accessType,contractStart:input.contractStart,contractEnd:input.contractEnd,paymentDeadline:input.paymentDeadline});
+  if(!(data.tuitionFee>0)||!data.contractStart||!data.contractEnd||!data.paymentDeadline)fail("Enter tuition, contract dates and payment deadline");
+  const today=new Date().toISOString().slice(0,10);
+  if(data.contractEnd<today||data.paymentDeadline<data.contractStart||data.paymentDeadline>data.contractEnd)fail("Choose valid current or future contract and payment dates");
+  return {...data,...manualTotals({tuitionFee:data.tuitionFee,paid:0}),status:"active",openingBalanceImported:false,manualOpeningPaid:0,accountingMode:"independent_pending_integration",sheetVersion:1,sheetSyncStatus:"pending",legacyCourseImported:true,trialConversionPrepared:true};
+ }
  if(accessType==="paid"&&!candidate.canPaid)fail("Existing paid totals do not reconcile. Verify the original course payments before importing.",409);
  if(accessType==="complimentary"&&(!candidate.canFree||input.confirmComplimentary!==true))fail("Confirm complimentary access without replacing existing tuition or payments.",409);
  if(!["paid","complimentary"].includes(accessType))fail("Select an access type");
@@ -146,9 +159,12 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
   // or the account is staff. Never touch the other language or class IDs.
   const previous=parent.data(),primary=legacyLanguage(previous.program||previous.language||"german");
   const projected={contractStart:data.contractStart,contractEnd:data.contractEnd,paymentDeadline:data.paymentDeadline,tuitionFee:data.tuitionFee,paid:data.paid,balanceDue:data.balanceDue,balance:data.balanceDue,paymentStatus:data.accessType==="complimentary"?"complimentary":data.balanceDue===0?"paid":"partial",accessType:data.accessType,effectiveEnrollmentId:ref.id};
+  // Preparing a trial contract must not alter live access; payment reconciliation activates it.
+  if(data.trialConversionPrepared!==true){
   if(current.program===primary)tx.update(student,projected);
   else tx.update(student,{coursePlacements:{...previous.coursePlacements,[current.program]:{...previous.coursePlacements?.[current.program],...projected}}});
-  tx.set(db.collection("auditLogs").doc(),{type:"student.existingCourseImported",studentId,enrollmentId:ref.id,actorId:user.uid,before:{contractStart:current.contractStart,contractEnd:current.contractEnd,paid:current.paid,balanceDue:current.balanceDue,accessType:current.accessType},after:enrollment,createdAt:stamp});
+  }
+  tx.set(db.collection("auditLogs").doc(),{type:data.trialConversionPrepared?"student.trialConversionPrepared":"student.existingCourseImported",studentId,enrollmentId:ref.id,actorId:user.uid,before:{contractStart:current.contractStart,contractEnd:current.contractEnd,paid:current.paid,balanceDue:current.balanceDue,accessType:current.accessType},after:enrollment,createdAt:stamp});
   return {id:ref.id,...enrollment};
  });
  return res.json({ok:true,enrollment:result});
