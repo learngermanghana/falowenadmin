@@ -55,12 +55,13 @@ test("Day 18 combines grammar while the legacy 12.2 teaching bank remains availa
   assert.match(JSON.stringify(getA1Days16To20UnderstandingChecks("A1-12.2")), /als Lehrer|bei einer Bank|zur Arbeit/);
 });
 
-test("Day 17 uses real Lesen/Hören workbook sections and preserves its Sie-imperative", () => {
+test("Day 17 uses real Sprechen/Hören/Lesen workbook sections and preserves its Sie-imperative", () => {
   const s = slide("A1-11");
   const parts = s.workbookConnection.parts;
-  assert.equal(parts.length, 2);
-  assert.match(parts[0].label,/Lesen/);
+  assert.equal(parts.length, 3);
+  assert.match(parts[0].label,/Sprechen/);
   assert.match(parts[1].label,/Hören/);
+  assert.match(parts[2].label,/Lesen/);
   const data = JSON.stringify(getA1Days16To20UnderstandingChecks("A1-11"));
   assert.match(data,/Gehen Sie geradeaus/);
   assert.match(data,/Biegen Sie links ab/);
