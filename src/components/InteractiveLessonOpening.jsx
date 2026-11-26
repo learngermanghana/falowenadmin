@@ -85,9 +85,10 @@ export default function InteractiveLessonOpening({ stage, slide }) {
         (lesson.listening.day === 27 && lesson.listening.audioKey === "swahili/B1/day-27/kuntunza.mp3")
         || (lesson.listening.day === 28 && lesson.listening.audioKey === "swahili/B1/day-28/swahili-listening kuntasa.mp3")
       );
+      const isSwahiliDay26Classroom = swahili && lesson.listening.level === "B1" && lesson.listening.day === 26 && lesson.listening.audioKey === "swahili/B1/day-26/swahili-listening matitizo.mp3";
       if (isB1Classroom) params.set("level", "B1");
-      if (isSwahiliClassroom) params.set("level", "SWAHILI-B1");
-      const audioEndpoint = isB1Classroom || isSwahiliClassroom
+      if (isSwahiliClassroom || isSwahiliDay26Classroom) params.set("level", "SWAHILI-B1");
+      const audioEndpoint = isB1Classroom || isSwahiliClassroom || isSwahiliDay26Classroom
         ? "https://www.falowen.app/api/course-media/classroom/audio-url"
         : lesson.listening.level === "A2" && [1, 2, 3, 4, 5, 7, 8, 9, 10, 18, 19, 20, 21, 23, 24, 25, 26, 27, 28].includes(lesson.listening.day)
           ? "https://www.falowen.app/api/course-media/a2/classroom-audio-url"
