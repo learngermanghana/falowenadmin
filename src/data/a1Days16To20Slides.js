@@ -60,9 +60,9 @@ const plans = Object.freeze({
   "A1-11": {
     subtitle: "A1 Day 17 · instructions, directions, prohibitions and permission. New classroom exam practice is ungraded; the published A1-11 workbook stays unchanged.",
     parts: [
-      { label: "Teil 1 · Lesen", detailEn: "Follow the published reading-comprehension task." },
+      { label: "Teil 1 · Sprechen", detailEn: "Draw one picture card and record one polite Goethe A1 Teil 3 request using the existing speaking checkpoint." },
       { label: "Teil 2 · Hören", detailEn: "Listen to the actual published Hören recording and answer its questions." },
-      { label: "Teil 3 · Wegbeschreibung", detailEn: "Complete the existing Richtig/Falsch route exercise and any speaking task shown in the learner workbook. Do not create a new score or answer key." },
+      { label: "Teil 3 · Lesen: Wegbeschreibung", detailEn: "Complete the existing Richtig/Falsch route exercise. Do not create a new score or answer key." },
     ],
     notes: [
       "The dedicated 12-page classroom lesson teaches formal Sie only; begin with visuals, then practise routes and the separable verb abbiegen.",
