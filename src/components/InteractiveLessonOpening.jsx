@@ -81,7 +81,10 @@ export default function InteractiveLessonOpening({ stage, slide }) {
         && lesson.listening.day === 28
         && lesson.listening.audioKey === "b1/day-28/klimafreundlich-leben.mp3";
       const isB1Classroom = isB1Day25Classroom || isB1Day26Classroom || isB1Day27Classroom || isB1Day28Classroom;
-      const isSwahiliClassroom = swahili && lesson.listening.level === "B1" && lesson.listening.day === 27 && lesson.listening.audioKey === "swahili/B1/day-27/kuntunza.mp3";
+      const isSwahiliClassroom = swahili && lesson.listening.level === "B1" && (
+        (lesson.listening.day === 27 && lesson.listening.audioKey === "swahili/B1/day-27/kuntunza.mp3")
+        || (lesson.listening.day === 28 && lesson.listening.audioKey === "swahili/B1/day-28/swahili-listening kuntasa.mp3")
+      );
       if (isB1Classroom) params.set("level", "B1");
       if (isSwahiliClassroom) params.set("level", "SWAHILI-B1");
       const audioEndpoint = isB1Classroom || isSwahiliClassroom
