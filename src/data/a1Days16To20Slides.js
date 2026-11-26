@@ -89,7 +89,7 @@ const plans = Object.freeze({
     exit: "Fragen Sie nach dem Bahnhof. Geben Sie Anweisungen. Formulieren Sie eine höfliche Bitte zum Rauchverbot und fragen Sie nach Erlaubnis zum Parken.",
   },
   "A1-12.1": {
-    subtitle: "A1 Day 18 · Wechselpräpositionen: Dativ (Wo?) versus Akkusativ (Wohin?), verb pairs, case articles and error correction.",
+    subtitle: "A1 Day 18 · Wechselpräpositionen: nine two-way prepositions, Wo? / Wohin?, article changes and sentence transformations.",
     parts: [
       { label: "Teil 1 · Fälle erkennen", detailEn: "Identify the case in paired sentences: liegen/legen, stehen/stellen, sitzen/setzen, hängen/hängen." },
       { label: "Teil 2 · Artikel einsetzen", detailEn: "Select masculine, feminine, neuter and plural articles in Wo?/Wohin? pairs; explain dem/den and der/die." },
@@ -99,7 +99,7 @@ const plans = Object.freeze({
       "Teach the article grid: masculine der → Akkusativ den / Dativ dem; feminine die → Akkusativ die / Dativ der; neuter das → Akkusativ das / Dativ dem; plural die → Akkusativ die / Dativ den (+n where required).",
       "With two-way prepositions, Wohin? (destination/change of location) takes accusative and Wo? (existing position/location) takes dative. Motion within a location can still be dative: Ich laufe im Park.",
       "Contrast verb pairs: legen → liegen (lay/lie), stellen → stehen (place upright/stand), setzen → sitzen (seat/sit). Hängen can describe both hanging something and something hanging.",
-      "Dative-only mit, bei and zu are a short separate note, not Wechselpräpositionen: mit dem Bus, bei der Arbeit, zum Arzt.",
+      "Keep mit, bei and zu outside the core classroom practice; they are not Wechselpräpositionen.",
     ],
     questions: [
       "Was ist Dativ, was ist Akkusativ? „Ich lege das Buch auf den Tisch.“ / „Das Buch liegt auf dem Tisch.“",
@@ -109,14 +109,15 @@ const plans = Object.freeze({
       "Korrigiere und begründe: „Ich gehe in der Schule.“ (Ziel: Schule).",
       "Ergänze: „Ich hänge das Bild an ___ Wand; das Bild hängt an ___ Wand.“",
       "Welcher Fall steht in „zwischen den Tischen“? Warum kommt bei Tischen ein -n?",
-      "Warum ist „Ich fahre mit dem Bus“ Dativ, obwohl ich mich bewege?",
+      "Warum ist „Ich laufe im Park“ Dativ, obwohl ich mich bewege?",
     ],
     flow: [
-      ["Fälle und Artikel", "8 min: students complete der → den/dem; die → die/der; das → das/dem; plural die → die/den."],
-      ["Verbpaare zuordnen", "8 min: compare legen/liegen, stellen/stehen, setzen/sitzen with destination and location sentences."],
-      ["Wo? oder Wohin?", "9 min: choose cases and articles for in die/der Schule, auf den/dem Tisch, an die/der Wand."],
-      ["Fehler finden", "10 min: correct Ich gehe in der Schule → Ich gehe in die Schule and Ich bin in die Schule → Ich bin in der Schule."],
-      ["Dativ allein + Transfer", "10 min: review mit, bei, zu as dative-only, then solve the published workbook activities."],
+      ["Einstieg und neun Präpositionen", "9 min: compare location and destination with local diagrams."],
+      ["Regel und Artikel", "10 min: contrast Wo? and Wohin?, including movement within a place, then practise all four article groups."],
+      ["Verbpaare und Satztraining", "14 min: contrast four verb pairs and transform sentences in both directions."],
+      ["Vergleich und Quick Practice", "9 min: compare all nine prepositions and choose eight articles."],
+      ["Zimmer und Fehlerkorrektur", "10 min: describe and rearrange furniture, then correct five sentences."],
+      ["Einzelcheck und Mini-Prüfung", "8 min: use the existing student picker and independent six-question exit check; open the published workbook."],
     ],
     exit: "Bestimme Fall und Artikel: „Ich lege das Buch auf ___ Tisch; es liegt auf ___ Tisch.“ Korrigiere „Ich gehe in der Schule.“ Erkläre legen/liegen und den/dem.",
   },
@@ -185,12 +186,12 @@ export function enhanceA1Days16To20Slide(slide = {}) {
   if (!workbookUrl) throw new Error(id + ": no verified published learner destination");
   return {
     ...slide,
-    ...(id === "A1-12.1" ? { title: "A1 Day 18 · Two-Way and Dative Prepositions", topic: "12.1 Two-Way and Dative Prepositions" } : {}),
+    ...(id === "A1-12.1" ? { title: "A1 Day 18 · Wechselpräpositionen – Wo? oder Wohin?", topic: "12.1 Wechselpräpositionen – Wo? oder Wohin?" } : {}),
     ...(id === "A1-12.1" ? {
       teacherSupport: {
         ...(slide.teacherSupport || {}),
-        grammarFocusEn: ["Two-way prepositions: Wo? + dative, destination Wohin? + accusative.", "Dative-only mit, bei and zu: mit dem Bus, beim Arzt, zum Arzt, zur Arbeit. Movement alone is not the rule."],
-        modelExamplesDe: ["Das Buch liegt auf dem Tisch.", "Ich lege das Buch auf den Tisch.", "Ich fahre mit dem Bus.", "Ich bin beim Arzt.", "Ich gehe zum Arzt.", "Wir fahren zur Arbeit."],
+        grammarFocusEn: ["Nine two-way prepositions: Wo? + dative, destination Wohin? + accusative.", "Transform the verb, subject/object and article; movement within a location can still be dative."],
+        modelExamplesDe: ["Das Buch liegt auf dem Tisch.", "Ich lege das Buch auf den Tisch.", "Die Flasche steht auf dem Tisch.", "Ich stelle die Flasche auf den Tisch.", "Ich laufe im Park.", "Ich gehe in den Park."],
       },
     } : {}),
     studentQuestionsDe: plan.questions,
