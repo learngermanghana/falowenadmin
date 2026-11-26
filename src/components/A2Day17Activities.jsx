@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { auth } from "../firebaseAuth.js";
 import "./A2Day17Activities.css";
+import { classroomRecordingPath } from "../utils/classroomRecordingPath.js";
 import { A2_DAY17_AUDIO_KEY, A2_DAY17_WARMUP, A2_DAY17_LISTENING, A2_DAY17_TRANSCRIPT } from "../data/a2Day17Opening.js";
 
 const AUDIO_API = (import.meta.env.VITE_FALOWEN_COURSE_API_URL || "https://www.falowen.app/api").replace(/[/]+$/, "");
@@ -49,12 +50,19 @@ export default function A2Day17Activities({ stage }) {
       const user = auth.currentUser;
       if (!user) throw new Error("Bitte zuerst in Falowen Admin anmelden.");
       const params = new URLSearchParams({ day: "17", key: stage.audioKey || A2_DAY17_AUDIO_KEY });
-      const response = await fetch(`${AUDIO_API}/course-media/a2/audio-url?${params}`, {
+      const request = async url => fetch(url, {
         method: "GET",
         headers: { Authorization: `Bearer ${await user.getIdToken()}` },
         cache: "no-store",
       });
-      const data = await response.json().catch(() => ({}));
+      let response = await request(`${AUDIO_API}/course-media/a2/audio-url?${params}`);
+      let data = await response.json().catch(() => ({}));
+      const fixedPath=classroomRecordingPath({level:"A2",day:17,audioKey:stage.audioKey || A2_DAY17_AUDIO_KEY});
+      if ([400,404].includes(response.status) && fixedPath) {
+        const fixed=await request(fixedPath);
+        const result=await fixed.json().catch(()=>({}));
+        if(fixed.ok && result.url){response=fixed;data=result;}
+      }
       if (!response.ok || !data.url) throw new Error(data.error || `Audio konnte nicht geladen werden (HTTP ${response.status}).`);
       if (requestId !== requestCounter.current) return;
       setAudioUrl(String(data.url));
