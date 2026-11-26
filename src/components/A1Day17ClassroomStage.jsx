@@ -105,15 +105,16 @@ function Permission(){return <>
 </>;}
 function Quiz({items,signs=false}){
   const [answers,setAnswers]=useState({});
+  const [index,setIndex]=useState(0);
+  const [idOrQuestion,statementOrOptions,right,note]=items[index];
+  const options=signs?["Richtig","Falsch"]:statementOrOptions;
+  const correct=signs?(right?"Richtig":"Falsch"):right;
+  const answer=answers[index];
   return <div className="a1d17-quiz">
-    <div className="a1n-actions"><strong>{Object.keys(answers).length}/{items.length} beantwortet</strong><button type="button" className="a1n-secondary" onClick={()=>setAnswers({})}>Neu starten</button></div>
-    {items.map((item,i)=>{
-      const [idOrQuestion,statementOrOptions,right,note]=item;
-      const options=signs?["Richtig","Falsch"]:statementOrOptions;
-      const correct=signs?(right?"Richtig":"Falsch"):right;
-      return <Panel key={i}><div className="a1d17-quiz-row">{signs&&<Sign id={idOrQuestion} showLabel/>}<div><h2>{i+1}. {signs?statementOrOptions:idOrQuestion}</h2><div className="a1n-actions">{options.map(option=><button type="button" key={option} aria-pressed={answers[i]===option} className={answers[i]===option?"a1n-picked":"a1n-secondary"} onClick={()=>setAnswers(old=>({...old,[i]:option}))}>{option}</button>)}</div>
-        {answers[i]&&<p role="status" className={answers[i]===correct?"a1n-correct":"a1n-error"}>{answers[i]===correct?"Richtig!":"Noch nicht. Lösung: "+correct}{note?" · "+note:""}</p>}</div></div></Panel>;
-    })}
+    <div className="a1n-actions"><strong>Aufgabe {index+1}/{items.length} · {Object.keys(answers).length}/{items.length} beantwortet</strong><button type="button" className="a1n-secondary" onClick={()=>{setAnswers({});setIndex(0);}}>Neu starten</button></div>
+    <Panel><div className="a1d17-quiz-row">{signs&&<Sign id={idOrQuestion} showLabel/>}<div><h2>{index+1}. {signs?statementOrOptions:idOrQuestion}</h2><div className="a1n-actions">{options.map(option=><button type="button" key={option} aria-pressed={answer===option} className={answer===option?"a1n-picked":"a1n-secondary"} onClick={()=>setAnswers(old=>({...old,[index]:option}))}>{option}</button>)}</div>
+      {answer&&<p role="status" className={answer===correct?"a1n-correct":"a1n-error"}>{answer===correct?"Richtig!":"Noch nicht. Lösung: "+correct}{note?" · "+note:""}</p>}</div></div></Panel>
+    <div className="a1n-actions"><button type="button" className="a1n-secondary" disabled={index===0} onClick={()=>setIndex(i=>i-1)}>Vorherige Aufgabe</button><button type="button" disabled={index===items.length-1} onClick={()=>setIndex(i=>i+1)}>Nächste Aufgabe</button></div>
   </div>;
 }
 function Reading(){return <><h1>Lesen · Richtig oder falsch?</h1><p className="a1n-lead">Lesen Sie das Schild und die Aussage. Entscheiden Sie.</p><Quiz items={A1_DAY17_READING} signs/></>;}
@@ -134,12 +135,8 @@ function Listening({hasMusic,assignmentKey,courseDay}){
     {mode==="music"&&hasMusic&&<PublishedSongLessonStage assignmentKey={assignmentKey} courseDay={courseDay} compact nextLyricOnly/>}
   </>;
 }
+const components={intro:Intro,directions:Directions,imperative:Imperative,practice:Practice,ask:Ask,map:CityMap,signs:Signs,permission:Permission,reading:Reading,speaking:Speaking,listening:Listening};
 export default function A1Day17ClassroomStage({step,hasMusic,assignmentKey,courseDay}){
-  switch(step){
-    case "intro":return <Intro/>;case "directions":return <Directions/>;case "imperative":return <Imperative/>;
-    case "practice":return <Practice/>;case "ask":return <Ask/>;case "map":return <CityMap/>;case "signs":return <Signs/>;
-    case "permission":return <Permission/>;case "reading":return <Reading/>;case "speaking":return <Speaking/>;
-    case "listening":return <Listening hasMusic={hasMusic} assignmentKey={assignmentKey} courseDay={courseDay}/>;
-    default:return null;
-  }
+  const Stage=components[step];
+  return Stage?<section className="a1n a1d17" lang="de"><Stage hasMusic={hasMusic} assignmentKey={assignmentKey} courseDay={courseDay}/></section>:null;
 }
