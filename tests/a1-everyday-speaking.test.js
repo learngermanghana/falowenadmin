@@ -62,7 +62,8 @@ test("presenter replaces sentence and workbook bridge slides after Common Mistak
   assert.match(presenter, /<A1EverydaySpeakingStage key=/);
   assert.ok(presenter.includes("stage.id}"), "activity key must include stage ID");
   assert.match(presenter, /const isSpeakingReadiness = .*A1-5\.9/);
-  assert.match(presenter, /id: "mock"/);
+  assert.match(presenter, /return buildA1Day19ClassroomStages/);
+  assert.match(fs.readFileSync("src/data/a1Day19Classroom.js", "utf8"), /id:"a1-day19-mock"/);
   assert.match(presenter, /<PresenterStudentPicker/);
   assert.match(presenter, /<PresenterSessionTimer/);
   assert.match(presenter, /id: "grammar-check"/);
