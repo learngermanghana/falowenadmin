@@ -15,14 +15,17 @@ const LESSONS = Object.freeze({
     notes: [
       "Day 21 continues the Day 20 writing sequence: a clear cancellation, concrete weather reason and new meeting; greeting and closing are separate letter form.",
       "The answer manifest confirms four sections: three answer-key sections and a writing section with AI-written-response review.",
-      "No published marking source verifies manual tutor marking. Do not invent a scored role-play, or turn weather into advanced weil clauses.",
+      "No published marking source verifies manual tutor marking. The classroom forecast and reading are extra practice, not graded workbook sections. Teach simple weil + verb-final without requiring weil for a complete message.",
     ],
     flow: [
-      ["Wetter erkennen", "7 min: distinguish Es regnet, Es schneit, Es ist kalt and Es sind 30 Grad using direct examples."],
-      ["Zeitangaben prüfen", "8 min: choose im + season/month, am + day and um + clock time with exact answers."],
-      ["Satzfehler reparieren", "8 min: correct Es ist regnet and build a new meeting question with am/um."],
-      ["Drei Schreibpunkte prüfen", "10 min: identify cancellation, concrete weather-related reason and another meeting; do not count Anrede or Gruß as content points."],
-      ["Vier Course Book Teile", "12 min: show the actual Anzeigen, Nachricht, Schreiben and Hören sections; distinguish writing review from objective answer keys."],
+      ["Wetter und Jahreszeiten", "17 min: visual warm-up, nine weather words, Es ist vs Es regnet, seasons and temperatures."],
+      ["Wetterbericht", "5 min: fictional five-day forecast with five interactive comprehension questions."],
+      ["Absage und Grund", "10 min: practise weil with concrete weather reasons and three-point cancellation structure."],
+      ["Neuer Termin", "4 min: choose im, am and um and make a new meeting proposal."],
+      ["Lesen", "5 min: read an additional weekend weather text with five true/false questions."],
+      ["Falowen Music", "5 min: use the existing published Bina, tut mir leid recording and next-lyric practice."],
+      ["Einzelcheck", "5 min: one question per selected learner through the native picker."],
+      ["Schreiben und Workbook", "9 min: independent cancellation message, self-check and unchanged four-part workbook."],
     ],
   },
   "A1-14.1": {
@@ -97,6 +100,7 @@ export function enhanceA1Days21To24Slide(slide = {}) {
   }
   return {
     ...slide,
+    ...(id === "A1-13" ? { estimatedDuration: "60 minutes", objective: "Describe weather and temperatures, understand a short forecast, write a three-point cancellation with a concrete weather reason, and propose a new meeting using am and um." } : {}),
     teacherNotesEn: [...(slide.teacherNotesEn || []), ...spec.notes],
     interactionFlow: spec.flow.map(([phase, detailEn]) => ({ phase, detailEn })),
     workbookConnection: {
