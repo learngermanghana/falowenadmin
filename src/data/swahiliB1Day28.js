@@ -1,3 +1,4 @@
+import { SWAHILI_B1_DAY28_LISTENING } from "./swahiliB1Day28Listening.js";
 import { SWAHILI_MUSIC_TRACKS } from "./swahiliMusicTracks.js";
 
 export const swahiliB1Day28 = {
@@ -200,68 +201,11 @@ export const swahiliB1Day28 = {
       ]
     },
     {
-      "id": "radio-dialogue",
-      "radioVideoId": "aeXVw4Q4olE",
-      "type": "numbered-list",
-      "title": "Falowen Radio · Kutunza Mazingira",
-      "items": [
-        "Sikiliza kipindi, kisha jibu maswali."
-      ]
-    },
-    {
-      "id": "radio-short-answers",
-      "type": "grammar-check",
-      "title": "Falowen Radio · Majibu mafupi",
-      "kicker": "Kiswahili B1 · 10.28",
-      "items": [
-        {
-          "label": "1",
-          "prompt": "Taja matatizo mawili ya mazingira yaliyozungumziwa katika podcast.",
-          "answer": "Matatizo mawili ni uchafuzi wa mazingira na matumizi makubwa ya plastiki.",
-          "answerLabel": "Mfano wa jibu",
-          "revealLabel": "Onyesha jibu"
-        },
-        {
-          "label": "2",
-          "prompt": "Ni njia gani zilizopendekezwa za kupunguza taka nyumbani?",
-          "answer": "Tunaweza kutenganisha taka, kutumia baadhi ya vitu tena na kuepuka kununua bidhaa zenye vifungashio vingi.",
-          "answerLabel": "Mfano wa jibu",
-          "revealLabel": "Onyesha jibu"
-        }
-      ]
-    },
-    {
-      "id": "radio-discussion",
-      "type": "grammar-check",
-      "title": "Falowen Radio · Kuzungumza",
-      "kicker": "Kiswahili B1 · 10.28",
-      "items": [
-        {
-          "label": "3",
-          "prompt": "Ni nani mwenye jukumu la kutunza mazingira: wananchi, serikali au makampuni? Eleza maoni yako.",
-          "answer": "Kwa maoni yangu, kila mtu ana jukumu la kutunza mazingira. Wananchi wanapaswa kuweka mazingira safi, serikali inapaswa kutunga sheria nzuri na makampuni yanapaswa kupunguza taka zinazotokana na bidhaa zao.",
-          "answerLabel": "Mfano wa jibu",
-          "revealLabel": "Onyesha jibu"
-        },
-        {
-          "label": "4",
-          "prompt": "Kama ungeanzisha mradi wa mazingira katika shule, chuo au eneo lako, ungefanya mradi gani?",
-          "answer": "Ningeanzisha mradi wa kupanda miti na kukusanya taka. Ningewaomba wanafunzi na wakazi washiriki. Pia tungeweka mapipa tofauti kwa plastiki, karatasi na taka nyingine.",
-          "answerLabel": "Mfano wa jibu",
-          "revealLabel": "Onyesha jibu"
-        }
-      ]
-    },
-    {
-      "id": "listening",
-      "type": "workbook",
-      "title": "Kusikiliza · Juma na Amina",
-      "kicker": "Kiswahili B1 · 10.28",
-      "items": [
-        { "label": "Sikiliza", "detail": "Fungua sehemu ya Kusikiliza katika kitabu cha kozi. Sikiliza mazungumzo ya Juma na Amina." },
-        { "label": "Jadili", "detail": "Kwa nini mwanzoni Juma anapendelea mifuko ya plastiki? Taja sababu mbili." }
-      ],
-      "workbookUrl": "https://www.falowen.app/campus/course/swahili/b1/day-28?view=hoeren"
+      "id": "knowledge",
+      "type": "classroom-listening",
+      "kicker": "Kusikiliza · B1",
+      "title": "Kupunguza plastiki · Mazungumzo na Juma",
+      "listening": SWAHILI_B1_DAY28_LISTENING
     },
     {
       "id": "reading",
