@@ -7,8 +7,8 @@ export function isSwahiliRadioStage(stage) {
 }
 
 export function buildSwahiliClassroomStages(lesson) {
-  const support = SWAHILI_CLASSROOM_SUPPORT[lesson.id];
-  const isA1 = !lesson.id.includes("-b1-");
+  const support = lesson.classroomSupport || SWAHILI_CLASSROOM_SUPPORT[lesson.id];
+  const isA1 = lesson.level === "A1" || /^swahili-day-\d+$/.test(lesson.id);
   const source = lesson.stages || lesson.classroomStages || [];
   let stages = source.filter(stage => !(isA1 && isSwahiliRadioStage(stage)));
   if (!stages.some(s => s.id === "knowledge" && s.listening || /^(?:listening|teacher-listening)$/.test(s.id))) {
