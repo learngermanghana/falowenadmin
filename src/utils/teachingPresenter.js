@@ -2201,8 +2201,8 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
     } : academic.skill === "Hören" ? {
       id: "academic-practice", type: "question-reveal", kicker: "Hören · Teil " + academic.part, title: academic.title,
       instruction: academic.instruction,
-      items: academic.questions.map(([prompt]) => prompt),
-      questionModels: academic.questions.map(([prompt, choices, correct, reason]) => ({ questionDe: prompt, modelAnswerDe: choices[correct] + " — " + reason })),
+      items: academic.questions.map(([prompt, choices]) => prompt + " — " + choices.join(" · ")),
+      questionModels: academic.questions.map(([prompt, choices, correct, reason]) => ({ questionDe: prompt + " — " + choices.join(" · "), modelAnswerDe: choices[correct] + " — " + reason })),
       suggestedMinutes: 10,
       teacherPurpose: { student: academic.instruction, teacher: "Vorlesen (" + ([2, 4].includes(academic.part) ? "zweimal" : "einmal") + "), nicht auf dem geteilten Bildschirm zeigen: " + academic.text },
     } : {
