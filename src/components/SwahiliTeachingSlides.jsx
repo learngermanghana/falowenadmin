@@ -5,6 +5,7 @@ import { SWAHILI_DAY_FIVE_ADMIN_LESSON } from "../data/swahiliDayFiveTeachingSli
 import SwahiliSlideMusic from "./SwahiliSlideMusic.jsx";
 import { useEffect, useState } from "react";
 import InteractiveLessonOpening from "./InteractiveLessonOpening.jsx";
+import { standardizeSwahiliStages } from "../utils/swahiliPresenterSequence.js";
 import { swahiliAudioChapters } from "../data/swahiliAudioChapters.js";
 import { swahiliB1Day27 } from "../data/swahiliB1Day27.js";
 import { swahiliB1Day28 } from "../data/swahiliB1Day28.js";
@@ -149,7 +150,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
   const selectedPresenterSlide = calendarRoutinePresenters[slideId] || (isB1Day27 ? swahiliB1Day27 : slideId === SWAHILI_DAY_ELEVEN_ADMIN_LESSON.id ? dayElevenPresenterSlide : isB1Day28 ? b1Day28PresenterSlide : isDayTen ? dayTenPresenterSlide : isDayFive ? dayFivePresenterSlide : isDayTwo ? dayTwoPresenterSlide : existingPresenterSlide);
   const lesson = selectedPresenterSlide;
   const selectedWorkbook = selectedPresenterSlide.workbookConnection.workbookUrl;
-  const stages = lesson.stages;
+  const stages = standardizeSwahiliStages(lesson.stages);
   const activityTimer = usePresenterActivityTimer(7);
   const [reportOpen, setReportOpen] = useState(false);
   const [index, setIndex] = useState(0);

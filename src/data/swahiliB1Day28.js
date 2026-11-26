@@ -264,6 +264,30 @@ export const swahiliB1Day28 = {
       "workbookUrl": "https://www.falowen.app/campus/course/swahili/b1/day-28?view=hoeren"
     },
     {
+      "id": "reading",
+      "type": "numbered-list",
+      "title": "Kusoma · Kutunza Mazingira",
+      "kicker": "Kusoma · B1",
+      "items": [
+        "Katika ulimwengu wa leo, kutunza mazingira ni jukumu muhimu la kila mtu katika maisha ya kila siku. Mazingira safi na salama huwezesha binadamu na viumbe wengine kuishi kwa afya njema. Hata hivyo, kutokana na kuongezeka kwa uchafuzi wa mazingira na matumizi mabaya ya maliasili, jamii nyingi zinakabiliwa na changamoto kubwa za mabadiliko ya tabianchi na magonjwa. Kwa sababu hiyo, ni lazima tuchukue hatua madhubuti za kulinda mazingira yetu kila siku.",
+        "Kuna njia mbalimbali za kutunza mazingira katika maisha ya kila siku. Kwanza, tunapaswa kupunguza matumizi ya plastiki na kuanza kurejeleza taka. Badala ya kutupa taka ovyo, ni vyema kutenganisha taka za kikaboni na zile zisizooza. Pili, kutumia nishati kwa busara, kama vile kuzima taa na vyombo vya umeme wakati havihitajiki, husaidia kuokoa rasilimali na kupunguza uchafuzi wa hewa. Tatu, kupanda miti na kutunza mimea karibu na nyumba zetu hufanya hewa iwe safi na kuzuia mmomonyoko wa udongo.",
+        "Kwa hitimisho, kila kitendo kidogo tunachofanya nyumbani, shuleni, au kazini kina mchango mkubwa katika hifadhi ya mazingira. Tukishirikiana na kuwajibika kikamilifu, tutaweza kulinda dunia yetu kwa ajili ya vizazi vya sasa na vijavyo. Kumbuka kuwa mazingira bora yanaanza na mimi na wewe."
+      ]
+    },
+    {
+      "id": "reading-check",
+      "type": "grammar-check",
+      "title": "Kusoma · Maswali ya ufahamu",
+      "kicker": "Kusoma · B1",
+      "items": [
+        {"label":"1","prompt":"Kwa nini kutunza mazingira ni jukumu muhimu?","answer":"Mazingira safi na salama husaidia binadamu na viumbe wengine kuishi kwa afya njema."},
+        {"label":"2","prompt":"Taja njia mbili za kushughulikia taka.","answer":"Kurejeleza taka na kutenganisha taka za kikaboni na zile zisizooza."},
+        {"label":"3","prompt":"Kupanda miti kuna faida gani mbili?","answer":"Hufanya hewa iwe safi na kuzuia mmomonyoko wa udongo."},
+        {"label":"4","prompt":"Kutumia nishati kwa busara husaidiaje?","answer":"Husaidia kuokoa rasilimali na kupunguza uchafuzi wa hewa."},
+        {"label":"5","prompt":"Ujumbe mkuu wa hitimisho ni upi?","answer":"Kila kitendo kidogo kina mchango mkubwa; ushirikiano hulinda dunia kwa vizazi vya sasa na vijavyo."}
+      ]
+    },
+    {
       "id": "comparison",
       "type": "numbered-list",
       "title": "Linganisha eneo lako na eneo jingine",
