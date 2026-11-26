@@ -5,6 +5,7 @@ import { assemblyScenePlan, buildStudioSpeechPlan, sceneVoiceKey } from "../util
 import { getSavedVoice, saveVoice } from "../utils/hoerenVoiceCache";
 import { encodeWavAsMp3 } from "../utils/hoerenMp3";
 import { swahiliAudioChapters } from "../data/swahiliAudioChapters.js";
+import { swahiliAudioFileBase } from "../utils/swahiliAudioFilename.js";
 
 const ENGINE = "lite";
 const TEMPLATE = "A: Habari za asubuhi!\nB: Nzuri, asante. Unaenda wapi?\nA: Ninaenda sokoni kununua matunda.\nB: Twende pamoja!";
@@ -31,6 +32,7 @@ export default function SwahiliConversationStudio({ ready, remaining, refreshSta
   const [progress, setProgress] = useState("");
   const lesson = chapters.find((entry) => entry.assignment_id === lessonId);
   const focus = topic.trim();
+  const fileBase = swahiliAudioFileBase(level, lesson, focus);
   const scriptTopic = lesson
     ? `${lesson.assignment_id} · ${lesson.en}${focus ? ` · Focus: ${focus}` : ""}`
     : focus;
@@ -85,7 +87,7 @@ export default function SwahiliConversationStudio({ ready, remaining, refreshSta
       clips.push(bytes);
     }
     const wav = assembleListeningExam(assemblyScenePlan(plan), clips, { repeats: 1, lineGap: 0.4 });
-    setRecording({ wav, url: URL.createObjectURL(wav) });
+    setRecording({ wav, url: URL.createObjectURL(wav), fileBase });
   }
 
   return <section className="hoeren-panel" aria-label="Swahili conversation studio">
@@ -135,13 +137,14 @@ export default function SwahiliConversationStudio({ ready, remaining, refreshSta
     {progress && <p role="status">{progress}</p>}
     {error && <p className="hoeren-alert" role="alert">{error}</p>}
     {recording && <div className="hoeren-output">
+      <p className="hoeren-hint">{recording.fileBase}</p>
       <audio controls src={recording.url} aria-label="Preview generated Swahili recording" />
       <button type="button" className="hoeren-quiet" disabled={!!busy}
-        onClick={() => run("download", async () => download(await encodeWavAsMp3(recording.wav), "swahili-listening.mp3"), false)}>Download MP3</button>
+        onClick={() => run("download", async () => download(await encodeWavAsMp3(recording.wav), `${recording.fileBase}.mp3`), false)}>Download MP3</button>
       <button type="button" className="hoeren-quiet" disabled={!!busy}
-        onClick={() => download(recording.wav, "swahili-listening.wav")}>Download WAV</button>
+        onClick={() => download(recording.wav, `${recording.fileBase}.wav`)}>Download WAV</button>
     </div>}
     {script.trim() && <button type="button" className="hoeren-quiet" disabled={!!busy}
-      onClick={() => download(new Blob([script], { type: "text/plain;charset=utf-8" }), "swahili-transcript.txt")}>Download transcript</button>}
+      onClick={() => download(new Blob([script], { type: "text/plain;charset=utf-8" }), `${fileBase}-transcript.txt`)}>Download transcript</button>}
   </section>;
 }
