@@ -1,0 +1,28 @@
+name: A1 Day 20 letter writing slides
+on:
+  pull_request:
+    paths:
+      - "src/components/A1GrammarPresenter.jsx"
+      - "src/components/A1Day20ClassroomStage.*"
+      - "src/data/a1Day20Classroom.js"
+      - "src/data/a1Days16To20Slides.js"
+      - "src/data/a1Days16To20Understanding.js"
+      - "tests/a1-day20-classroom-slides.test.js"
+      - "tests/a1-days16-to20-understanding.test.js"
+      - ".github/workflows/a1-day20-classroom-slides.yml"
+  workflow_dispatch:
+jobs:
+  day20:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Compile changed JSX
+        run: |
+          node --input-type=module -e "import { transformWithEsbuild } from 'vite'; import { readFileSync } from 'node:fs'; for (const file of ['src/components/A1Day20ClassroomStage.jsx','src/components/A1GrammarPresenter.jsx']) { await transformWithEsbuild(readFileSync(file, 'utf8'), file, { loader: 'jsx', jsx: 'automatic' }); console.log(file + ' JSX syntax OK'); }"
+      - name: Verify Day 20 slides and published writing contract
+        run: node --test tests/a1-day20-classroom-slides.test.js tests/a1-days16-to20-understanding.test.js tests/course-marking-current-contract.test.js

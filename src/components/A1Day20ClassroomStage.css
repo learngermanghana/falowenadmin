@@ -1,0 +1,24 @@
+/* Day 20: projector-friendly letters, visible content-point mapping and local checks. */
+.a1d20 .a1d20-letter{background:#fff;color:#172b4d;border:1px solid #cbd5e1;border-radius:.65rem;padding:clamp(.75rem,1.5vw,1.3rem);line-height:1.45;font-size:clamp(1rem,1.85vw,1.55rem)}
+.a1d20 .a1d20-letter p{margin:.4em 0}
+.a1d20 .a1d20-structure{display:grid;gap:.35rem;margin:.5rem 0}
+.a1d20 .a1d20-structure-row{display:grid;grid-template-columns:minmax(8rem,1fr) minmax(0,3fr);gap:.6rem;padding:.5rem .7rem;border:1px solid #94a3b866;border-radius:.45rem}
+.a1d20 .a1d20-structure-row small,.a1d20 .a1d20-table small{display:block;margin:.2em 0}
+.a1d20 .a1d20-point{border-inline-start:5px solid #2563eb}
+.a1d20 .a1d20-table{overflow:auto;margin:.5rem 0}
+.a1d20 .a1d20-table table{width:100%;border-collapse:collapse;font-size:clamp(.95rem,1.7vw,1.45rem)}
+.a1d20 .a1d20-table th,.a1d20 .a1d20-table td{padding:.55em;text-align:left;border-bottom:1px solid #94a3b866}
+.a1d20 .a1d20-table thead th{background:#dbeafe;color:#172b4d}
+.a1d20 .a1d20-points{margin:.6em 0;padding-inline-start:1.5em;display:grid;gap:.5em}
+.a1d20 .a1d20-reveal{margin:.45rem 0}
+.a1d20 .a1d20-reveal summary{cursor:pointer;text-decoration:underline;font-weight:650;padding:.45em 0}
+.a1d20 .a1d20-model-line{padding:.35em .55em;margin:.35em 0;border-inline-start:4px solid #2563eb;border-radius:.25rem;background:#eff6ff}
+.a1d20 .a1d20-model-1{border-color:#15803d;background:#f0fdf4}
+.a1d20 .a1d20-model-2{border-color:#b45309;background:#fff7ed}
+.a1d20 .a1d20-point-label{font-size:.75em;font-weight:700}
+.a1d20 .a1d20-timer{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.7rem;margin:.8rem 0}
+.a1d20 .a1d20-timer strong{font-size:clamp(1.8rem,4vw,3rem);font-variant-numeric:tabular-nums}
+.a1d20 .a1d20-checklist{display:grid;gap:.6em}
+.a1d20 .a1d20-checklist label{display:flex;align-items:center;gap:.7em;cursor:pointer}
+.a1d20 .a1d20-checklist input{width:1.35em;height:1.35em;accent-color:#2563eb;flex-shrink:0}
+@media(max-width:680px){.a1d20 .a1d20-structure-row{grid-template-columns:1fr;gap:.2em}.a1d20 .a1d20-table th,.a1d20 .a1d20-table td{padding:.35em}}

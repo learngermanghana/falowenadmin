@@ -27,6 +27,7 @@ import A1Day16NegationStage from "./A1Day16NegationStage.jsx";
 import A1Day17ClassroomStage from "./A1Day17ClassroomStage.jsx";
 import A1Day18ClassroomStage from "./A1Day18ClassroomStage.jsx";
 import A1Day19ClassroomStage from "./A1Day19ClassroomStage.jsx";
+import A1Day20ClassroomStage from "./A1Day20ClassroomStage.jsx";
 import A1Day22ClassroomStage from "./A1Day22ClassroomStage.jsx";
 import A1Day2TeachingStage from "./A1Day2TeachingStage.jsx";
 import A1Day3TeachingStage from "./A1Day3TeachingStage.jsx";
@@ -52,6 +53,7 @@ import { A1_DAY16_NEGATION_ASSIGNMENT, A1_DAY16_NEGATION_WORKBOOK, buildA1Day16N
 import { A1_DAY17_ASSIGNMENT, A1_DAY17_WORKBOOK, buildA1Day17ClassroomStages } from "../data/a1Day17Classroom.js";
 import { A1_DAY18_ASSIGNMENT, A1_DAY18_WORKBOOK, buildA1Day18ClassroomStages } from "../data/a1Day18Classroom.js";
 import { A1_DAY19_WORKBOOK, buildA1Day19ClassroomStages } from "../data/a1Day19Classroom.js";
+import { A1_DAY20_ASSIGNMENT, A1_DAY20_WORKBOOK, buildA1Day20ClassroomStages } from "../data/a1Day20Classroom.js";
 import { A1_DAY22_STAGES } from "../data/a1Day22Classroom.js";
 import { getCuratedMusicByAssignment } from "../data/curatedLessonMusic.js";
 import { getA1PresenterMusicStage } from "../data/a1PresenterMusicStage.js";
@@ -342,6 +344,13 @@ export function stageList(slide, topicLabel) {
     return buildA1Day18ClassroomStages({
       song: getA1PresenterMusicStage(A1_DAY18_ASSIGNMENT, slide.dayNumber),
       workbookUrl: slide.workbookConnection?.workbookUrl || A1_DAY18_WORKBOOK,
+    });
+  }
+
+  if (String(slide?.assignmentId || "").trim().toUpperCase() === A1_DAY20_ASSIGNMENT) {
+    return buildA1Day20ClassroomStages({
+      song: getA1PresenterMusicStage(A1_DAY20_ASSIGNMENT, slide.dayNumber),
+      workbookUrl: slide.workbookConnection?.workbookUrl || A1_DAY20_WORKBOOK,
     });
   }
 
@@ -914,6 +923,10 @@ export default function A1GrammarPresenter({
               workbookUrl={stage.workbookUrl ? lessonUrl(stage.workbookUrl) : ""} />
           ) : stage.type === "a1-day19" ? (
             <A1Day19ClassroomStage key={stage.id} step={stage.step} hasMusic={stage.hasMusic}
+              assignmentKey={slide.assignmentId} courseDay={slide.dayNumber}
+              workbookUrl={stage.workbookUrl ? lessonUrl(stage.workbookUrl) : ""} />
+          ) : stage.type === "a1-day20" ? (
+            <A1Day20ClassroomStage key={stage.id} step={stage.step} hasMusic={stage.hasMusic}
               assignmentKey={slide.assignmentId} courseDay={slide.dayNumber}
               workbookUrl={stage.workbookUrl ? lessonUrl(stage.workbookUrl) : ""} />
           ) : stage.type === "a1-day22" ? (
