@@ -105,7 +105,7 @@ function TopBar() {
   if (!user || !role || location.pathname === "/checkin/display") return null;
 
   return (
-    <header className="topbar">
+    <header className={location.pathname==="/students"?"topbar topbar-students":"topbar"}>
       <div className="topbar-inner">
         <div className="topbar-main-row">
           <button

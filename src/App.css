@@ -622,3 +622,6 @@ main[data-route="/live-classes"] article.card > div > button {
   .topbar-build-badge, .topbar-deployment-warning { max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
   .topbar-email { max-width: 60vw; }
 }
+
+/* Student records are long forms: let the header scroll away rather than overlaying tabs. */
+.topbar.topbar-students { position: static; }

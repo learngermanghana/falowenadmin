@@ -99,3 +99,21 @@ test("legacy partial payment requires deadline and keeps original paid total",()
  assert.equal(saved.paid,1500);assert.equal(saved.balanceDue,1500);
  assert.throws(()=>legacyCourseRecord(row,edited(row,{contractStart:"2099-02-01",paymentDeadline:"2099-01-01"})),/precedes/);
 });
+
+test("unpaid trial conversion preserves course identity and never invents payment",()=>{
+ const [trial]=legacyCourseCandidates({program:"swahili",level:"A1",status:"trial_expired",trialStatus:"expired",paymentStatus:"Pending"});
+ assert.equal(trial.canConvertTrial,true);
+ const input={revision:trial.revision,convertTrial:true,accessType:"paid",tuitionFee:3000,contractStart:"2099-01-01",contractEnd:"2099-07-01",paymentDeadline:"2099-02-01",className:"Kiswahili A1"};
+ const saved=legacyCourseRecord(trial,input);
+ assert.equal(saved.program,"swahili");assert.equal(saved.level,"A1");assert.equal(saved.paid,0);assert.equal(saved.balanceDue,3000);assert.equal(saved.paymentStatus,"Unpaid");assert.equal(saved.trialConversionPrepared,true);
+ const {activePaidRow}=require("../functions/effectiveEnrollmentProfile");
+ assert.equal(activePaidRow([saved],"swahili","2099-01-10"),null);
+ assert.equal(activePaidRow([{...saved,...paymentPatch(saved,1000)}],"swahili","2099-01-10").paid,1000);
+ assert.throws(()=>legacyCourseRecord(trial,{...input,tuitionFee:0}));
+ assert.throws(()=>legacyCourseRecord(trial,{...input,paymentDeadline:"2099-08-01"}));
+ const [paid]=legacyCourseCandidates({program:"swahili",level:"A1",status:"trial_expired",trialStatus:"expired",paymentStatus:"Pending",amountPaid:500});
+ assert.equal(paid.canConvertTrial,false);
+ assert.throws(()=>legacyCourseRecord(paid,{...input,revision:paid.revision}),/unpaid trial/);
+ const [unknown]=legacyCourseCandidates({program:"swahili",level:"A1",status:"pending",paymentStatus:"Pending"});
+ assert.equal(unknown.canConvertTrial,false);
+});
