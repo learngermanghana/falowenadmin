@@ -24,6 +24,8 @@ function grammarFocus(lesson) {
     `Grammatikschwerpunkt: ${lesson.grammarTitle}.`,
     `Anwendung: Nutze die Zielstruktur, um ${lesson.profile.aim}.`,
     `Kontrollpunkt: ${lesson.profile.mistake}`,
+    `C1-Transfer: ${lesson.academic.grammar} – ${lesson.academic.structure}.`,
+    `Prüfungstraining: ${lesson.academic.skill} Teil ${lesson.academic.part} · ${lesson.academic.topic}. ${lesson.academic.task}`,
   ];
 }
 
@@ -31,6 +33,7 @@ function modelExamples(lesson) {
   const firstAngle = lesson.profile.angles?.[0] || "eine zentrale Perspektive";
   return [
     lesson.foundation.example,
+    lesson.academic.example,
     `Bei der Beurteilung von „${lesson.title}“ sollte insbesondere ${sentenceCase(firstAngle)} berücksichtigt werden.`,
     tensionSentence(lesson.foundation.tension),
   ];
@@ -86,6 +89,7 @@ function makeSlide(day) {
     ].slice(0, 4),
     keyPhrasesDe: [
       ...getC1TopicCollocations(day),
+      ...lesson.academic.vocabulary,
       "Bei der Beurteilung dieser Frage sollte berücksichtigt werden, dass ...",
       "Einerseits ..., andererseits ...",
       "Zwar ..., jedoch ...",
@@ -141,6 +145,7 @@ function makeSlide(day) {
       day,
       title: topic,
       grammarTitle: lesson.grammarTitle,
+      academic: lesson.academic,
       coreQuestion: lesson.profile.question,
       tension: lesson.foundation.tension,
       aim: lesson.profile.aim,
