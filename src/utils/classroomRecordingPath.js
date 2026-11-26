@@ -1,6 +1,10 @@
 // Exact keys mirror the staff-only server classroom recording registry.
 // Do not substitute a different workbook recording when a key is missing.
 export const CLASSROOM_RECORDING_KEYS=Object.freeze({
+  "A2-1": "a2/day-01/small-talk.mp3",
+  "A2-17": "a2/day-17/apotheken-detektiv.mp3",
+  "A2-26": "a2/day-26/gefuhle-beschreiben.mp3",
+  "A2-28": "a2/day-28/uber-die-zukunft-sprechen.mp3",
   "SWAHILI-B1-28": "swahili/B1/day-28/swahili-listening kuntasa.mp3",
   "SWAHILI-B1-27": "swahili/B1/day-27/kuntunza.mp3",
   "SWAHILI-B1-26": "swahili/B1/day-26/swahili-listening matitizo.mp3",
