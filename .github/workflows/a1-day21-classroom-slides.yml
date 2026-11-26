@@ -1,0 +1,26 @@
+name: A1 Day 21 weather slides
+on:
+  pull_request:
+    paths:
+      - "src/components/A1GrammarPresenter.jsx"
+      - "src/components/A1Day21ClassroomStage.*"
+      - "src/data/a1Day21Classroom.js"
+      - "src/data/a1Days21To24Slides.js"
+      - "tests/a1-day21-classroom-slides.test.js"
+      - ".github/workflows/a1-day21-classroom-slides.yml"
+  workflow_dispatch:
+jobs:
+  day21:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Compile changed JSX
+        run: |
+          node --input-type=module -e "import { transformWithEsbuild } from 'vite'; import { readFileSync } from 'node:fs'; for (const file of ['src/components/A1Day21ClassroomStage.jsx','src/components/A1GrammarPresenter.jsx']) { await transformWithEsbuild(readFileSync(file, 'utf8'), file, { loader: 'jsx', jsx: 'automatic' }); console.log(file + ' JSX syntax OK'); }"
+      - name: Verify weather presentation and existing workbook and music contracts
+        run: node --test tests/a1-day21-classroom-slides.test.js tests/a1-13-writing-marking.test.js tests/curated-r2-song-slides.test.js
