@@ -1,0 +1,20 @@
+/* Day 18: local projector diagrams; no external assets. */
+.presenter-content-a1-day18 .a1d18 h2{font-size:clamp(1.15rem,2.35vw,2rem);line-height:1.35;margin:.35rem 0}
+.a1d18 .a1d18-dat{color:#166534;background:#dcfce7;padding:.12em .35em;border-radius:.3em}
+.a1d18 .a1d18-acc{color:#9a3412;background:#ffedd5;padding:.12em .35em;border-radius:.3em}
+.a1d18 .a1d18-object{display:block;width:100%;max-height:29vh;min-height:100px}
+.a1d18 .a1d18-prep-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.45rem}
+.a1d18 .a1d18-prep-grid .a1n-panel{display:grid;justify-items:center;gap:0;padding:.3rem}
+.a1d18 .a1d18-prep-picture{width:100%;height:clamp(65px,12vh,110px)}
+.a1d18 .a1d18-prep-grid b{font-size:clamp(1.1rem,2vw,1.65rem)}
+.a1d18 .a1d18-table{overflow:auto;margin:.5rem 0}
+.a1d18 .a1d18-table table{border-collapse:collapse;width:100%;font-size:clamp(.95rem,1.75vw,1.5rem)}
+.a1d18 .a1d18-table th,.a1d18 .a1d18-table td{padding:.35em .55em;text-align:left;border-bottom:1px solid #94a3b866}
+.a1d18 .a1d18-table th{background:#e2e8f0;color:#172b4d}
+.a1d18 .a1d18-table small{display:block;margin:.25em 0}
+.a1d18 .a1d18-reveal summary{cursor:pointer;text-decoration:underline;font-weight:650;padding:.5rem 0}
+.a1d18 .a1d18-room-layout{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:1rem;align-items:center}
+.a1d18 .a1d18-room{width:100%;max-height:50vh}
+.a1d18 .a1d18-exit{margin:.35rem 0;padding-left:1.4em;display:grid;gap:.35rem;font-size:clamp(1rem,1.9vw,1.6rem)}
+.a1d18 .a1d18-exit b{margin-left:.35rem}
+@media(max-width:740px){.a1d18 .a1d18-room-layout{grid-template-columns:1fr}.a1d18 .a1d18-object{max-height:22vh}.a1d18 .a1d18-room{max-height:34vh}}
