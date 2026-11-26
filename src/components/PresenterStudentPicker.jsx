@@ -608,14 +608,15 @@ export default function PresenterStudentPicker({
       readingShare?.level || course,
       Math.max(1, eligible.length),
     );
-    const assignments = buildFairReadingAssignments({
+    const rawAssignments = buildFairReadingAssignments({
       chunks,
       roster: eligible,
       stats,
       history: currentReadingHistory,
       level: readingShare?.level || course,
     });
-    setReadingAssignments(readingShare?.language === "sw" ? assignments.map(assignment => ({...assignment, listenerQuestion: "Eleza wazo kuu na taja jambo moja muhimu."})) : assignments);
+    const assignments = readingShare?.language === "sw" ? rawAssignments.map(assignment => ({...assignment, listenerQuestion: "Eleza wazo kuu na taja jambo moja muhimu."})) : rawAssignments;
+    setReadingAssignments(assignments);
     setReadingAssignmentIndex(0);
     setReadingCompletedIds(new Set());
     onReadingAssignmentChange?.(assignments[0] || null);
