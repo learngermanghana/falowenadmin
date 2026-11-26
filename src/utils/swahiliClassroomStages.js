@@ -36,7 +36,7 @@ export function buildSwahiliClassroomStages(lesson) {
     if (!stages.some(s => s.id === "presentation")) {
       stages.push({id:"presentation",type:"presentation",kicker:"Uwasilishaji · Presentation",title:"Uwasilishaji",content:support.presentation || "Eleza ulichojifunza. Tumia maneno ya somo."});
     }
-    stages=stages.map(s=>s.id==="presentation"?{...s,type:"classroom-presentation",starters:guide.starters,keywords:support.glossary?.map(([word])=>word)||[],level:lesson.level || (isA1?"A1":"B1")}:s);
+    stages=stages.map(s=>s.id==="presentation"?{...s,type:"classroom-presentation",title:s.title?.replace(/sekunde 60–90/g,"sekunde 90–120"),starters:guide.starters,keywords:support.glossary?.map(([word])=>word)||[],level:lesson.level || (isA1?"A1":"B1")}:s);
   }
   // Role-play comes before the final student presentation, independently
   // of the source array ordering. Writing and workbook follow afterwards.
