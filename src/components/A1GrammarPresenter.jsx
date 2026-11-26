@@ -24,6 +24,7 @@ import A1Day13ClassroomStage from "./A1Day13ClassroomStage.jsx";
 import A1Day14ClassroomStage from "./A1Day14ClassroomStage.jsx";
 import A1Day15ClassroomStage from "./A1Day15ClassroomStage.jsx";
 import A1Day16NegationStage from "./A1Day16NegationStage.jsx";
+import A1Day17ClassroomStage from "./A1Day17ClassroomStage.jsx";
 import A1Day22ClassroomStage from "./A1Day22ClassroomStage.jsx";
 import A1Day2TeachingStage from "./A1Day2TeachingStage.jsx";
 import A1Day3TeachingStage from "./A1Day3TeachingStage.jsx";
@@ -46,6 +47,7 @@ import { A1_DAY13_STAGES } from "../data/a1Day13Classroom.js";
 import { A1_DAY14_CLASSROOM_STAGES, A1_DAY14_EXIT_STAGE, A1_DAY14_ASSIGNMENT } from "../data/a1Day14Classroom.js";
 import { A1_DAY15_ASSIGNMENT, A1_DAY15_WORKBOOK, buildA1Day15ClassroomStages } from "../data/a1Day15Classroom.js";
 import { A1_DAY16_NEGATION_ASSIGNMENT, A1_DAY16_NEGATION_WORKBOOK, buildA1Day16NegationStages } from "../data/a1Day16NegationClassroom.js";
+import { A1_DAY17_ASSIGNMENT, A1_DAY17_WORKBOOK, buildA1Day17ClassroomStages } from "../data/a1Day17Classroom.js";
 import { A1_DAY22_STAGES } from "../data/a1Day22Classroom.js";
 import { getCuratedMusicByAssignment } from "../data/curatedLessonMusic.js";
 import { getA1PresenterMusicStage } from "../data/a1PresenterMusicStage.js";
@@ -322,6 +324,13 @@ export function stageList(slide, topicLabel) {
       song: getA1PresenterMusicStage(A1_DAY16_NEGATION_ASSIGNMENT, slide.dayNumber),
       reading: getA1PresenterReadingLesson(A1_DAY16_NEGATION_ASSIGNMENT),
       workbookUrl: slide.workbookConnection?.workbookUrl || A1_DAY16_NEGATION_WORKBOOK,
+    });
+  }
+
+  if (String(slide?.assignmentId || "").trim().toUpperCase() === A1_DAY17_ASSIGNMENT) {
+    return buildA1Day17ClassroomStages({
+      song: getA1PresenterMusicStage(A1_DAY17_ASSIGNMENT, slide.dayNumber),
+      workbookUrl: slide.workbookConnection?.workbookUrl || A1_DAY17_WORKBOOK,
     });
   }
 
@@ -961,6 +970,9 @@ export default function A1GrammarPresenter({
           ) : stage.type === "a1-day16-negation" ? (
             <A1Day16NegationStage key={stage.id} step={stage.step}
               assignmentKey={slide.assignmentId} courseDay={slide.dayNumber} reading={stage.reading} />
+          ) : stage.type === "a1-day17" ? (
+            <A1Day17ClassroomStage key={stage.id} step={stage.step}
+              hasMusic={stage.hasMusic} assignmentKey={slide.assignmentId} courseDay={slide.dayNumber} />
           ) : stage.type === "a1-day22" ? (
             <A1Day22ClassroomStage key={stage.id} step={stage.step} />
           ) : stage.type === "a1-day6-media" ? (
