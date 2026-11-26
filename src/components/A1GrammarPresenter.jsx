@@ -26,6 +26,7 @@ import A1Day15ClassroomStage from "./A1Day15ClassroomStage.jsx";
 import A1Day16NegationStage from "./A1Day16NegationStage.jsx";
 import A1Day17ClassroomStage from "./A1Day17ClassroomStage.jsx";
 import A1Day18ClassroomStage from "./A1Day18ClassroomStage.jsx";
+import A1Day19ClassroomStage from "./A1Day19ClassroomStage.jsx";
 import A1Day22ClassroomStage from "./A1Day22ClassroomStage.jsx";
 import A1Day2TeachingStage from "./A1Day2TeachingStage.jsx";
 import A1Day3TeachingStage from "./A1Day3TeachingStage.jsx";
@@ -50,6 +51,7 @@ import { A1_DAY15_ASSIGNMENT, A1_DAY15_WORKBOOK, buildA1Day15ClassroomStages } f
 import { A1_DAY16_NEGATION_ASSIGNMENT, A1_DAY16_NEGATION_WORKBOOK, buildA1Day16NegationStages } from "../data/a1Day16NegationClassroom.js";
 import { A1_DAY17_ASSIGNMENT, A1_DAY17_WORKBOOK, buildA1Day17ClassroomStages } from "../data/a1Day17Classroom.js";
 import { A1_DAY18_ASSIGNMENT, A1_DAY18_WORKBOOK, buildA1Day18ClassroomStages } from "../data/a1Day18Classroom.js";
+import { A1_DAY19_WORKBOOK, buildA1Day19ClassroomStages } from "../data/a1Day19Classroom.js";
 import { A1_DAY22_STAGES } from "../data/a1Day22Classroom.js";
 import { getCuratedMusicByAssignment } from "../data/curatedLessonMusic.js";
 import { getA1PresenterMusicStage } from "../data/a1PresenterMusicStage.js";
@@ -377,86 +379,10 @@ export function stageList(slide, topicLabel) {
   }] : [];
 
   if (isSpeakingReadiness) {
-    const flow = Array.isArray(slide.interactionFlow) ? slide.interactionFlow : [];
-    return [
-      {
-        id: "intro",
-        type: "intro",
-        kicker: "A1 · Day 19",
-        title: slide.title || "Goethe A1 Speaking Readiness",
-        topic: topicLabel || slide.topic || "",
-        objective: slide.objective || "",
-        duration: slide.estimatedDuration || "60 minutes",
-        examReadiness: true,
-      },
-      ...grammarStages,
-      ...readingStages,
-      {
-        id: "exam-map",
-        type: "list",
-        kicker: "Prüfungsformat",
-        title: "Die drei Teile der A1-Sprechprüfung",
-        items: [
-          "Teil 1 · Sich vorstellen: Name, Alter, Land, Wohnort, Sprachen, Beruf/Studium und Hobby; danach Buchstabieren und Zahlen.",
-          "Teil 2 · Fragen stellen und antworten: Aus einem Thema oder Schlüsselwort eine passende Frage machen und die Partnerfrage beantworten.",
-          "Teil 3 · Bitten formulieren und reagieren: Eine höfliche Bitte machen und natürlich auf die Bitte des Partners reagieren.",
-        ],
-      },
-      {
-        id: "teil-1",
-        type: "list",
-        kicker: "Teil 1",
-        title: "Sich vorstellen · 30–45 Sekunden",
-        items: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe.slice(0, 1) : [],
-      },
-      {
-        id: "grammar-check",
-        type: "check",
-        kicker: "Teil 1–3 · Live-Check",
-        title: "Prüfungsbereitschaft · ein Check pro Student",
-        items: mainChecks,
-      },
-      {
-        id: "teil-3",
-        type: "list",
-        kicker: "Teil 3",
-        title: "Bitten und reagieren",
-        items: (Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : []).slice(4, 6),
-      },
-      {
-        id: "mock",
-        type: "workbook",
-        kicker: "Mini-Prüfung",
-        title: "Teil 1 → Teil 2 → Teil 3 · ohne Hilfe",
-        items: flow.slice(2, 6).map((item) => ({ label: item.phase, detail: item.detailEn })),
-        workbookUrl: slide.workbookConnection?.workbookUrl || "",
-      },
-      {
-        id: "readiness",
-        type: "list",
-        kicker: "Readiness",
-        title: "Is the student ready for the exam?",
-        items: [
-          "Task completion: answers or forms exactly what the task asks for.",
-          "Question formation: forms a clear W-question or yes/no question that is correct enough for A1.",
-          "Answer relevance: answers the actual question instead of giving a memorized answer about the topic.",
-          "Fluency: responds without a long pause and continues after a small mistake.",
-          "Clarity: pronunciation and sentence structure are clear enough for A1.",
-          "Interaction: listens, makes polite requests, and responds appropriately to the partner.",
-        ],
-      },
-      {
-        id: "exit-check",
-        type: "check",
-        kicker: "Abschluss",
-        title: "Fresh Prompt · ohne Hilfe",
-        items: exitChecks,
-        exitCheck: true,
-      },
-      ...(a1SongStage ? [a1SongStage] : []),
-    ]
-      .filter((stage) => stage.type === "intro" || (Array.isArray(stage.items) && stage.items.length > 0))
-      .map((stage) => ({ ...stage, examReadiness: true }));
+    return buildA1Day19ClassroomStages({
+      song: a1SongStage,
+      workbookUrl: slide.workbookConnection?.workbookUrl || A1_DAY19_WORKBOOK,
+    });
   }
 
   const quickChecks = getA1Days1To5QuickChecks(slide.assignmentId)
@@ -984,6 +910,10 @@ export default function A1GrammarPresenter({
               hasMusic={stage.hasMusic} assignmentKey={slide.assignmentId} courseDay={slide.dayNumber} />
           ) : stage.type === "a1-day18" ? (
             <A1Day18ClassroomStage key={stage.id} step={stage.step} hasMusic={stage.hasMusic}
+              assignmentKey={slide.assignmentId} courseDay={slide.dayNumber}
+              workbookUrl={stage.workbookUrl ? lessonUrl(stage.workbookUrl) : ""} />
+          ) : stage.type === "a1-day19" ? (
+            <A1Day19ClassroomStage key={stage.id} step={stage.step} hasMusic={stage.hasMusic}
               assignmentKey={slide.assignmentId} courseDay={slide.dayNumber}
               workbookUrl={stage.workbookUrl ? lessonUrl(stage.workbookUrl) : ""} />
           ) : stage.type === "a1-day22" ? (

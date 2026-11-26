@@ -1,0 +1,27 @@
+name: A1 Day 19 speaking confidence slides
+on:
+  pull_request:
+    paths:
+      - "src/components/A1GrammarPresenter.jsx"
+      - "src/components/A1Day19ClassroomStage.*"
+      - "src/data/a1Day19Classroom.js"
+      - "tests/a1-day19-classroom-slides.test.js"
+      - "tests/a1-grammar-diagnostic-presenter.test.js"
+      - "tests/a1-everyday-speaking.test.js"
+      - ".github/workflows/a1-day19-classroom-slides.yml"
+  workflow_dispatch:
+jobs:
+  day19:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Compile changed JSX
+        run: |
+          node --input-type=module -e "import { transformWithEsbuild } from 'vite'; import { readFileSync } from 'node:fs'; for (const file of ['src/components/A1Day19ClassroomStage.jsx','src/components/A1GrammarPresenter.jsx']) { await transformWithEsbuild(readFileSync(file, 'utf8'), file, { loader: 'jsx', jsx: 'automatic' }); console.log(file + ' JSX syntax OK'); }"
+      - name: Verify Day 19 and native exam-readiness contract
+        run: node --test tests/a1-day19-classroom-slides.test.js tests/a1-grammar-diagnostic-presenter.test.js tests/a1-everyday-speaking.test.js

@@ -26,14 +26,15 @@ test("normal A1 Presenter teaches workbook grammar, while A1-5.9 keeps exam read
   assert.match(source, /A1-5\.9/);
   assert.match(source, /Grammatik wiederholen → Lesen → Prüfungsformat/);
   assert.match(source, /A1_WORKBOOK_GRAMMAR_TEACHING/);
-  assert.match(source, /Die drei Teile der A1-Sprechprüfung/);
-  assert.match(source, /Is the student ready for the exam\?/);
-  assert.match(source, /Task completion: answers or forms exactly what the task asks for/);
-  assert.match(source, /Question formation: forms a clear W-question or yes\/no question/);
-  assert.match(source, /Answer relevance: answers the actual question/);
-  assert.match(source, /Fluency: responds without a long pause/);
-  assert.match(source, /Clarity: pronunciation and sentence structure are clear enough for A1/);
-  assert.match(source, /Interaction: listens, makes polite requests, and responds appropriately/);
+  const day19 = fs.readFileSync("src/data/a1Day19Classroom.js", "utf8");
+  assert.match(day19, /Die drei Teile der A1-Sprechprüfung/);
+  assert.match(day19, /Prüfungsbereitschaft und Workbook/);
+  assert.match(day19, /Task completion: answers or forms exactly what the task asks for/);
+  assert.match(day19, /Question formation: forms a clear W-question or yes\/no question/);
+  assert.match(day19, /Answer relevance: answers the actual question/);
+  assert.match(day19, /Fluency: responds without a long pause/);
+  assert.match(day19, /Clarity: pronunciation and sentence structure are clear enough for A1/);
+  assert.match(day19, /Interaction: listens, makes polite requests, and responds appropriately/);
   assert.doesNotMatch(source, /Ist der Student prüfungsbereit\?/);
 });
 
@@ -159,7 +160,9 @@ test("A1-5.9 propagates exam-readiness context and distinguishes performance fro
     knowledgeItems.every((item) => checks.some((check) => check.questionDe === item.sourceQuestion && check.answerDe === item.answerDe)),
     "generated knowledge checks must retain the original factual guide",
   );
-  assert.match(source, /\.map\(\(stage\) => \(\{ \.\.\.stage, examReadiness: true \}\)\)/);
+  const day19 = fs.readFileSync("src/data/a1Day19Classroom.js", "utf8");
+  assert.match(day19, /\.map\(\(stage\) => \(\{ \.\.\.stage, examReadiness: true \}\)\)/);
+  assert.match(source, /return buildA1Day19ClassroomStages/);
   assert.match(source, /Readiness-Check selbstständig bearbeiten/);
   assert.match(source, /Performance-Prompts/);
   assert.match(source, /Wissensfragen/);
