@@ -1,3 +1,4 @@
+import { C1_REVISION_SECTIONS, C1_REVISION_GRAMMAR, C1_SIMULATION_MODULES, C1_SIMULATION_WRITING, C1_SIMULATION_SPEAKING, C1_SIMULATION_RUBRIC, C1_PREPARATION_PATH } from "../data/c1ExamPreparation.js";
 import { B1_WORKBOOK_PRESENTATIONS } from '../data/b1WorkbookPresentations.js';
 import { A2_WORKBOOK_PRESENTATIONS } from '../data/a2WorkbookPresentations.js';
 import { A2_B1_WORKBOOK_GRAMMAR, A2_WORKBOOK_GRAMMAR_PAGES, B1_WORKBOOK_GRAMMAR_EXTENSIONS } from "../data/a2B1WorkbookGrammar.js";
@@ -2193,7 +2194,7 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
       id: "academic-practice", type: "knowledge", variant: "lesson-reading",
       kicker: "Lesen · Teil " + academic.part, title: academic.title,
       textDe: academic.text, instruction: academic.instruction,
-      items: academic.questions.map(([prompt, choices]) => prompt + " — " + choices.map((choice, i) => String.fromCharCode(65 + i) + ") " + choice).join(" · ")),
+      items: academic.questions.map(([prompt, choices]) => prompt + " — " + choices.map((choice, i) => /^[A-GX](?:[.)]|$)/.test(choice) ? choice : String.fromCharCode(65 + i) + ") " + choice).join(" · ")),
       answerItems: academic.questions.map(([, choices, correct]) => choices[correct]),
       evidence: academic.questions.map(([, , , reason]) => reason),
       suggestedMinutes: 10,
@@ -2259,6 +2260,28 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
         studentReference,
       });
     }
+  }
+  if (presenterV2 && level === "C1" && Number(slide.dayNumber) === 28) {
+    const revisionItems = C1_REVISION_SECTIONS.map(x=>({questionDe:x.skill+" · Strategie",modelAnswerDe:x.strategy+" Stolperfalle: "+x.pitfall+" · Tage "+x.days.join(", ")}));
+    revisionItems.push(...C1_REVISION_GRAMMAR.map(([name,prompt,answer,reason])=>({questionDe:name+": "+prompt,modelAnswerDe:answer+" — "+reason})));
+    filtered.push({
+      id:"c1-exam-revision",type:"question-reveal",kicker:"Optional · Tag 29",title:"Intensive Prüfungsvorbereitung",
+      items:revisionItems.map(x=>x.questionDe),questionModels:revisionItems,
+      suggestedMinutes:0,
+      teacherPurpose:{student:"Wiederhole gezielt deine schwächsten Module.",teacher:"Separate Wiederholung nach Tag 28. Lösungen erst nach dem Versuch zeigen. Campus: "+C1_PREPARATION_PATH}
+    });
+    const simulationItems = [
+      ...C1_SIMULATION_MODULES.map(x=>({questionDe:x.skill+" · "+x.minutes+" Min.",modelAnswerDe:x.description})),
+      ...C1_SIMULATION_WRITING.map(x=>({questionDe:x.title,modelAnswerDe:x.situation+"\n"+x.points.join("\n")+"\nCa. "+x.words+" Wörter."})),
+      ...C1_SIMULATION_SPEAKING.topics.map(x=>({questionDe:x.title,modelAnswerDe:x.points.join("\n")})),
+      {questionDe:"Partnerdiskussion",modelAnswerDe:C1_SIMULATION_SPEAKING.discussion},
+      {questionDe:"Bewertung Schreiben / Sprechen",modelAnswerDe:[...C1_SIMULATION_RUBRIC.Schreiben,...C1_SIMULATION_RUBRIC.Sprechen].join(" · ")+" · Offizielles Bewertungsraster verwenden. Je Modul mindestens 60/100; keine Durchschnittsentscheidung."}
+    ];
+    filtered.push({
+      id:"c1-exam-simulation",type:"question-reveal",kicker:"Optional · Tag 30",title:"Vier-Modul-Prüfungssimulation",
+      items:simulationItems.map(x=>x.questionDe),questionModels:simulationItems,suggestedMinutes:0,
+      teacherPurpose:{student:"Bearbeite die vier Module separat unter Prüfungsbedingungen.",teacher:"Separater Prüfungstermin. Vorab Audiozugang prüfen. Lesen/Hören: vorhandene Exams Room Samples; Schreiben/Sprechen: neue Aufgaben. 20 Min. Sprechvorbereitung zusätzlich. Manuell bewerten, keine neue Pflichtabgabe."}
+    });
   }
   const insertWorkbookPresentation = (stage) => {
     const closingIndex = filtered.findIndex((item) => item.id === "questions");
