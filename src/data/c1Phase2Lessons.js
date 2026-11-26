@@ -1522,6 +1522,734 @@ export const C1_PHASE2_LESSONS = [
       ]
     ]
   }
+,
+
+  {
+    "day": 11,
+    "title": "Zivilcourage und gesellschaftliche Verantwortung",
+    "skill": "Sprechen",
+    "part": 1,
+    "grammar": "Funktionsverbgefüge und finale Strukturen",
+    "rule": "Funktionsverbgefüge wie Stellung beziehen und Verantwortung übernehmen sind feste Verbindungen. um ... zu bezeichnet einen Zweck bei gleichem Handlungsträger; damit ermöglicht verschiedene Subjekte.",
+    "grammarChecks": [
+      [
+        "Viele Menschen wollen helfen. Sie übernehmen Verantwortung. (um ... zu)",
+        "Viele Menschen übernehmen Verantwortung, um anderen zu helfen.",
+        "Gleicher Handlungsträger."
+      ],
+      [
+        "Die Stadt organisiert Schulungen. Die Bürger sollen Konflikte erkennen.",
+        "Die Stadt organisiert Schulungen, damit die Bürger Konflikte erkennen.",
+        "Verschiedene Subjekte erfordern damit."
+      ],
+      [
+        "Formulieren Sie mit Stellung beziehen: Sie äußert öffentlich ihre Haltung gegen Ausgrenzung.",
+        "Sie bezieht öffentlich Stellung gegen Ausgrenzung.",
+        "Stellung beziehen gegen + Akkusativ."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Zivilcourage",
+        "civil courage"
+      ],
+      [
+        "Verantwortung übernehmen",
+        "take responsibility"
+      ],
+      [
+        "die Solidarität",
+        "solidarity"
+      ],
+      [
+        "Stellung beziehen",
+        "take a stand"
+      ],
+      [
+        "die Hemmschwelle",
+        "inhibition threshold"
+      ],
+      [
+        "die Gleichgültigkeit",
+        "indifference"
+      ],
+      [
+        "die Ausgrenzung",
+        "exclusion"
+      ],
+      [
+        "die Einschüchterung",
+        "intimidation"
+      ],
+      [
+        "der Handlungsspielraum",
+        "scope for action"
+      ],
+      [
+        "die Selbstgefährdung",
+        "risk to oneself"
+      ],
+      [
+        "die Rücksichtnahme",
+        "consideration"
+      ],
+      [
+        "die Verpflichtung",
+        "obligation"
+      ],
+      [
+        "die Konfliktsituation",
+        "conflict situation"
+      ],
+      [
+        "der Zusammenhalt",
+        "cohesion"
+      ],
+      [
+        "die Unterstützung",
+        "support"
+      ],
+      [
+        "das Eingreifen",
+        "intervention"
+      ],
+      [
+        "Hilfe leisten",
+        "provide assistance"
+      ],
+      [
+        "einen Beitrag leisten",
+        "make a contribution"
+      ],
+      [
+        "Vertrauen schaffen",
+        "build trust"
+      ],
+      [
+        "verhältnismäßig",
+        "proportionate"
+      ]
+    ],
+    "instruction": "Sie halten in einem Seminar einen Vortrag von circa fünf Minuten zum Thema Zivilcourage. Gehen Sie auf die vier Aspekte ein und beantworten Sie anschließend Nachfragen.",
+    "prompts": [
+      "Erläutern Sie, welche Bedeutung Zivilcourage für den gesellschaftlichen Zusammenhalt hat.",
+      "Beschreiben Sie eine Alltagssituation, in der Eingreifen sinnvoll sein kann.",
+      "Wägen Sie die Grenzen persönlicher Verantwortung und die eigene Sicherheit ab.",
+      "Schlagen Sie eine Maßnahme vor, mit der Institutionen Zivilcourage fördern können."
+    ],
+    "followups": [
+      "Welche Möglichkeiten hat eine Person, die nicht direkt eingreifen kann?",
+      "Wie lässt sich solidarisches Verhalten langfristig fördern?"
+    ],
+    "model": "Zivilcourage bedeutet für mich, nicht gleichgültig zu bleiben, wenn andere benachteiligt werden. Beispielsweise kann jemand in einer öffentlichen Einrichtung ruhig Stellung beziehen, wenn eine andere Person beleidigt wird. Allerdings sollte niemand sich unnötig gefährden. Je nach Situation kann es sinnvoller sein, Unterstützung zu organisieren oder verantwortliche Mitarbeitende anzusprechen. Institutionen sollten klare Anlaufstellen schaffen, damit Betroffene und Beobachtende wissen, an wen sie sich wenden können. Auf diese Weise lässt sich Verantwortung übernehmen, ohne sie allein dem Einzelnen aufzubürden.",
+    "rubric": [
+      "Vier Aspekte nachvollziehbar behandeln",
+      "Beispiel und Grenzen erläutern",
+      "Feste Wendungen und logische Übergänge natürlich nutzen",
+      "Auf Nachfragen spontan eingehen"
+    ]
+  },
+  {
+    "day": 12,
+    "title": "Kunstmarkt und staatliche Kulturförderung",
+    "skill": "Schreiben",
+    "part": 2,
+    "grammar": "Vergleich, Konzessivität und formelles Register",
+    "rule": "wenngleich leitet einen Nebensatz ein, ungeachtet steht mit Genitiv. Im formellen Schreiben werden Anliegen konkret und höflich formuliert, etwa mit wäre es möglich oder ich wäre Ihnen dankbar.",
+    "grammarChecks": [
+      [
+        "Die Mittel sind begrenzt. Kulturangebote bleiben wichtig. (wenngleich)",
+        "Wenngleich die Mittel begrenzt sind, bleiben Kulturangebote wichtig.",
+        "Verbendstellung nach wenngleich."
+      ],
+      [
+        "Trotz der Kürzungen bleibt der Kurs bestehen. (ungeachtet)",
+        "Ungeachtet der Kürzungen bleibt der Kurs bestehen.",
+        "ungeachtet + Genitiv."
+      ],
+      [
+        "Formulieren Sie höflicher: Schicken Sie mir einen anderen Termin.",
+        "Ich wäre Ihnen dankbar, wenn Sie mir einen anderen Termin anbieten könnten.",
+        "Konjunktiv II und konditionale Bitte."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Kulturförderung",
+        "cultural funding"
+      ],
+      [
+        "die Subvention",
+        "subsidy"
+      ],
+      [
+        "die kulturelle Teilhabe",
+        "cultural participation"
+      ],
+      [
+        "Mittel bereitstellen",
+        "allocate funds"
+      ],
+      [
+        "die Förderung",
+        "support"
+      ],
+      [
+        "die Zugänglichkeit",
+        "accessibility"
+      ],
+      [
+        "das Kulturerbe",
+        "cultural heritage"
+      ],
+      [
+        "die Ausstellung",
+        "exhibition"
+      ],
+      [
+        "die Kunstfreiheit",
+        "artistic freedom"
+      ],
+      [
+        "die Eintrittsgebühr",
+        "admission fee"
+      ],
+      [
+        "die öffentliche Hand",
+        "public authorities"
+      ],
+      [
+        "die Eigenfinanzierung",
+        "self-financing"
+      ],
+      [
+        "die Haushaltskürzung",
+        "budget cut"
+      ],
+      [
+        "das Förderkriterium",
+        "funding criterion"
+      ],
+      [
+        "die Nachfrage",
+        "demand"
+      ],
+      [
+        "die Vermittlungsarbeit",
+        "outreach"
+      ],
+      [
+        "einen Antrag stellen",
+        "submit an application"
+      ],
+      [
+        "eine Ausnahme gewähren",
+        "grant an exception"
+      ],
+      [
+        "Zugang ermöglichen",
+        "enable access"
+      ],
+      [
+        "kostendeckend",
+        "covering costs"
+      ]
+    ],
+    "instruction": "Sie besuchen regelmäßig ein kommunales Kulturzentrum. Ein geförderter Abendkurs wurde wegen finanzieller Schwierigkeiten auf den Vormittag verlegt. Schreiben Sie der Leitung eine formelle Nachricht von circa 120 Wörtern (Richtwert 25 Minuten).",
+    "prompts": [
+      "Zeigen Sie Verständnis für die finanziellen Schwierigkeiten.",
+      "Erläutern Sie, warum die neue Kurszeit für Sie problematisch ist.",
+      "Beschreiben Sie, welchen Nutzen das bisherige Angebot für Berufstätige hatte.",
+      "Schlagen Sie eine realistische Alternative vor."
+    ],
+    "model": "Sehr geehrte Frau Klein,\nmit Bedauern habe ich erfahren, dass der bisher am Abend angebotene Kunstkurs künftig vormittags stattfinden soll. Mir ist bewusst, dass die gegenwärtige Haushaltslage eine Anpassung des Programms erforderlich macht. Allerdings kann ich aufgrund meiner Arbeitszeiten an dem neuen Termin nicht teilnehmen. Der Abendkurs hat bislang insbesondere Berufstätigen ermöglicht, sich künstlerisch weiterzubilden und mit anderen Teilnehmenden auszutauschen. Ungeachtet der finanziellen Einschränkungen wäre es daher wünschenswert, zumindest einen Abendtermin im Monat beizubehalten. Denkbar wäre auch eine geringfügige Erhöhung der Teilnahmegebühr, sofern dadurch die zusätzlichen Kosten gedeckt werden könnten. Ich wäre Ihnen dankbar, wenn Sie diese Möglichkeiten bei der nächsten Programmplanung in Betracht ziehen würden. Gern beteilige ich mich an einer gemeinsamen Befragung der bisherigen Teilnehmenden.\nMit freundlichen Grüßen\nAlex",
+    "rubric": [
+      "Vier Inhaltspunkte vollständig bearbeiten",
+      "Höflicher, adressatengerechter Ton",
+      "Konkrete, praktikable Alternative",
+      "Kohärenz, Grammatik und Wortschatz"
+    ]
+  },
+  {
+    "day": 13,
+    "title": "Sprachwandel, Anglizismen und Bilingualismus",
+    "skill": "Lesen",
+    "part": 4,
+    "grammar": "Nominalstil, Genitiv und Quellenbezug",
+    "rule": "Nominalisierung verdichtet Aussagen: weil sich die Sprache verändert → aufgrund des Sprachwandels. Der Genitiv kann Zugehörigkeit oder inhaltliche Beziehungen ausdrücken. Positionen müssen eindeutig ihren Verfassenden zugeordnet werden.",
+    "grammarChecks": [
+      [
+        "Weil sich die Sprache verändert, entstehen neue Wörter. (aufgrund)",
+        "Aufgrund des Sprachwandels entstehen neue Wörter.",
+        "aufgrund + Genitiv."
+      ],
+      [
+        "Die Schule fördert mehrere Sprachen. (Nominalisierung)",
+        "die Förderung der Mehrsprachigkeit durch die Schule",
+        "Genitiv bezeichnet den Gegenstand der Förderung."
+      ],
+      [
+        "Die Linguistin sagt: Anglizismen sind nicht grundsätzlich problematisch.",
+        "Die Linguistin erklärt, Anglizismen seien nicht grundsätzlich problematisch.",
+        "Konjunktiv I kennzeichnet die fremde Position."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "der Sprachwandel",
+        "language change"
+      ],
+      [
+        "die Sprachkompetenz",
+        "language competence"
+      ],
+      [
+        "die Mehrsprachigkeit",
+        "multilingualism"
+      ],
+      [
+        "der Sprachgebrauch",
+        "language use"
+      ],
+      [
+        "die Entlehnung",
+        "borrowing"
+      ],
+      [
+        "der Anglizismus",
+        "Anglicism"
+      ],
+      [
+        "die Verständlichkeit",
+        "comprehensibility"
+      ],
+      [
+        "die Sprachpflege",
+        "language cultivation"
+      ],
+      [
+        "die Sprachgemeinschaft",
+        "speech community"
+      ],
+      [
+        "die Erstsprache",
+        "first language"
+      ],
+      [
+        "die Zweitsprache",
+        "second language"
+      ],
+      [
+        "die Sprachvarietät",
+        "language variety"
+      ],
+      [
+        "die Ausdrucksfähigkeit",
+        "expressiveness"
+      ],
+      [
+        "das Sprachbewusstsein",
+        "language awareness"
+      ],
+      [
+        "die Bildungssprache",
+        "academic language"
+      ],
+      [
+        "der Bedeutungswandel",
+        "semantic change"
+      ],
+      [
+        "Begriffe übernehmen",
+        "adopt terms"
+      ],
+      [
+        "eine Unterscheidung treffen",
+        "make a distinction"
+      ],
+      [
+        "sprachliche Vielfalt fördern",
+        "promote linguistic diversity"
+      ],
+      [
+        "kontextabhängig",
+        "context-dependent"
+      ]
+    ],
+    "instruction": "Lesen Sie die drei fiktiven Fachpositionen. Wer äußert die jeweilige Aussage? A, B, C oder X (keine Person). Mehrere Aussagen können derselben Person zugeordnet werden; zwei Aussagen passen nicht.",
+    "text": "A – Sprachwissenschaftlerin Mara König: Entlehnungen sind keineswegs ein neues Phänomen. Ob ein englischer Ausdruck langfristig übernommen wird, hängt davon ab, welche Funktion er erfüllt. Entscheidend ist nicht seine Herkunft, sondern seine Verwendung. In der Alltagssprache sehe ich keinen Anlass für pauschale Verbote. In amtlichen Texten sollte dagegen die Verständlichkeit für alle Adressaten Vorrang haben.\n\nB – Bildungsforscher Karim Weber: Mehrsprachige Kinder verfügen häufig über Erfahrungen, die im Unterricht produktiv genutzt werden können. Allerdings ergibt sich ein schulischer Vorteil nicht automatisch aus der Anzahl gesprochener Sprachen. Lehrkräfte brauchen geeignete Materialien, und Kinder benötigen Möglichkeiten, ihre bildungssprachlichen Fähigkeiten gezielt auszubauen. Ich plädiere für Fortbildungen, in denen Lehrkräfte solche Ressourcen erkennen lernen.\n\nC – Medienredakteurin Eva Braun: In unserer Redaktion beobachten wir, dass bestimmte englische Begriffe Fachwissen signalisieren sollen, selbst wenn eine verständliche deutsche Bezeichnung existiert. Ich rate dazu, beim Schreiben die Zielgruppe zu berücksichtigen. In spezialisierten Fachmedien können internationale Begriffe sinnvoll sein; in allgemeinen Nachrichten erklären wir sie oder wählen eine geläufigere Formulierung. Es geht mir nicht um eine starre Liste verbotener Wörter, sondern um nachvollziehbare redaktionelle Entscheidungen.",
+    "questions": [
+      [
+        "1. Ein möglicher Bildungsvorteil hängt von weiteren Lernbedingungen ab.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        1,
+        "B betont Materialien und bildungssprachliche Förderung."
+      ],
+      [
+        "2. Englische Begriffe können als Statussignal eingesetzt werden.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        2,
+        "C nennt das Signalisieren von Fachwissen."
+      ],
+      [
+        "3. Die Geschichte der Sprache zeigt, dass Entlehnungen nicht neu sind.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        0,
+        "A erklärt dies ausdrücklich."
+      ],
+      [
+        "4. Mehrsprachige Kinder sollten nur in ihrer Erstsprache unterrichtet werden.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        3,
+        "Keine Person fordert ausschließlichen Erstsprachenunterricht."
+      ],
+      [
+        "5. Lehrkräfte sollten gezielt lernen, vorhandene Sprachressourcen zu erkennen.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        1,
+        "B fordert entsprechende Fortbildungen."
+      ],
+      [
+        "6. Internationale Fachbegriffe können je nach Publikation angemessen sein.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        2,
+        "C unterscheidet Fachmedien und allgemeine Nachrichten."
+      ],
+      [
+        "7. Neue Anglizismen sollten jährlich in einer amtlichen Liste genehmigt werden.",
+        [
+          "A",
+          "B",
+          "C",
+          "X"
+        ],
+        3,
+        "Niemand schlägt ein Genehmigungsverfahren vor."
+      ]
+    ]
+  },
+  {
+    "day": 14,
+    "title": "Start-ups und Technologiefolgen",
+    "skill": "Hören",
+    "part": 4,
+    "grammar": "Subjektive Modalverben und Prognosen",
+    "rule": "dürfte drückt eine begründete Vermutung aus; könnte eine Möglichkeit. soll + Infinitiv Perfekt gibt eine fremde, nicht bestätigte Behauptung wieder. Unterscheiden Sie Prognosen von gesicherten Befunden.",
+    "grammarChecks": [
+      [
+        "Vermutlich wird das Verfahren günstiger. (dürfte)",
+        "Das Verfahren dürfte günstiger werden.",
+        "dürfte kennzeichnet eine Vermutung."
+      ],
+      [
+        "Man behauptet, das Unternehmen habe neue Investoren gewonnen. (soll)",
+        "Das Unternehmen soll neue Investoren gewonnen haben.",
+        "soll + Infinitiv Perfekt markiert eine fremde Behauptung über Vergangenes."
+      ],
+      [
+        "Es ist möglich, dass die Nachfrage sinkt. (könnte)",
+        "Die Nachfrage könnte sinken.",
+        "könnte bezeichnet eine Möglichkeit."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "das Wagniskapital",
+        "venture capital"
+      ],
+      [
+        "die Technologiefolgen",
+        "technology impacts"
+      ],
+      [
+        "die Markteinführung",
+        "market launch"
+      ],
+      [
+        "Risiken abschätzen",
+        "assess risks"
+      ],
+      [
+        "das Geschäftsmodell",
+        "business model"
+      ],
+      [
+        "die Skalierbarkeit",
+        "scalability"
+      ],
+      [
+        "die Finanzierungslücke",
+        "funding gap"
+      ],
+      [
+        "der Prototyp",
+        "prototype"
+      ],
+      [
+        "die Machbarkeit",
+        "feasibility"
+      ],
+      [
+        "die Wirtschaftlichkeit",
+        "economic viability"
+      ],
+      [
+        "die Investitionsbereitschaft",
+        "willingness to invest"
+      ],
+      [
+        "die Marktnische",
+        "market niche"
+      ],
+      [
+        "die Kapitalrendite",
+        "return on capital"
+      ],
+      [
+        "die Innovationsförderung",
+        "innovation support"
+      ],
+      [
+        "der Wettbewerbsvorteil",
+        "competitive advantage"
+      ],
+      [
+        "die Folgekosten",
+        "downstream costs"
+      ],
+      [
+        "eine Hypothese prüfen",
+        "test a hypothesis"
+      ],
+      [
+        "Kapital beschaffen",
+        "raise capital"
+      ],
+      [
+        "Verantwortung zuweisen",
+        "assign responsibility"
+      ],
+      [
+        "tragfähig",
+        "viable"
+      ]
+    ],
+    "instruction": "Sie hören einen fiktiven Vortrag über Technologiefolgen zweimal. Wählen Sie für jede Aufgabe die richtige Aussage.",
+    "text": "Guten Tag. Ich möchte heute erläutern, weshalb erfolgreiche Innovation nicht mit einer möglichst schnellen Markteinführung gleichgesetzt werden sollte. Start-ups benötigen zwar Kapital, um Ideen zu erproben, doch eine hohe Investitionssumme ist kein Nachweis für gesellschaftlichen Nutzen. Investoren bewerten häufig Wachstumsaussichten; öffentliche Förderstellen können dagegen auch Ziele verfolgen, die sich nicht unmittelbar in Einnahmen ausdrücken. In einem erfundenen Pilotprojekt entwickelte ein junges Unternehmen Sensoren zur Verringerung des Wasserverbrauchs. Die Messungen deuteten zunächst darauf hin, dass der Verbrauch sinken könnte. Allerdings wurden die Geräte nur in Gebäuden mit besonders moderner Infrastruktur getestet. Ob sich die Ergebnisse auf ältere Anlagen übertragen lassen, blieb offen. Eine zweite Frage betrifft die langfristige Wirtschaftlichkeit. Die Herstellungskosten waren überschaubar, doch Wartung und Austausch der Sensoren erwiesen sich als aufwendiger als erwartet. Daher sollte die Bewertung den gesamten Lebenszyklus berücksichtigen. Schließlich stellt sich die Frage nach Verantwortung. Wenn ein automatisiertes System falsche Empfehlungen liefert, reicht es nicht, allein auf die technische Leistungsfähigkeit zu verweisen. Zuständigkeiten müssen vor dem Einsatz geklärt werden. Mein Fazit lautet: Pilotprojekte sollten frühzeitig überprüfbare Ziele formulieren, unterschiedliche Einsatzbedingungen berücksichtigen und ihre Annahmen transparent machen. Damit wird Innovation nicht verhindert, sondern die Grundlage für eine verantwortbare Ausweitung geschaffen.",
+    "questions": [
+      [
+        "1. Eine hohe Investitionssumme …",
+        [
+          "beweist den Nutzen.",
+          "ist kein Beleg für gesellschaftlichen Nutzen.",
+          "ersetzt die Erprobung."
+        ],
+        1,
+        "Kapitalhöhe und gesellschaftlicher Nutzen werden ausdrücklich unterschieden."
+      ],
+      [
+        "2. Öffentliche Förderstellen …",
+        [
+          "dürfen nur Gewinne fördern.",
+          "verfolgen immer dieselben Ziele wie Investoren.",
+          "können auch Ziele ohne unmittelbare Einnahmen verfolgen."
+        ],
+        2,
+        "Gemeint sind Ziele, die sich nicht direkt in Einnahmen ausdrücken."
+      ],
+      [
+        "3. Welche Einschränkung hatte das Pilotprojekt?",
+        [
+          "Es umfasste nur moderne Gebäude.",
+          "Die Sensoren wurden nie getestet.",
+          "Die Messwerte wurden absichtlich verändert."
+        ],
+        0,
+        "Die Ergebnisse für ältere Anlagen blieben offen."
+      ],
+      [
+        "4. Was war teurer bzw. aufwendiger als erwartet?",
+        [
+          "Die Entwicklung der Grundidee.",
+          "Wartung und Austausch.",
+          "Die erste Herstellung."
+        ],
+        1,
+        "Der Vortrag nennt Wartung und Austausch."
+      ],
+      [
+        "5. Bei falschen Systemempfehlungen sollen …",
+        [
+          "allein Nutzende verantwortlich sein.",
+          "technische Daten verschwiegen werden.",
+          "Zuständigkeiten zuvor geklärt werden."
+        ],
+        2,
+        "Verantwortung muss vor dem Einsatz festgelegt werden."
+      ],
+      [
+        "6. Der Vortrag befürwortet …",
+        [
+          "überprüfbare Ziele und transparente Annahmen.",
+          "eine möglichst schnelle Einführung ohne Prüfung.",
+          "ein generelles Innovationsverbot."
+        ],
+        0,
+        "Dies fasst das Fazit ausdrücklich zusammen."
+      ]
+    ]
+  },
+  {
+    "day": 15,
+    "title": "Bildungsungleichheit und Inklusion",
+    "skill": "Sprechen",
+    "part": 2,
+    "grammar": "Konzessive, kausale und konditionale Strukturen",
+    "rule": "wenngleich markiert einen Einwand; zumal ergänzt einen besonders wichtigen Grund; vorausgesetzt, dass leitet eine Bedingung ein. Präzise Konnektoren machen die Abwägung nachvollziehbar.",
+    "grammarChecks": [
+      [
+        "Digitale Geräte helfen. Nicht alle Familien haben Internet. (wenngleich)",
+        "Wenngleich digitale Geräte helfen können, haben nicht alle Familien Internet.",
+        "Konzessiver Nebensatz."
+      ],
+      [
+        "Die Schule sollte Beratung anbieten. Viele Eltern kennen das System nicht. (zumal)",
+        "Die Schule sollte Beratung anbieten, zumal viele Eltern das System nicht kennen.",
+        "zumal ergänzt einen verstärkenden Grund."
+      ],
+      [
+        "Die Reform kann gelingen. Es gibt ausreichend Personal. (vorausgesetzt, dass)",
+        "Die Reform kann gelingen, vorausgesetzt, dass ausreichend Personal vorhanden ist.",
+        "Bedingung mit Verb am Satzende."
+      ]
+    ],
+    "vocabulary": [
+      [
+        "die Bildungsungleichheit",
+        "educational inequality"
+      ],
+      [
+        "die Inklusion",
+        "inclusion"
+      ],
+      [
+        "der Bildungszugang",
+        "access to education"
+      ],
+      [
+        "Hürden abbauen",
+        "remove barriers"
+      ],
+      [
+        "die Bildungsgerechtigkeit",
+        "educational equity"
+      ],
+      [
+        "die Lernvoraussetzung",
+        "learning prerequisite"
+      ],
+      [
+        "die Förderung",
+        "support"
+      ],
+      [
+        "die Benachteiligung",
+        "disadvantage"
+      ],
+      [
+        "die Durchlässigkeit",
+        "permeability"
+      ],
+      [
+        "die Lernumgebung",
+        "learning environment"
+      ],
+      [
+        "die Barrierefreiheit",
+        "accessibility"
+      ],
+      [
+        "die Schulsozialarbeit",
+        "school social work"
+      ],
+      [
+        "die Ausstattung",
+        "equipment"
+      ],
+      [
+        "der Förderbedarf",
+        "support needs"
+      ],
+      [
+        "die Leistungsbewertung",
+        "performance assessment"
+      ],
+      [
+        "die Ressourcenverteilung",
+        "resource allocation"
+      ],
+      [
+        "Chancen eröffnen",
+        "create opportunities"
+      ],
+      [
+        "Teilhabe ermöglichen",
+        "enable participation"
+      ],
+      [
+        "einen Ausgleich schaffen",
+        "create balance"
+      ],
+      [
+        "bedarfsgerecht",
+        "needs-based"
+      ]
+    ],
+    "instruction": "Diskutieren Sie zu zweit etwa fünf Minuten: Sollen Schulen mit besonders schwierigen sozialen Bedingungen mehr finanzielle Mittel erhalten als andere Schulen? Reagieren Sie aufeinander und fassen Sie Ihr Ergebnis zusammen.",
+    "prompts": [
+      "Nehmen Sie begründet Stellung zur bedarfsgerechten Mittelverteilung.",
+      "Vergleichen Sie mögliche Folgen für unterschiedlich ausgestattete Schulen.",
+      "Reagieren Sie auf ein Gegenargument und entwickeln Sie ein überprüfbares Kriterium.",
+      "Formulieren Sie ein gemeinsames Fazit oder benennen Sie den verbleibenden Dissens."
+    ],
+    "model": "A: Ich halte eine bedarfsgerechte Finanzierung für sinnvoll, zumal gleiche Mittel bei unterschiedlichen Voraussetzungen nicht zwangsläufig gleiche Chancen schaffen.\nB: Das leuchtet mir ein. Allerdings könnte eine solche Regelung Schulen benachteiligen, deren Probleme weniger sichtbar sind.\nA: Deshalb sollten mehrere Kriterien berücksichtigt werden, etwa der tatsächliche Förderbedarf und die personelle Ausstattung.\nB: Vorausgesetzt, dass diese Kriterien transparent sind und regelmäßig überprüft werden, könnte ich dem Vorschlag zustimmen.\nA: Dann sind wir uns darin einig, dass zusätzliche Förderung möglich sein sollte, ohne die Grundausstattung anderer Schulen zu gefährden.",
+    "rubric": [
+      "Eigene Position mit Gründen vertreten",
+      "Partnerargumente aufgreifen und konkret beantworten",
+      "Kriterien und Zielkonflikte differenziert darstellen",
+      "Ergebnis der Diskussion zusammenfassen"
+    ]
+  }
 
 ];
 export const getC1Phase2Lesson = (day) => C1_PHASE2_LESSONS.find((lesson) => lesson.day === Number(day)) || null;
