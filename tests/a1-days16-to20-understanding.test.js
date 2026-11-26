@@ -68,7 +68,7 @@ test("Day 17 uses real Sprechen/Hören/Lesen workbook sections and preserves its
   assert.match(data,/Überqueren Sie die Straße/);
 });
 
-test("Day 20 exactly follows the informal birthday + formal language-school writing tasks", () => {
+test("Day 20 follows the current informal invitation + formal course enquiry tasks", () => {
   const s = slide("A1-12.3");
   assert.equal(s.workbookConnection.parts.length, 2);
   assert.match(s.workbookConnection.parts[0].label,/Informeller/);
@@ -76,9 +76,14 @@ test("Day 20 exactly follows the informal birthday + formal language-school writ
   const qs = JSON.stringify(getA1Days16To20UnderstandingChecks("A1-12.3"));
   assert.match(qs,/drei Inhaltspunkte/);
   assert.match(qs,/Anrede, Grußformel und Name/);
-  assert.match(qs,/Party|Geburtstags/);
-  assert.match(qs,/Wann beginnt der Kurs/);
-  assert.match(qs,/Kann ich online bezahlen/);
+  assert.match(qs,/Party/);
+  assert.match(qs,/Tag, Uhrzeit und Ort/);
+  assert.match(qs,/Getränke mitbringen/);
+  assert.match(qs,/Wann findet der Kurs statt/);
+  assert.match(qs,/Kurszeiten und Kosten/);
+  assert.match(qs,/gewünschten Kursbeginn/);
+  assert.match(s.workbookConnection.parts[0].detailEn,/Julia/);
+  assert.match(s.workbookConnection.parts[1].detailEn,/Sprachakademie München/);
 });
 
 test("Day 19 is a required three-part speaking assessment", () => {
