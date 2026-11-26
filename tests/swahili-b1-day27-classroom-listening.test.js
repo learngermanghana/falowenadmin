@@ -13,7 +13,7 @@ test("B1 Day 27 uses five transcript-backed true/false questions and the exact p
   assert.ok(swahiliB1Day27.stages.every(s => !s.radioVideoId));
 });
 test("B1 index preserves Day 28 and uses all curriculum chapter titles", () => {
-  assert.deepEqual(swahiliSlidePacks.B1.map(s => s.dayNumber), [27,28]);
+  assert.deepEqual(swahiliSlidePacks.B1.map(s => s.dayNumber), [26,27,28]);
   assert.equal(swahiliAudioChapters.B1.length, 28);
   const source = readFileSync(new URL("../src/components/SwahiliTeachingSlides.jsx", import.meta.url), "utf8");
   assert.match(source, /swahiliAudioChapters\.B1\.map/);
