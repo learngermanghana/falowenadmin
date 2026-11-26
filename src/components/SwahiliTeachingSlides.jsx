@@ -5,8 +5,9 @@ import { SWAHILI_DAY_FIVE_ADMIN_LESSON } from "../data/swahiliDayFiveTeachingSli
 import SwahiliSlideMusic from "./SwahiliSlideMusic.jsx";
 import { useEffect, useState } from "react";
 import InteractiveLessonOpening from "./InteractiveLessonOpening.jsx";
+import { readingParagraphChunks } from "../utils/swahiliGuidedClassroom.js";
 import { buildSwahiliClassroomStages } from "../utils/swahiliClassroomStages.js";
-import { SwahiliClassroomReading, SwahiliClassroomRoleplay } from "./SwahiliClassroomActivities.jsx";
+import { SwahiliClassroomReading, SwahiliClassroomRoleplay, SwahiliClassroomPresentation } from "./SwahiliClassroomActivities.jsx";
 import { swahiliAudioChapters } from "../data/swahiliAudioChapters.js";
 import { swahiliB1Day26 } from "../data/swahiliB1Day26.js";
 import { swahiliB1Day27 } from "../data/swahiliB1Day27.js";
@@ -154,6 +155,8 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
   const selectedWorkbook = selectedPresenterSlide.workbookConnection.workbookUrl;
   const stages = buildSwahiliClassroomStages(lesson);
   const activityTimer = usePresenterActivityTimer(7);
+  const [readingPhase,setReadingPhase] = useState("idle");
+  const [readingAssignment,setReadingAssignment] = useState(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [index, setIndex] = useState(0);
   const [notesVisible, setNotesVisible] = useState(false);
@@ -175,10 +178,14 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
     setGrammarPage(0);
     setFocusMode(false);
     setReportOpen(false);
+    setReadingPhase("idle");
+    setReadingAssignment(null);
   }, [slideId, present]);
 
   const goTo = (position) => {
     setIndex(Math.max(0, Math.min(stages.length - 1, position)));
+    setReadingPhase("idle");
+    setReadingAssignment(null);
     setNotesVisible(false);
     setAnswerVisible(false);
     setGrammarPage(0);
@@ -283,6 +290,8 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
         slide={selectedPresenterSlide}
         reportOpen={reportOpen}
         onReportClose={() => setReportOpen(false)}
+        readingShare={stage.type==="classroom-reading" && readingPhase!=="idle" ? {active:true,language:"sw",level:lessonLevel,phase:readingPhase,text:stage.content,signature:lesson.id+":"+stage.id,chunks:readingParagraphChunks(stage.units||[])} : null}
+        onReadingAssignmentChange={setReadingAssignment}
         responseContext={{ question: stageQuestion || stage.title, stageId: `${lesson.id}-${stage.id}${grammar ? `-${grammarPage + 1}` : ""}` }}
       />
 
@@ -301,7 +310,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
             </div>
           </div>
         )}
-        {stage.type === "classroom-reading" ? <SwahiliClassroomReading key={`${lesson.id}-${stage.id}`} stage={stage}>{isDaySix ? <SwahiliA2LessonStage stage={{...stage,type:"reading"}} isDaySix={true} /> : null}</SwahiliClassroomReading> : stage.type === "classroom-roleplay" ? <SwahiliClassroomRoleplay stage={stage} /> : stage.type === "classroom-listening" ? <InteractiveLessonOpening key={`${lesson.id}-${stage.id}`} stage={stage} slide={lesson} /> : isDaySix && stage.type === "music" ? <SwahiliRestaurantSong /> : (stage.audio || (isDayFive && stage.type === "day-five")) ? <section className="swahili-a2-presenter__media-stage">
+        {stage.type === "classroom-reading" ? <SwahiliClassroomReading key={`${lesson.id}-${stage.id}`} stage={stage} readingPhase={readingPhase} onReadingPhase={setReadingPhase} assignment={readingAssignment}>{isDaySix ? <SwahiliA2LessonStage stage={{...stage,type:"reading"}} isDaySix={true} /> : null}</SwahiliClassroomReading> : stage.type === "classroom-roleplay" ? <SwahiliClassroomRoleplay key={`${lesson.id}-${stage.id}`} stage={stage} /> : stage.type === "classroom-presentation" ? <SwahiliClassroomPresentation key={`${lesson.id}-${stage.id}`} stage={stage}>{isDaySix && stage.scenarios ? <SwahiliA2LessonStage stage={{...stage,type:"scenario"}} isDaySix={true} /> : null}</SwahiliClassroomPresentation> : stage.type === "classroom-listening" ? <InteractiveLessonOpening key={`${lesson.id}-${stage.id}`} stage={stage} slide={lesson} /> : isDaySix && stage.type === "music" ? <SwahiliRestaurantSong /> : (stage.audio || (isDayFive && stage.type === "day-five")) ? <section className="swahili-a2-presenter__media-stage">
           {stage.audio ? <SwahiliSlideMusic track={stage.audio} questions={stage.questions} /> : <p style={{ whiteSpace: "pre-line" }}>{stage.content}</p>}
         </section> : <SwahiliA2LessonStage stage={stage} grammar={grammar} isDaySix={isDaySix} level={isB1Day26 || isB1Day27 || isB1Day28 ? "B1" : "A1"} />}
 
