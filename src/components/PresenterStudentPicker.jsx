@@ -572,7 +572,7 @@ export default function PresenterStudentPicker({
   const helpCount = Object.values(stats).reduce((sum, row) => sum + Number(row?.needsHelp || row?.needsReview || 0), 0);
   const availableQuestionCount = Math.max(0, questionPool.length - roundQuestionIds.size);
   const interactionLocked = loadingStudents || syncState === "restoring" || hydratedIdentity !== sessionIdentity;
-  const readingEnabled = Boolean(readingShare?.active && ["A2", "B1"].includes(String(readingShare?.level || course).toUpperCase()));
+  const readingEnabled = Boolean(readingShare?.active && (readingShare?.language === "sw" || ["A2", "B1"].includes(String(readingShare?.level || course).toUpperCase())));
   const readingPhase = String(readingShare?.phase || "idle");
   const readingText = normalize(readingShare?.text);
   const readingSignature = [
@@ -603,7 +603,7 @@ export default function PresenterStudentPicker({
 
     const currentReadingHistory = readReadingHistory(selectedClassId);
     setReadingHistory(currentReadingHistory);
-    const chunks = buildReadingChunks(
+    const chunks = readingShare?.language === "sw" && readingShare?.chunks?.length ? readingShare.chunks : buildReadingChunks(
       readingText,
       readingShare?.level || course,
       Math.max(1, eligible.length),
@@ -615,7 +615,7 @@ export default function PresenterStudentPicker({
       history: currentReadingHistory,
       level: readingShare?.level || course,
     });
-    setReadingAssignments(assignments);
+    setReadingAssignments(readingShare?.language === "sw" ? assignments.map(assignment => ({...assignment, listenerQuestion: "Eleza wazo kuu na taja jambo moja muhimu."})) : assignments);
     setReadingAssignmentIndex(0);
     setReadingCompletedIds(new Set());
     onReadingAssignmentChange?.(assignments[0] || null);
