@@ -133,16 +133,17 @@ test("A1-12.3 understanding slides teach exactly three content points and separa
   assert.equal(new Set(classChecks.map((item) => item.questionDe)).size, 10);
   assert.match(combined, /genau drei|drei Inhaltspunkte/i);
   assert.match(combined, /Anrede, Grußformel und Name/);
-  assert.match(combined, /Alles Gute zum Geburtstag/);
-  assert.match(combined, /Gibt es eine Party/);
-  assert.match(combined, /Kann meine Familie mitkommen/);
-  assert.match(combined, /Wann beginnt der Kurs/);
-  assert.match(combined, /Wie viel kostet der Kurs/);
-  assert.match(combined, /Kann ich online bezahlen/);
+  assert.match(combined, /Ich lade dich zu meiner Party ein/);
+  assert.match(combined, /Tag, Uhrzeit und Ort/);
+  assert.match(combined, /Kannst du bitte Getränke mitbringen/);
+  assert.match(combined, /Wann findet der Kurs statt/);
+  assert.match(combined, /wie viel kostet er/);
+  assert.match(combined, /gewünschten Kursbeginn/);
   assert.ok(classChecks.some((item) => /^Ordne die Wörter:/.test(item.questionDe)));
   assert.ok(classChecks.some((item) => !/^Ordne die Wörter:/.test(item.questionDe)));
   assert.match(exitCheck.questionDe, /^Exit-Check:/);
-  assert.match(exitCheck.answerDe, /Wann beginnt der Kurs/);
+  assert.match(exitCheck.answerDe, /Kurszeiten und Kosten erfragen/);
+  assert.match(exitCheck.answerDe, /gewünschten Kursbeginn/);
   assert.match(exitCheck.answerDe, /Grußformel und Name/);
 });
 
