@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import InteractiveLessonOpening from "./InteractiveLessonOpening.jsx";
 import { standardizeSwahiliStages } from "../utils/swahiliPresenterSequence.js";
 import { swahiliAudioChapters } from "../data/swahiliAudioChapters.js";
+import { swahiliB1Day26 } from "../data/swahiliB1Day26.js";
 import { swahiliB1Day27 } from "../data/swahiliB1Day27.js";
 import { swahiliB1Day28 } from "../data/swahiliB1Day28.js";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -144,10 +145,11 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
   const isDayTwo = slideId === SWAHILI_DAY_TWO_ADMIN_LESSON.id;
   const isDaySix = slideId === SWAHILI_DAY_SIX_ADMIN_LESSON.id;
   const isDayTen = slideId === SWAHILI_DAY_TEN_ADMIN_LESSON.id;
+  const isB1Day26 = slideId === swahiliB1Day26.id;
   const isB1Day27 = slideId === swahiliB1Day27.id;
   const isB1Day28 = slideId === swahiliB1Day28.id;
   const existingPresenterSlide = isDaySix ? daySixPresenterSlide : presenterSlide;
-  const selectedPresenterSlide = calendarRoutinePresenters[slideId] || (isB1Day27 ? swahiliB1Day27 : slideId === SWAHILI_DAY_ELEVEN_ADMIN_LESSON.id ? dayElevenPresenterSlide : isB1Day28 ? b1Day28PresenterSlide : isDayTen ? dayTenPresenterSlide : isDayFive ? dayFivePresenterSlide : isDayTwo ? dayTwoPresenterSlide : existingPresenterSlide);
+  const selectedPresenterSlide = calendarRoutinePresenters[slideId] || (isB1Day26 ? swahiliB1Day26 : isB1Day27 ? swahiliB1Day27 : slideId === SWAHILI_DAY_ELEVEN_ADMIN_LESSON.id ? dayElevenPresenterSlide : isB1Day28 ? b1Day28PresenterSlide : isDayTen ? dayTenPresenterSlide : isDayFive ? dayFivePresenterSlide : isDayTwo ? dayTwoPresenterSlide : existingPresenterSlide);
   const lesson = selectedPresenterSlide;
   const selectedWorkbook = selectedPresenterSlide.workbookConnection.workbookUrl;
   const stages = standardizeSwahiliStages(lesson.stages);
@@ -302,7 +304,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
         {"radioVideoId" in stage && <SwahiliRadioMedia stage={stage} />}
         {stage.type === "classroom-listening" ? <InteractiveLessonOpening key={`${lesson.id}-${stage.id}`} stage={stage} slide={lesson} /> : isDaySix && stage.type === "music" ? <SwahiliRestaurantSong /> : (stage.audio || (isDayFive && stage.type === "day-five")) ? <section className="swahili-a2-presenter__media-stage">
           {stage.audio ? <SwahiliSlideMusic track={stage.audio} questions={stage.questions} /> : <p style={{ whiteSpace: "pre-line" }}>{stage.content}</p>}
-        </section> : <SwahiliA2LessonStage stage={stage} grammar={grammar} isDaySix={isDaySix} level={isB1Day27 || isB1Day28 ? "B1" : "A1"} />}
+        </section> : <SwahiliA2LessonStage stage={stage} grammar={grammar} isDaySix={isDaySix} level={isB1Day26 || isB1Day27 || isB1Day28 ? "B1" : "A1"} />}
 
         {stage.listeningWorkbookUrl && <a href={stage.listeningWorkbookUrl} target="_blank" rel="noreferrer">Open the related exercise in Campus</a>}
         {stageEnglish && <p className="swahili-a2-presenter__english" lang="en">{stageEnglish}</p>}
@@ -339,7 +341,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
       />
       {!focusMode && <footer className="swahili-a2-presenter__foot no-print">
         <a href={selectedWorkbook} target="_blank" rel="noreferrer">Open {lesson.day} learner workbook</a>
-        <span>{isB1Day27 || isB1Day28 ? "B1 · Kutunza Mazingira" : isDayTen ? "A1 · Sokoni" : isDayTwo ? "A1 · Salamu" : isDayFive ? "A1 · Day 5 practice" : isDaySix ? "Restaurant lesson · Falowen Music and Radio" : "Music and recorded Hören will be linked after upload."}</span>
+        <span>{isB1Day26 ? "B1 · Matatizo ya safari" : isB1Day27 || isB1Day28 ? "B1 · Kutunza Mazingira" : isDayTen ? "A1 · Sokoni" : isDayTwo ? "A1 · Salamu" : isDayFive ? "A1 · Day 5 practice" : isDaySix ? "Restaurant lesson · Falowen Music and Radio" : "Music and recorded Hören will be linked after upload."}</span>
       </footer>}
     </main>
     </div>
