@@ -2187,6 +2187,35 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
       : prepared;
   // Teacher lecture is a distinct lesson resource, never substituted for
   // the song (Musik) or the protected assessment Hören recording.
+  const academic = level === "C1" ? slide.academicPractice : null;
+  if (academic) {
+    const stage = academic.skill === "Lesen" ? {
+      id: "academic-practice", type: "knowledge", variant: "lesson-reading",
+      kicker: "Lesen · Teil " + academic.part, title: academic.title,
+      textDe: academic.text, instruction: academic.instruction,
+      items: academic.questions.map(([prompt, choices]) => prompt + " — " + choices.map((choice, i) => String.fromCharCode(65 + i) + ") " + choice).join(" · ")),
+      answerItems: academic.questions.map(([, choices, correct]) => choices[correct]),
+      evidence: academic.questions.map(([, , , reason]) => reason),
+      suggestedMinutes: 10,
+      teacherPurpose: { student: academic.instruction, teacher: "Antworten erst nach dem Versuch aufdecken. Unbewertetes Kurztraining." },
+    } : academic.skill === "Hören" ? {
+      id: "academic-practice", type: "question-reveal", kicker: "Hören · Teil 1", title: academic.title,
+      instruction: academic.instruction,
+      items: academic.questions.map(([prompt]) => prompt),
+      questionModels: academic.questions.map(([prompt, choices, correct, reason]) => ({ questionDe: prompt, modelAnswerDe: choices[correct] + " — " + reason })),
+      suggestedMinutes: 10,
+      teacherPurpose: { student: academic.instruction, teacher: "Vorlesen (einmal), nicht auf dem geteilten Bildschirm zeigen: " + academic.text },
+    } : {
+      id: "academic-practice", type: "question-reveal", kicker: academic.skill + " · Teil " + academic.part, title: academic.title,
+      instruction: academic.instruction,
+      items: [...academic.prompts, ...(academic.followups || []), "Muster und Selbstcheck"],
+      questionModels: [{ questionDe: "Muster und Selbstcheck", modelAnswerDe: academic.model + "\\n" + academic.rubric.join(" · ") }],
+      suggestedMinutes: 10,
+      teacherPurpose: { student: academic.instruction, teacher: "Bearbeiten lassen, anschließend Muster und Selbstcheck aufdecken. Keine neue Bewertung." },
+    };
+    const grammarIndex = classroomStages.findIndex(item => item.id === "grammar");
+    if (grammarIndex >= 0) classroomStages.splice(grammarIndex + 1, 0, stage);
+  }
   const teacherVideoId = String(slide.teacherLectureVideoId || "").trim();
   const withTeacherLecture = /^[A-Za-z0-9_-]{11}$/.test(teacherVideoId)
     ? classroomStages.flatMap(stage => stage.id === "intro"

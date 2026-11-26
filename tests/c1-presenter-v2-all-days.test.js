@@ -55,7 +55,8 @@ test("all C1 days use the stable argumentation teaching spine", () => {
 
     const stages = buildTeachingPresenterStages(slide, slide.topic);
     const stageIds = stages.map((stage) => stage.id);
-    assert.deepEqual(stageIds, REQUIRED_STAGES, slide.assignmentId + " should use the C1 teaching spine");
+    const expectedStages = slide.dayNumber <= 5 ? REQUIRED_STAGES.flatMap(id => id === "grammar" ? [id, "academic-practice"] : [id]) : REQUIRED_STAGES;
+    assert.deepEqual(stageIds, expectedStages, slide.assignmentId + " should use the C1 teaching spine");
 
     const warmup = stages.find((stage) => stage.id === "warmup");
     const foundation = stages.find((stage) => stage.id === "foundation");
