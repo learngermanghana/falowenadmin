@@ -24,7 +24,7 @@ import StudentEmergencyContact from "../components/StudentEmergencyContact.jsx";
 import { matchesStudentDirectorySearch } from "../utils/studentDirectorySearch.js";
 import { emergencyContactEditorValues, emergencyContactEditedFields } from "../utils/studentEmergencyContact.js";
 import { calculatePaystackCharge, calculatePaystackGrossAmount, parseMoneyValue, PAYSTACK_CHARGE_RATE, STUDENT_PAYSTACK_CHARGE_SHARE } from "../utils/paystackCharges";
-import { getEffectiveClassEndDate } from "../utils/liveClassScheduling";
+import { studentPaymentDeadlineReminder } from "../utils/tuitionPaymentCountdown.js";
 import { isArchivedStudent, isTrialOrUnpaidStudent, resolveStudentLearningStatus, sortStudentsByAttention, summarizeStudentAttention } from "../utils/studentAttention";
 
 const editableFields = STUDENT_DETAIL_TABS.flatMap((tab) => tab.fields);
@@ -158,29 +158,14 @@ const followUpTemplates = [
     helper: "For students who still owe fees.",
   },
   {
-    key: "assignment",
-    label: "Assignment reminder",
-    helper: "For students who have not submitted class work.",
-  },
-  {
-    key: "exam",
-    label: "Exam practice reminder",
-    helper: "For Goethe/exam preparation follow-up.",
-  },
-  {
-    key: "contract",
-    label: "Contract ending reminder",
-    helper: "For students whose class contract is ending soon.",
-  },
-  {
-    key: "classUpdate",
-    label: "Class update",
-    helper: "General update for class time, level, or learning plan.",
-  },
-  {
     key: "review",
     label: "Review request",
     helper: "Send the Google review link for course, school, and app feedback.",
+  },
+  {
+    key: "custom",
+    label: "Custom message",
+    helper: "Write your own WhatsApp message.",
   },
 ];
 
@@ -222,24 +207,6 @@ function displayValue(...values) {
   return values.map((value) => String(value ?? "").trim()).find(Boolean) || "";
 }
 
-function normalizeClassLookupValue(value) {
-  return displayValue(value).toLowerCase();
-}
-
-function findStudentClass(student = {}, draft = {}, classes = []) {
-  const wanted = [draft.className, student.className, draft.level, student.level, draft.program, student.program, student.location]
-    .map(normalizeClassLookupValue)
-    .filter(Boolean);
-  if (!wanted.length) return null;
-
-  return classes.find((klass) => {
-    const candidates = [klass.id, klass.name, klass.className, klass.title, klass.levelId, klass.level, klass.program, klass.location]
-      .map(normalizeClassLookupValue)
-      .filter(Boolean);
-    return wanted.some((value) => candidates.includes(value));
-  }) || null;
-}
-
 function resolveStudentName(student) {
   return displayValue(student?.name, student?.displayName, student?.studentCode, student?.id) || "Student";
 }
@@ -259,32 +226,6 @@ function resolveBalance(student, draft = {}) {
   return displayValue(draft.balanceDue, student?.balanceDue, student?.balance, student?.outstandingBalance, student?.amountDue);
 }
 
-function resolveContractEnd(student, draft = {}, classes = []) {
-  const explicitEnd = displayValue(draft.contractEnd, student?.contractEnd);
-  if (explicitEnd) return explicitEnd;
-
-  const klass = findStudentClass(student, draft, classes);
-  return klass ? getEffectiveClassEndDate(klass) : "";
-}
-
-function daysUntilDate(value) {
-  const normalized = normalizeDateValue(value);
-  if (!normalized) return null;
-  const target = new Date(`${normalized}T00:00:00Z`);
-  if (Number.isNaN(target.getTime())) return null;
-  const now = new Date();
-  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  return Math.ceil((target.getTime() - today.getTime()) / 86400000);
-}
-
-function formatDisplayDate(value) {
-  const normalized = normalizeDateValue(value);
-  if (!normalized) return "not set";
-  const date = new Date(`${normalized}T00:00:00Z`);
-  if (Number.isNaN(date.getTime())) return normalized;
-  return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-}
-
 function normalizePhoneForWhatsapp(phone) {
   const digits = String(phone || "").replace(/\D/g, "");
   if (!digits) return "";
@@ -299,13 +240,10 @@ function callUrl(phone) {
   return normalizedPhone ? `tel:${normalizedPhone}` : "";
 }
 
-function buildFollowUpMessage(templateKey, student, draft = {}, classes = []) {
+function buildFollowUpMessage(templateKey, student, draft = {}) {
   const name = resolveStudentName(student);
   const className = resolveStudentClass(student, draft);
   const balance = resolveBalance(student, draft);
-  const contractEnd = resolveContractEnd(student, draft, classes);
-  const daysLeft = daysUntilDate(contractEnd);
-  const contractDate = formatDisplayDate(contractEnd);
 
   if (templateKey === "balance") {
     const balanceText = toNumber(balance) > 0 ? formatGhs(balance) : "your outstanding balance";
@@ -315,33 +253,18 @@ function buildFollowUpMessage(templateKey, student, draft = {}, classes = []) {
       student?.checkoutUrl,
       student?.paymentUrl,
     );
-    const accessText = contractEnd
-      ? `If the balance is still unpaid, your Falowen access is scheduled to stop on ${contractDate}.`
-      : "Please make payment early so your Falowen access can continue without interruption.";
+    const accessText = studentPaymentDeadlineReminder(student, draft);
     const paymentText = paymentLink
       ? `You can pay here: ${paymentLink}`
       : "Please contact us if you need a payment link.";
     return `Hello ${name}, this is a payment reminder from Learn Language Education Academy / Falowen. Your ${className} outstanding balance is ${balanceText}. ${accessText} ${paymentText} Please update us after payment. Thank you.`;
   }
 
-  if (templateKey === "assignment") {
-    return `Hello ${name}, kindly remember to complete and submit your pending ${className} assignment. Consistent practice is very important for your German progress. Please submit it and update us when done.`;
-  }
-
-  if (templateKey === "exam") {
-    return `Hello ${name}, this is your exam practice reminder. Please practise one German task today: Schreiben, Sprechen, Lesen, or Hören. Focus on your weak area and send an update on your progress. Do not wait until exam week before practising.`;
-  }
-
-  if (templateKey === "contract") {
-    const remainingText = daysLeft == null ? "soon" : daysLeft <= 0 ? "today or has already ended" : `in ${daysLeft} day(s)`;
-    return `Hello ${name}, your ${className} learning contract ends ${remainingText}${contractEnd ? ` (${contractDate})` : ""}. Kindly contact us if you want to continue, renew, or complete any pending payment/assignment before the end date.`;
-  }
-
   if (templateKey === "review") {
     return `Hello ${name}, thank you for learning with Learn Language Education Academy / Falowen. Please share a review about your course, the school, and the app here: ${REVIEW_LINK}. Your feedback helps us improve and helps other students find us. Thank you.`;
   }
 
-  return `Hello ${name}, this is an update from Learn Language Education Academy / Falowen concerning your ${className}. Kindly check your class information, continue your lessons consistently, and contact us if you need help. Thank you.`;
+  return "";
 }
 
 function whatsappUrl(phone, message) {
@@ -555,8 +478,8 @@ export default function StudentDirectoryPage() {
       setFollowUpMessage("");
       return;
     }
-    setFollowUpMessage(buildFollowUpMessage(followUpType, selectedStudent, getDraft(selectedStudent), classes));
-  }, [followUpType, selectedStudent, selectedStudentId, drafts, classes]);
+    setFollowUpMessage(buildFollowUpMessage(followUpType, selectedStudent, getDraft(selectedStudent)));
+  }, [followUpType, selectedStudent, selectedStudentId, drafts]);
 
   const updateDraftField = (studentId, field, value, student) => {
     setDrafts((prev) => {
@@ -816,7 +739,7 @@ export default function StudentDirectoryPage() {
   };
 
   const openWhatsappFollowUp = () => {
-    if (!selectedStudent) return;
+    if (!selectedStudent || !followUpMessage.trim()) return;
     const phone = resolveStudentPhone(selectedStudent, getDraft(selectedStudent));
     const url = whatsappUrl(phone, followUpMessage);
     if (!url) {
@@ -1304,7 +1227,7 @@ export default function StudentDirectoryPage() {
                           <div>
                             <h3 style={{ margin: "0 0 4px" }}>WhatsApp follow-up generator</h3>
                             <p style={{ margin: 0, color: "#64748b" }}>
-                              Generate a ready message for balances, assignments, exams, contract renewal, or class updates.
+                              Generate a balance reminder, request a Google review, or write your own message.
                             </p>
                           </div>
 
@@ -1348,19 +1271,20 @@ export default function StudentDirectoryPage() {
                           </label>
 
                           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                            <button type="button" onClick={openWhatsappFollowUp}>
+                            <button type="button" disabled={!followUpMessage.trim()} onClick={openWhatsappFollowUp}>
                               Open WhatsApp
                             </button>
                             <button
                               type="button"
                               onClick={copyFollowUpMessage}
+                              disabled={!followUpMessage.trim()}
                               style={{ background: "#fff", color: "#1a2233", border: "1px solid #cbd5e1" }}
                             >
                               Copy message
                             </button>
                             <button
                               type="button"
-                              onClick={() => setFollowUpMessage(buildFollowUpMessage(followUpType, selectedStudent, getDraft(selectedStudent), classes))}
+                              onClick={() => setFollowUpMessage(buildFollowUpMessage(followUpType, selectedStudent, getDraft(selectedStudent)))}
                               style={{ background: "#fff", color: "#1a2233", border: "1px solid #cbd5e1" }}
                             >
                               Reset text
