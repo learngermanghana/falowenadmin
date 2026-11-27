@@ -28,8 +28,24 @@ function doPost(e) {
         const safe=body.row.map(v=>typeof v==="string"&&/^\s*[=+@-]/.test(v)?"'"+v:v);
         sheet.getRange(row,1,1,lastColumn).setValues([safe]);
       }
+      let terminationArchived=false;
+      if(isEnrollment&&String(body.row[9]).toLowerCase()==="forfeited"&&String(body.row[13]).toLowerCase()==="cancelled"){
+        const completedId=props.getProperty("COMPLETED_SPREADSHEET_ID");
+        if(!completedId)throw new Error("COMPLETED_SPREADSHEET_ID is not configured; no account will be purged.");
+        const completed=SpreadsheetApp.openById(completedId);
+        const archive=completed.getSheetByName("Terminated Enrollments")||completed.insertSheet("Terminated Enrollments");
+        const archiveHeaders=headers.concat(["Transferable Credit","Archived At"]);
+        if(!archive.getLastRow())archive.getRange(1,1,1,archiveHeaders.length).setValues([archiveHeaders]);
+        if(archive.getRange(1,1,1,archiveHeaders.length).getValues()[0].join("|")!==archiveHeaders.join("|"))throw new Error("Unexpected Terminated Enrollments headers");
+        const found=archive.getLastRow()>1?archive.getRange(2,1,archive.getLastRow()-1,1).createTextFinder(String(body.row[0])).matchEntireCell(true).findNext():null;
+        if(!found){
+          const values=body.row.concat([0,new Date()]).map(v=>typeof v==="string"&&/^\s*[=+@-]/.test(v)?"'"+v:v);
+          archive.getRange(archive.getLastRow()+1,1,1,archiveHeaders.length).setValues([values]);
+        }
+        terminationArchived=true;
+      }
       SpreadsheetApp.flush();
-      return enrollmentResponse({ok:true,action:body.action});
+      return enrollmentResponse({ok:true,action:body.action,terminationArchived});
     } finally {lock.releaseLock();}
   }catch(e){return enrollmentResponse({ok:false,error:String(e.message)});}
 }
