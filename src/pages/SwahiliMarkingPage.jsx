@@ -9,7 +9,7 @@ const LESSONS = {
     .map(([id, key]) => [id.split("-").at(-1), { title: key.title, writing: { response: "Kuandika" } }])),
   11: { title: "Dukani", writing: { dialogue: "Mazungumzo" } },
   26: { title: "B1 · Matatizo ya safari na suluhisho zake", writing: { essay: "Insha au ripoti" } },
-  27: { title: "B1 · Kutunza mazingira katika maisha ya kila siku", writing: { essay: "Insha au ripoti" } },
+  27: { title: "B1 · Uchafuzi wa mazingira: sababu na suluhisho", writing: { essay: "Insha au ripoti" } },
   28: { title: "B1 · Kutunza Mazingira katika Maisha ya Kila Siku", writing: { email: "Barua pepe" } },
   1: { title: "Alfabeti, sauti na matamshi", writing: { vowels: "Vokali", syllables: "Silabi", words: "Maneno" } },
   6: { title: "Mgahawani", writing: { likes: "Ninapenda", dislikes: "Sipendi", order: "Agizo" } },

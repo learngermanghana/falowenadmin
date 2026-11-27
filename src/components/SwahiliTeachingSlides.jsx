@@ -349,7 +349,7 @@ export default function SwahiliTeachingSlides({ slideId, present = false }) {
       />
       {!focusMode && <footer className="swahili-a2-presenter__foot no-print">
         <a href={selectedWorkbook} target="_blank" rel="noreferrer">Open {lesson.day} learner workbook</a>
-        <span>{isB1Day26 ? "B1 · Matatizo ya safari" : isB1Day27 || isB1Day28 ? "B1 · Kutunza Mazingira" : isDayTen ? "A1 · Sokoni" : isDayTwo ? "A1 · Salamu" : isDayFive ? "A1 · Day 5 practice" : isDaySix ? "Restaurant lesson · Music and listening" : "Music and recorded Hören will be linked after upload."}</span>
+        <span>{isB1Day26 ? "B1 · Matatizo ya safari" : isB1Day27 ? "B1 · Uchafuzi wa mazingira" : isB1Day28 ? "B1 · Kutunza Mazingira" : isDayTen ? "A1 · Sokoni" : isDayTwo ? "A1 · Salamu" : isDayFive ? "A1 · Day 5 practice" : isDaySix ? "Restaurant lesson · Music and listening" : "Music and recorded Hören will be linked after upload."}</span>
       </footer>}
     </main>
     </div>

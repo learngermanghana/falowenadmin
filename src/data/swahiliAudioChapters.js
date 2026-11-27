@@ -60,7 +60,7 @@ export const swahiliAudioChapters = {
     { assignment_id: "swahili-b1-day-24", en: "Somo la 24 · 8.24 · Matumizi ya bidhaa na uendelevu" },
     { assignment_id: "swahili-b1-day-25", en: "Somo la 25 · 8.25 · Ununuzi mtandaoni: haki na hatari" },
     { assignment_id: "swahili-b1-day-26", en: "Somo la 26 · 9.26 · Matatizo ya safari na suluhisho zake" },
-    { assignment_id: "swahili-b1-day-27", en: "Somo la 27 · 10.27 · Kutunza mazingira katika maisha ya kila siku" },
+    { assignment_id: "swahili-b1-day-27", en: "Somo la 27 · 10.27 · Uchafuzi wa mazingira: sababu na suluhisho" },
     { assignment_id: "swahili-b1-day-28", en: "Somo la 28 · 10.28 · Kutunza Mazingira katika Maisha ya Kila Siku" },
   ],
 };
