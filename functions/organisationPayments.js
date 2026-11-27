@@ -67,7 +67,7 @@ async function applyGroupPayment({ transaction: tx, paymentRef, payment, eventDa
     const student=snap.data(),id=student.effectiveEnrollmentId;
     const expected=payment.lines[i].enrollmentId;
     if(expected&&expected!==id||student.partialTuitionClosedEnrollmentId&&!expected)return {error:"Payment no longer belongs to the current enrollment"};
-    if(!id)return null;
+    if(!id){const lifecycle=require("./partialTuitionLifecycle"),legacy=lifecycle.legacyRow(student),dates=legacy&&lifecycle.recoveryDates(legacy);return dates&&date>=dates.terminateOn?{error:"The 30-day recovery period ended"}:null;}
     const ref=snap.ref.collection("levelEnrollments").doc(id),row=await tx.get(ref);
     try{
       if(!row.exists||lines[i].discount!==0||!require("./partialTuitionLifecycle").matchesRoot(student,{id,...row.data()}))throw Error("Level accounting requires reconciliation");
@@ -488,6 +488,8 @@ function registerOrganisationPaymentRoutes(app, { db, admin, initializePaystackP
       students.forEach((snap, i) => {
         if (!approved.has(lines[i].studentId) || !snap.exists || snap.data().organisationSubmissionId !== batchId) fail(409, "Only approved students in this organisation can be billed.");
         if(snap.data().partialTuitionTermination?.state==="pending_purge"||snap.data().partialTuitionClosedEnrollmentId&&snap.data().partialTuitionClosedEnrollmentId===snap.data().effectiveEnrollmentId)fail(409,"This enrollment has ended; register a new enrollment.");
+        const lifecycle=require("./partialTuitionLifecycle"),student=snap.data(),legacy=lifecycle.legacyRow(student),dates=lifecycle.recoveryDates(legacy||{...student,contractStart:require("./studentContractLifecycle").isoDate(student.contractStart),contractEnd:require("./studentContractLifecycle").isoDate(student.contractEnd),paymentDeadline:require("./studentContractLifecycle").isoDate(student.paymentDeadline)});
+        if(dates&&new Date().toISOString().slice(0,10)>=dates.terminateOn)fail(409,"The recovery period ended; register a new enrollment.");
         if (minor(lines[i].grossAmount) > balanceOf(snap.data())) fail(409, "An amount exceeds a student's outstanding balance.");
         // Retain 10% only on the first tuition payment, never a later instalment.
         const shareMinor = minor(lines[i].discount);
