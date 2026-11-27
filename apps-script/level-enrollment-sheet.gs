@@ -29,7 +29,7 @@ function doPost(e) {
         sheet.getRange(row,1,1,lastColumn).setValues([safe]);
       }
       let terminationArchived=false;
-      if(isEnrollment&&String(body.row[9]).toLowerCase()==="forfeited"&&String(body.row[13]).toLowerCase()==="cancelled"){
+      if(isEnrollment&&((String(body.row[9]).toLowerCase()==="forfeited"&&String(body.row[13]).toLowerCase()==="cancelled")||(body.terminationReason==="paid_contract_expired"&&String(body.row[9]).toLowerCase()==="paid"&&String(body.row[13]).toLowerCase()==="completed"&&Number(body.row[8])===0))){
         const completedId=props.getProperty("COMPLETED_SPREADSHEET_ID");
         if(!completedId)throw new Error("COMPLETED_SPREADSHEET_ID is not configured; no account will be purged.");
         const completed=SpreadsheetApp.openById(completedId);
