@@ -195,7 +195,7 @@ jobs:
             exit 1
           fi
           grep -F 'module.exports.cleanupExpiredPendingStudents = onSchedule' functions/main.js
-          grep -F 'schedule: "0 3 * * *"' functions/main.js
+          grep -F 'schedule: "0 3 1 * *"' functions/main.js
           grep -F 'exports.autoCompleteClassSessions = createAutoCompleteClassSessionsJob' functions/index.js
           grep -F 'exports.sendCourseReviewRequestEmails = createCourseReviewRequestEmailJob' functions/index.js
           if grep -F 'exports.sendDueHolidayNotices = onSchedule' functions/index.js; then echo "Daily holiday emails must stay retired"; exit 1; fi
