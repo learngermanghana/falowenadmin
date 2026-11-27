@@ -73,27 +73,29 @@ export default function StudentLevelEnrollments({student,pushToast,classes=[],mo
  const saveExisting=async(input)=>{setBusy(true);try{const r=await request(id,input,"/edit-existing-course");setRows(old=>[...old.filter(x=>x.id!==r.enrollment.id),r.enrollment]);setLegacyCourses(old=>old.filter(x=>x.id!==r.enrollment.id));await refreshProfile();if(input.convertTrial)setSelected(r.enrollment.id);pushToast?.({type:"success",message:input.convertTrial?"Contract prepared. Record payment below to activate access.":"Existing course saved. No payment created."});}finally{setBusy(false);}};
  const [checkout,setCheckout]=useState(null),[linkAmount,setLinkAmount]=useState("");
  const [verifyReference,setVerifyReference]=useState(""),[verifyBusy,setVerifyBusy]=useState(false),[verifyMessage,setVerifyMessage]=useState("");
- const verificationInFlight=useRef(false);
+ const verificationInFlight=useRef(null),currentStudent=useRef(id);
+ currentStudent.current=id;
  const verifyPayments=async(reference="",silent=false)=>{
-  if(verificationInFlight.current)return;
-  verificationInFlight.current=true;setVerifyBusy(true);setVerifyMessage("");
+  if(verificationInFlight.current===id)return;
+  verificationInFlight.current=id;setVerifyBusy(true);setVerifyMessage("");
   try{
    const token=await auth.currentUser?.getIdToken();
    const response=await fetch("/api/payments/reconcile-enrollment/"+encodeURIComponent(id),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({reference:reference.trim()})});
    const result=await response.json().catch(()=>({}));
    if(!response.ok||!result.ok)throw Error(result.error||"Payment verification failed ("+response.status+")");
+   if(currentStudent.current!==id)return;
    const issues=result.results.filter(r=>r.error);
    const paid=result.results.filter(r=>r.status==="paid"&&r.sheetStatus==="synced");
    if(issues.length)setVerifyMessage(issues.map(r=>r.reference+": "+r.error).join("; "));
    else if(paid.length)setVerifyMessage(paid.length+" verified payment(s); sheet synchronized.");
    else if(!silent)setVerifyMessage(result.results.length?"Paystack payment not completed yet.":"No pending level payment links found. Enter an exact reference to retry a paid transaction.");
-   const refreshed=await request(id);setRows(refreshed.enrollments);setLegacyCourses(refreshed.legacyCourses||[]);
+   const refreshed=await request(id);if(currentStudent.current!==id)return;setRows(refreshed.enrollments);setLegacyCourses(refreshed.legacyCourses||[]);
    if(paid.length)await refreshProfile();
-  }catch(e){setVerifyMessage(e.message);}finally{verificationInFlight.current=false;setVerifyBusy(false);}
+  }catch(e){if(currentStudent.current===id)setVerifyMessage(e.message);}finally{if(verificationInFlight.current===id)verificationInFlight.current=null;if(currentStudent.current===id)setVerifyBusy(false);}
  };
  // One check on opening the payment-link panel and one delayed check after generating a link.
  // No persistent polling, timers after unmount, or new cloud scheduler.
- useEffect(()=>{if(mode==="links")verifyPayments("",true);},[id,mode]);
+ useEffect(()=>{setVerifyReference("");setVerifyMessage("");setVerifyBusy(false);setCheckout(null);if(mode==="links")verifyPayments("",true);},[id,mode]);
  useEffect(()=>{if(mode!=="links"||!checkout?.reference)return;const timer=setTimeout(()=>verifyPayments(checkout.reference,true),90000);return()=>clearTimeout(timer);},[id,mode,checkout?.reference]);
  const recoveryControls=<div style={{display:"grid",gap:6}}><label>Payment reference (optional)<input value={verifyReference} onChange={e=>setVerifyReference(e.target.value)} placeholder="FAL-..." disabled={verifyBusy}/></label><button type="button" disabled={verifyBusy} onClick={()=>verifyPayments(verifyReference)}>{verifyBusy?"Verifying Paystack…":"Verify Paystack / recover payment"}</button>{verifyMessage&&<p role="status">{verifyMessage}</p>}</div>;
  useEffect(()=>{setCheckout(null);setLinkAmount("");},[selected]);
