@@ -306,6 +306,7 @@ app.post("/payments/restore-paid-contract", async (req, res) => {
     content = content.slice(0,index) + marker + "\n" + enrollmentHook + content.slice(index+marker.length);
   }
   const enrollmentRoute = 'require("./studentLevelEnrollments").registerEnrollmentCheckout({app,db,admin,requirePaymentAdmin,initializePaystackPayment,calculateStudentCheckoutAmount,createPaymentReference,verifyPaystackTransaction,applySuccessfulPaystackPayment});';
+  content = content.replace('require("./studentLevelEnrollments").registerEnrollmentCheckout({app,db,admin,requirePaymentAdmin,initializePaystackPayment,calculateStudentCheckoutAmount,createPaymentReference});', enrollmentRoute);
   if (!content.includes(enrollmentRoute)) {
     const marker = 'app.post("/payments/reconcile-student/:studentId", async (req, res) => {';
     if (!content.includes(marker)) throw new Error("Enrollment checkout route anchor missing");
@@ -314,7 +315,7 @@ app.post("/payments/restore-paid-contract", async (req, res) => {
   // A webhook replay retries the same sheet version without re-crediting tuition.
   content = replaceRequired(content,
     '    console.log("paystack_payment_applied", result);',
-    '    if (result.enrollmentId && !result.requiresAllocation) { const ref = db.collection("students").doc(result.studentId).collection("levelEnrollments").doc(result.enrollmentId); const sync = await require("./levelEnrollmentSheetSync").syncEnrollmentRef({ref,db,admin}); if (sync.status !== "synced") throw new Error(sync.error || "Enrollment sheet synchronization incomplete"); }\\n    console.log("paystack_payment_applied", result);',
+    '    if (result.enrollmentId && !result.requiresAllocation) { const ref = db.collection("students").doc(result.studentId).collection("levelEnrollments").doc(result.enrollmentId); const sync = await require("./levelEnrollmentSheetSync").syncEnrollmentRef({ref,db,admin}); if (sync.status !== "synced") throw new Error(sync.error || "Enrollment sheet synchronization incomplete"); }\n    console.log("paystack_payment_applied", result);',
     "enrollment webhook sheet recovery");
   // Sheet sync is optional. A missing integration must not block the core API deployment.
   content = content.replace('const levelEnrollmentSyncSecret = defineSecret("LEVEL_ENROLLMENT_SYNC_SECRET");\n', '').replace('    levelEnrollmentSyncSecret,\n', '');
