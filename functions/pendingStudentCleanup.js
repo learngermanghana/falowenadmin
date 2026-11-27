@@ -417,6 +417,10 @@ async function deleteExpiredPendingStudent({ admin, db, docSnap, now = Date.now(
   const summary = { deleted: 0, collections: {}, attendanceSessionMapsUpdated: 0, authUsersDeleted: [] };
 
   if(await hasAmbiguousCleanupIdentity(db,studentId,studentDocIds,allValues))return {skipped:"ambiguous_student_identity"};
+  if(partialTuition){
+    const user=await admin.auth().getUserByEmail(email).catch(error=>{if(error.code==="auth/user-not-found")return null;throw error;});
+    if(user&&user.uid!==(student.uid||studentId))return {skipped:"auth_identity_mismatch"};
+  }
 
   // Delete the sheet rows first. If Apps Script is temporarily unavailable,
   // keep the Firestore student so this purge remains retryable.
