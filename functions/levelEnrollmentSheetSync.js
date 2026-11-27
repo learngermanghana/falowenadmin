@@ -63,12 +63,13 @@ async function syncEnrollmentRef({ref,db,admin,url=resolveEnrollmentSyncConfig()
       levelPayments.push([p.reference,studentId,ref.id,record.program,record.level,p.amount,surcharge,gross,"GHS",p.receivedDate,"Paid"]);
     }
   }
+  if(!levelPayments?.length)primaryPayment=undefined;
   await syncEnrollmentSheet({id:ref.id,studentId:ref.parent.parent.id,record,url,secret,terminationNotice,primaryPayment,levelPayments});
   await db.runTransaction(async tx=>{const current=await tx.get(ref);if(current.exists&&Number(current.data().sheetVersion||1)===version)tx.update(ref,{sheetSyncStatus:"synced",sheetSyncedAt:admin.firestore.FieldValue.serverTimestamp(),sheetSyncError:""});});
   return {status:"synced"};
  } catch(e){
   const message=String(e.message||"Sheet sync failed").slice(0,250);
-  await db.runTransaction(async tx=>{const current=await tx.get(ref);if(current.exists&&Number(current.data().sheetVersion||1)===version&&(force||current.data().sheetSyncStatus!=="synced"))tx.update(ref,{sheetSyncStatus:"failed",sheetSyncError:message});});
+  await db.runTransaction(async tx=>{const current=await tx.get(ref);if(current.exists&&Number(current.data().sheetVersion||1)===version&&current.data().sheetSyncStatus!=="synced")tx.update(ref,{sheetSyncStatus:"failed",sheetSyncError:message});});
   return {status:"failed",error:message};
  }
 }
