@@ -4,10 +4,10 @@ function sheetRow(id,studentId,record){
 }
 async function syncEnrollmentSheet({id,studentId,record,url,secret,terminationNotice,fetchImpl=fetch}){
  if(!url||!secret)throw new Error("Enrollment sheet integration not configured");
- const response=await fetchImpl(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"upsertLevelEnrollment",secret,row:sheetRow(id,studentId,record),...(terminationNotice?{terminationNotice}:{})})});
+ const response=await fetchImpl(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"upsertLevelEnrollment",secret,row:sheetRow(id,studentId,record),...(record.terminationReason?{terminationReason:record.terminationReason}:{}),...(terminationNotice?{terminationNotice}:{})})});
  const body=await response.json().catch(()=>({}));
  if(!response.ok||body.ok!==true||body.action!=="upsertLevelEnrollment")throw new Error(body.error||"Enrollment sheet did not acknowledge update");
- if(record.terminationReason==="partial_tuition_recovery_expired"&&body.terminationArchived!==true)throw new Error("Completed spreadsheet did not acknowledge the terminated enrollment archive; update the existing Apps Script deployment.");
+ if(["partial_tuition_recovery_expired","paid_contract_expired"].includes(record.terminationReason)&&body.terminationArchived!==true)throw new Error("Completed spreadsheet did not acknowledge the terminated enrollment archive; update the existing Apps Script deployment.");
  return body;
 }
 module.exports={HEADERS,sheetRow,syncEnrollmentSheet};
@@ -25,7 +25,7 @@ async function syncEnrollmentRef({ref,db,admin,url=resolveEnrollmentSyncConfig()
  if(record.sheetSyncStatus==="synced")return {status:"synced"};
  try {
   let terminationNotice;
-  if(record.terminationReason==="partial_tuition_recovery_expired"){
+  if(["partial_tuition_recovery_expired","paid_contract_expired"].includes(record.terminationReason)){
     const parent=await ref.parent.parent.get(),student=parent.data()||{};
     let email=String(student.email||"").trim(),recipient=String(student.name||student.fullName||"Student");
     const organisation=Boolean(student.organisationSubmissionId||student.billingResponsibility==="organisation");
