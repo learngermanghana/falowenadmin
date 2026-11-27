@@ -1,6 +1,6 @@
 const test=require("node:test");
 const assert=require("node:assert/strict");
-const {recoveryDates,phase,rootCandidate,matchesRoot,otherCourseRisk}=require("./partialTuitionLifecycle");
+const {recoveryDates,paidContractDates,phase,rootCandidate,matchesRoot,otherCourseRisk}=require("./partialTuitionLifecycle");
 const {paymentPatch}=require("./studentLevelEnrollments");
 const row={id:"german-A1",program:"german",level:"A1",accessType:"paid",status:"active",tuitionFee:3000,paid:2000,balanceDue:1000,contractStart:"2026-11-05",contractEnd:"2026-12-05",paymentDeadline:"2026-12-05"};
 const root={...row,effectiveEnrollmentId:row.id};
@@ -35,4 +35,19 @@ test("payment in recovery settles the original term; after recovery and after ca
  assert.equal(settled.status,"active");assert.equal(settled.contractEnd,"2027-05-05");assert.equal(settled.balanceDue,0);
  assert.throws(()=>paymentPatch(expired,1000,"2027-01-05"),/recovery period ended/);
  assert.throws(()=>paymentPatch({...expired,status:"cancelled"},1000,"2027-01-04"),/new registration/);
+});
+
+test("fully paid contracts have no additional recovery period",()=>{
+ const paid={...row,paid:3000,balanceDue:0,contractEnd:"2027-05-05",paymentDeadline:"",status:"completed"};
+ assert.deepEqual(paidContractDates(paid),{lastAccess:"2027-05-05",recoveryEnd:"",terminateOn:"2027-05-06"});
+ assert.equal(phase(paid,"2027-05-05"),"active");
+ assert.equal(phase(paid,"2027-05-06"),"terminate");
+ assert.equal(rootCandidate({...paid,effectiveEnrollmentId:paid.id},"2027-06-01"),true);
+ assert.equal(rootCandidate({...paid,effectiveEnrollmentId:""},"2027-06-01"),true);
+ assert.equal(rootCandidate({...paid,effectiveEnrollmentId:paid.id},"2027-05-01"),false);
+ assert.equal(paidContractDates({...paid,accessType:"complimentary"}),null);
+ assert.equal(paidContractDates({...paid,balanceDue:500}),null);
+ const previous={...paid,id:"german-A2",level:"A2",status:"active",contractEnd:"2027-04-05"};
+ assert.equal(otherCourseRisk(paid,[paid,previous],paid,"2027-06-01"),false);
+ assert.equal(otherCourseRisk(paid,[paid,{...previous,contractEnd:"2027-07-05"}],paid,"2027-06-01"),true);
 });
