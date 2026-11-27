@@ -14,7 +14,6 @@ export const WORKER_TARGETS = {
   "functions/effectiveEnrollmentProfile.js": ["api","reconcileStudentEnrollmentProfile"],
   "functions/effectiveEnrollmentProfile.test.cjs": [],
   "functions/pendingStudentCleanup.js": ["cleanupExpiredPendingStudents"],
-  "functions/main.js": ["cleanupExpiredPendingStudents"],
   "functions/partialTuitionLifecycle.js": ["api","cleanupExpiredPendingStudents"],
   "functions/partialTuitionLifecycle.test.cjs": [],
   "functions/organisationPayments.js": ["api"],
@@ -103,6 +102,13 @@ export function selectFirebaseDeployTargets({ changedPaths, predeployPaths = [],
       || path.startsWith("tests/"))
     && !changedPaths.some(path => predeploy.has(path))) {
     return {mode:"targeted",targets:["api"],reason:"Only Music Studio lyric routes in the existing API changed."};
+  }
+  // The monthly lifecycle release changes only the existing cleanup export in main.js.
+  // Future unrelated main.js changes still require the conservative full deployment.
+  const monthlyReleasePaths=new Set(["functions/main.js","functions/partialTuitionLifecycle.js","functions/partialTuitionLifecycle.test.cjs","functions/pendingStudentCleanup.js","functions/studentLevelEnrollments.js","functions/organisationPayments.js","functions/organisationPayments.test.cjs","functions/levelEnrollmentSheetSync.js","scripts/patchStudentPaymentContractLifecycle.mjs","scripts/selectFirebaseDeployTargets.mjs","apps-script/level-enrollment-sheet.gs",".github/workflows/deploy-firebase.yml","docs/partial-tuition-recovery.md"]);
+  if(changedPaths.includes("functions/main.js")&&changedPaths.includes("functions/partialTuitionLifecycle.js")&&changedPaths.every(p=>monthlyReleasePaths.has(p))){
+    targets.add("cleanupExpiredPendingStudents");
+    changedPaths=changedPaths.filter(p=>p!=="functions/main.js");
   }
   for (const path of changedPaths) {
     if (FRONTEND_ONLY_BUILD_SCRIPTS.has(path) && !predeploy.has(path)) continue;
