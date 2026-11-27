@@ -46,10 +46,10 @@ async function applyGroupPayment({ transaction: tx, paymentRef, payment, eventDa
     tx.update(paymentRef, { status: "paid_needs_review", reviewReason: "withdrawn_link_paid", paidAt: admin.firestore.FieldValue.serverTimestamp(), paystackTransactionId: eventData.id || null, verifiedCurrency: eventData.currency, verifiedAmountSubunit: Number(eventData.amount) });
     return { reference: payment.reference, needsReview: true, duplicate: false };
   }
-  if (!["pending", "initializing"].includes(payment.status)) throw new Error("Group payment is not pending.");
+  if (!["pending", "initializing", "expired"].includes(payment.status)) throw new Error("Group payment is not pending.");
   const lines = validateLines(payment.lines.map(line => ({ ...line, amount: line.grossAmount })));
   const snapshots = await Promise.all(lines.map(line => tx.get(db.collection("students").doc(line.studentId))));
-  if (snapshots.some(snap => !snap.exists || snap.data().partialTuitionTermination?.state === "pending_purge" || snap.data().organisationSubmissionId !== payment.organisationSubmissionId)) {
+  if (snapshots.some(snap => !snap.exists || snap.data().partialTuitionTermination?.state === "pending_purge" || snap.data().partialTuitionClosedEnrollmentId&&snap.data().partialTuitionClosedEnrollmentId===snap.data().effectiveEnrollmentId || snap.data().organisationSubmissionId !== payment.organisationSubmissionId)) {
     tx.update(paymentRef,{status:"paid_needs_review",reviewReason:"student_enrollment_unavailable",paidAt:admin.firestore.FieldValue.serverTimestamp(),paystackTransactionId:eventData.id||null,verifiedCurrency:eventData.currency,verifiedAmountSubunit:Number(eventData.amount)});
     return {reference:payment.reference,needsReview:true,duplicate:false};
   }
@@ -65,6 +65,8 @@ async function applyGroupPayment({ transaction: tx, paymentRef, payment, eventDa
   const date=paidDate.toISOString().slice(0,10);
   const managed=await Promise.all(snapshots.map(async (snap,i)=>{
     const student=snap.data(),id=student.effectiveEnrollmentId;
+    const expected=payment.lines[i].enrollmentId;
+    if(expected&&expected!==id||student.partialTuitionClosedEnrollmentId&&!expected)return {error:"Payment no longer belongs to the current enrollment"};
     if(!id)return null;
     const ref=snap.ref.collection("levelEnrollments").doc(id),row=await tx.get(ref);
     try{
@@ -498,6 +500,7 @@ function registerOrganisationPaymentRoutes(app, { db, admin, initializePaystackP
         }
         if (lines[i].discount && !String(req.body.discountReason || "").trim()) fail(400, "Enter a reason for the partner share deduction.");
         lines[i].studentName = snap.data().name || snap.data().fullName || lines[i].studentId;
+        if(snap.data().effectiveEnrollmentId)lines[i].enrollmentId=snap.data().effectiveEnrollmentId;
       });
       const tuitionCredit = lines.reduce((sum, line) => sum + minor(line.tuitionCredit), 0) / 100;
       const discount = lines.reduce((sum, line) => sum + minor(line.discount), 0) / 100;
