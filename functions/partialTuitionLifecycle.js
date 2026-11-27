@@ -23,7 +23,10 @@ function rootCandidate(student,today){
  if(student.partialTuitionTermination?.state==="pending_purge")return true;
  if(["admin","staff","teacher","tutor"].includes(norm(student.role))||["archived","deleted","purged","withdrawn","suspended","blocked","inactive"].includes(norm(student.status))||student.accountType==="exam_only")return false;
  const root={...student,contractStart:isoDate(student.contractStart),contractEnd:isoDate(student.contractEnd),paymentDeadline:isoDate(student.paymentDeadline),status:"active"};
- return !!student.effectiveEnrollmentId&&["recovery","terminate"].includes(phase(root,today));
+ const state=phase(root,today),dates=recoveryDates(root);
+ if(!student.effectiveEnrollmentId||student.partialTuitionClosedEnrollmentId===student.effectiveEnrollmentId)return false;
+ // Do not repeatedly occupy the daily batch for already-suspended students.
+ return state==="terminate"||(state==="recovery"&&student.partialTuitionRecoveryEnd!==dates.recoveryEnd);
 }
 function matchesRoot(student,row){
  return student.effectiveEnrollmentId===row.id&&norm(student.program||student.language||"german").replace(/^kiswahili$/,"swahili")===row.program&&String(student.level||"").toUpperCase()===row.level&&
@@ -57,24 +60,26 @@ async function advancePartialTuition({db,admin,ref,today}){
   if(!target||!matchesRoot(student,target))return {skipped:"ledger_mismatch"};
   const state=phase(target,today),dates=recoveryDates(target);
   if(state==="recovery"){
-   if(target.status==="expired")return {skipped:"already_in_recovery"};
+   if(target.status==="expired"){tx.update(ref,{partialTuitionRecoveryEnd:dates.recoveryEnd});return {skipped:"already_in_recovery"};}
    tx.update(ref.collection("levelEnrollments").doc(target.id),{status:"expired",partialTuitionRecoveryEnd:dates.recoveryEnd,sheetVersion:Number(target.sheetVersion||1)+1,sheetSyncStatus:"pending",updatedAt:stamp()});
+   tx.update(ref,{partialTuitionRecoveryEnd:dates.recoveryEnd});
    return {recovery:true};
   }
   if(state!=="terminate")return {skipped:"not_due"};
   if(await paymentRisk(db,ref.id,student,tx))return {skipped:"unresolved_payment"};
   // Preserve the original financial record; cancellation is not a refund or a zero-paid reset.
   const rowRef=ref.collection("levelEnrollments").doc(target.id);
-  const financial=await tx.get(rowRef.collection("payments"));
-  const archiveRef=db.collection("terminatedLevelEnrollments").doc(ref.id+"_"+target.id);
-  const archive=await tx.get(archiveRef);
   const protectedAccount=otherCourseRisk(student,rows,target,today)||await hasExamLedgerProtection(ref,student);
-  if(!archive.exists){
-   tx.create(archiveRef,{studentId:ref.id,studentCode:student.studentCode||student.studentcode||ref.id,studentName:student.name||student.fullName||"",email:student.email||"",organisationSubmissionId:student.organisationSubmissionId||"",enrollment:target,forfeitedAmount:target.paid,uncollectableBalance:target.balanceDue,transferableCredit:0,...dates,terminatedAt:stamp()});
-   financial.docs.forEach(d=>tx.create(archiveRef.collection("payments").doc(d.id),d.data()));
+  const archivedRows=protectedAccount?[target]:rows;
+  const archives=await Promise.all(archivedRows.map(async r=>{const a=db.collection("terminatedLevelEnrollments").doc(ref.id+"_"+r.id);const [snapshot,financial]=await Promise.all([tx.get(a),tx.get(ref.collection("levelEnrollments").doc(r.id).collection("payments"))]);return {r,a,snapshot,financial};}));
+  for(const {r,a,snapshot,financial} of archives){
+   if(snapshot.exists)continue;
+   tx.create(a,{studentId:ref.id,studentCode:student.studentCode||student.studentcode||ref.id,studentName:student.name||student.fullName||"",email:student.email||"",organisationSubmissionId:student.organisationSubmissionId||"",enrollment:r,forfeitedAmount:r.id===target.id?target.paid:0,uncollectableBalance:r.id===target.id?target.balanceDue:0,transferableCredit:0,...dates,terminatedAt:stamp()});
+   financial.docs.forEach(d=>tx.create(a.collection("payments").doc(d.id),d.data()));
   }
   tx.update(rowRef,{status:"cancelled",terminationReason:"partial_tuition_recovery_expired",terminatedAt:stamp(),forfeitedAmount:target.paid,transferableCredit:0,partialTuitionRecoveryEnd:dates.recoveryEnd,sheetVersion:Number(target.sheetVersion||1)+1,sheetSyncStatus:"pending",updatedAt:stamp()});
   if(!protectedAccount)tx.update(ref,{status:"archived",accessType:"pending",partialTuitionTermination:{state:"pending_purge",enrollmentId:target.id,recoveryEnd:dates.recoveryEnd,terminateOn:dates.terminateOn},updatedAt:stamp()});
+  else tx.update(ref,{partialTuitionClosedEnrollmentId:target.id,updatedAt:stamp()});
   return {terminated:true,purge:!protectedAccount,protectedAccount};
  });
 }
