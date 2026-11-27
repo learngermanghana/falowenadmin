@@ -432,3 +432,47 @@ test("Paystack group receipt preserves charge, processing fee and student alloca
     },
   });
 });
+
+test("blank optional partner share is zero; missing tuition is rejected", () => {
+  assert.equal(validateLines([{ studentId: "A", amount: "1000", discount: "" }])[0].discount, 0);
+  assert.throws(() => validateLines([{ studentId: "A", amount: "", discount: "" }]), /Tuition amount/);
+});
+test("late payment on withdrawn link is preserved for review without allocating tuition", async () => {
+  const f = fixture();
+  f.data.get("payments/FAL-ORG-test").status = "withdrawn";
+  assert.equal((await f.apply()).needsReview, true);
+  assert.equal(f.data.get("students/A").paid, 100);
+  assert.equal(f.data.get("payments/FAL-ORG-test").status, "paid_needs_review");
+  assert.equal((await f.apply()).duplicate, true);
+});
+test("a second successful link exceeding the remaining balance is held for review", async () => {
+  const f = fixture();
+  f.data.get("students/A").balanceDue = 0;
+  assert.equal((await f.apply()).needsReview, true);
+  assert.equal(f.data.get("students/A").paid, 100);
+  assert.equal(f.data.get("payments/FAL-ORG-test").status, "paid_needs_review");
+});
+
+test("owner can withdraw an unpaid checkout, but cannot withdraw a verified payment", async () => {
+  const f = fixture(), reference = "FAL-ORG-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+  const paymentPath = "payments/" + reference;
+  f.data.set(paymentPath, { ...f.payment, reference, authorizationUrl: "https://checkout.example.test/group" });
+  const routes = new Map();
+  const ownerAdmin = { ...admin, auth: () => ({ verifyIdToken: async () => ({ email: "moxflex@gmail.com", email_verified: true, uid: "owner" }) }) };
+  registerOrganisationPaymentRoutes({ get: (p, h) => routes.set(p, h), post: (p, h) => routes.set(p, h) }, {
+    ...f, admin: ownerAdmin, reconcilePaymentReference: async () => ({ checked: true, applied: false, reason: "pending" })
+  });
+  const call = async () => {
+    let status = 200, value;
+    const res = { set() {}, status(n) { status = n; return this; }, json(data) { value = data; } };
+    await routes.get("/payments/organisations/withdraw/:reference")({ headers: { authorization: "Bearer test" }, params: { reference } }, res);
+    return { status, value };
+  };
+  assert.equal((await call()).status, 200);
+  assert.equal(f.data.get(paymentPath).status, "withdrawn");
+  assert.equal(f.data.get(paymentPath).withdrawnBy, "owner");
+  assert.equal((await call()).status, 200);
+  f.data.get(paymentPath).status = "paid";
+  assert.equal((await call()).status, 409);
+  assert.equal(f.data.get(paymentPath).status, "paid");
+});
