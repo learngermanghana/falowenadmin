@@ -12,3 +12,10 @@
 .partner-review-submissions{margin-top:18px}
 .partner-review-submissions h2{margin:0 0 10px}
 @media(max-width:650px){.partner-review-tabs>*{flex:1 1 calc(50% - 8px);text-align:center}}
+
+/* Payment form stays readable without the sticky dashboard header covering inputs. */
+body:has(.org-payment-page) .topbar {position:static;}
+.org-payment-page form>label{display:grid;gap:6px;margin:14px 0;max-width:100%}
+.org-payment-page form>label>select{max-width:100%;width:100%}
+.org-payment-page .org-withdraw{color:#9c2525;background:#fff2ef;border-color:#e6b5b1;margin:8px}
+.org-payment-page .org-scroll input[type=number]{width:125px}
