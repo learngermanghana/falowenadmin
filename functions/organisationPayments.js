@@ -16,7 +16,10 @@ function validateLines(lines) {
     const studentId = String(line.studentId || "");
     if (!/^[a-zA-Z0-9_-]{1,100}$/.test(studentId) || seen.has(studentId)) fail(400, "Invalid or duplicate student.");
     seen.add(studentId);
-    const gross = minor(line.amount), discount = minor(line.discount ?? 0);
+    let gross, discount;
+    try { gross = minor(line.amount); } catch (error) { fail(400, "Tuition amount for " + studentId + ": " + error.message); }
+    try { discount = minor(line.discount == null || String(line.discount).trim() === "" ? 0 : line.discount); }
+    catch (error) { fail(400, "Partner share for " + studentId + ": " + error.message); }
     if (!gross || discount >= gross) fail(400, "Each student must have a positive amount after discount.");
     return { studentId, tuitionCredit: (gross - discount) / 100, discount: discount / 100, grossAmount: gross / 100 };
   });
@@ -38,9 +41,19 @@ function balanceOf(student) {
 async function applyGroupPayment({ transaction: tx, paymentRef, payment, eventData, db, admin }) {
   if (eventData.currency !== "GHS" || Number(eventData.amount) !== minor(payment.checkoutAmount)) throw new Error("Group payment amount or currency mismatch.");
   if (payment.status === "paid") return { duplicate: true, reference: payment.reference, group: true };
+  if (payment.status === "paid_needs_review") return { duplicate: true, reference: payment.reference, needsReview: true };
+  if (payment.status === "withdrawn") {
+    tx.update(paymentRef, { status: "paid_needs_review", reviewReason: "withdrawn_link_paid", paidAt: admin.firestore.FieldValue.serverTimestamp(), paystackTransactionId: eventData.id || null, verifiedCurrency: eventData.currency, verifiedAmountSubunit: Number(eventData.amount) });
+    return { reference: payment.reference, needsReview: true, duplicate: false };
+  }
   if (!["pending", "initializing"].includes(payment.status)) throw new Error("Group payment is not pending.");
   const lines = validateLines(payment.lines.map(line => ({ ...line, amount: line.grossAmount })));
   const snapshots = await Promise.all(lines.map(line => tx.get(db.collection("students").doc(line.studentId))));
+  if (snapshots.every(snap => snap.exists && snap.data().organisationSubmissionId === payment.organisationSubmissionId) &&
+      snapshots.some((snap, i) => minor(lines[i].grossAmount) > balanceOf(snap.data()))) {
+    tx.update(paymentRef, { status: "paid_needs_review", reviewReason: "outstanding_balance_changed", paidAt: admin.firestore.FieldValue.serverTimestamp(), paystackTransactionId: eventData.id || null, verifiedCurrency: eventData.currency, verifiedAmountSubunit: Number(eventData.amount) });
+    return { reference: payment.reference, needsReview: true, duplicate: false };
+  }
   const now = admin.firestore.FieldValue.serverTimestamp();
   const paidDate = eventData.paid_at && !Number.isNaN(Date.parse(eventData.paid_at))
     ? new Date(eventData.paid_at) : new Date();
@@ -409,7 +422,14 @@ function registerOrganisationPaymentRoutes(app, { db, admin, initializePaystackP
     const batch = await db.collection("organisationEnrolments").doc(id).get();
     if (!batch.exists || batch.data().deleted) fail(404, "Submission not found.");
     const records = await db.collection("payments").where("organisationSubmissionId", "==", id).limit(50).get();
-    return { payments: records.docs.map(doc => ({ id: doc.id, ...doc.data() })) };
+    const submission = { id, ...batch.data() };
+    const rows = await Promise.all((submission.students || []).filter(row => row.status === "approved" && row.studentId).map(async row => {
+      const snap = await db.collection("students").doc(row.studentId).get();
+      if (!snap.exists || snap.data().organisationSubmissionId !== id) return { studentId: row.studentId, balance: null, firstPayment: null };
+      try { return { studentId: row.studentId, balance: balanceOf(snap.data()) / 100, firstPayment: paidOf(snap.data()) === 0 }; }
+      catch { return { studentId: row.studentId, balance: null, firstPayment: null }; }
+    }));
+    return { submission, billingRows: rows, payments: records.docs.map(doc => ({ id: doc.id, ...doc.data() })) };
   }));
   app.post("/payments/organisations/manual", handle(async (req, actor) => {
     const result = await recordManualOrganisationPayment({ db, admin, actor, body: req.body || {} });
@@ -435,7 +455,7 @@ function registerOrganisationPaymentRoutes(app, { db, admin, initializePaystackP
     const signature = crypto.createHash("sha256").update(JSON.stringify({ batchId, lines, email, agreement })).digest("hex");
     await db.runTransaction(async tx => {
       const prior = await tx.get(ref);
-      if (prior.exists) { if (prior.data().requestSignature !== signature) fail(409, "Start a new request after changing the invoice."); return; }
+      if (prior.exists) { if (!["pending", "initializing"].includes(prior.data().status) || prior.data().requestSignature !== signature) fail(409, "Start a new request after changing or withdrawing the invoice."); return; }
       const batch = await tx.get(db.collection("organisationEnrolments").doc(batchId));
       if (!batch.exists || batch.data().deleted) fail(404, "Submission not found.");
       const approved = new Set(batch.data().students.filter(row => row.status === "approved").map(row => row.studentId));
@@ -473,9 +493,31 @@ function registerOrganisationPaymentRoutes(app, { db, admin, initializePaystackP
     // Reuse the persisted reference on retry; never initialize a second charge intent.
     const checkout = await initializePaystackPayment({ email: payment.email, checkoutAmount: payment.checkoutAmount, reference,
       metadata: { source: "falowen_organisation", purpose: "organisation_group", organisationSubmissionId: batchId, referralEligible: false } });
-    await ref.update({ status: "pending", authorizationUrl: checkout.authorization_url });
+    await db.runTransaction(async tx => {
+      const current = await tx.get(ref);
+      if (current.data().status !== "initializing") return;
+      tx.update(ref, { status: "pending", authorizationUrl: checkout.authorization_url });
+    });
     await sendNotification({ db, admin, ref, kind: "payment_link", runtimeConfig });
     return { payment: (await ref.get()).data() };
+  }));
+  app.post("/payments/organisations/withdraw/:reference", handle(async (req, actor) => {
+    const reference = req.params.reference;
+    if (!/^FAL-ORG-[a-f0-9-]{36}$/.test(reference)) fail(400, "Invalid reference.");
+    const ref = db.collection("payments").doc(reference);
+    const snap = await ref.get();
+    if (!snap.exists || snap.data().purpose !== "organisation_group") fail(404, "Organisation payment link not found.");
+    if (snap.data().status === "withdrawn") return { status: "withdrawn" };
+    if (snap.data().status !== "pending") fail(409, "Only unpaid generated links can be withdrawn.");
+    const verification = await reconcilePaymentReference(reference);
+    if (!verification?.checked || verification.applied || verification.reason === "already_paid" || !["pending", "abandoned", "failed", "reversed"].includes(verification.reason)) fail(409, "Paystack could not confirm an unpaid link. Refresh payment status first.");
+    await db.runTransaction(async tx => {
+      const current = await tx.get(ref);
+      if (current.data().status === "withdrawn") return;
+      if (current.data().status !== "pending" || current.data().paymentLinkEmail?.leaseUntil > Date.now()) fail(409, "Payment status or email delivery changed. Refresh and retry.");
+      tx.update(ref, { status: "withdrawn", withdrawnAt: admin.firestore.FieldValue.serverTimestamp(), withdrawnBy: actor.uid, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+    });
+    return { status: "withdrawn" };
   }));
   app.post("/payments/organisations/payment-link-email/:reference", handle(async req => {
     if (!/^FAL-ORG-[a-f0-9-]{36}$/.test(req.params.reference)) fail(400, "Invalid reference.");
@@ -484,7 +526,8 @@ function registerOrganisationPaymentRoutes(app, { db, admin, initializePaystackP
   app.post("/payments/organisations/verify/:reference", handle(async req => {
     if (!/^FAL-ORG-[a-f0-9-]{36}$/.test(req.params.reference)) fail(400, "Invalid reference.");
     const result = await reconcilePaymentReference(req.params.reference);
-    await sendReceipt({ db, admin, reference: req.params.reference, runtimeConfig });
+    const current = await db.collection("payments").doc(req.params.reference).get();
+    if (current.exists && current.data().status === "paid") await sendReceipt({ db, admin, reference: req.params.reference, runtimeConfig });
     return { result };
   }));
   app.post("/payments/organisations/receipt/:reference", handle(async req => {
