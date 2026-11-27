@@ -264,9 +264,11 @@ function registerEnrollmentCheckout({app,db,admin,requirePaymentAdmin,initialize
     const outcome=await applySuccessfulPaystackPayment(verified);
     if(outcome.requiresAllocation)throw Error(outcome.allocationError||"Payment received but requires allocation review");
    }
+   if(!/^(german|swahili)-(A1|A2|B1|B2|C1|C2)$/.test(p.enrollmentId||""))throw Error("Payment intent has an invalid enrollment");
+   if(p.status==="paid"&&p.levelEnrollmentAllocation!==p.enrollmentId)throw Error("Paid payment has no confirmed level allocation");
    const ref=db.collection("students").doc(studentId).collection("levelEnrollments").doc(p.enrollmentId);
    const sync=await require("./levelEnrollmentSheetSync").syncEnrollmentRef({ref,db,admin,force:true});
-   results.push({reference:doc.id,status:"paid",sheetStatus:sync.status,...(sync.error?{error:sync.error}:{})});
+   results.push({reference:doc.id,status:"paid",sheetStatus:sync.status,...(sync.status!=="synced"?{error:sync.error||"Enrollment sheet synchronization "+sync.status}:{})});
   }catch(e){results.push({reference:doc.id,status:"review",error:e.message});}
  }
  return res.json({ok:true,results});
