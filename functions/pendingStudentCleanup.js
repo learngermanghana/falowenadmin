@@ -492,7 +492,9 @@ async function runExpiredPendingStudentCleanup({
   for (const item of actions) {
     try {
       if(item.reason==="partial_tuition"){
-        const advanced=await advancePartialTuition({db,admin,ref:item.docSnap.ref,today:new Date(now).toISOString().slice(0,10)});
+        const args={db,admin,ref:item.docSnap.ref,today:new Date(now).toISOString().slice(0,10)};
+        let advanced=await advancePartialTuition(args);
+        if(advanced.migrated)advanced=await advancePartialTuition(args);
         if(advanced.purge){
           const latest=await item.docSnap.ref.get();
           const id=latest.data()?.partialTuitionTermination?.enrollmentId;
