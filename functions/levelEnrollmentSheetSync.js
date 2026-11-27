@@ -2,9 +2,9 @@ const HEADERS=["Enrollment ID","Student ID","Student Code","Language","Level","C
 function sheetRow(id,studentId,record){
  return [studentId+":"+id,studentId,record.studentCode||studentId,record.program,record.level,record.className||"",record.tuitionFee??"",record.paid??0,record.balanceDue??"",record.paymentStatus,record.contractStart||"",record.contractEnd||"",record.paymentDeadline||"",record.status||"planned",Number(record.sheetVersion||1)];
 }
-async function syncEnrollmentSheet({id,studentId,record,url,secret,fetchImpl=fetch}){
+async function syncEnrollmentSheet({id,studentId,record,url,secret,terminationNotice,fetchImpl=fetch}){
  if(!url||!secret)throw new Error("Enrollment sheet integration not configured");
- const response=await fetchImpl(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"upsertLevelEnrollment",secret,row:sheetRow(id,studentId,record)})});
+ const response=await fetchImpl(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"upsertLevelEnrollment",secret,row:sheetRow(id,studentId,record),...(terminationNotice?{terminationNotice}:{})})});
  const body=await response.json().catch(()=>({}));
  if(!response.ok||body.ok!==true||body.action!=="upsertLevelEnrollment")throw new Error(body.error||"Enrollment sheet did not acknowledge update");
  if(record.terminationReason==="partial_tuition_recovery_expired"&&body.terminationArchived!==true)throw new Error("Completed spreadsheet did not acknowledge the terminated enrollment archive; update the existing Apps Script deployment.");
@@ -24,7 +24,21 @@ async function syncEnrollmentRef({ref,db,admin,url=resolveEnrollmentSyncConfig()
  if(!url||!secret)return {status:"not_configured",error:"Enrollment sheet integration not configured"};
  if(record.sheetSyncStatus==="synced")return {status:"synced"};
  try {
-  await syncEnrollmentSheet({id:ref.id,studentId:ref.parent.parent.id,record,url,secret});
+  let terminationNotice;
+  if(record.terminationReason==="partial_tuition_recovery_expired"){
+    const parent=await ref.parent.parent.get(),student=parent.data()||{};
+    let email=String(student.email||"").trim(),recipient=String(student.name||student.fullName||"Student");
+    const organisation=Boolean(student.organisationSubmissionId||student.billingResponsibility==="organisation");
+    if(organisation){
+      email="";recipient="Organisation partner";
+      if(student.organisationSubmissionId){
+        const batch=await db.collection("organisationEnrolments").doc(student.organisationSubmissionId).get(),org=batch.data()?.organisation;
+        if(org){email=String(org.billingEmail||org.email||"").trim();recipient=String(org.name||recipient);}
+      }
+    }
+    terminationNotice={email:/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)?email:"",recipient,studentName:String(student.name||student.fullName||""),organisation,recoveryEnd:record.partialTuitionRecoveryEnd||""};
+  }
+  await syncEnrollmentSheet({id:ref.id,studentId:ref.parent.parent.id,record,url,secret,terminationNotice});
   await db.runTransaction(async tx=>{const current=await tx.get(ref);if(current.exists&&Number(current.data().sheetVersion||1)===version)tx.update(ref,{sheetSyncStatus:"synced",sheetSyncedAt:admin.firestore.FieldValue.serverTimestamp(),sheetSyncError:""});});
   return {status:"synced"};
  } catch(e){
