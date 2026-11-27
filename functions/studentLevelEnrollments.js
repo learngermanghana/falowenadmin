@@ -141,7 +141,7 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  const enrollment={...data,studentId,studentCode:parent.data().studentCode||parent.data().studentcode||studentId,...totals,openingBalanceImported:totals.paid>0,manualOpeningPaid:totals.paid,status:enrollmentStatus(req.body?.status),accountingMode:"independent_pending_integration",sheetVersion:1,sheetSyncStatus:"pending"};
  const stamp=admin.firestore.FieldValue.serverTimestamp();tx.set(ref,{...enrollment,createdAt:stamp,createdBy:user.uid});tx.set(db.collection("auditLogs").doc(),{type:"student.levelEnrollmentCreated",studentId,enrollmentId:id,actorId:user.uid,openingTotals:totals,createdAt:stamp});return {id,...enrollment};});return res.json({ok:true,enrollment:result});}catch(e){return error(res,e);}});
  app.post(route+"/:enrollmentId/sync-sheet",async(req,res)=>{try{
- await authorize(req);const {studentId,collection}=refs(req);const ref=enrollmentRef(req,collection);const result=await require("./levelEnrollmentSheetSync").syncEnrollmentRef({ref,db,admin});
+ await authorize(req);const {studentId,collection}=refs(req);const ref=enrollmentRef(req,collection);const result=await require("./levelEnrollmentSheetSync").syncEnrollmentRef({ref,db,admin,force:true});
  if(result.status!=="synced")fail(result.error||"Enrollment not found",503);
  return res.json({ok:true});
  }catch(e){return error(res,e);}});
@@ -243,7 +243,36 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
 }
 module.exports={legacyCourseCandidates,legacyCourseRecord,normalizeEnrollment,manualTotals,enrollmentStatus,paymentPatch,paymentDate,legacyOpeningEnrollment,legacyUpgradeEnrollment,contractPatch,registerStudentLevelEnrollments};
 
-function registerEnrollmentCheckout({app,db,admin,requirePaymentAdmin,initializePaystackPayment,calculateStudentCheckoutAmount,createPaymentReference}){
+function registerEnrollmentCheckout({app,db,admin,requirePaymentAdmin,initializePaystackPayment,calculateStudentCheckoutAmount,createPaymentReference,verifyPaystackTransaction,applySuccessfulPaystackPayment}){
+ // On-demand recovery uses the stored intent, never an administrator-entered amount.
+ app.post("/payments/reconcile-enrollment/:studentId",async(req,res)=>{try{
+ await requirePaymentAdmin(req);
+ const studentId=String(req.params.studentId||"").trim(),reference=String(req.body?.reference||"").trim();
+ if(!studentId||studentId.includes("/")||(reference&&!/^[A-Za-z0-9._-]{3,150}$/.test(reference)))fail("Invalid student or payment reference");
+ const intents=db.collection("payments");
+ const docs=reference?[await intents.doc(reference).get()]:(await intents.where("studentId","==",studentId).limit(30).get()).docs.filter(d=>d.data().purpose==="level_enrollment"&&["pending","paid_unallocated"].includes(d.data().status)).slice(0,8);
+ const results=[];
+ for(const doc of docs){
+  const p=doc.data()||{};
+  if(!doc.exists||p.studentId!==studentId||p.purpose!=="level_enrollment"){if(reference)fail("No matching level payment link for this student",404);continue;}
+  try{
+   if(p.status==="paid_unallocated")throw Error(p.allocationError||"Payment received but requires allocation review");
+   if(p.status!=="paid"){
+    const verified=await verifyPaystackTransaction(doc.id);
+    if(verified.status!=="success"){results.push({reference:doc.id,status:verified.status||"pending"});continue;}
+    if(verified.reference!==doc.id)throw Error("Paystack reference mismatch");
+    const outcome=await applySuccessfulPaystackPayment(verified);
+    if(outcome.requiresAllocation)throw Error(outcome.allocationError||"Payment received but requires allocation review");
+   }
+   if(!/^(german|swahili)-(A1|A2|B1|B2|C1|C2)$/.test(p.enrollmentId||""))throw Error("Payment intent has an invalid enrollment");
+   if(p.status==="paid"&&p.levelEnrollmentAllocation!==p.enrollmentId)throw Error("Paid payment has no confirmed level allocation");
+   const ref=db.collection("students").doc(studentId).collection("levelEnrollments").doc(p.enrollmentId);
+   const sync=await require("./levelEnrollmentSheetSync").syncEnrollmentRef({ref,db,admin,force:true});
+   results.push({reference:doc.id,status:"paid",sheetStatus:sync.status,...(sync.status!=="synced"?{error:sync.error||"Enrollment sheet synchronization "+sync.status}:{})});
+  }catch(e){results.push({reference:doc.id,status:"review",error:e.message});}
+ }
+ return res.json({ok:true,results});
+ }catch(e){return res.status(e.statusCode||500).json({ok:false,error:e.message});}});
  app.post("/payments/enrollment-link",async(req,res)=>{try{
  const user=await requirePaymentAdmin(req);
  const {studentId,enrollmentId,amount}=req.body||{};
@@ -266,7 +295,8 @@ function registerEnrollmentCheckout({app,db,admin,requirePaymentAdmin,initialize
 }
 async function applyEnrollmentCheckout({transaction:tx,paymentRef,payment,eventData,db,admin}){
  const {studentId,enrollmentId,reference}=payment;
- if(String(payment.status).toLowerCase()==="paid"||payment.status==="paid_unallocated")return {duplicate:true,studentId,reference};
+ if(String(payment.status).toLowerCase()==="paid")return {duplicate:true,studentId,enrollmentId,reference};
+ if(payment.status==="paid_unallocated")return {duplicate:true,studentId,enrollmentId,reference,requiresAllocation:true,allocationError:payment.allocationError||"Payment requires allocation review"};
  if(eventData.status!=="success"||eventData.currency!=="GHS"||Number(eventData.amount)!==moneyCents(payment.checkoutAmount))fail("Paystack verification mismatch");
  const parent=db.collection("students").doc(studentId),ref=parent.collection("levelEnrollments").doc(enrollmentId);
  const key=crypto.createHash("sha256").update(reference.toLowerCase()).digest("hex"),unique=db.collection("levelPaymentReferences").doc(key);
@@ -274,17 +304,18 @@ async function applyEnrollmentCheckout({transaction:tx,paymentRef,payment,eventD
  if(duplicate.exists)fail("Reference already allocated",409);
  const stamp=admin.firestore.FieldValue.serverTimestamp(),date=paymentDate(String(eventData.paid_at||eventData.paidAt||new Date().toISOString()).slice(0,10));
  const amount=moneyCents(payment.tuitionCredit)/100;
- const record={studentId,enrollmentId,reference,amount,receivedDate:date,method:"paystack",source:"enrollment_checkout"};
+ const checkoutAmount=moneyCents(payment.checkoutAmount)/100;
+ const record={studentId,enrollmentId,reference,amount,receivedDate:date,method:"paystack",source:"enrollment_checkout",checkoutAmount,processingSurcharge:Math.round((checkoutAmount-amount)*100)/100,currency:"GHS"};
  let patch;
  try{if(!student.exists||!enrollment.exists||student.data().partialTuitionTermination?.state==="pending_purge")fail("Enrollment unavailable",409);patch=paymentPatch(enrollment.data(),amount,date);}catch(e){
  tx.update(paymentRef,{status:"paid_unallocated",allocationError:e.message,paidAt:stamp,paystackTransactionId:eventData.id||null});
  tx.set(db.collection("auditLogs").doc(),{...record,type:"student.levelPaymentNeedsAllocation",reason:e.message,createdAt:stamp});
- return {duplicate:false,studentId,reference,requiresAllocation:true};
+ return {duplicate:false,studentId,enrollmentId,reference,requiresAllocation:true,allocationError:e.message};
  }
  tx.set(unique,{...record,createdAt:stamp});tx.set(ref.collection("payments").doc(key),{...record,createdAt:stamp});
- tx.update(ref,{...patch,updatedAt:stamp});tx.update(paymentRef,{status:"paid",paidAt:stamp,levelEnrollmentAllocation:enrollmentId,paystackTransactionId:eventData.id||null});
+ tx.update(ref,{...patch,lastPaystackReference:reference,updatedAt:stamp});tx.update(paymentRef,{status:"paid",paidAt:stamp,levelEnrollmentAllocation:enrollmentId,paystackTransactionId:eventData.id||null,processingSurcharge:record.processingSurcharge});
  tx.set(db.collection("auditLogs").doc(),{...record,type:"student.levelPaymentRecorded",after:patch,createdAt:stamp});
- return {duplicate:false,studentId,reference,nextBalance:patch.balanceDue,paymentStatus:patch.paymentStatus};
+ return {duplicate:false,studentId,enrollmentId,reference,nextBalance:patch.balanceDue,paymentStatus:patch.paymentStatus};
 }
 module.exports.registerEnrollmentCheckout=registerEnrollmentCheckout;
 module.exports.applyEnrollmentCheckout=applyEnrollmentCheckout;
