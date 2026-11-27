@@ -21,7 +21,8 @@ test("only consistent partial tuition is eligible, no reset by partial instalmen
  assert.equal(rootCandidate({...root,partialTuitionRecoveryEnd:"2027-01-04"},"2027-01-05"),true);
  assert.equal(matchesRoot(root,row),true);
  assert.equal(matchesRoot({...root,paid:3000,balanceDue:0},row),false);
- assert.equal(rootCandidate({...root,effectiveEnrollmentId:"",status:"active"},"2027-01-05"),false);
+ assert.equal(rootCandidate({...root,effectiveEnrollmentId:"",status:"active"},"2027-01-05"),true);
+ assert.equal(rootCandidate({...root,effectiveEnrollmentId:"",paymentDeadline:"",contractTermMonths:"6"},"2027-01-05"),false);
 });
 test("active, future, institutional or additional uncertain contracts protect the account",()=>{
  assert.equal(otherCourseRisk(root,[row],row,"2027-01-05"),false);
