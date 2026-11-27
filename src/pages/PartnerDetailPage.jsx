@@ -278,6 +278,7 @@ export default function PartnerDetailPage() {
           </section>
           <section className="partner-profile-panel">
             <h2>Payment follow-up</h2>
+            <div className="partner-profile-contact-actions">{(partner.submissions || []).map((batch, index) => <Link key={batch.id} to={"/paystack?batch=" + encodeURIComponent(batch.id)}>Generate / manage payment link{partner.submissions.length > 1 ? " — submission " + (index + 1) : ""}</Link>)}</div>
             {ledger?.owingCount > 0 && !ledger.truncated ? <>
               <p>{ledger.owingCount} student(s) with confirmed outstanding tuition totalling <strong>{money(ledger.outstandingTotal)}</strong>.</p>
               <p>The reminder shows the recorded payment deadline or paid-access end date and days remaining. Check the details before sending.</p>
