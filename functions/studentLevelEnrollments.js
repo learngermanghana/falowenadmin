@@ -189,7 +189,7 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  const user=await authorize(req);const {studentId,student,collection}=refs(req);const ref=enrollmentRef(req,collection);
  const result=await db.runTransaction(async tx=>{const [snap,parent]=await Promise.all([tx.get(ref),tx.get(student)]);if(!snap.exists||!parent.exists)fail("Enrollment not found",404);
  const record=snap.data(),input=req.body||{},stamp=admin.firestore.FieldValue.serverTimestamp();
- if(record.terminationReason==="partial_tuition_recovery_expired"||parent.data().partialTuitionTermination?.state==="pending_purge")fail("Terminated tuition cannot be restored or transferred. New enrollment required.",409);
+ if(["partial_tuition_recovery_expired","paid_contract_expired"].includes(record.terminationReason)||parent.data().partialTuitionTermination?.state==="pending_purge")fail("Terminated tuition cannot be restored or transferred. New enrollment required.",409);
  const hasTotals=input.tuitionFee!==undefined||input.paid!==undefined;
  const totals=hasTotals?manualTotals({tuitionFee:input.tuitionFee===undefined?record.tuitionFee:input.tuitionFee,paid:input.paid===undefined?record.paid:input.paid}):{};
  const changed=hasTotals&&(totals.tuitionFee!==record.tuitionFee||totals.paid!==record.paid);

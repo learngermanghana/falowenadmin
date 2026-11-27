@@ -14,9 +14,16 @@ function recoveryDates(r){
  const lastAccess=end<deadline?end:deadline,anchor=end>deadline?end:deadline;
  return {lastAccess,recoveryEnd:datePlus(anchor,30),terminateOn:datePlus(anchor,31)};
 }
+const fullyPaid=r=>money(r.tuitionFee)>0&&money(r.paid)===money(r.tuitionFee)&&money(r.balanceDue??r.balance)===0&&r.accessType!=="complimentary";
+function paidContractDates(r){
+ const start=day(r.contractStart),end=day(r.contractEnd);
+ if(!fullyPaid(r)||!start||!end||end<start)return null;
+ return {lastAccess:end,recoveryEnd:"",terminateOn:datePlus(end,1)};
+}
+function closureDates(r){return recoveryDates(r)||paidContractDates(r);}
 function phase(r,today){
- const dates=recoveryDates(r);
- if(!dates||!["active","expired"].includes(norm(r.status)))return "";
+ const dates=closureDates(r);
+ if(!dates||!["active","expired","completed","paid"].includes(norm(r.status)))return "";
  return today>=dates.terminateOn?"terminate":today>dates.lastAccess?"recovery":"active";
 }
 // Legacy one-course records can enter the same lifecycle only when their
@@ -27,15 +34,15 @@ function legacyRow(student){
  if(!["german","swahili"].includes(program)||!["A1","A2","B1","B2","C1","C2"].includes(level))return null;
  const end=isoDate(student.contractEnd),start=isoDate(student.contractStart);
  const deadline=isoDate(student.paymentDeadline||student.paymentDueDate||student.tuitionDueDate||student.balanceDueDate)||(String(student.contractTermMonths)==="1"?end:"");
- const row={id:program+"-"+level,program,level,status:"active",accessType:"paid",className:student.className||"",tuitionFee:money(student.tuitionFee)/100,paid:money(student.paid)/100,balanceDue:money(student.balanceDue??student.balance)/100,contractStart:start,contractEnd:end,paymentDeadline:deadline,paymentStatus:"Partially Paid"};
- if(!partial(student)||!recoveryDates(row))return null;
+ const row={id:program+"-"+level,program,level,status:"active",accessType:"paid",className:student.className||"",tuitionFee:money(student.tuitionFee)/100,paid:money(student.paid)/100,balanceDue:money(student.balanceDue??student.balance)/100,contractStart:start,contractEnd:end,paymentDeadline:deadline,paymentStatus:fullyPaid(student)?"Paid":"Partially Paid"};
+ if((!partial(student)&&!fullyPaid(student))||!closureDates(row))return null;
  return row;
 }
 function rootCandidate(student,today){
  if(student.partialTuitionTermination?.state==="pending_purge")return true;
  if(["admin","staff","teacher","tutor"].includes(norm(student.role))||["archived","deleted","purged","withdrawn","suspended","blocked","inactive"].includes(norm(student.status))||student.accountType==="exam_only")return false;
  const root={...student,contractStart:isoDate(student.contractStart),contractEnd:isoDate(student.contractEnd),paymentDeadline:isoDate(student.paymentDeadline),status:"active"};
- const state=phase(root,today),dates=recoveryDates(root);
+ const state=phase(root,today),dates=closureDates(root);
  if(!student.effectiveEnrollmentId){const legacy=legacyRow(student);return !!legacy&&["recovery","terminate"].includes(phase(legacy,today));}
  if(student.partialTuitionClosedEnrollmentId===student.effectiveEnrollmentId)return false;
  // Do not repeatedly occupy the daily batch for already-suspended students.
@@ -49,8 +56,8 @@ function matchesRoot(student,row){
 function otherCourseRisk(student,rows,target,today){
  if(hasOtherCourseProtection(student)||student.institutionId||student.institutionVerification||student.upgradeId||student.upgradeStatus)return true;
  return rows.some(r=>r.id!==target.id&&(
-   activePaidRow([r],r.program,today)||!["completed","expired","cancelled"].includes(norm(r.status))||
-   !day(r.contractEnd)||r.contractEnd>=today||money(r.balanceDue)!==0
+   activePaidRow([r],r.program,today)||!["active","completed","expired","cancelled"].includes(norm(r.status))||
+   !day(r.contractEnd)||r.contractEnd>=today||(!fullyPaid(r)&&!(r.status==="cancelled"&&r.terminationReason==="partial_tuition_recovery_expired"))
  ));
 }
 const unresolved=p=>["pending","initializing","processing","paid_unallocated","paid_needs_review"].includes(norm(p.status));
@@ -79,8 +86,8 @@ async function advancePartialTuition({db,admin,ref,today}){
   }
   const target=rows.find(r=>r.id===student.effectiveEnrollmentId);
   if(!target||!matchesRoot(student,target))return {skipped:"ledger_mismatch"};
-  if(require("./levelUpgradeLifecycle").isManagedUpgrade(target))return {skipped:"upgrade_has_independent_lifecycle"};
-  const state=phase(target,today),dates=recoveryDates(target);
+  if(require("./levelUpgradeLifecycle").isManagedUpgrade(target)&&!fullyPaid(target))return {skipped:"upgrade_has_independent_lifecycle"};
+  const state=phase(target,today),dates=closureDates(target);
   if(state==="recovery"){
    if(target.status==="expired"){tx.update(ref,{partialTuitionRecoveryEnd:dates.recoveryEnd});return {skipped:"already_in_recovery"};}
    tx.update(ref.collection("levelEnrollments").doc(target.id),{status:"expired",partialTuitionRecoveryEnd:dates.recoveryEnd,sheetVersion:Number(target.sheetVersion||1)+1,sheetSyncStatus:"pending",updatedAt:stamp()});
@@ -92,14 +99,18 @@ async function advancePartialTuition({db,admin,ref,today}){
   // Preserve the original financial record; cancellation is not a refund or a zero-paid reset.
   const rowRef=ref.collection("levelEnrollments").doc(target.id);
   const protectedAccount=otherCourseRisk(student,rows,target,today)||await hasExamLedgerProtection(ref,student);
+  const paidExpiry=fullyPaid(target);
+  // A completed fully paid account with another entitlement can be reconsidered on the next monthly run.
+  if(paidExpiry&&protectedAccount)return {skipped:"other_entitlement"};
+  const reason=paidExpiry?"paid_contract_expired":"partial_tuition_recovery_expired";
   const archivedRows=protectedAccount?[target]:rows;
   const archives=await Promise.all(archivedRows.map(async r=>{const a=db.collection("terminatedLevelEnrollments").doc(ref.id+"_"+r.id);const [snapshot,financial]=await Promise.all([tx.get(a),tx.get(ref.collection("levelEnrollments").doc(r.id).collection("payments"))]);return {r,a,snapshot,financial};}));
   for(const {r,a,snapshot,financial} of archives){
    if(snapshot.exists)continue;
-   tx.create(a,{studentId:ref.id,studentCode:student.studentCode||student.studentcode||ref.id,studentName:student.name||student.fullName||"",email:student.email||"",organisationSubmissionId:student.organisationSubmissionId||"",enrollment:r,forfeitedAmount:r.id===target.id?target.paid:0,uncollectableBalance:r.id===target.id?target.balanceDue:0,transferableCredit:0,...dates,terminatedAt:stamp()});
+   tx.create(a,{studentId:ref.id,studentCode:student.studentCode||student.studentcode||ref.id,studentName:student.name||student.fullName||"",email:student.email||"",organisationSubmissionId:student.organisationSubmissionId||"",enrollment:r,forfeitedAmount:r.id===target.id&&!paidExpiry?target.paid:0,uncollectableBalance:r.id===target.id&&!paidExpiry?target.balanceDue:0,transferableCredit:0,...dates,terminatedAt:stamp()});
    financial.docs.forEach(d=>tx.create(a.collection("payments").doc(d.id),d.data()));
   }
-  tx.update(rowRef,{status:"cancelled",paymentStatus:"Forfeited",terminationReason:"partial_tuition_recovery_expired",terminatedAt:stamp(),forfeitedAmount:target.paid,transferableCredit:0,partialTuitionRecoveryEnd:dates.recoveryEnd,sheetVersion:Number(target.sheetVersion||1)+1,sheetSyncStatus:"pending",updatedAt:stamp()});
+  tx.update(rowRef,{status:paidExpiry?"completed":"cancelled",paymentStatus:paidExpiry?"Paid":"Forfeited",terminationReason:reason,terminatedAt:stamp(),forfeitedAmount:paidExpiry?0:target.paid,transferableCredit:0,partialTuitionRecoveryEnd:dates.recoveryEnd,sheetVersion:Number(target.sheetVersion||1)+1,sheetSyncStatus:"pending",updatedAt:stamp()});
   if(!protectedAccount)tx.update(ref,{status:"archived",accessType:"pending",partialTuitionTermination:{state:"pending_purge",enrollmentId:target.id,recoveryEnd:dates.recoveryEnd,terminateOn:dates.terminateOn},updatedAt:stamp()});
   else tx.update(ref,{partialTuitionClosedEnrollmentId:target.id,updatedAt:stamp()});
   return {terminated:true,purge:!protectedAccount,protectedAccount};
@@ -110,11 +121,11 @@ async function readTerminatedCandidate(ref,db,today){
  const student=snap.data(),mark=student.partialTuitionTermination;
  if(mark?.state!=="pending_purge"||mark.terminateOn>today||norm(student.status)!=="archived"||["admin","staff","teacher","tutor"].includes(norm(student.role)))return null;
  const ledger=await ref.collection("levelEnrollments").get(),rows=ledger.docs.map(d=>({id:d.id,...d.data()})),target=rows.find(r=>r.id===mark.enrollmentId);
- if(!target||target.status!=="cancelled"||target.terminationReason!=="partial_tuition_recovery_expired"||!matchesRoot(student,target)||otherCourseRisk(student,rows,target,today)||await hasExamLedgerProtection(ref,student)||await paymentRisk(db,ref.id,student))return null;
+ if(!target||!((target.status==="cancelled"&&target.terminationReason==="partial_tuition_recovery_expired")||(target.status==="completed"&&target.terminationReason==="paid_contract_expired"&&fullyPaid(target)))||!matchesRoot(student,target)||otherCourseRisk(student,rows,target,today)||await hasExamLedgerProtection(ref,student)||await paymentRisk(db,ref.id,student))return null;
  const archive=await db.collection("terminatedLevelEnrollments").doc(ref.id+"_"+target.id).get();
  if(!archive.exists)return null;
  // Acknowledged level sheet sync is mandatory before deleting its source.
  if(target.sheetSyncStatus!=="synced")return null;
  return student;
 }
-module.exports={legacyRow,recoveryDates,phase,rootCandidate,matchesRoot,otherCourseRisk,advancePartialTuition,readTerminatedCandidate};
+module.exports={legacyRow,recoveryDates,paidContractDates,phase,rootCandidate,matchesRoot,otherCourseRisk,advancePartialTuition,readTerminatedCandidate};
