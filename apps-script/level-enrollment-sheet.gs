@@ -34,12 +34,13 @@ function doPost(e) {
         if(!completedId)throw new Error("COMPLETED_SPREADSHEET_ID is not configured; no account will be purged.");
         const completed=SpreadsheetApp.openById(completedId);
         const archive=completed.getSheetByName("Terminated Enrollments")||completed.insertSheet("Terminated Enrollments");
-        const archiveHeaders=headers.concat(["Transferable Credit","Archived At"]);
+        const archiveHeaders=headers.concat(["Transferable Credit","Archived At","Notice Email","Notice Recipient","Student Name","Organisation Billing","Recovery End"]);
         if(!archive.getLastRow())archive.getRange(1,1,1,archiveHeaders.length).setValues([archiveHeaders]);
         if(archive.getRange(1,1,1,archiveHeaders.length).getValues()[0].join("|")!==archiveHeaders.join("|"))throw new Error("Unexpected Terminated Enrollments headers");
         const found=archive.getLastRow()>1?archive.getRange(2,1,archive.getLastRow()-1,1).createTextFinder(String(body.row[0])).matchEntireCell(true).findNext():null;
         if(!found){
-          const values=body.row.concat([0,new Date()]).map(v=>typeof v==="string"&&/^\s*[=+@-]/.test(v)?"'"+v:v);
+          const notice=body.terminationNotice||{};
+          const values=body.row.concat([0,new Date(),String(notice.email||""),String(notice.recipient||""),String(notice.studentName||""),notice.organisation===true?"yes":"no",String(notice.recoveryEnd||"")]).map(v=>typeof v==="string"&&/^\s*[=+@-]/.test(v)?"'"+v:v);
           archive.getRange(archive.getLastRow()+1,1,1,archiveHeaders.length).setValues([values]);
         }
         terminationArchived=true;
