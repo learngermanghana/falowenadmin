@@ -432,3 +432,23 @@ test("Paystack group receipt preserves charge, processing fee and student alloca
     },
   });
 });
+
+test("blank optional partner share is zero; missing tuition is rejected", () => {
+  assert.equal(validateLines([{ studentId: "A", amount: "1000", discount: "" }])[0].discount, 0);
+  assert.throws(() => validateLines([{ studentId: "A", amount: "", discount: "" }]), /Tuition amount/);
+});
+test("late payment on withdrawn link is preserved for review without allocating tuition", async () => {
+  const f = fixture();
+  f.data.get("payments/FAL-ORG-test").status = "withdrawn";
+  assert.equal((await f.apply()).needsReview, true);
+  assert.equal(f.data.get("students/A").paid, 100);
+  assert.equal(f.data.get("payments/FAL-ORG-test").status, "paid_needs_review");
+  assert.equal((await f.apply()).duplicate, true);
+});
+test("a second successful link exceeding the remaining balance is held for review", async () => {
+  const f = fixture();
+  f.data.get("students/A").balanceDue = 0;
+  assert.equal((await f.apply()).needsReview, true);
+  assert.equal(f.data.get("students/A").paid, 100);
+  assert.equal(f.data.get("payments/FAL-ORG-test").status, "paid_needs_review");
+});
