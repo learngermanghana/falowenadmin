@@ -37,7 +37,8 @@ function paymentPatch(enrollment,amount,date){
  const fee=moneyCents(enrollment.tuitionFee),paid=moneyCents(enrollment.paid),balance=moneyCents(enrollment.balanceDue),credit=moneyCents(amount);
  if(paid+balance!==fee||!credit||credit>balance) fail("Payment exceeds remaining tuition or ledger requires review",409);
  const due=balance-credit;
- return {...(date?paymentLifecycle(enrollment,due/100,date):{}),paid:(paid+credit)/100,balanceDue:due/100,paymentStatus:due?"Partially Paid":"Paid",sheetVersion:Number(enrollment.sheetVersion||1)+1,sheetSyncStatus:"pending"};
+ const settled=dates&&date&&!isManagedUpgrade(enrollment)&&due===0?{status:"active",contractEnd:require("./studentContractLifecycle").isoDate(require("./studentContractLifecycle").addCalendarMonths(enrollment.contractStart,6)),paymentDeadline:""}:{};
+ return {...(date?paymentLifecycle(enrollment,due/100,date):{}),...settled,paid:(paid+credit)/100,balanceDue:due/100,paymentStatus:due?"Partially Paid":"Paid",sheetVersion:Number(enrollment.sheetVersion||1)+1,sheetSyncStatus:"pending"};
 }
 function paymentDate(value){
  const date=String(value||"");
