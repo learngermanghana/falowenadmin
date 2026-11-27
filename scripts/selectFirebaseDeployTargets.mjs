@@ -14,6 +14,7 @@ export const WORKER_TARGETS = {
   "functions/effectiveEnrollmentProfile.js": ["api","reconcileStudentEnrollmentProfile"],
   "functions/effectiveEnrollmentProfile.test.cjs": [],
   "functions/pendingStudentCleanup.js": ["cleanupExpiredPendingStudents"],
+  "functions/main.js": ["cleanupExpiredPendingStudents"],
   "functions/partialTuitionLifecycle.js": ["api","cleanupExpiredPendingStudents"],
   "functions/partialTuitionLifecycle.test.cjs": [],
   "functions/organisationPayments.js": ["api"],
