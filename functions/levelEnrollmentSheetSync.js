@@ -7,6 +7,7 @@ async function syncEnrollmentSheet({id,studentId,record,url,secret,fetchImpl=fet
  const response=await fetchImpl(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"upsertLevelEnrollment",secret,row:sheetRow(id,studentId,record)})});
  const body=await response.json().catch(()=>({}));
  if(!response.ok||body.ok!==true||body.action!=="upsertLevelEnrollment")throw new Error(body.error||"Enrollment sheet did not acknowledge update");
+ if(record.terminationReason==="partial_tuition_recovery_expired"&&body.terminationArchived!==true)throw new Error("Completed spreadsheet did not acknowledge the terminated enrollment archive; update the existing Apps Script deployment.");
  return body;
 }
 module.exports={HEADERS,sheetRow,syncEnrollmentSheet};
