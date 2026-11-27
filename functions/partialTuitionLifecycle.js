@@ -58,6 +58,7 @@ async function advancePartialTuition({db,admin,ref,today}){
   if(!rootCandidate(student,today))return {skipped:"not_due"};
   const target=rows.find(r=>r.id===student.effectiveEnrollmentId);
   if(!target||!matchesRoot(student,target))return {skipped:"ledger_mismatch"};
+  if(require("./levelUpgradeLifecycle").isManagedUpgrade(target))return {skipped:"upgrade_has_independent_lifecycle"};
   const state=phase(target,today),dates=recoveryDates(target);
   if(state==="recovery"){
    if(target.status==="expired"){tx.update(ref,{partialTuitionRecoveryEnd:dates.recoveryEnd});return {skipped:"already_in_recovery"};}
@@ -77,7 +78,7 @@ async function advancePartialTuition({db,admin,ref,today}){
    tx.create(a,{studentId:ref.id,studentCode:student.studentCode||student.studentcode||ref.id,studentName:student.name||student.fullName||"",email:student.email||"",organisationSubmissionId:student.organisationSubmissionId||"",enrollment:r,forfeitedAmount:r.id===target.id?target.paid:0,uncollectableBalance:r.id===target.id?target.balanceDue:0,transferableCredit:0,...dates,terminatedAt:stamp()});
    financial.docs.forEach(d=>tx.create(a.collection("payments").doc(d.id),d.data()));
   }
-  tx.update(rowRef,{status:"cancelled",terminationReason:"partial_tuition_recovery_expired",terminatedAt:stamp(),forfeitedAmount:target.paid,transferableCredit:0,partialTuitionRecoveryEnd:dates.recoveryEnd,sheetVersion:Number(target.sheetVersion||1)+1,sheetSyncStatus:"pending",updatedAt:stamp()});
+  tx.update(rowRef,{status:"cancelled",paymentStatus:"Forfeited",terminationReason:"partial_tuition_recovery_expired",terminatedAt:stamp(),forfeitedAmount:target.paid,transferableCredit:0,partialTuitionRecoveryEnd:dates.recoveryEnd,sheetVersion:Number(target.sheetVersion||1)+1,sheetSyncStatus:"pending",updatedAt:stamp()});
   if(!protectedAccount)tx.update(ref,{status:"archived",accessType:"pending",partialTuitionTermination:{state:"pending_purge",enrollmentId:target.id,recoveryEnd:dates.recoveryEnd,terminateOn:dates.terminateOn},updatedAt:stamp()});
   else tx.update(ref,{partialTuitionClosedEnrollmentId:target.id,updatedAt:stamp()});
   return {terminated:true,purge:!protectedAccount,protectedAccount};
