@@ -62,6 +62,20 @@ async function applyGroupPayment({ transaction: tx, paymentRef, payment, eventDa
   const paidDate = eventData.paid_at && !Number.isNaN(Date.parse(eventData.paid_at))
     ? new Date(eventData.paid_at) : new Date();
   const paidAt = eventData.paid_at ? admin.firestore.Timestamp.fromDate(paidDate) : now;
+  const date=paidDate.toISOString().slice(0,10);
+  const managed=await Promise.all(snapshots.map(async (snap,i)=>{
+    const student=snap.data(),id=student.effectiveEnrollmentId;
+    if(!id)return null;
+    const ref=snap.ref.collection("levelEnrollments").doc(id),row=await tx.get(ref);
+    try{
+      if(!row.exists||lines[i].discount!==0||!require("./partialTuitionLifecycle").matchesRoot(student,{id,...row.data()}))throw Error("Level accounting requires reconciliation");
+      return {ref,patch:require("./studentLevelEnrollments").paymentPatch(row.data(),lines[i].tuitionCredit,date)};
+    }catch(error){return {error:error.message};}
+  }));
+  if(managed.some(m=>m?.error)){
+    tx.update(paymentRef,{status:"paid_needs_review",reviewReason:"managed_enrollment_payment_requires_review",paidAt,paystackTransactionId:eventData.id||null,verifiedCurrency:eventData.currency,verifiedAmountSubunit:Number(eventData.amount)});
+    return {reference:payment.reference,needsReview:true,duplicate:false};
+  }
   snapshots.forEach((snap, i) => {
     const line = lines[i];
     if (!snap.exists || snap.data().organisationSubmissionId !== payment.organisationSubmissionId) throw new Error("Group student no longer matches the organisation.");
@@ -97,6 +111,7 @@ async function applyGroupPayment({ transaction: tx, paymentRef, payment, eventDa
       status: active ? "Active" : "Expired",
       ...(firstPayment ? { trialStatus: "converted", trialConvertedAt: paidAt } : {}),
       ...termPatch,
+      ...(managed[i]?.patch?Object.fromEntries(Object.entries(managed[i].patch).filter(([key])=>["contractStart","contractEnd","paymentDeadline"].includes(key))):{}),
       paidLevel: student.level || student.paidLevel || "",
       organisationClassAssignmentPending: !String(student.className || "").trim(),
       organisationPaymentConfirmedAt: paidAt,
@@ -106,6 +121,10 @@ async function applyGroupPayment({ transaction: tx, paymentRef, payment, eventDa
       lastPaymentAmount: line.tuitionCredit, lastPaymentReference: payment.reference,
       lastPaymentProvider: "Paystack", lastPaymentAt: paidAt, syncedToSheets: false, updated_at: now,
     }, { merge: true });
+    if(managed[i]){
+      tx.update(managed[i].ref,{...managed[i].patch,updatedAt:now});
+      tx.create(managed[i].ref.collection("payments").doc(payment.reference+"-"+i),{studentId:line.studentId,enrollmentId:managed[i].ref.id,reference:payment.reference+"-"+i,amount:line.tuitionCredit,receivedDate:date,method:"paystack",source:"organisation_allocation",createdAt:now});
+    }
     tx.create(db.collection("payments").doc(`${payment.reference}-${i}`), {
       reference: `${payment.reference}-${i}`, parentReference: payment.reference,
       studentId: line.studentId, studentName: line.studentName || student.name || "", email: student.email,
