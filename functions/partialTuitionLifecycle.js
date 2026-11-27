@@ -19,12 +19,25 @@ function phase(r,today){
  if(!dates||!["active","expired"].includes(norm(r.status)))return "";
  return today>=dates.terminateOn?"terminate":today>dates.lastAccess?"recovery":"active";
 }
+// Legacy one-course records can enter the same lifecycle only when their
+// recorded money and dates reconcile; never infer a deadline for a full term.
+function legacyRow(student){
+ if(student.effectiveEnrollmentId||student.upgradeId||student.upgradeStatus||hasOtherCourseProtection(student)||student.secondaryProgram||money(student.tuitionDiscount??0)!==0)return null;
+ const program=norm(student.program||student.language||"german").replace(/^kiswahili$/,"swahili"),level=String(student.level||student.levelId||"").toUpperCase();
+ if(!["german","swahili"].includes(program)||!["A1","A2","B1","B2","C1","C2"].includes(level))return null;
+ const end=isoDate(student.contractEnd),start=isoDate(student.contractStart);
+ const deadline=isoDate(student.paymentDeadline||student.paymentDueDate||student.tuitionDueDate||student.balanceDueDate)||(String(student.contractTermMonths)==="1"?end:"");
+ const row={id:program+"-"+level,program,level,status:"active",accessType:"paid",className:student.className||"",tuitionFee:money(student.tuitionFee)/100,paid:money(student.paid)/100,balanceDue:money(student.balanceDue??student.balance)/100,contractStart:start,contractEnd:end,paymentDeadline:deadline,paymentStatus:"Partially Paid"};
+ if(!partial(student)||!recoveryDates(row))return null;
+ return row;
+}
 function rootCandidate(student,today){
  if(student.partialTuitionTermination?.state==="pending_purge")return true;
  if(["admin","staff","teacher","tutor"].includes(norm(student.role))||["archived","deleted","purged","withdrawn","suspended","blocked","inactive"].includes(norm(student.status))||student.accountType==="exam_only")return false;
  const root={...student,contractStart:isoDate(student.contractStart),contractEnd:isoDate(student.contractEnd),paymentDeadline:isoDate(student.paymentDeadline),status:"active"};
  const state=phase(root,today),dates=recoveryDates(root);
- if(!student.effectiveEnrollmentId||student.partialTuitionClosedEnrollmentId===student.effectiveEnrollmentId)return false;
+ if(!student.effectiveEnrollmentId){const legacy=legacyRow(student);return !!legacy&&["recovery","terminate"].includes(phase(legacy,today));}
+ if(student.partialTuitionClosedEnrollmentId===student.effectiveEnrollmentId)return false;
  // Do not repeatedly occupy the daily batch for already-suspended students.
  return state==="terminate"||(state==="recovery"&&student.partialTuitionRecoveryEnd!==dates.recoveryEnd);
 }
@@ -56,6 +69,14 @@ async function advancePartialTuition({db,admin,ref,today}){
   const student=parent.data(),rows=ledger.docs.map(d=>({id:d.id,...d.data()}));
   if(student.partialTuitionTermination?.state==="pending_purge")return {purge:true};
   if(!rootCandidate(student,today))return {skipped:"not_due"};
+  if(!student.effectiveEnrollmentId){
+   const legacy=legacyRow(student);
+   if(!legacy||rows.length)return {skipped:"legacy_ledger_mismatch"};
+   const {id,...record}=legacy;
+   tx.create(ref.collection("levelEnrollments").doc(id),{...record,studentId:ref.id,studentCode:student.studentCode||student.studentcode||ref.id,openingBalanceImported:true,legacyCourseImported:true,accountingMode:"independent_pending_integration",sheetVersion:1,sheetSyncStatus:"pending",createdAt:stamp()});
+   tx.update(ref,{effectiveEnrollmentId:id,paymentDeadline:record.paymentDeadline,contractStart:record.contractStart,contractEnd:record.contractEnd,accessType:"paid",updatedAt:stamp()});
+   return {migrated:true};
+  }
   const target=rows.find(r=>r.id===student.effectiveEnrollmentId);
   if(!target||!matchesRoot(student,target))return {skipped:"ledger_mismatch"};
   if(require("./levelUpgradeLifecycle").isManagedUpgrade(target))return {skipped:"upgrade_has_independent_lifecycle"};
@@ -96,4 +117,4 @@ async function readTerminatedCandidate(ref,db,today){
  if(target.sheetSyncStatus!=="synced")return null;
  return student;
 }
-module.exports={recoveryDates,phase,rootCandidate,matchesRoot,otherCourseRisk,advancePartialTuition,readTerminatedCandidate};
+module.exports={legacyRow,recoveryDates,phase,rootCandidate,matchesRoot,otherCourseRisk,advancePartialTuition,readTerminatedCandidate};
