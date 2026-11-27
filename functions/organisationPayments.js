@@ -49,6 +49,10 @@ async function applyGroupPayment({ transaction: tx, paymentRef, payment, eventDa
   if (!["pending", "initializing"].includes(payment.status)) throw new Error("Group payment is not pending.");
   const lines = validateLines(payment.lines.map(line => ({ ...line, amount: line.grossAmount })));
   const snapshots = await Promise.all(lines.map(line => tx.get(db.collection("students").doc(line.studentId))));
+  if (snapshots.some(snap => !snap.exists || snap.data().partialTuitionTermination?.state === "pending_purge" || snap.data().organisationSubmissionId !== payment.organisationSubmissionId)) {
+    tx.update(paymentRef,{status:"paid_needs_review",reviewReason:"student_enrollment_unavailable",paidAt:admin.firestore.FieldValue.serverTimestamp(),paystackTransactionId:eventData.id||null,verifiedCurrency:eventData.currency,verifiedAmountSubunit:Number(eventData.amount)});
+    return {reference:payment.reference,needsReview:true,duplicate:false};
+  }
   if (snapshots.every(snap => snap.exists && snap.data().organisationSubmissionId === payment.organisationSubmissionId) &&
       snapshots.some((snap, i) => minor(lines[i].grossAmount) > balanceOf(snap.data()))) {
     tx.update(paymentRef, { status: "paid_needs_review", reviewReason: "outstanding_balance_changed", paidAt: admin.firestore.FieldValue.serverTimestamp(), paystackTransactionId: eventData.id || null, verifiedCurrency: eventData.currency, verifiedAmountSubunit: Number(eventData.amount) });
@@ -462,6 +466,7 @@ function registerOrganisationPaymentRoutes(app, { db, admin, initializePaystackP
       const students = await Promise.all(lines.map(line => tx.get(db.collection("students").doc(line.studentId))));
       students.forEach((snap, i) => {
         if (!approved.has(lines[i].studentId) || !snap.exists || snap.data().organisationSubmissionId !== batchId) fail(409, "Only approved students in this organisation can be billed.");
+        if(snap.data().partialTuitionTermination?.state==="pending_purge"||snap.data().partialTuitionClosedEnrollmentId&&snap.data().partialTuitionClosedEnrollmentId===snap.data().effectiveEnrollmentId)fail(409,"This enrollment has ended; register a new enrollment.");
         if (minor(lines[i].grossAmount) > balanceOf(snap.data())) fail(409, "An amount exceeds a student's outstanding balance.");
         // Retain 10% only on the first tuition payment, never a later instalment.
         const shareMinor = minor(lines[i].discount);
