@@ -1,4 +1,5 @@
 import test from "node:test";
+import { buildSwahiliClassroomStages } from "../src/utils/swahiliClassroomStages.js";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { swahiliB1Day27, SWAHILI_B1_DAY27_LISTENING as listening } from "../src/data/swahiliB1Day27.js";
@@ -19,4 +20,18 @@ test("B1 index preserves Day 28 and uses all curriculum chapter titles", () => {
   assert.match(source, /swahiliAudioChapters\.B1\.map/);
   assert.match(source, /Not yet built/);
   assert.match(source, /<InteractiveLessonOpening/);
+});
+
+test("Day 27 teaches pollution causes, effects and solutions independently of Day 28", () => {
+  assert.notEqual(swahiliB1Day27.title.toLowerCase(), swahiliSlidePacks.B1.find(s => s.dayNumber === 28).title.toLowerCase());
+  const stages = buildSwahiliClassroomStages(swahiliB1Day27);
+  const reading = stages.find(s => s.type === "classroom-reading");
+  assert.match(reading.content, /mtaa wa Mtoni/);
+  assert.equal(reading.checks.length, 5);
+  assert.equal(reading.evidence.length, 5);
+  assert.ok(reading.units.every(u => u.english));
+  assert.equal(stages.find(s => s.id === "grammar").details.length, 3);
+  assert.equal(stages.find(s => s.type === "classroom-roleplay").situations.length, 3);
+  assert.match(stages.find(s => s.id === "writing").content, /sababu mbili/);
+  assert.equal(stages.find(s => s.id === "knowledge").listening, listening);
 });
