@@ -60,3 +60,11 @@ The admin UI does not read the `payments` collection directly. Payment history i
 - A paid reference cannot be applied twice.
 - Student updates and payment updates happen in the same Firestore transaction.
 - Payment history remains in the `payments` collection for audit.
+
+## Managed level payment recovery and Google Sheets
+
+For level-enrollment checkout, the original Paystack intent and reference select the language/level. The signed webhook applies the tuition credit once; the checkout surcharge is stored separately. A webhook replay can retry a failed sheet sync without applying a second credit. No scheduled function was added.
+
+**Deployment:** update and redeploy the existing Apps Script web app with `apps-script/level-enrollment-sheet.gs` using its existing script properties and deployment URL. Then deploy the Firebase API and the existing `syncLevelEnrollmentSheet` worker plus the Admin frontend. The sheet endpoint must acknowledge the new primary-payment and payment-ledger fields explicitly. The existing `Level Enrollments` tab is upserted by version; the main `students` tab mirrors paid/balance only for the matching effective primary level, and a new `Level Payments` tab records one row per original reference. A mismatched student code or level is reported rather than silently overwritten.
+
+**Recover an existing transaction:** open the student's Payment Links or Payments panel, paste the original reference in Payment reference and select Verify Paystack / recover payment. Do not manually record the gross amount. The server checks ownership, original intent, exact amount and currency and verifies Paystack before crediting a pending transaction. A previously paid, allocated reference only retries synchronization. Paid-unallocated or non-level legacy intents require explicit review rather than blind reallocation. The link panel also checks existing pending intents once on open and performs one delayed check after generating a link; there is no recurring polling or additional scheduled job. If needed, the existing Sync sheet / refresh action can re-send a known enrollment version.
