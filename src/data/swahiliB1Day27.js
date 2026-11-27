@@ -94,10 +94,10 @@ export const SWAHILI_B1_DAY27_LISTENING = Object.freeze({
 export const swahiliB1Day27 = Object.freeze({
   id: "swahili-b1-day-27", course: "SWAHILI", level: "B1",
   day: "B1 · Day 27", dayNumber: 27, assignmentId: "SWAHILI-B1-10.27",
-  title: "Kutunza mazingira katika maisha ya kila siku",
+  title: "Uchafuzi wa mazingira: sababu na suluhisho",
   objective: "Eleza tabia za kulinda mazingira, toa sababu na pendekeza suluhisho.",
   stages: [
-    { id: "intro", type: "intro", kicker: "Utangulizi · B1", title: "Kutunza mazingira", heading: "Kutunza mazingira", content: "Unafanya nini kila siku ili kulinda mazingira?", prompt: "Taja tabia mbili zinazolinda mazingira." },
+    { id: "intro", type: "intro", kicker: "Utangulizi · B1", title: "Uchafuzi wa mazingira: sababu na suluhisho", heading: "Uchafuzi wa mazingira: sababu na suluhisho", content: "Unafanya nini kila siku ili kulinda mazingira?", prompt: "Taja tabia mbili zinazolinda mazingira." },
     { id: "music", type: "media-pending", kicker: "Muziki · B1", title: "Wimbo wa somo", content: "Wimbo wa somo hili bado haujawekwa. Endelea na zoezi la kusikiliza." },
     { id: "vocabulary", type: "reading-text", kicker: "Msamiati", title: "Maneno muhimu", content: "Kutenganisha taka · Kuchakata taka\nKupunguza plastiki · Kuokoa nishati\nChupa ya chuma · Pipa la taka" },
     { id: "grammar", type: "question", kicker: "Sarufi", title: "Viunganishi vya B1", content: "Hata hivyo · tofauti\nKwa sababu hiyo · matokeo\nIli · lengo", prompt: "Unganisha: Ninazima taa. Ninataka kuokoa nishati. (ili)", answer: "Ninazima taa ili niokoe nishati." },
