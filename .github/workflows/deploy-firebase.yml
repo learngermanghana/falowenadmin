@@ -166,7 +166,7 @@ jobs:
           node --test tests/completion-participation-document.test.js tests/completion-pack-admin-ui.test.js
           node --test tests/registration-lifecycle-events.test.js tests/trial-access-emails.test.js tests/brochure-whatsapp.test.js
           node --test functions/classEmailScheduling.test.js functions/attendanceSessionClassIdentity.test.js
-          node --test tests/pending-student-cleanup.test.js functions/__tests__/enrollmentCleanupProtection.test.cjs functions/effectiveEnrollmentProfile.test.cjs functions/examSubscriptionSheetSync.test.cjs tests/student-level-enrollments.test.cjs
+          node --test functions/partialTuitionLifecycle.test.cjs tests/pending-student-cleanup.test.js functions/__tests__/enrollmentCleanupProtection.test.cjs functions/effectiveEnrollmentProfile.test.cjs functions/examSubscriptionSheetSync.test.cjs tests/student-level-enrollments.test.cjs
           node --test tests/student-payment-links.test.js tests/student-payment-listener-stability.test.js tests/student-payment-update-emails.test.js tests/student-contract-lifecycle.test.js tests/automatic-orientation-sync.test.js
           node --test tests/class-reminder-orientation-links.test.js tests/checkin-status-metadata-hydration.test.js
           grep -F 'app.post("/payments/create-link"' functions/index.js
@@ -195,7 +195,7 @@ jobs:
             exit 1
           fi
           grep -F 'module.exports.cleanupExpiredPendingStudents = onSchedule' functions/main.js
-          grep -F 'schedule: "0 3 * * *"' functions/main.js
+          grep -F 'schedule: "0 3 1 * *"' functions/main.js
           grep -F 'exports.autoCompleteClassSessions = createAutoCompleteClassSessionsJob' functions/index.js
           grep -F 'exports.sendCourseReviewRequestEmails = createCourseReviewRequestEmailJob' functions/index.js
           if grep -F 'exports.sendDueHolidayNotices = onSchedule' functions/index.js; then echo "Daily holiday emails must stay retired"; exit 1; fi

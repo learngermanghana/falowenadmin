@@ -1,4 +1,5 @@
 const { readCleanupCandidate, hasConversion } = require("./enrollmentCleanupProtection");
+const {rootCandidate,advancePartialTuition,readTerminatedCandidate}=require("./partialTuitionLifecycle");
 const TRIAL_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 const TRIAL_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 const DEFAULT_BATCH_LIMIT = 50;
@@ -395,14 +396,16 @@ async function hasAmbiguousCleanupIdentity(db, studentId, ids, values) {
   return matches.some(snap=>snap.docs.some(doc=>doc.id!==studentId));
 }
 
-async function deleteExpiredPendingStudent({ admin, db, docSnap, now = Date.now(), appsScriptUrl = "", syncSecret = "" }) {
-  const protectedCandidate = await readCleanupCandidate(docSnap.ref, current => expiredPendingReason(current, now) === "purge_due");
+async function deleteExpiredPendingStudent({ admin, db, docSnap, now = Date.now(), appsScriptUrl = "", syncSecret = "", partialTuition = false }) {
+  const today=new Date(now).toISOString().slice(0,10);
+  const candidate=()=>partialTuition?readTerminatedCandidate(docSnap.ref,db,today):readCleanupCandidate(docSnap.ref,current=>expiredPendingReason(current,now)==="purge_due");
+  const protectedCandidate = await candidate();
   if (!protectedCandidate) return { skipped: "protected_or_no_longer_eligible" };
   const latestSnap = await docSnap.ref.get();
   if (!latestSnap.exists) return { skipped: "already_deleted" };
   const student = { id: latestSnap.id, ...(latestSnap.data() || {}) };
   const reason = expiredPendingReason(student, now);
-  if (reason !== "purge_due") return { skipped: reason };
+  if (!partialTuition && reason !== "purge_due") return { skipped: reason };
 
   const studentId = text(latestSnap.id);
   const studentCode = text(student.studentCode || student.studentcode || student.uid || studentId);
@@ -414,10 +417,14 @@ async function deleteExpiredPendingStudent({ admin, db, docSnap, now = Date.now(
   const summary = { deleted: 0, collections: {}, attendanceSessionMapsUpdated: 0, authUsersDeleted: [] };
 
   if(await hasAmbiguousCleanupIdentity(db,studentId,studentDocIds,allValues))return {skipped:"ambiguous_student_identity"};
+  if(partialTuition){
+    const user=await admin.auth().getUserByEmail(email).catch(error=>{if(error.code==="auth/user-not-found")return null;throw error;});
+    if(user&&user.uid!==(student.uid||studentId))return {skipped:"auth_identity_mismatch"};
+  }
 
   // Delete the sheet rows first. If Apps Script is temporarily unavailable,
   // keep the Firestore student so this purge remains retryable.
-  if (!await readCleanupCandidate(docSnap.ref, current => expiredPendingReason(current, now) === "purge_due")) return { skipped: "protected_or_no_longer_eligible" };
+  if (!await candidate()) return { skipped: "protected_or_no_longer_eligible" };
   const sheet = await deleteStudentRowsFromSheet({
     appsScriptUrl,
     syncSecret,
@@ -432,11 +439,14 @@ async function deleteExpiredPendingStudent({ admin, db, docSnap, now = Date.now(
 
   // Recheck after the external sheet operation. Never recursively delete a
   // second student document simply because an identifier happens to match.
-  if (!await readCleanupCandidate(docSnap.ref,current=>expiredPendingReason(current,now)==="purge_due") ||
+  if (!await candidate() ||
       await hasAmbiguousCleanupIdentity(db,studentId,studentDocIds,allValues))return {skipped:"protected_or_ambiguous_after_sheet"};
-  await db.recursiveDelete(docSnap.ref);
-  summary.deleted += 1;
-  summary.collections.students = 1;
+  // Keep terminated paid accounts retryable until ancillary cleanup succeeds.
+  if (!partialTuition) {
+    await db.recursiveDelete(docSnap.ref);
+    summary.deleted += 1;
+    summary.collections.students = 1;
+  }
 
   await deleteMatchingCollectionDocs(db, "submissions", ["studentCode", "studentcode", "studentId", "uid", "email", "studentEmail"], allValues, summary);
   await deleteMatchingCollectionDocs(db, "scores", ["studentCode", "studentcode", "studentId", "studentEmail", "email"], allValues, summary);
@@ -448,7 +458,16 @@ async function deleteExpiredPendingStudent({ admin, db, docSnap, now = Date.now(
   await deleteMatchingCollectionGroupDocs(db, "checkins", ["studentCode", "studentcode", "studentId", "uid", "email"], allValues, summary);
   await deleteKnownNestedSubmissionScopes(db, codeValues, summary);
   await removeStudentFromAttendanceMaps({ admin, db, identifierValues: allValues, summary });
-  summary.authUsersDeleted = await deleteAuthUserIfPresent({ admin, uid: student.uid || studentId, email });
+  if (partialTuition) {
+    if (!await candidate()) return {skipped:"protected_before_auth_delete"};
+    // Use the verified matching identity, and fail on provider errors rather than silently losing the retry record.
+    const user=await admin.auth().getUserByEmail(email).catch(error=>{if(error.code==="auth/user-not-found")return null;throw error;});
+    const uid=student.uid||studentId;
+    if(user&&user.uid!==uid)return {skipped:"auth_identity_mismatch"};
+    if(user){await admin.auth().deleteUser(uid);summary.authUsersDeleted=[uid];}
+    await db.recursiveDelete(docSnap.ref);
+    summary.deleted+=1;summary.collections.students=1;
+  }else summary.authUsersDeleted = await deleteAuthUserIfPresent({ admin, uid: student.uid || studentId, email });
 
   return { deleted: true, studentId, studentCode, email, firestore: summary, sheet };
 }
@@ -464,15 +483,25 @@ async function runExpiredPendingStudentCleanup({
   const actions = snap.docs
     .map((docSnap) => ({
       docSnap,
-      reason: expiredPendingReason({ id: docSnap.id, ...(docSnap.data() || {}) }, now),
+      reason: rootCandidate(docSnap.data() || {},new Date(now).toISOString().slice(0,10))?"partial_tuition":expiredPendingReason({ id: docSnap.id, ...(docSnap.data() || {}) }, now),
     }))
-    .filter((item) => item.reason === "needs_block" || item.reason === "purge_due")
+    .filter((item) => item.reason === "needs_block" || item.reason === "purge_due" || item.reason === "partial_tuition")
     .slice(0, Math.max(1, Number(batchLimit) || DEFAULT_BATCH_LIMIT));
 
   const results = [];
   for (const item of actions) {
     try {
-      if (item.reason === "needs_block") {
+      if(item.reason==="partial_tuition"){
+        const args={db,admin,ref:item.docSnap.ref,today:new Date(now).toISOString().slice(0,10)};
+        let advanced=await advancePartialTuition(args);
+        if(advanced.migrated)advanced=await advancePartialTuition(args);
+        if(advanced.purge){
+          const latest=await item.docSnap.ref.get();
+          const id=latest.data()?.partialTuitionTermination?.enrollmentId;
+          if(id)await require("./levelEnrollmentSheetSync").syncEnrollmentRef({ref:item.docSnap.ref.collection("levelEnrollments").doc(id),db,admin});
+          results.push({...advanced,...await deleteExpiredPendingStudent({admin,db,docSnap:item.docSnap,now,appsScriptUrl,syncSecret,partialTuition:true})});
+        }else results.push(advanced);
+      } else if (item.reason === "needs_block") {
         results.push(await blockExpiredTrialStudent({
           admin,
           docSnap: item.docSnap,
@@ -519,7 +548,7 @@ function createExpiredPendingStudentCleanupJob({
   env = process.env,
 } = {}) {
   return onSchedule({
-    schedule: "0 3 * * *",
+    schedule: "0 3 1 * *",
     timeZone: "Africa/Accra",
     retryCount: 1,
     memory: "256MiB",

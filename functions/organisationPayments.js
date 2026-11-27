@@ -46,9 +46,13 @@ async function applyGroupPayment({ transaction: tx, paymentRef, payment, eventDa
     tx.update(paymentRef, { status: "paid_needs_review", reviewReason: "withdrawn_link_paid", paidAt: admin.firestore.FieldValue.serverTimestamp(), paystackTransactionId: eventData.id || null, verifiedCurrency: eventData.currency, verifiedAmountSubunit: Number(eventData.amount) });
     return { reference: payment.reference, needsReview: true, duplicate: false };
   }
-  if (!["pending", "initializing"].includes(payment.status)) throw new Error("Group payment is not pending.");
+  if (!["pending", "initializing", "expired"].includes(payment.status)) throw new Error("Group payment is not pending.");
   const lines = validateLines(payment.lines.map(line => ({ ...line, amount: line.grossAmount })));
   const snapshots = await Promise.all(lines.map(line => tx.get(db.collection("students").doc(line.studentId))));
+  if (snapshots.some(snap => !snap.exists || snap.data().partialTuitionTermination?.state === "pending_purge" || snap.data().partialTuitionClosedEnrollmentId&&snap.data().partialTuitionClosedEnrollmentId===snap.data().effectiveEnrollmentId || snap.data().organisationSubmissionId !== payment.organisationSubmissionId)) {
+    tx.update(paymentRef,{status:"paid_needs_review",reviewReason:"student_enrollment_unavailable",paidAt:admin.firestore.FieldValue.serverTimestamp(),paystackTransactionId:eventData.id||null,verifiedCurrency:eventData.currency,verifiedAmountSubunit:Number(eventData.amount)});
+    return {reference:payment.reference,needsReview:true,duplicate:false};
+  }
   if (snapshots.every(snap => snap.exists && snap.data().organisationSubmissionId === payment.organisationSubmissionId) &&
       snapshots.some((snap, i) => minor(lines[i].grossAmount) > balanceOf(snap.data()))) {
     tx.update(paymentRef, { status: "paid_needs_review", reviewReason: "outstanding_balance_changed", paidAt: admin.firestore.FieldValue.serverTimestamp(), paystackTransactionId: eventData.id || null, verifiedCurrency: eventData.currency, verifiedAmountSubunit: Number(eventData.amount) });
@@ -58,6 +62,22 @@ async function applyGroupPayment({ transaction: tx, paymentRef, payment, eventDa
   const paidDate = eventData.paid_at && !Number.isNaN(Date.parse(eventData.paid_at))
     ? new Date(eventData.paid_at) : new Date();
   const paidAt = eventData.paid_at ? admin.firestore.Timestamp.fromDate(paidDate) : now;
+  const date=paidDate.toISOString().slice(0,10);
+  const managed=await Promise.all(snapshots.map(async (snap,i)=>{
+    const student=snap.data(),id=student.effectiveEnrollmentId;
+    const expected=payment.lines[i].enrollmentId;
+    if(expected&&expected!==id||student.partialTuitionClosedEnrollmentId&&!expected)return {error:"Payment no longer belongs to the current enrollment"};
+    if(!id){const lifecycle=require("./partialTuitionLifecycle"),legacy=lifecycle.legacyRow(student),dates=legacy&&lifecycle.recoveryDates(legacy);return dates&&date>=dates.terminateOn?{error:"The 30-day recovery period ended"}:null;}
+    const ref=snap.ref.collection("levelEnrollments").doc(id),row=await tx.get(ref);
+    try{
+      if(!row.exists||lines[i].discount!==0||!require("./partialTuitionLifecycle").matchesRoot(student,{id,...row.data()}))throw Error("Level accounting requires reconciliation");
+      return {ref,patch:require("./studentLevelEnrollments").paymentPatch(row.data(),lines[i].tuitionCredit,date)};
+    }catch(error){return {error:error.message};}
+  }));
+  if(managed.some(m=>m?.error)){
+    tx.update(paymentRef,{status:"paid_needs_review",reviewReason:"managed_enrollment_payment_requires_review",paidAt,paystackTransactionId:eventData.id||null,verifiedCurrency:eventData.currency,verifiedAmountSubunit:Number(eventData.amount)});
+    return {reference:payment.reference,needsReview:true,duplicate:false};
+  }
   snapshots.forEach((snap, i) => {
     const line = lines[i];
     if (!snap.exists || snap.data().organisationSubmissionId !== payment.organisationSubmissionId) throw new Error("Group student no longer matches the organisation.");
@@ -93,6 +113,7 @@ async function applyGroupPayment({ transaction: tx, paymentRef, payment, eventDa
       status: active ? "Active" : "Expired",
       ...(firstPayment ? { trialStatus: "converted", trialConvertedAt: paidAt } : {}),
       ...termPatch,
+      ...(managed[i]?.patch?Object.fromEntries(Object.entries(managed[i].patch).filter(([key])=>["contractStart","contractEnd","paymentDeadline"].includes(key))):{}),
       paidLevel: student.level || student.paidLevel || "",
       organisationClassAssignmentPending: !String(student.className || "").trim(),
       organisationPaymentConfirmedAt: paidAt,
@@ -102,6 +123,10 @@ async function applyGroupPayment({ transaction: tx, paymentRef, payment, eventDa
       lastPaymentAmount: line.tuitionCredit, lastPaymentReference: payment.reference,
       lastPaymentProvider: "Paystack", lastPaymentAt: paidAt, syncedToSheets: false, updated_at: now,
     }, { merge: true });
+    if(managed[i]){
+      tx.update(managed[i].ref,{...managed[i].patch,updatedAt:now});
+      tx.create(managed[i].ref.collection("payments").doc(payment.reference+"-"+i),{studentId:line.studentId,enrollmentId:managed[i].ref.id,reference:payment.reference+"-"+i,amount:line.tuitionCredit,receivedDate:date,method:"paystack",source:"organisation_allocation",createdAt:now});
+    }
     tx.create(db.collection("payments").doc(`${payment.reference}-${i}`), {
       reference: `${payment.reference}-${i}`, parentReference: payment.reference,
       studentId: line.studentId, studentName: line.studentName || student.name || "", email: student.email,
@@ -462,6 +487,9 @@ function registerOrganisationPaymentRoutes(app, { db, admin, initializePaystackP
       const students = await Promise.all(lines.map(line => tx.get(db.collection("students").doc(line.studentId))));
       students.forEach((snap, i) => {
         if (!approved.has(lines[i].studentId) || !snap.exists || snap.data().organisationSubmissionId !== batchId) fail(409, "Only approved students in this organisation can be billed.");
+        if(snap.data().partialTuitionTermination?.state==="pending_purge"||snap.data().partialTuitionClosedEnrollmentId&&snap.data().partialTuitionClosedEnrollmentId===snap.data().effectiveEnrollmentId)fail(409,"This enrollment has ended; register a new enrollment.");
+        const lifecycle=require("./partialTuitionLifecycle"),student=snap.data(),legacy=lifecycle.legacyRow(student),dates=lifecycle.recoveryDates(legacy||{...student,contractStart:require("./studentContractLifecycle").isoDate(student.contractStart),contractEnd:require("./studentContractLifecycle").isoDate(student.contractEnd),paymentDeadline:require("./studentContractLifecycle").isoDate(student.paymentDeadline)});
+        if(dates&&new Date().toISOString().slice(0,10)>=dates.terminateOn)fail(409,"The recovery period ended; register a new enrollment.");
         if (minor(lines[i].grossAmount) > balanceOf(snap.data())) fail(409, "An amount exceeds a student's outstanding balance.");
         // Retain 10% only on the first tuition payment, never a later instalment.
         const shareMinor = minor(lines[i].discount);
@@ -474,6 +502,7 @@ function registerOrganisationPaymentRoutes(app, { db, admin, initializePaystackP
         }
         if (lines[i].discount && !String(req.body.discountReason || "").trim()) fail(400, "Enter a reason for the partner share deduction.");
         lines[i].studentName = snap.data().name || snap.data().fullName || lines[i].studentId;
+        if(snap.data().effectiveEnrollmentId)lines[i].enrollmentId=snap.data().effectiveEnrollmentId;
       });
       const tuitionCredit = lines.reduce((sum, line) => sum + minor(line.tuitionCredit), 0) / 100;
       const discount = lines.reduce((sum, line) => sum + minor(line.discount), 0) / 100;

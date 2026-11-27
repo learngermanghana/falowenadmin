@@ -38,7 +38,7 @@ module.exports = baseExports;
 
 module.exports.cleanupExpiredPendingStudents = onSchedule({
   cpu: "gcf_gen1",
-  schedule: "0 3 * * *",
+  schedule: "0 3 1 * *",
   timeZone: "Africa/Accra",
   retryCount: 1,
   memory: "256MiB",

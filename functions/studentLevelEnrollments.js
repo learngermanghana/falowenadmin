@@ -30,12 +30,15 @@ function manualTotals(input){
  return {tuitionFee:fee/100,paid:paid/100,balanceDue:balance/100,paymentStatus:balance?(paid?"Partially Paid":"Unpaid"):"Paid"};
 }
 function paymentPatch(enrollment,amount,date){
- if(enrollment.accessType==="complimentary"||enrollment.status==="cancelled")fail("This enrollment does not accept payments",409);
+ if(enrollment.accessType==="complimentary"||enrollment.status==="cancelled")fail("This enrollment does not accept payments; a terminated enrollment requires a new registration",409);
+ const dates=require("./partialTuitionLifecycle").recoveryDates(enrollment);
+ if(dates&&!isManagedUpgrade(enrollment)&&(date||new Date().toISOString().slice(0,10))>=dates.terminateOn)fail("The 30-day recovery period ended. Register a new enrollment.",409);
  if(enrollment.tuitionFee==null||enrollment.balanceDue==null)fail("Set the tuition fee before recording a new payment",409);
  const fee=moneyCents(enrollment.tuitionFee),paid=moneyCents(enrollment.paid),balance=moneyCents(enrollment.balanceDue),credit=moneyCents(amount);
  if(paid+balance!==fee||!credit||credit>balance) fail("Payment exceeds remaining tuition or ledger requires review",409);
  const due=balance-credit;
- return {...(date?paymentLifecycle(enrollment,due/100,date):{}),paid:(paid+credit)/100,balanceDue:due/100,paymentStatus:due?"Partially Paid":"Paid",sheetVersion:Number(enrollment.sheetVersion||1)+1,sheetSyncStatus:"pending"};
+ const settled=dates&&date&&!isManagedUpgrade(enrollment)&&due===0?{status:"active",contractEnd:require("./studentContractLifecycle").isoDate(require("./studentContractLifecycle").addCalendarMonths(enrollment.contractStart,6)),paymentDeadline:""}:{};
+ return {...(date?paymentLifecycle(enrollment,due/100,date):{}),...settled,paid:(paid+credit)/100,balanceDue:due/100,paymentStatus:due?"Partially Paid":"Paid",sheetVersion:Number(enrollment.sheetVersion||1)+1,sheetSyncStatus:"pending"};
 }
 function paymentDate(value){
  const date=String(value||"");
@@ -134,7 +137,7 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  app.post(route+"/reconcile-profile",async(req,res)=>{try{await authorize(req);const {studentId,student}=refs(req);await require("./effectiveEnrollmentProfile").reconcileEnrollmentProfile({db,admin,studentId});const snap=await student.get();if(!snap.exists)fail("Student not found",404);const p=snap.data();const keys=["level","className","contractStart","contractEnd","paymentDeadline","tuitionFee","paid","balanceDue","balance","paymentStatus","accessType","status","effectiveEnrollmentId","trialStatus","trialRetentionStatus","secondaryProgram","coursePlacements","levelId"];return res.json({ok:true,profile:Object.fromEntries(keys.filter(k=>p[k]!==undefined).map(k=>[k,p[k]]))});}catch(e){return error(res,e);}});
  app.get(route,async(req,res)=>{try{await authorize(req);const {student,collection}=refs(req);const parent=await student.get();if(!parent.exists)fail("Student not found",404);const snap=await collection.get();const enrollments=snap.docs.map(d=>({id:d.id,...d.data()}));return res.json({ok:true,enrollments,legacyCourses:legacyCourseCandidates(parent.data(),enrollments)});}catch(e){return error(res,e);}});
  app.post(route,async(req,res)=>{try{const user=await authorize(req);const {studentId,student,collection}=refs(req);const data=normalizeEnrollment(req.body);const totals=manualTotals(req.body||{});if(data.accessType==="complimentary"&&totals.paid!==0)fail("Complimentary access cannot contain payments");const id=data.program+"-"+data.level;const ref=collection.doc(id);
- const result=await db.runTransaction(async tx=>{const [parent,existing]=await Promise.all([tx.get(student),tx.get(ref)]);if(!parent.exists)fail("Student not found",404);if(existing.exists)fail("Level already exists",409);
+ const result=await db.runTransaction(async tx=>{const [parent,existing]=await Promise.all([tx.get(student),tx.get(ref)]);if(!parent.exists)fail("Student not found",404);if(parent.data().partialTuitionTermination?.state==="pending_purge")fail("Terminated account requires a new registration",409);if(existing.exists)fail("Level already exists",409);
  const enrollment={...data,studentId,studentCode:parent.data().studentCode||parent.data().studentcode||studentId,...totals,openingBalanceImported:totals.paid>0,manualOpeningPaid:totals.paid,status:enrollmentStatus(req.body?.status),accountingMode:"independent_pending_integration",sheetVersion:1,sheetSyncStatus:"pending"};
  const stamp=admin.firestore.FieldValue.serverTimestamp();tx.set(ref,{...enrollment,createdAt:stamp,createdBy:user.uid});tx.set(db.collection("auditLogs").doc(),{type:"student.levelEnrollmentCreated",studentId,enrollmentId:id,actorId:user.uid,openingTotals:totals,createdAt:stamp});return {id,...enrollment};});return res.json({ok:true,enrollment:result});}catch(e){return error(res,e);}});
  app.post(route+"/:enrollmentId/sync-sheet",async(req,res)=>{try{
@@ -186,6 +189,7 @@ function registerStudentLevelEnrollments({app,db,admin,requireAuth,isEditor}){
  const user=await authorize(req);const {studentId,student,collection}=refs(req);const ref=enrollmentRef(req,collection);
  const result=await db.runTransaction(async tx=>{const [snap,parent]=await Promise.all([tx.get(ref),tx.get(student)]);if(!snap.exists||!parent.exists)fail("Enrollment not found",404);
  const record=snap.data(),input=req.body||{},stamp=admin.firestore.FieldValue.serverTimestamp();
+ if(record.terminationReason==="partial_tuition_recovery_expired"||parent.data().partialTuitionTermination?.state==="pending_purge")fail("Terminated tuition cannot be restored or transferred. New enrollment required.",409);
  const hasTotals=input.tuitionFee!==undefined||input.paid!==undefined;
  const totals=hasTotals?manualTotals({tuitionFee:input.tuitionFee===undefined?record.tuitionFee:input.tuitionFee,paid:input.paid===undefined?record.paid:input.paid}):{};
  const changed=hasTotals&&(totals.tuitionFee!==record.tuitionFee||totals.paid!==record.paid);
@@ -247,6 +251,7 @@ function registerEnrollmentCheckout({app,db,admin,requirePaymentAdmin,initialize
  const parent=db.collection("students").doc(studentId),ref=parent.collection("levelEnrollments").doc(enrollmentId);
  const [student,enrollment]=await Promise.all([parent.get(),ref.get()]);
  if(!student.exists||!enrollment.exists)fail("Enrollment not found",404);
+ if(student.data().partialTuitionTermination?.state==="pending_purge")fail("Terminated account requires new registration",409);
  const credit=moneyCents(amount)/100;if(isManagedUpgrade(enrollment.data())&&!payableStatus(enrollment.data()))fail("Upgrade is not payable",409);paymentPatch(enrollment.data(),credit);
  const email=String(req.body.email||student.data().email||"").trim();if(!email.includes("@"))fail("Student email required");
  const reference=createPaymentReference(studentId),checkoutAmount=calculateStudentCheckoutAmount(credit);
@@ -271,7 +276,7 @@ async function applyEnrollmentCheckout({transaction:tx,paymentRef,payment,eventD
  const amount=moneyCents(payment.tuitionCredit)/100;
  const record={studentId,enrollmentId,reference,amount,receivedDate:date,method:"paystack",source:"enrollment_checkout"};
  let patch;
- try{if(!student.exists||!enrollment.exists)fail("Enrollment unavailable",409);patch=paymentPatch(enrollment.data(),amount,date);}catch(e){
+ try{if(!student.exists||!enrollment.exists||student.data().partialTuitionTermination?.state==="pending_purge")fail("Enrollment unavailable",409);patch=paymentPatch(enrollment.data(),amount,date);}catch(e){
  tx.update(paymentRef,{status:"paid_unallocated",allocationError:e.message,paidAt:stamp,paystackTransactionId:eventData.id||null});
  tx.set(db.collection("auditLogs").doc(),{...record,type:"student.levelPaymentNeedsAllocation",reason:e.message,createdAt:stamp});
  return {duplicate:false,studentId,reference,requiresAllocation:true};

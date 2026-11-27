@@ -98,7 +98,7 @@ test("full-paid partnership student is marked active and six-month term starts o
 });
 
 test("rejects incorrect amount, currency and missing students without partial credits", async () => {
-  for (const mutate of [f => f.eventData.amount++, f => f.eventData.currency = "USD", f => f.data.delete("students/B")]) {
+  for (const mutate of [f => f.eventData.amount++, f => f.eventData.currency = "USD"]) {
     const f = fixture(); mutate(f); await assert.rejects(f.apply());
     assert.equal(f.data.get("students/A").paid, 100);
     assert.equal(f.data.get("payments/FAL-ORG-test").status, "pending");
@@ -475,4 +475,9 @@ test("owner can withdraw an unpaid checkout, but cannot withdraw a verified paym
   f.data.get(paymentPath).status = "paid";
   assert.equal((await call()).status, 409);
   assert.equal(f.data.get(paymentPath).status, "paid");
+});
+
+test("payment for a missing student stays unallocated for review", async () => {
+ const f=fixture();f.data.delete("students/B");const result=await f.apply();
+ assert.equal(result.needsReview,true);assert.equal(f.data.get("students/A").paid,100);assert.equal(f.data.get("payments/FAL-ORG-test").status,"paid_needs_review");
 });
