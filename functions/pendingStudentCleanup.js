@@ -546,7 +546,7 @@ function createExpiredPendingStudentCleanupJob({
   env = process.env,
 } = {}) {
   return onSchedule({
-    schedule: "0 3 * * *",
+    schedule: "0 3 1 * *",
     timeZone: "Africa/Accra",
     retryCount: 1,
     memory: "256MiB",
