@@ -268,4 +268,4 @@ export default async function staffManagementHandler(req, res) {
 }
 
 // Reuse the existing verified owner and server service-account identity for teacher applications.
-export { requireOwner, tokenForGoogle, PROJECT };
+export { requireOwner, tokenForGoogle, PROJECT, OWNER };
