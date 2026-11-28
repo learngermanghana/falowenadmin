@@ -8,6 +8,7 @@ import integrationHubHandler from "./integration-hub.js";
 import checkinInvitationsHandler from "./checkin-invitations.js";
 import weeklyEngagementSummaryHandler from "./weekly-engagement-summary.js";
 import appointmentHandler from "./appointments.js";
+import teacherApplicationsHandler from "./teacher-applications.js";
 import staffManagementHandler from "./staff-management.js";
 import { autoMarkSubmission } from "../src/utils/autoMarking.js";
 
@@ -1322,6 +1323,7 @@ export default async function handler(req, res) {
   if (path === "weekly-engagement-summary") return weeklyEngagementSummaryHandler(req, res);
 
   if (path === "appointments") return appointmentHandler(req, res);
+  if (path === "teacher-applications") return teacherApplicationsHandler(req, res);
 
   if (path === "student-results/sheet-upsert") return studentResultsSheetUpsertHandler(req, res);
 
