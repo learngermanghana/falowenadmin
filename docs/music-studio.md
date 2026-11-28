@@ -300,3 +300,11 @@ existing authenticated dialogue recording.
 The Music slide follows the estimated line timings served by Falowen Music.
 The separate Falowen Radio slide embeds the Day 12 episode and offers five
 individual, pair and group activities with revealable model answers.
+
+## C1 Day 1 current song
+
+The C1 Day 1 songbook entry uses “Lernen mit Verstand,” matching the learner
+reference lyrics. The exact retired “Die Karte ist nicht das Gelände” cloud
+draft is identified as superseded; other teacher-saved edits are preserved.
+The updated text loads with a notice and the owner can save it with Overwrite
+Lyrics. Recording timing remains separate and requires audio review.
