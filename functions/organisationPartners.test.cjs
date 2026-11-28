@@ -91,3 +91,36 @@ test('existing UID-linked student retains course access when registering a compa
  await f.call('/organisation-partners/register',registration,'partner');
  assert.equal(f.data.get('organisationPartnerMembers/partner-user').courseAccessAllowed,true);
 });
+
+function billingFixture(status='pending') {
+ const f=setup(), id=seedPartner(f);
+ f.data.set('organisationEnrolments/group',{organisation:{email:'partner@example.test'},organisationId:id,students:[{name:'Own learner',level:'A1',status:'approved',studentId:'own'}]});
+ f.data.set('students/own',{name:'Own learner',level:'A1',organisationSubmissionId:'group',organisationId:id,billingResponsibility:'organisation',paid:0,tuitionFee:3000,balanceDue:3000,privateNote:'not visible'});
+ f.data.set('payments/invoice',{reference:'FAL-ORG-test',organisationSubmissionId:'group',purpose:'organisation_group',status,currency:'GHS',checkoutAmount:2750,tuitionCredit:2700,discount:300,processingShare:50,authorizationUrl:'https://checkout.paystack.com/test',email:'billing@example.test',lines:[{studentId:'own',grossAmount:3000,discount:300,tuitionCredit:2700}]});
+ return f;
+}
+test('billing requires a verified partner and never trusts an injected company ID',async()=>{
+ const f=billingFixture(); const other=seedPartner(f,{email:'other@example.test',uid:'other-user',name:'Other school'});
+ f.data.set('organisationEnrolments/other',{organisation:{email:'other@example.test'},organisationId:other,students:[]});
+ assert.equal((await f.call('/organisation-partners/billing/:id',{},false,'group')).status,401);
+ assert.equal((await f.call('/organisation-partners/billing/:id',{organisationId:other},'partner','other')).status,404);
+ const result=await f.call('/organisation-partners/billing/:id',{},'partner','group');
+ assert.equal(result.status,200);
+ assert.equal(result.result.students[0].balanceDue,3000);
+ assert.equal(result.result.payments[0].payUrl,'https://checkout.paystack.com/test');
+ assert.ok(!JSON.stringify(result.result).includes('privateNote'));
+ assert.ok(!JSON.stringify(result.result).includes('billing@example.test'));
+});
+test('paid, overlapping, stale, and untrusted checkouts cannot be paid from the dashboard',async()=>{
+ for(const mode of ['paid','withdrawn','stale','overlap','bad_url','wrong_owner','unapproved']){
+  const f=billingFixture(mode==='paid'||mode==='withdrawn'?mode:'pending');
+  if(mode==='stale') f.data.get('students/own').balanceDue=1000;
+  if(mode==='overlap') f.data.set('payments/duplicate',{...f.data.get('payments/invoice'),reference:'duplicate'});
+  if(mode==='bad_url') f.data.get('payments/invoice').authorizationUrl='https://checkout.paystack.com.evil.test/';
+  if(mode==='wrong_owner') f.data.get('students/own').organisationId='other';
+  if(mode==='unapproved') f.data.get('referralApplications/'+idForEmail('partner@example.test')).status='pending';
+  const response=await f.call('/organisation-partners/billing/:id',{},'partner','group');
+  assert.equal(response.status,200,mode);
+  assert.ok(response.result.payments.every(p=>!p.payUrl),mode);
+ }
+});
