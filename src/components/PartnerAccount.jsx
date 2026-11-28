@@ -14,6 +14,11 @@ function PartnerDashboard({ profile, enrolment, children, refresh, run, busy, me
     const data = await partnerRequest('organisation-partners/submissions');
     if (uid !== partnerAuth.currentUser?.uid) return;
     setHistory(data);
+    if (!batchId && data.submissions.length === 1) {
+      const id = data.submissions[0].id;
+      setBatchId(id);
+      await loadBilling(id);
+    }
   };
   const loadBilling = async id => {
     const uid = partnerAuth.currentUser?.uid;
@@ -21,6 +26,7 @@ function PartnerDashboard({ profile, enrolment, children, refresh, run, busy, me
     const data = await partnerRequest('organisation-partners/billing/' + encodeURIComponent(id));
     if (uid === partnerAuth.currentUser?.uid) setBilling(data);
   };
+  useEffect(() => { if (enrolment) run(loadHistory); }, [enrolment]);
   const select = next => {
     setTab(next);
     if ((next === 'Students' || next === 'Payments') && !history) run(loadHistory);
