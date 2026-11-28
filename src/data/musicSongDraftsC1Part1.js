@@ -3,11 +3,11 @@ import { defineAdvancedSongDrafts } from "./advancedMusicSongTools.js";
 export const MUSIC_SONG_DRAFTS_C1_PART1 = defineAdvancedSongDrafts([
   {
     "key": "C1 1",
-    "title": "Die Karte ist nicht das Gelände",
-    "genre": "Art-Pop",
-    "tempo": 84,
+    "title": "Lernen mit Verstand",
+    "genre": "West African Palm Wine · Afro-Soul Pop",
+    "tempo": 100,
     "arrangement": "Pulsing felt piano, restrained syncopated drums, expressive bass and patient string swells.",
-    "lyrics": "[Verse 1]\nAn meiner Wand hängt eine Karte,\nmit Pfeilen, Zielen, Jahreszahlen.\nDoch dieser Montag zeigt mir Wege,\ndie gestern niemand eingezeichnet hat.\n\n[Chorus]\nDie Karte ist nicht das Gelände,\nkein Pfeil ersetzt den ersten Schritt.\nIch darf den Kurs noch einmal ändern,\nohne das Ziel aus den Augen zu verlieren.\n\n[Verse 2]\nDie Prüfung rückt in greifbare Nähe,\nmein Fortschritt passt in keine gerade Linie.\nIch lese Fehler wie Randbemerkungen,\nnicht wie ein Urteil über mich.\nEin Plan, der keinen Irrtum zulässt,\nhält selten bis zum nächsten Regen.\n\n[Bridge]\nManchmal ist Anpassung kein Nachgeben,\nsondern die klügste Form von Mut.\n\n[Outro]\nIch zeichne eine Kurve weiter.\nDas Papier bleibt nicht mehr leer.",
+    "lyrics": "[Intro]\nHmm, oh yeah …\nWissen wächst mit der Zeit,\nNeugier macht den Geist bereit.\n\n[Strophe 1]\nWissen lässt sich nicht erzwingen,\nLernen muss an Tiefe gewinnen.\nStatt nur Fakten zu speichern,\nWill ich mein Verständnis erweitern.\n\nGezielt das Wissen aktivieren,\nKomplexe Inhalte strukturieren.\nZusammenhänge klar erkennen,\nUnd sie mit eigenen Worten benennen.\n\n[Refrain]\nLernen mit Verstand,\nMit Methode und System.\nWas ich heute noch nicht weiß,\nKann ich morgen schon verstehen.\n\nLernen mit Verstand,\nNeue Wege ausprobieren.\nAus den Fehlern Konsequenzen ziehen,\nDas Gelernte reflektieren.\n\n[Strophe 2]\nDie Wahl der richtigen Strategie\nHängt vom jeweiligen Lernziel ab.\nRegelmäßiges Wiederholen\nRuft gespeichertes Wissen ab.\n\nVon besonderer Bedeutung\nIst die aktive Anwendung.\nDurch bewusste Selbstreflexion\nEntsteht nachhaltige Veränderung.\n\n[Refrain]\nLernen mit Verstand,\nMit Methode und System.\nWas ich heute noch nicht weiß,\nKann ich morgen schon verstehen.\n\nLernen mit Verstand,\nNeue Wege ausprobieren.\nAus den Fehlern Konsequenzen ziehen,\nDas Gelernte reflektieren.\n\n[Bridge]\nJe gezielter wir reflektieren,\nDesto besser können wir reagieren.\nWer seine Schwächen analysiert,\nErkennt, was zum Fortschritt führt.\n\nNicht die Menge ist entscheidend,\nSondern wie man Wissen vernetzt.\nEin Konzept wird erst verständlich,\nWenn man es in die Praxis umsetzt.\n\n[Finaler Refrain]\nLernen mit Verstand,\nMit Ausdauer und Motivation.\nJeder Rückschlag birgt die Chance\nAuf persönliche Transformation.\n\nLernen mit Verstand,\nHmm, die Neugier bleibt bestehen.\nDenn es geht nicht nur ums Wissen,\nSondern darum, zu verstehen.\n\n[Outro]\nWissen vernetzen,\nZiele bewusst setzen.\nErkenntnisse gewinnen,\nImmer wieder neu beginnen.\n\nOh, Lernen mit Verstand …",
     "curriculumTopic": "Ziele und Lernweg"
   },
   {

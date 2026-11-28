@@ -1,5 +1,6 @@
 // Signatures of the retired B2 curriculum drafts. Custom teacher edits are preserved.
 const retired = {
+  "C1 1": "707:9f90c263",
   "B2-1.1": "716:58bfba66",
   "B2-1.2": "682:43b33920",
   "B2-1.3": "717:07d43e16",

@@ -5,7 +5,7 @@ export function defineAdvancedSongDrafts(entries) {
     const assignmentKey = String(key || "").trim();
     const cleaned = String(lyrics || "").trim();
     if (!/^(B2-|C1 |C2-)/.test(assignmentKey) || !title || !genre || !arrangement
-      || !/^\[Verse 1\]/.test(cleaned) || !cleaned.includes("[Chorus]")
+      || !(/^(\[Verse 1\]|\[Intro\])/.test(cleaned)) || !(cleaned.includes("[Chorus]") || cleaned.includes("[Refrain]"))
       || !cleaned.includes("[Outro]") || /falowen/i.test(cleaned)) {
       throw new Error("Invalid advanced song draft: " + assignmentKey);
     }
