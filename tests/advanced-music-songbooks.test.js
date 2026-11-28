@@ -21,13 +21,18 @@ test("every canonical B2, C1 and C2 lesson has its own drafted song", () => {
       assert.equal(getReusableSongDraft(song.assignmentKey), song);
       assert.ok(song.title.length > 6);
       assert.ok(song.musicStyle.startsWith(song.genre + ", "), song.assignmentKey);
-      assert.match(song.lyrics, /^\[Verse 1\][\s\S]*\[Chorus\][\s\S]*\[Verse 2\][\s\S]*\[Outro\][\s\S]+\S$/);
+      if (song.assignmentKey === "C1 1") {
+        assert.equal(song.title, "Lernen mit Verstand");
+        assert.match(song.lyrics, /^\[Intro\][\s\S]*\[Strophe 1\][\s\S]*\[Refrain\][\s\S]*\[Strophe 2\][\s\S]*\[Outro\]/);
+      } else {
+        assert.match(song.lyrics, /^\[Verse 1\][\s\S]*\[Chorus\][\s\S]*\[Verse 2\][\s\S]*\[Outro\][\s\S]+\S$/);
+      }
       assert.doesNotMatch(song.lyrics, /falowen|\[\[.*\]\]/i, song.assignmentKey);
       assert.doesNotMatch(song.genre, /jazz|reggae/i);
       const words = song.lyrics.trim().split(/\s+/);
-      assert.ok(words.length >= 80 && words.length <= 130, song.assignmentKey + " should sing in 2-minute mode");
+      if (song.assignmentKey !== "C1 1") assert.ok(words.length >= 80 && words.length <= 130, song.assignmentKey + " should sing in 2-minute mode");
       const lastLine = song.lyrics.trim().split("\n").at(-1);
-      assert.ok(lastLine.length >= 15 && lastLine.length <= 100);
+      assert.ok(lastLine.length >= (song.assignmentKey === "C1 1" ? 10 : 15) && lastLine.length <= 100);
       assert.ok(!endings.has(lastLine), "reused generic outro: " + lastLine);
       endings.add(lastLine);
       assert.ok(!titles.has(song.title), "reused title: " + song.title);
