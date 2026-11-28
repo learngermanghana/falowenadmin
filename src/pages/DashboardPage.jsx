@@ -134,7 +134,34 @@ function MiniList({ items, emptyText, renderItem }) {
 }
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const canReviewTeachers = role === "admin" && user?.emailVerified === true && String(user?.email || "").toLowerCase() === "moxflex@gmail.com";
+  const [teacherCount, setTeacherCount] = useState(null);
+  const [teacherCountError, setTeacherCountError] = useState(false);
+
+  // One small request when the owner opens the dashboard; no interval or listener.
+  useEffect(() => {
+    let active = true;
+    setTeacherCount(null);
+    setTeacherCountError(false);
+    if (!canReviewTeachers) return undefined;
+    async function loadTeacherCount() {
+      try {
+        const token = await user.getIdToken();
+        if (!active) return;
+        const response = await fetch("/api/teacher-applications?view=count", {
+          headers: { Authorization: `Bearer ${token}` }, cache: "no-store",
+        });
+        const data = await response.json();
+        if (!response.ok || data.ok !== true || !Number.isSafeInteger(data.newCount) || data.newCount < 0) throw new Error("Count unavailable");
+        if (active) setTeacherCount(data.newCount);
+      } catch {
+        if (active) setTeacherCountError(true);
+      }
+    }
+    loadTeacherCount();
+    return () => { active = false; };
+  }, [canReviewTeachers, user]);
   const [initialCache] = useState(() => readDashboardCache());
   const [students, setStudents] = useState(() => initialCache?.students || []);
   const [liveClasses, setLiveClasses] = useState(() => initialCache?.liveClasses || []);
@@ -250,10 +277,11 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <section className="analytics-grid three">
+      <section className={`analytics-grid ${canReviewTeachers ? "four" : "three"}`}>
         <StatCard label="Total students" value={loading ? "—" : analytics.totalStudents} helper={loading ? "Loading student records…" : `${analytics.activeRate}% active records`} tone="blue" icon="🎓" />
         <StatCard label="Upcoming holidays" value={upcomingHolidays.length} helper={`${affectedHolidayClassCount} affected class${affectedHolidayClassCount === 1 ? "" : "es"}`} tone="purple" icon="📅" />
         <StatCard label="Leads needing attention" value={leadNotificationSummary.unresolvedCount} helper={`${leadNotificationSummary.unseenCount} new unseen lead${leadNotificationSummary.unseenCount === 1 ? "" : "s"}`} tone="rose" icon="🔔" to="/leads" />
+        {canReviewTeachers && <StatCard label="New teacher applications" value={teacherCount ?? "—"} helper={teacherCountError ? "Count unavailable · Open applications" : teacherCount === null ? "Checking applications…" : teacherCount === 0 ? "No new applications · Open" : "Awaiting review · Open applications"} tone="green" icon="🧑‍🏫" to="/teacher-applications" />}
       </section>
 
       <AdminActionInbox user={user} classes={liveClasses} />
