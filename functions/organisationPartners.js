@@ -116,7 +116,7 @@ async function partnerBilling(req, { db, admin }) {
     const ledger = student ? organisationStudentLedger([{ ...student, id: row.studentId }]).students[0] : null;
     return { name: row.name, level: ledger?.level || row.level, className: student?.className || '', tuitionFee: ledger?.tuitionFee ?? null,
       paid: ledger?.paid ?? null, balanceDue: ledger?.balanceDue ?? null, paymentStatus: ledger?.paymentStatus || 'Needs review',
-      paymentDeadline: ledger?.paymentDueDate || '', accessEndDate: ledger?.accessEndDate || '' };
+      paymentDeadline: (student && require('./studentContractLifecycle').isoDate(student.paymentDeadline)) || ledger?.paymentDueDate || '', accessEndDate: ledger?.accessEndDate || '' };
   });
   const snapshot = await db.collection('payments').where('organisationSubmissionId', '==', id).limit(51).get();
   const truncated = snapshot.docs.length > 50 || approved.size > 50;
@@ -146,7 +146,9 @@ async function partnerBilling(req, { db, admin }) {
             contractEnd: require('./studentContractLifecycle').isoDate(student.contractEnd),
             paymentDeadline: require('./studentContractLifecycle').isoDate(student.paymentDeadline) });
           if (dates && new Date().toISOString().slice(0,10) >= dates.terminateOn) return false;
-          const paid = organisationStudentLedger([{ ...student, id: line.studentId }]).students[0].paid;
+          const ledger = organisationStudentLedger([{ ...student, id: line.studentId }]).students[0];
+          const paid = ledger.paid ?? (ledger.tuitionFee > 0 && ledger.balanceDue === ledger.tuitionFee &&
+            !student.lastPaymentReference && !student.organisationPaymentConfirmedAt && !Number(student.tuitionDiscount || 0) ? 0 : null);
           return paid !== null && minor(line.grossAmount) > 0 && minor(line.grossAmount) <= balanceOf(student) &&
             (paid > 0 ? minor(line.discount || 0) === 0 : minor(line.discount || 0) === Math.round(minor(line.grossAmount) * 0.1));
         } catch { return false; }
