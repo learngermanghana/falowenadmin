@@ -22,6 +22,21 @@ const base=()=>`https://firestore.googleapis.com/v1/projects/${encodeURIComponen
 const fields=obj=>Object.fromEntries(Object.entries(obj).map(([key,value])=>[key,{stringValue:String(value)}]));
 const unpack=doc=>({id:doc.name.split("/").pop(),version:doc.updateTime,...Object.fromEntries(Object.entries(doc.fields||{}).map(([k,v])=>[k,v.stringValue||""]))});
 async function db(url,token,method="GET",body){const response=await fetch(url,{method,headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},...(body?{body:JSON.stringify(body)}:{})});const data=await response.json().catch(()=>({}));if(!response.ok)throw Object.assign(new Error("Application storage unavailable."),{status:503,dbStatus:response.status});return data;}
+// Count matching index entries server-side, without downloading applicant records.
+export const newApplicationCountQuery = () => ({
+ structuredAggregationQuery: {
+  structuredQuery: {
+   from: [{collectionId:"falowenTeacherApplications"}],
+   where: {fieldFilter:{field:{fieldPath:"status"},op:"EQUAL",value:{stringValue:"new"}}}
+  },
+  aggregations: [{alias:"newCount",count:{}}]
+ }
+});
+export function parseNewApplicationCount(rows){
+ const raw=Array.isArray(rows)?rows.find(row=>row?.result?.aggregateFields?.newCount)?.result.aggregateFields.newCount.integerValue:undefined;
+ if(typeof raw!=="string"||!/^\d+$/.test(raw)||!Number.isSafeInteger(Number(raw)))fail("Application count unavailable.",503);
+ return Number(raw);
+}
 export default async function handler(req,res){
  res.setHeader("Cache-Control","private, no-store");res.setHeader("X-Content-Type-Options","nosniff");
  try{
@@ -37,6 +52,12 @@ export default async function handler(req,res){
   if(!["GET","PATCH","DELETE"].includes(req.method))return res.status(405).json({ok:false,error:"Method not allowed."});
   await requireOwner(req);const token=await tokenForGoogle();
   if(req.method==="GET"){
+   const view=req.query?.view ?? new URL(req.url||"/","https://admin.falowen.app").searchParams.get("view");
+   if(view==="count"){
+    const url=`https://firestore.googleapis.com/v1/projects/${encodeURIComponent(PROJECT)}/databases/(default)/documents:runAggregationQuery`;
+    const rows=await db(url,token,"POST",newApplicationCountQuery());
+    return res.status(200).json({ok:true,newCount:parseNewApplicationCount(rows)});
+   }
    const page=typeof req.query?.pageToken==="string"?req.query.pageToken:"";
    const data=await db(base()+"?pageSize=50&orderBy=createdAt%20desc"+(page?"&pageToken="+encodeURIComponent(page):""),token);
    return res.status(200).json({ok:true,applications:(data.documents||[]).map(unpack),nextPageToken:data.nextPageToken||""});
