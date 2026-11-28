@@ -10,6 +10,7 @@ import { waitingRoomDiscoveredMusicTrack } from '../utils/waitingRoomDayMusic.js
 import './PublishedSongLessonStage.css';
 import './LessonSongStage.css';
 import LessonSongLyrics from './LessonSongLyrics.jsx';
+import SongListeningArtwork from './SongListeningArtwork.jsx';
 import SongTimingEditor from './SongTimingEditor.jsx';
 import useSongTiming from '../hooks/useSongTiming.js';
 import classroomSongTiming from '../data/a1ClassroomSongTiming.js';
@@ -220,6 +221,7 @@ export default function PublishedSongLessonStage({ assignmentKey, courseDay, onE
         <button type="button" aria-pressed={view==='questions'} className={view==='questions'?'is-active':''} onClick={()=>openView('questions')}>3 · Fragen</button>
       </div>
       {view==='listen' && <div className="published-song-lesson__section">
+        <SongListeningArtwork objectKey={recording.objectKey} title={recording.title} description={recording.description} level={recording.level} day={recording.day} />
         <h3>Höre zuerst zu.</h3>
         <p>{listenPrompt}</p>
         <p>Beim ersten Hören brauchst du den Text nicht. Beim zweiten Hören kannst du mitlesen.</p>
