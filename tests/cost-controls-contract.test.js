@@ -35,6 +35,11 @@ test("Social song picker reaches one Vercel project on success and keeps fallbac
 test("No session, payment, or private attendance data is publicly CDN cached", () => {
   const vercel = JSON.parse(read("vercel.json"));
   assert.equal(vercel.ignoreCommand, "node scripts/vercelIgnoreBuild.cjs");
-  assert.equal(vercel.crons?.length, 1);
-  assert.equal(vercel.crons[0].schedule, "0 20 * * 0");
+  // The retired scheduler must not be recreated just to satisfy this contract.
+  assert.equal((vercel.crons || []).length, 0);
+  for (const rule of vercel.headers || []) {
+    if (rule.headers?.some(h => h.key.toLowerCase() === "cache-control" && /\bpublic\b/i.test(h.value))) {
+      assert.equal(rule.source, "/(.*).mp3", "Only public audio may be publicly cached");
+    }
+  }
 });
