@@ -8,6 +8,7 @@ import "./App.css";
 import "./LiveClassesMobile.css";
 
 const PaystackPage = lazy(() => import("./pages/PaystackPage.jsx"));
+const TeacherApplicationsPage = lazy(() => import("./pages/TeacherApplicationsPage.jsx"));
 const AppointmentAdminPage = lazy(() => import("./pages/AppointmentAdminPage.jsx"));
 const AppointmentBookingPage = lazy(() => import("./pages/AppointmentBookingPage.jsx"));
 const PartnershipPage = lazy(() => import("./pages/PartnershipPage.jsx"));
@@ -172,6 +173,7 @@ function TopBar() {
                 <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Slides</Link>
                 <Link to="/holiday-calendar" onClick={() => setMenuOpen(false)}>Holidays</Link>
                 <Link to="/appointments" onClick={() => setMenuOpen(false)}>Appointments</Link>
+                {role === "admin" && <Link to="/teacher-applications" onClick={() => setMenuOpen(false)}>Teacher applications</Link>}
               </>
             )}
           </div>
@@ -280,6 +282,7 @@ export default function App() {
           <Routes>
           <Route path="/partnerships" element={<PartnershipPage />} />
           <Route path="/paystack" element={<ProtectedRoute><PaystackPage /></ProtectedRoute>} />
+          <Route path="/teacher-applications" element={<ProtectedRoute>{role === "admin" ? <TeacherApplicationsPage /> : <Navigate to="/" replace />}</ProtectedRoute>} />
           <Route path="/appointments" element={<ProtectedRoute><AppointmentAdminPage /></ProtectedRoute>} />
           <Route path="/book-appointment" element={<AppointmentBookingPage />} />
           <Route path="/referral-review" element={<ProtectedRoute><ReferralReviewPage /></ProtectedRoute>} />
