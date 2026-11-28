@@ -37,3 +37,5 @@
   flex: 0 0 1rem;
   margin: 0;
 }
+
+.published-song-lesson__listening-art{display:flex;align-items:center;gap:clamp(16px,3vw,28px);padding:clamp(14px,2vw,22px);border-radius:14px;background:#eaf4e4}.published-song-lesson__listening-art img{display:block;width:clamp(120px,22vw,220px);aspect-ratio:1;object-fit:cover;border-radius:12px;flex:none}.published-song-lesson__listening-art div{min-width:0}.published-song-lesson__listening-art span{font-size:.75rem;font-weight:800;letter-spacing:.08em;color:#426c56}.published-song-lesson__listening-art h4{font-size:clamp(1.2rem,2.5vw,2rem);margin:.35em 0;color:#153f37}.published-song-lesson__listening-art p{margin:0}.published-song-lesson__listening-art h4,.published-song-lesson__listening-art p{overflow-wrap:anywhere}@media(max-width:480px){.published-song-lesson__listening-art{align-items:flex-start}.published-song-lesson__listening-art img{width:95px}}

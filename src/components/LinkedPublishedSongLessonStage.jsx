@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import LessonSongLyrics from './LessonSongLyrics.jsx';
+import SongListeningArtwork from './SongListeningArtwork.jsx';
 import PublishedSongLessonStage from './PublishedSongLessonStage.jsx';
 import { getCuratedMusicByAssignment } from '../data/curatedLessonMusic.js';
 import { getReusableSongDraft } from '../data/reusableMusicSongbook.js';
@@ -202,6 +203,7 @@ function LinkedRecordedSongLessonStage({ music }) {
       </div>
 
       {view==='listen' && <div className="published-song-lesson__section">
+        <SongListeningArtwork objectKey={track?.objectKey} title={track?.title || music.title} description={music.description || music.studentPurpose} level={level} day={day} />
         <h3>Höre zuerst zu.</h3><p>{music.introQuestion}</p>
         <p>Beim ersten Hören brauchst du den Text nicht. Beim zweiten Hören kannst du mitlesen.</p>
         <button type="button" onClick={()=>changeTab('lyrics')}>Weiter · Liedtext ansehen</button>
