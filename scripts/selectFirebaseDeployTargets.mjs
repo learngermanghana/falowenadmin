@@ -17,6 +17,8 @@ export const WORKER_TARGETS = {
   "functions/partialTuitionLifecycle.js": ["api","cleanupExpiredPendingStudents"],
   "functions/partialTuitionLifecycle.test.cjs": [],
   "functions/organisationPayments.js": ["api"],
+  "functions/organisationPartners.js": ["api"],
+  "functions/organisationPartners.test.cjs": [],
   "scripts/patchStudentPaymentContractLifecycle.mjs": ["api","maintainStudentPaymentContracts"],
   "functions/enrollmentCleanupProtection.js": ["cleanupExpiredPendingStudents"],
   "functions/__tests__/enrollmentCleanupProtection.test.cjs": [],
