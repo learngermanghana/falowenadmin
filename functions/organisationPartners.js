@@ -88,11 +88,90 @@ async function prepareLegacyPartner({ db, admin, email, actor }) {
   });
   return { ok: true, organisationId: id, email, state: 'ready_to_invite' };
 }
+
+function checkoutLink(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && url.hostname === 'checkout.paystack.com' && !url.username && !url.password && !url.port ? url.href : null;
+  } catch { return null; }
+}
+async function partnerBilling(req, { db, admin }) {
+  const { profile, agreement } = await partnerProfile(req, { db, admin });
+  const id = clean(req.params.id);
+  if (!/^[a-zA-Z0-9_-]{1,100}$/.test(id)) fail(400, 'Invalid submission reference.');
+  const batch = await db.collection('organisationEnrolments').doc(id).get();
+  const data = batch.exists ? batch.data() : null;
+  if (!data || data.deleted || lower(data.organisation?.email) !== profile.loginEmail || (data.organisationId && data.organisationId !== profile.id)) fail(404, 'Submission not found.');
+  const { organisationStudentLedger } = require('./organisationDirectory');
+  const { balanceOf, minor } = require('./organisationPayments');
+  const submitted = (Array.isArray(data.students) ? data.students : []).filter(row => row.status === 'approved' && row.studentId);
+  const approved = new Set(submitted.map(row => row.studentId));
+  const snapshots = await Promise.all([...approved].slice(0, 50).map(studentId => db.collection('students').doc(studentId).get()));
+  const own = new Map(snapshots.filter(snap => snap.exists && snap.data().organisationSubmissionId === id &&
+    (!snap.data().organisationId || snap.data().organisationId === profile.id) &&
+    (!snap.data().organisationContactEmail || lower(snap.data().organisationContactEmail) === profile.loginEmail) &&
+    snap.data().billingResponsibility === 'organisation').map(snap => [snap.id, snap.data()]));
+  const students = submitted.map(row => {
+    const student = own.get(row.studentId);
+    const ledger = student ? organisationStudentLedger([{ ...student, id: row.studentId }]).students[0] : null;
+    return { name: row.name, level: ledger?.level || row.level, className: student?.className || '', tuitionFee: ledger?.tuitionFee ?? null,
+      paid: ledger?.paid ?? null, balanceDue: ledger?.balanceDue ?? null, paymentStatus: ledger?.paymentStatus || 'Needs review',
+      paymentDeadline: (student && require('./studentContractLifecycle').isoDate(student.paymentDeadline)) || ledger?.paymentDueDate || '', accessEndDate: ledger?.accessEndDate || '' };
+  });
+  const snapshot = await db.collection('payments').where('organisationSubmissionId', '==', id).limit(51).get();
+  const truncated = snapshot.docs.length > 50 || approved.size > 50;
+  const records = snapshot.docs.slice(0, 50).map(doc => doc.data()).filter(p => ['organisation_group','organisation_manual'].includes(p.purpose));
+  const pendingCounts = new Map();
+  for (const p of records.filter(p => ['pending','initializing','paid_needs_review','expired'].includes(p.status))) {
+    for (const line of Array.isArray(p.lines) ? p.lines : []) pendingCounts.set(line.studentId, (pendingCounts.get(line.studentId) || 0) + 1);
+  }
+  const payments = records.flatMap(p => {
+    const lines = Array.isArray(p.lines) ? p.lines : [];
+    // Never expose checkout links or allocations with unknown or foreign student ownership.
+    if (!lines.length || !lines.every(line => approved.has(line.studentId))) return [];
+    let payUrl = null, reason = '';
+    if (p.purpose === 'organisation_group' && p.status === 'pending') {
+      if (agreement?.status !== 'approved') reason = 'Partnership approval required.';
+      else if (truncated) reason = 'Contact Falowen to review the full payment history.';
+      else if (lines.some(line => (pendingCounts.get(line.studentId) || 0) > 1)) reason = 'Multiple invoices need Falowen review before payment.';
+      else if (!lines.every(line => {
+        const student = own.get(line.studentId);
+        if (!student || student.partialTuitionTermination?.state === 'pending_purge' ||
+          (student.partialTuitionClosedEnrollmentId && student.partialTuitionClosedEnrollmentId === student.effectiveEnrollmentId) ||
+          (line.enrollmentId || student.effectiveEnrollmentId) && line.enrollmentId !== student.effectiveEnrollmentId) return false;
+        try {
+          const lifecycle = require('./partialTuitionLifecycle');
+          const dates = lifecycle.recoveryDates(lifecycle.legacyRow(student) || { ...student,
+            contractStart: require('./studentContractLifecycle').isoDate(student.contractStart),
+            contractEnd: require('./studentContractLifecycle').isoDate(student.contractEnd),
+            paymentDeadline: require('./studentContractLifecycle').isoDate(student.paymentDeadline) });
+          if (dates && new Date().toISOString().slice(0,10) >= dates.terminateOn) return false;
+          const ledger = organisationStudentLedger([{ ...student, id: line.studentId }]).students[0];
+          const paid = ledger.paid ?? (ledger.tuitionFee > 0 && ledger.balanceDue === ledger.tuitionFee &&
+            !student.lastPaymentReference && !student.organisationPaymentConfirmedAt && !Number(student.tuitionDiscount || 0) ? 0 : null);
+          return paid !== null && minor(line.grossAmount) > 0 && minor(line.grossAmount) <= balanceOf(student) &&
+            (paid > 0 ? minor(line.discount || 0) === 0 : minor(line.discount || 0) === Math.round(minor(line.grossAmount) * 0.1));
+        } catch { return false; }
+      })) reason = 'Student balances or enrolments changed. Ask Falowen to review this invoice.';
+      else if (p.currency !== 'GHS' || !Number.isFinite(p.checkoutAmount) || p.checkoutAmount <= 0 || !(payUrl = checkoutLink(p.authorizationUrl))) reason = 'Checkout unavailable. Contact Falowen.';
+    }
+    const amount = value => typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
+    return [{ reference: clean(p.reference), status: clean(p.status), purpose: p.purpose,
+      tuitionCredit: amount(p.tuitionCredit), discount: amount(p.discount), checkoutAmount: amount(p.checkoutAmount),
+      processingShare: amount(p.processingShare), receiptStatus: clean(p.receiptStatus),
+      lines: lines.map(line => ({ name: submitted.find(row => row.studentId === line.studentId)?.name || 'Student',
+        grossAmount: amount(line.grossAmount), tuitionCredit: amount(line.tuitionCredit), discount: amount(line.discount) })),
+      payUrl, reason }];
+  });
+  return { ok: true, students, payments, truncated };
+}
+
 function registerOrganisationPartnerRoutes(app, { db, admin }) {
   const handle = action => async (req, res) => {
     res.set('Cache-Control', 'private, no-store');
     try { res.json(await action(req)); } catch (e) { res.status(e.status || 500).json({ ok: false, error: e.status ? e.message : 'Partner service unavailable. Please retry.' }); }
   };
+  app.get('/organisation-partners/billing/:id', handle(req => partnerBilling(req, { db, admin })));
   app.get('/organisation-partners/me', handle(async req => ({ ok: true, profile: safeProfile(await partnerProfile(req, { db, admin })) })));
   app.post('/organisation-partners/register', handle(req => registerPartner(req, { db, admin })));
   app.get('/organisation-partners/submissions', handle(async req => {
