@@ -12,7 +12,7 @@ function Application({item,onSave,onDelete,busy}){
  return <article className="appt-panel" style={{overflowWrap:"anywhere"}}><h2>{item.name}</h2><p>{item.email} · {item.country} · {item.createdAt?.slice(0,10)}</p>
  <dl>{[["Languages",item.languages],["Levels",item.levels],["Qualifications",item.qualifications],["Experience",item.experience],["Availability",item.availability],["Hourly rate",item.rate]].map(([label,value])=><div key={label}><dt><strong>{label}</strong></dt><dd style={{whiteSpace:"pre-wrap",margin:"0 0 12px"}}>{value}</dd></div>)}</dl>
  <p><a href={item.videoUrl} target="_blank" rel="noopener noreferrer">Open reference video ↗</a> · <a href={"mailto:"+item.email}>Contact applicant</a></p>
- <form className="appt-form" onSubmit={e=>{e.preventDefault();onSave({id:item.id,status,notes});}}>
+ <form className="appt-form" onSubmit={e=>{e.preventDefault();onSave({id:item.id,status,notes,version:item.version});}}>
  <label>Review status<select value={status} onChange={e=>setStatus(e.target.value)}>{statuses.map(s=><option key={s}>{s}</option>)}</select></label>
  <label>Private review notes<textarea value={notes} maxLength={2000} onChange={e=>setNotes(e.target.value)} rows={3}/></label>
  <button disabled={busy} type="submit">Save review</button><button disabled={busy} type="button" onClick={()=>{if(window.confirm("Permanently delete this application?"))onDelete(item.id);}}>Delete application</button></form></article>;
@@ -27,6 +27,6 @@ export default function TeacherApplicationsPage(){
  {error&&<p role="alert" className="appt-message error">{error}</p>}{notice&&<p role="status" className="appt-message success">{notice}</p>}
  <section className="appt-panel"><label>Filter loaded applications <select value={filter} onChange={e=>setFilter(e.target.value)}><option value="all">All</option>{statuses.map(s=><option key={s}>{s}</option>)}</select></label> <button disabled={busy} onClick={()=>load()}>Refresh</button><p>{items.length} loaded</p></section>
  {busy&&<p role="status">Loading or saving…</p>}{!busy&&!items.length&&!error&&<p>No teacher applications yet.</p>}
- {items.filter(x=>filter==="all"||x.status===filter).map(item=><Application key={item.id} item={item} onSave={save} onDelete={remove} busy={busy}/>)}
+ {items.filter(x=>filter==="all"||x.status===filter).map(item=><Application key={item.id+":"+item.version} item={item} onSave={save} onDelete={remove} busy={busy}/>)}
  {next&&<button disabled={busy} onClick={()=>load(next)}>Load more</button>}</main>;
 }
