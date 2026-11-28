@@ -36,6 +36,7 @@ export function buildTeacherEmailBatch(item, owner=OWNER){
 }
 export function confirmedTeacherEmailBatch(receipt){
  if(receipt?.ok!==true)return false;
+ if(receipt.count===undefined||receipt.count===null||receipt.count==="")return false;
  const count=Number(receipt.count),duplicates=Number(receipt.duplicates??0);
  return Number.isInteger(count)&&count>=0&&Number.isInteger(duplicates)&&duplicates>=0&&count+duplicates===2;
 }
@@ -49,8 +50,11 @@ async function notifyTeacher(item,token){
   if(confirmedTeacherEmailBatch(result.body))emailStatus="queued";
  }catch{/* Application is already saved. Owner can retry with the same row IDs. */}
  try{
-  return unpack(await db(base()+"/"+item.id+"?currentDocument.exists=true&updateMask.fieldPaths=emailStatus",token,"PATCH",{fields:fields({emailStatus})}));
- }catch{return {...item,emailStatus:"unconfirmed"};}
+  return unpack(await db(base()+"/"+item.id+"?currentDocument.updateTime="+encodeURIComponent(item.version)+"&updateMask.fieldPaths=emailStatus",token,"PATCH",{fields:fields({emailStatus})}));
+ }catch{
+  // A concurrent review, retry or deletion must not be overwritten by an old notification response.
+  try{return unpack(await db(base()+"/"+item.id,token));}catch{return {...item,emailStatus:"unconfirmed"};}
+ }
 }
 export default async function handler(req,res){
  res.setHeader("Cache-Control","private, no-store");res.setHeader("X-Content-Type-Options","nosniff");
