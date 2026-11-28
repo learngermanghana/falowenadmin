@@ -266,3 +266,6 @@ export default async function staffManagementHandler(req, res) {
     return res.status(status).json({ ok: false, error: status >= 500 && !(ownerVerified && err.staffDiagnostic) ? "Staff management is unavailable. Check server credentials and Firebase access." : err.message });
   }
 }
+
+// Reuse the existing verified owner and server service-account identity for teacher applications.
+export { requireOwner, tokenForGoogle, PROJECT };
