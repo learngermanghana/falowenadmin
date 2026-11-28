@@ -20,7 +20,7 @@ function throttle(req){const now=Date.now();for(const [k,v] of attempts)if(v.unt
 function bodyOf(req){let body=req.body;if(typeof body==="string"){if(body.length>16000)fail("Application is too large.",413);try{body=JSON.parse(body);}catch{fail("Invalid application.");}}if(!body||JSON.stringify(body).length>16000)fail("Invalid or oversized application.");return body;}
 const base=()=>`https://firestore.googleapis.com/v1/projects/${encodeURIComponent(PROJECT)}/databases/(default)/documents/falowenTeacherApplications`;
 const fields=obj=>Object.fromEntries(Object.entries(obj).map(([key,value])=>[key,{stringValue:String(value)}]));
-const unpack=doc=>({id:doc.name.split("/").pop(),...Object.fromEntries(Object.entries(doc.fields||{}).map(([k,v])=>[k,v.stringValue||""]))});
+const unpack=doc=>({id:doc.name.split("/").pop(),version:doc.updateTime,...Object.fromEntries(Object.entries(doc.fields||{}).map(([k,v])=>[k,v.stringValue||""]))});
 async function db(url,token,method="GET",body){const response=await fetch(url,{method,headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},...(body?{body:JSON.stringify(body)}:{})});const data=await response.json().catch(()=>({}));if(!response.ok)throw Object.assign(new Error("Application storage unavailable."),{status:503,dbStatus:response.status});return data;}
 export default async function handler(req,res){
  res.setHeader("Cache-Control","private, no-store");res.setHeader("X-Content-Type-Options","nosniff");
@@ -44,7 +44,10 @@ export default async function handler(req,res){
   const body=bodyOf(req);if(!/^[a-f0-9]{64}$/.test(body.id||""))fail("Invalid application ID.");
   if(req.method==="DELETE"){await db(base()+"/"+body.id,token,"DELETE");return res.status(200).json({ok:true});}
   if(!statuses.has(body.status)||typeof body.notes!=="string"||body.notes.length>2000)fail("Invalid review status or notes.");
-  const result=await db(base()+"/"+body.id+"?currentDocument.exists=true&updateMask.fieldPaths=status&updateMask.fieldPaths=notes&updateMask.fieldPaths=updatedAt",token,"PATCH",{fields:fields({status:body.status,notes:body.notes,updatedAt:new Date().toISOString()})});
+  if(typeof body.version!=="string"||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?Z$/.test(body.version))fail("Refresh the application before saving.",409);
+  let result;
+  try { result=await db(base()+"/"+body.id+"?currentDocument.updateTime="+encodeURIComponent(body.version)+"&updateMask.fieldPaths=status&updateMask.fieldPaths=notes&updateMask.fieldPaths=updatedAt",token,"PATCH",{fields:fields({status:body.status,notes:body.notes,updatedAt:new Date().toISOString()})}); }
+  catch(e){if([400,404,409,412].includes(e.dbStatus))fail("This application changed. Refresh before saving your review.",409);throw e;}
   return res.status(200).json({ok:true,application:unpack(result)});
  }catch(e){const status=e.status||500;return res.status(status).json({ok:false,error:status>=500?"Application service is temporarily unavailable. Please try again.":e.message});}
 }
